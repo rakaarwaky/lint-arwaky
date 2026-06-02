@@ -76,8 +76,10 @@ class VersionBumper:
         if status.stdout.strip():
             self._run_command(["git", "commit", "--no-verify", "-m", f"chore: bump version to {new_version}"], critical=True)
             if not self.no_push:
+                self._run_command(["git", "tag", f"v{new_version}"], critical=True)
                 self._run_command(["git", "push"], critical=True)
-                print(f"🚀 Successfully bumped version to {new_version}, committed, and pushed.")
+                self._run_command(["git", "push", "origin", f"v{new_version}"], critical=True)
+                print(f"🚀 Successfully bumped version to {new_version}, committed, tagged v{new_version}, and pushed.")
             else:
                 print(f"✅ Successfully bumped version to {new_version} and committed locally.")
         else:

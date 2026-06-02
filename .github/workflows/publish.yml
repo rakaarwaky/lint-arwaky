@@ -1,31 +1,42 @@
 name: Publish to PyPI
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   publish:
+    name: Build and publish Python distribution to PyPI
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/auto-linter
+    environment: pypi
     permissions:
-      id-token: write   # Required for OIDC trusted publishing + SLSA attestation
+      id-token: write
       contents: read
-      attestations: write  # Required for SLSA provenance generation
+      attestations: write
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install build
-      - run: python -m build
-      - name: Generate SLSA provenance attestation
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Generate build provenance
         uses: actions/attest-build-provenance@v1
         with:
           subject-path: "dist/*"
-      - name: Publish to PyPI (OIDC)
-        uses: pypa/gh-action-pypi-publish@release/v1
-        # No password — uses OIDC trusted publishing via id-token: write
