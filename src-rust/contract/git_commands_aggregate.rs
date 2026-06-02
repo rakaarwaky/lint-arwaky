@@ -1,0 +1,8 @@
+use async_trait::async_trait;
+use super::*;
+
+#[async_trait]
+pub trait GitCommandsAggregate: Send + Sync {
+    async fn run_git_diff_check(&self, path: &FilePath) -> LintResultList;
+    async fn get_diff(&self, path: &FilePath) -> GitDiffResultAggregate;
+}

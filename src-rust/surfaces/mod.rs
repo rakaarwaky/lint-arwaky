@@ -1,0 +1,25 @@
+// This file is generated - corresponds to Python __init__.py
+pub mod cli_analysis_command;
+pub mod cli_check_command;
+pub mod cli_config_templates;
+pub mod cli_core_command;
+pub mod cli_dev_command;
+pub mod cli_fix_command;
+pub mod cli_main_handler;
+pub mod cli_maintenance_command;
+pub mod cli_output_controller;
+pub mod cli_setup_command;
+pub mod cli_setup_controller;
+pub mod cli_watch_command;
+pub mod core_git_command;
+pub mod core_multi_command;
+pub mod core_plugin_command;
+pub mod core_report_command;
+pub mod mcp_client_handler;
+pub mod mcp_command_handler;
+pub mod mcp_execute_command;
+pub mod mcp_health_handler;
+pub mod mcp_job_handler;
+pub mod mcp_server_handler;
+pub mod mcp_tools_store;
+pub mod syspath_bootstrap_handler;

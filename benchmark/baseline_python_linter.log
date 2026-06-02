@@ -1,0 +1,45 @@
+======================================================================
+           AUTO LINTER PERFORMANCE BENCHMARK BASELINE LOG (PYTHON)
+======================================================================
+Date             : 2026-05-29T04:28:00+07:00
+Environment      : Linux x86_64
+Python Interpreter: CPython 3.13.0
+Active Project   : Auto Linter v1.10.2 (Baseline - Pure Python Scanner)
+======================================================================
+
+1. TEST PROJECTS PERFORMANCE BENCHMARK (BASELINE)
+----------------------------------------------------------------------
+Uji Audit Kualitas Penuh (Full Quality Audit) menggunakan Python-based
+Auto Linter pada tiga target proyek pengujian:
+
+╒═════════════════════════╤═══════════════════╤══════════════════╤═════════════════════╤════════════════════════════╕
+│ Project Target          │ Target Files      │ Execution Time   │ Compliance Status   │ Notes                      │
+╞═════════════════════════╪═══════════════════╪══════════════════╪═════════════════════╪════════════════════════════╡
+│ test-project-javascript │ 1151 target files │ 20.8603 s        │ PASSED              │ Execution: baseline python │
+├─────────────────────────┼───────────────────┼──────────────────┼─────────────────────┼────────────────────────────┤
+│ test-project-python     │ 66 target files   │ 21.0909 s        │ PASSED              │ Execution: baseline python │
+├─────────────────────────┼───────────────────┼──────────────────┼─────────────────────┼────────────────────────────┤
+│ test-project-rust       │ 24 target files   │ 18.3989 s        │ PASSED              │ Execution: baseline python │
+╘═════════════════════════╧═══════════════════╧══════════════════╧═════════════════════╧════════════════════════════╛
+
+----------------------------------------------------------------------
+
+2. COMPONENT-LEVEL PARSING THROUGHPUT (AST Parsing)
+----------------------------------------------------------------------
+╒══════════════════════════════════════╤═══════════╤═════════════════╤═════════════════╤══════════════════╕
+│ Task / Component                     │ Volume    │ Time Duration   │ Throughput Rate │ Notes            │
+╞══════════════════════════════════════╪═══════════╪═════════════════╪═════════════════╪══════════════════╡
+│ Python AST Parsing (Python Core)     │ 276 files │ 0.2944 s        │ 937.60 files/s  │ Baseline         │
+├──────────────────────────────────────┼───────────┼─────────────────┼─────────────────┼──────────────────┤
+│ Rust AST Regex Parsing (Python Core) │ 8 files   │ 0.0166 s        │ 482.65 files/s  │ Baseline (Regex) │
+╘══════════════════════════════════════╧═══════════╧═════════════════╧═════════════════╧══════════════════╛
+
+----------------------------------------------------------------------
+
+3. ANALISIS BOTTLENECK & TARGET MITIGASI RUST
+----------------------------------------------------------------------
+* **JavaScript Project (1151 files)**: Memakan waktu **20.86 detik** untuk menyelesaikan scanning. Ini disebabkan overhead pembacaan direktori secara rekursif dan traversing AST sequential di Python.
+* **Python Project (66 files)**: Memakan waktu **21.09 detik** karena overhead pemicuan MyPy/Ruff subprocess secara terpisah.
+* **Rust Project (24 files)**: Memakan waktu **18.40 detik**.
+* **Target Rust**: Setelah migrasi ke native Rust (dengan parallel file walk via Rayon, AST parsing via tree-sitter/syn), target kita adalah menekan total execution time pada seluruh proyek ini menjadi **di bawah 1.5 detik**!
+======================================================================

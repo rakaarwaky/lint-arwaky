@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "auto-linter": {
+      "command": "/home/raka/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/home/raka/mcp-servers/auto_linter",
+        "run",
+        "auto-linter"
+      ]
+    }
+  }
+}

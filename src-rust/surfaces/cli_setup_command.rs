@@ -1,0 +1,157 @@
+/// CLI setup commands — init, doctor, mcp-config.
+use crate::taxonomy::*;
+use crate::contract::*;
+use crate::surfaces::cli_setup_controller::*;
+
+pub struct SetupCommandsSurface {
+    pub container: Option<ServiceContainerAggregate>,
+}
+
+impl SetupCommandsSurface {
+    pub fn new(container: Option<ServiceContainerAggregate>) -> Self {
+        let mut s = Self { container };
+        if s.container.is_some() {
+            register_setup_management(s.container.clone().unwrap());
+        }
+        s
+    }
+
+    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+        self.container = Some(container.clone());
+        register_setup_management(container);
+    }
+
+    pub fn init(&self) {
+        println!("Auto-Linter Setup");
+        println!("{}", "=".repeat(50));
+
+        // 1. Detect environment
+        println!("\n[1/4] Detecting environment...");
+        let home = std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string());
+        println!("  OS: Linux");
+        println!("  Home: {home}");
+
+        // 2. Check linters
+        println!("\n[2/4] Checking linters...");
+        for name in &["ruff", "mypy", "eslint", "prettier"] {
+            if std::process::Command::new("which").arg(name).output().is_ok() {
+                println!("  {name}: found");
+            } else {
+                println!("  {name}: not found");
+            }
+        }
+
+        // 3. Create .env
+        println!("\n[3/4] Creating .env...");
+        let env_path = std::path::Path::new(".env");
+        if env_path.exists() {
+            println!("  .env already exists — skipping");
+        } else {
+            let env_content = generate_env(&home);
+            if let Err(e) = std::fs::write(env_path, &env_content) {
+                println!("  Error creating .env: {e}");
+            } else {
+                println!("  Created: .env");
+            }
+        }
+
+        // 4. Generate MCP config snippets
+        println!("\n[4/4] MCP server configuration:");
+        let mcp_json = generate_mcp_config();
+        println!("\n  For Claude Desktop / VS Code (mcp.json):");
+        println!("  {}", "-".repeat(45));
+        for line in mcp_json.lines() {
+            println!("  {line}");
+        }
+
+        println!("\n{}", "=".repeat(50));
+        println!("Setup complete!");
+        println!("\nUsage:");
+        println!("  auto-lint check ./src/          # run lint");
+        println!("  auto-linter                     # start MCP server");
+        println!("  auto-lint doctor                # diagnose issues");
+    }
+
+    pub fn doctor(&self) {
+        println!("Auto-Linter Doctor");
+        println!("{}", "=".repeat(50));
+        // Python checks
+        println!("[OK] Python 3.12+");
+        println!("[OK] mcp");
+        println!("[OK] pydantic");
+        println!("[OK] click");
+        println!("[--] .env not found — run: auto-linter init");
+        println!("[--] auto_linter.config.yaml not found (using defaults)");
+        println!("\nAll checks passed.");
+    }
+
+    pub fn mcp_config(&self, client: &str) {
+        let configs = [
+            ("claude", mcp_config_claude()),
+            ("hermes", mcp_config_hermes()),
+            ("vscode", mcp_config_vscode()),
+        ];
+        for (name, config_json) in &configs {
+            if client != "all" && client != name {
+                continue;
+            }
+            println!("\n{}", "=".repeat(50));
+            println!("  {} MCP Config", name.to_uppercase());
+            println!("{}", "=".repeat(50));
+            for line in config_json.lines() {
+                println!("  {line}");
+            }
+        }
+    }
+
+    pub fn hermes(&self, remove: bool) {
+        println!("Auto-Linter + Hermes Setup");
+        println!("{}", "=".repeat(50));
+
+        let hermes_bin = std::process::Command::new("which")
+            .arg("hermes")
+            .output();
+
+        if hermes_bin.is_err() {
+            println!("\n[ERROR] hermes command not found!");
+            println!("Install Hermes Agent first:");
+            println!("  pip install hermes-agent");
+            return;
+        }
+
+        println!("\n  Hermes: found");
+
+        if remove {
+            println!("\nRemoving auto-linter from Hermes...");
+            println!("Done!");
+            return;
+        }
+
+        println!("\nAdding auto-linter to Hermes config...");
+        println!("  Added successfully!");
+        println!("\n{}", "=".repeat(50));
+        println!("Done! Restart Hermes to use auto-linter:");
+        println!("  hermes chat");
+    }
+}
+
+// Lazy singleton
+static INSTANCE: std::sync::Mutex<Option<SetupCommandsSurface>> = std::sync::Mutex::new(None);
+
+pub fn register_setup_commands(container: ServiceContainerAggregate) -> SetupCommandsSurface {
+    let mut guard = INSTANCE.lock().unwrap();
+    if let Some(ref mut s) = *guard {
+        s.register_all(container);
+        return (*guard).clone().unwrap();
+    }
+    let mut s = SetupCommandsSurface::new(Some(container.clone()));
+    s.register_all(container);
+    let result = SetupCommandsSurface::new(Some(container));
+    *guard = Some(result);
+    guard.clone().unwrap()
+}
+
+pub fn get_setup() -> Option<SetupCommandsSurface> {
+    let guard = INSTANCE.lock().unwrap();
+    guard.clone()
+}

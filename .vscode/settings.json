@@ -1,0 +1,54 @@
+{
+  "mypy-type-checker.args": [
+    "--config-file",
+    "auto_linter/mypy.ini",
+    "--explicit-package-bases",
+    "--ignore-missing-imports"
+  ],
+  "mypy-type-checker.cwd": "${workspaceFolder}/auto_linter",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/auto_linter/src"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/auto_linter/src"
+  ],
+  "python.testing.pytestArgs": [
+    "agentic-testing"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "vitest.command": "pnpm exec vitest",
+  "vitest.include": [
+    "tests/**/*.test.ts"
+  ],
+  "vitest.nodeArguments": [
+    "--environment",
+    "node"
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": false,
+    "**/*.egg-info": true,
+    "**/.mypy_cache": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/__pycache__": true,
+    "**/_test_tmp": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  }
+}
