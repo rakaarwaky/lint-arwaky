@@ -23,17 +23,17 @@ No external services required. Runs entirely locally.
 
 ### Option 1: pip
 
-    pip install auto-linter
+    pip install lint-arwaky
 
 ### Option 2: uv (recommended)
 
-    uv tool install auto-linter
+    uv tool install lint-arwaky
     # Or run without installing: uvx auto-lint check ./src/
 
 ### Option 3: From source
 
-    git clone https://github.com/rakaarwaky/auto-linter.git
-    cd auto-linter
+    git clone https://github.com/rakaarwaky/lint-arwaky.git
+    cd lint-arwaky
     python -m venv .venv && source .venv/bin/activate
     pip install -e ".[dev]"
 
@@ -60,7 +60,7 @@ Manual config in claude_desktop_config.json:
     json
     {
       "mcpServers": {
-        "auto-linter": { "command": "auto-linter" }
+        "lint-arwaky": { "command": "lint-arwaky" }
       }
     }
 
@@ -70,7 +70,7 @@ Manual config in claude_desktop_config.json:
 
 ### Configure for Hermes Agent
 
-    pip install auto-linter && auto-lint setup hermes
+    pip install lint-arwaky && auto-lint setup hermes
 
 ---
 
@@ -135,7 +135,7 @@ Config file: auto_linter.config.python.yaml
 
 ### Post-Deploy
 
-- [ ] pip install auto-linter==version succeeds
+- [ ] pip install lint-arwaky==version succeeds
 - [ ] MCP server starts without errors
 - [ ] Health check tool responds within 5 seconds
 - [ ] Sample lint run completes on a known-good project
@@ -144,7 +144,7 @@ Config file: auto_linter.config.python.yaml
 
 ## Rollback Plan
 
-    pip install auto-linter==previous_version
+    pip install lint-arwaky==previous_version
 
 Restart MCP server / Claude Desktop / VS Code.
 
@@ -152,6 +152,6 @@ Restart MCP server / Claude Desktop / VS Code.
 
 ## Support
 
-- Repository: https://github.com/rakaarwaky/auto-linter
-- Issues: https://github.com/rakaarwaky/auto-linter/issues
+- Repository: https://github.com/rakaarwaky/lint-arwaky
+- Issues: https://github.com/rakaarwaky/lint-arwaky/issues
 - Documentation: SKILL.md, AES_RULES.md, README.md

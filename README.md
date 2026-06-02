@@ -53,14 +53,14 @@ Auto Linter runs Ruff, MyPy, Bandit, and Radon in a single pass, then overlays 2
 ### pip
 
 ```bash
-pip install auto-linter
+pip install lint-arwaky
 ```
 
 ### uv (recommended)
 
 ```bash
 # Install as a globally available tool
-uv tool install auto-linter
+uv tool install lint-arwaky
 
 # Or zero-install via uvx
 uvx auto-lint check ./src/
@@ -70,10 +70,10 @@ uvx auto-lint check ./src/
 
 ```bash
 # Linux / macOS
-curl -sSL https://raw.githubusercontent.com/rakaarwaky/auto-linter/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/install.sh | bash
 
 # Windows PowerShell
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/rakaarwaky/auto-linter/main/install.ps1 | Invoke-Expression
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/install.ps1 | Invoke-Expression
 ```
 
 ### Verify installation
@@ -221,7 +221,7 @@ surface.run_server(container)
 The `pyproject.toml` registers the entry point as:
 ```toml
 [project.scripts]
-auto-linter = "auto_linter:mcp_main"
+lint-arwaky = "auto_linter:mcp_main"
 ```
 
 ### MCP tools (5 tools)
@@ -249,7 +249,7 @@ auto-lint setup mcp-config --client vscode
 ### Configure in Hermes Agent
 
 ```bash
-pip install auto-linter
+pip install lint-arwaky
 auto-lint setup hermes
 ```
 
@@ -258,8 +258,8 @@ auto-lint setup hermes
 ```json
 {
   "mcpServers": {
-    "auto-linter": {
-      "command": "auto-linter"
+    "lint-arwaky": {
+      "command": "lint-arwaky"
     }
   }
 }
@@ -363,7 +363,7 @@ For the complete rule specification with WHY and FIX sections, see [AES_RULES.md
 | `auto-lint fix <path>` | Apply safe fixes automatically |
 | `auto-lint report <path>` | Generate quality report (text/json/sarif/junit) |
 | `auto-lint ci <path>` | CI-optimized run with exit codes |
-| `auto-lint self-lint` | Run audit on auto-linter itself |
+| `auto-lint self-lint` | Run audit on lint-arwaky itself |
 
 ### Scans
 

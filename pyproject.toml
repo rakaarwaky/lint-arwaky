@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "arwaky-lint"
+name = "lint-arwaky"
 version = "1.10.2"
 description = "MCP server for autonomous linting and architecture auditing"
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Raka Arwaky", email = "arwaky90@gmail.com"}
+    {name = "rakaarwaky", email = "arwaky90@gmail.com"}
 ]
 keywords = ["mcp", "linting", "architecture", "ruff", "mypy", "ai", "linter", "audit"]
 classifiers = [
@@ -60,13 +60,13 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/rakaarwaky/auto-linter"
-Repository = "https://github.com/rakaarwaky/auto-linter"
-"Install (Linux/macOS)" = "https://raw.githubusercontent.com/rakaarwaky/auto-linter/main/install.sh"
-"Install (Windows)" = "https://raw.githubusercontent.com/rakaarwaky/auto-linter/main/install.ps1"
+Homepage = "https://github.com/rakaarwaky/lint-arwaky"
+Repository = "https://github.com/rakaarwaky/lint-arwaky"
+"Install (Linux/macOS)" = "https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/install.sh"
+"Install (Windows)" = "https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/install.ps1"
 
 [project.scripts]
-auto-linter = "auto_linter:mcp_main"
+lint-arwaky = "auto_linter:mcp_main"
 auto-lint = "auto_linter:cli_main"
 
 [project.optional-dependencies]
