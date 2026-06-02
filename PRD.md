@@ -1,18 +1,18 @@
 # Product Requirements Document (PRD)
 
-## Auto Linter MCP Server v1.10.2
+## Lint Arwaky MCP Server v1.10.2
 
 ---
 
 ## 1. Product Overview
 
-**Name**: Auto Linter
+**Name**: Lint Arwaky
 **Type**: MCP Server + CLI Tool
 **Version**: 1.10.2
 **License**: MIT
 **Language**: Python >= 3.12
 
-Auto Linter is an autonomous multi-language linting, type-checking, and
+Lint Arwaky is an autonomous multi-language linting, type-checking, and
 architectural rule auditing tool. It runs as both an MCP server and CLI tool.
 
 Uses `mcp.server.fastmcp.FastMCP` for the MCP server interface.
@@ -30,13 +30,13 @@ Software projects accumulate quality debt silently. Developers lack:
 - Both human-accessible CLI and AI-agent-accessible MCP tools from one codebase
 - Easy setup for community/open-source distribution
 
-Auto Linter addresses all five.
+Lint Arwaky addresses all five.
 
 ---
 
 ## 3. AI Agent Value
 
-Auto Linter is designed to integrate with AI coding agents through its MCP interface, providing:
+Lint Arwaky is designed to integrate with AI coding agents through its MCP interface, providing:
 
 | Value Driver               | Description                            |
 | -------------------------- | -------------------------------------- |

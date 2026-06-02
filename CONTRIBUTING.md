@@ -1,4 +1,4 @@
-# Contributing to Auto Linter
+# Contributing to Lint Arwaky
 
 > This guide covers everything you need to start contributing effectively.
 
@@ -45,8 +45,8 @@
 
 ```bash
 # Clone
-git clone https://github.com/rakaarwaky/auto_linter.git
-cd auto_linter
+git clone https://github.com/rakaarwaky/lint-arwaky.git
+cd lint-arwaky
 
 # Install with uv (recommended)
 uv sync

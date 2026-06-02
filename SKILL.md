@@ -1,7 +1,7 @@
 ---
 version: 1.10.2
 ---
-# Auto Linter Skill
+# Lint Arwaky Skill
 
 > **GUIDE FOR AI AGENTS.**
 > Humans: Use the `auto-lint` CLI directly in the terminal.

@@ -52,7 +52,7 @@
 - **Radon adapter**: Fixed `'str' object has no attribute 'value'` error in scan path handling.
 
 ### Added
-- **Architectural Enforcement**: Implemented strict hardening rules via `auto_linter.config.python.yaml`.
+- **Architectural Enforcement**: Implemented strict hardening rules via `lint-arwaky.config.python.yaml`.
 - **Naming Conventions**: Enforced 3-word underscore-separated filenames (`word1_word2_word3.py`).
 - **Class Mandate**: Mandatory class definitions for all logic files (except `__init__.py`).
 - **Layer Hardening**: Introduced mandatory contract inheritance and explicit layer-to-contract mappings.
@@ -69,7 +69,7 @@
 
 ### Changed
 - **Architecture**: Transitioned from 5-domain to 6-domain architecture by introducing the `contract` layer.
-- **Configuration**: Replaced `layer_map` and `governance_rules` with `layers` and `rules` in `auto_linter.config.yaml`.
+- **Configuration**: Replaced `layer_map` and `governance_rules` with `layers` and `rules` in `lint-arwaky.config.yaml`.
 - **Naming**: Renamed "Governance" adapter to "Architecture" adapter.
 
 ## 1.6.3 (2026-04-30)
@@ -146,7 +146,7 @@
 - **MCP import chain repaired** — `_running_jobs` moved to canonical source (`mcp_execute_command.py`)
 - **Mypy type errors fixed** — null-safety for `normalize_path()`, proper `entry_points()` handling, correct return types
 - **Unused imports removed** — 4 Ruff F401 violations cleaned up
-- **Build artifacts removed** — `src/auto_linter.egg-info/` deleted, added to `.gitignore`
+- **Build artifacts removed** — `src/lint-arwaky.egg-info/` deleted, added to `.gitignore`
 - **Entry point fixed** — `auto-lint` now uses `main()` wrapper for proper pip installation
 
 ### Cleanup

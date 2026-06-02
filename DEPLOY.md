@@ -1,4 +1,4 @@
-# Deployment Guide - MCP Auto-Linter
+# Deployment Guide - MCP Lint-Arwaky
 
 **Version**: 1.9.4
 **Python**: 3.12+
@@ -97,7 +97,7 @@ Expected: version returns info, doctor reports no issues, health_check tool retu
 
 ## Configuration
 
-Config file: auto_linter.config.python.yaml
+Config file: lint-arwaky.config.python.yaml
 
     thresholds:
       score_target: 100.0

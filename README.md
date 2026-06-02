@@ -1,13 +1,13 @@
-# Auto Linter
+# Lint Arwaky
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Server](https://img.shields.io/badge/MCP-Server-blue.svg)](https://modelcontextprotocol.io/)
-[![Architecture: AES](https://img.shields.io/badge/architecture-AES+Clean-green.svg)](auto_linter.config.python.yaml)
+[![Architecture: AES](https://img.shields.io/badge/architecture-AES+Clean-green.svg)](lint-arwaky.config.python.yaml)
 
 **Autonomous code quality and architecture enforcement for AI agents and developers.**
 
-Auto Linter runs Ruff, MyPy, Bandit, and Radon in a single pass, then overlays 25+ Agentic Engineering System (AES) rules that check layer boundaries, naming conventions, type safety, and dead code — all enforced at the code level with zero bypass allowed.
+Lint Arwaky runs Ruff, MyPy, Bandit, and Radon in a single pass, then overlays 25+ Agentic Engineering System (AES) rules that check layer boundaries, naming conventions, type safety, and dead code — all enforced at the code level with zero bypass allowed.
 
 ---
 
@@ -123,7 +123,7 @@ auto-lint export sarif -o report.sarif
 ### Self-lint (this project audits itself)
 
 ```bash
-cd auto_linter
+cd lint-arwaky
 auto-lint check ./src/
 # Result: 100/100 score, 0 violations across all adapters
 ```
@@ -141,7 +141,7 @@ auto-lint report /path/to/some-project/ --output-format sarif
 
 ## Architecture Overview
 
-Auto Linter follows its own AES (Agentic Engineering System) specification — a strict layered Clean Architecture with six layers:
+Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered Clean Architecture with six layers:
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -221,7 +221,7 @@ surface.run_server(container)
 The `pyproject.toml` registers the entry point as:
 ```toml
 [project.scripts]
-lint-arwaky = "auto_linter:mcp_main"
+lint-arwaky = "lint-arwaky:mcp_main"
 ```
 
 ### MCP tools (5 tools)
@@ -292,7 +292,7 @@ The `McpServerWrapper` (infrastructure layer) wraps FastMCP with:
 
 ## Supported AES Rules
 
-Auto Linter enforces 28 architecture rules across three categories:
+Lint Arwaky enforces 28 architecture rules across three categories:
 
 ### Global rules (applied everywhere)
 
@@ -399,7 +399,7 @@ For the complete rule specification with WHY and FIX sections, see [AES_RULES.md
 
 ## Configuration
 
-Configuration file: `auto_linter.config.python.yaml`
+Configuration file: `lint-arwaky.config.python.yaml`
 
 Key sections:
 

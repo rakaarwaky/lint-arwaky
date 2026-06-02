@@ -1,4 +1,4 @@
-# Verification Suite: Auto-Linter v1.9.4
+# Verification Suite: Lint-Arwaky v1.9.4
 ---
 
 ## 1. MCP Tool Verification
