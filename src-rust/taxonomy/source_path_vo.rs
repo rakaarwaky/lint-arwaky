@@ -5,7 +5,7 @@ use std::hash::{Hash, Hasher};
 /// File path identifier.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FilePath {
-    value: String,
+    pub value: String,
 }
 
 impl FilePath {
@@ -44,7 +44,7 @@ impl FilePath {
             ".gitignore",
             ".dockerignore",
         ];
-        if special_files.contains(&self.value.as_str()) || self.value.starts_with('.') {
+        if special_files.contains(&self.value.as_ref()) || self.value.starts_with('.') {
             return "".to_string();
         }
         match self.value.rsplitn(2, '.').nth(1) {
@@ -69,13 +69,13 @@ impl FilePath {
     /// Check if the path is a barrel file.
     pub fn is_barrel_file(&self) -> bool {
         let f = self.basename();
-        matches!(f.as_str(), "__init__.py" | "mod.rs" | "index.ts" | "index.js")
+        matches!(f.as_ref(), "__init__.py" | "mod.rs" | "index.ts" | "index.js")
     }
 
     /// Check if the path is a module/layer entry point file.
     pub fn is_entry_point(&self) -> bool {
         let f = self.basename();
-        matches!(f.as_str(), "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs")
+        matches!(f.as_ref(), "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs")
     }
 }
 
@@ -102,7 +102,7 @@ impl Hash for FilePath {
 /// Directory path identifier.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DirectoryPath {
-    value: String,
+    pub value: String,
 }
 
 impl DirectoryPath {

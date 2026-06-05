@@ -1,5 +1,5 @@
 /// javascript_call_tracer — Semantic analysis adapter for JavaScript/TypeScript files.
-use crate::contract::ISemanticTracerPort;
+use crate::contract::semantic_tracer_port::ISemanticTracerPort;
 use crate::taxonomy::{
     CallChainList, Count, DataFlowList, DirectoryPath, ExitCode, FilePath, LineNumber, MetadataVO,
     ResponseData, ResponseDataList, ScopeRef, SemanticError, StdError, StdOutput, SymbolName,
@@ -21,7 +21,7 @@ impl JSCallAdapter {
         let words: Vec<String> = Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
             .unwrap()
             .find_iter(name)
-            .map(|m| m.as_str().to_lowercase())
+            .map(|m| m.as_ref().to_lowercase())
             .collect();
 
         if words.is_empty() {
@@ -40,7 +40,7 @@ impl JSCallAdapter {
             .map(|w| {
                 let mut c = w.chars();
                 match c.next() {
-                    Some(ch) => ch.to_uppercase().to_string() + c.as_str(),
+                    Some(ch) => ch.to_uppercase().to_string() + c.as_ref(),
                     None => String::new(),
                 }
             })
@@ -51,7 +51,7 @@ impl JSCallAdapter {
             .map(|w| {
                 let mut c = w.chars();
                 match c.next() {
-                    Some(ch) => ch.to_uppercase().to_string() + c.as_str(),
+                    Some(ch) => ch.to_uppercase().to_string() + c.as_ref(),
                     None => String::new(),
                 }
             })
@@ -121,7 +121,7 @@ impl ISemanticTracerPort for JSCallAdapter {
     ) -> Result<CallChainList, SemanticError> {
         let mut callers = Vec::new();
         let name = target_name.to_string();
-        let root = Path::new(root_dir.as_str());
+        let root = Path::new(root_dir.as_ref());
 
         let call_pattern = Regex::new(&format!(r"\b{}\s*\(", regex::escape(&name))).unwrap();
         let def_pattern =
@@ -178,7 +178,7 @@ impl ISemanticTracerPort for JSCallAdapter {
         old_name: &SymbolName,
         new_name: &SymbolName,
     ) -> u32 {
-        let root = Path::new(root_dir.as_str());
+        let root = Path::new(root_dir.as_ref());
         let old = old_name.to_string();
         let new = new_name.to_string();
 
@@ -206,7 +206,7 @@ impl ISemanticTracerPort for JSCallAdapter {
                 if source.contains(&old) {
                     let new_source = pattern.replace_all(&source, |caps: &regex::Captures| {
                         if let Some(m) = caps.get(1) {
-                            m.as_str().to_string()
+                            m.as_ref().to_string()
                         } else {
                             new.clone()
                         }

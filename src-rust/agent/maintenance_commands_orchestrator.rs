@@ -1,5 +1,5 @@
 // maintenance_commands_orchestrator — Orchestrator for maintenance-related domain logic.
-use crate::contract::MaintenanceCommandsAggregate;
+use crate::contract::maintenance_commands_aggregate::MaintenanceCommandsAggregate;
 use crate::taxonomy::{DoctorResultVO, FilePath, JobId, MaintenanceStatsVO};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

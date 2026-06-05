@@ -1,5 +1,5 @@
 /// MCP Server Handler - Server startup only
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use crate::surfaces::mcp_tools_handler::register_tools;
 
 pub struct McpServerHandlerSurface;

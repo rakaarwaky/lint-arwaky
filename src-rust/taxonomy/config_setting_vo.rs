@@ -214,7 +214,7 @@ impl AdapterStatus {
 
 impl std::fmt::Display for AdapterStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
+        write!(f, "{}", self.as_ref())
     }
 }
 

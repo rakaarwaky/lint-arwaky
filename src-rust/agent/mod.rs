@@ -1,15 +1,14 @@
-// This file is generated - corresponds to Python __init__.py
+// Auto-generated at 2026-06-05T22:44:59.260674
 pub mod adapter_mixin_container;
 pub mod agent_container_registry;
 pub mod agent_job_registry;
 pub mod analysis_execution_orchestrator;
 pub mod architecture_compliance_coordinator;
 pub mod architecture_compliance_orchestrator;
+pub mod architecture_lint_orchestrator;
 pub mod capability_mixin_container;
-pub mod dispatch_check_orchestrator;
 pub mod dependency_injection_container;
 pub mod dev_commands_orchestrator;
-pub mod dispatch_fix_orchestrator;
 pub mod git_commands_orchestrator;
 pub mod git_diff_manager;
 pub mod hook_management_orchestrator;
@@ -28,5 +27,3 @@ pub mod report_commands_orchestrator;
 pub mod setup_management_orchestrator;
 pub mod watch_commands_orchestrator;
 pub mod watch_execution_orchestrator;
-pub mod architecture_lint_orchestrator;
-

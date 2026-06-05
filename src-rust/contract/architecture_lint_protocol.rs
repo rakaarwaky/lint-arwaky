@@ -1,4 +1,4 @@
-use crate::taxonomy::LintResultList;
+use crate::taxonomy::lint_result_vo::LintResultList;
 
 pub trait IArchLintProtocol: Send + Sync {
     fn run_self_lint(&self, project_root: &str) -> LintResultList;

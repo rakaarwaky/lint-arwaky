@@ -1,8 +1,8 @@
 use std::env;
 use std::path::{Path, PathBuf};
 
-use crate::contract::IPathNormalizationPort;
-use crate::taxonomy::FilePath;
+use crate::contract::path_normalization_port::IPathNormalizationPort;
+use crate::taxonomy::source_path_vo::FilePath;
 
 /// Implementation of path normalization services for infrastructure.
 pub struct PathNormalizationProvider;

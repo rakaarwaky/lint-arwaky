@@ -99,7 +99,7 @@ impl SurfaceHierarchyChecker {
         for (i, raw_line) in lines.iter().enumerate() {
             let stripped = raw_line.trim();
             if let Some(cap) = PY_CLASS_RE.captures(stripped) {
-                let class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                let class_name = cap.get(1).map(|m| m.as_ref()).unwrap_or("");
                 let class_start = i;
                 let indent = raw_line.len() - raw_line.trim_start().len();
 
@@ -119,7 +119,7 @@ impl SurfaceHierarchyChecker {
                     }
 
                     if let Some(mcap) = PY_METHOD_RE.captures(method_line.trim()) {
-                        let method_name = mcap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let method_name = mcap.get(1).map(|m| m.as_ref()).unwrap_or("");
                         // Public methods don't start with underscore
                         if !method_name.starts_with('_') {
                             // Estimate end line

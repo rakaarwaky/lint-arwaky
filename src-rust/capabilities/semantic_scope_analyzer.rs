@@ -42,7 +42,7 @@ impl SemanticScopeAnalyzer {
     fn split_words(name: &str) -> Vec<String> {
         WORD_SPLIT_RE
             .find_iter(name)
-            .map(|m| m.as_str().to_lowercase())
+            .map(|m| m.as_ref().to_lowercase())
             .collect()
     }
 
@@ -51,7 +51,7 @@ impl SemanticScopeAnalyzer {
         let mut c = s.chars();
         match c.next() {
             None => String::new(),
-            Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+            Some(f) => f.to_uppercase().collect::<String>() + c.as_ref(),
         }
     }
 
@@ -96,20 +96,20 @@ impl SemanticScopeAnalyzer {
         let mut results: HashSet<String> = HashSet::new();
         results.insert(name.value.clone());
 
-        if let Some(v) = dict.get("snake_case").and_then(|v| v.as_str()) {
+        if let Some(v) = dict.get("snake_case").and_then(|v| v.as_ref()) {
             results.insert(v.to_string());
         }
-        if let Some(v) = dict.get("camel_case").and_then(|v| v.as_str()) {
+        if let Some(v) = dict.get("camel_case").and_then(|v| v.as_ref()) {
             results.insert(v.to_string());
         }
-        if let Some(v) = dict.get("pascal_case").and_then(|v| v.as_str()) {
+        if let Some(v) = dict.get("pascal_case").and_then(|v| v.as_ref()) {
             results.insert(v.to_string());
         }
-        if let Some(v) = dict.get("screaming_snake").and_then(|v| v.as_str()) {
+        if let Some(v) = dict.get("screaming_snake").and_then(|v| v.as_ref()) {
             results.insert(v.to_string());
         }
         // Add kebab-case variant
-        if let Some(v) = dict.get("snake_case").and_then(|v| v.as_str()) {
+        if let Some(v) = dict.get("snake_case").and_then(|v| v.as_ref()) {
             results.insert(v.replace('_', "-"));
         }
 
@@ -142,7 +142,7 @@ impl SemanticScopeAnalyzer {
             // Detect new scope
             if let Some(cap) = PY_CLASS_RE.captures(stripped) {
                 if let Some(name) = cap.get(1) {
-                    let scope_name = format!("class {}", name.as_str());
+                    let scope_name = format!("class {}", name.as_ref());
                     let indent = raw_line.len() - raw_line.trim_start().len();
                     let mut end_line = lines.len() as i64;
                     for j in (i + 1)..lines.len() {
@@ -164,7 +164,7 @@ impl SemanticScopeAnalyzer {
                 }
             } else if let Some(cap) = PY_DEF_RE.captures(stripped) {
                 if let Some(name) = cap.get(1) {
-                    let scope_name = format!("def {}", name.as_str());
+                    let scope_name = format!("def {}", name.as_ref());
                     let indent = raw_line.len() - raw_line.trim_start().len();
                     let mut end_line = lines.len() as i64;
                     for j in (i + 1)..lines.len() {
@@ -280,7 +280,7 @@ impl SemanticScopeAnalyzer {
             let entry_str = if mutation_re.is_match(line_str) {
                 let method = mutation_re
                     .find(line_str)
-                    .and_then(|m| m.as_str().split('.').nth(1))
+                    .and_then(|m| m.as_ref().split('.').nth(1))
                     .unwrap_or("mutation");
                 format!("Line {} [Mutation '{}']: {}", line_no, method, stripped)
             } else if assign_re.is_match(line_str) {
@@ -371,7 +371,7 @@ impl SemanticScopeAnalyzer {
                         let new_source = pattern
                             .replace_all(&content, |caps: &regex::Captures| {
                                 if caps.get(1).is_some() {
-                                    caps.get(0).unwrap().as_str().to_string()
+                                    caps.get(0).unwrap().as_ref().to_string()
                                 } else {
                                     new.to_string()
                                 }

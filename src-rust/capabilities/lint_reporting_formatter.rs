@@ -33,7 +33,7 @@ impl ReportFormatterProcessor {
     ) -> ResponseData {
         let data = self.report_to_dict(report);
 
-        match output_format.name.as_str() {
+        match output_format.name.as_ref() {
             "sarif" => {
                 let sarif = self.to_sarif(report);
                 let mut value = ResponseData::new();
@@ -74,7 +74,7 @@ impl ReportFormatterProcessor {
 
     /// Map severity string to SARIF level.
     fn _get_severity(&self, sev: &str) -> &str {
-        match sev.to_lowercase().as_str() {
+        match sev.to_lowercase().as_ref() {
             "high" => "error",
             "medium" => "warning",
             "low" => "note",
@@ -94,10 +94,10 @@ impl ReportFormatterProcessor {
                 }
                 if let Some(results_arr) = adapter_results.as_array() {
                     for error in results_arr {
-                        let code = error.get("code").and_then(|v| v.as_str()).unwrap_or("unknown");
-                        let severity = error.get("severity").and_then(|v| v.as_str()).unwrap_or("medium");
-                        let message = error.get("message").and_then(|v| v.as_str()).unwrap_or("");
-                        let file = error.get("file").and_then(|v| v.as_str()).unwrap_or("unknown");
+                        let code = error.get("code").and_then(|v| v.as_ref()).unwrap_or("unknown");
+                        let severity = error.get("severity").and_then(|v| v.as_ref()).unwrap_or("medium");
+                        let message = error.get("message").and_then(|v| v.as_ref()).unwrap_or("");
+                        let file = error.get("file").and_then(|v| v.as_ref()).unwrap_or("unknown");
                         let line = error.get("line").and_then(|v| v.as_i64()).unwrap_or(1);
                         let column = error.get("column").and_then(|v| v.as_i64()).unwrap_or(1);
 
@@ -165,7 +165,7 @@ impl ReportFormatterProcessor {
                     } else {
                         for (i, error) in results_arr.iter().enumerate() {
                             let msg = xml_escape(
-                                error.get("message").and_then(|v| v.as_str()).unwrap_or(""),
+                                error.get("message").and_then(|v| v.as_ref()).unwrap_or(""),
                             );
                             testsuites.push(format!(
                                 r#"    <testcase name="lint_{}_{}" classname="{}">"#,

@@ -1,4 +1,4 @@
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 
 pub struct MainHandlerSurface {
     _container: Option<Box<dyn ServiceContainerAggregate>>,

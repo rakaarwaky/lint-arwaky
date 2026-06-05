@@ -1,5 +1,5 @@
 /// watch_service_provider — Provides file system watching capabilities.
-use crate::contract::IWatchProviderPort;
+use crate::contract::watch_provider_port::IWatchProviderPort;
 use crate::taxonomy::{BooleanVO, ErrorMessage, FilePath, WatchServiceError};
 
 pub struct WatchServiceProvider {

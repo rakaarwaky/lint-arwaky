@@ -1,5 +1,5 @@
 // git_commands_orchestrator — Agent orchestrator for git-aware linting.
-use crate::contract::{GitCommandsAggregate, DiffResultAggregate};
+use crate::contract::{crate::contract::git_commands_aggregate::GitCommandsAggregate, DiffResultAggregate};
 use crate::taxonomy::{FilePath, FilePathList, RenamedFileList, Count};
 use std::collections::HashSet;
 
@@ -127,7 +127,7 @@ impl GitCommandsOrchestrator {
             return FilePathList::new(Vec::new());
         }
         let input = changed_files.values.iter()
-            .map(|f| f.value.as_str())
+            .map(|f| f.value.as_ref())
             .collect::<Vec<_>>()
             .join("\n");
         // Use echo + pipe approach for check-ignore --stdin

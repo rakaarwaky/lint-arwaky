@@ -1,5 +1,5 @@
 /// config_discovery_provider — Provider for discovering configuration files in the filesystem.
-use crate::contract::IConfigDiscoveryPort;
+use crate::contract::config_discovery_port::IConfigDiscoveryPort;
 use crate::taxonomy::{ConfigError, DirectoryPath, FilePath};
 use std::env;
 use std::path::Path;

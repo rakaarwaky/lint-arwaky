@@ -6,7 +6,7 @@ use lint_arwaky::contract::ServiceContainerAggregate;
 use lint_arwaky::surfaces::mcp_tools_command;
 
 async fn handle_request(request: Value) -> Value {
-    let method = request.get("method").and_then(|m| m.as_str()).unwrap_or("");
+    let method = request.get("method").and_then(|m| m.as_ref()).unwrap_or("");
     let params = request.get("params").cloned().unwrap_or_else(|| json!({}));
     let id = request
         .get("id")
@@ -110,7 +110,7 @@ async fn handle_request(request: Value) -> Value {
         }
 
         "tools/call" => {
-            let tool_name = params.get("name").and_then(|n| n.as_str()).unwrap_or("");
+            let tool_name = params.get("name").and_then(|n| n.as_ref()).unwrap_or("");
             let arguments = params
                 .get("arguments")
                 .cloned()
@@ -120,7 +120,7 @@ async fn handle_request(request: Value) -> Value {
                 "execute_command" => {
                     let action = arguments
                         .get("action")
-                        .and_then(|a| a.as_str())
+                        .and_then(|a| a.as_ref())
                         .unwrap_or("")
                         .to_string();
                     let args = arguments.get("args").cloned();
@@ -133,17 +133,17 @@ async fn handle_request(request: Value) -> Value {
                 }
 
                 "list_commands" => {
-                    let domain = arguments.get("domain").and_then(|d| d.as_str());
+                    let domain = arguments.get("domain").and_then(|d| d.as_ref());
                     mcp_tools_command::list_commands_tool(domain)
                 }
 
                 "commands_schema" => {
-                    let tool_name = arguments.get("tool_name").and_then(|t| t.as_str());
+                    let tool_name = arguments.get("tool_name").and_then(|t| t.as_ref());
                     mcp_tools_command::commands_schema_tool(tool_name)
                 }
 
                 "read_skill_context" => {
-                    let section = arguments.get("section").and_then(|s| s.as_str());
+                    let section = arguments.get("section").and_then(|s| s.as_ref());
                     let project_root = std::env::current_dir()
                         .map(|p| p.to_string_lossy().to_string())
                         .unwrap_or_else(|_| ".".to_string());

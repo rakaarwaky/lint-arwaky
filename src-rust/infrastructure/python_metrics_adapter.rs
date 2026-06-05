@@ -1,7 +1,7 @@
 /// python_metrics_adapter — Thin adapters for Python metrics (Radon, file sizes, trends).
-use crate::contract::IMetricsProviderPort;
+use crate::contract::metrics_provider_port::IMetricsProviderPort;
 use crate::taxonomy::{Count, ErrorMessage, FilePath, MetricsError, ResponseData, ResponseDataList};
-use crate::contract::IPathNormalizationPort;
+use crate::contract::path_normalization_port::IPathNormalizationPort;
 use std::sync::Arc;
 
 pub struct MetricsProvider {

@@ -1,7 +1,7 @@
 /// dependency_injection_container — Implementation of the DI container.
 use crate::contract::*;
 use crate::infrastructure::*;
-use crate::taxonomy::DirectoryPath;
+use crate::taxonomy::source_path_vo::DirectoryPath;
 use std::sync::Arc;
 use std::collections::HashMap;
 

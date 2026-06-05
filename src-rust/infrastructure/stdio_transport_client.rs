@@ -1,5 +1,5 @@
 /// stdio_transport_client — Direct subprocess execution transport.
-use crate::contract::ICommandExecutorPort;
+use crate::contract::command_executor_port::ICommandExecutorPort;
 use crate::taxonomy::*;
 use std::time::Duration;
 use tokio::process::Command;
@@ -20,7 +20,7 @@ impl StdioClient {
 impl ICommandExecutorPort for StdioClient {
     async fn execute_command(&self, command: PatternList, working_dir: FilePath, timeout: Option<Duration>) -> anyhow::Result<ResponseData> {
         let timeout_val = timeout.unwrap_or(self.timeout);
-        let cmd_list: Vec<&str> = command.values.iter().map(|s| s.as_str()).collect();
+        let cmd_list: Vec<&str> = command.values.iter().map(|s| s.as_ref()).collect();
         if cmd_list.is_empty() {
             anyhow::bail!("Empty command");
         }

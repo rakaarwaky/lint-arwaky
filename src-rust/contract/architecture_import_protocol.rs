@@ -2,7 +2,7 @@ use crate::taxonomy::{
     FilePath, FilePathList, LintResultList, PatternList,
     LayerNameVO, ErrorMessage,
 };
-use crate::contract::IAnalyzer;
+use crate::contract::architecture_rule_protocol::IAnalyzer;
 use async_trait::async_trait;
 
 #[async_trait]

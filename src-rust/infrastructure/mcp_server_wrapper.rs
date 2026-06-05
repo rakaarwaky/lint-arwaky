@@ -1,5 +1,5 @@
 /// mcp_server_wrapper — Infrastructure adapter providing MCP spec compliance.
-use crate::contract::IMcpServerPort;
+use crate::contract::mcp_server_port::IMcpServerPort;
 use crate::taxonomy::{DescriptionVO, SymbolName};
 
 pub struct McpServerWrapper {

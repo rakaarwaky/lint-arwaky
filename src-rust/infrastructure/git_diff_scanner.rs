@@ -1,5 +1,5 @@
 /// git_diff_scanner — Git-aware file change detection for linting only modified files.
-use crate::contract::{ICommandExecutorPort, IScannerProviderPort};
+use crate::contract::{crate::contract::command_executor_port::ICommandExecutorPort, crate::contract::scanner_provider_port::IScannerProviderPort};
 use crate::taxonomy::{DirectoryPath, FilePath, FilePathList, GitRef, RenamedFile, RenamedFileList};
 use std::sync::Arc;
 

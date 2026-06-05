@@ -55,13 +55,13 @@ impl NamingVariantAnalyzer {
         let mut c = s.chars();
         match c.next() {
             None => String::new(),
-            Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+            Some(f) => f.to_uppercase().collect::<String>() + c.as_ref(),
         }
     }
 
     /// Get all naming convention variants for the given name.
     pub fn get_variant_dict(&self, name: &SymbolName) -> NamingVariantDict {
-        let n = name.value.as_str();
+        let n = name.value.as_ref();
         let words = Self::split_words(n);
 
         if words.is_empty() {

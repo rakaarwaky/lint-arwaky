@@ -1,5 +1,5 @@
 // agent_job_registry — Implementation of JobRegistryAggregate (Agent Layer).
-use crate::contract::{JobRegistryAggregate, IJobRegistryPort};
+use crate::contract::{crate::contract::job_registry_aggregate::JobRegistryAggregate, crate::contract::job_registry_port::IJobRegistryPort};
 use crate::taxonomy::{JobId, ActionName, Identity, MetadataVO, SuccessStatus, ErrorMessage, ResponseData, Count, Duration};
 
 pub struct JobRegistry {

@@ -3,7 +3,7 @@
 
 use std::fs;
 use regex::Regex;
-use crate::taxonomy::FilePath;
+use crate::taxonomy::source_path_vo::FilePath;
 
 /// Business logic for renaming symbols across the entire codebase.
 pub struct SymbolRenamerProcessor;

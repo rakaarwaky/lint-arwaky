@@ -1,6 +1,6 @@
 // lifecycle_state_manager — Agent lifecycle: startup, shutdown, health management.
 use async_trait::async_trait;
-use crate::contract::AgentLifecycleAggregate;
+use crate::contract::agent_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::taxonomy::{Duration, ResponseData, StdOutput, StdError, MetadataVO, ExitCode};
 use std::collections::HashMap;
 use std::time::Instant;

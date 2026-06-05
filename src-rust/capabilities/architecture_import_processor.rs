@@ -38,7 +38,7 @@ impl ArchImportProcessor {
             None => return,
         };
 
-        let basename = Path::new(file_path.to_string().as_str())
+        let basename = Path::new(file_path.to_string().as_ref())
             .file_name()
             .and_then(|f| f.to_str())
             .unwrap_or("");
@@ -178,14 +178,14 @@ impl ArchImportProcessor {
             if let Some(obj) = val.as_object() {
                 if let Some(aliases) = obj.get("aliases").and_then(|a| a.as_object()) {
                     for (k, v) in aliases {
-                        if let Some(v_str) = v.as_str() {
+                        if let Some(v_str) = v.as_ref() {
                             imported_aliases.insert(k.clone(), v_str.to_string());
                         }
                     }
                 }
                 if let Some(used) = obj.get("used").and_then(|u| u.as_array()) {
                     for sym in used {
-                        if let Some(s) = sym.as_str() {
+                        if let Some(s) = sym.as_ref() {
                             used_symbols.insert(s.to_string());
                         }
                     }
@@ -193,7 +193,7 @@ impl ArchImportProcessor {
                 if let Some(bases) = obj.get("class_bases").and_then(|b| b.as_object()) {
                     for (k, v) in bases {
                         if let Some(arr) = v.as_array() {
-                            let strs: Vec<String> = arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect();
+                            let strs: Vec<String> = arr.iter().filter_map(|v| v.as_ref().map(|s| s.to_string())).collect();
                             class_bases.insert(k.clone(), strs);
                         }
                     }
@@ -334,7 +334,7 @@ impl ArchImportProcessor {
         });
 
         if let Some(caps) = CAPTURE_RE.captures(req_layer_str) {
-            let _pattern = caps.get(1).unwrap().as_str();
+            let _pattern = caps.get(1).unwrap().as_ref();
         }
 
         true

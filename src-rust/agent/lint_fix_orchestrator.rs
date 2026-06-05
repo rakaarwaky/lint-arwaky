@@ -1,5 +1,5 @@
 // lint_fix_orchestrator — Orchestrates automatic fixes (Agent layer).
-use crate::contract::{FixOrchestratorAggregate, ILinterAdapterPort, IFileSystemPort};
+use crate::contract::{FixOrchestratorAggregate, crate::contract::linter_adapter_port::ILinterAdapterPort, crate::contract::file_system_port::IFileSystemPort};
 use crate::taxonomy::{FilePath, FixResult};
 
 pub struct LintFixOrchestrator;

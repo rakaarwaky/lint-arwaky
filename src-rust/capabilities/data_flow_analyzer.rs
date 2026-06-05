@@ -74,7 +74,7 @@ impl DataFlowAnalyzer {
             let stripped = line_str.trim();
             let entry_str = if let Some(m) = mutation_pattern.find(line_str) {
                 // Extract the method name from the match
-                let method = m.as_str().split('.').nth(1).unwrap_or("mutation");
+                let method = m.as_ref().split('.').nth(1).unwrap_or("mutation");
                 format!("Line {} [Mutation '{}']: {}", line_no, method, stripped)
             } else if assign_pattern.is_match(line_str) {
                 format!("Line {} [Assignment]: {}", line_no, stripped)

@@ -1,5 +1,5 @@
 /// git_hook_adapter — Infrastructure adapter for Git hook management.
-use crate::contract::IHookManagerPort;
+use crate::contract::hook_manager_port::IHookManagerPort;
 use crate::taxonomy::{FilePath, SuccessStatus};
 use std::path::Path;
 

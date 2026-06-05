@@ -1,5 +1,5 @@
 // watch_execution_orchestrator — Agent responsibility for file watching.
-use crate::contract::{WatchOrchestratorAggregate, DirectoryWatchAggregate};
+use crate::contract::{WatchOrchestratorAggregate, crate::contract::directory_watch_aggregate::DirectoryWatchAggregate};
 use crate::taxonomy::{FilePath, WatchResult, GovernanceReport};
 
 pub struct WatchExecutionOrchestrator;

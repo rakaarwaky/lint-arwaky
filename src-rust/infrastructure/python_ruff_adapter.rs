@@ -1,4 +1,4 @@
-use crate::contract::{ILinterAdapterPort, ICommandExecutorPort, IPathNormalizationPort};
+use crate::contract::{crate::contract::linter_adapter_port::ILinterAdapterPort, crate::contract::command_executor_port::ICommandExecutorPort, crate::contract::path_normalization_port::IPathNormalizationPort};
 use crate::taxonomy::*;
 use async_trait::async_trait;
 use serde_json::Value;
@@ -67,12 +67,12 @@ impl ILinterAdapterPort for RuffAdapter {
                 let mut results = Vec::new();
 
                 for f in findings {
-                    let filename = f.get("filename").and_then(|v| v.as_str()).unwrap_or("");
+                    let filename = f.get("filename").and_then(|v| v.as_ref()).unwrap_or("");
                     let row = f.get("location").and_then(|l| l.get("row")).and_then(|v| v.as_i64()).unwrap_or(0);
                     let col = f.get("location").and_then(|l| l.get("column")).and_then(|v| v.as_i64()).unwrap_or(0);
-                    let code = f.get("code").and_then(|v| v.as_str()).unwrap_or("UNKNOWN");
-                    let message = f.get("message").and_then(|v| v.as_str()).unwrap_or("");
-                    let severity_str = f.get("severity").and_then(|v| v.as_str()).unwrap_or("");
+                    let code = f.get("code").and_then(|v| v.as_ref()).unwrap_or("UNKNOWN");
+                    let message = f.get("message").and_then(|v| v.as_ref()).unwrap_or("");
+                    let severity_str = f.get("severity").and_then(|v| v.as_ref()).unwrap_or("");
 
                     results.push(LintResult {
                         file: FilePath::new(filename),

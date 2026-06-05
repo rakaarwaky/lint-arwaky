@@ -1,5 +1,5 @@
 /// javascript_scope_provider — JS/TS regex patterns and scope detection helpers.
-use crate::contract::IJavascriptScopePort;
+use crate::contract::javascript_scope_port::IJavascriptScopePort;
 use crate::taxonomy::{LineContentVO, LineNumber, ScopeBounds, SemanticError, SymbolName};
 use regex::Regex;
 

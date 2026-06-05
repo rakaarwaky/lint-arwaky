@@ -144,7 +144,7 @@ impl ArchComplianceAnalyzer {
             let suffix = &basename[underscore_pos + 1..];
             if !suffix.is_empty() {
                 let specialized = format!("{}({})", base_layer, suffix);
-                let key = LayerNameVO::new(specialized.as_str());
+                let key = LayerNameVO::new(specialized.as_ref());
                 if self.config.layers.contains_key(&key) {
                     return specialized;
                 }
@@ -167,7 +167,7 @@ impl ArchComplianceAnalyzer {
                 if let Some(underscore_pos) = next_part.rfind('_') {
                     let suffix = &next_part[underscore_pos + 1..];
                     let specialized = format!("{}({})", base_name, suffix);
-                    let key = LayerNameVO::new(specialized.as_str());
+                    let key = LayerNameVO::new(specialized.as_ref());
                     if self.config.layers.contains_key(&key) {
                         return specialized;
                     }

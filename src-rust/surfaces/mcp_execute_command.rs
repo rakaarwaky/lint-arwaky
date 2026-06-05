@@ -1,5 +1,5 @@
 /// MCP Tool: execute_command - Universal CLI executor.
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use std::sync::Arc;
 use serde_json::{json, Value};
 
@@ -21,7 +21,7 @@ pub async fn execute_command_tool(
     }
 
     // 2. Dispatch
-    match action.as_str() {
+    match action.as_ref() {
         "check" => {
             // Call check capability
             json!({"status": "success", "action": "check", "message": "Check executed (stub)"})

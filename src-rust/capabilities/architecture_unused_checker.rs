@@ -70,7 +70,7 @@ impl UnusedImportRuleChecker {
     fn extract_exported_symbols(content: &str) -> HashSet<String> {
         let mut exported: HashSet<String> = HashSet::new();
         if let Some(caps) = ALL_RE.captures(content) {
-            let inner = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+            let inner = caps.get(1).map(|m| m.as_ref()).unwrap_or("");
             for item in inner.split(',') {
                 let name = item.trim().trim_matches('"').trim_matches('\'').to_string();
                 if !name.is_empty() {

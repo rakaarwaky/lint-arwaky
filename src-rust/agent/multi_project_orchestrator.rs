@@ -1,5 +1,5 @@
 // multi_project_orchestrator — Orchestrates multi-project scans.
-use crate::contract::MultiProjectOrchestratorAggregate;
+use crate::contract::project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use crate::taxonomy::{
     AggregatedResults, ComplianceStatus, Count, FilePath, PatternList, ProjectResult, Score,
 };

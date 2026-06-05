@@ -58,7 +58,7 @@ impl ArchRoleChecker {
             None => return,
         };
 
-        let basename = Path::new(f.to_string().as_str())
+        let basename = Path::new(f.to_string().as_ref())
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
@@ -156,7 +156,7 @@ impl ArchRoleChecker {
         analyzer: &dyn IAnalyzer,
         results: &mut crate::taxonomy::LintResultList,
     ) {
-        let basename = Path::new(f.to_string().as_str())
+        let basename = Path::new(f.to_string().as_ref())
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
@@ -342,10 +342,10 @@ impl ArchRoleChecker {
         if let Some(arr) = class_methods.as_array() {
             for m in arr {
                 if let Some(obj) = m.as_object() {
-                    if obj.get("name").and_then(|v| v.as_str()) == Some("__init__") {
+                    if obj.get("name").and_then(|v| v.as_ref()) == Some("__init__") {
                         return Some(m.clone());
                     }
-                } else if let Some(s) = m.as_str() {
+                } else if let Some(s) = m.as_ref() {
                     if s == "__init__" {
                         let mut obj = serde_json::Map::new();
                         obj.insert("name".to_string(), serde_json::Value::String("__init__".to_string()));
@@ -491,7 +491,7 @@ impl ArchRoleChecker {
                     for m in arr {
                         if let Some(m_obj) = m.as_object() {
                             let m_line = m_obj.get("line").and_then(|v| v.as_i64()).unwrap_or(0);
-                            let m_name = m_obj.get("name").and_then(|v| v.as_str());
+                            let m_name = m_obj.get("name").and_then(|v| v.as_ref());
                             if let Some(name) = m_name {
                                 if m_line <= line && m_line > best_line {
                                     best_line = m_line;
@@ -514,7 +514,7 @@ impl ArchRoleChecker {
         _analyzer: &dyn IAnalyzer,
         results: &mut crate::taxonomy::LintResultList,
     ) {
-        let content = match std::fs::read_to_string(f.to_string().as_str()) {
+        let content = match std::fs::read_to_string(f.to_string().as_ref()) {
             Ok(c) => c,
             Err(_) => return,
         };

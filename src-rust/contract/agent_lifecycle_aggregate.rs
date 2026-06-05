@@ -1,7 +1,10 @@
 use async_trait::async_trait;
 use std::sync::Arc;
-use crate::taxonomy::{Duration, ResponseData, AgentStatusVO, BooleanVO};
-use crate::contract::ServiceContainerAggregate;
+use crate::taxonomy::{
+    common_duration_vo::Duration, lint_status_vo::ResponseData, agent_status_vo::AgentStatusVO,
+    common_collection_vo::BooleanVO,
+};
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 
 #[async_trait]
 pub trait AgentLifecycleAggregate: Send + Sync {

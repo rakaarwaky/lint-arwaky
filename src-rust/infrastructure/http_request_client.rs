@@ -1,5 +1,5 @@
 /// http_request_client — Sync HTTP provider implementation (runs blocking inside async).
-use crate::contract::IHttpProviderPort;
+use crate::contract::http_provider_port::IHttpProviderPort;
 use crate::taxonomy::{ContentString, ResponseData, Timeout, TransportUrlVO};
 use std::time::Duration;
 

@@ -1,7 +1,8 @@
 use std::env;
 
 use crate::taxonomy::{
-    AdapterName, AdapterNameList, BooleanVO, DirectoryPath,
+    adapter_name_vo::AdapterName, adapter_collection_vo::AdapterNameList,
+    common_collection_vo::BooleanVO, file_path_vo::DirectoryPath,
 };
 
 /// app_config_vo — Unified configuration for the application.

@@ -1,6 +1,6 @@
 // watch_commands_orchestrator — Implementation of WatchCommandsAggregate (Agent Logic).
-use crate::contract::WatchCommandsAggregate;
-use crate::taxonomy::FilePath;
+use crate::contract::watch_commands_aggregate::WatchCommandsAggregate;
+use crate::taxonomy::source_path_vo::FilePath;
 
 pub struct WatchCommandsOrchestrator;
 

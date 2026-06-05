@@ -1,4 +1,4 @@
-use crate::taxonomy::FilePath;
+use crate::taxonomy::source_path_vo::FilePath;
 use super::job_registry_port::IJobRegistryPort;
 
 pub trait WatchExecutionOrchestratorAggregate: Send + Sync {

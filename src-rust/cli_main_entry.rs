@@ -51,7 +51,7 @@ fn main() -> ExitCode {
             let target = path.unwrap_or_else(|| ".".to_string());
             let root = normalize_project_root(&target);
             let results = lint_path(&root);
-            match output_format.as_str() {
+            match output_format.as_ref() {
                 "json" => print_json(&results),
                 "sarif" => print_sarif(&results, &root),
                 "junit" => print_junit(&results),
@@ -346,7 +346,7 @@ fn main() -> ExitCode {
         }
         Commands::Export { format } => {
             let r = lint_path(".");
-            match format.as_str() {
+            match format.as_ref() {
                 "json" => print_json(&r),
                 "sarif" => print_sarif(&r, "."),
                 "junit" => print_junit(&r),

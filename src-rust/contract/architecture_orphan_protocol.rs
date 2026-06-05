@@ -1,9 +1,11 @@
 use crate::taxonomy::{
-    FilePath, FilePathList, LintResultList, ModuleName, ImportGraph, ReachabilityResult,
-    InboundLinkMap, GraphAnalysisContext, OrphanIndicatorResult, FileDefinitionMap,
-    InheritanceMap, ModuleToFileMap, LayerDefinition,
+    file_path_vo::FilePath, path_collection_vo::FilePathList,
+    lint_result_vo::LintResultList, common_error_vo::ModuleName,
+    architecture_analysis_vo::{ImportGraph, ReachabilityResult, InboundLinkMap, GraphAnalysisContext, OrphanIndicatorResult, FileDefinitionMap},
+    architecture_analysis_vo::{InheritanceMap, ModuleToFileMap},
+    layer_definition_vo::LayerDefinition,
 };
-use crate::contract::{IArchRuleProtocol, IAnalyzer};
+use crate::contract::{crate::contract::architecture_rule_protocol::IArchRuleProtocol, crate::contract::architecture_rule_protocol::IAnalyzer};
 use async_trait::async_trait;
 
 #[async_trait]

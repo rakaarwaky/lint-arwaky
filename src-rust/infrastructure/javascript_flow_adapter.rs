@@ -1,5 +1,5 @@
 /// javascript_flow_tracer — Variable flow tracking for JS/TS files.
-use crate::contract::IJavascriptFlowPort;
+use crate::contract::javascript_flow_port::IJavascriptFlowPort;
 use crate::taxonomy::{DataFlowList, ErrorMessage, FilePath, LineNumber, SemanticError, SymbolName};
 use regex::Regex;
 

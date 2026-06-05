@@ -1,4 +1,4 @@
-use crate::taxonomy::FilePath;
+use crate::taxonomy::source_path_vo::FilePath;
 use async_trait::async_trait;
 
 #[async_trait]

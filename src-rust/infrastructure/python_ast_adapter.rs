@@ -1,5 +1,5 @@
 /// python_ast_tracer — AST-based tracer for Python code analysis.
-use crate::contract::ISemanticTracerPort;
+use crate::contract::semantic_tracer_port::ISemanticTracerPort;
 use crate::infrastructure::PythonNamingVariantProvider;
 use crate::taxonomy::{
     CallChainList, Count, DataFlowList, DirectoryPath, FilePath, LineNumber, ResponseData,

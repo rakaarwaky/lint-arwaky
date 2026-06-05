@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use super::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct SuffixVO {
     pub value: String,
 }
@@ -48,7 +48,7 @@ impl<'de> serde::Deserialize<'de> for SuffixVO {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct SuffixPolicyVO {
     pub value: String,
 }

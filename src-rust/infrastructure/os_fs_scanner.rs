@@ -1,5 +1,5 @@
 /// Implementation of IFileSystemPort using standard std::fs.
-use crate::contract::IFileSystemPort;
+use crate::contract::file_system_port::IFileSystemPort;
 use crate::taxonomy::*;
 use async_trait::async_trait;
 use std::fs;

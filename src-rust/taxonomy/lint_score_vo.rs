@@ -13,7 +13,7 @@ impl FileFormat {
         Self { name: value.into() }
     }
     pub fn is_structured(&self) -> bool {
-        matches!(self.name.as_str(), "json" | "sarif" | "junit")
+        matches!(self.name.as_ref(), "json" | "sarif" | "junit")
     }
 }
 

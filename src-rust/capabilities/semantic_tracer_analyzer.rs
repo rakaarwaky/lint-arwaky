@@ -54,7 +54,7 @@ impl CallChainAnalyzer {
                     files.extend(subfiles);
                 } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                     let dot_ext = format!(".{}", ext);
-                    if JS_EXTENSIONS.contains(&dot_ext.as_str()) {
+                    if JS_EXTENSIONS.contains(&dot_ext.as_ref()) {
                         files.push(path.to_string_lossy().to_string());
                     }
                 }

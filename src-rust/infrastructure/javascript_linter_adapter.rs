@@ -1,5 +1,5 @@
 /// javascript_linter_adapter — ESLint, Prettier, and TSC adapters for JS/TS linting.
-use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
+use crate::contract::{crate::contract::command_executor_port::ICommandExecutorPort, crate::contract::linter_adapter_port::ILinterAdapterPort, crate::contract::path_normalization_port::IPathNormalizationPort};
 use crate::taxonomy::{
     AdapterError, AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, FilePath,
     LineNumber, LintMessage, LintResult, LintResultList, LinterOperationError, PatternList,
@@ -268,11 +268,11 @@ impl ILinterAdapterPort for TSCAdapter {
         for line in output.lines() {
             let line = line.trim();
             if let Some(caps) = pattern1.captures(line).or_else(|| pattern2.captures(line)) {
-                let filename = caps.get(1).unwrap().as_str().to_string();
-                let line_num = caps.get(2).unwrap().as_str().parse::<usize>().unwrap_or(1);
-                let col_num = caps.get(3).unwrap().as_str().parse::<usize>().unwrap_or(0);
-                let code = caps.get(4).unwrap().as_str().to_string();
-                let msg = caps.get(5).unwrap().as_str().to_string();
+                let filename = caps.get(1).unwrap().as_ref().to_string();
+                let line_num = caps.get(2).unwrap().as_ref().parse::<usize>().unwrap_or(1);
+                let col_num = caps.get(3).unwrap().as_ref().parse::<usize>().unwrap_or(0);
+                let code = caps.get(4).unwrap().as_ref().to_string();
+                let msg = caps.get(5).unwrap().as_ref().to_string();
 
                 let filename_vo = self
                     .path_norm
@@ -390,7 +390,7 @@ impl ILinterAdapterPort for ESLintAdapter {
         let mut results = Vec::new();
         if let Some(files) = parsed.as_array() {
             for file_data in files {
-                let filename = file_data["filePath"].as_str().unwrap_or("").to_string();
+                let filename = file_data["filePath"].as_ref().unwrap_or("").to_string();
                 let filename_vo = self
                     .path_norm
                     .resolve_infrastructure_path(&FilePath::new(filename), Some(path));
@@ -399,8 +399,8 @@ impl ILinterAdapterPort for ESLintAdapter {
                     for msg in messages {
                         let line_num = msg["line"].as_u64().unwrap_or(1) as usize;
                         let col_num = msg["column"].as_u64().unwrap_or(0) as usize;
-                        let rule_id = msg["ruleId"].as_str().unwrap_or("ESLINT").to_string();
-                        let message_text = msg["message"].as_str().unwrap_or("").to_string();
+                        let rule_id = msg["ruleId"].as_ref().unwrap_or("ESLINT").to_string();
+                        let message_text = msg["message"].as_ref().unwrap_or("").to_string();
                         let sev_code = msg["severity"].as_u64().unwrap_or(1);
 
                         let severity = if sev_code == 2 {

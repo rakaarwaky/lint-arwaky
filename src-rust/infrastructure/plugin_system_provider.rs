@@ -1,5 +1,5 @@
 /// plugin_system_provider — Entry point discovery and loading for custom adapters.
-use crate::contract::IPluginManagerPort;
+use crate::contract::plugin_manager_port::IPluginManagerPort;
 use crate::taxonomy::{AdapterMetadata, AdapterMetadataList, AdapterName, PluginGroup, AdapterClassMap, PluginError};
 use std::collections::HashMap;
 

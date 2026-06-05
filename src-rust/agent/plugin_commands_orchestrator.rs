@@ -1,6 +1,6 @@
 // plugin_commands_orchestrator — Orchestrator for plugin and adapter-related domain logic.
-use crate::contract::PluginCommandsAggregate;
-use crate::taxonomy::FilePath;
+use crate::contract::plugin_commands_aggregate::PluginCommandsAggregate;
+use crate::taxonomy::source_path_vo::FilePath;
 use std::collections::HashMap;
 
 pub struct PluginCommandsOrchestrator;

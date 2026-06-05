@@ -1,4 +1,4 @@
-use crate::contract::IConfigParserPort;
+use crate::contract::config_parser_port::IConfigParserPort;
 use crate::taxonomy::{ConfigError, ConfigKey, ErrorMessage, FilePath, ProjectConfig};
 use std::path::Path;
 

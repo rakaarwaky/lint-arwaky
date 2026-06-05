@@ -2,8 +2,8 @@ use crate::taxonomy::{
     ArchitectureConfig, FilePath, FilePathList, LintResultList, PatternList, LayerMapVO,
     LayerNameVO, Count, Identity, ErrorMessage, CustomMessageVO, ModuleName,
 };
-use crate::contract::IFileSystemPort;
-use crate::contract::ISourceParserPort;
+use crate::contract::file_system_port::IFileSystemPort;
+use crate::contract::source_parser_port::ISourceParserPort;
 use async_trait::async_trait;
 
 pub trait IAnalyzer {

@@ -104,8 +104,8 @@ impl ArchImportRuleChecker {
         let Ok(content) = fs::read_to_string(file) else { return; };
 
         for required in &definition.mandatory_import.values {
-            let is_present = content.contains(required.as_str())
-                || import_lines.iter().any(|(_, l)| l.contains(required.as_str()));
+            let is_present = content.contains(required.as_ref())
+                || import_lines.iter().any(|(_, l)| l.contains(required.as_ref()));
 
             if !is_present {
                 let msg = if !definition.mandatory_import_violation_message.value.is_empty() {
@@ -135,7 +135,7 @@ impl ArchImportRuleChecker {
         for (line_num, line) in &import_lines {
             if let Some(module) = Self::extract_module_from_line(line) {
                 for forbidden in &definition.forbidden_import.values {
-                    if module.contains(forbidden.as_str()) {
+                    if module.contains(forbidden.as_ref()) {
                         let msg = if !definition.forbidden_import_violation_message.value.is_empty() {
                             definition.forbidden_import_violation_message.value.clone()
                         } else {
@@ -204,7 +204,7 @@ impl ArchImportRuleChecker {
         for part in &parts {
             for (name, def) in &config.layers {
                 let path_last = def.path.value.split('/').last().unwrap_or("");
-                if *part == name.value.as_str() || *part == path_last {
+                if *part == name.value.as_ref() || *part == path_last {
                     return Some(name.value.clone());
                 }
             }

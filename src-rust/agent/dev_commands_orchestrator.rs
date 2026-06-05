@@ -1,5 +1,5 @@
 // dev_commands_orchestrator — Orchestrator for development-related domain logic.
-use crate::contract::DevCommandsAggregate;
+use crate::contract::dev_commands_aggregate::DevCommandsAggregate;
 use std::collections::HashMap;
 
 pub struct DevCommandsOrchestrator;

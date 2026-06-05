@@ -3,7 +3,7 @@ use serde_json::{json, Value};
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 
 /// Tool 1: execute_command(action, args) - Universal CLI executor
 pub async fn execute_command_tool(
@@ -17,9 +17,9 @@ pub async fn execute_command_tool(
 
     let args = args.unwrap_or_else(|| json!({}));
 
-    match action.as_str() {
+    match action.as_ref() {
         "check" | "scan" => {
-            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
             let linter = container
                 .get_architecture_linter()
                 .expect("Architecture linter not registered");
@@ -46,7 +46,7 @@ pub async fn execute_command_tool(
         }
 
         "fix" => {
-            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
             json!({
                 "status": "success",
                 "action": "fix",
@@ -57,10 +57,10 @@ pub async fn execute_command_tool(
         }
 
         "report" => {
-            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
             let output_format = args
                 .get("output-format")
-                .and_then(|v| v.as_str())
+                .and_then(|v| v.as_ref())
                 .unwrap_or("text");
             let linter = container
                 .get_architecture_linter()
@@ -133,7 +133,7 @@ pub async fn execute_command_tool(
         }
 
         "security" => {
-            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
             json!({
                 "status": "success",
                 "action": "security",
@@ -144,7 +144,7 @@ pub async fn execute_command_tool(
         }
 
         "complexity" => {
-            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
             json!({
                 "status": "success",
                 "action": "complexity",
@@ -155,7 +155,7 @@ pub async fn execute_command_tool(
         }
 
         "dependencies" => {
-            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
             json!({
                 "status": "success",
                 "action": "dependencies",

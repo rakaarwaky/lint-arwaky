@@ -16,7 +16,7 @@ impl PipelineActionDispatcher {
         let action_str = &action.value;
 
         // Handler map for known actions
-        match action_str.as_str() {
+        match action_str.as_ref() {
             "check" | "scan" => self.handle_check(action_str).await,
             "security" => self.handle_security(action_str).await,
             "complexity" => self.handle_complexity(action_str).await,
@@ -114,6 +114,6 @@ impl PipelineActionDispatcher {
             "fix", "report", "version", "adapters", "install-hook", "install_hook",
             "uninstall-hook", "uninstall_hook", "batch", "multi_project", "doctor", "cancel",
         ];
-        BooleanVO::new(known_actions.contains(&action.value.as_str()))
+        BooleanVO::new(known_actions.contains(&action.value.as_ref()))
     }
 }

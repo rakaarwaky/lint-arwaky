@@ -137,7 +137,7 @@ impl DependencyCycleAnalyzer {
         layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
 
         for (name, def) in layers {
-            let layer_path = def.path.value.as_str();
+            let layer_path = def.path.value.as_ref();
             if rel.starts_with(layer_path) {
                 return Some(name.value.clone());
             }
@@ -149,7 +149,7 @@ impl DependencyCycleAnalyzer {
         let parts: Vec<&str> = module.split('.').collect();
         for part in &parts {
             for (name, _def) in &self.config.layers {
-                if *part == name.value.as_str() {
+                if *part == name.value.as_ref() {
                     return Some(name.value.clone());
                 }
             }

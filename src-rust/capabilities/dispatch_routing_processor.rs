@@ -144,7 +144,7 @@ impl DispatchRoutingChecker {
     }
 
     fn _read_file_content(&self, analyzer: &dyn IAnalyzer, file_path: &FilePath) -> Option<String> {
-        std::fs::read_to_string(file_path.to_string().as_str()).ok()
+        std::fs::read_to_string(file_path.to_string().as_ref()).ok()
     }
 
     fn _collect_capability_refs(
@@ -154,8 +154,8 @@ impl DispatchRoutingChecker {
         refs: &mut CapabilityReferenceList,
     ) {
         for mat in CAPABILITY_REF_PATTERN.find_iter(text) {
-            let class_name = mat.get(1).unwrap().as_str().to_string();
-            let method_name = mat.get(2).unwrap().as_str().to_string();
+            let class_name = mat.get(1).unwrap().as_ref().to_string();
+            let method_name = mat.get(2).unwrap().as_ref().to_string();
             let line_no = text[..mat.start()].chars().filter(|&c| c == '\n').count() as i64 + 1;
             refs.references.push(CapabilityReference {
                 file: file_path.clone(),
@@ -297,7 +297,7 @@ impl DispatchRoutingChecker {
             return;
         }
 
-        let content = match std::fs::read_to_string(path.as_str()) {
+        let content = match std::fs::read_to_string(path.as_ref()) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -307,7 +307,7 @@ impl DispatchRoutingChecker {
         });
 
         for mat in CALL_PATTERN.find_iter(&content) {
-            let method_name = mat.get(1).unwrap().as_str();
+            let method_name = mat.get(1).unwrap().as_ref();
             let paren_start = mat.end() - 1;
             let args_vo = self._extract_args(&content, paren_start);
             if let Some(ref args_val) = args_vo.value {

@@ -129,7 +129,7 @@ impl ArchMetricChecker {
         let basename = Self::get_basename(file);
 
         // Skip special files
-        if matches!(basename.as_str(), "__init__.py" | "main.py" | "py.typed" | "mod.rs" | "lib.rs") {
+        if matches!(basename.as_ref(), "__init__.py" | "main.py" | "py.typed" | "mod.rs" | "lib.rs") {
             return;
         }
 

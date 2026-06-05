@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
+use crate::contract::{crate::contract::command_executor_port::ICommandExecutorPort, crate::contract::linter_adapter_port::ILinterAdapterPort, crate::contract::path_normalization_port::IPathNormalizationPort};
 use crate::taxonomy::{
     AdapterError, AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, FilePath,
     LineNumber, LintMessage, LintResult, LintResultList, LinterOperationError, PatternList,
@@ -114,24 +114,24 @@ impl ILinterAdapterPort for RustLinterAdapter {
             }
             match serde_json::from_str::<Value>(line) {
                 Ok(data) => {
-                    if data.get("reason").and_then(|r| r.as_str()) != Some("compiler-message") {
+                    if data.get("reason").and_then(|r| r.as_ref()) != Some("compiler-message") {
                         continue;
                     }
                     let msg = data.get("message").unwrap_or(&Value::Null);
                     let level = msg
                         .get("level")
-                        .and_then(|l| l.as_str())
+                        .and_then(|l| l.as_ref())
                         .unwrap_or("warning")
                         .to_lowercase();
                     let code_data = msg.get("code");
                     let code = code_data
                         .and_then(|c| c.get("code"))
-                        .and_then(|c| c.as_str())
+                        .and_then(|c| c.as_ref())
                         .unwrap_or("clippy::warning")
                         .to_string();
                     let message_text = msg
                         .get("message")
-                        .and_then(|m| m.as_str())
+                        .and_then(|m| m.as_ref())
                         .unwrap_or("Clippy finding")
                         .to_string();
 
@@ -150,7 +150,7 @@ impl ILinterAdapterPort for RustLinterAdapter {
                         {
                             continue;
                         }
-                        let filename = span.get("file_name").and_then(|f| f.as_str()).unwrap_or("");
+                        let filename = span.get("file_name").and_then(|f| f.as_ref()).unwrap_or("");
                         if filename.is_empty() {
                             continue;
                         }
@@ -173,8 +173,8 @@ impl ILinterAdapterPort for RustLinterAdapter {
                             resolved_file,
                             LineNumber::new(line_num as i64),
                             ColumnNumber::new(column_num as i64),
-                            ErrorCode::raw(code.as_str()),
-                            LintMessage::new(message_text.as_str()),
+                            ErrorCode::raw(code.as_ref()),
+                            LintMessage::new(message_text.as_ref()),
                             AdapterName::raw("clippy"),
                             severity,
                         ));

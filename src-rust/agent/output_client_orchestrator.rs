@@ -1,5 +1,5 @@
 // output_client_orchestrator — Implementation of output management logic.
-use crate::contract::OutputClientAggregate;
+use crate::contract::output_client_aggregate::OutputClientAggregate;
 use crate::taxonomy::{FilePath, LogOutput, Identity, FileFormat};
 use std::io::{self, Write};
 
@@ -24,7 +24,7 @@ impl OutputClientOrchestrator {
             let _ = std::fs::create_dir_all(output_dir);
         }
 
-        let ext = output_format.map(|f| f.name.as_str()).unwrap_or("txt");
+        let ext = output_format.map(|f| f.name.as_ref()).unwrap_or("txt");
         let cmd_str = &command.value;
         let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
         let filename = format!("{}_{}.{}", cmd_str, timestamp, ext);

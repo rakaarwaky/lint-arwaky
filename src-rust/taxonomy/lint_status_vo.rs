@@ -46,12 +46,12 @@ impl std::ops::Deref for SuccessStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ActionArgs {
+pub struct LintStatusActionArgs {
     #[serde(default)]
     pub value: HashMap<String, serde_json::Value>,
 }
 
-impl ActionArgs {
+impl LintStatusActionArgs {
     pub fn new() -> Self { Self { value: HashMap::new() } }
     pub fn get(&self, key: &str) -> Option<&serde_json::Value> { self.value.get(key) }
 }

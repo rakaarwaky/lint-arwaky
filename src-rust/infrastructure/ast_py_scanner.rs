@@ -1,5 +1,5 @@
 /// ast_py_scanner — Orchestrator for Python AST analysis.
-use crate::contract::ISourceParserPort;
+use crate::contract::source_parser_port::ISourceParserPort;
 use crate::taxonomy::{
     BooleanVO, ColumnNumber, Count, ErrorMessage, FilePath, Identity, ImportInfo, ImportInfoList,
     LineNumber, MetadataVO, PrimitiveTypeList, PrimitiveViolation, PrimitiveViolationList,

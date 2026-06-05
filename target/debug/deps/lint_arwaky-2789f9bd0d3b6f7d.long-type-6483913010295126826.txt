@@ -1,1 +1,0 @@
-Arc<(dyn source_parser_port::ISourceParserPort + 'static)>
