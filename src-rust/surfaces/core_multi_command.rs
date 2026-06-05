@@ -1,3 +1,4 @@
+use std::sync::Arc;
 /// Multi-project CLI commands for auto-linter.
 use std::collections::HashMap;
 
@@ -259,7 +260,7 @@ ToolHandler,
 WatchCommandsAggregate,
 WatchExecutionOrchestratorAggregate};
 pub struct MultiCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl MultiCommandsSurface {
@@ -267,7 +268,7 @@ impl MultiCommandsSurface {
         Self { container: None }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
@@ -292,7 +293,7 @@ impl MultiCommandsSurface {
     }
 }
 
-pub fn register_multi_commands(container: ServiceContainerAggregate) -> MultiCommandsSurface {
+pub fn register_multi_commands(container: Arc<dyn ServiceContainerAggregate>) -> MultiCommandsSurface {
     let mut surface = MultiCommandsSurface::new();
     surface.register_all(container);
     surface

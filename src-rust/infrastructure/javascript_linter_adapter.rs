@@ -1,5 +1,5 @@
 /// javascript_linter_adapter — ESLint, Prettier, and TSC adapters for JS/TS linting.
-use crate::contract::{crate::contract::command_executor_port::ICommandExecutorPort, crate::contract::linter_adapter_port::ILinterAdapterPort, crate::contract::path_normalization_port::IPathNormalizationPort};
+use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
 use crate::taxonomy::{
     AdapterError, AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, FilePath,
     LineNumber, LintMessage, LintResult, LintResultList, LinterOperationError, PatternList,

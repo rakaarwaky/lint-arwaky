@@ -1,6 +1,6 @@
 // git_commands_orchestrator — Agent orchestrator for git-aware linting.
-use crate::contract::{crate::contract::git_commands_aggregate::GitCommandsAggregate, DiffResultAggregate};
-use crate::taxonomy::{FilePath, FilePathList, RenamedFileList, Count};
+use crate::contract::{GitCommandsAggregate, GitDiffResultAggregate};
+use crate::taxonomy::{Count, FilePath, FilePathList, RenamedFileList};
 use std::collections::HashSet;
 
 pub struct GitCommandsOrchestrator {
@@ -67,7 +67,12 @@ impl GitCommandsOrchestrator {
         FilePathList::new(changed_set.into_iter().collect())
     }
 
-    fn try_variant(&self, changed_set: &mut HashSet<FilePath>, variant: &str, project_path: &FilePath) -> bool {
+    fn try_variant(
+        &self,
+        changed_set: &mut HashSet<FilePath>,
+        variant: &str,
+        project_path: &FilePath,
+    ) -> bool {
         if let Ok(output) = std::process::Command::new(&self.git_path)
             .args(["diff", "--name-only", variant])
             .current_dir(&project_path.value)
@@ -122,17 +127,26 @@ impl GitCommandsOrchestrator {
         }
     }
 
-    fn filter_ignored_files(&self, changed_files: &FilePathList, project_path: &FilePath) -> FilePathList {
+    fn filter_ignored_files(
+        &self,
+        changed_files: &FilePathList,
+        project_path: &FilePath,
+    ) -> FilePathList {
         if changed_files.values.is_empty() {
             return FilePathList::new(Vec::new());
         }
-        let input = changed_files.values.iter()
+        let input = changed_files
+            .values
+            .iter()
             .map(|f| f.value.as_ref())
             .collect::<Vec<_>>()
             .join("\n");
         // Use echo + pipe approach for check-ignore --stdin
         let child = std::process::Command::new("sh")
-            .args(["-c", &format!("echo '{}' | {} check-ignore --stdin", input, self.git_path)])
+            .args([
+                "-c",
+                &format!("echo '{}' | {} check-ignore --stdin", input, self.git_path),
+            ])
             .current_dir(&project_path.value)
             .output();
         if let Ok(output) = child {
@@ -143,17 +157,19 @@ impl GitCommandsOrchestrator {
                     .filter(|l| !l.is_empty())
                     .collect();
                 return FilePathList::new(
-                    changed_files.values.iter()
+                    changed_files
+                        .values
+                        .iter()
                         .filter(|f| !ignored.contains(&f.value))
                         .cloned()
-                        .collect()
+                        .collect(),
                 );
             }
         }
         changed_files.clone()
     }
 
-    pub async fn get_diff(&self, path: &FilePath) -> Box<dyn DiffResultAggregate> {
+    pub async fn get_diff(&self, path: &FilePath) -> Box<dyn GitDiffResultAggregate> {
         let default_branch = self.get_default_branch(path);
         let changed_files = self.collect_changed_files(path, &default_branch);
         let filtered = changed_files.clone();

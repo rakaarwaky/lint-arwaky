@@ -1,5 +1,5 @@
 // capability_mixin_container — Logic for initializing analyzers and processors.
-use crate::contract::{crate::contract::capability_container_aggregate::CapabilityContainerAggregate, crate::contract::service_container_aggregate::ServiceContainerAggregate};
+use crate::contract::{CapabilityContainerAggregate, ServiceContainerAggregate};
 
 pub struct CapabilityMixinContainer;
 

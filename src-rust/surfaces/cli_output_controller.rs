@@ -1,3 +1,4 @@
+use std::sync::Arc;
 /// CLI output management utilities.
 #[allow(unused)]
 use std::sync::Mutex;
@@ -260,7 +261,7 @@ ToolHandler,
 WatchCommandsAggregate,
 WatchExecutionOrchestratorAggregate};
 pub struct OutputControllerSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl OutputControllerSurface {
@@ -316,7 +317,7 @@ pub fn tee_stdout<F: FnOnce()>(_container: Option<&str>, f: F) -> String {
     String::new()
 }
 
-pub fn set_container(container: ServiceContainerAggregate) {
+pub fn set_container(container: Arc<dyn ServiceContainerAggregate>) {
     let mut guard = INSTANCE.lock().unwrap();
     if let Some(ref mut s) = *guard {
         s.container = Some(container);

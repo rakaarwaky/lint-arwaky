@@ -1,7 +1,12 @@
 /// MCP Tool: execute_command - Universal CLI executor.
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
-use std::sync::Arc;
 use serde_json::{json, Value};
+use std::sync::Arc;
+use std::sync::Mutex;
+
+/// Running jobs tracker for MCP execute command.
+pub static _running_jobs: std::sync::LazyLock<Mutex<Vec<String>>> =
+    std::sync::LazyLock::new(|| Mutex::new(Vec::new()));
 
 pub fn register_execute_commands(container: Arc<dyn ServiceContainerAggregate>) {
     // This would register the tool to the MCP server

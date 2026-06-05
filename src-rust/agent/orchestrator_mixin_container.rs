@@ -1,5 +1,5 @@
 // orchestrator_mixin_container — Logic for initializing high-level agent orchestrators.
-use crate::contract::{crate::contract::orchestrator_container_aggregate::OrchestratorContainerAggregate, crate::contract::service_container_aggregate::ServiceContainerAggregate};
+use crate::contract::{OrchestratorContainerAggregate, ServiceContainerAggregate};
 
 pub struct OrchestratorMixinContainer;
 

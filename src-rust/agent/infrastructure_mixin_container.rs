@@ -1,5 +1,5 @@
 // infrastructure_mixin_container — Logic for initializing base infrastructure and configuration.
-use crate::contract::{crate::contract::infrastructure_container_aggregate::InfrastructureContainerAggregate, crate::contract::service_container_aggregate::ServiceContainerAggregate};
+use crate::contract::{InfrastructureContainerAggregate, ServiceContainerAggregate};
 
 pub struct InfrastructureMixinContainer;
 

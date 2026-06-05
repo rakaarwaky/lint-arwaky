@@ -1,11 +1,17 @@
 // pipeline_extended_orchestrator — Orchestration for multi-project and watch modes (Agent Layer).
-use crate::contract::{PipelineExtendedAggregate, PipelineOutputAggregate, crate::contract::multi_project_aggregate::MultiProjectAggregate, crate::contract::directory_watch_aggregate::DirectoryWatchAggregate};
-use crate::taxonomy::{FilePath, JobId, SuccessStatus, BooleanVO, ResponseData, ErrorMessage, StdOutput, StdError, ExitCode, MetadataVO};
+use crate::contract::{
+    DirectoryWatchAggregate, MultiProjectAggregate, PipelineExtendedOrchestratorAggregate,
+    PipelineOutputAggregate,
+};
+use crate::taxonomy::{
+    BooleanVO, ErrorMessage, ExitCode, FilePath, JobId, MetadataVO, ResponseData, StdError,
+    StdOutput, SuccessStatus,
+};
 use std::collections::HashMap;
 
 pub struct PipelineExtendedOrchestrator;
 
-impl PipelineExtendedAggregate for PipelineExtendedOrchestrator {}
+impl PipelineExtendedOrchestratorAggregate for PipelineExtendedOrchestrator {}
 
 impl PipelineExtendedOrchestrator {
     pub fn new() -> Self {
@@ -56,10 +62,18 @@ struct ExtendedPipelineOutput {
 }
 
 impl PipelineOutputAggregate for ExtendedPipelineOutput {
-    fn success(&self) -> &SuccessStatus { &self.success }
-    fn job_id(&self) -> &JobId { &self.job_id }
-    fn data(&self) -> Option<&serde_json::Value> {
-        self.data.as_ref().map(|d| &serde_json::Value::String(d.stdout.to_string()))
+    fn success(&self) -> &SuccessStatus {
+        &self.success
     }
-    fn error(&self) -> Option<&ErrorMessage> { self.error.as_ref() }
+    fn job_id(&self) -> &JobId {
+        &self.job_id
+    }
+    fn data(&self) -> Option<&serde_json::Value> {
+        self.data
+            .as_ref()
+            .map(|d| &serde_json::Value::String(d.stdout.to_string()))
+    }
+    fn error(&self) -> Option<&ErrorMessage> {
+        self.error.as_ref()
+    }
 }

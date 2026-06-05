@@ -1,5 +1,5 @@
 // adapter_mixin_container — Logic for initializing and managing linter adapters.
-use crate::contract::{crate::contract::adapter_container_aggregate::AdapterContainerAggregate, crate::contract::service_container_aggregate::ServiceContainerAggregate};
+use crate::contract::{AdapterContainerAggregate, ServiceContainerAggregate};
 
 pub struct AdapterMixinContainer;
 

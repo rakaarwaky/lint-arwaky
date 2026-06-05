@@ -1,5 +1,5 @@
 /// python_analysis_adapter — Python analysis adapters (Complexity, Duplicate, Trends, Dependency).
-use crate::contract::{crate::contract::command_executor_port::ICommandExecutorPort, crate::contract::linter_adapter_port::ILinterAdapterPort, crate::contract::path_normalization_port::IPathNormalizationPort};
+use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
 use crate::taxonomy::{
     AdapterName, ColumnNumber, ComplianceStatus, Count, ErrorCode, FilePath, LineNumber,
     LintMessage, LintResult, LintResultList, LinterOperationError, Severity,

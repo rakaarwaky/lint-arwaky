@@ -1,5 +1,5 @@
 /// python_mypy_adapter — MyPy adapter for Python type checking.
-use crate::contract::{crate::contract::command_executor_port::ICommandExecutorPort, crate::contract::linter_adapter_port::ILinterAdapterPort, crate::contract::path_normalization_port::IPathNormalizationPort, LinterError};
+use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort, LinterError};
 use crate::taxonomy::{AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, FilePath, LineNumber, LintMessage, LintResult, LintResultList, ScanError, Severity, ErrorMessage};
 use regex::Regex;
 use std::sync::Arc;

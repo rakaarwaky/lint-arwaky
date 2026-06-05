@@ -1,4 +1,5 @@
 use super::*;
+use crate::taxonomy::{CommandMetadataVO, DescriptionVO, Suggestion};
 use std::collections::HashMap;
 
 pub fn command_catalog() -> HashMap<String, CommandMetadataVO> {

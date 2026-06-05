@@ -1,17 +1,25 @@
 // pipeline_execution_orchestrator — Agent pipeline: receive→think→act→respond orchestrator.
-use crate::contract::{ExecutionOrchestratorAggregate, PipelineInputAggregate, PipelineOutputAggregate};
-use crate::taxonomy::{FilePath, BooleanVO, ErrorMessage, JobId, ResponseData, SuccessStatus, Suggestion, ContentString, MetadataVO, ActionArgs};
+use crate::contract::{
+    PipelineExecutionOrchestratorAggregate, PipelineInputAggregate, PipelineOutputAggregate,
+};
+use crate::taxonomy::{
+    ActionArgs, BooleanVO, ContentString, ErrorMessage, FilePath, JobId, MetadataVO, ResponseData,
+    SuccessStatus, Suggestion,
+};
 
 pub struct PipelineExecutionOrchestrator;
 
-impl ExecutionOrchestratorAggregate for PipelineExecutionOrchestrator {}
+impl PipelineExecutionOrchestratorAggregate for PipelineExecutionOrchestrator {}
 
 impl PipelineExecutionOrchestrator {
     pub fn new() -> Self {
         Self
     }
 
-    pub async fn execute(&self, request: &dyn PipelineInputAggregate) -> Box<dyn PipelineOutputAggregate> {
+    pub async fn execute(
+        &self,
+        request: &dyn PipelineInputAggregate,
+    ) -> Box<dyn PipelineOutputAggregate> {
         // Full pipeline execution: receive → think → act → respond
         let action = request.action().to_string();
 
@@ -28,7 +36,11 @@ impl PipelineExecutionOrchestrator {
         self.format_success_response(job_id, serde_json::json!({"result": "ok"}))
     }
 
-    async fn stage_validate(&self, action: &str, _job_id: &JobId) -> Option<Box<dyn PipelineOutputAggregate>> {
+    async fn stage_validate(
+        &self,
+        action: &str,
+        _job_id: &JobId,
+    ) -> Option<Box<dyn PipelineOutputAggregate>> {
         if !self.validate_action(action) {
             return Some(Box::new(PipelineOutputImpl {
                 success: SuccessStatus::new(false),
@@ -41,7 +53,11 @@ impl PipelineExecutionOrchestrator {
         None
     }
 
-    fn format_success_response(&self, job_id: JobId, data: serde_json::Value) -> Box<dyn PipelineOutputAggregate> {
+    fn format_success_response(
+        &self,
+        job_id: JobId,
+        data: serde_json::Value,
+    ) -> Box<dyn PipelineOutputAggregate> {
         Box::new(PipelineOutputImpl {
             success: SuccessStatus::new(true),
             job_id,
@@ -53,9 +69,24 @@ impl PipelineExecutionOrchestrator {
 
     fn validate_action(&self, action: &str) -> bool {
         let known_actions = [
-            "check", "scan", "security", "complexity", "duplicates", "trends",
-            "fix", "report", "version", "adapters", "install-hook", "install_hook",
-            "uninstall-hook", "uninstall_hook", "batch", "multi_project", "doctor", "cancel",
+            "check",
+            "scan",
+            "security",
+            "complexity",
+            "duplicates",
+            "trends",
+            "fix",
+            "report",
+            "version",
+            "adapters",
+            "install-hook",
+            "install_hook",
+            "uninstall-hook",
+            "uninstall_hook",
+            "batch",
+            "multi_project",
+            "doctor",
+            "cancel",
         ];
         known_actions.contains(&action)
     }
@@ -70,10 +101,18 @@ struct PipelineOutputImpl {
 }
 
 impl PipelineOutputAggregate for PipelineOutputImpl {
-    fn success(&self) -> &SuccessStatus { &self.success }
-    fn job_id(&self) -> &JobId { &self.job_id }
-    fn data(&self) -> Option<&serde_json::Value> { self.data.as_ref() }
-    fn error(&self) -> Option<&ErrorMessage> { self.error.as_ref() }
+    fn success(&self) -> &SuccessStatus {
+        &self.success
+    }
+    fn job_id(&self) -> &JobId {
+        &self.job_id
+    }
+    fn data(&self) -> Option<&serde_json::Value> {
+        self.data.as_ref()
+    }
+    fn error(&self) -> Option<&ErrorMessage> {
+        self.error.as_ref()
+    }
 }
 
 struct PipelineInputImpl {
@@ -84,12 +123,22 @@ struct PipelineInputImpl {
 
 impl PipelineInputImpl {
     pub fn new(action: String) -> Self {
-        Self { action, args: None, path: None }
+        Self {
+            action,
+            args: None,
+            path: None,
+        }
     }
 }
 
 impl PipelineInputAggregate for PipelineInputImpl {
-    fn action(&self) -> &str { &self.action }
-    fn args(&self) -> Option<&ActionArgs> { self.args.as_ref() }
-    fn path(&self) -> Option<&FilePath> { self.path.as_ref() }
+    fn action(&self) -> &str {
+        &self.action
+    }
+    fn args(&self) -> Option<&ActionArgs> {
+        self.args.as_ref()
+    }
+    fn path(&self) -> Option<&FilePath> {
+        self.path.as_ref()
+    }
 }

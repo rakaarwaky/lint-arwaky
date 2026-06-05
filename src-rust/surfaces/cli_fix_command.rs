@@ -1,3 +1,4 @@
+use std::sync::Arc;
 /// Fix CLI command — applies safe fixes automatically (Surface).
 use std::path::PathBuf;
 
@@ -261,15 +262,15 @@ WatchExecutionOrchestratorAggregate};
 use crate::surfaces::cli_output_controller::{get_output_dir, write_output, tee_stdout};
 
 pub struct FixCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl FixCommandsSurface {
-    pub fn new(container: Option<ServiceContainerAggregate>) -> Self {
+    pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
         Self { container }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
@@ -293,7 +294,7 @@ impl FixCommandsSurface {
     }
 }
 
-pub fn register_fix_commands(container: ServiceContainerAggregate) -> FixCommandsSurface {
+pub fn register_fix_commands(container: Arc<dyn ServiceContainerAggregate>) -> FixCommandsSurface {
     let mut surface = FixCommandsSurface::new(Some(container.clone()));
     surface.register_all(container);
     surface

@@ -1,3 +1,4 @@
+use std::sync::Arc;
 /// CLI check and scan commands (Surface).
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -262,7 +263,7 @@ WatchExecutionOrchestratorAggregate};
 use crate::surfaces::cli_output_controller::{get_output_dir, write_output, tee_stdout};
 
 pub struct CheckCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl CheckCommandsSurface {
@@ -270,7 +271,7 @@ impl CheckCommandsSurface {
         Self { container: None }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
@@ -388,7 +389,7 @@ impl CheckCommandsSurface {
     }
 }
 
-pub fn register_check_commands(container: ServiceContainerAggregate) -> CheckCommandsSurface {
+pub fn register_check_commands(container: Arc<dyn ServiceContainerAggregate>) -> CheckCommandsSurface {
     let mut surface = CheckCommandsSurface::new();
     surface.register_all(container);
     surface

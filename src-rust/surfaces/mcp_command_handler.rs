@@ -1,3 +1,4 @@
+use std::sync::Arc;
 /// MCP Tools: list_commands and read_skill_context.
 use std::collections::HashMap;
 use std::path::Path;
@@ -287,7 +288,7 @@ pub fn list_commands_func(domain: Option<&str>) -> HashMap<String, HashMap<Strin
 }
 
 pub struct McpCommandCatalogSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl McpCommandCatalogSurface {
@@ -295,7 +296,7 @@ impl McpCommandCatalogSurface {
         Self { container: None }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
@@ -325,16 +326,16 @@ impl McpCommandCatalogSurface {
     }
 }
 
-pub fn register_catalog_commands(container: ServiceContainerAggregate) -> McpCommandCatalogSurface {
+pub fn register_catalog_commands(container: Arc<dyn ServiceContainerAggregate>) -> McpCommandCatalogSurface {
     let mut surface = McpCommandCatalogSurface::new();
     surface.register_all(container);
     surface
 }
 
-pub fn register_list_commands(container: ServiceContainerAggregate) -> McpCommandCatalogSurface {
+pub fn register_list_commands(container: Arc<dyn ServiceContainerAggregate>) -> McpCommandCatalogSurface {
     register_catalog_commands(container)
 }
 
-pub fn register_read_skill_context(container: ServiceContainerAggregate) -> McpCommandCatalogSurface {
+pub fn register_read_skill_context(container: Arc<dyn ServiceContainerAggregate>) -> McpCommandCatalogSurface {
     register_catalog_commands(container)
 }

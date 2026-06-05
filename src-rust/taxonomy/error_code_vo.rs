@@ -34,21 +34,6 @@ impl ErrorCode {
     pub fn is_architecture(&self) -> bool {
         self.code.starts_with("AES")
     }
-
-    /// Returns true if the code is a logic error (starts with F or I).
-    pub fn is_logic(&self) -> bool {
-        self.code.starts_with('F') || self.code.starts_with('I')
-    }
-
-    /// Returns true if the code is a security error (starts with B).
-    pub fn is_security(&self) -> bool {
-        self.code.starts_with('B')
-    }
-
-    /// Returns true for architecture compliance codes (prefix AES).
-    pub fn is_architecture(&self) -> bool {
-        self.code.starts_with("AES")
-    }
 }
 
 impl std::ops::Deref for ErrorCode {

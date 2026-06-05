@@ -261,15 +261,15 @@ WatchExecutionOrchestratorAggregate};
 pub struct WatchdogBridge;
 
 pub struct WatchCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl WatchCommandsSurface {
-    pub fn new(container: Option<ServiceContainerAggregate>) -> Self {
+    pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
         Self { container }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
@@ -292,7 +292,7 @@ impl WatchCommandsSurface {
     }
 }
 
-pub fn register_watch_command(container: ServiceContainerAggregate) -> WatchCommandsSurface {
+pub fn register_watch_command(container: Arc<dyn ServiceContainerAggregate>) -> WatchCommandsSurface {
     let mut surface = WatchCommandsSurface::new(Some(container.clone()));
     surface.register_all(container);
     surface

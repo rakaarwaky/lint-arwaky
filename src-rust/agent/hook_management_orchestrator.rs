@@ -1,10 +1,10 @@
 // hook_management_orchestrator — Orchestrates git hook management (Capability).
-use crate::contract::HookOrchestratorAggregate;
+use crate::contract::HookManagementOrchestratorAggregate;
 use crate::taxonomy::{AdapterName, Identity, SuccessStatus};
 
 pub struct HookManagementOrchestrator;
 
-impl HookOrchestratorAggregate for HookManagementOrchestrator {}
+impl HookManagementOrchestratorAggregate for HookManagementOrchestrator {}
 
 impl Default for HookManagementOrchestrator {
     fn default() -> Self {

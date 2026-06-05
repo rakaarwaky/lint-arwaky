@@ -1,6 +1,6 @@
 // arch_compliance_coordinator — Coordinator bridging multiple IArchComplianceProtocol orchestrators.
 use async_trait::async_trait;
-use crate::contract::{crate::contract::architecture_coordinator_aggregate::ArchCoordinatorAggregate, crate::contract::architecture_compliance_port::IArchCompliancePort, crate::contract::architecture_compliance_protocol::IArchComplianceProtocol};
+use crate::contract::{ArchCoordinatorAggregate, IArchCompliancePort, IArchComplianceProtocol};
 use crate::taxonomy::{AdapterName, ComplianceStatus, FilePath, LintResultList};
 
 pub struct ArchComplianceCoordinator {

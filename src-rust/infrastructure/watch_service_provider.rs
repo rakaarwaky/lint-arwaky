@@ -9,7 +9,10 @@ pub struct WatchServiceProvider {
 
 impl WatchServiceProvider {
     pub fn new(callback: Option<Box<dyn Fn(FilePath) + Send + Sync>>) -> Self {
-        Self { callback, running: false }
+        Self {
+            callback,
+            running: false,
+        }
     }
 
     pub fn is_available(&self) -> BooleanVO {
@@ -18,7 +21,10 @@ impl WatchServiceProvider {
 
     pub fn start(&mut self, path: &FilePath) -> Result<(), WatchServiceError> {
         if !std::path::Path::new(&path.value).exists() {
-            return Err(WatchServiceError::new(format!("Path does not exist: {}", &path.value)));
+            return Err(WatchServiceError::new(ErrorMessage::new(format!(
+                "Path does not exist: {}",
+                &path.value
+            ))));
         }
         self.running = true;
         Ok(())
@@ -32,12 +38,12 @@ impl WatchServiceProvider {
 
 #[async_trait::async_trait]
 impl IWatchProviderPort for WatchServiceProvider {
-    async fn start(&self, _path: &FilePath) -> Option<WatchServiceError> {
-        None
+    async fn start(&self, _path: &FilePath) -> Result<(), WatchServiceError> {
+        Ok(())
     }
 
-    async fn stop(&self) -> Option<WatchServiceError> {
-        None
+    async fn stop(&self) -> Result<(), WatchServiceError> {
+        Ok(())
     }
 
     async fn is_available(&self) -> bool {

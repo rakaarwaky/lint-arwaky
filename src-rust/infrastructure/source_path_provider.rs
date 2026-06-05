@@ -1,4 +1,5 @@
 use std::env;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::contract::path_normalization_port::IPathNormalizationPort;
@@ -30,12 +31,20 @@ impl IPathNormalizationPort for PathNormalizationProvider {
         // 2. Handle phantom roots - only apply when path does NOT already exist
         if !Path::new(&path_str).exists() {
             let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-            let phantom_root = env::var("PHANTOM_ROOT").unwrap_or(home).replace("\\\\", "/");
-            let actual_root = env::var("PROJECT_ROOT").unwrap_or_else(|| env::current_dir().unwrap().to_string_lossy().to_string()).replace("\\\\", "/");
+            let phantom_root = env::var("PHANTOM_ROOT")
+                .unwrap_or(home)
+                .replace("\\\\", "/");
+            let actual_root = env::var("PROJECT_ROOT")
+                .unwrap_or_else(|| env::current_dir().unwrap().to_string_lossy().to_string())
+                .replace("\\\\", "/");
 
             if !phantom_root.is_empty() && path_str.starts_with(&phantom_root) {
                 let suffix = &path_str[phantom_root.len()..];
-                let suffix = if suffix.starts_with('/') { &suffix[1..] } else { suffix };
+                let suffix = if suffix.starts_with('/') {
+                    &suffix[1..]
+                } else {
+                    suffix
+                };
                 path_str = format!("{}/{}", actual_root, suffix);
             }
         }

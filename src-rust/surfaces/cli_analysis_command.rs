@@ -1,3 +1,4 @@
+use std::sync::Arc;
 /// Analysis CLI commands: complexity, duplicates, trends, ci, batch, dependencies.
 use std::path::PathBuf;
 
@@ -261,15 +262,15 @@ WatchExecutionOrchestratorAggregate};
 use crate::surfaces::cli_output_controller::{get_output_dir, write_output, tee_stdout};
 
 pub struct AnalysisCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl AnalysisCommandsSurface {
-    pub fn new(container: Option<ServiceContainerAggregate>) -> Self {
+    pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
         Self { container }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
         // In Rust, command registration is done via clap in cli_main_handler/binary.
         // Methods are exposed for direct calling.
@@ -387,7 +388,7 @@ impl AnalysisCommandsSurface {
     }
 }
 
-pub fn register_analysis_commands(container: ServiceContainerAggregate) -> AnalysisCommandsSurface {
+pub fn register_analysis_commands(container: Arc<dyn ServiceContainerAggregate>) -> AnalysisCommandsSurface {
     let mut surface = AnalysisCommandsSurface::new(Some(container.clone()));
     surface.register_all(container);
     surface

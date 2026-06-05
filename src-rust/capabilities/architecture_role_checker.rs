@@ -1,16 +1,16 @@
 // arch_role_checker — Architectural role checks (agent and surface roles).
 // 1:1 Rust implementation matching capabilities/arch_role_checker.py
 
-use std::path::Path;
-use regex::Regex;
 use once_cell::sync::Lazy;
+use regex::Regex;
+use std::path::Path;
 
-use crate::taxonomy::{
-    AdapterName, ErrorCode, FilePath, LayerDefinition,
-    LayerNameVO, LintMessage, LintResult, LineNumber, ColumnNumber, Severity, SymbolName,
-};
+use crate::contract::architecture_rule_protocol::IAnalyzer;
 use crate::taxonomy::layer_names_vo::*;
-use crate::contract::arch_rule_protocol::IAnalyzer;
+use crate::taxonomy::{
+    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LayerNameVO, LineNumber,
+    LintMessage, LintResult, Severity, SymbolName,
+};
 
 fn make_adapter(name: &str) -> Option<AdapterName> {
     AdapterName::new(name).ok()
@@ -31,7 +31,8 @@ impl ArchRoleChecker {
         results: &mut crate::taxonomy::LintResultList,
     ) {
         for f in &files.values {
-            self._check_agent_role_on_file(f, analyzer, root_dir, results).await;
+            self._check_agent_role_on_file(f, analyzer, root_dir, results)
+                .await;
         }
     }
 
@@ -48,7 +49,9 @@ impl ArchRoleChecker {
         };
 
         let is_agent = layer_vo == layer_agent()
-            || layer_vo.value.starts_with(&format!("{}(", layer_agent().value));
+            || layer_vo
+                .value
+                .starts_with(&format!("{}(", layer_agent().value));
         if !is_agent {
             return;
         }
@@ -66,7 +69,8 @@ impl ArchRoleChecker {
             return;
         }
 
-        self._apply_agent_role_checks(f, &definition, analyzer, results).await;
+        self._apply_agent_role_checks(f, &definition, analyzer, results)
+            .await;
     }
 
     async fn _apply_agent_role_checks(
@@ -77,31 +81,38 @@ impl ArchRoleChecker {
         results: &mut crate::taxonomy::LintResultList,
     ) {
         if definition.stateless_execution.value {
-            self._check_stateless_execution(f, definition, analyzer, results).await;
+            self._check_stateless_execution(f, definition, analyzer, results)
+                .await;
         }
 
         if definition.high_level_policy_only.value {
-            self._check_high_level_policy_only(f, definition, analyzer, results).await;
+            self._check_high_level_policy_only(f, definition, analyzer, results)
+                .await;
         }
 
         if definition.coordinates_multiple_orchestrators.value {
-            self._check_coordinates_multiple_orchestrators(f, definition, analyzer, results).await;
+            self._check_coordinates_multiple_orchestrators(f, definition, analyzer, results)
+                .await;
         }
 
         if definition.no_domain_logic.value {
-            self._check_no_domain_logic(f, definition, analyzer, results, "AES021").await;
+            self._check_no_domain_logic(f, definition, analyzer, results, "AES021")
+                .await;
         }
 
         if definition.must_implement_service_container_aggregate.value {
-            self._check_must_implement_contract_lazy(f, definition, analyzer, results).await;
+            self._check_must_implement_contract_lazy(f, definition, analyzer, results)
+                .await;
         }
 
         if definition.lazy_eager_initialization_only.value {
-            self._check_lazy_eager_init_only(f, definition, analyzer, results).await;
+            self._check_lazy_eager_init_only(f, definition, analyzer, results)
+                .await;
         }
 
         if definition.forbid_any_type.value {
-            self._check_forbid_any_type(f, definition, analyzer, results).await;
+            self._check_forbid_any_type(f, definition, analyzer, results)
+                .await;
         }
     }
 
@@ -113,8 +124,18 @@ impl ArchRoleChecker {
         results: &mut crate::taxonomy::LintResultList,
     ) {
         let contract_name = SymbolName::new("ServiceContainerAggregate");
-        let violation_msg = definition.must_implement_service_container_aggregate_violation_message.value.clone();
-        self._check_must_implement_contract(f, &contract_name, &violation_msg, analyzer, results, "AES021");
+        let violation_msg = definition
+            .must_implement_service_container_aggregate_violation_message
+            .value
+            .clone();
+        self._check_must_implement_contract(
+            f,
+            &contract_name,
+            &violation_msg,
+            analyzer,
+            results,
+            "AES021",
+        );
     }
 
     pub async fn check_surface_roles(
@@ -131,7 +152,9 @@ impl ArchRoleChecker {
             };
 
             let is_surface = layer_vo == layer_surfaces()
-                || layer_vo.value.starts_with(&format!("{}(", layer_surfaces().value));
+                || layer_vo
+                    .value
+                    .starts_with(&format!("{}(", layer_surfaces().value));
             if !is_surface {
                 continue;
             }
@@ -142,7 +165,8 @@ impl ArchRoleChecker {
             };
 
             if definition.no_domain_logic.value {
-                self._check_no_domain_logic(f, &definition, analyzer, results, "AES022").await;
+                self._check_no_domain_logic(f, &definition, analyzer, results, "AES022")
+                    .await;
             }
 
             self._check_forbidden_mandatory_imports(f, &definition, analyzer, results);
@@ -175,7 +199,8 @@ impl ArchRoleChecker {
                 continue;
             }
 
-            let module_fp = FilePath::new(module_str.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap());
+            let module_fp =
+                FilePath::new(module_str.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap());
             let target_layer = match analyzer.detect_module_layer(&module_fp) {
                 Some(l) => l,
                 None => continue,
@@ -199,11 +224,17 @@ impl ArchRoleChecker {
 
     fn _is_smart_surface_allowed_layer(&self, layer_vo: &LayerNameVO) -> bool {
         let layer_str = &layer_vo.value;
-        let allowed_bases = [layer_taxonomy().value, layer_agent().value, layer_surfaces().value];
+        let allowed_bases = [
+            layer_taxonomy().value,
+            layer_agent().value,
+            layer_surfaces().value,
+        ];
         if allowed_bases.iter().any(|b| b == layer_str) {
             return true;
         }
-        allowed_bases.iter().any(|b| layer_str.starts_with(&format!("{}(", b)))
+        allowed_bases
+            .iter()
+            .any(|b| layer_str.starts_with(&format!("{}(", b)))
     }
 
     fn _report_surface_dependency_violation(
@@ -246,9 +277,13 @@ impl ArchRoleChecker {
             let method_name = self._find_method_name_for_line(&metadata_methods.value, line_val);
             if let Some(ref name) = method_name {
                 if name.value != "__init__" {
-                    let msg = definition.stateless_execution_violation_message.value.clone();
+                    let msg = definition
+                        .stateless_execution_violation_message
+                        .value
+                        .clone();
                     let message = if msg.is_empty() {
-                        "Non-stateless behavior detected: state assignment found outside __init__.".to_string()
+                        "Non-stateless behavior detected: state assignment found outside __init__."
+                            .to_string()
                     } else {
                         msg
                     };
@@ -282,7 +317,10 @@ impl ArchRoleChecker {
 
         for imp in imports.values {
             if imp.module.contains(&layer_infrastructure().value) {
-                let msg = definition.high_level_policy_only_violation_message.value.clone();
+                let msg = definition
+                    .high_level_policy_only_violation_message
+                    .value
+                    .clone();
                 let message = if msg.is_empty() {
                     "Low-level implementation details found (infrastructure import).".to_string()
                 } else {
@@ -316,7 +354,10 @@ impl ArchRoleChecker {
             if let Some(ref init_m) = init_method {
                 if self._count_orchestrator_args(init_m) < 2 {
                     let line_val = init_m.get("line").and_then(|v| v.as_i64()).unwrap_or(0);
-                    let msg = definition.coordinates_multiple_orchestrators_violation_message.value.clone();
+                    let msg = definition
+                        .coordinates_multiple_orchestrators_violation_message
+                        .value
+                        .clone();
                     let message = if msg.is_empty() {
                         "Coordinator must manage multiple orchestrators.".to_string()
                     } else {
@@ -348,7 +389,10 @@ impl ArchRoleChecker {
                 } else if let Some(s) = m.as_ref() {
                     if s == "__init__" {
                         let mut obj = serde_json::Map::new();
-                        obj.insert("name".to_string(), serde_json::Value::String("__init__".to_string()));
+                        obj.insert(
+                            "name".to_string(),
+                            serde_json::Value::String("__init__".to_string()),
+                        );
                         obj.insert("line".to_string(), serde_json::Value::Number(0.into()));
                         obj.insert("args".to_string(), serde_json::Value::Array(vec![]));
                         return Some(serde_json::Value::Object(obj));
@@ -360,7 +404,8 @@ impl ArchRoleChecker {
     }
 
     fn _count_orchestrator_args(&self, method: &serde_json::Value) -> usize {
-        method.get("args")
+        method
+            .get("args")
             .and_then(|v| v.as_array())
             .map(|args| {
                 args.iter()
@@ -381,9 +426,17 @@ impl ArchRoleChecker {
         let control_flow_count = analyzer.parser().get_control_flow_count(f);
         if control_flow_count.value > 3 {
             let default_msg = "Complex domain logic detected in a passive layer/role.".to_string();
-            let violation_msg = if !definition.no_domain_logic_violation_message.value.is_empty() {
+            let violation_msg = if !definition
+                .no_domain_logic_violation_message
+                .value
+                .is_empty()
+            {
                 definition.no_domain_logic_violation_message.value.clone()
-            } else if !definition.no_decision_logic_violation_message.value.is_empty() {
+            } else if !definition
+                .no_decision_logic_violation_message
+                .value
+                .is_empty()
+            {
                 definition.no_decision_logic_violation_message.value.clone()
             } else {
                 default_msg
@@ -415,11 +468,15 @@ impl ArchRoleChecker {
             if init_method.is_some() {
                 let control_flow_count = analyzer.parser().get_control_flow_count(f);
                 if control_flow_count.value > 2 {
-                    let line_val = init_method.as_ref()
+                    let line_val = init_method
+                        .as_ref()
                         .and_then(|m| m.get("line"))
                         .and_then(|v| v.as_i64())
                         .unwrap_or(0);
-                    let msg = definition.lazy_eager_initialization_only_violation_message.value.clone();
+                    let msg = definition
+                        .lazy_eager_initialization_only_violation_message
+                        .value
+                        .clone();
                     let message = if msg.is_empty() {
                         "Complex initialization logic found in Container.".to_string()
                     } else {
@@ -453,7 +510,8 @@ impl ArchRoleChecker {
         let bases_map = analyzer.parser().get_class_bases_map(f);
         for (_, bases) in &bases_map.value {
             let has_contract = bases.as_array().map_or(false, |arr| {
-                arr.iter().any(|b| b.to_string().contains(&contract_name.value))
+                arr.iter()
+                    .any(|b| b.to_string().contains(&contract_name.value))
             });
             if !has_contract {
                 let default_msg = format!("Class must implement {}.", contract_name.value);
@@ -519,9 +577,8 @@ impl ArchRoleChecker {
             Err(_) => return,
         };
 
-        static ANY_TYPE_RE: Lazy<Regex> = Lazy::new(|| {
-            Regex::new(r":\s*Any\b|->\s*Any\b|\bAny\s*\[").unwrap()
-        });
+        static ANY_TYPE_RE: Lazy<Regex> =
+            Lazy::new(|| Regex::new(r":\s*Any\b|->\s*Any\b|\bAny\s*\[").unwrap());
 
         for (i, line) in content.lines().enumerate() {
             for mat in ANY_TYPE_RE.find_iter(line) {
@@ -546,7 +603,8 @@ impl ArchRoleChecker {
     }
 
     fn _extract_json_array(value: &Option<serde_json::Value>, key: &str) -> Vec<serde_json::Value> {
-        value.as_ref()
+        value
+            .as_ref()
             .and_then(|v| v.get(key))
             .and_then(|v| v.as_array())
             .cloned()

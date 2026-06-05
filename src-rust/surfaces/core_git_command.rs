@@ -1,3 +1,4 @@
+use std::sync::Arc;
 /// Git-related CLI commands for auto-linter.
 use std::collections::HashMap;
 
@@ -259,7 +260,7 @@ ToolHandler,
 WatchCommandsAggregate,
 WatchExecutionOrchestratorAggregate};
 pub struct GitCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl GitCommandsSurface {
@@ -267,7 +268,7 @@ impl GitCommandsSurface {
         Self { container: None }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate, _cli: Option<&str>) {
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>, _cli: Option<&str>) {
         self.container = Some(container);
     }
 
@@ -298,7 +299,7 @@ impl GitCommandsSurface {
     }
 }
 
-pub fn register_git_commands(container: ServiceContainerAggregate) -> GitCommandsSurface {
+pub fn register_git_commands(container: Arc<dyn ServiceContainerAggregate>) -> GitCommandsSurface {
     let mut surface = GitCommandsSurface::new();
     surface.register_all(container, None);
     surface

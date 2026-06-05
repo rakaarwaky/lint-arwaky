@@ -1,15 +1,15 @@
 // arch_import_processor — Logic for evaluating architectural import rules.
 // 1:1 Rust implementation matching capabilities/arch_import_processor.py
 
-use std::path::Path;
-use regex::Regex;
 use once_cell::sync::Lazy;
+use regex::Regex;
+use std::path::Path;
 
+use crate::contract::architecture_rule_protocol::IAnalyzer;
 use crate::taxonomy::{
-    AdapterName, ErrorCode, FilePath, LayerDefinition,
-    LayerNameVO, LintMessage, LintResult, LineNumber, ColumnNumber, Severity,
+    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LayerNameVO, LineNumber,
+    LintMessage, LintResult, Severity,
 };
-use crate::contract::arch_rule_protocol::IAnalyzer;
 
 fn make_adapter(name: &str) -> Option<AdapterName> {
     AdapterName::new(name).ok()
@@ -46,7 +46,9 @@ impl ArchImportProcessor {
             return;
         }
 
-        if definition.forbidden_import.values.is_empty() && definition.allowed_import.values.is_empty() {
+        if definition.forbidden_import.values.is_empty()
+            && definition.allowed_import.values.is_empty()
+        {
             return;
         }
 
@@ -68,7 +70,8 @@ impl ArchImportProcessor {
         definition: &LayerDefinition,
         results: &mut crate::taxonomy::LintResultList,
     ) {
-        let module = FilePath::new(imp.module.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap());
+        let module =
+            FilePath::new(imp.module.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap());
         let target_layer = match analyzer.detect_module_layer(&module) {
             Some(l) => l,
             None => return,
@@ -76,20 +79,44 @@ impl ArchImportProcessor {
 
         if !definition.allowed_import.values.is_empty() {
             let is_same = self._is_same_domain_layer(&target_layer, file_layer);
-            let allowed = definition.allowed_import.values.iter().any(|p| self._is_layer_match(&target_layer, p));
+            let allowed = definition
+                .allowed_import
+                .values
+                .iter()
+                .any(|p| self._is_layer_match(&target_layer, p));
             if !is_same && !allowed {
-                let msg = if !definition.forbidden_import_violation_message.value.is_empty() {
+                let msg = if !definition
+                    .forbidden_import_violation_message
+                    .value
+                    .is_empty()
+                {
                     definition.forbidden_import_violation_message.value.clone()
                 } else {
                     "Forbidden layer import detected.".to_string()
                 };
-                self._add_forbidden_violation(results, file_path, imp, file_layer, &target_layer, &msg);
+                self._add_forbidden_violation(
+                    results,
+                    file_path,
+                    imp,
+                    file_layer,
+                    &target_layer,
+                    &msg,
+                );
                 return;
             }
         }
 
-        if definition.forbidden_import.values.iter().any(|p| self._is_layer_match(&target_layer, p)) {
-            let msg = if !definition.forbidden_import_violation_message.value.is_empty() {
+        if definition
+            .forbidden_import
+            .values
+            .iter()
+            .any(|p| self._is_layer_match(&target_layer, p))
+        {
+            let msg = if !definition
+                .forbidden_import_violation_message
+                .value
+                .is_empty()
+            {
                 definition.forbidden_import_violation_message.value.clone()
             } else {
                 "Forbidden layer import detected.".to_string()
@@ -111,9 +138,17 @@ impl ArchImportProcessor {
         }
         if pattern.contains('(') && layer_name.contains('(') {
             let p_base = pattern.split('(').next().unwrap_or(pattern);
-            let p_subs_raw = pattern.splitn(2, '(').nth(1).unwrap_or("").trim_end_matches(')');
+            let p_subs_raw = pattern
+                .splitn(2, '(')
+                .nth(1)
+                .unwrap_or("")
+                .trim_end_matches(')');
             let l_base = layer_name.split('(').next().unwrap_or(layer_name);
-            let l_sub_raw = layer_name.splitn(2, '(').nth(1).unwrap_or("").trim_end_matches(')');
+            let l_sub_raw = layer_name
+                .splitn(2, '(')
+                .nth(1)
+                .unwrap_or("")
+                .trim_end_matches(')');
             if p_base != l_base {
                 return false;
             }
@@ -170,9 +205,11 @@ impl ArchImportProcessor {
             Err(_) => return,
         };
 
-        let mut imported_aliases: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+        let mut imported_aliases: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
         let mut used_symbols: std::collections::HashSet<String> = std::collections::HashSet::new();
-        let mut class_bases: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+        let mut class_bases: std::collections::HashMap<String, Vec<String>> =
+            std::collections::HashMap::new();
 
         if let Some(val) = &symbols_data.value {
             if let Some(obj) = val.as_object() {
@@ -193,7 +230,10 @@ impl ArchImportProcessor {
                 if let Some(bases) = obj.get("class_bases").and_then(|b| b.as_object()) {
                     for (k, v) in bases {
                         if let Some(arr) = v.as_array() {
-                            let strs: Vec<String> = arr.iter().filter_map(|v| v.as_ref().map(|s| s.to_string())).collect();
+                            let strs: Vec<String> = arr
+                                .iter()
+                                .filter_map(|v| v.as_ref().map(|s| s.to_string()))
+                                .collect();
                             class_bases.insert(k.clone(), strs);
                         }
                     }
@@ -210,7 +250,16 @@ impl ArchImportProcessor {
 
         for req_layer in &required_layers.values {
             let satisfied = if req_layer.starts_with("contract") {
-                self._check_contract_layer(analyzer, req_layer, &imported_aliases, &real_usages, &class_bases, file_path, layer_vo, results)
+                self._check_contract_layer(
+                    analyzer,
+                    req_layer,
+                    &imported_aliases,
+                    &real_usages,
+                    &class_bases,
+                    file_path,
+                    layer_vo,
+                    results,
+                )
             } else {
                 self._check_general_layer(analyzer, req_layer, &imported_aliases, &real_usages)
             };
@@ -219,12 +268,21 @@ impl ArchImportProcessor {
             }
         }
 
-        let missing: Vec<String> = required_layers.values.iter()
+        let missing: Vec<String> = required_layers
+            .values
+            .iter()
             .filter(|r| !found_layers.contains(*r))
             .cloned()
             .collect();
         if !missing.is_empty() {
-            self._report_missing_imports(results, file_path, layer_vo, layers_display, &missing, &message_template.value);
+            self._report_missing_imports(
+                results,
+                file_path,
+                layer_vo,
+                layers_display,
+                &missing,
+                &message_template.value,
+            );
         }
     }
 
@@ -270,8 +328,15 @@ impl ArchImportProcessor {
         if name.starts_with('_') {
             let lower = name.to_lowercase();
             let bypass_keywords = [
-                "marker", "stub", "compliance", "dummy", "fake",
-                "bypass", "placeholder", "sentinel", "shim",
+                "marker",
+                "stub",
+                "compliance",
+                "dummy",
+                "fake",
+                "bypass",
+                "placeholder",
+                "sentinel",
+                "shim",
             ];
             if bypass_keywords.iter().any(|kw| lower.contains(kw)) {
                 return true;
@@ -287,15 +352,22 @@ impl ArchImportProcessor {
         class_bases: &std::collections::HashMap<String, Vec<String>>,
         file_path: &FilePath,
     ) -> Vec<String> {
-        let all_bases: std::collections::HashSet<String> = class_bases.values()
+        let all_bases: std::collections::HashSet<String> = class_bases
+            .values()
             .flat_map(|bases| bases.iter().cloned())
             .collect();
 
-        let used_as_base: Vec<String> = aliases.iter().filter(|a| {
-            all_bases.contains(*a)
-                || imported_aliases.get(*a).map_or(false, |v| all_bases.contains(v))
-                || all_bases.iter().any(|b| b.starts_with(&format!("{}.", a)))
-        }).cloned().collect();
+        let used_as_base: Vec<String> = aliases
+            .iter()
+            .filter(|a| {
+                all_bases.contains(*a)
+                    || imported_aliases
+                        .get(*a)
+                        .map_or(false, |v| all_bases.contains(v))
+                    || all_bases.iter().any(|b| b.starts_with(&format!("{}.", a)))
+            })
+            .cloned()
+            .collect();
 
         let is_utility = file_path.to_string().ends_with("_util.py")
             || file_path.to_string().ends_with("_visitor.py");
@@ -320,18 +392,23 @@ impl ArchImportProcessor {
         layer_vo: &LayerNameVO,
         results: &mut crate::taxonomy::LintResultList,
     ) -> bool {
-        let aliases = self._get_contract_barrel_aliases(imported_aliases, real_usages, file_path, layer_vo, results);
+        let aliases = self._get_contract_barrel_aliases(
+            imported_aliases,
+            real_usages,
+            file_path,
+            layer_vo,
+            results,
+        );
         if aliases.is_empty() {
             return false;
         }
-        let used_as_base = self._check_import_stem_matches(&aliases, imported_aliases, class_bases, file_path);
+        let used_as_base =
+            self._check_import_stem_matches(&aliases, imported_aliases, class_bases, file_path);
         if used_as_base.is_empty() {
             return false;
         }
 
-        static CAPTURE_RE: Lazy<Regex> = Lazy::new(|| {
-            Regex::new(r"contract\((.+)\)").unwrap()
-        });
+        static CAPTURE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"contract\((.+)\)").unwrap());
 
         if let Some(caps) = CAPTURE_RE.captures(req_layer_str) {
             let _pattern = caps.get(1).unwrap().as_ref();
@@ -384,9 +461,12 @@ impl ArchImportProcessor {
         real_usages: &std::collections::HashSet<String>,
     ) -> bool {
         for (alias, fullname) in imported_aliases {
-            let module = FilePath::new(fullname.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap());
+            let module =
+                FilePath::new(fullname.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap());
             let detected = analyzer.detect_module_layer(&module);
-            let layer_match = detected.as_ref().map_or(false, |l| self._is_layer_match(l, req_layer));
+            let layer_match = detected
+                .as_ref()
+                .map_or(false, |l| self._is_layer_match(l, req_layer));
             let segment_match = fullname.split('.').any(|s| s == req_layer);
             if (layer_match || segment_match) && real_usages.contains(alias) {
                 return true;

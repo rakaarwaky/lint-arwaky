@@ -1,3 +1,4 @@
+use std::sync::Arc;
 /// Report and security CLI commands for auto-linter.
 use std::collections::HashMap;
 use std::path::Path;
@@ -260,7 +261,7 @@ ToolHandler,
 WatchCommandsAggregate,
 WatchExecutionOrchestratorAggregate};
 pub struct ReportCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl ReportCommandsSurface {
@@ -268,7 +269,7 @@ impl ReportCommandsSurface {
         Self { container: None }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
@@ -305,7 +306,7 @@ impl ReportCommandsSurface {
     }
 }
 
-pub fn register_report_commands(container: ServiceContainerAggregate) -> ReportCommandsSurface {
+pub fn register_report_commands(container: Arc<dyn ServiceContainerAggregate>) -> ReportCommandsSurface {
     let mut surface = ReportCommandsSurface::new();
     surface.register_all(container);
     surface

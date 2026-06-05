@@ -1,11 +1,9 @@
+use crate::contract::{IAnalyzer, IArchRuleProtocol};
 use crate::taxonomy::{
-    file_path_vo::FilePath, path_collection_vo::FilePathList,
-    lint_result_vo::LintResultList, common_error_vo::ModuleName,
-    architecture_analysis_vo::{ImportGraph, ReachabilityResult, InboundLinkMap, GraphAnalysisContext, OrphanIndicatorResult, FileDefinitionMap},
-    architecture_analysis_vo::{InheritanceMap, ModuleToFileMap},
-    layer_definition_vo::LayerDefinition,
+    FileDefinitionMap, FilePath, FilePathList, GraphAnalysisContext, ImportGraph, InboundLinkMap,
+    InheritanceMap, LayerDefinition, LintResultList, ModuleName, ModuleToFileMap,
+    OrphanIndicatorResult, ReachabilityResult,
 };
-use crate::contract::{crate::contract::architecture_rule_protocol::IArchRuleProtocol, crate::contract::architecture_rule_protocol::IAnalyzer};
 use async_trait::async_trait;
 
 #[async_trait]
@@ -45,7 +43,9 @@ pub trait IOrphanGraphProtocol: Send + Sync {
     ) -> FilePathList;
 
     async fn trace_reachability(
-        &self, entry_points: &FilePathList, graph: &ImportGraph,
+        &self,
+        entry_points: &FilePathList,
+        graph: &ImportGraph,
     ) -> ReachabilityResult;
 }
 
@@ -78,7 +78,10 @@ pub trait IOrphanIndicatorProtocol: Send + Sync {
     ) -> OrphanIndicatorResult;
 
     async fn is_agent_orphan(
-        &self, analyzer: &dyn IAnalyzer, f: &FilePath, root_dir: &FilePath,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        f: &FilePath,
+        root_dir: &FilePath,
     ) -> OrphanIndicatorResult;
 
     async fn is_surface_orphan(

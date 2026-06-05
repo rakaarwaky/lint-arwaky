@@ -1,3 +1,4 @@
+use std::sync::Arc;
 /// Plugin and adapter-related CLI commands for auto-linter.
 use crate::taxonomy::{AccessDeniedError,
 ActionArgs,
@@ -247,7 +248,7 @@ ToolHandler,
 WatchCommandsAggregate,
 WatchExecutionOrchestratorAggregate};
 pub struct PluginCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl PluginCommandsSurface {
@@ -255,7 +256,7 @@ impl PluginCommandsSurface {
         Self { container: None }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
@@ -278,7 +279,7 @@ impl PluginCommandsSurface {
     }
 }
 
-pub fn register_plugin_commands(container: ServiceContainerAggregate) -> PluginCommandsSurface {
+pub fn register_plugin_commands(container: Arc<dyn ServiceContainerAggregate>) -> PluginCommandsSurface {
     let mut surface = PluginCommandsSurface::new();
     surface.register_all(container);
     surface

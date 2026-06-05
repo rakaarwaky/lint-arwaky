@@ -1,4 +1,4 @@
-use crate::contract::{crate::contract::linter_adapter_port::ILinterAdapterPort, crate::contract::command_executor_port::ICommandExecutorPort, crate::contract::path_normalization_port::IPathNormalizationPort};
+use crate::contract::{ILinterAdapterPort, ICommandExecutorPort, IPathNormalizationPort};
 use crate::taxonomy::{AccessDeniedError,
 ActionArgs,
 ActionName,

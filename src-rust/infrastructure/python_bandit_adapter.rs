@@ -1,5 +1,5 @@
 /// python_bandit_adapter — Bandit adapter for Python security scanning.
-use crate::contract::{crate::contract::command_executor_port::ICommandExecutorPort, crate::contract::linter_adapter_port::ILinterAdapterPort, crate::contract::path_normalization_port::IPathNormalizationPort, LinterError};
+use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort, LinterError};
 use crate::taxonomy::{AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, FilePath, LineNumber, LintMessage, LintResult, LintResultList, PatternList, ScanError, Severity};
 use std::sync::Arc;
 use std::time::Duration;

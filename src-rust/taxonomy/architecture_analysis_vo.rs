@@ -1,6 +1,9 @@
-use serde::{Serialize, Deserialize};
-use std::collections::{HashMap, HashSet};
 use super::*;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+
+/// A set of file paths.
+pub type FilePathSet = HashSet<FilePath>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FileDefinitionMap {
@@ -84,13 +87,27 @@ impl ReachabilityResult {
 }
 
 impl GraphAnalysisContext {
-    pub fn new(import_graph: ImportGraph, inbound_links: InboundLinkMap, inheritance_map: InheritanceMap, file_definitions: FileDefinitionMap,) -> Self {
-        Self { import_graph, inbound_links, inheritance_map, file_definitions }
+    pub fn new(
+        import_graph: ImportGraph,
+        inbound_links: InboundLinkMap,
+        inheritance_map: InheritanceMap,
+        file_definitions: FileDefinitionMap,
+    ) -> Self {
+        Self {
+            import_graph,
+            inbound_links,
+            inheritance_map,
+            file_definitions,
+        }
     }
 }
 
 impl OrphanIndicatorResult {
-    pub fn new(is_orphan: bool, reason: String, severity: Severity,) -> Self {
-        Self { is_orphan, reason, severity }
+    pub fn new(is_orphan: bool, reason: String, severity: Severity) -> Self {
+        Self {
+            is_orphan,
+            reason,
+            severity,
+        }
     }
 }

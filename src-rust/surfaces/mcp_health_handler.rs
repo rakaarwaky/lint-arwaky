@@ -1,3 +1,4 @@
+use std::sync::Arc;
 /// MCP Health Check Surface.
 use crate::taxonomy::{AccessDeniedError,
 ActionArgs,
@@ -247,11 +248,11 @@ ToolHandler,
 WatchCommandsAggregate,
 WatchExecutionOrchestratorAggregate};
 pub struct McpHealthCheckSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl McpHealthCheckSurface {
-    pub fn new(container: Option<ServiceContainerAggregate>) -> Self {
+    pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
         Self { container }
     }
 
@@ -286,6 +287,6 @@ impl McpHealthCheckSurface {
     }
 }
 
-pub fn register_health_commands(container: ServiceContainerAggregate) -> McpHealthCheckSurface {
+pub fn register_health_commands(container: Arc<dyn ServiceContainerAggregate>) -> McpHealthCheckSurface {
     McpHealthCheckSurface::new(Some(container))
 }

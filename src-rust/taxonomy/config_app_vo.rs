@@ -1,9 +1,6 @@
 use std::env;
 
-use crate::taxonomy::{
-    adapter_name_vo::AdapterName, adapter_collection_vo::AdapterNameList,
-    common_collection_vo::BooleanVO, file_path_vo::DirectoryPath,
-};
+use crate::taxonomy::{AdapterName, AdapterNameList, BooleanVO, DirectoryPath};
 
 /// app_config_vo — Unified configuration for the application.
 
@@ -23,8 +20,8 @@ impl AppConfig {
     /// * `project_root` - Optional project root directory. Defaults to environment variable `PROJECT_ROOT` or current directory.
     /// * `project` - Optional project configuration. Defaults to `ProjectConfig::defaults()`.
     pub fn create(
-        phantom_root: Option<&str>,
-        project_root: Option<&str>,
+        phantom_root: Option<String>,
+        project_root: Option<String>,
         project: Option<crate::taxonomy::ProjectConfig>,
     ) -> Self {
         let p_root = phantom_root
@@ -69,8 +66,7 @@ impl AppConfig {
         let mut values = Vec::new();
         for entry in &self.project.adapters {
             if entry.is_active {
-                values.push(AdapterName::new(entry.name.clone())
-                    .expect("Invalid adapter name"));
+                values.push(AdapterName::new(entry.name.clone()).expect("Invalid adapter name"));
             }
         }
         AdapterNameList { values }
@@ -96,8 +92,8 @@ mod tests {
     #[test]
     fn test_app_config_create() {
         let config = AppConfig::create(
-            Some("/phantom"),
-            Some("/project"),
+            Some("/phantom".to_string()),
+            Some("/project".to_string()),
             Some(ProjectConfig::defaults()),
         );
         assert_eq!(config.phantom_root.to_string(), "/phantom");
