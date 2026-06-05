@@ -1,15 +1,23 @@
 // pipeline_execution_orchestrator — Agent pipeline: receive→think→act→respond orchestrator.
 use crate::contract::{
-    PipelineExecutionOrchestratorAggregate, PipelineInputAggregate, PipelineOutputAggregate,
+    PipelineExecutionOrchestratorAggregate, PipelineInputAggregate, PipelineOutputAggregate, IJobRegistryPort,
 };
 use crate::taxonomy::{
     ActionArgs, BooleanVO, ContentString, ErrorMessage, FilePath, JobId, MetadataVO, ResponseData,
     SuccessStatus, Suggestion,
 };
+use crate::infrastructure::MemoryJobRegistryAdapter;
+use std::sync::OnceLock;
+
+static REGISTRY: OnceLock<MemoryJobRegistryAdapter> = OnceLock::new();
 
 pub struct PipelineExecutionOrchestrator;
 
-impl PipelineExecutionOrchestratorAggregate for PipelineExecutionOrchestrator {}
+impl PipelineExecutionOrchestratorAggregate for PipelineExecutionOrchestrator {
+    fn job_registry(&self) -> &dyn IJobRegistryPort {
+        REGISTRY.get_or_init(MemoryJobRegistryAdapter::new)
+    }
+}
 
 impl PipelineExecutionOrchestrator {
     pub fn new() -> Self {

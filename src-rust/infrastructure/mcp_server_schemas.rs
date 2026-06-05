@@ -1,5 +1,6 @@
 /// mcp_server_schemas — JSON Schema definitions for lint-arwaky tools.
 use crate::taxonomy::MAX_STRING_LENGTH;
+
 use serde_json::Value;
 
 #[derive(Debug, Clone)]

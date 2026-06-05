@@ -1,3 +1,4 @@
+use crate::taxonomy::{FilePath, FixResult};
 use super::*;
 
 pub trait LintFixOrchestratorAggregate: Send + Sync {

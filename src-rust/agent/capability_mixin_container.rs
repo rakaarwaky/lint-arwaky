@@ -3,8 +3,6 @@ use crate::contract::{CapabilityContainerAggregate, ServiceContainerAggregate};
 
 pub struct CapabilityMixinContainer;
 
-impl CapabilityContainerAggregate for CapabilityMixinContainer {}
-
 impl CapabilityMixinContainer {
     pub fn init_capabilities(&self) {
         // In the Python version, this initializes:
@@ -15,6 +13,12 @@ impl CapabilityMixinContainer {
         // - Architecture Compliance: ArchNamingChecker, ArchInternalChecker,
         //   ArchMetricChecker, ArchRoleChecker, ArchComplianceAnalyzer, etc.
         // The Rust port will reify these via the capabilities layer.
+    }
+}
+
+impl CapabilityContainerAggregate for CapabilityMixinContainer {
+    fn _init_capabilities(&mut self) {
+        // stub: matches trait name with underscore
     }
 }
 

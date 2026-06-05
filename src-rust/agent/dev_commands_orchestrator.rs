@@ -2,9 +2,51 @@
 use crate::contract::dev_commands_aggregate::DevCommandsAggregate;
 use std::collections::HashMap;
 
+use async_trait::async_trait;
+use crate::taxonomy::{FilePath, FileFormat};
+
 pub struct DevCommandsOrchestrator;
 
-impl DevCommandsAggregate for DevCommandsOrchestrator {}
+#[async_trait]
+impl DevCommandsAggregate for DevCommandsOrchestrator {
+    async fn diff(&self, path1: FilePath, path2: FilePath, _output_format: FileFormat) {
+        let diff_data = self.get_diff_data(&path1.value, &path2.value).await;
+        println!("Comparison: {:?}", diff_data);
+    }
+
+    async fn suggest(&self, path: FilePath, _ai: bool) {
+        let suggestions = self.get_suggestions(&path.value).await;
+        println!("Suggestions: {:?}", suggestions);
+    }
+
+    async fn ignore(&self, rule: &str, remove: bool, path: Option<FilePath>) {
+        let p = path.map(|fp| fp.value).unwrap_or_else(|| "lint_arwaky.config.yaml".to_string());
+        let res = self.update_ignore_rule(rule, remove, &p);
+        println!("{}", res);
+    }
+
+    async fn config(&self, _action: &str, _path: Option<FilePath>) {
+        println!("Config action: {}", _action);
+    }
+
+    async fn export(&self, _output_format: FileFormat, _output: Option<FilePath>) {
+        println!("Export to format: {:?}", _output_format);
+    }
+
+    async fn init(&self, path: Option<FilePath>) {
+        let p = path.map(|fp| fp.value).unwrap_or_else(|| ".".to_string());
+        let res = self.initialize_config(&p);
+        println!("{}", res);
+    }
+
+    async fn install_hook(&self, _path: Option<FilePath>) {
+        println!("Installing pre-commit hook");
+    }
+
+    async fn uninstall_hook(&self, _path: Option<FilePath>) {
+        println!("Uninstalling pre-commit hook");
+    }
+}
 
 impl Default for DevCommandsOrchestrator {
     fn default() -> Self {

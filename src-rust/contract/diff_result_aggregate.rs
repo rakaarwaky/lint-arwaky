@@ -1,3 +1,6 @@
+use crate::taxonomy::Count;
+use crate::taxonomy::FilePathList;
+use crate::taxonomy::RenamedFile;
 use super::*;
 
 #[derive(Debug, Clone, Default)]

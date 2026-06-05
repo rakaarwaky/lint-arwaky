@@ -5,7 +5,24 @@ use std::io::{self, Write};
 
 pub struct OutputClientOrchestrator;
 
-impl OutputClientAggregate for OutputClientOrchestrator {}
+impl OutputClientAggregate for OutputClientOrchestrator {
+    fn get_output_dir(&self) -> Option<&FilePath> {
+        Some(&FilePath::new("outputs").expect("valid output dir"))
+    }
+
+    fn write_output(
+        &self,
+        output: &str,
+        command: &str,
+        output_format: Option<&FileFormat>,
+    ) -> Option<FilePath> {
+        self.write_output(
+            &LogOutput::new(output),
+            &Identity::new(command),
+            output_format,
+        )
+    }
+}
 
 impl OutputClientOrchestrator {
     pub fn new() -> Self {

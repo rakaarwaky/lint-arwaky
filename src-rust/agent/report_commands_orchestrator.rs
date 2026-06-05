@@ -2,9 +2,24 @@
 use crate::contract::report_commands_aggregate::ReportCommandsAggregate;
 use crate::taxonomy::{FilePath, GovernanceReport, FileFormat};
 
+use async_trait::async_trait;
+
 pub struct ReportCommandsOrchestrator;
 
-impl ReportCommandsAggregate for ReportCommandsOrchestrator {}
+#[async_trait]
+impl ReportCommandsAggregate for ReportCommandsOrchestrator {
+    fn root_path(&self) -> Option<&FilePath> {
+        None
+    }
+    async fn report(&self, path: &FilePath, output_format: &FileFormat) {
+        let report_data = self.run_analysis(path).await;
+        let formatted = self.get_formatted_output(&report_data, output_format);
+        println!("{}", formatted);
+    }
+    async fn security(&self, path: &FilePath) {
+        println!("Running security scan for: {:?}", path);
+    }
+}
 
 impl ReportCommandsOrchestrator {
     pub fn new() -> Self {

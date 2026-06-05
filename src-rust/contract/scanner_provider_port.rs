@@ -1,3 +1,4 @@
+use crate::taxonomy::{DirectoryPath, FilePathList, FileSystemError};
 use super::*;
 
 pub trait IScannerProviderPort: Send + Sync {

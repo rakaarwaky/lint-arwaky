@@ -1,3 +1,4 @@
+use crate::contract::ServiceContainerAggregate;
 use crate::contract::adapter_container_aggregate::AdapterContainerAggregate;
 use crate::contract::agent_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::contract::analysis_orchestrator_aggregate::AnalysisOrchestratorAggregate;

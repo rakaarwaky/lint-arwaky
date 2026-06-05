@@ -1,7 +1,6 @@
 use serde::{Serialize, Deserialize};
 use super::*;
 
-pub const CORE_PRIMITIVE_TYPES: &[&str] = &["str", "int", "float"];
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SymbolNameList {

@@ -1,3 +1,6 @@
+use crate::taxonomy::Count;
+use crate::taxonomy::DirectoryPath;
+use crate::taxonomy::SymbolName;
 use super::*;
 
 pub trait ICodeTransformationProtocol: Send + Sync {

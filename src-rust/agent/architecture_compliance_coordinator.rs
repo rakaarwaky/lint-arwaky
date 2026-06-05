@@ -34,7 +34,7 @@ impl ArchCoordinatorAggregate for ArchComplianceCoordinator {
     async fn scan(&self, path: &FilePath) -> LintResultList {
         let mut results = LintResultList::new(Vec::new());
         for orchestrator in &self.orchestrators {
-            let mut partial = orchestrator.execute(path).await;
+            let mut partial = orchestrator.execute(path);
             results.values.append(&mut partial.values);
         }
         results

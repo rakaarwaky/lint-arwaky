@@ -1,6 +1,6 @@
 /// python_bandit_adapter — Bandit adapter for Python security scanning.
-use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort, LinterError};
-use crate::taxonomy::{AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, FilePath, LineNumber, LintMessage, LintResult, LintResultList, PatternList, ScanError, Severity};
+use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
+use crate::taxonomy::{AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, FilePath, LineNumber, LintMessage, LintResult, LintResultList, PatternList, ScanError, Severity, LinterOperationError};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -19,6 +19,6 @@ impl BanditAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for BanditAdapter {
     fn name(&self) -> AdapterName { AdapterName::new("bandit").unwrap() }
-    async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterError> { Ok(LintResultList::new(Vec::new())) }
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterError> { Ok(ComplianceStatus::new(false)) }
+    async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> { Ok(LintResultList::new(Vec::new())) }
+    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> { Ok(ComplianceStatus::new(false)) }
 }

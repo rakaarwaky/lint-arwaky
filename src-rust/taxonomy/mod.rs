@@ -1,6 +1,3 @@
-// Barrel exports for the Taxonomy layer (AES Architecture)
-// All public domain types are re-exported here for clean cross-layer imports.
-
 pub mod adapter_collection_vo;
 pub mod adapter_name_vo;
 pub mod agent_status_vo;
@@ -29,6 +26,7 @@ pub mod job_action_vo;
 pub mod job_registry_error;
 pub mod layer_content_vo;
 pub mod layer_definition_vo;
+pub mod layer_names_constant;
 pub mod layer_names_vo;
 pub mod lint_adapter_error;
 pub mod lint_code_vo;
@@ -38,16 +36,19 @@ pub mod lint_operation_error;
 pub mod lint_position_vo;
 pub mod lint_result_vo;
 pub mod lint_scan_event;
+pub mod lint_score_constant;
 pub mod lint_score_vo;
 pub mod lint_severity_vo;
 pub mod lint_status_vo;
 pub mod log_suggestion_vo;
 pub mod maintenance_doctor_vo;
 pub mod maintenance_stats_vo;
+pub mod mcp_server_constant;
 pub mod message_status_vo;
 pub mod metrics_provider_error;
 pub mod naming_provider_error;
 pub mod naming_symbol_vo;
+pub mod naming_symbols_constant;
 pub mod naming_symbols_vo;
 pub mod plugin_group_vo;
 pub mod plugin_manager_error;
@@ -65,98 +66,66 @@ pub mod transport_protocol_vo;
 pub mod watch_result_vo;
 pub mod watch_service_error;
 
-// ---- Re-exports (canonical sources) ----
-// Modules without conflicts use wildcard re-export
-pub use adapter_collection_vo::*;
-pub use adapter_name_vo::*;
-pub use agent_status_vo::*;
-pub use architecture_analysis_vo::*;
-pub use architecture_config_vo::*;
-pub use architecture_governance_entity::*;
-pub use architecture_rule_vo::*;
-pub use capability_routing_vo::*;
-pub use command_catalog_constant::*;
-pub use command_metadata_vo::*;
-pub use common_duration_vo::*;
-pub use common_error_vo::*;
-pub use config_app_vo::*;
-pub use config_identifier_vo::*;
-pub use config_provider_error::*;
-pub use config_setting_vo::*;
-pub use doctor_result_vo::*;
-pub use error_code_vo::*;
-pub use file_system_error::*;
-pub use fix_result_vo::*;
-pub use git_diff_vo::*;
-pub use git_hook_error::*;
-pub use git_ref_vo::*;
-pub use job_action_vo::*;
-pub use job_registry_error::*;
-pub use layer_content_vo::*;
-pub use layer_definition_vo::*;
-pub use layer_names_vo::*;
-pub use lint_adapter_error::*;
-pub use lint_domain_vo::*;
-pub use lint_operation_error::*;
-pub use lint_result_vo::*;
-pub use lint_scan_event::*;
-pub use lint_score_vo::*;
-pub use lint_severity_vo::*;
-pub use log_suggestion_vo::*;
-pub use maintenance_stats_vo::*;
-pub use message_status_vo::*;
-pub use metrics_provider_error::*;
-pub use naming_provider_error::*;
-pub use naming_symbol_vo::*;
-pub use naming_symbols_vo::*;
-pub use plugin_group_vo::*;
-pub use plugin_manager_error::*;
-pub use project_summary_vo::*;
-pub use semantic_tracer_error::*;
-pub use source_analysis_vo::*;
-pub use source_content_vo::*;
-pub use source_parser_error::*;
-pub use source_path_vo::*;
-pub use source_paths_vo::*;
-pub use source_suffix_vo::*;
-pub use transport_client_error::*;
-pub use transport_protocol_vo::*;
-pub use watch_result_vo::*;
-pub use watch_service_error::*;
-
-// ---- Constants and defaults ----
-pub const MAX_STRING_LENGTH: usize = 1_000_000;
-
-/// Default AES configuration loader (stub).
-pub fn default_aes_config() -> ArchitectureConfig {
-    ArchitectureConfig::default()
-}
-
-// ---- Modules with conflicts: explicit re-exports only ----
-// common_collection_vo: Timestamp excluded (canonical in common_duration_vo)
-pub use common_collection_vo::{
-    BooleanVO, ColumnNumber, Count, DataFlowList, IntoPatternListValues, JobIdList,
-    LineContentList, LineNumber, PatternList, ResponseDataList, Score,
-};
-
-// lint_code_vo: ErrorCode excluded (canonical in error_code_vo)
-// lint_code_vo has no other public types
-
-// lint_fix_vo: FixResult excluded (canonical in fix_result_vo)
-// lint_fix_vo has no other public types
-
-// lint_position_vo: LineNumber/ColumnNumber excluded (canonical in common_collection_vo)
-pub use lint_position_vo::Position;
-
-// lint_status_vo: TransportUrlVO excluded (canonical in transport_protocol_vo)
-pub use lint_status_vo::{
-    AdapterMetadata, EnvContentVO, JobStatus, LintStatusActionArgs, McpConfigVO, ResponseData,
-    SuccessStatus,
-};
-
-// maintenance_doctor_vo: DoctorResultVO excluded (canonical in doctor_result_vo)
-// maintenance_doctor_vo has no other public types
-
-// source_system_error: FileSystemError/PathNotFoundError/AccessDeniedError excluded
-//   (canonical in file_system_error)
-// source_system_error has no other public types
+pub use adapter_collection_vo::{AdapterClassMap, AdapterMetadataList, AdapterNameList};
+pub use adapter_name_vo::{AdapterName};
+pub use agent_status_vo::{AgentStatus, AgentStatusVO};
+pub use architecture_analysis_vo::{FileDefinitionMap, FilePathSet, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap, ModuleToFileMap, OrphanIndicatorResult, ReachabilityResult};
+pub use architecture_config_vo::{ArchitectureConfig, default_aes_config};
+pub use architecture_governance_entity::{GovernanceReport};
+pub use architecture_rule_vo::{ArchitectureRule, CustomMessageVO, LegacyLayerRule, LegacyLayerRuleList, MandatoryImportRuleVO};
+pub use capability_routing_vo::{CapabilityReference, CapabilityReferenceList, CapabilityRoutingContext, ClassDefinitionMap, ClassFileMap, ClassMethodsVO, ClassNameVO, ClassUsageItem, ClassUsageItemList, ClassUsageMap};
+pub use command_catalog_constant::{COMMAND_CATALOG};
+pub use command_metadata_vo::{CommandMetadataVO};
+pub use common_collection_vo::{BooleanVO, ColumnNumber, Count, DataFlowList, IntoPatternListValues, JobIdList, LineContentList, LineNumber, PatternList, ResponseDataList, Score, Timestamp};
+pub use common_duration_vo::{Duration, Timeout};
+pub use common_error_vo::{Cause, Constraint, ErrorMessage, ExitCode, FieldName, ModuleName, PrimitiveTypeName};
+pub use config_app_vo::{AppConfig};
+pub use config_identifier_vo::{ConfigKey};
+pub use config_provider_error::{ConfigError};
+pub use config_setting_vo::{ActualValue, AdapterEntry, AdapterStatus, ExpectedValue, ProjectConfig, Thresholds};
+pub use doctor_result_vo::{DoctorResultVO};
+pub use error_code_vo::{ErrorCode};
+pub use file_system_error::{AccessDeniedError, FileSystemError, PathNotFoundError};
+pub use fix_result_vo::{FixResult};
+pub use git_diff_vo::{GitDiffResultVO};
+pub use git_hook_error::{GitHookError};
+pub use git_ref_vo::{GitRef};
+pub use job_action_vo::{ActionArgs, ActionName, JobId};
+pub use job_registry_error::{JobError};
+pub use layer_content_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
+pub use layer_definition_vo::{LayerDefinition, LayerMapVO, NamingConfig};
+pub use layer_names_constant::{LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_GLOBAL, LAYER_INFRASTRUCTURE, LAYER_ROOT, LAYER_SURFACES, LAYER_TAXONOMY};
+pub use layer_names_vo::{all_core_layers, core_layer_names, layer_agent, layer_capabilities, layer_contract, layer_global, layer_infrastructure, layer_root, layer_surfaces, layer_taxonomy};
+pub use lint_adapter_error::{AdapterError, ScanError, ValidationError};
+pub use lint_domain_vo::{CommandArgs, Location, LocationList, ScopeBounds, ScopeRef, ViolationConstraint};
+pub use lint_operation_error::{LinterOperationError};
+pub use lint_position_vo::{Position};
+pub use lint_result_vo::{LintResult, LintResultList};
+pub use lint_scan_event::{AdapterRegistered, FixApplied, HookInstalled, HookRemoved, ScanCompleted, ScanFailed, ScanStarted};
+pub use lint_score_constant::{FORMAT_JSON, FORMAT_JUNIT, FORMAT_SARIF, FORMAT_TEXT};
+pub use lint_score_vo::{FileFormat};
+pub use lint_severity_vo::{Severity};
+pub use lint_status_vo::{AdapterMetadata, EnvContentVO, JobStatus, LintStatusActionArgs, McpConfigVO, ResponseData, SuccessStatus, TransportUrlVO};
+pub use log_suggestion_vo::{ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion};
+pub use maintenance_stats_vo::{MaintenanceStatsVO};
+pub use mcp_server_constant::{AUTO_LINT_VERSION, MAX_BATCH_SIZE, MAX_PATH_DEPTH, MAX_PATH_LENGTH, MAX_STRING_LENGTH, MCP_SERVER_VERSION};
+pub use message_status_vo::{ComplianceStatus, LintMessage};
+pub use metrics_provider_error::{MetricsError};
+pub use naming_provider_error::{NamingError};
+pub use naming_symbol_vo::{NameVariants, SymbolName};
+pub use naming_symbols_constant::{CORE_PRIMITIVE_TYPES};
+pub use naming_symbols_vo::{CallChainList, ImportNameList, PrimitiveTypeList, SymbolNameList, primitive_type_list};
+pub use plugin_group_vo::{PluginGroup};
+pub use plugin_manager_error::{DiscoveryError, PluginError, RegistrationError};
+pub use project_summary_vo::{AggregatedResults, ProjectResult};
+pub use semantic_tracer_error::{CallChainError, ScopeResolutionError, SemanticError};
+pub use source_analysis_vo::{ImportInfo, ImportInfoList, PrimitiveViolation, PrimitiveViolationList};
+pub use source_content_vo::{ContentString};
+pub use source_parser_error::{SourceParserError, SyntaxErrorVO};
+pub use source_path_vo::{DirectoryPath, FilePath};
+pub use source_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
+pub use source_suffix_vo::{SuffixPolicyVO, SuffixVO};
+pub use transport_client_error::{TransportError};
+pub use transport_protocol_vo::{TransportEndpoint, TransportProtocol};
+pub use watch_result_vo::{WatchResult};
+pub use watch_service_error::{WatchEventError, WatchServiceError, WatchSubscriptionError};

@@ -1,6 +1,6 @@
 /// python_metrics_adapter — Thin adapters for Python metrics (Radon, file sizes, trends).
 use crate::contract::metrics_provider_port::IMetricsProviderPort;
-use crate::taxonomy::{Count, ErrorMessage, FilePath, MetricsError, ResponseData, ResponseDataList};
+use crate::taxonomy::{Count, FilePath};
 use crate::contract::path_normalization_port::IPathNormalizationPort;
 use std::sync::Arc;
 
@@ -17,31 +17,31 @@ impl MetricsProvider {
 
 #[async_trait::async_trait]
 impl IMetricsProviderPort for MetricsProvider {
-    async fn get_line_count(&self, path: &FilePath) -> Result<Count, MetricsError> {
+    async fn get_line_count(&self, path: &FilePath) -> Count {
         let p = &path.value;
         if !std::path::Path::new(p).is_file() {
-            return Err(MetricsError::new(format!("File not found: {}", p)));
+            return Count::new(0);
         }
         match std::fs::read_to_string(p) {
-            Ok(content) => Ok(Count::new(content.lines().count() as i64)),
-            Err(e) => Err(MetricsError::new(format!("Failed to read: {}", e)))
+            Ok(content) => Count::new(content.lines().count() as i64),
+            Err(_) => Count::new(0),
         }
     }
 
-    async fn get_history(&self) -> Result<Vec<ResponseData>, MetricsError> {
+    async fn get_history(&self) -> Vec<serde_json::Value> {
         if !std::path::Path::new(&self.history_path).exists() {
-            return Ok(Vec::new());
+            return Vec::new();
         }
         let mut history = Vec::new();
         if let Ok(content) = std::fs::read_to_string(&self.history_path) {
             for line in content.lines() {
                 if !line.trim().is_empty() {
                     if let Ok(val) = serde_json::from_str::<serde_json::Value>(line) {
-                        history.push(ResponseData::new(val));
+                        history.push(val);
                     }
                 }
             }
         }
-        Ok(history)
+        history
     }
 }

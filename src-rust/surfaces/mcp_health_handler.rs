@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::collections::HashMap;
 /// MCP Health Check Surface.
 use crate::taxonomy::{AccessDeniedError,
 ActionArgs,

@@ -1,10 +1,21 @@
-// watch_execution_orchestrator — Agent responsibility for file watching.
-use crate::contract::{DirectoryWatchAggregate, WatchExecutionOrchestratorAggregate};
+use crate::contract::{DirectoryWatchAggregate, WatchExecutionOrchestratorAggregate, IJobRegistryPort};
 use crate::taxonomy::{FilePath, GovernanceReport, WatchResult};
+use crate::infrastructure::MemoryJobRegistryAdapter;
+use std::collections::HashMap;
+use std::sync::OnceLock;
+
+static REGISTRY: OnceLock<MemoryJobRegistryAdapter> = OnceLock::new();
 
 pub struct WatchExecutionOrchestrator;
 
-impl WatchExecutionOrchestratorAggregate for WatchExecutionOrchestrator {}
+impl WatchExecutionOrchestratorAggregate for WatchExecutionOrchestrator {
+    fn root_path(&self) -> Option<&FilePath> {
+        None
+    }
+    fn job_registry(&self) -> &dyn IJobRegistryPort {
+        REGISTRY.get_or_init(MemoryJobRegistryAdapter::new)
+    }
+}
 
 impl WatchExecutionOrchestrator {
     pub fn new() -> Self {
@@ -17,7 +28,7 @@ impl WatchExecutionOrchestrator {
         true
     }
 
-    pub async fn execute(&self, _request: &dyn DirectoryWatchAggregate) -> WatchResult {
+    pub async fn execute(&self, _request: &DirectoryWatchAggregate) -> WatchResult {
         // Initial execution for watch mode
         WatchResult {
             file: FilePath::new(".").unwrap(),

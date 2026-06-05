@@ -4,7 +4,7 @@ use crate::contract::{AdapterContainerAggregate, ServiceContainerAggregate};
 pub struct AdapterMixinContainer;
 
 impl AdapterContainerAggregate for AdapterMixinContainer {
-    fn init_adapters(&mut self) {
+    fn _init_adapters(&mut self) {
         // In the Python version, this initializes RuffAdapter, MyPyAdapter, BanditAdapter,
         // ComplexityAdapter, DependencyAdapter, DuplicateAdapter, TrendsAdapter,
         // PrettierAdapter, TSCAdapter, ESLintAdapter, ArchComplianceAdapter.

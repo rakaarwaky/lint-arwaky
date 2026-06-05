@@ -1,3 +1,4 @@
+use crate::taxonomy::Identity;
 use super::*;
 
 pub trait HookManagementOrchestratorAggregate: Send + Sync {

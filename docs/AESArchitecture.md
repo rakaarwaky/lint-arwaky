@@ -91,6 +91,12 @@ Here is the comprehensive specification of each layer in the AES architecture, l
 * **Aggregate: suffix _aggregate**: Composition-based aggregates or facades that group related ports and protocols to define clean subsystem boundaries. It is forbidden to inherit from Port or Protocol directly to enforce rule AES026.
   * *Example*: src/contract/service_container_aggregate.py.
 
+#### Contract Cardinality Rules:
+To maintain structural symmetry and prevent bloated abstractions, the distribution of contracts must satisfy the following ratios:
+* **Protocol Contracts**: The number of protocol contracts must equal the number of capabilities.
+* **Port Contracts**: The number of port contracts must equal the number of infrastructure components.
+* **Aggregate Contracts**: The number of aggregate contracts must equal the number of agents.
+
 ---
 
 ### 3. Capabilities: Domain Logic and Core Use Cases

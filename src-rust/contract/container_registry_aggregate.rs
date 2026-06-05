@@ -1,3 +1,4 @@
+use crate::taxonomy::FilePath;
 use super::*;
 
 pub trait ContainerRegistryAggregate: Send + Sync {

@@ -136,7 +136,7 @@ impl OrphanIndicatorEvaluator {
     }
 }
 
-use crate::taxonomy::layer_names_vo::{
+use crate::taxonomy::layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_SURFACES,
     LAYER_TAXONOMY,
 };

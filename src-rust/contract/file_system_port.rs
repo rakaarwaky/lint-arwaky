@@ -1,14 +1,10 @@
 // file_system_port — Abstract port for file system operations (Contract Layer).
 use async_trait::async_trait;
 
-use crate::taxonomy::adapter_collection_vo::AdapterClassMap;
-use crate::taxonomy::config_setting_vo::ActualValue;
-use crate::taxonomy::config_setting_vo::AdapterEntry;
-use crate::taxonomy::job_action_vo::ActionArgs;
-use crate::taxonomy::job_action_vo::ActionName;
-use crate::taxonomy::lint_adapter_error::AdapterError;
-use crate::taxonomy::lint_status_vo::AdapterMetadata;
-use crate::taxonomy::source_system_error::AccessDeniedError;
+use crate::taxonomy::{
+    ContentString, Count, FilePath, FileSystemError, Identity, PatternList, SuccessStatus,
+};
+
 
 /// Abstract interface for file system operations.
 /// Implemented by Infrastructure (e.g., OSFileSystemAdapter).

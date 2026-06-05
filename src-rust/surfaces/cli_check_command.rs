@@ -323,7 +323,7 @@ impl CheckCommandsSurface {
         lines.join("\n")
     }
 
-    async fn handle_git_diff(&self, container: &ServiceContainerAggregate, project_path: &FilePath) {
+    async fn handle_git_diff(&self, container: &dyn ServiceContainerAggregate, project_path: &FilePath) {
         // In real impl: call container.analysis_orchestrator.run
         let report = GovernanceReport {
             results: vec![],
@@ -334,7 +334,7 @@ impl CheckCommandsSurface {
         println!("{report_text}");
     }
 
-    async fn handle_full_analysis(&self, container: &ServiceContainerAggregate, project_path: &FilePath) {
+    async fn handle_full_analysis(&self, container: &dyn ServiceContainerAggregate, project_path: &FilePath) {
         println!(" Running analysis on {}...", project_path.value);
         let report = GovernanceReport {
             results: vec![],

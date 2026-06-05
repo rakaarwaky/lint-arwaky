@@ -1,6 +1,6 @@
 /// python_mypy_adapter — MyPy adapter for Python type checking.
-use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort, LinterError};
-use crate::taxonomy::{AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, FilePath, LineNumber, LintMessage, LintResult, LintResultList, ScanError, Severity, ErrorMessage};
+use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
+use crate::taxonomy::{AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, FilePath, LineNumber, LintMessage, LintResult, LintResultList, ScanError, Severity, ErrorMessage, LinterOperationError};
 use regex::Regex;
 use std::sync::Arc;
 use std::time::Duration;
@@ -28,6 +28,6 @@ impl MyPyAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for MyPyAdapter {
     fn name(&self) -> AdapterName { AdapterName::new("mypy").unwrap() }
-    async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterError> { Ok(LintResultList::new(Vec::new())) }
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterError> { Ok(ComplianceStatus::new(false)) }
+    async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> { Ok(LintResultList::new(Vec::new())) }
+    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> { Ok(ComplianceStatus::new(false)) }
 }

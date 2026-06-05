@@ -1,13 +1,46 @@
-// multi_project_orchestrator — Orchestrates multi-project scans.
+use async_trait::async_trait;
 use crate::contract::project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use crate::taxonomy::{
-    AggregatedResults, ComplianceStatus, Count, FilePath, PatternList, ProjectResult, Score,
+    AggregatedResults, ComplianceStatus, Count, FilePath, FilePathList, PatternList, ProjectResult, Score,
 };
 use std::collections::HashMap;
 
 pub struct MultiProjectOrchestrator;
 
-impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {}
+#[async_trait]
+impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
+    fn root_path(&self) -> Option<&FilePath> {
+        None
+    }
+
+    async fn analyze_project(&self, path: &FilePath) -> ProjectResult {
+        self.analyze_project_old(path).await
+    }
+
+    async fn scan_all_projects(
+        &self,
+        paths: &FilePathList,
+        max_concurrency: Count,
+    ) -> AggregatedResults {
+        self.scan_all_projects_old(&paths.values, max_concurrency.value as usize).await
+    }
+
+    fn load_config(config_path: Option<&FilePath>) -> FilePathList {
+        let orchestrator = Self::new();
+        let path_str = match config_path {
+            Some(fp) => &fp.value,
+            None => "",
+        };
+        let projects = orchestrator.load_config_old(path_str);
+        FilePathList::new(projects.into_iter().map(FilePath::new).collect())
+    }
+
+    fn find_projects(root: &FilePath, config_name: &str) -> FilePathList {
+        let orchestrator = Self::new();
+        let projects = orchestrator.find_projects_old(root, config_name);
+        FilePathList::new(projects)
+    }
+}
 
 impl Default for MultiProjectOrchestrator {
     fn default() -> Self {
@@ -20,7 +53,7 @@ impl MultiProjectOrchestrator {
         Self
     }
 
-    pub async fn analyze_project(&self, path: &FilePath) -> ProjectResult {
+    pub async fn analyze_project_old(&self, path: &FilePath) -> ProjectResult {
         // Analyze a single project
         // In full implementation, gets the project-specific container and runs analysis
         ProjectResult {
@@ -33,7 +66,7 @@ impl MultiProjectOrchestrator {
         }
     }
 
-    pub async fn scan_all_projects(
+    pub async fn scan_all_projects_old(
         &self,
         paths: &[FilePath],
         _max_concurrency: usize,
@@ -41,7 +74,7 @@ impl MultiProjectOrchestrator {
         // Scan a specific list of projects with semaphore-limited concurrency
         let mut results = Vec::new();
         for path in paths {
-            let result = self.analyze_project(path).await;
+            let result = self.analyze_project_old(path).await;
             results.push(result);
         }
         self.aggregate_results(results)
@@ -70,7 +103,7 @@ impl MultiProjectOrchestrator {
         }
     }
 
-    pub fn load_config(&self, config_path: &str) -> Vec<String> {
+    pub fn load_config_old(&self, config_path: &str) -> Vec<String> {
         // Load list of project paths from a config file
         let path = std::path::Path::new(config_path);
         if !path.exists() {
@@ -90,7 +123,7 @@ impl MultiProjectOrchestrator {
         Vec::new()
     }
 
-    pub fn find_projects(&self, root: &FilePath, config_name: &str) -> Vec<FilePath> {
+    pub fn find_projects_old(&self, root: &FilePath, config_name: &str) -> Vec<FilePath> {
         // Find all projects with lint-arwaky configs
         let root_path = std::path::Path::new(&root.value);
         let mut projects = Vec::new();

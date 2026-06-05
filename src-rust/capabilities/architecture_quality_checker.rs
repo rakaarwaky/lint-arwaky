@@ -1,4 +1,5 @@
 /// Architecture rule checking: bypass comments and unused imports.
+use crate::contract::IFileSystemPort;
 use crate::contract::{AdapterContainerAggregate,
 AgentLifecycleAggregate,
 AnalysisOrchestratorAggregate,

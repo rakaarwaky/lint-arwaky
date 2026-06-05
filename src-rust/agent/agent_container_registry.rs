@@ -1,4 +1,5 @@
 // agent_container_registry — Registry and provider for project-specific DI containers.
+use crate::taxonomy::FilePath;
 use crate::contract::{ServiceContainerAggregate, ContainerRegistryAggregate};
 use crate::taxonomy::source_path_vo::DirectoryPath;
 use std::collections::HashMap;
@@ -15,38 +16,31 @@ static CONTAINER_REGISTRY: Lazy<Mutex<HashMap<String, ()>>> = Lazy::new(|| {
 pub struct AgentContainerRegistry;
 
 impl AgentContainerRegistry {
-    pub fn get_container(project_root: Option<DirectoryPath>) -> Box<dyn ServiceContainerAggregate> {
-        // Normalize path
-        let root = project_root.unwrap_or_else(|| {
-            DirectoryPath::new(".").unwrap()
-        });
-        let key = root.value.clone();
-
+    pub fn get_container(project_root: Option<&FilePath>) -> Box<dyn ServiceContainerAggregate> {
+        let key = project_root.map(|p| p.value.clone()).unwrap_or_else(|| ".".to_string());
         let mut registry = CONTAINER_REGISTRY.lock().unwrap();
-        if !registry.contains_key(&key) {
-            registry.insert(key.clone(), ());
-        }
-        // Returns placeholder — real Container creation deferred to DI container module
+        registry.insert(key.clone(), ());
         Box::new(StubContainer)
     }
 
-    pub fn reset_container(project_root: Option<DirectoryPath>) {
+    pub fn reset_container(project_root: Option<&FilePath>) {
+        let key = project_root.map(|p| p.value.clone());
         let mut registry = CONTAINER_REGISTRY.lock().unwrap();
-        match project_root {
-            Some(root) => {
-                registry.remove(&root.value);
-            }
-            None => {
-                registry.clear();
-            }
+        match key {
+            Some(root) => { registry.remove(&root); }
+            None => { registry.clear(); }
         }
     }
 }
 
-impl ContainerRegistryAggregate for AgentContainerRegistry {}
+impl ContainerRegistryAggregate for AgentContainerRegistry {
+    fn get_container(project_root: Option<&FilePath>) -> Box<dyn ServiceContainerAggregate> {
+        Self::get_container(project_root)
+    }
+    fn reset_container(project_root: Option<&FilePath>) {
+        Self::reset_container(project_root)
+    }
+}
 
 struct StubContainer;
 impl ServiceContainerAggregate for StubContainer {}
-
-pub use AgentContainerRegistry as get_container;
-pub use AgentContainerRegistry as reset_container;

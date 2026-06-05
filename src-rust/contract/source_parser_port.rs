@@ -3,7 +3,7 @@ use crate::taxonomy::{
     PrimitiveViolationList, ResponseData, SourceParserError, SuccessStatus, SymbolName,
 };
 
-pub trait ISourceParserPort {
+pub trait ISourceParserPort: Send + Sync {
     fn extract_imports(&self, path: &FilePath) -> Result<ImportInfoList, SourceParserError>;
     fn get_raw_symbols(&self, path: &FilePath) -> Result<ResponseData, SourceParserError>;
     fn get_class_attributes(&self, path: &FilePath) -> ResponseData;

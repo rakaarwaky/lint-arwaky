@@ -1,6 +1,6 @@
 /// memory_registry_adapter — In-memory job tracking implementation.
 use crate::contract::job_registry_port::IJobRegistryPort;
-use crate::taxonomy::{Count, Duration, ErrorMessage, Identity, JobId, MetadataVO, ResponseData, SuccessStatus, BooleanVO, JobError, JobStatus};
+use crate::taxonomy::{Count, Duration, ErrorMessage, Identity, JobId, MetadataVO, ResponseData, SuccessStatus, BooleanVO, JobError, JobStatus, StdOutput, StdError, ExitCode};
 use std::collections::HashMap;
 use tokio::sync::Mutex;
 
@@ -19,12 +19,21 @@ pub struct MemoryJobRegistryAdapter {
     jobs: Mutex<HashMap<String, JobRecord>>,
 }
 
+impl Default for MemoryJobRegistryAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MemoryJobRegistryAdapter {
     pub fn new() -> Self {
         Self { jobs: Mutex::new(HashMap::new()) }
     }
+}
 
-    pub async fn create_job(&self, action: &str) -> JobId {
+#[async_trait::async_trait]
+impl IJobRegistryPort for MemoryJobRegistryAdapter {
+    async fn create_job(&self, action: &str) -> Result<JobId, JobError> {
         let job_id = format!("{:x}", rand::random::<u32>());
         let record = JobRecord {
             id: job_id.clone(),
@@ -36,19 +45,19 @@ impl MemoryJobRegistryAdapter {
             completed_at: None,
         };
         self.jobs.lock().await.insert(job_id.clone(), record);
-        JobId::new(job_id)
+        Ok(JobId::new(job_id))
     }
 
-    pub async fn complete_job(&self, job_id: &JobId, result: &ResponseData) {
+    async fn complete_job(&self, job_id: &JobId, result: &ResponseData) {
         let mut jobs = self.jobs.lock().await;
         if let Some(record) = jobs.get_mut(&job_id.value) {
             record.status = "completed".to_string();
-            record.result = result.value.as_ref().map(|v| v.to_string());
+            record.result = Some(format!("{:?}", result));
             record.completed_at = Some(chrono::Utc::now().to_rfc3339());
         }
     }
 
-    pub async fn fail_job(&self, job_id: &JobId, error: &ErrorMessage) {
+    async fn fail_job(&self, job_id: &JobId, error: &ErrorMessage) {
         let mut jobs = self.jobs.lock().await;
         if let Some(record) = jobs.get_mut(&job_id.value) {
             record.status = "failed".to_string();
@@ -57,7 +66,7 @@ impl MemoryJobRegistryAdapter {
         }
     }
 
-    pub async fn list_jobs(&self) -> Vec<serde_json::Value> {
+    async fn list_jobs(&self) -> Vec<serde_json::Value> {
         let jobs = self.jobs.lock().await;
         jobs.values().map(|j| serde_json::json!({
             "id": j.id,
@@ -68,7 +77,16 @@ impl MemoryJobRegistryAdapter {
         })).collect()
     }
 
-    pub async fn cancel_job(&self, job_id: &JobId) -> SuccessStatus {
+    async fn get_job(&self, job_id: &JobId) -> Option<JobId> {
+        let jobs = self.jobs.lock().await;
+        if jobs.contains_key(&job_id.value) {
+            Some(job_id.clone())
+        } else {
+            None
+        }
+    }
+
+    async fn cancel_job(&self, job_id: &JobId) -> SuccessStatus {
         let mut jobs = self.jobs.lock().await;
         if let Some(record) = jobs.get_mut(&job_id.value) {
             record.status = "cancelled".to_string();
@@ -78,35 +96,18 @@ impl MemoryJobRegistryAdapter {
             SuccessStatus::new(false)
         }
     }
-}
 
-#[async_trait::async_trait]
-impl IJobRegistryPort for MemoryJobRegistryAdapter {
-    async fn create_job(&self, action: &str) -> Result<JobId, JobError> {
-        unimplemented!()
-    }
-    async fn complete_job(&self, job_id: &JobId, result: &ResponseData) {
-        unimplemented!()
-    }
-    async fn fail_job(&self, job_id: &JobId, error: &ErrorMessage) {
-        unimplemented!()
-    }
-    async fn list_jobs(&self) -> Vec<serde_json::Value> {
-        unimplemented!()
-    }
-    async fn get_job(&self, job_id: &JobId) -> Option<JobId> {
-        unimplemented!()
-    }
-    async fn cancel_job(&self, job_id: &JobId) -> SuccessStatus {
-        unimplemented!()
-    }
     async fn run_with_retry(
         &self,
-        operation: &str,
-        max_retries: u32,
-        base_delay: Duration,
+        _operation: &str,
+        _max_retries: u32,
+        _base_delay: Duration,
     ) -> ResponseData {
-        unimplemented!()
+        ResponseData::new(
+            StdOutput::new("success"),
+            StdError::new(""),
+            ExitCode::new(0),
+            MetadataVO::new(HashMap::new()),
+        )
     }
 }
-

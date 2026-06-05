@@ -1,3 +1,6 @@
+use crate::taxonomy::FilePath;
+use crate::taxonomy::GitHookError;
+use crate::taxonomy::SuccessStatus;
 use super::*;
 
 pub trait IHookManagerPort: Send + Sync {

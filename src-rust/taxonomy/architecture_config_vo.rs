@@ -56,3 +56,7 @@ impl Default for ArchitectureConfig {
         }
     }
 }
+
+pub fn default_aes_config() -> ArchitectureConfig {
+    ArchitectureConfig::default()
+}

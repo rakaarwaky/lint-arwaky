@@ -11,31 +11,30 @@ impl JavascriptNamingProvider {
     }
 }
 
-#[async_trait::async_trait]
 impl INamingProviderPort for JavascriptNamingProvider {
-    async fn get_variants(&self, name: &SymbolName) -> Result<NameVariants, crate::taxonomy::NamingError> {
+    fn get_variants(&self, name: &SymbolName) -> NameVariants {
         let name_str = &name.value;
         let words: Vec<String> = Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
-            .unwrap().find_iter(name_str).map(|m| m.as_ref().to_lowercase()).collect();
+            .unwrap().find_iter(name_str).map(|m| m.as_str().to_lowercase()).collect();
         if words.is_empty() {
-            return Ok(NameVariants::new(vec![SymbolName::new(name_str.clone())]));
+            return NameVariants::new(vec![SymbolName::new(name_str.clone())]);
         }
         let snake_case = words.join("_");
         let first = words[0].clone();
         let rest: String = words[1..].iter().map(|w| {
             let mut c = w.chars();
-            match c.next() { Some(ch) => ch.to_uppercase().to_string() + c.as_ref(), None => String::new() }
+            match c.next() { Some(ch) => ch.to_uppercase().to_string() + c.as_str(), None => String::new() }
         }).collect();
         let camel_case = format!("{}{}", first, rest);
         let pascal_case: String = words.iter().map(|w| {
             let mut c = w.chars();
-            match c.next() { Some(ch) => ch.to_uppercase().to_string() + c.as_ref(), None => String::new() }
+            match c.next() { Some(ch) => ch.to_uppercase().to_string() + c.as_str(), None => String::new() }
         }).collect();
         let screaming_snake = snake_case.to_uppercase();
         let kebab = snake_case.replace('_', "-");
         let mut variants = vec![name_str.clone(), snake_case, camel_case, pascal_case, screaming_snake, kebab];
         variants.sort();
         variants.dedup();
-        Ok(NameVariants::new(variants.into_iter().map(SymbolName::new).collect()))
+        NameVariants::new(variants.into_iter().map(SymbolName::new).collect())
     }
 }

@@ -21,6 +21,11 @@ impl ErrorCode {
         Ok(ErrorCode { code })
     }
 
+    /// Create a raw ErrorCode without error validation.
+    pub fn raw<S: Into<String>>(code: S) -> Self {
+        ErrorCode { code: code.into() }
+    }
+
     /// Returns true if the code is a style error (starts with E, W, or D).
     pub fn is_style(&self) -> bool {
         self.code.starts_with('E') || self.code.starts_with('W') || self.code.starts_with('D')

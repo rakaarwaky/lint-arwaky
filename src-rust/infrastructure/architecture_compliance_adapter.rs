@@ -1,6 +1,6 @@
 /// arch_compliance_adapter — Infrastructure adapter that wraps architectural compliance checking.
-use crate::contract::{IArchCompliancePort, ILinterAdapterPort, LinterError};
-use crate::taxonomy::{AdapterError, AdapterName, ComplianceStatus, ErrorMessage, FilePath, LintResultList, ScanError};
+use crate::contract::{IArchCompliancePort, ILinterAdapterPort};
+use crate::taxonomy::{AdapterError, AdapterName, ComplianceStatus, ErrorMessage, FilePath, LintResultList, ScanError, LinterOperationError};
 use std::sync::Arc;
 
 pub struct ArchComplianceAdapter {
@@ -16,14 +16,14 @@ impl ArchComplianceAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for ArchComplianceAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("architecture")
+        AdapterName::new("architecture").unwrap()
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterError> {
+    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         Ok(self.coordinator.scan(path).await)
     }
 
-    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterError> {
+    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(self.coordinator.apply_fix(path).await)
     }
 }

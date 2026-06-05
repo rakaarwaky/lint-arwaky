@@ -173,8 +173,6 @@ WatchServiceError,
 WatchSubscriptionError};
 use serde_json::json;
 
-use crate::taxonomy::lint_score_vo::{FORMAT_TEXT, FORMAT_JSON, FORMAT_SARIF, FORMAT_JUNIT};
-
 /// Business logic for transforming GovernanceReports into standard formats.
 pub struct ReportFormatterProcessor;
 

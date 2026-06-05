@@ -13,4 +13,4 @@ pub struct GitDiffResult {
     pub total_changed: Count,
 }
 
-impl GitDiffResultAggregate for GitDiffResult {}
+// No-op - GitDiffResultAggregate is a struct, not a trait.

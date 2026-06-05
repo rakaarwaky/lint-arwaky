@@ -1,3 +1,5 @@
+use crate::taxonomy::FilePath;
+use crate::taxonomy::WatchServiceError;
 use super::*;
 
 #[async_trait::async_trait]

@@ -1,4 +1,3 @@
-// Auto-generated at 2026-06-05T22:44:59.260674
 pub mod adapter_mixin_container;
 pub mod agent_container_registry;
 pub mod agent_job_registry;
@@ -27,3 +26,32 @@ pub mod report_commands_orchestrator;
 pub mod setup_management_orchestrator;
 pub mod watch_commands_orchestrator;
 pub mod watch_execution_orchestrator;
+
+pub use adapter_mixin_container::{AdapterMixinContainer};
+pub use agent_container_registry::{AgentContainerRegistry};
+pub use agent_job_registry::{JobRegistry};
+pub use analysis_execution_orchestrator::{AnalysisOrchestrator};
+pub use architecture_compliance_coordinator::{ArchComplianceCoordinator};
+pub use architecture_compliance_orchestrator::{ArchitectureOrchestrator};
+pub use architecture_lint_orchestrator::{ArchLintPipelineOrchestrator, ArchitectureLintOrchestrator};
+pub use capability_mixin_container::{CapabilityMixinContainer};
+pub use dependency_injection_container::{Container, DependencyInjectionContainer};
+pub use dev_commands_orchestrator::{DevCommandsOrchestrator};
+pub use git_commands_orchestrator::{GitCommandsOrchestrator};
+pub use git_diff_manager::{GitDiffResult};
+pub use hook_management_orchestrator::{HookManagementOrchestrator};
+pub use infrastructure_mixin_container::{InfrastructureMixinContainer};
+pub use lifecycle_state_manager::{AgentState, get_state};
+pub use lint_fix_orchestrator::{LintFixOrchestrator};
+pub use maintenance_commands_orchestrator::{MaintenanceCommandsOrchestrator};
+pub use multi_project_orchestrator::{MultiProjectOrchestrator};
+pub use orchestrator_mixin_container::{OrchestratorMixinContainer};
+pub use output_client_orchestrator::{OutputClientOrchestrator};
+pub use pipeline_action_orchestrator::{PipelineActionDispatcher};
+pub use pipeline_execution_orchestrator::{PipelineExecutionOrchestrator};
+pub use pipeline_extended_orchestrator::{PipelineExtendedOrchestrator};
+pub use plugin_commands_orchestrator::{PluginCommandsOrchestrator};
+pub use report_commands_orchestrator::{ReportCommandsOrchestrator};
+pub use setup_management_orchestrator::{SetupManagementOrchestrator};
+pub use watch_commands_orchestrator::{WatchCommandsOrchestrator};
+pub use watch_execution_orchestrator::{WatchExecutionOrchestrator};

@@ -6,7 +6,30 @@ use std::path::{Path, PathBuf};
 
 pub struct MaintenanceCommandsOrchestrator;
 
-impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {}
+use async_trait::async_trait;
+
+#[async_trait]
+impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
+    async fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
+        self.stats_old(project_path)
+    }
+
+    async fn clean(&self) {
+        self.clean_old();
+    }
+
+    async fn update(&self) {
+        self.update_old();
+    }
+
+    async fn doctor(&self) -> DoctorResultVO {
+        self.doctor_old()
+    }
+
+    async fn cancel(&self, job_id: JobId) {
+        self.cancel_old(job_id).await;
+    }
+}
 
 fn walk_dir(dir: &Path, py_files: &mut Vec<PathBuf>) {
     if let Ok(entries) = std::fs::read_dir(dir) {
@@ -51,7 +74,7 @@ impl MaintenanceCommandsOrchestrator {
         Self
     }
 
-    pub fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
+    pub fn stats_old(&self, project_path: &FilePath) -> MaintenanceStatsVO {
         let root = Path::new(&project_path.value);
         let mut py_files = Vec::new();
         walk_dir(root, &mut py_files);
@@ -79,7 +102,7 @@ impl MaintenanceCommandsOrchestrator {
         }
     }
 
-    pub fn clean(&self) {
+    pub fn clean_old(&self) {
         let cwd = std::env::current_dir().ok();
         if let Some(cwd) = cwd {
             let cache_dirs = [
@@ -97,7 +120,7 @@ impl MaintenanceCommandsOrchestrator {
         }
     }
 
-    pub fn update(&self) {
+    pub fn update_old(&self) {
         let adapters = ["ruff", "mypy", "bandit", "radon"];
         for adapter in &adapters {
             let _ = std::process::Command::new("pip")
@@ -106,7 +129,7 @@ impl MaintenanceCommandsOrchestrator {
         }
     }
 
-    pub fn doctor(&self) -> DoctorResultVO {
+    pub fn doctor_old(&self) -> DoctorResultVO {
         let mut issues = Vec::new();
         let mut adapter_statuses = HashMap::new();
 
@@ -163,7 +186,7 @@ impl MaintenanceCommandsOrchestrator {
         }
     }
 
-    pub async fn cancel(&self, _job_id: JobId) {
+    pub async fn cancel_old(&self, _job_id: JobId) {
         // Cancel a running lint job
     }
 }

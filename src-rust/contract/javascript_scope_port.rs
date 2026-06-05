@@ -17,3 +17,12 @@ pub trait IJavascriptScopePort: Send + Sync {
         scope_line: Option<LineNumber>,
     ) -> Result<Option<ScopeBounds>, SemanticError>;
 }
+
+#[async_trait]
+pub trait IJsTracerPort: Send + Sync {
+    async fn show_enclosing_scope(
+        &self,
+        file_path: &crate::taxonomy::FilePath,
+        line: LineNumber,
+    ) -> Result<Option<crate::taxonomy::ScopeRef>, SemanticError>;
+}

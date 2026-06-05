@@ -1,3 +1,5 @@
+use crate::taxonomy::SymbolName;
+use crate::taxonomy::SymbolNameList;
 use super::*;
 
 pub trait INamingVariantPort: Send + Sync {

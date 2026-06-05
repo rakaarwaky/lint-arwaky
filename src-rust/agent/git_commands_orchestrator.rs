@@ -7,7 +7,31 @@ pub struct GitCommandsOrchestrator {
     git_path: String,
 }
 
-impl GitCommandsAggregate for GitCommandsOrchestrator {}
+use async_trait::async_trait;
+use crate::taxonomy::LintResultList;
+
+#[async_trait]
+impl GitCommandsAggregate for GitCommandsOrchestrator {
+    async fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
+        self.run_git_diff_check_old(&(), path).await;
+        LintResultList::new(Vec::new())
+    }
+
+    async fn get_diff(&self, path: &FilePath) -> GitDiffResultAggregate {
+        let default_branch = self.get_default_branch(path);
+        let changed_files = self.collect_changed_files(path, &default_branch);
+        let filtered = changed_files.clone();
+        GitDiffResultAggregate {
+            added: FilePathList::new(Vec::new()),
+            modified: filtered.clone(),
+            deleted: FilePathList::new(Vec::new()),
+            renamed: Vec::new(),
+            lintable_files: changed_files.clone(),
+            all_files: changed_files,
+            total_changed: Count::new(filtered.values.len() as i64),
+        }
+    }
+}
 
 impl GitCommandsOrchestrator {
     pub fn new() -> Self {
@@ -21,7 +45,7 @@ impl GitCommandsOrchestrator {
         Self { git_path: git }
     }
 
-    pub async fn run_git_diff_check(&self, _container: &(), path: &FilePath) {
+    pub async fn run_git_diff_check_old(&self, _container: &(), path: &FilePath) {
         let default_branch = self.get_default_branch(path);
         let _changed_files = self.collect_changed_files(path, &default_branch);
     }
@@ -169,11 +193,11 @@ impl GitCommandsOrchestrator {
         changed_files.clone()
     }
 
-    pub async fn get_diff(&self, path: &FilePath) -> Box<dyn GitDiffResultAggregate> {
+    pub async fn get_diff_old(&self, path: &FilePath) -> crate::agent::git_diff_manager::GitDiffResult {
         let default_branch = self.get_default_branch(path);
         let changed_files = self.collect_changed_files(path, &default_branch);
         let filtered = changed_files.clone();
-        Box::new(crate::agent::git_diff_manager::GitDiffResult {
+        crate::agent::git_diff_manager::GitDiffResult {
             added: FilePathList::new(Vec::new()),
             modified: filtered.clone(),
             deleted: FilePathList::new(Vec::new()),
@@ -181,6 +205,6 @@ impl GitCommandsOrchestrator {
             lintable_files: changed_files.clone(),
             all_files: changed_files,
             total_changed: Count::new(filtered.values.len() as i64),
-        })
+        }
     }
 }

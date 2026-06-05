@@ -12,7 +12,7 @@ use once_cell::sync::Lazy;
 use crate::taxonomy::{
     AdapterName, CapabilityReference, CapabilityReferenceList, CapabilityRoutingContext,
     ClassDefinitionMap, ClassFileMap, ClassUsageItem, ClassUsageItemList,
-    ClassUsageMap, ErrorCode, FilePath, LineNumber,
+    ClassUsageMap, ErrorCode, FilePath, LineNumber, ColumnNumber,
     LintMessage, LintResult, Severity,
 };
 use crate::contract::architecture_rule_protocol::IAnalyzer;

@@ -7,14 +7,33 @@ use std::collections::HashMap;
 
 pub struct PipelineActionDispatcher;
 
-impl PipelineActionDispatcherAggregate for PipelineActionDispatcher {}
+#[async_trait::async_trait]
+impl PipelineActionDispatcherAggregate for PipelineActionDispatcher {
+    fn root_path(&self) -> Option<&FilePath> {
+        None
+    }
+
+    async fn dispatch(&self, action: &str, args: serde_json::Value) -> serde_json::Value {
+        let action_vo = ContentString::new(action);
+        let mut meta_map = std::collections::HashMap::new();
+        meta_map.insert("args".to_string(), args);
+        let metadata_vo = MetadataVO::new(meta_map);
+        let res = self.dispatch_old(&action_vo, &metadata_vo).await;
+        serde_json::to_value(res).unwrap_or(serde_json::Value::Null)
+    }
+
+    fn validate_action(&self, action: &str) -> bool {
+        let action_vo = ContentString::new(action);
+        self.validate_action_old(&action_vo).value
+    }
+}
 
 impl PipelineActionDispatcher {
     pub fn new() -> Self {
         Self
     }
 
-    pub async fn dispatch(&self, action: &ContentString, _args: &MetadataVO) -> ResponseData {
+    pub async fn dispatch_old(&self, action: &ContentString, _args: &MetadataVO) -> ResponseData {
         let action_str = &action.value;
 
         // Handler map for known actions
@@ -180,7 +199,7 @@ impl PipelineActionDispatcher {
         )
     }
 
-    pub fn validate_action(&self, action: &ContentString) -> BooleanVO {
+    pub fn validate_action_old(&self, action: &ContentString) -> BooleanVO {
         let known_actions = [
             "check",
             "scan",

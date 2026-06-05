@@ -1,3 +1,5 @@
+use crate::taxonomy::FilePath;
+use crate::taxonomy::SymbolName;
 use super::*;
 
 pub trait IUnusedProtocol: Send + Sync {

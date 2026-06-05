@@ -3,7 +3,11 @@ use crate::contract::{OrchestratorContainerAggregate, ServiceContainerAggregate}
 
 pub struct OrchestratorMixinContainer;
 
-impl OrchestratorContainerAggregate for OrchestratorMixinContainer {}
+impl OrchestratorContainerAggregate for OrchestratorMixinContainer {
+    fn _init_orchestrators(&mut self) {
+        // Orchestrator initialization stub.
+    }
+}
 
 impl OrchestratorMixinContainer {
     pub fn init_orchestrators(&self) {

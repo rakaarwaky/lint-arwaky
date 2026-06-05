@@ -1,7 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::infrastructure::mcp_server_constants::{AUTO_LINT_VERSION, MCP_SERVER_VERSION};
-use crate::taxonomy::{DirectoryPath, FilePath};
+use crate::taxonomy::{AUTO_LINT_VERSION, MCP_SERVER_VERSION, DirectoryPath, FilePath};
 use tracing::info;
 
 /// Context object yielded by the lifespan manager.

@@ -20,6 +20,11 @@ impl AdapterName {
         }
         Ok(AdapterName { value: value.trim().to_string() })
     }
+
+    /// Create a raw AdapterName without error validation (for static compile-time safe inputs).
+    pub fn raw<S: Into<String>>(value: S) -> Self {
+        AdapterName { value: value.into() }
+    }
 }
 
 impl std::ops::Deref for AdapterName {

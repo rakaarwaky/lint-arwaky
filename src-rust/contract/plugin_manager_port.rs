@@ -1,3 +1,6 @@
+use crate::taxonomy::AdapterMetadata;
+use crate::taxonomy::AdapterName;
+use crate::taxonomy::PluginError;
 use super::*;
 
 pub trait IPluginManagerPort: Send + Sync {

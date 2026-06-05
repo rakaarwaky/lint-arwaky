@@ -1,3 +1,5 @@
+use crate::taxonomy::FilePath;
+use crate::taxonomy::LintResultList;
 use async_trait::async_trait;
 use super::*;
 

@@ -1,3 +1,6 @@
+use crate::taxonomy::ConfigError;
+use crate::taxonomy::DirectoryPath;
+use crate::taxonomy::FilePath;
 use super::*;
 
 pub trait IConfigDiscoveryPort: Send + Sync {

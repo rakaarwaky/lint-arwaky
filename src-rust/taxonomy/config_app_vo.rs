@@ -65,7 +65,7 @@ impl AppConfig {
     pub fn active_adapters(&self) -> AdapterNameList {
         let mut values = Vec::new();
         for entry in &self.project.adapters {
-            if entry.is_active {
+            if entry.is_active() {
                 values.push(AdapterName::new(entry.name.clone()).expect("Invalid adapter name"));
             }
         }

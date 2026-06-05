@@ -1,3 +1,4 @@
+use crate::taxonomy::{FilePath, LineNumber, SymbolName};
 use super::*;
 
 pub trait IDataFlowProtocol: Send + Sync {
