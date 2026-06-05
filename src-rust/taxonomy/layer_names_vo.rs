@@ -1,13 +1,22 @@
 use super::*;
 
-pub fn layer_agent() -> LayerNameVO { LayerNameVO::new("agent") }
-pub fn layer_capabilities() -> LayerNameVO { LayerNameVO::new("capabilities") }
-pub fn layer_taxonomy() -> LayerNameVO { LayerNameVO::new("taxonomy") }
-pub fn layer_contract() -> LayerNameVO { LayerNameVO::new("contract") }
-pub fn layer_infrastructure() -> LayerNameVO { LayerNameVO::new("infrastructure") }
-pub fn layer_surfaces() -> LayerNameVO { LayerNameVO::new("surfaces") }
-pub fn layer_root() -> LayerNameVO { LayerNameVO::new("root") }
-pub fn layer_global() -> LayerNameVO { LayerNameVO::new("global") }
+pub const LAYER_AGENT: &str = "agent";
+pub const LAYER_CAPABILITIES: &str = "capabilities";
+pub const LAYER_CONTRACT: &str = "contract";
+pub const LAYER_INFRASTRUCTURE: &str = "infrastructure";
+pub const LAYER_SURFACES: &str = "surfaces";
+pub const LAYER_TAXONOMY: &str = "taxonomy";
+pub const LAYER_ROOT: &str = "root";
+pub const LAYER_GLOBAL: &str = "global";
+
+pub fn layer_agent() -> LayerNameVO { LayerNameVO::new(LAYER_AGENT) }
+pub fn layer_capabilities() -> LayerNameVO { LayerNameVO::new(LAYER_CAPABILITIES) }
+pub fn layer_taxonomy() -> LayerNameVO { LayerNameVO::new(LAYER_TAXONOMY) }
+pub fn layer_contract() -> LayerNameVO { LayerNameVO::new(LAYER_CONTRACT) }
+pub fn layer_infrastructure() -> LayerNameVO { LayerNameVO::new(LAYER_INFRASTRUCTURE) }
+pub fn layer_surfaces() -> LayerNameVO { LayerNameVO::new(LAYER_SURFACES) }
+pub fn layer_root() -> LayerNameVO { LayerNameVO::new(LAYER_ROOT) }
+pub fn layer_global() -> LayerNameVO { LayerNameVO::new(LAYER_GLOBAL) }
 
 pub fn all_core_layers() -> Vec<LayerNameVO> {
     vec![

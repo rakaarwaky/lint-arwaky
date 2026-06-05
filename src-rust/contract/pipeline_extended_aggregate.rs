@@ -1,5 +1,6 @@
 use crate::taxonomy::{FilePath, PipelineOutputAggregate};
-use crate::contract::{crate::contract::multi_project_aggregate::MultiProjectAggregate, crate::contract::directory_watch_aggregate::DirectoryWatchAggregate};
+use crate::contract::multi_project_aggregate::MultiProjectAggregate;
+use crate::contract::directory_watch_aggregate::DirectoryWatchAggregate;
 use async_trait::async_trait;
 
 #[async_trait]

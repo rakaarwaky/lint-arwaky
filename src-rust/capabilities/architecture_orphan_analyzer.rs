@@ -98,12 +98,10 @@ impl OrphanIndicatorEvaluator {
     }
 }
 
-pub const LAYER_AGENT: &str = "agent";
-pub const LAYER_CAPABILITIES: &str = "capabilities";
-pub const LAYER_CONTRACT: &str = "contract";
-pub const LAYER_INFRASTRUCTURE: &str = "infrastructure";
-pub const LAYER_SURFACES: &str = "surfaces";
-pub const LAYER_TAXONOMY: &str = "taxonomy";
+use crate::taxonomy::layer_names_vo::{
+    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_SURFACES,
+    LAYER_TAXONOMY,
+};
 
 pub struct ArchOrphanAnalyzer {
     resolver: OrphanGraphResolver,

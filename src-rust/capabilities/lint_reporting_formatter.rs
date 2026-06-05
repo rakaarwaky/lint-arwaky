@@ -1,14 +1,179 @@
 // report_formatter_processor — Capability for formatting reports (SARIF, JUnit).
 // Implements ILintReportingProtocol: format, get_formatted_payload, to_sarif, to_junit.
 
-use crate::taxonomy::*;
+use crate::taxonomy::{AccessDeniedError,
+ActionArgs,
+ActionName,
+ActualValue,
+AdapterClassMap,
+AdapterEntry,
+AdapterError,
+AdapterMetadata,
+AdapterMetadataList,
+AdapterName,
+AdapterNameList,
+AdapterRegistered,
+AdapterStatus,
+AgentStatus,
+AgentStatusVO};
+
+use crate::taxonomy::{AggregatedResults,
+AppConfig,
+ArchitectureConfig,
+ArchitectureRule,
+BooleanVO,
+CallChainError,
+CallChainList,
+CapabilityReference,
+CapabilityReferenceList,
+CapabilityRoutingContext,
+Cause,
+ClassDefinitionMap,
+ClassFileMap,
+ClassMethodsVO,
+ClassNameVO};
+
+use crate::taxonomy::{ClassPath,
+ClassUsageItem,
+ClassUsageItemList,
+ClassUsageMap,
+ColumnNumber,
+CommandArgs,
+CommandMetadataVO,
+ComplianceStatus,
+ConfigError,
+ConfigKey,
+Constraint,
+ContentString,
+Count,
+CustomMessageVO,
+DataFlowList};
+
+use crate::taxonomy::{DescriptionVO,
+DirectoryPath,
+DiscoveryError,
+DoctorResultVO,
+Duration,
+EnvContentVO,
+ErrorCode,
+ErrorMessage,
+ExitCode,
+ExpectedValue,
+FieldName,
+FileContentVO,
+FileDefinitionMap,
+FileFormat,
+FilePath};
+
+use crate::taxonomy::{FilePathList,
+FileSystemError,
+FixApplied,
+FixResult,
+GitDiffResultVO,
+GitHookError,
+GitRef,
+GovernanceReport,
+GraphAnalysisContext,
+HookInstalled,
+HookRemoved,
+Identity,
+ImportGraph,
+ImportInfo,
+ImportInfoList};
+
+use crate::taxonomy::{ImportNameList,
+InboundLinkMap,
+InheritanceMap,
+IntoPatternListValues,
+JobError,
+JobId,
+JobIdList,
+JobStatus,
+LayerDefinition,
+LayerMapVO,
+LayerNameVO,
+LegacyLayerRule,
+LegacyLayerRuleList,
+LineContentList,
+LineContentVO};
+
+use crate::taxonomy::{LineNumber,
+LintMessage,
+LintResult,
+LintResultList,
+LintStatusActionArgs,
+LinterOperationError,
+Location,
+LocationList,
+LogOutput,
+MaintenanceStatsVO,
+MandatoryImportRuleVO,
+McpConfigVO,
+MetadataVO,
+MetricsError,
+ModuleName};
+
+use crate::taxonomy::{ModuleToFileMap,
+NameVariants,
+NamingConfig,
+NamingError,
+OrphanIndicatorResult,
+PathNotFoundError,
+PatternList,
+PluginError,
+PluginGroup,
+Position,
+PrimitiveTypeList,
+PrimitiveTypeName,
+PrimitiveViolation,
+PrimitiveViolationList,
+ProjectConfig};
+
+use crate::taxonomy::{ProjectResult,
+ReachabilityResult,
+RegistrationError,
+RenamedFile,
+RenamedFileList,
+ResponseData,
+ResponseDataList,
+ScanCompleted,
+ScanError,
+ScanFailed,
+ScanStarted,
+ScopeBounds,
+ScopeRef,
+ScopeResolutionError,
+Score};
+
+use crate::taxonomy::{SemanticError,
+Severity,
+SourceParserError,
+StdError,
+StdOutput,
+SuccessStatus,
+SuffixPolicyVO,
+SuffixVO,
+Suggestion,
+SymbolName,
+SymbolNameList,
+SyntaxErrorVO,
+Thresholds,
+Timeout,
+Timestamp};
+
+use crate::taxonomy::{TransportEndpoint,
+TransportError,
+TransportProtocol,
+TransportUrlVO,
+ValidationError,
+ViolationConstraint,
+WatchEventError,
+WatchResult,
+WatchServiceError,
+WatchSubscriptionError};
 use serde_json::json;
 
-/// Format constants matching Python taxonomy
-pub const FORMAT_TEXT: &str = "text";
-pub const FORMAT_JSON: &str = "json";
-pub const FORMAT_SARIF: &str = "sarif";
-pub const FORMAT_JUNIT: &str = "junit";
+use crate::taxonomy::lint_score_vo::{FORMAT_TEXT, FORMAT_JSON, FORMAT_SARIF, FORMAT_JUNIT};
 
 /// Business logic for transforming GovernanceReports into standard formats.
 pub struct ReportFormatterProcessor;

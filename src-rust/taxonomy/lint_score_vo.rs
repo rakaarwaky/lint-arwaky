@@ -2,6 +2,11 @@ use serde::{Serialize, Deserialize};
 use std::collections::{HashMap, HashSet};
 use super::*;
 
+pub const FORMAT_TEXT: &str = "text";
+pub const FORMAT_JSON: &str = "json";
+pub const FORMAT_SARIF: &str = "sarif";
+pub const FORMAT_JUNIT: &str = "junit";
+
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct FileFormat {

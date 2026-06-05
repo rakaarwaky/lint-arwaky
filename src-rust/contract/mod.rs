@@ -1,4 +1,5 @@
-// Auto-generated at 2026-06-05T22:44:59.260441
+// Generated barrel exports
+
 pub mod adapter_container_aggregate;
 pub mod agent_lifecycle_aggregate;
 pub mod analysis_orchestrator_aggregate;
@@ -50,6 +51,7 @@ pub mod naming_variant_port;
 pub mod naming_variant_protocol;
 pub mod orchestrator_container_aggregate;
 pub mod output_client_aggregate;
+pub mod path_normalization_port;
 pub mod pipeline_dispatcher_aggregate;
 pub mod pipeline_extended_aggregate;
 pub mod pipeline_orchestrator_aggregate;
