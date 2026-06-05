@@ -1,24 +1,24 @@
-/// CLI setup commands — init, doctor, mcp-config.
-use crate::taxonomy::*;
 use crate::contract::*;
 use crate::surfaces::cli_setup_controller::*;
 
+use std::sync::Arc;
+
+#[derive(Clone)]
 pub struct SetupCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
 impl SetupCommandsSurface {
-    pub fn new(container: Option<ServiceContainerAggregate>) -> Self {
-        let mut s = Self { container };
-        if s.container.is_some() {
-            register_setup_management(s.container.clone().unwrap());
+    pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
+        let s = Self { container };
+        if let Some(ref c) = s.container {
+            register_setup_management(c.clone());
         }
         s
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
-        self.container = Some(container.clone());
-        register_setup_management(container);
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
+        self.container = Some(container);
     }
 
     pub fn init(&self) {
@@ -34,7 +34,11 @@ impl SetupCommandsSurface {
         // 2. Check linters
         println!("\n[2/4] Checking linters...");
         for name in &["ruff", "mypy", "eslint", "prettier"] {
-            if std::process::Command::new("which").arg(name).output().is_ok() {
+            if std::process::Command::new("which")
+                .arg(name)
+                .output()
+                .is_ok()
+            {
                 println!("  {name}: found");
             } else {
                 println!("  {name}: not found");
@@ -67,9 +71,9 @@ impl SetupCommandsSurface {
         println!("\n{}", "=".repeat(50));
         println!("Setup complete!");
         println!("\nUsage:");
-        println!("  auto-lint check ./src/          # run lint");
-        println!("  auto-linter                     # start MCP server");
-        println!("  auto-lint doctor                # diagnose issues");
+        println!("  lint-arwaky check ./src/          # run lint");
+        println!("  lint-arwaky                     # start MCP server");
+        println!("  lint-arwaky doctor                # diagnose issues");
     }
 
     pub fn doctor(&self) {
@@ -80,8 +84,8 @@ impl SetupCommandsSurface {
         println!("[OK] mcp");
         println!("[OK] pydantic");
         println!("[OK] click");
-        println!("[--] .env not found — run: auto-linter init");
-        println!("[--] auto_linter.config.yaml not found (using defaults)");
+        println!("[--] .env not found — run: lint-arwaky init");
+        println!("[--] lint_arwaky.config.yaml not found (using defaults)");
         println!("\nAll checks passed.");
     }
 
@@ -92,7 +96,7 @@ impl SetupCommandsSurface {
             ("vscode", mcp_config_vscode()),
         ];
         for (name, config_json) in &configs {
-            if client != "all" && client != name {
+            if client != "all" && client != *name {
                 continue;
             }
             println!("\n{}", "=".repeat(50));
@@ -105,12 +109,10 @@ impl SetupCommandsSurface {
     }
 
     pub fn hermes(&self, remove: bool) {
-        println!("Auto-Linter + Hermes Setup");
+        println!("Lint Arwaky + Hermes Setup");
         println!("{}", "=".repeat(50));
 
-        let hermes_bin = std::process::Command::new("which")
-            .arg("hermes")
-            .output();
+        let hermes_bin = std::process::Command::new("which").arg("hermes").output();
 
         if hermes_bin.is_err() {
             println!("\n[ERROR] hermes command not found!");
@@ -122,15 +124,15 @@ impl SetupCommandsSurface {
         println!("\n  Hermes: found");
 
         if remove {
-            println!("\nRemoving auto-linter from Hermes...");
+            println!("\nRemoving lint-arwaky from Hermes...");
             println!("Done!");
             return;
         }
 
-        println!("\nAdding auto-linter to Hermes config...");
+        println!("\nAdding lint-arwaky to Hermes config...");
         println!("  Added successfully!");
         println!("\n{}", "=".repeat(50));
-        println!("Done! Restart Hermes to use auto-linter:");
+        println!("Done! Restart Hermes to use lint-arwaky:");
         println!("  hermes chat");
     }
 }
@@ -138,20 +140,22 @@ impl SetupCommandsSurface {
 // Lazy singleton
 static INSTANCE: std::sync::Mutex<Option<SetupCommandsSurface>> = std::sync::Mutex::new(None);
 
-pub fn register_setup_commands(container: ServiceContainerAggregate) -> SetupCommandsSurface {
+pub fn register_setup_commands(
+    container: impl ServiceContainerAggregate + Clone + 'static,
+) -> SetupCommandsSurface {
+    let arc_container = std::sync::Arc::new(container);
     let mut guard = INSTANCE.lock().unwrap();
     if let Some(ref mut s) = *guard {
-        s.register_all(container);
-        return (*guard).clone().unwrap();
+        s.register_all(arc_container.clone());
+        return s.clone();
     }
-    let mut s = SetupCommandsSurface::new(Some(container.clone()));
-    s.register_all(container);
-    let result = SetupCommandsSurface::new(Some(container));
-    *guard = Some(result);
-    guard.clone().unwrap()
+    let mut s = SetupCommandsSurface::new(Some(arc_container.clone()));
+    s.register_all(arc_container);
+    *guard = Some(s.clone());
+    s
 }
 
 pub fn get_setup() -> Option<SetupCommandsSurface> {
     let guard = INSTANCE.lock().unwrap();
-    guard.clone()
+    guard.as_ref().cloned()
 }

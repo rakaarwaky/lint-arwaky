@@ -18,7 +18,7 @@ impl INamingProviderPort for JavascriptNamingProvider {
         let words: Vec<String> = Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
             .unwrap().find_iter(name_str).map(|m| m.as_str().to_lowercase()).collect();
         if words.is_empty() {
-            return Ok(NameVariants::new(vec![name_str.clone()]));
+            return Ok(NameVariants::new(vec![SymbolName::new(name_str.clone())]));
         }
         let snake_case = words.join("_");
         let first = words[0].clone();
@@ -36,6 +36,6 @@ impl INamingProviderPort for JavascriptNamingProvider {
         let mut variants = vec![name_str.clone(), snake_case, camel_case, pascal_case, screaming_snake, kebab];
         variants.sort();
         variants.dedup();
-        Ok(NameVariants::new(variants))
+        Ok(NameVariants::new(variants.into_iter().map(SymbolName::new).collect()))
     }
 }

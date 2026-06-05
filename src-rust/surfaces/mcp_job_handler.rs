@@ -16,7 +16,7 @@ impl McpJobCommandsSurface {
         job_id: Option<String>,
     ) -> Result<String, String> {
         let job_registry = container
-            .get::<Arc<dyn JobRegistryAggregate>>()
+            .get_job_registry()
             .ok_or_else(|| "Container not initialized".to_string())?;
 
         match job_id {
@@ -66,7 +66,7 @@ impl McpJobCommandsSurface {
         job_id: String,
     ) -> Result<String, String> {
         let job_registry = container
-            .get::<Arc<dyn JobRegistryAggregate>>()
+            .get_job_registry()
             .ok_or_else(|| "Container not initialized".to_string())?;
 
         let success = job_registry

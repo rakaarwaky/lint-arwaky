@@ -1,10 +1,15 @@
-/// Helper functions for CLI setup commands.
-
-use crate::taxonomy::*;
 use crate::contract::*;
 
+use std::sync::Arc;
+
 pub struct SetupManagementSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
+}
+
+impl Default for SetupManagementSurface {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SetupManagementSurface {
@@ -12,27 +17,26 @@ impl SetupManagementSurface {
         Self { container: None }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
     pub fn generate_env(&self, home: &str) -> String {
         // In real impl: container.setup_processor.generate_env(home)
-        format!(
-            "# Auto-Linter environment configuration\nHOME={home}\nMCP_LOG_LEVEL=INFO\n"
-        )
+        format!("# Lint Arwaky environment configuration\nHOME={home}\nMCP_LOG_LEVEL=INFO\n")
     }
 
     pub fn generate_mcp_config(&self) -> String {
         // In real impl: container.setup_processor.generate_mcp_config()
         r#"{
   "mcpServers": {
-    "auto-linter": {
-      "command": "auto-linter",
+    "lint-arwaky": {
+      "command": "lint-arwaky",
       "args": []
     }
   }
-}"#.to_string()
+}"#
+        .to_string()
     }
 
     pub fn mcp_config_claude(&self) -> String {
@@ -60,7 +64,7 @@ fn get_instance() -> std::sync::MutexGuard<'static, Option<SetupManagementSurfac
     guard
 }
 
-pub fn register_setup_management(container: ServiceContainerAggregate) {
+pub fn register_setup_management(container: Arc<dyn ServiceContainerAggregate>) {
     let mut guard = INSTANCE.lock().unwrap();
     if let Some(ref mut s) = *guard {
         s.register_all(container);
@@ -73,25 +77,40 @@ pub fn register_setup_management(container: ServiceContainerAggregate) {
 
 pub fn generate_env(home: &str) -> String {
     let guard = get_instance();
-    guard.as_ref().map(|s| s.generate_env(home)).unwrap_or_default()
+    guard
+        .as_ref()
+        .map(|s| s.generate_env(home))
+        .unwrap_or_default()
 }
 
 pub fn generate_mcp_config() -> String {
     let guard = get_instance();
-    guard.as_ref().map(|s| s.generate_mcp_config()).unwrap_or_default()
+    guard
+        .as_ref()
+        .map(|s| s.generate_mcp_config())
+        .unwrap_or_default()
 }
 
 pub fn mcp_config_claude() -> String {
     let guard = get_instance();
-    guard.as_ref().map(|s| s.mcp_config_claude()).unwrap_or_default()
+    guard
+        .as_ref()
+        .map(|s| s.mcp_config_claude())
+        .unwrap_or_default()
 }
 
 pub fn mcp_config_hermes() -> String {
     let guard = get_instance();
-    guard.as_ref().map(|s| s.mcp_config_hermes()).unwrap_or_default()
+    guard
+        .as_ref()
+        .map(|s| s.mcp_config_hermes())
+        .unwrap_or_default()
 }
 
 pub fn mcp_config_vscode() -> String {
     let guard = get_instance();
-    guard.as_ref().map(|s| s.mcp_config_vscode()).unwrap_or_default()
+    guard
+        .as_ref()
+        .map(|s| s.mcp_config_vscode())
+        .unwrap_or_default()
 }

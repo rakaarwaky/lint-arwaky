@@ -44,11 +44,11 @@ impl ISourceParserPort for ASTPythonParserAdapter {
         _path: &FilePath,
         _primitive_types: &PrimitiveTypeList,
     ) -> PrimitiveViolationList {
-        PrimitiveViolationList::new(Vec::new())
+        PrimitiveViolationList::new()
     }
 
     fn find_unused_imports(&self, _path: &FilePath) -> ImportInfoList {
-        ImportInfoList::new(Vec::new())
+        ImportInfoList::new()
     }
 
     fn get_class_definitions(&self, _path: &FilePath) -> Result<MetadataVO, SourceParserError> {

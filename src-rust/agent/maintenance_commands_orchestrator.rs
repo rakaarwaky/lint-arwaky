@@ -1,11 +1,50 @@
 // maintenance_commands_orchestrator — Orchestrator for maintenance-related domain logic.
 use crate::contract::MaintenanceCommandsAggregate;
-use crate::taxonomy::{FilePath, MaintenanceStatsVO, DoctorResultVO, JobId};
+use crate::taxonomy::{DoctorResultVO, FilePath, JobId, MaintenanceStatsVO};
 use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
 pub struct MaintenanceCommandsOrchestrator;
 
 impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {}
+
+fn walk_dir(dir: &Path, py_files: &mut Vec<PathBuf>) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                if name != "target" && name != ".git" && name != "node_modules" && name != ".venv" {
+                    walk_dir(&path, py_files);
+                }
+            } else if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("py") {
+                py_files.push(path);
+            }
+        }
+    }
+}
+
+fn find_cache_dirs(dir: &Path, cache_names: &[&str], found_dirs: &mut Vec<PathBuf>) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                if cache_names.contains(&name) {
+                    found_dirs.push(path.clone());
+                } else if name != "target" && name != ".git" && name != "node_modules" {
+                    find_cache_dirs(&path, cache_names, found_dirs);
+                }
+            }
+        }
+    }
+}
+
+impl Default for MaintenanceCommandsOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl MaintenanceCommandsOrchestrator {
     pub fn new() -> Self {
@@ -13,39 +52,52 @@ impl MaintenanceCommandsOrchestrator {
     }
 
     pub fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
-        // Logic for stats command
-        let root = std::path::Path::new(&project_path.value);
-        let py_files: Vec<_> = root.rglob("*.py").collect();
-        let py_count = py_files.len();
-        let test_count = py_files.iter().filter(|f| {
-            f.file_name().map(|n| n.to_string_lossy().starts_with("test_")).unwrap_or(false)
-        }).count();
-        let _ratio = if py_count > 0 { (test_count as f64 / py_count as f64) * 100.0 } else { 0.0 };
+        let root = Path::new(&project_path.value);
+        let mut py_files = Vec::new();
+        walk_dir(root, &mut py_files);
+        let py_count = py_files.len() as i64;
+        let test_count = py_files
+            .iter()
+            .filter(|f| {
+                f.file_name()
+                    .map(|n| n.to_string_lossy().starts_with("test_"))
+                    .unwrap_or(false)
+            })
+            .count() as i64;
+        let ratio = if py_count > 0 {
+            test_count as f64 / py_count as f64
+        } else {
+            0.0
+        };
 
         MaintenanceStatsVO {
-            files_checked: py_count,
-            violations_found: 0,
-            autofixes_applied: 0,
+            project_path: project_path.clone(),
+            total_files: py_count,
+            test_files: test_count,
+            test_ratio: ratio,
+            python_files: py_count,
         }
     }
 
     pub fn clean(&self) {
-        // Cleanup cache and temporary files
         let cwd = std::env::current_dir().ok();
         if let Some(cwd) = cwd {
-            let cache_dirs = [".pytest_cache", ".mypy_cache", ".ruff_cache", "__pycache__", ".auto_linter_cache"];
-            for cache_dir in &cache_dirs {
-                for entry in cwd.rglob(cache_dir) {
-                    if entry.is_dir() {
-                        let _ = std::fs::remove_dir_all(&entry);
-                    }
-                }
+            let cache_dirs = [
+                ".pytest_cache",
+                ".mypy_cache",
+                ".ruff_cache",
+                "__pycache__",
+                ".lint_arwaky_cache",
+            ];
+            let mut found_dirs = Vec::new();
+            find_cache_dirs(&cwd, &cache_dirs, &mut found_dirs);
+            for entry in found_dirs {
+                let _ = std::fs::remove_dir_all(&entry);
             }
         }
     }
 
     pub fn update(&self) {
-        // Update linter adapters to latest versions
         let adapters = ["ruff", "mypy", "bandit", "radon"];
         for adapter in &adapters {
             let _ = std::process::Command::new("pip")
@@ -55,23 +107,23 @@ impl MaintenanceCommandsOrchestrator {
     }
 
     pub fn doctor(&self) -> DoctorResultVO {
-        // Diagnose common issues
         let mut issues = Vec::new();
         let mut adapter_statuses = HashMap::new();
 
-        // Check Python version
-        let py_ver = "3.12".to_string(); // Placeholder
+        let py_ver = "3.12".to_string();
 
-        // Check auto-linter installation
         let is_installed = std::process::Command::new("pip")
-            .args(["show", "auto-linter"])
+            .args(["show", "lint-arwaky"])
             .output()
             .map(|o| o.status.success())
             .unwrap_or(false);
 
-        // Check config files
         let mut config_found = Vec::new();
-        for cfg in &[".auto_linter.json", "auto_linter.config.yaml", "pyproject.toml"] {
+        for cfg in &[
+            ".lint_arwaky.json",
+            "lint_arwaky.config.yaml",
+            "pyproject.toml",
+        ] {
             if std::path::Path::new(cfg).exists() {
                 config_found.push(cfg.to_string());
             }
@@ -80,18 +132,26 @@ impl MaintenanceCommandsOrchestrator {
             issues.push("No configuration file found".to_string());
         }
 
-        // Check linter binaries
         for adapter in &["ruff", "mypy", "bandit", "radon"] {
             let found = std::process::Command::new("which")
                 .arg(adapter)
                 .output()
                 .map(|o| o.status.success())
                 .unwrap_or(false);
-            adapter_statuses.insert(adapter.to_string(), if found { "found".to_string() } else { "MISSING".to_string() });
+            adapter_statuses.insert(
+                adapter.to_string(),
+                if found {
+                    "found".to_string()
+                } else {
+                    "MISSING".to_string()
+                },
+            );
             if !found {
                 issues.push(format!("Linter adapter '{}' is not installed", adapter));
             }
         }
+
+        let healthy = issues.is_empty();
 
         DoctorResultVO {
             python_version: py_ver,
@@ -99,7 +159,7 @@ impl MaintenanceCommandsOrchestrator {
             config_found,
             adapter_statuses,
             issues,
-            healthy: issues.is_empty(),
+            healthy,
         }
     }
 

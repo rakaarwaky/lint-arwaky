@@ -437,7 +437,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
         };
 
         for imp in data.imports_list {
-            let mod_name = imp.module.value.clone();
+            let mod_name = imp.module.clone();
             let mut found_use = false;
 
             if data.used.contains(&mod_name) || data.exported.contains(&mod_name) {

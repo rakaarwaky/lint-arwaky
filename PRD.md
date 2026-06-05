@@ -10,12 +10,12 @@
 **Type**: MCP Server + CLI Tool
 **Version**: 1.10.2
 **License**: MIT
-**Language**: Python >= 3.12
+**Language**: Rust 1.80+ (2024 edition)
 
 Lint Arwaky is an autonomous multi-language linting, type-checking, and
-architectural rule auditing tool. It runs as both an MCP server and CLI tool.
+architectural rule auditing tool written in Rust. It runs as both an MCP server and CLI tool.
 
-Uses `mcp.server.fastmcp.FastMCP` for the MCP server interface.
+Uses `mcp-sdk-rs` for the MCP server interface.
 Connects to system for secure command execution.
 
 ---
@@ -26,11 +26,9 @@ Software projects accumulate quality debt silently. Developers lack:
 
 - Automated pre-commit quality gates that run without configuration
 - Architectural enforcement that prevents cross-layer violations
-- Unified interface across multiple linters (Ruff, MyPy, Bandit, ESLint...)
+- Unified interface across multiple linters (Ruff, MyPy, Bandit, ESLint, Clippy...)
 - Both human-accessible CLI and AI-agent-accessible MCP tools from one codebase
-- Easy setup for community/open-source distribution
-
-Lint Arwaky addresses all five.
+- Easy setup for community/open-source distribution via Cargo or pre-compiled binaries
 
 ---
 
@@ -49,15 +47,15 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 ## 4. Target Users
 
-| User                             | Interface           | Use Case                                                 |
-| -------------------------------- | ------------------- | -------------------------------------------------------- |
-| **AI Agents**              | MCP tools (5 tools) | Automated code review, pre-commit checks, CI integration |
-| **Prototype Developers**   | MCP + CLI           | Fast iterations, AI-assisted coding, quality gates       |
-| **Architecture Engineers** | Architecture tools  | Architectural rule enforcement, clean code, DDD          |
-| Developers                       | CLI (30+ commands)  | Local development, watch mode, git hooks                 |
-| CI/CD Pipelines                  | CLI + exit codes    | Quality gates, SARIF/JUnit reports                       |
-| Community                        | pip install + setup | Easy install, works immediately                          |
-| Contributors                     | GitHub + PRs        | Adapters, CLI commands, MCP tools                        |
+| User                             | Interface             | Use Case                                                 |
+| -------------------------------- | --------------------- | -------------------------------------------------------- |
+| **AI Agents**              | MCP tools (5 tools)   | Automated code review, pre-commit checks, CI integration |
+| **Prototype Developers**   | MCP + CLI             | Fast iterations, AI-assisted coding, quality gates       |
+| **Architecture Engineers** | Architecture tools    | Architectural rule enforcement, clean code, DDD          |
+| Developers                       | CLI (24+ commands)    | Local development, watch mode, git hooks                 |
+| CI/CD Pipelines                  | CLI + exit codes      | Quality gates, SARIF/JUnit reports                       |
+| Community                        | cargo install + setup | Easy install, works immediately                          |
+| Contributors                     | GitHub + PRs          | Adapters, CLI commands, MCP tools                        |
 
 ---
 
@@ -71,10 +69,10 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 | FR-002 | Run MyPy type checking on Python files         | Done   |
 | FR-003 | Run Bandit security scanning on Python files   | Done   |
 | FR-004 | Run ESLint on JavaScript/TypeScript files      | Done   |
-| FR-005 | Run Prettier formatting on JS/TS files         | Done   |
+| FR-005 | Run Prettier formatting on JS/TS/YAML files    | Done   |
 | FR-006 | Run TSC type checking on TypeScript files      | Done   |
 | FR-007 | Run Radon complexity analysis on Python files  | Done   |
-| FR-008 | Run pip-audit dependency vulnerability scan    | Done   |
+| FR-008 | Run Cargo Clippy static analysis on Rust files | Done   |
 | FR-009 | Detect oversized files (>500 lines)            | Done   |
 | FR-010 | Track quality trends over time                 | Done   |
 | FR-011 | Apply safe auto-fixes (Ruff, ESLint, Prettier) | Done   |
@@ -91,18 +89,18 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 ### 5.3 Integration
 
-| ID     | Requirement                                     | Status |
-| ------ | ----------------------------------------------- | ------ |
-| FR-030 | MCP server via FastMCP (`mcp.server.fastmcp`) | Done   |
-| FR-031 | CLI via Click                                   | Done   |
-| FR-032 | Direct command execution                        | Done   |
-| FR-033 | Git pre-commit hook install/uninstall           | Done   |
-| FR-034 | File watcher for auto-lint on save              | Done   |
-| FR-035 | Automatic local execution                       | Done   |
-| FR-036 | Community setup (setup init/hermes/doctor)      | Done   |
-| FR-037 | pip install + uvx support                       | Done   |
-| FR-038 | curl installer script                           | Done   |
-| FR-039 | Modern CI/CD (OIDC, SLSA Provenance)            | Done   |
+| ID     | Requirement                                | Status |
+| ------ | ------------------------------------------ | ------ |
+| FR-030 | MCP server via `mcp-sdk-rs`              | Done   |
+| FR-031 | CLI via clap (Rust)                        | Done   |
+| FR-032 | Direct command execution                   | Done   |
+| FR-033 | Git pre-commit hook install/uninstall      | Done   |
+| FR-034 | File watcher for auto-lint on save         | Done   |
+| FR-035 | Automatic local execution                  | Done   |
+| FR-036 | Community setup (setup init/hermes/doctor) | Done   |
+| FR-037 | `cargo install` support                  | Done   |
+| FR-038 | installer script                           | Done   |
+| FR-039 | Modern CI/CD                               | Done   |
 
 ### 5.4 Semantic Analysis (Enrichment)
 
@@ -120,11 +118,11 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 | ID      | Requirement               | Target  | Current |
 | ------- | ------------------------- | ------- | ------- |
-| NFR-003 | Startup time (MCP server) | < 2s    | ~1s     |
-| NFR-004 | Single-file scan time     | < 5s    | ~2s     |
-| NFR-005 | Full project scan         | < 30s   | ~10s    |
-| NFR-006 | Python version            | >= 3.12 | 3.12+   |
-| NFR-007 | Max directory depth       | <= 5    | 5       |
+| NFR-003 | Startup time (MCP server) | < 0.5s  | ~0.1s   |
+| NFR-004 | Single-file scan time     | < 5s    | ~1.5s   |
+| NFR-005 | Full project scan         | < 30s   | ~8s     |
+| NFR-006 | Rust version              | >= 1.80 | 1.80+   |
+| NFR-007 | Max directory depth       | <= 10   | 10      |
 
 ---
 
@@ -133,12 +131,12 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 ### 7.1 Domain Model (6 Domains)
 
 ```
-src/
+src-rust/
   agent/           -- Lifecycle, orchestration, pipeline, DI container
   capabilities/    -- Thinking logic: analysis, formatting, architecture
   contract/        -- Interfaces, traits, protocols
-  infrastructure/  -- Adapters: ruff, mypy, eslint, transports
-  surfaces/        -- Interfaces: CLI (Click), MCP (FastMCP)
+  infrastructure/  -- Adapters: ruff, mypy, eslint, clippy, transports
+  surfaces/        -- Interfaces: CLI (clap), MCP (mcp-sdk-rs)
   taxonomy/        -- Shared types: value objects, models, errors
 ```
 
@@ -146,29 +144,14 @@ src/
 
 ```
 agent          -> taxonomy, contract, infrastructure, capabilities  
-surfaces       -> taxonomy, contract, agent  
+surfaces       -> taxonomy, contract (agent via contract traits only)
 capabilities   -> taxonomy, contract   
 infrastructure -> taxonomy, contract  
-contract       -> taxonomy, contract              
-taxonomy       -> taxonomy                                      
+contract       -> taxonomy, contract            
+taxonomy       -> taxonomy                                    
 ```
 
-### 7.3 MCP Server Architecture
-
-Uses `mcp.server.fastmcp.FastMCP` with register-function based tool registration.
-Tool registry is split into granular modules:
-
-```
-mcp_server_entry.py     -- creates FastMCP, registers tools
-mcp_tools_registry.py   -- bridges modules, calls register_*()
-mcp_execute_command.py  -- execute_command tool (Direct execution)
-mcp_command_catalog.py  -- list_commands + read_skill_context
-mcp_job_management.py   -- check_status (cancel moved to CLI: auto-lint cancel)
-mcp_health_check.py     -- health_check
-mcp_status_client.py    -- Status check client
-```
-
-### 7.4 Agentic Engineering System (AES) v1.9.4
+### 7.3 Agentic Engineering System (AES) v1.9.4
 
 Severity levels and their point penalty per finding:
 
@@ -181,10 +164,10 @@ Severity levels and their point penalty per finding:
 
 Total score starts at 100.0 and is deducted per finding. If any CRITICAL finding exists, compliance fails regardless of score.
 
-**AES006 Primitive Policy (v1.9.4)**: Value Object enforcement is **granular per layer**:
+**AES006 Primitive Policy Default**
 
-- `contract` and `taxonomy(entity|error|event)` → `no_primitives: true` (strict)
-- `infrastructure`, `capabilities`, `surfaces` → `no_primitives: false` (adapter layers may use primitives as supporting types)
+- `contract` and `taxonomy(entity|error|event)` → `no_primitives: true` 
+- `infrastructure`, `capabilities`, `surfaces` → `no_primitives: false`
 
 See separate [AES Rules Document](docs/AES_RULES.md) for full rule definitions, codes, and violation messages.
 
@@ -196,15 +179,13 @@ See separate [AES Rules Document](docs/AES_RULES.md) for full rule definitions, 
 | --------------------------------- | -------------------------------- |
 | `execute_command(action, args)` | Execute any CLI command          |
 | `list_commands(domain)`         | Discover available CLI commands  |
+| `commands_schema(tool_name)`    | Retrieve JSON schemas for tools  |
 | `read_skill_context(section)`   | Read SKILL.md documentation      |
-| `check_status(job_id)`          | Check status of running lint job |
 | `health_check()`                | Check adapters and system health |
-
-> **Note**: Job cancellation is a CLI command: `auto-lint cancel <job_id>`
 
 ---
 
-## 9. CLI Interface (30 Commands)
+## 9. CLI Interface (24 Commands)
 
 | Category    | Commands                                                                          |
 | ----------- | --------------------------------------------------------------------------------- |
@@ -221,17 +202,16 @@ See separate [AES Rules Document](docs/AES_RULES.md) for full rule definitions, 
 
 ## 11. Dependencies
 
-| Package       | Type     | Purpose                   |
-| ------------- | -------- | ------------------------- |
-| mcp[cli]      | Core     | MCP protocol library      |
-| fastmcp       | Core     | FastMCP server framework  |
-| pydantic      | Core     | Data validation           |
-| ruff          | Core     | Python linter/formatter   |
-| mypy          | Core     | Python type checker       |
-| click         | Core     | CLI framework             |
-| watchdog      | Core     | File system watcher       |
-| python-dotenv | Core     | .env file loading         |
-| pyre-check    | Optional | Python type checker (alt) |
+| Package    | Type | Purpose                   |
+| ---------- | ---- | ------------------------- |
+| serde      | Core | Serialization             |
+| serde_json | Core | JSON manipulation         |
+| tokio      | Core | Async runtime             |
+| mcp-sdk-rs | Core | MCP server implementation |
+| clap       | Core | CLI argument parsing      |
+| reqwest    | Core | HTTP requests             |
+| serde_yaml | Core | YAML configuration        |
+| toml       | Core | TOML configuration        |
 
 ---
 
@@ -239,5 +219,4 @@ See separate [AES Rules Document](docs/AES_RULES.md) for full rule definitions, 
 
 - Directly executes commands on the system
 - No database required (file-based history only)
-- FastMCP for MCP server (decorator-based registration)
-- Platform: Linux, Windows, Mac
+- Platform: Linux

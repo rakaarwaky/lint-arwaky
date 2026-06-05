@@ -1,24 +1,28 @@
-/// Main entry point for the Auto Linter MCP server.
-use crate::taxonomy::*;
-use crate::contract::*;
-use crate::surfaces::mcp_tools_store::register_tools;
+/// MCP Server Handler - Server startup only
+use crate::contract::ServiceContainerAggregate;
+use crate::surfaces::mcp_tools_handler::register_tools;
 
 pub struct McpServerHandlerSurface;
+
+impl Default for McpServerHandlerSurface {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl McpServerHandlerSurface {
     pub fn new() -> Self {
         Self
     }
 
-    pub fn run_server(&self, container: ServiceContainerAggregate) {
-        // In real impl: create FastMCP equivalent, register tools, run
+    pub fn run_server(&self, container: std::sync::Arc<dyn ServiceContainerAggregate>) {
         register_tools(container);
-        println!("Auto-Linter MCP server starting...");
-        println!("Server name: auto-linter");
+        println!("Lint Arwaky MCP server starting...");
+        println!("Server name: lint-arwaky");
         println!("Note: Full MCP server requires 'fastmcp' / 'mcp' crate integration");
     }
 
-    pub fn run(&self, container: ServiceContainerAggregate) {
+    pub fn run(&self, container: std::sync::Arc<dyn ServiceContainerAggregate>) {
         self.run_server(container);
     }
 }

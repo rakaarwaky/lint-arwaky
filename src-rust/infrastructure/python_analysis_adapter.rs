@@ -1,69 +1,107 @@
 /// python_analysis_adapter — Python analysis adapters (Complexity, Duplicate, Trends, Dependency).
-use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort, LinterError};
-use crate::taxonomy::{AdapterName, ColumnNumber, ComplianceStatus, Count, ErrorCode, ErrorMessage, FilePath, LineNumber, LintMessage, LintResult, LintResultList, PatternList, ScanError, Severity};
+use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
+use crate::taxonomy::{
+    AdapterName, ColumnNumber, ComplianceStatus, Count, ErrorCode, FilePath, LineNumber,
+    LintMessage, LintResult, LintResultList, LinterOperationError, Severity,
+};
 use std::path::Path;
 use std::sync::Arc;
-use std::time::Duration;
 
+#[allow(dead_code)]
 fn resolve_working_dir(path: &FilePath) -> FilePath {
     let path_str = &path.value;
     if let Ok(abs_path) = std::fs::canonicalize(path_str) {
         let mut current = if abs_path.is_file() {
             abs_path.parent().unwrap_or(Path::new(".")).to_path_buf()
-        } else { abs_path };
+        } else {
+            abs_path
+        };
         for _ in 0..10 {
-            if current.join("auto_linter.config.yaml").is_file() || current.join(".git").is_dir() || current.join("pyproject.toml").is_file() {
-                return FilePath::new(current.to_string_lossy().to_string()).unwrap();
+            if current.join("lint_arwaky.config.yaml").is_file()
+                || current.join(".git").is_dir()
+                || current.join("pyproject.toml").is_file()
+            {
+                return FilePath::new(current.to_string_lossy().to_string());
             }
-            if let Some(parent) = current.parent() { if parent == current { break; } current = parent.to_path_buf(); } else { break; }
+            if let Some(parent) = current.parent() {
+                if parent == current {
+                    break;
+                }
+                current = parent.to_path_buf();
+            } else {
+                break;
+            }
         }
     }
-    FilePath::new(".").unwrap()
+    FilePath::new(".")
 }
 
 pub struct ComplexityAdapter {
-    executor: Arc<dyn ICommandExecutorPort>,
-    path_norm: Arc<dyn IPathNormalizationPort>,
-    bin_path: Option<FilePath>,
-    threshold: Count,
+    _executor: Arc<dyn ICommandExecutorPort>,
+    _path_norm: Arc<dyn IPathNormalizationPort>,
+    _bin_path: Option<FilePath>,
+    _threshold: Count,
 }
 
 impl ComplexityAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorPort>, path_norm: Arc<dyn IPathNormalizationPort>, bin_path: Option<FilePath>, threshold: Count) -> Self {
-        Self { executor, path_norm, bin_path, threshold }
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        bin_path: Option<FilePath>,
+        threshold: Count,
+    ) -> Self {
+        Self {
+            _executor: executor,
+            _path_norm: path_norm,
+            _bin_path: bin_path,
+            _threshold: threshold,
+        }
     }
 }
 
 #[async_trait::async_trait]
 impl ILinterAdapterPort for ComplexityAdapter {
-    fn name(&self) -> AdapterName { AdapterName::new("radon").unwrap() }
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterError> {
-        Ok(LintResultList::new(Vec::new()))
+    fn name(&self) -> AdapterName {
+        AdapterName::new("radon")
     }
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterError> {
+    async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+        Ok(LintResultList::default())
+    }
+    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
     }
 }
 
 pub struct DuplicateAdapter {
-    executor: Arc<dyn ICommandExecutorPort>,
-    path_norm: Arc<dyn IPathNormalizationPort>,
-    bin_path: Option<FilePath>,
+    _executor: Arc<dyn ICommandExecutorPort>,
+    _path_norm: Arc<dyn IPathNormalizationPort>,
+    _bin_path: Option<FilePath>,
 }
 
 impl DuplicateAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorPort>, path_norm: Arc<dyn IPathNormalizationPort>, bin_path: Option<FilePath>) -> Self {
-        Self { executor, path_norm, bin_path }
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            _executor: executor,
+            _path_norm: path_norm,
+            _bin_path: bin_path,
+        }
     }
 }
 
 #[async_trait::async_trait]
 impl ILinterAdapterPort for DuplicateAdapter {
-    fn name(&self) -> AdapterName { AdapterName::new("duplicates").unwrap() }
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterError> {
+    fn name(&self) -> AdapterName {
+        AdapterName::new("duplicates")
+    }
+    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
         let abs_path = std::path::Path::new(&path.value);
-        if abs_path.is_file() { } else if abs_path.is_dir() {
+        if abs_path.is_file() {
+        } else if abs_path.is_dir() {
             if let Ok(entries) = std::fs::read_dir(abs_path) {
                 for entry in entries.flatten() {
                     let p = entry.path();
@@ -73,12 +111,18 @@ impl ILinterAdapterPort for DuplicateAdapter {
                                 let line_count = content.lines().count();
                                 if line_count > 500 {
                                     results.push(LintResult {
-                                        file: FilePath::new(p.to_string_lossy().to_string()).unwrap(),
-                                        line: LineNumber::new(1), column: ColumnNumber::new(0),
+                                        file: FilePath::new(p.to_string_lossy().to_string()),
+                                        line: LineNumber::new(1),
+                                        column: ColumnNumber::new(0),
                                         code: ErrorCode::new("DUPE001"),
-                                        message: LintMessage::new(format!("File exceeds 500 lines ({}); potential duplication.", line_count)).unwrap(),
-                                        source: Some(self.name()), severity: Severity::Low,
-                                        enclosing_scope: None, related_locations: None,
+                                        message: LintMessage::new(format!(
+                                            "File exceeds 500 lines ({}); potential duplication.",
+                                            line_count
+                                        )),
+                                        source: self.name(),
+                                        severity: Severity::LOW,
+                                        enclosing_scope: Default::default(),
+                                        related_locations: Default::default(),
                                     });
                                 }
                             }
@@ -89,43 +133,73 @@ impl ILinterAdapterPort for DuplicateAdapter {
         }
         Ok(LintResultList::new(results))
     }
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterError> { Ok(ComplianceStatus::new(false)) }
+    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+        Ok(ComplianceStatus::new(false))
+    }
 }
 
 pub struct TrendsAdapter {
-    executor: Arc<dyn ICommandExecutorPort>,
-    path_norm: Arc<dyn IPathNormalizationPort>,
-    history_file: FilePath,
+    _executor: Arc<dyn ICommandExecutorPort>,
+    _path_norm: Arc<dyn IPathNormalizationPort>,
+    _history_file: FilePath,
 }
 
 impl TrendsAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorPort>, path_norm: Arc<dyn IPathNormalizationPort>, history_file: FilePath) -> Self {
-        Self { executor, path_norm, history_file }
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        history_file: FilePath,
+    ) -> Self {
+        Self {
+            _executor: executor,
+            _path_norm: path_norm,
+            _history_file: history_file,
+        }
     }
 }
 
 #[async_trait::async_trait]
 impl ILinterAdapterPort for TrendsAdapter {
-    fn name(&self) -> AdapterName { AdapterName::new("trends").unwrap() }
-    async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterError> { Ok(LintResultList::new(Vec::new())) }
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterError> { Ok(ComplianceStatus::new(false)) }
+    fn name(&self) -> AdapterName {
+        AdapterName::new("trends")
+    }
+    async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+        Ok(LintResultList::default())
+    }
+    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+        Ok(ComplianceStatus::new(false))
+    }
 }
 
 pub struct DependencyAdapter {
-    executor: Arc<dyn ICommandExecutorPort>,
-    path_norm: Arc<dyn IPathNormalizationPort>,
-    bin_path: Option<FilePath>,
+    _executor: Arc<dyn ICommandExecutorPort>,
+    _path_norm: Arc<dyn IPathNormalizationPort>,
+    _bin_path: Option<FilePath>,
 }
 
 impl DependencyAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorPort>, path_norm: Arc<dyn IPathNormalizationPort>, bin_path: Option<FilePath>) -> Self {
-        Self { executor, path_norm, bin_path }
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            _executor: executor,
+            _path_norm: path_norm,
+            _bin_path: bin_path,
+        }
     }
 }
 
 #[async_trait::async_trait]
 impl ILinterAdapterPort for DependencyAdapter {
-    fn name(&self) -> AdapterName { AdapterName::new("pip-audit").unwrap() }
-    async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterError> { Ok(LintResultList::new(Vec::new())) }
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterError> { Ok(ComplianceStatus::new(false)) }
+    fn name(&self) -> AdapterName {
+        AdapterName::new("pip-audit")
+    }
+    async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+        Ok(LintResultList::default())
+    }
+    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+        Ok(ComplianceStatus::new(false))
+    }
 }

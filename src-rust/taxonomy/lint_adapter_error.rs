@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use super::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct AdapterError {
     pub adapter_name: AdapterName,
     pub message: ErrorMessage,

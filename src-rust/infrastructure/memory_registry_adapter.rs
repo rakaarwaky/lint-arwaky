@@ -43,7 +43,7 @@ impl MemoryJobRegistryAdapter {
         let mut jobs = self.jobs.lock().await;
         if let Some(record) = jobs.get_mut(&job_id.value) {
             record.status = "completed".to_string();
-            record.result = Some(result.value.to_string());
+            record.result = result.value.as_ref().map(|v| v.to_string());
             record.completed_at = Some(chrono::Utc::now().to_rfc3339());
         }
     }
@@ -73,9 +73,9 @@ impl MemoryJobRegistryAdapter {
         if let Some(record) = jobs.get_mut(&job_id.value) {
             record.status = "cancelled".to_string();
             record.completed_at = Some(chrono::Utc::now().to_rfc3339());
-            SuccessStatus::new(BooleanVO::new(true))
+            SuccessStatus::new(true)
         } else {
-            SuccessStatus::new(BooleanVO::new(false))
+            SuccessStatus::new(false)
         }
     }
 }

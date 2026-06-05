@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use super::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct PluginGroup {
     pub value: String,
 }

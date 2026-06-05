@@ -1,7 +1,6 @@
-/// mcp_server_schemas — JSON Schema definitions for auto-linter tools.
-use crate::infrastructure::mcp_server_constants::{MAX_STRING_LENGTH, MAX_PATH_LENGTH, MAX_BATCH_SIZE};
+/// mcp_server_schemas — JSON Schema definitions for lint-arwaky tools.
+use crate::taxonomy::MAX_STRING_LENGTH;
 use serde_json::Value;
-use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct ToolSchema {
@@ -12,7 +11,12 @@ pub struct ToolSchema {
 }
 
 impl ToolSchema {
-    pub fn new(name: &str, description: &str, input_schema: Value, output_schema: Option<Value>) -> Self {
+    pub fn new(
+        name: &str,
+        description: &str,
+        input_schema: Value,
+        output_schema: Option<Value>,
+    ) -> Self {
         Self {
             name: name.to_string(),
             description: description.to_string(),
@@ -25,8 +29,8 @@ impl ToolSchema {
 pub fn build_tool_schemas() -> Vec<ToolSchema> {
     vec![
         ToolSchema::new(
-            "auto_linter_exec",
-            "Execute an auto-linter command.",
+            "lint_arwaky_exec",
+            "Execute a lint-arwaky command.",
             serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -41,31 +45,31 @@ pub fn build_tool_schemas() -> Vec<ToolSchema> {
             None,
         ),
         ToolSchema::new(
-            "auto_linter_list_commands",
-            "List all available auto-linter commands.",
+            "lint_arwaky_list_commands",
+            "List all available lint-arwaky commands.",
             serde_json::json!({ "type": "object", "properties": { "domain": { "type": "string" } }, "additionalProperties": false }),
             None,
         ),
         ToolSchema::new(
-            "auto_linter_check_status",
+            "lint_arwaky_check_status",
             "Check status of running lint jobs.",
             serde_json::json!({ "type": "object", "properties": { "job_id": { "type": "string" } }, "additionalProperties": false }),
             None,
         ),
         ToolSchema::new(
-            "auto_linter_cancel_job",
+            "lint_arwaky_cancel_job",
             "Cancel a running lint job.",
             serde_json::json!({ "type": "object", "properties": { "job_id": { "type": "string", "minLength": 1 } }, "required": ["job_id"], "additionalProperties": false }),
             None,
         ),
         ToolSchema::new(
-            "auto_linter_health_check",
+            "lint_arwaky_health_check",
             "Check overall system health.",
             serde_json::json!({ "type": "object", "properties": {}, "additionalProperties": false }),
             None,
         ),
         ToolSchema::new(
-            "auto_linter_read_docs",
+            "lint_arwaky_read_docs",
             "Read SKILL.md documentation sections.",
             serde_json::json!({ "type": "object", "properties": { "section": { "type": "string" } }, "additionalProperties": false }),
             None,

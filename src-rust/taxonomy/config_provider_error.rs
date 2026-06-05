@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use super::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ConfigError {
     pub key: ConfigKey,
     pub message: ErrorMessage,

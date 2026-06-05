@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "lint-arwaky": {
+      "command": "/home/raka/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/home/raka/mcp-arwaky/auto_linter",
+        "run",
+        "lint-arwaky"
+      ]
+    }
+  }
+}

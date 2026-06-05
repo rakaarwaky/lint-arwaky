@@ -11,37 +11,37 @@ impl JobRegistry {
         Self { port }
     }
 
-    pub async fn create_job(&self, action: ActionName) -> JobId {
-        self.port.create_job(action).await
+    pub async fn create_job(&self, action: ActionName) -> Result<JobId, crate::taxonomy::JobError> {
+        self.port.create_job(&action.value).await
     }
 
-    pub async fn complete_job(&self, job_id: JobId, result: String) {
-        self.port.complete_job(job_id, result).await
+    pub async fn complete_job(&self, job_id: JobId, result: ResponseData) {
+        self.port.complete_job(&job_id, &result).await
     }
 
-    pub async fn fail_job(&self, job_id: JobId, error: String) {
-        self.port.fail_job(job_id, error).await
+    pub async fn fail_job(&self, job_id: JobId, error: ErrorMessage) {
+        self.port.fail_job(&job_id, &error).await
     }
 
-    pub async fn list_jobs(&self) -> MetadataVO {
+    pub async fn list_jobs(&self) -> Vec<serde_json::Value> {
         self.port.list_jobs().await
     }
 
-    pub async fn get_job(&self, job_id: JobId) -> Option<String> {
-        self.port.get_job(job_id).await
+    pub async fn get_job(&self, job_id: JobId) -> Option<JobId> {
+        self.port.get_job(&job_id).await
     }
 
     pub async fn cancel_job(&self, job_id: JobId) -> SuccessStatus {
-        self.port.cancel_job(job_id).await
+        self.port.cancel_job(&job_id).await
     }
 
     pub async fn run_with_retry(
         &self,
         operation: String,
-        max_retries: Count,
+        max_retries: u32,
         base_delay: Duration,
     ) -> ResponseData {
-        self.port.run_with_retry(operation, max_retries, base_delay).await
+        self.port.run_with_retry(&operation, max_retries, base_delay).await
     }
 }
 

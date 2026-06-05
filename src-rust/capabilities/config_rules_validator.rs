@@ -31,8 +31,8 @@ impl ConfigRulesValidator {
     /// Determines if a specific adapter should run based on configuration rules.
     pub fn is_adapter_enabled(&self, adapter_name: &AdapterName) -> bool {
         for adapter in &self.config.adapters {
-            if adapter.name.value == adapter_name.value {
-                return adapter.status == AdapterStatus::ENABLED;
+            if adapter.name == adapter_name.value {
+                return adapter.status == AdapterStatus::Enabled;
             }
         }
         // Default policy: enabled if not explicitly mentioned

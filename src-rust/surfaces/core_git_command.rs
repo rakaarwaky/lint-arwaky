@@ -17,8 +17,10 @@ impl GitCommandsSurface {
         self.container = Some(container);
     }
 
-    pub fn print_section<F>(&self, title: &str, items: &[impl std::fmt::Display], item_fmt: F)
-    where F: Fn(&impl std::fmt::Display)
+    pub fn print_section<F, T>(&self, title: &str, items: &[T], item_fmt: F)
+    where
+        T: std::fmt::Display,
+        F: Fn(&T),
     {
         if !items.is_empty() {
             println!("  {title} ({}):", items.len());

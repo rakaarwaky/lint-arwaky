@@ -1,31 +1,26 @@
-/// Development CLI commands: diff, suggest, ignore, config, export.
-use std::path::PathBuf;
-use std::collections::HashMap;
-
-use crate::taxonomy::*;
-use crate::contract::*;
+﻿use crate::contract::*;
 
 pub struct DevCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Box<dyn ServiceContainerAggregate>>,
 }
 
 impl DevCommandsSurface {
-    pub fn new(container: Option<ServiceContainerAggregate>) -> Self {
+    pub fn new(container: Option<Box<dyn ServiceContainerAggregate>>) -> Self {
         Self { container }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Box<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
-    pub fn diff(&self, path1: &str, path2: &str, output_format: &str) {
+    pub fn diff(&self, path1: &str, path2: &str, _output_format: &str) {
         println!("Version Comparison:");
         println!(" {path1}: 100.0");
         println!(" {path2}: 100.0");
         println!(" Difference: +0.0  UNCHANGED");
     }
 
-    pub fn suggest(&self, path: &str, ai: bool) {
+    pub fn suggest(&self, path: &str, _ai: bool) {
         println!(" Analyzing {path} for suggestions...");
         println!("\nSuggestions for {path}:");
         println!("  Code is at 100.0 architecture compliance score!");
@@ -35,7 +30,7 @@ impl DevCommandsSurface {
         let config_file = std::path::Path::new(config_path);
         if !config_file.exists() {
             println!(" Config file not found: {config_path}");
-            println!("Run 'auto-lint setup init' first");
+            println!("Run 'lint-arwaky setup init' first");
             return;
         }
 
@@ -52,7 +47,7 @@ impl DevCommandsSurface {
             "show" => {
                 let config_file = std::path::Path::new(config_path);
                 if !config_file.exists() {
-                    println!(" Config not found. Run 'auto-lint setup init'");
+                    println!(" Config not found. Run 'lint-arwaky setup init'");
                     return;
                 }
                 match std::fs::read_to_string(config_file) {
@@ -98,7 +93,7 @@ impl DevCommandsSurface {
     }
 
     pub fn init(&self, path: &str) {
-        let config_file = format!("{}/auto_linter.config.yaml", path);
+        let config_file = format!("{}/lint_arwaky.config.yaml", path);
         if std::path::Path::new(&config_file).exists() {
             println!("{config_file} already exists. Overwrite? (y/n) [y]");
             // Would need interactive confirmation
@@ -127,25 +122,27 @@ impl DevCommandsSurface {
             }
         };
 
-        // In real impl: parse YAML/JSON and write to auto_linter.config.yaml
-        let target = std::path::Path::new("auto_linter.config.yaml");
+        // In real impl: parse YAML/JSON and write to lint_arwaky.config.yaml
+        let target = std::path::Path::new("lint_arwaky.config.yaml");
         std::fs::write(target, &content).unwrap_or_else(|e| {
             println!("Error writing target config: {e}");
         });
-        println!(" Imported config from {config_file} -> auto_linter.config.yaml");
+        println!(" Imported config from {config_file} -> lint_arwaky.config.yaml");
     }
 
-    pub fn install_hook(&self, path: &str) {
+    pub fn install_hook(&self, _path: &str) {
         println!(" Pre-commit hook installed successfully.");
     }
 
-    pub fn uninstall_hook(&self, path: &str) {
+    pub fn uninstall_hook(&self, _path: &str) {
         println!(" Pre-commit hook removed successfully.");
     }
 }
 
-pub fn register_dev_commands(container: ServiceContainerAggregate) -> DevCommandsSurface {
-    let mut surface = DevCommandsSurface::new(Some(container.clone()));
-    surface.register_all(container);
+pub fn register_dev_commands(
+    container: impl ServiceContainerAggregate + Clone + 'static,
+) -> DevCommandsSurface {
+    let mut surface = DevCommandsSurface::new(Some(Box::new(container.clone())));
+    surface.register_all(Box::new(container));
     surface
 }

@@ -8,7 +8,7 @@ use std::time::Instant;
 pub struct AgentState {
     start_time: Option<Instant>,
     pub started: bool,
-    pub status: String,
+    pub status: crate::taxonomy::AgentStatus,
 }
 
 impl AgentState {
@@ -16,7 +16,7 @@ impl AgentState {
         Self {
             start_time: None,
             started: false,
-            status: "initializing".to_string(),
+            status: crate::taxonomy::AgentStatus::INIT,
         }
     }
 }

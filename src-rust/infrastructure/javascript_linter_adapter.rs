@@ -1,8 +1,9 @@
 /// javascript_linter_adapter — ESLint, Prettier, and TSC adapters for JS/TS linting.
-use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort, LinterError};
+use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
 use crate::taxonomy::{
     AdapterError, AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, FilePath,
-    LineNumber, LintMessage, LintResult, LintResultList, PatternList, ScanError, Severity,
+    LineNumber, LintMessage, LintResult, LintResultList, LinterOperationError, PatternList,
+    ScanError, Severity,
 };
 use regex::Regex;
 use serde_json::Value;
@@ -44,19 +45,19 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
         let mut current = if abs_path.is_file() {
             match abs_path.parent() {
                 Some(p) => p.to_path_buf(),
-                None => return FilePath::new(".").unwrap(),
+                None => return FilePath::new("."),
             }
         } else {
             abs_path
         };
 
         for _ in 0..10 {
-            if current.join("auto_linter.config.yaml").is_file()
-                || current.join("auto_linter.config.python.yaml").is_file()
+            if current.join("lint_arwaky.config.yaml").is_file()
+                || current.join("lint_arwaky.config.python.yaml").is_file()
                 || current.join("package.json").is_file()
                 || current.join(".git").is_dir()
             {
-                return FilePath::new(current.to_string_lossy().to_string()).unwrap();
+                return FilePath::new(current.to_string_lossy().to_string());
             }
             match current.parent() {
                 Some(parent) => current = parent.to_path_buf(),
@@ -64,7 +65,7 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
             }
         }
     }
-    FilePath::new(".").unwrap()
+    FilePath::new(".")
 }
 
 // ── Prettier Adapter ───────────────────────────────────────────────────────
@@ -89,10 +90,10 @@ impl PrettierAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for PrettierAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("prettier").unwrap()
+        AdapterName::new("prettier")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterError> {
+    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = &path.value;
         if Path::new(path_str).is_file()
             && !path_str.ends_with(".ts")
@@ -105,10 +106,10 @@ impl ILinterAdapterPort for PrettierAdapter {
             && !path_str.ends_with(".yml")
             && !path_str.ends_with(".yaml")
         {
-            return Ok(LintResultList::new(Vec::new()));
+            return Ok(LintResultList::default());
         }
 
-        let wd = resolve_working_dir(&path);
+        let wd = resolve_working_dir(path);
         let abs_path = match std::fs::canonicalize(path_str) {
             Ok(p) => p.to_string_lossy().to_string(),
             Err(_) => path_str.clone(),
@@ -119,7 +120,7 @@ impl ILinterAdapterPort for PrettierAdapter {
         let response = match self
             .executor
             .execute_command(
-                PatternList::new(Some(cmd)),
+                PatternList::new(cmd),
                 wd.clone(),
                 Some(Duration::from_secs(60)),
             )
@@ -127,8 +128,8 @@ impl ILinterAdapterPort for PrettierAdapter {
         {
             Ok(r) => r,
             Err(e) => {
-                return Err(LinterError::Scan(ScanError {
-                    path,
+                return Err(LinterOperationError::Scan(ScanError {
+                    path: path.clone(),
                     message: ErrorMessage::new(e.to_string()),
                     error_code: None,
                     adapter_name: Some(self.name()),
@@ -141,26 +142,26 @@ impl ILinterAdapterPort for PrettierAdapter {
         let combined_output = format!("{}{}", response.stdout, response.stderr);
 
         if combined_output.contains("[warn]") {
-            let filename_vo = self.path_norm.resolve_infrastructure_path(path.clone(), Some(path.clone()));
+            let filename_vo = self.path_norm.resolve_infrastructure_path(path, Some(path));
             results.push(LintResult {
                 file: filename_vo,
                 line: LineNumber::new(1),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::new("formatting"),
-                message: LintMessage::new("Code style issues found. Run Prettier to fix.").unwrap(),
-                source: Some(self.name()),
-                severity: Severity::Low,
-                enclosing_scope: None,
-                related_locations: None,
+                message: LintMessage::new("Code style issues found. Run Prettier to fix."),
+                source: self.name(),
+                severity: Severity::LOW,
+                enclosing_scope: Default::default(),
+                related_locations: Default::default(),
             });
         }
 
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterError> {
+    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         let path_str = &path.value;
-        let wd = resolve_working_dir(&path);
+        let wd = resolve_working_dir(path);
         let abs_path = match std::fs::canonicalize(path_str) {
             Ok(p) => p.to_string_lossy().to_string(),
             Err(_) => path_str.clone(),
@@ -170,20 +171,16 @@ impl ILinterAdapterPort for PrettierAdapter {
 
         match self
             .executor
-            .execute_command(
-                PatternList::new(Some(cmd)),
-                wd,
-                Some(Duration::from_secs(60)),
-            )
+            .execute_command(PatternList::new(cmd), wd, Some(Duration::from_secs(60)))
             .await
         {
-            Ok(r) => Ok(ComplianceStatus::new(r.returncode.value == 0)),
-            Err(e) => Err(LinterError::Adapter(AdapterError {
+            Ok(r) => Ok(ComplianceStatus::new(r.returncode == 0)),
+            Err(e) => Err(LinterOperationError::Adapter(AdapterError {
                 adapter_name: self.name(),
                 message: ErrorMessage::new(e.to_string()),
                 error_code: None,
                 command: None,
-                stderr: ErrorMessage::new(""),
+                stderr: Some(ErrorMessage::new("")),
                 exit_code: None,
             })),
         }
@@ -212,22 +209,29 @@ impl TSCAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for TSCAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("tsc").unwrap()
+        AdapterName::new("tsc")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterError> {
+    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = &path.value;
-        if Path::new(path_str).is_file() && !path_str.ends_with(".ts") && !path_str.ends_with(".tsx") {
-            return Ok(LintResultList::new(Vec::new()));
+        if Path::new(path_str).is_file()
+            && !path_str.ends_with(".ts")
+            && !path_str.ends_with(".tsx")
+        {
+            return Ok(LintResultList::default());
         }
 
-        let wd = resolve_working_dir(&path);
+        let wd = resolve_working_dir(path);
         let abs_path = match std::fs::canonicalize(path_str) {
             Ok(p) => p.to_string_lossy().to_string(),
             Err(_) => path_str.clone(),
         };
 
-        let mut args = vec!["--noEmit".to_string(), "--pretty".to_string(), "false".to_string()];
+        let mut args = vec![
+            "--noEmit".to_string(),
+            "--pretty".to_string(),
+            "false".to_string(),
+        ];
         if abs_path != "." && abs_path != "./" {
             args.push(abs_path);
         }
@@ -237,7 +241,7 @@ impl ILinterAdapterPort for TSCAdapter {
         let response = match self
             .executor
             .execute_command(
-                PatternList::new(Some(cmd)),
+                PatternList::new(cmd),
                 wd.clone(),
                 Some(Duration::from_secs(60)),
             )
@@ -245,8 +249,8 @@ impl ILinterAdapterPort for TSCAdapter {
         {
             Ok(r) => r,
             Err(e) => {
-                return Err(LinterError::Scan(ScanError {
-                    path,
+                return Err(LinterOperationError::Scan(ScanError {
+                    path: path.clone(),
                     message: ErrorMessage::new(e.to_string()),
                     error_code: None,
                     adapter_name: Some(self.name()),
@@ -270,21 +274,20 @@ impl ILinterAdapterPort for TSCAdapter {
                 let code = caps.get(4).unwrap().as_str().to_string();
                 let msg = caps.get(5).unwrap().as_str().to_string();
 
-                let filename_vo = self.path_norm.resolve_infrastructure_path(
-                    FilePath::new(filename).unwrap(),
-                    Some(path.clone()),
-                );
+                let filename_vo = self
+                    .path_norm
+                    .resolve_infrastructure_path(&FilePath::new(filename), Some(path));
 
                 results.push(LintResult {
                     file: filename_vo,
-                    line: LineNumber::new(line_num),
-                    column: ColumnNumber::new(col_num),
+                    line: LineNumber::new(line_num as i64),
+                    column: ColumnNumber::new(col_num as i64),
                     code: ErrorCode::new(code),
-                    message: LintMessage::new(msg).unwrap(),
-                    source: Some(self.name()),
-                    severity: Severity::High,
-                    enclosing_scope: None,
-                    related_locations: None,
+                    message: LintMessage::new(msg),
+                    source: self.name(),
+                    severity: Severity::HIGH,
+                    enclosing_scope: Default::default(),
+                    related_locations: Default::default(),
                 });
             }
         }
@@ -292,7 +295,7 @@ impl ILinterAdapterPort for TSCAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterError> {
+    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
     }
 }
@@ -319,10 +322,10 @@ impl ESLintAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for ESLintAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("eslint").unwrap()
+        AdapterName::new("eslint")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterError> {
+    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = &path.value;
         if Path::new(path_str).is_file()
             && !path_str.ends_with(".ts")
@@ -330,10 +333,10 @@ impl ILinterAdapterPort for ESLintAdapter {
             && !path_str.ends_with(".js")
             && !path_str.ends_with(".jsx")
         {
-            return Ok(LintResultList::new(Vec::new()));
+            return Ok(LintResultList::default());
         }
 
-        let wd = resolve_working_dir(&path);
+        let wd = resolve_working_dir(path);
         let abs_path = match std::fs::canonicalize(path_str) {
             Ok(p) => p.to_string_lossy().to_string(),
             Err(_) => path_str.clone(),
@@ -348,7 +351,7 @@ impl ILinterAdapterPort for ESLintAdapter {
         let response = match self
             .executor
             .execute_command(
-                PatternList::new(Some(cmd)),
+                PatternList::new(cmd),
                 wd.clone(),
                 Some(Duration::from_secs(60)),
             )
@@ -356,8 +359,8 @@ impl ILinterAdapterPort for ESLintAdapter {
         {
             Ok(r) => r,
             Err(e) => {
-                return Err(LinterError::Scan(ScanError {
-                    path,
+                return Err(LinterOperationError::Scan(ScanError {
+                    path: path.clone(),
                     message: ErrorMessage::new(e.to_string()),
                     error_code: None,
                     adapter_name: Some(self.name()),
@@ -368,14 +371,14 @@ impl ILinterAdapterPort for ESLintAdapter {
 
         let stdout_str = response.stdout.to_string();
         if stdout_str.trim().is_empty() {
-            return Ok(LintResultList::new(Vec::new()));
+            return Ok(LintResultList::default());
         }
 
         let parsed: Value = match serde_json::from_str(&stdout_str) {
             Ok(v) => v,
             Err(e) => {
-                return Err(LinterError::Scan(ScanError {
-                    path,
+                return Err(LinterOperationError::Scan(ScanError {
+                    path: path.clone(),
                     message: ErrorMessage::new(format!("Failed to parse JSON: {}", e)),
                     error_code: None,
                     adapter_name: Some(self.name()),
@@ -388,10 +391,9 @@ impl ILinterAdapterPort for ESLintAdapter {
         if let Some(files) = parsed.as_array() {
             for file_data in files {
                 let filename = file_data["filePath"].as_str().unwrap_or("").to_string();
-                let filename_vo = self.path_norm.resolve_infrastructure_path(
-                    FilePath::new(filename).unwrap(),
-                    Some(path.clone()),
-                );
+                let filename_vo = self
+                    .path_norm
+                    .resolve_infrastructure_path(&FilePath::new(filename), Some(path));
 
                 if let Some(messages) = file_data["messages"].as_array() {
                     for msg in messages {
@@ -402,21 +404,21 @@ impl ILinterAdapterPort for ESLintAdapter {
                         let sev_code = msg["severity"].as_u64().unwrap_or(1);
 
                         let severity = if sev_code == 2 {
-                            Severity::High
+                            Severity::HIGH
                         } else {
-                            Severity::Medium
+                            Severity::MEDIUM
                         };
 
                         results.push(LintResult {
                             file: filename_vo.clone(),
-                            line: LineNumber::new(line_num),
-                            column: ColumnNumber::new(col_num),
+                            line: LineNumber::new(line_num as i64),
+                            column: ColumnNumber::new(col_num as i64),
                             code: ErrorCode::new(rule_id),
-                            message: LintMessage::new(message_text).unwrap(),
-                            source: Some(self.name()),
+                            message: LintMessage::new(message_text),
+                            source: self.name(),
                             severity,
-                            enclosing_scope: None,
-                            related_locations: None,
+                            enclosing_scope: Default::default(),
+                            related_locations: Default::default(),
                         });
                     }
                 }
@@ -426,9 +428,9 @@ impl ILinterAdapterPort for ESLintAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterError> {
+    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         let path_str = &path.value;
-        let wd = resolve_working_dir(&path);
+        let wd = resolve_working_dir(path);
         let abs_path = match std::fs::canonicalize(path_str) {
             Ok(p) => p.to_string_lossy().to_string(),
             Err(_) => path_str.clone(),
@@ -438,20 +440,16 @@ impl ILinterAdapterPort for ESLintAdapter {
 
         match self
             .executor
-            .execute_command(
-                PatternList::new(Some(cmd)),
-                wd,
-                Some(Duration::from_secs(60)),
-            )
+            .execute_command(PatternList::new(cmd), wd, Some(Duration::from_secs(60)))
             .await
         {
-            Ok(r) => Ok(ComplianceStatus::new(r.returncode.value == 0)),
-            Err(e) => Err(LinterError::Adapter(AdapterError {
+            Ok(r) => Ok(ComplianceStatus::new(r.returncode == 0)),
+            Err(e) => Err(LinterOperationError::Adapter(AdapterError {
                 adapter_name: self.name(),
                 message: ErrorMessage::new(e.to_string()),
                 error_code: None,
                 command: None,
-                stderr: ErrorMessage::new(""),
+                stderr: Some(ErrorMessage::new("")),
                 exit_code: None,
             })),
         }

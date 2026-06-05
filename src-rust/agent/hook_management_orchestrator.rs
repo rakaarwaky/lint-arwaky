@@ -1,10 +1,16 @@
 // hook_management_orchestrator — Orchestrates git hook management (Capability).
-use crate::contract::{HookOrchestratorAggregate};
-use crate::taxonomy::{AdapterName, FilePath, Identity, SuccessStatus};
+use crate::contract::HookOrchestratorAggregate;
+use crate::taxonomy::{AdapterName, Identity, SuccessStatus};
 
 pub struct HookManagementOrchestrator;
 
 impl HookOrchestratorAggregate for HookManagementOrchestrator {}
+
+impl Default for HookManagementOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl HookManagementOrchestrator {
     pub fn new() -> Self {
@@ -12,11 +18,11 @@ impl HookManagementOrchestrator {
     }
 
     pub fn get_hook_manager_identity(&self) -> Identity {
-        Identity::new("git_hook_manager")
+        "git_hook_manager".to_string()
     }
 
     pub fn install(&self, executable: Option<AdapterName>) -> SuccessStatus {
-        let _exec = executable.unwrap_or_else(|| AdapterName::new("auto-lint").unwrap());
+        let _exec = executable.unwrap_or_else(|| AdapterName::new("lint-arwaky"));
         // Delegates to the git hook manager from infrastructure
         SuccessStatus::new(true)
     }

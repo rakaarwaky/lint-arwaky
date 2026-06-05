@@ -1,11 +1,19 @@
 [package]
-name = "auto_linter_rust"
+name = "lint_arwaky"
 version = "1.10.2"
-edition = "2024"
+edition = "2021"
+
+[lib]
+name = "lint_arwaky"
+path = "src-rust/lib.rs"
 
 [[bin]]
-name = "auto-linter"
-path = "src-rust/main.rs"
+name = "lint-arwaky"
+path = "src-rust/cli_main_entry.rs"
+
+[[bin]]
+name = "lint-arwaky-mcp"
+path = "src-rust/mcp_main_entry.rs"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -23,3 +31,5 @@ reqwest = { version = "0.13.4", features = ["blocking"] }
 chrono = "0.4.44"
 mcp-sdk-rs = "0.3.4"
 rand = "0.10.1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

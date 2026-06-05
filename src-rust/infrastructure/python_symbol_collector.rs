@@ -15,8 +15,14 @@ impl SymbolCollector {
         Self { defined: Vec::new(), used: Vec::new(), exported: Vec::new(), imported_aliases: std::collections::HashMap::new(), class_bases: std::collections::HashMap::new(), imports_list: Vec::new() }
     }
 
-    pub fn defined(&self) -> SymbolNameList { SymbolNameList::new(self.defined.iter().map(|s| SymbolName::new(s.clone())).collect()) }
-    pub fn used(&self) -> SymbolNameList { SymbolNameList::new(self.used.iter().map(|s| SymbolName::new(s.clone())).collect()) }
-    pub fn exported(&self) -> SymbolNameList { SymbolNameList::new(self.exported.iter().map(|s| SymbolName::new(s.clone())).collect()) }
-    pub fn imported_aliases(&self) -> MetadataVO { MetadataVO::new(serde_json::to_value(&self.imported_aliases).unwrap_or_default()) }
+    pub fn defined(&self) -> SymbolNameList { SymbolNameList { values: self.defined.iter().map(|s| SymbolName::new(s.clone())).collect() } }
+    pub fn used(&self) -> SymbolNameList { SymbolNameList { values: self.used.iter().map(|s| SymbolName::new(s.clone())).collect() } }
+    pub fn exported(&self) -> SymbolNameList { SymbolNameList { values: self.exported.iter().map(|s| SymbolName::new(s.clone())).collect() } }
+    pub fn imported_aliases(&self) -> MetadataVO {
+        let mut map = std::collections::HashMap::new();
+        for (k, v) in &self.imported_aliases {
+            map.insert(k.clone(), serde_json::Value::String(v.clone()));
+        }
+        MetadataVO::new(map)
+    }
 }

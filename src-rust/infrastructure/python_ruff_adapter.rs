@@ -1,5 +1,4 @@
-/// Ruff adapter for Python linting.
-use crate::contract::{ILinterAdapterPort, ICommandExecutorPort, IPathNormalizationPort, LinterError};
+use crate::contract::{ILinterAdapterPort, ICommandExecutorPort, IPathNormalizationPort};
 use crate::taxonomy::*;
 use async_trait::async_trait;
 use serde_json::Value;
@@ -47,7 +46,7 @@ impl ILinterAdapterPort for RuffAdapter {
         AdapterName::new("ruff")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterError> {
+    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let executable = self.resolve_executable();
         let cmd = vec![
             executable,
@@ -88,14 +87,14 @@ impl ILinterAdapterPort for RuffAdapter {
                 }
                 Ok(LintResultList::new(results))
             }
-            Err(e) => Err(LinterError::Adapter(AdapterError {
+            Err(e) => Err(LinterOperationError::Adapter(AdapterError {
                 message: ErrorMessage::new(format!("Ruff execution failed: {}", e)),
                 ..Default::default()
             })),
         }
     }
 
-    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterError> {
+    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         let executable = self.resolve_executable();
         let cmd = vec![
             executable,
@@ -110,7 +109,7 @@ impl ILinterAdapterPort for RuffAdapter {
 
         match self.executor.execute_command(command, working_dir, Some(std::time::Duration::from_secs(60))).await {
             Ok(_) => Ok(ComplianceStatus::new(true)),
-            Err(e) => Err(LinterError::Adapter(AdapterError {
+            Err(e) => Err(LinterOperationError::Adapter(AdapterError {
                 message: ErrorMessage::new(format!("Ruff fix failed: {}", e)),
                 ..Default::default()
             })),

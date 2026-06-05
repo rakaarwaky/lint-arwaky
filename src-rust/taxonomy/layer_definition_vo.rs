@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use std::collections::{HashMap, HashSet};
 use super::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LayerDefinition {
     pub path: DirectoryPath,
     pub suffix_policy: SuffixPolicyVO,

@@ -27,7 +27,7 @@ impl SetupManagementOrchestrator {
         let mut config = HashMap::new();
         config.insert("transport".to_string(), serde_json::json!(transport.value));
         McpConfigVO {
-            value: MetadataVO::new(config),
+            value: config,
         }
     }
 
@@ -36,7 +36,7 @@ impl SetupManagementOrchestrator {
         config.insert("transport".to_string(), serde_json::json!(transport.value));
         config.insert("client".to_string(), serde_json::json!("claude"));
         McpConfigVO {
-            value: MetadataVO::new(config),
+            value: config,
         }
     }
 
@@ -45,7 +45,7 @@ impl SetupManagementOrchestrator {
         config.insert("transport".to_string(), serde_json::json!(transport.value));
         config.insert("client".to_string(), serde_json::json!("hermes"));
         McpConfigVO {
-            value: MetadataVO::new(config),
+            value: config,
         }
     }
 
@@ -54,7 +54,7 @@ impl SetupManagementOrchestrator {
         config.insert("transport".to_string(), serde_json::json!(transport.value));
         config.insert("client".to_string(), serde_json::json!("vscode"));
         McpConfigVO {
-            value: MetadataVO::new(config),
+            value: config,
         }
     }
 }

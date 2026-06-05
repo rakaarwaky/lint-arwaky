@@ -1,22 +1,37 @@
 // dev_commands_orchestrator — Orchestrator for development-related domain logic.
-use crate::contract::{DevCommandsAggregate, ServiceContainerAggregate};
-use crate::taxonomy::FilePath;
+use crate::contract::DevCommandsAggregate;
 use std::collections::HashMap;
 
 pub struct DevCommandsOrchestrator;
 
 impl DevCommandsAggregate for DevCommandsOrchestrator {}
 
+impl Default for DevCommandsOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DevCommandsOrchestrator {
     pub fn new() -> Self {
         Self
     }
 
-    pub async fn get_diff_data(&self, path1: &str, path2: &str) -> HashMap<String, serde_json::Value> {
+    pub async fn get_diff_data(
+        &self,
+        path1: &str,
+        path2: &str,
+    ) -> HashMap<String, serde_json::Value> {
         // Get comparison data between two paths
         let mut result = HashMap::new();
-        result.insert("version1".to_string(), serde_json::json!({"score": 0.0, "path": path1}));
-        result.insert("version2".to_string(), serde_json::json!({"score": 0.0, "path": path2}));
+        result.insert(
+            "version1".to_string(),
+            serde_json::json!({"score": 0.0, "path": path1}),
+        );
+        result.insert(
+            "version2".to_string(),
+            serde_json::json!({"score": 0.0, "path": path2}),
+        );
         result.insert("difference".to_string(), serde_json::json!(0.0));
         result.insert("status".to_string(), serde_json::json!("UNCHANGED"));
         result
@@ -37,11 +52,15 @@ impl DevCommandsOrchestrator {
             return format!("Config file not found: {}", config_path);
         }
         // Basic implementations for config manipulation
-        format!("{} '{}' from ignore list", if remove { "Removed" } else { "Added" }, rule)
+        format!(
+            "{} '{}' from ignore list",
+            if remove { "Removed" } else { "Added" },
+            rule
+        )
     }
 
     pub fn initialize_config(&self, path: &str) -> String {
-        let config_file = format!("{}/auto_linter.config.yaml", path);
+        let config_file = format!("{}/lint_arwaky.config.yaml", path);
         if std::path::Path::new(&config_file).exists() {
             return format!("ALREADY_EXISTS:{}", config_file);
         }

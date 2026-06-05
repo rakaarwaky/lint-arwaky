@@ -1,17 +1,15 @@
-/// Maintenance CLI commands: stats, clean, update, doctor, cancel.
-use crate::taxonomy::*;
-use crate::contract::*;
+﻿use crate::contract::*;
 
 pub struct MaintenanceCommandsSurface {
-    pub container: Option<ServiceContainerAggregate>,
+    pub container: Option<Box<dyn ServiceContainerAggregate>>,
 }
 
 impl MaintenanceCommandsSurface {
-    pub fn new(container: Option<ServiceContainerAggregate>) -> Self {
+    pub fn new(container: Option<Box<dyn ServiceContainerAggregate>>) -> Self {
         Self { container }
     }
 
-    pub fn register_all(&mut self, container: ServiceContainerAggregate) {
+    pub fn register_all(&mut self, container: Box<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
@@ -36,11 +34,11 @@ impl MaintenanceCommandsSurface {
     }
 
     pub fn doctor(&self) {
-        println!(" Auto-Linter Doctor");
+        println!(" Lint Arwaky Doctor");
         println!("{}", "=".repeat(50));
         println!(" Python: 3.12+");
         println!(" Status: Installed");
-        println!(" Config: auto_linter.config.yaml");
+        println!(" Config: lint_arwaky.config.yaml");
         println!("\n Adapters:");
         println!("  - ruff: OK");
         println!("  - mypy: OK");
@@ -53,8 +51,10 @@ impl MaintenanceCommandsSurface {
     }
 }
 
-pub fn register_maintenance_commands(container: ServiceContainerAggregate) -> MaintenanceCommandsSurface {
-    let mut surface = MaintenanceCommandsSurface::new(Some(container.clone()));
-    surface.register_all(container);
+pub fn register_maintenance_commands(
+    container: impl ServiceContainerAggregate + Clone + 'static,
+) -> MaintenanceCommandsSurface {
+    let mut surface = MaintenanceCommandsSurface::new(Some(Box::new(container.clone())));
+    surface.register_all(Box::new(container));
     surface
 }

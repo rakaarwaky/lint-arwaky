@@ -1,9 +1,0 @@
-.venv
-.ruff_cache
-.pytest_cache
-.mypy_cache
-__pycache__
-auto_linter.egg-info
-.pyre
-*.json
-tests/__pycache__

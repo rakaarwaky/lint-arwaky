@@ -1,10 +1,16 @@
 /// config_discovery_provider — Provider for discovering configuration files in the filesystem.
 use crate::contract::IConfigDiscoveryPort;
-use crate::taxonomy::{ConfigError, ConfigKey, DirectoryPath, ErrorMessage, FilePath};
+use crate::taxonomy::{ConfigError, DirectoryPath, FilePath};
 use std::env;
 use std::path::Path;
 
 pub struct ConfigDiscoveryProvider;
+
+impl Default for ConfigDiscoveryProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ConfigDiscoveryProvider {
     pub fn new() -> Self {
@@ -38,25 +44,48 @@ impl ConfigDiscoveryProvider {
 }
 
 impl IConfigDiscoveryPort for ConfigDiscoveryProvider {
-    fn find_env_file(&self, start: Option<DirectoryPath>) -> Option<FilePath> {
-        let base = start.map(|d| Path::new(&d.value).to_path_buf()).unwrap_or_else(|| std::env::current_dir().ok().unwrap_or_default());
-        Self::walk_up(&base, &[".env"])
+    fn find_env_file(
+        &self,
+        start: Option<&DirectoryPath>,
+    ) -> Option<Result<FilePath, ConfigError>> {
+        let base = start
+            .map(|d| Path::new(&d.value).to_path_buf())
+            .unwrap_or_else(|| std::env::current_dir().ok().unwrap_or_default());
+        Self::walk_up(&base, &[".env"]).map(Ok)
     }
 
-    fn find_yaml_config(&self, start: Option<DirectoryPath>) -> Result<Option<FilePath>, ConfigError> {
+    fn find_yaml_config(
+        &self,
+        start: Option<&DirectoryPath>,
+    ) -> Option<Result<FilePath, ConfigError>> {
         let explicit = env::var("AUTO_LINTER_CONFIG").ok();
         if let Some(ref path) = explicit {
             let p = Path::new(path);
             if p.is_file() {
-                return Ok(Some(FilePath::new(path.clone())));
+                return Some(Ok(FilePath::new(path.clone())));
             }
         }
-        let base = start.map(|d| Path::new(&d.value).to_path_buf()).unwrap_or_else(|| std::env::current_dir().ok().unwrap_or_default());
-        Ok(Self::walk_up(&base, &["auto_linter.config.jinja", "auto_linter.config.yaml", "auto_linter.config.python.yaml"]))
+        let base = start
+            .map(|d| Path::new(&d.value).to_path_buf())
+            .unwrap_or_else(|| std::env::current_dir().ok().unwrap_or_default());
+        Self::walk_up(
+            &base,
+            &[
+                "lint_arwaky.config.jinja",
+                "lint_arwaky.config.yaml",
+                "lint_arwaky.config.python.yaml",
+            ],
+        )
+        .map(Ok)
     }
 
-    fn find_toml_config(&self, start: Option<DirectoryPath>) -> Result<Option<FilePath>, ConfigError> {
-        let base = start.map(|d| Path::new(&d.value).to_path_buf()).unwrap_or_else(|| std::env::current_dir().ok().unwrap_or_default());
-        Ok(Self::walk_up(&base, &["pyproject.toml"]))
+    fn find_toml_config(
+        &self,
+        start: Option<&DirectoryPath>,
+    ) -> Option<Result<FilePath, ConfigError>> {
+        let base = start
+            .map(|d| Path::new(&d.value).to_path_buf())
+            .unwrap_or_else(|| std::env::current_dir().ok().unwrap_or_default());
+        Self::walk_up(&base, &["pyproject.toml"]).map(Ok)
     }
 }

@@ -77,9 +77,8 @@ impl GitCommandsOrchestrator {
                 for line in String::from_utf8_lossy(&output.stdout).lines() {
                     let line = line.trim();
                     if !line.is_empty() {
-                        if let Ok(fp) = FilePath::new(line) {
-                            changed_set.insert(fp);
-                        }
+                        let fp = FilePath::new(line);
+                        changed_set.insert(fp);
                     }
                 }
             }
@@ -97,9 +96,8 @@ impl GitCommandsOrchestrator {
                 for line in String::from_utf8_lossy(&output.stdout).lines() {
                     let line = line.trim();
                     if !line.is_empty() {
-                        if let Ok(fp) = FilePath::new(line) {
-                            changed_set.insert(fp);
-                        }
+                        let fp = FilePath::new(line);
+                        changed_set.insert(fp);
                     }
                 }
             }
@@ -116,9 +114,8 @@ impl GitCommandsOrchestrator {
                 for line in String::from_utf8_lossy(&output.stdout).lines() {
                     let line = line.trim();
                     if !line.is_empty() {
-                        if let Ok(fp) = FilePath::new(line) {
-                            changed_set.insert(fp);
-                        }
+                        let fp = FilePath::new(line);
+                        changed_set.insert(fp);
                     }
                 }
             }
@@ -162,12 +159,12 @@ impl GitCommandsOrchestrator {
         let filtered = changed_files.clone();
         Box::new(crate::agent::git_diff_manager::GitDiffResult {
             added: FilePathList::new(Vec::new()),
-            modified: filtered,
+            modified: filtered.clone(),
             deleted: FilePathList::new(Vec::new()),
             renamed: RenamedFileList::new(Vec::new()),
             lintable_files: changed_files.clone(),
             all_files: changed_files,
-            total_changed: Count::new(filtered.values.len()),
+            total_changed: Count::new(filtered.values.len() as i64),
         })
     }
 }
