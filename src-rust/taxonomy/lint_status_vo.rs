@@ -109,21 +109,6 @@ impl std::fmt::Display for EnvContentVO {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct TransportUrlVO {
-    pub value: String,
-}
-
-impl TransportUrlVO {
-    pub fn new(value: impl Into<String>) -> Self { Self { value: value.into() } }
-}
-
-impl std::fmt::Display for TransportUrlVO {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct McpConfigVO {
     #[serde(default)]
     pub value: HashMap<String, serde_json::Value>,

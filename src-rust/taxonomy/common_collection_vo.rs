@@ -417,6 +417,10 @@ pub struct Timestamp {
 }
 
 impl Timestamp {
+    pub fn now() -> Self {
+        Self { value: chrono::Utc::now().to_rfc3339() }
+    }
+
     pub fn new(value: impl Into<String>) -> Self {
         Self { value: value.into() }
     }
