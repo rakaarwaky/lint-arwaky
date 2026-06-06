@@ -72,8 +72,8 @@ pub fn load_config(project_root: Option<&Path>, src_dir: &Path) -> ArchitectureC
 pub fn run_lint_with_deps(
     src_dir: &Path,
     project_root: Option<&Path>,
-    fs: Arc<dyn IFileSystemPort>,
-    parser: Arc<dyn ISourceParserPort>,
+    _fs: Arc<dyn IFileSystemPort>,
+    _parser: Arc<dyn ISourceParserPort>,
 ) -> Vec<LintResult> {
     let config = load_config(project_root, src_dir);
     let analyzer = ArchComplianceAnalyzer::new(config);

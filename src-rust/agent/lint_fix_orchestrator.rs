@@ -1,5 +1,5 @@
 // lint_fix_orchestrator — Orchestrates automatic fixes (Agent layer).
-use crate::contract::{IFileSystemPort, ILinterAdapterPort, LintFixOrchestratorAggregate};
+use crate::contract::LintFixOrchestratorAggregate;
 use crate::taxonomy::{FilePath, FixResult};
 
 pub struct LintFixOrchestrator;
@@ -21,7 +21,7 @@ impl LintFixOrchestrator {
     fn _process_rename_rule(
         &self,
         code_str: &str,
-        message: &str,
+        _message: &str,
         _root_dir: &str,
     ) -> (usize, String) {
         // Process a single lint result for renaming
@@ -33,7 +33,7 @@ impl LintFixOrchestrator {
         (0, String::new())
     }
 
-    pub async fn execute_old(&self, path: &FilePath) -> FixResult {
+    pub async fn execute_old(&self, _path: &FilePath) -> FixResult {
         // Execute fix application pipeline
         // Step 1: Pre-fix semantic renaming logic
         // Step 2: Apply fixes via adapters

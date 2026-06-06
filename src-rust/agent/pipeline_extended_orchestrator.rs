@@ -4,7 +4,7 @@ use crate::contract::{
     PipelineOutputAggregate,
 };
 use crate::taxonomy::{
-    BooleanVO, ErrorMessage, FilePath, JobId, MetadataVO, ResponseData, SuccessStatus,
+    ErrorMessage, FilePath, JobId, ResponseData, SuccessStatus,
 };
 use std::collections::HashMap;
 

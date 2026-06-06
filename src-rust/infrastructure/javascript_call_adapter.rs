@@ -1,9 +1,8 @@
 /// javascript_call_tracer — Semantic analysis adapter for JavaScript/TypeScript files.
 use crate::contract::semantic_tracer_port::ISemanticTracerPort;
 use crate::taxonomy::{
-    CallChainList, Count, DataFlowList, DirectoryPath, ExitCode, FilePath, LineNumber, MetadataVO,
-    ResponseData, ResponseDataList, ScopeRef, SemanticError, StdError, StdOutput, SymbolName,
-    SymbolNameList,
+    CallChainList, DataFlowList, DirectoryPath, FilePath, LineNumber,
+    ResponseData, ScopeRef, SemanticError, SymbolName,
 };
 use async_trait::async_trait;
 use regex::Regex;

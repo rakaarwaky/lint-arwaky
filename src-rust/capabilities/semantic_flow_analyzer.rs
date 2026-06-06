@@ -4,7 +4,6 @@
 use std::fs;
 use std::collections::HashSet;
 use regex::Regex;
-use crate::taxonomy::{FilePath, LineNumber, SymbolName};
 use crate::capabilities::semantic_boundary_analyzer::ScopeBoundaryAnalyzer;
 
 /// A single data flow entry describing a variable's usage at a line.

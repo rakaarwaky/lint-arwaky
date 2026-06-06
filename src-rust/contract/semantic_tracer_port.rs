@@ -1,8 +1,7 @@
 // semantic_tracer_port — Protocol interface for semantic analysis capabilities.
 // Infrastructure implements this. Capabilities consume it via DI.
 use crate::taxonomy::{
-    CallChainList, Count, DataFlowList, DirectoryPath, FilePath, LineNumber, ResponseData,
-    ResponseDataList, ScopeRef, SemanticError, SymbolName, SymbolNameList,
+    CallChainList, DataFlowList, DirectoryPath, FilePath, LineNumber, ResponseData, ScopeRef, SemanticError, SymbolName,
 };
 use async_trait::async_trait;
 

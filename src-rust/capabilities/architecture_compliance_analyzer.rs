@@ -4,8 +4,7 @@
 use super::architecture_import_checker::ArchImportRuleChecker;
 use super::architecture_metric_checker::ArchMetricChecker;
 use crate::taxonomy::{
-    AdapterName, ArchitectureConfig, ColumnNumber, ErrorCode, FilePath, LayerDefinition,
-    LayerNameVO, LineNumber, LintMessage, LintResult, LocationList, ScopeRef, Severity,
+    ArchitectureConfig, LayerDefinition, LayerNameVO,
 };
 use std::path::Path;
 
@@ -240,23 +239,4 @@ impl ArchComplianceAnalyzer {
         }
     }
 
-    fn make_result(file: &str, line: i64, code: &str, msg: &str, sev: Severity) -> LintResult {
-        LintResult {
-            file: FilePath::new(file.to_string()).unwrap(),
-            line: LineNumber::new(line),
-            column: ColumnNumber::new(0),
-            code: ErrorCode::new(code).unwrap(),
-            message: LintMessage::new(msg),
-            source: Some(AdapterName::new("architecture").unwrap()),
-            severity: sev,
-            enclosing_scope: Some(ScopeRef {
-                name: String::new(),
-                kind: String::new(),
-                file: None,
-                start_line: None,
-                end_line: None,
-            }),
-            related_locations: LocationList::new(),
-        }
-    }
 }

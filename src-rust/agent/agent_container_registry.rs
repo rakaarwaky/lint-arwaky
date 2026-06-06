@@ -1,7 +1,6 @@
 // agent_container_registry — Registry and provider for project-specific DI containers.
 use crate::taxonomy::FilePath;
 use crate::contract::{ServiceContainerAggregate, ContainerRegistryAggregate};
-use crate::taxonomy::source_path_vo::DirectoryPath;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;

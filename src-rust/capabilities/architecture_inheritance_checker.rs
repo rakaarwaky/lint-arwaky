@@ -138,7 +138,7 @@ impl MandatoryInheritanceChecker {
             };
 
             // Only check agent/capabilities/infrastructure layers
-            let layer_suffix = match LAYER_CONTRACT_SUFFIX.iter().find(|(l, _)| *l == layer.as_str()) {
+            let _layer_suffix = match LAYER_CONTRACT_SUFFIX.iter().find(|(l, _)| *l == layer.as_str()) {
                 Some((_, s)) => *s,
                 None => continue,
             };

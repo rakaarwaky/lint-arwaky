@@ -4,9 +4,8 @@
 use std::fs;
 use std::path::Path;
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition,
-    LayerNameVO, LintMessage, LintResult, LineNumber, Severity,
-    ScopeRef, LocationList, ArchitectureConfig,
+    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LintMessage, LintResult, LineNumber, Severity,
+    ScopeRef, LocationList,
 };
 
 pub struct ArchMetricChecker;

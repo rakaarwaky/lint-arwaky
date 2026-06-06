@@ -3,7 +3,6 @@
 
 use std::fs;
 use regex::Regex;
-use crate::taxonomy::{FilePath, LineNumber, ColumnNumber};
 
 /// A single primitive usage violation (line, column, type_name).
 pub struct PrimitiveViolation {

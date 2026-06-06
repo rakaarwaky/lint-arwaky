@@ -3,7 +3,7 @@
 
 use crate::contract::architecture_rule_protocol::IAnalyzer;
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FileDefinitionMap, FilePath, FilePathSet,
+    AdapterName, ColumnNumber, ErrorCode, FileDefinitionMap, FilePath,
     GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap, LayerDefinition,
     LayerNameVO, LineNumber, LintMessage, LintResult, LocationList, OrphanIndicatorResult,
     ScopeRef, Severity,
@@ -87,7 +87,7 @@ impl OrphanIndicatorEvaluator {
 
     pub fn is_contract_orphan(
         &self,
-        f: &str,
+        _f: &str,
         _root: &str,
         _defs: &FileDefinitionMap,
         _inh: &InheritanceMap,
@@ -409,7 +409,7 @@ impl ArchOrphanAnalyzer {
             return false;
         }
 
-        let mut found = false;
+        let found = false;
         if let Ok(entries) = std::fs::read_dir(path) {
             for entry in entries.flatten() {
                 let entry_path = entry.path();

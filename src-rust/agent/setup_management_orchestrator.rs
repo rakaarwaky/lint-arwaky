@@ -1,6 +1,6 @@
 // setup_management_orchestrator — Implementation of SetupManagementAggregate (Agent Logic).
 use crate::contract::setup_management_aggregate::SetupManagementAggregate;
-use crate::taxonomy::{TransportUrlVO, BooleanVO, DirectoryPath, EnvContentVO, McpConfigVO, MetadataVO};
+use crate::taxonomy::{TransportUrlVO, BooleanVO, DirectoryPath, EnvContentVO, McpConfigVO};
 use std::collections::HashMap;
 
 use async_trait::async_trait;

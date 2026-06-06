@@ -40,7 +40,7 @@ pub use core_plugin_command::{PluginCommandsSurface, register_plugin_commands};
 pub use core_report_command::{ReportCommandsSurface, register_report_commands};
 pub use mcp_client_handler::{McpDesktopClientSurface, register_desktop_client};
 pub use mcp_command_handler::{CommandEntry, McpCommandCatalogSurface, list_commands_func, register_catalog_commands, register_list_commands, register_read_skill_context};
-pub use mcp_execute_command::{_running_jobs, register_execute_commands};
+pub use mcp_execute_command::{RUNNING_JOBS, register_execute_commands};
 pub use mcp_health_handler::{McpHealthCheckSurface, register_health_commands};
 pub use mcp_job_handler::{McpJobCommandsSurface};
 pub use mcp_server_handler::{McpServerHandlerSurface};

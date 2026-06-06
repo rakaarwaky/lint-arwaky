@@ -10,176 +10,26 @@
 // control flow) instead of acting as a thin pass-through to the agent layer.
 // Surfaces must be declarative/passive — I/O parsing + delegation only.
 
-use crate::taxonomy::{AccessDeniedError,
-ActionArgs,
-ActionName,
-ActualValue,
-AdapterClassMap,
-AdapterEntry,
-AdapterError,
-AdapterMetadata,
-AdapterMetadataList,
-AdapterName,
-AdapterNameList,
-AdapterRegistered,
-AdapterStatus,
-AgentStatus,
-AgentStatusVO};
+use crate::taxonomy::AdapterName;
 
-use crate::taxonomy::{AggregatedResults,
-AppConfig,
-ArchitectureConfig,
-ArchitectureRule,
-BooleanVO,
-CallChainError,
-CallChainList,
-CapabilityReference,
-CapabilityReferenceList,
-CapabilityRoutingContext,
-Cause,
-ClassDefinitionMap,
-ClassFileMap,
-ClassMethodsVO,
-ClassNameVO};
 
-use crate::taxonomy::{ClassPath,
-ClassUsageItem,
-ClassUsageItemList,
-ClassUsageMap,
-ColumnNumber,
-CommandArgs,
-CommandMetadataVO,
-ComplianceStatus,
-ConfigError,
-ConfigKey,
-Constraint,
-ContentString,
-Count,
-CustomMessageVO,
-DataFlowList};
+use crate::taxonomy::ColumnNumber;
 
-use crate::taxonomy::{DescriptionVO,
-DirectoryPath,
-DiscoveryError,
-DoctorResultVO,
-Duration,
-EnvContentVO,
-ErrorCode,
-ErrorMessage,
-ExitCode,
-ExpectedValue,
-FieldName,
-FileContentVO,
-FileDefinitionMap,
-FileFormat,
+use crate::taxonomy::{ErrorCode,
 FilePath};
 
-use crate::taxonomy::{FilePathList,
-FileSystemError,
-FixApplied,
-FixResult,
-GitDiffResultVO,
-GitHookError,
-GitRef,
-GovernanceReport,
-GraphAnalysisContext,
-HookInstalled,
-HookRemoved,
-Identity,
-ImportGraph,
-ImportInfo,
-ImportInfoList};
 
-use crate::taxonomy::{ImportNameList,
-InboundLinkMap,
-InheritanceMap,
-IntoPatternListValues,
-JobError,
-JobId,
-JobIdList,
-JobStatus,
-LayerDefinition,
-LayerMapVO,
-LayerNameVO,
-LegacyLayerRule,
-LegacyLayerRuleList,
-LineContentList,
-LineContentVO};
 
 use crate::taxonomy::{LineNumber,
 LintMessage,
 LintResult,
 LintResultList,
-LintStatusActionArgs,
-LinterOperationError,
-Location,
-LocationList,
-LogOutput,
-MaintenanceStatsVO,
-MandatoryImportRuleVO,
-McpConfigVO,
-MetadataVO,
-MetricsError,
-ModuleName};
+LocationList};
 
-use crate::taxonomy::{ModuleToFileMap,
-NameVariants,
-NamingConfig,
-NamingError,
-OrphanIndicatorResult,
-PathNotFoundError,
-PatternList,
-PluginError,
-PluginGroup,
-Position,
-PrimitiveTypeList,
-PrimitiveTypeName,
-PrimitiveViolation,
-PrimitiveViolationList,
-ProjectConfig};
 
-use crate::taxonomy::{ProjectResult,
-ReachabilityResult,
-RegistrationError,
-RenamedFile,
-RenamedFileList,
-ResponseData,
-ResponseDataList,
-ScanCompleted,
-ScanError,
-ScanFailed,
-ScanStarted,
-ScopeBounds,
-ScopeRef,
-ScopeResolutionError,
-Score};
 
-use crate::taxonomy::{SemanticError,
-Severity,
-SourceParserError,
-StdError,
-StdOutput,
-SuccessStatus,
-SuffixPolicyVO,
-SuffixVO,
-Suggestion,
-SymbolName,
-SymbolNameList,
-SyntaxErrorVO,
-Thresholds,
-Timeout,
-Timestamp};
+use crate::taxonomy::Severity;
 
-use crate::taxonomy::{TransportEndpoint,
-TransportError,
-TransportProtocol,
-TransportUrlVO,
-ValidationError,
-ViolationConstraint,
-WatchEventError,
-WatchResult,
-WatchServiceError,
-WatchSubscriptionError};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -215,7 +65,7 @@ impl SurfaceHierarchyChecker {
     pub fn check_surface_hierarchy(
         &self,
         files: &[FilePath],
-        root_dir: &FilePath,
+        _root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
         for f in files {
@@ -236,7 +86,7 @@ impl SurfaceHierarchyChecker {
                     stem(f),
                     directory(f)
                 );
-                results.append(LintResult {
+                results.push(LintResult {
                     file: f.clone(),
                     line: LineNumber::new(1),
                     column: ColumnNumber::new(1),
@@ -269,7 +119,7 @@ impl SurfaceHierarchyChecker {
             let stripped = raw_line.trim();
             if let Some(cap) = PY_CLASS_RE.captures(stripped) {
                 let class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
-                let class_start = i;
+                let _class_start = i;
                 let indent = raw_line.len() - raw_line.trim_start().len();
 
                 // Collect public methods in this class
@@ -411,7 +261,7 @@ impl SurfaceHierarchyChecker {
             .collect::<Vec<_>>()
             .join("\n");
 
-        results.append(LintResult {
+        results.push(LintResult {
             file: f.clone(),
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),

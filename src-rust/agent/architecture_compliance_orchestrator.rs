@@ -1,7 +1,7 @@
 // arch_compliance_orchestrator — Logic for resolving ArchitectureConfig into LayerDefinitions.
 use crate::contract::IArchComplianceProtocol;
 use crate::taxonomy::{
-    ArchitectureConfig, ArchitectureRule, BooleanVO, ErrorMessage, LayerDefinition, LayerMapVO,
+    ArchitectureConfig, ArchitectureRule, BooleanVO, LayerDefinition, LayerMapVO,
     LayerNameVO, LAYER_GLOBAL,
 };
 use std::collections::HashMap;

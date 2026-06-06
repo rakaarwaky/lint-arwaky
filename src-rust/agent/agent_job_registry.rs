@@ -1,6 +1,6 @@
 // agent_job_registry — Implementation of JobRegistryAggregate (Agent Layer).
 use crate::contract::{JobRegistryAggregate, IJobRegistryPort};
-use crate::taxonomy::{JobId, ActionName, Identity, MetadataVO, SuccessStatus, ErrorMessage, ResponseData, Count, Duration};
+use crate::taxonomy::{JobId, ActionName, SuccessStatus, ErrorMessage, ResponseData, Count, Duration};
 
 use async_trait::async_trait;
 use std::collections::HashMap;

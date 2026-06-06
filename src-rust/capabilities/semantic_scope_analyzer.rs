@@ -2,176 +2,25 @@
 // Implements ISemanticTracerProtocol for Python code analysis.
 // Uses regex-based analysis (no Python AST dependency).
 
-use crate::taxonomy::{AccessDeniedError,
-ActionArgs,
-ActionName,
-ActualValue,
-AdapterClassMap,
-AdapterEntry,
-AdapterError,
-AdapterMetadata,
-AdapterMetadataList,
-AdapterName,
-AdapterNameList,
-AdapterRegistered,
-AdapterStatus,
-AgentStatus,
-AgentStatusVO};
 
-use crate::taxonomy::{AggregatedResults,
-AppConfig,
-ArchitectureConfig,
-ArchitectureRule,
-BooleanVO,
-CallChainError,
-CallChainList,
-CapabilityReference,
-CapabilityReferenceList,
-CapabilityRoutingContext,
-Cause,
-ClassDefinitionMap,
-ClassFileMap,
-ClassMethodsVO,
-ClassNameVO};
 
-use crate::taxonomy::{ClassPath,
-ClassUsageItem,
-ClassUsageItemList,
-ClassUsageMap,
-ColumnNumber,
-CommandArgs,
-CommandMetadataVO,
-ComplianceStatus,
-ConfigError,
-ConfigKey,
-Constraint,
-ContentString,
-Count,
-CustomMessageVO,
+use crate::taxonomy::{Count,
 DataFlowList};
 
-use crate::taxonomy::{DescriptionVO,
-DirectoryPath,
-DiscoveryError,
-DoctorResultVO,
-Duration,
-EnvContentVO,
-ErrorCode,
+use crate::taxonomy::{DirectoryPath,
 ErrorMessage,
-ExitCode,
-ExpectedValue,
-FieldName,
-FileContentVO,
-FileDefinitionMap,
-FileFormat,
 FilePath};
 
-use crate::taxonomy::{FilePathList,
-FileSystemError,
-FixApplied,
-FixResult,
-GitDiffResultVO,
-GitHookError,
-GitRef,
-GovernanceReport,
-GraphAnalysisContext,
-HookInstalled,
-HookRemoved,
-Identity,
-ImportGraph,
-ImportInfo,
-ImportInfoList};
 
-use crate::taxonomy::{ImportNameList,
-InboundLinkMap,
-InheritanceMap,
-IntoPatternListValues,
-JobError,
-JobId,
-JobIdList,
-JobStatus,
-LayerDefinition,
-LayerMapVO,
-LayerNameVO,
-LegacyLayerRule,
-LegacyLayerRuleList,
-LineContentList,
-LineContentVO};
 
-use crate::taxonomy::{LineNumber,
-LintMessage,
-LintResult,
-LintResultList,
-LintStatusActionArgs,
-LinterOperationError,
-Location,
-LocationList,
-LogOutput,
-MaintenanceStatsVO,
-MandatoryImportRuleVO,
-McpConfigVO,
-MetadataVO,
-MetricsError,
-ModuleName};
+use crate::taxonomy::LineNumber;
 
-use crate::taxonomy::{ModuleToFileMap,
-NameVariants,
-NamingConfig,
-NamingError,
-OrphanIndicatorResult,
-PathNotFoundError,
-PatternList,
-PluginError,
-PluginGroup,
-Position,
-PrimitiveTypeList,
-PrimitiveTypeName,
-PrimitiveViolation,
-PrimitiveViolationList,
-ProjectConfig};
 
-use crate::taxonomy::{ProjectResult,
-ReachabilityResult,
-RegistrationError,
-RenamedFile,
-RenamedFileList,
-ResponseData,
-ResponseDataList,
-ScanCompleted,
-ScanError,
-ScanFailed,
-ScanStarted,
-ScopeBounds,
-ScopeRef,
-ScopeResolutionError,
-Score};
+use crate::taxonomy::ScopeRef;
 
-use crate::taxonomy::{SemanticError,
-Severity,
-SourceParserError,
-StdError,
-StdOutput,
-SuccessStatus,
-SuffixPolicyVO,
-SuffixVO,
-Suggestion,
-SymbolName,
-SymbolNameList,
-SyntaxErrorVO,
-Thresholds,
-Timeout,
-Timestamp};
+use crate::taxonomy::{SymbolName,
+SymbolNameList};
 
-use crate::taxonomy::{TransportEndpoint,
-TransportError,
-TransportProtocol,
-TransportUrlVO,
-ValidationError,
-ViolationConstraint,
-WatchEventError,
-WatchResult,
-WatchServiceError,
-WatchSubscriptionError};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;
@@ -189,14 +38,6 @@ static PY_DEF_RE: Lazy<Regex> = Lazy::new(|| {
 /// Regex to detect Python class definitions.
 static PY_CLASS_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^class\s+(\w+)").unwrap()
-});
-
-/// Regex for project-wide rename: matches strings, comments, and word boundaries.
-static RENAME_PATTERN_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(
-        r#"(?s)("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|#[^\n]*)|\b(\w+)\b"#,
-    )
-    .unwrap()
 });
 
 /// AST-based semantic scope analyzer for Python code.

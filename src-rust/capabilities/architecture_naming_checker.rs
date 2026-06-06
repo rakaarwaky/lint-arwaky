@@ -1,11 +1,9 @@
 // arch_naming_checker — Architectural naming convention checks.
 // Implements INamingCheckerProtocol: check_file_naming and check_domain_suffixes.
 
-use std::path::Path;
 use regex::Regex;
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition,
-    LayerNameVO, LintMessage, LintResult, LineNumber, Severity,
+    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LintMessage, LintResult, LineNumber, Severity,
     ScopeRef, LocationList, ArchitectureConfig,
 };
 
@@ -65,7 +63,7 @@ impl ArchNamingChecker {
         &self,
         file: &str,
         filename: &str,
-        layer_name: &Option<String>,
+        _layer_name: &Option<String>,
         definition: Option<&LayerDefinition>,
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
@@ -125,7 +123,7 @@ impl ArchNamingChecker {
         file: &str,
         filename: &str,
         definition: Option<&LayerDefinition>,
-        layer_name: &Option<String>,
+        _layer_name: &Option<String>,
         violations: &mut Vec<LintResult>,
     ) {
         if Self::is_barrel_file(filename) || Self::is_entry_point(filename) {

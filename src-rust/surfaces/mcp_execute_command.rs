@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 /// Running jobs tracker for MCP execute command.
-pub static _running_jobs: std::sync::LazyLock<Mutex<Vec<String>>> =
+pub static RUNNING_JOBS: std::sync::LazyLock<Mutex<Vec<String>>> =
     std::sync::LazyLock::new(|| Mutex::new(Vec::new()));
 
 pub fn register_execute_commands(container: Arc<dyn ServiceContainerAggregate>) {
@@ -15,9 +15,9 @@ pub fn register_execute_commands(container: Arc<dyn ServiceContainerAggregate>) 
 }
 
 pub async fn execute_command_tool(
-    container: Arc<dyn ServiceContainerAggregate>,
+    _container: Arc<dyn ServiceContainerAggregate>,
     action: String,
-    args: Option<Value>,
+    _args: Option<Value>,
 ) -> Value {
     // Implementation of the dispatch logic
     // 1. Validate action

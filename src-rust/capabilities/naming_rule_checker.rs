@@ -4,9 +4,9 @@
 use std::path::Path;
 use regex::Regex;
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, FilePathList,
-    LayerNameVO, LintMessage, LintResult, LintResultList, LineNumber,
-    Severity, Count, Identity, ArchitectureConfig, ScopeRef, LocationList,
+    AdapterName, ColumnNumber, ErrorCode, FilePath,
+    LayerNameVO, LintMessage, LintResult, LineNumber,
+    Severity, Identity, ArchitectureConfig, ScopeRef, LocationList,
 };
 
 pub struct NamingRuleChecker;

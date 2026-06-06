@@ -34,8 +34,8 @@ impl IJavascriptScopePort for JSScopeProvider {
 
     async fn find_scope_bounds(
         &self,
-        lines: &crate::taxonomy::LineContentList,
-        scope_line: Option<LineNumber>,
+        _lines: &crate::taxonomy::LineContentList,
+        _scope_line: Option<LineNumber>,
     ) -> Result<Option<ScopeBounds>, SemanticError> {
         // Placeholder
         Ok(None)

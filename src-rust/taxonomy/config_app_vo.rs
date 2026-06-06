@@ -8,8 +8,6 @@ use crate::taxonomy::{AdapterName, AdapterNameList, BooleanVO, DirectoryPath};
 #[derive(Debug, Clone)]
 pub struct AppConfig {
     phantom_root: DirectoryPath,
-    #[allow(dead_code)]
-    project_root: DirectoryPath,
     project: crate::taxonomy::ProjectConfig,
 }
 
@@ -35,7 +33,6 @@ impl AppConfig {
 
         Self {
             phantom_root: DirectoryPath::new(p_root).expect("Invalid phantom root"),
-            project_root: DirectoryPath::new(proj_root).expect("Invalid project root"),
             project: proj,
         }
     }

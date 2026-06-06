@@ -3,7 +3,7 @@ use crate::contract::{
     PipelineExecutionOrchestratorAggregate, PipelineInputAggregate, PipelineOutputAggregate, IJobRegistryPort,
 };
 use crate::taxonomy::{
-    ActionArgs, BooleanVO, ContentString, ErrorMessage, FilePath, JobId, MetadataVO, ResponseData,
+    ActionArgs, ErrorMessage, FilePath, JobId,
     SuccessStatus, Suggestion,
 };
 use crate::infrastructure::MemoryJobRegistryAdapter;
@@ -120,33 +120,5 @@ impl PipelineOutputAggregate for PipelineOutputImpl {
     }
     fn error(&self) -> Option<&ErrorMessage> {
         self.error.as_ref()
-    }
-}
-
-struct PipelineInputImpl {
-    action: String,
-    args: Option<ActionArgs>,
-    path: Option<FilePath>,
-}
-
-impl PipelineInputImpl {
-    pub fn new(action: String) -> Self {
-        Self {
-            action,
-            args: None,
-            path: None,
-        }
-    }
-}
-
-impl PipelineInputAggregate for PipelineInputImpl {
-    fn action(&self) -> &str {
-        &self.action
-    }
-    fn args(&self) -> Option<&ActionArgs> {
-        self.args.as_ref()
-    }
-    fn path(&self) -> Option<&FilePath> {
-        self.path.as_ref()
     }
 }

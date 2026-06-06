@@ -1,98 +1,13 @@
 /// Core CLI commands: full surface aligned with SKILL.md.
 use clap::{Parser, Subcommand};
 
-use crate::contract::{AdapterContainerAggregate,
-AgentLifecycleAggregate,
-AnalysisOrchestratorAggregate,
-ArchCoordinatorAggregate,
-CapabilityContainerAggregate,
-CheckCommandsAggregate,
-ContainerRegistryAggregate,
-DevCommandsAggregate,
-DirectoryWatchAggregate,
-FixCommandsAggregate,
-GitCommandsAggregate,
-GitDiffResultAggregate,
-HookManagementOrchestratorAggregate,
-IAnalyzer,
-IArchAnalyzerProtocol};
 
-use crate::contract::{IArchCompliancePort,
-IArchComplianceProtocol,
-IArchImportProcessorProtocol,
-IArchImportProtocol,
-IArchInheritanceProtocol,
-IArchLintProtocol,
-IArchOrphanProtocol,
-IArchRuleEngineProtocol,
-IArchRuleProtocol,
-IArchStructureProtocol,
-ICodeQualityProtocol,
-ICodeTransformationProtocol,
-ICommandExecutorPort,
-IConfigDiscoveryPort,
-IConfigParserPort};
 
-use crate::contract::{IConfigProviderPort,
-IConfigRulesProtocol,
-IConfigValidationPort,
-ICycleAnalysisProtocol,
-IDataFlowProtocol,
-IDispatchRoutingParserProtocol,
-IDispatchRoutingProtocol,
-IDomainTypeProtocol,
-IHookManagerPort,
-IHttpProviderPort,
-IInternalCheckerProtocol,
-IJavascriptFlowPort,
-IJavascriptScopePort,
-IJobRegistryPort,
-ILintReportingProtocol};
 
-use crate::contract::{IMcpServerPort,
-IMetricAnalyzerProtocol,
-IMetricCheckerProtocol,
-IMetricsProviderPort,
-INamingCheckerProtocol,
-INamingProviderPort,
-INamingRuleProtocol,
-INamingVariantPort,
-INamingVariantProtocol,
-IOrphanGraphProtocol,
-IOrphanIndicatorProtocol,
-IPathNormalizationPort,
-IPluginManagerPort,
-IRoleCheckerProtocol,
-IScannerProviderPort};
 
-use crate::contract::{IScopeBoundaryProtocol,
-ISemanticTracerPort,
-ISemanticTracerProtocol,
-ISetupManagementProtocol,
-ISourceParserPort,
-IUnusedProtocol,
-IWatchProviderPort,
-InfrastructureContainerAggregate,
-JobRegistryAggregate,
-LintFixOrchestratorAggregate,
-LintPipelineOrchestratorAggregate,
-MaintenanceCommandsAggregate,
-MultiProjectAggregate,
-MultiProjectOrchestratorAggregate,
-OrchestratorContainerAggregate};
 
-use crate::contract::{OutputClientAggregate,
-PipelineActionDispatcherAggregate,
-PipelineExecutionOrchestratorAggregate,
-PipelineExtendedOrchestratorAggregate,
-PluginCommandsAggregate,
-ProjectContainerAggregate,
-ReportCommandsAggregate,
-ServiceContainerAggregate,
-SetupManagementAggregate,
-ToolHandler,
-WatchCommandsAggregate,
-WatchExecutionOrchestratorAggregate};
+
+use crate::contract::ServiceContainerAggregate;
 #[derive(Parser, Debug)]
 #[command(name = "lint-arwaky")]
 #[command(about = "Lint Arwaky CLI: Autonomous Code Quality Gatekeeper.", long_about = None)]

@@ -384,7 +384,7 @@ impl ArchImportProcessor {
 
     fn _check_contract_layer(
         &self,
-        analyzer: &dyn IAnalyzer,
+        _analyzer: &dyn IAnalyzer,
         req_layer_str: &str,
         imported_aliases: &std::collections::HashMap<String, String>,
         real_usages: &std::collections::HashSet<String>,

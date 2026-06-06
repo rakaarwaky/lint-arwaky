@@ -1,48 +1,24 @@
 /// dependency_injection_container — Implementation of the DI container.
 use crate::contract::{
-    AdapterContainerAggregate, AgentLifecycleAggregate, AnalysisOrchestratorAggregate,
-    ArchCoordinatorAggregate, CapabilityContainerAggregate, CheckCommandsAggregate,
-    ContainerRegistryAggregate, DevCommandsAggregate, DirectoryWatchAggregate,
-    FixCommandsAggregate, GitCommandsAggregate, GitDiffResultAggregate,
-    HookManagementOrchestratorAggregate, IAnalyzer, IArchAnalyzerProtocol, IFileSystemPort,
+    IFileSystemPort,
     ILinterAdapterPort,
 };
 use crate::contract::{
-    IArchCompliancePort, IArchComplianceProtocol, IArchImportProcessorProtocol,
-    IArchImportProtocol, IArchInheritanceProtocol, IArchLintProtocol, IArchOrphanProtocol,
-    IArchRuleEngineProtocol, IArchRuleProtocol, IArchStructureProtocol, ICodeQualityProtocol,
-    ICodeTransformationProtocol, ICommandExecutorPort, IConfigDiscoveryPort, IConfigParserPort,
+    IArchLintProtocol, ICommandExecutorPort,
 };
 use crate::contract::{
-    IConfigProviderPort, IConfigRulesProtocol, IConfigValidationPort, ICycleAnalysisProtocol,
-    IDataFlowProtocol, IDispatchRoutingParserProtocol, IDispatchRoutingProtocol,
-    IDomainTypeProtocol, IHookManagerPort, IHttpProviderPort, IInternalCheckerProtocol,
-    IJavascriptFlowPort, IJavascriptScopePort, IJobRegistryPort, ILintReportingProtocol,
+    IJobRegistryPort,
 };
-use crate::contract::{
-    IMcpServerPort, IMetricAnalyzerProtocol, IMetricCheckerProtocol, IMetricsProviderPort,
-    INamingCheckerProtocol, INamingProviderPort, INamingRuleProtocol, INamingVariantPort,
-    INamingVariantProtocol, IOrphanGraphProtocol, IOrphanIndicatorProtocol, IPathNormalizationPort,
-    IPluginManagerPort, IRoleCheckerProtocol, IScannerProviderPort,
-};
-use crate::contract::{
-    IScopeBoundaryProtocol, ISemanticTracerPort, ISemanticTracerProtocol, ISetupManagementProtocol,
-    ISourceParserPort, IUnusedProtocol, IWatchProviderPort, InfrastructureContainerAggregate,
-    JobRegistryAggregate, LintFixOrchestratorAggregate, LintPipelineOrchestratorAggregate,
-    MaintenanceCommandsAggregate, MultiProjectAggregate, MultiProjectOrchestratorAggregate,
-    OrchestratorContainerAggregate,
-};
-use crate::contract::{
-    OutputClientAggregate, PipelineActionDispatcherAggregate,
-    PipelineExecutionOrchestratorAggregate, PipelineExtendedOrchestratorAggregate,
-    PluginCommandsAggregate, ProjectContainerAggregate, ReportCommandsAggregate,
-    ServiceContainerAggregate, SetupManagementAggregate, ToolHandler, WatchCommandsAggregate,
-    WatchExecutionOrchestratorAggregate,
-};
+use crate::contract::IPathNormalizationPort;
+use crate::contract::ISourceParserPort;
+use crate::contract::ServiceContainerAggregate;
 use crate::infrastructure::{
-    MemoryJobRegistryAdapter, OSFileSystemAdapter, PathNormalizationProvider, RuffAdapter,
-    SourceParserOrchestrator, StdioClient,
+    BanditAdapter, ComplexityAdapter, DependencyAdapter, DuplicateAdapter, ESLintAdapter,
+    MemoryJobRegistryAdapter, MetricsProvider, MyPyAdapter, OSFileSystemAdapter,
+    PathNormalizationProvider, PrettierAdapter, RuffAdapter, RustLinterAdapter,
+    SourceParserOrchestrator, StdioClient, TrendsAdapter, TSCAdapter,
 };
+use crate::taxonomy::{Count, FilePath};
 use crate::taxonomy::source_path_vo::DirectoryPath;
 use crate::capabilities::ArchLintHandler;
 use std::collections::HashMap;
@@ -68,8 +44,41 @@ impl DependencyInjectionContainer {
         let arch_linter: Arc<dyn IArchLintProtocol> = Arc::new(ArchLintHandler::new(fs.clone(), source_parser.clone()));
 
         let mut linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
+
         let ruff = Arc::new(RuffAdapter::new(executor.clone(), path_norm.clone(), None));
         linter_adapters.insert("ruff".to_string(), ruff);
+
+        let bandit = Arc::new(BanditAdapter::new(executor.clone(), path_norm.clone(), None));
+        linter_adapters.insert("bandit".to_string(), bandit);
+
+        let mypy = Arc::new(MyPyAdapter::new(executor.clone(), path_norm.clone(), None));
+        linter_adapters.insert("mypy".to_string(), mypy);
+
+        let eslint = Arc::new(ESLintAdapter::new(executor.clone(), path_norm.clone()));
+        linter_adapters.insert("eslint".to_string(), eslint);
+
+        let prettier = Arc::new(PrettierAdapter::new(executor.clone(), path_norm.clone()));
+        linter_adapters.insert("prettier".to_string(), prettier);
+
+        let tsc = Arc::new(TSCAdapter::new(executor.clone(), path_norm.clone()));
+        linter_adapters.insert("tsc".to_string(), tsc);
+
+        let clippy = Arc::new(RustLinterAdapter::new(executor.clone(), path_norm.clone(), None));
+        linter_adapters.insert("clippy".to_string(), clippy);
+
+        let complexity = Arc::new(ComplexityAdapter::new(executor.clone(), path_norm.clone(), None, Count::new(10)));
+        linter_adapters.insert("complexity".to_string(), complexity);
+
+        let duplicate = Arc::new(DuplicateAdapter::new(executor.clone(), path_norm.clone(), None));
+        linter_adapters.insert("duplicate".to_string(), duplicate);
+
+        let trends = Arc::new(TrendsAdapter::new(executor.clone(), path_norm.clone(), FilePath::new(".lint-trends.json".to_string()).unwrap()));
+        linter_adapters.insert("trends".to_string(), trends);
+
+        let dependency = Arc::new(DependencyAdapter::new(executor.clone(), path_norm.clone(), None));
+        linter_adapters.insert("dependency".to_string(), dependency);
+
+        let _metrics = Arc::new(MetricsProvider::new(path_norm.clone(), ".lint-history.json"));
 
         Self {
             file_system: fs,

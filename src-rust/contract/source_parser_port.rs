@@ -1,5 +1,5 @@
 use crate::taxonomy::{
-    Count, FilePath, Identity, ImportInfoList, MetadataVO, PatternList, PrimitiveTypeList,
+    Count, FilePath, ImportInfoList, MetadataVO, PatternList, PrimitiveTypeList,
     PrimitiveViolationList, ResponseData, SourceParserError, SuccessStatus, SymbolName,
 };
 

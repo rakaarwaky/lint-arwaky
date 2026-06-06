@@ -1,5 +1,5 @@
-/// semantic_boundary_analyzer — Semantic scope boundary detection.
-/// Variant used by semantic_flow_analyzer for scope-aware data flow.
+/// scope_boundary_analyzer — Scope boundary detection for JS/TS files.
+/// Used by data_flow_analyzer to determine enclosing scope bounds.
 
 pub struct ScopeBoundaryAnalyzer;
 
@@ -20,8 +20,10 @@ impl ScopeBoundaryAnalyzer {
             return (None, None);
         }
 
+        // Simple brace-based scope detection
         let mut depth: i32 = 0;
         let mut scope_start: Option<usize> = None;
+        #[allow(unused_assignments)]
         let mut scope_end: Option<usize> = None;
 
         for (i, l) in lines.iter().enumerate() {

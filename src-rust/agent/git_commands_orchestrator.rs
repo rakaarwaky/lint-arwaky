@@ -151,48 +151,6 @@ impl GitCommandsOrchestrator {
         }
     }
 
-    fn filter_ignored_files(
-        &self,
-        changed_files: &FilePathList,
-        project_path: &FilePath,
-    ) -> FilePathList {
-        if changed_files.values.is_empty() {
-            return FilePathList::new(Vec::new());
-        }
-        let input = changed_files
-            .values
-            .iter()
-            .map(|f| f.value.as_ref())
-            .collect::<Vec<_>>()
-            .join("\n");
-        // Use echo + pipe approach for check-ignore --stdin
-        let child = std::process::Command::new("sh")
-            .args([
-                "-c",
-                &format!("echo '{}' | {} check-ignore --stdin", input, self.git_path),
-            ])
-            .current_dir(&project_path.value)
-            .output();
-        if let Ok(output) = child {
-            if output.status.success() {
-                let ignored: HashSet<String> = String::from_utf8_lossy(&output.stdout)
-                    .lines()
-                    .map(|l| l.trim().to_string())
-                    .filter(|l| !l.is_empty())
-                    .collect();
-                return FilePathList::new(
-                    changed_files
-                        .values
-                        .iter()
-                        .filter(|f| !ignored.contains(&f.value))
-                        .cloned()
-                        .collect(),
-                );
-            }
-        }
-        changed_files.clone()
-    }
-
     pub async fn get_diff_old(&self, path: &FilePath) -> crate::agent::git_diff_manager::GitDiffResult {
         let default_branch = self.get_default_branch(path);
         let changed_files = self.collect_changed_files(path, &default_branch);

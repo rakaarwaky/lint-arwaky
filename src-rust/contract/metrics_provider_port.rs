@@ -1,5 +1,4 @@
 use crate::taxonomy::{Count, FilePath};
-use async_trait::async_trait;
 
 #[async_trait::async_trait]
 pub trait IMetricsProviderPort: Send + Sync {

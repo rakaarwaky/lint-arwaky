@@ -5,176 +5,26 @@
 // Detects: missing schema, empty schema, invalid JSON Schema syntax,
 // missing descriptions, missing required fields array when properties exist.
 
-use crate::taxonomy::{AccessDeniedError,
-ActionArgs,
-ActionName,
-ActualValue,
-AdapterClassMap,
-AdapterEntry,
-AdapterError,
-AdapterMetadata,
-AdapterMetadataList,
-AdapterName,
-AdapterNameList,
-AdapterRegistered,
-AdapterStatus,
-AgentStatus,
-AgentStatusVO};
+use crate::taxonomy::AdapterName;
 
-use crate::taxonomy::{AggregatedResults,
-AppConfig,
-ArchitectureConfig,
-ArchitectureRule,
-BooleanVO,
-CallChainError,
-CallChainList,
-CapabilityReference,
-CapabilityReferenceList,
-CapabilityRoutingContext,
-Cause,
-ClassDefinitionMap,
-ClassFileMap,
-ClassMethodsVO,
-ClassNameVO};
 
-use crate::taxonomy::{ClassPath,
-ClassUsageItem,
-ClassUsageItemList,
-ClassUsageMap,
-ColumnNumber,
-CommandArgs,
-CommandMetadataVO,
-ComplianceStatus,
-ConfigError,
-ConfigKey,
-Constraint,
-ContentString,
-Count,
-CustomMessageVO,
-DataFlowList};
+use crate::taxonomy::ColumnNumber;
 
-use crate::taxonomy::{DescriptionVO,
-DirectoryPath,
-DiscoveryError,
-DoctorResultVO,
-Duration,
-EnvContentVO,
-ErrorCode,
-ErrorMessage,
-ExitCode,
-ExpectedValue,
-FieldName,
-FileContentVO,
-FileDefinitionMap,
-FileFormat,
+use crate::taxonomy::{ErrorCode,
 FilePath};
 
-use crate::taxonomy::{FilePathList,
-FileSystemError,
-FixApplied,
-FixResult,
-GitDiffResultVO,
-GitHookError,
-GitRef,
-GovernanceReport,
-GraphAnalysisContext,
-HookInstalled,
-HookRemoved,
-Identity,
-ImportGraph,
-ImportInfo,
-ImportInfoList};
 
-use crate::taxonomy::{ImportNameList,
-InboundLinkMap,
-InheritanceMap,
-IntoPatternListValues,
-JobError,
-JobId,
-JobIdList,
-JobStatus,
-LayerDefinition,
-LayerMapVO,
-LayerNameVO,
-LegacyLayerRule,
-LegacyLayerRuleList,
-LineContentList,
-LineContentVO};
 
 use crate::taxonomy::{LineNumber,
 LintMessage,
 LintResult,
 LintResultList,
-LintStatusActionArgs,
-LinterOperationError,
-Location,
-LocationList,
-LogOutput,
-MaintenanceStatsVO,
-MandatoryImportRuleVO,
-McpConfigVO,
-MetadataVO,
-MetricsError,
-ModuleName};
+LocationList};
 
-use crate::taxonomy::{ModuleToFileMap,
-NameVariants,
-NamingConfig,
-NamingError,
-OrphanIndicatorResult,
-PathNotFoundError,
-PatternList,
-PluginError,
-PluginGroup,
-Position,
-PrimitiveTypeList,
-PrimitiveTypeName,
-PrimitiveViolation,
-PrimitiveViolationList,
-ProjectConfig};
 
-use crate::taxonomy::{ProjectResult,
-ReachabilityResult,
-RegistrationError,
-RenamedFile,
-RenamedFileList,
-ResponseData,
-ResponseDataList,
-ScanCompleted,
-ScanError,
-ScanFailed,
-ScanStarted,
-ScopeBounds,
-ScopeRef,
-ScopeResolutionError,
-Score};
 
-use crate::taxonomy::{SemanticError,
-Severity,
-SourceParserError,
-StdError,
-StdOutput,
-SuccessStatus,
-SuffixPolicyVO,
-SuffixVO,
-Suggestion,
-SymbolName,
-SymbolNameList,
-SyntaxErrorVO,
-Thresholds,
-Timeout,
-Timestamp};
+use crate::taxonomy::Severity;
 
-use crate::taxonomy::{TransportEndpoint,
-TransportError,
-TransportProtocol,
-TransportUrlVO,
-ValidationError,
-ViolationConstraint,
-WatchEventError,
-WatchResult,
-WatchServiceError,
-WatchSubscriptionError};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -226,16 +76,6 @@ static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| {
 // Regex: triple-quoted docstring
 static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#).unwrap()
-});
-
-// Regex: parameter with type annotation
-static PARAM_ANNOTATED_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(\w+)\s*:\s*\S+").unwrap()
-});
-
-// Regex: extract keyword arguments from decorator call
-static KWARG_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(\w+)\s*=\s*").unwrap()
 });
 
 /// AES025 — Validate MCP tool input/output schemas.
@@ -381,7 +221,7 @@ impl McpSchemaChecker {
         }
 
         if !found_docstring {
-            results.append(LintResult {
+            results.push(LintResult {
                 file: f.clone(),
                 line: LineNumber::new((func_line_idx as i64) + 1),
                 column: ColumnNumber::new(1),
@@ -427,7 +267,7 @@ impl McpSchemaChecker {
 
             // Check if it has a type annotation (contains ':')
             if !param_annotated(param_name) {
-                results.append(LintResult {
+                results.push(LintResult {
                     file: f.clone(),
                     line: LineNumber::new((func_line_idx as i64) + 1),
                     column: ColumnNumber::new(1),
@@ -583,7 +423,7 @@ impl McpSchemaChecker {
             .collect::<Vec<_>>()
             .join("\n");
 
-        results.append(LintResult {
+        results.push(LintResult {
             file: f.clone(),
             line: LineNumber::new(line),
             column: ColumnNumber::new(1),

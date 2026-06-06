@@ -143,7 +143,7 @@ impl DispatchRoutingChecker {
         }
     }
 
-    fn _read_file_content(&self, analyzer: &dyn IAnalyzer, file_path: &FilePath) -> Option<String> {
+    fn _read_file_content(&self, _analyzer: &dyn IAnalyzer, file_path: &FilePath) -> Option<String> {
         std::fs::read_to_string(file_path.to_string().as_str()).ok()
     }
 

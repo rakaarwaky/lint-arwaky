@@ -3,7 +3,7 @@
 
 use std::fs;
 use regex::Regex;
-use crate::taxonomy::{DirectoryPath, FilePath, LineNumber, SymbolName, SymbolNameList};
+use crate::taxonomy::{SymbolName, SymbolNameList};
 use crate::capabilities::naming_variant_analyzer::NamingVariantAnalyzer;
 use crate::capabilities::semantic_boundary_resolver::ScopeBoundaryResolver;
 use crate::capabilities::semantic_flow_analyzer::DataFlowAnalyzer;

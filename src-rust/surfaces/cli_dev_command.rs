@@ -1,16 +1,4 @@
 use crate::contract::ServiceContainerAggregate;
-use crate::contract::adapter_container_aggregate::AdapterContainerAggregate;
-use crate::contract::agent_lifecycle_aggregate::AgentLifecycleAggregate;
-use crate::contract::analysis_orchestrator_aggregate::AnalysisOrchestratorAggregate;
-use crate::contract::architecture_coordinator_aggregate::ArchCoordinatorAggregate;
-use crate::contract::capability_container_aggregate::CapabilityContainerAggregate;
-use crate::contract::dispatch_check_aggregate::CheckCommandsAggregate;
-use crate::contract::container_registry_aggregate::ContainerRegistryAggregate;
-use crate::contract::dev_commands_aggregate::DevCommandsAggregate;
-use crate::contract::directory_watch_aggregate::DirectoryWatchAggregate;
-use crate::contract::dispatch_fix_aggregate::FixCommandsAggregate;
-use crate::contract::git_commands_aggregate::GitCommandsAggregate;
-use crate::contract::diff_result_aggregate::GitDiffResultAggregate;
 
 pub struct DevCommandsSurface {
     pub container: Option<Box<dyn ServiceContainerAggregate>>,

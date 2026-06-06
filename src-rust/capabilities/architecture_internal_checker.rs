@@ -3,8 +3,7 @@
 
 use std::fs;
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition,
-    LayerNameVO, LintMessage, LintResult, LineNumber, Severity,
+    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LintMessage, LintResult, LineNumber, Severity,
     ScopeRef, LocationList,
 };
 
@@ -54,7 +53,7 @@ impl ArchInternalChecker {
     pub fn check_barrel_completeness(
         &self,
         file: &str,
-        filename: &str,
+        _filename: &str,
         definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {

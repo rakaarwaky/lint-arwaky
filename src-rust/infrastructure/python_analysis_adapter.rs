@@ -7,7 +7,6 @@ use crate::taxonomy::{
 use std::path::Path;
 use std::sync::Arc;
 
-#[allow(dead_code)]
 fn resolve_working_dir(path: &FilePath) -> FilePath {
     let path_str = &path.value;
     if let Ok(abs_path) = std::fs::canonicalize(path_str) {

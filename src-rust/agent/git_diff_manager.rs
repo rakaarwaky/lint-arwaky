@@ -1,5 +1,4 @@
 // git_diff_manager — Git diff result implementation (Agent Layer).
-use crate::contract::GitDiffResultAggregate;
 use crate::taxonomy::{Count, FilePathList, RenamedFileList};
 
 #[derive(Debug, Clone)]

@@ -6,10 +6,6 @@ use std::collections::{HashMap, HashSet};
 use regex::Regex;
 use once_cell::sync::Lazy;
 
-static IMPORT_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?:from\s+\S+\s+import\s+(.+)|import\s+(.+))").unwrap()
-});
-
 static ALL_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).unwrap()
 });
@@ -117,7 +113,7 @@ impl UnusedImportRuleChecker {
         let used_symbols = Self::extract_used_symbols(&content, &imported_aliases);
 
         imported_aliases.iter()
-            .filter(|(alias, fullname)| {
+            .filter(|(alias, _fullname)| {
                 // Unused if: not in used_symbols AND not in __all__ exports
                 !used_symbols.contains(*alias)
                     && !exported_symbols.contains(*alias)

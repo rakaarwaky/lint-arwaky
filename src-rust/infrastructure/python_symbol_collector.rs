@@ -1,5 +1,5 @@
 /// python_symbol_collector — Collector for symbols and imports from Python AST.
-use crate::taxonomy::{Count, InheritanceMap, MetadataVO, SymbolName, SymbolNameList, ImportInfo, LineNumber, ModuleName};
+use crate::taxonomy::{MetadataVO, SymbolName, SymbolNameList, ImportInfo};
 
 pub struct SymbolCollector {
     defined: Vec<String>,

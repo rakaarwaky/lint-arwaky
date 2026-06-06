@@ -1,4 +1,3 @@
-use crate::contract::job_registry_port::IJobRegistryPort;
 use crate::taxonomy::job_action_vo::JobId;
 use serde_json::json;
 use std::sync::Arc;

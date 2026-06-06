@@ -1,6 +1,6 @@
 /// memory_registry_adapter — In-memory job tracking implementation.
 use crate::contract::job_registry_port::IJobRegistryPort;
-use crate::taxonomy::{Count, Duration, ErrorMessage, Identity, JobId, MetadataVO, ResponseData, SuccessStatus, BooleanVO, JobError, JobStatus, StdOutput, StdError, ExitCode};
+use crate::taxonomy::{Duration, ErrorMessage, JobId, ResponseData, SuccessStatus, JobError};
 use std::collections::HashMap;
 use tokio::sync::Mutex;
 

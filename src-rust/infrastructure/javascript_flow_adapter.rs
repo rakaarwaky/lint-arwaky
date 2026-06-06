@@ -36,7 +36,7 @@ impl IJavascriptFlowPort for JSFlowAdapter {
         Ok(DataFlowList::new(flows))
     }
 
-    async fn trace_flow(&self, path: &FilePath) -> Result<DataFlowList, SemanticError> {
+    async fn trace_flow(&self, _path: &FilePath) -> Result<DataFlowList, SemanticError> {
         Ok(DataFlowList::new(vec![]))
     }
 }

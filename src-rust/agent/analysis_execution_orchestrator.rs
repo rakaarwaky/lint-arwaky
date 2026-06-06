@@ -1,10 +1,9 @@
 // analysis_execution_orchestrator — Implementation of the analysis orchestration domain contract.
 use crate::contract::{
-    AnalysisOrchestratorAggregate, LintPipelineOrchestratorAggregate, ServiceContainerAggregate,
+    AnalysisOrchestratorAggregate, ServiceContainerAggregate,
 };
 use crate::taxonomy::{FilePath, GovernanceReport, LintResultList};
 use async_trait::async_trait;
-use std::sync::Arc;
 
 pub struct AnalysisOrchestrator;
 

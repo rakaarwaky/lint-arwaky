@@ -1,5 +1,5 @@
 /// mcp_server_validator — Input validation for MCP tools.
-use crate::taxonomy::{BooleanVO, ContentString, ErrorMessage, FieldName, MAX_PATH_LENGTH, MAX_PATH_DEPTH, MAX_BATCH_SIZE, MAX_STRING_LENGTH};
+use crate::taxonomy::{BooleanVO, ErrorMessage, FieldName, MAX_PATH_LENGTH, MAX_PATH_DEPTH, MAX_STRING_LENGTH};
 use std::path::Path;
 
 #[derive(Debug, Clone)]

@@ -1,5 +1,5 @@
 // job_registry_port — Port for job tracking and lifecycle management.
-use crate::taxonomy::{ActionName, Count, Duration, ErrorMessage, Identity, JobError, JobId, MetadataVO, ResponseData, SuccessStatus};
+use crate::taxonomy::{Duration, ErrorMessage, JobError, JobId, ResponseData, SuccessStatus};
 use async_trait::async_trait;
 use serde_json;
 

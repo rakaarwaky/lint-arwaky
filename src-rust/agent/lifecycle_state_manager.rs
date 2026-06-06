@@ -2,7 +2,7 @@
 use async_trait::async_trait;
 use crate::contract::agent_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
-use crate::taxonomy::{Duration, ResponseData, StdOutput, StdError, MetadataVO, ExitCode, AgentStatusVO, BooleanVO};
+use crate::taxonomy::{Duration, ResponseData, AgentStatusVO, BooleanVO};
 use std::collections::HashMap;
 use std::time::Instant;
 use std::sync::Arc;
