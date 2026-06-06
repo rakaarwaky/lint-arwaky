@@ -8,7 +8,7 @@
 //! ## Layer Rules (AES Compliance)
 //! - **Allowed Imports**: Strictly limited to `src/taxonomy/`. Outer imports trigger **AES001**.
 //! - **Allowed Suffixes**: `_vo`, `_entity`, `_event`, `_error`, `_constant`
-//! - **Primitive Usage**: Forbidden in core entities (**AES006**). Must be wrapped in VOs.
+//! - **Primitive Usage**: Forbidden in core entities . Must be wrapped in VOs.
 //!
 //! ## Import Patterns
 //!
