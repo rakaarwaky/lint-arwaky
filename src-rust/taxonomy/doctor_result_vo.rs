@@ -1,6 +1,5 @@
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
-use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct DoctorResultVO {

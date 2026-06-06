@@ -8,6 +8,7 @@ use crate::taxonomy::{AdapterName, AdapterNameList, BooleanVO, DirectoryPath};
 #[derive(Debug, Clone)]
 pub struct AppConfig {
     phantom_root: DirectoryPath,
+    #[allow(dead_code)]
     project_root: DirectoryPath,
     project: crate::taxonomy::ProjectConfig,
 }

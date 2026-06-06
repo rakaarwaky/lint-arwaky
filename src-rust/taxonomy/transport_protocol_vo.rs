@@ -1,6 +1,4 @@
 use serde::{Serialize, Deserialize};
-use std::collections::{HashMap, HashSet};
-use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TransportEndpoint {
@@ -16,7 +14,7 @@ impl TransportEndpoint {
     pub fn display_name(&self) -> String {
         match self.protocol {
             TransportProtocol::HTTP => format!("HTTP({})", self.address),
-            TransportProtocol::UNIX_SOCKET => format!("Socket({})", self.address),
+            TransportProtocol::UnixSocket => format!("Socket({})", self.address),
             TransportProtocol::STDAggregate => "Stdio(direct)".to_string(),
         }
     }
@@ -26,7 +24,7 @@ impl TransportEndpoint {
         } else if url == "stdio" {
             Self { protocol: TransportProtocol::STDAggregate, address: "stdio".to_string() }
         } else if url.starts_with("/") || url.starts_with(".") {
-            Self { protocol: TransportProtocol::UNIX_SOCKET, address: url.to_string() }
+            Self { protocol: TransportProtocol::UnixSocket, address: url.to_string() }
         } else {
             Self { protocol: TransportProtocol::STDAggregate, address: "stdio".to_string() }
         }
@@ -44,7 +42,7 @@ pub enum TransportProtocol {
     #[serde(rename = "HTTP")]
     HTTP,
     #[serde(rename = "UnixSocket")]
-    UNIX_SOCKET,
+    UnixSocket,
     #[serde(rename = "Stdio")]
     STDAggregate,
 }
@@ -53,7 +51,7 @@ impl std::fmt::Display for TransportProtocol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TransportProtocol::HTTP => write!(f, "HTTP"),
-            TransportProtocol::UNIX_SOCKET => write!(f, "UnixSocket"),
+            TransportProtocol::UnixSocket => write!(f, "UnixSocket"),
             TransportProtocol::STDAggregate => write!(f, "Stdio"),
         }
     }
@@ -61,7 +59,7 @@ impl std::fmt::Display for TransportProtocol {
 
 impl TransportProtocol {
     pub fn needs_desktop_commander(&self) -> bool {
-        matches!(self, TransportProtocol::HTTP | TransportProtocol::UNIX_SOCKET)
+        matches!(self, TransportProtocol::HTTP | TransportProtocol::UnixSocket)
     }
 }
 

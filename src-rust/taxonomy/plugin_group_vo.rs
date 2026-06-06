@@ -1,5 +1,4 @@
-use serde::{Serialize, Deserialize};
-use super::*;
+use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct PluginGroup {
