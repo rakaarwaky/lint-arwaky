@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::taxonomy::{FilePath, LineNumber};
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CapabilityReference {
     pub file: FilePath,

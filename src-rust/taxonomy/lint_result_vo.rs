@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::taxonomy::{AdapterName, ColumnNumber, ErrorCode, FilePath, Identity, LineNumber, LintMessage, LocationList, Position, ScopeRef, Severity};
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LintResult {
     pub file: FilePath,

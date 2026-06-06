@@ -1,7 +1,8 @@
 //! config_setting_vo — Value objects for configuration domain.
 
-use super::*;
 use serde::{Deserialize, Serialize};
+
+use crate::taxonomy::{ArchitectureConfig, Count, FilePathList, PatternList, Score};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(transparent)]

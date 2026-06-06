@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::taxonomy::{ComplianceStatus, Count, ErrorMessage, FilePath, PatternList, Score};
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AggregatedResults {
     pub projects: Vec<ProjectResult>,

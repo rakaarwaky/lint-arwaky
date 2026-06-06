@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
-use super::*;
+
+use crate::taxonomy::{ColumnNumber, LineNumber};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Position {

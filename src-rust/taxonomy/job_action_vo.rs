@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::taxonomy::MetadataVO;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ActionArgs {
     pub value: MetadataVO,

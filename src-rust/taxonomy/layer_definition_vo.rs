@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::taxonomy::{BooleanVO, Count, CustomMessageVO, DirectoryPath, ErrorMessage, LayerNameVO, MandatoryImportRuleVO, PatternList, SuffixPolicyVO};
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LayerDefinition {
     pub path: DirectoryPath,

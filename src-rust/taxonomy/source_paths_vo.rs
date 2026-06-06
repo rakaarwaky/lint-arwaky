@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::taxonomy::FilePath;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RenamedFile {
     pub old_path: FilePath,

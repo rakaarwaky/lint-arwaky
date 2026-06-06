@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
-use super::*;
+
+use crate::taxonomy::AdapterName;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum JobStatus {

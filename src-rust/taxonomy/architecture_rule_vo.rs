@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::taxonomy::{BooleanVO, Count, DescriptionVO, ErrorCode, ErrorMessage, LayerNameVO, PatternList, SuffixPolicyVO, SuffixVO};
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ArchitectureRule {
     pub name: DescriptionVO,

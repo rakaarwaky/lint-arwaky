@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::taxonomy::{ErrorMessage, JobId, LineContentVO, ResponseData, Severity};
+
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct BooleanVO {

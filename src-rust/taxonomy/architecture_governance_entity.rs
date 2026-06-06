@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
-use super::*;
+
+use crate::taxonomy::{AdapterName, ComplianceStatus, Count, LintResult, LintResultList, Score, Severity};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct GovernanceReport {

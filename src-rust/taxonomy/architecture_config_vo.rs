@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::taxonomy::{ArchitectureRule, BooleanVO, Count, ErrorMessage, FilePathList, LayerDefinition, LayerNameVO, LegacyLayerRuleList, NamingConfig};
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ArchitectureConfig {
     pub enabled: BooleanVO,

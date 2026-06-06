@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::taxonomy::{Count, FilePathList, RenamedFileList};
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct GitDiffResultVO {
     pub added: FilePathList,
