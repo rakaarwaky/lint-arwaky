@@ -292,7 +292,7 @@ impl CheckCommandsSurface {
 
         // Group results by source
         let mut source_results: HashMap<String, Vec<&LintResult>> = HashMap::new();
-        for res in &report.results {
+        for res in report.results.iter() {
             let src = res.source.as_ref().map(|s| s.value.clone()).unwrap_or_else(|| "unknown".to_string());
             source_results.entry(src).or_default().push(res);
         }
@@ -309,7 +309,7 @@ impl CheckCommandsSurface {
                     " - {file}:{line} {code}: {msg}",
                     file = res.file.value,
                     line = res.line.value,
-                    code = res.code.as_deref().unwrap_or(""),
+                    code = &*res.code,
                     msg = res.message.value,
                 ));
             }
@@ -326,9 +326,9 @@ impl CheckCommandsSurface {
     async fn handle_git_diff(&self, container: &dyn ServiceContainerAggregate, project_path: &FilePath) {
         // In real impl: call container.analysis_orchestrator.run
         let report = GovernanceReport {
-            results: vec![],
-            score: Score::new(100.0).unwrap(),
-            is_passing: BooleanVO { value: true },
+            results: LintResultList::default(),
+            score: Score::new(100.0),
+            is_passing: ComplianceStatus::new(true),
         };
         let report_text = self.format_report(&report);
         println!("{report_text}");
@@ -337,9 +337,9 @@ impl CheckCommandsSurface {
     async fn handle_full_analysis(&self, container: &dyn ServiceContainerAggregate, project_path: &FilePath) {
         println!(" Running analysis on {}...", project_path.value);
         let report = GovernanceReport {
-            results: vec![],
-            score: Score::new(100.0).unwrap(),
-            is_passing: BooleanVO { value: true },
+            results: LintResultList::default(),
+            score: Score::new(100.0),
+            is_passing: ComplianceStatus::new(true),
         };
         let report_text = self.format_report(&report);
         println!("{report_text}");
@@ -369,7 +369,7 @@ impl CheckCommandsSurface {
     fn aggregate_source_counts(&self, reports: &[(String, GovernanceReport)]) -> HashMap<String, i32> {
         let mut counts = HashMap::new();
         for (_, report) in reports {
-            for res in &report.results {
+            for res in report.results.iter() {
                 let source = res.source.as_ref().map(|s| s.value.clone()).unwrap_or_else(|| "unknown".to_string());
                 *counts.entry(source).or_insert(0) += 1;
             }

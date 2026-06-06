@@ -19,13 +19,13 @@ pub async fn execute_command_tool(
 
     match action.as_ref() {
         "check" | "scan" => {
-            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
             let linter = container
                 .get_architecture_linter()
                 .expect("Architecture linter not registered");
             let results = linter.run_self_lint(path);
             let report = linter.format_report(&results, path);
-            let total = results.results.len();
+            let total = results.values.len();
 
             json!({
                 "status": "success",
@@ -33,11 +33,11 @@ pub async fn execute_command_tool(
                 "path": path,
                 "total_violations": total,
                 "report": report,
-                "violations": results.results.iter().map(|r| {
+                "violations": results.values.iter().map(|r| {
                     json!({
                         "file": r.file.value,
                         "line": r.line.value,
-                        "code": r.code.code,
+                        "code": &*r.code,
                         "message": r.message.value,
                         "severity": format!("{:?}", r.severity)
                     })
@@ -46,7 +46,7 @@ pub async fn execute_command_tool(
         }
 
         "fix" => {
-            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
             json!({
                 "status": "success",
                 "action": "fix",
@@ -57,10 +57,10 @@ pub async fn execute_command_tool(
         }
 
         "report" => {
-            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
             let output_format = args
                 .get("output-format")
-                .and_then(|v| v.as_ref())
+                .and_then(|v| v.as_str())
                 .unwrap_or("text");
             let linter = container
                 .get_architecture_linter()
@@ -75,12 +75,12 @@ pub async fn execute_command_tool(
                         "format": "json",
                         "data": {
                             "project": path,
-                            "total_violations": results.results.len(),
-                            "violations": results.results.iter().map(|r| {
+                            "total_violations": results.values.len(),
+                            "violations": results.values.iter().map(|r| {
                                 json!({
                                     "file": r.file.value,
                                     "line": r.line.value,
-                                    "code": r.code.code,
+                                    "code": &*r.code,
                                     "message": r.message.value,
                                     "severity": format!("{:?}", r.severity)
                                 })
@@ -104,9 +104,9 @@ pub async fn execute_command_tool(
                                         "informationUri": "https://github.com/rakaarwaky/lint-arwaky"
                                     }
                                 },
-                                "results": results.results.iter().map(|r| {
+                                "results": results.values.iter().map(|r| {
                                     json!({
-                                        "ruleId": r.code.code,
+                                        "ruleId": &*r.code,
                                         "message": {"text": r.message.value},
                                         "locations": [{
                                             "physicalLocation": {
@@ -133,7 +133,7 @@ pub async fn execute_command_tool(
         }
 
         "security" => {
-            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
             json!({
                 "status": "success",
                 "action": "security",
@@ -144,7 +144,7 @@ pub async fn execute_command_tool(
         }
 
         "complexity" => {
-            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
             json!({
                 "status": "success",
                 "action": "complexity",
@@ -155,7 +155,7 @@ pub async fn execute_command_tool(
         }
 
         "dependencies" => {
-            let path = args.get("path").and_then(|v| v.as_ref()).unwrap_or(".");
+            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
             json!({
                 "status": "success",
                 "action": "dependencies",
