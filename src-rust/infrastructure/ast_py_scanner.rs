@@ -32,11 +32,11 @@ impl ISourceParserPort for ASTPythonParserAdapter {
     }
 
     fn get_class_attributes(&self, _path: &FilePath) -> ResponseData {
-        ResponseData::new(serde_json::Value::Null)
+        ResponseData { value: Some(serde_json::Value::Null), stdout: String::new(), stderr: String::new(), returncode: 0, metadata: std::collections::HashMap::new() }
     }
 
     fn has_all_export(&self, _path: &FilePath) -> SuccessStatus {
-        SuccessStatus::new(BooleanVO::new(false))
+        SuccessStatus::new(false)
     }
 
     fn find_primitive_violations(
@@ -60,7 +60,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
     }
 
     fn is_symbol_exported(&self, _path: &FilePath, _symbol: &SymbolName) -> SuccessStatus {
-        SuccessStatus::new(BooleanVO::new(false))
+        SuccessStatus::new(false)
     }
 
     fn get_class_methods(&self, _path: &FilePath) -> MetadataVO {

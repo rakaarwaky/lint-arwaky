@@ -5,9 +5,9 @@ use regex::Regex;
 
 use crate::contract::source_parser_port::ISourceParserPort;
 use crate::taxonomy::{
-    BooleanVO, Cause, ColumnNumber, Count, ErrorCode, ErrorMessage, FilePath, ImportInfo,
-    ImportInfoList, LineNumber, MetadataVO, ModuleName, PatternList,
-    PrimitiveTypeList, PrimitiveTypeName, PrimitiveViolation,
+    Cause, ColumnNumber, Count, ErrorCode, ErrorMessage, FilePath, ImportInfo,
+    ImportInfoList, LineNumber, MetadataVO, PatternList,
+    PrimitiveTypeList, PrimitiveViolation,
     PrimitiveViolationList, ResponseData, SourceParserError, SuccessStatus,
     SymbolName,
 };
@@ -37,8 +37,8 @@ impl ASTRustParserAdapter {
         let content = fs::read_to_string(&path.value).map_err(|e| SourceParserError {
             path: path.clone(),
             message: ErrorMessage::new(format!("Failed to read file: {}", e)),
-            error_code: ErrorCode::new("FILE_READ_ERROR"),
-            cause: Cause::new(e.to_string()),
+            error_code: Some(ErrorCode::new("FILE_READ_ERROR").unwrap()),
+            cause: Some(Cause::new(e.to_string())),
         })?;
 
         let mut defined = HashSet::new();
@@ -69,8 +69,8 @@ impl ASTRustParserAdapter {
 
             // Check for impl block
             if let Some(impl_cap) = IMPL_REGEX.captures(stripped) {
-                let trait_name = impl_cap.get(1).map(|m| m.as_ref());
-                let struct_name = impl_cap.get(2).unwrap().as_ref().to_string();
+                let trait_name = impl_cap.get(1).map(|m| m.as_str());
+                let struct_name = impl_cap.get(2).unwrap().as_str().to_string();
                 
                 if let Some(t_name) = trait_name {
                     let clean_trait = t_name.split("::").last().unwrap_or(t_name).to_string();
@@ -92,7 +92,7 @@ impl ASTRustParserAdapter {
 
             // 1. Imports
             if let Some(use_cap) = USE_REGEX.captures(stripped) {
-                let raw_path = use_cap.get(1).unwrap().as_ref().trim();
+                let raw_path = use_cap.get(1).unwrap().as_str().trim();
                 let mut clean_path = raw_path;
                 for prefix in &["crate::", "self::", "super::"] {
                     if clean_path.starts_with(prefix) {
@@ -120,8 +120,8 @@ impl ASTRustParserAdapter {
                         imported_aliases.insert(alias, dotted.clone());
                         imports_list.push(ImportInfo {
                             line: LineNumber::new(idx),
-                            module: ModuleName::new(dotted),
-                            name: SymbolName::new(""),
+                            module: dotted,
+                            name: None,
                         });
                     }
                 }
@@ -129,7 +129,7 @@ impl ASTRustParserAdapter {
 
             // 2. Struct, Enum, Trait Definitions
             if let Some(struct_cap) = STRUCT_REGEX.captures(stripped) {
-                let name = struct_cap.get(1).unwrap().as_ref().to_string();
+                let name = struct_cap.get(1).unwrap().as_str().to_string();
                 defined.insert(name.clone());
                 
                 let mut is_dead = stripped.contains(';') || stripped.contains("{}");
@@ -153,7 +153,7 @@ impl ASTRustParserAdapter {
 
             // 3. Functions / Methods
             if let Some(fn_cap) = FN_REGEX.captures(stripped) {
-                let name = fn_cap.get(1).unwrap().as_ref().to_string();
+                let name = fn_cap.get(1).unwrap().as_str().to_string();
                 defined.insert(name.clone());
                 
                 if let Some(ref cimpl) = current_impl {
@@ -174,7 +174,7 @@ impl ASTRustParserAdapter {
             // 4. Assignments
             if stripped.starts_with("let ") {
                 if let Some(let_cap) = LET_REGEX.captures(stripped) {
-                    let name = let_cap.get(1).unwrap().as_ref().to_string();
+                    let name = let_cap.get(1).unwrap().as_str().to_string();
                     let col_pos = line.find(&name).unwrap_or(0) as i64;
                     assignments.push(serde_json::json!({
                         "name": name,
@@ -190,22 +190,22 @@ impl ASTRustParserAdapter {
 
             // 6. Used symbols
             for word_match in WORD_REGEX.find_iter(stripped) {
-                used.insert(word_match.as_ref().to_string());
+                used.insert(word_match.as_str().to_string());
             }
 
             // 7. Exported symbols (pub items)
             if stripped.starts_with("pub ") {
                 if let Some(cap) = PUB_STRUCT_REGEX.captures(stripped) {
-                    exported.insert(cap.get(2).unwrap().as_ref().to_string());
+                    exported.insert(cap.get(2).unwrap().as_str().to_string());
                 }
                 if let Some(cap) = PUB_MOD_REGEX.captures(stripped) {
-                    exported.insert(cap.get(1).unwrap().as_ref().to_string());
+                    exported.insert(cap.get(1).unwrap().as_str().to_string());
                 }
                 if let Some(cap) = PUB_USE_REGEX.captures(stripped) {
-                    exported.insert(cap.get(1).unwrap().as_ref().to_string());
+                    exported.insert(cap.get(1).unwrap().as_str().to_string());
                 }
                 if let Some(cap) = PUB_USE_GROUP.captures(stripped) {
-                    for name in cap.get(1).unwrap().as_ref().split(',') {
+                    for name in cap.get(1).unwrap().as_str().split(',') {
                         let clean = name.trim();
                         if !clean.is_empty() {
                             exported.insert(clean.to_string());
@@ -218,7 +218,7 @@ impl ASTRustParserAdapter {
         // Post-processing class definitions to add bases and resolved_bases
         for cdef in &mut class_defs {
             if let Some(obj) = cdef.as_object_mut() {
-                if let Some(cname_val) = obj.get("name").and_then(|v| v.as_ref()) {
+                if let Some(cname_val) = obj.get("name").and_then(|v| v.as_str()) {
                     let cname = cname_val.to_string();
                     if let Some(bases) = class_bases.get(&cname) {
                         obj.insert("bases".to_string(), serde_json::json!(bases));
@@ -278,37 +278,37 @@ impl ISourceParserPort for ASTRustParserAdapter {
         map.insert("class_bases".to_string(), serde_json::json!(data.class_bases));
         
         Ok(ResponseData {
-            value: serde_json::json!(map),
-            stdout: crate::taxonomy::StdOutput::new(""),
-            stderr: crate::taxonomy::StdError::new(""),
-            returncode: crate::taxonomy::ExitCode::new(0),
-            metadata: crate::taxonomy::MetadataVO::new(HashMap::new()),
+            value: Some(serde_json::json!(map)),
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0i64,
+            metadata: HashMap::new(),
         })
     }
 
     fn get_class_attributes(&self, _path: &FilePath) -> ResponseData {
         ResponseData {
-            value: serde_json::json!(HashMap::<String, serde_json::Value>::new()),
-            stdout: crate::taxonomy::StdOutput::new(""),
-            stderr: crate::taxonomy::StdError::new(""),
-            returncode: crate::taxonomy::ExitCode::new(0),
-            metadata: crate::taxonomy::MetadataVO::new(HashMap::new()),
+            value: Some(serde_json::json!(HashMap::<String, serde_json::Value>::new())),
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0i64,
+            metadata: HashMap::new(),
         }
     }
 
     fn has_all_export(&self, path: &FilePath) -> SuccessStatus {
         if !self.is_barrel_file(path) {
             return SuccessStatus {
-                value: BooleanVO::new(false),
+                value: false,
             };
         }
         if let Ok(data) = self.read_and_parse(path) {
             SuccessStatus {
-                value: BooleanVO::new(!data.exported.is_empty()),
+                value: !data.exported.is_empty(),
             }
         } else {
             SuccessStatus {
-                value: BooleanVO::new(false),
+                value: false,
             }
         }
     }
@@ -341,11 +341,11 @@ impl ISourceParserPort for ASTRustParserAdapter {
                 for prim in &prim_keywords {
                     let prim_regex = Regex::new(&format!(r"\b{}\b", prim)).unwrap();
                     if let Some(m) = prim_regex.find(stripped) {
-                        let col = (line.find(m.as_ref()).unwrap_or(0) + 1) as i64;
+                        let col = (line.find(m.as_str()).unwrap_or(0) + 1) as i64;
                         violations.push(PrimitiveViolation {
                             line: LineNumber::new(idx),
                             column: ColumnNumber::new(col),
-                            type_name: PrimitiveTypeName::new(prim.clone()),
+                            type_name: prim.clone(),
                         });
                     }
                 }
@@ -366,7 +366,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
 
         let mut unused = Vec::new();
         for imp in data.imports_list {
-            let mod_name = imp.module.value.clone();
+            let mod_name = imp.module.clone();
             let mut is_used = used_set.contains(&mod_name) || exported_set.contains(&mod_name);
             
             if !is_used {
@@ -406,11 +406,11 @@ impl ISourceParserPort for ASTRustParserAdapter {
     fn is_symbol_exported(&self, path: &FilePath, symbol: &SymbolName) -> SuccessStatus {
         if let Ok(data) = self.read_and_parse(path) {
             SuccessStatus {
-                value: BooleanVO::new(data.exported.contains(&symbol.value)),
+                value: data.exported.contains(&symbol.value),
             }
         } else {
             SuccessStatus {
-                value: BooleanVO::new(false),
+                value: false,
             }
         }
     }

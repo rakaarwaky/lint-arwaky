@@ -21,7 +21,7 @@ impl JSCallAdapter {
         let words: Vec<String> = Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
             .unwrap()
             .find_iter(name)
-            .map(|m| m.as_ref().to_lowercase())
+            .map(|m| m.as_str().to_lowercase())
             .collect();
 
         if words.is_empty() {
@@ -40,7 +40,7 @@ impl JSCallAdapter {
             .map(|w| {
                 let mut c = w.chars();
                 match c.next() {
-                    Some(ch) => ch.to_uppercase().to_string() + c.as_ref(),
+                    Some(ch) => ch.to_uppercase().to_string() + &c.collect::<String>(),
                     None => String::new(),
                 }
             })
@@ -51,7 +51,7 @@ impl JSCallAdapter {
             .map(|w| {
                 let mut c = w.chars();
                 match c.next() {
-                    Some(ch) => ch.to_uppercase().to_string() + c.as_ref(),
+                    Some(ch) => ch.to_uppercase().to_string() + &c.collect::<String>(),
                     None => String::new(),
                 }
             })
@@ -119,9 +119,9 @@ impl ISemanticTracerPort for JSCallAdapter {
         root_dir: &DirectoryPath,
         target_name: &SymbolName,
     ) -> Result<CallChainList, SemanticError> {
-        let mut callers = Vec::new();
+        let mut callers: Vec<SymbolName> = Vec::new();
         let name = target_name.to_string();
-        let root = Path::new(root_dir.as_ref());
+        let root = Path::new(&root_dir.value);
 
         let call_pattern = Regex::new(&format!(r"\b{}\s*\(", regex::escape(&name))).unwrap();
         let def_pattern =
@@ -134,12 +134,12 @@ impl ISemanticTracerPort for JSCallAdapter {
                 for (i, line) in content.lines().enumerate() {
                     if call_pattern.is_match(line) && !def_pattern.is_match(line) {
                         if let Ok(rel_path) = filepath.strip_prefix(root) {
-                            callers.push(format!(
+                            callers.push(SymbolName::new(format!(
                                 "{}:{} -> {}",
                                 rel_path.display(),
                                 i + 1,
                                 line.trim()
-                            ));
+                            )));
                         }
                     }
                 }
@@ -164,12 +164,13 @@ impl ISemanticTracerPort for JSCallAdapter {
         for (k, v) in dict {
             map.insert(k, serde_json::Value::String(v));
         }
-        ResponseData::new(
-            StdOutput::new(""),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(map),
-        )
+        ResponseData {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata: map,
+        }
     }
 
     async fn project_wide_rename(
@@ -178,7 +179,7 @@ impl ISemanticTracerPort for JSCallAdapter {
         old_name: &SymbolName,
         new_name: &SymbolName,
     ) -> u32 {
-        let root = Path::new(root_dir.as_ref());
+        let root = Path::new(&root_dir.value);
         let old = old_name.to_string();
         let new = new_name.to_string();
 
@@ -206,7 +207,7 @@ impl ISemanticTracerPort for JSCallAdapter {
                 if source.contains(&old) {
                     let new_source = pattern.replace_all(&source, |caps: &regex::Captures| {
                         if let Some(m) = caps.get(1) {
-                            m.as_ref().to_string()
+                            m.as_str().to_string()
                         } else {
                             new.clone()
                         }
@@ -235,7 +236,7 @@ impl ISemanticTracerPort for JSCallAdapter {
     async fn build_variants(&self, name: &SymbolName) -> Vec<SymbolName> {
         Self::build_variants_raw(&name.to_string())
             .into_iter()
-            .filter_map(|s| SymbolName::try_from(s).ok())
+            .map(SymbolName::new)
             .collect()
     }
 }

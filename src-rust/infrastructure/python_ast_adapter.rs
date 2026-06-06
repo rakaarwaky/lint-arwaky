@@ -1,12 +1,14 @@
 /// python_ast_tracer — AST-based tracer for Python code analysis.
+use crate::contract::naming_variant_port::INamingVariantPort;
 use crate::contract::semantic_tracer_port::ISemanticTracerPort;
 use crate::infrastructure::PythonNamingVariantProvider;
 use crate::taxonomy::{
-    CallChainList, Count, DataFlowList, DirectoryPath, FilePath, LineNumber, ResponseData,
-    ResponseDataList, ScopeRef, SymbolName, SymbolNameList,
+    CallChainList, DataFlowList, DirectoryPath, FilePath, LineNumber, ResponseData, ScopeRef,
+    SemanticError, SymbolName,
 };
 
 use async_trait::async_trait;
+use std::collections::HashMap;
 
 pub struct PythonTracer;
 
@@ -16,13 +18,19 @@ impl PythonTracer {
     }
 }
 
+impl Default for PythonTracer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[async_trait]
 impl ISemanticTracerPort for PythonTracer {
     async fn get_enclosing_scope(
         &self,
         file_path: &FilePath,
         line: LineNumber,
-    ) -> Result<Option<ScopeRef>, crate::taxonomy::SemanticError> {
+    ) -> Result<Option<ScopeRef>, SemanticError> {
         let path_str = &file_path.value;
         let content = match std::fs::read_to_string(path_str) {
             Ok(c) => c,
@@ -39,8 +47,8 @@ impl ISemanticTracerPort for PythonTracer {
         &self,
         _root_dir: &DirectoryPath,
         _target_name: &SymbolName,
-    ) -> Result<CallChainList, crate::taxonomy::SemanticError> {
-        Ok(CallChainList::new(Vec::new()))
+    ) -> Result<CallChainList, SemanticError> {
+        Ok(CallChainList { values: Vec::new() })
     }
 
     async fn find_flow(
@@ -49,13 +57,25 @@ impl ISemanticTracerPort for PythonTracer {
         _var_name: &SymbolName,
         _start_line: LineNumber,
     ) -> DataFlowList {
-        DataFlowList::new(Vec::new())
+        DataFlowList { values: Vec::new() }
     }
 
     async fn get_variant_dict(&self, name: &SymbolName) -> ResponseData {
-        PythonNamingVariantProvider::new()
-            .get_variant_dict(name.clone())
-            .unwrap_or_else(|_| ResponseData::new(serde_json::Value::Null))
+        let provider = PythonNamingVariantProvider::new();
+        let variant_json = provider.get_variant_dict(name);
+        let mut map = HashMap::new();
+        if let Some(obj) = variant_json.as_object() {
+            for (k, v) in obj {
+                map.insert(k.clone(), v.clone());
+            }
+        }
+        ResponseData {
+            value: Some(serde_json::json!(map)),
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata: HashMap::new(),
+        }
     }
 
     async fn project_wide_rename(
@@ -75,7 +95,9 @@ impl ISemanticTracerPort for PythonTracer {
         Vec::new()
     }
 
-    async fn build_variants(&self, _name: &SymbolName) -> Vec<SymbolName> {
-        Vec::new()
+    async fn build_variants(&self, name: &SymbolName) -> Vec<SymbolName> {
+        let provider = PythonNamingVariantProvider::new();
+        let variants = provider.build_variants(name);
+        variants.values
     }
 }

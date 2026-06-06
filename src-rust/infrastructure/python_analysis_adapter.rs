@@ -21,7 +21,7 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
                 || current.join(".git").is_dir()
                 || current.join("pyproject.toml").is_file()
             {
-                return FilePath::new(current.to_string_lossy().to_string());
+                return FilePath::new(current.to_string_lossy().to_string()).unwrap();
             }
             if let Some(parent) = current.parent() {
                 if parent == current {
@@ -33,7 +33,7 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
             }
         }
     }
-    FilePath::new(".")
+    FilePath::new(".").unwrap()
 }
 
 pub struct ComplexityAdapter {
@@ -62,7 +62,7 @@ impl ComplexityAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for ComplexityAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("radon")
+        AdapterName::new("radon").unwrap()
     }
     async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         Ok(LintResultList::default())
@@ -95,7 +95,7 @@ impl DuplicateAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for DuplicateAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("duplicates")
+        AdapterName::new("duplicates").unwrap()
     }
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
@@ -111,15 +111,15 @@ impl ILinterAdapterPort for DuplicateAdapter {
                                 let line_count = content.lines().count();
                                 if line_count > 500 {
                                     results.push(LintResult {
-                                        file: FilePath::new(p.to_string_lossy().to_string()),
+                                        file: FilePath::new(p.to_string_lossy().to_string()).unwrap(),
                                         line: LineNumber::new(1),
                                         column: ColumnNumber::new(0),
-                                        code: ErrorCode::new("DUPE001"),
+                                        code: ErrorCode::new("DUPE001").unwrap(),
                                         message: LintMessage::new(format!(
                                             "File exceeds 500 lines ({}); potential duplication.",
                                             line_count
                                         )),
-                                        source: self.name(),
+                                        source: Some(self.name()),
                                         severity: Severity::LOW,
                                         enclosing_scope: Default::default(),
                                         related_locations: Default::default(),
@@ -161,7 +161,7 @@ impl TrendsAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for TrendsAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("trends")
+        AdapterName::new("trends").unwrap()
     }
     async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         Ok(LintResultList::default())
@@ -194,7 +194,7 @@ impl DependencyAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for DependencyAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("pip-audit")
+        AdapterName::new("pip-audit").unwrap()
     }
     async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         Ok(LintResultList::default())

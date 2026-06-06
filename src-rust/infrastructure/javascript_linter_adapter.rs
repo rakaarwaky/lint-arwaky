@@ -45,7 +45,7 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
         let mut current = if abs_path.is_file() {
             match abs_path.parent() {
                 Some(p) => p.to_path_buf(),
-                None => return FilePath::new("."),
+                None => return FilePath::new(".").unwrap(),
             }
         } else {
             abs_path
@@ -57,7 +57,7 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
                 || current.join("package.json").is_file()
                 || current.join(".git").is_dir()
             {
-                return FilePath::new(current.to_string_lossy().to_string());
+                return FilePath::new(current.to_string_lossy().to_string()).unwrap();
             }
             match current.parent() {
                 Some(parent) => current = parent.to_path_buf(),
@@ -65,7 +65,7 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
             }
         }
     }
-    FilePath::new(".")
+    FilePath::new(".").unwrap()
 }
 
 // ── Prettier Adapter ───────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ impl PrettierAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for PrettierAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("prettier")
+        AdapterName::new("prettier").unwrap()
     }
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
@@ -142,14 +142,14 @@ impl ILinterAdapterPort for PrettierAdapter {
         let combined_output = format!("{}{}", response.stdout, response.stderr);
 
         if combined_output.contains("[warn]") {
-            let filename_vo = self.path_norm.resolve_infrastructure_path(path, Some(path));
+            let filename_vo = self.path_norm.resolve_infrastructure_path(path.clone(), Some(path.clone()));
             results.push(LintResult {
                 file: filename_vo,
                 line: LineNumber::new(1),
                 column: ColumnNumber::new(0),
-                code: ErrorCode::new("formatting"),
+                code: ErrorCode::new("formatting").unwrap(),
                 message: LintMessage::new("Code style issues found. Run Prettier to fix."),
-                source: self.name(),
+                source: Some(self.name()),
                 severity: Severity::LOW,
                 enclosing_scope: Default::default(),
                 related_locations: Default::default(),
@@ -209,7 +209,7 @@ impl TSCAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for TSCAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("tsc")
+        AdapterName::new("tsc").unwrap()
     }
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
@@ -268,23 +268,23 @@ impl ILinterAdapterPort for TSCAdapter {
         for line in output.lines() {
             let line = line.trim();
             if let Some(caps) = pattern1.captures(line).or_else(|| pattern2.captures(line)) {
-                let filename = caps.get(1).unwrap().as_ref().to_string();
-                let line_num = caps.get(2).unwrap().as_ref().parse::<usize>().unwrap_or(1);
-                let col_num = caps.get(3).unwrap().as_ref().parse::<usize>().unwrap_or(0);
-                let code = caps.get(4).unwrap().as_ref().to_string();
-                let msg = caps.get(5).unwrap().as_ref().to_string();
+                let filename = caps.get(1).unwrap().as_str().to_string();
+                let line_num = caps.get(2).unwrap().as_str().parse::<usize>().unwrap_or(1);
+                let col_num = caps.get(3).unwrap().as_str().parse::<usize>().unwrap_or(0);
+                let code = caps.get(4).unwrap().as_str().to_string();
+                let msg = caps.get(5).unwrap().as_str().to_string();
 
                 let filename_vo = self
                     .path_norm
-                    .resolve_infrastructure_path(&FilePath::new(filename), Some(path));
+                    .resolve_infrastructure_path(FilePath::new(filename).unwrap(), Some(path.clone()));
 
                 results.push(LintResult {
                     file: filename_vo,
                     line: LineNumber::new(line_num as i64),
                     column: ColumnNumber::new(col_num as i64),
-                    code: ErrorCode::new(code),
+                    code: ErrorCode::new(code).unwrap(),
                     message: LintMessage::new(msg),
-                    source: self.name(),
+                    source: Some(self.name()),
                     severity: Severity::HIGH,
                     enclosing_scope: Default::default(),
                     related_locations: Default::default(),
@@ -322,7 +322,7 @@ impl ESLintAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for ESLintAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("eslint")
+        AdapterName::new("eslint").unwrap()
     }
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
@@ -390,17 +390,17 @@ impl ILinterAdapterPort for ESLintAdapter {
         let mut results = Vec::new();
         if let Some(files) = parsed.as_array() {
             for file_data in files {
-                let filename = file_data["filePath"].as_ref().unwrap_or("").to_string();
+                let filename = file_data["filePath"].as_str().unwrap_or("").to_string();
                 let filename_vo = self
                     .path_norm
-                    .resolve_infrastructure_path(&FilePath::new(filename), Some(path));
+                    .resolve_infrastructure_path(FilePath::new(filename).unwrap(), Some(path.clone()));
 
                 if let Some(messages) = file_data["messages"].as_array() {
                     for msg in messages {
                         let line_num = msg["line"].as_u64().unwrap_or(1) as usize;
                         let col_num = msg["column"].as_u64().unwrap_or(0) as usize;
-                        let rule_id = msg["ruleId"].as_ref().unwrap_or("ESLINT").to_string();
-                        let message_text = msg["message"].as_ref().unwrap_or("").to_string();
+                        let rule_id = msg["ruleId"].as_str().unwrap_or("ESLINT").to_string();
+                        let message_text = msg["message"].as_str().unwrap_or("").to_string();
                         let sev_code = msg["severity"].as_u64().unwrap_or(1);
 
                         let severity = if sev_code == 2 {
@@ -413,9 +413,9 @@ impl ILinterAdapterPort for ESLintAdapter {
                             file: filename_vo.clone(),
                             line: LineNumber::new(line_num as i64),
                             column: ColumnNumber::new(col_num as i64),
-                            code: ErrorCode::new(rule_id),
+                            code: ErrorCode::new(rule_id).unwrap(),
                             message: LintMessage::new(message_text),
-                            source: self.name(),
+                            source: Some(self.name()),
                             severity,
                             enclosing_scope: Default::default(),
                             related_locations: Default::default(),

@@ -18,10 +18,10 @@ impl MyPyAdapter {
 
     fn map_severity(msg_type: &str, msg: &str) -> Severity {
         let m = msg.to_lowercase();
-        if msg_type == "note" { return Severity::Low; }
-        if m.contains("syntax") || m.contains("parse") { return Severity::Critical; }
-        if msg_type == "warning" { return Severity::Medium; }
-        Severity::High
+        if msg_type == "note" { return Severity::LOW; }
+        if m.contains("syntax") || m.contains("parse") { return Severity::CRITICAL; }
+        if msg_type == "warning" { return Severity::MEDIUM; }
+        Severity::HIGH
     }
 }
 

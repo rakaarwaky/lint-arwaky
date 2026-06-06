@@ -1,167 +1,15 @@
-use crate::contract::{ILinterAdapterPort, ICommandExecutorPort, IPathNormalizationPort};
-use crate::taxonomy::{AccessDeniedError,
-ActionArgs,
-ActionName,
-ActualValue,
-AdapterClassMap,
-AdapterEntry,
-AdapterError,
-AdapterMetadata,
-AdapterMetadataList,
-AdapterName,
-AdapterNameList,
-AdapterRegistered,
-AdapterStatus,
-AgentStatus,
-AgentStatusVO};
-use crate::taxonomy::{AggregatedResults,
-AppConfig,
-ArchitectureConfig,
-ArchitectureRule,
-BooleanVO,
-CallChainError,
-CallChainList,
-CapabilityReference,
-CapabilityReferenceList,
-CapabilityRoutingContext,
-Cause,
-ClassDefinitionMap,
-ClassFileMap,
-ClassMethodsVO,
-ClassNameVO};
-use crate::taxonomy::{ClassPath,
-ClassUsageItem,
-ClassUsageItemList,
-ClassUsageMap,
-ColumnNumber,
-CommandArgs,
-CommandMetadataVO,
-ComplianceStatus,
-ConfigError,
-ConfigKey,
-Constraint,
-ContentString,
-Count,
-CustomMessageVO,
-DataFlowList};
-use crate::taxonomy::{DescriptionVO,
-DirectoryPath,
-DiscoveryError,
-DoctorResultVO,
-Duration,
-EnvContentVO,
-ErrorCode,
-ErrorMessage,
-ExitCode,
-ExpectedValue,
-FieldName,
-FileContentVO,
-FileDefinitionMap,
-FileFormat,
-FilePath};
-use crate::taxonomy::{FilePathList,
-FileSystemError,
-FixApplied,
-FixResult,
-GitDiffResultVO,
-GitHookError,
-GitRef,
-GovernanceReport,
-GraphAnalysisContext,
-HookInstalled,
-HookRemoved,
-Identity,
-ImportGraph,
-ImportInfo,
-ImportInfoList};
-use crate::taxonomy::{ImportNameList,
-InboundLinkMap,
-InheritanceMap,
-IntoPatternListValues,
-JobError,
-JobId,
-JobIdList,
-JobStatus,
-LayerDefinition,
-LayerMapVO,
-LayerNameVO,
-LegacyLayerRule,
-LegacyLayerRuleList,
-LineContentList,
-LineContentVO};
-use crate::taxonomy::{LineNumber,
-LintMessage,
-LintResult,
-LintResultList,
-LintStatusActionArgs,
-LinterOperationError,
-Location,
-LocationList,
-LogOutput,
-MaintenanceStatsVO,
-MandatoryImportRuleVO,
-McpConfigVO,
-MetadataVO,
-MetricsError,
-ModuleName};
-use crate::taxonomy::{ModuleToFileMap,
-NameVariants,
-NamingConfig,
-NamingError,
-OrphanIndicatorResult,
-PathNotFoundError,
-PatternList,
-PluginError,
-PluginGroup,
-Position,
-PrimitiveTypeList,
-PrimitiveTypeName,
-PrimitiveViolation,
-PrimitiveViolationList,
-ProjectConfig};
-use crate::taxonomy::{ProjectResult,
-ReachabilityResult,
-RegistrationError,
-RenamedFile,
-RenamedFileList,
-ResponseData,
-ResponseDataList,
-ScanCompleted,
-ScanError,
-ScanFailed,
-ScanStarted,
-ScopeBounds,
-ScopeRef,
-ScopeResolutionError,
-Score};
-use crate::taxonomy::{SemanticError,
-Severity,
-SourceParserError,
-StdError,
-StdOutput,
-SuccessStatus,
-SuffixPolicyVO,
-SuffixVO,
-Suggestion,
-SymbolName,
-SymbolNameList,
-SyntaxErrorVO,
-Thresholds,
-Timeout,
-Timestamp};
-use crate::taxonomy::{TransportEndpoint,
-TransportError,
-TransportProtocol,
-TransportUrlVO,
-ValidationError,
-ViolationConstraint,
-WatchEventError,
-WatchResult,
-WatchServiceError,
-WatchSubscriptionError};
+//! python_ruff_adapter — Ruff linter adapter for Python files.
+
 use async_trait::async_trait;
 use serde_json::Value;
 use std::sync::Arc;
+
+use crate::contract::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
+use crate::taxonomy::{
+    AdapterError, AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, FilePath,
+    LineNumber, LintMessage, LintResult, LintResultList, LinterOperationError, LocationList,
+    PatternList, Severity,
+};
 
 pub struct RuffAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
@@ -191,10 +39,10 @@ impl RuffAdapter {
 
     fn map_severity(&self, severity: &str, _code: &str) -> Severity {
         match severity {
-            "error" => Severity::ERROR,
-            "warning" => Severity::WARNING,
-            "info" => Severity::INFO,
-            _ => Severity::WARNING,
+            "error" => Severity::HIGH,
+            "warning" => Severity::MEDIUM,
+            "info" => Severity::LOW,
+            _ => Severity::MEDIUM,
         }
     }
 }
@@ -202,7 +50,7 @@ impl RuffAdapter {
 #[async_trait]
 impl ILinterAdapterPort for RuffAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("ruff")
+        AdapterName::raw("ruff")
     }
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
@@ -215,41 +63,62 @@ impl ILinterAdapterPort for RuffAdapter {
             "--exit-zero".to_string(),
             "--no-cache".to_string(),
         ];
-
         let command = PatternList::new(cmd);
-        let working_dir = FilePath::new("."); // Simplified
+        let working_dir = FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone());
 
-        match self.executor.execute_command(command, working_dir, Some(std::time::Duration::from_secs(60))).await {
+        match self
+            .executor
+            .execute_command(
+                command,
+                working_dir,
+                Some(std::time::Duration::from_secs(60)),
+            )
+            .await
+        {
             Ok(response) => {
-                let stdout = response.stdout.value;
-                let findings: Vec<Value> = serde_json::from_str(&stdout).unwrap_or_default();
+                let stdout = &response.stdout;
+                let findings: Vec<Value> = serde_json::from_str(stdout).unwrap_or_default();
                 let mut results = Vec::new();
 
                 for f in findings {
-                    let filename = f.get("filename").and_then(|v| v.as_ref()).unwrap_or("");
-                    let row = f.get("location").and_then(|l| l.get("row")).and_then(|v| v.as_i64()).unwrap_or(0);
-                    let col = f.get("location").and_then(|l| l.get("column")).and_then(|v| v.as_i64()).unwrap_or(0);
-                    let code = f.get("code").and_then(|v| v.as_ref()).unwrap_or("UNKNOWN");
-                    let message = f.get("message").and_then(|v| v.as_ref()).unwrap_or("");
-                    let severity_str = f.get("severity").and_then(|v| v.as_ref()).unwrap_or("");
+                    let filename = f.get("filename").and_then(|v| v.as_str()).unwrap_or("");
+                    let row = f
+                        .get("location")
+                        .and_then(|l| l.get("row"))
+                        .and_then(|v| v.as_i64())
+                        .unwrap_or(0);
+                    let col = f
+                        .get("location")
+                        .and_then(|l| l.get("column"))
+                        .and_then(|v| v.as_i64())
+                        .unwrap_or(0);
+                    let code = f.get("code").and_then(|v| v.as_str()).unwrap_or("UNKNOWN");
+                    let message = f.get("message").and_then(|v| v.as_str()).unwrap_or("");
+                    let severity_str = f.get("severity").and_then(|v| v.as_str()).unwrap_or("");
 
-                    results.push(LintResult {
-                        file: FilePath::new(filename),
-                        line: LineNumber::new(row),
-                        column: ColumnNumber::new(col),
-                        code: ErrorCode::new(code),
-                        message: LintMessage::new(message),
-                        source: Some(self.name()),
-                        severity: self.map_severity(severity_str, code),
-                        ..Default::default()
-                    });
+                    let resolved = self.path_norm.resolve_infrastructure_path(
+                        FilePath::new(filename).unwrap_or_else(|_| path.clone()),
+                        Some(path.clone()),
+                    );
+
+                    results.push(LintResult::new(
+                        resolved,
+                        LineNumber::new(row),
+                        ColumnNumber::new(col),
+                        ErrorCode::raw(code),
+                        LintMessage::new(message),
+                        Some(self.name()),
+                        self.map_severity(severity_str, code),
+                        None,
+                        LocationList::new(),
+                    ));
                 }
                 Ok(LintResultList::new(results))
             }
-            Err(e) => Err(LinterOperationError::Adapter(AdapterError {
-                message: ErrorMessage::new(format!("Ruff execution failed: {}", e)),
-                ..Default::default()
-            })),
+            Err(e) => Err(LinterOperationError::Adapter(AdapterError::new(
+                self.name(),
+                ErrorMessage::new(format!("Ruff execution failed: {}", e)),
+            ))),
         }
     }
 
@@ -262,16 +131,23 @@ impl ILinterAdapterPort for RuffAdapter {
             "--fix".to_string(),
             "--exit-zero".to_string(),
         ];
-
         let command = PatternList::new(cmd);
-        let working_dir = FilePath::new(".");
+        let working_dir = FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone());
 
-        match self.executor.execute_command(command, working_dir, Some(std::time::Duration::from_secs(60))).await {
+        match self
+            .executor
+            .execute_command(
+                command,
+                working_dir,
+                Some(std::time::Duration::from_secs(60)),
+            )
+            .await
+        {
             Ok(_) => Ok(ComplianceStatus::new(true)),
-            Err(e) => Err(LinterOperationError::Adapter(AdapterError {
-                message: ErrorMessage::new(format!("Ruff fix failed: {}", e)),
-                ..Default::default()
-            })),
+            Err(e) => Err(LinterOperationError::Adapter(AdapterError::new(
+                self.name(),
+                ErrorMessage::new(format!("Ruff fix failed: {}", e)),
+            ))),
         }
     }
 }

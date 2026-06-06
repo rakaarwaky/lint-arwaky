@@ -47,12 +47,12 @@ impl GitDiffScanner {
             if parts.is_empty() { continue; }
             let status = parts[0];
             match status.chars().next() {
-                Some('A') if parts.len() > 1 => added.push(FilePath::new(parts[1].to_string())),
-                Some('M') if parts.len() > 1 => modified.push(FilePath::new(parts[1].to_string())),
-                Some('D') if parts.len() > 1 => deleted.push(FilePath::new(parts[1].to_string())),
+                Some('A') if parts.len() > 1 => added.push(FilePath::new(parts[1].to_string()).unwrap()),
+                Some('M') if parts.len() > 1 => modified.push(FilePath::new(parts[1].to_string()).unwrap()),
+                Some('D') if parts.len() > 1 => deleted.push(FilePath::new(parts[1].to_string()).unwrap()),
                 Some('R') if parts.len() > 2 => renamed.push(RenamedFile {
-                    old_path: FilePath::new(parts[1].to_string()),
-                    new_path: FilePath::new(parts[2].to_string()),
+                    old_path: FilePath::new(parts[1].to_string()).unwrap(),
+                    new_path: FilePath::new(parts[2].to_string()).unwrap(),
                 }),
                 _ => {}
             }

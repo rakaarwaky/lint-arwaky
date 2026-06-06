@@ -1,6 +1,7 @@
 /// http_request_client — Sync HTTP provider implementation (runs blocking inside async).
 use crate::contract::http_provider_port::IHttpProviderPort;
 use crate::taxonomy::{ContentString, ResponseData, Timeout, TransportUrlVO};
+use std::collections::HashMap;
 use std::time::Duration;
 
 pub struct SyncHttpProvider;
@@ -18,7 +19,13 @@ impl IHttpProviderPort for SyncHttpProvider {
         let client = reqwest::blocking::Client::builder().timeout(dur).build().map_err(|e| e.to_string())?;
         let resp = client.get(&url.value).send().map_err(|e| e.to_string())?;
         let text = resp.text().map_err(|e| e.to_string())?;
-        Ok(ResponseData::new(serde_json::Value::String(text)))
+        Ok(ResponseData {
+            value: Some(serde_json::Value::String(text)),
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata: HashMap::new(),
+        })
     }
 
     async fn post(&self, url: TransportUrlVO, body: ContentString, timeout: Option<Timeout>) -> Result<ResponseData, String> {
@@ -27,6 +34,12 @@ impl IHttpProviderPort for SyncHttpProvider {
         let payload = body.value.clone();
         let resp = client.post(&url.value).body(payload).send().map_err(|e| e.to_string())?;
         let text = resp.text().map_err(|e| e.to_string())?;
-        Ok(ResponseData::new(serde_json::Value::String(text)))
+        Ok(ResponseData {
+            value: Some(serde_json::Value::String(text)),
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata: HashMap::new(),
+        })
     }
 }

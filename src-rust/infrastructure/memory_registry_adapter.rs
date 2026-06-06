@@ -103,11 +103,12 @@ impl IJobRegistryPort for MemoryJobRegistryAdapter {
         _max_retries: u32,
         _base_delay: Duration,
     ) -> ResponseData {
-        ResponseData::new(
-            StdOutput::new("success"),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(HashMap::new()),
-        )
+        ResponseData {
+            value: None,
+            stdout: "success".to_string(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata: HashMap::new(),
+        }
     }
 }

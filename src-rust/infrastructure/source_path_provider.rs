@@ -14,7 +14,7 @@ impl IPathNormalizationPort for PathNormalizationProvider {
     /// Reads PHANTOM_ROOT and PROJECT_ROOT from environment.
     /// Defaults to current working directory for PROJECT_ROOT.
     fn normalize_path(&self, path: FilePath) -> FilePath {
-        let mut path_str = path.value;
+        let mut path_str = path.value.clone();
         if path_str.is_empty() {
             return path;
         }
@@ -35,7 +35,7 @@ impl IPathNormalizationPort for PathNormalizationProvider {
                 .unwrap_or(home)
                 .replace("\\\\", "/");
             let actual_root = env::var("PROJECT_ROOT")
-                .unwrap_or_else(|| env::current_dir().unwrap().to_string_lossy().to_string())
+                .unwrap_or_else(|_| env::current_dir().unwrap().to_string_lossy().to_string())
                 .replace("\\\\", "/");
 
             if !phantom_root.is_empty() && path_str.starts_with(&phantom_root) {

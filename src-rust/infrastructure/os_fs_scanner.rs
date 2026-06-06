@@ -1,168 +1,14 @@
-/// Implementation of IFileSystemPort using standard std::fs.
-use crate::contract::file_system_port::IFileSystemPort;
-use crate::taxonomy::{AccessDeniedError,
-ActionArgs,
-ActionName,
-ActualValue,
-AdapterClassMap,
-AdapterEntry,
-AdapterError,
-AdapterMetadata,
-AdapterMetadataList,
-AdapterName,
-AdapterNameList,
-AdapterRegistered,
-AdapterStatus,
-AgentStatus,
-AgentStatusVO};
-use crate::taxonomy::{AggregatedResults,
-AppConfig,
-ArchitectureConfig,
-ArchitectureRule,
-BooleanVO,
-CallChainError,
-CallChainList,
-CapabilityReference,
-CapabilityReferenceList,
-CapabilityRoutingContext,
-Cause,
-ClassDefinitionMap,
-ClassFileMap,
-ClassMethodsVO,
-ClassNameVO};
-use crate::taxonomy::{ClassPath,
-ClassUsageItem,
-ClassUsageItemList,
-ClassUsageMap,
-ColumnNumber,
-CommandArgs,
-CommandMetadataVO,
-ComplianceStatus,
-ConfigError,
-ConfigKey,
-Constraint,
-ContentString,
-Count,
-CustomMessageVO,
-DataFlowList};
-use crate::taxonomy::{DescriptionVO,
-DirectoryPath,
-DiscoveryError,
-DoctorResultVO,
-Duration,
-EnvContentVO,
-ErrorCode,
-ErrorMessage,
-ExitCode,
-ExpectedValue,
-FieldName,
-FileContentVO,
-FileDefinitionMap,
-FileFormat,
-FilePath};
-use crate::taxonomy::{FilePathList,
-FileSystemError,
-FixApplied,
-FixResult,
-GitDiffResultVO,
-GitHookError,
-GitRef,
-GovernanceReport,
-GraphAnalysisContext,
-HookInstalled,
-HookRemoved,
-Identity,
-ImportGraph,
-ImportInfo,
-ImportInfoList};
-use crate::taxonomy::{ImportNameList,
-InboundLinkMap,
-InheritanceMap,
-IntoPatternListValues,
-JobError,
-JobId,
-JobIdList,
-JobStatus,
-LayerDefinition,
-LayerMapVO,
-LayerNameVO,
-LegacyLayerRule,
-LegacyLayerRuleList,
-LineContentList,
-LineContentVO};
-use crate::taxonomy::{LineNumber,
-LintMessage,
-LintResult,
-LintResultList,
-LintStatusActionArgs,
-LinterOperationError,
-Location,
-LocationList,
-LogOutput,
-MaintenanceStatsVO,
-MandatoryImportRuleVO,
-McpConfigVO,
-MetadataVO,
-MetricsError,
-ModuleName};
-use crate::taxonomy::{ModuleToFileMap,
-NameVariants,
-NamingConfig,
-NamingError,
-OrphanIndicatorResult,
-PathNotFoundError,
-PatternList,
-PluginError,
-PluginGroup,
-Position,
-PrimitiveTypeList,
-PrimitiveTypeName,
-PrimitiveViolation,
-PrimitiveViolationList,
-ProjectConfig};
-use crate::taxonomy::{ProjectResult,
-ReachabilityResult,
-RegistrationError,
-RenamedFile,
-RenamedFileList,
-ResponseData,
-ResponseDataList,
-ScanCompleted,
-ScanError,
-ScanFailed,
-ScanStarted,
-ScopeBounds,
-ScopeRef,
-ScopeResolutionError,
-Score};
-use crate::taxonomy::{SemanticError,
-Severity,
-SourceParserError,
-StdError,
-StdOutput,
-SuccessStatus,
-SuffixPolicyVO,
-SuffixVO,
-Suggestion,
-SymbolName,
-SymbolNameList,
-SyntaxErrorVO,
-Thresholds,
-Timeout,
-Timestamp};
-use crate::taxonomy::{TransportEndpoint,
-TransportError,
-TransportProtocol,
-TransportUrlVO,
-ValidationError,
-ViolationConstraint,
-WatchEventError,
-WatchResult,
-WatchServiceError,
-WatchSubscriptionError};
+//! os_fs_scanner — Implementation of IFileSystemPort using standard std::fs.
+
 use async_trait::async_trait;
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use crate::contract::file_system_port::IFileSystemPort;
+use crate::taxonomy::{
+    ActionName, ContentString, Count, ErrorMessage, FilePath, FileSystemError,
+    Identity, PatternList, SuccessStatus,
+};
 
 pub struct OSFileSystemAdapter;
 
@@ -173,26 +19,31 @@ impl OSFileSystemAdapter {
 
     fn walk_recursive(&self, dir: &Path, ignored: &[String], results: &mut Vec<FilePath>) {
         if dir.is_file() {
-            results.push(FilePath::new(dir.to_string_lossy().to_string()));
+            if let Ok(fp) = FilePath::new(dir.to_string_lossy().to_string()) {
+                results.push(fp);
+            }
             return;
         }
-
         if let Ok(entries) = fs::read_dir(dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
                 let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-
                 if ignored.contains(&name.to_string()) {
                     continue;
                 }
-
                 if path.is_dir() {
                     self.walk_recursive(&path, ignored, results);
-                } else {
-                    results.push(FilePath::new(path.to_string_lossy().to_string()));
+                } else if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
+                    results.push(fp);
                 }
             }
         }
+    }
+}
+
+impl Default for OSFileSystemAdapter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -209,18 +60,20 @@ impl IFileSystemPort for OSFileSystemAdapter {
     }
 
     async fn is_directory(&self, path: &FilePath) -> SuccessStatus {
-        SuccessStatus::new(BooleanVO::new(Path::new(&path.value).is_dir()))
+        SuccessStatus::new(Path::new(&path.value).is_dir())
     }
 
     async fn is_file(&self, path: &FilePath) -> SuccessStatus {
-        SuccessStatus::new(BooleanVO::new(Path::new(&path.value).is_file()))
+        SuccessStatus::new(Path::new(&path.value).is_file())
     }
 
     async fn get_relative_path(&self, path: &FilePath, start: &FilePath) -> FilePath {
         let p = Path::new(&path.value);
         let s = Path::new(&start.value);
         match p.strip_prefix(s) {
-            Ok(rel) => FilePath::new(rel.to_string_lossy().to_string()),
+            Ok(rel) => {
+                FilePath::new(rel.to_string_lossy().to_string()).unwrap_or_else(|_| path.clone())
+            }
             Err(_) => path.clone(),
         }
     }
@@ -238,13 +91,15 @@ impl IFileSystemPort for OSFileSystemAdapter {
     }
 
     async fn exists(&self, path: &FilePath) -> SuccessStatus {
-        SuccessStatus::new(BooleanVO::new(Path::new(&path.value).exists()))
+        SuccessStatus::new(Path::new(&path.value).exists())
     }
 
     async fn get_parent(&self, path: &FilePath) -> FilePath {
         let p = Path::new(&path.value);
         match p.parent() {
-            Some(parent) => FilePath::new(parent.to_string_lossy().to_string()),
+            Some(parent) => {
+                FilePath::new(parent.to_string_lossy().to_string()).unwrap_or_else(|_| path.clone())
+            }
             None => path.clone(),
         }
     }
@@ -256,23 +111,24 @@ impl IFileSystemPort for OSFileSystemAdapter {
         _mode: Option<&Identity>,
     ) -> Result<SuccessStatus, FileSystemError> {
         match fs::write(&path.value, &content.value) {
-            Ok(_) => Ok(SuccessStatus::new(BooleanVO::new(true))),
-            Err(e) => Err(FileSystemError {
-                path: path.clone(),
-                message: ErrorMessage::new(e.to_string()),
-                ..Default::default()
-            }),
+            Ok(_) => Ok(SuccessStatus::new(true)),
+            Err(e) => Err(FileSystemError::new(
+                path.clone(),
+                ErrorMessage::new(e.to_string()),
+                ActionName::new("write"),
+            )),
         }
     }
 
-    async fn glob(&self, pattern: &Identity) -> Vec<FilePath> {
-        // Simple mock glob
+    async fn glob(&self, _pattern: &Identity) -> Vec<FilePath> {
         vec![]
     }
 
     async fn get_cwd(&self) -> FilePath {
         let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-        FilePath::new(cwd.to_string_lossy().to_string())
+        FilePath::new(cwd.to_string_lossy().to_string()).unwrap_or_else(|_| {
+            FilePath::new(".".to_string()).unwrap()
+        })
     }
 
     async fn get_basename(&self, path: &FilePath) -> Identity {
@@ -291,16 +147,17 @@ impl IFileSystemPort for OSFileSystemAdapter {
             path.push(&part.value);
         }
         FilePath::new(path.to_string_lossy().to_string())
+            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap())
     }
 
     async fn read_file(&self, path: &FilePath) -> Result<ContentString, FileSystemError> {
         match fs::read_to_string(&path.value) {
             Ok(content) => Ok(ContentString::new(content)),
-            Err(e) => Err(FileSystemError {
-                path: path.clone(),
-                message: ErrorMessage::new(e.to_string()),
-                ..Default::default()
-            }),
+            Err(e) => Err(FileSystemError::new(
+                path.clone(),
+                ErrorMessage::new(e.to_string()),
+                ActionName::new("read"),
+            )),
         }
     }
 }
