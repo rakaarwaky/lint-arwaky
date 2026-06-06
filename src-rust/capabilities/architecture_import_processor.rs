@@ -33,12 +33,13 @@ impl ArchImportProcessor {
             Some(l) => l,
             None => return,
         };
-        let definition = match analyzer.layer_map().get(&layer_vo) {
+        let definition = match analyzer.layer_map().values.get(&layer_vo) {
             Some(d) => d.clone(),
             None => return,
         };
 
-        let basename = Path::new(file_path.to_string().as_ref())
+        let file_path_str = file_path.to_string();
+        let basename = Path::new(file_path_str.as_str())
             .file_name()
             .and_then(|f| f.to_str())
             .unwrap_or("");
@@ -180,7 +181,7 @@ impl ArchImportProcessor {
             file: file_path.clone(),
             line: imp.line.clone(),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new("AES001"),
+            code: ErrorCode::new("AES001").unwrap(),
             message: LintMessage::new(message),
             source: make_adapter("architecture"),
             severity: Severity::CRITICAL,
@@ -215,14 +216,14 @@ impl ArchImportProcessor {
             if let Some(obj) = val.as_object() {
                 if let Some(aliases) = obj.get("aliases").and_then(|a| a.as_object()) {
                     for (k, v) in aliases {
-                        if let Some(v_str) = v.as_ref() {
+                        if let Some(v_str) = v.as_str() {
                             imported_aliases.insert(k.clone(), v_str.to_string());
                         }
                     }
                 }
                 if let Some(used) = obj.get("used").and_then(|u| u.as_array()) {
                     for sym in used {
-                        if let Some(s) = sym.as_ref() {
+                        if let Some(s) = sym.as_str() {
                             used_symbols.insert(s.to_string());
                         }
                     }
@@ -232,7 +233,7 @@ impl ArchImportProcessor {
                         if let Some(arr) = v.as_array() {
                             let strs: Vec<String> = arr
                                 .iter()
-                                .filter_map(|v| v.as_ref().map(|s| s.to_string()))
+                                .filter_map(|v| v.as_str().map(|s| s.to_string()))
                                 .collect();
                             class_bases.insert(k.clone(), strs);
                         }
@@ -312,7 +313,7 @@ impl ArchImportProcessor {
             file: file_path.clone(),
             line: LineNumber::new(0),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new("AES002"),
+            code: ErrorCode::new("AES002").unwrap(),
             message: LintMessage::new(message),
             source: make_adapter("architecture"),
             severity: Severity::HIGH,
@@ -411,7 +412,7 @@ impl ArchImportProcessor {
         static CAPTURE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"contract\((.+)\)").unwrap());
 
         if let Some(caps) = CAPTURE_RE.captures(req_layer_str) {
-            let _pattern = caps.get(1).unwrap().as_ref();
+            let _pattern = caps.get(1).unwrap().as_str();
         }
 
         true
@@ -441,7 +442,7 @@ impl ArchImportProcessor {
                     file: file_path.clone(),
                     line: LineNumber::new(0),
                     column: ColumnNumber::new(0),
-                    code: ErrorCode::new("AES007"),
+                    code: ErrorCode::new("AES007").unwrap(),
                     message: LintMessage::new("Contract import must be from barrel."),
                     source: make_adapter("architecture"),
                     severity: Severity::MEDIUM,

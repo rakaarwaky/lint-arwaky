@@ -268,7 +268,7 @@ impl SurfaceHierarchyChecker {
         for (i, raw_line) in lines.iter().enumerate() {
             let stripped = raw_line.trim();
             if let Some(cap) = PY_CLASS_RE.captures(stripped) {
-                let class_name = cap.get(1).map(|m| m.as_ref()).unwrap_or("");
+                let class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
                 let class_start = i;
                 let indent = raw_line.len() - raw_line.trim_start().len();
 
@@ -288,7 +288,7 @@ impl SurfaceHierarchyChecker {
                     }
 
                     if let Some(mcap) = PY_METHOD_RE.captures(method_line.trim()) {
-                        let method_name = mcap.get(1).map(|m| m.as_ref()).unwrap_or("");
+                        let method_name = mcap.get(1).map(|m| m.as_str()).unwrap_or("");
                         // Public methods don't start with underscore
                         if !method_name.starts_with('_') {
                             // Estimate end line
@@ -447,16 +447,16 @@ fn is_init(f: &FilePath) -> bool {
 }
 
 /// Extract the file stem (filename without extension).
-fn stem(f: &FilePath) -> &str {
+fn stem(f: &FilePath) -> String {
     let path_str = f.to_string();
-    let basename = path_str.rsplit('/').next().unwrap_or(path_str);
-    basename.rsplit('.').next().unwrap_or(basename)
+    let basename = path_str.rsplit('/').next().unwrap_or(&path_str);
+    basename.rsplit('.').next().unwrap_or(basename).to_string()
 }
 
 /// Get the directory portion of the file path.
-fn directory(f: &FilePath) -> &str {
+fn directory(f: &FilePath) -> String {
     let path_str = f.to_string();
-    path_str.rsplit('/').skip(1).next().unwrap_or(path_str)
+    path_str.rsplit('/').skip(1).next().unwrap_or(&path_str).to_string()
 }
 
 /// Check if a module stem is imported in its directory barrel.

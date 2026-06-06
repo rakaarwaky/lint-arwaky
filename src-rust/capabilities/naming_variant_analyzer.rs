@@ -55,7 +55,7 @@ impl NamingVariantAnalyzer {
         let mut c = s.chars();
         match c.next() {
             None => String::new(),
-            Some(f) => f.to_uppercase().collect::<String>() + c.as_ref(),
+            Some(f) => f.to_uppercase().collect::<String>() + &c.collect::<String>(),
         }
     }
 

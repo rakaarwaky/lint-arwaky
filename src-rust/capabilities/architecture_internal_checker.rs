@@ -17,21 +17,21 @@ impl ArchInternalChecker {
 
     fn make_result(file: &str, code: &str, msg: &str, sev: Severity) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()),
+            file: FilePath::new(file.to_string()).unwrap(),
             line: LineNumber::new(0),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new(code),
+            code: ErrorCode::new(code).unwrap(),
             message: LintMessage::new(msg),
-            source: AdapterName::new("architecture"),
+            source: Some(AdapterName::new("architecture").unwrap()),
             severity: sev,
-            enclosing_scope: ScopeRef {
-                name: "".to_string(),
-                kind: "".to_string(),
-                file: FilePath::new(""),
-                start_line: LineNumber::new(0),
-                end_line: LineNumber::new(0),
-            },
-            related_locations: LocationList::new(Vec::new()),
+            enclosing_scope: Some(ScopeRef {
+                name: String::new(),
+                kind: String::new(),
+                file: None,
+                start_line: None,
+                end_line: None,
+            }),
+            related_locations: LocationList::new(),
         }
     }
 

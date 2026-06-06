@@ -276,15 +276,15 @@ impl McpSchemaChecker {
 
             // Collect decorator lines
             if let Some(cap) = DECORATOR_RE.captures(trimmed) {
-                let decorator_text = cap.get(1).map(|m| m.as_ref()).unwrap_or("");
+                let decorator_text = cap.get(1).map(|m| m.as_str()).unwrap_or("");
                 pending_decorators.push((i + 1, decorator_text.to_string()));
                 continue;
             }
 
             // When we hit a function def, check accumulated decorators
             if let Some(cap) = FUNC_DEF_RE.captures(trimmed) {
-                let func_name = cap.get(1).map(|m| m.as_ref()).unwrap_or("");
-                let params_str = cap.get(2).map(|m| m.as_ref()).unwrap_or("");
+                let func_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                let params_str = cap.get(2).map(|m| m.as_str()).unwrap_or("");
 
                 let mut is_tool = false;
                 for (_, dec_text) in &pending_decorators {
@@ -496,7 +496,7 @@ impl McpSchemaChecker {
 
         // Check type values
         if let Some(type_val) = extract_schema_type_value(line) {
-            if !JSON_SCHEMA_TYPE_VALUES.contains(type_val.as_ref()) {
+            if !JSON_SCHEMA_TYPE_VALUES.contains(type_val.as_str()) {
                 violations.push(format!("Schema type='{}' is not a valid JSON Schema type", type_val));
             }
         }
@@ -539,11 +539,11 @@ impl McpSchemaChecker {
             let re = Regex::new(r#""(\w+)"\s*:\s*\{[^}]*\}"#).unwrap();
             for cap in re.captures_iter(snippet) {
                 if let Some(prop_name) = cap.get(1) {
-                    let prop_dict = cap.get(0).map(|m| m.as_ref()).unwrap_or("");
+                    let prop_dict = cap.get(0).map(|m| m.as_str()).unwrap_or("");
                     if !prop_dict.contains("description") {
                         violations.push(format!(
                             "Property '{}' missing description in schema",
-                            prop_name.as_ref()
+                            prop_name.as_str()
                         ));
                     }
                 }
@@ -559,7 +559,7 @@ impl McpSchemaChecker {
         violations: &mut Vec<String>,
     ) {
         if let Some(type_val) = extract_schema_type_value(schema_line) {
-            if !JSON_SCHEMA_TYPE_VALUES.contains(type_val.as_ref()) {
+            if !JSON_SCHEMA_TYPE_VALUES.contains(type_val.as_str()) {
                 violations.push(format!(
                     "Schema type='{}' is not a valid JSON Schema type",
                     type_val
@@ -612,11 +612,11 @@ fn extract_schema_type_value(line: &str) -> Option<String> {
     // Match patterns like: "type": "string" or 'type': 'object'
     let re = Regex::new(r#""type"\s*:\s*"([^"]+)""#).unwrap();
     if let Some(cap) = re.captures(line) {
-        return cap.get(1).map(|m| m.as_ref().to_string());
+        return cap.get(1).map(|m| m.as_str().to_string());
     }
     let re = Regex::new(r#"'type'\s*:\s*'([^']+)'"#).unwrap();
     if let Some(cap) = re.captures(line) {
-        return cap.get(1).map(|m| m.as_ref().to_string());
+        return cap.get(1).map(|m| m.as_str().to_string());
     }
     None
 }

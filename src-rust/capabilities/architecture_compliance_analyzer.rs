@@ -21,7 +21,7 @@ impl ArchComplianceAnalyzer {
     /// Orchestrate all compliance checks for the given file list under root_dir.
     /// Mirrors Python `execute()` — skips barrel files, detects layers, runs sub-checkers.
     pub fn execute(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
-        if !self.config.enabled {
+        if !self.config.enabled.value {
             return Vec::new();
         }
 
@@ -144,7 +144,7 @@ impl ArchComplianceAnalyzer {
             let suffix = &basename[underscore_pos + 1..];
             if !suffix.is_empty() {
                 let specialized = format!("{}({})", base_layer, suffix);
-                let key = LayerNameVO::new(specialized.as_ref());
+                let key = LayerNameVO::new(specialized.as_str());
                 if self.config.layers.contains_key(&key) {
                     return specialized;
                 }
@@ -167,7 +167,7 @@ impl ArchComplianceAnalyzer {
                 if let Some(underscore_pos) = next_part.rfind('_') {
                     let suffix = &next_part[underscore_pos + 1..];
                     let specialized = format!("{}({})", base_name, suffix);
-                    let key = LayerNameVO::new(specialized.as_ref());
+                    let key = LayerNameVO::new(specialized.as_str());
                     if self.config.layers.contains_key(&key) {
                         return specialized;
                     }
@@ -242,21 +242,21 @@ impl ArchComplianceAnalyzer {
 
     fn make_result(file: &str, line: i64, code: &str, msg: &str, sev: Severity) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()),
+            file: FilePath::new(file.to_string()).unwrap(),
             line: LineNumber::new(line),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new(code),
+            code: ErrorCode::new(code).unwrap(),
             message: LintMessage::new(msg),
-            source: AdapterName::new("architecture"),
+            source: Some(AdapterName::new("architecture").unwrap()),
             severity: sev,
-            enclosing_scope: ScopeRef {
-                name: "".to_string(),
-                kind: "".to_string(),
-                file: FilePath::new(""),
-                start_line: LineNumber::new(0),
-                end_line: LineNumber::new(0),
-            },
-            related_locations: LocationList::new(Vec::new()),
+            enclosing_scope: Some(ScopeRef {
+                name: String::new(),
+                kind: String::new(),
+                file: None,
+                start_line: None,
+                end_line: None,
+            }),
+            related_locations: LocationList::new(),
         }
     }
 }

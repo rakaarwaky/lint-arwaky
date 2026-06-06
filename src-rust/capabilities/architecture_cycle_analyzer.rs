@@ -89,21 +89,21 @@ impl DependencyCycleAnalyzer {
 
     fn make_result(file: &str, msg: &str) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()),
+            file: FilePath::new(file.to_string()).unwrap(),
             line: LineNumber::new(1),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new("AES020"),
+            code: ErrorCode::new("AES020").unwrap(),
             message: LintMessage::new(msg),
-            source: AdapterName::new("architecture"),
+            source: Some(AdapterName::new("architecture").unwrap()),
             severity: Severity::CRITICAL,
-            enclosing_scope: ScopeRef {
-                name: "".to_string(),
-                kind: "".to_string(),
-                file: FilePath::new(""),
-                start_line: LineNumber::new(0),
-                end_line: LineNumber::new(0),
-            },
-            related_locations: LocationList::new(Vec::new()),
+            enclosing_scope: Some(ScopeRef {
+                name: String::new(),
+                kind: String::new(),
+                file: None,
+                start_line: None,
+                end_line: None,
+            }),
+            related_locations: LocationList::new(),
         }
     }
 
@@ -137,7 +137,7 @@ impl DependencyCycleAnalyzer {
         layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
 
         for (name, def) in layers {
-            let layer_path = def.path.value.as_ref();
+            let layer_path = def.path.value.as_str();
             if rel.starts_with(layer_path) {
                 return Some(name.value.clone());
             }
@@ -149,7 +149,7 @@ impl DependencyCycleAnalyzer {
         let parts: Vec<&str> = module.split('.').collect();
         for part in &parts {
             for (name, _def) in &self.config.layers {
-                if *part == name.value.as_ref() {
+                if *part == name.value.as_str() {
                     return Some(name.value.clone());
                 }
             }
@@ -158,7 +158,7 @@ impl DependencyCycleAnalyzer {
     }
 
     pub fn scan(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
-        if !self.config.enabled {
+        if !self.config.enabled.value {
             return vec![];
         }
 

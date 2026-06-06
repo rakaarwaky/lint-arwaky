@@ -5,7 +5,8 @@ use crate::contract::architecture_rule_protocol::IAnalyzer;
 use crate::taxonomy::{
     AdapterName, ColumnNumber, ErrorCode, FileDefinitionMap, FilePath, FilePathSet,
     GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap, LayerDefinition,
-    LayerNameVO, LineNumber, LintMessage, LintResult, OrphanIndicatorResult, Severity,
+    LayerNameVO, LineNumber, LintMessage, LintResult, LocationList, OrphanIndicatorResult,
+    ScopeRef, Severity,
 };
 use std::collections::HashMap;
 
@@ -162,7 +163,7 @@ impl ArchOrphanAnalyzer {
         root_dir: &str,
     ) -> Vec<LintResult> {
         let mut results: Vec<LintResult> = Vec::new();
-        let root_fp = FilePath::new(root_dir);
+        let root_fp = FilePath::new(root_dir).unwrap();
 
         // Build comprehensive context
         let context: GraphAnalysisContext = self.resolver.build_graph_context(files, root_dir);
@@ -174,7 +175,7 @@ impl ArchOrphanAnalyzer {
 
         // Evaluate each file
         for f in files {
-            let file_fp = FilePath::new(f.clone());
+            let file_fp = FilePath::new(f.clone()).unwrap();
             let layer_vo = match analyzer.detect_layer(&file_fp, &root_fp) {
                 Some(l) => l,
                 None => continue,
@@ -213,21 +214,21 @@ impl ArchOrphanAnalyzer {
 
     fn _make_result(&self, file: &str, msg: &str, sev: Severity) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()),
+            file: FilePath::new(file.to_string()).unwrap(),
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),
-            code: ErrorCode::new("AES017"),
+            code: ErrorCode::new("AES017").unwrap(),
             message: LintMessage::new(msg),
-            source: Some(AdapterName::new("architecture")),
+            source: Some(AdapterName::new("architecture").unwrap()),
             severity: sev,
-            enclosing_scope: Some(crate::taxonomy::ScopeRef {
+            enclosing_scope: Some(ScopeRef {
                 name: String::new(),
                 kind: String::new(),
-                file: FilePath::new(String::new()),
-                start_line: LineNumber::new(0),
-                end_line: LineNumber::new(0),
+                file: None,
+                start_line: None,
+                end_line: None,
             }),
-            related_locations: crate::taxonomy::LocationList::new(Vec::new()),
+            related_locations: LocationList::new(),
         }
     }
 

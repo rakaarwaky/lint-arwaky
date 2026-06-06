@@ -76,15 +76,13 @@ pub fn run_lint_with_deps(
     parser: Arc<dyn ISourceParserPort>,
 ) -> Vec<LintResult> {
     let config = load_config(project_root, src_dir);
-    let analyzer = ArchComplianceAnalyzer::new(config, fs, parser);
+    let analyzer = ArchComplianceAnalyzer::new(config);
     let files = collect_rs_files(src_dir);
     if files.is_empty() {
         return Vec::new();
     }
     let root_dir = src_dir.to_string_lossy().to_string();
-    let mut violations = analyzer.run_analysis(&files, &root_dir);
-    analyzer.run_project_wide_checks(&files, &root_dir, &mut violations);
-    violations
+    analyzer.execute(&files, &root_dir)
 }
 
 pub fn format_report(results: &[LintResult], project_root: &str) -> String {
@@ -118,7 +116,7 @@ pub fn format_report(results: &[LintResult], project_root: &str) -> String {
         for r in &critical {
             lines.push(format!(
                 "  {}:{} [{}] {}",
-                r.file.value, r.line.value, r.code.code, r.message.value
+                r.file.value, r.line.value, format!("{}", r.code), r.message.value
             ));
         }
         lines.push("".to_string());
@@ -130,7 +128,7 @@ pub fn format_report(results: &[LintResult], project_root: &str) -> String {
         for r in &high {
             lines.push(format!(
                 "  {}:{} [{}] {}",
-                r.file.value, r.line.value, r.code.code, r.message.value
+                r.file.value, r.line.value, format!("{}", r.code), r.message.value
             ));
         }
         lines.push("".to_string());
@@ -142,7 +140,7 @@ pub fn format_report(results: &[LintResult], project_root: &str) -> String {
         for r in &medium {
             lines.push(format!(
                 "  {}:{} [{}] {}",
-                r.file.value, r.line.value, r.code.code, r.message.value
+                r.file.value, r.line.value, format!("{}", r.code), r.message.value
             ));
         }
         lines.push("".to_string());
@@ -154,7 +152,7 @@ pub fn format_report(results: &[LintResult], project_root: &str) -> String {
         for r in &low {
             lines.push(format!(
                 "  {}:{} [{}] {}",
-                r.file.value, r.line.value, r.code.code, r.message.value
+                r.file.value, r.line.value, format!("{}", r.code), r.message.value
             ));
         }
         lines.push("".to_string());
@@ -207,6 +205,6 @@ impl crate::contract::architecture_lint_protocol::IArchLintProtocol for ArchLint
     }
 
     fn format_report(&self, results: &LintResultList, project_root: &str) -> String {
-        format_report(&results.results, project_root)
+        format_report(&results.values, project_root)
     }
 }

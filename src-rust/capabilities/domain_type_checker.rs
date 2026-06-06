@@ -48,7 +48,7 @@ impl DomainTypeRuleChecker {
 
             // Detect class definition
             if let Some(caps) = class_pattern.captures(line) {
-                class_indent = caps.get(1).map(|m| m.as_ref().len()).unwrap_or(0);
+                class_indent = caps.get(1).map(|m| m.as_str().len()).unwrap_or(0);
                 inside_class = true;
                 continue;
             }
@@ -69,7 +69,7 @@ impl DomainTypeRuleChecker {
 
             // Check for attribute type annotations
             if let Some(caps) = attr_pattern.captures(line) {
-                let type_annotation = caps.get(3).map(|m| m.as_ref().trim()).unwrap_or("");
+                let type_annotation = caps.get(3).map(|m| m.as_str().trim()).unwrap_or("");
                 let column = caps.get(2).map(|m| m.start()).unwrap_or(0);
 
                 // Extract base type (before [ or |)

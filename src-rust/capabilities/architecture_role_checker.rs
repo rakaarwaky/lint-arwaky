@@ -56,12 +56,13 @@ impl ArchRoleChecker {
             return;
         }
 
-        let definition = match analyzer.layer_map().get(&layer_vo) {
+        let definition = match analyzer.layer_map().values.get(&layer_vo) {
             Some(d) => d.clone(),
             None => return,
         };
 
-        let basename = Path::new(f.to_string().as_ref())
+        let file_str = f.to_string();
+        let basename = Path::new(file_str.as_str())
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
@@ -81,38 +82,31 @@ impl ArchRoleChecker {
         results: &mut crate::taxonomy::LintResultList,
     ) {
         if definition.stateless_execution.value {
-            self._check_stateless_execution(f, definition, analyzer, results)
-                .await;
+            self._check_stateless_execution(f, definition, analyzer, results);
         }
 
         if definition.high_level_policy_only.value {
-            self._check_high_level_policy_only(f, definition, analyzer, results)
-                .await;
+            self._check_high_level_policy_only(f, definition, analyzer, results);
         }
 
         if definition.coordinates_multiple_orchestrators.value {
-            self._check_coordinates_multiple_orchestrators(f, definition, analyzer, results)
-                .await;
+            self._check_coordinates_multiple_orchestrators(f, definition, analyzer, results);
         }
 
         if definition.no_domain_logic.value {
-            self._check_no_domain_logic(f, definition, analyzer, results, "AES021")
-                .await;
+            self._check_no_domain_logic(f, definition, analyzer, results, "AES021");
         }
 
         if definition.must_implement_service_container_aggregate.value {
-            self._check_must_implement_contract_lazy(f, definition, analyzer, results)
-                .await;
+            self._check_must_implement_contract_lazy(f, definition, analyzer, results);
         }
 
         if definition.lazy_eager_initialization_only.value {
-            self._check_lazy_eager_init_only(f, definition, analyzer, results)
-                .await;
+            self._check_lazy_eager_init_only(f, definition, analyzer, results);
         }
 
         if definition.forbid_any_type.value {
-            self._check_forbid_any_type(f, definition, analyzer, results)
-                .await;
+            self._check_forbid_any_type(f, definition, analyzer, results);
         }
     }
 
@@ -159,14 +153,13 @@ impl ArchRoleChecker {
                 continue;
             }
 
-            let definition = match analyzer.layer_map().get(&layer_vo) {
+            let definition = match analyzer.layer_map().values.get(&layer_vo) {
                 Some(d) => d.clone(),
                 None => continue,
             };
 
             if definition.no_domain_logic.value {
-                self._check_no_domain_logic(f, &definition, analyzer, results, "AES022")
-                    .await;
+                self._check_no_domain_logic(f, &definition, analyzer, results, "AES022");
             }
 
             self._check_forbidden_mandatory_imports(f, &definition, analyzer, results);
@@ -180,7 +173,8 @@ impl ArchRoleChecker {
         analyzer: &dyn IAnalyzer,
         results: &mut crate::taxonomy::LintResultList,
     ) {
-        let basename = Path::new(f.to_string().as_ref())
+        let file_str = f.to_string();
+        let basename = Path::new(file_str.as_str())
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
@@ -248,7 +242,7 @@ impl ArchRoleChecker {
             file: f.clone(),
             line: imp.line.clone(),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new("AES023"),
+            code: ErrorCode::new("AES023").unwrap(),
             message: LintMessage::new(format!(
                 "SURFACE DEPENDENCY VIOLATION: Surface layer is only allowed to import from 'contract' and 'taxonomy'. Found import from '{}'.",
                 target_layer.value
@@ -268,13 +262,16 @@ impl ArchRoleChecker {
         results: &mut crate::taxonomy::LintResultList,
     ) {
         let metadata_assigns = analyzer.parser().get_assignment_targets(f);
-        let assignments = Self::_extract_json_array(&metadata_assigns.value, "assignments");
+        let assignments = metadata_assigns.value.get("assignments")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
         let metadata_methods = analyzer.parser().get_class_methods(f);
 
         for assign in &assignments {
             let line_val = assign.get("line").and_then(|v| v.as_i64()).unwrap_or(0);
             let line_vo = LineNumber::new(line_val);
-            let method_name = self._find_method_name_for_line(&metadata_methods.value, line_val);
+            let method_name = self._find_method_name_for_line(&serde_json::Value::Object(serde_json::Map::from_iter(metadata_methods.value.clone().into_iter())), line_val);
             if let Some(ref name) = method_name {
                 if name.value != "__init__" {
                     let msg = definition
@@ -291,7 +288,7 @@ impl ArchRoleChecker {
                         file: f.clone(),
                         line: line_vo,
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::new("AES021"),
+                        code: ErrorCode::new("AES021").unwrap(),
                         message: LintMessage::new(message),
                         source: make_adapter("architecture"),
                         severity: Severity::HIGH,
@@ -330,7 +327,7 @@ impl ArchRoleChecker {
                     file: f.clone(),
                     line: imp.line.clone(),
                     column: ColumnNumber::new(0),
-                    code: ErrorCode::new("AES021"),
+                    code: ErrorCode::new("AES021").unwrap(),
                     message: LintMessage::new(message),
                     source: make_adapter("architecture"),
                     severity: Severity::HIGH,
@@ -367,7 +364,7 @@ impl ArchRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::new("AES021"),
+                        code: ErrorCode::new("AES021").unwrap(),
                         message: LintMessage::new(message),
                         source: make_adapter("architecture"),
                         severity: Severity::MEDIUM,
@@ -383,10 +380,10 @@ impl ArchRoleChecker {
         if let Some(arr) = class_methods.as_array() {
             for m in arr {
                 if let Some(obj) = m.as_object() {
-                    if obj.get("name").and_then(|v| v.as_ref()) == Some("__init__") {
+                    if obj.get("name").and_then(|v| v.as_str()) == Some("__init__") {
                         return Some(m.clone());
                     }
-                } else if let Some(s) = m.as_ref() {
+                } else if let Some(s) = m.as_str() {
                     if s == "__init__" {
                         let mut obj = serde_json::Map::new();
                         obj.insert(
@@ -445,7 +442,7 @@ impl ArchRoleChecker {
                 file: f.clone(),
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
-                code: ErrorCode::new(code),
+                code: ErrorCode::new(code).unwrap(),
                 message: LintMessage::new(violation_msg),
                 source: make_adapter("architecture"),
                 severity: Severity::HIGH,
@@ -486,7 +483,7 @@ impl ArchRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::new("AES021"),
+                        code: ErrorCode::new("AES021").unwrap(),
                         message: LintMessage::new(message),
                         source: make_adapter("architecture"),
                         severity: Severity::HIGH,
@@ -524,7 +521,7 @@ impl ArchRoleChecker {
                     file: f.clone(),
                     line: LineNumber::new(0),
                     column: ColumnNumber::new(0),
-                    code: ErrorCode::new(code),
+                    code: ErrorCode::new(code).unwrap(),
                     message: LintMessage::new(message),
                     source: make_adapter("architecture"),
                     severity: Severity::HIGH,
@@ -549,7 +546,7 @@ impl ArchRoleChecker {
                     for m in arr {
                         if let Some(m_obj) = m.as_object() {
                             let m_line = m_obj.get("line").and_then(|v| v.as_i64()).unwrap_or(0);
-                            let m_name = m_obj.get("name").and_then(|v| v.as_ref());
+                            let m_name = m_obj.get("name").and_then(|v| v.as_str());
                             if let Some(name) = m_name {
                                 if m_line <= line && m_line > best_line {
                                     best_line = m_line;
@@ -572,7 +569,7 @@ impl ArchRoleChecker {
         _analyzer: &dyn IAnalyzer,
         results: &mut crate::taxonomy::LintResultList,
     ) {
-        let content = match std::fs::read_to_string(f.to_string().as_ref()) {
+        let content = match std::fs::read_to_string(f.to_string().as_str()) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -588,7 +585,7 @@ impl ArchRoleChecker {
                     file: f.clone(),
                     line: LineNumber::new(line_num),
                     column: ColumnNumber::new(col),
-                    code: ErrorCode::new("AES024"),
+                    code: ErrorCode::new("AES024").unwrap(),
                     message: LintMessage::new(format!(
                         "`Any` type annotation found in agent orchestrator layer: '{}'.",
                         line.trim()

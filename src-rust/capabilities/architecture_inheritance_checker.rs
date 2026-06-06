@@ -30,21 +30,21 @@ impl MandatoryInheritanceChecker {
 
     fn make_result(file: &str, msg: &str) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()),
+            file: FilePath::new(file.to_string()).unwrap(),
             line: LineNumber::new(0),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new("AES027"),
+            code: ErrorCode::new("AES027").unwrap(),
             message: LintMessage::new(msg),
-            source: AdapterName::new("architecture"),
+            source: Some(AdapterName::new("architecture").unwrap()),
             severity: Severity::CRITICAL,
-            enclosing_scope: ScopeRef {
-                name: "".to_string(),
-                kind: "".to_string(),
-                file: FilePath::new(""),
-                start_line: LineNumber::new(0),
-                end_line: LineNumber::new(0),
-            },
-            related_locations: LocationList::new(Vec::new()),
+            enclosing_scope: Some(ScopeRef {
+                name: String::new(),
+                kind: String::new(),
+                file: None,
+                start_line: None,
+                end_line: None,
+            }),
+            related_locations: LocationList::new(),
         }
     }
 
@@ -56,7 +56,7 @@ impl MandatoryInheritanceChecker {
         layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
 
         for (name, def) in layers {
-            if rel.starts_with(def.path.value.as_ref()) {
+            if rel.starts_with(&def.path.value) {
                 return Some(name.value.clone());
             }
         }
@@ -80,8 +80,8 @@ impl MandatoryInheritanceChecker {
         for line in content.lines() {
             let trimmed = line.trim();
             if let Some(caps) = from_re.captures(trimmed) {
-                let module = caps.get(1).map(|m| m.as_ref()).unwrap_or("");
-                let names_str = caps.get(2).map(|m| m.as_ref()).unwrap_or("");
+                let module = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+                let names_str = caps.get(2).map(|m| m.as_str()).unwrap_or("");
                 // Parse imported names (handle parentheses on single line)
                 let names = names_str
                     .trim_matches(|c| c == '(' || c == ')')
@@ -105,7 +105,7 @@ impl MandatoryInheritanceChecker {
 
         for line in content.lines() {
             if let Some(caps) = class_re.captures(line) {
-                let base_str = caps.get(1).map(|m| m.as_ref()).unwrap_or("");
+                let base_str = caps.get(1).map(|m| m.as_str()).unwrap_or("");
                 for base in base_str.split(',') {
                     let base_name = base.trim().to_string();
                     if !base_name.is_empty() {
@@ -138,7 +138,7 @@ impl MandatoryInheritanceChecker {
             };
 
             // Only check agent/capabilities/infrastructure layers
-            let layer_suffix = match LAYER_CONTRACT_SUFFIX.iter().find(|(l, _)| *l == layer.as_ref()) {
+            let layer_suffix = match LAYER_CONTRACT_SUFFIX.iter().find(|(l, _)| *l == layer.as_str()) {
                 Some((_, s)) => *s,
                 None => continue,
             };
@@ -154,7 +154,7 @@ impl MandatoryInheritanceChecker {
 
             // Check: does any class base match a contract import?
             let inherited = contract_imports.iter().any(|ci|
-                class_bases.iter().any(|base| base.contains(ci.as_ref()))
+                class_bases.iter().any(|base| base.contains(ci.as_str()))
             );
 
             if !inherited {

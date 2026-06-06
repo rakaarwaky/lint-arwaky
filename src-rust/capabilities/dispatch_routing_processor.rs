@@ -144,7 +144,7 @@ impl DispatchRoutingChecker {
     }
 
     fn _read_file_content(&self, analyzer: &dyn IAnalyzer, file_path: &FilePath) -> Option<String> {
-        std::fs::read_to_string(file_path.to_string().as_ref()).ok()
+        std::fs::read_to_string(file_path.to_string().as_str()).ok()
     }
 
     fn _collect_capability_refs(
@@ -153,10 +153,10 @@ impl DispatchRoutingChecker {
         file_path: &FilePath,
         refs: &mut CapabilityReferenceList,
     ) {
-        for mat in CAPABILITY_REF_PATTERN.find_iter(text) {
-            let class_name = mat.get(1).unwrap().as_ref().to_string();
-            let method_name = mat.get(2).unwrap().as_ref().to_string();
-            let line_no = text[..mat.start()].chars().filter(|&c| c == '\n').count() as i64 + 1;
+        for caps in CAPABILITY_REF_PATTERN.captures_iter(text) {
+            let class_name = caps.get(1).unwrap().as_str().to_string();
+            let method_name = caps.get(2).unwrap().as_str().to_string();
+            let line_no = text[..caps.get(0).unwrap().start()].chars().filter(|&c| c == '\n').count() as i64 + 1;
             refs.references.push(CapabilityReference {
                 file: file_path.clone(),
                 line: LineNumber::new(line_no),
@@ -223,7 +223,7 @@ impl DispatchRoutingChecker {
             let (single_class, usage_list) = class_usage.usage.iter().next().unwrap();
             if !usage_list.items.is_empty() {
                 let other_classes: Vec<String> = class_defs.definitions.keys()
-                    .filter(|c| c != single_class)
+                    .filter(|c| *c != single_class)
                     .cloned()
                     .collect();
                 if !other_classes.is_empty() && usage_list.items.len() >= 3 {
@@ -297,7 +297,7 @@ impl DispatchRoutingChecker {
             return;
         }
 
-        let content = match std::fs::read_to_string(path.as_ref()) {
+        let content = match std::fs::read_to_string(path.as_str()) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -306,9 +306,9 @@ impl DispatchRoutingChecker {
             Regex::new(r"(?:await\s+)?self\.\w+\.(\w+)\s*\(").unwrap()
         });
 
-        for mat in CALL_PATTERN.find_iter(&content) {
-            let method_name = mat.get(1).unwrap().as_ref();
-            let paren_start = mat.end() - 1;
+        for caps in CALL_PATTERN.captures_iter(&content) {
+            let method_name = caps.get(1).unwrap().as_str();
+            let paren_start = caps.get(0).unwrap().end() - 1;
             let args_vo = self._extract_args(&content, paren_start);
             if let Some(ref args_val) = args_vo.value {
                 let args_text = args_val.trim();
@@ -363,11 +363,11 @@ impl DispatchRoutingChecker {
             file: file.clone(),
             line: line.clone(),
             column: ColumnNumber::new(1),
-            code: ErrorCode::new(code),
+            code: ErrorCode::new(code).unwrap(),
             message: LintMessage::new(message),
             severity: Severity::MEDIUM,
-            source: AdapterName::new("dispatch_routing").unwrap_or_default(),
-            enclosing_scope: crate::taxonomy::ScopeRef::new(""),
+            source: Some(AdapterName::new("dispatch_routing").unwrap_or_default()),
+            enclosing_scope: Some(crate::taxonomy::ScopeRef::new("")),
             related_locations: crate::taxonomy::LocationList::new(),
         });
     }

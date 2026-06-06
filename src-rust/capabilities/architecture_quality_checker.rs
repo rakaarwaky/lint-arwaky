@@ -289,7 +289,7 @@ impl CodeQualityRuleChecker {
             _ => return,
         };
 
-        let content = match fs.read_text(file_path.clone()).await {
+        let content = match fs.read_text(&file_path).await {
             Ok(c) => c.value,
             Err(_) => return,
         };
@@ -306,9 +306,9 @@ impl CodeQualityRuleChecker {
                     column: ColumnNumber::new(col),
                     code: ErrorCode::raw("AES014"),
                     message: LintMessage::new(final_msg),
-                    source: AdapterName::raw("architecture"),
+                    source: Some(AdapterName::raw("architecture")),
                     severity: Severity::CRITICAL,
-                    enclosing_scope: crate::taxonomy::ScopeRef::default(),
+                    enclosing_scope: None,
                     related_locations: crate::taxonomy::LocationList::default(),
                 });
             }
