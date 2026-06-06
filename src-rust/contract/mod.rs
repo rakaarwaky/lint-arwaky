@@ -268,7 +268,7 @@ pub fn list_command_names() -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{command_catalog, find_command, is_command_registered, command_count, list_command_names};
 
     #[test]
     fn test_command_catalog_not_empty() {

@@ -20,12 +20,13 @@ impl JobRegistryAggregate for JobRegistry {
     }
 
     async fn complete_job(&self, job_id: JobId, _result: serde_json::Value) {
-        let response_data = ResponseData::new(
-            crate::taxonomy::StdOutput::new(""),
-            crate::taxonomy::StdError::new(""),
-            crate::taxonomy::ExitCode::new(0),
-            MetadataVO::new(HashMap::new()),
-        );
+        let response_data = ResponseData {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata: HashMap::new(),
+        };
         self.complete_job_old(job_id, response_data).await
     }
 

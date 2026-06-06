@@ -7,7 +7,7 @@ pub struct OutputClientOrchestrator;
 
 impl OutputClientAggregate for OutputClientOrchestrator {
     fn get_output_dir(&self) -> Option<&FilePath> {
-        Some(&FilePath::new("outputs").expect("valid output dir"))
+        None
     }
 
     fn write_output(
@@ -16,11 +16,9 @@ impl OutputClientAggregate for OutputClientOrchestrator {
         command: &str,
         output_format: Option<&FileFormat>,
     ) -> Option<FilePath> {
-        self.write_output(
-            &LogOutput::new(output),
-            &Identity::new(command),
-            output_format,
-        )
+        let log_output = LogOutput::new(output);
+        let identity = Identity::new(command);
+        self.write_output_inner(&log_output, &identity, output_format)
     }
 }
 
@@ -29,7 +27,7 @@ impl OutputClientOrchestrator {
         Self
     }
 
-    pub fn write_output(
+    pub fn write_output_inner(
         &self,
         output: &LogOutput,
         command: &Identity,

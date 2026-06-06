@@ -70,7 +70,7 @@ impl Hash for ErrorCode {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::ErrorCode;
 
     #[test]
     fn test_error_code_new() {

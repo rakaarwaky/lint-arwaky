@@ -1,5 +1,5 @@
+use crate::taxonomy::{ActualValue, ConfigKey, ErrorMessage, ExpectedValue, FilePath};
 use serde::{Serialize, Deserialize};
-use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ConfigError {

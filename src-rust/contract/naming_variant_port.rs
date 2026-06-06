@@ -1,6 +1,6 @@
 use crate::taxonomy::SymbolName;
 use crate::taxonomy::SymbolNameList;
-use super::*;
+
 
 pub trait INamingVariantPort: Send + Sync {
     fn get_variant_dict(&self, name: &SymbolName) -> serde_json::Value;

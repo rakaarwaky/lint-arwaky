@@ -30,15 +30,14 @@ self.run_lint_at(Path::new(src_dir), None)
 
 fn run_lint_at(&self, src_dir: &Path, project_root: Option<&Path>) -> Vec<LintResult> {
 let config = load_config(project_root, src_dir);
-let analyzer = ArchComplianceAnalyzer::new(config, self.fs.clone(), self.parser.clone());
+let analyzer = ArchComplianceAnalyzer::new(config);
 let files = collect_rs_files(src_dir);
 if files.is_empty() {
-return Vec::new();
+    return Vec::new();
 }
 let root_dir = src_dir.to_string_lossy().to_string();
 
-let mut violations = analyzer.run_analysis(&files, &root_dir);
-analyzer.run_project_wide_checks(&files, &root_dir, &mut violations);
+let violations = analyzer.execute(&files, &root_dir);
 violations
 }
 
@@ -69,7 +68,7 @@ LintResultList::new(results)
 }
 
 pub fn generate_report(&self, results: &LintResultList, project_root: &str) -> String {
-self.inner.format_report(&results.results, project_root)
+self.inner.format_report(&results.values, project_root)
 }
 }
 

@@ -1,5 +1,5 @@
+use crate::taxonomy::{Cause, ColumnNumber, ErrorCode, FilePath, LineNumber, ErrorMessage};
 use serde::{Serialize, Deserialize};
-use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct SourceParserError {

@@ -39,7 +39,10 @@ use crate::contract::{
     ServiceContainerAggregate, SetupManagementAggregate, ToolHandler, WatchCommandsAggregate,
     WatchExecutionOrchestratorAggregate,
 };
-use crate::infrastructure::*;
+use crate::infrastructure::{
+    MemoryJobRegistryAdapter, OSFileSystemAdapter, PathNormalizationProvider, RuffAdapter,
+    SourceParserOrchestrator, StdioClient,
+};
 use crate::taxonomy::source_path_vo::DirectoryPath;
 use crate::capabilities::ArchLintHandler;
 use std::collections::HashMap;
@@ -60,7 +63,7 @@ impl DependencyInjectionContainer {
     pub fn new(_root: DirectoryPath) -> Self {
         let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
         let executor: Arc<dyn ICommandExecutorPort> = Arc::new(StdioClient::new(std::time::Duration::from_secs(60)));
-        let path_norm: Arc<dyn IPathNormalizationPort> = Arc::new(PathNormalizationProvider::new());
+        let path_norm: Arc<dyn IPathNormalizationPort> = Arc::new(PathNormalizationProvider);
         let source_parser: Arc<dyn ISourceParserPort> = Arc::new(SourceParserOrchestrator::new());
         let arch_linter: Arc<dyn IArchLintProtocol> = Arc::new(ArchLintHandler::new(fs.clone(), source_parser.clone()));
 

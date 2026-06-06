@@ -4,7 +4,7 @@ use crate::taxonomy::ErrorMessage;
 use crate::taxonomy::JobId;
 use crate::taxonomy::SuccessStatus;
 use async_trait::async_trait;
-use super::*;
+use crate::contract::IJobRegistryPort;
 
 #[async_trait]
 pub trait JobRegistryAggregate: Send + Sync {

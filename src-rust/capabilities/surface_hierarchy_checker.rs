@@ -484,7 +484,7 @@ fn is_wired(f: &FilePath) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{FilePath, directory, is_in_surfaces, is_init, stem};
 
     #[test]
     fn test_is_in_surfaces() {

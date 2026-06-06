@@ -86,7 +86,7 @@ impl std::fmt::Display for AppConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::AppConfig;
     use crate::taxonomy::{AdapterStatus, ProjectConfig, Thresholds};
 
     #[test]

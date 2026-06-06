@@ -1,5 +1,5 @@
+use crate::taxonomy::{ActionName, Cause, ErrorCode, ErrorMessage, FilePath};
 use serde::{Serialize, Deserialize};
-use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FileSystemError {

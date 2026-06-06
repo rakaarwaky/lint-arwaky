@@ -5,11 +5,10 @@ use crate::taxonomy::{FilePath, FixResult};
 pub struct LintFixOrchestrator;
 
 impl LintFixOrchestratorAggregate for LintFixOrchestrator {
-    fn execute(&self, path: &FilePath) -> FixResult {
+    fn execute(&self, _path: &FilePath) -> FixResult {
         FixResult {
-            file: path.clone(),
-            applied: true,
-            message: "Fix applied successfully".to_string(),
+            output: "Fix applied successfully".to_string(),
+            error: None,
         }
     }
 }
@@ -40,9 +39,8 @@ impl LintFixOrchestrator {
         // Step 2: Apply fixes via adapters
         // Returns FixResult with output log
         FixResult {
-            file: path.clone(),
-            applied: true,
-            message: "Fix applied successfully".to_string(),
+            output: "Fix applied successfully".to_string(),
+            error: None,
         }
     }
 }

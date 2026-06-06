@@ -1,7 +1,7 @@
 // pipeline_action_orchestrator — Logic for dispatching pipeline actions (Agent Layer).
 use crate::contract::PipelineActionDispatcherAggregate;
 use crate::taxonomy::{
-    BooleanVO, ContentString, ExitCode, FilePath, MetadataVO, ResponseData, StdError, StdOutput,
+    BooleanVO, ContentString, FilePath, MetadataVO, ResponseData,
 };
 use std::collections::HashMap;
 
@@ -55,12 +55,13 @@ impl PipelineActionDispatcher {
                     "error".to_string(),
                     serde_json::json!(format!("No pipeline handler for action: {}", action_str)),
                 );
-                ResponseData::new(
-                    StdOutput::new(""),
-                    StdError::new(format!("No pipeline handler for action: {}", action_str)),
-                    ExitCode::new(1),
-                    MetadataVO::new(metadata),
-                )
+                ResponseData {
+                    value: None,
+                    stdout: String::new(),
+                    stderr: format!("No pipeline handler for action: {}", action_str),
+                    returncode: 1,
+                    metadata,
+                }
             }
         }
     }
@@ -68,12 +69,13 @@ impl PipelineActionDispatcher {
     async fn handle_check(&self, _action: &str) -> ResponseData {
         let mut metadata = HashMap::new();
         metadata.insert("message".to_string(), serde_json::json!("check completed"));
-        ResponseData::new(
-            StdOutput::new("check completed"),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: "check completed".to_string(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     async fn handle_security(&self, _action: &str) -> ResponseData {
@@ -82,23 +84,25 @@ impl PipelineActionDispatcher {
             "bandit".to_string(),
             serde_json::json!(Vec::<String>::new()),
         );
-        ResponseData::new(
-            StdOutput::new(""),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     async fn handle_complexity(&self, _action: &str) -> ResponseData {
         let mut metadata = HashMap::new();
         metadata.insert("radon".to_string(), serde_json::json!(Vec::<String>::new()));
-        ResponseData::new(
-            StdOutput::new(""),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     async fn handle_duplicates(&self, _action: &str) -> ResponseData {
@@ -107,12 +111,13 @@ impl PipelineActionDispatcher {
             "duplicates".to_string(),
             serde_json::json!(Vec::<String>::new()),
         );
-        ResponseData::new(
-            StdOutput::new(""),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     async fn handle_trends(&self, _action: &str) -> ResponseData {
@@ -121,46 +126,50 @@ impl PipelineActionDispatcher {
             "trends".to_string(),
             serde_json::json!(Vec::<String>::new()),
         );
-        ResponseData::new(
-            StdOutput::new(""),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     async fn handle_fix(&self, _action: &str) -> ResponseData {
         let mut metadata = HashMap::new();
         metadata.insert("output".to_string(), serde_json::json!("fix applied"));
-        ResponseData::new(
-            StdOutput::new("fix applied"),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: "fix applied".to_string(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     async fn handle_report(&self, _action: &str) -> ResponseData {
         let mut metadata = HashMap::new();
         metadata.insert("format".to_string(), serde_json::json!("text"));
         metadata.insert("data".to_string(), serde_json::json!({}));
-        ResponseData::new(
-            StdOutput::new(""),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     async fn handle_version(&self, _action: &str) -> ResponseData {
         let mut metadata = HashMap::new();
         metadata.insert("version".to_string(), serde_json::json!("1.0.0"));
-        ResponseData::new(
-            StdOutput::new("1.0.0"),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: "1.0.0".to_string(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     async fn handle_adapters(&self, _action: &str) -> ResponseData {
@@ -169,34 +178,37 @@ impl PipelineActionDispatcher {
             "adapters".to_string(),
             serde_json::json!(Vec::<String>::new()),
         );
-        ResponseData::new(
-            StdOutput::new(""),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     async fn handle_install_hook(&self, _action: &str) -> ResponseData {
         let mut metadata = HashMap::new();
         metadata.insert("installed".to_string(), serde_json::json!(true));
-        ResponseData::new(
-            StdOutput::new("hook installed"),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: "hook installed".to_string(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     async fn handle_uninstall_hook(&self, _action: &str) -> ResponseData {
         let mut metadata = HashMap::new();
         metadata.insert("uninstalled".to_string(), serde_json::json!(true));
-        ResponseData::new(
-            StdOutput::new("hook uninstalled"),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata),
-        )
+        ResponseData {
+            value: None,
+            stdout: "hook uninstalled".to_string(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata,
+        }
     }
 
     pub fn validate_action_old(&self, action: &ContentString) -> BooleanVO {

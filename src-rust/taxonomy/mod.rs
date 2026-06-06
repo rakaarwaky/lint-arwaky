@@ -566,7 +566,11 @@ pub fn worst_severity(results: &[LintResult]) -> Severity {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{
+        column_number, compute_score, count, count_by_severity, error_message, file_path,
+        has_critical, is_passing, line_number, position, score, worst_severity, BooleanVO,
+        ColumnNumber, LintResult, LineNumber, Score, Severity,
+    };
 
     #[test]
     fn test_factory_line_number() {

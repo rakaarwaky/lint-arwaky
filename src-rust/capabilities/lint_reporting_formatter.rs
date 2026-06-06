@@ -424,7 +424,7 @@ fn xml_escape(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{GovernanceReport, ReportFormatterProcessor, xml_escape};
 
     #[test]
     fn test_get_severity() {

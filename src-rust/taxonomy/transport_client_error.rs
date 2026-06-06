@@ -1,5 +1,5 @@
+use crate::taxonomy::{ErrorMessage, TransportEndpoint, TransportProtocol};
 use serde::{Serialize, Deserialize};
-use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TransportError {

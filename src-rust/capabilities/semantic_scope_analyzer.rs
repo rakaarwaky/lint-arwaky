@@ -591,7 +591,7 @@ fn collect_py_files_recursive(dir: &str, files: &mut Vec<String>) -> Result<(), 
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{SemanticScopeAnalyzer, SymbolName, extract_lineno};
 
     #[test]
     fn test_split_words() {

@@ -1,5 +1,5 @@
 use crate::taxonomy::{DirectoryPath, FilePathList, FileSystemError};
-use super::*;
+
 
 pub trait IScannerProviderPort: Send + Sync {
     fn scan_directory(&self, path: &DirectoryPath) -> Result<FilePathList, FileSystemError>;

@@ -6,7 +6,10 @@ use regex::Regex;
 use std::path::Path;
 
 use crate::contract::architecture_rule_protocol::IAnalyzer;
-use crate::taxonomy::layer_names_vo::*;
+use crate::taxonomy::layer_names_vo::{
+    core_layer_names, layer_agent, layer_contract, layer_infrastructure, layer_surfaces,
+    layer_taxonomy,
+};
 use crate::taxonomy::{
     AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LayerNameVO, LineNumber,
     LintMessage, LintResult, Severity, SymbolName,

@@ -1,5 +1,5 @@
 use crate::taxonomy::{FilePath, LineNumber, LintResultList, ScopeBounds, SymbolName};
-use super::*;
+
 
 pub trait IArchComplianceProtocol: Send + Sync {
     fn execute(&self, path: &FilePath) -> LintResultList;

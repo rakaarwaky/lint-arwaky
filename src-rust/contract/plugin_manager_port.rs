@@ -1,7 +1,7 @@
 use crate::taxonomy::AdapterMetadata;
 use crate::taxonomy::AdapterName;
 use crate::taxonomy::PluginError;
-use super::*;
+
 
 pub trait IPluginManagerPort: Send + Sync {
     fn discover_plugins(&self, group: &str) -> Result<Vec<(String, String)>, PluginError>;

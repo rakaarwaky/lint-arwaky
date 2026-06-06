@@ -27,7 +27,7 @@ impl ArchComplianceCoordinator {
 #[async_trait]
 impl ArchCoordinatorAggregate for ArchComplianceCoordinator {
     async fn check_compliance(&self, path: &FilePath) -> ComplianceStatus {
-        let result = self.scan(path).await;
+        let result = ArchCoordinatorAggregate::scan(self, path).await;
         ComplianceStatus::new(result.values.is_empty())
     }
 

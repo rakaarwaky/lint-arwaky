@@ -160,7 +160,7 @@ impl Hash for DirectoryPath {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{DirectoryPath, FilePath};
 
     #[test]
     fn test_file_path_new() {

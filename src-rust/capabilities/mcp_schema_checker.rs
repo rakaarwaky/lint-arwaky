@@ -623,7 +623,7 @@ fn extract_schema_type_value(line: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{McpSchemaChecker, extract_schema_type_value};
 
     #[test]
     fn test_is_tool_decorator() {

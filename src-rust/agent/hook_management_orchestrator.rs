@@ -13,7 +13,7 @@ pub struct HookManagementOrchestrator;
 
 impl HookManagementOrchestratorAggregate for HookManagementOrchestrator {
     fn get_hook_manager(&self) -> &dyn IHookManagerPort {
-        HOOK_MANAGER.get_or_init(|| GitHookAdapter::new(FilePath::new(".")))
+        HOOK_MANAGER.get_or_init(|| GitHookAdapter::new(FilePath::new(".").unwrap()))
     }
 
     fn get_hook_manager_identity(&self) -> Identity {
@@ -33,11 +33,11 @@ impl HookManagementOrchestrator {
     }
 
     pub fn get_hook_manager_identity_old(&self) -> Identity {
-        "git_hook_manager".to_string()
+        Identity::new("git_hook_manager")
     }
 
     pub fn install(&self, executable: Option<AdapterName>) -> SuccessStatus {
-        let _exec = executable.unwrap_or_else(|| AdapterName::new("lint-arwaky"));
+        let _exec = executable.unwrap_or_else(|| AdapterName::new("lint-arwaky").unwrap());
         // Delegates to the git hook manager from infrastructure
         SuccessStatus::new(true)
     }

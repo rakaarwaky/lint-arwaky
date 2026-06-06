@@ -85,7 +85,10 @@ SetupManagementAggregate,
 ToolHandler,
 WatchCommandsAggregate,
 WatchExecutionOrchestratorAggregate};
-use crate::surfaces::cli_setup_controller::*;
+use crate::surfaces::cli_setup_controller::{
+    generate_env, generate_mcp_config, mcp_config_claude, mcp_config_hermes, mcp_config_vscode,
+    register_setup_management,
+};
 
 use std::sync::Arc;
 

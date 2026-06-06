@@ -1,5 +1,5 @@
+use crate::taxonomy::{AdapterName, Cause, ErrorCode, ErrorMessage};
 use serde::{Serialize, Deserialize};
-use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PluginError {

@@ -1,7 +1,7 @@
 use crate::taxonomy::FilePath;
 use crate::taxonomy::GitHookError;
 use crate::taxonomy::SuccessStatus;
-use super::*;
+
 
 pub trait IHookManagerPort: Send + Sync {
     fn install_pre_commit(&self, executable_path: &FilePath) -> Result<SuccessStatus, GitHookError>;

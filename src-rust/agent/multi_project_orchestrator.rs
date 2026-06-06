@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use crate::contract::project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use crate::taxonomy::{
-    AggregatedResults, ComplianceStatus, Count, FilePath, FilePathList, PatternList, ProjectResult, Score,
+    AggregatedResults, ComplianceStatus, Count, ErrorMessage, FilePath, FilePathList, PatternList, ProjectResult, Score,
 };
 use std::collections::HashMap;
 
@@ -32,7 +32,7 @@ impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
             None => "",
         };
         let projects = orchestrator.load_config_old(path_str);
-        FilePathList::new(projects.into_iter().map(FilePath::new).collect())
+        FilePathList::new(projects.into_iter().map(|p| FilePath::new(p).unwrap()).collect())
     }
 
     fn find_projects(root: &FilePath, config_name: &str) -> FilePathList {
@@ -62,7 +62,7 @@ impl MultiProjectOrchestrator {
             is_passing: ComplianceStatus::new(true),
             issues: Vec::new(),
             adapters: PatternList::new(Vec::<String>::new()),
-            error: None,
+            error: ErrorMessage::default(),
         }
     }
 
@@ -135,7 +135,7 @@ impl MultiProjectOrchestrator {
                         visit_dirs(&path, config_name, projects);
                     } else if path.file_name().is_some_and(|n| n == config_name) {
                         if let Some(parent) = path.parent() {
-                            let fp = FilePath::new(parent.to_string_lossy().to_string());
+                            let fp = FilePath::new(parent.to_string_lossy().to_string()).unwrap();
                             projects.push(fp);
                         }
                     }

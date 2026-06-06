@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use crate::taxonomy::{FilePath, LintResultList, ComplianceStatus};
-use super::*;
+
 
 #[async_trait]
 pub trait IArchCompliancePort: Send + Sync {

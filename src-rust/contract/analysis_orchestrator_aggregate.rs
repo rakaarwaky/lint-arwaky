@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use crate::taxonomy::{FilePath, GovernanceReport};
-use super::*;
+use crate::contract::ServiceContainerAggregate;
 
 #[async_trait]
 pub trait AnalysisOrchestratorAggregate: Send + Sync {

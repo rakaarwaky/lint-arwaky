@@ -56,7 +56,7 @@ impl Hash for AdapterName {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::AdapterName;
 
     #[test]
     fn test_adapter_name_new() {

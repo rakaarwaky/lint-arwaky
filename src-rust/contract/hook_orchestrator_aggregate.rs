@@ -1,5 +1,5 @@
 use crate::taxonomy::Identity;
-use super::*;
+use crate::contract::IHookManagerPort;
 
 pub trait HookManagementOrchestratorAggregate: Send + Sync {
     fn get_hook_manager(&self) -> &dyn IHookManagerPort;

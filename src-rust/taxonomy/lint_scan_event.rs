@@ -1,5 +1,8 @@
+use crate::taxonomy::{
+    AdapterName, ComplianceStatus, Count, Duration, ErrorCode, ErrorMessage, FilePath, Score,
+    Severity,
+};
 use serde::{Serialize, Deserialize};
-use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ScanStarted {

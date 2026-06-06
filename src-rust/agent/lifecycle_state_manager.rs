@@ -81,12 +81,13 @@ impl AgentLifecycleAggregate for AgentState {
             "os": std::env::consts::OS,
             "cwd": std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_default(),
         }));
-        ResponseData::new(
-            StdOutput::new(""),
-            StdError::new(""),
-            ExitCode::new(0),
-            MetadataVO::new(metadata_map),
-        )
+        ResponseData {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata: metadata_map,
+        }
     }
 
     fn mark_stopped(&self) {

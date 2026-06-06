@@ -1,5 +1,5 @@
+use crate::taxonomy::{CORE_PRIMITIVE_TYPES, SymbolName};
 use serde::{Serialize, Deserialize};
-use super::*;
 
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

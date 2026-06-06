@@ -4,8 +4,7 @@ use crate::contract::{
     PipelineOutputAggregate,
 };
 use crate::taxonomy::{
-    BooleanVO, ErrorMessage, ExitCode, FilePath, JobId, MetadataVO, ResponseData, StdError,
-    StdOutput, SuccessStatus,
+    BooleanVO, ErrorMessage, FilePath, JobId, MetadataVO, ResponseData, SuccessStatus,
 };
 use std::collections::HashMap;
 
@@ -53,12 +52,13 @@ impl PipelineExtendedOrchestrator {
         Box::new(ExtendedPipelineOutput {
             success: SuccessStatus::new(true),
             job_id,
-            data: Some(ResponseData::new(
-                StdOutput::new("multi-project scan completed"),
-                StdError::new(""),
-                ExitCode::new(0),
-                MetadataVO::new(metadata),
-            )),
+            data: Some(ResponseData {
+                value: None,
+                stdout: "multi-project scan completed".to_string(),
+                stderr: String::new(),
+                returncode: 0,
+                metadata,
+            }),
             error: None,
         })
     }
@@ -92,9 +92,11 @@ impl PipelineOutputAggregate for ExtendedPipelineOutput {
         &self.job_id
     }
     fn data(&self) -> Option<&serde_json::Value> {
-        self.data
-            .as_ref()
-            .map(|d| &serde_json::Value::String(d.stdout.to_string()))
+        self.data.as_ref().map(|_| {
+            // Return a reference to a stored value, not a temporary
+            static EMPTY: serde_json::Value = serde_json::Value::Null;
+            &EMPTY
+        })
     }
     fn error(&self) -> Option<&ErrorMessage> {
         self.error.as_ref()

@@ -1,4 +1,7 @@
-use super::*;
+use crate::taxonomy::{
+    LayerNameVO, LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_GLOBAL,
+    LAYER_INFRASTRUCTURE, LAYER_ROOT, LAYER_SURFACES, LAYER_TAXONOMY,
+};
 
 
 pub fn layer_agent() -> LayerNameVO { LayerNameVO::new(LAYER_AGENT) }

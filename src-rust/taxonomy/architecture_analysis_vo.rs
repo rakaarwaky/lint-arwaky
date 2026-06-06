@@ -1,4 +1,4 @@
-use super::*;
+use crate::taxonomy::{FilePath, Severity};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
