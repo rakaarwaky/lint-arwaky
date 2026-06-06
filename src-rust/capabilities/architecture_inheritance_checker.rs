@@ -2,13 +2,15 @@
 // Checks that files in agent/capabilities/infrastructure that import contracts
 // also have a class inheriting from them.
 
-use std::fs;
-use regex::Regex;
+use crate::contract::architecture_inheritance_protocol::IArchInheritanceProtocol;
+use crate::contract::architecture_rule_protocol::IAnalyzer;
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerNameVO,
-    LintMessage, LintResult, LineNumber, Severity, ScopeRef, LocationList,
-    ArchitectureConfig,
+    AdapterName, ArchitectureConfig, ColumnNumber, ErrorCode, FilePath, FilePathList, LayerNameVO,
+    LineNumber, LintMessage, LintResult, LintResultList, LocationList, ScopeRef, Severity,
 };
+use async_trait::async_trait;
+use regex::Regex;
+use std::fs;
 
 // Map layer name → required contract suffix pattern
 const LAYER_CONTRACT_SUFFIX: &[(&str, &str)] = &[
@@ -38,8 +40,8 @@ impl MandatoryInheritanceChecker {
             source: Some(AdapterName::new("architecture").unwrap()),
             severity: Severity::CRITICAL,
             enclosing_scope: Some(ScopeRef {
-                name: String::new(),
-                kind: String::new(),
+                name: crate::taxonomy::DescriptionVO::new(String::new()),
+                kind: crate::taxonomy::DescriptionVO::new(String::new()),
                 file: None,
                 start_line: None,
                 end_line: None,
@@ -49,7 +51,10 @@ impl MandatoryInheritanceChecker {
     }
 
     fn detect_file_layer(&self, file: &str, root_dir: &str) -> Option<String> {
-        let rel = file.strip_prefix(root_dir).unwrap_or(file).trim_start_matches('/');
+        let rel = file
+            .strip_prefix(root_dir)
+            .unwrap_or(file)
+            .trim_start_matches('/');
 
         let mut layers: Vec<(&LayerNameVO, &crate::taxonomy::LayerDefinition)> =
             self.config.layers.iter().collect();
@@ -138,12 +143,17 @@ impl MandatoryInheritanceChecker {
             };
 
             // Only check agent/capabilities/infrastructure layers
-            let _layer_suffix = match LAYER_CONTRACT_SUFFIX.iter().find(|(l, _)| *l == layer.as_str()) {
+            let _layer_suffix = match LAYER_CONTRACT_SUFFIX
+                .iter()
+                .find(|(l, _)| *l == layer.as_str())
+            {
                 Some((_, s)) => *s,
                 None => continue,
             };
 
-            let Ok(content) = fs::read_to_string(file) else { continue; };
+            let Ok(content) = fs::read_to_string(file) else {
+                continue;
+            };
 
             let contract_imports = Self::extract_contract_imports(&content);
             if contract_imports.is_empty() {
@@ -153,9 +163,9 @@ impl MandatoryInheritanceChecker {
             let class_bases = Self::extract_class_bases(&content);
 
             // Check: does any class base match a contract import?
-            let inherited = contract_imports.iter().any(|ci|
-                class_bases.iter().any(|base| base.contains(ci.as_str()))
-            );
+            let inherited = contract_imports
+                .iter()
+                .any(|ci| class_bases.iter().any(|base| base.contains(ci.as_str())));
 
             if !inherited {
                 let imported_list = contract_imports.join(", ");
@@ -168,5 +178,19 @@ impl MandatoryInheritanceChecker {
                 violations.push(Self::make_result(file, &msg));
             }
         }
+    }
+}
+
+#[async_trait]
+impl IArchInheritanceProtocol for MandatoryInheritanceChecker {
+    async fn check_mandatory_inheritance(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        let file_strs: Vec<String> = files.iter().map(|f| f.value().to_string()).collect();
+        self.check_mandatory_inheritance(&file_strs, root_dir.value(), &mut results.values);
     }
 }

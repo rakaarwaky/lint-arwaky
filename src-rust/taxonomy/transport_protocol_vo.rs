@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TransportEndpoint {
@@ -7,7 +7,7 @@ pub struct TransportEndpoint {
 }
 
 impl TransportEndpoint {
-    pub fn new(protocol: TransportProtocol, address: String,) -> Self {
+    pub fn new(protocol: TransportProtocol, address: String) -> Self {
         Self { protocol, address }
     }
 
@@ -20,13 +20,25 @@ impl TransportEndpoint {
     }
     pub fn from_url(url: &str) -> Self {
         if url.starts_with("http://") || url.starts_with("https://") {
-            Self { protocol: TransportProtocol::HTTP, address: url.to_string() }
+            Self {
+                protocol: TransportProtocol::HTTP,
+                address: url.to_string(),
+            }
         } else if url == "stdio" {
-            Self { protocol: TransportProtocol::STDAggregate, address: "stdio".to_string() }
+            Self {
+                protocol: TransportProtocol::STDAggregate,
+                address: "stdio".to_string(),
+            }
         } else if url.starts_with("/") || url.starts_with(".") {
-            Self { protocol: TransportProtocol::UnixSocket, address: url.to_string() }
+            Self {
+                protocol: TransportProtocol::UnixSocket,
+                address: url.to_string(),
+            }
         } else {
-            Self { protocol: TransportProtocol::STDAggregate, address: "stdio".to_string() }
+            Self {
+                protocol: TransportProtocol::STDAggregate,
+                address: "stdio".to_string(),
+            }
         }
     }
 }
@@ -59,19 +71,27 @@ impl std::fmt::Display for TransportProtocol {
 
 impl TransportProtocol {
     pub fn needs_desktop_commander(&self) -> bool {
-        matches!(self, TransportProtocol::HTTP | TransportProtocol::UnixSocket)
+        matches!(
+            self,
+            TransportProtocol::HTTP | TransportProtocol::UnixSocket
+        )
     }
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct TransportUrlVO {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl TransportUrlVO {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
     }
 }
 
@@ -83,7 +103,9 @@ impl std::fmt::Display for TransportUrlVO {
 
 impl From<&str> for TransportUrlVO {
     fn from(s: &str) -> Self {
-        Self { value: s.to_string() }
+        Self {
+            value: s.to_string(),
+        }
     }
 }
 
@@ -104,19 +126,30 @@ impl<'de> serde::Deserialize<'de> for TransportUrlVO {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-                Ok(TransportUrlVO { value: v.to_string() })
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(TransportUrlVO {
+                    value: v.to_string(),
+                })
             }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(TransportUrlVO { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;

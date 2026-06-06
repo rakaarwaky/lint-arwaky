@@ -1,23 +1,9 @@
 // report_formatter_processor — Capability for formatting reports (SARIF, JUnit).
 // Implements ILintReportingProtocol: format, get_formatted_payload, to_sarif, to_junit.
-
-
-
-
-use crate::taxonomy::FileFormat;
-
-use crate::taxonomy::GovernanceReport;
-
-
-use crate::taxonomy::LogOutput;
-
-
-use crate::taxonomy::ResponseData;
-
-
+use crate::taxonomy::{ArchitectureGovernanceEntity, FileFormat, LogOutput, ResponseData};
 use serde_json::json;
 
-/// Business logic for transforming GovernanceReports into standard formats.
+/// Business logic for transforming ArchitectureGovernanceEntitys into standard formats.
 pub struct ReportFormatterProcessor;
 
 impl ReportFormatterProcessor {
@@ -26,7 +12,7 @@ impl ReportFormatterProcessor {
     }
 
     /// Standard entry point for formatting as JSON/Dict.
-    pub fn format(&self, report: &GovernanceReport) -> LogOutput {
+    pub fn format(&self, report: &ArchitectureGovernanceEntity) -> LogOutput {
         let data = self.report_to_dict(report);
         let json_str = serde_json::to_string_pretty(&data).unwrap_or_else(|_| "{}".to_string());
         LogOutput::new(json_str)
@@ -35,7 +21,7 @@ impl ReportFormatterProcessor {
     /// Unified entry point for getting a formatted payload for the Surface layer.
     pub fn get_formatted_payload(
         &self,
-        report: &GovernanceReport,
+        report: &ArchitectureGovernanceEntity,
         output_format: &FileFormat,
     ) -> ResponseData {
         let data = self.report_to_dict(report);
@@ -89,22 +75,34 @@ impl ReportFormatterProcessor {
         }
     }
 
-    /// Transform a GovernanceReport into a SARIF formatted string.
-    pub fn to_sarif(&self, report: &GovernanceReport) -> LogOutput {
+    /// Transform a ArchitectureGovernanceEntity into a SARIF formatted string.
+    pub fn to_sarif(&self, report: &ArchitectureGovernanceEntity) -> LogOutput {
         let report_data = self.report_to_dict(report);
         let mut results_list: Vec<serde_json::Value> = Vec::new();
 
         if let Some(obj) = report_data.as_object() {
             for (adapter_name, adapter_results) in obj {
-                if adapter_name == "score" || adapter_name == "is_passing" || adapter_name == "summary" {
+                if adapter_name == "score"
+                    || adapter_name == "is_passing"
+                    || adapter_name == "summary"
+                {
                     continue;
                 }
                 if let Some(results_arr) = adapter_results.as_array() {
                     for error in results_arr {
-                        let code = error.get("code").and_then(|v| v.as_str()).unwrap_or("unknown");
-                        let severity = error.get("severity").and_then(|v| v.as_str()).unwrap_or("medium");
+                        let code = error
+                            .get("code")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("unknown");
+                        let severity = error
+                            .get("severity")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("medium");
                         let message = error.get("message").and_then(|v| v.as_str()).unwrap_or("");
-                        let file = error.get("file").and_then(|v| v.as_str()).unwrap_or("unknown");
+                        let file = error
+                            .get("file")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("unknown");
                         let line = error.get("line").and_then(|v| v.as_i64()).unwrap_or(1);
                         let column = error.get("column").and_then(|v| v.as_i64()).unwrap_or(1);
 
@@ -139,8 +137,8 @@ impl ReportFormatterProcessor {
         LogOutput::new(serde_json::to_string_pretty(&sarif).unwrap_or_else(|_| "{}".to_string()))
     }
 
-    /// Transform a GovernanceReport into a JUnit XML formatted string.
-    pub fn to_junit(&self, report: &GovernanceReport) -> LogOutput {
+    /// Transform a ArchitectureGovernanceEntity into a JUnit XML formatted string.
+    pub fn to_junit(&self, report: &ArchitectureGovernanceEntity) -> LogOutput {
         let report_data = self.report_to_dict(report);
         let mut xml_lines: Vec<String> = Vec::new();
         xml_lines.push(r#"<?xml version="1.0" encoding="UTF-8"?>"#.to_string());
@@ -151,7 +149,10 @@ impl ReportFormatterProcessor {
 
         if let Some(obj) = report_data.as_object() {
             for (adapter_name, adapter_results) in obj {
-                if adapter_name == "score" || adapter_name == "is_passing" || adapter_name == "summary" {
+                if adapter_name == "score"
+                    || adapter_name == "is_passing"
+                    || adapter_name == "summary"
+                {
                     continue;
                 }
                 if let Some(results_arr) = adapter_results.as_array() {
@@ -203,11 +204,19 @@ impl ReportFormatterProcessor {
         LogOutput::new(xml_lines.join("\n"))
     }
 
-    /// Converts GovernanceReport entity to a plain dictionary for formatting.
-    pub fn report_to_dict(&self, report: &GovernanceReport) -> serde_json::Value {
+    /// Converts ArchitectureGovernanceEntity entity to a plain dictionary for formatting.
+    pub fn report_to_dict(&self, report: &ArchitectureGovernanceEntity) -> serde_json::Value {
         let violation_count = report.violation_count().value;
-        let adapter_count = report.results.values.iter()
-            .map(|r| r.source.as_ref().map(|s| s.value.clone()).unwrap_or_default())
+        let adapter_count = report
+            .results
+            .values
+            .iter()
+            .map(|r| {
+                r.source
+                    .as_ref()
+                    .map(|s| s.value.clone())
+                    .unwrap_or_default()
+            })
             .collect::<std::collections::HashSet<_>>()
             .len();
 
@@ -225,7 +234,9 @@ impl ReportFormatterProcessor {
             std::collections::HashMap::new();
 
         for result in &report.results.values {
-            let source_name = result.source.as_ref()
+            let source_name = result
+                .source
+                .as_ref()
                 .map(|s| s.value.clone())
                 .unwrap_or_else(|| "unknown".to_string());
 
@@ -240,7 +251,11 @@ impl ReportFormatterProcessor {
             });
 
             // Remove null enclosing_scope for cleaner output
-            if entry.get("enclosing_scope").and_then(|v| v.as_null()).is_some() {
+            if entry
+                .get("enclosing_scope")
+                .and_then(|v| v.as_null())
+                .is_some()
+            {
                 entry.as_object_mut().map(|m| m.remove("enclosing_scope"));
             }
 
@@ -268,7 +283,7 @@ fn xml_escape(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{GovernanceReport, ReportFormatterProcessor, xml_escape};
+    use super::{xml_escape, ArchitectureGovernanceEntity, ReportFormatterProcessor};
 
     #[test]
     fn test_get_severity() {
@@ -288,7 +303,7 @@ mod tests {
     #[test]
     fn test_report_to_dict() {
         let formatter = ReportFormatterProcessor::new();
-        let report = GovernanceReport::new();
+        let report = ArchitectureGovernanceEntity::new();
         let dict = formatter.report_to_dict(&report);
         assert_eq!(dict["score"], 100.0);
         assert_eq!(dict["is_passing"], true);

@@ -1,5 +1,7 @@
 // javascript_scope_port — Port for JS/TS scope detection.
-use crate::taxonomy::{LineContentList, LineContentVO, LineNumber, ScopeBounds, SemanticError, SymbolName};
+use crate::taxonomy::{
+    LineContentList, LineContentVO, LineNumber, ScopeBounds, SemanticError, SymbolName,
+};
 use async_trait::async_trait;
 
 #[async_trait]

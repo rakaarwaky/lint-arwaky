@@ -3,7 +3,6 @@ use crate::taxonomy::FilePath;
 use crate::taxonomy::LintResultList;
 use async_trait::async_trait;
 
-
 #[async_trait]
 pub trait ArchCoordinatorAggregate: Send + Sync {
     async fn check_compliance(&self, path: &FilePath) -> ComplianceStatus;

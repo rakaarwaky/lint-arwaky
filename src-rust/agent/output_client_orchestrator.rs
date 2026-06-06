@@ -1,6 +1,6 @@
 // output_client_orchestrator — Implementation of output management logic.
-use crate::contract::output_client_aggregate::OutputClientAggregate;
-use crate::taxonomy::{FilePath, LogOutput, Identity, FileFormat};
+use crate::contract::OutputClientAggregate;
+use crate::taxonomy::{ContentString, FileFormat, FilePath, Identity, LogOutput};
 use std::io::{self, Write};
 
 pub struct OutputClientOrchestrator;
@@ -12,13 +12,12 @@ impl OutputClientAggregate for OutputClientOrchestrator {
 
     fn write_output(
         &self,
-        output: &str,
-        command: &str,
+        output: &ContentString,
+        command: &Identity,
         output_format: Option<&FileFormat>,
     ) -> Option<FilePath> {
-        let log_output = LogOutput::new(output);
-        let identity = Identity::new(command);
-        self.write_output_inner(&log_output, &identity, output_format)
+        let log_output = LogOutput::new(output.value());
+        self.write_output_inner(&log_output, command, output_format)
     }
 }
 

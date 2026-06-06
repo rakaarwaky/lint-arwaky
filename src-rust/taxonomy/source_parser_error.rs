@@ -1,7 +1,7 @@
-use crate::taxonomy::{Cause, ColumnNumber, ErrorCode, FilePath, LineNumber, ErrorMessage};
-use serde::{Serialize, Deserialize};
+use crate::taxonomy::{Cause, ColumnNumber, ErrorCode, ErrorMessage, FilePath, LineNumber};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]
 pub struct SourceParserError {
     pub path: FilePath,
     pub message: ErrorMessage,
@@ -13,18 +13,27 @@ pub struct SourceParserError {
 
 impl SourceParserError {
     pub fn new(path: FilePath, message: ErrorMessage) -> Self {
-        Self { path, message, error_code: None, cause: None }
+        Self {
+            path,
+            message,
+            error_code: None,
+            cause: None,
+        }
     }
 }
 
 impl std::fmt::Display for SourceParserError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let code = self.error_code.as_ref().map(|c| format!(" [{}]", c)).unwrap_or_default();
+        let code = self
+            .error_code
+            .as_ref()
+            .map(|c| format!(" [{}]", c))
+            .unwrap_or_default();
         write!(f, "Parser Error on {}{}: {}", self.path, code, self.message)
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct SyntaxErrorVO {
     #[serde(flatten)]
     pub base: SourceParserError,
@@ -36,7 +45,11 @@ pub struct SyntaxErrorVO {
 
 impl SyntaxErrorVO {
     pub fn new(path: FilePath, message: ErrorMessage) -> Self {
-        Self { base: SourceParserError::new(path, message), line: None, column: None }
+        Self {
+            base: SourceParserError::new(path, message),
+            line: None,
+            column: None,
+        }
     }
 }
 
@@ -47,6 +60,10 @@ impl std::fmt::Display for SyntaxErrorVO {
             (Some(l), None) => format!(" at {}", l),
             _ => String::new(),
         };
-        write!(f, "Syntax Error on {}{}: {}", self.base.path, pos, self.base.message)
+        write!(
+            f,
+            "Syntax Error on {}{}: {}",
+            self.base.path, pos, self.base.message
+        )
     }
 }

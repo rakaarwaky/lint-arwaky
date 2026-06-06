@@ -1,6 +1,5 @@
 /// contract — Port for executing external commands.
-use crate::taxonomy::{FilePath, PatternList, ResponseData};
-use std::time::Duration;
+use crate::taxonomy::{FilePath, PatternList, ResponseData, Timeout};
 
 #[async_trait::async_trait]
 pub trait ICommandExecutorPort: Send + Sync {
@@ -9,7 +8,7 @@ pub trait ICommandExecutorPort: Send + Sync {
         &self,
         command: PatternList,
         working_dir: FilePath,
-        timeout: Option<Duration>,
+        timeout: Option<Timeout>,
     ) -> anyhow::Result<ResponseData>;
 
     /// Check the health of the execution transport.

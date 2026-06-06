@@ -1,2 +1,1 @@
-// Contract barrel
-// Missing pub modules/re-exports list (violates AES012)
+pub mod wrong_name_port;

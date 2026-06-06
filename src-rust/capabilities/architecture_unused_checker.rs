@@ -1,14 +1,14 @@
 // unused_import_checker — Capability for detecting unused imports.
 // Implements IUnusedImportProtocol: find_unused_imports.
 
-use std::fs;
-use std::collections::{HashMap, HashSet};
-use regex::Regex;
+use crate::contract::IUnusedProtocol;
+use crate::taxonomy::{FilePath, SymbolName};
 use once_cell::sync::Lazy;
+use regex::Regex;
+use std::collections::{HashMap, HashSet};
+use std::fs;
 
-static ALL_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).unwrap()
-});
+static ALL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).unwrap());
 
 /// Business logic for identifying imports that are not utilized in the code.
 pub struct UnusedImportRuleChecker;
@@ -77,11 +77,15 @@ impl UnusedImportRuleChecker {
         exported
     }
 
-    fn extract_used_symbols(content: &str, all_imports: &HashMap<String, String>) -> HashSet<String> {
+    fn extract_used_symbols(
+        content: &str,
+        all_imports: &HashMap<String, String>,
+    ) -> HashSet<String> {
         let mut used: HashSet<String> = HashSet::new();
 
         // Strip import lines to avoid false positives
-        let code_lines: String = content.lines()
+        let code_lines: String = content
+            .lines()
             .filter(|l| {
                 let t = l.trim();
                 !t.starts_with("import ") && !t.starts_with("from ")
@@ -112,13 +116,22 @@ impl UnusedImportRuleChecker {
         let exported_symbols = Self::extract_exported_symbols(&content);
         let used_symbols = Self::extract_used_symbols(&content, &imported_aliases);
 
-        imported_aliases.iter()
+        imported_aliases
+            .iter()
             .filter(|(alias, _fullname)| {
                 // Unused if: not in used_symbols AND not in __all__ exports
-                !used_symbols.contains(*alias)
-                    && !exported_symbols.contains(*alias)
+                !used_symbols.contains(*alias) && !exported_symbols.contains(*alias)
             })
             .map(|(alias, _)| alias.clone())
+            .collect()
+    }
+}
+
+impl IUnusedProtocol for UnusedImportRuleChecker {
+    fn find_unused_imports(&self, path: &FilePath) -> Vec<SymbolName> {
+        self.find_unused_imports(path.value())
+            .into_iter()
+            .map(|s| SymbolName::new(s))
             .collect()
     }
 }

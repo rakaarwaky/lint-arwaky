@@ -1,9 +1,10 @@
-use async_trait::async_trait;
-use crate::contract::project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+use crate::contract::MultiProjectOrchestratorAggregate;
 use crate::taxonomy::{
-    AggregatedResults, ComplianceStatus, Count, ErrorMessage, FilePath, FilePathList, PatternList, ProjectResult, Score,
+    AggregatedResults, ComplianceStatus, Count, ErrorMessage, FilePath, FilePathList, Identity,
+    PatternList, ProjectResult, Score,
 };
-use std::collections::HashMap;
+use async_trait::async_trait;
+
 
 pub struct MultiProjectOrchestrator;
 
@@ -14,30 +15,80 @@ impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
     }
 
     async fn analyze_project(&self, path: &FilePath) -> ProjectResult {
-        self.analyze_project_old(path).await
+        ProjectResult {
+            path: path.clone(),
+            score: Score::new(100.0),
+            is_passing: ComplianceStatus::new(true),
+            issues: Vec::new(),
+            adapters: PatternList::new(Vec::<String>::new()),
+            error: ErrorMessage::default(),
+        }
     }
 
     async fn scan_all_projects(
         &self,
         paths: &FilePathList,
-        max_concurrency: Count,
+        _max_concurrency: Count,
     ) -> AggregatedResults {
-        self.scan_all_projects_old(&paths.values, max_concurrency.value as usize).await
+        let mut results = Vec::new();
+        for path in &paths.values {
+            let result = self.analyze_project(path).await;
+            results.push(result);
+        }
+        self.aggregate_results(results)
     }
 
     fn load_config(config_path: Option<&FilePath>) -> FilePathList {
-        let orchestrator = Self::new();
         let path_str = match config_path {
             Some(fp) => &fp.value,
             None => "",
         };
-        let projects = orchestrator.load_config_old(path_str);
-        FilePathList::new(projects.into_iter().map(|p| FilePath::new(p).unwrap()).collect())
+        let path = std::path::Path::new(path_str);
+        if !path.exists() {
+            return FilePathList::new(Vec::new());
+        }
+        if let Some(ext) = path.extension() {
+            if ext == "json" {
+                if let Ok(content) = std::fs::read_to_string(path) {
+                    if let Ok(data) =
+                        serde_json::from_str::<std::collections::HashMap<String, Vec<String>>>(
+                            &content,
+                        )
+                    {
+                        let projects = data.get("projects").cloned().unwrap_or_default();
+                        return FilePathList::new(
+                            projects
+                                .into_iter()
+                                .map(|p| FilePath::new(p).unwrap())
+                                .collect(),
+                        );
+                    }
+                }
+            }
+        }
+        FilePathList::new(Vec::new())
     }
 
-    fn find_projects(root: &FilePath, config_name: &str) -> FilePathList {
-        let orchestrator = Self::new();
-        let projects = orchestrator.find_projects_old(root, config_name);
+    fn find_projects(root: &FilePath, config_name: &Identity) -> FilePathList {
+        let root_path = std::path::Path::new(&root.value);
+        let mut projects = Vec::new();
+        fn visit_dirs(dir: &std::path::Path, config_name: &str, projects: &mut Vec<FilePath>) {
+            if let Ok(entries) = std::fs::read_dir(dir) {
+                for entry in entries.flatten() {
+                    let p = entry.path();
+                    if p.is_dir() {
+                        visit_dirs(&p, config_name, projects);
+                    } else if p.file_name().is_some_and(|n| n == config_name) {
+                        if let Some(parent) = p.parent() {
+                            let fp =
+                                FilePath::new(parent.to_string_lossy().to_string()).unwrap();
+                            projects.push(fp);
+                        }
+                    }
+                }
+            }
+        }
+        visit_dirs(root_path, config_name.value(), &mut projects);
         FilePathList::new(projects)
     }
 }
@@ -51,33 +102,6 @@ impl Default for MultiProjectOrchestrator {
 impl MultiProjectOrchestrator {
     pub fn new() -> Self {
         Self
-    }
-
-    pub async fn analyze_project_old(&self, path: &FilePath) -> ProjectResult {
-        // Analyze a single project
-        // In full implementation, gets the project-specific container and runs analysis
-        ProjectResult {
-            path: path.clone(),
-            score: Score::new(100.0),
-            is_passing: ComplianceStatus::new(true),
-            issues: Vec::new(),
-            adapters: PatternList::new(Vec::<String>::new()),
-            error: ErrorMessage::default(),
-        }
-    }
-
-    pub async fn scan_all_projects_old(
-        &self,
-        paths: &[FilePath],
-        _max_concurrency: usize,
-    ) -> AggregatedResults {
-        // Scan a specific list of projects with semaphore-limited concurrency
-        let mut results = Vec::new();
-        for path in paths {
-            let result = self.analyze_project_old(path).await;
-            results.push(result);
-        }
-        self.aggregate_results(results)
     }
 
     pub fn aggregate_results(&self, projects: Vec<ProjectResult>) -> AggregatedResults {
@@ -103,46 +127,4 @@ impl MultiProjectOrchestrator {
         }
     }
 
-    pub fn load_config_old(&self, config_path: &str) -> Vec<String> {
-        // Load list of project paths from a config file
-        let path = std::path::Path::new(config_path);
-        if !path.exists() {
-            return Vec::new();
-        }
-        // Supports .json and .yaml/.yml files
-        if let Some(ext) = path.extension() {
-            if ext == "json" {
-                if let Ok(content) = std::fs::read_to_string(path) {
-                    if let Ok(data) = serde_json::from_str::<HashMap<String, Vec<String>>>(&content)
-                    {
-                        return data.get("projects").cloned().unwrap_or_default();
-                    }
-                }
-            }
-        }
-        Vec::new()
-    }
-
-    pub fn find_projects_old(&self, root: &FilePath, config_name: &str) -> Vec<FilePath> {
-        // Find all projects with lint-arwaky configs
-        let root_path = std::path::Path::new(&root.value);
-        let mut projects = Vec::new();
-        fn visit_dirs(dir: &std::path::Path, config_name: &str, projects: &mut Vec<FilePath>) {
-            if let Ok(entries) = std::fs::read_dir(dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_dir() {
-                        visit_dirs(&path, config_name, projects);
-                    } else if path.file_name().is_some_and(|n| n == config_name) {
-                        if let Some(parent) = path.parent() {
-                            let fp = FilePath::new(parent.to_string_lossy().to_string()).unwrap();
-                            projects.push(fp);
-                        }
-                    }
-                }
-            }
-        }
-        visit_dirs(root_path, config_name, &mut projects);
-        projects
-    }
 }

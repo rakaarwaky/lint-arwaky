@@ -1,6 +1,6 @@
 /// linter_operation_error — Unified error type for linter adapter operations.
 use crate::taxonomy::{lint_adapter_error::AdapterError, lint_adapter_error::ScanError};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, thiserror::Error)]
 pub enum LinterOperationError {

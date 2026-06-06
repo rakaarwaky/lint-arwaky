@@ -41,6 +41,8 @@ pub mod python_bandit_adapter;
 pub mod python_mypy_adapter;
 pub mod python_ruff_adapter;
 pub mod rust_linter_adapter;
+pub mod rust_fmt_adapter;
+pub mod cargo_audit_adapter;
 
 // --- Adapters: Source Parsing ---
 pub mod ast_js_scanner;
@@ -58,7 +60,7 @@ pub mod python_ast_adapter;
 // --- Adapters: Metrics & Analysis ---
 pub mod python_analysis_adapter;
 pub mod python_metrics_adapter;
-pub mod python_symbol_collector;
+pub mod python_symbol_scanner;
 
 // --- Providers: Configuration ---
 pub mod config_discovery_provider;
@@ -102,6 +104,8 @@ pub use python_bandit_adapter::BanditAdapter;
 pub use python_mypy_adapter::MyPyAdapter;
 pub use python_ruff_adapter::RuffAdapter;
 pub use rust_linter_adapter::RustLinterAdapter;
+pub use rust_fmt_adapter::RustFmtAdapter;
+pub use cargo_audit_adapter::CargoAuditAdapter;
 
 // --- Source Parsing ---
 pub use ast_js_scanner::ASTJSParserAdapter;
@@ -121,7 +125,7 @@ pub use python_analysis_adapter::{
     ComplexityAdapter, DependencyAdapter, DuplicateAdapter, TrendsAdapter,
 };
 pub use python_metrics_adapter::MetricsProvider;
-pub use python_symbol_collector::SymbolCollector;
+pub use python_symbol_scanner::SymbolCollector;
 
 // --- Configuration ---
 pub use config_discovery_provider::ConfigDiscoveryProvider;

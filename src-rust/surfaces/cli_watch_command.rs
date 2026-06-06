@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 
 
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 pub struct WatchdogBridge;
 
 pub struct WatchCommandsSurface {

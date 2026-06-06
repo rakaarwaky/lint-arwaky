@@ -1,8 +1,8 @@
 // domain_type_checker — Capability for enforcing domain type usage over primitives.
 // Implements IDomainTypeProtocol: find_primitive_violations.
 
-use std::fs;
 use regex::Regex;
+use std::fs;
 
 /// A single primitive usage violation (line, column, type_name).
 pub struct PrimitiveViolation {
@@ -36,9 +36,9 @@ impl DomainTypeRuleChecker {
 
         // Pattern to detect class attribute type annotations: `attr: type` or `attr: type = ...`
         // We look for patterns like `    field: str` or `    field: int = 0`
-        let attr_pattern = Regex::new(
-            r"^(\s+)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*([A-Za-z_][A-Za-z0-9_\[\], |]*)"
-        ).unwrap();
+        let attr_pattern =
+            Regex::new(r"^(\s+)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*([A-Za-z_][A-Za-z0-9_\[\], |]*)")
+                .unwrap();
 
         let class_pattern = Regex::new(r"^(\s*)class\s+[A-Za-z_]").unwrap();
 

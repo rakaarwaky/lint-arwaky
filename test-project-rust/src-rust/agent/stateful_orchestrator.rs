@@ -1,16 +1,6 @@
-// This agent orchestrator file violates AES021 (agent-role-violation)
-// because agent orchestrators must be stateless, but this holds internal state.
-use crate::taxonomy::removal_types::RemovalType;
-use crate::contract::removal_io::IRemovalIO;
-
 pub struct StatefulOrchestrator {
-    // Non-stateless state violation!
-    pub execution_counter: u32,
-    pub last_processed_id: String,
+    pub counter: u32,
 }
-
 impl StatefulOrchestrator {
-    pub fn process(&mut self) {
-        self.execution_counter += 1;
-    }
+    pub fn run(&mut self) { self.counter += 1; }
 }

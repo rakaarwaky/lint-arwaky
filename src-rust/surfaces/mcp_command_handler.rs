@@ -13,7 +13,7 @@ use std::path::Path;
 
 
 
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use crate::taxonomy::command_catalog_constant::COMMAND_CATALOG;
 
 /// COMMAND_CATALOG — mirrors the Python dict exactly.

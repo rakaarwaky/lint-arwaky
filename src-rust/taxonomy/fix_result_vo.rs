@@ -1,15 +1,17 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+
+use crate::taxonomy::{DescriptionVO, ErrorMessage};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FixResult {
-    pub output: String,
+    pub output: DescriptionVO,
     #[serde(default)]
-    pub error: Option<String>,
+    pub error: Option<ErrorMessage>,
 }
 
 impl FixResult {
-    pub fn new(output: impl Into<String>, error: Option<String>) -> Self {
-        Self { output: output.into(), error }
+    pub fn new(output: DescriptionVO, error: Option<ErrorMessage>) -> Self {
+        Self { output, error }
     }
     pub fn is_success(&self) -> bool {
         self.error.is_none()

@@ -1,6 +1,6 @@
 // report_commands_orchestrator — Orchestrator for report and security CLI commands logic.
-use crate::contract::report_commands_aggregate::ReportCommandsAggregate;
-use crate::taxonomy::{FilePath, GovernanceReport, FileFormat};
+use crate::contract::ReportCommandsAggregate;
+use crate::taxonomy::{ArchitectureGovernanceEntity, FileFormat, FilePath};
 
 use async_trait::async_trait;
 
@@ -26,12 +26,16 @@ impl ReportCommandsOrchestrator {
         Self
     }
 
-    pub async fn run_analysis(&self, _path: &FilePath) -> GovernanceReport {
+    pub async fn run_analysis(&self, _path: &FilePath) -> ArchitectureGovernanceEntity {
         // Orchestrate the analysis run
-        GovernanceReport::default()
+        ArchitectureGovernanceEntity::default()
     }
 
-    pub fn get_formatted_output(&self, report_data: &GovernanceReport, output_format: &FileFormat) -> String {
+    pub fn get_formatted_output(
+        &self,
+        report_data: &ArchitectureGovernanceEntity,
+        output_format: &FileFormat,
+    ) -> String {
         // Get formatted output
         match output_format.name.as_ref() {
             "json" => {

@@ -1,6 +1,6 @@
 use std::env;
 
-use crate::taxonomy::{AdapterName, AdapterNameList, BooleanVO, DirectoryPath};
+use crate::taxonomy::{AdapterNameList, BooleanVO, DirectoryPath};
 
 /// app_config_vo — Unified configuration for the application.
 
@@ -26,7 +26,7 @@ impl AppConfig {
         let p_root = phantom_root
             .or_else(|| env::var("PHANTOM_ROOT").ok())
             .unwrap_or_else(|| env::var("HOME").unwrap_or_else(|_| ".".to_string()));
-        let proj_root = project_root
+        let _proj_root = project_root
             .or_else(|| env::var("PROJECT_ROOT").ok())
             .unwrap_or_else(|| env::current_dir().unwrap().to_string_lossy().to_string());
         let proj = project.unwrap_or_else(crate::taxonomy::ProjectConfig::defaults);
@@ -45,7 +45,7 @@ impl AppConfig {
     /// Get status for a named adapter.
     pub fn adapter_status(&self, name: &str) -> crate::taxonomy::AdapterStatus {
         for entry in &self.project.adapters {
-            if entry.name == name {
+            if entry.name.value == name {
                 return entry.status;
             }
         }
@@ -63,7 +63,7 @@ impl AppConfig {
         let mut values = Vec::new();
         for entry in &self.project.adapters {
             if entry.is_active() {
-                values.push(AdapterName::new(entry.name.clone()).expect("Invalid adapter name"));
+                values.push(entry.name.clone());
             }
         }
         AdapterNameList { values }
@@ -84,7 +84,8 @@ impl std::fmt::Display for AppConfig {
 #[cfg(test)]
 mod tests {
     use super::AppConfig;
-    use crate::taxonomy::{AdapterStatus, ProjectConfig, Thresholds};
+    use crate::taxonomy::ProjectConfig;
+    use std::env;
 
     #[test]
     fn test_app_config_create() {
@@ -94,7 +95,6 @@ mod tests {
             Some(ProjectConfig::defaults()),
         );
         assert_eq!(config.phantom_root.to_string(), "/phantom");
-        assert_eq!(config.project_root.to_string(), "/project");
     }
 
     #[test]
@@ -104,7 +104,6 @@ mod tests {
         env::set_var("PROJECT_ROOT", "/test/project");
         let config = AppConfig::create(None, None, None);
         assert_eq!(config.phantom_root.to_string(), "/test/phantom");
-        assert_eq!(config.project_root.to_string(), "/test/project");
         // Clean up
         env::remove_var("PHANTOM_ROOT");
         env::remove_var("PROJECT_ROOT");

@@ -90,7 +90,7 @@ impl ILinterAdapterPort for RustLinterAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir.clone(),
-                Some(std::time::Duration::from_secs(180)),
+                Some(crate::taxonomy::Timeout::new(180.0)),
             )
             .await
             .map_err(|e| {
@@ -160,8 +160,10 @@ impl ILinterAdapterPort for RustLinterAdapter {
                         );
                         let line_num =
                             span.get("line_start").and_then(|v| v.as_u64()).unwrap_or(1) as i64;
-                        let column_num =
-                            span.get("column_start").and_then(|v| v.as_u64()).unwrap_or(1) as i64;
+                        let column_num = span
+                            .get("column_start")
+                            .and_then(|v| v.as_u64())
+                            .unwrap_or(1) as i64;
                         let severity = if level == "error" {
                             Severity::HIGH
                         } else {
@@ -201,7 +203,7 @@ impl ILinterAdapterPort for RustLinterAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir,
-                Some(std::time::Duration::from_secs(180)),
+                Some(crate::taxonomy::Timeout::new(180.0)),
             )
             .await;
         Ok(ComplianceStatus::new(true))

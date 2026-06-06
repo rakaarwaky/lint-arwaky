@@ -1,12 +1,12 @@
 // arch_metric_checker — Architectural metric checks (line counts, mandatory classes).
 // Implements IMetricCheckerProtocol: check_line_counts, check_mandatory_class_definition.
 
+use crate::taxonomy::{
+    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LineNumber, LintMessage,
+    LintResult, LocationList, ScopeRef, Severity,
+};
 use std::fs;
 use std::path::Path;
-use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LintMessage, LintResult, LineNumber, Severity,
-    ScopeRef, LocationList,
-};
 
 pub struct ArchMetricChecker;
 
@@ -25,8 +25,8 @@ impl ArchMetricChecker {
             source: Some(AdapterName::new("architecture").unwrap()),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
-                name: String::new(),
-                kind: String::new(),
+                name: crate::taxonomy::DescriptionVO::new(String::new()),
+                kind: crate::taxonomy::DescriptionVO::new(String::new()),
                 file: None,
                 start_line: None,
                 end_line: None,
@@ -51,11 +51,15 @@ impl ArchMetricChecker {
 
     fn file_has_class_definition(file: &str) -> bool {
         if let Ok(content) = fs::read_to_string(file) {
-            // Check for class definitions in Python, Rust, TypeScript/JavaScript
+            // Check for class/trait/enum definitions in Python, Rust, TypeScript/JavaScript
             return content.contains("\nclass ")
                 || content.starts_with("class ")
                 || content.contains("\npub struct ")
                 || content.contains("\nstruct ")
+                || content.contains("\npub trait ")
+                || content.contains("\ntrait ")
+                || content.contains("\npub enum ")
+                || content.contains("\nenum ")
                 || content.contains("\nexport class ")
                 || content.contains("\nexport default class ");
         }
@@ -128,7 +132,15 @@ impl ArchMetricChecker {
         let basename = Self::get_basename(file);
 
         // Skip special files
-        if matches!(basename.as_ref(), "__init__.py" | "main.py" | "py.typed" | "mod.rs" | "lib.rs") {
+        if matches!(
+            basename.as_ref(),
+            "__init__.py" | "main.py" | "py.typed" | "mod.rs" | "lib.rs"
+        ) {
+            return;
+        }
+
+        // AES033 constant-purity rule overrides AES009: _constant files must only have const/static
+        if basename.ends_with("_constant.rs") || basename.ends_with("_constant.py") {
             return;
         }
 
@@ -146,8 +158,14 @@ impl ArchMetricChecker {
         }
 
         if !Self::file_has_class_definition(file) {
-            let msg = if !def.mandatory_class_definition_violation_message.value.is_empty() {
-                def.mandatory_class_definition_violation_message.value.clone()
+            let msg = if !def
+                .mandatory_class_definition_violation_message
+                .value
+                .is_empty()
+            {
+                def.mandatory_class_definition_violation_message
+                    .value
+                    .clone()
             } else {
                 "AES009 MANDATORY_CLASS_DEFINITION: File is missing a class definition.\n\
                 WHY? Encapsulation in classes is required for proper dependency injection.\n\

@@ -1,30 +1,42 @@
+use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::sync::LazyLock;
-use regex::Regex;
 
 use crate::contract::source_parser_port::ISourceParserPort;
 use crate::taxonomy::{
-    Cause, ColumnNumber, Count, ErrorCode, ErrorMessage, FilePath, ImportInfo,
-    ImportInfoList, LineNumber, MetadataVO, PatternList,
-    PrimitiveTypeList, PrimitiveViolation,
-    PrimitiveViolationList, ResponseData, SourceParserError, SuccessStatus,
-    SymbolName,
+    BooleanVO, Cause, ColumnNumber, Count, ErrorCode, ErrorMessage, FilePath, ImportInfo,
+    ImportInfoList, LineNumber, MetadataVO, PatternList, PrimitiveTypeList, PrimitiveViolation,
+    PrimitiveViolationList, ResponseData, SourceParserError, SuccessStatus, SymbolName,
 };
 
-static USE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:pub\s+)?use\s+([^;]+);").unwrap());
-static STRUCT_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:pub\s+)?(?:pub\s*\([^)]*\)\s+)?(?:struct|enum|trait)\s+([a-zA-Z0-9_]+)").unwrap());
-static FN_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(?:pub\s+)?(?:async\s+)?fn\s+([a-zA-Z0-9_]+)").unwrap());
-static IMPL_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^impl\s+(?:([a-zA-Z0-9_:]+)\s+for\s+)?([a-zA-Z0-9_]+)").unwrap());
-static CF_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\b(if|for|while|match|loop)\b").unwrap());
-static LET_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^let\s+(?:mut\s+)?([a-zA-Z0-9_]+)").unwrap());
-static WORD_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").unwrap());
+static USE_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(?:pub\s+)?use\s+([^;]+);").unwrap());
+static STRUCT_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^(?:pub\s+)?(?:pub\s*\([^)]*\)\s+)?(?:struct|enum|trait)\s+([a-zA-Z0-9_]+)")
+        .unwrap()
+});
+static FN_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(?:pub\s+)?(?:async\s+)?fn\s+([a-zA-Z0-9_]+)").unwrap());
+static IMPL_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^impl\s+(?:([a-zA-Z0-9_:]+)\s+for\s+)?([a-zA-Z0-9_]+)").unwrap());
+static CF_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\b(if|for|while|match|loop)\b").unwrap());
+static LET_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^let\s+(?:mut\s+)?([a-zA-Z0-9_]+)").unwrap());
+static WORD_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").unwrap());
 
-static PUB_STRUCT_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\b(struct|enum|trait|fn|const)\s+([a-zA-Z0-9_]+)").unwrap());
-static PUB_MOD_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bmod\s+([a-zA-Z0-9_]+)").unwrap());
-static PUB_USE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\buse\s+(?:.*::)?([a-zA-Z0-9_]+)\s*(?:::\{|;|$)").unwrap());
-static PUB_USE_GROUP: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\buse\s+.*::\{([^}]+)\}").unwrap());
-static TYPE_DECL_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\b(struct|enum|trait|fn|impl|pub)\b").unwrap());
+static PUB_STRUCT_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\b(struct|enum|trait|fn|const)\s+([a-zA-Z0-9_]+)").unwrap());
+static PUB_MOD_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\bmod\s+([a-zA-Z0-9_]+)").unwrap());
+static PUB_USE_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\buse\s+(?:.*::)?([a-zA-Z0-9_]+)\s*(?:::\{|;|$)").unwrap());
+static PUB_USE_GROUP: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\buse\s+.*::\{([^}]+)\}").unwrap());
+static TYPE_DECL_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\b(struct|enum|trait|fn|impl|pub)\b").unwrap());
 
 pub struct ASTRustParserAdapter;
 
@@ -60,7 +72,11 @@ impl ASTRustParserAdapter {
         for (idx_zero, line) in lines.iter().enumerate() {
             let idx = (idx_zero + 1) as i64;
             let stripped = line.trim();
-            if stripped.is_empty() || stripped.starts_with("//") || stripped.starts_with("/*") || stripped.starts_with("*") {
+            if stripped.is_empty()
+                || stripped.starts_with("//")
+                || stripped.starts_with("/*")
+                || stripped.starts_with("*")
+            {
                 continue;
             }
 
@@ -71,7 +87,7 @@ impl ASTRustParserAdapter {
             if let Some(impl_cap) = IMPL_REGEX.captures(stripped) {
                 let trait_name = impl_cap.get(1).map(|m| m.as_str());
                 let struct_name = impl_cap.get(2).unwrap().as_str().to_string();
-                
+
                 if let Some(t_name) = trait_name {
                     let clean_trait = t_name.split("::").last().unwrap_or(t_name).to_string();
                     class_bases
@@ -79,7 +95,7 @@ impl ASTRustParserAdapter {
                         .or_insert_with(Vec::new)
                         .push(clean_trait);
                 }
-                
+
                 current_impl = Some(struct_name);
                 brace_count = 0;
             }
@@ -131,7 +147,7 @@ impl ASTRustParserAdapter {
             if let Some(struct_cap) = STRUCT_REGEX.captures(stripped) {
                 let name = struct_cap.get(1).unwrap().as_str().to_string();
                 defined.insert(name.clone());
-                
+
                 let mut is_dead = stripped.contains(';') || stripped.contains("{}");
                 if !is_dead && (idx_zero + 1) < lines.len() {
                     let next_line = lines[idx_zero + 1].trim();
@@ -155,7 +171,7 @@ impl ASTRustParserAdapter {
             if let Some(fn_cap) = FN_REGEX.captures(stripped) {
                 let name = fn_cap.get(1).unwrap().as_str().to_string();
                 defined.insert(name.clone());
-                
+
                 if let Some(ref cimpl) = current_impl {
                     class_methods
                         .entry(cimpl.clone())
@@ -224,7 +240,12 @@ impl ASTRustParserAdapter {
                         obj.insert("bases".to_string(), serde_json::json!(bases));
                         let resolved: Vec<String> = bases
                             .iter()
-                            .map(|b| imported_aliases.get(b).cloned().unwrap_or_else(|| b.clone()))
+                            .map(|b| {
+                                imported_aliases
+                                    .get(b)
+                                    .cloned()
+                                    .unwrap_or_else(|| b.clone())
+                            })
                             .collect();
                         obj.insert("resolved_bases".to_string(), serde_json::json!(resolved));
                     }
@@ -265,7 +286,9 @@ struct ParsedData {
 impl ISourceParserPort for ASTRustParserAdapter {
     fn extract_imports(&self, path: &FilePath) -> Result<ImportInfoList, SourceParserError> {
         let data = self.read_and_parse(path)?;
-        Ok(ImportInfoList { values: data.imports_list })
+        Ok(ImportInfoList {
+            values: data.imports_list,
+        })
     }
 
     fn get_raw_symbols(&self, path: &FilePath) -> Result<ResponseData, SourceParserError> {
@@ -275,8 +298,11 @@ impl ISourceParserPort for ASTRustParserAdapter {
         map.insert("used".to_string(), serde_json::json!(data.used));
         map.insert("exported".to_string(), serde_json::json!(data.exported));
         map.insert("aliases".to_string(), serde_json::json!(data.aliases));
-        map.insert("class_bases".to_string(), serde_json::json!(data.class_bases));
-        
+        map.insert(
+            "class_bases".to_string(),
+            serde_json::json!(data.class_bases),
+        );
+
         Ok(ResponseData {
             value: Some(serde_json::json!(map)),
             stdout: String::new(),
@@ -288,7 +314,9 @@ impl ISourceParserPort for ASTRustParserAdapter {
 
     fn get_class_attributes(&self, _path: &FilePath) -> ResponseData {
         ResponseData {
-            value: Some(serde_json::json!(HashMap::<String, serde_json::Value>::new())),
+            value: Some(serde_json::json!(
+                HashMap::<String, serde_json::Value>::new()
+            )),
             stdout: String::new(),
             stderr: String::new(),
             returncode: 0i64,
@@ -297,19 +325,15 @@ impl ISourceParserPort for ASTRustParserAdapter {
     }
 
     fn has_all_export(&self, path: &FilePath) -> SuccessStatus {
-        if !self.is_barrel_file(path) {
-            return SuccessStatus {
-                value: false,
-            };
+        if !self.is_barrel_file(path).value() {
+            return SuccessStatus { value: false };
         }
         if let Ok(data) = self.read_and_parse(path) {
             SuccessStatus {
                 value: !data.exported.is_empty(),
             }
         } else {
-            SuccessStatus {
-                value: false,
-            }
+            SuccessStatus { value: false }
         }
     }
 
@@ -333,7 +357,10 @@ impl ISourceParserPort for ASTRustParserAdapter {
         for (idx_zero, line) in content.lines().enumerate() {
             let idx = (idx_zero + 1) as i64;
             let stripped = line.trim();
-            if stripped.starts_with("use ") || stripped.starts_with("//") || stripped.starts_with("/*") {
+            if stripped.starts_with("use ")
+                || stripped.starts_with("//")
+                || stripped.starts_with("/*")
+            {
                 continue;
             }
 
@@ -368,10 +395,12 @@ impl ISourceParserPort for ASTRustParserAdapter {
         for imp in data.imports_list {
             let mod_name = imp.module.clone();
             let mut is_used = used_set.contains(&mod_name) || exported_set.contains(&mod_name);
-            
+
             if !is_used {
                 for (alias, fullname) in &data.aliases {
-                    if fullname == &mod_name && (used_set.contains(alias) || exported_set.contains(alias)) {
+                    if fullname == &mod_name
+                        && (used_set.contains(alias) || exported_set.contains(alias))
+                    {
                         is_used = true;
                         break;
                     }
@@ -389,16 +418,25 @@ impl ISourceParserPort for ASTRustParserAdapter {
     fn get_class_definitions(&self, path: &FilePath) -> Result<MetadataVO, SourceParserError> {
         let data = self.read_and_parse(path)?;
         let mut map = HashMap::new();
-        map.insert("classes".to_string(), serde_json::json!(data.class_definitions));
+        map.insert(
+            "classes".to_string(),
+            serde_json::json!(data.class_definitions),
+        );
         Ok(MetadataVO { value: map })
     }
 
     fn get_function_definitions(&self, path: &FilePath) -> MetadataVO {
         let mut map = HashMap::new();
         if let Ok(data) = self.read_and_parse(path) {
-            map.insert("functions".to_string(), serde_json::json!(data.function_definitions));
+            map.insert(
+                "functions".to_string(),
+                serde_json::json!(data.function_definitions),
+            );
         } else {
-            map.insert("functions".to_string(), serde_json::json!(Vec::<serde_json::Value>::new()));
+            map.insert(
+                "functions".to_string(),
+                serde_json::json!(Vec::<serde_json::Value>::new()),
+            );
         }
         MetadataVO { value: map }
     }
@@ -409,9 +447,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
                 value: data.exported.contains(&symbol.value),
             }
         } else {
-            SuccessStatus {
-                value: false,
-            }
+            SuccessStatus { value: false }
         }
     }
 
@@ -438,9 +474,15 @@ impl ISourceParserPort for ASTRustParserAdapter {
     fn get_assignment_targets(&self, path: &FilePath) -> MetadataVO {
         let mut map = HashMap::new();
         if let Ok(data) = self.read_and_parse(path) {
-            map.insert("assignments".to_string(), serde_json::json!(data.assignments));
+            map.insert(
+                "assignments".to_string(),
+                serde_json::json!(data.assignments),
+            );
         } else {
-            map.insert("assignments".to_string(), serde_json::json!(Vec::<serde_json::Value>::new()));
+            map.insert(
+                "assignments".to_string(),
+                serde_json::json!(Vec::<serde_json::Value>::new()),
+            );
         }
         MetadataVO { value: map }
     }
@@ -453,9 +495,9 @@ impl ISourceParserPort for ASTRustParserAdapter {
         }
     }
 
-    fn is_barrel_file(&self, path: &FilePath) -> bool {
+    fn is_barrel_file(&self, path: &FilePath) -> BooleanVO {
         let path_str = path.value.replace('\\', "/");
-        path_str.ends_with("/mod.rs") || path_str.ends_with("/lib.rs")
+        BooleanVO::new(path_str.ends_with("/mod.rs") || path_str.ends_with("/lib.rs"))
     }
 
     fn get_stem(&self, path: &FilePath) -> SymbolName {
@@ -464,10 +506,10 @@ impl ISourceParserPort for ASTRustParserAdapter {
         SymbolName::new(basename.replace(".rs", ""))
     }
 
-    fn is_entry_point(&self, path: &FilePath) -> bool {
+    fn is_entry_point(&self, path: &FilePath) -> BooleanVO {
         let path_str = path.value.replace('\\', "/");
         let basename = path_str.split('/').last().unwrap_or(&path.value);
-        basename == "main.rs" || basename == "lib.rs" || basename == "mod.rs"
+        BooleanVO::new(basename == "main.rs" || basename == "lib.rs" || basename == "mod.rs")
     }
 
     fn get_supported_extensions(&self) -> PatternList {

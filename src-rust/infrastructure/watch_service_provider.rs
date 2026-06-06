@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use std::time::SystemTime;
 
 use crate::contract::watch_provider_port::IWatchProviderPort;
-use crate::taxonomy::{ErrorMessage, FilePath, WatchServiceError};
+use crate::taxonomy::{BooleanVO, ErrorMessage, FilePath, WatchServiceError};
 
 pub struct WatchServiceProvider {
     running: bool,
@@ -21,8 +21,8 @@ impl WatchServiceProvider {
         }
     }
 
-    pub fn is_available(&self) -> bool {
-        cfg!(feature = "watch")
+    pub fn is_available(&self) -> BooleanVO {
+        BooleanVO::new(cfg!(feature = "watch"))
     }
 
     pub fn start_sync(&mut self, path: &FilePath) -> Result<(), WatchServiceError> {
@@ -136,7 +136,7 @@ impl IWatchProviderPort for WatchServiceProvider {
         Ok(())
     }
 
-    async fn is_available(&self) -> bool {
+    async fn is_available(&self) -> BooleanVO {
         self.is_available()
     }
 }

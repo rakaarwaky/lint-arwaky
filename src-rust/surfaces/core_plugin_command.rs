@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 pub struct PluginCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }

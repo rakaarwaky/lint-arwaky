@@ -1,26 +1,20 @@
 /// python_ast_tracer — AST-based tracer for Python code analysis.
 use crate::contract::naming_variant_port::INamingVariantPort;
 use crate::contract::semantic_tracer_port::ISemanticTracerPort;
-use crate::infrastructure::PythonNamingVariantProvider;
 use crate::taxonomy::{
-    CallChainList, DataFlowList, DirectoryPath, FilePath, LineNumber, ResponseData, ScopeRef,
-    SemanticError, SymbolName,
+    CallChainList, Count, DataFlowList, DirectoryPath, FilePath, LineNumber, ResponseData,
+    ResponseDataList, ScopeRef, SemanticError, SymbolName, SymbolNameList,
 };
 
 use async_trait::async_trait;
-use std::collections::HashMap;
 
-pub struct PythonTracer;
-
-impl PythonTracer {
-    pub fn new() -> Self {
-        Self
-    }
+pub struct PythonTracer {
+    naming_provider: Box<dyn INamingVariantPort>,
 }
 
-impl Default for PythonTracer {
-    fn default() -> Self {
-        Self::new()
+impl PythonTracer {
+    pub fn new(naming_provider: Box<dyn INamingVariantPort>) -> Self {
+        Self { naming_provider }
     }
 }
 
@@ -61,20 +55,13 @@ impl ISemanticTracerPort for PythonTracer {
     }
 
     async fn get_variant_dict(&self, name: &SymbolName) -> ResponseData {
-        let provider = PythonNamingVariantProvider::new();
-        let variant_json = provider.get_variant_dict(name);
-        let mut map = HashMap::new();
-        if let Some(obj) = variant_json.as_object() {
-            for (k, v) in obj {
-                map.insert(k.clone(), v.clone());
-            }
-        }
+        let value = self.naming_provider.get_variant_dict(name);
         ResponseData {
-            value: Some(serde_json::json!(map)),
+            value: Some(value),
             stdout: String::new(),
             stderr: String::new(),
             returncode: 0,
-            metadata: HashMap::new(),
+            metadata: std::collections::HashMap::new(),
         }
     }
 
@@ -83,21 +70,19 @@ impl ISemanticTracerPort for PythonTracer {
         _root_dir: &DirectoryPath,
         _old_name: &SymbolName,
         _new_name: &SymbolName,
-    ) -> u32 {
-        0
+    ) -> Count {
+        Count::new(0)
     }
 
     async fn get_symbol_locations(
         &self,
         _file_path: &FilePath,
         _symbol: &SymbolName,
-    ) -> Vec<ResponseData> {
-        Vec::new()
+    ) -> ResponseDataList {
+        ResponseDataList { values: vec![] }
     }
 
-    async fn build_variants(&self, name: &SymbolName) -> Vec<SymbolName> {
-        let provider = PythonNamingVariantProvider::new();
-        let variants = provider.build_variants(name);
-        variants.values
+    async fn build_variants(&self, name: &SymbolName) -> SymbolNameList {
+        self.naming_provider.build_variants(name)
     }
 }

@@ -1,7 +1,7 @@
 /// python_metrics_adapter — Thin adapters for Python metrics (Radon, file sizes, trends).
 use crate::contract::metrics_provider_port::IMetricsProviderPort;
-use crate::taxonomy::{Count, FilePath};
 use crate::contract::path_normalization_port::IPathNormalizationPort;
+use crate::taxonomy::{Count, FilePath, ResponseData, ResponseDataList};
 use std::sync::Arc;
 
 pub struct MetricsProvider {
@@ -11,14 +11,18 @@ pub struct MetricsProvider {
 
 impl MetricsProvider {
     pub fn new(path_norm: Arc<dyn IPathNormalizationPort>, history_path: &str) -> Self {
-        Self { path_norm, history_path: history_path.to_string() }
+        Self {
+            path_norm,
+            history_path: history_path.to_string(),
+        }
     }
 }
 
 #[async_trait::async_trait]
 impl IMetricsProviderPort for MetricsProvider {
     async fn get_line_count(&self, path: &FilePath) -> Count {
-        let p = &path.value;
+        let normalized = self.path_norm.normalize_path(path.clone());
+        let p = &normalized.value;
         if !std::path::Path::new(p).is_file() {
             return Count::new(0);
         }

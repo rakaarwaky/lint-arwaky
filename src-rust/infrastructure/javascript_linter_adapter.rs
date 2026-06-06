@@ -9,7 +9,6 @@ use regex::Regex;
 use serde_json::Value;
 use std::path::Path;
 use std::sync::Arc;
-use std::time::Duration;
 
 fn is_bun_available() -> bool {
     std::process::Command::new("bun")
@@ -122,7 +121,7 @@ impl ILinterAdapterPort for PrettierAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(Duration::from_secs(60)),
+                Some(crate::taxonomy::Timeout::new(60.0)),
             )
             .await
         {
@@ -142,7 +141,9 @@ impl ILinterAdapterPort for PrettierAdapter {
         let combined_output = format!("{}{}", response.stdout, response.stderr);
 
         if combined_output.contains("[warn]") {
-            let filename_vo = self.path_norm.resolve_infrastructure_path(path.clone(), Some(path.clone()));
+            let filename_vo = self
+                .path_norm
+                .resolve_infrastructure_path(path.clone(), Some(path.clone()));
             results.push(LintResult {
                 file: filename_vo,
                 line: LineNumber::new(1),
@@ -171,7 +172,11 @@ impl ILinterAdapterPort for PrettierAdapter {
 
         match self
             .executor
-            .execute_command(PatternList::new(cmd), wd, Some(Duration::from_secs(60)))
+            .execute_command(
+                PatternList::new(cmd),
+                wd,
+                Some(crate::taxonomy::Timeout::new(60.0)),
+            )
             .await
         {
             Ok(r) => Ok(ComplianceStatus::new(r.returncode == 0)),
@@ -243,7 +248,7 @@ impl ILinterAdapterPort for TSCAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(Duration::from_secs(60)),
+                Some(crate::taxonomy::Timeout::new(60.0)),
             )
             .await
         {
@@ -274,9 +279,10 @@ impl ILinterAdapterPort for TSCAdapter {
                 let code = caps.get(4).unwrap().as_str().to_string();
                 let msg = caps.get(5).unwrap().as_str().to_string();
 
-                let filename_vo = self
-                    .path_norm
-                    .resolve_infrastructure_path(FilePath::new(filename).unwrap(), Some(path.clone()));
+                let filename_vo = self.path_norm.resolve_infrastructure_path(
+                    FilePath::new(filename).unwrap(),
+                    Some(path.clone()),
+                );
 
                 results.push(LintResult {
                     file: filename_vo,
@@ -353,7 +359,7 @@ impl ILinterAdapterPort for ESLintAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(Duration::from_secs(60)),
+                Some(crate::taxonomy::Timeout::new(60.0)),
             )
             .await
         {
@@ -391,9 +397,10 @@ impl ILinterAdapterPort for ESLintAdapter {
         if let Some(files) = parsed.as_array() {
             for file_data in files {
                 let filename = file_data["filePath"].as_str().unwrap_or("").to_string();
-                let filename_vo = self
-                    .path_norm
-                    .resolve_infrastructure_path(FilePath::new(filename).unwrap(), Some(path.clone()));
+                let filename_vo = self.path_norm.resolve_infrastructure_path(
+                    FilePath::new(filename).unwrap(),
+                    Some(path.clone()),
+                );
 
                 if let Some(messages) = file_data["messages"].as_array() {
                     for msg in messages {
@@ -440,7 +447,11 @@ impl ILinterAdapterPort for ESLintAdapter {
 
         match self
             .executor
-            .execute_command(PatternList::new(cmd), wd, Some(Duration::from_secs(60)))
+            .execute_command(
+                PatternList::new(cmd),
+                wd,
+                Some(crate::taxonomy::Timeout::new(60.0)),
+            )
             .await
         {
             Ok(r) => Ok(ComplianceStatus::new(r.returncode == 0)),

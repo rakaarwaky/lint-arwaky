@@ -1,16 +1,134 @@
-// arch_compliance_orchestrator — Logic for resolving ArchitectureConfig into LayerDefinitions.
-use crate::contract::IArchComplianceProtocol;
-use crate::taxonomy::{
-    ArchitectureConfig, ArchitectureRule, BooleanVO, LayerDefinition, LayerMapVO,
-    LayerNameVO, LAYER_GLOBAL,
-};
+//! Architecture compliance orchestration — layer-map resolution, compliance coordination,
+//! watch mode, and DI mixin stubs.
+//!
+//! Naming: `arch` = bounded context (architecture governance), not layer name.
+//! Also hosts watch orchestrators and mixin container stubs consolidated for cohesion.
+
 use std::collections::HashMap;
+use std::sync::OnceLock;
+
+use async_trait::async_trait;
+
+use crate::contract::{
+    ArchCoordinatorAggregate, DirectoryWatchAggregate, IArchCompliancePort,
+    IArchComplianceProtocol, IJobRegistryPort, InfrastructureContainerAggregate,
+    OrchestratorContainerAggregate, ServiceContainerAggregate, WatchCommandsAggregate,
+    WatchExecutionOrchestratorAggregate,
+};
+use crate::infrastructure::MemoryJobRegistryAdapter;
+use crate::taxonomy::{
+    AdapterName, ArchitectureConfig, ArchitectureGovernanceEntity, ArchitectureRule, BooleanVO,
+    ComplianceStatus, FilePath, LayerDefinition, LayerMapVO, LayerNameVO, LintResultList,
+    WatchResult, LAYER_GLOBAL,
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MIXIN CONTAINERS — DI initialization stubs (wired via DependencyInjectionContainer)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+pub struct InfrastructureMixinContainer;
+
+impl InfrastructureMixinContainer {
+    pub fn init_infrastructure(&self) {}
+}
+
+impl InfrastructureContainerAggregate for InfrastructureMixinContainer {
+    fn _init_infrastructure(&mut self) {}
+
+    fn root_path(&self) -> Option<&FilePath> {
+        None
+    }
+}
+
+impl ServiceContainerAggregate for InfrastructureMixinContainer {}
+
+pub struct OrchestratorMixinContainer;
+
+impl OrchestratorContainerAggregate for OrchestratorMixinContainer {
+    fn _init_orchestrators(&mut self) {}
+}
+
+impl OrchestratorMixinContainer {
+    pub fn init_orchestrators(&self) {}
+}
+
+impl ServiceContainerAggregate for OrchestratorMixinContainer {}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WATCH ORCHESTRATORS — CLI watch command + file-change execution
+// ═══════════════════════════════════════════════════════════════════════════════
+
+static WATCH_JOB_REGISTRY: OnceLock<MemoryJobRegistryAdapter> = OnceLock::new();
+
+pub struct WatchCommandsOrchestrator {
+    execution: WatchExecutionOrchestrator,
+}
+
+#[async_trait]
+impl WatchCommandsAggregate for WatchCommandsOrchestrator {
+    fn root_path(&self) -> Option<&FilePath> {
+        None
+    }
+
+    async fn watch(&self, path: &FilePath) {
+        self.execution.process_event(path);
+    }
+}
+
+impl WatchCommandsOrchestrator {
+    pub fn new() -> Self {
+        Self {
+            execution: WatchExecutionOrchestrator::new(),
+        }
+    }
+}
+
+pub struct WatchExecutionOrchestrator;
+
+impl WatchExecutionOrchestratorAggregate for WatchExecutionOrchestrator {
+    fn root_path(&self) -> Option<&FilePath> {
+        None
+    }
+
+    fn job_registry(&self) -> &dyn IJobRegistryPort {
+        WATCH_JOB_REGISTRY.get_or_init(MemoryJobRegistryAdapter::new)
+    }
+}
+
+impl WatchExecutionOrchestrator {
+    pub fn new() -> Self {
+        Self
+    }
+
+    pub fn is_available(&self) -> bool {
+        true
+    }
+
+    pub async fn execute(&self, _request: &DirectoryWatchAggregate) -> WatchResult {
+        WatchResult {
+            file: FilePath::new(".").unwrap(),
+            report: ArchitectureGovernanceEntity::default(),
+        }
+    }
+
+    pub fn process_event(&self, file_path: &FilePath) -> HashMap<String, serde_json::Value> {
+        let mut result = HashMap::new();
+        result.insert("file".to_string(), serde_json::json!(file_path.value));
+        result.insert("score".to_string(), serde_json::json!(0.0));
+        result.insert("is_passing".to_string(), serde_json::json!(false));
+        result
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ARCHITECTURE COMPLIANCE — config resolution + multi-orchestrator coordination
+// ═══════════════════════════════════════════════════════════════════════════════
 
 pub struct ArchitectureOrchestrator;
 
 impl IArchComplianceProtocol for ArchitectureOrchestrator {
-    fn execute(&self, _path: &crate::taxonomy::FilePath) -> crate::taxonomy::LintResultList {
-        crate::taxonomy::LintResultList::new(vec![])
+    fn execute(&self, _path: &FilePath) -> LintResultList {
+        LintResultList::new(vec![])
     }
 }
 
@@ -19,7 +137,6 @@ impl ArchitectureOrchestrator {
         Self
     }
 
-    /// Merges base layer definitions with global and layer-specific rules.
     pub fn resolve_effective_layer_map(&self, config: &ArchitectureConfig) -> LayerMapVO {
         let mut layer_map = self.resolve_layers(config);
         layer_map = self.merge_layer_rules(layer_map, config);
@@ -105,7 +222,6 @@ impl ArchitectureOrchestrator {
         mut def: LayerDefinition,
         rule: &ArchitectureRule,
     ) -> LayerDefinition {
-        // Override simple scalar fields
         if rule.word_count.value != 0 {
             def.word_count = rule.word_count.clone();
         }
@@ -147,11 +263,19 @@ impl ArchitectureOrchestrator {
             def.forbidden_bypass_violation_message =
                 rule.forbidden_bypass_violation_message.clone();
         }
-        if !rule.mandatory_class_definition_violation_message.value.is_empty() {
+        if !rule
+            .mandatory_class_definition_violation_message
+            .value
+            .is_empty()
+        {
             def.mandatory_class_definition_violation_message =
                 rule.mandatory_class_definition_violation_message.clone();
         }
-        if !rule.dead_inheritance_bypass_violation_message.value.is_empty() {
+        if !rule
+            .dead_inheritance_bypass_violation_message
+            .value
+            .is_empty()
+        {
             def.dead_inheritance_bypass_violation_message =
                 rule.dead_inheritance_bypass_violation_message.clone();
         }
@@ -192,11 +316,19 @@ impl ArchitectureOrchestrator {
             def.stateless_execution_violation_message =
                 rule.stateless_execution_violation_message.clone();
         }
-        if !rule.single_execution_goal_violation_message.value.is_empty() {
+        if !rule
+            .single_execution_goal_violation_message
+            .value
+            .is_empty()
+        {
             def.single_execution_goal_violation_message =
                 rule.single_execution_goal_violation_message.clone();
         }
-        if !rule.high_level_policy_only_violation_message.value.is_empty() {
+        if !rule
+            .high_level_policy_only_violation_message
+            .value
+            .is_empty()
+        {
             def.high_level_policy_only_violation_message =
                 rule.high_level_policy_only_violation_message.clone();
         }
@@ -220,7 +352,11 @@ impl ArchitectureOrchestrator {
             def.thread_async_safe_violation_message =
                 rule.thread_async_safe_violation_message.clone();
         }
-        if !rule.no_domain_data_storage_violation_message.value.is_empty() {
+        if !rule
+            .no_domain_data_storage_violation_message
+            .value
+            .is_empty()
+        {
             def.no_domain_data_storage_violation_message =
                 rule.no_domain_data_storage_violation_message.clone();
         }
@@ -233,7 +369,11 @@ impl ArchitectureOrchestrator {
                 .owns_system_health_transitions_violation_message
                 .clone();
         }
-        if !rule.lifecycle_tracking_only_violation_message.value.is_empty() {
+        if !rule
+            .lifecycle_tracking_only_violation_message
+            .value
+            .is_empty()
+        {
             def.lifecycle_tracking_only_violation_message =
                 rule.lifecycle_tracking_only_violation_message.clone();
         }
@@ -241,7 +381,6 @@ impl ArchitectureOrchestrator {
             def.forbid_any_type_violation_message = rule.forbid_any_type_violation_message.clone();
         }
 
-        // Override boolean fields
         if rule.no_primitives != BooleanVO::new(false) {
             def.no_primitives = rule.no_primitives.clone();
         }
@@ -249,7 +388,6 @@ impl ArchitectureOrchestrator {
             def.barrel_completeness = rule.barrel_completeness.clone();
         }
 
-        // Collection fields
         if !rule.allowed_import.values.is_empty() {
             def.allowed_import = rule.allowed_import.clone();
         }
@@ -276,5 +414,60 @@ impl ArchitectureOrchestrator {
         }
 
         def
+    }
+}
+
+pub struct ArchComplianceCoordinator {
+    orchestrators: Vec<Box<dyn IArchComplianceProtocol + Send + Sync>>,
+}
+
+impl ArchComplianceCoordinator {
+    pub fn new(
+        compliance_orchestrator: Box<dyn IArchComplianceProtocol + Send + Sync>,
+        additional_orchestrators: Option<Vec<Box<dyn IArchComplianceProtocol + Send + Sync>>>,
+    ) -> Self {
+        let mut orchestrators = vec![compliance_orchestrator];
+        if let Some(additional) = additional_orchestrators {
+            orchestrators.extend(additional);
+        }
+        Self { orchestrators }
+    }
+
+    pub fn name(&self) -> AdapterName {
+        AdapterName::new("architecture").unwrap()
+    }
+}
+
+#[async_trait]
+impl ArchCoordinatorAggregate for ArchComplianceCoordinator {
+    async fn check_compliance(&self, path: &FilePath) -> ComplianceStatus {
+        let result = ArchCoordinatorAggregate::scan(self, path).await;
+        ComplianceStatus::new(result.values.is_empty())
+    }
+
+    async fn scan(&self, path: &FilePath) -> LintResultList {
+        let mut results = LintResultList::new(Vec::new());
+        for orchestrator in &self.orchestrators {
+            let mut partial = orchestrator.execute(path);
+            results.values.append(&mut partial.values);
+        }
+        results
+    }
+
+    async fn apply_fix(&self, _path: &FilePath) -> ComplianceStatus {
+        ComplianceStatus::new(false)
+    }
+}
+
+#[async_trait]
+impl IArchCompliancePort for ArchComplianceCoordinator {
+    async fn scan(&self, path: &FilePath) -> LintResultList {
+        (self as &dyn ArchCoordinatorAggregate).scan(path).await
+    }
+
+    async fn apply_fix(&self, path: &FilePath) -> ComplianceStatus {
+        (self as &dyn ArchCoordinatorAggregate)
+            .apply_fix(path)
+            .await
     }
 }

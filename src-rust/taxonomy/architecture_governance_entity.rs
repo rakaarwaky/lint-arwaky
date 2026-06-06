@@ -1,9 +1,13 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use crate::taxonomy::{AdapterName, ComplianceStatus, Count, LintResult, LintResultList, Score, Severity};
+use crate::taxonomy::{
+    AdapterName, ComplianceStatus, Count, Identity, LintResult, LintResultList, Score, Severity,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct GovernanceReport {
+pub struct ArchitectureGovernanceEntity {
+    #[serde(default)]
+    pub id: Identity,
     #[serde(default)]
     pub results: LintResultList,
     #[serde(default = "default_score")]
@@ -12,12 +16,21 @@ pub struct GovernanceReport {
     pub is_passing: ComplianceStatus,
 }
 
-fn default_score() -> Score { Score::new(100.0) }
-fn default_compliance() -> ComplianceStatus { ComplianceStatus::new(true) }
+fn default_score() -> Score {
+    Score::new(100.0)
+}
+fn default_compliance() -> ComplianceStatus {
+    ComplianceStatus::new(true)
+}
 
-impl GovernanceReport {
+impl ArchitectureGovernanceEntity {
     pub fn new() -> Self {
-        Self { results: LintResultList::default(), score: Score::new(100.0), is_passing: ComplianceStatus::new(true) }
+        Self {
+            id: Identity::new("default"),
+            results: LintResultList::default(),
+            score: Score::new(100.0),
+            is_passing: ComplianceStatus::new(true),
+        }
     }
     pub fn add_result(&mut self, result: LintResult) {
         self.score = self.score.deduct(&result.severity);
@@ -25,24 +38,37 @@ impl GovernanceReport {
     }
     pub fn update_compliance(&mut self, threshold: &Score) {
         let is_p = self.score.value >= threshold.value;
-        let has_critical = self.results.values.iter().any(|r| r.severity == Severity::CRITICAL);
+        let has_critical = self
+            .results
+            .values
+            .iter()
+            .any(|r| r.severity == Severity::CRITICAL);
         self.is_passing = ComplianceStatus::new(is_p && !has_critical);
     }
     pub fn results_by_source(&self, source: &AdapterName) -> LintResultList {
         LintResultList {
-            values: self.results.values.iter()
+            values: self
+                .results
+                .values
+                .iter()
                 .filter(|r| r.source.as_ref() == Some(source))
                 .cloned()
                 .collect(),
         }
     }
     pub fn violation_count(&self) -> Count {
-        Count::new(self.results.values.iter()
-            .filter(|r| r.severity.score_impact() > 0.0)
-            .count() as i64)
+        Count::new(
+            self.results
+                .values
+                .iter()
+                .filter(|r| r.severity.score_impact() > 0.0)
+                .count() as i64,
+        )
     }
 }
 
-impl Default for GovernanceReport {
-    fn default() -> Self { Self::new() }
+impl Default for ArchitectureGovernanceEntity {
+    fn default() -> Self {
+        Self::new()
+    }
 }

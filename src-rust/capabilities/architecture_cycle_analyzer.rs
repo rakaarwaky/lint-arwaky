@@ -97,8 +97,8 @@ impl DependencyCycleAnalyzer {
             source: Some(AdapterName::new("architecture").unwrap()),
             severity: Severity::CRITICAL,
             enclosing_scope: Some(ScopeRef {
-                name: String::new(),
-                kind: String::new(),
+                name: crate::taxonomy::DescriptionVO::new(String::new()),
+                kind: crate::taxonomy::DescriptionVO::new(String::new()),
                 file: None,
                 start_line: None,
                 end_line: None,

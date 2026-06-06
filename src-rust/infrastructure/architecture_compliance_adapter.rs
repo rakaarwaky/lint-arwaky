@@ -1,6 +1,8 @@
 /// arch_compliance_adapter — Infrastructure adapter that wraps architectural compliance checking.
 use crate::contract::{IArchCompliancePort, ILinterAdapterPort};
-use crate::taxonomy::{AdapterName, ComplianceStatus, FilePath, LintResultList, LinterOperationError};
+use crate::taxonomy::{
+    AdapterName, ComplianceStatus, FilePath, LintResultList, LinterOperationError,
+};
 use std::sync::Arc;
 
 pub struct ArchComplianceAdapter {

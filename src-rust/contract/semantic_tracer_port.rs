@@ -1,7 +1,8 @@
 // semantic_tracer_port — Protocol interface for semantic analysis capabilities.
 // Infrastructure implements this. Capabilities consume it via DI.
 use crate::taxonomy::{
-    CallChainList, DataFlowList, DirectoryPath, FilePath, LineNumber, ResponseData, ScopeRef, SemanticError, SymbolName,
+    CallChainList, Count, DataFlowList, DirectoryPath, FilePath, LineNumber, ResponseData,
+    ResponseDataList, ScopeRef, SemanticError, SymbolName, SymbolNameList,
 };
 use async_trait::async_trait;
 
@@ -38,15 +39,15 @@ pub trait ISemanticTracerPort: Send + Sync {
         root_dir: &DirectoryPath,
         old_name: &SymbolName,
         new_name: &SymbolName,
-    ) -> u32;
+    ) -> Count;
 
     /// Return the locations of a symbol within a file.
     async fn get_symbol_locations(
         &self,
         file_path: &FilePath,
         symbol: &SymbolName,
-    ) -> Vec<ResponseData>;
+    ) -> ResponseDataList;
 
     /// Produce common naming variants for a given name.
-    async fn build_variants(&self, name: &SymbolName) -> Vec<SymbolName>;
+    async fn build_variants(&self, name: &SymbolName) -> SymbolNameList;
 }

@@ -57,8 +57,8 @@ Check linter adapter liveness and system state. Reports which of the 9 adapters 
 
 ### Core
 
-- `lint-arwaky-cli check [path] [--git-diff]`: Run full architecture compliance analysis.
-- `lint-arwaky-cli scan [path]`: Alias for `check` (CI-friendly).
+- `lint-arwaky-cli check .`: Self-lint this project under AES rules (no path needed).
+- `lint-arwaky-cli scan <project-path>`: Scan external/test project with all adapters + AES.
 - `lint-arwaky-cli fix [path]`: Apply safe automatic fixes.
 - `lint-arwaky-cli report [path] --output-format <text|json|sarif|junit>`: Generate quality report.
 - `lint-arwaky-cli ci [path] --threshold <N>`: CI mode; exit 1 if score < threshold (default 80).

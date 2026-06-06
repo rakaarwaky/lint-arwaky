@@ -1,6 +1,7 @@
 use crate::taxonomy::job_action_vo::JobId;
 use serde_json::json;
 use std::sync::Arc;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 
 pub struct McpJobCommandsSurface;
 
@@ -17,7 +18,7 @@ impl McpJobCommandsSurface {
 
     pub async fn check_status(
         &self,
-        container: &Arc<dyn crate::contract::service_container_aggregate::ServiceContainerAggregate>,
+        container: &Arc<dyn ServiceContainerAggregate>,
         job_id: Option<String>,
     ) -> Result<String, String> {
         let job_registry = container
@@ -52,7 +53,7 @@ impl McpJobCommandsSurface {
 
     pub async fn cancel_job(
         &self,
-        container: &Arc<dyn crate::contract::service_container_aggregate::ServiceContainerAggregate>,
+        container: &Arc<dyn ServiceContainerAggregate>,
         job_id: String,
     ) -> Result<String, String> {
         let job_registry = container

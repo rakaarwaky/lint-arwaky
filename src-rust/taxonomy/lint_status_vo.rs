@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::taxonomy::AdapterName;
@@ -28,39 +28,59 @@ impl std::fmt::Display for JobStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SuccessStatus {
-    pub value: bool,
+    pub(crate) value: bool,
 }
 
 impl SuccessStatus {
-    pub fn new(value: bool) -> Self { Self { value } }
+    pub fn new(value: bool) -> Self {
+        Self { value }
+    }
+    pub fn value(&self) -> bool {
+        self.value
+    }
 }
 
 impl std::fmt::Display for SuccessStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.value { write!(f, "SUCCESS") } else { write!(f, "FAILURE") }
+        if self.value {
+            write!(f, "SUCCESS")
+        } else {
+            write!(f, "FAILURE")
+        }
     }
 }
 
 impl std::ops::Deref for SuccessStatus {
     type Target = bool;
-    fn deref(&self) -> &bool { &self.value }
+    fn deref(&self) -> &bool {
+        &self.value
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LintStatusActionArgs {
     #[serde(default)]
-    pub value: HashMap<String, serde_json::Value>,
+    pub(crate) value: HashMap<String, serde_json::Value>,
 }
 
 impl LintStatusActionArgs {
-    pub fn new() -> Self { Self { value: HashMap::new() } }
-    pub fn get(&self, key: &str) -> Option<&serde_json::Value> { self.value.get(key) }
+    pub fn new() -> Self {
+        Self {
+            value: HashMap::new(),
+        }
+    }
+    pub fn value(&self) -> &HashMap<String, serde_json::Value> {
+        &self.value
+    }
+    pub fn get(&self, key: &str) -> Option<&serde_json::Value> {
+        self.value.get(key)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ResponseData {
     #[serde(default)]
-    pub value: Option<serde_json::Value>,
+    pub(crate) value: Option<serde_json::Value>,
     #[serde(default)]
     pub stdout: String,
     #[serde(default)]
@@ -73,7 +93,16 @@ pub struct ResponseData {
 
 impl ResponseData {
     pub fn new() -> Self {
-        Self { value: None, stdout: String::new(), stderr: String::new(), returncode: 0, metadata: HashMap::new() }
+        Self {
+            value: None,
+            stdout: String::new(),
+            stderr: String::new(),
+            returncode: 0,
+            metadata: HashMap::new(),
+        }
+    }
+    pub fn value(&self) -> Option<&serde_json::Value> {
+        self.value.as_ref()
     }
     pub fn get(&self, key: &str) -> Option<&serde_json::Value> {
         self.value.as_ref().and_then(|v| v.get(key))
@@ -90,17 +119,28 @@ pub struct AdapterMetadata {
 
 impl AdapterMetadata {
     pub fn new(name: AdapterName, class_path: String) -> Self {
-        Self { name, class_path, description: String::new() }
+        Self {
+            name,
+            class_path,
+            description: String::new(),
+        }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EnvContentVO {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl EnvContentVO {
-    pub fn new(value: impl Into<String>) -> Self { Self { value: value.into() } }
+    pub fn new(value: impl Into<String>) -> Self {
+        Self {
+            value: value.into(),
+        }
+    }
+    pub fn value(&self) -> &str {
+        &self.value
+    }
 }
 
 impl std::fmt::Display for EnvContentVO {
@@ -112,5 +152,5 @@ impl std::fmt::Display for EnvContentVO {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct McpConfigVO {
     #[serde(default)]
-    pub value: HashMap<String, serde_json::Value>,
+    pub(crate) value: HashMap<String, serde_json::Value>,
 }

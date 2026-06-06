@@ -1,5 +1,5 @@
-use crate::taxonomy::{FilePath, FilePathList, LintResultList};
 use crate::contract::architecture_rule_protocol::IAnalyzer;
+use crate::taxonomy::{FilePath, FilePathList, LintResultList};
 use async_trait::async_trait;
 
 #[async_trait]
@@ -12,4 +12,3 @@ pub trait ICycleAnalysisProtocol: Send + Sync {
         results: &mut LintResultList,
     );
 }
-

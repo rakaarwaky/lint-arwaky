@@ -13,7 +13,7 @@ use crate::taxonomy::FilePath;
 
 
 
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use crate::surfaces::cli_output_controller::{get_output_dir, write_output, tee_stdout};
 
 pub struct FixCommandsSurface {

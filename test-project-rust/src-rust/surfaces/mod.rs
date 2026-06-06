@@ -1,3 +1,2 @@
-// Surfaces barrel
-// Missing pub modules/re-exports (violates AES012 barrel completeness)
-// Intentionally does NOT import orphan_surface_router.rs (violates AES018 surface-hierarchy-violation)
+pub mod complex_view_handler;
+pub mod direct_infra_handler;

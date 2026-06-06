@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::taxonomy::{ComplianceStatus, Count, ErrorMessage, FilePath, PatternList, Score};
 
@@ -22,13 +22,39 @@ pub struct ProjectResult {
 }
 
 impl AggregatedResults {
-    pub fn new(projects: Vec<ProjectResult>, total_projects: Count, passing_projects: Count, failing_projects: Count, average_score: Score,) -> Self {
-        Self { projects, total_projects, passing_projects, failing_projects, average_score }
+    pub fn new(
+        projects: Vec<ProjectResult>,
+        total_projects: Count,
+        passing_projects: Count,
+        failing_projects: Count,
+        average_score: Score,
+    ) -> Self {
+        Self {
+            projects,
+            total_projects,
+            passing_projects,
+            failing_projects,
+            average_score,
+        }
     }
 }
 
 impl ProjectResult {
-    pub fn new(path: FilePath, score: Score, is_passing: ComplianceStatus, issues: Vec<std::collections::HashMap<String, serde_json::Value>>, adapters: PatternList, error: ErrorMessage,) -> Self {
-        Self { path, score, is_passing, issues, adapters, error }
+    pub fn new(
+        path: FilePath,
+        score: Score,
+        is_passing: ComplianceStatus,
+        issues: Vec<std::collections::HashMap<String, serde_json::Value>>,
+        adapters: PatternList,
+        error: ErrorMessage,
+    ) -> Self {
+        Self {
+            path,
+            score,
+            is_passing,
+            issues,
+            adapters,
+            error,
+        }
     }
 }

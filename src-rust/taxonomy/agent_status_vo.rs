@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum AgentStatus {
@@ -25,11 +25,14 @@ impl std::fmt::Display for AgentStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AgentStatusVO {
-    pub value: AgentStatus,
+    pub(crate) value: AgentStatus,
 }
 
 impl AgentStatusVO {
     pub fn new(value: AgentStatus) -> Self {
         Self { value: value }
+    }
+    pub fn value(&self) -> &AgentStatus {
+        &self.value
     }
 }

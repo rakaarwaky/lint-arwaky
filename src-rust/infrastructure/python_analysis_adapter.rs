@@ -7,34 +7,6 @@ use crate::taxonomy::{
 use std::path::Path;
 use std::sync::Arc;
 
-fn resolve_working_dir(path: &FilePath) -> FilePath {
-    let path_str = &path.value;
-    if let Ok(abs_path) = std::fs::canonicalize(path_str) {
-        let mut current = if abs_path.is_file() {
-            abs_path.parent().unwrap_or(Path::new(".")).to_path_buf()
-        } else {
-            abs_path
-        };
-        for _ in 0..10 {
-            if current.join("lint_arwaky.config.yaml").is_file()
-                || current.join(".git").is_dir()
-                || current.join("pyproject.toml").is_file()
-            {
-                return FilePath::new(current.to_string_lossy().to_string()).unwrap();
-            }
-            if let Some(parent) = current.parent() {
-                if parent == current {
-                    break;
-                }
-                current = parent.to_path_buf();
-            } else {
-                break;
-            }
-        }
-    }
-    FilePath::new(".").unwrap()
-}
-
 pub struct ComplexityAdapter {
     _executor: Arc<dyn ICommandExecutorPort>,
     _path_norm: Arc<dyn IPathNormalizationPort>,
@@ -98,7 +70,7 @@ impl ILinterAdapterPort for DuplicateAdapter {
     }
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
-        let abs_path = std::path::Path::new(&path.value);
+        let abs_path = Path::new(&path.value);
         if abs_path.is_file() {
         } else if abs_path.is_dir() {
             if let Ok(entries) = std::fs::read_dir(abs_path) {
@@ -110,7 +82,8 @@ impl ILinterAdapterPort for DuplicateAdapter {
                                 let line_count = content.lines().count();
                                 if line_count > 500 {
                                     results.push(LintResult {
-                                        file: FilePath::new(p.to_string_lossy().to_string()).unwrap(),
+                                        file: FilePath::new(p.to_string_lossy().to_string())
+                                            .unwrap(),
                                         line: LineNumber::new(1),
                                         column: ColumnNumber::new(0),
                                         code: ErrorCode::new("DUPE001").unwrap(),

@@ -2,18 +2,18 @@
 
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::time::Duration;
+use std::time::Duration as StdDuration;
 use tokio::process::Command;
 
 use crate::contract::command_executor_port::ICommandExecutorPort;
-use crate::taxonomy::{FilePath, PatternList, ResponseData};
+use crate::taxonomy::{FilePath, PatternList, ResponseData, Timeout};
 
 pub struct StdioClient {
-    timeout: Duration,
+    timeout: StdDuration,
 }
 
 impl StdioClient {
-    pub fn new(timeout: Duration) -> Self {
+    pub fn new(timeout: StdDuration) -> Self {
         Self { timeout }
     }
 }
@@ -24,9 +24,11 @@ impl ICommandExecutorPort for StdioClient {
         &self,
         command: PatternList,
         working_dir: FilePath,
-        timeout: Option<Duration>,
+        timeout: Option<Timeout>,
     ) -> anyhow::Result<ResponseData> {
-        let timeout_val = timeout.unwrap_or(self.timeout);
+        let timeout_val = timeout
+            .map(|d| StdDuration::from_secs(d.value() as u64))
+            .unwrap_or(self.timeout);
         let cmd_list: Vec<&str> = command.values.iter().map(|s| s.as_str()).collect();
         if cmd_list.is_empty() {
             anyhow::bail!("Empty command");

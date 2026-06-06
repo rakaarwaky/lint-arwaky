@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 
 
 
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 #[derive(Parser, Debug)]
 #[command(name = "lint-arwaky")]
 #[command(about = "Lint Arwaky CLI: Autonomous Code Quality Gatekeeper.", long_about = None)]

@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "lint-arwaky": {
-      "command": "/home/raka/mcp-arwaky/lint-arwaky/target/release/lint-arwaky-mcp",
+      "command": "lint-arwaky-mcp",
       "args": []
     }
   }

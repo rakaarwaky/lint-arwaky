@@ -1,43 +1,22 @@
-// pipeline_action_orchestrator — Logic for dispatching pipeline actions (Agent Layer).
+// pipeline_action_orchestrator — Agent orchestrator for pipeline actions.
 use crate::contract::PipelineActionDispatcherAggregate;
 use crate::taxonomy::{
-    BooleanVO, ContentString, FilePath, MetadataVO, ResponseData,
+    ActionArgs, ActionName, FilePath, ResponseData,
+    SuccessStatus,
 };
 use std::collections::HashMap;
 
-pub struct PipelineActionDispatcher;
+pub struct PipelineActionOrchestrator;
 
 #[async_trait::async_trait]
-impl PipelineActionDispatcherAggregate for PipelineActionDispatcher {
+impl PipelineActionDispatcherAggregate for PipelineActionOrchestrator {
     fn root_path(&self) -> Option<&FilePath> {
         None
     }
 
-    async fn dispatch(&self, action: &str, args: serde_json::Value) -> serde_json::Value {
-        let action_vo = ContentString::new(action);
-        let mut meta_map = std::collections::HashMap::new();
-        meta_map.insert("args".to_string(), args);
-        let metadata_vo = MetadataVO::new(meta_map);
-        let res = self.dispatch_old(&action_vo, &metadata_vo).await;
-        serde_json::to_value(res).unwrap_or(serde_json::Value::Null)
-    }
-
-    fn validate_action(&self, action: &str) -> bool {
-        let action_vo = ContentString::new(action);
-        self.validate_action_old(&action_vo).value
-    }
-}
-
-impl PipelineActionDispatcher {
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub async fn dispatch_old(&self, action: &ContentString, _args: &MetadataVO) -> ResponseData {
-        let action_str = &action.value;
-
-        // Handler map for known actions
-        match action_str.as_ref() {
+    async fn dispatch(&self, action: &ActionName, _args: ActionArgs) -> ResponseData {
+        let action_str = action.value();
+        match action_str {
             "check" | "scan" => self.handle_check(action_str).await,
             "security" => self.handle_security(action_str).await,
             "complexity" => self.handle_complexity(action_str).await,
@@ -64,6 +43,36 @@ impl PipelineActionDispatcher {
                 }
             }
         }
+    }
+
+    fn validate_action(&self, action: &ActionName) -> SuccessStatus {
+        let known_actions = [
+            "check",
+            "scan",
+            "security",
+            "complexity",
+            "duplicates",
+            "trends",
+            "fix",
+            "report",
+            "version",
+            "adapters",
+            "install-hook",
+            "install_hook",
+            "uninstall-hook",
+            "uninstall_hook",
+            "batch",
+            "multi_project",
+            "doctor",
+            "cancel",
+        ];
+        SuccessStatus::new(known_actions.contains(&action.value()))
+    }
+}
+
+impl PipelineActionOrchestrator {
+    pub fn new() -> Self {
+        Self
     }
 
     async fn handle_check(&self, _action: &str) -> ResponseData {
@@ -211,27 +220,4 @@ impl PipelineActionDispatcher {
         }
     }
 
-    pub fn validate_action_old(&self, action: &ContentString) -> BooleanVO {
-        let known_actions = [
-            "check",
-            "scan",
-            "security",
-            "complexity",
-            "duplicates",
-            "trends",
-            "fix",
-            "report",
-            "version",
-            "adapters",
-            "install-hook",
-            "install_hook",
-            "uninstall-hook",
-            "uninstall_hook",
-            "batch",
-            "multi_project",
-            "doctor",
-            "cancel",
-        ];
-        BooleanVO::new(known_actions.contains(&action.value.as_ref()))
-    }
 }

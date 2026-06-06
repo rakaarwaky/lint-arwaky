@@ -30,16 +30,24 @@
 //!
 //! ## Module Index
 //!
-//! | Domain | Key Types | Description |
-//! |--------|-----------|-------------|
-//! | **Core VOs** | `LineNumber`, `ColumnNumber`, `Score`, `Timestamp`, `Count` | Fundamental primitive wrappers |
-//! | **Paths** | `FilePath`, `DirectoryPath`, `FilePathList` | File system abstractions |
-//! | **Lint Results** | `LintResult`, `LintResultList`, `Severity`, `ErrorCode` | Linting output models |
-//! | **Architecture** | `ArchitectureConfig`, `ArchitectureRule`, `LayerDefinition` | AES configuration |
-//! | **Capabilities** | `CapabilityRoutingContext`, `ClassDefinitionMap` | Capability dispatch models |
-//! | **Errors** | `FileSystemError`, `SourceParserError`, `AdapterError` | Domain-specific errors |
-//! | **Events** | `ScanStarted`, `ScanCompleted`, `FixApplied` | Domain event snapshots |
-//! | **Config** | `AppConfig`, `ProjectConfig`, `Thresholds` | Application configuration |
+//! | Domain / Feature | Key Types | Description |
+//! |------------------|-----------|-------------|
+//! | **Linting** | `LintResult`, `LintResultList`, `Severity`, `ErrorCode`, `Position`, `ComplianceStatus`, `LintMessage` | Core linting results, severity, & compliance |
+//! | **Source Code** | `FilePath`, `DirectoryPath`, `ContentString`, `ImportInfo`, `SuffixVO`, `PrimitiveViolation` | Source file, path, & import analysis |
+//! | **Architecture** | `ArchitectureConfig`, `ArchitectureRule`, `LayerDefinition`, `LayerMapVO` | Layer-based architecture governance |
+//! | **Configuration** | `AppConfig`, `ProjectConfig`, `Thresholds`, `ConfigKey` | Application & project configuration |
+//! | **Adapter** | `AdapterName`, `AdapterMetadata`, `AdapterRegistered`, `AdapterClassMap` | Plugin adapter registration & lifecycle |
+//! | **Capability** | `CapabilityRoutingContext`, `ClassDefinitionMap`, `CapabilityReference` | Capability-based dispatch routing |
+//! | **Common** | `LineNumber`, `ColumnNumber`, `Score`, `Timestamp`, `Count`, `Duration`, `Timeout` | Shared primitive value objects |
+//! | **Git** | `GitRef`, `GitDiffResultVO`, `GitHookError` | Version control integration |
+//! | **Job** | `JobId`, `JobStatus`, `ActionArgs`, `JobError` | Background job scheduling |
+//! | **Transport** | `TransportProtocol`, `TransportEndpoint`, `TransportUrlVO`, `TransportError` | Inter-process communication protocol |
+//! | **Plugin** | `PluginGroup`, `PluginError`, `DiscoveryError` | Plugin discovery & lifecycle |
+//! | **Naming** | `SymbolName`, `NameVariants`, `PrimitiveTypeList`, `SymbolNameList` | Naming convention validation |
+//! | **Semantic** | `SemanticError`, `CallChainError`, `ScopeResolutionError` | Code semantic & scope tracing |
+//! | **Fix** | `FixResult`, `FixApplied` | Auto-fix results & events |
+//! | **Watch** | `WatchResult`, `WatchServiceError` | File system watcher models |
+//! | **Doctor** | `DoctorResultVO` | System diagnostics & health check |
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MODULE DECLARATIONS
@@ -47,6 +55,7 @@
 
 pub mod adapter_collection_vo;
 pub mod adapter_name_vo;
+pub mod adapter_registered_event;
 pub mod agent_status_vo;
 pub mod architecture_analysis_vo;
 pub mod architecture_config_vo;
@@ -65,10 +74,13 @@ pub mod config_setting_vo;
 pub mod doctor_result_vo;
 pub mod error_code_vo;
 pub mod file_system_error;
+pub mod fix_applied_event;
 pub mod fix_result_vo;
 pub mod git_diff_vo;
 pub mod git_hook_error;
 pub mod git_ref_vo;
+pub mod hook_installed_event;
+pub mod hook_removed_event;
 pub mod job_action_vo;
 pub mod job_registry_error;
 pub mod layer_content_vo;
@@ -80,7 +92,6 @@ pub mod lint_domain_vo;
 pub mod lint_operation_error;
 pub mod lint_position_vo;
 pub mod lint_result_vo;
-pub mod lint_scan_event;
 pub mod lint_score_constant;
 pub mod lint_score_vo;
 pub mod lint_severity_vo;
@@ -97,6 +108,9 @@ pub mod naming_symbols_vo;
 pub mod plugin_group_vo;
 pub mod plugin_manager_error;
 pub mod project_summary_vo;
+pub mod scan_completed_event;
+pub mod scan_failed_event;
+pub mod scan_started_event;
 pub mod semantic_tracer_error;
 pub mod source_analysis_vo;
 pub mod source_content_vo;
@@ -124,10 +138,9 @@ pub use architecture_analysis_vo::{
     InheritanceMap, ModuleToFileMap, OrphanIndicatorResult, ReachabilityResult,
 };
 pub use architecture_config_vo::{default_aes_config, ArchitectureConfig};
-pub use architecture_governance_entity::GovernanceReport;
+pub use architecture_governance_entity::ArchitectureGovernanceEntity;
 pub use architecture_rule_vo::{
-    ArchitectureRule, CustomMessageVO, LegacyLayerRule, LegacyLayerRuleList,
-    MandatoryImportRuleVO,
+    ArchitectureRule, CustomMessageVO, LegacyLayerRule, LegacyLayerRuleList, MandatoryImportRuleVO,
 };
 
 // --- Capability Domain ---
@@ -192,6 +205,10 @@ pub use layer_names_vo::{
 };
 
 // --- Lint Domain ---
+pub use adapter_registered_event::AdapterRegistered;
+pub use fix_applied_event::FixApplied;
+pub use hook_installed_event::HookInstalled;
+pub use hook_removed_event::HookRemoved;
 pub use lint_adapter_error::{AdapterError, ScanError, ValidationError};
 pub use lint_domain_vo::{
     CommandArgs, Location, LocationList, ScopeBounds, ScopeRef, ViolationConstraint,
@@ -199,10 +216,6 @@ pub use lint_domain_vo::{
 pub use lint_operation_error::LinterOperationError;
 pub use lint_position_vo::Position;
 pub use lint_result_vo::{LintResult, LintResultList};
-pub use lint_scan_event::{
-    AdapterRegistered, FixApplied, HookInstalled, HookRemoved, ScanCompleted, ScanFailed,
-    ScanStarted,
-};
 pub use lint_score_constant::{FORMAT_JSON, FORMAT_JUNIT, FORMAT_SARIF, FORMAT_TEXT};
 pub use lint_score_vo::FileFormat;
 pub use lint_severity_vo::Severity;
@@ -210,6 +223,9 @@ pub use lint_status_vo::{
     AdapterMetadata, EnvContentVO, JobStatus, LintStatusActionArgs, McpConfigVO, ResponseData,
     SuccessStatus,
 };
+pub use scan_completed_event::ScanCompleted;
+pub use scan_failed_event::ScanFailed;
+pub use scan_started_event::ScanStarted;
 
 // --- Log/Suggestion Domain ---
 pub use log_suggestion_vo::{
@@ -250,7 +266,9 @@ pub use project_summary_vo::{AggregatedResults, ProjectResult};
 pub use semantic_tracer_error::{CallChainError, ScopeResolutionError, SemanticError};
 
 // --- Source Domain ---
-pub use source_analysis_vo::{ImportInfo, ImportInfoList, PrimitiveViolation, PrimitiveViolationList};
+pub use source_analysis_vo::{
+    ImportInfo, ImportInfoList, PrimitiveViolation, PrimitiveViolationList,
+};
 pub use source_content_vo::ContentString;
 pub use source_parser_error::{SourceParserError, SyntaxErrorVO};
 pub use source_path_vo::{DirectoryPath, FilePath};
@@ -487,7 +505,7 @@ pub fn location(file: impl Into<String>, line: i64, column: i64) -> Location {
         file: FilePath::new(file).ok(),
         line: Some(LineNumber::new(line)),
         column: Some(ColumnNumber::new(column)),
-        description: String::new(),
+        description: DescriptionVO::new(String::new()),
     }
 }
 
@@ -519,9 +537,7 @@ pub fn is_passing(results: &[LintResult], threshold: f64) -> bool {
 }
 
 /// Count violations by severity level.
-pub fn count_by_severity(
-    results: &[LintResult],
-) -> std::collections::HashMap<Severity, usize> {
+pub fn count_by_severity(results: &[LintResult]) -> std::collections::HashMap<Severity, usize> {
     let mut counts = std::collections::HashMap::new();
     for r in results {
         *counts.entry(r.severity.clone()).or_insert(0) += 1;
@@ -567,9 +583,9 @@ pub fn worst_severity(results: &[LintResult]) -> Severity {
 #[cfg(test)]
 mod tests {
     use super::{
-        column_number, compute_score, count, count_by_severity, error_message, file_path,
-        has_critical, is_passing, line_number, position, score, worst_severity, BooleanVO,
-        ColumnNumber, LintResult, LineNumber, Score, Severity,
+        boolean, column_number, compute_score, count, count_by_severity, error_message, file_path,
+        has_critical, is_passing, line_number, position, score, worst_severity, LintResult,
+        Severity,
     };
 
     #[test]

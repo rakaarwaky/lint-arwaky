@@ -14,7 +14,7 @@ use crate::taxonomy::FilePath;
 
 
 
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 pub struct OutputControllerSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
