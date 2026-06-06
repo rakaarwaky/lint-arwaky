@@ -8,7 +8,7 @@ name = "lint_arwaky"
 path = "src-rust/lib.rs"
 
 [[bin]]
-name = "lint-arwaky"
+name = "lint-arwaky-cli"
 path = "src-rust/cli_main_entry.rs"
 
 [[bin]]

@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "lint-arwaky": {
-      "command": "uvx",
-      "args": ["lint-arwaky"]
+      "command": "lint-arwaky-mcp",
+      "args": []
     }
   }
 }

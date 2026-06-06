@@ -4,88 +4,105 @@ version: 1.10.2
 # Lint Arwaky Skill
 
 > **GUIDE FOR AI AGENTS.**
-> Humans: Use the `auto-lint` CLI directly in the terminal.
+> Humans: invoke the `lint-arwaky-cli` binary directly in the terminal.
 
-MCP Server for autonomous multi-language linting and architectural governance audits.
+Rust MCP server for autonomous multi-language linting and architectural governance audits.
 
 ## Key Features
 
-- **Multi-Linter**: Runs Ruff, MyPy, Bandit, Radon, pip-audit, ESLint, Prettier, and TSC in a single command.
-- **Architecture Audit**: Enforces architectural rules (e.g., "Surfaces are prohibited from importing Infrastructure").
-- **Auto-Fix**: Automatically fixes code style issues (linting) without intervention.
-- **Reporting**: Generates quality scores (100 - sum of violation penalties, no lower bound) and reports in JSON/SARIF/JUnit formats.
-- **Hot Reload**: Supports live server code updates during development.
+- **Multi-Language**: Audits Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon-style metrics), and JavaScript/TypeScript (ESLint, Prettier, TSC) in a single command.
+- **Architecture Audit**: Enforces 31 Agentic Engineering System (AES) rules (codes AES001–AES033, with AES028 and AES029 reserved) — e.g., "Surfaces are prohibited from importing Infrastructure" (AES001, AES023).
+- **Auto-Fix**: The `fix` subcommand applies safe style fixes without human intervention.
+- **Reporting**: Quality score = `100 - sum(penalty)` (no lower bound). Output formats: `text`, `json`, SARIF 2.1.0, JUnit XML.
+- **Self-Auditing**: The project scans itself under `lint-arwaky-cli check .` using the same rules it exposes to others.
 
 ## Agent Workflow (Recommended)
 
-1. `list_commands()` — Discover available commands.
-2. `execute_command("check", {"path": "src/"})` — Run a quality audit.
-3. `execute_command("fix", {"path": "src/"})` — Fix issues automatically.
-4. `execute_command("report", {"path": "src/", "output-format": "json"})` — Retrieve detailed data.
+1. `list_commands(domain="core")` — Discover available subcommands.
+2. `execute_command("check", {"path": "src-rust/"})` — Run a quality audit.
+3. `execute_command("report", {"path": "src-rust/", "format": "json"})` — Retrieve structured data.
+4. `execute_command("fix", {"path": "src-rust/"})` — Apply safe fixes.
+5. `health_check()` — Confirm linter adapters are reachable.
 
 ## MCP Tools (5 tools)
 
 ### `execute_command(action, args)`
 
-Execute any CLI command. This is the primary tool.
-Example actions: check, fix, report, security, complexity, dependencies, setup, doctor.
+Primary dispatch tool. Execute any CLI subcommand. Examples of valid `action` values: `check`, `scan`, `fix`, `report`, `security`, `complexity`, `dependencies`, `setup`, `doctor`, `git-diff`, `multi-project`, `version`.
+
+```json
+{
+  "action": "check",
+  "args": { "path": "src-rust/", "git_diff": false }
+}
+```
 
 ### `list_commands(domain)`
 
-Lists all available CLI commands along with examples.
+List all available CLI subcommands grouped by domain. Returns rows from `COMMAND_CATALOG` in `src-rust/taxonomy/command_catalog_constant.rs`.
 
-### `comands_schema(tool_name)`
+### `commands_schema(tool_name)`
 
-Retrieve the JSON schemas for the registered MCP tools.
+Retrieve the JSON Schema for a registered MCP tool — useful for typed argument construction.
 
 ### `read_skill_context(section)`
 
-Read this SKILL.md documentation by section or in its entirety.
+Read this SKILL.md by section heading, or the entire document when `section` is empty/missing.
 
 ### `health_check()`
 
-Check system health: adapters and system state.
+Check linter adapter liveness and system state. Reports which of the 9 adapters are reachable and the `cargo` toolchain version.
 
-## CLI Command List (auto-lint)
+## CLI Subcommands (lint-arwaky-cli)
 
 ### Core
 
-- `auto-lint check <path>`: Run all linters and calculate score.
-- `auto-lint scan <path>`: Alias for check (CI-friendly).
-- `auto-lint fix <path>`: Apply safe automatic fixes.
-- `auto-lint report <path> --output-format json`: Generate detailed quality reports.
-- `auto-lint ci <path>`: CI mode (exit code 1 if score < threshold).
-- `auto-lint git-diff [--base HEAD]`: Show files changed since base ref.
-
-### Multi-Project
-
-- `auto-lint multi-project <paths...>`: Run lint across multiple projects and aggregate results.
+- `lint-arwaky-cli check [path] [--git-diff]`: Run full architecture compliance analysis.
+- `lint-arwaky-cli scan [path]`: Alias for `check` (CI-friendly).
+- `lint-arwaky-cli fix [path]`: Apply safe automatic fixes.
+- `lint-arwaky-cli report [path] --output-format <text|json|sarif|junit>`: Generate quality report.
+- `lint-arwaky-cli ci [path] --threshold <N>`: CI mode; exit 1 if score < threshold (default 80).
+- `lint-arwaky-cli git-diff [--base <ref>]`: List files changed since base ref (default `HEAD`).
+- `lint-arwaky-cli multi-project <paths...>`: Aggregate lint results across multiple projects.
 
 ### Scans
 
-- `auto-lint security <path>`: Scan for vulnerabilities using Bandit.
-- `auto-lint complexity <path>`: Cyclomatic complexity analysis (Radon).
-- `auto-lint duplicates <path>`: Detect code duplication or SRP violations.
-- `auto-lint trends <path>`: Monitor quality trends over time.
-- `auto-lint dependencies <path>`: Scan for library vulnerabilities (pip-audit).
+- `lint-arwaky-cli security [path]`: Bandit-style vulnerability scan.
+- `lint-arwaky-cli complexity [path]`: Top 5 cyclomatic-complexity hotspots.
+- `lint-arwaky-cli duplicates [path]`: 5-line block duplication detection.
+- `lint-arwaky-cli trends [path]`: Quality score over time.
+- `lint-arwaky-cli dependencies [path]`: Parse and list `Cargo.toml` dependencies.
 
 ### Setup & Maintenance
 
-- `auto-lint setup doctor`: Diagnose environment health and linter binaries.
-- `auto-lint setup init`: Automatic environment configuration.
-- `auto-lint setup hermes`: Auto-install into Hermes Agent.
-- `auto-lint setup mcp-config`: Print MCP configuration for clients.
-- `auto-lint adapters`: List all active linters.
-- `auto-lint version`: Show current version (1.10.2).
-- `auto-lint config show`: View active configuration (YAML).
-- `auto-lint cancel <job_id>`: Cancel a running lint job.
+- `lint-arwaky-cli setup init`: Create a default `lint_arwaky.config.yaml`.
+- `lint-arwaky-cli setup doctor`: Diagnose environment health and `cargo` toolchain.
+- `lint-arwaky-cli setup mcp-config --client <claude|vscode|hermes|all>`: Print MCP configuration.
+- `lint-arwaky-cli setup hermes [--remove]`: Add or remove the `[mcp.lint-arwaky]` section in Hermes.
+- `lint-arwaky-cli adapters`: List active linter adapters.
+- `lint-arwaky-cli config show`: Show active configuration.
+- `lint-arwaky-cli cancel <job_id>`: Request cancellation of a running lint job.
+- `lint-arwaky-cli version`: Show current version (1.10.2).
 
 ### Dev
 
-- `auto-lint diff <path1> <path2>`: Compare lint results between two versions.
-- `auto-lint import <config_file>`: Import configurations from a JSON/YAML file.
-- `auto-lint export <sarif|junit|json>`: Export lint reports in standard formats.
-- `auto-lint watch <path>`: Monitor files and run lint automatically on changes.
-- `auto-lint suggest <path>`: Provide improvement suggestions (can use --ai).
-- `auto-lint install-hook`: Install git pre-commit hook.
-- `auto-lint uninstall-hook`: Remove git pre-commit hook.
+- `lint-arwaky-cli diff <path1> <path2>`: Compare violation counts and scores between two paths.
+- `lint-arwaky-cli import <config_file>`: Import configuration from a JSON/YAML file.
+- `lint-arwaky-cli export <sarif|junit|json>`: Export reports in standard formats.
+- `lint-arwaky-cli watch [path]`: Poll the path every 2s and re-run lint (Ctrl+C to stop).
+- `lint-arwaky-cli suggest [path] [--ai]`: Print top suggestions by file.
+- `lint-arwaky-cli install-hook`: Install `lint-arwaky-cli check .` as a git pre-commit hook.
+- `lint-arwaky-cli uninstall-hook`: Remove the installed git pre-commit hook.
+
+## Build & Run
+
+```bash
+# Build
+cargo build --release
+
+# Run CLI
+./target/release/lint-arwaky-cli check .
+
+# Run MCP server (speaks JSON-RPC 2.0 over stdin/stdout)
+./target/release/lint-arwaky-mcp
+```

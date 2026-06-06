@@ -225,7 +225,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
         }
     }
 
-    async fn read_text(&self, path: &FilePath) -> Result<FileContentVO, FileSystemError> {
+    async fn read_text(&self, path: &FilePath) -> Result<ContentString, FileSystemError> {
         self.read_file(path).await
     }
 
@@ -252,7 +252,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
     async fn write_text(
         &self,
         path: &FilePath,
-        content: &FileContentVO,
+        content: &ContentString,
         _mode: Option<&Identity>,
     ) -> Result<SuccessStatus, FileSystemError> {
         match fs::write(&path.value, &content.value) {
@@ -293,9 +293,9 @@ impl IFileSystemPort for OSFileSystemAdapter {
         FilePath::new(path.to_string_lossy().to_string())
     }
 
-    async fn read_file(&self, path: &FilePath) -> Result<FileContentVO, FileSystemError> {
+    async fn read_file(&self, path: &FilePath) -> Result<ContentString, FileSystemError> {
         match fs::read_to_string(&path.value) {
-            Ok(content) => Ok(FileContentVO::new(content)),
+            Ok(content) => Ok(ContentString::new(content)),
             Err(e) => Err(FileSystemError {
                 path: path.clone(),
                 message: ErrorMessage::new(e.to_string()),

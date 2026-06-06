@@ -1,16 +1,16 @@
 # Contributing to Lint Arwaky
 
-> This guide covers everything you need to start contributing effectively.
+> This guide covers everything you need to start contributing to the Rust reference implementation in `src-rust/`.
 
 ## Why Contribute
 
-| Aspect                         | Benefit                                     |
-| ------------------------------- | ------------------------------------------- |
-| **Real-world impact**     | Your code supports teams using automated quality tooling |
-| **Skill development**     | Practice with pytest, async, MCP, and 6-domain architecture |
-| **Open source experience**      | Build portfolio and gain collaborative development experience |
-| **Community** | Join an active open-source project with regular contributors |
-| **Learning opportunity**  | Study a well-architected codebase with clear domain boundaries |
+| Aspect | Benefit |
+| --- | --- |
+| **Real-world impact** | Your code powers the same rule engine that audits this project |
+| **Skill development** | Practice Rust, async/tokio, MCP, and 6-layer architecture |
+| **Open-source experience** | Build portfolio with a self-auditing codebase |
+| **Community** | Join a project where every PR is checked by the rules it adds |
+| **Learning opportunity** | Study a codebase that passes its own architecture linter |
 
 ---
 
@@ -30,14 +30,15 @@
 
 ## Prerequisites
 
-- Python >= 3.12
-- uv (recommended) or pip
-- Git
+- **Rust** >= 1.70 (edition 2021)
+- **Cargo** (bundled with Rust)
+- **Git**
 - Familiarity with:
-  - Python asyncio
-  - Click (CLI framework)
-  - mcp (MCP protocol library)
-  - pytest
+  - Rust async/await and `tokio`
+  - `clap` derive macros
+  - `mcp-sdk-rs` (or willingness to read the JSON-RPC 2.0 spec)
+
+> Optional: `rustup` for toolchain management, `cargo-watch` for development.
 
 ---
 
@@ -48,218 +49,272 @@
 git clone https://github.com/rakaarwaky/lint-arwaky.git
 cd lint-arwaky
 
-# Install with uv (recommended)
-uv sync
+# Build everything
+cargo build --release
 
-# Or with pip
-pip install -e ".[dev]"
+# Run the CLI
+./target/release/lint-arwaky-cli version
+# Expected: Lint Arwaky v1.10.2 (AES Semantic Builder)
 
-# Verify installation
-python3 -m pytest tests/ -q
-# Expected: 1500+ passed
+# Run the MCP server in a separate terminal
+./target/release/lint-arwaky-mcp
+# Expected: "Listening on stdin/stdout (JSON-RPC 2.0)"
 
-# Check version
-python3 -m surfaces.cli_main_entry version
-# Expected: 1.7.0
+# Self-lint the project
+./target/release/lint-arwaky-cli check .
+# Scans src-rust/ under the same AES rules the project enforces.
+```
+
+For development without the release profile:
+
+```bash
+cargo run --bin lint-arwaky-cli -- check .
+cargo run --bin lint-arwaky-mcp
 ```
 
 ---
 
 ## Architecture
 
-### 6-Domain Model
+### 6-Layer Model
 
 ```
-src/
-  agent/              Wiring layer -- DI container, managers, orchestrators
-  capabilities/       Thinking layer -- analysis logic, processors, evaluators
-  contract/           Interface layer -- ports, protocols, aggregates
-  infrastructure/     Toolbox layer -- linter adapters, providers, clients
-  surfaces/           Interface layer -- CLI commands, MCP handlers
-  taxonomy/           Language layer -- Value Objects (VOs), entities, events
+src-rust/
+  agent/           Wiring layer — DI container, managers, orchestrators
+  capabilities/    Thinking layer — analysis logic, processors, evaluators
+  contract/        Interface layer — ports (I*), protocols, aggregates
+  infrastructure/  Toolbox layer — linter adapters, providers, scanners
+  surfaces/        Interface layer — CLI commands, MCP handlers
+  taxonomy/        Language layer — Value Objects (VOs), entities, constants
 ```
 
 ### Dependency Rules
 
-Imports must follow AES layer rules:
+The import boundaries are enforced by the `arch_import_checker` capability and AES001:
 
 ```
 agent          --> taxonomy, contract, infrastructure, capabilities  OK
-surfaces       --> taxonomy, contract(io), agent                     OK
-surfaces       --> infrastructure, capabilities                      NO
+surfaces       --> taxonomy, contract(io)                            OK
+surfaces       --> infrastructure, capabilities                      NO  (AES001, AES023)
 capabilities   --> taxonomy, contract(protocol)                      OK
-capabilities   --> infrastructure, surfaces, agent                   NO
+capabilities   --> infrastructure, surfaces, agent                   NO  (AES001)
 infrastructure --> taxonomy, contract(port)                          OK
-infrastructure --> capabilities, surfaces, agent                     NO
+infrastructure --> capabilities, surfaces, agent                     NO  (AES001)
 contract       --> taxonomy                                          OK
-contract       --> agent, capabilities, infrastructure, surfaces     NO
+contract       --> agent, capabilities, infrastructure, surfaces     NO  (AES001)
 taxonomy       --> taxonomy                                          OK
-taxonomy       --> agent, capabilities, infrastructure, surfaces, contract NO
+taxonomy       --> agent, capabilities, infrastructure, surfaces, contract  NO  (AES001)
 ```
 
-The `ArchComplianceAdapter` enforces these rules automatically.
-Run `auto-lint check src/` to verify no violations.
+The Surface → Agent edge is indirect: surfaces hold `Arc<dyn ServiceContainerAggregate>` and call into it via the trait only.
 
 ### Key Interfaces & Mandatory Inheritance
 
-To prevent architectural bypasses, every logic file (except `__init__.py`) **must** define a class that inherits from its corresponding contract:
+To prevent architectural bypasses, every logic file **must** define a struct that implements the appropriate contract (AES027):
 
-| Layer              | Suffix Rule | Base Contract   | Example File                 |
-| ------------------ | ----------- | --------------- | ---------------------------- |
-| **Agent**          | Strict      | `_aggregate.py`  | `analysis_orchestrator_aggregate.py` |
-| **Capabilities**   | Flexible    | `_protocol.py`  | `arch_compliance_analyzer.py` |
-| **Infrastructure** | Flexible    | `_port.py`      | `python_ruff_adapter.py`      |
-| **Surfaces**       | Strict      | N/A             | `cli_check_command.py`        |
-| **Taxonomy**       | Strict      | `_vo.py` etc.   | `adapter_name_vo.py`         |
+| Layer | Allowed Suffixes | Trait / Example File |
+| --- | --- | --- |
+| **Agent** | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager` | `analysis_execution_orchestrator.rs` |
+| **Capabilities** | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler` | `architecture_compliance_analyzer.rs` |
+| **Infrastructure** | `_adapter`, `_provider`, `_scanner`, `_client`, `_lifespan`, `_validator`, `_wrapper` | `python_ruff_adapter.rs` |
+| **Surfaces** | `_command`, `_handler`, `_controller` | `cli_check_command.rs` |
+| **Taxonomy** | `_vo`, `_entity`, `_event`, `_error`, `_constant` | `lint_score_vo.rs`, `lint_score_constant.rs` |
+
+**AES033 (constant purity)**: A `_constant` file may contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, `impl`, `mod`, or `pub use` in such a file triggers AES033.
 
 ---
 
 ## How to Add an Adapter
 
-### 1. Create the adapter file
+### 1. Pick the right layer
 
-File: `src/infrastructure/python_mytool_adapter.py` (Must be exactly 3 words)
+Linter adapters live in `src-rust/infrastructure/` and must end in `_adapter.rs` (or `_scanner.rs` for AST-level tools). The file name follows the 3-word convention: `[domain]_[tool]_[role].rs`.
 
-Implement the appropriate port from `contract/`.
+### 2. Create the adapter file
 
-```python
-"""Adapter for MyTool."""
-from contract import ILinterAdapterPort
-from taxonomy import LintResultEntity
+For example, `src-rust/infrastructure/rust_clippy_adapter.rs`:
 
-class PythonMytoolAdapter(ILinterAdapterPort):
-    def name(self) -> str:
-        return "my-tool"
+```rust
+//! Adapter wrapping the Clippy linter.
+use async_trait::async_trait;
+use std::path::Path;
+use std::process::Command;
 
-    def scan(self, path: str) -> list[LintResultEntity]:
-        # Implementation
-        ...
+use crate::contract::ILinterAdapterPort;
+use crate::taxonomy::{AdapterName, LintResult, LintResultList};
+
+pub struct RustClippyAdapter;
+
+impl RustClippyAdapter {
+    pub fn new() -> Self { Self }
+}
+
+#[async_trait]
+impl ILinterAdapterPort for RustClippyAdapter {
+    fn name(&self) -> AdapterName { AdapterName::new("clippy") }
+
+    async fn scan(&self, path: &Path) -> LintResultList {
+        let output = Command::new("cargo")
+            .args(["clippy", "--message-format=json", "--manifest-path"])
+            .arg(path)
+            .output();
+        // parse output into LintResultList...
+        LintResultList::default()
+    }
+}
 ```
 
-### 2. Register in DI container
+### 3. Register in the DI container
 
-File: `src/agent/dependency_injection_container.py`
+Edit `src-rust/agent/dependency_injection_container.rs` and add the adapter:
 
-Add your adapter to the container initialization:
+```rust
+use crate::infrastructure::rust_clippy_adapter::RustClippyAdapter;
 
-```python
-from infrastructure.python_mytool_adapter import PythonMytoolAdapter
-
-self.adapters = [
-    ...
-    PythonMytoolAdapter(),
-]
+// inside DependencyInjectionContainer::new()
+self.adapters.push(Box::new(RustClippyAdapter::new()));
 ```
 
-### 3. Add tests
+### 4. Add a test
 
-File: `tests/infrastructure/test_my_tool_adapter.py`
+Create `src-rust/infrastructure/rust_clippy_adapter.rs` `#[cfg(test)] mod tests` (Rust convention: keep tests in-file) or a sibling test in `tests/`:
 
-```python
-from unittest.mock import patch, MagicMock
-from infrastructure.python_mytool_adapter import PythonMytoolAdapter
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-def test_my_tool_name():
-    assert PythonMytoolAdapter().name() == "my-tool"
-
-@patch("subprocess.run")
-def test_my_tool_scan(mock_run):
-    mock_run.return_value = MagicMock(stdout="...", stderr="", returncode=0)
-    results = PythonMytoolAdapter().scan("test.py")
-    assert isinstance(results, list)
+    #[tokio::test]
+    async fn test_clippy_name() {
+        let a = RustClippyAdapter::new();
+        assert_eq!(a.name().value, "clippy");
+    }
+}
 ```
 
-### 4. Run tests
+### 5. Run the tests
 
 ```bash
-python3 -m pytest tests/infrastructure/test_my_tool_adapter.py -v
-python3 -m pytest tests/ --cov=src --cov-report=term-missing
+cargo test --bin lint-arwaky-cli
+cargo test --lib
 ```
 
 ---
 
 ## How to Add a CLI Command
 
-### 1. Choose the right module
+### 1. Pick the right module
 
-All CLI modules are in `src/surfaces/` and must follow the `cli_<name>_command.py` pattern.
+CLI surface modules live in `src-rust/surfaces/` and follow the `cli_<group>_command.rs` pattern:
 
-| Module                    | Purpose                                         |
-| ------------------------- | ----------------------------------------------- |
-| `cli_core_command.py`     | check, scan, fix, report, version               |
-| `cli_analysis_command.py` | complexity, duplicates, trends, dependencies    |
-| `cli_dev_command.py`      | diff, suggest, ignore, config, export, import   |
-| `cli_setup_command.py`    | setup init, setup hermes, setup doctor          |
+| Module | Purpose |
+| --- | --- |
+| `cli_core_command.rs` | `check`, `scan`, `fix`, `report`, `ci`, `version`, `adapters`, `config` |
+| `cli_analysis_command.rs` | `complexity`, `duplicates`, `trends`, `dependencies` |
+| `cli_dev_command.rs` | `diff`, `suggest`, `import`, `export` |
+| `cli_setup_command.rs` | `setup init/doctor/mcp-config/hermes` |
+| `cli_watch_command.rs` | `watch` |
+| `cli_maintenance_command.rs` | `install-hook`, `uninstall-hook`, `clean`, `update` |
+| `core_git_command.rs` | `git-diff`, `multi-project` |
 
-### 2. Add the command
+### 2. Add the subcommand
 
-Commands must be wrapped in a Handler or Controller class in the surface layer.
+In `src-rust/surfaces/cli_core_command.rs`:
 
-```python
-@click.command()
-@click.argument('path')
-def my_command(path):
-    """Description."""
-    container = AgentContainerRegistry.get_instance()
-    # Delegate to Agent layer
-    container.orchestrator.run_logic(path)
+```rust
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    // ... existing variants ...
+    /// My new command
+    MyCommand {
+        /// Optional path argument
+        path: Option<String>,
+    },
+}
 ```
 
-### 3. Register in catalog
+In `src-rust/cli_main_entry.rs` add a `match` arm:
 
-File: `src/surfaces/mcp_command_catalog.py`
-
-Add to `_COMMAND_CATALOG`:
-
-```python
-"my-command": {
-    "description": "What it does",
-    "example": "auto-lint my-command /path",
-},
+```rust
+Commands::MyCommand { path } => {
+    let target = path.unwrap_or_else(|| ".".to_string());
+    // delegate to an agent orchestrator
+    let container: Arc<dyn ServiceContainerAggregate> =
+        Arc::new(DependencyInjectionContainer::new());
+    container.get_my_orchestrator().run(&target);
+    ExitCode::SUCCESS
+}
 ```
 
-### 4. Add tests
+### 3. Register in COMMAND_CATALOG
 
-Test via CliRunner (integration) or test the underlying
-use case directly (unit):
+`src-rust/taxonomy/command_catalog_constant.rs` is the single source of truth (AES030). Add a row:
 
-```python
-from click.testing import CliRunner
-from surfaces.cli_core_command import cli
+```rust
+pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
+    // ... existing rows ...
+    (
+        "my-command",
+        "Brief description for list_commands",
+        "lint-arwaky-cli my-command /path",
+    ),
+];
+```
 
-def test_my_command():
-    runner = CliRunner()
-    result = runner.invoke(cli, ['my-command', 'test.py'])
-    assert result.exit_code == 0
+### 4. Run and verify
+
+```bash
+cargo run --bin lint-arwaky-cli -- my-command .
+cargo run --bin lint-arwaky-cli -- list_commands core
 ```
 
 ---
 
 ## How to Add an MCP Tool
 
-### 1. Add to registry
+### 1. Implement the tool
 
-File: `src/surfaces/mcp_tools_store.py` (3 words)
+In `src-rust/surfaces/mcp_tools_command.rs`, add a new function:
 
-```python
-def register_my_tool(server):
-    @server.tool()
-    async def my_tool_handler(param: str) -> str:
-        """Description."""
-        # implementation
+```rust
+pub async fn my_tool_handler(args: Option<serde_json::Value>) -> serde_json::Value {
+    serde_json::json!({ "ok": true, "args": args })
+}
 ```
 
-### 2. Add tests
+### 2. Register the tool schema
 
-```python
-import json
-import pytest
+In `src-rust/mcp_main_entry.rs`, add an entry to the `tools/list` array:
 
-@pytest.mark.asyncio
-async def test_my_tool():
-    from surfaces.mcp_tools_store import register_my_tool
-    # Setup test server/mock
-    ...
+```rust
+{
+    "name": "my_tool",
+    "description": "What the tool does (AES025: must be a non-empty string).",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "arg": { "type": "string" }
+        }
+    }
+}
+```
+
+### 3. Wire the dispatch arm
+
+In the `match tool_name` block in `mcp_main_entry.rs`:
+
+```rust
+"my_tool" => mcp_tools_command::my_tool_handler(arguments).await,
+```
+
+### 4. Smoke-test
+
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+  | ./target/release/lint-arwaky-mcp
+
+echo '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"my_tool","arguments":{"arg":"hello"}}}' \
+  | ./target/release/lint-arwaky-mcp
 ```
 
 ---
@@ -269,39 +324,35 @@ async def test_my_tool():
 ### Run all tests
 
 ```bash
-python3 -m pytest tests/ -v --tb=short
+cargo test --workspace
 ```
 
-### Run with coverage
+### Run a single test by name
 
 ```bash
-python3 -m pytest tests/ --cov=src --cov-report=term-missing
+cargo test --lib arch_compliance
 ```
 
-### Run specific test file
+### Test organization
 
-```bash
-python3 -m pytest tests/infrastructure/test_python_mytool_adapter.py -v
-```
-
-### Test structure
+Tests live next to the code they exercise (Rust convention):
 
 ```
-tests/
-  agent/                  DI container tests
-  capabilities/           Use case and formatter tests
-  infrastructure/         Adapter tests (mock subprocess)
-  surfaces/               CLI and MCP tool tests
-  taxonomy/               Model and utility tests
-  conftest.py             Shared fixtures
+src-rust/
+  capabilities/architecture_compliance_analyzer.rs
+    └── #[cfg(test)] mod tests { ... }
+  contract/...
+  ...
 ```
+
+For integration tests, use the `tests/` directory at the workspace root.
 
 ### Rules
 
-- Every new function needs at least one test
-- Mock external tools (subprocess, filesystem, network)
-- Test both success and failure paths
-- Use `@pytest.mark.asyncio` for async tests
+- Every public function should have at least one test.
+- Mock external processes (`std::process::Command`) at the trait boundary.
+- Test both success and failure paths.
+- Use `#[tokio::test]` for async tests.
 
 ---
 
@@ -310,32 +361,33 @@ tests/
 ### Formatting
 
 ```bash
-# Auto-format
-auto-lint fix src/
+cargo fmt --all
+cargo clippy --all-targets -- -D warnings
 ```
 
 ### Conventions
 
-- **Naming**: Strict 3-word underscore-separated filenames (`word1_word2_word3.py`).
-- **Classes**: Mandatory class definitions for all logic modules. No standalone functions at module level.
-- **Lines**: Files must be 10-300 lines.
-- **Score**: 100/100 architectural compliance required for all PRs.
-- **Bypasses**: `noqa`, `type: ignore`, and `nosec` are strictly forbidden.
+- **Naming**: Strict 3-word snake_case filename with a layer-role suffix (e.g., `architecture_compliance_analyzer.rs`).
+- **Structs**: Mandatory struct definitions in all logic modules. Free-standing functions are forbidden in the capability/agent/infrastructure layers (AES009).
+- **Lines**: Files must stay within the AES004/AES005 bounds (configurable; default 10-500 lines).
+- **Score**: `cargo run --bin lint-arwaky-cli -- check .` should report 0 critical findings on a clean PR.
+- **Bypasses**: `#[allow(...)]` on lint rules, `noqa`-style comments, and `type: ignore`-style suppressions are forbidden by AES014 and will fail CI.
 
-### AES006 Primitive Type Policy (v1.9.4)
+### AES006 Primitive Type Policy
 
 The project applies a **layer-granular** primitive enforcement strategy:
 
 | Layer | `no_primitives` | Policy |
-|---|---|---|
+| --- | --- | --- |
 | `contract` | `true` | All port/protocol/aggregate signatures must use taxonomy Value Objects |
 | `taxonomy(entity\|error\|event)` | `true` | All entity/error/event attributes must use Value Objects |
 | `taxonomy(vo)` | `false` | VO internals may use primitives as underlying storage |
+| `taxonomy(constant)` | `false` | Constants are primitives by definition; must contain ONLY constants (AES033) |
 | `infrastructure` | `false` | Adapters may use primitive types as supporting/local types |
 | `capabilities` | `false` | Capability implementations may use primitive types internally |
 | `surfaces` | `false` | Surface/CLI handlers may use primitive types for I/O parsing |
 
-**Rationale**: Enforcing strict Value Objects in implementation adapter layers creates unnecessary boxing overhead and conflicts with third-party library APIs (e.g., FastMCP, Click, asyncio). Domain contracts and taxonomy definitions remain strictly typed to prevent boundary leakage.
+**Rationale**: Strict Value Objects in implementation/adapter layers create unnecessary boxing overhead and conflict with third-party APIs (`clap`, `tokio`, `mcp-sdk-rs`). Domain contracts and taxonomy definitions remain strictly typed to prevent boundary leakage.
 
 ---
 
@@ -343,14 +395,14 @@ The project applies a **layer-granular** primitive enforcement strategy:
 
 ### Before Submitting
 
-1. **Run tests**: `python3 -m pytest tests/`
-2. **Run Architecture Audit**: `auto-lint check src/`
-   **Score must be 100.0/100.0**.
-3. **Update docs**: Ensure `README.md`, `SKILL.md`, and `PRD.md` match your changes.
+1. **Run tests**: `cargo test --workspace`
+2. **Run self-lint**: `cargo run --bin lint-arwaky-cli -- check .` — no CRITICAL findings.
+3. **Format & lint**: `cargo fmt --all && cargo clippy --all-targets -- -D warnings`
+4. **Update docs**: Ensure `README.md`, `SKILL.md`, `PRD.md`, and `CHANGELOG.md` reflect your changes.
 
 ### PR Description Template
 
-```
+```markdown
 ## What
 Brief description of what this PR does.
 
@@ -364,15 +416,16 @@ How does it work? Any design decisions?
 How was it tested? What test cases were added?
 
 ## Checklist
-- [ ] Tests passing
-- [ ] 100.0/100.0 architecture score
-- [ ] Coverage not decreased
+- [ ] `cargo test --workspace` passes
+- [ ] `cargo run --bin lint-arwaky-cli -- check .` reports 0 CRITICAL findings
+- [ ] `cargo fmt --all` clean
+- [ ] `cargo clippy --all-targets -- -D warnings` clean
 - [ ] Docs updated if needed
 ```
 
 ### Review Criteria
 
-- Code follows architecture rules (no cross-layer violations)
+- Code follows AES rules (no cross-layer violations)
 - Tests cover both happy path and error cases
 - No hardcoded paths or environment assumptions
 - Subprocess calls use absolute paths to executables

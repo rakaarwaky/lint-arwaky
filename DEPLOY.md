@@ -1,113 +1,191 @@
-# Deployment Guide - MCP Lint-Arwaky
+# Deployment Guide — Lint Arwaky v1.10.2
 
-**Version**: 1.9.4
-**Python**: 3.12+
-**Status**: PRODUCTION-READY — all acceptance criteria PASS.
+**Status**: PRODUCTION-READY — self-lint target ships clean.
 
 ---
 
 ## Prerequisites
 
-| Requirement | Minimum               | Recommended                 |
-| ----------- | --------------------- | --------------------------- |
-| Python      | 3.12                  | 3.13+                       |
-| RAM         | 512 MB                | 2 GB+ (for large codebases) |
-| Disk        | 100 MB                | -                           |
-| OS          | Linux, macOS, Windows | Linux                       |
+| Requirement | Minimum | Recommended |
+| --- | --- | --- |
+| Rust toolchain | 1.70 (edition 2021) | 1.78+ (stable) |
+| RAM | 256 MB | 1 GB+ (for large codebases) |
+| Disk | 50 MB (release binaries) | - |
+| OS | Linux, macOS, Windows (MSVC / GNU) | Linux x86_64 |
 
-No external services required. Runs entirely locally.
+No external services required. The MCP server speaks JSON-RPC 2.0 over stdin/stdout and has no network dependencies.
 
 ---
 
 ## Installation
 
-### Option 1: pip
+### Option 1: Installer script
 
-    pip install lint-arwaky
+```bash
+# Linux / macOS
+curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/install.remote.sh | bash
+```
 
-### Option 2: uv (recommended)
+The installer places `lint-arwaky-cli` and `lint-arwaky-mcp` in `~/.local/bin/` (or `/usr/local/bin/` when run as root).
 
-    uv tool install lint-arwaky
-    # Or run without installing: uvx auto-lint check ./src/
+### Option 2: From source (recommended for contributors)
 
-### Option 3: From source
+```bash
+git clone https://github.com/rakaarwaky/lint-arwaky.git
+cd lint-arwaky
+cargo build --release
 
-    git clone https://github.com/rakaarwaky/lint-arwaky.git
-    cd lint-arwaky
-    python -m venv .venv && source .venv/bin/activate
-    pip install -e ".[dev]"
+# Binaries produced at:
+#   target/release/lint-arwaky-cli
+#   target/release/lint-arwaky-mcp
 
-### Option 4: Installer scripts
+# Optionally symlink into PATH
+ln -s "$PWD/target/release/lint-arwaky-cli" ~/.local/bin/
+ln -s "$PWD/target/release/lint-arwaky-mcp" ~/.local/bin/
+```
 
-    Linux/macOS: curl -sSL INSTALL_URL | bash
-    Windows PowerShell: Invoke-WebRequest -Uri INSTALL_URL | Invoke-Expression
+### Option 3: Cross-compile
+
+```bash
+# Linux x86_64
+cargo build --release --target x86_64-unknown-linux-gnu
+
+# macOS Apple Silicon
+cargo build --release --target aarch64-apple-darwin
+
+# Windows MSVC
+cargo build --release --target x86_64-pc-windows-msvc
+```
 
 ### Verify installation
 
-    auto-lint version
-    auto-lint setup doctor
+```bash
+lint-arwaky-cli version
+# Expected: Lint Arwaky v1.10.2 (AES Semantic Builder)
+
+lint-arwaky-cli setup doctor
+# Expected: cargo: OK (cargo X.Y.Z), binary: OK (/path/to/lint-arwaky-cli)
+```
 
 ---
 
 ## MCP Server Setup
 
+The MCP server is a self-contained binary that speaks JSON-RPC 2.0 over stdin/stdout using the `2024-11-05` protocol version.
+
 ### Configure for Claude Desktop
 
-    auto-lint setup mcp-config --client claude
+Edit `claude_desktop_config.json`:
 
-Manual config in claude_desktop_config.json:
-
-    json
-    {
-      "mcpServers": {
-        "lint-arwaky": { "command": "lint-arwaky" }
-      }
+```json
+{
+  "mcpServers": {
+    "lint-arwaky": {
+      "command": "lint-arwaky-mcp",
+      "args": []
     }
+  }
+}
+```
 
-### Configure for VS Code
+Or print the config snippet from the CLI:
 
-    auto-lint setup mcp-config --client vscode
+```bash
+lint-arwaky-cli setup mcp-config --client claude
+```
+
+### Configure for VS Code (MCP extension)
+
+```bash
+lint-arwaky-cli setup mcp-config --client vscode
+```
 
 ### Configure for Hermes Agent
 
-    pip install lint-arwaky && auto-lint setup hermes
+```bash
+# Add lint-arwaky to ~/.hermes/config.toml
+lint-arwaky-cli setup hermes
+
+# To remove:
+lint-arwaky-cli setup hermes --remove
+```
+
+### Smoke-test the MCP server manually
+
+```bash
+# tools/list
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | lint-arwaky-mcp
+
+# health_check
+echo '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"health_check","arguments":{}}}' \
+  | lint-arwaky-mcp
+```
 
 ---
 
 ## Health Check Commands
 
-    auto-lint version          # Version check
-    auto-lint setup doctor     # Self-diagnose
-    auto-lint check ./src/ --dry-run  # Adapter health
+```bash
+lint-arwaky-cli version        # Version check
+lint-arwaky-cli setup doctor   # Self-diagnose (Rust toolchain, binary path)
+lint-arwaky-cli adapters       # List active linter adapters
+```
 
-Expected: version returns info, doctor reports no issues, health_check tool returns all 4 adapters healthy.
+The `health_check` MCP tool reports on adapter health and system state.
 
 ---
 
 ## Usage
 
-    auto-lint check ./src/              # Full audit
-    auto-lint security ./src/           # Bandit scan
-    auto-lint complexity ./src/         # Radon analysis
-    auto-lint ci ./src/                 # CI mode with exit codes
-    auto-lint fix ./src/                # Auto-apply safe fixes
-    auto-lint report ./src/ --output-format sarif -o report.sarif
+```bash
+# Full self-lint
+lint-arwaky-cli check .
+
+# Targeted scans
+lint-arwaky-cli security .       # vulnerability scan
+lint-arwaky-cli complexity .     # complexity hotspots
+lint-arwaky-cli duplicates .     # duplication detection
+lint-arwaky-cli dependencies .   # Cargo.toml listing
+
+# CI mode with exit codes
+lint-arwaky-cli ci . --threshold 80
+
+# Auto-fix (where safe)
+lint-arwaky-cli fix .
+
+# Reports
+lint-arwaky-cli report . --output-format sarif
+lint-arwaky-cli report . --output-format junit
+lint-arwaky-cli report . --output-format json
+```
 
 ---
 
 ## Configuration
 
-Config file: lint-arwaky.config.python.yaml
+Default configuration is hard-coded in `src-rust/capabilities/architecture_lint_handler::default_aes_config()`. To override, generate a YAML file:
 
-    thresholds:
-      score_target: 100.0
-      max_complexity: 10
-    adapters:
-      ruff: { enabled: true, weight: 1.0 }
-      mypy: { enabled: true, weight: 1.0 }
-      bandit: { enabled: true, weight: 1.0 }
-      radon: { enabled: true, weight: 1.0 }
-      architecture: { enabled: true, weight: 3.0 }
+```bash
+lint-arwaky-cli setup init
+# Creates lint_arwaky.config.yaml in the current directory
+```
+
+Key sections:
+
+```yaml
+thresholds:
+  score_target: 100.0      # target self-lint score
+  max_complexity: 10       # per-function branch cap
+
+adapters:
+  rust_linter:  { enabled: true, weight: 1.0 }
+  python_ruff:  { enabled: true, weight: 1.0 }
+  python_mypy:  { enabled: true, weight: 1.0 }
+  python_bandit:{ enabled: true, weight: 1.0 }
+  python_metrics:{ enabled: true, weight: 1.0 }
+  javascript:   { enabled: true, weight: 1.0 }
+  architecture: { enabled: true, weight: 3.0 }   # AES rules carry 3x weight
+```
 
 ---
 
@@ -115,38 +193,48 @@ Config file: lint-arwaky.config.python.yaml
 
 ### Before Deploy
 
-- [ ] Container.execute() implemented - CLI boots without crash
-- [ ] Zero bypass annotations - no noqa or type: ignore in codebase
-- [ ] E501 rule active - all line-length violations fixed
-- [ ] Self-lint score = 100% - auto-lint check ./src/ passes clean
-- [ ] MCP tools respond correctly - end-to-end MCP client test passes
-- [ ] Health check green - all 4 adapters report healthy
-- [ ] Security scan clean - auto-lint security ./src/ no issues
-- [ ] Type safety confirmed - mypy src/ = 0 errors
-- [ ] Architecture rules pass - 0 AES violations
+- [ ] `cargo build --release` succeeds
+- [ ] `cargo test --workspace` passes
+- [ ] `cargo run --bin lint-arwaky-cli -- check .` reports 0 CRITICAL findings
+- [ ] `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings` clean
+- [ ] `lint-arwaky-cli version` returns `1.10.2`
+- [ ] `lint-arwaky-cli setup doctor` reports no issues
+- [ ] `lint-arwaky-mcp` responds to `tools/list` with the 5 expected tools
+- [ ] `health_check` MCP tool returns all adapters healthy
 
 ### Deploy
 
-- [ ] Package version bumped
-- [ ] Changelog updated (CHANGELOG.md)
-- [ ] Tests pass: pytest test/
-- [ ] Build succeeds: python -m build
-- [ ] Upload to PyPI: twine upload dist/*
+- [ ] Bump version in `Cargo.toml`
+- [ ] Update `CHANGELOG.md`
+- [ ] Build release: `cargo build --release`
+- [ ] Tag the release: `git tag v1.10.2`
+- [ ] Push tag: `git push origin v1.10.2`
+- [ ] Run installer smoke-test on a clean machine
 
 ### Post-Deploy
 
-- [ ] pip install lint-arwaky==version succeeds
-- [ ] MCP server starts without errors
-- [ ] Health check tool responds within 5 seconds
-- [ ] Sample lint run completes on a known-good project
+- [ ] `lint-arwaky-cli --version` succeeds on the target machine
+- [ ] MCP server starts and responds to `tools/list` within 2 seconds
+- [ ] Sample lint run on a known-good project completes without errors
 
 ---
 
 ## Rollback Plan
 
-    pip install lint-arwaky==previous_version
+Reinstall the previous release:
 
-Restart MCP server / Claude Desktop / VS Code.
+```bash
+cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag v1.10.1
+```
+
+Or rebuild from a specific tag:
+
+```bash
+git checkout v1.10.1
+cargo build --release
+```
+
+Restart any running MCP client (Claude Desktop, VS Code, Hermes).
 
 ---
 
@@ -154,4 +242,4 @@ Restart MCP server / Claude Desktop / VS Code.
 
 - Repository: https://github.com/rakaarwaky/lint-arwaky
 - Issues: https://github.com/rakaarwaky/lint-arwaky/issues
-- Documentation: SKILL.md, AES_RULES.md, README.md
+- Documentation: [README.md](README.md), [SKILL.md](SKILL.md), [docs/AES_RULES.md](docs/AES_RULES.md), [docs/AESArchitecture.md](docs/AESArchitecture.md)
