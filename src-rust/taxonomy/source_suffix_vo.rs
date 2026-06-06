@@ -61,6 +61,12 @@ impl SuffixPolicyVO {
     pub fn is_strict(&self) -> bool { self.value == "strict" }
 }
 
+impl Default for SuffixPolicyVO {
+    fn default() -> Self {
+        SuffixPolicyVO { value: "strict".to_string() }
+    }
+}
+
 impl std::fmt::Display for SuffixPolicyVO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)

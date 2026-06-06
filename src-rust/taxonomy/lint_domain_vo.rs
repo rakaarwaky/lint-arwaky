@@ -84,6 +84,15 @@ impl LocationList {
     pub fn new() -> Self {
         Self { values: Vec::new() }
     }
+}
+
+impl Default for LocationList {
+    fn default() -> Self {
+        LocationList { values: Vec::new() }
+    }
+}
+
+impl LocationList {
     pub fn push(&mut self, item: Location) { self.values.push(item); }
     pub fn len(&self) -> usize { self.values.len() }
     pub fn is_empty(&self) -> bool { self.values.is_empty() }

@@ -1,11 +1,18 @@
+use serde::{Serialize, Deserialize};
 use std::hash::{Hash, Hasher};
 
 /// error_code_vo — Error code value object.
 
 /// Linter error code.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ErrorCode {
     code: String,
+}
+
+impl Default for ErrorCode {
+    fn default() -> Self {
+        ErrorCode { code: String::new() }
+    }
 }
 
 impl ErrorCode {

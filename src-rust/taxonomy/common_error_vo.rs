@@ -142,6 +142,12 @@ impl ErrorMessage {
     }
 }
 
+impl Default for ErrorMessage {
+    fn default() -> Self {
+        ErrorMessage { value: String::new() }
+    }
+}
+
 impl std::fmt::Display for ErrorMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)

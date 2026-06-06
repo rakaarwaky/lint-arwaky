@@ -14,6 +14,12 @@ impl BooleanVO {
     }
 }
 
+impl Default for BooleanVO {
+    fn default() -> Self {
+        BooleanVO { value: false }
+    }
+}
+
 impl std::fmt::Display for BooleanVO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
@@ -66,6 +72,12 @@ pub struct ColumnNumber {
 impl ColumnNumber {
     pub fn new(value: i64) -> Self {
         Self { value: value }
+    }
+}
+
+impl Default for ColumnNumber {
+    fn default() -> Self {
+        ColumnNumber { value: 0 }
     }
 }
 
@@ -124,6 +136,12 @@ pub struct Count {
 impl Count {
     pub fn new(value: i64) -> Self {
         Self { value: value }
+    }
+}
+
+impl Default for Count {
+    fn default() -> Self {
+        Count { value: 0 }
     }
 }
 
@@ -254,6 +272,12 @@ impl LineNumber {
     }
 }
 
+impl Default for LineNumber {
+    fn default() -> Self {
+        LineNumber { value: 0 }
+    }
+}
+
 impl std::fmt::Display for LineNumber {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
@@ -309,6 +333,15 @@ impl PatternList {
     pub fn new(value: impl IntoPatternListValues) -> Self {
         Self { values: value.into_pattern_list_values() }
     }
+}
+
+impl Default for PatternList {
+    fn default() -> Self {
+        PatternList { values: Vec::new() }
+    }
+}
+
+impl PatternList {
     pub fn iter(&self) -> std::slice::Iter<'_, String> {
         self.values.iter()
     }

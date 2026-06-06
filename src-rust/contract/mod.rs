@@ -1,3 +1,52 @@
+//! # Contract Layer — The Abstraction Boundaries
+//!
+//! This module is the **formal promise layer** of the AES architecture. It defines
+//! _what_ can be done without defining _how_. Every type in this layer is either:
+//!
+//! - A **Port** (`_port`): Outbound interface for technical operations (I/O, DB, Network).
+//!   Implemented by **Infrastructure**.
+//! - A **Protocol** (`_protocol`): Inbound interface for use cases or domain calculations.
+//!   Implemented by **Capabilities**.
+//! - An **Aggregate** (`_aggregate`): Composition-based facade grouping related ports/protocols.
+//!   Implemented by **Agent**.
+//!
+//! ## Layer Rules (AES Compliance)
+//! - **Allowed Imports**: `src/taxonomy/` and `src/contract/` only.
+//! - **Forbidden Imports**: `src/capabilities/`, `src/infrastructure/`, `src/agent/`, `src/surfaces/`.
+//!   Violations trigger **AES001**.
+//! - **Allowed Suffixes**: `_port`, `_protocol`, `_aggregate` (**AES008**).
+//! - **Primitive Usage**: Forbidden in trait signatures (**AES006**). Must use taxonomy VOs.
+//!
+//! ## Import Patterns
+//!
+//! Import specific interfaces directly from the barrel:
+//!
+//! ```rust,ignore
+//! use lint_arwaky::contract::{IFileSystemPort, IArchLintProtocol, ServiceContainerAggregate};
+//! ```
+//!
+//! ## Architectural Invariants
+//!
+//! - **AES026**: Aggregates may inherit from both Ports and Protocols (composition of
+//!   outbound dependencies and inbound use cases). Composition via fields is also valid
+//!   when inheritance is not appropriate.
+//! - **AES007**: All imports of contract types must come from this barrel (`contract::*`),
+//!   not from internal submodules.
+//! - **AES027**: Any layer importing a contract must have at least one struct that
+//!   implements it (prevents dead contract syndrome).
+//!
+//! ## Notes on Shims
+//!
+//! Some modules in this layer are intentionally retained as **backward-compat shims**
+//! (e.g. `source_system_port`, `naming_variant_port`) so that historical import paths
+//! continue to compile. They are not dead code: the port/protocol split between
+//! `INamingVariantPort` (Infrastructure) and `INamingVariantProtocol` (Capabilities)
+//! is a deliberate design choice, even though their method signatures coincide.
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MODULE DECLARATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 pub mod adapter_container_aggregate;
 pub mod agent_lifecycle_aggregate;
 pub mod analysis_orchestrator_aggregate;
@@ -153,3 +202,131 @@ pub use source_parser_port::{ISourceParserPort};
 pub use watch_commands_aggregate::{WatchCommandsAggregate};
 pub use watch_orchestrator_aggregate::{WatchExecutionOrchestratorAggregate};
 pub use watch_provider_port::{IWatchProviderPort};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPE ALIASES (Ergonomic Shortcuts for Complex Trait Object Types)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Arc-wrapped file system port — the standard DI container signature.
+pub type FileSystemPortRef = std::sync::Arc<dyn IFileSystemPort>;
+
+/// Arc-wrapped source parser port.
+pub type SourceParserPortRef = std::sync::Arc<dyn ISourceParserPort>;
+
+/// Arc-wrapped command executor port.
+pub type CommandExecutorPortRef = std::sync::Arc<dyn ICommandExecutorPort>;
+
+/// Arc-wrapped job registry port.
+pub type JobRegistryPortRef = std::sync::Arc<dyn IJobRegistryPort>;
+
+/// Arc-wrapped architecture linter protocol — the primary surface-facing trait.
+pub type ArchLintProtocolRef = std::sync::Arc<dyn IArchLintProtocol>;
+
+/// Arc-wrapped service container aggregate — the DI root.
+pub type ServiceContainerRef = std::sync::Arc<dyn ServiceContainerAggregate>;
+
+/// Arc-wrapped linter adapter port (generic adapter).
+pub type LinterAdapterPortRef = std::sync::Arc<dyn ILinterAdapterPort>;
+
+/// Arc-wrapped semantic tracer port.
+pub type SemanticTracerPortRef = std::sync::Arc<dyn ISemanticTracerPort>;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// UTILITY FUNCTIONS (Contract-level helpers)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Look up a command's metadata from the contract-level command catalog.
+///
+/// Returns `None` if the command is not registered.
+#[inline]
+pub fn find_command(name: &str) -> Option<crate::taxonomy::CommandMetadataVO> {
+    command_catalog().get(name).cloned()
+}
+
+/// Check whether a command name is registered in the catalog.
+#[inline]
+pub fn is_command_registered(name: &str) -> bool {
+    command_catalog().contains_key(name)
+}
+
+/// Return the total number of registered commands.
+#[inline]
+pub fn command_count() -> usize {
+    command_catalog().len()
+}
+
+/// List all registered command names in sorted order.
+pub fn list_command_names() -> Vec<String> {
+    let mut names: Vec<String> = command_catalog().keys().cloned().collect();
+    names.sort();
+    names
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TESTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_command_catalog_not_empty() {
+        assert!(!command_catalog().is_empty());
+    }
+
+    #[test]
+    fn test_find_command_check() {
+        let meta = find_command("check");
+        assert!(meta.is_some());
+        let meta = meta.unwrap();
+        assert!(!meta.description.value.is_empty());
+        assert!(!meta.example.value.is_empty());
+    }
+
+    #[test]
+    fn test_find_command_unknown() {
+        assert!(find_command("nonexistent-command-xyz").is_none());
+    }
+
+    #[test]
+    fn test_is_command_registered() {
+        assert!(is_command_registered("check"));
+        assert!(is_command_registered("fix"));
+        assert!(is_command_registered("report"));
+        assert!(!is_command_registered("foobar"));
+    }
+
+    #[test]
+    fn test_command_count() {
+        let count = command_count();
+        assert!(count > 0);
+        assert!(count < 100); // sanity bound
+    }
+
+    #[test]
+    fn test_list_command_names_sorted() {
+        let names = list_command_names();
+        assert!(!names.is_empty());
+        for window in names.windows(2) {
+            assert!(
+                window[0] <= window[1],
+                "names not sorted: {} > {}",
+                window[0],
+                window[1]
+            );
+        }
+    }
+
+    #[test]
+    fn test_core_commands_present() {
+        let core = ["check", "scan", "fix", "report", "ci", "version"];
+        for cmd in core {
+            assert!(
+                is_command_registered(cmd),
+                "core command '{}' missing from catalog",
+                cmd
+            );
+        }
+    }
+}

@@ -46,6 +46,15 @@ impl FilePathList {
     pub fn new(value: Vec<FilePath>) -> Self {
         Self { values: value }
     }
+}
+
+impl Default for FilePathList {
+    fn default() -> Self {
+        FilePathList { values: Vec::new() }
+    }
+}
+
+impl FilePathList {
     pub fn iter(&self) -> std::slice::Iter<'_, FilePath> {
         self.values.iter()
     }

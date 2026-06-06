@@ -51,14 +51,13 @@ impl AppConfig {
                 return entry.status;
             }
         }
-        crate::taxonomy::AdapterStatus::NOT_INSTALLED
+        crate::taxonomy::AdapterStatus::NotInstalled
     }
 
     /// Check if an adapter is enabled.
     pub fn is_adapter_enabled(&self, name: &str) -> BooleanVO {
         let status = self.adapter_status(name);
-        BooleanVO::new(status == crate::taxonomy::AdapterStatus::ENABLED)
-            .expect("Invalid boolean value")
+        BooleanVO::new(status == crate::taxonomy::AdapterStatus::Enabled)
     }
 
     /// Names of enabled adapters.

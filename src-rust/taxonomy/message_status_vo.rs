@@ -14,6 +14,12 @@ impl ComplianceStatus {
     }
 }
 
+impl Default for ComplianceStatus {
+    fn default() -> Self {
+        ComplianceStatus { value: false }
+    }
+}
+
 impl std::fmt::Display for ComplianceStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
@@ -66,6 +72,12 @@ pub struct LintMessage {
 impl LintMessage {
     pub fn new(value: impl Into<String>) -> Self {
         Self { value: value.into() }
+    }
+}
+
+impl Default for LintMessage {
+    fn default() -> Self {
+        LintMessage { value: String::new() }
     }
 }
 

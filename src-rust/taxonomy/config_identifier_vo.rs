@@ -60,6 +60,12 @@ impl From<String> for ConfigKey {
     }
 }
 
+impl Default for ConfigKey {
+    fn default() -> Self {
+        ConfigKey { value: String::new() }
+    }
+}
+
 impl<'de> serde::Deserialize<'de> for ConfigKey {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

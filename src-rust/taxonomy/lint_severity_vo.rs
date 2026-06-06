@@ -28,6 +28,12 @@ impl std::fmt::Display for Severity {
     }
 }
 
+impl Default for Severity {
+    fn default() -> Self {
+        Severity::INFO
+    }
+}
+
 impl Severity {
     pub fn score_impact(&self) -> f64 {
         match self {

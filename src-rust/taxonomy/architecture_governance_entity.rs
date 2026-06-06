@@ -16,11 +16,11 @@ fn default_compliance() -> ComplianceStatus { ComplianceStatus::new(true) }
 
 impl GovernanceReport {
     pub fn new() -> Self {
-        Self { results: LintResultList::new(), score: Score::new(100.0), is_passing: ComplianceStatus::new(true) }
+        Self { results: LintResultList::default(), score: Score::new(100.0), is_passing: ComplianceStatus::new(true) }
     }
     pub fn add_result(&mut self, result: LintResult) {
+        self.score = self.score.deduct(&result.severity);
         self.results.push(result);
-        self.score = self.score.deduct(result.severity);
     }
     pub fn update_compliance(&mut self, threshold: &Score) {
         let is_p = self.score.value >= threshold.value;
