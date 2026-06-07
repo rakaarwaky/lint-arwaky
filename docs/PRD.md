@@ -73,14 +73,14 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 | ID | Requirement | Dependency |
 |----|-------------|------------|
-| FR-010 | **Import layer violation detector** (AES001) — cross-layer import detection | FR-001 |
-| FR-011 | **Mandatory import missing detector** (AES002) — required imports per layer | FR-001 |
-| FR-012 | **Layer import alias checker** (AES007) — contract imports via barrel | FR-001 |
-| FR-013 | **Root layer detection** (AES010) — forbidden root import patterns | FR-001 |
-| FR-014 | **Layer suffix mismatch detector** (AES011) — file suffix must match layer | FR-001 |
-| FR-015 | **Contract suffix mismatch detector** (AES008) — contract needs _port/_protocol/_aggregate | FR-001 |
-| FR-016 | **Surface layer rule checker** (AES022) — surface must not implement domain logic; Smart surfaces parse input and delegate via `ServiceContainerAggregate`; Passive surfaces (`_component`, `_layout`, `_view`) import taxonomy only (AES019) | FR-001 |
-| FR-017 | **Surface direct import checker** (AES023) — no direct infra/cap imports | FR-001 |
+| FR-010 | **Import layer violation detector** (AES001) — cross-layer import detection — see [`docs/FRD_010_import_layer_violation.md`](FRD_010_import_layer_violation.md) | FR-001 |
+| FR-011 | **Mandatory import missing detector** (AES002) — required imports per layer — see [`docs/FRD_011_mandatory_import.md`](FRD_011_mandatory_import.md) | FR-001 |
+| FR-012 | **Layer import alias checker** (AES007) — contract imports via barrel — see [`docs/FRD_012_contract_barrel.md`](FRD_012_contract_barrel.md) | FR-001 |
+| FR-013 | **Root layer detection** (AES010) — forbidden root import patterns — see [`docs/FRD_013_root_layer_detection.md`](FRD_013_root_layer_detection.md) | FR-001 |
+| FR-014 | **Layer suffix mismatch detector** (AES011) — file suffix must match layer — see [`docs/FRD_014_layer_suffix.md`](FRD_014_layer_suffix.md) | FR-001 |
+| FR-015 | **Contract suffix mismatch detector** (AES008) — contract needs _port/_protocol/_aggregate — see [`docs/FRD_015_contract_suffix.md`](FRD_015_contract_suffix.md) | FR-001 |
+| FR-016 | **Surface layer rule checker** (AES022) — surface must not implement domain logic; Smart surfaces parse input and delegate via `ServiceContainerAggregate`; Passive surfaces (`_component`, `_layout`, `_view`) import taxonomy only (AES019) — see [`docs/FRD_016_surface_layer_rule.md`](FRD_016_surface_layer_rule.md) | FR-001 |
+| FR-017 | **Surface direct import checker** (AES023) — no direct infra/cap imports — see [`docs/FRD_017_surface_direct_import.md`](FRD_017_surface_direct_import.md) | FR-001 |
 
 ### 5.3 Naming & Structure Rules
 

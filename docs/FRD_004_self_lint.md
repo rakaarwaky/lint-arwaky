@@ -1,300 +1,164 @@
-# FRD — Self-Lint Target (`lint-arwaky-cli check .`)
+# 📄 Feature Requirements Document (FRD)
+**Feature Name:** Self-Lint Target (`lint-arwaky-cli check .`)  
+**Product:** Lint Arwaky v1.10.2  
+**Author:** Raka  
+**Date:** 08/06/2026  
+**Version:** v1.0  
 
-> **PRD Reference**: [FR-004](PRD.md) — Self-lint target — project audits itself
-> **Dependency**: FR-001 (6-layer AES), FR-002 (Config), FR-003 (Source parsing)
-> **Status**: ✅ **PRODUCTION-READY** — 31 rules real, violations detected on self-lint. Full pipeline: CLI entry → config load → file discovery → per-file checks (22 rules) → cross-file checks (9 rules) → scoring → reporting (text/JSON/SARIF/JUnit). CI mode with threshold, git-diff mode.
-> **Self-lint**: `lint-arwaky-cli check .` — project audits `src-rust/` against all AES rules
+## 1. Document Control
+| Version | Date | Author | Description of Changes | Approved By |
+|---------|------|--------|----------------------|-------------|
+| v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
 
-## 1. Problem Statement
+## 2. Introduction
+### 2.1 Purpose
+This document defines the self-lint feature that runs all 31 AES rules against the project's own `src-rust/` directory. It enables dogfooding — the linter audits itself — and provides CI gates, quality scores, and structured reporting.
 
-Before self-lint:
+### 2.2 Scope
+**In-Scope:**
+- `lint-arwaky-cli check .` — run all AES rules on the project
+- `lint-arwaky-cli scan <path>` — run AES + external adapaters
+- `lint-arwaky-cli ci <path> --threshold <N>` — CI mode with exit code
+- `lint-arwaky-cli report <path> --format <format>` — reporting
+- Score computation and CRITICAL auto-fail
+- Report formats: text, JSON, SARIF, JUnit
 
-| Issue | Description |
-|-------|-------------|
-| **No dogfooding** | Project cannot check its own architecture compliance |
-| **No CI gate** | PRs can be merged with architecture violations |
-| **Manual review** | AES violations only detected during code review |
-| **No score** | No quantitative measure of codebase health |
-| **No reporting** | Violations are not reported in a structured way |
+**Out-of-Scope:**
+- External tool linting (clippy, ruff, eslint — handled by FR-070 to FR-080)
+- Auto-fixing violations (covered by FR-005)
+- Quality trends (covered by FR-006)
 
-## 2. Core Concept
+### 2.3 Glossary
+| Term | Definition |
+|------|------------|
+| **Self-lint** | Running AES rules against the project's own code |
+| **ArchitectureGovernanceEntity** | Score + violations + compliance status |
+| **LintResult** | Single violation with file, line, severity, message |
+| **LintCheckingCoordinator** | Agent that orchestrates all 31 rule checks |
+| **CRITICAL auto-fail** | Any CRITICAL violation → run fails regardless of score |
 
-Self-lint = run all 31 AES rules against `src-rust/` (the project's own code). The result:
-1. **Score**: Starts at 100, deducted per violation
-2. **Violations**: Complete list with file, line, rule, severity
-3. **CRITICAL auto-fail**: If there is a CRITICAL → exit non-zero
+## 3. Feature Overview
+### 3.1 Background & Problem
+The project could not verify its own architectural compliance. Architecture violations were only caught during code review. There was no quantitative measure of codebase health, no CI gate to prevent merging violations, and no structured violation reporting.
 
+### 3.2 Business Goals
+- Dogfooding: the linter must pass on its own code
+- CI integration: PRs blocked if score drops below threshold
+- Visibility: violations reported in text, JSON, SARIF, JUnit formats
+- Score tracking: quantitative health metric (0-100)
+
+### 3.3 Target Users
+- **Developers**: Run `check .` before committing
+- **CI/CD Pipelines**: Run `ci . --threshold 80` in CI
+- **Architecture Engineers**: Review violations in structured reports
+
+## 4. Functional Requirements
+### 4.1 User Stories
+- **US-001:** As a developer, I want to run `lint-arwaky-cli check .` to see all architecture violations in my code, so I can fix them before pushing.
+- **US-002:** As a CI pipeline, I want to run `lint-arwaky-cli ci . --threshold 80` that exits non-zero if the score is below 80, so I can block bad PRs.
+- **US-003:** As an architect, I want violations in SARIF format, so I can integrate with GitHub Code Scanning.
+
+### 4.2 Use Cases & Workflow
+**Self-Lint Pipeline:**
 ```
-The project lints itself — dogfooding.
-If there is a bug in rule AES001, self-lint will detect it itself.
-```
-
-## 3. Working Mechanism — Step by Step
-
-### 3.1 Entry Point
-
-```
-User: lint-arwaky-cli check .
-    │
-    ▼
-cli_main_entry.rs: main()
-    │
-    ├─► Clap parse args → Commands::Check { path: Some("."), git_diff: false }
-    │
-    ├─► handle_check(".", false)
-    │     │
-    │     ├─► lint_path(".")
-    │     │
-    │     └─► Print results:
-    │           ├─► "Score: 87.5 / 100"
-    │           ├─► "CRITICAL: 0 | HIGH: 3 | MEDIUM: 5 | LOW: 2"
-    │           └─► List of violations per file
-    │
-    └─► ExitCode::Success (0) or Failure (1)
-```
-
-### 3.2 Lint Pipeline
-
-```
-lint_path(project_root)
-    │
-    ├─► Step 1: Find source directory
-    │     ArchLintHandler.find_source_dir(project_root)
-    │     ├─► Check: src-rust/ → Rust ✅
-    │     ├─► Check: src-python/ → Python
-    │     ├─► Check: src-javascript/ → JavaScript
-    │     └─► Check: src/ (generic)
-    │
-    ├─► Step 2: Load config
-    │     ConfigLoaderOrchestrator.load_project_config(project_root)
-    │     ├─► detect_language(".") → Rust
-    │     ├─► read_config(".", "rust") → lint_arwaky.config.rust.yaml
-    │     └─► parse → ArchitectureConfig
-    │
-    ├─► Step 3: Run all checks
-    │     LintCheckingCoordinator.run_all_checks(ArchitectureConfig, source_dir)
-    │     │
-    │     │  ╔══════════════════════════════════════╗
-    │     │  ║  3a. File discovery                  ║
-    │     │  ╚══════════════════════════════════════╝
-    │     │  Walk source_dir → collect all *.rs / *.py / *.js *.ts
-    │     │
-    │     │  ╔══════════════════════════════════════╗
-    │     │  ║  3b. Per-file checks (22 rules)      ║
-    │     │  ╚══════════════════════════════════════╝
-    │     │  For EACH file:
-    │     │  ├── Layer detection
-    │     │  │     detect_layer() → find which layer the file is in
-    │     │  │
-    │     │  ├── AES003: Naming convention
-    │     │  │     Regex: ^word_word_word\.rs$ ?
-    │     │  │     → "architecture_compliance_analyzer.rs" ✅
-    │     │  │     → "my_file.rs" ❌ (only 2 words)
-    │     │  │
-    │     │  ├── AES004: File too large (>500 lines)
-    │     │  │     get_line_count() > 500 ? → FLAG
-    │     │  │
-    │     │  ├── AES005: File too short (<10 lines)
-    │     │  │     get_line_count() < 10 ? → FLAG
-    │     │  │
-    │     │  ├── AES006: Primitive usage
-    │     │  │     find_primitive_violations() → look for String/i32 in domain
-    │     │  │
-    │     │  ├── AES008: Contract suffix
-    │     │  │     Check: if in contract/ → suffix _port/_protocol/_aggregate?
-    │     │  │
-    │     │  ├── AES009: Mandatory struct/trait
-    │     │  │     get_raw_symbols() → is there a struct/trait/enum?
-    │     │  │
-    │     │  ├── AES011: Suffix mismatch
-    │     │  │     Check: is file suffix in layer's allowed list?
-    │     │  │
-    │     │  ├── AES014: Bypass comment
-    │     │  │     find_bypass_comments() → #[allow, unwrap(), panic!
-    │     │  │
-    │     │  ├── AES015: Unused import
-    │     │  │     find_unused_imports() → symbol exists but not used
-    │     │  │
-    │     │  ├── AES016: Dead inheritance
-    │     │  │     Empty Struct {} or trait {}? → FLAG
-    │     │  │
-    │     │  ├── AES021: Agent role
-    │     │  │     If _container → only wiring?
-    │     │  │     If _orchestrator → stateless?
-    │     │  │
-    │     │  ├── AES022: Surface role
-    │     │  │     Smart surface → must delegate via container
-    │     │  │     Passive surface → only taxonomy import
-    │     │  │
-    │     │  ├── AES023: Surface direct import
-    │     │  │     extract_imports() → is there "use crate::infrastructure::" ?
-    │     │  │
-    │     │  ├── AES024: Agent any-bypass
-    │     │  │     Check: is there `dyn Any` or `Box<Any>` in agent?
-    │     │  │
-    │     │  ├── AES025: MCP schema
-    │     │  │     MCP files → is there docstring + JSON Schema?
-    │     │  │
-    │     │  ├── AES026: Forbidden inheritance
-    │     │  │     Contract Aggregate must not `impl PortTrait for ...`
-    │     │  │
-    │     │  ├── AES027: Mandatory inheritance
-    │     │  │     Every file → implements contract trait?
-    │     │  │
-    │     │  ├── AES030: Capability method exists
-    │     │  │     Dispatch catalog → method exists in class?
-    │     │  │
-    │     │  ├── AES031: Single bottleneck
-    │     │  │     All dispatch to 1 class? → FLAG
-    │     │  │
-    │     │  ├── AES032: Missing VO
-    │     │  │     Capability call → is there a VO parameter?
-    │     │  │
-    │     │  └── AES033: Constant purity
-    │     │        File _constant → only pub const/pub static?
-    │     │
-    │     │  ╔══════════════════════════════════════╗
-    │     │  ║  3c. Cross-file checks (9 rules)     ║
-    │     │  ╚══════════════════════════════════════╝
-    │     │  ├── AES001: Import layer violation
-    │     │  │     Match each import against per-layer import rules
-    │     │  │
-    │     │  ├── AES002: Mandatory import missing
-    │     │  │     Layer must import taxonomy? → check extract_imports
-    │     │  │
-    │     │  ├── AES007: Layer import alias
-    │     │  │     Contract imports must go through barrel (mod.rs)
-    │     │  │
-    │     │  ├── AES010: Root layer
-    │     │  │     Root files → only entry point?
-    │     │  │
-    │     │  ├── AES012: Barrel completeness
-    │     │  │     mod.rs → exports all files in the layer?
-    │     │  │
-    │     │  ├── AES013: Internal all forbidden
-    │     │  │     Non-mod.rs → pub mod / pub use? → FLAG
-    │     │  │
-    │     │  ├── AES018: Surface hierarchy
-    │     │  │     Utility surface imports Smart surface? → FLAG
-    │     │  │
-    │     │  ├── AES019: Passive surface violation
-    │     │  │     Passive surface imports agent/contract? → FLAG
-    │     │  │
-    │     │  └── AES020: Circular dependency
-    │     │        Graph analysis → is there a cycle in imports?
-    │     │
-    │     └── 3d. Collect all violations
-    │
-    ├─► Step 4: Compute score
-    │     ArchitectureGovernanceEntity
-    │     ├─► Score = 100.0
-    │     ├─► For each violation:
-    │     │     LOW     → score -= 1
-    │     │     MEDIUM  → score -= 2
-    │     │     HIGH    → score -= 3
-    │     │     CRITICAL → score -= 5
-    │     ├─► score = max(0, score)
-    │     ├─► If there is CRITICAL → is_passing = false
-    │     └─► If score < threshold (ci mode) → exit non-zero
-    │
-    └─► Step 5: Print report
-          ├─► Format: text (default), JSON (--format json), SARIF, JUnit
-          ├─► Group by severity
-          └─► Display per file with line number
+lint-arwaky-cli check .
+  │
+  ├─► 1. Find source directory
+  │     src-rust/ → Rust
+  │
+  ├─► 2. Load config
+  │     lint_arwaky.config.rust.yaml → ArchitectureConfig
+  │
+  ├─► 3. Run all checks
+  │     LintCheckingCoordinator.run_all_checks()
+  │     │
+  │     ├── Per-file checks (22 rules):
+  │     │   ├── AES003 naming, AES004/005 file size
+  │     │   ├── AES006 primitive, AES009 struct/trait
+  │     │   ├── AES011 suffix, AES014 bypass
+  │     │   ├── AES015 unused, AES016 dead inheritance
+  │     │   ├── AES021 agent role, AES022 surface role
+  │     │   ├── AES023 surface import, AES024 any-bypass
+  │     │   ├── AES025 MCP schema, AES026 inheritance
+  │     │   ├── AES027 mandatory trait, AES030–AES033
+  │     │   └── ...
+  │     │
+  │     └── Cross-file checks (9 rules):
+  │         ├── AES001 forbidden import, AES002 mandatory
+  │         ├── AES007 barrel, AES010/AES011 suffix
+  │         ├── AES012 completeness, AES013 internal
+  │         ├── AES018 hierarchy, AES019 passive
+  │         └── AES020 circular dependency
+  │
+  ├─► 4. Compute score
+  │     Score = 100
+  │     LOW -1 | MEDIUM -2 | HIGH -3 | CRITICAL -5
+  │     Any CRITICAL → auto-fail
+  │
+  └─► 5. Report
+        Text / JSON / SARIF / JUnit
 ```
 
-### 3.3 CI Mode
-
+**Score Computation:**
 ```
-lint-arwaky-cli ci . --threshold 80
-    │
-    └─► Same as check, but:
-          ├─► If score < 80 → exit code 1 (CI FAIL)
-          ├─► Output JSON (machine-readable)
-          └─► Exit code:
-                0 = PASS (score >= threshold, no CRITICAL)
-                1 = FAIL (score < threshold OR has CRITICAL)
+Start: 100.0
+  AES001 CRITICAL → -5   → 95.0
+  AES003 LOW      → -1   → 94.0
+  AES011 HIGH     → -3   → 91.0
+  Result: 91.0/100
+  Has CRITICAL? → Yes → FAIL (auto-fail)
 ```
 
-### 3.4 Git Diff Mode
+### 4.3 Business Rules
+- Score starts at 100, deducted per violation
+- CRITICAL auto-fail: any CRITICAL → run fails regardless of score
+- CI mode: exit code 1 if score < threshold
+- Report formats: text (default), JSON, SARIF 2.1.0, JUnit XML
 
+## 5. Non-Functional Requirements
+| ID | Requirement | Target |
+|----|-------------|--------|
+| NFR-001 | Full self-lint of `src-rust/` | < 5s |
+| NFR-002 | CI exit code accuracy | 100% reliable |
+| NFR-003 | Report generation (all formats) | < 1s after check |
+
+## 6. UI/UX Requirements
+CLI output grouped by severity:
 ```
-lint-arwaky-cli check . --git-diff
-    │
-    └─► Only check files changed in git working tree
-          ├─► git diff --name-only → list of modified files
-          └─► Run checks only for those files
+Score: 87.5 / 100
+CRITICAL: 0 | HIGH: 3 | MEDIUM: 5 | LOW: 2
+
+=== HIGH ===
+AES011 - src-rust/capabilities/my_file.rs:12 - Suffix mismatch
+AES023 - src-rust/surfaces/cli_check.rs:42 - Direct infra import
+
+=== MEDIUM ===
+AES007 - src-rust/surfaces/command.rs:5 - Barrel import style
+...
 ```
-
-## 4. Key Files
-
-### Surface
-| File | Function |
-|------|----------|
-| `cli_core_command.rs` | Define all CLI subcommands via Clap |
-| `cli_check_command.rs` | `CheckCommandsSurface` — entry point check/scan |
-| `cli_main_entry.rs` | `handle_check()`, `handle_scan()`, `handle_ci()`, `lint_path()` |
-
-### Agent
-| File | Function |
-|------|----------|
-| `architecture_lint_orchestrator.rs` | `run_self_lint(project_root)` — find source + load config + run checks |
-| `lint_checking_coordinator.rs` | `run_all_checks(config, src)` — orchestrate 31 AES rules |
-| `dependency_injection_container.rs` | Wire all dependencies |
-
-### Capabilities (10 checkers)
-| File | AES Rules |
-|------|-----------|
-| `architecture_compliance_analyzer.rs` | Layer detection |
-| `architecture_import_checker.rs` | AES001, AES002, AES023 |
-| `architecture_naming_checker.rs` | AES003, AES008, AES011 |
-| `architecture_internal_checker.rs` | AES012, AES013 |
-| `architecture_metric_checker.rs` | AES004, AES005, AES006 |
-| `architecture_cycle_analyzer.rs` | AES020 |
-| `architecture_orphan_analyzer.rs` | AES017 |
-| `architecture_inheritance_checker.rs` | AES026, AES027 |
-| `surface_hierarchy_checker.rs` | AES018, AES019, AES022 |
-| `architecture_lint_handler.rs` | `ArchLintHandler` — implement `IArchLintProtocol` |
-
-## 5. Score Computation Detail
-
-```
-Raw score = 100.0
-
-Violation: AES001 | HIGH | infrastructure/foo.rs:42
-  Score -= 3 → 97.0
-
-Violation: AES014 | CRITICAL | capabilities/bar.rs:15
-  Score -= 5 → 92.0
-  is_passing = false ← CRITICAL auto-fail!
-
-Violation: AES003 | LOW | agent/my_file.rs
-  Score -= 1 → 91.0
-
-Final score = max(0, 91.0) = 91.0
-Status: FAIL (CRITICAL found)
-```
-
-## 6. Report Formats
-
-| Format | Output | Use Case |
-|--------|--------|----------|
-| Text | Human readable table | Local dev |
-| JSON | `{"score": 91.0, "violations": [...]}` | Machine parsing |
-| SARIF | SARIF 2.1.0 JSON | GitHub Code Scanning |
-| JUnit | JUnit XML | Jenkins/CI pipeline |
 
 ## 7. Acceptance Criteria
+| ID | Given | When | Then | Status |
+|----|-------|------|------|--------|
+| AC-001 | `lint-arwaky-cli check .` runs | Pipeline completes | Violations printed, exit 0 | ✅ |
+| AC-002 | CRITICAL violation exists | Score computed | auto-fail, exit 1 | ✅ |
+| AC-003 | `ci . --threshold 80` with score 75 | CI check runs | exit 1 | ✅ |
+| AC-004 | `ci . --threshold 80` with score 85 | CI check runs | exit 0 | ✅ |
+| AC-005 | `report --format json` | Report generated | Valid JSON output | ✅ |
+| AC-006 | `report --format sarif` | Report generated | SARIF 2.1.0 compliant | ✅ |
+| AC-007 | 31 AES rules all executed | `run_all_checks()` completes | All codes present in output | ✅ |
 
-| # | Criteria | Status |
-|---|----------|--------|
-| AC001 | `lint-arwaky-cli check .` runs without error | ✅ |
-| AC002 | Detects 153+ violations in own codebase | ✅ |
-| AC003 | 31 AES codes (AES001–AES033, 028/029 reserved) | ✅ |
-| AC004 | Score: start 100, deduct per severity, CRITICAL = fail | ✅ |
-| AC005 | `scan` command = AES + external adapters (clippy, ruff, eslint) | ✅ |
-| AC006 | `ci` mode with threshold + exit code | ✅ |
-| AC007 | Report formats: text, JSON, SARIF, JUnit | ✅ |
-| AC008 | `git-diff` — only check changed files | ✅ |
-| AC009 | `cargo check --bin lint-arwaky-cli` passes | ✅ |
-| AC010 | `cargo test` — all tests pass | ✅ |
+## 8. Dependencies & Risks
+| Dependency | Description | Risk | Mitigation |
+|------------|-------------|------|------------|
+| FR-001 (Architecture) | Layer definitions needed for rule checking | Architecture changes break rules | Config-driven |
+| FR-002 (Config) | Rule configuration from YAML | Missing config = default | Built-in fallback |
+| FR-003 (Parsing) | Source parsing for all file analysis | Parser limitations affect accuracy | Document limitations |
+| 10 capability checkers | Rule implementations | Checker bugs cause false positives | Unit tests for each checker |
+
+## 9. Appendices
+- `src-rust/agent/architecture_lint_orchestrator.rs` — Orchestration entry
+- `src-rust/agent/lint_checking_coordinator.rs` — 31 rule coordinator
+- `src-rust/surfaces/cli_check_command.rs` — CLI command
+- `src-rust/cli_main_entry.rs` — CLI routing
+- `docs/RULES_AES.md` — Full rule catalog

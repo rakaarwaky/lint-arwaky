@@ -1,196 +1,150 @@
-# FRD — Apply Safe Auto-Fixes (Rust + Python + JS/TS)
+# 📄 Feature Requirements Document (FRD)
+**Feature Name:** Apply Safe Auto-Fixes (Rust + Python + JS/TS)  
+**Product:** Lint Arwaky v1.10.2  
+**Author:** Raka  
+**Date:** 08/06/2026  
+**Version:** v1.0  
 
-> **PRD Reference**: [FR-005](PRD.md) — Apply safe auto-fixes
-> **Dependency**: FR-003 (Source parsing)
-> **Status**: ✅ **PRODUCTION-READY** — CLI surface (`cli_fix_command.rs`) fully wired, `LintFixOrchestrator` real with AES003/AES014/AES015 auto-fix, dry-run support, FixAppliedEvent emission, non-fixable violation reporting. All 5 linter adapters have real `apply_fix()` implementations (`cargo clippy --fix`, `ruff check --fix`, etc.). `NamingRenamerProcessor` integrated and actively called.
+## 1. Document Control
+| Version | Date | Author | Description of Changes | Approved By |
+|---------|------|--------|----------------------|-------------|
+| v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
 
-## 1. Problem Statement
+## 2. Introduction
+### 2.1 Purpose
+This document defines the auto-fix feature that automatically applies safe fixes to detected violations. It covers fix orchestration, linter adapter `apply_fix()` implementations, dry-run mode, and the naming renamer for AES003 violations.
 
-Before auto-fix:
+### 2.2 Scope
+**In-Scope:**
+- `lint-arwaky-cli fix <path>` — apply safe fixes
+- `lint-arwaky-cli fix <path> --dry-run` — preview fixes
+- `NamingRenamerProcessor` for AES003 (naming) fixes
+- `apply_fix()` on linter adapters (clippy, ruff, prettier, eslint, rustfmt)
+- `FixAppliedEvent` tracking for audit trail
 
-| Issue | Description |
-|-------|-------------|
-| **No automated fix** | All violations are fixed manually one by one |
-| **No pipeline** | No orchestrated fix — each fix runs independently |
-| **No dry-run** | Cannot preview changes before execution |
-| **No audit trail** | No record of what was fixed and when |
+**Out-of-Scope:**
+- Non-auto-fixable rules (AES004 size, AES005 small, AES006 primitive, AES001 import)
+- Running linters without fixing
 
-## 2. Basic Concepts
+### 2.3 Glossary
+| Term | Definition |
+|------|------------|
+| **LintFixOrchestrator** | Agent that coordinates the fix pipeline |
+| **NamingRenamerProcessor** | Capability that renames symbols project-wide |
+| **FixResult** | Struct with output description and optional error |
+| **FixAppliedEvent** | Event recorded after a fix is applied |
+| **apply_fix()** | Method on ILinterAdapterPort to fix violations |
+| **Dry-run** | Preview fixes without modifying files |
 
-Auto-fix = after self-lint detects a violation, the system can **automatically fix** safe violations. Unsafe ones remain manual.
+## 3. Feature Overview
+### 3.1 Background & Problem
+Violations were only reported, never fixed automatically. Developers had to manually fix every violation, including repetitive tasks like renaming symbols or removing bypass comments. There was no way to preview fixes before applying them, and no audit trail of what was fixed.
 
-**Fixable** (can be automated):
-- AES003 (naming) → rename symbol
-- AES014 (bypass) → remove `#[allow(...)]` / `noqa`
-- AES015 (unused import) → remove import line
+### 3.2 Business Goals
+- Reduce manual fix effort for repetitive violations
+- Provide safe, automated fixes for low-risk violations
+- Enable preview before applying changes
+- Maintain audit trail of all applied fixes
 
-**Not fixable** (requires manual):
-- AES004 (file too large) → refactor
-- AES006 (primitive in domain) → wrap VO
-- AES001 (import violation) → architectural decision
+### 3.3 Target Users
+- **Developers**: Run `fix .` to auto-fix naming, bypass, and unused import violations
+- **AI Agents**: Use MCP to trigger fix pipeline autonomously
 
-## 3. How It Works
+## 4. Functional Requirements
+### 4.1 User Stories
+- **US-001:** As a developer, I want to run `lint-arwaky-cli fix .` to auto-fix naming convention violations, so I don't have to rename files manually.
+- **US-002:** As a developer, I want to run `lint-arwaky-cli fix . --dry-run` to see what would be changed, so I can review before applying.
+- **US-003:** As a developer, I want non-fixable violations to be listed as manual steps, so I know what still needs attention.
 
-### 3.1 Target Flow
-
+### 4.2 Use Cases & Workflow
+**Fix Pipeline (Target):**
 ```
-User: lint-arwaky-cli fix .
-    │
-    ▼
-cli_fix_command.rs → FixCommandsSurface.fix(path)
-    │
-    ├─► Self-lint first → get list of violations
-    │
-    ├─► Group violations by fixability:
-    │     ├── Fixable automatically:
-    │     │     ├── AES003 (naming) → NamingRenamerProcessor.rename_symbol()
-    │     │     ├── AES014 (bypass) → remove #[allow(...)] / noqa lines
-    │     │     └── AES015 (unused) → remove import line
-    │     │
-    │     └── Manual (reported to user):
-    │           ├── AES004 (size) → refactor
-    │           ├── AES006 (primitive) → wrap VO
-    │           └── ...
-    │
-    ├─► Execute automatic fixes (if not dry-run)
-    │
-    └─► Report:
-          ├─► "3 violations fixed automatically"
-          └─► "5 violations require manual fix — see above"
-```
-
-### 3.2 Naming Renamer — The Only One That's Working
-
-File: `capabilities/naming_renamer_processor.rs` (98 lines)
-
-```
-rename_symbol(root_dir, old_name, new_name)
-    │
-    ├─► Walk all files in root_dir
-    │
-    ├─► Read file line by line
-    │
-    ├─► For each line:
-    │     ├─► Skip if the line is:
-    │     │     ├─► Single-line comment (// or #)
-    │     │     ├─► Multi-line comment (/* */ still open)
-    │     │     ├─► String literal ('...' or "...")
-    │     │     ├─► Triple-quoted string ("""...""")
-    │     │     └─► Template literal (`...`)
-    │     │
-    │     └─► Replace old_name → new_name (regex word boundary)
-    │
-    ├─► Write file if there are changes
-    │
-    └─► Return count modified files
+lint-arwaky-cli fix .
+  │
+  ├─► 1. Self-lint → collect violations
+  │
+  ├─► 2. Classify violations:
+  │     ├── Auto-fixable: AES003 (naming), AES014 (bypass), AES015 (unused)
+  │     └── Manual: AES001 (import), AES004 (size), AES006 (primitive)
+  │
+  ├─► 3. Apply fixes:
+  │     ├── AES003 → NamingRenamerProcessor.rename_symbol()
+  │     ├── AES014 → adapter.apply_fix() (remove #[allow], noqa)
+  │     └── AES015 → adapter.apply_fix() (remove unused imports)
+  │
+  ├─► 4. Record FixAppliedEvent for audit
+  │
+  └─► 5. Report:
+        "3 violations fixed automatically"
+        "5 violations require manual fix"
 ```
 
-**Example**:
+**Naming Renamer Workflow:**
 ```
-Before: auth_token_vo.rs → is_symbol_exported(path, symbol)
-After:  auth_token_vo.rs → check_symbol_exported(path, symbol)
-(assuming rename is_symbol → check_symbol)
-```
-
-### 3.3 Adapter apply_fix — All Stubs
-
-Each linter adapter has an `apply_fix()` method:
-
-```rust
-// contract/linter_adapter_port.rs
-pub trait ILinterAdapterPort: Send + Sync {
-    async fn scan(&self, path: &DirectoryPath) -> Result<...>;
-    async fn apply_fix(&self, path: &FilePath) -> Result<...>;  // NEW
-    fn fixable_error_codes(&self) -> Vec<String>;                // NEW
-    async fn preview_fix(&self, path: &FilePath) -> Result<...>; // NEW
-}
+NamingRenamerProcessor.rename_symbol(root, old_name, new_name)
+  │
+  ├─► Walk all files in project
+  ├─► For each file:
+  │     ├── Skip: comments, string literals, template literals
+  │     └── Replace old_name → new_name (word boundary regex)
+  └─► Return count of modified files
 ```
 
-Current implementation — ALL STUBS:
+**Adapter apply_fix() (Real implementations):**
+| Adapter | Command | Scope |
+|---------|---------|-------|
+| clippy | `cargo clippy --fix --allow-dirty` | Rust |
+| ruff | `ruff check <path> --fix` | Python |
+| prettier | `prettier --write <path>` | JS/TS formatting |
+| eslint | `eslint <path> --fix` | JS/TS lint |
+| rustfmt | `cargo fmt` | Rust formatting |
 
-```rust
-// infrastructure/python_ruff_adapter.rs
-impl ILinterAdapterPort for PythonRuffAdapter {
-    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, ...> {
-        // TODO: call ruff check --fix
-        Ok(ComplianceStatus::new(false))  // ← STUB: return false
-    }
-}
+### 4.3 Business Rules
+- Only safe, automated fixes are applied without human review
+- Dry-run mode: analyze but do NOT modify files
+- Non-auto-fixable violations reported as manual steps
+- Each fix generates a `FixAppliedEvent` with timestamp
+
+## 5. Non-Functional Requirements
+| ID | Requirement | Target |
+|----|-------------|--------|
+| NFR-001 | Fix application (50 files) | < 3s |
+| NFR-002 | Dry-run preview (50 files) | < 2s |
+| NFR-003 | Zero data loss on fix | Guaranteed (dry-run first) |
+
+## 6. UI/UX Requirements
+CLI output:
+```
+ Applying safe fixes to /project...
+ ✅ architecture_import_checker.rs → renamed symbol (AES003)
+ ✅ my_file.rs → removed unused import (AES015)
+ ⚠️  architecture_lint_handler.rs → requires manual fix (AES001 - import violation)
+ ℹ️  Dry-run mode: 2 of 5 violations can be auto-fixed
 ```
 
-What it should be:
-```rust
-// Target implementation:
-async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, ...> {
-    let output = Command::new("ruff")
-        .args(["check", "--fix", &path.value])
-        .output()?;
-    Ok(ComplianceStatus::new(output.status.success()))
-}
-```
+## 7. Acceptance Criteria
+| ID | Given | When | Then | Status |
+|----|-------|------|------|--------|
+| AC-001 | File with AES003 naming violation | `fix .` runs | File renamed to correct 3-word pattern | ⚠️ Stub |
+| AC-002 | File with `#[allow(...)]` bypass | `fix .` runs | `#[allow(...)]` line removed | ⚠️ Stub |
+| AC-003 | File with unused import | `fix .` runs | Unused import line removed | ⚠️ Stub |
+| AC-004 | `--dry-run` flag set | `fix . --dry-run` runs | Files inspected but NOT modified | ❌ Missing |
+| AC-005 | Non-fixable violations present | `fix .` runs | Listed as manual steps | ⚠️ Stub |
+| AC-006 | Naming violation with AES003 | `NamingRenamerProcessor` runs | Symbol renamed project-wide | ✅ Working |
+| AC-007 | Clippy fixable issue in Rust file | `rust_linter_adapter.apply_fix()` | `cargo clippy --fix` executes | ✅ Real |
 
-### 3.4 Fix Orchestrator — Stub
+## 8. Dependencies & Risks
+| Dependency | Description | Risk | Mitigation |
+|------------|-------------|------|------------|
+| FR-003 (Parsing) | Parser identifies violations to fix | Regex inaccuracy affects fix targeting | Use external tool's own fix mechanism |
+| External tools | clippy, ruff, eslint, prettier must be installed | Tool not found → fix fails | Check tool availability before fix |
+| `NamingRenamerProcessor` | Regex-based rename | False positives in strings/comments | Skip non-code contexts |
 
-File: `agent/lint_fix_orchestrator.rs` (20 lines)
-
-```rust
-pub struct LintFixOrchestrator { ... }
-
-impl LintFixOrchestratorAggregate for LintFixOrchestrator {
-    fn execute(&self, path: &FilePath) -> FixResult {
-        // TODO:
-        // 1. Run self-lint
-        // 2. Classify violations by fixability
-        // 3. Call NamingRenamerProcessor for AES003
-        // 4. Call adapter.apply_fix() for AES014/AES015
-        // 5. Collect results
-        // 6. Return FixResult
-        FixResult::success("No fixes applied (stub)")  // ← STUB
-    }
-}
-```
-
-### 3.5 CLI Surface — Stub
-
-File: `surfaces/cli_fix_command.rs` (56 lines)
-
-```rust
-pub async fn fix(&self, path: &str) {
-    // Current: print warning, fallback to check
-    println!("Applying safe fixes to {path}...");
-    println!("Fix command is not fully wired yet — falling back to check");
-    // self.container.get_fix_orchestrator().execute(path)  ← COMMENTED OUT
-}
-```
-
-## 4. Key Files
-
-| File | Lines | Status | Function |
-|------|-------|--------|----------|
-| `taxonomy/fix_result_vo.rs` | 28 | ✅ | `FixResult { output, error }` |
-| `taxonomy/fix_applied_event.rs` | 29 | ✅ | `FixApplied { path, adapter, error_code, changes, timestamp }` — emitted by orchestrator |
-| `contract/lint_fix_aggregate.rs` | 5 | ✅ | `LintFixOrchestratorAggregate::execute(path) → FixResult` |
-| `contract/linter_adapter_port.rs` | 15 | ✅ | `apply_fix()`, `preview_fix()`, `fixable_error_codes()` |
-| `capabilities/naming_renamer_processor.rs` | 98 | ✅ | Project-wide symbol rename (integrated in orchestrator) |
-| `infrastructure/rust_linter_adapter.rs` | 211 | ✅ Real | `apply_fix` calls `cargo clippy --fix --allow-dirty` |
-| `infrastructure/python_ruff_adapter.rs` | 153 | ✅ Real | `apply_fix` calls `ruff check --fix` |
-| `infrastructure/python_mypy_adapter.rs` | — | ✅ Real | `apply_fix` method exists |
-| `infrastructure/python_bandit_adapter.rs` | — | ✅ Real | `apply_fix` method exists |
-| `infrastructure/javascript_linter_adapter.rs` | — | ✅ Real | `apply_fix` method exists |
-| `agent/lint_fix_orchestrator.rs` | 159 | ✅ **Enhanced** | Self-lint → fix AES003/AES014/AES015 → dry-run → FixAppliedEvent → report non-fixable |
-| `surfaces/cli_fix_command.rs` | 72 | ✅ **Enhanced** | Full fix pipeline with `--dry-run` support |
-
-## 5. Acceptance Criteria
-
-| # | Criteria | Status |
-|---|----------|--------|
-| AC001 | `fix .` runs lint + auto-fix pipeline | ✅ Full pipeline — self-lint → classify → fix → re-lint → report |
-| AC002 | AES003 naming violation fix via `NamingRenamerProcessor` | ✅ Integrated in orchestrator |
-| AC003 | AES014 bypass comments removed automatically | ✅ Bypass lines removed: `#[allow(...)]`, `unwrap()`, `noqa`, `type: ignore`, `panic!` |
-| AC004 | AES015 unused imports removed | ✅ Import lines removed |
-| AC005 | `apply_fix()` on all 5 adapters | ✅ All real — `cargo clippy --fix`, `ruff check --fix`, etc. |
-| AC006 | Dry-run `--dry-run` preview changes | ✅ `lint-arwaky-cli fix --dry-run` shows preview without changes |
-| AC007 | `FixAppliedEvent` recorded | ✅ `FixApplied` struct emitted per fix action |
-| AC008 | Non-fixable violations reported as manual steps | ✅ Non-AES003/AES014/AES015 violations listed as manual steps |
-| AC009 | `cargo check --bin lint-arwaky-cli` passes | ✅ |
-| AC010 | `cargo test` passes | ✅ |
+## 9. Appendices
+- `src-rust/surfaces/cli_fix_command.rs` — CLI command (stub)
+- `src-rust/agent/lint_fix_orchestrator.rs` — Orchestrator (stub)
+- `src-rust/capabilities/naming_renamer_processor.rs` — Naming renamer (working)
+- `src-rust/taxonomy/fix_result_vo.rs` — FixResult VO
+- `src-rust/taxonomy/fix_applied_event.rs` — FixAppliedEvent
+- `src-rust/contract/lint_fix_aggregate.rs` — Fix orchestrator trait
+- `src-rust/contract/linter_adapter_port.rs` — `apply_fix()` trait method
