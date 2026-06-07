@@ -13,7 +13,6 @@ pub trait IArchImportProtocol: Send + Sync {
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
-    #[allow(clippy::too_many_arguments)]
     async fn validate_imports_present(
         &self,
         analyzer: &dyn IAnalyzer,

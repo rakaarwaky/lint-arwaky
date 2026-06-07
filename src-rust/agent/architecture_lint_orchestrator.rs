@@ -39,7 +39,7 @@ impl ArchitectureLintOrchestrator {
             return Vec::new();
         }
         let root_dir = src_dir.to_string_lossy().to_string();
-        let coordinator = crate::agent::checking_coordinator::CheckingCoordinator::new();
+        let coordinator = crate::agent::lint_checking_coordinator::LintCheckingCoordinator::new();
         coordinator.run_all_checks(&config, &files, &root_dir)
     }
 

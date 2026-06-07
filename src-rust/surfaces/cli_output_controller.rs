@@ -1,6 +1,5 @@
 use std::sync::Arc;
 /// CLI output management utilities.
-#[allow(unused)]
 use std::sync::Mutex;
 
 

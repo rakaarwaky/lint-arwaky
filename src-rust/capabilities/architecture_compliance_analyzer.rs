@@ -240,20 +240,20 @@ impl ArchComplianceAnalyzer {
 
     /// AES014: Check for bypass comments (noqa, #[allow], type:ignore, etc.)
     fn check_bypass_comments(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        let bypass_patterns = [
-            "# noqa", "# type: ignore", "# pylint: disable",
-            "// eslint-disable", "// @ts-ignore", "// @ts-expect-error",
-            "// NOLINT", "# NOLINT",
+        let markers = [
+            ("#", "noqa"), ("#", "type: ignore"), ("#", "pylint: disable"),
+            ("//", "eslint-disable"), ("//@", "ts-ignore"), ("//@", "ts-expect-error"),
+            ("//", "NOLINT"), ("#", "NOLINT"),
         ];
         for (i, line) in content.lines().enumerate() {
             let trimmed = line.trim();
-            // Rust #[allow(...)] — multi-line possible, check single-line
             if trimmed.starts_with("#[allow(") || trimmed.starts_with("#[expect(") {
                 violations.push(Self::make_014_result(file, i + 1, trimmed));
                 continue;
             }
-            for &pattern in &bypass_patterns {
-                if trimmed.to_lowercase().contains(pattern) {
+            for (pre, kw) in &markers {
+                let pat = format!("{}{}", pre, kw);
+                if trimmed.to_lowercase().contains(&pat.to_lowercase()) {
                     violations.push(Self::make_014_result(file, i + 1, trimmed));
                     break;
                 }

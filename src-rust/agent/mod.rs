@@ -34,7 +34,7 @@
 pub mod analysis_execution_orchestrator;
 pub mod architecture_compliance_orchestrator;
 pub mod architecture_lint_orchestrator;
-pub mod checking_coordinator;
+pub mod lint_checking_coordinator;
 pub mod dependency_injection_container;
 pub mod dev_commands_orchestrator;
 pub mod git_commands_orchestrator;
