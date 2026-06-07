@@ -71,6 +71,7 @@ pub mod config_app_vo;
 pub mod config_identifier_vo;
 pub mod config_provider_error;
 pub mod config_setting_vo;
+pub mod config_source_vo;
 pub mod doctor_result_vo;
 pub mod error_code_vo;
 pub mod file_system_error;
@@ -108,6 +109,7 @@ pub mod naming_symbols_vo;
 pub mod plugin_group_vo;
 pub mod plugin_manager_error;
 pub mod project_summary_vo;
+pub mod project_language_vo;
 pub mod scan_completed_event;
 pub mod scan_failed_event;
 pub mod scan_started_event;
@@ -170,6 +172,7 @@ pub use config_provider_error::ConfigError;
 pub use config_setting_vo::{
     ActualValue, AdapterEntry, AdapterStatus, ExpectedValue, ProjectConfig, Thresholds,
 };
+pub use config_source_vo::{ConfigResult, ConfigSource};
 
 // --- Doctor Domain ---
 pub use doctor_result_vo::DoctorResultVO;
@@ -261,6 +264,7 @@ pub use plugin_manager_error::{DiscoveryError, PluginError, RegistrationError};
 
 // --- Project Domain ---
 pub use project_summary_vo::{AggregatedResults, ProjectResult};
+pub use project_language_vo::{LanguageSource, ProjectLanguage};
 
 // --- Semantic Domain ---
 pub use semantic_tracer_error::{CallChainError, ScopeResolutionError, SemanticError};

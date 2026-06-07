@@ -1,17 +1,10 @@
 /// dependency_injection_container — Implementation of the DI container.
 use crate::contract::{
-    IFileSystemPort,
-    ILinterAdapterPort,
+    IArchLintProtocol, ICommandExecutorPort, IFileSystemPort,
+    ILinterAdapterPort, IMetricsProviderPort, IJobRegistryPort,
+    IPathNormalizationPort, ISourceParserPort, LintFixOrchestratorAggregate,
+    ServiceContainerAggregate,
 };
-use crate::contract::{
-    IArchLintProtocol, ICommandExecutorPort,
-};
-use crate::contract::{
-    IJobRegistryPort,
-};
-use crate::contract::IPathNormalizationPort;
-use crate::contract::ISourceParserPort;
-use crate::contract::ServiceContainerAggregate;
 use crate::infrastructure::{
     ASTJSParserAdapter, ASTPythonParserAdapter, ASTRustParserAdapter, BanditAdapter,
     ComplexityAdapter, DependencyAdapter, DuplicateAdapter, ESLintAdapter,
@@ -35,6 +28,7 @@ pub struct DependencyInjectionContainer {
     source_parser: Arc<dyn ISourceParserPort>,
     architecture_linter: Arc<dyn IArchLintProtocol>,
     linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
+    metrics_provider: Arc<dyn IMetricsProviderPort>,
 }
 
 impl DependencyInjectionContainer {
@@ -84,7 +78,7 @@ impl DependencyInjectionContainer {
         let dependency = Arc::new(DependencyAdapter::new(executor.clone(), path_norm.clone(), None));
         linter_adapters.insert("dependency".to_string(), dependency);
 
-        let _metrics = Arc::new(MetricsProvider::new(path_norm.clone(), ".lint-history.json"));
+        let metrics_provider: Arc<dyn IMetricsProviderPort> = Arc::new(MetricsProvider::new(path_norm.clone(), ".lint-history.json"));
 
         Self {
             file_system: fs,
@@ -93,6 +87,7 @@ impl DependencyInjectionContainer {
             source_parser,
             architecture_linter: arch_linter,
             linter_adapters,
+            metrics_provider,
         }
     }
 }
@@ -126,5 +121,13 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
         use std::sync::OnceLock;
         static REGISTRY: OnceLock<Arc<dyn IJobRegistryPort>> = OnceLock::new();
         Some(REGISTRY.get_or_init(|| Arc::new(MemoryJobRegistryAdapter::new())).clone())
+    }
+
+    fn metrics_provider(&self) -> Option<Arc<dyn IMetricsProviderPort>> {
+        Some(self.metrics_provider.clone())
+    }
+
+    fn get_fix_orchestrator(&self, dry_run: bool) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
+        Some(Arc::new(crate::agent::lint_fix_orchestrator::LintFixOrchestrator::with_dry_run(dry_run)))
     }
 }

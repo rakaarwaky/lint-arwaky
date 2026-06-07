@@ -19,7 +19,7 @@
 //! | **Source Parsing** | `SourceParserOrchestrator`, `ASTRustParserAdapter`, `ASTJSParserAdapter`, `ASTPythonParserAdapter` | Multi-language AST parsing |
 //! | **Linting** | `RuffAdapter`, `MyPyAdapter`, `BanditAdapter`, `RustLinterAdapter`, `ESLintAdapter`, `PrettierAdapter`, `TSCAdapter` | External linter wrappers |
 //! | **Metrics** | `MetricsProvider`, `ComplexityAdapter`, `DuplicateAdapter`, `TrendsAdapter`, `DependencyAdapter` | Code quality metrics |
-//! | **Config** | `ConfigDiscoveryProvider`, `ConfigParserProvider` | Configuration loading |
+//! | **Config** | `ConfigParserProvider`, `ConfigYamlReader`, `LanguageDetectorProvider` | Configuration loading |
 //! | **Transport** | `StdioClient`, `SyncHttpProvider` | Command execution and HTTP |
 //! | **Semantic** | `JSCallAdapter`, `JSFlowAdapter`, `PythonTracer`, `JSScopeTracer`, `JSScopeProvider` | Semantic analysis |
 //! | **Naming** | `JavascriptNamingProvider`, `PythonNamingVariantProvider` | Naming convention variants |
@@ -63,8 +63,11 @@ pub mod python_metrics_adapter;
 pub mod python_symbol_scanner;
 
 // --- Providers: Configuration ---
-pub mod config_discovery_provider;
+// NOTE: config_discovery_provider removed per FRD-002.
+// Replaced by ConfigYamlReader + LanguageDetectorProvider.
 pub mod config_parser_provider;
+pub mod config_yaml_reader;
+pub mod language_detector_provider;
 
 // --- Providers: Naming ---
 pub mod javascript_naming_provider;
@@ -128,8 +131,9 @@ pub use python_metrics_adapter::MetricsProvider;
 pub use python_symbol_scanner::SymbolCollector;
 
 // --- Configuration ---
-pub use config_discovery_provider::ConfigDiscoveryProvider;
 pub use config_parser_provider::ConfigParserProvider;
+pub use config_yaml_reader::ConfigYamlReader;
+pub use language_detector_provider::LanguageDetectorProvider;
 
 // --- Naming ---
 pub use javascript_naming_provider::JavascriptNamingProvider;

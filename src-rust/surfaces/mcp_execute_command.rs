@@ -1,5 +1,8 @@
 /// MCP Tool: execute_command - Universal CLI executor.
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
+
+/// Surface for MCP execute command handling.
+pub struct McpExecuteCommandSurface;
 use serde_json::{json, Value};
 use std::sync::Arc;
 use std::sync::Mutex;

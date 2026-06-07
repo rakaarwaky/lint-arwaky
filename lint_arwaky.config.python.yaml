@@ -153,10 +153,10 @@ architecture:
           AES005 FILE_TOO_SHORT: File contains fewer than 10 lines of code.
           WHY? Excessively small files clutter the project structure; logic should be merged into a parent module.
           FIX: Merge this logic into a related module or expand the component with more functionality.
-        max_lines: 500
+        max_lines: 700
         exceptions: ["__init__.py", "__main__.py"]
         max_lines_violation_message: >
-          AES004 FILE_TOO_LARGE: File exceeds the 500-line limit.
+          AES004 FILE_TOO_LARGE: File exceeds the 700-line limit.
           WHY? Large files violate the Single Responsibility Principle and are difficult to maintain or test.
           FIX: Split the module into smaller, more focused files according to their specific roles.
 

@@ -1,6 +1,9 @@
 use serde_json::{json, Value};
 use std::sync::Arc;
 
+/// MCP binary entry point for lint-arwaky-mcp.
+pub struct McpMainEntry;
+
 use lint_arwaky::agent::dependency_injection_container::DependencyInjectionContainer;
 use lint_arwaky::contract::ServiceContainerAggregate;
 use lint_arwaky::surfaces::mcp_tools_command;

@@ -62,15 +62,10 @@ impl Default for ArchitectureConfig {
     }
 }
 
-/// Build default config by parsing the embedded YAML file at compile time.
-/// The YAML (`lint_arwaky.config.rust.yaml`) is baked into the binary via `include_str!`.
-/// Project-level `lint_arwaky.config.rust.yaml` at runtime will override this default.
-pub fn default_aes_config() -> ArchitectureConfig {
-    let yaml_str = include_str!("../../lint_arwaky.config.rust.yaml");
+fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
     let raw: serde_yaml::Value = serde_yaml::from_str(yaml_str).unwrap_or_default();
     if let Some(arch_val) = raw.get("architecture") {
         let mut json = serde_json::to_value(arch_val).unwrap_or_default();
-        // Remove null values so #[serde(default)] kicks in for missing fields
         fn remove_nulls(val: &mut serde_json::Value) {
             match val {
                 serde_json::Value::Object(m) => {
@@ -84,7 +79,6 @@ pub fn default_aes_config() -> ArchitectureConfig {
             }
         }
         remove_nulls(&mut json);
-        // Convert YAML suffix format to struct fields
         if let Some(layers_obj) = json.get_mut("layers") {
             if let Some(obj) = layers_obj.as_object_mut() {
                 let mut suffix_updates: Vec<(String, Option<String>, serde_json::Value, serde_json::Value)> = Vec::new();
@@ -136,7 +130,6 @@ pub fn default_aes_config() -> ArchitectureConfig {
                 }
             }
         }
-        // Flatten nested rules (global/internal/external) into a single array.
         if let Some(rules_obj) = json.get_mut("rules") {
             if let Some(obj) = rules_obj.as_object_mut() {
                 let mut flat = serde_json::Value::Array(Vec::new());
@@ -153,5 +146,19 @@ pub fn default_aes_config() -> ArchitectureConfig {
         serde_json::from_value::<ArchitectureConfig>(json).unwrap_or_default()
     } else {
         ArchitectureConfig::default()
+    }
+}
+
+/// All 3 config YAMLs are baked into the binary at compile time via `include_str!`.
+/// Runtime project-level config files override these defaults.
+pub fn default_aes_config() -> ArchitectureConfig {
+    parse_config_yaml(include_str!("../../lint_arwaky.config.rust.yaml"))
+}
+
+pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
+    match language {
+        "python" => parse_config_yaml(include_str!("../../lint_arwaky.config.python.yaml")),
+        "javascript" => parse_config_yaml(include_str!("../../lint_arwaky.config.javascript.yaml")),
+        _ => default_aes_config(),
     }
 }

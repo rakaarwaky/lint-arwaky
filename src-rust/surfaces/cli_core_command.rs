@@ -50,6 +50,9 @@ pub enum Commands {
     Fix {
         /// Path to fix
         path: Option<String>,
+        /// Preview changes without applying them
+        #[arg(long)]
+        dry_run: bool,
     },
 
     /// Generate quality reports

@@ -38,7 +38,7 @@
 //! ## Notes on Shims
 //!
 //! Some modules in this layer are intentionally retained as **backward-compat shims**
-//! (e.g. `source_system_port`, `naming_variant_port`) so that historical import paths
+//! (e.g. `naming_variant_port`) so that historical import paths
 //! continue to compile. They are not dead code: the port/protocol split between
 //! `INamingVariantPort` (Infrastructure) and `INamingVariantProtocol` (Capabilities)
 //! is a deliberate design choice, even though their method signatures coincide.
@@ -63,7 +63,9 @@ pub mod architecture_unused_protocol;
 pub mod capability_container_aggregate;
 pub mod command_executor_port;
 pub mod config_discovery_port;
+pub mod config_orchestration_protocol;
 pub mod config_parser_port;
+pub mod config_reader_port;
 pub mod container_registry_aggregate;
 pub mod dev_commands_aggregate;
 pub mod diff_result_aggregate;
@@ -82,6 +84,7 @@ pub mod javascript_flow_port;
 pub mod javascript_scope_port;
 pub mod job_registry_aggregate;
 pub mod job_registry_port;
+pub mod language_detector_port;
 pub mod lint_fix_aggregate;
 pub mod lint_reporting_protocol;
 pub mod linter_adapter_port;
@@ -112,7 +115,6 @@ pub mod service_container_aggregate;
 pub mod setup_management_aggregate;
 pub mod setup_management_protocol;
 pub mod source_parser_port;
-pub mod source_system_port;
 pub mod watch_commands_aggregate;
 pub mod watch_orchestrator_aggregate;
 pub mod watch_provider_port;
@@ -136,7 +138,9 @@ pub use architecture_unused_protocol::IUnusedProtocol;
 pub use capability_container_aggregate::CapabilityContainerAggregate;
 pub use command_executor_port::ICommandExecutorPort;
 pub use config_discovery_port::IConfigDiscoveryPort;
+pub use config_orchestration_protocol::IConfigOrchestrationProtocol;
 pub use config_parser_port::IConfigParserPort;
+pub use config_reader_port::IConfigReaderPort;
 pub use container_registry_aggregate::ContainerRegistryAggregate;
 pub use dev_commands_aggregate::DevCommandsAggregate;
 pub use diff_result_aggregate::GitDiffResultAggregate;
@@ -155,6 +159,7 @@ pub use javascript_flow_port::IJavascriptFlowPort;
 pub use javascript_scope_port::{IJavascriptScopePort, IJsTracerPort};
 pub use job_registry_aggregate::JobRegistryAggregate;
 pub use job_registry_port::IJobRegistryPort;
+pub use language_detector_port::ILanguageDetectorPort;
 pub use lint_fix_aggregate::LintFixOrchestratorAggregate;
 pub use lint_reporting_protocol::ILintReportingProtocol;
 pub use linter_adapter_port::ILinterAdapterPort;

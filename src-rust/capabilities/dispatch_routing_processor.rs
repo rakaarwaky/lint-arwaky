@@ -9,7 +9,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::contract::architecture_rule_protocol::IAnalyzer;
+use crate::contract::IAnalyzer;
 use crate::contract::dispatch_routing_protocol::{
     IDispatchRoutingParserProtocol, IDispatchRoutingProtocol,
 };

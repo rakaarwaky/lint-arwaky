@@ -1,3 +1,8 @@
+//! Protocol for self-linting the linter's own codebase.
+//!
+//! Defines the inbound interface for running architectural audits
+//! against the lint-arwaky project itself and formatting reports.
+
 use crate::taxonomy::lint_result_vo::LintResultList;
 
 pub trait IArchLintProtocol: Send + Sync {

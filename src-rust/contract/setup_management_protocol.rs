@@ -1,3 +1,8 @@
+//! Protocol for project setup and configuration generation.
+//!
+//! Defines the inbound interface for generating environment
+//! files and MCP server configurations for various editors.
+
 use crate::taxonomy::{DirectoryPath, EnvContentVO, McpConfigVO};
 
 pub trait ISetupManagementProtocol: Send + Sync {

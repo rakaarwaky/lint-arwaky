@@ -1,3 +1,8 @@
+//! Port trait for parsing configuration files.
+//!
+//! Provides outbound interfaces for parsing YAML and TOML
+//! configuration formats into structured project configuration.
+
 use crate::taxonomy::ConfigError;
 use crate::taxonomy::FilePath;
 use crate::taxonomy::ProjectConfig;

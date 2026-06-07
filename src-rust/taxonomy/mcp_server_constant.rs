@@ -1,4 +1,7 @@
-/// mcp_server_constant — Shared constants for MCP server.
+//! Shared constants for MCP server configuration.
+//!
+//! Defines version identifiers, path limits, and batch size
+//! constraints used throughout the MCP server implementation.
 
 pub const MCP_SERVER_VERSION: &str = "1.0.0";
 pub const AUTO_LINT_VERSION: &str = env!("CARGO_PKG_VERSION");

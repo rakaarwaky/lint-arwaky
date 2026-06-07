@@ -1,3 +1,8 @@
+//! Port trait for architecture compliance checking.
+//!
+//! Defines the interface for scanning source trees for architecture
+//! violations and applying automated fixes.
+
 use async_trait::async_trait;
 use crate::taxonomy::{FilePath, LintResultList, ComplianceStatus};
 
