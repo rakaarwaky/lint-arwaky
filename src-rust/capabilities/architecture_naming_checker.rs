@@ -182,7 +182,12 @@ impl ArchNamingChecker {
                         allowed_list
                     )
                 };
-                violations.push(Self::make_result(file, "AES010", &msg, Severity::HIGH));
+                let code = if _layer_name.as_ref().map(|l| l.as_str()) == Some("contract") {
+                    "AES008"
+                } else {
+                    "AES010"
+                };
+                violations.push(Self::make_result(file, code, &msg, Severity::HIGH));
             }
         }
     }

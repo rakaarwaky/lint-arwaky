@@ -47,6 +47,7 @@ impl LintCheckingCoordinator {
             Self::check_dead_inheritance(file, &c, &mut violations);
             Self::check_agent_role(file, &c, &mut violations);
             Self::check_surface_role(file, &c, &mut violations);
+            Self::check_surface_imports(file, &c, &mut violations);
             Self::check_agent_any_bypass(file, &c, &mut violations);
             Self::check_mcp_schema(file, &c, &mut violations);
             Self::check_forbidden_inheritance(file, &c, &mut violations);
@@ -59,10 +60,32 @@ impl LintCheckingCoordinator {
                 let t = line.trim();
                 if let Some(imp) = t.strip_prefix("use ") {
                     let target = imp.trim_end_matches(';').trim();
-                    if !target.is_empty() { import_edges.push((file.to_string(), target.to_string())); }
+                    if !target.is_empty() {
+                        import_edges.push((file.to_string(), target.to_string()));
+                        // Resolve crate:: imports to file paths for cycle detection
+                        if target.starts_with("crate::") {
+                            let path_part = target.trim_start_matches("crate::");
+                            if let Some(first_break) = path_part.find("::") {
+                                let module_path = &path_part[..first_break];
+                                let item = path_part[first_break+2..].split("::").next().unwrap_or("");
+                                let candidate = format!("{}/{}/{}.rs", root_dir.trim_end_matches('/'), module_path, item);
+                                if std::path::Path::new(&candidate).exists() {
+                                    import_edges.push((file.to_string(), candidate));
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") { continue; }
+            if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
+                // AES012: barrel completeness check on barrel files
+                let b_layer = analyzer.detect_layer(file, root_dir);
+                let b_def = b_layer.as_ref().and_then(|l| analyzer.get_layer_def(l));
+                if let Some(bd) = b_def {
+                    internal_checker.check_internal_rules(file, filename, Some(bd), &mut violations);
+                }
+                continue; 
+            }
             let layer = match analyzer.detect_layer(file, root_dir) { Some(l) => l, None => continue };
             let def = match analyzer.get_layer_def(&layer) { Some(d) => d, None => continue };
             if def.exceptions.values.contains(&filename.to_string()) { continue; }
@@ -71,6 +94,7 @@ impl LintCheckingCoordinator {
             import_checker.check_forbidden_imports(file, &layer, def, &mut violations);
             import_checker.check_legacy_import_rules(file, &layer, config, &mut violations);
             metric_checker.check_line_counts(file, Some(def), &mut violations);
+            metric_checker.check_constant_purity(file, &mut violations);
             metric_checker.check_mandatory_class_definition(file, Some(def), &mut violations);
             naming_checker.check_file_naming(file, filename, &Some(layer.clone()), Some(def), config, &mut violations);
             naming_checker.check_domain_suffixes(file, filename, Some(def), &Some(layer.clone()), &mut violations);
@@ -227,6 +251,18 @@ impl LintCheckingCoordinator {
         if content.matches("fn ").count() > 10 {
             violations.push(Self::mk(file, 0, "AES022", Severity::HIGH,
                 "AES022 SURFACE_ROLE: Surface file >10 functions."));
+        }
+    }
+
+    fn check_surface_imports(file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        if !file.contains("/surfaces/") { return; }
+        for line in content.lines() {
+            let t = line.trim();
+            if t.starts_with("use ") && (t.contains("::capabilities::") || t.contains("::infrastructure::") || t.contains("::agent::")) {
+                violations.push(Self::mk(file, 0, "AES023", Severity::HIGH,
+                    "AES023 SURFACE_DEPENDENCY: Surface imports from forbidden layer."));
+                break;
+            }
         }
     }
 

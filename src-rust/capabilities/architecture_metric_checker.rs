@@ -122,6 +122,68 @@ impl ArchMetricChecker {
         }
     }
 
+    /// Check constant purity in _constant files (AES033).
+    /// _constant files may ONLY contain pub const / pub static declarations.
+    pub fn check_constant_purity(
+        &self,
+        file: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let basename = Self::get_basename(file);
+        if !basename.ends_with("_constant.rs") && !basename.ends_with("_constant.py") {
+            return;
+        }
+
+        if let Ok(content) = fs::read_to_string(file) {
+            for (i, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+                let lineno = (i + 1) as i64;
+
+                // Skip empty lines, comments, attributes
+                if trimmed.is_empty()
+                    || trimmed.starts_with("//")
+                    || trimmed.starts_with('#')
+                    || trimmed.starts_with("#[")
+                {
+                    continue;
+                }
+
+                // ALLOWED: pub const, pub static
+                if trimmed.starts_with("pub const ") || trimmed.starts_with("pub static ") {
+                    continue;
+                }
+
+                // ALLOWED: use/import statements (needed for type annotations in consts)
+                if trimmed.starts_with("use ") || trimmed.starts_with("pub(crate) use ") {
+                    continue;
+                }
+
+                // FORBIDDEN: struct, enum, fn, impl, mod, trait, type, pub use
+                if trimmed.starts_with("pub struct ")
+                    || trimmed.starts_with("struct ")
+                    || trimmed.starts_with("pub enum ")
+                    || trimmed.starts_with("enum ")
+                    || trimmed.starts_with("pub fn ")
+                    || trimmed.starts_with("fn ")
+                    || trimmed.starts_with("impl ")
+                    || trimmed.starts_with("pub mod ")
+                    || trimmed.starts_with("mod ")
+                    || trimmed.starts_with("pub trait ")
+                    || trimmed.starts_with("trait ")
+                    || trimmed.starts_with("pub use ")
+                    || trimmed.starts_with("pub type ")
+                    || trimmed.starts_with("type ")
+                {
+                    let msg = "AES033 CONSTANT_PURITY: Taxonomy _constant file contains non-constant declaration.\n\
+                        WHY? _constant files must contain ONLY pub const / pub static declarations.\n\
+                        FIX: Move non-constant declarations to the appropriate _vo or _entity file."
+                        .to_string();
+                    violations.push(Self::make_result(file, lineno, "AES033", &msg, Severity::HIGH));
+                }
+            }
+        }
+    }
+
     /// Check mandatory class definition requirement (AES009).
     pub fn check_mandatory_class_definition(
         &self,

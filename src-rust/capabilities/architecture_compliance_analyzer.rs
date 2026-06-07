@@ -22,27 +22,55 @@ pub struct ArchComplianceAnalyzer {
 
 impl ArchComplianceAnalyzer {
     pub fn new(mut config: ArchitectureConfig) -> Self {
-        // Flatten rules into a string-keyed map, then rebuild layers
-        let mut rules_by_layer: HashMap<String, &ArchitectureRule> = HashMap::new();
+        // Group rules by layer name (including global/empty scope)
+        let mut rules_by_layer: HashMap<String, Vec<&ArchitectureRule>> = HashMap::new();
         for rule in &config.rules {
             let scope = rule.scope.to_string();
-            if scope.is_empty() { continue; }
-            let layer = scope.split('(').next().unwrap_or(&scope).to_string();
-            rules_by_layer.entry(layer).or_insert(rule);
+            let layer = if scope.is_empty() {
+                String::new()
+            } else {
+                scope.split('(').next().unwrap_or(&scope).to_string()
+            };
+            rules_by_layer.entry(layer).or_default().push(rule);
         }
 
         let mut new_layers: HashMap<LayerNameVO, LayerDefinition> = HashMap::new();
         for (lname, mut ldef) in config.layers {
             let lstr = lname.to_string();
-            if let Some(rule) = rules_by_layer.get(&lstr) {
-                if !rule.exceptions.values.is_empty() {
-                    ldef.exceptions = rule.exceptions.clone();
-                }
-                if !rule.mandatory_import.values.is_empty() {
-                    ldef.mandatory_import = rule.mandatory_import.clone();
-                }
-                if !rule.forbidden_import.values.is_empty() {
-                    ldef.forbidden_import = rule.forbidden_import.clone();
+            // Apply global rules (empty scope) to all layers, then layer-specific rules
+            for key in ["", &lstr] {
+                if let Some(rules) = rules_by_layer.get(key) {
+                    for rule in rules {
+                        if !rule.exceptions.values.is_empty() {
+                            ldef.exceptions = rule.exceptions.clone();
+                        }
+                        if !rule.mandatory_import.values.is_empty() {
+                            ldef.mandatory_import = rule.mandatory_import.clone();
+                        }
+                        if !rule.forbidden_import.values.is_empty() {
+                            ldef.forbidden_import = rule.forbidden_import.clone();
+                        }
+                        if rule.min_lines.value > 0 {
+                            ldef.min_lines = rule.min_lines.clone();
+                            ldef.min_lines_violation_message = rule.min_lines_violation_message.clone();
+                        }
+                        if rule.max_lines.value > 0 {
+                            ldef.max_lines = rule.max_lines.clone();
+                            ldef.max_lines_violation_message = rule.max_lines_violation_message.clone();
+                        }
+                        if rule.barrel_completeness.value {
+                            ldef.barrel_completeness = rule.barrel_completeness.clone();
+                            ldef.barrel_completeness_violation_message = rule.barrel_completeness_violation_message.clone();
+                        }
+                        if rule.forbid_internal_all.value {
+                            ldef.forbid_internal_all = rule.forbid_internal_all.clone();
+                            ldef.forbid_internal_all_violation_message = rule.forbid_internal_all_violation_message.clone();
+                        }
+                        if rule.mandatory_class_definition.value {
+                            ldef.mandatory_class_definition = rule.mandatory_class_definition.clone();
+                            ldef.mandatory_class_definition_violation_message = rule.mandatory_class_definition_violation_message.clone();
+                        }
+                    }
                 }
             }
             new_layers.insert(lname, ldef);
@@ -108,6 +136,7 @@ impl ArchComplianceAnalyzer {
 
             // ── AES022 — Surface role: surface must not contain business logic ──
             Self::check_surface_role(file, &content, &mut violations);
+            Self::check_surface_imports(file, &content, &mut violations);
 
             // ── AES027 — Mandatory inheritance: imported protocol must be implemented ──
             Self::check_mandatory_inheritance(file, &content, &mut violations);
@@ -131,6 +160,18 @@ impl ArchComplianceAnalyzer {
                     let target = imp.trim_end_matches(';').trim();
                     if !target.is_empty() {
                         import_edges.push((file.to_string(), target.to_string()));
+                        // Resolve crate:: imports to file paths for cycle detection
+                        if target.starts_with("crate::") {
+                            let path_part = target.trim_start_matches("crate::");
+                            if let Some(first_break) = path_part.find("::") {
+                                let module_path = &path_part[..first_break];
+                                let item = path_part[first_break+2..].split("::").next().unwrap_or("");
+                                let candidate = format!("{}/{}/{}.rs", root_dir.trim_end_matches('/'), module_path, item);
+                                if std::path::Path::new(&candidate).exists() {
+                                    import_edges.push((file.to_string(), candidate));
+                                }
+                            }
+                        }
                     }
                 } else if let Some(imp) = trimmed.strip_prefix("from ") {
                     let module = imp.split_whitespace().next().unwrap_or("");
@@ -138,8 +179,13 @@ impl ArchComplianceAnalyzer {
                 }
             }
 
-            // Skip barrel / entry-point files at orchestrator level
+            // Skip barrel / entry-point files — but still run AES012 (barrel completeness)
             if Self::is_barrel_file(filename) {
+                let b_layer = self.detect_layer(file, root_dir);
+                let b_def = b_layer.as_ref().and_then(|l| self.get_layer_def(l));
+                if let Some(bd) = b_def {
+                    internal_checker.check_internal_rules(file, filename, Some(bd), &mut violations);
+                }
                 continue;
             }
 
@@ -165,6 +211,9 @@ impl ArchComplianceAnalyzer {
 
             // ── AES004 / AES005 — Line count metrics ──
             metric_checker.check_line_counts(file, Some(def), &mut violations);
+
+            // ── AES033 — Constant purity ──
+            metric_checker.check_constant_purity(file, &mut violations);
 
             // ── AES009 — Mandatory class/struct/trait/enum definition ──
             metric_checker.check_mandatory_class_definition(file, Some(def), &mut violations);
@@ -517,6 +566,23 @@ impl ArchComplianceAnalyzer {
         }
     }
 
+    /// AES023: Surface dependency — surface must not import from capabilities/infrastructure/agent
+    fn check_surface_imports(file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        if !file.contains("/surfaces/") { return; }
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("use ")
+                && (trimmed.contains("::capabilities::")
+                    || trimmed.contains("::infrastructure::")
+                    || trimmed.contains("::agent::"))
+            {
+                violations.push(Self::make_rule_result(file, 0, "AES023", Severity::HIGH,
+                    "AES023 SURFACE_DEPENDENCY: Surface imports from forbidden layer."));
+                break;
+            }
+        }
+    }
+
     /// AES027: Mandatory inheritance — imported protocol must be implemented
     fn check_mandatory_inheritance(file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let mut imported_traits: Vec<String> = Vec::new();
@@ -805,6 +871,15 @@ impl ArchComplianceAnalyzer {
 
         // Case 3: rel has no directory but layer path appears as a suffix of rel
         if parent_dir == "." && rel.ends_with(norm_path_def) {
+            return true;
+        }
+
+        // Case 4: File at scan root (no subdirectory) matches non-recursive layer.
+        // This case is needed because detect_source_dir descends into src-rust/ before
+        // scanning, so a root file like "root_violation.rs" has no "src-rust/" prefix
+        // in its relative path. Without this, root layer files never match any layer
+        // definition and are skipped entirely by the architectural checkers.
+        if parent_dir == "." && !norm_path_def.is_empty() {
             return true;
         }
 
