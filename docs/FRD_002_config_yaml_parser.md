@@ -6,113 +6,288 @@
 
 ## 1. Problem Statement
 
-Currently, Lint Arwaky **hardcodes config paths** in multiple places:
+Config loading dulu dilakukan secara hardcode di banyak tempat:
 
 | Location | Problem |
 |----------|---------|
-| `capabilities/architecture_lint_handler.rs` | Walks up dirs looking for hardcoded `lint_arwaky.config.rust.yaml` |
-| `taxonomy/architecture_config_vo.rs` | Compile-time `include_str!("../../lint_arwaky.config.rust.yaml")` — only Rust config embedded |
-| `infrastructure/javascript_linter_adapter.rs` | Checks for `lint_arwaky.config.python.yaml` (wrong name for JS) |
-| `infrastructure/config_discovery_provider.rs` | Missing `lint_arwaky.config.javascript.yaml` and `lint_arwaky.config.rust.yaml` |
+| `capabilities/architecture_lint_handler.rs` | Cari `lint_arwaky.config.rust.yaml` dengan hardcode — naik parent directory manual |
+| `taxonomy/architecture_config_vo.rs` | `include_str!("../../lint_arwaky.config.rust.yaml")` — cuma Rust config yang di-embed |
+| `infrastructure/javascript_linter_adapter.rs` | Malah nyari `lint_arwaky.config.python.yaml` untuk JS — nama file salah |
+| `infrastructure/config_discovery_provider.rs` | Config buat JS dan Rust tidak terdaftar |
 
-Also, **config loading lives in the wrong layer**: `ArchitectureLintHandler` (capability) does YAML reading and parsing directly — it should read via infrastructure adapters.
+Juga, config loading ada di layer yang salah: `ArchitectureLintHandler` (capabilities) baca file langsung. Seharusnya infrastruktur yang handle I/O.
 
-## 2. Solution Overview
+## 2. Konsep Dasar
 
-| Layer | New/Changed | Responsibility |
-|-------|-------------|----------------|
-| **Taxonomy** | New VOs | `ProjectLanguage`, `ConfigResult`, `LanguageSource` |
-| **Contract** | New port + protocol | `IConfigReaderPort`, `ILanguageDetectorPort`, `IConfigOrchestrationProtocol` |
-| **Infrastructure** | New adapters | `ConfigYamlReader`, `LanguageDetectorProvider`, updated `ConfigParserProvider` |
-| **Capabilities** | New processor | `ConfigOrchestrationProcessor` — decides which config to load |
-| **Agent** | Updated DI | Wire config orchestrator |
-| **Surfaces** | Cleanup | Remove hardcoded dir checks |
-
-### Flow
+Setiap project punya bahasa pemrograman dominan (Rust, Python, JavaScript). Masing-masing punya file config sendiri:
 
 ```
-User runs: lint-arwaky-cli scan /some/project
-  └─► Surface (cli_check_command)
-        └─► Agent (ConfigLoaderOrchestrator)
-              ├─► LanguageDetectorProvider.detect_language()
-              │     ├─► src-rust/ OR Cargo.toml → Rust
-              │     ├─► src-python/ OR pyproject.toml → Python
-              │     └─► src-javascript/ OR package.json → JavaScript
-              ├─► ConfigYamlReader.read_config(language)
-              │     ├─► Rust → lint_arwaky.config.rust.yaml
-              │     ├─► Python → lint_arwaky.config.python.yaml
-              │     └─► JavaScript → lint_arwaky.config.javascript.yaml
-              └─► ConfigParserProvider.parse_raw_yaml() → ArchitectureConfig
+Project Rust:     ./lint_arwaky.config.rust.yaml
+Project Python:   ./lint_arwaky.config.python.yaml
+Project JS/TS:    ./lint_arwaky.config.javascript.yaml
 ```
 
-## 3. Taxonomy Changes
+Ketika user jalanin `lint-arwaky-cli scan /some/project`, sistem harus:
+1. **Deteksi bahasa** project (dari struktur direktori)
+2. **Baca config** yang sesuai dengan bahasa tersebut
+3. **Parse YAML** → `ArchitectureConfig`
+4. **Gunakan config** untuk semua rule checking
 
-### New Value Objects
+## 3. Mekanisme Kerja — Step by Step
 
-| VO | File | Fields |
-|----|------|--------|
-| `ProjectLanguage` | `project_language_vo.rs` | `language: String` |
-| `LanguageSource` | `project_language_vo.rs` | `language`, `confidence: u8`, `source: String` |
-| `ConfigSource` | `config_source_vo.rs` | `language`, `path`, `raw_content` |
-| `ConfigResult` | `config_source_vo.rs` | `config`, `source`, `warnings` |
+### 3.1 Language Detection (`LanguageDetectorProvider`)
 
-## 4. Contract Changes
+```
+Input: /some/project
 
-### New Ports
+Step 1: Cek source directory (confidence 100)
+  ├── /some/project/src-rust/      → Rust ✅ 
+  ├── /some/project/src-python/    → Python
+  └── /some/project/src-javascript/ → JavaScript
 
-| File | Trait | Methods |
-|------|-------|---------|
-| `contract/config_reader_port.rs` | `IConfigReaderPort` | `read_config()`, `list_config_files()` |
-| `contract/language_detector_port.rs` | `ILanguageDetectorPort` | `detect_language()` |
-| `contract/config_orchestration_protocol.rs` | `IConfigOrchestrationProtocol` | `load_project_config()`, `load_config_for_language()` |
+Step 2: Cek file manifest (confidence 90)
+  ├── Cargo.toml → Rust
+  ├── pyproject.toml / setup.py / requirements.txt → Python
+  └── package.json → JavaScript
 
-## 5. Infrastructure Changes
+Step 3: Cek src/ + ekstensi file (confidence 70)
+  ├── src/ + *.rs → Rust
+  ├── src/ + *.py → Python
+  └── src/ + *.js/.ts → JavaScript
 
-### NEW: `ConfigYamlReader`
+Step 4: Fallback — scan semua file di project (confidence 50)
+  └── Hitung ekstensi terbanyak → tebak bahasa
 
-File: `infrastructure/config_yaml_reader.rs`
+Output: LanguageSource { language: "rust", confidence: 100, source: "directory" }
+```
 
-Given `ProjectLanguage`, reads correct file: `lint_arwaky.config.{rust,python,javascript}.yaml`.
+### 3.2 Config File Reading (`ConfigYamlReader`)
 
-### NEW: `LanguageDetectorProvider`
+```
+Input: /some/project, language = "rust"
 
-File: `infrastructure/language_detector_provider.rs`
+Step 1: Tentukan nama file config
+  └── LanguageConfig:
+        rust       → "lint_arwaky.config.rust.yaml"
+        python     → "lint_arwaky.config.python.yaml"
+        javascript → "lint_arwaky.config.javascript.yaml"
 
-Detection priority: `src-{lang}/` (100) > manifest file (90) > `src/` + extensions (70) > fallback (50).
+Step 2: Cari file
+  ├── /some/project/lint_arwaky.config.rust.yaml  ← Cari di project root dulu
+  ├── Kalau nggak ada → naik ke parent directory
+  └── Kalau nggak ada sama sekali → fallback ke embedded default
 
-### UPDATED: `ConfigParserProvider`
+Step 3: Baca file
+  └── fs::read_to_string() → raw YAML string
 
-Accept raw YAML string, handle all 3 config files.
+Output: ConfigSource { language: "rust", path: "/some/project/...", raw_content: "layers:\n  ..." }
+```
 
-## 6. Capability Changes
+### 3.3 YAML Parsing (`ConfigParserProvider`)
 
-### NEW: `ConfigOrchestrationProcessor`
+```
+Input: Raw YAML string
 
-File: `capabilities/config_orchestration_processor.rs`
+Step 1: serde_yaml::from_str(raw) → serde_json::Value
+Step 2: Extract key "architecture"
+Step 3: Flatten rules: global + internal + external
+Step 4: Deserialize → ArchitectureConfig
 
-Flow: detect language → read config → parse → return `ConfigResult`. Falls back to `default_aes_config()` if no config found.
+ArchitectureConfig {
+    layers: Vec<LayerDefinition>,      // Definisis setiap layer
+    rules: Vec<ArchitectureRule>,       // Semua AES rules
+    naming: NamingConfig,               // Aturan naming
+    scoring: ScoringConfig,             // Threshold score
+    bypass: BypassConfig,               // Bypass patterns
+}
+```
 
-## 7. Agent Changes
+### 3.4 Config Orchestration (`ConfigOrchestrationProcessor`)
 
-Update `DependencyInjectionContainer` to wire config reader + detector + parser + orchestrator.
+```
+User: lint-arwaky-cli scan /some/project
+    │
+    ▼
+Surface (cli_check_command)
+    │
+    ▼
+ConfigOrchestrationProcessor.load_project_config("/some/project")
+    │
+    ├─► ILanguageDetectorPort.detect_language("/some/project")
+    │     └─→ LanguageSource { "rust", 100 }
+    │
+    ├─► IConfigReaderPort.read_config("/some/project", "rust")
+    │     └─→ ConfigSource (raw YAML)
+    │
+    ├─► IConfigParserPort.parse_raw_yaml(raw_yaml)
+    │     └─→ ArchitectureConfig
+    │
+    └─→ ConfigResult { config: ArchitectureConfig, source: ConfigSource, warnings: [] }
 
-## 8. Surface Changes
+Kalau nggak ada config file:
+    └─→ default_aes_config()  ← embedded include_str!("../../lint_arwaky.config.rust.yaml")
+         └─→ ConfigResult { warnings: ["No config file found, using built-in defaults"] }
+```
 
-Remove hardcoded directory checks from `cli_check_command.rs`.
+## 4. Struktur Config YAML
 
-## 9. Acceptance Criteria
+```yaml
+# lint_arwaky.config.rust.yaml
+architecture:
+  layers:
+    - name: taxonomy
+      path: src-rust/taxonomy/
+      suffixes: [vo, entity, event, error, constant]
+      allowed_imports: [taxonomy]
+      forbidden_imports: [agent, infrastructure, surfaces, contract, capabilities]
+      mandatory_imports: []
+      recursive: true
+      min_lines: 10
+      max_lines: 500
+      no_primitives: true
+      
+    - name: contract
+      path: src-rust/contract/
+      suffixes: [port, protocol, aggregate]
+      allowed_imports: [taxonomy, contract]
+      forbidden_imports: [agent, infrastructure, surfaces, capabilities]
+      mandatory_imports: [taxonomy]
+      recursive: true
+      min_lines: 5
+      max_lines: 300
+      no_primitives: true
 
-| # | Kriteria | Status |
-|---|----------|--------|
-| AC001 | Config loading moved from `ArchitectureLintHandler` to `ConfigOrchestrationProcessor` | ✅ |
-| AC002 | `IConfigReaderPort` reads 3 config files by `ProjectLanguage` | ✅ |
-| AC003 | `LanguageDetectorProvider` detects language from dir structure | ✅ |
-| AC004 | Fallback to `default_aes_config()` if config not found | ✅ |
-| AC005 | `include_str!` default restored as built-in fallback | ✅ |
-| AC006 | `config_discovery_provider.rs` deleted | ✅ |
-| AC007 | Blocking I/O wrapped in `spawn_blocking` | ✅ |
-| AC008 | Runtime reuse via `Handle::try_current()` | ✅ |
-| AC009 | `cli_check_command.rs` keeps `has_src` guard | ✅ |
-| AC010 | Barrel exports updated in all layers | ✅ |
-| AC011 | `cargo check --bin lint-arwaky-cli` passes | ✅ |
-| AC012 | `cargo test` — 46 passed, 0 failed | ✅ |
+    # ... layer lainnya dengan struktur yang sama
+
+  rules:
+    - code: AES001
+      name: import-layer-violation
+      severity: HIGH
+      enabled: true
+    - code: AES002
+      name: mandatory-import-missing
+      severity: HIGH
+      enabled: true
+    # ... semua 31 rules
+
+  naming:
+    pattern: "^[a-z]+_[a-z]+_[a-z]+\\.rs$"
+    exceptions: ["main.rs", "lib.rs", "mod.rs"]
+
+  scoring:
+    initial_score: 100.0
+    penalties:
+      LOW: 1.0
+      MEDIUM: 2.0
+      HIGH: 3.0
+      CRITICAL: 5.0
+    auto_fail_on_critical: true
+
+  bypass:
+    patterns:
+      - "#[allow\\("]
+      - "unwrap\\(\\)"
+      - "panic!"
+      - "noqa"
+      - "type: ignore"
+      - "# type:"
+```
+
+## 5. File-file Kunci
+
+### Taxonomy (2 new VOs)
+| File | Struct | Field |
+|------|--------|-------|
+| `taxonomy/project_language_vo.rs` | `ProjectLanguage` | `language: String` |
+| | `LanguageSource` | `language`, `confidence: u8`, `source: String` |
+| `taxonomy/config_source_vo.rs` | `ConfigSource` | `language`, `path`, `raw_content` |
+| | `ConfigResult` | `config`, `source`, `warnings` |
+
+### Contract (3 new ports)
+| File | Trait | Method |
+|------|-------|--------|
+| `contract/config_reader_port.rs` | `IConfigReaderPort` | `read_config(project_root, language) → ConfigSource`, `list_config_files(project_root) → Vec<(Language, Path)>` |
+| `contract/language_detector_port.rs` | `ILanguageDetectorPort` | `detect_language(project_root) → LanguageSource` |
+| `contract/config_orchestration_protocol.rs` | `IConfigOrchestrationProtocol` | `load_project_config(project_root) → ConfigResult`, `load_config_for_language(project_root, language) → ConfigResult` |
+
+### Infrastructure (2 new, 1 updated)
+| File | Class | Implements |
+|------|-------|------------|
+| `infrastructure/config_yaml_reader.rs` | `ConfigYamlReader` | `IConfigReaderPort` |
+| `infrastructure/language_detector_provider.rs` | `LanguageDetectorProvider` | `ILanguageDetectorPort` |
+| `infrastructure/config_parser_provider.rs` | `ConfigParserProvider` | (updated) tambah `parse_raw_yaml(content)` |
+
+### Capabilities (1 new)
+| File | Class | Implements |
+|------|-------|------------|
+| `capabilities/config_orchestration_processor.rs` | `ConfigOrchestrationProcessor` | `IConfigOrchestrationProtocol` |
+
+### Dihapus
+| File | Alasan |
+|------|--------|
+| `infrastructure/config_discovery_provider.rs` | Diganti oleh `ConfigYamlReader` + `LanguageDetectorProvider` |
+
+## 6. Alur Data Lengkap
+
+```
+YAML File (disk)
+    │
+    ▼
+ConfigYamlReader.read_config()      ← Infrastructure
+    │  fs::read_to_string()
+    ▼
+Raw YAML String (ConfigSource)
+    │
+    ▼
+ConfigParserProvider.parse_raw_yaml()  ← Infrastructure
+    │  serde_yaml::from_str()
+    ▼
+ArchitectureConfig (struct)
+    │
+    ▼
+ConfigOrchestrationProcessor  ← Capabilities
+    │  Gabung source + config + warnings
+    ▼
+ConfigResult
+    │
+    ▼
+DI Container (agent) → Surface (CLI)
+    │
+    ▼
+LintCheckingCoordinator.run_all_checks()
+    │  Pakai ArchitectureConfig.rules untuk setiap check
+    ▼
+Setiap checker baca dari config:
+    ├── naming_checker → config.naming.pattern
+    ├── import_checker → config.layers[].allowed_imports / forbidden_imports
+    ├── metric_checker → config.layers[].min_lines / max_lines
+    ├── bypass_checker → config.bypass.patterns
+    └── scoring → config.scoring.penalties
+```
+
+## 7. AES Compliance
+
+| Rule | Compliance |
+|------|------------|
+| AES001 | `ConfigOrchestrationProcessor` (capabilities) panggil `IConfigReaderPort` (contract) — bukan langsung import infrastructure |
+| AES002 | Semua class implements contract trait wajib |
+| AES003 | Semua filename 3-word: `config_yaml_reader`, `language_detector_provider`, `config_orchestration_processor` |
+| AES011 | Suffix: `_reader`, `_provider`, `_detector`, `_processor` — semua allowed per layer |
+| AES027 | Setiap logic file implements trait (`IConfigReaderPort`, `ILanguageDetectorPort`, `IConfigOrchestrationProtocol`) |
+
+## 8. Acceptance Criteria
+
+| # | Kriteria | Mekanisme | Status |
+|---|----------|-----------|--------|
+| AC001 | Config loading pindah dari capability ke infrastructure | `ArchitectureLintHandler` dulu: `fs::read()` langsung + `serde_yaml::from_str()`. Sekarang: delegasi ke `ConfigYamlReader` + `ConfigParserProvider` | ✅ |
+| AC002 | Baca 3 config berdasarkan bahasa | `IConfigReaderPort` pilih filename dari `ProjectLanguage` | ✅ |
+| AC003 | Deteksi bahasa dari struktur direktori | `LanguageDetectorProvider` cek `src-{lang}/` → Cargo.toml → pyproject.toml → package.json → ekstensi | ✅ |
+| AC004 | Fallback ke default jika config tidak ada | `default_aes_config()` dipanggil dengan warning | ✅ |
+| AC005 | `include_str!` default sebagai built-in fallback | `taxonomy/architecture_config_vo.rs` masih nahan embedded yaml | ✅ |
+| AC006 | `config_discovery_provider.rs` dihapus | File sudah tidak ada | ✅ |
+| AC007 | Blocking I/O pakai `spawn_blocking` | `tokio::task::spawn_blocking(|| fs::read_to_string())` | ✅ |
+| AC008 | Runtime reuse via `Handle::try_current()` | Tidak bikin Runtime baru setiap panggilan | ✅ |
+| AC009 | `has_src` guard tetap jalan | Sebelum jalanin AES lint, cek dulu `src-rust/` ada | ✅ |
+| AC010 | Barrel exports di semua layer diperbarui | Setiap `mod.rs` re-export file baru | ✅ |
+| AC011 | `cargo check --bin lint-arwaky-cli` lulus | Compile tanpa error | ✅ |
+| AC012 | `cargo test` — 46 passed, 0 failed | Unit tests lulus | ✅ |
