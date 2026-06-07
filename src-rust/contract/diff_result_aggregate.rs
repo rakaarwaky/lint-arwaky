@@ -2,7 +2,6 @@ use crate::taxonomy::Count;
 use crate::taxonomy::FilePathList;
 use crate::taxonomy::RenamedFile;
 
-
 #[derive(Debug, Clone, Default)]
 pub struct GitDiffResultAggregate {
     pub added: FilePathList,

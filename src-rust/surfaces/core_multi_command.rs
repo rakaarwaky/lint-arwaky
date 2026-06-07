@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 
 
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 pub struct MultiCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }

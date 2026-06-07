@@ -1,7 +1,7 @@
 use crate::taxonomy::{ErrorMessage, TransportEndpoint, TransportProtocol};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct TransportError {
     pub protocol: TransportProtocol,
     pub message: ErrorMessage,
@@ -13,13 +13,22 @@ pub struct TransportError {
 
 impl TransportError {
     pub fn new(protocol: TransportProtocol, message: ErrorMessage) -> Self {
-        Self { protocol, message, endpoint: None, underlying_error: None }
+        Self {
+            protocol,
+            message,
+            endpoint: None,
+            underlying_error: None,
+        }
     }
 }
 
 impl std::fmt::Display for TransportError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let ep = self.endpoint.as_ref().map(|e| format!(" {}", e)).unwrap_or_default();
+        let ep = self
+            .endpoint
+            .as_ref()
+            .map(|e| format!(" {}", e))
+            .unwrap_or_default();
         write!(f, "[{}]{} {}", self.protocol, ep, self.message)
     }
 }

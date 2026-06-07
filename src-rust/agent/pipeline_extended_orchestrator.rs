@@ -3,9 +3,7 @@ use crate::contract::{
     DirectoryWatchAggregate, MultiProjectAggregate, PipelineExtendedOrchestratorAggregate,
     PipelineOutputAggregate,
 };
-use crate::taxonomy::{
-    ErrorMessage, FilePath, JobId, ResponseData, SuccessStatus,
-};
+use crate::taxonomy::{BooleanVO, ErrorMessage, FilePath, JobId, ResponseData, SuccessStatus};
 use std::collections::HashMap;
 
 use async_trait::async_trait;
@@ -20,30 +18,8 @@ impl PipelineExtendedOrchestratorAggregate for PipelineExtendedOrchestrator {
 
     async fn execute_multi_project(
         &self,
-        request: MultiProjectAggregate,
-        use_retry: Option<bool>,
-        config_path: Option<&FilePath>,
-    ) -> Box<dyn PipelineOutputAggregate> {
-        self.execute_multi_project_old(&request, use_retry, config_path).await
-    }
-
-    async fn execute_watch(
-        &self,
-        request: DirectoryWatchAggregate,
-    ) -> Box<dyn PipelineOutputAggregate> {
-        self.execute_watch_old(&request).await
-    }
-}
-
-impl PipelineExtendedOrchestrator {
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub async fn execute_multi_project_old(
-        &self,
-        _request: &MultiProjectAggregate,
-        _use_retry: Option<bool>,
+        _request: MultiProjectAggregate,
+        _use_retry: Option<BooleanVO>,
         _config_path: Option<&FilePath>,
     ) -> Box<dyn PipelineOutputAggregate> {
         let job_id = JobId::new("multi-project-job");
@@ -63,9 +39,9 @@ impl PipelineExtendedOrchestrator {
         })
     }
 
-    pub async fn execute_watch_old(
+    async fn execute_watch(
         &self,
-        _request: &DirectoryWatchAggregate,
+        _request: DirectoryWatchAggregate,
     ) -> Box<dyn PipelineOutputAggregate> {
         let job_id = JobId::new("watch-job");
         Box::new(ExtendedPipelineOutput {
@@ -74,6 +50,12 @@ impl PipelineExtendedOrchestrator {
             data: None,
             error: None,
         })
+    }
+}
+
+impl PipelineExtendedOrchestrator {
+    pub fn new() -> Self {
+        Self
     }
 }
 
@@ -91,12 +73,8 @@ impl PipelineOutputAggregate for ExtendedPipelineOutput {
     fn job_id(&self) -> &JobId {
         &self.job_id
     }
-    fn data(&self) -> Option<&serde_json::Value> {
-        self.data.as_ref().map(|_| {
-            // Return a reference to a stored value, not a temporary
-            static EMPTY: serde_json::Value = serde_json::Value::Null;
-            &EMPTY
-        })
+    fn data(&self) -> Option<&ResponseData> {
+        self.data.as_ref()
     }
     fn error(&self) -> Option<&ErrorMessage> {
         self.error.as_ref()

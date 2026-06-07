@@ -1,4 +1,4 @@
-use crate::taxonomy::{ContentString, ResponseData, Timeout, TransportUrlVO};
+use crate::taxonomy::{ContentString, ResponseData, Timeout, TransportError, TransportUrlVO};
 
 #[async_trait::async_trait]
 pub trait IHttpProviderPort: Send + Sync {
@@ -6,12 +6,12 @@ pub trait IHttpProviderPort: Send + Sync {
         &self,
         url: TransportUrlVO,
         timeout: Option<Timeout>,
-    ) -> Result<ResponseData, String>;
+    ) -> Result<ResponseData, TransportError>;
 
     async fn post(
         &self,
         url: TransportUrlVO,
         body: ContentString,
         timeout: Option<Timeout>,
-    ) -> Result<ResponseData, String>;
+    ) -> Result<ResponseData, TransportError>;
 }

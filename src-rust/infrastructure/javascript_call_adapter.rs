@@ -1,8 +1,8 @@
 /// javascript_call_tracer — Semantic analysis adapter for JavaScript/TypeScript files.
 use crate::contract::semantic_tracer_port::ISemanticTracerPort;
 use crate::taxonomy::{
-    CallChainList, DataFlowList, DirectoryPath, FilePath, LineNumber,
-    ResponseData, ScopeRef, SemanticError, SymbolName,
+    CallChainList, Count, DataFlowList, DirectoryPath, FilePath, LineNumber, ResponseData,
+    ResponseDataList, ScopeRef, SemanticError, SymbolName, SymbolNameList,
 };
 use async_trait::async_trait;
 use regex::Regex;
@@ -177,7 +177,7 @@ impl ISemanticTracerPort for JSCallAdapter {
         root_dir: &DirectoryPath,
         old_name: &SymbolName,
         new_name: &SymbolName,
-    ) -> u32 {
+    ) -> Count {
         let root = Path::new(&root_dir.value);
         let old = old_name.to_string();
         let new = new_name.to_string();
@@ -221,21 +221,22 @@ impl ISemanticTracerPort for JSCallAdapter {
             }
         }
 
-        modified_count
+        Count::new(modified_count)
     }
 
     async fn get_symbol_locations(
         &self,
         _file_path: &FilePath,
         _symbol: &SymbolName,
-    ) -> Vec<ResponseData> {
-        Vec::new()
+    ) -> ResponseDataList {
+        ResponseDataList { values: vec![] }
     }
 
-    async fn build_variants(&self, name: &SymbolName) -> Vec<SymbolName> {
-        Self::build_variants_raw(&name.to_string())
+    async fn build_variants(&self, name: &SymbolName) -> SymbolNameList {
+        let values = Self::build_variants_raw(&name.to_string())
             .into_iter()
             .map(SymbolName::new)
-            .collect()
+            .collect();
+        SymbolNameList { values }
     }
 }

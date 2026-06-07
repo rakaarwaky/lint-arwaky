@@ -1,12 +1,14 @@
 // job_registry_port — Port for job tracking and lifecycle management.
-use crate::taxonomy::{Duration, ErrorMessage, JobError, JobId, ResponseData, SuccessStatus};
+use crate::taxonomy::{
+    ActionName, Count, Duration, ErrorMessage, JobError, JobId, ResponseData, ResponseDataList,
+    SuccessStatus,
+};
 use async_trait::async_trait;
-use serde_json;
 
 #[async_trait]
 pub trait IJobRegistryPort: Send + Sync {
     /// Register a new job and return its ID.
-    async fn create_job(&self, action: &str) -> Result<JobId, JobError>;
+    async fn create_job(&self, action: ActionName) -> Result<JobId, JobError>;
 
     /// Mark job as completed.
     async fn complete_job(&self, job_id: &JobId, result: &ResponseData);
@@ -15,7 +17,7 @@ pub trait IJobRegistryPort: Send + Sync {
     async fn fail_job(&self, job_id: &JobId, error: &ErrorMessage);
 
     /// Return all jobs.
-    async fn list_jobs(&self) -> Vec<serde_json::Value>;
+    async fn list_jobs(&self) -> ResponseDataList;
 
     /// Return a single job or None.
     async fn get_job(&self, job_id: &JobId) -> Option<JobId>;
@@ -26,8 +28,8 @@ pub trait IJobRegistryPort: Send + Sync {
     /// Execute async function with exponential backoff retry.
     async fn run_with_retry(
         &self,
-        operation: &str,
-        max_retries: u32,
+        operation: ActionName,
+        max_retries: Count,
         base_delay: Duration,
     ) -> ResponseData;
 }

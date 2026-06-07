@@ -34,7 +34,11 @@ impl NamingVariantAnalyzer {
                 }
             } else if ch.is_uppercase() && !current.is_empty() {
                 // New word starts on uppercase after lowercase
-                let last_lower = current.chars().last().map(|c| c.is_lowercase()).unwrap_or(false);
+                let last_lower = current
+                    .chars()
+                    .last()
+                    .map(|c| c.is_lowercase())
+                    .unwrap_or(false);
                 if last_lower {
                     words.push(current.to_lowercase());
                     current = String::from(ch);
@@ -109,7 +113,10 @@ impl NamingVariantAnalyzer {
         results.insert(dict.kebab_case);
 
         SymbolNameList {
-            values: results.into_iter().map(|s| SymbolName { value: s }).collect(),
+            values: results
+                .into_iter()
+                .map(|s| SymbolName { value: s })
+                .collect(),
         }
     }
 }

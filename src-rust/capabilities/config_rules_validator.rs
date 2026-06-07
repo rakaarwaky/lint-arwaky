@@ -1,7 +1,7 @@
 // config_rules_validator — Capability for validating project configuration rules.
 // Implements IConfigRulesProtocol: is_adapter_enabled, validate_thresholds.
 
-use crate::taxonomy::{AdapterName, ProjectConfig, AdapterStatus};
+use crate::taxonomy::{AdapterName, AdapterStatus, ProjectConfig};
 
 /// Result of a validation operation.
 pub struct ValidationResult {
@@ -11,10 +11,16 @@ pub struct ValidationResult {
 
 impl ValidationResult {
     pub fn ok() -> Self {
-        Self { is_valid: true, reason: None }
+        Self {
+            is_valid: true,
+            reason: None,
+        }
     }
     pub fn fail(reason: &str) -> Self {
-        Self { is_valid: false, reason: Some(reason.to_string()) }
+        Self {
+            is_valid: false,
+            reason: Some(reason.to_string()),
+        }
     }
 }
 
@@ -31,7 +37,7 @@ impl ConfigRulesValidator {
     /// Determines if a specific adapter should run based on configuration rules.
     pub fn is_adapter_enabled(&self, adapter_name: &AdapterName) -> bool {
         for adapter in &self.config.adapters {
-            if adapter.name == adapter_name.value {
+            if adapter.name == *adapter_name {
                 return adapter.status == AdapterStatus::Enabled;
             }
         }

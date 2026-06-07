@@ -71,7 +71,7 @@ impl ILinterAdapterPort for RuffAdapter {
             .execute_command(
                 command,
                 working_dir,
-                Some(std::time::Duration::from_secs(60)),
+                Some(crate::taxonomy::Timeout::new(60.0)),
             )
             .await
         {
@@ -139,7 +139,7 @@ impl ILinterAdapterPort for RuffAdapter {
             .execute_command(
                 command,
                 working_dir,
-                Some(std::time::Duration::from_secs(60)),
+                Some(crate::taxonomy::Timeout::new(60.0)),
             )
             .await
         {

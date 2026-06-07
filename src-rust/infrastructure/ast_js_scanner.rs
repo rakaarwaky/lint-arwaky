@@ -5,10 +5,9 @@ use std::sync::LazyLock;
 
 use crate::contract::source_parser_port::ISourceParserPort;
 use crate::taxonomy::{
-    Cause, ColumnNumber, Count, ErrorCode, ErrorMessage, FilePath, ImportInfo,
-    ImportInfoList, LineNumber, MetadataVO, PatternList, PrimitiveTypeList,
-    PrimitiveViolation, PrimitiveViolationList, ResponseData, SourceParserError,
-    SuccessStatus, SymbolName,
+    BooleanVO, Cause, ColumnNumber, Count, ErrorCode, ErrorMessage, FilePath, ImportInfo,
+    ImportInfoList, LineNumber, MetadataVO, PatternList, PrimitiveTypeList, PrimitiveViolation,
+    PrimitiveViolationList, ResponseData, SourceParserError, SuccessStatus, SymbolName,
 };
 
 static IMPORT_REGEX: LazyLock<Regex> =
@@ -353,7 +352,9 @@ impl ISourceParserPort for ASTJSParserAdapter {
 
     fn get_class_attributes(&self, _path: &FilePath) -> ResponseData {
         ResponseData {
-            value: Some(serde_json::json!(HashMap::<String, serde_json::Value>::new())),
+            value: Some(serde_json::json!(
+                HashMap::<String, serde_json::Value>::new()
+            )),
             stdout: String::new(),
             stderr: String::new(),
             returncode: 0i64,
@@ -368,18 +369,14 @@ impl ISourceParserPort for ASTJSParserAdapter {
             || filename.ends_with("/index.tsx")
             || filename.ends_with("/index.jsx");
         if !is_barrel {
-            return SuccessStatus {
-                value: false,
-            };
+            return SuccessStatus { value: false };
         }
         if let Ok(data) = self.read_and_parse(path) {
             SuccessStatus {
                 value: !data.exported.is_empty(),
             }
         } else {
-            SuccessStatus {
-                value: false,
-            }
+            SuccessStatus { value: false }
         }
     }
 
@@ -490,9 +487,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
                 value: data.exported.contains(&symbol.value),
             }
         } else {
-            SuccessStatus {
-                value: false,
-            }
+            SuccessStatus { value: false }
         }
     }
 
@@ -548,12 +543,14 @@ impl ISourceParserPort for ASTJSParserAdapter {
         }
     }
 
-    fn is_barrel_file(&self, path: &FilePath) -> bool {
+    fn is_barrel_file(&self, path: &FilePath) -> BooleanVO {
         let path_str = path.value.replace('\\', "/");
-        path_str.ends_with("/index.ts")
-            || path_str.ends_with("/index.js")
-            || path_str.ends_with("/index.tsx")
-            || path_str.ends_with("/index.jsx")
+        BooleanVO::new(
+            path_str.ends_with("/index.ts")
+                || path_str.ends_with("/index.js")
+                || path_str.ends_with("/index.tsx")
+                || path_str.ends_with("/index.jsx"),
+        )
     }
 
     fn get_stem(&self, path: &FilePath) -> SymbolName {
@@ -574,7 +571,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
         SymbolName::new(stem)
     }
 
-    fn is_entry_point(&self, path: &FilePath) -> bool {
+    fn is_entry_point(&self, path: &FilePath) -> BooleanVO {
         let basename = path
             .value
             .replace('\\', "/")
@@ -582,15 +579,17 @@ impl ISourceParserPort for ASTJSParserAdapter {
             .last()
             .unwrap_or("")
             .to_string();
-        [
-            "index.ts",
-            "index.js",
-            "index.tsx",
-            "index.jsx",
-            "main.ts",
-            "main.js",
-        ]
-        .contains(&basename.as_ref())
+        BooleanVO::new(
+            [
+                "index.ts",
+                "index.js",
+                "index.tsx",
+                "index.jsx",
+                "main.ts",
+                "main.js",
+            ]
+            .contains(&basename.as_ref()),
+        )
     }
 
     fn get_supported_extensions(&self) -> PatternList {

@@ -1,12 +1,12 @@
-use crate::taxonomy::{
-    ArchitectureConfig, FilePath, FilePathList, LintResultList, PatternList, LayerMapVO,
-    LayerNameVO, Count, Identity, ErrorMessage, CustomMessageVO, ModuleName,
-};
 use crate::contract::file_system_port::IFileSystemPort;
 use crate::contract::source_parser_port::ISourceParserPort;
+use crate::taxonomy::{
+    ArchitectureConfig, Count, CustomMessageVO, ErrorMessage, FilePath, FilePathList, Identity,
+    LayerMapVO, LayerNameVO, LintResultList, ModuleName, PatternList,
+};
 use async_trait::async_trait;
 
-pub trait IAnalyzer {
+pub trait IAnalyzer: Send + Sync {
     fn config(&self) -> &ArchitectureConfig;
     fn layer_map(&self) -> &LayerMapVO;
     fn fs(&self) -> &dyn IFileSystemPort;
@@ -22,44 +22,76 @@ pub trait IArchRuleProtocol {
 #[async_trait]
 pub trait INamingCheckerProtocol: Send + Sync {
     async fn check_file_naming(
-        &self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     );
     async fn check_domain_suffixes(
-        &self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     );
 }
 
 #[async_trait]
 pub trait IInternalCheckerProtocol: Send + Sync {
     async fn check_layer_internal_rules(
-        &self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     );
 }
 
 #[async_trait]
 pub trait IMetricCheckerProtocol: Send + Sync {
     async fn check_line_counts(
-        &self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     );
     async fn check_mandatory_class_definition(
-        &self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     );
 }
 
 #[async_trait]
 pub trait IRoleCheckerProtocol: Send + Sync {
     async fn check_agent_roles(
-        &self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     );
     async fn check_surface_roles(
-        &self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     );
 }
 
 #[async_trait]
 pub trait IArchImportProcessorProtocol: Send + Sync {
     async fn process_file_imports(
-        &self, analyzer: &dyn IAnalyzer, file_path: &FilePath, root_dir: &FilePath, results: &mut LintResultList,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        file_path: &FilePath,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     );
     async fn validate_imports_present(
         &self,
@@ -87,10 +119,16 @@ pub trait INamingRuleProtocol: IArchRuleProtocol + Send + Sync {
         detect_layer_fn: &dyn Fn(&FilePath, &FilePath) -> Option<LayerNameVO>,
     );
     async fn check_class_naming(
-        &self, files: &FilePathList, results: &mut LintResultList, source_parser: &dyn ISourceParserPort,
+        &self,
+        files: &FilePathList,
+        results: &mut LintResultList,
+        source_parser: &dyn ISourceParserPort,
     );
     async fn check_function_naming(
-        &self, files: &FilePathList, results: &mut LintResultList, source_parser: &dyn ISourceParserPort,
+        &self,
+        files: &FilePathList,
+        results: &mut LintResultList,
+        source_parser: &dyn ISourceParserPort,
     );
 }
 
@@ -112,30 +150,98 @@ pub trait ICodeQualityProtocol: IArchRuleProtocol + Send + Sync {
         results: &mut LintResultList,
         violation_message: Option<&ErrorMessage>,
         mandatory_imports: Option<&PatternList>,
-        layer_resolver: Option<&dyn Fn(&ModuleName) -> Option<LayerNameVO>>,
+        layer_resolver: Option<&(dyn Fn(&ModuleName) -> Option<LayerNameVO> + Sync)>,
     );
     async fn check_dead_inheritance_bypass(
-        &self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     );
     async fn check_forbidden_inheritance(
-        &self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     );
 }
 
 #[async_trait]
 pub trait IArchStructureProtocol: IArchRuleProtocol + Send + Sync {
-    async fn check_file_naming(&self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList);
-    async fn check_domain_suffixes(&self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList);
-    async fn check_layer_internal_rules(&self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList);
-    async fn check_line_counts(&self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList);
-    async fn check_mandatory_class_definition(&self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList);
-    async fn check_agent_roles(&self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList);
-    async fn check_surface_roles(&self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList);
+    async fn check_file_naming(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    );
+    async fn check_domain_suffixes(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    );
+    async fn check_layer_internal_rules(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    );
+    async fn check_line_counts(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    );
+    async fn check_mandatory_class_definition(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    );
+    async fn check_agent_roles(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    );
+    async fn check_surface_roles(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    );
 }
 
 #[async_trait]
 pub trait IArchImportProtocol: IArchRuleProtocol + Send + Sync {
-    async fn check_mandatory_imports(&self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList);
-    async fn check_forbidden_imports(&self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList);
-    async fn check_legacy_import_rules(&self, analyzer: &dyn IAnalyzer, files: &FilePathList, root_dir: &FilePath, results: &mut LintResultList);
+    async fn check_mandatory_imports(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    );
+    async fn check_forbidden_imports(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    );
+    async fn check_legacy_import_rules(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    );
 }

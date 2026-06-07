@@ -2,16 +2,22 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::taxonomy::{ArchitectureConfig, Count, FilePathList, PatternList, Score};
+use crate::taxonomy::{
+    AdapterName, ArchitectureConfig, Count, DescriptionVO, DirectoryPath, FilePathList,
+    PatternList, Score,
+};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(transparent)]
 #[derive(Default)]
 pub struct ActualValue {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl ActualValue {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
     pub fn new(value: impl Into<String>) -> Self {
         Self {
             value: value.into(),
@@ -88,10 +94,13 @@ impl<'de> serde::Deserialize<'de> for ActualValue {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct ExpectedValue {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl ExpectedValue {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
     pub fn new(value: impl Into<String>) -> Self {
         Self {
             value: value.into(),
@@ -222,7 +231,7 @@ impl std::fmt::Display for AdapterStatus {
 /// Single adapter configuration.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AdapterEntry {
-    pub name: String,
+    pub name: AdapterName,
     #[serde(default)]
     pub status: AdapterStatus,
     #[serde(default = "default_weight")]
@@ -234,15 +243,15 @@ fn default_weight() -> f64 {
 }
 
 impl AdapterEntry {
-    pub fn new(name: impl Into<String>, status: AdapterStatus, weight: f64) -> Self {
+    pub fn new(name: AdapterName, status: AdapterStatus, weight: f64) -> Self {
         Self {
-            name: name.into(),
+            name,
             status,
             weight,
         }
     }
 
-    pub fn enabled(name: impl Into<String>) -> Self {
+    pub fn enabled(name: AdapterName) -> Self {
         Self::new(name, AdapterStatus::Enabled, 1.0)
     }
 
@@ -255,7 +264,7 @@ impl AdapterEntry {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ProjectConfig {
     #[serde(default = "default_project_name")]
-    pub project_name: String,
+    pub project_name: DescriptionVO,
     #[serde(default)]
     pub thresholds: Thresholds,
     #[serde(default)]
@@ -267,29 +276,28 @@ pub struct ProjectConfig {
     #[serde(default)]
     pub layer_map: std::collections::HashMap<String, String>,
     #[serde(default)]
-    pub output_dir: Option<String>,
+    pub output_dir: Option<DirectoryPath>,
     #[serde(default)]
     pub architecture: ArchitectureConfig,
 }
 
-fn default_project_name() -> String {
-    "lint-arwaky".to_string()
+fn default_project_name() -> DescriptionVO {
+    DescriptionVO::new("lint-arwaky")
 }
 
 impl ProjectConfig {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
-        project_name: impl Into<String>,
+        project_name: DescriptionVO,
         thresholds: Thresholds,
         adapters: Vec<AdapterEntry>,
         ignored_paths: FilePathList,
         ignored_rules: PatternList,
         layer_map: std::collections::HashMap<String, String>,
-        output_dir: Option<String>,
+        output_dir: Option<DirectoryPath>,
         architecture: ArchitectureConfig,
     ) -> Self {
         Self {
-            project_name: project_name.into(),
+            project_name,
             thresholds,
             adapters,
             ignored_paths,
@@ -306,10 +314,10 @@ impl ProjectConfig {
             project_name: default_project_name(),
             thresholds: Thresholds::default(),
             adapters: vec![
-                AdapterEntry::enabled("ruff"),
-                AdapterEntry::enabled("mypy"),
-                AdapterEntry::enabled("bandit"),
-                AdapterEntry::enabled("radon"),
+                AdapterEntry::enabled(AdapterName::raw("ruff")),
+                AdapterEntry::enabled(AdapterName::raw("mypy")),
+                AdapterEntry::enabled(AdapterName::raw("bandit")),
+                AdapterEntry::enabled(AdapterName::raw("radon")),
             ],
             ignored_paths: FilePathList::default(),
             ignored_rules: PatternList::default(),

@@ -1,9 +1,9 @@
 // dev_commands_orchestrator — Orchestrator for development-related domain logic.
-use crate::contract::dev_commands_aggregate::DevCommandsAggregate;
+use crate::contract::DevCommandsAggregate;
 use std::collections::HashMap;
 
+use crate::taxonomy::{BooleanVO, FileFormat, FilePath, Identity};
 use async_trait::async_trait;
-use crate::taxonomy::{FilePath, FileFormat};
 
 pub struct DevCommandsOrchestrator;
 
@@ -14,19 +14,21 @@ impl DevCommandsAggregate for DevCommandsOrchestrator {
         println!("Comparison: {:?}", diff_data);
     }
 
-    async fn suggest(&self, path: FilePath, _ai: bool) {
+    async fn suggest(&self, path: FilePath, _ai: BooleanVO) {
         let suggestions = self.get_suggestions(&path.value).await;
         println!("Suggestions: {:?}", suggestions);
     }
 
-    async fn ignore(&self, rule: &str, remove: bool, path: Option<FilePath>) {
-        let p = path.map(|fp| fp.value).unwrap_or_else(|| "lint_arwaky.config.yaml".to_string());
-        let res = self.update_ignore_rule(rule, remove, &p);
+    async fn ignore(&self, rule: &Identity, remove: BooleanVO, path: Option<FilePath>) {
+        let p = path
+            .map(|fp| fp.value)
+            .unwrap_or_else(|| "lint_arwaky.config.yaml".to_string());
+        let res = self.update_ignore_rule(&rule.value, remove.value(), &p);
         println!("{}", res);
     }
 
-    async fn config(&self, _action: &str, _path: Option<FilePath>) {
-        println!("Config action: {}", _action);
+    async fn config(&self, _action: &Identity, _path: Option<FilePath>) {
+        println!("Config action: {}", _action.value);
     }
 
     async fn export(&self, _output_format: FileFormat, _output: Option<FilePath>) {

@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::taxonomy::{ColumnNumber, LineNumber};
 
@@ -11,7 +11,10 @@ pub struct Position {
 
 impl Position {
     pub fn new(line: LineNumber) -> Self {
-        Self { line, column: ColumnNumber::new(0) }
+        Self {
+            line,
+            column: ColumnNumber::new(0),
+        }
     }
 }
 

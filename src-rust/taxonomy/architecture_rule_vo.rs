@@ -1,8 +1,12 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use crate::taxonomy::{BooleanVO, Count, DescriptionVO, ErrorCode, ErrorMessage, LayerNameVO, PatternList, SuffixPolicyVO, SuffixVO};
+use crate::taxonomy::{
+    BooleanVO, Count, DescriptionVO, ErrorCode, ErrorMessage, LayerNameVO, PatternList,
+    SuffixPolicyVO, SuffixVO,
+};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(default)]
 pub struct ArchitectureRule {
     pub name: DescriptionVO,
     pub description: DescriptionVO,
@@ -89,7 +93,7 @@ pub struct LegacyLayerRule {
     pub description: ErrorMessage,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LegacyLayerRuleList {
     pub values: Vec<LegacyLayerRule>,
 }
@@ -119,25 +123,175 @@ pub struct MandatoryImportRuleVO {
 }
 
 impl ArchitectureRule {
-    pub fn new(name: DescriptionVO, description: DescriptionVO, rule_type: ErrorCode, scope: LayerNameVO, word_count: Count, exceptions: PatternList, allowed_import: PatternList, forbidden_import: PatternList, mandatory_import: PatternList, mandatory_import_violation_message: ErrorMessage, forbidden_import_violation_message: ErrorMessage, suffix_policy: SuffixPolicyVO, allowed_suffix: PatternList, forbidden_suffix: PatternList, no_primitives: BooleanVO, mandatory_imports: Vec<MandatoryImportRuleVO>, barrel_completeness: BooleanVO, min_lines: Count, max_lines: Count, word_count_violation_message: ErrorMessage, suffix_violation_message: ErrorMessage, no_primitives_violation_message: ErrorMessage, min_lines_violation_message: ErrorMessage, max_lines_violation_message: ErrorMessage, barrel_completeness_violation_message: ErrorMessage, forbidden_bypass: PatternList, forbidden_bypass_violation_message: ErrorMessage, forbidden_bypass_custom_messages: Vec<CustomMessageVO>, forbid_internal_all: BooleanVO, forbid_internal_all_violation_message: ErrorMessage, mandatory_class_definition: BooleanVO, mandatory_class_definition_violation_message: ErrorMessage, dead_inheritance_bypass: BooleanVO, dead_inheritance_bypass_violation_message: ErrorMessage, dead_inheritance_bypass_custom_messages: Vec<CustomMessageVO>, check_orphan: BooleanVO, orphan_entry_points: PatternList, orphan_violation_message: ErrorMessage, check_unused_mandatory_imports: BooleanVO, check_unused_mandatory_imports_violation_message: ErrorMessage, forbidden_inheritance: PatternList, forbidden_inheritance_violation_message: ErrorMessage, no_domain_logic: BooleanVO, no_domain_logic_violation_message: ErrorMessage, must_implement_service_container_aggregate: BooleanVO, must_implement_service_container_aggregate_violation_message: ErrorMessage, lazy_eager_initialization_only: BooleanVO, lazy_eager_initialization_only_violation_message: ErrorMessage, stateless_execution: BooleanVO, stateless_execution_violation_message: ErrorMessage, single_execution_goal: BooleanVO, single_execution_goal_violation_message: ErrorMessage, high_level_policy_only: BooleanVO, high_level_policy_only_violation_message: ErrorMessage, coordinates_multiple_orchestrators: BooleanVO, coordinates_multiple_orchestrators_violation_message: ErrorMessage, crud_only: BooleanVO, crud_only_violation_message: ErrorMessage, no_decision_logic: BooleanVO, no_decision_logic_violation_message: ErrorMessage, thread_async_safe: BooleanVO, thread_async_safe_violation_message: ErrorMessage, no_domain_data_storage: BooleanVO, no_domain_data_storage_violation_message: ErrorMessage, owns_system_health_transitions: BooleanVO, owns_system_health_transitions_violation_message: ErrorMessage, lifecycle_tracking_only: BooleanVO, lifecycle_tracking_only_violation_message: ErrorMessage, forbid_any_type: BooleanVO, forbid_any_type_violation_message: ErrorMessage,) -> Self {
-        Self { name, description, rule_type, scope, word_count, exceptions, allowed_import, forbidden_import, mandatory_import, mandatory_import_violation_message, forbidden_import_violation_message, suffix_policy, allowed_suffix, forbidden_suffix, no_primitives, mandatory_imports, barrel_completeness, min_lines, max_lines, word_count_violation_message, suffix_violation_message, no_primitives_violation_message, min_lines_violation_message, max_lines_violation_message, barrel_completeness_violation_message, forbidden_bypass, forbidden_bypass_violation_message, forbidden_bypass_custom_messages, forbid_internal_all, forbid_internal_all_violation_message, mandatory_class_definition, mandatory_class_definition_violation_message, dead_inheritance_bypass, dead_inheritance_bypass_violation_message, dead_inheritance_bypass_custom_messages, check_orphan, orphan_entry_points, orphan_violation_message, check_unused_mandatory_imports, check_unused_mandatory_imports_violation_message, forbidden_inheritance, forbidden_inheritance_violation_message, no_domain_logic, no_domain_logic_violation_message, must_implement_service_container_aggregate, must_implement_service_container_aggregate_violation_message, lazy_eager_initialization_only, lazy_eager_initialization_only_violation_message, stateless_execution, stateless_execution_violation_message, single_execution_goal, single_execution_goal_violation_message, high_level_policy_only, high_level_policy_only_violation_message, coordinates_multiple_orchestrators, coordinates_multiple_orchestrators_violation_message, crud_only, crud_only_violation_message, no_decision_logic, no_decision_logic_violation_message, thread_async_safe, thread_async_safe_violation_message, no_domain_data_storage, no_domain_data_storage_violation_message, owns_system_health_transitions, owns_system_health_transitions_violation_message, lifecycle_tracking_only, lifecycle_tracking_only_violation_message, forbid_any_type, forbid_any_type_violation_message }
+    pub fn new(
+        name: DescriptionVO,
+        description: DescriptionVO,
+        rule_type: ErrorCode,
+        scope: LayerNameVO,
+        word_count: Count,
+        exceptions: PatternList,
+        allowed_import: PatternList,
+        forbidden_import: PatternList,
+        mandatory_import: PatternList,
+        mandatory_import_violation_message: ErrorMessage,
+        forbidden_import_violation_message: ErrorMessage,
+        suffix_policy: SuffixPolicyVO,
+        allowed_suffix: PatternList,
+        forbidden_suffix: PatternList,
+        no_primitives: BooleanVO,
+        mandatory_imports: Vec<MandatoryImportRuleVO>,
+        barrel_completeness: BooleanVO,
+        min_lines: Count,
+        max_lines: Count,
+        word_count_violation_message: ErrorMessage,
+        suffix_violation_message: ErrorMessage,
+        no_primitives_violation_message: ErrorMessage,
+        min_lines_violation_message: ErrorMessage,
+        max_lines_violation_message: ErrorMessage,
+        barrel_completeness_violation_message: ErrorMessage,
+        forbidden_bypass: PatternList,
+        forbidden_bypass_violation_message: ErrorMessage,
+        forbidden_bypass_custom_messages: Vec<CustomMessageVO>,
+        forbid_internal_all: BooleanVO,
+        forbid_internal_all_violation_message: ErrorMessage,
+        mandatory_class_definition: BooleanVO,
+        mandatory_class_definition_violation_message: ErrorMessage,
+        dead_inheritance_bypass: BooleanVO,
+        dead_inheritance_bypass_violation_message: ErrorMessage,
+        dead_inheritance_bypass_custom_messages: Vec<CustomMessageVO>,
+        check_orphan: BooleanVO,
+        orphan_entry_points: PatternList,
+        orphan_violation_message: ErrorMessage,
+        check_unused_mandatory_imports: BooleanVO,
+        check_unused_mandatory_imports_violation_message: ErrorMessage,
+        forbidden_inheritance: PatternList,
+        forbidden_inheritance_violation_message: ErrorMessage,
+        no_domain_logic: BooleanVO,
+        no_domain_logic_violation_message: ErrorMessage,
+        must_implement_service_container_aggregate: BooleanVO,
+        must_implement_service_container_aggregate_violation_message: ErrorMessage,
+        lazy_eager_initialization_only: BooleanVO,
+        lazy_eager_initialization_only_violation_message: ErrorMessage,
+        stateless_execution: BooleanVO,
+        stateless_execution_violation_message: ErrorMessage,
+        single_execution_goal: BooleanVO,
+        single_execution_goal_violation_message: ErrorMessage,
+        high_level_policy_only: BooleanVO,
+        high_level_policy_only_violation_message: ErrorMessage,
+        coordinates_multiple_orchestrators: BooleanVO,
+        coordinates_multiple_orchestrators_violation_message: ErrorMessage,
+        crud_only: BooleanVO,
+        crud_only_violation_message: ErrorMessage,
+        no_decision_logic: BooleanVO,
+        no_decision_logic_violation_message: ErrorMessage,
+        thread_async_safe: BooleanVO,
+        thread_async_safe_violation_message: ErrorMessage,
+        no_domain_data_storage: BooleanVO,
+        no_domain_data_storage_violation_message: ErrorMessage,
+        owns_system_health_transitions: BooleanVO,
+        owns_system_health_transitions_violation_message: ErrorMessage,
+        lifecycle_tracking_only: BooleanVO,
+        lifecycle_tracking_only_violation_message: ErrorMessage,
+        forbid_any_type: BooleanVO,
+        forbid_any_type_violation_message: ErrorMessage,
+    ) -> Self {
+        Self {
+            name,
+            description,
+            rule_type,
+            scope,
+            word_count,
+            exceptions,
+            allowed_import,
+            forbidden_import,
+            mandatory_import,
+            mandatory_import_violation_message,
+            forbidden_import_violation_message,
+            suffix_policy,
+            allowed_suffix,
+            forbidden_suffix,
+            no_primitives,
+            mandatory_imports,
+            barrel_completeness,
+            min_lines,
+            max_lines,
+            word_count_violation_message,
+            suffix_violation_message,
+            no_primitives_violation_message,
+            min_lines_violation_message,
+            max_lines_violation_message,
+            barrel_completeness_violation_message,
+            forbidden_bypass,
+            forbidden_bypass_violation_message,
+            forbidden_bypass_custom_messages,
+            forbid_internal_all,
+            forbid_internal_all_violation_message,
+            mandatory_class_definition,
+            mandatory_class_definition_violation_message,
+            dead_inheritance_bypass,
+            dead_inheritance_bypass_violation_message,
+            dead_inheritance_bypass_custom_messages,
+            check_orphan,
+            orphan_entry_points,
+            orphan_violation_message,
+            check_unused_mandatory_imports,
+            check_unused_mandatory_imports_violation_message,
+            forbidden_inheritance,
+            forbidden_inheritance_violation_message,
+            no_domain_logic,
+            no_domain_logic_violation_message,
+            must_implement_service_container_aggregate,
+            must_implement_service_container_aggregate_violation_message,
+            lazy_eager_initialization_only,
+            lazy_eager_initialization_only_violation_message,
+            stateless_execution,
+            stateless_execution_violation_message,
+            single_execution_goal,
+            single_execution_goal_violation_message,
+            high_level_policy_only,
+            high_level_policy_only_violation_message,
+            coordinates_multiple_orchestrators,
+            coordinates_multiple_orchestrators_violation_message,
+            crud_only,
+            crud_only_violation_message,
+            no_decision_logic,
+            no_decision_logic_violation_message,
+            thread_async_safe,
+            thread_async_safe_violation_message,
+            no_domain_data_storage,
+            no_domain_data_storage_violation_message,
+            owns_system_health_transitions,
+            owns_system_health_transitions_violation_message,
+            lifecycle_tracking_only,
+            lifecycle_tracking_only_violation_message,
+            forbid_any_type,
+            forbid_any_type_violation_message,
+        }
     }
 }
 
 impl CustomMessageVO {
-    pub fn new(pattern: String, message: ErrorMessage,) -> Self {
+    pub fn new(pattern: String, message: ErrorMessage) -> Self {
         Self { pattern, message }
     }
 }
 
 impl MandatoryImportRuleVO {
-    pub fn new(suffix: SuffixVO, imports: PatternList,) -> Self {
+    pub fn new(suffix: SuffixVO, imports: PatternList) -> Self {
         Self { suffix, imports }
     }
 }
 
 impl LegacyLayerRule {
-    pub fn new(source_layer: LayerNameVO, forbidden_target: LayerNameVO, description: ErrorMessage,) -> Self {
-        Self { source_layer, forbidden_target, description }
+    pub fn new(
+        source_layer: LayerNameVO,
+        forbidden_target: LayerNameVO,
+        description: ErrorMessage,
+    ) -> Self {
+        Self {
+            source_layer,
+            forbidden_target,
+            description,
+        }
     }
 }

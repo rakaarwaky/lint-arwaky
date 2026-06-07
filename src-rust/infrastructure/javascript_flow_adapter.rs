@@ -1,6 +1,8 @@
 /// javascript_flow_tracer — Variable flow tracking for JS/TS files.
 use crate::contract::javascript_flow_port::IJavascriptFlowPort;
-use crate::taxonomy::{DataFlowList, ErrorMessage, FilePath, LineNumber, SemanticError, SymbolName};
+use crate::taxonomy::{
+    DataFlowList, ErrorMessage, FilePath, LineNumber, SemanticError, SymbolName,
+};
 use regex::Regex;
 
 pub struct JSFlowAdapter;
@@ -22,15 +24,23 @@ impl IJavascriptFlowPort for JSFlowAdapter {
         let path_str = &file_path.value;
         let var_str = &var_name.value;
         if !std::path::Path::new(path_str).exists() {
-            return Err(SemanticError::new(ErrorMessage::new(format!("File does not exist: {}", path_str))));
+            return Err(SemanticError::new(ErrorMessage::new(format!(
+                "File does not exist: {}",
+                path_str
+            ))));
         }
-        let content = std::fs::read_to_string(path_str).map_err(|e| SemanticError::new(ErrorMessage::new(format!("Failed to read: {}", e))))?;
+        let content = std::fs::read_to_string(path_str)
+            .map_err(|e| SemanticError::new(ErrorMessage::new(format!("Failed to read: {}", e))))?;
         let lines: Vec<&str> = content.lines().collect();
         let word_pattern = Regex::new(&format!(r"\b{}", regex::escape(var_str))).unwrap();
         let mut flows: Vec<ErrorMessage> = Vec::new();
         for (i, line) in lines.iter().enumerate() {
             if word_pattern.is_match(line) {
-                flows.push(ErrorMessage::new(format!("Line {} [Usage]: {}", i + 1, line.trim())));
+                flows.push(ErrorMessage::new(format!(
+                    "Line {} [Usage]: {}",
+                    i + 1,
+                    line.trim()
+                )));
             }
         }
         Ok(DataFlowList::new(flows))

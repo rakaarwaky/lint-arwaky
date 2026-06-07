@@ -1,6 +1,9 @@
 // maintenance_commands_orchestrator — Orchestrator for maintenance-related domain logic.
 use crate::contract::maintenance_commands_aggregate::MaintenanceCommandsAggregate;
-use crate::taxonomy::{DoctorResultVO, FilePath, JobId, MaintenanceStatsVO};
+use crate::taxonomy::{
+    AdapterName, ComplianceStatus, Count, DescriptionVO, DoctorResultVO, ErrorMessage, FilePath,
+    FilePathList, JobId, MaintenanceStatsVO, Score,
+};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -11,23 +14,126 @@ use async_trait::async_trait;
 #[async_trait]
 impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
     async fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
-        self.stats_old(project_path)
+        let root = Path::new(&project_path.value);
+        let mut py_files = Vec::new();
+        walk_dir(root, &mut py_files);
+        let py_count = py_files.len() as i64;
+        let test_count = py_files
+            .iter()
+            .filter(|f| {
+                f.file_name()
+                    .map(|n| n.to_string_lossy().starts_with("test_"))
+                    .unwrap_or(false)
+            })
+            .count() as i64;
+        let ratio = if py_count > 0 {
+            test_count as f64 / py_count as f64
+        } else {
+            0.0
+        };
+
+        MaintenanceStatsVO {
+            project_path: project_path.clone(),
+            total_files: Count::new(py_count),
+            test_files: Count::new(test_count),
+            test_ratio: Score::new(ratio),
+            python_files: Count::new(py_count),
+        }
     }
 
     async fn clean(&self) {
-        self.clean_old();
+        let cwd = std::env::current_dir().ok();
+        if let Some(cwd) = cwd {
+            let cache_dirs = [
+                ".pytest_cache",
+                ".mypy_cache",
+                ".ruff_cache",
+                "__pycache__",
+                ".lint_arwaky_cache",
+            ];
+            let mut found_dirs = Vec::new();
+            find_cache_dirs(&cwd, &cache_dirs, &mut found_dirs);
+            for entry in found_dirs {
+                let _ = std::fs::remove_dir_all(&entry);
+            }
+        }
     }
 
     async fn update(&self) {
-        self.update_old();
+        let adapters = ["ruff", "mypy", "bandit", "radon"];
+        for adapter in &adapters {
+            let _ = std::process::Command::new("pip")
+                .args(["install", "--upgrade", adapter])
+                .output();
+        }
     }
 
     async fn doctor(&self) -> DoctorResultVO {
-        self.doctor_old()
+        let mut issues: Vec<ErrorMessage> = Vec::new();
+        let mut adapter_statuses: HashMap<AdapterName, String> = HashMap::new();
+
+        let py_ver = DescriptionVO::new("3.12");
+
+        let is_installed = std::process::Command::new("pip")
+            .args(["show", "lint-arwaky"])
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false);
+
+        let mut config_found_paths = Vec::new();
+        for cfg in &[
+            ".lint_arwaky.json",
+            "lint_arwaky.config.yaml",
+            "pyproject.toml",
+        ] {
+            if std::path::Path::new(cfg).exists() {
+                if let Ok(fp) = FilePath::new(cfg.to_string()) {
+                    config_found_paths.push(fp);
+                }
+            }
+        }
+        let config_found = FilePathList::new(config_found_paths);
+        if config_found.is_empty() {
+            issues.push(ErrorMessage::new("No configuration file found"));
+        }
+
+        for adapter in &["ruff", "mypy", "bandit", "radon"] {
+            let found = std::process::Command::new("which")
+                .arg(adapter)
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false);
+            if let Ok(name) = AdapterName::new(adapter.to_string()) {
+                adapter_statuses.insert(
+                    name.clone(),
+                    if found {
+                        "found".to_string()
+                    } else {
+                        "MISSING".to_string()
+                    },
+                );
+                if !found {
+                    issues.push(ErrorMessage::new(format!(
+                        "Linter adapter '{}' is not installed",
+                        adapter
+                    )));
+                }
+            }
+        }
+
+        let healthy = ComplianceStatus::new(issues.is_empty());
+
+        DoctorResultVO {
+            python_version: py_ver,
+            is_installed: ComplianceStatus::new(is_installed),
+            config_found,
+            adapter_statuses,
+            issues,
+            healthy,
+        }
     }
 
-    async fn cancel(&self, job_id: JobId) {
-        self.cancel_old(job_id).await;
+    async fn cancel(&self, _job_id: JobId) {
     }
 }
 
@@ -72,121 +178,5 @@ impl Default for MaintenanceCommandsOrchestrator {
 impl MaintenanceCommandsOrchestrator {
     pub fn new() -> Self {
         Self
-    }
-
-    pub fn stats_old(&self, project_path: &FilePath) -> MaintenanceStatsVO {
-        let root = Path::new(&project_path.value);
-        let mut py_files = Vec::new();
-        walk_dir(root, &mut py_files);
-        let py_count = py_files.len() as i64;
-        let test_count = py_files
-            .iter()
-            .filter(|f| {
-                f.file_name()
-                    .map(|n| n.to_string_lossy().starts_with("test_"))
-                    .unwrap_or(false)
-            })
-            .count() as i64;
-        let ratio = if py_count > 0 {
-            test_count as f64 / py_count as f64
-        } else {
-            0.0
-        };
-
-        MaintenanceStatsVO {
-            project_path: project_path.clone(),
-            total_files: py_count,
-            test_files: test_count,
-            test_ratio: ratio,
-            python_files: py_count,
-        }
-    }
-
-    pub fn clean_old(&self) {
-        let cwd = std::env::current_dir().ok();
-        if let Some(cwd) = cwd {
-            let cache_dirs = [
-                ".pytest_cache",
-                ".mypy_cache",
-                ".ruff_cache",
-                "__pycache__",
-                ".lint_arwaky_cache",
-            ];
-            let mut found_dirs = Vec::new();
-            find_cache_dirs(&cwd, &cache_dirs, &mut found_dirs);
-            for entry in found_dirs {
-                let _ = std::fs::remove_dir_all(&entry);
-            }
-        }
-    }
-
-    pub fn update_old(&self) {
-        let adapters = ["ruff", "mypy", "bandit", "radon"];
-        for adapter in &adapters {
-            let _ = std::process::Command::new("pip")
-                .args(["install", "--upgrade", adapter])
-                .output();
-        }
-    }
-
-    pub fn doctor_old(&self) -> DoctorResultVO {
-        let mut issues = Vec::new();
-        let mut adapter_statuses = HashMap::new();
-
-        let py_ver = "3.12".to_string();
-
-        let is_installed = std::process::Command::new("pip")
-            .args(["show", "lint-arwaky"])
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false);
-
-        let mut config_found = Vec::new();
-        for cfg in &[
-            ".lint_arwaky.json",
-            "lint_arwaky.config.yaml",
-            "pyproject.toml",
-        ] {
-            if std::path::Path::new(cfg).exists() {
-                config_found.push(cfg.to_string());
-            }
-        }
-        if config_found.is_empty() {
-            issues.push("No configuration file found".to_string());
-        }
-
-        for adapter in &["ruff", "mypy", "bandit", "radon"] {
-            let found = std::process::Command::new("which")
-                .arg(adapter)
-                .output()
-                .map(|o| o.status.success())
-                .unwrap_or(false);
-            adapter_statuses.insert(
-                adapter.to_string(),
-                if found {
-                    "found".to_string()
-                } else {
-                    "MISSING".to_string()
-                },
-            );
-            if !found {
-                issues.push(format!("Linter adapter '{}' is not installed", adapter));
-            }
-        }
-
-        let healthy = issues.is_empty();
-
-        DoctorResultVO {
-            python_version: py_ver,
-            is_installed,
-            config_found,
-            adapter_statuses,
-            issues,
-            healthy,
-        }
-    }
-
-    pub async fn cancel_old(&self, _job_id: JobId) {
-        // Cancel a running lint job
     }
 }

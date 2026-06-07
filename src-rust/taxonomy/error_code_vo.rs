@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
 /// error_code_vo — Error code value object.
@@ -11,11 +11,16 @@ pub struct ErrorCode {
 
 impl Default for ErrorCode {
     fn default() -> Self {
-        ErrorCode { code: String::new() }
+        ErrorCode {
+            code: String::new(),
+        }
     }
 }
 
 impl ErrorCode {
+    pub fn code(&self) -> &str {
+        &self.code
+    }
     /// Create a new ErrorCode from a string.
     ///
     /// # Errors

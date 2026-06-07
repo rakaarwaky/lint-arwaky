@@ -1,13 +1,16 @@
 // arch_orphan_analyzer — Multi-indicator orphan code detection logic.
 // Implements IArchOrphanProtocol: check_orphans.
 
+use crate::contract::architecture_orphan_protocol::IOrphanGraphProtocol;
+use crate::contract::architecture_orphan_protocol::IOrphanIndicatorProtocol;
 use crate::contract::architecture_rule_protocol::IAnalyzer;
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FileDefinitionMap, FilePath,
-    GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap, LayerDefinition,
-    LayerNameVO, LineNumber, LintMessage, LintResult, LocationList, OrphanIndicatorResult,
-    ScopeRef, Severity,
+    AdapterName, ColumnNumber, ErrorCode, FileDefinitionMap, FilePath, FilePathList,
+    FilePathSet, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap,
+    LayerDefinition, LayerNameVO, LineNumber, LintMessage, LintResult, LocationList, ModuleName,
+    ModuleToFileMap, OrphanIndicatorResult, ReachabilityResult, ScopeRef, Severity,
 };
+use async_trait::async_trait;
 use std::collections::HashMap;
 
 /// Build graph context and identify entry points for orphan analysis.
@@ -222,8 +225,8 @@ impl ArchOrphanAnalyzer {
             source: Some(AdapterName::new("architecture").unwrap()),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
-                name: String::new(),
-                kind: String::new(),
+                name: crate::taxonomy::DescriptionVO::new(String::new()),
+                kind: crate::taxonomy::DescriptionVO::new(String::new()),
                 file: None,
                 start_line: None,
                 end_line: None,
@@ -409,7 +412,6 @@ impl ArchOrphanAnalyzer {
             return false;
         }
 
-        let found = false;
         if let Ok(entries) = std::fs::read_dir(path) {
             for entry in entries.flatten() {
                 let entry_path = entry.path();
@@ -433,6 +435,149 @@ impl ArchOrphanAnalyzer {
                 }
             }
         }
-        found
+        false
+    }
+}
+
+#[async_trait]
+impl IOrphanGraphProtocol for OrphanGraphResolver {
+    async fn build_graph_context(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        full_project_files: &FilePathList,
+        root_dir: &FilePath,
+    ) -> GraphAnalysisContext {
+        let files: Vec<String> = full_project_files.iter().map(|f| f.value().to_string()).collect();
+        self.build_graph_context(&files, root_dir.value())
+    }
+
+    async fn resolve_import_to_file(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        _current_file: &FilePath,
+        _module_path: &ModuleName,
+        _root_dir: &FilePath,
+        _module_to_file: Option<&ModuleToFileMap>,
+    ) -> Option<FilePath> {
+        None
+    }
+
+    async fn identify_entry_points(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        all_files: &FilePathList,
+        _root_dir: &FilePath,
+    ) -> FilePathList {
+        let files: Vec<String> = all_files.iter().map(|f| f.value().to_string()).collect();
+        let result = self.identify_entry_points(&files);
+        let paths: Vec<FilePath> = result
+            .into_iter()
+            .filter_map(|s| FilePath::new(s).ok())
+            .collect();
+        FilePathList::new(paths)
+    }
+
+    async fn trace_reachability(
+        &self,
+        entry_points: &FilePathList,
+        graph: &ImportGraph,
+    ) -> ReachabilityResult {
+        let mut reachable: std::collections::HashSet<String> = entry_points
+            .iter()
+            .map(|fp| fp.value().to_string())
+            .collect();
+        let mut queue: std::collections::VecDeque<String> =
+            reachable.iter().cloned().collect();
+        while let Some(current) = queue.pop_front() {
+            if let Some(neighbors) = graph.mapping.get(&current) {
+                for neighbor in neighbors {
+                    if reachable.insert(neighbor.clone()) {
+                        queue.push_back(neighbor.clone());
+                    }
+                }
+            }
+        }
+        let paths: FilePathSet = reachable
+            .into_iter()
+            .filter_map(|s| FilePath::new(s).ok())
+            .collect();
+        ReachabilityResult::new(paths)
+    }
+}
+
+#[async_trait]
+impl IOrphanIndicatorProtocol for OrphanIndicatorEvaluator {
+    async fn is_taxonomy_orphan(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        f: &FilePath,
+        root_dir: &FilePath,
+        definition: Option<&LayerDefinition>,
+        inbound_links: &InboundLinkMap,
+    ) -> OrphanIndicatorResult {
+        let def = match definition {
+            Some(d) => d,
+            None => {
+                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            }
+        };
+        self.is_taxonomy_orphan(f.value(), root_dir.value(), def, inbound_links)
+    }
+
+    async fn is_contract_orphan(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        f: &FilePath,
+        root_dir: &FilePath,
+        file_definitions: &FileDefinitionMap,
+        inheritance_map: &InheritanceMap,
+    ) -> OrphanIndicatorResult {
+        self.is_contract_orphan(f.value(), root_dir.value(), file_definitions, inheritance_map)
+    }
+
+    async fn is_infra_cap_orphan(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        f: &FilePath,
+        _root_dir: &FilePath,
+        alive_files: &ReachabilityResult,
+    ) -> OrphanIndicatorResult {
+        let is_reachable = alive_files.paths.contains(f);
+        self.is_infra_cap_orphan(false, is_reachable)
+    }
+
+    async fn is_agent_orphan(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        _f: &FilePath,
+        _root_dir: &FilePath,
+    ) -> OrphanIndicatorResult {
+        self.is_agent_orphan(false)
+    }
+
+    async fn is_surface_orphan(
+        &self,
+        f: &FilePath,
+        alive_files: &ReachabilityResult,
+        definition: Option<&LayerDefinition>,
+    ) -> OrphanIndicatorResult {
+        let alive: Vec<String> = alive_files.paths.iter().map(|fp| fp.value().to_string()).collect();
+        let def = match definition {
+            Some(d) => d,
+            None => {
+                return OrphanIndicatorResult::new(false, String::new(), Severity::MEDIUM);
+            }
+        };
+        self.is_surface_orphan(f.value(), &alive, def)
+    }
+
+    async fn is_generic_orphan(
+        &self,
+        f: &FilePath,
+        alive_files: &ReachabilityResult,
+        inbound_links: &InboundLinkMap,
+    ) -> OrphanIndicatorResult {
+        let alive: Vec<String> = alive_files.paths.iter().map(|fp| fp.value().to_string()).collect();
+        self.is_generic_orphan(f.value(), &alive, inbound_links)
     }
 }

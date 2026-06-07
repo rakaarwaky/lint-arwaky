@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
 /// file_path_vo — File and directory path value objects.
@@ -6,16 +6,21 @@ use std::hash::{Hash, Hasher};
 /// File path identifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FilePath {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl Default for FilePath {
     fn default() -> Self {
-        FilePath { value: String::new() }
+        FilePath {
+            value: String::new(),
+        }
     }
 }
 
 impl FilePath {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
     /// Create a new FilePath from a string.
     ///
     /// # Errors
@@ -25,15 +30,17 @@ impl FilePath {
         if value.trim().is_empty() {
             return Err("File path cannot be empty".to_string());
         }
-        // Normalize: replace backslashes with forward slashes, and remove trailing slash.
+        // Normalize: replace backslashes with forward slashes, and collapse multiple slashes.
         value = value.replace('\\', "/");
-        // Remove trailing slash unless it's just "/"
-        if value.ends_with('/') && value.len() > 1 {
+        // Remove all trailing slashes
+        while value.ends_with('/') && value.len() > 1 {
             value.pop();
         }
-        // If after normalization it's empty, then it was all slashes -> treat as root?
+        // If after normalization it's empty, then it was all slashes -> treat as root
         if value.is_empty() {
-            return Ok(FilePath { value: "/".to_string() });
+            return Ok(FilePath {
+                value: "/".to_string(),
+            });
         }
         Ok(FilePath { value })
     }
@@ -54,7 +61,7 @@ impl FilePath {
         if special_files.contains(&self.value.as_ref()) || self.value.starts_with('.') {
             return "".to_string();
         }
-        match self.value.rsplitn(2, '.').nth(1) {
+        match self.value.rsplitn(2, '.').next() {
             Some(ext) => ext.to_string(),
             None => "".to_string(),
         }
@@ -76,13 +83,19 @@ impl FilePath {
     /// Check if the path is a barrel file.
     pub fn is_barrel_file(&self) -> bool {
         let f = self.basename();
-        matches!(f.as_ref(), "__init__.py" | "mod.rs" | "index.ts" | "index.js")
+        matches!(
+            f.as_ref(),
+            "__init__.py" | "mod.rs" | "index.ts" | "index.js"
+        )
     }
 
     /// Check if the path is a module/layer entry point file.
     pub fn is_entry_point(&self) -> bool {
         let f = self.basename();
-        matches!(f.as_ref(), "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs")
+        matches!(
+            f.as_ref(),
+            "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs"
+        )
     }
 }
 
@@ -107,18 +120,23 @@ impl Hash for FilePath {
 }
 
 /// Directory path identifier.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DirectoryPath {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl Default for DirectoryPath {
     fn default() -> Self {
-        DirectoryPath { value: String::new() }
+        DirectoryPath {
+            value: String::new(),
+        }
     }
 }
 
 impl DirectoryPath {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
     /// Create a new DirectoryPath from a string.
     ///
     /// # Errors
@@ -149,6 +167,16 @@ impl std::ops::Deref for DirectoryPath {
 impl std::fmt::Display for DirectoryPath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for DirectoryPath {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        DirectoryPath::new(s).map_err(serde::de::Error::custom)
     }
 }
 

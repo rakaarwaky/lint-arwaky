@@ -1,4 +1,4 @@
-use crate::taxonomy::{FilePath, MaintenanceStatsVO, DoctorResultVO, JobId};
+use crate::taxonomy::{DoctorResultVO, FilePath, JobId, MaintenanceStatsVO};
 use async_trait::async_trait;
 
 #[async_trait]

@@ -94,11 +94,11 @@ impl IJsTracerPort for JSScopeTracer {
 
         if let Some((name, start_line)) = scope_stack.last() {
             Ok(Some(ScopeRef {
-                name: name.clone(),
+                name: crate::taxonomy::DescriptionVO::new(name.clone()),
                 kind: if name.starts_with("class") {
-                    "class".to_string()
+                    crate::taxonomy::DescriptionVO::new("class")
                 } else {
-                    "function".to_string()
+                    crate::taxonomy::DescriptionVO::new("function")
                 },
                 file: Some(file_path.clone()),
                 start_line: Some(LineNumber::new(*start_line as i64)),

@@ -3,10 +3,13 @@ use serde::Serialize;
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct FileFormat {
-    pub name: String,
+    pub(crate) name: String,
 }
 
 impl FileFormat {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
     pub fn new(value: impl Into<String>) -> Self {
         Self { name: value.into() }
     }
@@ -23,7 +26,9 @@ impl std::fmt::Display for FileFormat {
 
 impl From<&str> for FileFormat {
     fn from(s: &str) -> Self {
-        Self { name: s.to_string() }
+        Self {
+            name: s.to_string(),
+        }
     }
 }
 
@@ -44,19 +49,30 @@ impl<'de> serde::Deserialize<'de> for FileFormat {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-                Ok(FileFormat { name: v.to_string() })
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(FileFormat {
+                    name: v.to_string(),
+                })
             }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(FileFormat { name: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "name" || k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("name"))?;

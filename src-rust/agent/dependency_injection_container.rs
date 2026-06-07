@@ -13,13 +13,15 @@ use crate::contract::IPathNormalizationPort;
 use crate::contract::ISourceParserPort;
 use crate::contract::ServiceContainerAggregate;
 use crate::infrastructure::{
-    BanditAdapter, ComplexityAdapter, DependencyAdapter, DuplicateAdapter, ESLintAdapter,
+    ASTJSParserAdapter, ASTPythonParserAdapter, ASTRustParserAdapter, BanditAdapter,
+    ComplexityAdapter, DependencyAdapter, DuplicateAdapter, ESLintAdapter,
     MemoryJobRegistryAdapter, MetricsProvider, MyPyAdapter, OSFileSystemAdapter,
     PathNormalizationProvider, PrettierAdapter, RuffAdapter, RustLinterAdapter,
     SourceParserOrchestrator, StdioClient, TrendsAdapter, TSCAdapter,
 };
 use crate::taxonomy::{Count, FilePath};
 use crate::taxonomy::source_path_vo::DirectoryPath;
+use crate::taxonomy::AdapterName;
 use crate::capabilities::ArchLintHandler;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -40,7 +42,11 @@ impl DependencyInjectionContainer {
         let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
         let executor: Arc<dyn ICommandExecutorPort> = Arc::new(StdioClient::new(std::time::Duration::from_secs(60)));
         let path_norm: Arc<dyn IPathNormalizationPort> = Arc::new(PathNormalizationProvider);
-        let source_parser: Arc<dyn ISourceParserPort> = Arc::new(SourceParserOrchestrator::new());
+        let source_parser: Arc<dyn ISourceParserPort> = Arc::new(SourceParserOrchestrator::new(
+            Box::new(ASTPythonParserAdapter::new()),
+            Box::new(ASTRustParserAdapter::new()),
+            Box::new(ASTJSParserAdapter::new()),
+        ));
         let arch_linter: Arc<dyn IArchLintProtocol> = Arc::new(ArchLintHandler::new(fs.clone(), source_parser.clone()));
 
         let mut linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
@@ -108,8 +114,8 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
         self.source_parser.clone()
     }
 
-    fn linter_adapter(&self, name: &str) -> Option<Arc<dyn ILinterAdapterPort>> {
-        self.linter_adapters.get(name).cloned()
+    fn linter_adapter(&self, name: &AdapterName) -> Option<Arc<dyn ILinterAdapterPort>> {
+        self.linter_adapters.get(name.value()).cloned()
     }
 
     fn get_architecture_linter(&self) -> Option<Arc<dyn IArchLintProtocol>> {

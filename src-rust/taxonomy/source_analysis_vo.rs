@@ -1,5 +1,5 @@
 use crate::taxonomy::{ColumnNumber, LineNumber};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ImportInfo {
@@ -11,7 +11,11 @@ pub struct ImportInfo {
 
 impl ImportInfo {
     pub fn new(line: LineNumber, module: String) -> Self {
-        Self { line, module, name: None }
+        Self {
+            line,
+            module,
+            name: None,
+        }
     }
 }
 
@@ -24,7 +28,11 @@ pub struct PrimitiveViolation {
 
 impl PrimitiveViolation {
     pub fn new(line: LineNumber, column: ColumnNumber, type_name: String) -> Self {
-        Self { line, column, type_name }
+        Self {
+            line,
+            column,
+            type_name,
+        }
     }
 }
 
@@ -35,10 +43,18 @@ pub struct ImportInfoList {
 }
 
 impl ImportInfoList {
-    pub fn new() -> Self { Self { values: Vec::new() } }
-    pub fn push(&mut self, item: ImportInfo) { self.values.push(item); }
-    pub fn len(&self) -> usize { self.values.len() }
-    pub fn is_empty(&self) -> bool { self.values.is_empty() }
+    pub fn new() -> Self {
+        Self { values: Vec::new() }
+    }
+    pub fn push(&mut self, item: ImportInfo) {
+        self.values.push(item);
+    }
+    pub fn len(&self) -> usize {
+        self.values.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -48,8 +64,16 @@ pub struct PrimitiveViolationList {
 }
 
 impl PrimitiveViolationList {
-    pub fn new() -> Self { Self { values: Vec::new() } }
-    pub fn push(&mut self, item: PrimitiveViolation) { self.values.push(item); }
-    pub fn len(&self) -> usize { self.values.len() }
-    pub fn is_empty(&self) -> bool { self.values.is_empty() }
+    pub fn new() -> Self {
+        Self { values: Vec::new() }
+    }
+    pub fn push(&mut self, item: PrimitiveViolation) {
+        self.values.push(item);
+    }
+    pub fn len(&self) -> usize {
+        self.values.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
 }

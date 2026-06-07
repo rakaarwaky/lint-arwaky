@@ -1,6 +1,9 @@
 /// memory_registry_adapter — In-memory job tracking implementation.
 use crate::contract::job_registry_port::IJobRegistryPort;
-use crate::taxonomy::{Duration, ErrorMessage, JobId, ResponseData, SuccessStatus, JobError};
+use crate::taxonomy::{
+    ActionName, Count, Duration, ErrorMessage, JobError, JobId, ResponseData, ResponseDataList,
+    SuccessStatus,
+};
 use std::collections::HashMap;
 use tokio::sync::Mutex;
 
@@ -27,18 +30,21 @@ impl Default for MemoryJobRegistryAdapter {
 
 impl MemoryJobRegistryAdapter {
     pub fn new() -> Self {
-        Self { jobs: Mutex::new(HashMap::new()) }
+        Self {
+            jobs: Mutex::new(HashMap::new()),
+        }
     }
 }
 
 #[async_trait::async_trait]
 impl IJobRegistryPort for MemoryJobRegistryAdapter {
-    async fn create_job(&self, action: &str) -> Result<JobId, JobError> {
+    async fn create_job(&self, action: ActionName) -> Result<JobId, JobError> {
+        let action_str = action.value();
         let job_id = format!("{:x}", rand::random::<u32>());
         let record = JobRecord {
             id: job_id.clone(),
             status: "running".to_string(),
-            action: action.to_string(),
+            action: action_str.to_string(),
             started_at: chrono::Utc::now().to_rfc3339(),
             result: None,
             error: None,
@@ -66,15 +72,25 @@ impl IJobRegistryPort for MemoryJobRegistryAdapter {
         }
     }
 
-    async fn list_jobs(&self) -> Vec<serde_json::Value> {
+    async fn list_jobs(&self) -> ResponseDataList {
         let jobs = self.jobs.lock().await;
-        jobs.values().map(|j| serde_json::json!({
-            "id": j.id,
-            "status": j.status,
-            "action": j.action,
-            "started_at": j.started_at,
-            "completed_at": j.completed_at,
-        })).collect()
+        let values: Vec<ResponseData> = jobs
+            .values()
+            .map(|j| ResponseData {
+                value: Some(serde_json::json!({
+                    "id": j.id,
+                    "status": j.status,
+                    "action": j.action,
+                    "started_at": j.started_at,
+                    "completed_at": j.completed_at,
+                })),
+                stdout: String::new(),
+                stderr: String::new(),
+                returncode: 0,
+                metadata: HashMap::new(),
+            })
+            .collect();
+        ResponseDataList { values }
     }
 
     async fn get_job(&self, job_id: &JobId) -> Option<JobId> {
@@ -99,8 +115,8 @@ impl IJobRegistryPort for MemoryJobRegistryAdapter {
 
     async fn run_with_retry(
         &self,
-        _operation: &str,
-        _max_retries: u32,
+        _operation: ActionName,
+        _max_retries: Count,
         _base_delay: Duration,
     ) -> ResponseData {
         ResponseData {

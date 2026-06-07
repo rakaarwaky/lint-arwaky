@@ -1,11 +1,11 @@
 // arch_internal_checker — Internal architectural rule checks (barrels, primitives).
 // Implements IInternalCheckerProtocol: barrel completeness, forbid_internal_all, no_primitives.
 
-use std::fs;
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LintMessage, LintResult, LineNumber, Severity,
-    ScopeRef, LocationList,
+    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LineNumber, LintMessage,
+    LintResult, LocationList, ScopeRef, Severity,
 };
+use std::fs;
 
 pub struct ArchInternalChecker;
 
@@ -24,8 +24,8 @@ impl ArchInternalChecker {
             source: Some(AdapterName::new("architecture").unwrap()),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
-                name: String::new(),
-                kind: String::new(),
+                name: crate::taxonomy::DescriptionVO::new(String::new()),
+                kind: crate::taxonomy::DescriptionVO::new(String::new()),
                 file: None,
                 start_line: None,
                 end_line: None,
@@ -61,8 +61,15 @@ impl ArchInternalChecker {
             return;
         }
         if !Self::file_has_all_export(file) {
-            let msg = if !definition.barrel_completeness_violation_message.value.is_empty() {
-                definition.barrel_completeness_violation_message.value.clone()
+            let msg = if !definition
+                .barrel_completeness_violation_message
+                .value
+                .is_empty()
+            {
+                definition
+                    .barrel_completeness_violation_message
+                    .value
+                    .clone()
             } else {
                 "__init__.py missing __all__ export list.".to_string()
             };
@@ -71,6 +78,8 @@ impl ArchInternalChecker {
     }
 
     /// Check forbid_internal_all (AES013): non-barrel files must NOT have __all__.
+    /// JS/TS is exempted because `export` in every file is standard module practice,
+    /// not a bypass — unlike Python __all__ or Rust pub use which centralize public API.
     pub fn check_forbid_internal_all(
         &self,
         file: &str,
@@ -80,9 +89,24 @@ impl ArchInternalChecker {
         if !definition.forbid_internal_all.value {
             return;
         }
+        let lower = file.to_lowercase();
+        if lower.ends_with(".js")
+            || lower.ends_with(".ts")
+            || lower.ends_with(".jsx")
+            || lower.ends_with(".tsx")
+        {
+            return;
+        }
         if Self::file_has_all_export(file) {
-            let msg = if !definition.forbid_internal_all_violation_message.value.is_empty() {
-                definition.forbid_internal_all_violation_message.value.clone()
+            let msg = if !definition
+                .forbid_internal_all_violation_message
+                .value
+                .is_empty()
+            {
+                definition
+                    .forbid_internal_all_violation_message
+                    .value
+                    .clone()
             } else {
                 "__all__ is forbidden in non-barrel files.".to_string()
             };

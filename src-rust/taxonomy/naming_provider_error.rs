@@ -1,7 +1,7 @@
 use crate::taxonomy::{Cause, ErrorCode, ErrorMessage};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct NamingError {
     pub message: ErrorMessage,
     #[serde(default)]
@@ -12,7 +12,11 @@ pub struct NamingError {
 
 impl NamingError {
     pub fn new(message: ErrorMessage) -> Self {
-        Self { message, error_code: None, cause: None }
+        Self {
+            message,
+            error_code: None,
+            cause: None,
+        }
     }
 }
 

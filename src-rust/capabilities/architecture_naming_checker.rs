@@ -1,11 +1,11 @@
 // arch_naming_checker — Architectural naming convention checks.
 // Implements INamingCheckerProtocol: check_file_naming and check_domain_suffixes.
 
-use regex::Regex;
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LintMessage, LintResult, LineNumber, Severity,
-    ScopeRef, LocationList, ArchitectureConfig,
+    AdapterName, ArchitectureConfig, ColumnNumber, ErrorCode, FilePath, LayerDefinition,
+    LineNumber, LintMessage, LintResult, LocationList, ScopeRef, Severity,
 };
+use regex::Regex;
 
 pub struct ArchNamingChecker;
 
@@ -24,8 +24,8 @@ impl ArchNamingChecker {
             source: Some(AdapterName::new("architecture").unwrap()),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
-                name: String::new(),
-                kind: String::new(),
+                name: crate::taxonomy::DescriptionVO::new(String::new()),
+                kind: crate::taxonomy::DescriptionVO::new(String::new()),
                 file: None,
                 start_line: None,
                 end_line: None,
@@ -39,7 +39,10 @@ impl ArchNamingChecker {
     }
 
     fn is_entry_point(filename: &str) -> bool {
-        matches!(filename, "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs")
+        matches!(
+            filename,
+            "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs"
+        )
     }
 
     fn get_stem(filename: &str) -> Option<String> {
@@ -163,7 +166,10 @@ impl ArchNamingChecker {
 
         // AES010: Strict suffix policy check
         if def.suffix_policy.value == "strict" {
-            let valid = suffix.as_ref().map(|s| def.allowed_suffix.values.contains(s)).unwrap_or(false);
+            let valid = suffix
+                .as_ref()
+                .map(|s| def.allowed_suffix.values.contains(s))
+                .unwrap_or(false);
             if !valid {
                 let allowed_list = def.allowed_suffix.values.join(", ");
                 let msg = if !def.suffix_violation_message.value.is_empty() {
@@ -176,7 +182,12 @@ impl ArchNamingChecker {
                         allowed_list
                     )
                 };
-                violations.push(Self::make_result(file, "AES010", &msg, Severity::HIGH));
+                let code = if _layer_name.as_ref().map(|l| l.as_str()) == Some("contract") {
+                    "AES008"
+                } else {
+                    "AES010"
+                };
+                violations.push(Self::make_result(file, code, &msg, Severity::HIGH));
             }
         }
     }

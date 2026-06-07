@@ -1,5 +1,5 @@
 use crate::taxonomy::{
-    Count, FilePath, ImportInfoList, MetadataVO, PatternList, PrimitiveTypeList,
+    BooleanVO, Count, FilePath, ImportInfoList, MetadataVO, PatternList, PrimitiveTypeList,
     PrimitiveViolationList, ResponseData, SourceParserError, SuccessStatus, SymbolName,
 };
 
@@ -21,8 +21,8 @@ pub trait ISourceParserPort: Send + Sync {
     fn get_class_bases_map(&self, path: &FilePath) -> MetadataVO;
     fn get_assignment_targets(&self, path: &FilePath) -> MetadataVO;
     fn get_control_flow_count(&self, path: &FilePath) -> Count;
-    fn is_barrel_file(&self, path: &FilePath) -> bool;
+    fn is_barrel_file(&self, path: &FilePath) -> BooleanVO;
     fn get_stem(&self, path: &FilePath) -> SymbolName;
-    fn is_entry_point(&self, path: &FilePath) -> bool;
+    fn is_entry_point(&self, path: &FilePath) -> BooleanVO;
     fn get_supported_extensions(&self) -> PatternList;
 }

@@ -1,6 +1,9 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use crate::taxonomy::{AdapterName, ColumnNumber, ErrorCode, FilePath, Identity, LineNumber, LintMessage, LocationList, Position, ScopeRef, Severity};
+use crate::taxonomy::{
+    AdapterName, ColumnNumber, ErrorCode, FilePath, Identity, LineNumber, LintMessage,
+    LocationList, Position, ScopeRef, Severity,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LintResult {
@@ -16,15 +19,41 @@ pub struct LintResult {
 }
 
 impl LintResult {
-    pub fn new(file: FilePath, line: LineNumber, column: ColumnNumber, code: ErrorCode, message: LintMessage, source: Option<AdapterName>, severity: Severity, enclosing_scope: Option<ScopeRef>, related_locations: LocationList,) -> Self {
-        Self { file, line, column, code, message, source, severity, enclosing_scope, related_locations }
+    pub fn new(
+        file: FilePath,
+        line: LineNumber,
+        column: ColumnNumber,
+        code: ErrorCode,
+        message: LintMessage,
+        source: Option<AdapterName>,
+        severity: Severity,
+        enclosing_scope: Option<ScopeRef>,
+        related_locations: LocationList,
+    ) -> Self {
+        Self {
+            file,
+            line,
+            column,
+            code,
+            message,
+            source,
+            severity,
+            enclosing_scope,
+            related_locations,
+        }
     }
 
     pub fn position(&self) -> Position {
-        Position { line: self.line.clone(), column: self.column.clone() }
+        Position {
+            line: self.line.clone(),
+            column: self.column.clone(),
+        }
     }
     pub fn identity(&self) -> Identity {
-        Identity::new(format!("{}:{}:{}:{:?}", self.file, self.line, self.code, self.source))
+        Identity::new(format!(
+            "{}:{}:{}:{:?}",
+            self.file, self.line, self.code, self.source
+        ))
     }
 }
 

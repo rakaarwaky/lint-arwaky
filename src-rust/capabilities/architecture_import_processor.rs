@@ -1,14 +1,15 @@
 // arch_import_processor — Logic for evaluating architectural import rules.
 // 1:1 Rust implementation matching capabilities/arch_import_processor.py
 
+use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
 
-use crate::contract::architecture_rule_protocol::IAnalyzer;
+use crate::contract::architecture_rule_protocol::{IAnalyzer, IArchImportProcessorProtocol};
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LayerNameVO, LineNumber,
-    LintMessage, LintResult, Severity,
+    AdapterName, ColumnNumber, ErrorCode, ErrorMessage, FilePath, LayerDefinition, LayerNameVO,
+    LineNumber, LintMessage, LintResult, LintResultList, PatternList, Severity,
 };
 
 fn make_adapter(name: &str) -> Option<AdapterName> {
@@ -476,3 +477,42 @@ impl ArchImportProcessor {
         false
     }
 }
+
+#[async_trait]
+impl IArchImportProcessorProtocol for ArchImportProcessor {
+    async fn process_file_imports(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        file_path: &FilePath,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        self.process_file_imports(analyzer, file_path, root_dir, results)
+            .await;
+    }
+
+    async fn validate_imports_present(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        file_path: &FilePath,
+        root_dir: &FilePath,
+        required_layers: &PatternList,
+        results: &mut LintResultList,
+        message_template: &ErrorMessage,
+        layer_name: &LayerNameVO,
+        layers_display: &PatternList,
+    ) {
+        self.validate_imports_present(
+            analyzer,
+            file_path,
+            root_dir,
+            required_layers,
+            results,
+            message_template,
+            layer_name,
+            layers_display,
+        )
+        .await;
+    }
+}
+

@@ -1,7 +1,7 @@
 use crate::taxonomy::{Cause, ErrorCode, ErrorMessage, FilePath};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct SemanticError {
     #[serde(default)]
     pub path: Option<FilePath>,
@@ -14,19 +14,32 @@ pub struct SemanticError {
 
 impl SemanticError {
     pub fn new(message: ErrorMessage) -> Self {
-        Self { path: None, message, error_code: None, cause: None }
+        Self {
+            path: None,
+            message,
+            error_code: None,
+            cause: None,
+        }
     }
 }
 
 impl std::fmt::Display for SemanticError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let target = self.path.as_ref().map(|p| format!(" on {}", p)).unwrap_or_default();
-        let code = self.error_code.as_ref().map(|c| format!(" [{}]", c)).unwrap_or_default();
+        let target = self
+            .path
+            .as_ref()
+            .map(|p| format!(" on {}", p))
+            .unwrap_or_default();
+        let code = self
+            .error_code
+            .as_ref()
+            .map(|c| format!(" [{}]", c))
+            .unwrap_or_default();
         write!(f, "Semantic Error{}{}: {}", target, code, self.message)
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct ScopeResolutionError {
     #[serde(flatten)]
     pub base: SemanticError,
@@ -34,7 +47,9 @@ pub struct ScopeResolutionError {
 
 impl ScopeResolutionError {
     pub fn new(message: ErrorMessage) -> Self {
-        Self { base: SemanticError::new(message) }
+        Self {
+            base: SemanticError::new(message),
+        }
     }
 }
 
@@ -44,7 +59,7 @@ impl std::fmt::Display for ScopeResolutionError {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct CallChainError {
     #[serde(flatten)]
     pub base: SemanticError,
@@ -52,7 +67,9 @@ pub struct CallChainError {
 
 impl CallChainError {
     pub fn new(message: ErrorMessage) -> Self {
-        Self { base: SemanticError::new(message) }
+        Self {
+            base: SemanticError::new(message),
+        }
     }
 }
 

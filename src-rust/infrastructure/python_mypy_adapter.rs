@@ -1,5 +1,4 @@
 /// python_mypy_adapter — MyPy adapter for Python type checking.
-
 use async_trait::async_trait;
 use regex::Regex;
 use std::sync::Arc;
@@ -75,7 +74,7 @@ impl ILinterAdapterPort for MyPyAdapter {
             .execute_command(
                 command,
                 working_dir,
-                Some(std::time::Duration::from_secs(120)),
+                Some(crate::taxonomy::Timeout::new(120.0)),
             )
             .await
         {
@@ -97,15 +96,20 @@ impl ILinterAdapterPort for MyPyAdapter {
 
                     if let Some(caps) = re.captures(line) {
                         let filename = caps.get(1).map(|m| m.as_str()).unwrap_or("");
-                        let line_number: i64 = caps.get(2).and_then(|m| m.as_str().parse().ok()).unwrap_or(0);
-                        let column: i64 = caps.get(3).and_then(|m| m.as_str().parse().ok()).unwrap_or(0);
+                        let line_number: i64 = caps
+                            .get(2)
+                            .and_then(|m| m.as_str().parse().ok())
+                            .unwrap_or(0);
+                        let column: i64 = caps
+                            .get(3)
+                            .and_then(|m| m.as_str().parse().ok())
+                            .unwrap_or(0);
                         let msg_type = caps.get(4).map(|m| m.as_str()).unwrap_or("error");
                         let message = caps.get(5).map(|m| m.as_str()).unwrap_or("");
                         let code = caps.get(6).map(|m| m.as_str()).unwrap_or("");
 
                         let resolved = self.path_norm.resolve_infrastructure_path(
-                            FilePath::new(filename.to_string())
-                                .unwrap_or_else(|_| path.clone()),
+                            FilePath::new(filename.to_string()).unwrap_or_else(|_| path.clone()),
                             Some(path.clone()),
                         );
 
@@ -122,14 +126,16 @@ impl ILinterAdapterPort for MyPyAdapter {
                         ));
                     } else if let Some(caps) = re_simple.captures(line) {
                         let filename = caps.get(1).map(|m| m.as_str()).unwrap_or("");
-                        let line_number: i64 = caps.get(2).and_then(|m| m.as_str().parse().ok()).unwrap_or(0);
+                        let line_number: i64 = caps
+                            .get(2)
+                            .and_then(|m| m.as_str().parse().ok())
+                            .unwrap_or(0);
                         let msg_type = caps.get(3).map(|m| m.as_str()).unwrap_or("error");
                         let message = caps.get(4).map(|m| m.as_str()).unwrap_or("");
                         let code = caps.get(5).map(|m| m.as_str()).unwrap_or("");
 
                         let resolved = self.path_norm.resolve_infrastructure_path(
-                            FilePath::new(filename.to_string())
-                                .unwrap_or_else(|_| path.clone()),
+                            FilePath::new(filename.to_string()).unwrap_or_else(|_| path.clone()),
                             Some(path.clone()),
                         );
 
@@ -155,10 +161,7 @@ impl ILinterAdapterPort for MyPyAdapter {
         }
     }
 
-    async fn apply_fix(
-        &self,
-        _path: &FilePath,
-    ) -> Result<ComplianceStatus, LinterOperationError> {
+    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
     }
 }

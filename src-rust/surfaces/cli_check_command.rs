@@ -1,26 +1,8 @@
 use std::sync::Arc;
-/// CLI check and scan commands (Surface).
-use std::collections::HashMap;
 
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
+use crate::taxonomy::LintResultList;
 
-use crate::taxonomy::BooleanVO;
-
-use crate::taxonomy::ComplianceStatus;
-
-use crate::taxonomy::FilePath;
-
-use crate::taxonomy::GovernanceReport;
-
-
-use crate::taxonomy::{LintResult,
-LintResultList};
-
-
-use crate::taxonomy::Score;
-
-
-use crate::contract::ServiceContainerAggregate;
-use crate::surfaces::cli_output_controller::{get_output_dir, write_output, tee_stdout};
 
 pub struct CheckCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -35,42 +17,59 @@ impl CheckCommandsSurface {
         self.container = Some(container);
     }
 
-    pub fn check(&self, path: &str, git_diff: bool) {
-        let path_vo = FilePath { value: path.to_string() };
-        let diff_vo = BooleanVO { value: git_diff };
-        self.run_check(path_vo, diff_vo);
-    }
-
+    /// scan: Full multi-language lint on target project path.
+    /// Uses all available linter adapters via tokio runtime.
     pub fn scan(&self, path: &str) {
-        let path_vo = FilePath { value: path.to_string() };
-        let diff_vo = BooleanVO { value: false };
-        self.run_check(path_vo, diff_vo);
-    }
-
-    fn run_check(&self, project_path: FilePath, git_diff: BooleanVO) {
-        let output_dir = get_output_dir(None);
-
-        let output = tee_stdout(None, || {
-            if git_diff.value {
-                println!("[git-diff] Running analysis on {}", project_path.value);
-            } else {
-                println!(" Running analysis on {}...", project_path.value);
+        let container = match self.container.as_ref() {
+            Some(c) => c.clone(),
+            None => {
+                eprintln!("[error] container not registered");
+                return;
             }
-            // Structural placeholder
-            println!("{}", "-".repeat(40));
-            println!("total issues :  0");
-            println!("total score  :  100.0/100.0");
-            println!("{}", "-".repeat(40));
-        });
+        };
 
-        if let Some(_dir) = output_dir {
-            write_output(None, &output, "check", Some("txt"));
+        let mut all_results = Vec::new();
+        let adapter_names = [
+            "clippy", "rustfmt", "cargo-audit", "ruff", "mypy", "bandit",
+            "eslint", "prettier", "tsc",
+        ];
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let path_obj = crate::taxonomy::FilePath::new(path.to_string())
+            .unwrap_or_else(|_| crate::taxonomy::FilePath::new(".".to_string()).unwrap());
+
+        for name in &adapter_names {
+            let adapter_name =
+                crate::taxonomy::AdapterName::new(name.to_string()).unwrap_or_default();
+            if let Some(adapter) = container.linter_adapter(&adapter_name) {
+                match rt.block_on(adapter.scan(&path_obj)) {
+                    Ok(results) => {
+                        all_results.extend(results.values);
+                    }
+                    Err(e) => {
+                        eprintln!("[warn] {} adapter failed: {:?}", name, e);
+                    }
+                }
+            }
+        }
+
+        // AES architecture lint via ServiceContainerAggregate contract (no direct agent import)
+        let has_src = ["src-rust", "src-python", "src-javascript", "src"]
+            .iter()
+            .any(|d| std::path::Path::new(path).join(d).is_dir());
+        if let Some(linter) = container.get_architecture_linter() {
+            if has_src {
+                let aes_results = linter.run_self_lint(path);
+                all_results.extend(aes_results.values);
+            }
+            let results_list = LintResultList::new(all_results);
+            println!("{}", linter.format_report(&results_list, path));
         }
     }
-
 }
 
-pub fn register_check_commands(container: Arc<dyn ServiceContainerAggregate>) -> CheckCommandsSurface {
+pub fn register_check_commands(
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> CheckCommandsSurface {
     let mut surface = CheckCommandsSurface::new();
     surface.register_all(container);
     surface

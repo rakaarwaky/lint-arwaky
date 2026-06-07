@@ -1,14 +1,14 @@
-use crate::taxonomy::{ComplianceStatus, FilePath, GovernanceReport, Score};
-use serde::{Serialize, Deserialize};
+use crate::taxonomy::{ArchitectureGovernanceEntity, ComplianceStatus, FilePath, Score};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct WatchResult {
     pub file: FilePath,
-    pub report: GovernanceReport,
+    pub report: ArchitectureGovernanceEntity,
 }
 
 impl WatchResult {
-    pub fn new(file: FilePath, report: GovernanceReport) -> Self {
+    pub fn new(file: FilePath, report: ArchitectureGovernanceEntity) -> Self {
         Self { file, report }
     }
     pub fn score(&self) -> &Score {

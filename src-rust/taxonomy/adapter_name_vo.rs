@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
 /// adapter_name_vo — Adapter and tool identifier value objects.
@@ -6,16 +6,21 @@ use std::hash::{Hash, Hasher};
 /// Adapter/tool identifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AdapterName {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl Default for AdapterName {
     fn default() -> Self {
-        AdapterName { value: String::new() }
+        AdapterName {
+            value: String::new(),
+        }
     }
 }
 
 impl AdapterName {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
     /// Create a new AdapterName from a string.
     ///
     /// # Errors
@@ -25,12 +30,16 @@ impl AdapterName {
         if value.trim().is_empty() {
             return Err("Adapter name cannot be empty".to_string());
         }
-        Ok(AdapterName { value: value.trim().to_string() })
+        Ok(AdapterName {
+            value: value.trim().to_string(),
+        })
     }
 
     /// Create a raw AdapterName without error validation (for static compile-time safe inputs).
     pub fn raw<S: Into<String>>(value: S) -> Self {
-        AdapterName { value: value.into() }
+        AdapterName {
+            value: value.into(),
+        }
     }
 }
 
