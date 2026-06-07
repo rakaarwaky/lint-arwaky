@@ -1,5 +1,8 @@
 /// MCP Tools Commands - All 5 MCP tool implementations
 use serde_json::{json, Value};
+
+/// Surface for MCP tools command implementations.
+pub struct McpToolsCommandSurface;
 use std::path::Path;
 use std::sync::Arc;
 

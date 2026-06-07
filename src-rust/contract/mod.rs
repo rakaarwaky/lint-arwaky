@@ -38,7 +38,7 @@
 //! ## Notes on Shims
 //!
 //! Some modules in this layer are intentionally retained as **backward-compat shims**
-//! (e.g. `source_system_port`, `naming_variant_port`) so that historical import paths
+//! (e.g. `naming_variant_port`) so that historical import paths
 //! continue to compile. They are not dead code: the port/protocol split between
 //! `INamingVariantPort` (Infrastructure) and `INamingVariantProtocol` (Capabilities)
 //! is a deliberate design choice, even though their method signatures coincide.
@@ -115,7 +115,6 @@ pub mod service_container_aggregate;
 pub mod setup_management_aggregate;
 pub mod setup_management_protocol;
 pub mod source_parser_port;
-pub mod source_system_port;
 pub mod watch_commands_aggregate;
 pub mod watch_orchestrator_aggregate;
 pub mod watch_provider_port;

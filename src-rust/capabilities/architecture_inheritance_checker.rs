@@ -3,7 +3,7 @@
 // also have a class inheriting from them.
 
 use crate::contract::architecture_inheritance_protocol::IArchInheritanceProtocol;
-use crate::contract::architecture_rule_protocol::IAnalyzer;
+use crate::contract::IAnalyzer;
 use crate::taxonomy::{
     AdapterName, ArchitectureConfig, ColumnNumber, ErrorCode, FilePath, FilePathList, LayerNameVO,
     LineNumber, LintMessage, LintResult, LintResultList, LocationList, ScopeRef, Severity,

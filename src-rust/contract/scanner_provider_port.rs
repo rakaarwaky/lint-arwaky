@@ -1,3 +1,8 @@
+//! Port trait for scanning the filesystem.
+//!
+//! Defines the outbound interface for recursively scanning
+//! directories and retrieving git-ignored file patterns.
+
 use crate::taxonomy::{DirectoryPath, FilePathList, FileSystemError};
 
 

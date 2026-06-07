@@ -1,3 +1,8 @@
+//! Port trait for collecting and persisting metrics.
+//!
+//! Defines the outbound interface for gathering code metrics
+//! (such as line counts) and storing historical metric data.
+
 use crate::taxonomy::{Count, FilePath};
 
 #[async_trait::async_trait]

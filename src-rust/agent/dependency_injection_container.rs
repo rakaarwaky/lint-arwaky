@@ -2,7 +2,8 @@
 use crate::contract::{
     IArchLintProtocol, ICommandExecutorPort, IFileSystemPort,
     ILinterAdapterPort, IMetricsProviderPort, IJobRegistryPort,
-    IPathNormalizationPort, ISourceParserPort, ServiceContainerAggregate,
+    IPathNormalizationPort, ISourceParserPort, LintFixOrchestratorAggregate,
+    ServiceContainerAggregate,
 };
 use crate::infrastructure::{
     ASTJSParserAdapter, ASTPythonParserAdapter, ASTRustParserAdapter, BanditAdapter,
@@ -124,5 +125,9 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
 
     fn metrics_provider(&self) -> Option<Arc<dyn IMetricsProviderPort>> {
         Some(self.metrics_provider.clone())
+    }
+
+    fn get_fix_orchestrator(&self, dry_run: bool) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
+        Some(Arc::new(crate::agent::lint_fix_orchestrator::LintFixOrchestrator::with_dry_run(dry_run)))
     }
 }

@@ -1,3 +1,8 @@
+//! Port trait for reading configuration from external sources.
+//!
+//! Defines the outbound interface for reading configuration files
+//! and listing available configuration sources for a project.
+
 use crate::taxonomy::{ConfigSource, FilePath};
 use async_trait::async_trait;
 

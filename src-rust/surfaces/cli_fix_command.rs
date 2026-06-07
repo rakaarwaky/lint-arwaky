@@ -1,10 +1,8 @@
 use std::sync::Arc;
 use std::path::PathBuf;
 use crate::taxonomy::FilePath;
-use crate::contract::LintFixOrchestratorAggregate;
 use crate::contract::ServiceContainerAggregate;
 use crate::surfaces::cli_output_controller::{get_output_dir, write_output, tee_stdout};
-use crate::agent::lint_fix_orchestrator::LintFixOrchestrator;
 
 pub struct FixCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -44,7 +42,10 @@ impl FixCommandsSurface {
             let results = orchestrator.run_self_lint(&project_path);
             println!("Found {} violations before fix", results.len());
 
-            let fix_orch = LintFixOrchestrator::with_dry_run(dry_run);
+            // Get fix orchestrator from container (AES023: surfaces must not import agent directly)
+            let fix_orch = self.container.as_ref()
+                .and_then(|c| c.get_fix_orchestrator(dry_run))
+                .expect("Fix orchestrator not available in container");
             let fix_result = fix_orch.execute(&project_path);
 
             println!("{}", fix_result.output.value);

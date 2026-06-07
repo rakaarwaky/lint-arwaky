@@ -1,3 +1,8 @@
+//! Protocol for orchestrating configuration loading.
+//!
+//! Defines how configuration is discovered and loaded for a
+//! project, including language-specific config resolution.
+
 use crate::taxonomy::{ConfigResult, FilePath};
 use async_trait::async_trait;
 

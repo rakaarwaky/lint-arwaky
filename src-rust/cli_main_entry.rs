@@ -3,6 +3,9 @@ use std::env;
 use std::process::ExitCode;
 use std::sync::Arc;
 
+/// CLI binary entry point for lint-arwaky-cli.
+pub struct CliMainEntry;
+
 use clap::Parser;
 use lint_arwaky::capabilities::architecture_lint_handler::format_report;
 use lint_arwaky::contract::ServiceContainerAggregate;

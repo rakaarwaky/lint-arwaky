@@ -3,6 +3,9 @@ use crate::taxonomy::{
     LAYER_INFRASTRUCTURE, LAYER_ROOT, LAYER_SURFACES, LAYER_TAXONOMY,
 };
 
+/// Value object holding the set of core layer names.
+pub struct LayerNames;
+
 pub fn layer_agent() -> LayerNameVO {
     LayerNameVO::new(LAYER_AGENT)
 }

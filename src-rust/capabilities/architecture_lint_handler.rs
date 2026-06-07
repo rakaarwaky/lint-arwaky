@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::capabilities::architecture_compliance_analyzer::ArchComplianceAnalyzer;
 use crate::contract::source_parser_port::ISourceParserPort;
-use crate::contract::source_system_port::IFileSystemPort;
+use crate::contract::IFileSystemPort;
 use crate::contract::IArchLintProtocol;
 use crate::taxonomy::{
     default_aes_config, ArchitectureConfig, LintResult, LintResultList,

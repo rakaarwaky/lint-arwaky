@@ -3,7 +3,7 @@
 
 use crate::contract::architecture_orphan_protocol::IOrphanGraphProtocol;
 use crate::contract::architecture_orphan_protocol::IOrphanIndicatorProtocol;
-use crate::contract::architecture_rule_protocol::IAnalyzer;
+use crate::contract::IAnalyzer;
 use crate::taxonomy::{
     AdapterName, ColumnNumber, ErrorCode, FileDefinitionMap, FilePath, FilePathList,
     FilePathSet, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap,

@@ -1,4 +1,4 @@
-use crate::contract::architecture_rule_protocol::IAnalyzer;
+use crate::contract::IAnalyzer;
 use crate::taxonomy::{
     ErrorMessage, FilePath, FilePathList, LayerNameVO, LintResultList, PatternList,
 };
@@ -45,4 +45,63 @@ pub trait IArchImportProtocol: Send + Sync {
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
+}
+
+pub struct DefaultArchImportProtocol;
+
+#[async_trait]
+impl IArchImportProtocol for DefaultArchImportProtocol {
+    async fn process_file_imports(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        _file_path: &FilePath,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {
+        todo!()
+    }
+
+    async fn validate_imports_present(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        _file_path: &FilePath,
+        _root_dir: &FilePath,
+        _required_layers: &PatternList,
+        _results: &mut LintResultList,
+        _message_template: &ErrorMessage,
+        _layer_name: &LayerNameVO,
+        _layers_display: &PatternList,
+    ) {
+        todo!()
+    }
+
+    async fn check_mandatory_imports(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        _files: &FilePathList,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {
+        todo!()
+    }
+
+    async fn check_forbidden_imports(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        _files: &FilePathList,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {
+        todo!()
+    }
+
+    async fn check_legacy_import_rules(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        _files: &FilePathList,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {
+        todo!()
+    }
 }
