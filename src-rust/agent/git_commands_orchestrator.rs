@@ -1,19 +1,18 @@
 // git_commands_orchestrator — Agent orchestrator for git-aware linting.
 use crate::contract::{GitCommandsAggregate, GitDiffResultAggregate};
-use crate::taxonomy::{Count, FilePath, FilePathList, RenamedFileList};
+use crate::taxonomy::{Count, FilePath, FilePathList, LintResultList};
+use async_trait::async_trait;
 use std::collections::HashSet;
 
 pub struct GitCommandsOrchestrator {
     git_path: String,
 }
 
-use async_trait::async_trait;
-use crate::taxonomy::LintResultList;
-
 #[async_trait]
 impl GitCommandsAggregate for GitCommandsOrchestrator {
     async fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
-        self.run_git_diff_check_old(&(), path).await;
+        let default_branch = self.get_default_branch(path);
+        let _changed_files = self.collect_changed_files(path, &default_branch);
         LintResultList::new(Vec::new())
     }
 
@@ -43,11 +42,6 @@ impl GitCommandsOrchestrator {
             .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
             .unwrap_or_else(|| "git".to_string());
         Self { git_path: git }
-    }
-
-    pub async fn run_git_diff_check_old(&self, _container: &(), path: &FilePath) {
-        let default_branch = self.get_default_branch(path);
-        let _changed_files = self.collect_changed_files(path, &default_branch);
     }
 
     fn get_default_branch(&self, project_path: &FilePath) -> String {
@@ -148,21 +142,6 @@ impl GitCommandsOrchestrator {
                     }
                 }
             }
-        }
-    }
-
-    pub async fn get_diff_old(&self, path: &FilePath) -> crate::agent::git_diff_manager::GitDiffResult {
-        let default_branch = self.get_default_branch(path);
-        let changed_files = self.collect_changed_files(path, &default_branch);
-        let filtered = changed_files.clone();
-        crate::agent::git_diff_manager::GitDiffResult {
-            added: FilePathList::new(Vec::new()),
-            modified: filtered.clone(),
-            deleted: FilePathList::new(Vec::new()),
-            renamed: RenamedFileList::new(Vec::new()),
-            lintable_files: changed_files.clone(),
-            all_files: changed_files,
-            total_changed: Count::new(filtered.values.len() as i64),
         }
     }
 }

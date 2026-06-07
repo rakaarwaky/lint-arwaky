@@ -1,7 +1,9 @@
 /// git_diff_scanner — Git-aware file change detection for linting only modified files.
-use crate::contract::{ICommandExecutorPort, IScannerProviderPort};
-use crate::taxonomy::{DirectoryPath, FilePath, FilePathList, RenamedFile, RenamedFileList, FileSystemError};
-use std::sync::Arc;
+use crate::contract::IScannerProviderPort;
+use crate::taxonomy::{
+    ActionName, DirectoryPath, ErrorMessage, FilePath, FilePathList, FileSystemError, RenamedFile,
+    RenamedFileList,
+};
 
 pub struct DiffResult {
     pub added: FilePathList,
@@ -11,8 +13,18 @@ pub struct DiffResult {
 }
 
 impl DiffResult {
-    pub fn new(added: FilePathList, modified: FilePathList, deleted: FilePathList, renamed: RenamedFileList) -> Self {
-        Self { added, modified, deleted, renamed }
+    pub fn new(
+        added: FilePathList,
+        modified: FilePathList,
+        deleted: FilePathList,
+        renamed: RenamedFileList,
+    ) -> Self {
+        Self {
+            added,
+            modified,
+            deleted,
+            renamed,
+        }
     }
 
     pub fn all_files(&self) -> FilePathList {
@@ -27,12 +39,11 @@ impl DiffResult {
 
 pub struct GitDiffScanner {
     root: Option<DirectoryPath>,
-    executor: Option<Arc<dyn ICommandExecutorPort>>,
 }
 
 impl GitDiffScanner {
-    pub fn new(root: Option<DirectoryPath>, executor: Option<Arc<dyn ICommandExecutorPort>>) -> Self {
-        Self { root, executor }
+    pub fn new(root: Option<DirectoryPath>) -> Self {
+        Self { root }
     }
 
     fn parse_diff_output(stdout: &str) -> DiffResult {
@@ -42,14 +53,24 @@ impl GitDiffScanner {
         let mut renamed = Vec::new();
         for line in stdout.lines() {
             let line = line.trim();
-            if line.is_empty() { continue; }
+            if line.is_empty() {
+                continue;
+            }
             let parts: Vec<&str> = line.split('\t').collect();
-            if parts.is_empty() { continue; }
+            if parts.is_empty() {
+                continue;
+            }
             let status = parts[0];
             match status.chars().next() {
-                Some('A') if parts.len() > 1 => added.push(FilePath::new(parts[1].to_string()).unwrap()),
-                Some('M') if parts.len() > 1 => modified.push(FilePath::new(parts[1].to_string()).unwrap()),
-                Some('D') if parts.len() > 1 => deleted.push(FilePath::new(parts[1].to_string()).unwrap()),
+                Some('A') if parts.len() > 1 => {
+                    added.push(FilePath::new(parts[1].to_string()).unwrap())
+                }
+                Some('M') if parts.len() > 1 => {
+                    modified.push(FilePath::new(parts[1].to_string()).unwrap())
+                }
+                Some('D') if parts.len() > 1 => {
+                    deleted.push(FilePath::new(parts[1].to_string()).unwrap())
+                }
                 Some('R') if parts.len() > 2 => renamed.push(RenamedFile {
                     old_path: FilePath::new(parts[1].to_string()).unwrap(),
                     new_path: FilePath::new(parts[2].to_string()).unwrap(),
@@ -57,11 +78,18 @@ impl GitDiffScanner {
                 _ => {}
             }
         }
-        DiffResult::new(FilePathList::new(added), FilePathList::new(modified), FilePathList::new(deleted), RenamedFileList::new(renamed))
+        DiffResult::new(
+            FilePathList::new(added),
+            FilePathList::new(modified),
+            FilePathList::new(deleted),
+            RenamedFileList::new(renamed),
+        )
     }
 
     pub fn filter_by_extensions(&self, files: &FilePathList, extensions: &[&str]) -> FilePathList {
-        let filtered: Vec<FilePath> = files.values.iter()
+        let filtered: Vec<FilePath> = files
+            .values
+            .iter()
             .filter(|f| extensions.iter().any(|ext| f.value.ends_with(ext)))
             .cloned()
             .collect();
@@ -70,11 +98,55 @@ impl GitDiffScanner {
 }
 
 impl IScannerProviderPort for GitDiffScanner {
-    fn scan_directory(&self, _path: &DirectoryPath) -> Result<FilePathList, FileSystemError> {
-        Ok(FilePathList::new(Vec::new()))
+    fn scan_directory(&self, path: &DirectoryPath) -> Result<FilePathList, FileSystemError> {
+        let work_dir = if path.value.is_empty() {
+            "."
+        } else {
+            &path.value
+        };
+        let output = std::process::Command::new("git")
+            .args(["diff", "--name-status", "HEAD"])
+            .current_dir(work_dir)
+            .output()
+            .map_err(|e| {
+                FileSystemError::new(
+                    FilePath::new(".".to_string()).unwrap(),
+                    ErrorMessage::new(format!("git diff failed: {}", e)),
+                    ActionName::new("git_diff".to_string()),
+                )
+            })?;
+
+        if !output.status.success() {
+            return Err(FileSystemError::new(
+                FilePath::new(".".to_string()).unwrap(),
+                ErrorMessage::new(String::from_utf8_lossy(&output.stderr).to_string()),
+                ActionName::new("git_diff".to_string()),
+            ));
+        }
+
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let diff = Self::parse_diff_output(&stdout);
+        Ok(diff.all_files())
     }
 
     fn get_ignored_files(&self) -> FilePathList {
+        if let Some(root) = &self.root {
+            let output = std::process::Command::new("git")
+                .args(["ls-files", "--others", "--ignored", "--exclude-standard"])
+                .current_dir(&root.value)
+                .output()
+                .ok();
+            if let Some(out) = output {
+                if out.status.success() {
+                    let files: Vec<FilePath> = String::from_utf8_lossy(&out.stdout)
+                        .lines()
+                        .filter(|l| !l.is_empty())
+                        .map(|l| FilePath::new(l.to_string()).unwrap())
+                        .collect();
+                    return FilePathList::new(files);
+                }
+            }
+        }
         FilePathList::new(Vec::new())
     }
 }

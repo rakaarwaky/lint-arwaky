@@ -1,4 +1,4 @@
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use std::sync::Arc;
 
 pub struct SetupManagementSurface {

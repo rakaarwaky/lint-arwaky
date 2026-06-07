@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::taxonomy::FilePath;
 
@@ -32,7 +32,7 @@ impl RenamedFileList {
 }
 
 impl RenamedFile {
-    pub fn new(old_path: FilePath, new_path: FilePath,) -> Self {
+    pub fn new(old_path: FilePath, new_path: FilePath) -> Self {
         Self { old_path, new_path }
     }
 }

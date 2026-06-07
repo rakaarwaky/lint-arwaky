@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use crate::contract::file_system_port::IFileSystemPort;
 use crate::taxonomy::{
-    ActionName, ContentString, Count, ErrorMessage, FilePath, FileSystemError,
+    ActionName, ContentString, Count, ErrorMessage, FilePath, FilePathList, FileSystemError,
     Identity, PatternList, SuccessStatus,
 };
 
@@ -49,14 +49,14 @@ impl Default for OSFileSystemAdapter {
 
 #[async_trait]
 impl IFileSystemPort for OSFileSystemAdapter {
-    async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> Vec<FilePath> {
+    async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
         let root = Path::new(&path.value);
         let ignored = ignored_patterns
             .map(|p| p.values.clone())
             .unwrap_or_default();
         let mut results = Vec::new();
         self.walk_recursive(root, &ignored, &mut results);
-        results
+        FilePathList { values: results }
     }
 
     async fn is_directory(&self, path: &FilePath) -> SuccessStatus {
@@ -120,15 +120,14 @@ impl IFileSystemPort for OSFileSystemAdapter {
         }
     }
 
-    async fn glob(&self, _pattern: &Identity) -> Vec<FilePath> {
-        vec![]
+    async fn glob(&self, _pattern: &Identity) -> FilePathList {
+        FilePathList { values: vec![] }
     }
 
     async fn get_cwd(&self) -> FilePath {
         let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-        FilePath::new(cwd.to_string_lossy().to_string()).unwrap_or_else(|_| {
-            FilePath::new(".".to_string()).unwrap()
-        })
+        FilePath::new(cwd.to_string_lossy().to_string())
+            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap())
     }
 
     async fn get_basename(&self, path: &FilePath) -> Identity {

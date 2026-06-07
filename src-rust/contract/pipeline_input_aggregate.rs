@@ -1,7 +1,7 @@
-use crate::taxonomy::{ActionArgs, FilePath};
+use crate::taxonomy::{ActionArgs, ActionName, FilePath};
 
 pub trait PipelineInputAggregate: Send + Sync {
-    fn action(&self) -> &str;
+    fn action(&self) -> ActionName;
     fn args(&self) -> Option<&ActionArgs>;
     fn path(&self) -> Option<&FilePath>;
 }

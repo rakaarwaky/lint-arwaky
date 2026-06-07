@@ -5,38 +5,39 @@
 // Detects: missing schema, empty schema, invalid JSON Schema syntax,
 // missing descriptions, missing required fields array when properties exist.
 
-use crate::taxonomy::AdapterName;
-
-
-use crate::taxonomy::ColumnNumber;
-
-use crate::taxonomy::{ErrorCode,
-FilePath};
-
-
-
-use crate::taxonomy::{LineNumber,
-LintMessage,
-LintResult,
-LintResultList,
-LocationList};
-
-
-
-use crate::taxonomy::Severity;
-
+use crate::taxonomy::{
+    AdapterName, ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, LintResult,
+    LintResultList, LocationList, Severity,
+};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
 // JSON Schema draft-07/2020-12 required keywords
 static _JSON_SCHEMA_KEYWORDS: Lazy<std::collections::HashSet<&'static str>> = Lazy::new(|| {
     [
-        "type", "properties", "required", "items",
-        "additionalProperties", "description", "title",
-        "enum", "const", "default", "minimum", "maximum",
-        "minLength", "maxLength", "pattern", "format",
-        "anyOf", "oneOf", "allOf", "not",
-        "$ref", "$defs", "$schema",
+        "type",
+        "properties",
+        "required",
+        "items",
+        "additionalProperties",
+        "description",
+        "title",
+        "enum",
+        "const",
+        "default",
+        "minimum",
+        "maximum",
+        "minLength",
+        "maxLength",
+        "pattern",
+        "format",
+        "anyOf",
+        "oneOf",
+        "allOf",
+        "not",
+        "$ref",
+        "$defs",
+        "$schema",
     ]
     .iter()
     .copied()
@@ -46,17 +47,16 @@ static _JSON_SCHEMA_KEYWORDS: Lazy<std::collections::HashSet<&'static str>> = La
 // Patterns that indicate a tool registration (FastMCP, stdio MCP, etc.)
 static TOOL_DECORATOR_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
     vec![
-        Regex::new(r"@\w+\.tool\s*\(").unwrap(),   // @mcp.tool(...)
+        Regex::new(r"@\w+\.tool\s*\(").unwrap(),    // @mcp.tool(...)
         Regex::new(r"@\w+\.tool\s*$").unwrap(),     // @mcp.tool
-        Regex::new(r"server\.add_tool\b").unwrap(),  // server.add_tool(...)
-        Regex::new(r"register_tool\b").unwrap(),     // register_tool(...)
+        Regex::new(r"server\.add_tool\b").unwrap(), // server.add_tool(...)
+        Regex::new(r"register_tool\b").unwrap(),    // register_tool(...)
     ]
 });
 
 static JSON_SCHEMA_TYPE_VALUES: Lazy<std::collections::HashSet<&'static str>> = Lazy::new(|| {
     [
-        "string", "number", "integer", "boolean",
-        "array", "object", "null",
+        "string", "number", "integer", "boolean", "array", "object", "null",
     ]
     .iter()
     .copied()
@@ -64,19 +64,15 @@ static JSON_SCHEMA_TYPE_VALUES: Lazy<std::collections::HashSet<&'static str>> = 
 });
 
 // Regex: captures a function definition line
-static FUNC_DEF_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)").unwrap()
-});
+static FUNC_DEF_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)").unwrap());
 
 // Regex: captures decorator lines
-static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\s*@(.+)$").unwrap()
-});
+static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\s*@(.+)$").unwrap());
 
 // Regex: triple-quoted docstring
-static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#).unwrap()
-});
+static DOCSTRING_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#).unwrap());
 
 /// AES025 — Validate MCP tool input/output schemas.
 pub struct McpSchemaChecker;
@@ -135,14 +131,7 @@ impl McpSchemaChecker {
                 }
 
                 if is_tool {
-                    self._check_tool_schema(
-                        func_name,
-                        params_str,
-                        &lines,
-                        i,
-                        f,
-                        results,
-                    );
+                    self._check_tool_schema(func_name, params_str, &lines, i, f, results);
                 }
 
                 pending_decorators.clear();
@@ -215,7 +204,10 @@ impl McpSchemaChecker {
                 if stripped.len() >= 10 {
                     found_docstring = true;
                 }
-            } else if trimmed.starts_with("def ") || trimmed.starts_with("class ") || trimmed.starts_with("@") {
+            } else if trimmed.starts_with("def ")
+                || trimmed.starts_with("class ")
+                || trimmed.starts_with("@")
+            {
                 break;
             }
         }
@@ -303,8 +295,17 @@ impl McpSchemaChecker {
             let line = lines[i].trim();
             if line.starts_with('@') {
                 // Check for parameters=, input_schema=, schema= keywords
-                if line.contains("parameters=") || line.contains("input_schema=") || line.contains("schema=") {
-                    self._validate_schema_from_line(func_name, line, f, results, (func_line_idx as i64) + 1);
+                if line.contains("parameters=")
+                    || line.contains("input_schema=")
+                    || line.contains("schema=")
+                {
+                    self._validate_schema_from_line(
+                        func_name,
+                        line,
+                        f,
+                        results,
+                        (func_line_idx as i64) + 1,
+                    );
                 }
                 break;
             }
@@ -337,7 +338,10 @@ impl McpSchemaChecker {
         // Check type values
         if let Some(type_val) = extract_schema_type_value(line) {
             if !JSON_SCHEMA_TYPE_VALUES.contains(type_val.as_str()) {
-                violations.push(format!("Schema type='{}' is not a valid JSON Schema type", type_val));
+                violations.push(format!(
+                    "Schema type='{}' is not a valid JSON Schema type",
+                    type_val
+                ));
             }
         }
 
@@ -372,7 +376,9 @@ impl McpSchemaChecker {
         // Simple heuristic: look for property names and check if they have descriptions
         // In a dict literal like {"type": "object", "properties": {"name": {"type": "string", "description": "..."}}}
         // We look for property sub-dicts without "description"
-        let props_start = schema_line.find("\"properties\"").or_else(|| schema_line.find("'properties'"));
+        let props_start = schema_line
+            .find("\"properties\"")
+            .or_else(|| schema_line.find("'properties'"));
         if let Some(start) = props_start {
             let snippet = &schema_line[start..];
             // Count property entries that lack description
@@ -463,7 +469,7 @@ fn extract_schema_type_value(line: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{McpSchemaChecker, extract_schema_type_value};
+    use super::{extract_schema_type_value, McpSchemaChecker};
 
     #[test]
     fn test_is_tool_decorator() {

@@ -1,10 +1,16 @@
-use crate::taxonomy::AdapterMetadata;
+use crate::taxonomy::AdapterClassMap;
+use crate::taxonomy::AdapterMetadataList;
 use crate::taxonomy::AdapterName;
+use crate::taxonomy::ContentString;
 use crate::taxonomy::PluginError;
-
+use crate::taxonomy::PluginGroup;
 
 pub trait IPluginManagerPort: Send + Sync {
-    fn discover_plugins(&self, group: &str) -> Result<Vec<(String, String)>, PluginError>;
-    fn list_custom_adapters(&self) -> Vec<AdapterMetadata>;
-    fn register_custom_adapter(&self, name: &AdapterName, class_path: &str) -> Result<(), PluginError>;
+    fn discover_plugins(&self, group: &PluginGroup) -> Result<AdapterClassMap, PluginError>;
+    fn list_custom_adapters(&self) -> AdapterMetadataList;
+    fn register_custom_adapter(
+        &self,
+        name: &AdapterName,
+        class_path: &ContentString,
+    ) -> Result<(), PluginError>;
 }

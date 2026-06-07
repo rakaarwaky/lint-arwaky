@@ -1,74 +1,71 @@
 use std::path::Path;
-use std::sync::Arc;
 
-use crate::contract::source_system_port::IFileSystemPort;
-use crate::contract::source_parser_port::ISourceParserPort;
-use crate::taxonomy::{LintResult, LintResultList};
-use crate::capabilities::architecture_lint_handler::{
-collect_rs_files, load_config, format_report,
+use crate::capabilities::{
+    collect_source_files, format_report, load_config, ArchComplianceAnalyzer,
 };
-use crate::capabilities::architecture_compliance_analyzer::ArchComplianceAnalyzer;
+use crate::taxonomy::{LintResult, LintResultList};
 
-pub struct ArchitectureLintOrchestrator {
-fs: Arc<dyn IFileSystemPort>,
-parser: Arc<dyn ISourceParserPort>,
+pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
+    for name in &["src-rust", "src-python", "src-javascript", "src"] {
+        let candidate = project_root.join(name);
+        if candidate.is_dir() {
+            return candidate;
+        }
+    }
+    project_root.join("src-rust")
 }
+
+pub struct ArchitectureLintOrchestrator;
 
 impl ArchitectureLintOrchestrator {
-pub fn new(fs: Arc<dyn IFileSystemPort>, parser: Arc<dyn ISourceParserPort>) -> Self {
-Self { fs, parser }
-}
+    pub fn new() -> Self {
+        Self
+    }
 
-pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
-let src_dir = Path::new(project_root).join("src-rust");
-self.run_lint_at(&src_dir, Some(Path::new(project_root)))
-}
+    pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
+        let root = Path::new(project_root);
+        let src_dir = detect_source_dir(root);
+        self.run_lint_at(&src_dir, Some(root))
+    }
 
-pub fn run_self_lint_dir(&self, src_dir: &str) -> Vec<LintResult> {
-self.run_lint_at(Path::new(src_dir), None)
-}
+    pub fn run_self_lint_dir(&self, src_dir: &str) -> Vec<LintResult> {
+        self.run_lint_at(Path::new(src_dir), None)
+    }
 
-fn run_lint_at(&self, src_dir: &Path, project_root: Option<&Path>) -> Vec<LintResult> {
-let config = load_config(project_root, src_dir);
-let analyzer = ArchComplianceAnalyzer::new(config);
-let files = collect_rs_files(src_dir);
-if files.is_empty() {
-    return Vec::new();
-}
-let root_dir = src_dir.to_string_lossy().to_string();
+    fn run_lint_at(&self, src_dir: &Path, project_root: Option<&Path>) -> Vec<LintResult> {
+        let config = load_config(project_root, src_dir);
+        let files = collect_source_files(src_dir);
+        if files.is_empty() {
+            return Vec::new();
+        }
+        let root_dir = src_dir.to_string_lossy().to_string();
+        let coordinator = crate::agent::lint_checking_coordinator::LintCheckingCoordinator::new();
+        coordinator.run_all_checks(&config, &files, &root_dir)
+    }
 
-let violations = analyzer.execute(&files, &root_dir);
-violations
-}
-
-pub fn format_report(&self, results: &[LintResult], project_root: &str) -> String {
-format_report(results, project_root)
-}
+    pub fn format_report(&self, results: &[LintResult], project_root: &str) -> String {
+        format_report(results, project_root)
+    }
 }
 
 pub struct ArchLintPipelineOrchestrator {
-inner: ArchitectureLintOrchestrator,
+    inner: ArchitectureLintOrchestrator,
 }
 
 impl ArchLintPipelineOrchestrator {
-pub fn new(fs: Arc<dyn IFileSystemPort>, parser: Arc<dyn ISourceParserPort>) -> Self {
-Self {
-inner: ArchitectureLintOrchestrator::new(fs, parser),
-}
-}
+    pub fn new() -> Self {
+        Self {
+            inner: ArchitectureLintOrchestrator,
+        }
+    }
 
-pub fn execute_pipeline(&self, project_root: &str) -> LintResultList {
-let results = self.inner.run_self_lint(project_root);
-LintResultList::new(results)
-}
+    pub fn execute_pipeline(&self, project_root: &str) -> LintResultList {
+        let results = self.inner.run_self_lint(project_root);
+        LintResultList::new(results)
+    }
 
-pub fn execute_pipeline_dir(&self, src_dir: &str) -> LintResultList {
-let results = self.inner.run_self_lint_dir(src_dir);
-LintResultList::new(results)
+    pub fn execute_pipeline_dir(&self, src_dir: &str) -> LintResultList {
+        let results = self.inner.run_self_lint_dir(src_dir);
+        LintResultList::new(results)
+    }
 }
-
-pub fn generate_report(&self, results: &LintResultList, project_root: &str) -> String {
-self.inner.format_report(&results.values, project_root)
-}
-}
-

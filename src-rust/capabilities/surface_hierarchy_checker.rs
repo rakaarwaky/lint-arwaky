@@ -10,43 +10,22 @@
 // control flow) instead of acting as a thin pass-through to the agent layer.
 // Surfaces must be declarative/passive — I/O parsing + delegation only.
 
-use crate::taxonomy::AdapterName;
-
-
-use crate::taxonomy::ColumnNumber;
-
-use crate::taxonomy::{ErrorCode,
-FilePath};
-
-
-
-use crate::taxonomy::{LineNumber,
-LintMessage,
-LintResult,
-LintResultList,
-LocationList};
-
-
-
-use crate::taxonomy::Severity;
-
+use crate::taxonomy::{
+    AdapterName, ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, LintResult,
+    LintResultList, LocationList, Severity,
+};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
 // Regex: detect Python function/method definitions inside a class
-static PY_METHOD_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(").unwrap()
-});
+static PY_METHOD_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(").unwrap());
 
 // Regex: detect class definitions
-static PY_CLASS_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^class\s+(\w+)").unwrap()
-});
+static PY_CLASS_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^class\s+(\w+)").unwrap());
 
 // Regex: detect if statements for nesting depth
-static IF_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\s*if\s+").unwrap()
-});
+static IF_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\s*if\s+").unwrap());
 
 /// AES018 + AES019 — surface barrel wiring and passivity checks.
 pub struct SurfaceHierarchyChecker;
@@ -249,12 +228,7 @@ impl SurfaceHierarchyChecker {
     }
 
     /// Append a single AES019 result to the results list.
-    fn _report_aes019(
-        &self,
-        f: &FilePath,
-        violations: Vec<String>,
-        results: &mut LintResultList,
-    ) {
+    fn _report_aes019(&self, f: &FilePath, violations: Vec<String>, results: &mut LintResultList) {
         let detail: String = violations
             .iter()
             .map(|v| format!("  - {}", v))
@@ -300,13 +274,22 @@ fn is_init(f: &FilePath) -> bool {
 fn stem(f: &FilePath) -> String {
     let path_str = f.to_string();
     let basename = path_str.rsplit('/').next().unwrap_or(&path_str);
-    basename.rsplit('.').next().unwrap_or(basename).to_string()
+    basename.split('.').next().unwrap_or(basename).to_string()
 }
 
 /// Get the directory portion of the file path.
 fn directory(f: &FilePath) -> String {
     let path_str = f.to_string();
-    path_str.rsplit('/').skip(1).next().unwrap_or(&path_str).to_string()
+    let pos = path_str.rfind('/').map(|i| i).unwrap_or(0);
+    if pos == 0 {
+        if path_str.starts_with('/') {
+            "/".to_string()
+        } else {
+            ".".to_string()
+        }
+    } else {
+        path_str[..pos].to_string()
+    }
 }
 
 /// Check if a module stem is imported in its directory barrel.
@@ -334,7 +317,7 @@ fn is_wired(f: &FilePath) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{FilePath, directory, is_in_surfaces, is_init, stem};
+    use super::{directory, is_in_surfaces, is_init, stem, FilePath};
 
     #[test]
     fn test_is_in_surfaces() {

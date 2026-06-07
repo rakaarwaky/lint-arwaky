@@ -3,12 +3,17 @@ use serde::Serialize;
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct Cause {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl Cause {
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
+    }
+    pub fn value(&self) -> &str {
+        &self.value
     }
 }
 
@@ -20,7 +25,9 @@ impl std::fmt::Display for Cause {
 
 impl From<&str> for Cause {
     fn from(s: &str) -> Self {
-        Self { value: s.to_string() }
+        Self {
+            value: s.to_string(),
+        }
     }
 }
 
@@ -41,19 +48,30 @@ impl<'de> serde::Deserialize<'de> for Cause {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-                Ok(Cause { value: v.to_string() })
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(Cause {
+                    value: v.to_string(),
+                })
             }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(Cause { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -67,12 +85,17 @@ impl<'de> serde::Deserialize<'de> for Cause {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct Constraint {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl Constraint {
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
+    }
+    pub fn value(&self) -> &str {
+        &self.value
     }
 }
 
@@ -84,7 +107,9 @@ impl std::fmt::Display for Constraint {
 
 impl From<&str> for Constraint {
     fn from(s: &str) -> Self {
-        Self { value: s.to_string() }
+        Self {
+            value: s.to_string(),
+        }
     }
 }
 
@@ -105,19 +130,30 @@ impl<'de> serde::Deserialize<'de> for Constraint {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-                Ok(Constraint { value: v.to_string() })
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(Constraint {
+                    value: v.to_string(),
+                })
             }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(Constraint { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -131,18 +167,25 @@ impl<'de> serde::Deserialize<'de> for Constraint {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct ErrorMessage {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl ErrorMessage {
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
+    }
+    pub fn value(&self) -> &str {
+        &self.value
     }
 }
 
 impl Default for ErrorMessage {
     fn default() -> Self {
-        ErrorMessage { value: String::new() }
+        ErrorMessage {
+            value: String::new(),
+        }
     }
 }
 
@@ -154,7 +197,9 @@ impl std::fmt::Display for ErrorMessage {
 
 impl From<&str> for ErrorMessage {
     fn from(s: &str) -> Self {
-        Self { value: s.to_string() }
+        Self {
+            value: s.to_string(),
+        }
     }
 }
 
@@ -175,19 +220,30 @@ impl<'de> serde::Deserialize<'de> for ErrorMessage {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-                Ok(ErrorMessage { value: v.to_string() })
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(ErrorMessage {
+                    value: v.to_string(),
+                })
             }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(ErrorMessage { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -201,12 +257,15 @@ impl<'de> serde::Deserialize<'de> for ErrorMessage {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct ExitCode {
-    pub value: i64,
+    pub(crate) value: i64,
 }
 
 impl ExitCode {
     pub fn new(value: i64) -> Self {
         Self { value: value }
+    }
+    pub fn value(&self) -> i64 {
+        self.value
     }
 }
 
@@ -233,19 +292,28 @@ impl<'de> serde::Deserialize<'de> for ExitCode {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(ExitCode { value: v })
             }
-            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(ExitCode { value: v as i64 })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<i64>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -259,12 +327,17 @@ impl<'de> serde::Deserialize<'de> for ExitCode {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct FieldName {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl FieldName {
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
+    }
+    pub fn value(&self) -> &str {
+        &self.value
     }
 }
 
@@ -276,7 +349,9 @@ impl std::fmt::Display for FieldName {
 
 impl From<&str> for FieldName {
     fn from(s: &str) -> Self {
-        Self { value: s.to_string() }
+        Self {
+            value: s.to_string(),
+        }
     }
 }
 
@@ -297,19 +372,30 @@ impl<'de> serde::Deserialize<'de> for FieldName {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-                Ok(FieldName { value: v.to_string() })
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(FieldName {
+                    value: v.to_string(),
+                })
             }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(FieldName { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -323,12 +409,17 @@ impl<'de> serde::Deserialize<'de> for FieldName {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct ModuleName {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl ModuleName {
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
+    }
+    pub fn value(&self) -> &str {
+        &self.value
     }
 }
 
@@ -340,7 +431,9 @@ impl std::fmt::Display for ModuleName {
 
 impl From<&str> for ModuleName {
     fn from(s: &str) -> Self {
-        Self { value: s.to_string() }
+        Self {
+            value: s.to_string(),
+        }
     }
 }
 
@@ -361,19 +454,30 @@ impl<'de> serde::Deserialize<'de> for ModuleName {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-                Ok(ModuleName { value: v.to_string() })
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(ModuleName {
+                    value: v.to_string(),
+                })
             }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(ModuleName { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -387,12 +491,17 @@ impl<'de> serde::Deserialize<'de> for ModuleName {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct PrimitiveTypeName {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl PrimitiveTypeName {
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
+    }
+    pub fn value(&self) -> &str {
+        &self.value
     }
 }
 
@@ -404,7 +513,9 @@ impl std::fmt::Display for PrimitiveTypeName {
 
 impl From<&str> for PrimitiveTypeName {
     fn from(s: &str) -> Self {
-        Self { value: s.to_string() }
+        Self {
+            value: s.to_string(),
+        }
     }
 }
 
@@ -425,19 +536,30 @@ impl<'de> serde::Deserialize<'de> for PrimitiveTypeName {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-                Ok(PrimitiveTypeName { value: v.to_string() })
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(PrimitiveTypeName {
+                    value: v.to_string(),
+                })
             }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(PrimitiveTypeName { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;

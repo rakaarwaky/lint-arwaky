@@ -50,7 +50,6 @@
 pub mod adapter_container_aggregate;
 pub mod agent_lifecycle_aggregate;
 pub mod analysis_orchestrator_aggregate;
-pub mod architecture_analyzer_protocol;
 pub mod architecture_compliance_port;
 pub mod architecture_compliance_protocol;
 pub mod architecture_coordinator_aggregate;
@@ -62,19 +61,14 @@ pub mod architecture_orphan_protocol;
 pub mod architecture_rule_protocol;
 pub mod architecture_unused_protocol;
 pub mod capability_container_aggregate;
-pub mod code_transformation_protocol;
 pub mod command_executor_port;
 pub mod config_discovery_port;
 pub mod config_parser_port;
-pub mod config_provider_port;
-pub mod config_validation_port;
 pub mod container_registry_aggregate;
 pub mod dev_commands_aggregate;
 pub mod diff_result_aggregate;
 pub mod directory_watch_aggregate;
-pub mod dispatch_check_aggregate;
 pub mod dispatch_commands_aggregate;
-pub mod dispatch_fix_aggregate;
 pub mod dispatch_routing_protocol;
 pub mod domain_type_protocol;
 pub mod execution_orchestrator_aggregate;
@@ -104,11 +98,9 @@ pub mod path_normalization_port;
 pub mod pipeline_dispatcher_aggregate;
 pub mod pipeline_extended_aggregate;
 pub mod pipeline_input_aggregate;
-pub mod pipeline_orchestrator_aggregate;
 pub mod pipeline_output_aggregate;
 pub mod plugin_commands_aggregate;
 pub mod plugin_manager_port;
-pub mod project_container_aggregate;
 pub mod project_governance_protocol;
 pub mod project_orchestrator_aggregate;
 pub mod report_commands_aggregate;
@@ -125,83 +117,78 @@ pub mod watch_commands_aggregate;
 pub mod watch_orchestrator_aggregate;
 pub mod watch_provider_port;
 
-pub use adapter_container_aggregate::{AdapterContainerAggregate};
-pub use agent_lifecycle_aggregate::{AgentLifecycleAggregate};
-pub use analysis_orchestrator_aggregate::{AnalysisOrchestratorAggregate};
-pub use architecture_analyzer_protocol::{IArchAnalyzerProtocol};
-pub use architecture_compliance_port::{IArchCompliancePort};
+pub use adapter_container_aggregate::AdapterContainerAggregate;
+pub use agent_lifecycle_aggregate::AgentLifecycleAggregate;
+pub use analysis_orchestrator_aggregate::AnalysisOrchestratorAggregate;
+pub use architecture_compliance_port::IArchCompliancePort;
 pub use architecture_compliance_protocol::{IArchComplianceProtocol, IScopeBoundaryProtocol};
-pub use architecture_coordinator_aggregate::{ArchCoordinatorAggregate};
-pub use architecture_cycle_protocol::{ICycleAnalysisProtocol};
-pub use architecture_import_protocol::{IArchImportProtocol};
-pub use architecture_inheritance_protocol::{IArchInheritanceProtocol};
-pub use architecture_lint_protocol::{IArchLintProtocol};
-pub use architecture_orphan_protocol::{IArchOrphanProtocol, IOrphanGraphProtocol, IOrphanIndicatorProtocol};
-pub use architecture_rule_protocol::{IAnalyzer, IArchImportProcessorProtocol, IArchRuleProtocol, IArchStructureProtocol, ICodeQualityProtocol, IInternalCheckerProtocol, IMetricCheckerProtocol, INamingCheckerProtocol, INamingRuleProtocol, IRoleCheckerProtocol};
-pub use architecture_unused_protocol::{IUnusedProtocol};
-pub use capability_container_aggregate::{CapabilityContainerAggregate};
-pub use code_transformation_protocol::{ICodeTransformationProtocol};
-pub use command_executor_port::{ICommandExecutorPort};
-pub use config_discovery_port::{IConfigDiscoveryPort};
-pub use config_parser_port::{IConfigParserPort};
-pub use config_provider_port::{IConfigProviderPort};
-pub use config_validation_port::{IConfigValidationPort};
-pub use container_registry_aggregate::{ContainerRegistryAggregate};
-pub use dev_commands_aggregate::{DevCommandsAggregate};
-pub use diff_result_aggregate::{GitDiffResultAggregate};
-pub use directory_watch_aggregate::{DirectoryWatchAggregate};
-pub use dispatch_check_aggregate::{CheckCommandsAggregate};
-pub use dispatch_commands_aggregate::{command_catalog};
-pub use dispatch_fix_aggregate::{FixCommandsAggregate};
+pub use architecture_coordinator_aggregate::ArchCoordinatorAggregate;
+pub use architecture_cycle_protocol::ICycleAnalysisProtocol;
+pub use architecture_import_protocol::IArchImportProtocol;
+pub use architecture_inheritance_protocol::IArchInheritanceProtocol;
+pub use architecture_lint_protocol::IArchLintProtocol;
+pub use architecture_orphan_protocol::IArchOrphanProtocol;
+pub use architecture_rule_protocol::{
+    IAnalyzer, IArchRuleProtocol, IInternalCheckerProtocol, IMetricCheckerProtocol,
+    INamingCheckerProtocol, INamingRuleProtocol,
+};
+pub use architecture_unused_protocol::IUnusedProtocol;
+pub use capability_container_aggregate::CapabilityContainerAggregate;
+pub use command_executor_port::ICommandExecutorPort;
+pub use config_discovery_port::IConfigDiscoveryPort;
+pub use config_parser_port::IConfigParserPort;
+pub use container_registry_aggregate::ContainerRegistryAggregate;
+pub use dev_commands_aggregate::DevCommandsAggregate;
+pub use diff_result_aggregate::GitDiffResultAggregate;
+pub use directory_watch_aggregate::DirectoryWatchAggregate;
+pub use dispatch_commands_aggregate::command_catalog;
 pub use dispatch_routing_protocol::{IDispatchRoutingParserProtocol, IDispatchRoutingProtocol};
-pub use domain_type_protocol::{IDomainTypeProtocol};
-pub use execution_orchestrator_aggregate::{PipelineExecutionOrchestratorAggregate};
-pub use file_system_port::{IFileSystemPort};
-pub use git_commands_aggregate::{GitCommandsAggregate};
-pub use hook_manager_port::{IHookManagerPort};
-pub use hook_orchestrator_aggregate::{HookManagementOrchestratorAggregate};
-pub use http_provider_port::{IHttpProviderPort};
-pub use infrastructure_container_aggregate::{InfrastructureContainerAggregate};
-pub use javascript_flow_port::{IJavascriptFlowPort};
+pub use domain_type_protocol::IDomainTypeProtocol;
+pub use execution_orchestrator_aggregate::PipelineExecutionOrchestratorAggregate;
+pub use file_system_port::IFileSystemPort;
+pub use git_commands_aggregate::GitCommandsAggregate;
+pub use hook_manager_port::IHookManagerPort;
+pub use hook_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+pub use http_provider_port::IHttpProviderPort;
+pub use infrastructure_container_aggregate::InfrastructureContainerAggregate;
+pub use javascript_flow_port::IJavascriptFlowPort;
 pub use javascript_scope_port::{IJavascriptScopePort, IJsTracerPort};
-pub use job_registry_aggregate::{JobRegistryAggregate};
-pub use job_registry_port::{IJobRegistryPort};
-pub use lint_fix_aggregate::{LintFixOrchestratorAggregate};
-pub use lint_reporting_protocol::{ILintReportingProtocol};
-pub use linter_adapter_port::{ILinterAdapterPort};
-pub use maintenance_commands_aggregate::{MaintenanceCommandsAggregate};
+pub use job_registry_aggregate::JobRegistryAggregate;
+pub use job_registry_port::IJobRegistryPort;
+pub use lint_fix_aggregate::LintFixOrchestratorAggregate;
+pub use lint_reporting_protocol::ILintReportingProtocol;
+pub use linter_adapter_port::ILinterAdapterPort;
+pub use maintenance_commands_aggregate::MaintenanceCommandsAggregate;
 pub use mcp_server_port::{IMcpServerPort, ToolHandler};
-pub use metrics_provider_port::{IMetricsProviderPort};
-pub use multi_project_aggregate::{MultiProjectAggregate};
-pub use naming_provider_port::{INamingProviderPort};
-pub use naming_variant_port::{INamingVariantPort};
-pub use naming_variant_protocol::{INamingVariantProtocol};
-pub use orchestrator_container_aggregate::{OrchestratorContainerAggregate};
-pub use output_client_aggregate::{OutputClientAggregate};
-pub use path_normalization_port::{IPathNormalizationPort};
-pub use pipeline_dispatcher_aggregate::{PipelineActionDispatcherAggregate};
-pub use pipeline_extended_aggregate::{PipelineExtendedOrchestratorAggregate};
-pub use pipeline_input_aggregate::{PipelineInputAggregate};
-pub use pipeline_orchestrator_aggregate::{LintPipelineOrchestratorAggregate};
-pub use pipeline_output_aggregate::{PipelineOutputAggregate};
-pub use plugin_commands_aggregate::{PluginCommandsAggregate};
-pub use plugin_manager_port::{IPluginManagerPort};
-pub use project_container_aggregate::{ProjectContainerAggregate};
-pub use project_governance_protocol::{IArchRuleEngineProtocol, IConfigRulesProtocol, IMetricAnalyzerProtocol};
-pub use project_orchestrator_aggregate::{MultiProjectOrchestratorAggregate};
-pub use report_commands_aggregate::{ReportCommandsAggregate};
-pub use scanner_provider_port::{IScannerProviderPort};
-pub use semantic_flow_protocol::{IDataFlowProtocol};
-pub use semantic_tracer_port::{ISemanticTracerPort};
-pub use semantic_tracer_protocol::{ISemanticTracerProtocol};
-pub use service_container_aggregate::{ServiceContainerAggregate};
-pub use setup_management_aggregate::{SetupManagementAggregate};
-pub use setup_management_protocol::{ISetupManagementProtocol};
-pub use source_parser_port::{ISourceParserPort};
+pub use metrics_provider_port::IMetricsProviderPort;
+pub use multi_project_aggregate::MultiProjectAggregate;
+pub use naming_provider_port::INamingProviderPort;
+pub use naming_variant_port::INamingVariantPort;
+pub use naming_variant_protocol::INamingVariantProtocol;
+pub use orchestrator_container_aggregate::OrchestratorContainerAggregate;
+pub use output_client_aggregate::OutputClientAggregate;
+pub use path_normalization_port::IPathNormalizationPort;
+pub use pipeline_dispatcher_aggregate::PipelineActionDispatcherAggregate;
+pub use pipeline_extended_aggregate::PipelineExtendedOrchestratorAggregate;
+pub use pipeline_input_aggregate::PipelineInputAggregate;
+pub use pipeline_output_aggregate::PipelineOutputAggregate;
+pub use plugin_commands_aggregate::PluginCommandsAggregate;
+pub use plugin_manager_port::IPluginManagerPort;
+pub use project_governance_protocol::IConfigRulesProtocol;
+pub use project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+pub use report_commands_aggregate::ReportCommandsAggregate;
+pub use scanner_provider_port::IScannerProviderPort;
+pub use semantic_flow_protocol::IDataFlowProtocol;
+pub use semantic_tracer_port::ISemanticTracerPort;
+pub use semantic_tracer_protocol::ISemanticTracerProtocol;
+pub use service_container_aggregate::ServiceContainerAggregate;
+pub use setup_management_aggregate::SetupManagementAggregate;
+pub use setup_management_protocol::ISetupManagementProtocol;
+pub use source_parser_port::ISourceParserPort;
 // No unique public exports in source_system_port
-pub use watch_commands_aggregate::{WatchCommandsAggregate};
-pub use watch_orchestrator_aggregate::{WatchExecutionOrchestratorAggregate};
-pub use watch_provider_port::{IWatchProviderPort};
+pub use watch_commands_aggregate::WatchCommandsAggregate;
+pub use watch_orchestrator_aggregate::WatchExecutionOrchestratorAggregate;
+pub use watch_provider_port::IWatchProviderPort;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPE ALIASES (Ergonomic Shortcuts for Complex Trait Object Types)
@@ -240,13 +227,15 @@ pub type SemanticTracerPortRef = std::sync::Arc<dyn ISemanticTracerPort>;
 /// Returns `None` if the command is not registered.
 #[inline]
 pub fn find_command(name: &str) -> Option<crate::taxonomy::CommandMetadataVO> {
-    command_catalog().get(name).cloned()
+    command_catalog()
+        .get(&crate::taxonomy::ActionName::from(name))
+        .cloned()
 }
 
 /// Check whether a command name is registered in the catalog.
 #[inline]
 pub fn is_command_registered(name: &str) -> bool {
-    command_catalog().contains_key(name)
+    command_catalog().contains_key(&crate::taxonomy::ActionName::from(name))
 }
 
 /// Return the total number of registered commands.
@@ -257,7 +246,10 @@ pub fn command_count() -> usize {
 
 /// List all registered command names in sorted order.
 pub fn list_command_names() -> Vec<String> {
-    let mut names: Vec<String> = command_catalog().keys().cloned().collect();
+    let mut names: Vec<String> = command_catalog()
+        .keys()
+        .map(|k| k.value().to_string())
+        .collect();
     names.sort();
     names
 }
@@ -268,7 +260,9 @@ pub fn list_command_names() -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{command_catalog, find_command, is_command_registered, command_count, list_command_names};
+    use super::{
+        command_catalog, command_count, find_command, is_command_registered, list_command_names,
+    };
 
     #[test]
     fn test_command_catalog_not_empty() {

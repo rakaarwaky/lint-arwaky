@@ -1,18 +1,19 @@
 // arch_role_checker — Architectural role checks (agent and surface roles).
 // 1:1 Rust implementation matching capabilities/arch_role_checker.py
 
+use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
 
-use crate::contract::architecture_rule_protocol::IAnalyzer;
+use crate::contract::architecture_rule_protocol::{IAnalyzer, IRoleCheckerProtocol};
 use crate::taxonomy::layer_names_vo::{
     core_layer_names, layer_agent, layer_contract, layer_infrastructure, layer_surfaces,
     layer_taxonomy,
 };
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LayerNameVO, LineNumber,
-    LintMessage, LintResult, Severity, SymbolName,
+    AdapterName, ColumnNumber, ErrorCode, FilePath, FilePathList, LayerDefinition, LayerNameVO,
+    LineNumber, LintMessage, LintResult, LintResultList, Severity, SymbolName,
 };
 
 fn make_adapter(name: &str) -> Option<AdapterName> {
@@ -265,7 +266,9 @@ impl ArchRoleChecker {
         results: &mut crate::taxonomy::LintResultList,
     ) {
         let metadata_assigns = analyzer.parser().get_assignment_targets(f);
-        let assignments = metadata_assigns.value.get("assignments")
+        let assignments = metadata_assigns
+            .value
+            .get("assignments")
             .and_then(|v| v.as_array())
             .cloned()
             .unwrap_or_default();
@@ -274,7 +277,12 @@ impl ArchRoleChecker {
         for assign in &assignments {
             let line_val = assign.get("line").and_then(|v| v.as_i64()).unwrap_or(0);
             let line_vo = LineNumber::new(line_val);
-            let method_name = self._find_method_name_for_line(&serde_json::Value::Object(serde_json::Map::from_iter(metadata_methods.value.clone().into_iter())), line_val);
+            let method_name = self._find_method_name_for_line(
+                &serde_json::Value::Object(serde_json::Map::from_iter(
+                    metadata_methods.value.clone().into_iter(),
+                )),
+                line_val,
+            );
             if let Some(ref name) = method_name {
                 if name.value != "__init__" {
                     let msg = definition
@@ -578,7 +586,7 @@ impl ArchRoleChecker {
         };
 
         static ANY_TYPE_RE: Lazy<Regex> =
-            Lazy::new(|| Regex::new(r":\s*Any\b|->\s*Any\b|\bAny\s*\[").unwrap());
+            Lazy::new(|| Regex::new(r":\s*[Aa]ny\b|->\s*[Aa]ny\b|\b[Aa]ny\s*\[").unwrap());
 
         for (i, line) in content.lines().enumerate() {
             for mat in ANY_TYPE_RE.find_iter(line) {
@@ -611,3 +619,29 @@ impl ArchRoleChecker {
             .unwrap_or_default()
     }
 }
+
+#[async_trait]
+impl IRoleCheckerProtocol for ArchRoleChecker {
+    async fn check_agent_roles(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        self.check_agent_roles(analyzer, files, root_dir, results)
+            .await;
+    }
+
+    async fn check_surface_roles(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        self.check_surface_roles(analyzer, files, root_dir, results)
+            .await;
+    }
+}
+

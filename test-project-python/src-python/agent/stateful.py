@@ -1,5 +1,5 @@
 # AES021 — agent role violation: orchestrator with state
-# AES002 — missing mandatory imports (no taxonomy, no contract IO)
+# AES002 — missing mandatory imports (no taxonomy, no contract aggregate)
 # AES003 — wrong name (only 1 word)
 
 

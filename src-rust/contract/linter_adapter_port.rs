@@ -1,8 +1,9 @@
 // linter_adapter_port — Abstract port for linter adapter operations (Contract Layer).
 use async_trait::async_trait;
 
-use crate::taxonomy::{AdapterName, ComplianceStatus, FilePath, LintResultList, LinterOperationError};
-
+use crate::taxonomy::{
+    AdapterName, ComplianceStatus, FilePath, LintResultList, LinterOperationError,
+};
 
 /// Abstract interface for linter adapters.
 /// Implemented by Infrastructure (e.g., RuffAdapter, MypyAdapter).

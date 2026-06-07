@@ -25,7 +25,7 @@
 //! | **Naming** | `NamingRuleChecker`, `NamingVariantAnalyzer`, `SymbolRenamerProcessor` | Naming conventions and refactoring |
 //! | **Domain Types** | `DomainTypeRuleChecker` | Primitive usage detection (AES006) |
 //! | **Semantic Analysis** | `SemanticScopeAnalyzer`, `CallChainAnalyzer`, `ScopeBoundaryAnalyzer`, `ScopeBoundaryResolver` | Scope & flow analysis |
-//! | **Semantic Flow** | `DataFlowAnalyzer` | Variable lifecycle tracking |
+//! | **Data Flow** | `DataFlowAnalyzer` | Variable lifecycle tracking |
 //! | **Reporting** | `ReportFormatterProcessor` | SARIF/JUnit/JSON report generation |
 //! | **MCP Schema** | `McpSchemaChecker` | AES025 JSON Schema validation |
 //! | **Surface Hierarchy** | `SurfaceHierarchyChecker` | AES018/AES019 passive surface checks |
@@ -72,11 +72,13 @@ pub mod naming_variant_analyzer;
 pub mod domain_type_checker;
 
 // --- Semantic Analysis ---
-pub mod semantic_boundary_analyzer;
+pub mod scope_boundary_analyzer;
 pub mod semantic_boundary_resolver;
-pub mod semantic_flow_analyzer;
 pub mod semantic_scope_analyzer;
 pub mod semantic_tracer_analyzer;
+
+// --- Data Flow Analysis ---
+pub mod data_flow_analyzer;
 
 // --- Reporting & Formatting ---
 pub mod lint_reporting_formatter;
@@ -103,7 +105,8 @@ pub mod setup_management_processor;
 // --- Architecture: Core Orchestration ---
 pub use architecture_compliance_analyzer::ArchComplianceAnalyzer;
 pub use architecture_lint_handler::{
-    collect_rs_files, format_report, load_config, run_lint_with_deps, ArchLintHandler,
+    collect_rs_files, collect_source_files, format_report, load_config, run_lint_with_deps,
+    ArchLintHandler,
 };
 
 // --- Architecture: Per-File Checkers ---
@@ -116,7 +119,9 @@ pub use architecture_role_checker::ArchRoleChecker;
 pub use architecture_unused_checker::UnusedImportRuleChecker;
 
 // --- Architecture: Project-Wide Analyzers ---
-pub use architecture_cycle_analyzer::{detect_cycle_edges, DependencyCycleAnalyzer, DependencyEdge};
+pub use architecture_cycle_analyzer::{
+    detect_cycle_edges, DependencyCycleAnalyzer, DependencyEdge,
+};
 pub use architecture_import_processor::ArchImportProcessor;
 pub use architecture_inheritance_checker::MandatoryInheritanceChecker;
 pub use architecture_orphan_analyzer::{
@@ -132,11 +137,13 @@ pub use naming_variant_analyzer::{NamingVariantAnalyzer, NamingVariantDict};
 pub use domain_type_checker::{DomainTypeRuleChecker, PrimitiveViolation};
 
 // --- Semantic Analysis ---
-pub use semantic_boundary_analyzer::ScopeBoundaryAnalyzer;
+pub use scope_boundary_analyzer::ScopeBoundaryAnalyzer;
 pub use semantic_boundary_resolver::ScopeBoundaryResolver;
-pub use semantic_flow_analyzer::{DataFlowAnalyzer, DataFlowEntry};
 pub use semantic_scope_analyzer::SemanticScopeAnalyzer;
 pub use semantic_tracer_analyzer::CallChainAnalyzer;
+
+// --- Data Flow Analysis ---
+pub use data_flow_analyzer::{DataFlowAnalyzer, DataFlowEntry};
 
 // --- Reporting & Formatting ---
 pub use lint_reporting_formatter::ReportFormatterProcessor;

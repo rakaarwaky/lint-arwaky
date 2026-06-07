@@ -1,5 +1,5 @@
 use crate::taxonomy::{DescriptionVO, Suggestion};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CommandMetadataVO {
@@ -9,7 +9,10 @@ pub struct CommandMetadataVO {
 
 impl CommandMetadataVO {
     pub fn new(description: DescriptionVO, example: Suggestion) -> Self {
-        Self { description, example }
+        Self {
+            description,
+            example,
+        }
     }
 }
 

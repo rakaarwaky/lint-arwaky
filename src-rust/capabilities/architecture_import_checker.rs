@@ -1,18 +1,67 @@
 // arch_import_checker — Import-related architectural checks.
 // Implements IArchImportProtocol: check_mandatory_imports, check_forbidden_imports, check_legacy_import_rules.
 
+use crate::taxonomy::{
+    AdapterName, ArchitectureConfig, ColumnNumber, ErrorCode, FilePath, LayerDefinition,
+    LineNumber, LintMessage, LintResult, LocationList, ScopeRef, Severity,
+};
 use std::fs;
 use std::path::Path;
-use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LintMessage, LintResult, LineNumber, Severity,
-    ScopeRef, LocationList, ArchitectureConfig,
-};
 
 pub struct ArchImportRuleChecker;
 
 impl ArchImportRuleChecker {
     pub fn new() -> Self {
         Self
+    }
+
+    /// Resolve a scope value (e.g. "contract(protocol)", "taxonomy(entity,error,event)",
+    /// "contract(port|protocol|aggregate)", "taxonomy") into layer + suffix matches.
+    /// Returns (layer_name, suffixes) where suffixes is empty if no suffix restriction.
+    fn resolve_scope(scope: &str) -> (&str, Vec<&str>) {
+        if let Some(paren) = scope.find('(') {
+            let layer = scope[..paren].trim();
+            let inner = scope[paren+1..].trim_end_matches(')').trim();
+            let suffixes: Vec<&str> = if inner.contains('|') {
+                inner.split('|').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+            } else {
+                inner.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+            };
+            (layer, suffixes)
+        } else {
+            (scope.trim(), vec![])
+        }
+    }
+
+    /// Check if an import line satisfies the given scope requirement.
+    /// e.g. scope "contract(protocol)" matches "use crate::contract::some_protocol::X"
+    fn import_matches_scope(import_line: &str, layer: &str, suffixes: &[&str]) -> bool {
+        let lower = import_line.to_lowercase();
+        let layer_match = lower.contains(&format!("{}::", layer))
+            || lower.contains(&format!("::{}::", layer));
+        if !layer_match {
+            return false;
+        }
+        if suffixes.is_empty() {
+            return true;
+        }
+        suffixes.iter().any(|s| {
+            // Snake_case: "service_container_aggregate" contains "_aggregate"
+            if lower.contains(&format!("_{}", s)) || lower.contains(&format!("::{}", s)) {
+                return true;
+            }
+            // PascalCase / barrel import: "ServiceContainerAggregate" ends with "Aggregate" (case-insensitive)
+            // Split by :: and check each identifier segment
+            lower.split("::").any(|seg| {
+                let cleaned = seg
+                    .trim_end_matches(';')
+                    .trim()
+                    .trim_start_matches('{')
+                    .trim_end_matches('}')
+                    .trim();
+                cleaned.split(',').any(|t| t.trim().to_lowercase().ends_with(s))
+            })
+        })
     }
 
     fn make_result(file: &str, line: i64, code: &str, msg: &str, sev: Severity) -> LintResult {
@@ -25,8 +74,8 @@ impl ArchImportRuleChecker {
             source: Some(AdapterName::new("architecture").unwrap()),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
-                name: String::new(),
-                kind: String::new(),
+                name: crate::taxonomy::DescriptionVO::new(String::new()),
+                kind: crate::taxonomy::DescriptionVO::new(String::new()),
                 file: None,
                 start_line: None,
                 end_line: None,
@@ -47,7 +96,8 @@ impl ArchImportRuleChecker {
         let Ok(content) = fs::read_to_string(file) else {
             return vec![];
         };
-        content.lines()
+        content
+            .lines()
             .enumerate()
             .filter(|(_, line)| {
                 let trimmed = line.trim();
@@ -100,17 +150,42 @@ impl ArchImportRuleChecker {
         }
 
         let import_lines = Self::read_import_lines(file);
-        let Ok(content) = fs::read_to_string(file) else { return; };
+        let Ok(content) = fs::read_to_string(file) else {
+            return;
+        };
 
         for required in &definition.mandatory_import.values {
-            let is_present = content.contains(required.as_str())
-                || import_lines.iter().any(|(_, l)| l.contains(required.as_str()));
+            let (layer, suffixes) = Self::resolve_scope(required);
+            let is_present = if suffixes.is_empty() {
+                content.contains(layer)
+                    || import_lines.iter().any(|(_, l)| l.contains(layer))
+            } else {
+                import_lines.iter()
+                    .any(|(_, l)| Self::import_matches_scope(l, layer, &suffixes))
+            };
+
+            // Skip mandatory import if file genuinely doesn't use ANY
+            // types/identifiers from this layer (not even inline qualifiers).
+            // Prevents forcing unused imports just to satisfy AES002.
+            let genuinely_unreferenced = suffixes.is_empty()
+                && !content.contains(layer);
+
+            if genuinely_unreferenced {
+                continue;
+            }
 
             if !is_present {
-                let msg = if !definition.mandatory_import_violation_message.value.is_empty() {
+                let msg = if !definition
+                    .mandatory_import_violation_message
+                    .value
+                    .is_empty()
+                {
                     definition.mandatory_import_violation_message.value.clone()
                 } else {
-                    format!("AES002 MANDATORY_IMPORT: Missing required import: '{}'.", required)
+                    format!(
+                        "AES002 MANDATORY_IMPORT: Missing required import: '{}'.",
+                        required
+                    )
                 };
                 violations.push(Self::make_result(file, 0, "AES002", &msg, Severity::HIGH));
             }
@@ -134,8 +209,18 @@ impl ArchImportRuleChecker {
         for (line_num, line) in &import_lines {
             if let Some(module) = Self::extract_module_from_line(line) {
                 for forbidden in &definition.forbidden_import.values {
-                    if module.contains(forbidden.as_str()) {
-                        let msg = if !definition.forbidden_import_violation_message.value.is_empty() {
+                    let (layer, suffixes) = Self::resolve_scope(forbidden);
+                    let is_forbidden = if suffixes.is_empty() {
+                        module.contains(forbidden.as_str()) || module.contains(layer)
+                    } else {
+                        Self::import_matches_scope(line, layer, &suffixes)
+                    };
+                    if is_forbidden {
+                        let msg = if !definition
+                            .forbidden_import_violation_message
+                            .value
+                            .is_empty()
+                        {
                             definition.forbidden_import_violation_message.value.clone()
                         } else {
                             format!(
@@ -143,7 +228,13 @@ impl ArchImportRuleChecker {
                                 layer_name, module
                             )
                         };
-                        violations.push(Self::make_result(file, *line_num as i64, "AES001", &msg, Severity::CRITICAL));
+                        violations.push(Self::make_result(
+                            file,
+                            *line_num as i64,
+                            "AES001",
+                            &msg,
+                            Severity::CRITICAL,
+                        ));
                     }
                 }
             }
@@ -189,7 +280,13 @@ impl ArchImportRuleChecker {
                                 "[AES Layer Violation] {}. File in '{}' imports from '{}' via '{}'.",
                                 desc, file_layer, target, module
                             );
-                            violations.push(Self::make_result(file, *line_num as i64, "AES001", &msg, Severity::CRITICAL));
+                            violations.push(Self::make_result(
+                                file,
+                                *line_num as i64,
+                                "AES001",
+                                &msg,
+                                Severity::CRITICAL,
+                            ));
                             break;
                         }
                     }

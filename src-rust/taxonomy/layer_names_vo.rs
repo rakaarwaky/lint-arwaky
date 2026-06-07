@@ -3,15 +3,30 @@ use crate::taxonomy::{
     LAYER_INFRASTRUCTURE, LAYER_ROOT, LAYER_SURFACES, LAYER_TAXONOMY,
 };
 
-
-pub fn layer_agent() -> LayerNameVO { LayerNameVO::new(LAYER_AGENT) }
-pub fn layer_capabilities() -> LayerNameVO { LayerNameVO::new(LAYER_CAPABILITIES) }
-pub fn layer_taxonomy() -> LayerNameVO { LayerNameVO::new(LAYER_TAXONOMY) }
-pub fn layer_contract() -> LayerNameVO { LayerNameVO::new(LAYER_CONTRACT) }
-pub fn layer_infrastructure() -> LayerNameVO { LayerNameVO::new(LAYER_INFRASTRUCTURE) }
-pub fn layer_surfaces() -> LayerNameVO { LayerNameVO::new(LAYER_SURFACES) }
-pub fn layer_root() -> LayerNameVO { LayerNameVO::new(LAYER_ROOT) }
-pub fn layer_global() -> LayerNameVO { LayerNameVO::new(LAYER_GLOBAL) }
+pub fn layer_agent() -> LayerNameVO {
+    LayerNameVO::new(LAYER_AGENT)
+}
+pub fn layer_capabilities() -> LayerNameVO {
+    LayerNameVO::new(LAYER_CAPABILITIES)
+}
+pub fn layer_taxonomy() -> LayerNameVO {
+    LayerNameVO::new(LAYER_TAXONOMY)
+}
+pub fn layer_contract() -> LayerNameVO {
+    LayerNameVO::new(LAYER_CONTRACT)
+}
+pub fn layer_infrastructure() -> LayerNameVO {
+    LayerNameVO::new(LAYER_INFRASTRUCTURE)
+}
+pub fn layer_surfaces() -> LayerNameVO {
+    LayerNameVO::new(LAYER_SURFACES)
+}
+pub fn layer_root() -> LayerNameVO {
+    LayerNameVO::new(LAYER_ROOT)
+}
+pub fn layer_global() -> LayerNameVO {
+    LayerNameVO::new(LAYER_GLOBAL)
+}
 
 pub fn all_core_layers() -> Vec<LayerNameVO> {
     vec![

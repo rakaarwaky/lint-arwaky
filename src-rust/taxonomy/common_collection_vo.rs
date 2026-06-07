@@ -1,16 +1,19 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::taxonomy::{ErrorMessage, JobId, LineContentVO, ResponseData, Severity};
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct BooleanVO {
-    pub value: bool,
+    pub(crate) value: bool,
 }
 
 impl BooleanVO {
     pub fn new(value: bool) -> Self {
         Self { value: value }
+    }
+    pub fn value(&self) -> bool {
+        self.value
     }
 }
 
@@ -43,16 +46,22 @@ impl<'de> serde::Deserialize<'de> for BooleanVO {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(BooleanVO { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<bool>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -66,12 +75,15 @@ impl<'de> serde::Deserialize<'de> for BooleanVO {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct ColumnNumber {
-    pub value: i64,
+    pub(crate) value: i64,
 }
 
 impl ColumnNumber {
     pub fn new(value: i64) -> Self {
         Self { value: value }
+    }
+    pub fn value(&self) -> i64 {
+        self.value
     }
 }
 
@@ -104,19 +116,28 @@ impl<'de> serde::Deserialize<'de> for ColumnNumber {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(ColumnNumber { value: v })
             }
-            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(ColumnNumber { value: v as i64 })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<i64>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -130,12 +151,15 @@ impl<'de> serde::Deserialize<'de> for ColumnNumber {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct Count {
-    pub value: i64,
+    pub(crate) value: i64,
 }
 
 impl Count {
     pub fn new(value: i64) -> Self {
         Self { value: value }
+    }
+    pub fn value(&self) -> i64 {
+        self.value
     }
 }
 
@@ -168,19 +192,28 @@ impl<'de> serde::Deserialize<'de> for Count {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(Count { value: v })
             }
-            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(Count { value: v as i64 })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<i64>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -193,12 +226,15 @@ impl<'de> serde::Deserialize<'de> for Count {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct DataFlowList {
-    pub values: Vec<ErrorMessage>,
+    pub(crate) values: Vec<ErrorMessage>,
 }
 
 impl DataFlowList {
     pub fn new(value: Vec<ErrorMessage>) -> Self {
         Self { values: value }
+    }
+    pub fn values(&self) -> &[ErrorMessage] {
+        &self.values
     }
     pub fn iter(&self) -> std::slice::Iter<'_, ErrorMessage> {
         self.values.iter()
@@ -216,12 +252,15 @@ impl DataFlowList {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct JobIdList {
-    pub values: Vec<JobId>,
+    pub(crate) values: Vec<JobId>,
 }
 
 impl JobIdList {
     pub fn new(value: Vec<JobId>) -> Self {
         Self { values: value }
+    }
+    pub fn values(&self) -> &[JobId] {
+        &self.values
     }
     pub fn iter(&self) -> std::slice::Iter<'_, JobId> {
         self.values.iter()
@@ -239,12 +278,15 @@ impl JobIdList {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LineContentList {
-    pub values: Vec<LineContentVO>,
+    pub(crate) values: Vec<LineContentVO>,
 }
 
 impl LineContentList {
     pub fn new(value: Vec<LineContentVO>) -> Self {
         Self { values: value }
+    }
+    pub fn values(&self) -> &[LineContentVO] {
+        &self.values
     }
     pub fn iter(&self) -> std::slice::Iter<'_, LineContentVO> {
         self.values.iter()
@@ -263,12 +305,15 @@ impl LineContentList {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct LineNumber {
-    pub value: i64,
+    pub(crate) value: i64,
 }
 
 impl LineNumber {
     pub fn new(value: i64) -> Self {
         Self { value: value }
+    }
+    pub fn value(&self) -> i64 {
+        self.value
     }
 }
 
@@ -301,19 +346,28 @@ impl<'de> serde::Deserialize<'de> for LineNumber {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(LineNumber { value: v })
             }
-            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(LineNumber { value: v as i64 })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<i64>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -325,13 +379,19 @@ impl<'de> serde::Deserialize<'de> for LineNumber {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(transparent)]
 pub struct PatternList {
-    pub values: Vec<String>,
+    pub(crate) values: Vec<String>,
 }
 
 impl PatternList {
     pub fn new(value: impl IntoPatternListValues) -> Self {
-        Self { values: value.into_pattern_list_values() }
+        Self {
+            values: value.into_pattern_list_values(),
+        }
+    }
+    pub fn values(&self) -> &[String] {
+        &self.values
     }
 }
 
@@ -358,12 +418,15 @@ impl PatternList {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ResponseDataList {
-    pub values: Vec<ResponseData>,
+    pub(crate) values: Vec<ResponseData>,
 }
 
 impl ResponseDataList {
     pub fn new(value: Vec<ResponseData>) -> Self {
         Self { values: value }
+    }
+    pub fn values(&self) -> &[ResponseData] {
+        &self.values
     }
     pub fn iter(&self) -> std::slice::Iter<'_, ResponseData> {
         self.values.iter()
@@ -382,12 +445,15 @@ impl ResponseDataList {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct Score {
-    pub value: f64,
+    pub(crate) value: f64,
 }
 
 impl Score {
     pub fn new(value: f64) -> Self {
         Self { value: value }
+    }
+    pub fn value(&self) -> f64 {
+        self.value
     }
     pub fn is_perfect(&self) -> bool {
         self.value >= 100.0
@@ -396,7 +462,9 @@ impl Score {
         self.value >= threshold.value
     }
     pub fn deduct(&self, severity: &Severity) -> Score {
-        Score { value: self.value - severity.score_impact() }
+        Score {
+            value: self.value - severity.score_impact(),
+        }
     }
 }
 
@@ -423,16 +491,22 @@ impl<'de> serde::Deserialize<'de> for Score {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(Score { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<f64>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -446,16 +520,31 @@ impl<'de> serde::Deserialize<'de> for Score {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct Timestamp {
-    pub value: String,
+    pub(crate) value: String,
+}
+
+impl Default for Timestamp {
+    fn default() -> Self {
+        Self {
+            value: String::new(),
+        }
+    }
 }
 
 impl Timestamp {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
     pub fn now() -> Self {
-        Self { value: chrono::Utc::now().to_rfc3339() }
+        Self {
+            value: chrono::Utc::now().to_rfc3339(),
+        }
     }
 
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
     }
 }
 
@@ -467,7 +556,9 @@ impl std::fmt::Display for Timestamp {
 
 impl From<&str> for Timestamp {
     fn from(s: &str) -> Self {
-        Self { value: s.to_string() }
+        Self {
+            value: s.to_string(),
+        }
     }
 }
 
@@ -488,19 +579,30 @@ impl<'de> serde::Deserialize<'de> for Timestamp {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-                Ok(Timestamp { value: v.to_string() })
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(Timestamp {
+                    value: v.to_string(),
+                })
             }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(Timestamp { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
@@ -510,7 +612,6 @@ impl<'de> serde::Deserialize<'de> for Timestamp {
         deserializer.deserialize_any(TimestampVisitor)
     }
 }
-
 
 // Custom Coercion Traits for PatternList
 

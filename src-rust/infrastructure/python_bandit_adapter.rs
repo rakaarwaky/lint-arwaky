@@ -1,5 +1,4 @@
 /// python_bandit_adapter — Bandit adapter for Python security scanning.
-
 use async_trait::async_trait;
 use serde_json::Value;
 use std::sync::Arc;
@@ -71,15 +70,14 @@ impl ILinterAdapterPort for BanditAdapter {
             .execute_command(
                 command,
                 working_dir,
-                Some(std::time::Duration::from_secs(120)),
+                Some(crate::taxonomy::Timeout::new(120.0)),
             )
             .await
         {
             Ok(response) => {
                 let stdout = &response.stdout;
-                let parsed: Value = serde_json::from_str(stdout).unwrap_or(Value::Object(
-                    serde_json::Map::new(),
-                ));
+                let parsed: Value =
+                    serde_json::from_str(stdout).unwrap_or(Value::Object(serde_json::Map::new()));
                 let findings = parsed
                     .get("results")
                     .and_then(|v| v.as_array())
@@ -88,28 +86,23 @@ impl ILinterAdapterPort for BanditAdapter {
                 let mut results = Vec::new();
 
                 for f in findings {
-                    let filename =
-                        f.get("filename").and_then(|v| v.as_str()).unwrap_or("");
-                    let line_number =
-                        f.get("line_number").and_then(|v| v.as_i64()).unwrap_or(0);
+                    let filename = f.get("filename").and_then(|v| v.as_str()).unwrap_or("");
+                    let line_number = f.get("line_number").and_then(|v| v.as_i64()).unwrap_or(0);
                     let line_range = f
                         .get("line_range")
                         .and_then(|v| v.as_array())
                         .and_then(|a| a.first())
                         .and_then(|v| v.as_i64())
                         .unwrap_or(0);
-                    let test_id =
-                        f.get("test_id").and_then(|v| v.as_str()).unwrap_or("B000");
-                    let issue_text =
-                        f.get("issue_text").and_then(|v| v.as_str()).unwrap_or("");
+                    let test_id = f.get("test_id").and_then(|v| v.as_str()).unwrap_or("B000");
+                    let issue_text = f.get("issue_text").and_then(|v| v.as_str()).unwrap_or("");
                     let issue_severity = f
                         .get("issue_severity")
                         .and_then(|v| v.as_str())
                         .unwrap_or("MEDIUM");
 
                     let resolved = self.path_norm.resolve_infrastructure_path(
-                        FilePath::new(filename.to_string())
-                            .unwrap_or_else(|_| path.clone()),
+                        FilePath::new(filename.to_string()).unwrap_or_else(|_| path.clone()),
                         Some(path.clone()),
                     );
 
@@ -134,10 +127,7 @@ impl ILinterAdapterPort for BanditAdapter {
         }
     }
 
-    async fn apply_fix(
-        &self,
-        _path: &FilePath,
-    ) -> Result<ComplianceStatus, LinterOperationError> {
+    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
     }
 }

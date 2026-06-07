@@ -1,6 +1,6 @@
 /// mcp_server_wrapper — Infrastructure adapter providing MCP spec compliance.
 use crate::contract::mcp_server_port::IMcpServerPort;
-use crate::taxonomy::{DescriptionVO, SymbolName};
+use crate::taxonomy::{DescriptionVO, SymbolName, TransportError};
 
 pub struct McpServerWrapper {
     _project_root: String,
@@ -26,7 +26,7 @@ impl IMcpServerPort for McpServerWrapper {
     ) {
     }
 
-    async fn run_server(&self) -> Result<(), String> {
+    async fn run_server(&self) -> Result<(), TransportError> {
         Ok(())
     }
 

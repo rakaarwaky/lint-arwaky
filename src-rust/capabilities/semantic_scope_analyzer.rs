@@ -1,44 +1,75 @@
 // semantic_scope_analyzer — AST-based semantic scope analysis capability.
 // Implements ISemanticTracerProtocol for Python code analysis.
 // Uses regex-based analysis (no Python AST dependency).
-
-
-
-use crate::taxonomy::{Count,
-DataFlowList};
-
-use crate::taxonomy::{DirectoryPath,
-ErrorMessage,
-FilePath};
-
-
-
-use crate::taxonomy::LineNumber;
-
-
-use crate::taxonomy::ScopeRef;
-
-use crate::taxonomy::{SymbolName,
-SymbolNameList};
-
+use crate::taxonomy::{
+    Count, DataFlowList, DirectoryPath, ErrorMessage, FilePath, LineNumber, ScopeRef, SymbolName,
+    SymbolNameList,
+};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;
 
-/// Regex to split names into words by camelCase, PascalCase, underscores, hyphens.
-static WORD_SPLIT_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+").unwrap()
-});
+/// Split a name into lowercase words by camelCase, PascalCase, underscores, hyphens.
+/// Does NOT use regex look-around (unsupported in Rust's regex crate).
+fn split_name_into_words(name: &str) -> Vec<String> {
+    if name.is_empty() {
+        return Vec::new();
+    }
+    let name = name.trim_matches(|c: char| c == '_' || c == '-');
+    if name.is_empty() {
+        return Vec::new();
+    }
+
+    let mut words: Vec<String> = Vec::new();
+    let mut current = String::new();
+    let mut chars = name.chars().peekable();
+
+    while let Some(ch) = chars.next() {
+        if ch == '_' || ch == '-' {
+            if !current.is_empty() {
+                words.push(current.clone().to_lowercase());
+                current.clear();
+            }
+            continue;
+        }
+
+        if ch.is_uppercase() {
+            // End current word if it's not empty
+            if !current.is_empty() {
+                // Check if this uppercase starts a new word or continues an acronym
+                let next_is_lower = chars.peek().map_or(false, |n| n.is_lowercase());
+                let prev_is_upper = current.chars().last().map_or(false, |c| c.is_uppercase());
+
+                if next_is_lower || (prev_is_upper && current.len() > 1) {
+                    words.push(current.clone().to_lowercase());
+                    current.clear();
+                }
+            }
+            current.push(ch);
+        } else if ch.is_lowercase() || ch.is_numeric() {
+            current.push(ch);
+        } else {
+            // Skip other characters
+            if !current.is_empty() {
+                words.push(current.clone().to_lowercase());
+                current.clear();
+            }
+        }
+    }
+
+    if !current.is_empty() {
+        words.push(current.to_lowercase());
+    }
+
+    words
+}
 
 /// Regex to detect Python function definitions.
-static PY_DEF_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(").unwrap()
-});
+static PY_DEF_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(").unwrap());
 
 /// Regex to detect Python class definitions.
-static PY_CLASS_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^class\s+(\w+)").unwrap()
-});
+static PY_CLASS_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^class\s+(\w+)").unwrap());
 
 /// AST-based semantic scope analyzer for Python code.
 pub struct SemanticScopeAnalyzer;
@@ -50,10 +81,7 @@ impl SemanticScopeAnalyzer {
 
     /// Split a name into lowercase words by camelCase, PascalCase, underscores, hyphens.
     fn split_words(name: &str) -> Vec<String> {
-        WORD_SPLIT_RE
-            .find_iter(name)
-            .map(|m| m.as_str().to_lowercase())
-            .collect()
+        split_name_into_words(name)
     }
 
     /// Capitalize the first character of a string.
@@ -199,8 +227,8 @@ impl SemanticScopeAnalyzer {
 
         if !best_match.is_empty() {
             Some(ScopeRef {
-                name: best_match.join(" -> "),
-                kind: String::new(),
+                name: crate::taxonomy::DescriptionVO::new(best_match.join(" -> ")),
+                kind: crate::taxonomy::DescriptionVO::new(String::new()),
                 file: Some(file_path.clone()),
                 start_line: None,
                 end_line: None,
@@ -249,7 +277,9 @@ impl SemanticScopeAnalyzer {
                     }
                 } else if !stripped.is_empty() {
                     let indent = raw_line.len() - raw_line.trim_start().len();
-                    if indent == 0 && (PY_DEF_RE.is_match(stripped) || PY_CLASS_RE.is_match(stripped)) {
+                    if indent == 0
+                        && (PY_DEF_RE.is_match(stripped) || PY_CLASS_RE.is_match(stripped))
+                    {
                         end = line_no;
                         break;
                     }
@@ -337,9 +367,7 @@ impl SemanticScopeAnalyzer {
 
                 for (i, line) in content.lines().enumerate() {
                     if call_re.is_match(line) && !def_re.is_match(line) {
-                        let rel_path = filepath
-                            .strip_prefix(&root_dir.value)
-                            .unwrap_or(filepath);
+                        let rel_path = filepath.strip_prefix(&root_dir.value).unwrap_or(filepath);
                         callers.push(SymbolName::new(format!(
                             "{}:{} -> {}",
                             rel_path,
@@ -432,7 +460,7 @@ fn collect_py_files_recursive(dir: &str, files: &mut Vec<String>) -> Result<(), 
 
 #[cfg(test)]
 mod tests {
-    use super::{SemanticScopeAnalyzer, SymbolName, extract_lineno};
+    use super::{extract_lineno, SemanticScopeAnalyzer, SymbolName};
 
     #[test]
     fn test_split_words() {

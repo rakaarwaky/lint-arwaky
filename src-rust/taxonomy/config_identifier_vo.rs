@@ -3,12 +3,17 @@ use serde::Serialize;
 #[derive(Debug, Clone, Serialize)]
 #[serde(transparent)]
 pub struct ConfigKey {
-    pub value: String,
+    pub(crate) value: String,
 }
 
 impl ConfigKey {
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
+    }
+    pub fn value(&self) -> &str {
+        &self.value
     }
     pub fn parts(&self) -> Vec<String> {
         self.value.split('.').map(|s| s.to_string()).collect()
@@ -16,13 +21,16 @@ impl ConfigKey {
     pub fn parent(&self) -> String {
         let parts = self.parts();
         if parts.len() > 1 {
-            parts[..parts.len()-1].join(".")
+            parts[..parts.len() - 1].join(".")
         } else {
             String::new()
         }
     }
     pub fn leaf(&self) -> String {
-        self.parts().last().cloned().unwrap_or_else(|| self.value.clone())
+        self.parts()
+            .last()
+            .cloned()
+            .unwrap_or_else(|| self.value.clone())
     }
 }
 
@@ -48,7 +56,9 @@ impl Eq for ConfigKey {}
 
 impl From<&str> for ConfigKey {
     fn from(s: &str) -> Self {
-        Self { value: s.to_string() }
+        Self {
+            value: s.to_string(),
+        }
     }
 }
 
@@ -60,7 +70,9 @@ impl From<String> for ConfigKey {
 
 impl Default for ConfigKey {
     fn default() -> Self {
-        ConfigKey { value: String::new() }
+        ConfigKey {
+            value: String::new(),
+        }
     }
 }
 
@@ -75,19 +87,30 @@ impl<'de> serde::Deserialize<'de> for ConfigKey {
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("primitive or map with 'value' key")
             }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: serde::de::Error {
-                Ok(ConfigKey { value: v.to_string() })
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(ConfigKey {
+                    value: v.to_string(),
+                })
             }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E> where E: serde::de::Error {
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
                 Ok(ConfigKey { value: v })
             }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: serde::de::MapAccess<'de> {
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
                     if k == "value" || k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
-                        let _ : serde::de::IgnoredAny = map.next_value()?;
+                        let _: serde::de::IgnoredAny = map.next_value()?;
                     }
                 }
                 let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;

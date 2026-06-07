@@ -1,12 +1,10 @@
 // pipeline_execution_orchestrator — Agent pipeline: receive→think→act→respond orchestrator.
 use crate::contract::{
-    PipelineExecutionOrchestratorAggregate, PipelineInputAggregate, PipelineOutputAggregate, IJobRegistryPort,
-};
-use crate::taxonomy::{
-    ActionArgs, ErrorMessage, FilePath, JobId,
-    SuccessStatus, Suggestion,
+    IJobRegistryPort, PipelineExecutionOrchestratorAggregate, PipelineInputAggregate,
+    PipelineOutputAggregate,
 };
 use crate::infrastructure::MemoryJobRegistryAdapter;
+use crate::taxonomy::{ErrorMessage, JobId, ResponseData, SuccessStatus};
 use std::sync::OnceLock;
 
 static REGISTRY: OnceLock<MemoryJobRegistryAdapter> = OnceLock::new();
@@ -41,7 +39,7 @@ impl PipelineExecutionOrchestrator {
 
         // 3. Act — execute
         // 4. Respond — format and complete
-        self.format_success_response(job_id, serde_json::json!({"result": "ok"}))
+        self.format_success_response(job_id, serde_json::Value::Null)
     }
 
     async fn stage_validate(
@@ -55,7 +53,6 @@ impl PipelineExecutionOrchestrator {
                 job_id: JobId::new("error"),
                 data: None,
                 error: Some(ErrorMessage::new(format!("Invalid action '{}'", action))),
-                suggestion: Some(Suggestion::new("Use list_commands() for catalog")),
             }));
         }
         None
@@ -64,14 +61,15 @@ impl PipelineExecutionOrchestrator {
     fn format_success_response(
         &self,
         job_id: JobId,
-        data: serde_json::Value,
+        raw: serde_json::Value,
     ) -> Box<dyn PipelineOutputAggregate> {
+        let mut resp = ResponseData::new();
+        resp.value = Some(raw);
         Box::new(PipelineOutputImpl {
             success: SuccessStatus::new(true),
             job_id,
-            data: Some(data),
+            data: Some(resp),
             error: None,
-            suggestion: None,
         })
     }
 
@@ -103,9 +101,8 @@ impl PipelineExecutionOrchestrator {
 struct PipelineOutputImpl {
     success: SuccessStatus,
     job_id: JobId,
-    data: Option<serde_json::Value>,
+    data: Option<ResponseData>,
     error: Option<ErrorMessage>,
-    suggestion: Option<Suggestion>,
 }
 
 impl PipelineOutputAggregate for PipelineOutputImpl {
@@ -115,7 +112,7 @@ impl PipelineOutputAggregate for PipelineOutputImpl {
     fn job_id(&self) -> &JobId {
         &self.job_id
     }
-    fn data(&self) -> Option<&serde_json::Value> {
+    fn data(&self) -> Option<&ResponseData> {
         self.data.as_ref()
     }
     fn error(&self) -> Option<&ErrorMessage> {

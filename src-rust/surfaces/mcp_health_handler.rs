@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use std::collections::HashMap;
-use crate::contract::ServiceContainerAggregate;
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 pub struct McpHealthCheckSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }

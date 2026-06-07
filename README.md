@@ -15,7 +15,7 @@ The project is its own first customer: running `lint-arwaky-cli check .` on the 
 
 ## Table of Contents
 
-- [Overview & Value Proposition](#overview--value-proposition)
+- [Overview &amp; Value Proposition](#overview--value-proposition)
 - [Install](#install)
 - [Usage](#usage)
 - [Architecture Overview](#architecture-overview)
@@ -29,24 +29,24 @@ The project is its own first customer: running `lint-arwaky-cli check .` on the 
 
 ### What it does
 
-| Feature | Description |
-|---|---|
-| **Multi-Language** | Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon), JavaScript/TypeScript (ESLint, Prettier, TSC) |
+| Feature                      | Description                                                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Multi-Language**     | Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon), JavaScript/TypeScript (ESLint, Prettier, TSC)             |
 | **Architecture Audit** | 31 AES rules enforce clean architecture layer boundaries, naming, type safety, and dead code (AES028/029 reserved) |
-| **MCP Server** | 5 tools for autonomous AI-agent integration over JSON-RPC 2.0 |
-| **Zero Bypass** | `noqa`, `type: ignore`, and `#[allow(...)]` suppressions are detected and flagged (**AES014**) |
-| **CI Ready** | SARIF 2.1.0, JUnit XML, and JSON reports with proper exit codes |
-| **Self-Auditing** | The project lints itself under its own rule engine |
+| **MCP Server**         | 5 tools for autonomous AI-agent integration over JSON-RPC 2.0                                                      |
+| **Zero Bypass**        | `noqa`, `type: ignore`, and `#[allow(...)]` suppressions are detected and flagged (**AES014**)         |
+| **CI Ready**           | SARIF 2.1.0, JUnit XML, and JSON reports with proper exit codes                                                    |
+| **Self-Auditing**      | The project lints itself under its own rule engine                                                                 |
 
 ### Who it's for
 
-| Persona | Use Case | Start Here |
-|---|---|---|
-| **AI Agent** | Autonomous linting, self-healing, code review | [SKILL.md](SKILL.md) |
-| **Developer** | Lint codebases, enforce architecture | [Quick Start](#usage) below |
-| **DevOps / CI** | Quality gates, trend reports, dependency scans | `ci`, `report` |
-| **Contributor** | Extend adapters, add CLI commands | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| **Reviewer** | Security audit, complexity analysis | `security`, `complexity` |
+| Persona               | Use Case                                       | Start Here                      |
+| --------------------- | ---------------------------------------------- | ------------------------------- |
+| **AI Agent**    | Autonomous linting, self-healing, code review  | [SKILL.md](SKILL.md)               |
+| **Developer**   | Lint codebases, enforce architecture           | [Quick Start](#usage) below        |
+| **DevOps / CI** | Quality gates, trend reports, dependency scans | `ci`, `report`              |
+| **Contributor** | Extend adapters, add CLI commands              | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| **Reviewer**    | Security audit, complexity analysis            | `security`, `complexity`    |
 
 ---
 
@@ -120,9 +120,8 @@ cargo run --bin lint-arwaky-cli -- check .
 ### Lint other repos
 
 ```bash
-# Point at any Rust/Python/JS project that follows AES layout
-lint-arwaky-cli check /path/to/some-project/src-rust/
-lint-arwaky-cli security /path/to/some-project/
+# Scan external projects with all adapters + AES architecture rules
+lint-arwaky-cli scan /path/to/some-project/
 ```
 
 ---
@@ -155,40 +154,28 @@ Lint Arwaky follows its own AES (Agentic Engineering System) specification — a
 
 ### Layer responsibilities
 
-| Layer | Path | Allowed Suffixes | Files | Role |
-|---|---|---|---|---|
-| `taxonomy` | `src-rust/taxonomy/` | `_vo`, `_entity`, `_event`, `_error`, `_constant` | 68 | Domain types, value objects, structured errors, constants |
-| `contract` | `src-rust/contract/` | `_port`, `_protocol`, `_aggregate` | 78 | Interface definitions, dependency-injection contracts |
-| `capabilities` | `src-rust/capabilities/` | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler` | 31 | Use-case implementations — the workhorse logic |
-| `infrastructure` | `src-rust/infrastructure/` | `_adapter`, `_provider`, `_scanner`, `_client`, `_lifespan`, `_validator`, `_wrapper` | 37 | External-tool adapters, linter wrappers, AST parsers |
-| `agent` | `src-rust/agent/` | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager` | 29 | DI wiring, pipeline coordination, job management |
-| `surfaces` | `src-rust/surfaces/` | `_command`, `_handler`, `_controller` | 25 | CLI and MCP server command handlers |
-
-### Dependency direction
-
-Dependencies flow inward only:
-
-```
-surfaces → agent → capabilities → contract → taxonomy
-                       │              ↑
-                       └─→ infrastructure → contract → taxonomy
-```
-
-No layer may import from an outer layer. Taxonomy is the bottom-most foundation with zero dependencies on any other layer. Capabilities and Infrastructure are **siblings** — neither may import the other.
+| Layer              | Path                         | Allowed Suffixes                                                                                                         | Files | Role                                                      |
+| ------------------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----- | --------------------------------------------------------- |
+| `taxonomy`       | `src-rust/taxonomy/`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`                                                              | 68    | Domain types, value objects, structured errors, constants |
+| `contract`       | `src-rust/contract/`       | `_port`, `_protocol`, `_aggregate`                                                                                 | 78    | Interface definitions, dependency-injection contracts     |
+| `capabilities`   | `src-rust/capabilities/`   | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler` | 31    | Use-case implementations — the workhorse logic           |
+| `infrastructure` | `src-rust/infrastructure/` | `_adapter`, `_provider`, `_scanner`, `_client`, `_lifespan`, `_validator`, `_wrapper`                      | 37    | External-tool adapters, linter wrappers, AST parsers      |
+| `agent`          | `src-rust/agent/`          | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`                                         | 29    | DI wiring, pipeline coordination, job management          |
+| `surfaces`       | `src-rust/surfaces/`       | `_command`, `_handler`, `_controller`                                                                              | 25    | CLI and MCP server command handlers                       |
 
 ### Adapters
 
-| Adapter | What it checks | Layer |
-|---|---|---|
-| `ast_rust_scanner` | Rust AST parsing | infrastructure |
-| `ast_py_scanner` | Python AST parsing | infrastructure |
-| `ast_js_scanner` | JavaScript/TypeScript AST parsing | infrastructure |
-| `rust_linter_adapter` | Clippy | infrastructure |
-| `python_ruff_adapter` | Ruff | infrastructure |
-| `python_mypy_adapter` | MyPy | infrastructure |
-| `python_bandit_adapter` | Bandit | infrastructure |
-| `python_metrics_adapter` | Radon-style complexity | infrastructure |
-| `javascript_linter_adapter` | ESLint / Prettier / TSC | infrastructure |
+| Adapter                       | What it checks                    | Layer          |
+| ----------------------------- | --------------------------------- | -------------- |
+| `ast_rust_scanner`          | Rust AST parsing                  | infrastructure |
+| `ast_py_scanner`            | Python AST parsing                | infrastructure |
+| `ast_js_scanner`            | JavaScript/TypeScript AST parsing | infrastructure |
+| `rust_linter_adapter`       | Clippy                            | infrastructure |
+| `python_ruff_adapter`       | Ruff                              | infrastructure |
+| `python_mypy_adapter`       | MyPy                              | infrastructure |
+| `python_bandit_adapter`     | Bandit                            | infrastructure |
+| `python_metrics_adapter`    | Radon-style complexity            | infrastructure |
+| `javascript_linter_adapter` | ESLint / Prettier / TSC           | infrastructure |
 
 The architecture compliance analyzer (`arch_compliance_analyzer.rs`) carries the highest effective weight — structural violations are the highest priority.
 
@@ -200,28 +187,17 @@ The architecture compliance analyzer (`arch_compliance_analyzer.rs`) carries the
 
 The MCP server is bootstrapped by `src-rust/mcp_main_entry.rs`:
 
-```rust
-// 1. Wire the DI container
-let container: Arc<dyn ServiceContainerAggregate> =
-    Arc::new(DependencyInjectionContainer::new());
-
-// 2. Serve JSON-RPC 2.0 over stdin/stdout
-run_server().await
-```
-
-The server speaks MCP protocol version `2024-11-05` and announces `tools` capability with `listChanged: false`.
-
 ### MCP tools (5 tools)
 
-| Tool | Description |
-|---|---|
+| Tool                              | Description                                                       |
+| --------------------------------- | ----------------------------------------------------------------- |
 | `execute_command(action, args)` | Execute any CLI command with arguments. This is the primary tool. |
-| `list_commands(domain)` | List all available CLI commands with descriptions. |
-| `commands_schema(tool_name)` | Retrieve the JSON Schema for a registered MCP tool. |
-| `read_skill_context(section)` | Read SKILL.md documentation by section for AI context. |
-| `health_check()` | Verify linter adapter health and system state. |
+| `list_commands(domain)`         | List all available CLI commands with descriptions.                |
+| `commands_schema(tool_name)`    | Retrieve the JSON Schema for a registered MCP tool.               |
+| `read_skill_context(section)`   | Read SKILL.md documentation by section for AI context.            |
+| `health_check()`                | Verify linter adapter health and system state.                    |
 
-### Configure in Claude Desktop
+### Configure 
 
 Add to `claude_desktop_config.json`:
 
@@ -246,138 +222,71 @@ lint-arwaky-cli setup mcp-config --client hermes
 
 ---
 
-## Supported AES Rules
-
-Lint Arwaky enforces 31 architecture rules across three categories (codes AES001–AES033, with AES028 and AES029 reserved for future use). The full rule list with WHY/FIX messages is in [docs/AES_RULES.md](docs/AES_RULES.md).
-
-### Global rules (apply across all layers)
-
-| Code | Name | Description |
-|---|---|---|
-| AES001 | import-layer-violation | Cross-layer dependency violations |
-| AES003 | naming-convention | File names must follow the 3-word `word1_word2_word3[_suffix].rs` pattern |
-| AES004 | file-too-large | Files exceeding 500 lines (SRP violation) |
-| AES005 | file-too-short | Files under 10 lines (dead code clutter) |
-| AES006 | primitive-usage | Raw primitives (`str`, `int`, `bool`) used where Value Objects are required |
-| AES009 | mandatory-class-definition | Files must contain a struct/class definition |
-| AES014 | bypass-comment-violation | `noqa`, `type: ignore`, or `#[allow(...)]` suppressions detected — forbidden |
-| AES015 | unused-mandatory-import | Required symbols imported but never used (bypass fraud) |
-| AES016 | dead-inheritance-bypass | Empty structs inheriting from contracts (compliance fraud) |
-| AES024 | agent-any-bypass | Bare `Any` type annotation bypassing type safety |
-
-### Internal rules (per-layer structure)
-
-| Code | Layer | Description |
-|---|---|---|
-| AES002 | contract | Mandatory imports missing |
-| AES007 | contract | Contract barrel violation (must import from `contract::*` not internal modules) |
-| AES008 | contract | Missing `_port`, `_protocol`, or `_aggregate` suffix |
-| AES010 | layer | Forbidden suffix for this layer |
-| AES011 | layer | Suffix does not match allowed patterns |
-| AES012 | non-root layer | `mod.rs` missing public re-exports |
-| AES013 | non-root layer | Public re-exports found in a non-barrel file |
-| AES017 | taxonomy/agent | Orphan code unreachable from entry points |
-| AES018 | surfaces | Smart surface hierarchy violation |
-| AES019 | surfaces | Passive surface depends on logic |
-| AES020 | any | Circular import detected |
-| AES021 | agent | Agent role violation (container/orchestrator/coordinator/registry/manager) |
-| AES022 | surfaces | Complex domain logic in passive surface |
-| AES023 | surfaces | Surface imports from forbidden layer |
-| AES025 | surfaces | MCP tool missing JSON Schema, docstring, or typed params |
-| AES026 | any | Class inherits from a forbidden port/protocol |
-| AES027 | capability | File imports contract but no struct inherits from any of them |
-| AES033 | taxonomy | `_constant` file contains non-constant declarations |
-
-### Dispatch rules (capability routing)
-
-| Code | Name | Description |
-|---|---|---|
-| AES030 | capability-method-not-found | `COMMAND_CATALOG` method name does not exist on target capability class |
-| AES031 | single-capability-bottleneck | All dispatch routes funnel into a single capability class |
-| AES032 | missing-vo-construction | Capability method call missing required request/data VO parameter |
-
-### Agent role mandates
-
-| Role | Suffix | Mandate |
-|---|---|---|
-| Container | `_container` | No domain logic, implements `ServiceContainerAggregate`, lazy/eager init only |
-| Orchestrator | `_orchestrator` | Stateless execution, single execution goal, no `Any` |
-| Coordinator | `_coordinator` | High-level policy only, coordinates multiple orchestrators |
-| Registry | `_registry` | CRUD only, no decision logic, thread/async safe |
-| Manager | `_manager` | No domain data storage, owns health transitions, lifecycle tracking only |
-
-### Full rule reference
-
-For the complete rule specification with WHY and FIX sections, see [docs/AES_RULES.md](docs/AES_RULES.md).
-For layer boundaries and Mermaid diagrams, see [docs/AESArchitecture.md](docs/AESArchitecture.md).
-
----
-
 ## CLI Commands Reference
 
 The CLI is implemented in `src-rust/surfaces/cli_core_command.rs` (with subcommands split across `cli_check_command.rs`, `cli_dev_command.rs`, `cli_setup_command.rs`, etc.). All commands are defined in `src-rust/taxonomy/command_catalog_constant.rs` (`COMMAND_CATALOG`).
 
 ### Core
 
-| Command | Description |
-|---|---|
-| `lint-arwaky-cli check [path] [--git-diff]` | Run full architecture compliance analysis |
-| `lint-arwaky-cli scan [path]` | Alias for `check` (CI-friendly) |
-| `lint-arwaky-cli fix [path]` | Apply safe fixes automatically |
-| `lint-arwaky-cli report [path] --output-format <text\|json\|sarif\|junit>` | Generate quality report |
-| `lint-arwaky-cli ci [path] --threshold <N>` | CI mode with exit codes |
-| `lint-arwaky-cli git-diff [--base <ref>]` | List files changed since base ref (default `HEAD`) |
-| `lint-arwaky-cli multi-project <paths...>` | Aggregate lint results across projects |
+| Command                                                                   | Description                                          |
+| ------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `lint-arwaky-cli check [path] [--git-diff]`                             | Run full architecture compliance analysis            |
+| `lint-arwaky-cli scan [path]`                                           | Alias for `check` (CI-friendly)                    |
+| `lint-arwaky-cli fix [path]`                                            | Apply safe fixes automatically                       |
+| `lint-arwaky-cli report [path] --output-format <text\|json\|sarif\|junit>` | Generate quality report                              |
+| `lint-arwaky-cli ci [path] --threshold <N>`                             | CI mode with exit codes                              |
+| `lint-arwaky-cli git-diff [--base <ref>]`                               | List files changed since base ref (default `HEAD`) |
+| `lint-arwaky-cli multi-project <paths...>`                              | Aggregate lint results across projects               |
 
 ### Scans
 
-| Command | Description |
-|---|---|
-| `lint-arwaky-cli security [path]` | Bandit-style vulnerability scan |
-| `lint-arwaky-cli complexity [path]` | Cyclomatic complexity hotspots (top 5 files) |
-| `lint-arwaky-cli duplicates [path]` | 5-line block duplication detection |
-| `lint-arwaky-cli trends [path]` | Quality score trends over time |
-| `lint-arwaky-cli dependencies [path]` | Parse and list `Cargo.toml` dependencies |
+| Command                                 | Description                                  |
+| --------------------------------------- | -------------------------------------------- |
+| `lint-arwaky-cli security [path]`     | Bandit-style vulnerability scan              |
+| `lint-arwaky-cli complexity [path]`   | Cyclomatic complexity hotspots (top 5 files) |
+| `lint-arwaky-cli duplicates [path]`   | 5-line block duplication detection           |
+| `lint-arwaky-cli trends [path]`       | Quality score trends over time               |
+| `lint-arwaky-cli dependencies [path]` | Parse and list `Cargo.toml` dependencies   |
 
 ### Setup
 
-| Command | Description |
-|---|---|
-| `lint-arwaky-cli setup init` | Create a default `lint_arwaky.config.yaml` |
-| `lint-arwaky-cli setup doctor` | Environment diagnostics (Rust toolchain, binary path) |
-| `lint-arwaky-cli setup mcp-config --client <claude\|vscode\|hermes\|all>` | Print MCP config for AI clients |
-| `lint-arwaky-cli setup hermes [--remove]` | Add/remove the `[mcp.lint-arwaky]` section in Hermes |
+| Command                                                                  | Description                                            |
+| ------------------------------------------------------------------------ | ------------------------------------------------------ |
+| `lint-arwaky-cli setup init`                                           | Create a default `lint_arwaky.config.yaml`           |
+| `lint-arwaky-cli setup doctor`                                         | Environment diagnostics (Rust toolchain, binary path)  |
+| `lint-arwaky-cli setup mcp-config --client <claude\|vscode\|hermes\|all>` | Print MCP config for AI clients                        |
+| `lint-arwaky-cli setup hermes [--remove]`                              | Add/remove the `[mcp.lint-arwaky]` section in Hermes |
 
 ### Dev & Maintenance
 
-| Command | Description |
-|---|---|
-| `lint-arwaky-cli diff <path1> <path2>` | Compare violation counts and scores between two paths |
-| `lint-arwaky-cli import <config_file>` | Import configuration from JSON/YAML file |
-| `lint-arwaky-cli export <sarif\|junit\|json>` | Export reports in standard formats |
-| `lint-arwaky-cli watch [path]` | Poll the path every 2s and re-run lint |
-| `lint-arwaky-cli suggest [path] [--ai]` | Print top suggestions by file |
-| `lint-arwaky-cli install-hook` | Install `lint-arwaky-cli check .` as a git pre-commit hook |
-| `lint-arwaky-cli uninstall-hook` | Remove the installed git pre-commit hook |
-| `lint-arwaky-cli adapters` | List active linter adapters |
-| `lint-arwaky-cli config show` | Show active configuration |
-| `lint-arwaky-cli cancel <job_id>` | Request cancellation of a running lint job |
-| `lint-arwaky-cli version` | Show version (`1.10.2`) |
+| Command                                       | Description                                                  |
+| --------------------------------------------- | ------------------------------------------------------------ |
+| `lint-arwaky-cli diff <path1> <path2>`      | Compare violation counts and scores between two paths        |
+| `lint-arwaky-cli import <config_file>`      | Import configuration from JSON/YAML file                     |
+| `lint-arwaky-cli export <sarif\|junit\|json>` | Export reports in standard formats                           |
+| `lint-arwaky-cli watch [path]`              | Poll the path every 2s and re-run lint                       |
+| `lint-arwaky-cli suggest [path] [--ai]`     | Print top suggestions by file                                |
+| `lint-arwaky-cli install-hook`              | Install `lint-arwaky-cli check .` as a git pre-commit hook |
+| `lint-arwaky-cli uninstall-hook`            | Remove the installed git pre-commit hook                     |
+| `lint-arwaky-cli adapters`                  | List active linter adapters                                  |
+| `lint-arwaky-cli config show`               | Show active configuration                                    |
+| `lint-arwaky-cli cancel <job_id>`           | Request cancellation of a running lint job                   |
+| `lint-arwaky-cli version`                   | Show version (`1.10.2`)                                    |
 
 ---
 
 ## Project Stats (v1.10.2)
 
-| Metric | Value |
-|---|---|
-| Language | Rust 2021 edition |
-| Crate | `lint_arwaky` (library) |
-| Binaries | `lint-arwaky-cli`, `lint-arwaky-mcp` |
-| Source files | 271 (across 6 layers + 2 entry points + `lib.rs`) |
-| Layers | 6 (taxonomy, contract, capabilities, infrastructure, agent, surfaces) |
-| AES rules enforced | 31 (codes AES001–AES033, AES028/029 reserved) |
-| Linter adapters | 9 (Rust AST + Clippy, Python AST + Ruff + MyPy + Bandit + Metrics, JS/TS AST + ESLint/Prettier/TSC) |
-| MCP tools | 5 (execute_command, list_commands, commands_schema, read_skill_context, health_check) |
-| CLI subcommands | 20+ across core/scans/setup/dev |
-| Report formats | `text`, `json`, `sarif` 2.1.0, `junit` XML |
-| Self-lint target | `src-rust/` scanned under the same rules the project enforces |
+| Metric             | Value                                                                                               |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| Language           | Rust 2021 edition                                                                                   |
+| Crate              | `lint_arwaky` (library)                                                                           |
+| Binaries           | `lint-arwaky-cli`, `lint-arwaky-mcp`                                                            |
+| Source files       | 271 (across 6 layers + 2 entry points +`lib.rs`)                                                  |
+| Layers             | 6 (taxonomy, contract, capabilities, infrastructure, agent, surfaces)                               |
+| AES rules enforced | 31                                                                                                 |
+| Linter adapters    | 9 (Rust AST + Clippy, Python AST + Ruff + MyPy + Bandit + Metrics, JS/TS AST + ESLint/Prettier/TSC) |
+| MCP tools          | 5 (execute_command, list_commands, commands_schema, read_skill_context, health_check)               |
+| CLI subcommands    | 20+ across core/scans/setup/dev                                                                     |
+| Report formats     | `text`, `json`, `sarif` 2.1.0, `junit` XML                                                  |
+| Self-lint target   | `src-rust/` scanned under the same rules the project enforces                                     |

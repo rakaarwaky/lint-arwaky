@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::taxonomy::{Count, FilePathList, RenamedFileList};
 
@@ -14,7 +14,23 @@ pub struct GitDiffResultVO {
 }
 
 impl GitDiffResultVO {
-    pub fn new(added: FilePathList, modified: FilePathList, deleted: FilePathList, renamed: RenamedFileList, lintable_files: FilePathList, all_files: FilePathList, total_changed: Count,) -> Self {
-        Self { added, modified, deleted, renamed, lintable_files, all_files, total_changed }
+    pub fn new(
+        added: FilePathList,
+        modified: FilePathList,
+        deleted: FilePathList,
+        renamed: RenamedFileList,
+        lintable_files: FilePathList,
+        all_files: FilePathList,
+        total_changed: Count,
+    ) -> Self {
+        Self {
+            added,
+            modified,
+            deleted,
+            renamed,
+            lintable_files,
+            all_files,
+            total_changed,
+        }
     }
 }

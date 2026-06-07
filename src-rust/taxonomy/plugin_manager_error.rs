@@ -1,7 +1,7 @@
 use crate::taxonomy::{AdapterName, Cause, ErrorCode, ErrorMessage};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct PluginError {
     pub message: ErrorMessage,
     #[serde(default)]
@@ -12,18 +12,26 @@ pub struct PluginError {
 
 impl PluginError {
     pub fn new(message: ErrorMessage) -> Self {
-        Self { message, error_code: None, cause: None }
+        Self {
+            message,
+            error_code: None,
+            cause: None,
+        }
     }
 }
 
 impl std::fmt::Display for PluginError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let code = self.error_code.as_ref().map(|c| format!(" [{}]", c)).unwrap_or_default();
+        let code = self
+            .error_code
+            .as_ref()
+            .map(|c| format!(" [{}]", c))
+            .unwrap_or_default();
         write!(f, "Plugin Error{}: {}", code, self.message)
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct DiscoveryError {
     #[serde(flatten)]
     pub base: PluginError,
@@ -31,7 +39,9 @@ pub struct DiscoveryError {
 
 impl DiscoveryError {
     pub fn new(message: ErrorMessage) -> Self {
-        Self { base: PluginError::new(message) }
+        Self {
+            base: PluginError::new(message),
+        }
     }
 }
 
@@ -41,7 +51,7 @@ impl std::fmt::Display for DiscoveryError {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct RegistrationError {
     #[serde(flatten)]
     pub base: PluginError,
@@ -51,13 +61,20 @@ pub struct RegistrationError {
 
 impl RegistrationError {
     pub fn new(message: ErrorMessage) -> Self {
-        Self { base: PluginError::new(message), adapter_name: None }
+        Self {
+            base: PluginError::new(message),
+            adapter_name: None,
+        }
     }
 }
 
 impl std::fmt::Display for RegistrationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let target = self.adapter_name.as_ref().map(|a| format!(" for '{}'", a)).unwrap_or_default();
+        let target = self
+            .adapter_name
+            .as_ref()
+            .map(|a| format!(" for '{}'", a))
+            .unwrap_or_default();
         write!(f, "Registration Error{}: {}", target, self.base.message)
     }
 }

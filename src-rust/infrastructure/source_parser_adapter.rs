@@ -2,56 +2,61 @@
 //!
 //! Instead of duplicating 2000+ lines of scanner code, this module composes
 //! the three language-specific adapters and routes calls based on file extension.
+//! Uses DI via Box<dyn ISourceParserPort> to avoid sibling infrastructure imports (AES001).
 
 use crate::contract::source_parser_port::ISourceParserPort;
-use crate::infrastructure::ast_js_scanner::ASTJSParserAdapter;
-use crate::infrastructure::ast_py_scanner::ASTPythonParserAdapter;
-use crate::infrastructure::ast_rust_scanner::ASTRustParserAdapter;
 use crate::taxonomy::{
-    Count, FilePath, ImportInfoList, MetadataVO, PatternList, PrimitiveTypeList,
+    BooleanVO, Count, FilePath, ImportInfoList, MetadataVO, PatternList, PrimitiveTypeList,
     PrimitiveViolationList, ResponseData, SourceParserError, SuccessStatus, SymbolName,
 };
 
-/// Composite source parser that delegates to language-specific adapters.
+/// Composite source parser that delegates to language-specific adapters via DI.
 ///
 /// Routing logic:
-/// - `.rs` → `ASTRustParserAdapter`
-/// - `.ts`, `.tsx`, `.js`, `.jsx` → `ASTJSParserAdapter`
-/// - `.py` (and everything else) → `ASTPythonParserAdapter`
+/// - `.rs` → Rust parser
+/// - `.ts`, `.tsx`, `.js`, `.jsx` → JS/TS parser
+/// - `.py` (and everything else) → Python parser
+///
+/// Parser instances are injected as trait objects to keep the orchestrator decoupled
+/// from concrete infrastructure adapter types.
 pub struct SourceParserOrchestrator {
-    python_parser: ASTPythonParserAdapter,
-    rust_parser: ASTRustParserAdapter,
-    js_parser: ASTJSParserAdapter,
+    python_parser: Box<dyn ISourceParserPort>,
+    rust_parser: Box<dyn ISourceParserPort>,
+    js_parser: Box<dyn ISourceParserPort>,
 }
 
 impl SourceParserOrchestrator {
-    pub fn new() -> Self {
+    pub fn new(
+        python_parser: Box<dyn ISourceParserPort>,
+        rust_parser: Box<dyn ISourceParserPort>,
+        js_parser: Box<dyn ISourceParserPort>,
+    ) -> Self {
         Self {
-            python_parser: ASTPythonParserAdapter::new(),
-            rust_parser: ASTRustParserAdapter::new(),
-            js_parser: ASTJSParserAdapter::new(),
+            python_parser,
+            rust_parser,
+            js_parser,
         }
     }
 
     fn select_parser(&self, path: &FilePath) -> &dyn ISourceParserPort {
         let p = &path.value;
         if p.ends_with(".rs") {
-            return &self.rust_parser;
+            return &*self.rust_parser;
         }
         if p.ends_with(".ts")
             || p.ends_with(".tsx")
             || p.ends_with(".js")
             || p.ends_with(".jsx")
         {
-            return &self.js_parser;
+            return &*self.js_parser;
         }
-        &self.python_parser
+        &*self.python_parser
     }
 }
 
 impl Default for SourceParserOrchestrator {
     fn default() -> Self {
-        Self::new()
+        panic!("SourceParserOrchestrator requires DI — use SourceParserOrchestrator::new() with parser instances")
     }
 }
 
@@ -113,7 +118,7 @@ impl ISourceParserPort for SourceParserOrchestrator {
         self.select_parser(path).get_control_flow_count(path)
     }
 
-    fn is_barrel_file(&self, path: &FilePath) -> bool {
+    fn is_barrel_file(&self, path: &FilePath) -> BooleanVO {
         self.select_parser(path).is_barrel_file(path)
     }
 
@@ -121,7 +126,7 @@ impl ISourceParserPort for SourceParserOrchestrator {
         self.select_parser(path).get_stem(path)
     }
 
-    fn is_entry_point(&self, path: &FilePath) -> bool {
+    fn is_entry_point(&self, path: &FilePath) -> BooleanVO {
         self.select_parser(path).is_entry_point(path)
     }
 
