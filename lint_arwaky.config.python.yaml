@@ -22,11 +22,11 @@ ignored_paths:
   - "/.github"
   - "/scratch"
   - "/__pycache__"
-  - "node_modules"
-  - ".venv"
-  - "venv"
-  - ".mypy_cache"
-  - ".ruff_cache"
+  - "/node_modules"
+  - "/.venv"
+  - "/venv"
+  - "/.mypy_cache"
+  - "/.ruff_cache"
 
 architecture:
   enabled: true
@@ -52,45 +52,44 @@ architecture:
       suffix:
         - flexible:
             [
-              "analyzer", "actions", "formatters", "generator", "processor",
-              "evaluator", "checker", "validator", "transformer", "calculator",
-              "builder", "handler", "executor", "resolver", "compiler",
-              "aggregator", "classifier", "extractor", "reporter", "mapper",
-              "filter", "collector", "comparator", "scorer", "inspector",
-              "reviewer", "assessor",
+              "analyzer", "checker", "processor", "evaluator", "resolver", 
+              "validator", "formatter", "handler", "executor", "transformer", 
+              "calculator", "builder", "compiler", "aggregator", "classifier", 
+              "extractor", "reporter", "mapper", "filter", "collector", 
+              "comparator", "scorer", "inspector", "reviewer", "assessor", "actions"
             ]
-        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "io"]
+        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     infrastructure:
       recursive: true
       path: "src-python/infrastructure"
       suffix:
         - flexible:
             [
-              "adapter", "provider", "scanner", "client", "tracer", "tracker",
-              "variants", "detector", "patterns", "util", "system", "repository",
-              "cache", "store", "loader", "writer", "reader", "driver",
-              "connector", "gateway", "serializer", "encoder", "decoder",
-              "fetcher", "watcher", "indexer", "dispatcher", "recorder",
-              "proxy", "publisher", "subscriber", "listener", "poller", "streamer",
+              "adapter", "provider", "scanner", "client", "constants", "schemas", 
+              "lifespan", "wrapper", "tracer", "tracker", "variants", "detector", 
+              "patterns", "util", "system", "repository", "cache", "store", "loader", 
+              "writer", "reader", "driver", "connector", "gateway", "serializer", 
+              "encoder", "decoder", "fetcher", "watcher", "indexer", "dispatcher", 
+              "recorder", "proxy", "publisher", "subscriber", "listener", "poller", "streamer"
             ]
-        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "io"]
+        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     surfaces:
       recursive: true
       path: "src-python/surfaces"
       suffix:
-        - strict: [
-            "page", "handler", "controller", "router",
-            "component", "layout", "view", "entry",
-            "hook", "store", "provider"
-          ]
-
+        - strict: 
+            [
+              "command", "handler", "controller", "page", "view", "component", 
+              "router", "layout", "entry", "hook", "store", "provider"
+            ]
     agent:
       path: "src-python/agent"
       recursive: true
       suffix:
         - strict:
             [
-              "container", "manager", "orchestrator", "registry", "coordinator"
+              "container", "manager", "orchestrator", "registry", "coordinator",
+              "mixin", "dispatcher", "handler", "result", "state"
             ]
 
   rules:
@@ -104,13 +103,13 @@ architecture:
         word_count_violation_message: >
           AES003 NAMING_CONVENTION: Filename does not follow the word1_word2_word3.py pattern.
           WHY? Strict three-word names ensure architectural consistency and prevent naming ambiguity.
-          FIX: Rename the file to exactly three words separated by underscores (e.g., user_data_vo.py).
+          FIX: Rename the file to exactly three words separated by underscores (e.g., auth_session_vo.py).
 
       - name: "forbidden bypass / cheating"
         forbidden_bypass:
           [
             "# noqa", "# type: ignore", "# fmt: off", "# ruff: noqa",
-            "# pylint: disable", "Any", "except:", "pass",
+            "# pylint: disable", "Any", "except:", "pass"
           ]
         exceptions: []
         forbidden_bypass_violation_message: >
@@ -139,7 +138,7 @@ architecture:
               WHY? Bare excepts catch unexpected exceptions like SystemExit and KeyboardInterrupt.
               FIX: Use 'except Exception:' or target specific exception types.
 
-      - name: "Mandatory Class or Function Definition"
+      - name: "Mandatory Class or Protocol Definition"
         mandatory_class_definition: true
         exceptions: ["__init__.py", "__main__.py"]
         mandatory_class_definition_violation_message: >
@@ -155,10 +154,7 @@ architecture:
           WHY? Excessively small files clutter the project structure; logic should be merged into a parent module.
           FIX: Merge this logic into a related module or expand the component with more functionality.
         max_lines: 500
-        exceptions:
-          [
-            "__init__.py", "__main__.py",
-          ]
+        exceptions: ["__init__.py", "__main__.py"]
         max_lines_violation_message: >
           AES004 FILE_TOO_LARGE: File exceeds the 500-line limit.
           WHY? Large files violate the Single Responsibility Principle and are difficult to maintain or test.
@@ -198,12 +194,12 @@ architecture:
           WHY? Taxonomy is the system foundation; all public symbols must be explicitly exported via __init__.py.
           FIX: Add explicit __all__ declarations or import statements in __init__.py exposing public Value Objects.
         forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list detected in a non-barrel sub-module.
+          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
           WHY? Only __init__.py barrel files should define the layer's public API surface.
-          FIX: Remove public exports from this file and centralize them in the layer's __init__.py.
+          FIX: Remove __all__ from this file and centralize exports in the layer's __init__.py.
         suffix_violation_message: >
           AES011 SUFFIX_MISMATCH: Taxonomy file is missing a required role-based suffix.
-          WHY? Suffixes (_vo, _entity, _error, _event) are required to communicate component roles.
+          WHY? Suffixes (_vo, _entity, _error, _event, _constant) are required to communicate component roles.
           FIX: Rename the file to include the correct suffix matching its architectural purpose.
 
       - name: "Taxonomy_VO_Integrity"
@@ -235,6 +231,14 @@ architecture:
           WHY? Events represent state changes and must be composed of Value Objects to ensure domain integrity.
           FIX: Replace raw event data types with proper Value Object (_vo) components.
 
+      - name: "Taxonomy_Constant_Purity"
+        scope: "taxonomy(constant)"
+        forbid_non_constants: true
+        forbid_non_constants_violation_message: >
+          AES033 CONSTANT_PURITY: Taxonomy `_constant` file contains non-constant declarations (`def`, `class`, `import`, `from ... import`).
+          WHY? Constants are the only Taxonomy role permitted to expose raw primitives. Mixing in functions, classes, or imports collapses the role boundary and reintroduces primitive leakage.
+          FIX: Move non-constant declarations to the appropriate file (`_vo`, `_entity`, or capability module) and keep the `_constant` file restricted to uppercase variable assignments only.
+
       - name: "Contract_Standards"
         scope: "contract"
         no_primitives: true
@@ -245,35 +249,50 @@ architecture:
           WHY? Contracts define the public boundary and must explicitly export their interfaces.
           FIX: Add explicit __all__ or import statements in __init__.py exposing only public interfaces.
         forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list detected in a non-barrel sub-module.
+          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
           WHY? Contract consumption must be centralized through the layer's __init__.py barrel file.
-          FIX: Remove public exports from this file and export the interfaces via the layer's __init__.py.
+          FIX: Remove __all__ from this file and export the interfaces via the layer's __init__.py.
         suffix_violation_message: >
           AES008 CONTRACT_SUFFIX_MISMATCH: File is missing a required contract-specific suffix.
-          WHY? Every contract must communicate its role as a port, protocol, or IO boundary via suffixes.
+          WHY? Every contract must communicate its role as a port, protocol, or composition boundary via suffixes.
           FIX: Rename the file with the correct _port, _protocol, or _aggregate suffix.
         no_primitives_violation_message: >
           AES006 PRIMITIVE_USAGE: Raw primitive types detected in a contract interface.
           WHY? Contracts must use domain types to prevent technical implementation details from leaking.
-          FIX: Use taxonomy types (_vo or _entity) instead of raw primitives in interface definitions.
+          FIX: Use taxonomy types (_vo or _entity) instead of raw primitives in Protocol definitions.
 
       - name: "Capabilities_Standards"
         scope: "capabilities"
         no_primitives: false
         barrel_completeness: true
         forbid_internal_all: true
+        check_method_existence: true
+        check_vo_parameter_usage: true
+        check_dispatch_distribution: true
         barrel_completeness_violation_message: >
           AES012 BARREL_COMPLETENESS: __init__.py is missing public re-exports.
           WHY? Explicit exports ensure a clean and predictable API surface for the agent layer.
           FIX: Add proper __all__ or imports in __init__.py listing public capabilities.
         forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list detected in a non-barrel sub-module.
+          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
           WHY? Use case implementations must be exported exclusively through the layer's barrel file.
-          FIX: Remove public exports from this file and centralize them in __init__.py.
+          FIX: Remove __all__ from this file and centralize them in __init__.py.
         suffix_violation_message: >
           AES011 SUFFIX_MISMATCH: Capability file uses an incorrect or forbidden suffix.
           WHY? Capability suffixes must reflect specific use-case roles like _analyzer or _executor.
           FIX: Rename the file to use an allowed capability suffix defined in the architecture.
+        method_existence_violation_message: >
+          AES030 CAPABILITY_METHOD_NOT_FOUND: Capability method referenced in a dispatch catalog or command map does not exist on the target class.
+          WHY? Mismatched method names between dispatch catalog and capability class cause runtime dispatch failures.
+          FIX: Sync the method name in the dispatch catalog with the actual method defined on the capability class.
+        vo_parameter_usage_violation_message: >
+          AES032 MISSING_VO_CONSTRUCTION: Capability method call missing required request/data Value Object parameter.
+          WHY? Capability methods expect typed VO arguments. Calling without them bypasses domain validation and creates runtime fragility.
+          FIX: Pass the appropriate request or data VO to every capability method call.
+        dispatch_distribution_violation_message: >
+          AES031 SINGLE_CAPABILITY_BOTTLENECK: All dispatch routes go to a single capability class when multiple specialized options exist.
+          WHY? Dispatch should distribute actions across capabilities by concern. A single class handling everything indicates under-utilization of the architecture.
+          FIX: Create or use specialized capability classes for distinct action types.
 
       - name: "Infrastructure_Standards"
         scope: "infrastructure"
@@ -285,9 +304,9 @@ architecture:
           WHY? Centralized exports in __init__.py allow the agent to discover adapters consistently.
           FIX: Add proper __all__ or imports in __init__.py listing all public adapters.
         forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list detected in a non-barrel sub-module.
+          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
           WHY? Technical implementation details should not define their own public API surface.
-          FIX: Remove public exports from this file and centralize them in __init__.py.
+          FIX: Remove __all__ from this file and centralize them in __init__.py.
         suffix_violation_message: >
           AES011 SUFFIX_MISMATCH: Infrastructure file uses a reserved domain or contract suffix.
           WHY? Infrastructure is for technical implementations; domain concepts are strictly forbidden here.
@@ -304,13 +323,13 @@ architecture:
           WHY? Surfaces are entry points; all public commands and presenters must be explicitly exported.
           FIX: Add proper __all__ or imports in __init__.py for all public surface classes.
         forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list detected in a non-barrel sub-module.
+          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
           WHY? Surface submodules must export via the barrel to maintain a clean boundary.
-          FIX: Remove public exports from this file and centralize them in __init__.py.
+          FIX: Remove __all__ from this file and centralize them in __init__.py.
         suffix_violation_message: >
           AES011 SUFFIX_MISMATCH: Surface file uses a forbidden suffix or domain type.
           WHY? Surfaces must not define domain concepts; those belong exclusively in the taxonomy layer.
-          FIX: Rename to use surface-specific suffixes like _handler, _entry, or _page.
+          FIX: Rename to use surface-specific suffixes like _command, _page, or _handler.
 
       - name: "Agent_Standards"
         scope: "agent"
@@ -323,13 +342,13 @@ architecture:
           WHY? The agent is the system's brain; its public API must be explicitly exported to surfaces.
           FIX: Add proper __all__ or imports in __init__.py exposing orchestrators and containers.
         forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list detected in a non-barrel sub-module.
+          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
           WHY? Agent internal submodules must centralize their exports in the layer's barrel file.
-          FIX: Remove public re-exports from this file and handle them via __init__.py.
+          FIX: Remove __all__ from this file and handle them via __init__.py.
         suffix_violation_message: >
           AES011 SUFFIX_MISMATCH: Agent file uses a forbidden or non-specialized role suffix.
-          WHY? We enforce strict role specialization (container, manager, orchestrator, registry, coordinator).
-          FIX: Rename the file to use one of the five allowed agent-specific suffixes.
+          WHY? We enforce strict role specialization (container, manager, orchestrator, registry, coordinator, and support modules).
+          FIX: Rename the file to use one of the allowed agent-specific suffixes.
 
       - name: "Agent_Container_Wiring_Mandate"
         scope: "agent(container)"
@@ -486,7 +505,7 @@ architecture:
         forbidden_inheritance_violation_message: >
           AES026 INHERITANCE_VIOLATION: Contract Aggregate must NOT inherit from Port or Protocol.
           WHY? The Aggregate is a composition contract. Inheriting from Port/Protocol violates the aggregate's role as a facade.
-          FIX: Change inheritance to composition. Define Ports/Protocols as fields or abstract methods within the Aggregate.
+          FIX: Change inheritance to composition. Define Ports/Protocols as fields or abstract methods within the Aggregate class.
 
       - name: "Capabilities_Relations"
         scope: "capabilities"
@@ -592,7 +611,7 @@ architecture:
           FIX: Import taxonomy value objects and contract aggregate for data exchange.
 
       - name: "Utility_Surface_Relations"
-        scope: "surfaces(hook|store|provider|router|)"
+        scope: "surfaces(hook|store|provider|router)"
         allowed_import: ["taxonomy", "contract(aggregate)", "surfaces(passive)"]
         forbidden_import: [
           "agent",

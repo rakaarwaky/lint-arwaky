@@ -47,45 +47,44 @@ architecture:
       suffix:
         - flexible:
             [
-              "analyzer", "actions", "formatters", "generator", "processor",
-              "evaluator", "checker", "validator", "transformer", "calculator",
-              "builder", "handler", "executor", "resolver", "compiler",
-              "aggregator", "classifier", "extractor", "reporter", "mapper",
-              "filter", "collector", "comparator", "scorer", "inspector",
-              "reviewer", "assessor",
+              "analyzer", "checker", "processor", "evaluator", "resolver", 
+              "validator", "formatter", "handler", "executor", "transformer", 
+              "calculator", "builder", "compiler", "aggregator", "classifier", 
+              "extractor", "reporter", "mapper", "filter", "collector", 
+              "comparator", "scorer", "inspector", "reviewer", "assessor", "actions"
             ]
-        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "io"]
+        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     infrastructure:
       recursive: true
       path: "src-rust/infrastructure"
       suffix:
         - flexible:
             [
-              "adapter", "provider", "scanner", "client", "tracer", "tracker",
-              "variants", "detector", "patterns", "util", "system", "repository",
-              "cache", "store", "loader", "writer", "reader", "driver",
-              "connector", "gateway", "serializer", "encoder", "decoder",
-              "fetcher", "watcher", "indexer", "dispatcher", "recorder",
-              "proxy", "publisher", "subscriber", "listener", "poller", "streamer",
+              "adapter", "provider", "scanner", "client", "constants", "schemas", 
+              "lifespan", "wrapper", "tracer", "tracker", "variants", "detector", 
+              "patterns", "util", "system", "repository", "cache", "store", "loader", 
+              "writer", "reader", "driver", "connector", "gateway", "serializer", 
+              "encoder", "decoder", "fetcher", "watcher", "indexer", "dispatcher", 
+              "recorder", "proxy", "publisher", "subscriber", "listener", "poller", "streamer"
             ]
-        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "io"]
+        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     surfaces:
       recursive: true
       path: "src-rust/surfaces"
       suffix:
-        - strict: [
-            "page", "handler", "controller", "router",
-            "component", "layout", "view", "entry",
-            "hook", "store", "provider"
-          ]
-       
+        - strict: 
+            [
+              "command", "handler", "controller", "page", "view", "component", 
+              "router", "layout", "entry", "hook", "store", "provider"
+            ]
     agent:
       path: "src-rust/agent"
       recursive: true
       suffix:
         - strict:
             [
-              "container", "manager", "orchestrator", "registry", "coordinator"
+              "container", "manager", "orchestrator", "registry", "coordinator",
+              "mixin", "dispatcher", "handler", "result", "state"
             ]
 
   rules:
@@ -98,7 +97,7 @@ architecture:
         word_count_violation_message: >
           AES003 NAMING_CONVENTION: Filename does not follow the word1_word2_word3.rs pattern.
           WHY? Strict three-word names ensure architectural consistency and prevent naming ambiguity.
-          FIX: Rename the file to exactly three words separated by underscores (e.g., user_data_vo.rs).
+          FIX: Rename the file to exactly three words separated by underscores (e.g., auth_session_vo.rs).
 
       - name: "forbidden bypass / cheating"
         forbidden_bypass: ["#[allow(", "unwrap()", "panic!", "noqa", "type: ignore", "eslint-disable"]
@@ -179,7 +178,7 @@ architecture:
           FIX: Remove public exports from this file and centralize them in the layer's mod.rs.
         suffix_violation_message: >
           AES011 SUFFIX_MISMATCH: Taxonomy file is missing a required role-based suffix.
-          WHY? Suffixes (_vo, _entity, _error, _event) are required to communicate component roles.
+          WHY? Suffixes (_vo, _entity, _error, _event, _constant) are required to communicate component roles.
           FIX: Rename the file to include the correct suffix matching its architectural purpose.
 
       - name: "Taxonomy_VO_Integrity"
@@ -211,6 +210,14 @@ architecture:
           WHY? Events represent state changes and must be composed of Value Objects to ensure domain integrity.
           FIX: Replace raw event data types with proper Value Object (_vo) components.
 
+      - name: "Taxonomy_Constant_Purity"
+        scope: "taxonomy(constant)"
+        forbid_non_constants: true
+        forbid_non_constants_violation_message: >
+          AES033 CONSTANT_PURITY: Taxonomy `_constant` file contains non-constant declarations (`pub fn`, `pub struct`, `pub enum`, `pub mod`, `pub use`, `impl`).
+          WHY? Constants are the only Taxonomy role permitted to expose raw primitives. Mixing in structs/enums/functions collapses the role boundary and reintroduces primitive leakage.
+          FIX: Move non-constant declarations to the appropriate file (`_vo`, `_entity`, or capability module) and keep the `_constant` file restricted to `pub const` / `pub static` declarations only.
+
       - name: "Contract_Standards"
         scope: "contract"
         no_primitives: true
@@ -226,7 +233,7 @@ architecture:
           FIX: Remove public exports from this file and export the interfaces via the layer's mod.rs.
         suffix_violation_message: >
           AES008 CONTRACT_SUFFIX_MISMATCH: File is missing a required contract-specific suffix.
-          WHY? Every contract must communicate its role as a port, protocol, or IO boundary via suffixes.
+          WHY? Every contract must communicate its role as a port, protocol, or composition boundary via suffixes.
           FIX: Rename the file with the correct _port, _protocol, or _aggregate suffix.
         no_primitives_violation_message: >
           AES006 PRIMITIVE_USAGE: Raw primitive types detected in a contract interface.
@@ -238,6 +245,9 @@ architecture:
         no_primitives: false
         barrel_completeness: true
         forbid_internal_all: true
+        check_method_existence: true
+        check_vo_parameter_usage: true
+        check_dispatch_distribution: true
         barrel_completeness_violation_message: >
           AES012 BARREL_COMPLETENESS: mod.rs is missing public re-exports.
           WHY? Explicit exports ensure a clean and predictable API surface for the agent layer.
@@ -250,6 +260,18 @@ architecture:
           AES011 SUFFIX_MISMATCH: Capability file uses an incorrect or forbidden suffix.
           WHY? Capability suffixes must reflect specific use-case roles like _analyzer or _executor.
           FIX: Rename the file to use an allowed capability suffix defined in the architecture.
+        method_existence_violation_message: >
+          AES030 CAPABILITY_METHOD_NOT_FOUND: Capability method referenced in a dispatch catalog or command map does not exist on the target class.
+          WHY? Mismatched method names between dispatch catalog and capability class cause runtime dispatch failures.
+          FIX: Sync the method name in the dispatch catalog with the actual method defined on the capability struct/trait.
+        vo_parameter_usage_violation_message: >
+          AES032 MISSING_VO_CONSTRUCTION: Capability method call missing required request/data Value Object parameter.
+          WHY? Capability methods expect typed VO arguments. Calling without them bypasses domain validation and creates runtime fragility.
+          FIX: Pass the appropriate request or data VO to every capability method call.
+        dispatch_distribution_violation_message: >
+          AES031 SINGLE_CAPABILITY_BOTTLENECK: All dispatch routes go to a single capability class when multiple specialized options exist.
+          WHY? Dispatch should distribute actions across capabilities by concern. A single class handling everything indicates under-utilization of the architecture.
+          FIX: Create or use specialized capability classes for distinct action types.
 
       - name: "Infrastructure_Standards"
         scope: "infrastructure"
@@ -286,7 +308,7 @@ architecture:
         suffix_violation_message: >
           AES011 SUFFIX_MISMATCH: Surface file uses a forbidden suffix or domain type.
           WHY? Surfaces must not define domain concepts; those belong exclusively in the taxonomy layer.
-          FIX: Rename to use surface-specific suffixes like _commands, _page, or _handler.
+          FIX: Rename to use surface-specific suffixes like _command, _page, or _handler.
 
       - name: "Agent_Standards"
         scope: "agent"
@@ -304,8 +326,8 @@ architecture:
           FIX: Remove public re-exports from this file and handle them via mod.rs.
         suffix_violation_message: >
           AES011 SUFFIX_MISMATCH: Agent file uses a forbidden or non-specialized role suffix.
-          WHY? We enforce strict role specialization (container, manager, orchestrator, registry, coordinator).
-          FIX: Rename the file to use one of the five allowed agent-specific suffixes.
+          WHY? We enforce strict role specialization (container, manager, orchestrator, registry, coordinator, and support modules).
+          FIX: Rename the file to use one of the allowed agent-specific suffixes.
 
       - name: "Agent_Container_Wiring_Mandate"
         scope: "agent(container)"
@@ -446,7 +468,7 @@ architecture:
         forbidden_import_violation_message: >
           AES001 IMPORT_LAYER_VIOLATION: Pure contract (_port/_protocol) depends on execution logic.
           WHY? Ports and Protocols define logic shapes and must not know about orchestration or implementation.
-          FIX: Remove all imports except from taxonomy. Specifically, remove references to _io modules.
+          FIX: Remove all imports except from taxonomy.
 
       - name: "Contract_Aggregate_Relations"
         scope: "contract(aggregate)"
@@ -462,7 +484,7 @@ architecture:
         forbidden_inheritance_violation_message: >
           AES026 INHERITANCE_VIOLATION: Contract Aggregate must NOT inherit from Port or Protocol.
           WHY? The Aggregate is a composition contract. Inheriting from Port/Protocol violates the aggregate's role as a facade.
-          FIX: Change inheritance to aggregation. Define Ports/Protocols as fields or abstract methods within the IO struct.
+          FIX: Change inheritance to aggregation. Define Ports/Protocols as fields or abstract methods within the struct.
 
       - name: "Capabilities_Relations"
         scope: "capabilities"
@@ -568,7 +590,7 @@ architecture:
           FIX: Import taxonomy value objects and contract aggregate for data exchange.
 
       - name: "Utility_Surface_Relations"
-        scope: "surfaces(hook|store|provider|router|)"
+        scope: "surfaces(hook|store|provider|router)"
         allowed_import: ["taxonomy", "contract(aggregate)", "surfaces(passive)"]
         forbidden_import: [
           "agent",
