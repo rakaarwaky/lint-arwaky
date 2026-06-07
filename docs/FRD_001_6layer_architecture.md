@@ -22,43 +22,51 @@ Before the 6-layer AES architecture, Lint Arwaky had:
 
 The 6-layer AES architecture defines strict vertical layering with one-way dependency flow:
 
-| Layer | Directory | Suffixes | Responsibility |
+| Layer | Directory | Suffixes (per ARCHITECTURE.md) | Responsibility |
 |-------|-----------|----------|----------------|
-| **Surface** | `src-rust/surfaces/` | `_command`, `_handler`, `_controller` | User-facing entry points — CLI, MCP |
-| **Agent** | `src-rust/agent/` | `_container`, `_orchestrator`, `_coordinator` | Composition & DI wiring |
-| **Capability** | `src-rust/capabilities/` | `_checker`, `_analyzer`, `_processor` | Business logic, rule checking |
-| **Infrastructure** | `src-rust/infrastructure/` | `_adapter`, `_provider`, `_scanner` | Concrete I/O implementations |
+| **Surface** | `src-rust/surfaces/` | `_command`, `_handler`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_provider` | User-facing entry points — CLI, MCP |
+| **Agent** | `src-rust/agent/` | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`, `_mixin`, `_dispatcher`, `_handler`, `_result`, `_state` | Composition & DI wiring |
+| **Capability** | `src-rust/capabilities/` | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions` | Business logic, rule checking |
+| **Infrastructure** | `src-rust/infrastructure/` | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_store`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | Concrete I/O implementations |
 | **Contract** | `src-rust/contract/` | `_port`, `_protocol`, `_aggregate` | Abstract interfaces (traits) |
 | **Taxonomy** | `src-rust/taxonomy/` | `_vo`, `_entity`, `_event`, `_error`, `_constant` | Domain value objects & foundation |
 
 ### Dependency Flow
 
 ```
-surfaces → agent → capabilities + infrastructure → contract → taxonomy
+surfaces → contract → taxonomy
+agent → capabilities + infrastructure → contract → taxonomy
+capabilities → contract → taxonomy
+infrastructure → contract → taxonomy
+contract → taxonomy
+taxonomy → taxonomy
 ```
 
-Surfaces must NOT import capabilities/infrastructure directly — they access them through `ServiceContainerAggregate` (AES023).
+Surfaces must NOT import `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through `ServiceContainerAggregate` in the contract layer (AES023, AES022). Per ARCHITECTURE.md, agent imports are also forbidden for surfaces.
 
 ### Architecture Diagram
 
 ```
-┌──────────────────────────────────────────────────┐
-│  SURFACES   (25 files — CLI, MCP, controllers)   │
-│  _command _handler _controller _page _view        │
-├──────────────────────────────────────────────────┤
-│  AGENT      (22 files — orchestration, DI)       │
-│  _container _orchestrator _coordinator _registry  │
-├──────────────────────┬───────────────────────────┤
-│  CAPABILITIES (29)   │  INFRASTRUCTURE (41)      │
-│  _checker _analyzer  │  _adapter _provider        │
-│  _processor _resolver│  _scanner _client          │
-├──────────────────────┴───────────────────────────┤
-│  CONTRACT   (71 files — ports, protocols)        │
-│  _port _protocol _aggregate                      │
-├──────────────────────────────────────────────────┤
-│  TAXONOMY   (70 files — domain foundation)       │
-│  _vo _entity _error _event _constant             │
-└──────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  SURFACES    (25 files — CLI, MCP, controllers, views)  │
+│  _command _handler _controller _page _view _component    │
+│  _router _layout _entry _hook _store _provider           │
+├─────────────────────────────────────────────────────────┤
+│  AGENT       (22 files — orchestration, DI, lifecycle)  │
+│  _container _orchestrator _coordinator _registry          │
+│  _manager _mixin _dispatcher _handler _result _state      │
+├──────────────────────────┬──────────────────────────────┤
+│  CAPABILITIES  (29)      │  INFRASTRUCTURE  (41)        │
+│  _checker _analyzer      │  _adapter _provider _scanner  │
+│  _processor _evaluator   │  _client _fetcher _watcher    │
+│  _resolver _builder ...  │  _loader _driver _gateway ... │
+├──────────────────────────┴──────────────────────────────┤
+│  CONTRACT    (71 files — ports, protocols, aggregates)  │
+│  _port _protocol _aggregate                              │
+├─────────────────────────────────────────────────────────┤
+│  TAXONOMY    (70 files — domain foundation)             │
+│  _vo _entity _error _event _constant                     │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ### Layer-Gated Compilation
@@ -198,7 +206,7 @@ Wires all layers through `ServiceContainerAggregate`:
 
 ## 8. Surface Changes
 
-No changes needed — surfaces already delegate to agent layer through `ServiceContainerAggregate`.
+No changes needed — surfaces already delegate to capabilities/infrastructure through `ServiceContainerAggregate` (a contract aggregate), not through direct imports. The DI container is created at the root entry point (`cli_main_entry.rs`) and injected into surfaces.
 
 ## 9. Files Summary
 
@@ -219,15 +227,21 @@ FR-001 is already **fully implemented**. No new files need to be created.
 
 | Rule | Status | Notes |
 |------|--------|-------|
-| AES001 | ✅ | Layer import violations detected and flagged |
+| AES001 | ✅ | Layer import violations detected and flagged; surfaces forbidden from importing agent/infra/capabilities |
+| AES002 | ✅ | Mandatory imports per layer enforced (taxonomy for contract, contract(protocol) for capabilities, etc.) |
 | AES003 | ✅ | 3-word filename convention enforced |
-| AES008 | ✅ | Contract suffixes enforced |
-| AES011 | ✅ | Layer-specific suffix rules enforced |
-| AES012 | ✅ | Barrel completeness enforced |
-| AES013 | ✅ | No re-exports in sub-modules |
-| AES022 | ✅ | Surface passivity enforced |
-| AES023 | ✅ | Surfaces go through ServiceContainerAggregate |
-| AES027 | ✅ | Every file implements a contract trait |
+| AES006 | ✅ | Primitive usage restricted in taxonomy(entity\|error\|event) and contract; exempt in _vo and _constant |
+| AES008 | ✅ | Contract suffixes enforced (_port, _protocol, _aggregate) |
+| AES011 | ✅ | Layer-specific suffix rules enforced per allowed list in ARCHITECTURE.md |
+| AES012 | ✅ | Barrel completeness enforced (mod.rs must export all) |
+| AES013 | ✅ | No re-exports in non-barrel sub-modules |
+| AES018 | ✅ | Utility surfaces must NOT import Smart surfaces |
+| AES019 | ✅ | Passive surfaces must import taxonomy only |
+| AES022 | ✅ | Surface layer rules enforced — Smart surfaces delegate via ServiceContainerAggregate; Passive surfaces are I/O only |
+| AES023 | ✅ | Surfaces go through ServiceContainerAggregate (contract), NOT direct agent/infra/cap imports |
+| AES026 | ✅ | Contract Aggregate must not inherit from Port/Protocol — use composition |
+| AES027 | ✅ | Every logic file implements a contract trait |
+| AES033 | ✅ | _constant files must contain only pub const/pub static |
 
 ## 11. Implementation Order
 

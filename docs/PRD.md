@@ -62,9 +62,9 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 | ID | Requirement | Dependency |
 |----|-------------|------------|
-| FR-001 | 6-layer AES architecture enforcement — layer hierarchy, dependency direction, sibling equivalence across taxonomy, contract, capabilities, infrastructure, agent, surfaces — see [`docs/PRD_001_6layer_architecture.md`](PRD_001_6layer_architecture.md) | — |
-| FR-002 | Config system: multi-config support (`lint_arwaky.config.rust.yaml`, `.python.yaml`, `.javascript.yaml`), YAML reader, language detection, config-driven rules — see [`docs/PRD_002_config_yaml_parser.md`](PRD_002_config_yaml_parser.md) | FR-001 |
-| FR-003 | AST scanning for Rust, Python, JavaScript/TypeScript | FR-001 |
+| FR-001 | 6-layer AES architecture enforcement — layer hierarchy, dependency direction, sibling equivalence across taxonomy, contract, capabilities, infrastructure, agent, surfaces — see [`docs/FRD_001_6layer_architecture.md`](FRD_001_6layer_architecture.md) | — |
+| FR-002 | Config system: multi-config support (`lint_arwaky.config.rust.yaml`, `.python.yaml`, `.javascript.yaml`), YAML reader, language detection, config-driven rules — see [`docs/FRD_002_config_yaml_parser.md`](FRD_002_config_yaml_parser.md) | FR-001 |
+| FR-003 | Source code parsing for Rust, Python, JavaScript/TypeScript — regex-based line scanners (not true AST parsers; see [`docs/FRD_003_ast_scanning.md`](FRD_003_ast_scanning.md)) | FR-001 |
 | FR-004 | Self-lint target (`lint-arwaky-cli check .`) — project audits itself | FR-001, FR-002, FR-003 |
 | FR-005 | Apply safe auto-fixes (Rust + Python + JS/TS) | FR-003 |
 | FR-006 | Track quality trends over time | FR-004 |
@@ -79,7 +79,7 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 | FR-013 | **Root layer detection** (AES010) — forbidden root import patterns | FR-001 |
 | FR-014 | **Layer suffix mismatch detector** (AES011) — file suffix must match layer | FR-001 |
 | FR-015 | **Contract suffix mismatch detector** (AES008) — contract needs _port/_protocol/_aggregate | FR-001 |
-| FR-016 | **Surface layer rule checker** (AES022) — surfaces are passive I/O | FR-001 |
+| FR-016 | **Surface layer rule checker** (AES022) — surface must not implement domain logic; Smart surfaces parse input and delegate via `ServiceContainerAggregate`; Passive surfaces (`_component`, `_layout`, `_view`) import taxonomy only (AES019) | FR-001 |
 | FR-017 | **Surface direct import checker** (AES023) — no direct infra/cap imports | FR-001 |
 
 ### 5.3 Naming & Structure Rules
@@ -261,14 +261,14 @@ src-rust/
 
 ```
 agent          -> taxonomy, contract, infrastructure, capabilities
-|surface -> taxonomy, contract, agent
+surface        -> contract, taxonomy
 capabilities   -> taxonomy, contract
 infrastructure -> taxonomy, contract
 contract       -> taxonomy
 taxonomy       -> taxonomy
 ```
 
-Surfaces may import from `agent` (for DI container creation) and `contract` (for trait types), but must NOT import from `capabilities` or `infrastructure` directly — they access capabilities and infrastructure only through the `ServiceContainerAggregate` trait (AES023, AES022).
+Surfaces must NOT import from `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through the `ServiceContainerAggregate` trait in the contract layer (AES023, AES022). The DI container is created in `cli_main_entry.rs` (root layer, not a surface) and passed to surfaces. This enforces strict dependency inversion per ARCHITECTURE.md.
 
 ### 7.3 MCP Server Architecture
 
@@ -383,6 +383,6 @@ Subcommands are defined in `src-rust/surfaces/cli_core_command.rs` and dispatche
 | Python Test Project (`scan`)     | ✅ Verified | Detects 238 violations across 9 tools (ruff/mypy/bandit)           |
 | JavaScript Test Project (`scan`) | ✅ Verified | Detects 323 violations across 12 tools (eslint/prettier/tsc)       |
 | Unique AES Codes Detected          | ✅ 30/31    | AES001–AES033 minus AES028/029 (reserved), AES031 pending         |
-| CLI (20+ subcommands)              | ✅ Complete | check, scan, fix, report, ci, watch, git-diff, setup, etc.         |
+| CLI (20+ subcommands)              | ✅ Complete | check, scan, fix, report, ci, watch, git-diff, setup, clean, etc. |
 | MCP Server (5 tools)               | ✅ Complete | JSON-RPC 2.0 over stdin/stdout via mcp-sdk-rs                      |
 | Zero Bypass Tolerance              | ✅ Complete | `noqa`, `type: ignore`, `#[allow(...)]` all flagged          |
