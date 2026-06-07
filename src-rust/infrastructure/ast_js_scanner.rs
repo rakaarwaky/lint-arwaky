@@ -272,6 +272,43 @@ impl ASTJSParserAdapter {
                 });
             }
 
+            // Export detection
+            if stripped.starts_with("export ") {
+                if let Some(export_name) = stripped
+                    .strip_prefix("export ")
+                    .and_then(|rest| {
+                        if rest.starts_with("default ") {
+                            rest.strip_prefix("default ")
+                                .and_then(|r| r.split_whitespace().nth(1))
+                        } else if rest.starts_with("function ")
+                            || rest.starts_with("class ")
+                            || rest.starts_with("const ")
+                            || rest.starts_with("let ")
+                            || rest.starts_with("var ")
+                        {
+                            rest.split_whitespace().nth(1)
+                        } else {
+                            None
+                        }
+                    })
+                {
+                    data.exported.insert(export_name.to_string());
+                }
+                // export { foo, bar as baz }
+                if stripped.starts_with("export {") && stripped.contains('}') {
+                    let inner = stripped
+                        .strip_prefix("export {")
+                        .and_then(|s| s.split('}').next())
+                        .unwrap_or("");
+                    for sym in inner.split(',') {
+                        let clean = sym.trim().split(" as ").next().unwrap_or("").trim();
+                        if !clean.is_empty() {
+                            data.exported.insert(clean.to_string());
+                        }
+                    }
+                }
+            }
+
             if let Some(fn_cap) = FN_REGEX.captures(stripped) {
                 let name = fn_cap.get(1).unwrap().as_str().to_string();
                 data.defined.insert(name.clone());
@@ -299,7 +336,7 @@ impl ASTJSParserAdapter {
 
             for cap in WORD_REGEX.find_iter(stripped) {
                 let word = cap.as_str();
-                if !js_keywords.contains(word) && !word.chars().next().unwrap().is_numeric() {
+                if !js_keywords.contains(word) && !word.chars().next().is_none_or(|c| c.is_numeric()) {
                     data.used.insert(word.to_string());
                 }
             }
@@ -350,11 +387,56 @@ impl ISourceParserPort for ASTJSParserAdapter {
         })
     }
 
-    fn get_class_attributes(&self, _path: &FilePath) -> ResponseData {
+    fn get_class_attributes(&self, path: &FilePath) -> ResponseData {
+        let mut attrs = HashMap::new();
+        if let Ok(content) = std::fs::read_to_string(&path.value) {
+            let lines: Vec<&str> = content.lines().collect();
+            let mut in_class = false;
+            let mut class_name = String::new();
+            let mut brace_count = 0;
+            for line in &lines {
+                let stripped = line.trim();
+                if stripped.starts_with("//") || stripped.starts_with("/*") {
+                    continue;
+                }
+                if let Some(cap) = CLASS_REGEX.captures(stripped) {
+                    class_name = cap.get(1).unwrap().as_str().to_string();
+                    in_class = true;
+                    brace_count = 0;
+                    continue;
+                }
+                if in_class {
+                    brace_count += stripped.matches('{').count() as i32;
+                    brace_count -= stripped.matches('}').count() as i32;
+                    if brace_count <= 0 && !stripped.contains('{') {
+                        in_class = false;
+                        continue;
+                    }
+                    if stripped.starts_with("this.") {
+                        let field = stripped.strip_prefix("this.")
+                            .and_then(|s| s.split('=').next())
+                            .map(|s| s.trim().trim_end_matches(';').to_string())
+                            .unwrap_or_default();
+                        if !field.is_empty() && !field.contains('(') {
+                            attrs.entry(class_name.clone())
+                                .or_insert_with(Vec::new)
+                                .push(serde_json::json!({"name": field}));
+                        }
+                    } else if stripped.contains('=') && !stripped.starts_with("function") && !stripped.starts_with("static") {
+                        let field = stripped.split('=').next()
+                            .map(|s| s.trim().trim_start_matches("this.").trim().to_string())
+                            .unwrap_or_default();
+                        if !field.is_empty() && !field.contains('(') && !field.contains(' ') {
+                            attrs.entry(class_name.clone())
+                                .or_insert_with(Vec::new)
+                                .push(serde_json::json!({"name": field}));
+                        }
+                    }
+                }
+            }
+        }
         ResponseData {
-            value: Some(serde_json::json!(
-                HashMap::<String, serde_json::Value>::new()
-            )),
+            value: Some(serde_json::json!(attrs)),
             stdout: String::new(),
             stderr: String::new(),
             returncode: 0i64,

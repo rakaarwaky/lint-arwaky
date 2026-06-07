@@ -5,7 +5,9 @@ use std::sync::Arc;
 
 use clap::Parser;
 use lint_arwaky::capabilities::architecture_lint_handler::format_report;
+use lint_arwaky::contract::ServiceContainerAggregate;
 use lint_arwaky::surfaces::cli_core_command::{Cli, Commands, ConfigCommands, SetupCommands};
+use lint_arwaky::surfaces::cli_fix_command::register_fix_commands;
 use lint_arwaky::taxonomy::{DirectoryPath, FilePath, LintResult, Severity};
 
 fn main() -> ExitCode {
@@ -22,7 +24,7 @@ fn main() -> ExitCode {
     match cli.command {
         Commands::Check { path, git_diff } => handle_check(path, git_diff),
         Commands::Scan { path } => handle_scan(path),
-        Commands::Fix { path } => handle_fix(path),
+        Commands::Fix { path, dry_run } => handle_fix(path, dry_run),
         Commands::Report {
             path,
             output_format,
@@ -73,10 +75,19 @@ fn handle_scan(path: Option<String>) -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn handle_fix(path: Option<String>) -> ExitCode {
+fn handle_fix(path: Option<String>, dry_run: bool) -> ExitCode {
     let root = resolve_target(path);
-    eprintln!("[info] `fix` is not yet fully implemented; running check instead");
-    run_lint_and_report(&root)
+    let container = Arc::new(
+        DependencyInjectionContainer::new(
+            DirectoryPath::new(&root).unwrap_or_default(),
+        ),
+    );
+    let fix_surface = register_fix_commands(container);
+    fix_surface.run_fix(
+        FilePath::new(root).unwrap_or_default(),
+        dry_run,
+    );
+    ExitCode::SUCCESS
 }
 
 fn handle_report(path: Option<String>, output_format: String) -> ExitCode {
@@ -256,14 +267,87 @@ fn handle_trends(path: Option<String>) -> ExitCode {
     let root = resolve_target(path);
     let results = lint_path(&root);
     let score = compute_score(&results);
+    let violations_count = results.len();
+    let critical_count = results.iter().filter(|r| r.severity == Severity::CRITICAL).count();
+    
     println!("Lint Arwaky v{} (Trends)", env!("CARGO_PKG_VERSION"));
-    println!("Current score: {}", score);
-    let history = std::path::Path::new(&root).join(".lint-arwaky-trends.json");
-    if history.exists() {
-        println!("History file: {}", history.display());
+    println!("Target: {}", root);
+    println!();
+    println!("Current scan:");
+    println!("  Score:      {}/100", score);
+    println!("  Violations: {}", violations_count);
+    println!("  Critical:   {}", critical_count);
+    
+    // Use MetricsProvider via DI container (AES023 compliant)
+    let container = Arc::new(
+        DependencyInjectionContainer::new(
+            DirectoryPath::new(&root).unwrap_or_default(),
+        ),
+    );
+    let metrics = container.metrics_provider();
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    
+    // Read history
+    let history: Vec<serde_json::Value> = if let Some(ref mp) = metrics {
+        rt.block_on(mp.get_history())
     } else {
+        Vec::new()
+    };
+    
+    // Trend analysis
+    if let Some(prev) = history.last() {
+        let prev_score = prev.get("score").and_then(|s| s.as_f64()).unwrap_or(100.0);
+        let prev_violations = prev.get("violations").and_then(|v| v.as_u64()).unwrap_or(0);
+        let delta = score - prev_score;
+        
+        let trend = if delta > 1.0 {
+            "IMPROVING"
+        } else if delta < -1.0 {
+            "DECLINING"
+        } else {
+            "STABLE"
+        };
+        
+        let all_time_high = history.iter()
+            .filter_map(|e| e.get("score").and_then(|s| s.as_f64()))
+            .fold(score, f64::max);
+        let all_time_low = history.iter()
+            .filter_map(|e| e.get("score").and_then(|s| s.as_f64()))
+            .fold(score, f64::min);
+        
+        println!();
+        println!("Previous scan:");
+        println!("  Score:      {}/100", prev_score);
+        println!("  Violations: {}", prev_violations);
+        println!();
+        println!("Delta: {:+.1} — {}", delta, trend);
+        println!("All-time high: {} / 100", all_time_high);
+        println!("All-time low:  {} / 100", all_time_low);
+        println!("History entries: {}", history.len());
+    } else {
+        println!();
         println!("No history yet — first run");
     }
+    
+    // Save current score to history via MetricsProvider
+    use chrono::Utc;
+    let entry = serde_json::json!({
+        "score": score,
+        "timestamp": Utc::now().to_rfc3339(),
+        "violations": violations_count,
+        "critical": critical_count,
+    });
+    
+    if let Some(ref mp) = metrics {
+        let saved = rt.block_on(mp.save_metric(entry));
+        if saved {
+            println!();
+            println!("Current score saved to history");
+        } else {
+            eprintln!("[warn] Could not save history");
+        }
+    }
+    
     ExitCode::SUCCESS
 }
 

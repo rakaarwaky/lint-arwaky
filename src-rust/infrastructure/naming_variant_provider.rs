@@ -1,8 +1,7 @@
 /// naming_variant_provider — Python naming variant generator.
 use crate::contract::naming_variant_port::INamingVariantPort;
-use crate::taxonomy::{ResponseData, SymbolName, SymbolNameList};
+use crate::taxonomy::{SymbolName, SymbolNameList};
 use regex::Regex;
-use std::collections::HashMap;
 
 pub struct PythonNamingVariantProvider;
 

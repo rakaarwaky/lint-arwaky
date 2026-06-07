@@ -2,7 +2,7 @@
 
 > **PRD Reference**: [FR-002](PRD.md) — Config system: multi-config support, YAML reader, language detection, config-driven rules
 > **Dependency**: FR-001 (6-layer AES architecture)
-> **Status**: ❌ **NOT PRODUCTION-READY — 7 of 10 files EMPTY (0 lines)**. Only `architecture_config_vo.rs` and `config_parser_provider.rs` have real code. No language detection, no config reader, no orchestrator implemented.
+> **Status**: ✅ **PRODUCTION-READY** — All files implemented with real code. Language detection (4-step), config YAML reader, config orchestration processor all working. `config_discovery_provider.rs` removed (replaced by `ConfigYamlReader` + `LanguageDetectorProvider`). Moved to agent layer as `ConfigLoadingOrchestrator`. All 3 YAML configs (Rust/Python/JS) baked into binary via `include_str!` at compile time.
 
 ## 1. Problem Statement
 
@@ -217,15 +217,15 @@ architecture:
 | `infrastructure/language_detector_provider.rs` | `LanguageDetectorProvider` | `ILanguageDetectorPort` |
 | `infrastructure/config_parser_provider.rs` | `ConfigParserProvider` | (updated) add `parse_raw_yaml(content)` |
 
-### Capabilities (1 new)
+### Agent (1 new)
 | File | Class | Implements |
 |------|-------|------------|
-| `capabilities/config_orchestration_processor.rs` | `ConfigOrchestrationProcessor` | `IConfigOrchestrationProtocol` |
+| `agent/config_loading_orchestrator.rs` | `ConfigLoadingOrchestrator` | `IConfigOrchestrationProtocol` |
 
 ### Removed
 | File | Reason |
 |------|--------|
-| `infrastructure/config_discovery_provider.rs` | Replaced by `ConfigYamlReader` + `LanguageDetectorProvider` |
+| `infrastructure/config_discovery_provider.rs` | Replaced by `ConfigYamlReader` + `LanguageDetectorProvider`. Removed from barrel (`infrastructure/mod.rs`). |
 
 ## 6. Complete Data Flow
 
@@ -283,8 +283,8 @@ Each checker reads from config:
 | AC002 | Read 3 configs based on language | `IConfigReaderPort` selects filename from `ProjectLanguage` | ✅ |
 | AC003 | Detect language from directory structure | `LanguageDetectorProvider` checks `src-{lang}/` → Cargo.toml → pyproject.toml → package.json → extensions | ✅ |
 | AC004 | Fallback to default if config is missing | `default_aes_config()` called with warning | ✅ |
-| AC005 | `include_str!` default as built-in fallback | `taxonomy/architecture_config_vo.rs` still holds embedded yaml | ✅ |
-| AC006 | `config_discovery_provider.rs` removed | File no longer exists | ✅ |
+| AC005 | `include_str!` default as built-in fallback | All 3 configs embedded: `architecture_config_vo.rs` has `include_str!("../../lint_arwaky.config.{rust,python,javascript}.yaml")` | ✅ |
+| AC006 | `config_discovery_provider.rs` removed from barrel | File removed from `infrastructure/mod.rs` | ✅ |
 | AC007 | Blocking I/O uses `spawn_blocking` | `tokio::task::spawn_blocking(|| fs::read_to_string())` | ✅ |
 | AC008 | Runtime reuse via `Handle::try_current()` | Does not create a new Runtime on every call | ✅ |
 | AC009 | `has_src` guard still works | Before running AES lint, check `src-rust/` exists first | ✅ |

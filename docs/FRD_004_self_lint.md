@@ -2,7 +2,7 @@
 
 > **PRD Reference**: [FR-004](PRD.md) — Self-lint target — project audits itself
 > **Dependency**: FR-001 (6-layer AES), FR-002 (Config), FR-003 (Source parsing)
-> **Status**: ✅ **PRODUCTION-READY** — 31 rules real, 153+ violations detected. NOTE: ~500 lines duplicated between coordinator and compliance_analyzer; 170+ `unwrap()` causes AES014 self-violations.
+> **Status**: ✅ **PRODUCTION-READY** — 31 rules real, violations detected on self-lint. Full pipeline: CLI entry → config load → file discovery → per-file checks (22 rules) → cross-file checks (9 rules) → scoring → reporting (text/JSON/SARIF/JUnit). CI mode with threshold, git-diff mode.
 > **Self-lint**: `lint-arwaky-cli check .` — project audits `src-rust/` against all AES rules
 
 ## 1. Problem Statement

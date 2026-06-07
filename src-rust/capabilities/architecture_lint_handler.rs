@@ -7,7 +7,7 @@ use crate::contract::source_parser_port::ISourceParserPort;
 use crate::contract::source_system_port::IFileSystemPort;
 use crate::contract::IArchLintProtocol;
 use crate::taxonomy::{
-    default_aes_config, ArchitectureConfig, ContentString, FilePath, LintResult, LintResultList,
+    default_aes_config, ArchitectureConfig, LintResult, LintResultList,
 };
 
 pub fn collect_source_files(dir: &Path) -> Vec<String> {

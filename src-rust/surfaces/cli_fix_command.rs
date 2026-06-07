@@ -1,20 +1,10 @@
 use std::sync::Arc;
-/// Fix CLI command — applies safe fixes automatically (Surface).
 use std::path::PathBuf;
-
-
-
-
 use crate::taxonomy::FilePath;
-
-
-
-
-
-
-
-use crate::contract::service_container_aggregate::ServiceContainerAggregate;
+use crate::contract::LintFixOrchestratorAggregate;
+use crate::contract::ServiceContainerAggregate;
 use crate::surfaces::cli_output_controller::{get_output_dir, write_output, tee_stdout};
+use crate::agent::lint_fix_orchestrator::LintFixOrchestrator;
 
 pub struct FixCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -30,17 +20,43 @@ impl FixCommandsSurface {
     }
 
     pub fn fix(&self, path: &str) {
-        let project_path = FilePath { value: PathBuf::from(path).canonicalize().unwrap_or_else(|_| PathBuf::from(path)).to_string_lossy().to_string() };
-        self.run_fix(project_path);
+        let project_path = FilePath { 
+            value: PathBuf::from(path)
+                .canonicalize()
+                .unwrap_or_else(|_| PathBuf::from(path))
+                .to_string_lossy()
+                .to_string() 
+        };
+        self.run_fix(project_path, false);
     }
 
-    fn run_fix(&self, project_path: FilePath) {
+    pub fn run_fix(&self, project_path: FilePath, dry_run: bool) {
         let output_dir = get_output_dir(None);
 
         let output = tee_stdout(None, || {
-            println!(" Applying safe fixes to {}...", project_path.value);
-            // In real impl: container.fix_orchestrator.execute(project_path)
-            println!("Fix complete.");
+            if dry_run {
+                println!("[DRY-RUN] Previewing fixes for {}...", project_path.value);
+            } else {
+                println!("Applying safe fixes to {}...", project_path.value);
+            }
+
+            let orchestrator = crate::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator::new();
+            let results = orchestrator.run_self_lint(&project_path);
+            println!("Found {} violations before fix", results.len());
+
+            let fix_orch = LintFixOrchestrator::with_dry_run(dry_run);
+            let fix_result = fix_orch.execute(&project_path);
+
+            println!("{}", fix_result.output.value);
+
+            if !dry_run {
+                let after_results = orchestrator.run_self_lint(&project_path);
+                let fixed_count = results.len().saturating_sub(after_results.len());
+                println!("Fixed {} violations ({} remaining)", fixed_count, after_results.len());
+                println!("Fix complete.");
+            } else {
+                println!("Dry-run complete — no changes applied.");
+            }
         });
 
         if let Some(_dir) = output_dir {

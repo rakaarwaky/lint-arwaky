@@ -312,11 +312,39 @@ impl ISourceParserPort for ASTRustParserAdapter {
         })
     }
 
-    fn get_class_attributes(&self, _path: &FilePath) -> ResponseData {
+    fn get_class_attributes(&self, path: &FilePath) -> ResponseData {
+        let mut attrs = HashMap::new();
+        if let Ok(content) = std::fs::read_to_string(&path.value) {
+            let lines: Vec<&str> = content.lines().collect();
+            let mut in_struct = false;
+            let mut struct_name = String::new();
+            for line in &lines {
+                let stripped = line.trim();
+                if let Some(cap) = STRUCT_REGEX.captures(stripped) {
+                    struct_name = cap.get(1).unwrap().as_str().to_string();
+                    in_struct = true;
+                    continue;
+                }
+                if in_struct {
+                    if stripped.starts_with('}') || stripped.starts_with("//") || stripped.is_empty() {
+                        if stripped.starts_with('}') {
+                            in_struct = false;
+                        }
+                        continue;
+                    }
+                    if stripped.contains(':') && !stripped.starts_with("fn ") && !stripped.starts_with("impl ") {
+                        let field_name = stripped.split(':').next().unwrap_or("").trim().trim_start_matches("pub ").to_string();
+                        if !field_name.is_empty() && !field_name.contains(' ') {
+                            attrs.entry(struct_name.clone())
+                                .or_insert_with(Vec::new)
+                                .push(serde_json::json!({"name": field_name}));
+                        }
+                    }
+                }
+            }
+        }
         ResponseData {
-            value: Some(serde_json::json!(
-                HashMap::<String, serde_json::Value>::new()
-            )),
+            value: Some(serde_json::json!(attrs)),
             stdout: String::new(),
             stderr: String::new(),
             returncode: 0i64,

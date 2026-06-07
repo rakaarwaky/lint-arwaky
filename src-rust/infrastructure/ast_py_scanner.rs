@@ -335,9 +335,44 @@ impl ISourceParserPort for ASTPythonParserAdapter {
         })
     }
 
-    fn get_class_attributes(&self, _path: &FilePath) -> ResponseData {
+    fn get_class_attributes(&self, path: &FilePath) -> ResponseData {
+        let mut attrs = HashMap::new();
+        if let Ok(content) = std::fs::read_to_string(&path.value) {
+            let lines: Vec<&str> = content.lines().collect();
+            let mut in_class = false;
+            let mut class_name = String::new();
+            let mut class_indent = 0;
+            for line in &lines {
+                let stripped = line.trim();
+                if stripped.is_empty() || stripped.starts_with('#') {
+                    continue;
+                }
+                if let Some(cap) = CLASS_REGEX.captures(stripped) {
+                    class_name = cap.get(1).unwrap().as_str().to_string();
+                    in_class = true;
+                    class_indent = line.len() - stripped.len();
+                    continue;
+                }
+                if in_class {
+                    let indent = line.len() - stripped.len();
+                    if indent <= class_indent && !stripped.starts_with('#') && !stripped.is_empty() {
+                        if stripped.starts_with("def ") || stripped.starts_with("class ") {
+                            break;
+                        }
+                    }
+                    if indent > class_indent && stripped.contains('=') && !stripped.starts_with("def ") {
+                        let field_name = stripped.split('=').next().unwrap_or("").trim().to_string();
+                        if !field_name.is_empty() && !field_name.starts_with('_') {
+                            attrs.entry(class_name.clone())
+                                .or_insert_with(Vec::new)
+                                .push(serde_json::json!({"name": field_name}));
+                        }
+                    }
+                }
+            }
+        }
         ResponseData {
-            value: Some(serde_json::Value::Null),
+            value: Some(serde_json::json!(attrs)),
             stdout: String::new(),
             stderr: String::new(),
             returncode: 0,

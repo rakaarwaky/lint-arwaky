@@ -2,7 +2,7 @@
 
 > **PRD Reference**: [FR-001](PRD.md) — 6-layer AES architecture enforcement
 > **Dependency**: — (Foundation, no prior dependency)
-> **Status**: ✅ **PRODUCTION-READY** — All 10 checkers real, DI container real, feature gating real. NOTE: ~170 `unwrap()` calls across codebase cause AES014 self-violations.
+> **Status**: ✅ **PRODUCTION-READY** — All 10 checkers real, DI container real, feature gating real. 269 Rust files across 6 layers. NOTE: ~170 `unwrap()` calls across codebase cause AES014 self-violations.
 > **Self-lint**: `lint-arwaky-cli check .` — project audits itself under this architecture
 
 ## 1. Problem Statement
@@ -391,7 +391,7 @@ If capabilities tries to import surfaces:
 | AC004 | Barrel is complete (AES012) | `check_barrel()` on all mod.rs | ✅ |
 | AC005 | `features check_taxonomy` only compiles taxonomy | `cargo check --no-default-features --features check_taxonomy` | ✅ |
 | AC006 | `features check_surfaces` compiles everything | `cargo check --features check_surfaces` | ✅ |
-| AC007 | Self-lint detects violations | `lint-arwaky-cli check .` → 153 violations | ✅ |
+| AC007 | Self-lint detects violations | `lint-arwaky-cli check .` → violations detected | ✅ |
 | AC008 | Circular dependency detected | `architecture_cycle_analyzer` | ✅ |
 | AC009 | Every logic file implements contract trait | `check_inheritance()` → AES027 | ✅ |
 | AC010 | Configuration via YAML without code changes | Read `lint_arwaky.config.rust.yaml` | ✅ |

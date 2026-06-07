@@ -1,7 +1,7 @@
 /// python_metrics_adapter — Thin adapters for Python metrics (Radon, file sizes, trends).
 use crate::contract::metrics_provider_port::IMetricsProviderPort;
 use crate::contract::path_normalization_port::IPathNormalizationPort;
-use crate::taxonomy::{Count, FilePath, ResponseData, ResponseDataList};
+use crate::taxonomy::{Count, FilePath};
 use std::sync::Arc;
 
 pub struct MetricsProvider {
@@ -47,5 +47,25 @@ impl IMetricsProviderPort for MetricsProvider {
             }
         }
         history
+    }
+
+    async fn save_metric(&self, entry: serde_json::Value) -> bool {
+        // Ensure the directory exists
+        if let Some(parent) = std::path::Path::new(&self.history_path).parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        // Append to history file (JSON-lines format)
+        match std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.history_path)
+        {
+            Ok(mut file) => {
+                use std::io::Write;
+                let line = serde_json::to_string(&entry).unwrap_or_default();
+                writeln!(file, "{}", line).is_ok()
+            }
+            Err(_) => false,
+        }
     }
 }

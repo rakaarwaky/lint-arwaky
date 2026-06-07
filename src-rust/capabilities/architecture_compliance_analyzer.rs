@@ -2,7 +2,6 @@
 // 1:1 Rust port of capabilities/arch_compliance_analyzer.py
 
 use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
 
 use super::architecture_import_checker::ArchImportRuleChecker;
@@ -12,7 +11,7 @@ use super::architecture_naming_checker::ArchNamingChecker;
 use super::surface_hierarchy_checker::SurfaceHierarchyChecker;
 use crate::taxonomy::{
     AdapterName, ArchitectureConfig, ArchitectureRule, ColumnNumber, ErrorCode, FilePath,
-    LayerDefinition, LayerNameVO, LineNumber, LintMessage, LintResult, LintResultList, LocationList, ScopeRef,
+    LayerDefinition, LayerNameVO, LineNumber, LintMessage, LintResult, LintResultList, LocationList,
     Severity,
 };
 
@@ -635,7 +634,7 @@ impl ArchComplianceAnalyzer {
             }
         }
         for s in &struct_names {
-            let impl_pattern = format!("impl {} for {}", "", s);
+            let _impl_pattern = format!("impl {} for {}", "", s);
             // Check if struct has any trait implementation
             let has_trait_impl = content.contains(&format!("impl I{}", s))
                 || content.contains(&format!(" for {} ", s))
@@ -678,13 +677,13 @@ impl ArchComplianceAnalyzer {
         let in_cap = file.contains("/capabilities/") || file.contains("/infrastructure/");
         if !in_cap { return; }
         // Check for direct string/number assignments without VO wrapping
-        let direct_patterns = [
+        let _direct_patterns = [
             ".to_string()", "String::from(", "\"hello", "\"world", "\"error",
             "0i32", "0u32", "0i64", "0usize",
         ];
         for (i, line) in content.lines().enumerate() {
             let trimmed = line.trim();
-            let lower = trimmed.to_lowercase();
+            let _lower = trimmed.to_lowercase();
             // Look for patterns like `let x = "literal"` or `let x = 42`
             if trimmed.starts_with("let ") && trimmed.contains(" = ") {
                 let rhs = trimmed.split(" = ").nth(1).unwrap_or("");
