@@ -85,30 +85,65 @@ Aggregates group related ports and protocols into logical clusters. Target: 10-1
 | **`ContainerRegistryAggregate`** | Per-project DI container registry | Multi-project container management |
 
 > **Design rule**: Aggregates are composition facades, NOT trait wrappers for every struct in Agent. If an aggregate has only 1 method that just delegates, it should be merged into a parent aggregate. The goal is 10-15 aggregates, not 30+.
+> **AES026**: Aggregates must use composition, NOT inheritance from Port/Protocol. Inheriting from Port/Protocol violates the aggregate's role as a facade.
 
 ### 2.4 Barrel (`mod.rs`) Requirements
 
 The Contract barrel MUST:
 - Declare every module with `pub mod`
-- Re-export every public type via `pub use`
+- Re-export ALL public types via `pub use` (AES012)
+- ZERO `pub mod`/`pub use` in non-barrel sub-modules (AES013)
 - Provide `Arc<dyn ...>` type aliases: `FileSystemPortRef`, `SourceParserPortRef`, `ArchLintProtocolRef`, `ServiceContainerRef`, etc.
-- Provide utility functions: `find_command(name)`, `is_command_registered(name)`, `command_count()`, `list_command_names()`
 - Include barrel tests verifying command catalog completeness
 
-> **Note on utility functions**: The barrel contains `find_command()` and related as LIMITED helpers that only query the static `COMMAND_CATALOG` constant (defined in Taxonomy). These are query operations on a constant, NOT business logic. Any mutation or routing logic must live in Capabilities as `ICommandRegistryPort`.
+> **AES008**: Every file must have a `_port`, `_protocol`, or `_aggregate` suffix.
+> **AES013**: Only `mod.rs` barrel files should define the layer's public API surface.
 
-## 3. Architectural Rules
+## 3. Import & Relation Rules
+
+### Contract Ports & Protocols
+
+| Rule | Setting |
+|------|---------|
+| Allowed imports | `taxonomy` |
+| Mandatory imports | `taxonomy` (AES002) |
+| Forbidden imports | `agent`, `infrastructure`, `surfaces`, `capabilities`, `contract(aggregate)`, `root` |
+| AES001 | Pure contracts define logic shapes and must not know about orchestration, implementation, or aggregates |
+
+### Contract Aggregates
+
+| Rule | Setting |
+|------|---------|
+| Allowed imports | `taxonomy`, `contract` |
+| Mandatory imports | `taxonomy`, `contract(port\|protocol\|aggregate)` (AES002) |
+| Forbidden imports | `agent`, `infrastructure`, `surfaces`, `capabilities`, `root` |
+| Forbidden inheritance | `contract(port\|protocol)` — AES026 |
+| AES001 | Aggregate represents system's formal promise, must remain agnostic to implementation |
+| AES026 | Aggregate must NOT inherit from Port/Protocol — use composition |
+| AES017 | Contract must be implemented in at least one consumer layer |
+
+### Primitive Policy (AES006)
+
+| Scope | `no_primitives` |
+|-------|----------------|
+| `contract` | `true` — All port/protocol/aggregate signatures must use taxonomy VOs |
+
+## 4. Architectural Rules
 
 | Rule | Constraint |
 |------|------------|
 | AES001 | Zero imports to capabilities, infrastructure, agent, or surfaces |
-| AES006 | Trait signatures use taxonomy VOs exclusively |
-| AES007 | All contract imports via barrel (`contract::*`) |
+| AES002 | Must import `taxonomy` (mandatory) |
+| AES006 | Trait signatures use taxonomy VOs exclusively — zero primitives |
 | AES008 | Suffixes: `_port`, `_protocol`, `_aggregate` only |
-| AES026 | Aggregates may compose Ports + Protocols; zero business logic |
+| AES011 | Suffix must match allowed patterns for this layer |
+| AES012 | `mod.rs` must export all public symbols (barrel completeness) |
+| AES013 | No `pub mod`/`pub use` in non-barrel sub-modules |
+| AES017 | Contract must be consumed by at least one implementation layer |
+| AES026 | Aggregates may NOT inherit from Port/Protocol; use composition |
 | AES027 | Every importing layer must implement at least one contract |
 
-## 4. Non-Functional Targets
+## 5. Non-Functional Targets
 
 | Metric | Target |
 |--------|--------|
@@ -119,7 +154,7 @@ The Contract barrel MUST:
 | Barrel re-exports | 100% of public types |
 | Type aliases | One `*Ref` per port and protocol |
 
-## 5. Success Criteria
+## 6. Success Criteria
 
 A Contract layer is **complete** when:
 - Every infrastructure adapter has a corresponding `_port` trait
@@ -129,4 +164,6 @@ A Contract layer is **complete** when:
 - All trait methods return/accept taxonomy VOs
 - Barrel re-exports every type with documentation
 - Arc-wrapped type aliases exist for DI wiring
-- Command catalog utility functions correctly query COMMAND_CATALOG
+- Zero imports to capabilities/infrastructure/agent/surfaces
+- Aggregates use composition, NOT inheritance from Port/Protocol (AES026)
+- No public exports in non-barrel sub-modules (AES013)

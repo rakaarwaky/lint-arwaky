@@ -1,6 +1,23 @@
 # Changelog
 
-## 1.10.2 (2026-06-06) — Rust Reference Implementation
+## 1.10.2 (2026-06-07) — 31 AES Rules Complete
+
+### Added
+- **Full 31/31 AES coverage**: All 31 AES codes (AES001–AES033, AES028/029 reserved) implemented and verified. 30/31 unique codes detected across Rust self-lint, Python, and JS test projects.
+- **AES030 capability-method-not-found**: Dispatch integrity check — verifies capability methods exist in dispatch catalog.
+- **AES031 single-capability-bottleneck**: Detects when all dispatch routes go to a single capability class.
+- **AES032 missing-vo-construction**: Flags capability calls missing required Value Object parameters.
+- **AES033 constant-purity**: Ensures `_constant` files contain only `pub const`/`pub static` declarations.
+- **Multi-language configs**: `lint_arwaky.config.rust.yaml`, `lint_arwaky.config.python.yaml`, `lint_arwaky.config.javascript.yaml` — per-language architecture enforcement with language-specific bypass patterns and barrel conventions.
+- **Docs**: `docs/RULES_AES.md` — full AES rule catalog with multi-condition import matrices, suffix tables, and agent role mandates. `docs/ARCHITECHTURE.md` — complete AES architecture reference with Mermaid diagram.
+
+### Changed
+- **Architecture docs**: Suffix tables expanded to match full config lists across all languages.
+- **Self-lint verified**: 153 violations detected on own codebase (15 AES codes), 0 CRITICAL.
+
+---
+
+## 1.10.1 (2026-06-06) — Rust Reference Implementation
 
 ### Changed
 - **Full language migration**: Lint Arwaky is now implemented in Rust (edition 2021). The Python v1.9.x codebase is preserved for reference; the active project lives in `src-rust/` and produces two binaries: `lint-arwaky-cli` and `lint-arwaky-mcp`.

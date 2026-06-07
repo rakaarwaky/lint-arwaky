@@ -21,6 +21,7 @@ Rules enforced by the `auto-lint` architecture checker on layer boundaries and c
 | AES015 | unused-mandatory-import      | Statement: Mandatory symbols are imported but never used in scope.`<br>`WHY? Importing required modules without usage is an architectural bypass attempt.`<br>`FIX: Utilize the imported symbols in your logic or remove the dependency from the module.                                                                                                                                                                                                                                                                                                     |
 | AES016 | dead-inheritance-bypass      | Statement: Empty struct or trait detected.`<br>`WHY? Empty traits or marker structures are used to bypass architectural enforcement logic.`<br>`FIX: Implement the required trait methods or define attributes in the struct.                                                                                                                                                                                                                                                                                                                                |
 | AES017 | orphan-code-detection        | Statement: Component is unreachable and unused.`<br>`WHY? Orphan files indicate dead code or missing integration in the layer barrel.`<br>`FIX: Register in mod.rs and ensure it is imported/consumed by at least one authorized consumer layer.                                                                                                                                                                                                                                                                                                             |
+| AES018 | surface-hierarchy-violation  | Statement: Utility surface (hook/store/provider/router) imports a Smart surface (page/command/handler/controller/entry).`<br>`WHY? Smart surfaces orchestrate flow; utility surfaces are helpers that should be stateless or leaf-oriented.`<br>`FIX: Move shared logic to Agent or Taxonomy, or refactor the utility to be independent.                                                                                                                                                                                                                       |
 | AES019 | passive-surface-violation    | Statement: Passive surface (component/view/layout) imports forbidden layers.`<br>`WHY? Components and views should only know about data structures (Taxonomy), not logic or orchestration.`<br>`FIX: Pass necessary callbacks or data via props/parameters from the Smart surface. Remove Agent/Contract/Infra/Cap imports.                                                                                                                                                                                                                                  |
 | AES021 | agent-role-violation         | Statement: File violates the specific behavioral mandate of its assigned role (e.g., statelessness, coordination).`<br>`WHY? Agent roles have strict responsibilities to ensure decoupling and maintainable orchestration.`<br>`FIX: Refactor the component to strictly follow its role's behavioral mandate (e.g., remove state from orchestrator, move domain logic out of container).                                                                                                                                                                     |
 | AES024 | agent-any-bypass             | Statement:`any` type (or raw pointers) detected in the agent orchestrator logic.`<br>`WHY? Bypassing type safety for DI containers masks method name or argument mismatches.`<br>`FIX: Use safe static typing or concrete trait definitions to ensure architectural integrity.                                                                                                                                                                                                                                                                             |
@@ -48,8 +49,8 @@ Rules enforced by the `auto-lint` architecture checker on layer boundaries and c
 | `agent(orchestrator\|coordinator\|dispatcher)` | `taxonomy`, `contract(aggregate)`               | `surfaces`, `agent` (siblings/governance), `root`                                                                                   | **AES001/AES002**: Orchestrators must only use `ServiceContainerAggregate` (contract) to avoid circular dependencies with the implementation.                                            |
 | `agent(manager\|handler\|result\|state)`        | `taxonomy`                                        | `agent` (other roles), `infrastructure`, `capabilities`, `surfaces`, `root`                                                     | **AES001**: Support modules (leaf nodes) must be independent of the wiring and logic flow to prevent cycles. Stick to Taxonomy and Contract Aggregate.                                     |
 | `surfaces(page\|command\|handler\|controller)`  | `taxonomy`, `contract(aggregate)`               | `agent`, `infrastructure`, `capabilities`, `contract(port)`, `contract(protocol)`, `root`                                     | **AES001/AES002**: Smart surfaces are entry points that orchestrate via `ServiceContainerAggregate` (contract). They must NOT import concrete agent, infra, or capability modules.       |
-| `surfaces(hook\|store\|provider\|router)`       | None                                                | `agent`, `infrastructure`, `capabilities`, `contract(port)`, `contract(protocol)`, `surfaces(smart)`, `root`                | **AES001**: Utility surfaces are helpers that should be stateless or leaf-oriented. They cannot depend on Smart surfaces.                                                                  |
-| `surfaces(component\|layout\|view)`            | `taxonomy`                                        | `agent`, `contract`, `infrastructure`, `capabilities`, `surfaces(active)`, `root`                                             | **AES001/AES019**: Passive surfaces (Dumb) must only import Taxonomy. They should only know about data structures, not logic or orchestration.                                             |
+| `surfaces(hook\|store\|provider\|router)`       | None                                                | `agent`, `infrastructure`, `capabilities`, `contract(port)`, `contract(protocol)`, `surfaces(page\|command\|handler\|controller\|entry)`, `root` | **AES001/AES018**: Utility surfaces are helpers that should be stateless or leaf-oriented. They cannot depend on Smart surfaces. |
+| `surfaces(component\|layout\|view)`            | `taxonomy`                                        | `agent`, `contract`, `infrastructure`, `capabilities`, `surfaces(page\|command\|handler\|controller\|entry\|hook\|store\|provider\|router)`, `root` | **AES001/AES019**: Passive surfaces (Dumb) must only import Taxonomy. They should only know about data structures, not logic or orchestration. |
 
 ---
 
@@ -78,31 +79,3 @@ Rules enforced by the `auto-lint` architecture checker on layer boundaries and c
 | `manager`      | Lifecycle tracking, no domain data storage | **AES021**: Domain data storage or operational domain-specific tasks detected. Managers are 'Supervisors' of system health and lifecycle, not domain data containers. Delegate operational tasks to Orchestrators. |
 
 ---
-
-### Catatan
-
-- Pesan-pesan di atas bersumber langsung dari `lint_arwaky.config.rust.yaml`.
-- Aturan yang spesifik untuk Python (seperti `__init__.py`, `mypy Any`, `Pydantic`) telah dihapus dari dokumen ini agar selaras 100% dengan konfigurasi Rust Anda yang menggunakan `mod.rs`, `unwrap()`, `#[allow(`, dan `struct`/`trait`.
-- Contoh penamaan file pada AES003 telah diperbaiki menjadi `auth_session_vo.rs` (tepat 3 kata) untuk menghilangkan kontradiksi.
-- **AES030–AES033** telah ditambahkan kembali ke dalam katalog aturan.
-
----
-
-> **💡 Tips untuk Konfigurasi YAML:**
-> Jika Anda ingin linter Anda benar-benar menegakkan aturan AES030–AES033, pastikan Anda menambahkan blok aturan berikut ke dalam bagian `rules.internal` di file `lint_arwaky.config.rust.yaml` Anda:
->
-> ```yaml
->       - name: "Capability_Dispatch_Integrity"
->         scope: "capabilities"
->         check_method_existence: true # Untuk AES030
->         check_vo_parameter_usage: true # Untuk AES032
->         check_dispatch_distribution: true # Untuk AES031
->     
->       - name: "Taxonomy_Constant_Purity"
->         scope: "taxonomy(constant)"
->         forbid_non_constants: true # Untuk AES033 (memastikan hanya ada pub const/pub static)
->         forbid_non_constants_violation_message: >
->           AES033 CONSTANT_PURITY: Taxonomy `_constant` file contains non-constant declarations (`pub fn`, `pub struct`, `pub enum`, `pub mod`, `pub use`, `impl`).
->           WHY? Constants are the only Taxonomy role permitted to expose raw primitives. Mixing in structs/enums/functions collapses the role boundary.
->           FIX: Move non-constant declarations to the appropriate file (`_vo`, `_entity`, or capability module).
-> ```

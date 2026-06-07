@@ -8,17 +8,23 @@
 **Role**: Dependency injection, pipeline orchestration, lifecycle management, job registry, command dispatch
 **Dependency Rule**: Component-type dependent:
 - **Containers/Registries/Mixins** (wiring): import from `taxonomy`, `contract`, `capabilities`, `infrastructure`, and sibling agent orchestrators
-- **Orchestrators/Coordinators** (execution): import ONLY from `taxonomy` and `contract` — access capabilities/infrastructure through `ServiceContainerAggregate` (contract)
-- **Managers** (support): import from `taxonomy` and `contract(aggregate)` only
+- **Orchestrators/Coordinators/Dispatchers** (execution): import ONLY from `taxonomy` and `contract` — access capabilities/infrastructure through `ServiceContainerAggregate` (contract)
+- **Managers/Handlers/Results/State** (support): import from `taxonomy` and `contract(aggregate)` only
 ZERO imports to `surfaces` for all types.
 
 ## 1. Strategic Goal
 
 Agent must become the **composition root and orchestrator** of the entire system. It creates all adapters, wires them into the DI container, orchestrates pipeline execution, manages job lifecycles, coordinates multi-project runs, and supervises watchers. Agent is the ONLY layer that connects capabilities to infrastructure.
 
-## 2. Two Categories of Components
+## 2. Component Categories
 
-Agent has TWO distinct component categories with different state rules:
+Agent has THREE distinct component categories with different import rules (per YAML config):
+
+| Category | Roles | Import Rule |
+|----------|-------|-------------|
+| **Governance** (wiring) | `_container`, `_registry`, `_mixin` | taxonomy, contract, infrastructure, capabilities, sibling orchestrators |
+| **Orchestration** (execution) | `_orchestrator`, `_coordinator`, `_dispatcher` | taxonomy, contract(aggregate) ONLY |
+| **Support** (leaf nodes) | `_manager`, `_handler`, `_result`, `_state` | taxonomy, contract(aggregate) ONLY — zero sibling imports |
 
 ### 2.1 Stateless Orchestrators (one-shot operations)
 
@@ -143,17 +149,73 @@ ArchitectureLintOrchestrator (stateless)
 
 > **Key difference from earlier design**: Stage 2 (Parse) is EXPLICIT. Agent calls `SourceParserOrchestrator` to produce `Vec<SourceContentVO>`, then passes the parsed data to Capabilities analyzers. This keeps Capabilities pure — they never touch infrastructure ports directly.
 
-## 8. Architectural Rules
+## 8. Import & Relation Rules
+
+### Agent Governance (container|registry|mixin)
+
+| Rule | Setting |
+|------|---------|
+| Allowed imports | `taxonomy`, `contract`, `infrastructure`, `capabilities`, `agent(orchestrator\|coordinator\|dispatcher)`, `agent(manager\|handler\|result\|state)`, `agent(mixin)` |
+| Mandatory imports | `taxonomy`, `contract` (AES002) |
+| Forbidden imports | `surfaces`, `root` |
+| AES001 | The wiring layer must be accessible but must not depend on the edge (surfaces) |
+| AES017 | Governance component must be reachable from surface entry points |
+
+### Agent Orchestration (orchestrator|coordinator|dispatcher)
+
+| Rule | Setting |
+|------|---------|
+| Allowed imports | `taxonomy`, `contract` |
+| Mandatory imports | `taxonomy`, `contract(aggregate)` (AES002) |
+| Forbidden imports | `surfaces`, `agent` (siblings/governance), `root` |
+| AES001 | Orchestrators must only use ServiceContainerAggregate (contract) to avoid circular dependencies |
+| AES021 | Orchestrators must be stateless with single execution goal; Coordinators must be high-level policy only |
+
+### Agent Support (manager|handler|result|state)
+
+| Rule | Setting |
+|------|---------|
+| Allowed imports | `taxonomy`, `contract(aggregate)` |
+| Mandatory imports | `taxonomy` (AES002) |
+| Forbidden imports | `agent` (other roles), `infrastructure`, `capabilities`, `surfaces`, `root` |
+| AES001 | Support modules must be independent of the wiring and logic flow to prevent cycles |
+
+### Primitive Policy
+
+| Scope | `no_primitives` |
+|-------|----------------|
+| `agent` | `false` — may use primitive types internally |
+
+### Barrel (AES012)
+
+`mod.rs` must export all public orchestrators and containers. ZERO `pub mod`/`pub use` in non-barrel sub-modules (AES013).
+
+## 9. Architectural Rules
 
 | Rule | Constraint |
 |------|------------|
-| AES001 | Zero imports to surfaces |
+| AES001 | Zero imports to surfaces (all types); Orchestrators zero sibling/capabilities/infrastructure imports |
+| AES002 | Must import `taxonomy` + `contract` (governance) or `contract(aggregate)` (orchestration) |
 | AES003 | Filenames: word1_word2_word3 pattern |
-| AES021 | Orchestrators MUST be stateless; services must document state explicitly |
+| AES011 | Suffixes: `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`, `_mixin`, `_dispatcher`, `_handler`, `_result`, `_state` |
+| AES012 | `mod.rs` must export all public symbols (barrel completeness) |
+| AES013 | No `pub mod`/`pub use` in non-barrel sub-modules |
+| AES017 | Governance component must be reachable from surface entry points |
+| AES021 | Orchestrators MUST be stateless (single execution goal); Coordinators: high-level policy only; Containers: structural wiring only; Registries: CRUD only, no decision logic; Managers: lifecycle tracking only |
 | AES024 | Zero `Any` type annotations — use typed containers |
 | AES027 | Every file must implement at least one imported contract type |
 
-## 9. Non-Functional Targets
+### Agent Role Mandates (AES021)
+
+| Role | Mandate | Forbidden |
+|------|---------|-----------|
+| `_container` | Structural DI wiring only | Domain logic, complex initialization |
+| `_orchestrator` | Stateless, single execution goal | Mutable fields, multiple domain goals |
+| `_coordinator` | High-level policy, cross-orchestrator | Low-level implementation details |
+| `_registry` | CRUD only, no decision logic, thread-safe | Business logic, non-thread-safe operations |
+| `_manager` | Lifecycle tracking, no domain data storage | Domain data storage, operational tasks |
+
+## 10. Non-Functional Targets
 
 | Metric | Target |
 |--------|--------|
@@ -165,7 +227,7 @@ ArchitectureLintOrchestrator (stateless)
 | Business logic in Agent | ZERO — delegate to Capabilities |
 | Surface imports | ZERO |
 
-## 10. Success Criteria
+## 11. Success Criteria
 
 An Agent layer is **complete** when:
 - `DependencyInjectionContainer` creates AND wires ALL adapters correctly
@@ -179,3 +241,6 @@ An Agent layer is **complete** when:
 - Plugin system discovers and loads plugins
 - Zero business logic in agent files
 - Zero mutable state in orchestrators (stateful services exempted)
+- Zero imports to surfaces (all types)
+- Orchestrators/coordinators access capabilities/infrastructure only through ServiceContainerAggregate
+- No public exports in non-barrel sub-modules (AES013)

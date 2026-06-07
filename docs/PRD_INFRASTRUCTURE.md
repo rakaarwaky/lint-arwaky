@@ -172,17 +172,49 @@ Errors must NEVER produce silent empty results. An empty `Vec<LintResult>` is ON
 - Methods: `initialize`, `tools/list`, `tools/call`
 - Tool descriptions must match registered commands
 
-## 4. Architectural Rules
+## 4. Import & Relation Rules
+
+### Infrastructure
+
+| Rule | Setting |
+|------|---------|
+| Allowed imports | `taxonomy`, `contract` |
+| Mandatory imports | `taxonomy`, `contract(port)` (AES002) |
+| Forbidden imports | `surfaces`, `capabilities`, `agent`, `infrastructure` (siblings), `root` |
+| AES001 | Infrastructure adapters must be isolated; importing siblings creates technical coupling and cycles |
+| AES002 | Infrastructure must implement a `_port` from the contract layer |
+| AES017 | Infrastructure must be registered in Agent Container and implement a port |
+
+### Primitive Policy
+
+| Scope | `no_primitives` |
+|-------|----------------|
+| `infrastructure` | `false` — may use primitive types as supporting/local types |
+
+### Barrel (AES012)
+
+`mod.rs` must export all public adapters. ZERO `pub mod`/`pub use` in non-barrel sub-modules (AES013).
+
+## 5. Architectural Rules
 
 | Rule | Constraint |
 |------|------------|
-| AES001 | Zero imports to capabilities, agent, surfaces |
+| AES001 | Zero imports to capabilities, agent, surfaces, or sibling infrastructure |
+| AES002 | Must import `taxonomy` + `contract(port)` |
 | AES003 | Filenames: word1_word2_word3 pattern |
-| AES008 | Suffixes: `_adapter`, `_provider`, `_scanner`, `_client`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_store`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` (flexible mode) |
-| AES010 | FORBIDDEN suffix `_vo` in infrastructure |
+| AES011 | Suffixes: flexible mode — all 38 allowed suffixes (see below). Forbidden: `_vo`, `_entity`, `_error`, `_event`, `_port`, `_protocol`, `_aggregate`, `_io` |
+| AES012 | `mod.rs` must export all public symbols (barrel completeness) |
+| AES013 | No `pub mod`/`pub use` in non-barrel sub-modules |
+| AES017 | Adapter must be wired in Agent Container and implement a port |
 | AES027 | Every file must implement at least one imported contract type |
 
-## 5. Non-Functional Targets
+### Allowed Infrastructure Suffixes (AES011)
+
+`_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_store`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer`
+
+Forbidden: `_vo`, `_entity`, `_error`, `_event`, `_port`, `_protocol`, `_aggregate`, `_io`
+
+## 6. Non-Functional Targets
 
 | Metric | Target |
 |--------|--------|
@@ -193,7 +225,7 @@ Errors must NEVER produce silent empty results. An empty `Vec<LintResult>` is ON
 | MCP protocol compliance | Valid JSON-RPC 2.0 |
 | Sibling imports | ZERO (except orchestration composition) |
 
-## 6. Success Criteria
+## 7. Success Criteria
 
 An Infrastructure layer is **complete** when:
 - Every external linter (Ruff, MyPy, Bandit, ESLint, Prettier, TSC, Clippy) has a working adapter
@@ -208,3 +240,4 @@ An Infrastructure layer is **complete** when:
 - MCP server handles initialize → tools/list → tools/call lifecycle
 - Memory job registry is thread-safe
 - Zero imports to capabilities, agent, or surfaces
+- No public exports in non-barrel sub-modules (AES013)

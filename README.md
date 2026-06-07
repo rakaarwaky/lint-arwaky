@@ -3,7 +3,7 @@
 [![Rust 2021](https://img.shields.io/badge/rust-2021-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![MCP Server](https://img.shields.io/badge/MCP-Server-blue.svg)](https://modelcontextprotocol.io/)
-[![Architecture: AES](https://img.shields.io/badge/architecture-AES+Clean-green.svg)](docs/AESArchitecture.md)
+[![Architecture: AES](https://img.shields.io/badge/architecture-AES+Clean-green.svg)](docs/ARCHITECHTURE.md)
 
 **Autonomous code quality and architecture enforcement for AI agents and developers — written in Rust.**
 
@@ -128,7 +128,7 @@ lint-arwaky-cli scan /path/to/some-project/
 
 ## Architecture Overview
 
-Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with six layers. See [docs/AESArchitecture.md](docs/AESArchitecture.md) for the full specification and Mermaid diagrams.
+Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with six layers. See [docs/ARCHITECHTURE.md](docs/ARCHITECHTURE.md) for the full specification and Mermaid diagrams.
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -154,14 +154,14 @@ Lint Arwaky follows its own AES (Agentic Engineering System) specification — a
 
 ### Layer responsibilities
 
-| Layer              | Path                         | Allowed Suffixes                                                                                                         | Files | Role                                                      |
-| ------------------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----- | --------------------------------------------------------- |
-| `taxonomy`       | `src-rust/taxonomy/`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`                                                              | 68    | Domain types, value objects, structured errors, constants |
-| `contract`       | `src-rust/contract/`       | `_port`, `_protocol`, `_aggregate`                                                                                 | 78    | Interface definitions, dependency-injection contracts     |
-| `capabilities`   | `src-rust/capabilities/`   | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler` | 31    | Use-case implementations — the workhorse logic           |
-| `infrastructure` | `src-rust/infrastructure/` | `_adapter`, `_provider`, `_scanner`, `_client`, `_lifespan`, `_validator`, `_wrapper`                      | 37    | External-tool adapters, linter wrappers, AST parsers      |
-| `agent`          | `src-rust/agent/`          | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`                                         | 29    | DI wiring, pipeline coordination, job management          |
-| `surfaces`       | `src-rust/surfaces/`       | `_command`, `_handler`, `_controller`                                                                              | 25    | CLI and MCP server command handlers                       |
+| Layer              | Path                         | Allowed Suffixes                                                                                                                                                                                                                                                                                                                             | Files | Role                                                      |
+| ------------------ | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------- |
+| `taxonomy`       | `src-rust/taxonomy/`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`                                                                                                                                                                                                                                                                                  | 68    | Domain types, value objects, structured errors, constants |
+| `contract`       | `src-rust/contract/`       | `_port`, `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                     | 78    | Interface definitions, dependency-injection contracts     |
+| `capabilities`   | `src-rust/capabilities/`   | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions` | 31    | Use-case implementations — the workhorse logic           |
+| `infrastructure` | `src-rust/infrastructure/` | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_store`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | 37    | External-tool adapters, linter wrappers, AST parsers      |
+| `agent`          | `src-rust/agent/`          | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`, `_mixin`, `_dispatcher`, `_handler`, `_result`, `_state`                                                                                                                                                                                         | 29    | DI wiring, pipeline coordination, job management          |
+| `surfaces`       | `src-rust/surfaces/`       | `_command`, `_handler`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_provider`                                                                                                                                                                                  | 25    | CLI and MCP server command handlers                       |
 
 ### Adapters
 

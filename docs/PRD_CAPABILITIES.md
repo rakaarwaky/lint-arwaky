@@ -1,4 +1,5 @@
 # PRD — Capabilities Layer
+
 > **Vision**: The thinking layer — all domain logic, rules, and analysis
 
 ## Layer Identity
@@ -6,7 +7,7 @@
 **Layer**: Capabilities (Domain Logic Layer)
 **Path**: `src-rust/capabilities/`
 **Role**: Pure business logic — rule checkers, analyzers, processors, formatters, handlers
-**Dependency Rule**: Can import from `taxonomy` and `contract` only. ZERO imports to `infrastructure`, `agent`, or `surfaces`.
+**Dependency Rule**: Can import from `taxonomy` and `contract` only. ZERO imports to `infrastructure`, `agent`, `surfaces`, or sibling capabilities.
 
 ## 1. Strategic Goal
 
@@ -16,12 +17,13 @@ Capabilities must become the **comprehensive rule engine** that enforces the AES
 
 ### 2.1 Architecture Compliance Core
 
-| Component | Role | Contract Implemented |
-|-----------|------|---------------------|
+| Component                  | Role                                                        | Contract Implemented    |
+| -------------------------- | ----------------------------------------------------------- | ----------------------- |
 | `ArchComplianceAnalyzer` | Orchestrates all per-file checkers + project-wide analyzers | IArchComplianceProtocol |
-| `ArchLintHandler` | Top-level entry point for lint requests | IArchLintProtocol |
+| `ArchLintHandler`        | Top-level entry point for lint requests                     | IArchLintProtocol       |
 
 **ArchComplianceAnalyzer** must:
+
 - Accept `ArchitectureConfig` (from taxonomy)
 - Accept `Vec<SourceContentVO>` (files already parsed by Agent layer)
 - Iterate all files, run each registered checker
@@ -29,6 +31,7 @@ Capabilities must become the **comprehensive rule engine** that enforces the AES
 - Return `Vec<LintResult>` grouped by severity
 
 **ArchLintHandler** must:
+
 - Accept `Arc<dyn IFileSystemPort>` + `Arc<dyn ISourceParserPort>`
 - Implement `IArchLintProtocol::run_self_lint()` and `run_self_lint_dir()`
 - Locate config (from YAML or default), delegate to Analyzer
@@ -40,28 +43,29 @@ Capabilities must become the **comprehensive rule engine** that enforces the AES
 
 Each checker evaluates ONE file against ONE rule category. Checkers receive `(file: &FilePath, config: &ArchitectureConfig, source: &SourceContentVO)` and return `Vec<LintResult>`.
 
-| Checker | Evaluates | AES Codes |
-|---------|-----------|-----------|
-| `ArchNamingChecker` | Filename convention (word1_word2_word3) | AES003 |
-| `ArchInternalChecker` | Layer import rules (who can import what) | AES001, AES023 |
-| `ArchMetricChecker` | File size min/max thresholds | AES004, AES005 |
-| `ArchImportRuleChecker` | Mandatory/forbidden imports per layer | AES002, AES010 |
-| `CodeQualityRuleChecker` | Code quality metrics, complexity | — |
-| `ArchRoleChecker` | Layer role mandates (statelessness, passivity) | AES021, AES022 |
-| `UnusedImportRuleChecker` | Dead mandatory imports | AES015 |
+| Checker                     | Evaluates                                      | AES Codes      |
+| --------------------------- | ---------------------------------------------- | -------------- |
+| `ArchNamingChecker`       | Filename convention (word1_word2_word3)        | AES003         |
+| `ArchInternalChecker`     | Layer import rules (who can import what)       | AES001, AES023 |
+| `ArchMetricChecker`       | File size min/max thresholds                   | AES004, AES005 |
+| `ArchImportRuleChecker`   | Mandatory/forbidden imports per layer          | AES002, AES010 |
+| `CodeQualityRuleChecker`  | Code quality metrics, complexity               | —             |
+| `ArchRoleChecker`         | Layer role mandates (statelessness, passivity) | AES021, AES022 |
+| `UnusedImportRuleChecker` | Dead mandatory imports                         | AES015         |
 
 ### 2.3 Project-Wide Analyzers
 
 Each analyzer evaluates the ENTIRE project against a pre-built data structure (import graph, file map, symbol table) assembled by Agent.
 
-| Analyzer | Detects | Input | AES Codes |
-|----------|---------|-------|-----------|
-| `DependencyCycleAnalyzer` | Circular imports between modules | ImportGraph | AES020 |
-| `ArchOrphanAnalyzer` | Files unreachable from surfaces (with sub-resolvers) | FilePathSet + surface entry points | AES017 |
-| `MandatoryInheritanceChecker` | Empty/hollow contract inheritance | FileDefinitionMap | AES016, AES027 |
-| `ArchRoleChecker` (project) | Agent role violations across project | FileDefinitionMap | AES021, AES024 |
+| Analyzer                        | Detects                                              | Input                              | AES Codes      |
+| ------------------------------- | ---------------------------------------------------- | ---------------------------------- | -------------- |
+| `DependencyCycleAnalyzer`     | Circular imports between modules                     | ImportGraph                        | AES020         |
+| `ArchOrphanAnalyzer`          | Files unreachable from surfaces (with sub-resolvers) | FilePathSet + surface entry points | AES017         |
+| `MandatoryInheritanceChecker` | Empty/hollow contract inheritance                    | FileDefinitionMap                  | AES016, AES027 |
+| `ArchRoleChecker` (project)   | Agent role violations across project                 | FileDefinitionMap                  | AES021, AES024 |
 
 **Analyzer contract**: Every analyzer receives pre-computed domain data (never raw ports):
+
 ```rust
 fn analyze(
     &self,
@@ -74,82 +78,120 @@ fn analyze(
 
 ### 2.4 Naming & Refactoring
 
-| Module | Operations | Input → Output |
-|--------|-----------|----------------|
-| `NamingRuleChecker` | Validate naming per convention | FilePath → Vec<LintResult> |
-| `NamingVariantAnalyzer` | Generate snake_case, camelCase, PascalCase, kebab-case | Identifier → NameVariants |
-| `SymbolRenamerProcessor` | Project-wide symbol rename | (OldName, NewName) → Vec<FixResult> |
+| Module                     | Operations                                             | Input → Output                          |
+| -------------------------- | ------------------------------------------------------ | ---------------------------------------- |
+| `NamingRuleChecker`      | Validate naming per convention                         | FilePath → Vec`<LintResult>`          |
+| `NamingVariantAnalyzer`  | Generate snake_case, camelCase, PascalCase, kebab-case | Identifier → NameVariants               |
+| `SymbolRenamerProcessor` | Project-wide symbol rename                             | (OldName, NewName) → Vec`<FixResult>` |
 
 ### 2.5 Domain Type Enforcement
 
-| Module | Operations | AES |
-|--------|-----------|-----|
+| Module                    | Operations                                            | AES    |
+| ------------------------- | ----------------------------------------------------- | ------ |
 | `DomainTypeRuleChecker` | Detect raw primitives in contract/taxonomy boundaries | AES006 |
 
 ### 2.6 Semantic Analysis
 
-| Module | Operations |
-|--------|-----------|
+| Module                    | Operations                                       |
+| ------------------------- | ------------------------------------------------ |
 | `SemanticScopeAnalyzer` | Show enclosing function/class for each violation |
-| `CallChainAnalyzer` | Trace call chains across project files |
-| `ScopeBoundaryAnalyzer` | Detect cross-boundary scope violations |
+| `CallChainAnalyzer`     | Trace call chains across project files           |
+| `ScopeBoundaryAnalyzer` | Detect cross-boundary scope violations           |
 | `ScopeBoundaryResolver` | Resolve symbol references across file boundaries |
-| `DataFlowAnalyzer` | Track variable lifecycle within scope |
+| `DataFlowAnalyzer`      | Track variable lifecycle within scope            |
 
 ### 2.7 Reporting & Formatting
 
-| Module | Output Formats |
-|--------|----------------|
+| Module                       | Output Formats                                                              |
+| ---------------------------- | --------------------------------------------------------------------------- |
 | `ReportFormatterProcessor` | Text (human-readable), JSON (machine), SARIF 2.1.0 (GitHub), JUnit XML (CI) |
 
 ### 2.8 Validation Layer
 
-| Module | Validates | AES |
-|--------|-----------|-----|
-| `McpSchemaChecker` | MCP tool JSON Schema correctness | AES025 |
+| Module                      | Validates                               | AES            |
+| --------------------------- | --------------------------------------- | -------------- |
+| `McpSchemaChecker`        | MCP tool JSON Schema correctness        | AES025         |
 | `SurfaceHierarchyChecker` | Surface barrel reachability + passivity | AES018, AES019 |
-| `DispatchRoutingChecker` | Method resolution in COMMAND_CATALOG | AES030, AES031 |
-| `DispatchRoutingParser` | Method argument parsing | AES032 |
-| `ConfigRulesValidator` | Config YAML validity | — |
+| `DispatchRoutingChecker`  | Method resolution in COMMAND_CATALOG    | AES030, AES031 |
+| `DispatchRoutingParser`   | Method argument parsing                 | AES032         |
+| `ConfigRulesValidator`    | Config YAML validity                    | —             |
 
 ### 2.9 Configuration Logic
 
-| Module | Purpose |
-|--------|---------|
+| Module                   | Purpose                                                                 |
+| ------------------------ | ----------------------------------------------------------------------- |
 | `ConfigRulesValidator` | Validate `.lint_arwaky.config.yaml` against ArchitectureConfig schema |
 
 ### 2.10 Setup Management
 
-| Module | Produces |
-|--------|----------|
+| Module                       | Produces                                                       |
+| ---------------------------- | -------------------------------------------------------------- |
 | `SetupManagementProcessor` | `.env` file, MCP client config JSON (Claude, VSCode, Hermes) |
 
-## 3. Architectural Rules
+## 3. Import & Relation Rules
 
-| Rule | Constraint |
-|------|------------|
-| AES001 | Zero imports to infrastructure, agent, or surfaces |
-| AES006 | Public method signatures use taxonomy VOs |
-| AES011 | Suffixes: `_analyzer`, `_actions`, `_formatters`, `_generator`, `_processor`, `_evaluator`, `_checker`, `_validator`, `_transformer`, `_calculator`, `_builder`, `_handler`, `_executor`, `_resolver`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor` (flexible mode) |
-| AES030 | Every capability method in COMMAND_CATALOG must exist on target class |
-| AES031 | Dispatch routes must distribute across multiple capabilities |
-| AES032 | Capability calls must pass typed request/data VOs |
+### Capabilities
 
-## 4. Non-Functional Targets
+| Rule              | Setting                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| Allowed imports   | `taxonomy`, `contract`                                                                  |
+| Mandatory imports | `taxonomy`, `contract(protocol)`                                                        |
+| Forbidden imports | `infrastructure`, `surfaces`, `agent`, `capabilities` (siblings), `root`          |
+| AES001            | Capabilities must be independent; importing siblings or outer layers causes circular cycles |
+| AES002            | Capabilities must import taxonomy and contract(protocol)                                    |
+| AES017            | Capability must be registered in Agent Container and invoked by Orchestrator                |
 
-| Metric | Target |
-|--------|--------|
-| Infrastructure imports | ZERO — no std::process, no file I/O |
-| Contract adherence | All checkers/analyzers implement at least one protocol |
-| Port dependencies | ZERO — analyzers receive `SourceContentVO`, not ports |
-| Return types | 100% `LintResult` / `LintResultList` |
-| Statelessness | Zero mutable shared state between runs |
-| Semantic coverage | Rust + Python + JavaScript/TypeScript |
-| Report formats | 4: text, JSON, SARIF 2.1.0, JUnit XML |
+### Primitive Policy
 
-## 5. Success Criteria
+| Scope            | `no_primitives`                               |
+| ---------------- | ----------------------------------------------- |
+| `capabilities` | `false` — may use primitive types internally |
+
+### Dispatch Integrity (AES030–AES032)
+
+| Check                 | AES Code | Description                                                                         |
+| --------------------- | -------- | ----------------------------------------------------------------------------------- |
+| Method existence      | AES030   | Every capability method referenced in COMMAND_CATALOG must exist on target class    |
+| Dispatch distribution | AES031   | Dispatch routes must distribute across multiple capabilities, not bottleneck on one |
+| VO parameter usage    | AES032   | Capability calls must pass typed request/data VOs                                   |
+
+## 4. Architectural Rules
+
+| Rule   | Constraint                                                               |
+| ------ | ------------------------------------------------------------------------ |
+| AES001 | Zero imports to infrastructure, agent, surfaces, or sibling capabilities |
+| AES002 | Must import `taxonomy` + `contract(protocol)`                        |
+| AES006 | Public method signatures use taxonomy VOs                                |
+| AES011 | Suffixes: flexible mode — all 26 allowed suffixes (see below)           |
+| AES012 | `mod.rs` must export all public symbols (barrel completeness)          |
+| AES013 | No `pub mod`/`pub use` in non-barrel sub-modules                     |
+| AES017 | Capability must be wired in Agent Container and invoked                  |
+| AES030 | Every capability method in COMMAND_CATALOG must exist on target class    |
+| AES031 | Dispatch routes must distribute across multiple capabilities             |
+| AES032 | Capability calls must pass typed request/data VOs                        |
+
+### Allowed Capabilities Suffixes (AES011)
+
+`_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions`
+
+Forbidden: `_vo`, `_entity`, `_error`, `_event`, `_port`, `_protocol`, `_aggregate`, `_io`
+
+## 5. Non-Functional Targets
+
+| Metric                 | Target                                                   |
+| ---------------------- | -------------------------------------------------------- |
+| Infrastructure imports | ZERO — no std::process, no file I/O                     |
+| Contract adherence     | All checkers/analyzers implement at least one protocol   |
+| Port dependencies      | ZERO — analyzers receive `SourceContentVO`, not ports |
+| Return types           | 100%`LintResult` / `Vec<LintResult>`                 |
+| Statelessness          | Zero mutable shared state between runs                   |
+| Semantic coverage      | Rust + Python + JavaScript/TypeScript                    |
+| Report formats         | 4: text, JSON, SARIF 2.1.0, JUnit XML                    |
+
+## 6. Success Criteria
 
 A Capabilities layer is **complete** when:
+
 - `ArchComplianceAnalyzer` correctly orchestrates ALL per-file checkers
 - `ArchLintHandler` implements `IArchLintProtocol` fully
 - Project-wide analyzers detect cycles, orphans, inheritance violations, and role violations — using pre-built domain data
@@ -161,3 +203,5 @@ A Capabilities layer is **complete** when:
 - Zero false positives in compliance checking
 - Zero port dependencies in analyzer signatures
 - Zero infrastructure code leaks into capabilities
+- Dispatch integrity checks verify method existence (AES030), distribution (AES031), and VO parameters (AES032)
+- No public exports in non-barrel sub-modules (AES013)

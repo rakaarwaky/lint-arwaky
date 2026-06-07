@@ -114,10 +114,10 @@ To prevent architectural bypasses, every logic file **must** define a struct tha
 
 | Layer | Allowed Suffixes | Trait / Example File |
 | --- | --- | --- |
-| **Agent** | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager` | `analysis_execution_orchestrator.rs` |
-| **Capabilities** | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler` | `architecture_compliance_analyzer.rs` |
-| **Infrastructure** | `_adapter`, `_provider`, `_scanner`, `_client`, `_lifespan`, `_validator`, `_wrapper` | `python_ruff_adapter.rs` |
-| **Surfaces** | `_command`, `_handler`, `_controller` | `cli_check_command.rs` |
+| **Agent** | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`, `_mixin`, `_dispatcher`, `_handler`, `_result`, `_state` | `analysis_execution_orchestrator.rs` |
+| **Capabilities** | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions` | `architecture_compliance_analyzer.rs` |
+| **Infrastructure** | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_store`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `python_ruff_adapter.rs` |
+| **Surfaces** | `_command`, `_handler`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_provider` | `cli_check_command.rs` |
 | **Taxonomy** | `_vo`, `_entity`, `_event`, `_error`, `_constant` | `lint_score_vo.rs`, `lint_score_constant.rs` |
 
 **AES033 (constant purity)**: A `_constant` file may contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, `impl`, `mod`, or `pub use` in such a file triggers AES033.
