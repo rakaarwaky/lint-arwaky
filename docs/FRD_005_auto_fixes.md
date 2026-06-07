@@ -2,34 +2,34 @@
 
 > **PRD Reference**: [FR-005](PRD.md) — Apply safe auto-fixes
 > **Dependency**: FR-003 (Source parsing)
-> **Status**: ⚠️ PARTIAL — Naming renamer implemented; `apply_fix` on adapters + orchestrator are stubs
+> **Status**: ❌ **NOT PRODUCTION-READY — CLI surface + orchestrator are stubs**. 4 adapters real (`clippy --fix`, `ruff check --fix`, `prettier --write`, `eslint --fix`) but NOT WIRED to orchestrator. `NamingRenamerProcessor` working but ORPHANED (never called).
 
 ## 1. Problem Statement
 
-Sebelum auto-fix:
+Before auto-fix:
 
 | Issue | Description |
 |-------|-------------|
-| **No automated fix** | Semua violation diperbaiki manual satu per satu |
-| **No pipeline** | Tidak ada orchestrated fix — tiap fix jalan sendiri |
-| **No dry-run** | Tidak bisa preview perubahan sebelum dieksekusi |
-| **No audit trail** | Tidak tercatat apa yang diperbaiki dan kapan |
+| **No automated fix** | All violations are fixed manually one by one |
+| **No pipeline** | No orchestrated fix — each fix runs independently |
+| **No dry-run** | Cannot preview changes before execution |
+| **No audit trail** | No record of what was fixed and when |
 
-## 2. Konsep Dasar
+## 2. Basic Concepts
 
-Auto-fix = setelah self-lint mendeteksi violation, sistem bisa **memperbaiki sendiri** violation yang aman (safe). Yang tidak aman tetap manual.
+Auto-fix = after self-lint detects a violation, the system can **automatically fix** safe violations. Unsafe ones remain manual.
 
-**Fixable** (bisa otomatis):
+**Fixable** (can be automated):
 - AES003 (naming) → rename symbol
-- AES014 (bypass) → hapus `#[allow(...)]` / `noqa`
-- AES015 (unused import) → hapus baris import
+- AES014 (bypass) → remove `#[allow(...)]` / `noqa`
+- AES015 (unused import) → remove import line
 
-**Not fixable** (perlu manual):
-- AES004 (file terlalu besar) → refactor
-- AES006 (primitif di domain) → bungkus VO
-- AES001 (import violation) → keputusan arsitektur
+**Not fixable** (requires manual):
+- AES004 (file too large) → refactor
+- AES006 (primitive in domain) → wrap VO
+- AES001 (import violation) → architectural decision
 
-## 3. Mekanisme Kerja
+## 3. How It Works
 
 ### 3.1 Target Flow
 
@@ -39,62 +39,62 @@ User: lint-arwaky-cli fix .
     ▼
 cli_fix_command.rs → FixCommandsSurface.fix(path)
     │
-    ├─► Self-lint dulu → dapat daftar violations
+    ├─► Self-lint first → get list of violations
     │
-    ├─► Kelompokkan violation berdasarkan fixability:
-    │     ├── Fixable otomatis:
+    ├─► Group violations by fixability:
+    │     ├── Fixable automatically:
     │     │     ├── AES003 (naming) → NamingRenamerProcessor.rename_symbol()
-    │     │     ├── AES014 (bypass) → hapus baris #[allow(...)] / noqa
-    │     │     └── AES015 (unused) → hapus baris import
+    │     │     ├── AES014 (bypass) → remove #[allow(...)] / noqa lines
+    │     │     └── AES015 (unused) → remove import line
     │     │
-    │     └── Manual (dilaporkan ke user):
+    │     └── Manual (reported to user):
     │           ├── AES004 (size) → refactor
-    │           ├── AES006 (primitive) → bungkus VO
+    │           ├── AES006 (primitive) → wrap VO
     │           └── ...
     │
-    ├─► Eksekusi fix otomatis (kalau bukan dry-run)
+    ├─► Execute automatic fixes (if not dry-run)
     │
-    └─► Laporkan:
+    └─► Report:
           ├─► "3 violations fixed automatically"
           └─► "5 violations require manual fix — see above"
 ```
 
-### 3.2 Naming Renamer — Satu-satunya yang Working
+### 3.2 Naming Renamer — The Only One That's Working
 
 File: `capabilities/naming_renamer_processor.rs` (98 lines)
 
 ```
 rename_symbol(root_dir, old_name, new_name)
     │
-    ├─► Walk semua file di root_dir
+    ├─► Walk all files in root_dir
     │
-    ├─► Baca file line by line
+    ├─► Read file line by line
     │
-    ├─► Untuk setiap line:
-    │     ├─► Skip kalau line adalah:
-    │     │     ├─► Single-line comment (// atau #)
-    │     │     ├─► Multi-line comment (/* */ masih terbuka)
-    │     │     ├─► String literal ('...' atau "...")
+    ├─► For each line:
+    │     ├─► Skip if the line is:
+    │     │     ├─► Single-line comment (// or #)
+    │     │     ├─► Multi-line comment (/* */ still open)
+    │     │     ├─► String literal ('...' or "...")
     │     │     ├─► Triple-quoted string ("""...""")
     │     │     └─► Template literal (`...`)
     │     │
     │     └─► Replace old_name → new_name (regex word boundary)
     │
-    ├─► Write file kalau ada perubahan
+    ├─► Write file if there are changes
     │
     └─► Return count modified files
 ```
 
-**Contoh**:
+**Example**:
 ```
-Sebelum: auth_token_vo.rs → is_symbol_exported(path, symbol)
-Sesudah:  auth_token_vo.rs → check_symbol_exported(path, symbol)
-(dengan asumsi rename is_symbol → check_symbol)
+Before: auth_token_vo.rs → is_symbol_exported(path, symbol)
+After:  auth_token_vo.rs → check_symbol_exported(path, symbol)
+(assuming rename is_symbol → check_symbol)
 ```
 
-### 3.3 Adapter apply_fix — Semua Stub
+### 3.3 Adapter apply_fix — All Stubs
 
-Setiap linter adapter punya method `apply_fix()`:
+Each linter adapter has an `apply_fix()` method:
 
 ```rust
 // contract/linter_adapter_port.rs
@@ -106,21 +106,21 @@ pub trait ILinterAdapterPort: Send + Sync {
 }
 ```
 
-Implementasi saat ini — SEMUA STUB:
+Current implementation — ALL STUBS:
 
 ```rust
 // infrastructure/python_ruff_adapter.rs
 impl ILinterAdapterPort for PythonRuffAdapter {
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, ...> {
-        // TODO: panggil ruff check --fix
+        // TODO: call ruff check --fix
         Ok(ComplianceStatus::new(false))  // ← STUB: return false
     }
 }
 ```
 
-Yang seharusnya:
+What it should be:
 ```rust
-// Target implementasi:
+// Target implementation:
 async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, ...> {
     let output = Command::new("ruff")
         .args(["check", "--fix", &path.value])
@@ -156,41 +156,41 @@ File: `surfaces/cli_fix_command.rs` (56 lines)
 
 ```rust
 pub async fn fix(&self, path: &str) {
-    // Current: print warning, fallback ke check
+    // Current: print warning, fallback to check
     println!("Applying safe fixes to {path}...");
     println!("Fix command is not fully wired yet — falling back to check");
     // self.container.get_fix_orchestrator().execute(path)  ← COMMENTED OUT
 }
 ```
 
-## 4. File-file Kunci
+## 4. Key Files
 
-| File | Baris | Status | Fungsi |
-|------|-------|--------|--------|
+| File | Lines | Status | Function |
+|------|-------|--------|----------|
 | `taxonomy/fix_result_vo.rs` | 28 | ✅ | `FixResult { output, error }` |
 | `taxonomy/fix_applied_event.rs` | 29 | ✅ | `FixApplied { path, adapter, error_code, changes, timestamp }` |
 | `contract/lint_fix_aggregate.rs` | 5 | ✅ | `LintFixOrchestratorAggregate::execute(path) → FixResult` |
 | `contract/linter_adapter_port.rs` | 15 | ✅ | `apply_fix()`, `preview_fix()`, `fixable_error_codes()` |
 | `capabilities/naming_renamer_processor.rs` | 98 | ✅ **Working** | Project-wide symbol rename |
-| `infrastructure/rust_linter_adapter.rs` | — | ⚠️ Stub | `apply_fix` return false |
-| `infrastructure/python_ruff_adapter.rs` | — | ⚠️ Stub | `apply_fix` return false |
-| `infrastructure/python_mypy_adapter.rs` | — | ⚠️ Stub | `apply_fix` return false |
-| `infrastructure/python_bandit_adapter.rs` | — | ⚠️ Stub | `apply_fix` return false |
-| `infrastructure/javascript_linter_adapter.rs` | — | ⚠️ Stub | `apply_fix` return false |
-| `agent/lint_fix_orchestrator.rs` | 20 | ⚠️ Stub | Orchestrator return success dummy |
-| `surfaces/cli_fix_command.rs` | 56 | ⚠️ Stub | Fallback ke check |
+| `infrastructure/rust_linter_adapter.rs` | — | ⚠️ Stub | `apply_fix` returns false |
+| `infrastructure/python_ruff_adapter.rs` | — | ⚠️ Stub | `apply_fix` returns false |
+| `infrastructure/python_mypy_adapter.rs` | — | ⚠️ Stub | `apply_fix` returns false |
+| `infrastructure/python_bandit_adapter.rs` | — | ⚠️ Stub | `apply_fix` returns false |
+| `infrastructure/javascript_linter_adapter.rs` | — | ⚠️ Stub | `apply_fix` returns false |
+| `agent/lint_fix_orchestrator.rs` | 20 | ⚠️ Stub | Orchestrator returns dummy success |
+| `surfaces/cli_fix_command.rs` | 56 | ⚠️ Stub | Falls back to check |
 
 ## 5. Acceptance Criteria
 
-| # | Kriteria | Status |
+| # | Criteria | Status |
 |---|----------|--------|
-| AC001 | `fix .` jalanin lint + auto-fix pipeline | ❌ Stub — cuma println |
-| AC002 | AES003 naming violation fix via `NamingRenamerProcessor` | ✅ Working — rename project-wide |
-| AC003 | AES014 bypass comments dihapus otomatis | ❌ Stub — `apply_fix` return false |
-| AC004 | AES015 unused imports dihapus | ❌ Stub |
-| AC005 | `apply_fix()` on all 5 adapters | ❌ Stub — semua return false |
+| AC001 | `fix .` runs lint + auto-fix pipeline | ❌ Stub — only prints |
+| AC002 | AES003 naming violation fix via `NamingRenamerProcessor` | ✅ Working — project-wide rename |
+| AC003 | AES014 bypass comments removed automatically | ❌ Stub — `apply_fix` returns false |
+| AC004 | AES015 unused imports removed | ❌ Stub |
+| AC005 | `apply_fix()` on all 5 adapters | ❌ Stub — all return false |
 | AC006 | Dry-run `--dry-run` preview changes | ❌ Missing |
-| AC007 | `FixAppliedEvent` dicatat | ❌ Stub — orchestrator belum panggil event |
-| AC008 | Non-fixable violations dilapor sebagai manual steps | ❌ Stub |
-| AC009 | `cargo check --bin lint-arwaky-cli` lulus | ✅ |
-| AC010 | `cargo test` lulus | ✅ |
+| AC007 | `FixAppliedEvent` recorded | ❌ Stub — orchestrator hasn't called event |
+| AC008 | Non-fixable violations reported as manual steps | ❌ Stub |
+| AC009 | `cargo check --bin lint-arwaky-cli` passes | ✅ |
+| AC010 | `cargo test` passes | ✅ |

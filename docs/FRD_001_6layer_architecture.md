@@ -2,7 +2,7 @@
 
 > **PRD Reference**: [FR-001](PRD.md) — 6-layer AES architecture enforcement
 > **Dependency**: — (Foundation, no prior dependency)
-> **Status**: ✅ COMPLETE — Implemented as the core architecture of the project
+> **Status**: ✅ **PRODUCTION-READY** — All 10 checkers real, DI container real, feature gating real. NOTE: ~170 `unwrap()` calls across codebase cause AES014 self-violations.
 > **Self-lint**: `lint-arwaky-cli check .` — project audits itself under this architecture
 
 ## 1. Problem Statement
@@ -18,16 +18,16 @@ Before the 6-layer AES architecture, Lint Arwaky had:
 | **No self-audit** | Architecture violations were undetectable without manual review |
 | **No DI contract** | Surfaces bypassed the DI container and imported infrastructure/capabilities directly |
 
-## 2. Konsep Dasar
+## 2. Basic Concepts
 
-AES membagi kode ke 6 layer vertikal dengan aturan ketat:
+AES divides code into 6 vertical layers with strict rules:
 
 ```
 Semakin ke atas → semakin dekat ke user (CLI, MCP)
 Semakin ke bawah → semakin dekat ke domain murni (VO, Entity)
 ```
 
-**Aturan emas**: Layer atas bisa pakai layer bawah, tapi layer bawah TIDAK boleh tahu layer atas.
+**Golden rule**: Upper layers can use lower layers, but lower layers MUST NOT know about upper layers.
 
 ```
 Surfaces ──► Contract ──► Taxonomy
@@ -35,22 +35,22 @@ Agent ──► Capabilities + Infrastructure ──► Contract ──► Taxon
 ```
 
 ### Sibling Equivalence
-Capabilities dan Infrastructure adalah **peer**. Mereka tidak boleh saling import. Keduanya hanya bicara lewat Contract (Ports/Protocols).
+Capabilities and Infrastructure are **peers**. They must not import each other. Both only communicate through Contract (Ports/Protocols).
 
 ### Dependency Inversion
-Surfaces tidak pernah import implementasi konkret. Mereka cuma megang `ServiceContainerAggregate` (trait di contract). Implementasi disuntik lewat DI container.
+Surfaces never import concrete implementations. They only hold `ServiceContainerAggregate` (trait in contract). Implementations are injected through the DI container.
 
-## 3. Mekanisme Kerja — Step by Step
+## 3. How It Works — Step by Step
 
 ### 3.1 Layer Detection (`architecture_compliance_analyzer.rs`)
 
-Setiap file di-scan, layer-nya dideteksi dengan algoritma ini:
+Each file is scanned, its layer is detected with this algorithm:
 
 ```
 FilePath: "src-rust/capabilities/architecture_import_checker.rs"
 
 Step 1: detect_layer()
-  ├── Cek prefix path:
+  ├── Check path prefix:
   │     "src-rust/taxonomy/"  → LAYER_TAXONOMY
   │     "src-rust/contract/"  → LAYER_CONTRACT
   │     "src-rust/capabilities/" → LAYER_CAPABILITIES  ← MATCH
@@ -60,7 +60,7 @@ Step 1: detect_layer()
   │     "src/" atau root → LAYER_ROOT
   │
 Step 2: resolve_specialized_layer()
-  └── Cocokkan suffix file:
+  └── Match file suffix:
         "_vo"       → taxonomy(vo)
         "_entity"   → taxonomy(entity)
         "_error"    → taxonomy(error)
@@ -72,37 +72,37 @@ Step 2: resolve_specialized_layer()
         "_checker"  → capabilities(checker)   ← MATCH
         "_analyzer" → capabilities(analyzer)
         ...
-        (fallback → layer umum)
+        (fallback → general layer)
 
 Result: LAYER_CAPABILITIES + sub-layer "checker"
 ```
 
 ### 3.2 Import Validation (`architecture_import_checker.rs`)
 
-Setelah layer diketahui, impor di file divalidasi:
+After the layer is known, the imports in the file are validated:
 
 ```
 File: capabilities/architecture_import_checker.rs
 Layer: capabilities
 
-Untuk setiap "use ..." atau "import ..." di file:
+For each "use ..." or "import ..." in the file:
 
 1. check_forbidden_imports() → AES001
-   ├── Cari tahu layer TARGET dari path import
+   ├── Determine the TARGET layer from the import path
    │     "use crate::infrastructure::..." → target = infrastructure
    │
-   └── Cek aturan:
-         capabilities BOLEH import: taxonomy, contract(protocol)
-         capabilities TIDAK BOLEH import: infrastructure, surfaces, agent, capabilities(sibling)
-         └── infrastructure ada di daftar terlarang → FLAG VIOLATION (AES001)
+   └── Check rules:
+         capabilities MAY import: taxonomy, contract(protocol)
+         capabilities MUST NOT import: infrastructure, surfaces, agent, capabilities(sibling)
+         └── infrastructure is in the forbidden list → FLAG VIOLATION (AES001)
 
 2. check_mandatory_imports() → AES002
-   └── Capabilities WAJIB import: taxonomy, contract(protocol)
-         └── Kalau taxonomy tidak diimport → FLAG VIOLATION (AES002)
+   └── capabilities MUST import: taxonomy, contract(protocol)
+         └── If taxonomy is not imported → FLAG VIOLATION (AES002)
 
-3. AES023 (khusus surfaces):
-   └── Surface cuma boleh akses infra/cap lewat ServiceContainerAggregate
-         └── Kalau ada "use crate::infrastructure::..." langsung → FLAG
+3. AES023 (surfaces only):
+   └── Surface may only access infra/cap via ServiceContainerAggregate
+         └── If there is "use crate::infrastructure::..." directly → FLAG
 ```
 
 ### 3.3 Layer-Gated Compilation (`src-rust/lib.rs`)
@@ -130,9 +130,9 @@ pub mod agent;           // depends on capabilities + infrastructure + contract
 pub mod surfaces;        // depends on agent + contract
 ```
 
-Rantai feature: `check_taxonomy` → `check_contract` → `check_infrastructure` / `check_capabilities` → `check_agent` → `check_surfaces` (default).
+Feature chain: `check_taxonomy` → `check_contract` → `check_infrastructure` / `check_capabilities` → `check_agent` → `check_surfaces` (default).
 
-Kalau seseorang compile `--features check_agent` tanpa `check_capabilities`, compile **gagal** karena agent butuh capabilities. Ini mencegah circular dependency di compile time.
+If someone compiles `--features check_agent` without `check_capabilities`, compilation **fails** because agent needs capabilities. This prevents circular dependencies at compile time.
 
 ### 3.4 DI Container Wiring (`agent/dependency_injection_container.rs`)
 
@@ -140,7 +140,7 @@ Kalau seseorang compile `--features check_agent` tanpa `check_capabilities`, com
 Entry point (cli_main_entry.rs / mcp_main_entry.rs)
     │
     ▼
-Buat semua implementasi konkret (infrastructure):
+Create all concrete implementations (infrastructure):
     ├── OSFileSystemAdapter
     ├── ASTRustParserAdapter
     ├── ASTPythonParserAdapter
@@ -151,7 +151,7 @@ Buat semua implementasi konkret (infrastructure):
     ├── ...
     │
     ▼
-Bungkus dalam Arc<dyn TraitContract>:
+Wrap in Arc<dyn TraitContract>:
     ├── Arc<dyn IFileSystemPort>
     ├── Arc<dyn ISourceParserPort>
     ├── Arc<dyn IConfigReaderPort>
@@ -159,21 +159,21 @@ Bungkus dalam Arc<dyn TraitContract>:
     ├── ...
     │
     ▼
-Buat capabilitiy (logic) dengan injected dependencies:
+Create capability (logic) with injected dependencies:
     ├── ArchitectureComplianceAnalyzer(IFileSystemPort)
     ├── ArchitectureImportChecker(ISourceParserPort)
     ├── ConfigOrchestrationProcessor(IConfigReaderPort, ILanguageDetectorPort)
     ├── ...
     │
     ▼
-Buat ServiceContainerAggregate (contract) → implementasi konkret:
-    └── DependencyInjectionContainer { semua Arc }
+Create ServiceContainerAggregate (contract) → concrete implementation:
+    └── DependencyInjectionContainer { all Arc }
         │
         ▼
-Inject ke surfaces (CLI, MCP) via Arc<dyn ServiceContainerAggregate>
+Inject into surfaces (CLI, MCP) via Arc<dyn ServiceContainerAggregate>
 
-Surface PANGGIL:   container.get_compliance_analyzer().detect_layer(path)
-Surface TIDAK:     ArchitectureComplianceAnalyzer::new()  ← FORBIDDEN (AES023)
+Surface CALLS:   container.get_compliance_analyzer().detect_layer(path)
+Surface DOES NOT: ArchitectureComplianceAnalyzer::new()  ← FORBIDDEN (AES023)
 ```
 
 ### 3.5 Self-Lint Flow
@@ -182,77 +182,77 @@ Surface TIDAK:     ArchitectureComplianceAnalyzer::new()  ← FORBIDDEN (AES023)
 lint-arwaky-cli check .
     │
     ├─► ArchLintHandler.find_source_dir(".")
-    │     └─► Cari: src-rust/? src-python/? src-javascript/? src/?
-    │           → ketemu src-rust/ → language = Rust
+    │     └─► Search: src-rust/? src-python/? src-javascript/? src/?
+    │           → found src-rust/ → language = Rust
     │
     ├─► ConfigLoaderOrchestrator.load_project_config(".")
-    │     └─► Baca lint_arwaky.config.rust.yaml → ArchitectureConfig
+    │     └─► Read lint_arwaky.config.rust.yaml → ArchitectureConfig
     │
     ├─► LintCheckingCoordinator.run_all_checks("src-rust/")
     │     │
-    │     ├─► Walk semua file .rs di src-rust/
+    │     ├─► Walk all .rs files in src-rust/
     │     │
     │     ├─► Per file:
-    │     │     ├─► detect_layer() → tahu file ini di layer apa
-    │     │     ├─► extract_imports() → tahu file ini import apa aja
+    │     │     ├─► detect_layer() → know which layer this file is in
+    │     │     ├─► extract_imports() → know what imports this file has
     │     │     ├─► check naming (AES003) → 3-word snake_case?
-    │     │     ├─► check suffix (AES011) → suffix sesuai layer?
-    │     │     ├─► check imports (AES001, AES002) → import boleh/tidak?
-    │     │     ├─► check bypass (AES014) → ada #[allow(...)]?
+    │     │     ├─► check suffix (AES011) → suffix matches layer?
+    │     │     ├─► check imports (AES001, AES002) → imports allowed/not?
+    │     │     ├─► check bypass (AES014) → any #[allow(...)]?
     │     │     ├─► check inheritance (AES026, AES027) → implements contract?
-    │     │     ├─► check primitives (AES006) → ada String/i32 di entity?
+    │     │     ├─► check primitives (AES006) → any String/i32 in entity?
     │     │     ├─► check file size (AES004, AES005) → 10-500 lines?
     │     │     └─► ...
     │     │
     │     └─► Cross file:
-    │           ├─► barrel completeness (AES012) → mod.rs export semua?
-    │           ├─► circular dependencies (AES020) → ada cycle?
-    │           └─► orphan detection (AES017) → file tidak di-refer?
+    │           ├─► barrel completeness (AES012) → mod.rs exports everything?
+    │           ├─► circular dependencies (AES020) → any cycles?
+    │           └─► orphan detection (AES017) → file not referenced?
     │
-    └─► Kumpulkan semua violation → ArchitectureGovernanceEntity
+    └─► Collect all violations → ArchitectureGovernanceEntity
           ├─► Score: 100 - (LOW*1 + MEDIUM*2 + HIGH*3 + CRITICAL*5)
-          ├─► Kalau ada CRITICAL → auto fail
-          └─► Cetak violation grouped by severity/rule
+          ├─► If there is CRITICAL → auto fail
+          └─► Print violations grouped by severity/rule
 ```
 
 ## 4. Layer Specification
 
-| Layer | Directory | Suffixes | Boleh Import | Tidak Boleh Import |
+| Layer | Directory | Suffixes | May Import | Must Not Import |
 |-------|-----------|----------|--------------|-------------------|
 | **Surface (Smart)** | `surfaces/` | `_command`, `_handler`, `_controller`, `_entry` | taxonomy, contract(aggregate) | agent, capabilities, infrastructure, contract(port), contract(protocol) |
 | **Surface (Utility)** | `surfaces/` | `_hook`, `_store`, `_provider`, `_router` | taxonomy, contract(aggregate) | agent, capabilities, infrastructure, Smart surfaces |
-| **Surface (Passive)** | `surfaces/` | `_component`, `_layout`, `_view` | taxonomy | agent, contract, capabilities, infrastructure, semua surface lain |
+| **Surface (Passive)** | `surfaces/` | `_component`, `_layout`, `_view` | taxonomy | agent, contract, capabilities, infrastructure, all other surfaces |
 | **Agent (Container)** | `agent/` | `_container`, `_registry`, `_mixin` | taxonomy, contract | surfaces |
 | **Agent (Orchestrator)** | `agent/` | `_orchestrator`, `_coordinator`, `_dispatcher` | taxonomy, contract(aggregate) | surfaces, agent siblings |
-| **Agent (Support)** | `agent/` | `_manager`, `_handler`, `_result`, `_state` | taxonomy | agent lain, infrastructure, capabilities, surfaces |
-| **Capabilities** | `capabilities/` | `_checker`, `_analyzer`, `_processor`, dll | taxonomy, contract(protocol) | infrastructure, surfaces, agent, capabilities(sibling) |
-| **Infrastructure** | `infrastructure/` | `_adapter`, `_provider`, `_scanner`, dll | taxonomy, contract(port) | surfaces, capabilities, agent, infrastructure(sibling) |
+| **Agent (Support)** | `agent/` | `_manager`, `_handler`, `_result`, `_state` | taxonomy | other agents, infrastructure, capabilities, surfaces |
+| **Capabilities** | `capabilities/` | `_checker`, `_analyzer`, `_processor`, etc. | taxonomy, contract(protocol) | infrastructure, surfaces, agent, capabilities(sibling) |
+| **Infrastructure** | `infrastructure/` | `_adapter`, `_provider`, `_scanner`, etc. | taxonomy, contract(port) | surfaces, capabilities, agent, infrastructure(sibling) |
 | **Contract** | `contract/` | `_port`, `_protocol`, `_aggregate` | taxonomy, contract(sibling) | agent, infrastructure, surfaces, capabilities |
-| **Taxonomy** | `taxonomy/` | `_vo`, `_entity`, `_event`, `_error`, `_constant` | taxonomy only | semua layer lain |
+| **Taxonomy** | `taxonomy/` | `_vo`, `_entity`, `_event`, `_error`, `_constant` | taxonomy only | all other layers |
 
-## 5. File-file Kunci
+## 5. Key Files
 
 ### Taxonomy (4 files)
-| File | Isi |
+| File | Content |
 |------|-----|
-| `taxonomy/layer_names_constant.rs` | `LAYER_TAXONOMY = "taxonomy"`, `LAYER_CONTRACT = "contract"`, dll |
-| `taxonomy/layer_names_vo.rs` | Fungsi factory: `all_core_layers()` → vec semua layer |
+| `taxonomy/layer_names_constant.rs` | `LAYER_TAXONOMY = "taxonomy"`, `LAYER_CONTRACT = "contract"`, etc. |
+| `taxonomy/layer_names_vo.rs` | Factory function: `all_core_layers()` → vec of all layers |
 | `taxonomy/layer_definition_vo.rs` | `LayerDefinition { path, allowed_suffixes, allowed_imports, forbidden_imports, mandatory_imports, min_lines, max_lines }` |
-| `taxonomy/layer_content_vo.rs` | `LayerNameVO`, `FileContentVO`, `LineContentVO` — data container untuk hasil parsing |
+| `taxonomy/layer_content_vo.rs` | `LayerNameVO`, `FileContentVO`, `LineContentVO` — data containers for parse results |
 
 ### Contract (5 traits)
 | File | Trait | Method |
 |------|-------|--------|
-| `contract/service_container_aggregate.rs` | `ServiceContainerAggregate` | `get_compliance_analyzer()`, `get_import_checker()`, `get_lint_orchestrator()`, dll |
-| `contract/infrastructure_container_aggregate.rs` | `InfrastructureContainerAggregate` | Init semua adapter |
-| `contract/capability_container_aggregate.rs` | `CapabilityContainerAggregate` | Init semua checker |
+| `contract/service_container_aggregate.rs` | `ServiceContainerAggregate` | `get_compliance_analyzer()`, `get_import_checker()`, `get_lint_orchestrator()`, etc. |
+| `contract/infrastructure_container_aggregate.rs` | `InfrastructureContainerAggregate` | Init all adapters |
+| `contract/capability_container_aggregate.rs` | `CapabilityContainerAggregate` | Init all checkers |
 | `contract/orchestrator_container_aggregate.rs` | `OrchestratorContainerAggregate` | Init orchestrator |
 | `contract/adapter_container_aggregate.rs` | `AdapterContainerAggregate` | Init linter adapters |
 
 ### Capabilities (10 checker files)
-| File | Fungsi |
+| File | Function |
 |------|--------|
-| `architecture_compliance_analyzer.rs` | `detect_layer(path) → LayerNameVO` — inti layer detection |
+| `architecture_compliance_analyzer.rs` | `detect_layer(path) → LayerNameVO` — core layer detection |
 | `architecture_naming_checker.rs` | `check_naming(file) → Vec<Violation>` — AES003, AES011 |
 | `architecture_import_checker.rs` | `check_imports(file, layer) → Vec<Violation>` — AES001, AES002, AES023 |
 | `architecture_role_checker.rs` | `check_role(file, layer) → Vec<Violation>` — AES021 |
@@ -263,7 +263,7 @@ lint-arwaky-cli check .
 | `architecture_cycle_analyzer.rs` | `find_cycles(project) → Vec<Violation>` — AES020 |
 | `surface_hierarchy_checker.rs` | `check_surfaces(file) → Vec<Violation>` — AES018, AES019, AES022 |
 
-## 6. Alur Validasi Import (Detail)
+## 6. Import Validation Flow (Detail)
 
 ```
 Sebuah file surfaces/cli_check_command.rs di-check:
@@ -310,20 +310,20 @@ AES013: File selain mod.rs TIDAK BOLEH punya `pub mod` atau `pub use`
   yang mengekspos modul lain. Hanya mod.rs yang boleh jadi pintu keluar.
 ```
 
-## 8. Layer-Gated Compilation — Cara Kerja
+## 8. Layer-Gated Compilation — How It Works
 
 ```bash
-# Cuma compile taxonomy (layer paling bawah)
+# Only compile taxonomy (bottom layer)
 cargo check --lib --no-default-features --features check_taxonomy
 
 # Compile taxonomy + contract
 cargo check --lib --no-default-features --features check_contract
 
-# Compile semua layer (default)
+# Compile all layers (default)
 cargo check --lib
 ```
 
-Diagram dependensi feature di `Cargo.toml`:
+Feature dependency diagram in `Cargo.toml`:
 
 ```toml
 [features]
@@ -336,62 +336,62 @@ check_surfaces = ["check_agent"]
 default = ["check_surfaces"]
 ```
 
-Kalau ada `capabilities` yang nyoba import `surfaces`:
-- Compile `--features check_capabilities` → OK (surfaces tidak di-include)
-- Tapi pas runtime `check surfaces` → ERROR karena `check_capabilities` tidak include surfaces
-- **Compile-time protection**: surfaces tidak tersedia di scope capabilities
+If capabilities tries to import surfaces:
+- Compile `--features check_capabilities` → OK (surfaces is not included)
+- But at runtime `check surfaces` → ERROR because `check_capabilities` does not include surfaces
+- **Compile-time protection**: surfaces is not available in capabilities scope
 
 ## 9. Files Summary
 
-| Kategori | Jumlah | File |
+| Category | Count | File |
 |----------|--------|------|
 | Layer VOs/Constants | 4 | `layer_names_constant.rs`, `layer_names_vo.rs`, `layer_definition_vo.rs`, `layer_content_vo.rs` |
 | Barrel files | 6 | `taxonomy/mod.rs`, `contract/mod.rs`, `capabilities/mod.rs`, `infrastructure/mod.rs`, `agent/mod.rs`, `surfaces/mod.rs` |
 | DI Contract traits | 5 | `service_container_aggregate.rs`, `infrastructure_container_aggregate.rs`, `capability_container_aggregate.rs`, `orchestrator_container_aggregate.rs`, `adapter_container_aggregate.rs` |
-| Layer enforcement | 10 | Semua file di `capabilities/` untuk layer logic |
+| Layer enforcement | 10 | All files in `capabilities/` for layer logic |
 | YAML configs | 3 | `lint_arwaky.config.rust.yaml`, `.python.yaml`, `.javascript.yaml` |
 | Entry points | 3 | `lib.rs`, `cli_main_entry.rs`, `mcp_main_entry.rs` |
 
 ## 10. AES Compliance
 
-| Rule | Status | Mekanisme |
+| Rule | Status | Mechanism |
 |------|--------|-----------|
-| AES001 | ✅ | `check_forbidden_imports()` — cocokkan target import dengan daftar terlarang per layer |
-| AES002 | ✅ | `check_mandatory_imports()` — pastikan import wajib ada |
+| AES001 | ✅ | `check_forbidden_imports()` — match import target against forbidden list per layer |
+| AES002 | ✅ | `check_mandatory_imports()` — ensure mandatory imports are present |
 | AES003 | ✅ | `check_naming()` — regex `^\w+_\w+_\w+\.rs$` |
 | AES006 | ✅ | `find_primitive_violations()` — scan type annotation: `String`, `i32`, `int`, `str` |
-| AES008 | ✅ | `check_suffix()` — contract harus `_port`, `_protocol`, atau `_aggregate` |
-| AES011 | ✅ | `check_suffix()` — suffix harus sesuai allowed list per layer |
-| AES012 | ✅ | `check_barrel()` — mod.rs harus re-export semua file di layer |
-| AES013 | ✅ | `check_internal()` — file non-mod.rs tidak boleh `pub mod` / `pub use` |
-| AES018 | ✅ | Utility surfaces tidak boleh import Smart surfaces |
-| AES019 | ✅ | Passive surfaces cuma boleh import taxonomy |
-| AES022 | ✅ | Smart surfaces harus delegate via `ServiceContainerAggregate` |
-| AES023 | ✅ | Surface tidak boleh langsung import infra/capabilities |
-| AES026 | ✅ | Contract Aggregate gak boleh `impl PortTrait` — harus composition |
-| AES027 | ✅ | Setiap logic file harus implements minimal satu contract trait |
-| AES033 | ✅ | `_constant` file cuma berisi `pub const` / `pub static` |
+| AES008 | ✅ | `check_suffix()` — contract must be `_port`, `_protocol`, or `_aggregate` |
+| AES011 | ✅ | `check_suffix()` — suffix must match allowed list per layer |
+| AES012 | ✅ | `check_barrel()` — mod.rs must re-export all files in the layer |
+| AES013 | ✅ | `check_internal()` — non-mod.rs files must not have `pub mod` / `pub use` |
+| AES018 | ✅ | Utility surfaces must not import Smart surfaces |
+| AES019 | ✅ | Passive surfaces may only import taxonomy |
+| AES022 | ✅ | Smart surfaces must delegate via `ServiceContainerAggregate` |
+| AES023 | ✅ | Surface must not directly import infra/capabilities |
+| AES026 | ✅ | Contract Aggregate must not `impl PortTrait` — must use composition |
+| AES027 | ✅ | Every logic file must implement at least one contract trait |
+| AES033 | ✅ | `_constant` file only contains `pub const` / `pub static` |
 
 ## 11. Implementation Order
 
-1. **Taxonomy**: Definisikan layer names, definitions, content VOs
-2. **Contract**: Definisikan `ServiceContainerAggregate` + DI traits
-3. **Infrastructure**: Implementasi `OSFileSystemAdapter`, config providers, parsers
-4. **Capabilities**: Implementasi compliance analyzer, naming checker, import checker
-5. **Agent**: Wiring DI container
-6. **Surfaces**: Wiring CLI check command
+1. **Taxonomy**: Define layer names, definitions, content VOs
+2. **Contract**: Define `ServiceContainerAggregate` + DI traits
+3. **Infrastructure**: Implement `OSFileSystemAdapter`, config providers, parsers
+4. **Capabilities**: Implement compliance analyzer, naming checker, import checker
+5. **Agent**: Wire DI container
+6. **Surfaces**: Wire CLI check command
 
 ## 12. Acceptance Criteria
 
-| # | Kriteria | Mekanisme Verifikasi | Status |
+| # | Criteria | Verification Mechanism | Status |
 |---|----------|---------------------|--------|
-| AC001 | Setiap file punya suffix layer sesuai | `check_suffix()` di semua file `src-rust/` | ✅ |
-| AC002 | Taxonomy tidak import layer atas | `check_forbidden_imports()` di taxonomy | ✅ |
-| AC003 | Surface tidak import infra/cap langsung | `check_legacy_import_rules()` → AES023 | ✅ |
-| AC004 | Barrel lengkap (AES012) | `check_barrel()` di semua mod.rs | ✅ |
-| AC005 | `features check_taxonomy` hanya compile taxonomy | `cargo check --no-default-features --features check_taxonomy` | ✅ |
-| AC006 | `features check_surfaces` compile semua | `cargo check --features check_surfaces` | ✅ |
-| AC007 | Self-lint deteksi pelanggaran | `lint-arwaky-cli check .` → 153 violations | ✅ |
-| AC008 | Circular dependency terdeteksi | `architecture_cycle_analyzer` | ✅ |
-| AC009 | Setiap logic file implements contract trait | `check_inheritance()` → AES027 | ✅ |
-| AC010 | Konfigurasi lewat YAML tanpa perubahan kode | Baca `lint_arwaky.config.rust.yaml` | ✅ |
+| AC001 | Each file has the correct layer suffix | `check_suffix()` on all files in `src-rust/` | ✅ |
+| AC002 | Taxonomy does not import upper layers | `check_forbidden_imports()` on taxonomy | ✅ |
+| AC003 | Surface does not directly import infra/cap | `check_legacy_import_rules()` → AES023 | ✅ |
+| AC004 | Barrel is complete (AES012) | `check_barrel()` on all mod.rs | ✅ |
+| AC005 | `features check_taxonomy` only compiles taxonomy | `cargo check --no-default-features --features check_taxonomy` | ✅ |
+| AC006 | `features check_surfaces` compiles everything | `cargo check --features check_surfaces` | ✅ |
+| AC007 | Self-lint detects violations | `lint-arwaky-cli check .` → 153 violations | ✅ |
+| AC008 | Circular dependency detected | `architecture_cycle_analyzer` | ✅ |
+| AC009 | Every logic file implements contract trait | `check_inheritance()` → AES027 | ✅ |
+| AC010 | Configuration via YAML without code changes | Read `lint_arwaky.config.rust.yaml` | ✅ |
