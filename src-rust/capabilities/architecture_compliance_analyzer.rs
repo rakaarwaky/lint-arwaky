@@ -70,6 +70,10 @@ impl ArchComplianceAnalyzer {
                             ldef.mandatory_class_definition = rule.mandatory_class_definition.clone();
                             ldef.mandatory_class_definition_violation_message = rule.mandatory_class_definition_violation_message.clone();
                         }
+                        if !rule.forbidden_inheritance.values.is_empty() {
+                            ldef.forbidden_inheritance = rule.forbidden_inheritance.clone();
+                            ldef.forbidden_inheritance_violation_message = rule.forbidden_inheritance_violation_message.clone();
+                        }
                     }
                 }
             }
