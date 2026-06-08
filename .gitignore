@@ -23,7 +23,5 @@ coverage.json
 .graph-it/
 scratch/
 output/
-graphanalyzerreference/
-graph analyzerreference/
 .jj
 target/
