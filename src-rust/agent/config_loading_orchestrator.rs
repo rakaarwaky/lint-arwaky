@@ -4,7 +4,10 @@ use crate::contract::config_orchestration_protocol::IConfigOrchestrationProtocol
 use crate::contract::config_reader_port::IConfigReaderPort;
 use crate::contract::config_parser_port::IConfigParserPort;
 use crate::contract::language_detector_port::ILanguageDetectorPort;
+<<<<<<< HEAD
 use crate::contract::ServiceContainerAggregate;
+=======
+>>>>>>> 6073c42fee5ad436692b5fe2fdf692e46b36a70c
 use crate::taxonomy::architecture_config_vo::default_config_for_language;
 use crate::taxonomy::{ConfigResult, ConfigSource, FilePath};
 
