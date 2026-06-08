@@ -1,4 +1,4 @@
-use crate::taxonomy::{BooleanVO, Cause, ErrorCode, ErrorMessage, JobId};
+use crate::taxonomy::{Cause, ErrorCode, ErrorMessage, JobId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]

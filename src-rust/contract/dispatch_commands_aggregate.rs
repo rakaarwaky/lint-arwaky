@@ -1,8 +1,10 @@
-use crate::contract::ServiceContainerAggregate;
 use crate::taxonomy::{ActionName, CommandMetadataVO, DescriptionVO, Suggestion};
 use std::collections::HashMap;
 
-pub fn command_catalog() -> HashMap<ActionName, CommandMetadataVO> {
+pub struct DispatchCommandsAggregate;
+
+impl DispatchCommandsAggregate {
+    pub fn command_catalog() -> HashMap<ActionName, CommandMetadataVO> {
     let mut catalog = HashMap::new();
     catalog.insert(
         ActionName::from("check"),
@@ -208,4 +210,10 @@ pub fn command_catalog() -> HashMap<ActionName, CommandMetadataVO> {
         ),
     );
     catalog
+    } // end command_catalog
+}
+
+// Forward-compat free function wrapper for backward compatibility
+pub fn command_catalog() -> HashMap<ActionName, CommandMetadataVO> {
+    DispatchCommandsAggregate::command_catalog()
 }

@@ -32,7 +32,7 @@ To solve the "Scattered Feature Problem", AES enforces a **3-Word File Naming Co
 2. **Middle**: A single word defining the core concept (e.g., `token`, `session`).
 3. **Suffix**: Defines the architectural layer and behavioral contract (e.g., `_vo`, `_port`, `_orchestrator`).
 
-*Example:* `auth_session_vo.rs` instantly tells us the domain (auth), the concept (session), and the architectural role (value object). Exceptions: `main.rs`, `lib.rs`, `mod.rs`.
+*Example:* `auth_session_vo.rs` instantly tells us the domain (auth), the concept (session), and the architectural role (value object). Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
 
 ---
 
