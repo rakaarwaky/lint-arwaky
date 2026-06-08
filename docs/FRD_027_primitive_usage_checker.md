@@ -12,82 +12,89 @@
 
 ## 2. Introduction
 ### 2.1 Purpose
-Dokumen ini mendefinisikan aturan **AES006 (PRIMITIVE_USAGE)** yang melarang penggunaan tipe primitif mentah (seperti `String`, `i32`, `bool`, `str`, `int`, `float`) dalam domain types tertentu. Aturan ini memastikan bahwa entity, error, event, dan contract interface menggunakan Value Objects (_vo) sebagai pengganti primitif, sesuai prinsip Domain-Driven Design.
+This document defines the AES006 rule that detects raw primitive type usage in domain types. Entities, errors, events, and contract interfaces must use Value Objects instead of raw primitives (e.g., `String`, `i32`, `str`, `int`), following Domain-Driven Design principles. VO and Constant files are exempt.
 
 ### 2.2 Scope
 **In-Scope:**
-- Deteksi primitif di file taxonomy(entity), taxonomy(error), taxonomy(event)
-- Deteksi primitif di file contract(port), contract(protocol)
-- Pengecualian untuk taxonomy(vo) dan taxonomy(constant) — boleh pakai primitif
-- Tiga bahasa: Rust, Python, JavaScript/TypeScript
-- Severity HIGH
+- Primitive detection in taxonomy(entity), taxonomy(error), taxonomy(event)
+- Primitive detection in contract(port), contract(protocol)
+- Exemption for taxonomy(vo) and taxonomy(constant) — primitives allowed
+- Three languages: Rust, Python, JavaScript/TypeScript
+- HIGH severity
 
 **Out-of-Scope:**
-- File di luar taxonomy dan contract (capabilities, infrastructure, agent, surfaces)
-- Auto-fixing (tidak auto-fixable)
-- Penggantian primitif dengan VO secara otomatis
+- Files outside taxonomy and contract layers (capabilities, infrastructure, agent, surfaces)
+- Auto-fixing violations
+- Automatic primitive-to-VO conversion
 
 ### 2.3 Glossary
 | Term | Definition |
 |------|------------|
-| **AES006** | Rule code untuk primitive usage violation |
-| **check_primitive_usage()** | Inline checker method (aktif) di `lint_checking_coordinator.rs` |
-| **DomainTypeRuleChecker** | Capability checker (tidak dipakai) di `domain_type_checker.rs` |
-| **no_primitives** | Config flag yang menentukan scope mana yang dicek |
-| **CORE_PRIMITIVE_TYPES** | Constant daftar primitif di `naming_symbols_constant.rs` |
-| **VO (Value Object)** | Tipe domain yang membungkus primitif dengan aturan bisnis |
+| **AES006** | Rule code for primitive usage violation |
+| **check_primitive_usage()** | Active inline checker in `lint_checking_coordinator.rs` |
+| **DomainTypeRuleChecker** | Orphan capability in `domain_type_checker.rs` (unused) |
+| **no_primitives** | Config flag controlling which scopes are checked |
+| **CORE_PRIMITIVE_TYPES** | Primitive type constant in `naming_symbols_constant.rs` |
+| **VO (Value Object)** | Domain type wrapping primitives with business rules |
 
 ## 3. Feature Overview
 ### 3.1 Background & Problem
-Sebelum AES006, domain entity, error, dan event bisa menggunakan tipe primitif langsung seperti `String name` atau `int age`. Ini melanggar prinsip Domain-Driven Design di mana semua domain type harus menggunakan Value Objects yang memiliki validasi dan aturan bisnis. Tidak ada mekanisme yang secara otomatis mendeteksi pelanggaran ini.
+Before AES006, domain entities, errors, and events could use raw primitives like `String name` or `int age` directly. This violates DDD principles where all domain types should use Value Objects with validation and business rules. There was no automated mechanism to catch these violations.
 
 ### 3.2 Business Goals
-- Memastikan semua domain entity menggunakan Value Objects
-- Memastikan domain error dan event tidak bocor ke primitif
-- Contract interface harus menggunakan domain types, bukan primitif
-- Memberikan pengecualian untuk VO dan Constant (exempt)
+- Ensure all domain entities use Value Objects instead of primitives
+- Prevent primitive leakage in domain errors and events
+- Contract interfaces must use domain types, not primitives
+- Exempt VO and Constant files (they legitimately wrap/expose primitives)
 
 ### 3.3 Target Users
-- **Developers**: Mendapat feedback ketika menggunakan primitif di domain types
-- **Domain Architects**: Memastikan DDD purity dalam taxonomy layer
+- **Developers**: Get feedback when using primitives in domain types
+- **Domain Architects**: Enforce DDD purity in the taxonomy layer
 
 ## 4. Functional Requirements
 ### 4.1 User Stories
-- **US-001:** Sebagai developer, saya ingin diperingatkan ketika saya menggunakan `String` atau `i32` di entity, sehingga saya membuat Value Object yang tepat.
-- **US-002:** Sebagai developer, saya TIDAK ingin diperingatkan ketika saya menggunakan primitif di VO file, karena VO justru membungkus primitif.
-- **US-003:** Sebagai architect, saya ingin mengaktifkan/menonaktifkan aturan ini per scope via YAML.
+- **US-001:** As a developer, I want to be warned when I use `String` or `i32` in an entity, so I create proper Value Objects.
+- **US-002:** As a developer, I do NOT want to be warned when I use primitives in a VO file, since VOs are meant to wrap primitives.
+- **US-003:** As an architect, I want to enable/disable this rule per scope via YAML (`no_primitives` flag).
 
 ### 4.2 Use Cases & Workflow
-**Detection Pipeline (saat ini - inline checker):**
+**Current Detection Pipeline (inline checker):**
 ```
 File: taxonomy/massive_domain_entity.rs
 
-1. Apakah path mengandung "/taxonomy/"? → YA ✅
-2. Untuk setiap baris:
-   a. Apakah baris mengandung ":" dan diakhiri "," atau "}"? → YA (field definition)
-   b. Ambil tipe setelah ":"
-   c. Apakah tipe termasuk ["String","i32","bool",...]? → YA
+1. Does path contain "/taxonomy/"? → YES ✅
+2. For each line:
+   a. Does line contain ":" and end with "," or "}"? → YES (field def)
+   b. Extract type after ":"
+   c. Is type in ["String","i32","bool",...]? → YES
    d. Flag AES006 HIGH
 ```
 
-**Detection Pipeline (seharusnya - berdasarkan config):**
+**Correct Detection Pipeline (should be):**
 ```
 File: taxonomy/massive_domain_entity.rs
 
-1. Deteksi layer: taxonomy(entity)
-2. Apakah no_primitives = true? → YA ✅ (config line 190)
-3. Parse file dengan AST scanner → dapatkan semua field types
-4. Apakah ada field dengan tipe primitif? → String, i32 — YA ❌
+1. Detect layer: taxonomy(entity)
+2. Is no_primitives = true? → YES ✅ (config line 190)
+3. Parse file via AST scanner → extract all field types
+4. Any fields with primitive types? → String, i32 — YES ❌
 5. Flag AES006 HIGH
+
+File: taxonomy/address_vo.rs (VO — exempt)
+
+1. Detect layer: taxonomy(vo)
+2. Is no_primitives = false? → YES (config line 186)
+3. Skip — no check performed ✅
 ```
 
 ### 4.3 Business Rules
 - Severity: HIGH
-- Scope yang dicek: `taxonomy(entity)`, `taxonomy(error)`, `taxonomy(event)`, `contract`
-- Scope yang TIDAK dicek: `taxonomy(vo)`, `taxonomy(constant)`, `capabilities`, `infrastructure`, `agent`, `surfaces`
-- Pesan violation dari YAML per scope
-- Primitive list untuk Rust: `String, i8-i128, u8-u128, f32, f64, bool, char, Vec<, HashMap<, Option<, Result<`
-- Primitive list untuk Python: `str, int, float, bool, list, dict, tuple, set`
+- Scopes checked: `taxonomy(entity)`, `taxonomy(error)`, `taxonomy(event)`, `contract`
+- Scopes NOT checked: `taxonomy(vo)`, `taxonomy(constant)`, `capabilities`, `infrastructure`, `agent`, `surfaces`
+- Violation message per scope from YAML
+- Rust primitives: `String, i8-i128, u8-u128, f32, f64, bool, char, Vec<, HashMap<, Option<, Result<`
+- Python primitives: `str, int, float, bool, list, dict, tuple, set`
+- JS/TS primitives: `string, number, boolean, any, object, Array, Record`
 
 ## 5. Non-Functional Requirements
 | ID | Requirement | Target |
@@ -95,7 +102,7 @@ File: taxonomy/massive_domain_entity.rs
 | NFR-001 | Detection per file | < 20ms |
 | NFR-002 | False positive rate (VO files) | 0% |
 | NFR-003 | Cross-language support | Rust, Python, JS/TS |
-| NFR-004 | Config-driven scope | Sesuai `no_primitives` di YAML |
+| NFR-004 | Config-driven scoping | Reflects `no_primitives` in YAML |
 
 ## 6. UI/UX Requirements
 ```
@@ -109,19 +116,19 @@ AES006 HIGH - test-project-python/src-python/taxonomy/raw_entity.py:5
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Rust entity file pakai `String`, `i32` | Check primitive usage | AES006 HIGH flagged | ✅ (inline checker) |
-| AC-002 | Python entity file pakai `str`, `int` | Check primitive usage | AES006 HIGH flagged | ❌ **Tidak dicek oleh inline checker** |
-| AC-003 | JS/TS entity file pakai `string`, `number` | Check primitive usage | AES006 HIGH flagged | ❌ **Tidak dicek sama sekali** |
-| AC-004 | Rust VO file pakai `String` | Check primitive usage | **TIDAK** flagged (exempt) | ❌ **Inline checker tetap flag — false positive** |
-| AC-005 | Rust constant file pakai primitif | Check primitive usage | **TIDAK** flagged (exempt) | ❌ **Inline checker tetap flag — false positive** |
-| AC-006 | File di luar taxonomy | Check primitive usage | **TIDAK** dicek | ✅ (inline checker early return) |
-| AC-007 | Config `no_primitives: false` untuk satu scope | Check primitive usage | **TIDAK** flagged untuk scope itu | ❌ **Config flag tidak pernah dibaca** |
+| AC-001 | Rust entity with `String`, `i32` | Primitive check runs | AES006 HIGH flagged | ✅ (inline checker) |
+| AC-002 | Python entity with `str`, `int` | Primitive check runs | AES006 HIGH flagged | ❌ **Not checked by inline checker** |
+| AC-003 | JS/TS entity with `string`, `number` | Primitive check runs | AES006 HIGH flagged | ❌ **Not checked at all** |
+| AC-004 | Rust VO file with `String` | Primitive check runs | **NOT** flagged (exempt) | ❌ **Inline checker flags it — false positive** |
+| AC-005 | Rust constant file with primitives | Primitive check runs | **NOT** flagged (exempt) | ❌ **Inline checker flags it — false positive** |
+| AC-006 | File outside taxonomy | Primitive check runs | **NOT** checked | ✅ (inline early return) |
+| AC-007 | Config `no_primitives: false` for a scope | Primitive check runs | **NOT** flagged for that scope | ❌ **Config flag never consumed** |
 
-## 8. Temuan Empiris (Code Audit)
+## 8. Empirical Findings (Code Audit)
 
-### 8.1 Ada 4 (Empat) Implementasi, Hanya 1 yang Aktif
+### 8.1 Four Implementations — Only One Active
 
-#### 8.1.1 Inline Checker (AKTIF) — `lint_checking_coordinator.rs:177-191`
+#### 8.1.1 Inline Checker (ACTIVE) — `lint_checking_coordinator.rs:177-191`
 ```rust
 fn check_primitive_usage(file: &str, content: &str, violations: &mut Vec<LintResult>) {
     if !file.contains("/taxonomy/") { return; }
@@ -129,137 +136,136 @@ fn check_primitive_usage(file: &str, content: &str, violations: &mut Vec<LintRes
     for (i, line) in content.lines().enumerate() {
         let t = line.trim();
         if t.contains(':') && (t.ends_with(',') || t.ends_with('}')) {
-            let ft = t.split(':').nth(1).unwrap_or("").trim().trim_end_matches(',').trim_end_matches('}');
-            for p in &primitives { if ft.starts_with(p) || ft == p.trim_end_matches('<') {
-                violations.push(...);
-            }}
+            // heuristic: extract type after ':', check against primitive list
+            ...
         }
     }
 }
 ```
-**Status**: ✅ Aktif dipanggil di `run_all_checks()` line 47.
+**Status**: ✅ Active, called in `run_all_checks()` line 47.
 
 #### 8.1.2 DomainTypeRuleChecker (ORPHAN) — `domain_type_checker.rs:24-92`
 ```rust
 pub fn find_primitive_violations(&self, file_path: &str, primitive_types: &[&str]) -> Vec<PrimitiveViolation>
 ```
-**Status**: ❌ **Tidak pernah dipanggil** oleh siapa pun. Kode mati (orphan).
+**Status**: ❌ **Never called** by any pipeline. Dead code.
 
 #### 8.1.3 AST Scanners (UNUSED for AES006) — `ast_rust_scanner.rs`, `ast_py_scanner.rs`, `ast_js_scanner.rs`
-Semua scanner implement `find_primitive_violations()` via `ISourceParserPort`.
-**Status**: ❌ **Tidak pernah dipanggil untuk AES006**. Scanners hanya digunakan untuk parsing import, symbol detection, dll.
+All scanners implement `find_primitive_violations()` via `ISourceParserPort`.
+**Status**: ❌ **Never called for AES006**. Scanners only used for import extraction, symbol detection, etc.
 
-#### 8.1.4 PythonPrimitiveChecker (STUB) — `python_primitive_checker.rs`
+#### 8.1.4 PythonPrimitiveChecker (EMPTY STUB) — `python_primitive_checker.rs`
 ```rust
 pub struct PythonPrimitiveChecker;
 impl PythonPrimitiveChecker {
     pub fn new() -> Self { Self }
 }
 ```
-**Status**: ❌ **Hollow stub** — 9 baris, struct kosong tanpa method. Rencana awal untuk generated Python primitive checker tapi tidak pernah diimplementasi.
+**Status**: ❌ **Hollow stub** — 9 lines, empty struct with no methods. Originally planned for generated Python primitive checker but never implemented.
 
-### 8.2 Bug yang Ditemukan
+### 8.2 Bugs Found
 
-1. **`no_primitives` config flag TIDAK PERNAH dibaca oleh checker** (KRITIS)
-   - Config YAML mendefinisikan `no_primitives: true/false` per scope (lines 184-242)
-   - Tapi inline checker di `lint_checking_coordinator.rs:177-191` punya primitive list hardcoded
-   - `LayerDefinition.no_primitives` di-set di `architecture_compliance_orchestrator.rs:385-387` tapi tidak pernah dikonsumsi
-   - Ini menyebabkan **false positive untuk VO dan Constant** yang seharusnya exempt
+1. **`no_primitives` config flag NEVER consumed by checker** (CRITICAL)
+   - YAML config defines `no_primitives: true/false` per scope (lines 184-242)
+   - Inline checker at `lint_checking_coordinator.rs:177-191` uses a hardcoded primitive list
+   - `LayerDefinition.no_primitives` is set in `architecture_compliance_orchestrator.rs:385-387` but never read by any checker
+   - **Impact**: all taxonomy files are checked uniformly regardless of config
 
-2. **VO dan Constant tetap di-flag** (KRITIS)
+2. **VO and Constant files are falsely flagged** (CRITICAL)
    - Config: `taxonomy(vo): no_primitives: false` (line 186)
    - Config: `taxonomy(constant): no_primitives: false` (line 215)
-   - Tapi inline checker tetap mengecek SEMUA file di `/taxonomy/` tanpa diskriminasi
+   - Inline checker checks ALL files under `/taxonomy/` without discrimination
+   - **Impact**: false positives on legitimate VO and Constant files
 
-3. **Hanya support Rust** (KRITIS)
-   - Primitive list hardcoded untuk Rust: `String, i32, Vec<`, dll.
-   - Python file di `/taxonomy/` tidak akan terdeteksi primitifnya
-   - JS/TS file tidak terdeteksi sama sekali
+3. **Rust-only support** (CRITICAL)
+   - Primitive list is hardcoded for Rust: `String, i32, Vec<`, etc.
+   - Python files under `/taxonomy/` are not detected
+   - JS/TS files are not detected at all
 
-4. **Heuristic regex rapuh**
-   - `line.contains(':') && (line.ends_with(',') || line.ends_with('}'))` — hanya cocok untuk struct field
-   - Tidak menangkap: tuple struct fields, function signatures, const/static types, associated types
-   - `fn process(&self) -> bool { true }` akan di-flag karena `: bool` dan `}` ✅ (actual match)
-   - Tapi `let x: String = ...` tidak akan di-flag ❌ (false negative)
+4. **Fragile regex heuristic**
+   - `line.contains(':') && (line.ends_with(',') || line.ends_with('}'))` — only matches struct fields
+   - Does NOT catch: tuple struct fields, function signatures, const/static types, associated types
+   - `fn process(&self) -> bool { true }` gets flagged because `: bool` and `}` ✅ (accidental match)
+   - `let x: String = ...` is NOT flagged ❌ (false negative)
 
-5. **`CORE_PRIMITIVE_TYPES` tidak dipakai**
+5. **`CORE_PRIMITIVE_TYPES` unused**
    - `naming_symbols_constant.rs:10`: `pub const CORE_PRIMITIVE_TYPES: &[&str] = &["str", "int", "float"]`
-   - Define untuk Python tapi tidak direferensi oleh checker manapun
+   - Defined for Python but never referenced by any checker
 
-6. **`architecture_internal_checker.rs:145` — TODO comment**
+6. **`architecture_internal_checker.rs:145` — dead-end TODO comment**
    - `// Note: no_primitives check (AES006) requires AST parsing of class attributes. That is delegated to the main ArchitectureRulesEvaluator which has AST access.`
-   - Tapi ArchitectureRulesEvaluator tidak ada — delegasi ke entitas yang tidak eksis
+   - `ArchitectureRulesEvaluator` does not exist — delegation target is mythical
 
-### 8.3 Apa yang Perlu Ditambahkan
+### 8.3 What Needs to Be Added
 
-1. **Checker yang proper dengan konsumsi `no_primitives` config**
-   - Gunakan `LayerDefinition.no_primitives` untuk menentukan apakah file perlu dicek
-   - Perluas primitive list per bahasa
-   - Integrasi dengan `ISourceParserPort::find_primitive_violations()` dari AST scanners
+1. **Proper checker consuming `no_primitives` config**
+   - Read `LayerDefinition.no_primitives` to decide whether a file needs checking
+   - Expand primitive list per language
+   - Integrate with `ISourceParserPort::find_primitive_violations()` from existing AST scanners
 
-2. **Dukungan Python dan JavaScript**
-   - Aktifkan `find_primitive_violations()` di `ast_py_scanner.rs` dan `ast_js_scanner.rs`
-   - Panggil melalui `SourceParserOrchestrator` berdasarkan ekstensi file
+2. **Python and JavaScript support**
+   - Activate `find_primitive_violations()` in `ast_py_scanner.rs` and `ast_js_scanner.rs`
+   - Route through `SourceParserOrchestrator` by file extension
 
-3. **Unit tests** untuk semua primitive checking logic
-   - Test untuk Rust struct fields
-   - Test untuk Python class attributes
-   - Test untuk JS/TS class properties
-   - Test untuk VO exemption
-   - Test untuk config `no_primitives: false`
+3. **Unit tests** for all primitive checking logic
+   - Rust struct fields
+   - Python class attributes
+   - JS/TS class properties
+   - VO exemption (negative test)
+   - Config `no_primitives: false` (negative test)
 
-4. **Test fixtures yang lebih komprehensif**
-   - Rust: entity dengan primitif (`String`, `i32`, `bool`)
-   - Rust: VO dengan primitif (harus exempt — test negative)
-   - Python: entity dengan `str`, `int`
-   - JS/TS: entity dengan `string`, `number`
+4. **More comprehensive test fixtures**
+   - Rust: entity with primitives (`String`, `i32`, `bool`)
+   - Rust: VO with primitives (must be exempt — negative test)
+   - Python: entity with `str`, `int`
+   - JS/TS: entity with `string`, `number`
 
-### 8.4 Apa yang Perlu Dihapus
+### 8.4 What Needs to Be Removed
 
-1. **`domain_type_checker.rs` — kode mati/orphan**
-   - `DomainTypeRuleChecker` tidak pernah dipanggil
-   - Hapus file atau wiring agar dipanggil oleh coordinator
-   - Atau ganti dengan implementasi yang benar-benar terintegrasi
+1. **`domain_type_checker.rs` — orphan/dead code**
+   - `DomainTypeRuleChecker` is never called
+   - Either wire it into the pipeline or delete it in favor of integrated solution
 
-2. **`python_primitive_checker.rs` — stub kosong**
-   - 9 baris, struct kosong, tidak berguna
-   - Hapus atau implementasi penuh
+2. **`python_primitive_checker.rs` — empty stub**
+   - 9 lines, empty struct, no useful functionality
+   - Either implement fully or delete
 
-### 8.5 Apa yang Perlu Dipertahankan
+### 8.5 What to Keep
 
-- **Inline checker sebagai fallback**: selama belum ada implementasi yang proper, inline checker tetap berguna untuk Rust taxonomy meskipun dengan false positive
-- **Config YAML structure**: definisi `no_primitives`, scope, dan violation messages sudah benar — hanya perlu wiring
-- **`NamingSymbolsConstant::CORE_PRIMITIVE_TYPES`**: constant untuk Python primitives — perlu diperluas dan diintegrasikan
+- **Inline checker as fallback**: until proper implementation lands, inline checker still catches Rust taxonomy primitives (with false positives)
+- **YAML config structure**: `no_primitives`, scope definitions, and violation messages are already correct — only wiring is needed
+- **`CORE_PRIMITIVE_TYPES` constant**: needs expansion and integration, but the concept is correct
+- **`ISourceParserPort::find_primitive_violations`** interface: already defined and implemented in all three scanners
 
-### 8.6 Bukti Empiris Test Project
+### 8.6 Empirical Evidence from Test Projects
 
-**AES006 terdeteksi di TEST.md ✅** (line 96 — AES006 ada di 30 unique codes)
-Tapi test fixtures yang ada:
-- `test-project-python/taxonomy/raw_entity.py` — `str`, `int` ✅
-- `test-project-python/taxonomy/raw_error.py` — `int`, `str` ✅
-- `test-project-rust/taxonomy/massive_domain_entity.rs` — `String`, `i32` (504 lines, > threshold)
+**AES006 detected in TEST.md ✅** (line 96 — AES006 in 30 unique codes)
+Test fixtures:
+- `test-project-python/taxonomy/raw_entity.py` — `str`, `int` violations ✅
+- `test-project-python/taxonomy/raw_error.py` — `int`, `str` violations ✅
+- `test-project-rust/taxonomy/massive_domain_entity.rs` — `String`, `i32` (also triggers AES006)
 
-**Yang BELUM ada:**
-- Rust test fixture dengan primitif di entity yang jelas (file terpisah)
-- JS/TS test fixture dengan primitif
-- Rust VO file dengan primitif (harus exempt — untuk test negatif)
+**Missing:**
+- Rust-specific entity fixture with explicit primitives (separate file)
+- JS/TS entity fixture with primitives
+- Rust VO file with primitives (for negative test — must NOT flag)
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
-| FR-003 (AST Parsing) | Scanner untuk deteksi tipe per bahasa | Scanner belum diintegrasi untuk AES006 | Integrasi via ISourceParserPort |
-| Config YAML `no_primitives` | Flag enable/disable per scope | Flag tidak dikonsumsi → false positive | Wiring config ke checker logic |
-| SourceParserOrchestrator | Routing parser by extension | Hanya support Rust di inline checker | Pakai orchestrator untuk multi-language |
-| ArchitectureComplianceOrchestrator | Layer definition builder | `no_primitives` sudah di-parse tapi tidak dipakai | Sambungkan ke coordinator |
+| FR-003 (AST Parsing) | Scanners for type detection per language | Scanners not wired for AES006 | Integrate via ISourceParserPort |
+| Config YAML `no_primitives` | Enable/disable flag per scope | Flag not consumed → false positives | Wire config to checker logic |
+| SourceParserOrchestrator | Extension-based parser routing | Inline checker is Rust-only | Use orchestrator for multi-lang |
+| ArchitectureComplianceOrchestrator | Layer definition builder | `no_primitives` parsed but unused | Connect to coordinator |
 
-## 10. Konsep Arsitektur
+## 10. Architecture Concept
 
-### 10.1 Alur Data yang Seharusnya
+### 10.1 Correct Data Flow
 ```
 lint_arwaky.config.rust.yaml
     ↓ (parsing)
 LayerDefinition { no_primitives: true/false }
-    ↓ (wiring) ──── harusnya ────→ check_primitive_usage()
+    ↓ (wiring) ──── should be ────→ check_primitive_usage()
                                       ↓
                               SourceParserOrchestrator
                               ├── .rs → ASTRustScanner.find_primitive_violations(fields)
@@ -269,7 +275,7 @@ LayerDefinition { no_primitives: true/false }
                               LintResult (AES006 HIGH)
 ```
 
-### 10.2 Gap Saat Ini
+### 10.2 Current Gap
 ```
 Config (no_primitives) ────???───→ Inline Checker (hardcoded, Rust only)
                                         ↓
@@ -281,18 +287,18 @@ Config (no_primitives) ────???───→ Inline Checker (hardcoded, Ru
 ```
 
 ## 11. Appendices
-- `src-rust/agent/lint_checking_coordinator.rs:177` — Inline checker (AKTIF)
-- `src-rust/capabilities/domain_type_checker.rs:24` — Orphan capability (TIDAK DIPAKAI)
-- `src-rust/infrastructure/python_primitive_checker.rs` — Stub kosong
-- `src-rust/infrastructure/ast_rust_scanner.rs:368` — Rust scanner (UNUSED untuk AES006)
-- `src-rust/infrastructure/ast_py_scanner.rs:394` — Python scanner (UNUSED untuk AES006)
-- `src-rust/infrastructure/ast_js_scanner.rs:465` — JS scanner (UNUSED untuk AES006)
-- `src-rust/infrastructure/source_parser_adapter.rs:80` — Orchestrator (UNUSED untuk AES006)
+- `src-rust/agent/lint_checking_coordinator.rs:177` — Inline checker (ACTIVE)
+- `src-rust/capabilities/domain_type_checker.rs:24` — Orphan capability (UNUSED)
+- `src-rust/infrastructure/python_primitive_checker.rs` — Empty stub
+- `src-rust/infrastructure/ast_rust_scanner.rs:368` — Rust scanner (UNUSED for AES006)
+- `src-rust/infrastructure/ast_py_scanner.rs:394` — Python scanner (UNUSED for AES006)
+- `src-rust/infrastructure/ast_js_scanner.rs:465` — JS scanner (UNUSED for AES006)
+- `src-rust/infrastructure/source_parser_adapter.rs:80` — Orchestrator (UNUSED for AES006)
 - `src-rust/contract/source_parser_port.rs:11` — ISourceParserPort::find_primitive_violations
 - `src-rust/taxonomy/naming_symbols_constant.rs:10` — CORE_PRIMITIVE_TYPES
 - `src-rust/taxonomy/layer_definition_vo.rs:33` — no_primitives field
-- `src-rust/taxonomy/architecture_rule_vo.rs:25` — no_primitives in rule
-- `lint_arwaky.config.rust.yaml:184-242` — Config per scope
-- `test-project-python/src-python/taxonomy/raw_entity.py` — Fixture
-- `test-project-python/src-python/taxonomy/raw_error.py` — Fixture
-- `test-project-rust/src-rust/taxonomy/massive_domain_entity.rs` — Fixture
+- `src-rust/taxonomy/architecture_rule_vo.rs:25` — no_primitives in rule definition
+- `lint_arwaky.config.rust.yaml:184-242` — Per-scope config
+- `test-project-python/src-python/taxonomy/raw_entity.py` — Test fixture
+- `test-project-python/src-python/taxonomy/raw_error.py` — Test fixture
+- `test-project-rust/src-rust/taxonomy/massive_domain_entity.rs` — Test fixture

@@ -12,71 +12,71 @@
 
 ## 2. Introduction
 ### 2.1 Purpose
-Dokumen ini mendefinisikan aturan **AES004 (FILE_TOO_LARGE)** yang memeriksa batas maksimum jumlah baris per file. Aturan diimplementasikan di method `check_line_counts()` dalam `ArchMetricChecker`. AES004 memastikan file tidak melebihi batas maksimum baris (global default: 700).
+This document defines the AES004 rule that detects files exceeding the maximum allowed line count. The rule is implemented in `check_line_counts()` within `ArchMetricChecker`. AES004 ensures no file exceeds the `max_lines` threshold (global default: 700).
 
 ### 2.2 Scope
 **In-Scope:**
-- Pengecekan jumlah baris per file terhadap threshold `max_lines`
-- Pengecualian (exception) untuk barrel files (`__init__.py`, `mod.rs`) dan daftar exceptions dari YAML
-- Pesan kustom dari konfigurasi YAML (`max_lines_violation_message`)
-- Severity HIGH
+- Checking per-file line count against the `max_lines` threshold
+- Exception handling for barrel files (`__init__.py`, `mod.rs`) and YAML-defined exceptions
+- Custom violation messages from YAML (`max_lines_violation_message`)
+- HIGH severity reporting
 
 **Out-of-Scope:**
-- Pengecekan minimum baris (AES005 — FRD terpisah)
-- Pengecekan berdasarkan layer dengan threshold berbeda (saat ini global)
+- Minimum line count checking (AES005 — separate FRD)
+- Per-layer threshold differentiation (currently global only)
 - Auto-fixing violations
 
 ### 2.3 Glossary
 | Term | Definition |
 |------|------------|
-| **AES004** | Rule code untuk file melebihi batas maksimum baris |
-| **check_line_counts()** | Method utama di `ArchMetricChecker` yang menjalankan aturan |
-| **max_lines** | Konfigurasi batas maksimum baris per file (default: 700) |
-| **count_lines()** | Helper method untuk menghitung jumlah baris dari file |
+| **AES004** | Rule code for file exceeding maximum line limit |
+| **check_line_counts()** | Main detection method in `ArchMetricChecker` |
+| **max_lines** | Configurable maximum line threshold (default: 700) |
+| **count_lines()** | Helper that counts lines in a file |
 
 ## 3. Feature Overview
 ### 3.1 Background & Problem
-Sebelum AES004, tidak ada batasan ukuran file dalam proyek. File bisa menjadi sangat besar (ribuan baris) yang melanggar Single Responsibility Principle dan sulit di-maintain. Arsitektur AES membutuhkan file yang fokus dan terukur.
+Before AES004, files had no size limit enforcement. Files could grow to thousands of lines, violating the Single Responsibility Principle and becoming difficult to maintain or test. The AES architecture requires focused, measurable file sizes.
 
 ### 3.2 Business Goals
-- Mencegah file yang terlalu besar yang sulit di-maintain dan di-test
-- Memberikan pesan violation yang jelas dan actionable
-- Threshold yang dapat dikonfigurasi via YAML
+- Prevent oversized files that are hard to maintain and test
+- Provide clear, actionable violation messages
+- Make thresholds configurable via YAML
 
 ### 3.3 Target Users
-- **Developers**: Mendapat feedback otomatis ketika file terlalu besar
-- **Architects**: Mengatur threshold `max_lines` per proyek via YAML
+- **Developers**: Get automatic feedback when a file is too large
+- **Architects**: Configure `max_lines` threshold per project via YAML
 
 ## 4. Functional Requirements
 ### 4.1 User Stories
-- **US-001:** Sebagai developer, saya ingin diperingatkan ketika file saya melebihi batas baris maksimum, sehingga saya bisa memecahnya menjadi modul yang lebih kecil.
-- **US-002:** Sebagai architect, saya ingin threshold `max_lines` bisa diatur via YAML, sehingga saya bisa menyesuaikan dengan standar proyek.
+- **US-001:** As a developer, I want to be warned when my file exceeds the maximum line limit, so I can split it into smaller modules.
+- **US-002:** As an architect, I want the `max_lines` threshold configurable in YAML, so I can adapt it per project standards.
 
 ### 4.2 Use Cases & Workflow
 **Detection Pipeline:**
 ```
 File: capabilities/my_checker.rs
 
-1. Dapatkan basename file
-2. Apakah basename == "__init__.py" atau "mod.rs"? → SKIP (barrel)
-3. Apakah basename ada di exceptions list? → SKIP
-4. count = count_lines(file) → hitung jumlah baris
-5. Jika count > max_lines (700) → AES004 HIGH
+1. Extract basename from file path
+2. Is basename == "__init__.py" or "mod.rs"? → SKIP (barrel)
+3. Is basename in exceptions list? → SKIP
+4. count = count_lines(file) → count lines
+5. If count > max_lines (700) → AES004 HIGH
 ```
 
 ### 4.3 Business Rules
 - Severity: HIGH
-- Barrel files (`__init__.py`, `mod.rs`) tidak dicek
-- Exception list dari YAML: `["main.rs", "lib.rs", "mod.rs", "python_taxonomy_bridge.rs", "js_taxonomy_bridge.rs"]`
-- Jika `max_lines` <= 0, aturan dilewati
-- Pesan kustom dari YAML didahulukan; jika kosong pakai default
+- Barrel files (`__init__.py`, `mod.rs`) are skipped
+- Exception list from YAML: `["main.rs", "lib.rs", "mod.rs", "python_taxonomy_bridge.rs", "js_taxonomy_bridge.rs"]`
+- If `max_lines` <= 0, rule is skipped
+- Custom YAML message takes priority; default used if empty
 
 ## 5. Non-Functional Requirements
 | ID | Requirement | Target |
 |----|-------------|--------|
 | NFR-001 | Detection per file | < 5ms |
-| NFR-002 | False positive rate | 0% untuk file valid |
-| NFR-003 | False negative rate | 0% untuk file yang melanggar |
+| NFR-002 | False positive rate | 0% for valid files |
+| NFR-003 | False negative rate | 0% for violating files |
 
 ## 6. UI/UX Requirements
 ```
@@ -89,58 +89,59 @@ AES004 HIGH - src-rust/capabilities/massive_file.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | File dengan 504 baris (massive_domain_entity.rs) | `check_line_counts()` jalan | Tidak ada AES004 (504 < 700) | ✅ |
-| AC-002 | File > 700 baris (belum ada fixture) | `check_line_counts()` jalan | AES004 HIGH flagged | ✅ (logic benar) |
-| AC-003 | File `__init__.py` atau `mod.rs` | `check_line_counts()` jalan | Skip (barrel) | ✅ |
-| AC-004 | File di exception list | `check_line_counts()` jalan | Skip | ✅ |
-| AC-005 | File 0 baris (tidak bisa dibaca) | `count_lines()` jalan | Return 0 — tidak overflow | ⚠️ OK untuk AES004 |
+| AC-001 | 504-line file (massive_domain_entity.rs) | `check_line_counts()` runs | No AES004 (504 < 700) | ✅ |
+| AC-002 | File > 700 lines (no fixture exists) | `check_line_counts()` runs | AES004 HIGH flagged | ✅ (logic correct) |
+| AC-003 | Barrel file (`__init__.py` / `mod.rs`) | `check_line_counts()` runs | Skipped | ✅ |
+| AC-004 | Exception-listed file | `check_line_counts()` runs | Skipped | ✅ |
+| AC-005 | Unreadable file (count_lines fails) | `count_lines()` runs | Returns 0 — no overflow | ⚠️ OK for AES004 |
 
-## 8. Temuan Empiris (Code Audit)
+## 8. Empirical Findings (Code Audit)
 
-### 8.1 Implementasi Saat Ini
-- **Lokasi**: `src-rust/capabilities/architecture_metric_checker.rs:75-128`
-- **Bagian AES004**: `architecture_metric_checker.rs:114-127`
-- **Status**: **SUDAH TERIMPLEMENTASI PENUH** — bukan stub
-- Method `check_line_counts()` dipanggil di `lint_checking_coordinator.rs:98`
+### 8.1 Current Implementation
+- **Location**: `src-rust/capabilities/architecture_metric_checker.rs:75-128`
+- **AES004 portion**: `architecture_metric_checker.rs:114-127`
+- **Status**: **FULLY IMPLEMENTED** — not a stub
+- Invoked from `lint_checking_coordinator.rs:98`
 
-### 8.2 Bug yang Ditemukan
-1. **Threshold global tanpa per-layer override** (`lint_arwaky.config.rust.yaml:131`)
-   - `max_lines: 700` berlaku untuk SEMUA layer
-   - Tidak bisa membedakan threshold untuk taxonomy vs capabilities vs surfaces
-   - **Fix**: dukung `max_lines` per scope di YAML
+### 8.2 Bugs Found
 
-2. **Tidak ada test unit Rust** untuk `ArchMetricChecker`
-   - Tidak ada `#[cfg(test)]` module di `architecture_metric_checker.rs`
-   - Test hanya mengandalkan test-project fixtures
-   - **Fix**: tambah unit test untuk `count_lines()`, `check_line_counts()`
+1. **Global threshold with no per-layer override** (`lint_arwaky.config.rust.yaml:131`)
+   - `max_lines: 700` applies to ALL layers
+   - Cannot differentiate threshold for taxonomy vs capabilities vs surfaces
+   - **Fix**: support `max_lines` per scope in YAML
 
-### 8.3 Apa yang Perlu Ditambahkan
-- **Per-layer threshold**: dukung konfigurasi `max_lines` spesifik per scope/layer
-- **Unit tests**: minimal untuk `count_lines()` dan `check_line_counts()`
-- **Test fixture untuk Rust AES004**: TEST.md menyebut `extremely_large_vo` (line 59) tapi file itu **tidak ada** di test-project-rust. Buat file dengan > 700 baris untuk Rust.
+2. **No Rust unit tests** for `ArchMetricChecker`
+   - No `#[cfg(test)]` module in `architecture_metric_checker.rs`
+   - Testing relies entirely on test-project fixtures
+   - **Fix**: add unit tests for `count_lines()` and `check_line_counts()`
 
-### 8.4 Apa yang Perlu Dipertahankan
-- **Logika pengecualian barrel files** ✅ (line 83-86)
-- **Pesan default yang jelas dan actionable** ✅ (line 119-124)
-- **Dukungan pesan kustom dari YAML** ✅ (line 116-117)
-- **Integrasi dengan coordinator pipeline** ✅ (lint_checking_coordinator.rs:98)
+### 8.3 What Needs to Be Added
+- **Per-layer threshold**: support `max_lines` config per individual scope/layer
+- **Unit tests**: at minimum for `count_lines()` and `check_line_counts()`
+- **Rust AES004 test fixture**: TEST.md mentions `extremely_large_vo` (line 59) but that file **does not exist** in test-project-rust. Create a file > 700 lines for Rust.
 
-### 8.5 Bukti Empiris Test Project
-- `test-project-rust/src-rust/taxonomy/massive_domain_entity.rs` (504 baris) → tidak overflow karena < 700 ✅
-- `test-project-python/src-python/taxonomy/large_domain_entity.py` — perlu dicek jumlah barisnya
-- **AES004 di TEST.md**: disebut `extremely_large_vo` tapi **file tidak ditemukan** → fixture hilang ❌
+### 8.4 What to Keep
+- **Barrel file exclusion logic** ✅ (lines 83-86)
+- **Clear, actionable default messages** ✅ (lines 119-124)
+- **Custom YAML message support** ✅ (lines 116-117)
+- **Coordinator pipeline integration** ✅ (lint_checking_coordinator.rs:98)
+
+### 8.5 Empirical Evidence from Test Projects
+- `test-project-rust/src-rust/taxonomy/massive_domain_entity.rs` (504 lines) → no overflow (504 < 700) ✅
+- `test-project-python/src-python/taxonomy/large_domain_entity.py` — needs line count check
+- **AES004 in TEST.md**: mentions `extremely_large_vo` but **file not found** → missing fixture ❌
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
-| FR-003 (Parsing) | Membaca konten file | File tidak bisa dibaca | count_lines return 0 (OK untuk AES004) |
-| Config YAML | Threshold dari config | Threshold tidak wajar (0 atau negatif) | Skip jika <= 0 ✅ |
-| Test fixtures | File test > 700 baris | `extremely_large_vo` tidak ada | Buat fixture baru |
+| FR-003 (Parsing) | File content reading | File unreadable → count_lines returns 0 (OK for AES004) | Low risk |
+| Config YAML | Threshold from config | Unreasonable threshold (0 or negative) | Skip if <= 0 ✅ |
+| Test fixtures | File > 700 lines | `extremely_large_vo` missing | Create new fixture |
 
 ## 10. Appendices
 - `src-rust/capabilities/architecture_metric_checker.rs:75` — `check_line_counts()`
 - `src-rust/capabilities/architecture_metric_checker.rs:38` — `count_lines()`
 - `src-rust/taxonomy/layer_definition_vo.rs` — `max_lines` field
 - `src-rust/agent/lint_checking_coordinator.rs:98` — Invocation
-- `lint_arwaky.config.rust.yaml:131` — Konfigurasi max_lines
-- `test-project-rust/src-rust/taxonomy/massive_domain_entity.rs` — Fixture (504 baris)
+- `lint_arwaky.config.rust.yaml:131` — max_lines config
+- `test-project-rust/src-rust/taxonomy/massive_domain_entity.rs` — Test fixture (504 lines)
