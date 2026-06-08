@@ -17,9 +17,8 @@ use crate::contract::{
 };
 use crate::infrastructure::MemoryJobRegistryAdapter;
 use crate::taxonomy::{
-    AdapterName, ArchitectureConfig, ArchitectureRule, BooleanVO,
-    ComplianceStatus, FilePath, LayerDefinition, LayerMapVO, LayerNameVO, LintResultList, Score,
-    WatchResult, LAYER_GLOBAL,
+    AdapterName, ArchitectureConfig, ArchitectureRule, BooleanVO, ComplianceStatus, FilePath,
+    LayerDefinition, LayerMapVO, LayerNameVO, LintResultList, Score, WatchResult, LAYER_GLOBAL,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -246,8 +245,14 @@ impl ArchitectureOrchestrator {
         if !rule.no_primitives_violation_message.value.is_empty() {
             def.no_primitives_violation_message = rule.no_primitives_violation_message.clone();
         }
+        if rule.min_lines.value > 0 {
+            def.min_lines = rule.min_lines.clone();
+        }
         if !rule.min_lines_violation_message.value.is_empty() {
             def.min_lines_violation_message = rule.min_lines_violation_message.clone();
+        }
+        if rule.max_lines.value > 0 {
+            def.max_lines = rule.max_lines.clone();
         }
         if !rule.max_lines_violation_message.value.is_empty() {
             def.max_lines_violation_message = rule.max_lines_violation_message.clone();

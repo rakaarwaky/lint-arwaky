@@ -1,16 +1,6 @@
 /// Watch CLI command — file watcher with auto-lint on changes.
 use std::sync::Arc;
 
-
-
-
-
-
-
-
-
-
-
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 pub struct WatchdogBridge;
 
@@ -46,7 +36,9 @@ impl WatchCommandsSurface {
     }
 }
 
-pub fn register_watch_command(container: Arc<dyn ServiceContainerAggregate>) -> WatchCommandsSurface {
+pub fn register_watch_command(
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> WatchCommandsSurface {
     let mut surface = WatchCommandsSurface::new(Some(container.clone()));
     surface.register_all(container);
     surface

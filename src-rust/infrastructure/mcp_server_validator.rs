@@ -86,11 +86,7 @@ pub fn validate_string_input(
     if value.len() > max {
         errors.push(ValidationError {
             field_name: FieldName::new(field_name),
-            message: ErrorMessage::new(format!(
-                "Input length {} exceeds max {}",
-                value.len(),
-                max
-            )),
+            message: ErrorMessage::new(format!("Input length {} exceeds max {}", value.len(), max)),
             constraint: Some(Constraint::new("StringTooLong")),
             value: None,
         });

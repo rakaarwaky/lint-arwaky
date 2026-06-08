@@ -5,9 +5,8 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 static RE_WORDS: Lazy<Result<Regex, NamingError>> = Lazy::new(|| {
-    Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+").map_err(|e| {
-        NamingError::new(ErrorMessage::new(format!("Invalid regex pattern: {}", e)))
-    })
+    Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
+        .map_err(|e| NamingError::new(ErrorMessage::new(format!("Invalid regex pattern: {}", e))))
 });
 
 pub struct JavascriptNamingProvider;

@@ -3,9 +3,8 @@ use std::sync::Arc;
 
 use crate::contract::{ILinterAdapterPort, IPathNormalizationPort};
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, FilePath,
-    LineNumber, LintMessage, LintResult, LintResultList, LinterOperationError, LocationList,
-    Severity,
+    AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, FilePath, LineNumber, LintMessage,
+    LintResult, LintResultList, LinterOperationError, LocationList, Severity,
 };
 use async_trait::async_trait;
 use tracing::debug;
@@ -55,7 +54,10 @@ impl ILinterAdapterPort for CargoAuditAdapter {
 
         let cargo_lock = Path::new(working_dir_str).join("Cargo.lock");
         if !cargo_lock.exists() {
-            debug!("Skipping cargo-audit: Cargo.lock not found at {:?}", cargo_lock);
+            debug!(
+                "Skipping cargo-audit: Cargo.lock not found at {:?}",
+                cargo_lock
+            );
             return Ok(LintResultList::new(results));
         }
 

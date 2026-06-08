@@ -1,15 +1,5 @@
 use std::sync::Arc;
 
-
-
-
-
-
-
-
-
-
-
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 pub struct MultiCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -27,9 +17,15 @@ impl MultiCommandsSurface {
     pub fn multi_project(&self, paths: &[String], output_format: &str, _config: Option<&str>) {
         let project_list = if paths.is_empty() {
             if let Some(ref _container) = self.container {
-                vec![std::env::current_dir().unwrap_or_default().to_string_lossy().to_string()]
+                vec![std::env::current_dir()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string()]
             } else {
-                vec![std::env::current_dir().unwrap_or_default().to_string_lossy().to_string()]
+                vec![std::env::current_dir()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string()]
             }
         } else {
             paths.to_vec()
@@ -45,7 +41,9 @@ impl MultiCommandsSurface {
     }
 }
 
-pub fn register_multi_commands(container: Arc<dyn ServiceContainerAggregate>) -> MultiCommandsSurface {
+pub fn register_multi_commands(
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> MultiCommandsSurface {
     let mut surface = MultiCommandsSurface::new();
     surface.register_all(container);
     surface

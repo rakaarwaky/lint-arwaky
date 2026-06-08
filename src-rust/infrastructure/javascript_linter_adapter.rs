@@ -89,7 +89,7 @@ impl PrettierAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for PrettierAdapter {
     fn name(&self) -> AdapterName {
-                AdapterName::raw("prettier")
+        AdapterName::raw("prettier")
     }
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
@@ -267,15 +267,23 @@ impl ILinterAdapterPort for TSCAdapter {
         let output = format!("{}{}", response.stdout, response.stderr);
         let mut results = Vec::new();
 
-        let pattern1 = Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").expect("valid regex");
-        let pattern2 = Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").expect("valid regex");
+        let pattern1 = Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$")
+            .expect("valid regex");
+        let pattern2 = Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$")
+            .expect("valid regex");
 
         for line in output.lines() {
             let line = line.trim();
             if let Some(caps) = pattern1.captures(line).or_else(|| pattern2.captures(line)) {
                 let filename = caps.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
-                let line_num = caps.get(2).and_then(|m| m.as_str().parse::<usize>().ok()).unwrap_or(1);
-                let col_num = caps.get(3).and_then(|m| m.as_str().parse::<usize>().ok()).unwrap_or(0);
+                let line_num = caps
+                    .get(2)
+                    .and_then(|m| m.as_str().parse::<usize>().ok())
+                    .unwrap_or(1);
+                let col_num = caps
+                    .get(3)
+                    .and_then(|m| m.as_str().parse::<usize>().ok())
+                    .unwrap_or(0);
                 let code = caps.get(4).map(|m| m.as_str()).unwrap_or("").to_string();
                 let msg = caps.get(5).map(|m| m.as_str()).unwrap_or("").to_string();
 

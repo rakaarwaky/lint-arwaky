@@ -35,7 +35,12 @@ impl IPathNormalizationPort for PathNormalizationProvider {
                 .unwrap_or(home)
                 .replace("\\\\", "/");
             let actual_root = env::var("PROJECT_ROOT")
-                .unwrap_or_else(|_| env::current_dir().unwrap_or_default().to_string_lossy().to_string())
+                .unwrap_or_else(|_| {
+                    env::current_dir()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string()
+                })
                 .replace("\\\\", "/");
 
             if !phantom_root.is_empty() && path_str.starts_with(&phantom_root) {

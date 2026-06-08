@@ -80,16 +80,11 @@ fn handle_scan(path: Option<String>) -> ExitCode {
 
 fn handle_fix(path: Option<String>, dry_run: bool) -> ExitCode {
     let root = resolve_target(path);
-    let container = Arc::new(
-        DependencyInjectionContainer::new(
-            DirectoryPath::new(&root).unwrap_or_default(),
-        ),
-    );
+    let container = Arc::new(DependencyInjectionContainer::new(
+        DirectoryPath::new(&root).unwrap_or_default(),
+    ));
     let fix_surface = register_fix_commands(container);
-    fix_surface.run_fix(
-        FilePath::new(root).unwrap_or_default(),
-        dry_run,
-    );
+    fix_surface.run_fix(FilePath::new(root).unwrap_or_default(), dry_run);
     ExitCode::SUCCESS
 }
 
@@ -271,8 +266,11 @@ fn handle_trends(path: Option<String>) -> ExitCode {
     let results = lint_path(&root);
     let score = compute_score(&results);
     let violations_count = results.len();
-    let critical_count = results.iter().filter(|r| r.severity == Severity::CRITICAL).count();
-    
+    let critical_count = results
+        .iter()
+        .filter(|r| r.severity == Severity::CRITICAL)
+        .count();
+
     println!("Lint Arwaky v{} (Trends)", env!("CARGO_PKG_VERSION"));
     println!("Target: {}", root);
     println!();
@@ -280,29 +278,27 @@ fn handle_trends(path: Option<String>) -> ExitCode {
     println!("  Score:      {}/100", score);
     println!("  Violations: {}", violations_count);
     println!("  Critical:   {}", critical_count);
-    
+
     // Use MetricsProvider via DI container (AES023 compliant)
-    let container = Arc::new(
-        DependencyInjectionContainer::new(
-            DirectoryPath::new(&root).unwrap_or_default(),
-        ),
-    );
+    let container = Arc::new(DependencyInjectionContainer::new(
+        DirectoryPath::new(&root).unwrap_or_default(),
+    ));
     let metrics = container.metrics_provider();
     let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
-    
+
     // Read history
     let history: Vec<serde_json::Value> = if let Some(ref mp) = metrics {
         rt.block_on(mp.get_history())
     } else {
         Vec::new()
     };
-    
+
     // Trend analysis
     if let Some(prev) = history.last() {
         let prev_score = prev.get("score").and_then(|s| s.as_f64()).unwrap_or(100.0);
         let prev_violations = prev.get("violations").and_then(|v| v.as_u64()).unwrap_or(0);
         let delta = score - prev_score;
-        
+
         let trend = if delta > 1.0 {
             "IMPROVING"
         } else if delta < -1.0 {
@@ -310,14 +306,16 @@ fn handle_trends(path: Option<String>) -> ExitCode {
         } else {
             "STABLE"
         };
-        
-        let all_time_high = history.iter()
+
+        let all_time_high = history
+            .iter()
             .filter_map(|e| e.get("score").and_then(|s| s.as_f64()))
             .fold(score, f64::max);
-        let all_time_low = history.iter()
+        let all_time_low = history
+            .iter()
             .filter_map(|e| e.get("score").and_then(|s| s.as_f64()))
             .fold(score, f64::min);
-        
+
         println!();
         println!("Previous scan:");
         println!("  Score:      {}/100", prev_score);
@@ -331,7 +329,7 @@ fn handle_trends(path: Option<String>) -> ExitCode {
         println!();
         println!("No history yet — first run");
     }
-    
+
     // Save current score to history via MetricsProvider
     use chrono::Utc;
     let entry = serde_json::json!({
@@ -340,7 +338,7 @@ fn handle_trends(path: Option<String>) -> ExitCode {
         "violations": violations_count,
         "critical": critical_count,
     });
-    
+
     if let Some(ref mp) = metrics {
         let saved = rt.block_on(mp.save_metric(entry));
         if saved {
@@ -350,7 +348,7 @@ fn handle_trends(path: Option<String>) -> ExitCode {
             eprintln!("[warn] Could not save history");
         }
     }
-    
+
     ExitCode::SUCCESS
 }
 
@@ -542,8 +540,8 @@ fn normalize_project_root(path: &str) -> String {
 }
 
 fn lint_path(path: &str) -> Vec<LintResult> {
-    let root =
-        FilePath::new(normalize_project_root(path)).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+    let root = FilePath::new(normalize_project_root(path))
+        .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
     let orchestrator =
         lint_arwaky::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator::new();
     orchestrator.run_self_lint(&root)

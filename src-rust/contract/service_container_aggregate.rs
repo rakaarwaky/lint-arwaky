@@ -1,12 +1,12 @@
 use crate::contract::command_executor_port::ICommandExecutorPort;
-use crate::contract::IArchLintProtocol;
 use crate::contract::file_system_port::IFileSystemPort;
 use crate::contract::job_registry_port::IJobRegistryPort;
-use crate::contract::linter_adapter_port::ILinterAdapterPort;
 use crate::contract::lint_fix_aggregate::LintFixOrchestratorAggregate;
+use crate::contract::linter_adapter_port::ILinterAdapterPort;
 use crate::contract::metrics_provider_port::IMetricsProviderPort;
 use crate::contract::path_normalization_port::IPathNormalizationPort;
 use crate::contract::source_parser_port::ISourceParserPort;
+use crate::contract::IArchLintProtocol;
 use crate::taxonomy::AdapterName;
 use std::sync::Arc;
 
@@ -35,7 +35,10 @@ pub trait ServiceContainerAggregate: Send + Sync {
     fn metrics_provider(&self) -> Option<Arc<dyn IMetricsProviderPort>> {
         None
     }
-    fn get_fix_orchestrator(&self, _dry_run: bool) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
+    fn get_fix_orchestrator(
+        &self,
+        _dry_run: bool,
+    ) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
         None
     }
 }

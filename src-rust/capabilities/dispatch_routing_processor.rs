@@ -9,10 +9,10 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::contract::IAnalyzer;
 use crate::contract::dispatch_routing_protocol::{
     IDispatchRoutingParserProtocol, IDispatchRoutingProtocol,
 };
+use crate::contract::IAnalyzer;
 use crate::taxonomy::{
     AdapterName, CapabilityReference, CapabilityReferenceList, CapabilityRoutingContext,
     ClassDefinitionMap, ClassFileMap, ClassNameVO, ClassUsageItem, ClassUsageItemList,
@@ -36,7 +36,8 @@ impl DispatchRoutingParser {
 
 impl IDispatchRoutingParserProtocol for DispatchRoutingParser {
     fn strip_docstrings(&self, text: &ContentString) -> ContentString {
-        let re = regex::Regex::new(r#""""[\s\S]*?""""|'''[\s\S]*?'''"|#[^\n]*"#).expect("valid regex");
+        let re =
+            regex::Regex::new(r#""""[\s\S]*?""""|'''[\s\S]*?'''"|#[^\n]*"#).expect("valid regex");
         ContentString::new(re.replace_all(&text.value, "").to_string())
     }
 
@@ -65,7 +66,8 @@ impl IDispatchRoutingParserProtocol for DispatchRoutingParser {
 }
 
 static CAPABILITY_REF_PATTERN: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"["']capability["']\s*:\s*["']([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)["']"#).expect("valid regex")
+    Regex::new(r#"["']capability["']\s*:\s*["']([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)["']"#)
+        .expect("valid regex")
 });
 
 pub struct DispatchRoutingChecker {
@@ -174,8 +176,10 @@ impl DispatchRoutingChecker {
         refs: &mut CapabilityReferenceList,
     ) {
         for caps in CAPABILITY_REF_PATTERN.captures_iter(text) {
-            let class_name = ClassNameVO::new(caps.get(1).map(|m| m.as_str()).unwrap_or("").to_string());
-            let method_name = DescriptionVO::new(caps.get(2).map(|m| m.as_str()).unwrap_or("").to_string());
+            let class_name =
+                ClassNameVO::new(caps.get(1).map(|m| m.as_str()).unwrap_or("").to_string());
+            let method_name =
+                DescriptionVO::new(caps.get(2).map(|m| m.as_str()).unwrap_or("").to_string());
             let line_no = text[..caps.get(0).map(|m| m.start()).unwrap_or(0)]
                 .chars()
                 .filter(|&c| c == '\n')
@@ -249,7 +253,10 @@ impl DispatchRoutingChecker {
         let class_usage = self._group_capabilities_by_class(capability_refs);
 
         if class_usage.usage.len() == 1 {
-            let (single_class, usage_list) = class_usage.usage.iter().next()
+            let (single_class, usage_list) = class_usage
+                .usage
+                .iter()
+                .next()
                 .expect("class_usage.usage should have at least one element when len() == 1");
             if !usage_list.items.is_empty() {
                 let other_classes: Vec<ClassNameVO> = class_defs

@@ -1,8 +1,8 @@
 // pipeline_extended_orchestrator — Orchestration for multi-project and watch modes (Agent Layer).
+use crate::contract::directory_watch_aggregate::DirectoryWatchAggregate;
 use crate::contract::{
     MultiProjectAggregate, PipelineExtendedOrchestratorAggregate, PipelineOutputAggregate,
 };
-use crate::contract::directory_watch_aggregate::DirectoryWatchAggregate;
 use crate::taxonomy::{BooleanVO, ErrorMessage, FilePath, JobId, ResponseData, SuccessStatus};
 use std::collections::HashMap;
 

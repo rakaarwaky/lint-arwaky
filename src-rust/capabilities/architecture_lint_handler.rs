@@ -1,9 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-use crate::taxonomy::{
-    default_aes_config, ArchitectureConfig, LintResult,
-};
+use crate::taxonomy::{default_aes_config, ArchitectureConfig, LintResult};
 
 pub fn collect_source_files(dir: &Path) -> Vec<String> {
     let mut files = Vec::new();
@@ -88,59 +86,77 @@ fn try_load_yaml_config(start: &Path) -> Option<ArchitectureConfig> {
                             if let Some(layers_obj) = json.get_mut("layers") {
                                 if let Some(obj) = layers_obj.as_object_mut() {
                                     let mut suffix_updates: Vec<(
-                                String, Option<String>, serde_json::Value, serde_json::Value,
-                            )> = Vec::new();
-                            for (layer_name, layer) in obj.iter() {
-                                if let Some(suffix_val) = layer.get("suffix") {
-                                    if let Some(arr) = suffix_val.as_array() {
-                                        let mut policy: Option<String> = None;
-                                        let mut allowed = serde_json::Value::Array(Vec::new());
-                                        let mut forbidden = serde_json::Value::Array(Vec::new());
-                                        for entry in arr {
-                                            if let Some(entry_obj) = entry.as_object() {
-                                                for (pkey, plist) in entry_obj {
-                                                    match pkey.as_str() {
-                                                        "strict" | "flexible" => {
-                                                            policy = Some(pkey.clone());
-                                                            if let Some(list) = plist.as_array() {
-                                                                allowed = serde_json::json!(list);
+                                        String,
+                                        Option<String>,
+                                        serde_json::Value,
+                                        serde_json::Value,
+                                    )> = Vec::new();
+                                    for (layer_name, layer) in obj.iter() {
+                                        if let Some(suffix_val) = layer.get("suffix") {
+                                            if let Some(arr) = suffix_val.as_array() {
+                                                let mut policy: Option<String> = None;
+                                                let mut allowed =
+                                                    serde_json::Value::Array(Vec::new());
+                                                let mut forbidden =
+                                                    serde_json::Value::Array(Vec::new());
+                                                for entry in arr {
+                                                    if let Some(entry_obj) = entry.as_object() {
+                                                        for (pkey, plist) in entry_obj {
+                                                            match pkey.as_str() {
+                                                                "strict" | "flexible" => {
+                                                                    policy = Some(pkey.clone());
+                                                                    if let Some(list) =
+                                                                        plist.as_array()
+                                                                    {
+                                                                        allowed =
+                                                                            serde_json::json!(list);
+                                                                    }
+                                                                }
+                                                                "forbidden" => {
+                                                                    if let Some(list) =
+                                                                        plist.as_array()
+                                                                    {
+                                                                        forbidden =
+                                                                            serde_json::json!(list);
+                                                                    }
+                                                                }
+                                                                _ => {}
                                                             }
                                                         }
-                                                        "forbidden" => {
-                                                            if let Some(list) = plist.as_array() {
-                                                                forbidden = serde_json::json!(list);
-                                                            }
-                                                        }
-                                                        _ => {}
                                                     }
                                                 }
+                                                suffix_updates.push((
+                                                    layer_name.clone(),
+                                                    policy,
+                                                    allowed,
+                                                    forbidden,
+                                                ));
                                             }
                                         }
-                                        suffix_updates.push((
-                                            layer_name.clone(),
-                                            policy,
-                                            allowed,
-                                            forbidden,
-                                        ));
                                     }
-                                }
-                            }
-                            for (name, policy, allowed, forbidden) in suffix_updates {
-                                if let Some(layer) = obj.get_mut(&name) {
-                                    if let Some(layer_obj) = layer.as_object_mut() {
-                                        if let Some(ref p) = policy {
-                                            layer_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
-                                        }
-                                        layer_obj.insert("allowed_suffix".to_string(), allowed);
-                                        if let Some(arr) = forbidden.as_array() {
-                                            if !arr.is_empty() {
-                                                layer_obj.insert("forbidden_suffix".to_string(), forbidden);
+                                    for (name, policy, allowed, forbidden) in suffix_updates {
+                                        if let Some(layer) = obj.get_mut(&name) {
+                                            if let Some(layer_obj) = layer.as_object_mut() {
+                                                if let Some(ref p) = policy {
+                                                    layer_obj.insert(
+                                                        "suffix_policy".to_string(),
+                                                        serde_json::json!(p),
+                                                    );
+                                                }
+                                                layer_obj
+                                                    .insert("allowed_suffix".to_string(), allowed);
+                                                if let Some(arr) = forbidden.as_array() {
+                                                    if !arr.is_empty() {
+                                                        layer_obj.insert(
+                                                            "forbidden_suffix".to_string(),
+                                                            forbidden,
+                                                        );
+                                                    }
+                                                }
+                                                layer_obj.remove("suffix");
                                             }
                                         }
-                                        layer_obj.remove("suffix");
                                     }
-                                }
-                            }
                                 }
                             }
                             // Flatten nested rules (global/internal/external) into a single array.
@@ -150,7 +166,9 @@ fn try_load_yaml_config(start: &Path) -> Option<ArchitectureConfig> {
                                     for (_, v) in obj.iter() {
                                         if let Some(arr) = v.as_array() {
                                             for item in arr {
-                                                if let Some(arr) = flat.as_array_mut() { arr.push(item.clone()); }
+                                                if let Some(arr) = flat.as_array_mut() {
+                                                    arr.push(item.clone());
+                                                }
                                             }
                                         }
                                     }
@@ -203,7 +221,12 @@ pub fn format_report(results: &[LintResult], project_root: &str) -> String {
         }
     }
 
-    for (sev, items) in [("CRITICAL", &critical), ("HIGH", &high), ("MEDIUM", &medium), ("LOW", &low)] {
+    for (sev, items) in [
+        ("CRITICAL", &critical),
+        ("HIGH", &high),
+        ("MEDIUM", &medium),
+        ("LOW", &low),
+    ] {
         if items.is_empty() {
             continue;
         }

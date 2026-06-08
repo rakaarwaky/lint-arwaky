@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use crate::capabilities::naming_renamer_processor::SymbolRenamerProcessor;
+use crate::contract::{IArchLintProtocol, LintFixOrchestratorAggregate};
 use crate::taxonomy::fix_applied_event::FixApplied;
 use crate::taxonomy::{AdapterName, Count, DescriptionVO, ErrorCode, FilePath, FixResult};
-use crate::contract::{IArchLintProtocol, LintFixOrchestratorAggregate};
+use std::sync::Arc;
 
 pub struct LintFixOrchestrator {
     dry_run: bool,
@@ -11,7 +11,10 @@ pub struct LintFixOrchestrator {
 
 impl LintFixOrchestrator {
     pub fn new(linter: Arc<dyn IArchLintProtocol>) -> Self {
-        Self { dry_run: false, linter }
+        Self {
+            dry_run: false,
+            linter,
+        }
     }
 
     pub fn with_dry_run(dry_run: bool, linter: Arc<dyn IArchLintProtocol>) -> Self {
@@ -154,14 +157,15 @@ impl LintFixOrchestratorAggregate for LintFixOrchestrator {
             .collect();
 
         let mut fixed_count = 0usize;
-        let mut total_fixable = naming_violations.len()
-            + bypass_violations.len()
-            + unused_import_violations.len();
+        let mut total_fixable =
+            naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
 
         let renamer = SymbolRenamerProcessor;
         for violation in &naming_violations {
             let msg = violation.message.value();
-            if let Some(old_name) = msg.split_whitespace().find(|w| w.contains('_') && w.len() > 3)
+            if let Some(old_name) = msg
+                .split_whitespace()
+                .find(|w| w.contains('_') && w.len() > 3)
             {
                 let new_name = if !old_name.contains('_') {
                     format!("renamed_{}", old_name)
