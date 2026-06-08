@@ -2,13 +2,14 @@
 **Feature Name:** Config YAML Parser  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated file paths to reflect vertical slicing (26 feature folders) | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -35,9 +36,9 @@ This document defines the configuration system that reads, parses, and serves ar
 | **ConfigSource** | Raw YAML content read from disk |
 | **ConfigResult** | Final parsed config with metadata |
 | **ArchitectureConfig** | Deserialized struct with all layer definitions and rules |
-| **LanguageDetectorProvider** | Infrastructure adapter that detects project language |
-| **ConfigYamlReader** | Infrastructure adapter that reads config files |
-| **ConfigOrchestrationProcessor** | Capability that orchestrates the full flow |
+| **LanguageDetectorAdapter** | Infrastructure adapter (prefix `infrastructure_`) that detects project language |
+| **ConfigYamlReader** | Infrastructure adapter (prefix `infrastructure_`) that reads config files |
+| **ConfigOrchestrationProcessor** | Capability (prefix `capabilities_`) that orchestrates the full flow |
 
 ## 3. Feature Overview
 ### 3.1 Background & Problem
@@ -67,7 +68,7 @@ Config loading was previously hardcoded in many places: `architecture_lint_handl
 Input: /some/project
 
 Step 1: Check source directory (confidence 100)
-  ├── /some/project/src-rust/ → Rust ✅
+  ├── /some/project/src-rust/ → Rust Pending Review
   ├── /some/project/src-python/ → Python
   └── /some/project/src-javascript/ → JavaScript
 
@@ -129,24 +130,27 @@ No direct UI. Feedback via:
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Project has `src-rust/` directory | `detect_language()` runs | Language = Rust (confidence 100) | ❌ — `language_detector_provider.rs` empty, `language_detector_port.rs` empty |
-| AC-002 | Project has `Cargo.toml` (no `src-rust/`) | `detect_language()` runs | Language = Rust (confidence 90) | ❌ — same as AC-001 |
-| AC-003 | Project has `lint_arwaky.config.rust.yaml` | `read_config()` runs | ConfigSource with raw content | ❌ — `config_yaml_reader.rs` empty, `config_reader_port.rs` empty |
-| AC-004 | Project has NO config file | `read_config()` runs | Fallback to `default_aes_config()` with warning | ✅ — only `architecture_config_vo.rs` and `config_parser_provider.rs` work |
-| AC-005 | Malformed YAML in config file | `parse_raw_yaml()` runs | Error returned, not crash | ⚠️ — `config_parser_provider.rs` real but uses `unwrap()` (crash risk) |
+| AC-001 | Project has `src-rust/` directory | `detect_language()` runs | Language = Rust (confidence 100) | Pending Review — `language_detector_provider.rs` empty, `language_detector_port.rs` empty |
+| AC-002 | Project has `Cargo.toml` (no `src-rust/`) | `detect_language()` runs | Language = Rust (confidence 90) | Pending Review — same as AC-001 |
+| AC-003 | Project has `lint_arwaky.config.rust.yaml` | `read_config()` runs | ConfigSource with raw content | Pending Review — `config_yaml_reader.rs` empty, `config_reader_port.rs` empty |
+| AC-004 | Project has NO config file | `read_config()` runs | Fallback to `default_aes_config()` with warning | Pending Review — only `architecture_config_vo.rs` and `config_parser_provider.rs` work |
+| AC-005 | Malformed YAML in config file | `parse_raw_yaml()` runs | Error returned, not crash | Pending Review — `config_parser_provider.rs` real but uses `unwrap()` (crash risk) |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | FR-001 (6-Layer Arch) | Config structure depends on layer definitions | If architecture changes, YAML schema must update | Architecture config uses generic schema |
 | serde_yaml | External crate for YAML parsing | Version compatibility | Pinned in Cargo.toml: 0.9.34 |
 | File system access | Config reading requires file I/O | IO error crashes | Wrapped in `spawn_blocking`, errors propagated |
 
-## 9. Appendices
+## 10. Appendices
 - `lint_arwaky.config.rust.yaml` — Example Rust config
 - `lint_arwaky.config.python.yaml` — Example Python config
 - `lint_arwaky.config.javascript.yaml` — Example JS/TS config
-- `src-rust/infrastructure/language_detector_provider.rs` — Language detection implementation
-- `src-rust/infrastructure/config_yaml_reader.rs` — Config reader implementation
-- `src-rust/capabilities/config_orchestration_processor.rs` — Config orchestration
-- `src-rust/taxonomy/architecture_config_vo.rs` — `default_aes_config()` embedded fallback
+- `src-rust/project-setup/` — Language detection and project setup
+- `src-rust/config-system/` — Config reading, parsing, orchestration
+- `src-rust/shared-common/` — `taxonomy_config_vo.rs` with `default_aes_config()`

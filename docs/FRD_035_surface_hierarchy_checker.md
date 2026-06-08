@@ -2,14 +2,15 @@
 **Feature Name:** Surface Hierarchy Violation Detector (AES018)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v2.0  
+**Date:** 09/06/2026
+**Version:** v2.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
 | v2.0 | 08/06/2026 | Raka | Added full 3-tier hierarchy (Smart, Utility, Passive) | [Stakeholder] |
+| v2.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -24,9 +25,9 @@ This document defines the AES018 rule that enforces **surface hierarchy** constr
 | **Passive** (bottom) | `_component`, `_layout`, `_view` | Dumb views — present data only | taxonomy only |
 
 **Hierarchy Rule:** A tier may NOT import from a tier above it:
-- Utility → Smart ❌ (forbidden)
-- Passive → Smart ❌ (forbidden)
-- Passive → Utility ❌ (forbidden)
+- Utility → Smart Pending Review (forbidden)
+- Passive → Smart Pending Review (forbidden)
+- Passive → Utility Pending Review (forbidden)
 
 **In-Scope:**
 - Barrel wiring: verifying every surface file is re-exported via `__init__.py`/`mod.rs`/`index.ts`
@@ -83,7 +84,7 @@ Surface files that are not wired into their layer barrel become invisible to con
 
 **Cross-Tier Import Pipeline (config-defined):**
 ```
-File: surfaces/utility_import_store.rs  → Utility tier
+File: cli-commands/surface_import_store.rs  → Utility tier
 
 1. Detect surface tier by suffix:
    - _command/_handler/_controller/_entry → Smart
@@ -113,12 +114,12 @@ File: surfaces/utility_import_store.rs  → Utility tier
 
 ## 6. UI/UX Requirements
 ```
-AES018 HIGH - src-rust/surfaces/complex_view_handler.rs
+AES018 HIGH - src-rust/cli-commands/surface_view_handler.rs
   AES018 MISSING_BARREL: Surface file not exported from mod.rs.
   WHY? Each surface must be explicitly wired via the layer barrel to be discoverable.
   FIX: Add `pub mod complex_view_handler;` to mod.rs.
 
-AES018 HIGH - src-rust/surfaces/utility_import_store.rs
+AES018 HIGH - src-rust/cli-commands/surface_import_store.rs
   AES018 SURFACE_HIERARCHY_VIOLATION: Utility surface imports Smart surface.
   WHY? Utility surfaces must be independent of Smart surfaces.
   FIX: Remove the Smart surface import; use dependency injection instead.
@@ -127,31 +128,31 @@ AES018 HIGH - src-rust/surfaces/utility_import_store.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Surface file NOT in barrel | `check_surface_hierarchy()` runs | AES018 HIGH flagged | ✅ |
-| AC-002 | Surface file properly barrelled | `check_surface_hierarchy()` runs | No AES018 | ✅ |
-| AC-003 | Barrel file itself (`__init__.py`) | `check_surface_hierarchy()` runs | Skipped | ✅ |
-| AC-004 | Utility surface imports Smart surface | Import check runs | AES018 flagged | ❌ Emitted as AES001 |
-| AC-005 | Passive surface imports agent | Import check runs | AES019 flagged | ❌ Emitted as AES001 |
-| AC-006 | Smart surface imports from any layer | Import check runs | Allowed | ✅ |
-| AC-007 | Non-surface file outside /surfaces/ | `check_surface_hierarchy()` runs | Skipped | ✅ |
+| AC-001 | Surface file NOT in barrel | `check_surface_hierarchy()` runs | AES018 HIGH flagged | Pending Review |
+| AC-002 | Surface file properly barrelled | `check_surface_hierarchy()` runs | No AES018 | Pending Review |
+| AC-003 | Barrel file itself (`__init__.py`) | `check_surface_hierarchy()` runs | Skipped | Pending Review |
+| AC-004 | Utility surface imports Smart surface | Import check runs | AES018 flagged | Pending Review Emitted as AES001 |
+| AC-005 | Passive surface imports agent | Import check runs | AES019 flagged | Pending Review Emitted as AES001 |
+| AC-006 | Smart surface imports from any layer | Import check runs | Allowed | Pending Review |
+| AC-007 | Non-surface file without surface_ prefix | `check_surface_hierarchy()` runs | Skipped | Pending Review |
 
 ## 8. Empirical Findings (Code Audit)
 
 ### 8.1 Current Implementation
-- **Location**: `src-rust/capabilities/surface_hierarchy_checker.rs:43-79`
+- **Location**: `src-rust/layer-rules/capabilities_hierarchy_checker.rs:43-79`
 - **Status**: **FULLY IMPLEMENTED** — barrel wiring check only
 - Invoked from `lint_checking_coordinator.rs:154`
 
 ### 8.2 Bugs Found
 
-1. **Error code mismatch for import restriction** (`architecture_import_checker.rs:339`)
+1. **Error code mismatch for import restriction** (`src-rust/layer-rules/capabilities_import_checker.rs:339`)
    - Config defines AES018/AES019 violation messages for cross-tier surface imports
    - `ArchImportRuleChecker::check_forbidden_imports` hardcodes `AES001` as error code
    - **Impact**: all import-based surface hierarchy violations are labeled AES001
    - **Fix**: wire error code from config or accept AES001 as the correct code for import rules
 
 2. **Barrel wiring primarily supports Python**
-   - The `is_wired` helper (`surface_hierarchy_checker.rs:296-316`) reads `__init__.py` content
+   - The `is_wired` helper (`src-rust/layer-rules/capabilities_hierarchy_checker.rs:296-316`) reads `__init__.py` content
    - Rust `mod.rs` support relies on file existence checks, not content analysis
    - **Impact**: Rust surface files may get false negatives
    - **Fix**: implement content-aware `mod.rs` parsing
@@ -168,14 +169,14 @@ AES018 HIGH - src-rust/surfaces/utility_import_store.rs
 - **Tier-aware import checker**: add explicit Smart/Utility/Passive tier detection with separate code paths
 
 ### 8.4 What to Keep
-- **Barrel wiring logic** ✅ (`surface_hierarchy_checker.rs:43-79`)
-- **Per-surface-tier forbidden imports** ✅ (config sections for Smart, Utility, Passive)
-- **Coordinator pipeline integration** ✅ (`lint_checking_coordinator.rs:154`)
+- **Barrel wiring logic** Pending Review (`src-rust/layer-rules/capabilities_hierarchy_checker.rs:43-79`)
+- **Per-surface-tier forbidden imports** Pending Review (config sections for Smart, Utility, Passive)
+- **Coordinator pipeline integration** Pending Review (`src-rust/pipeline-jobs/agent_checking_coordinator.rs:154`)
 
 ### 8.5 Empirical Evidence from Test Projects
-- `test-project-rust/src-rust/surfaces/utility_import_store.rs` — Utility imports Smart → flagged as AES001 ❌
-- `test-project-rust/src-rust/surfaces/passive_bad_view.rs` — Passive imports agent → flagged as AES001 ❌
-- `test-project-rust/src-rust/surfaces/complex_view_handler.rs` — Smart surface → no tier violation
+- `test-project-rust/src-rust/cli-commands/surface_import_store.rs` — Utility imports Smart → flagged as AES001 Pending Review
+- `test-project-rust/src-rust/cli-commands/surface_passive_view.rs` — Passive imports agent → flagged as AES001 Pending Review
+- `test-project-rust/src-rust/cli-commands/surface_view_handler.rs` — Smart surface → no tier violation
 - No dedicated AES018 barrel-wiring fixture exists
 
 ## 9. Dependencies & Risks
@@ -186,9 +187,9 @@ AES018 HIGH - src-rust/surfaces/utility_import_store.rs
 | File I/O | Reading barrel content | Unreadable barrel → false positive | Skip on read error |
 
 ## 10. Appendices
-- `src-rust/capabilities/surface_hierarchy_checker.rs:43` — `check_surface_hierarchy()`
-- `src-rust/agent/lint_checking_coordinator.rs:154` — Invocation
-- `src-rust/capabilities/architecture_import_checker.rs:339` — Hardcoded AES001
+- `src-rust/layer-rules/capabilities_hierarchy_checker.rs:43` — `check_surface_hierarchy()`
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs:154` — Invocation
+- `src-rust/layer-rules/capabilities_import_checker.rs:339` — Hardcoded AES001
 - `lint_arwaky.config.rust.yaml:582` — Smart_Surface_Relations config
 - `lint_arwaky.config.rust.yaml:593` — Utility_Surface_Relations config
 - `lint_arwaky.config.rust.yaml:610` — Passive_Surface_Relations config

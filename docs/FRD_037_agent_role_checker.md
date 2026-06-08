@@ -2,13 +2,14 @@
 **Feature Name:** Agent Role Violation Detector (AES021)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026
+**Version:** v1.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -61,16 +62,16 @@ Agent files in the AES architecture have specific role-based behavioral mandates
 ### 4.2 Use Cases & Workflow
 **Active Pipeline (line count only):**
 ```
-File: agent/large_orchestrator.rs
+File: pipeline-jobs/agent_large_orchestrator.rs
 
-1. Is file in /agent/ directory? → YES
+1. Does filename have agent_ prefix? → YES
 2. Count total lines
 3. If count > 300 → AES021 HIGH
 ```
 
 **Full Pipeline (dead code — ArchRoleChecker):**
 ```
-File: agent/stateful_orchestrator.rs
+File: pipeline-jobs/agent_stateful_orchestrator.rs
 
 1. Detect agent role: suffix → orchestrator
 2. Load LayerDefinition for role scope
@@ -84,7 +85,7 @@ File: agent/stateful_orchestrator.rs
 
 ### 4.3 Business Rules
 - Severity: HIGH
-- Active rule: file > 300 lines in `/agent/` directory
+- Active rule: file > 300 lines with `agent_` prefix
 - Full rule (dead code): per-role behavioral checks from config
 - Container must implement `ServiceContainerAggregate` contract
 - Orchestrator must be stateless (no mutable fields outside constructor)
@@ -98,12 +99,12 @@ File: agent/stateful_orchestrator.rs
 
 ## 6. UI/UX Requirements
 ```
-AES021 HIGH - src-rust/agent/large_orchestrator.rs
+AES021 HIGH - src-rust/pipeline-jobs/agent_large_orchestrator.rs
   AES021 AGENT_ROLE: Agent file >300 lines (found: 358).
   WHY? Large agent files violate the Single Responsibility Principle.
   FIX: Delegate logic to capabilities or infrastructure.
 
-AES021 HIGH - src-rust/agent/stateful_orchestrator.rs
+AES021 HIGH - src-rust/pipeline-jobs/agent_stateful_orchestrator.rs
   AES021 AGENT_ROLE: Orchestrator contains mutable state — violates stateless mandate.
   WHY? Orchestrators are 'Conductors' and must not hold internal execution state.
   FIX: Move state to a Registry component.
@@ -112,11 +113,11 @@ AES021 HIGH - src-rust/agent/stateful_orchestrator.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Agent file > 300 lines | `check_agent_role()` runs | AES021 HIGH flagged | ✅ |
-| AC-002 | Agent file ≤ 300 lines | `check_agent_role()` runs | No AES021 | ✅ |
-| AC-003 | Container with domain logic | Full checker runs | AES021 flagged | ❌ Dead code |
-| AC-004 | Orchestrator with mutable state | Full checker runs | AES021 flagged | ❌ Dead code |
-| AC-005 | File outside agent directory | Active checker runs | Skipped | ✅ |
+| AC-001 | Agent file > 300 lines | `check_agent_role()` runs | AES021 HIGH flagged | Pending Review |
+| AC-002 | Agent file ≤ 300 lines | `check_agent_role()` runs | No AES021 | Pending Review |
+| AC-003 | Container with domain logic | Full checker runs | AES021 flagged | Pending Review Dead code |
+| AC-004 | Orchestrator with mutable state | Full checker runs | AES021 flagged | Pending Review Dead code |
+| AC-005 | File without agent_ prefix | Active checker runs | Skipped | Pending Review |
 
 ## 8. Empirical Findings (Code Audit)
 
@@ -125,22 +126,22 @@ AES021 HIGH - src-rust/agent/stateful_orchestrator.rs
 #### 8.1.1 Line-Count Checker (ACTIVE) — `lint_checking_coordinator.rs:449-462`
 ```rust
 fn check_agent_role(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-    if !file.contains("/agent/") { return; }
+    if !file.starts_with("agent_") { return; }
     if content.lines().count() > 300 {
         violations.push(Self::mk(file, 0, "AES021", Severity::HIGH, "..."));
     }
 }
 ```
-**Status**: ✅ Active, called in `run_all_checks()` line 61.
+**Status**: Pending Review Active, called in `run_all_checks()` line 61.
 
-#### 8.1.2 ArchRoleChecker (DEAD CODE) — `architecture_role_checker.rs:30-646`
+#### 8.1.2 ArchRoleChecker (DEAD CODE) — `src-rust/role-rules/capabilities_role_checker.rs:30-646`
 - `check_agent_roles()` — 320+ lines, 6 sub-role checks
 - Detects state, domain logic, control flow count, contract implementation, etc.
-- **Status**: ❌ **Never called** by any active code path. Implements `IRoleCheckerProtocol` but the trait is never invoked.
+- **Status**: Pending Review **Never called** by any active code path. Implements `IRoleCheckerProtocol` but the trait is never invoked.
 
 ### 8.2 Bugs Found
 
-1. **CATASTROPHIC: ArchRoleChecker is dead code** (`architecture_role_checker.rs:30-646`)
+1. **CATASTROPHIC: ArchRoleChecker is dead code** (`src-rust/role-rules/capabilities_role_checker.rs:30-646`)
    - Full implementation exists (320+ lines, 6 role-specific checker methods)
    - `check_agent_roles()` is the entry point but has zero callers
    - **Impact**: 13 AES021 violation messages in YAML config are unreachable
@@ -156,14 +157,14 @@ fn check_agent_role(file: &str, content: &str, violations: &mut Vec<LintResult>)
 - **Test fixtures**: verify full role-based checks detect stateful containers, orchestrators, etc.
 
 ### 8.4 What to Keep
-- **Line-count threshold check** ✅ (simple and effective)
-- **ArchRoleChecker implementation** ✅ (sophisticated logic, just needs wiring)
-- **YAML config structure** ✅ (per-role violation messages are already correct)
+- **Line-count threshold check** Pending Review (simple and effective)
+- **ArchRoleChecker implementation** Pending Review (sophisticated logic, just needs wiring)
+- **YAML config structure** Pending Review (per-role violation messages are already correct)
 
 ### 8.5 Empirical Evidence from Test Projects
-- `test-project-rust/src-rust/agent/large_orchestrator.rs` — 358 lines → flagged AES021 ✅
-- `test-project-rust/src-rust/agent/stateful_orchestrator.rs` — mutable `counter` field → NOT flagged ❌
-- `test-project-python/src-python/agent/stateful.py` — `self.state`, `self.executed` → NOT flagged ❌
+- `test-project-rust/src-rust/pipeline-jobs/agent_large_orchestrator.rs` — 358 lines → flagged AES021 Pending Review
+- `test-project-rust/src-rust/pipeline-jobs/agent_stateful_orchestrator.rs` — mutable `counter` field → NOT flagged Pending Review
+- `test-project-python/src-python/pipeline-jobs/agent_stateful.py` — `self.state`, `self.executed` → NOT flagged Pending Review
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
@@ -173,14 +174,14 @@ fn check_agent_role(file: &str, content: &str, violations: &mut Vec<LintResult>)
 | FR-003 (AST parsing) | State detection, control flow | ArchRoleChecker uses regex | Acceptable for now |
 
 ## 10. Appendices
-- `src-rust/agent/lint_checking_coordinator.rs:449` — Active line-count checker
-- `src-rust/capabilities/architecture_role_checker.rs:30` — Dead-code full checker
-- `src-rust/capabilities/architecture_role_checker.rs:261` — `_check_stateless_execution()`
-- `src-rust/capabilities/architecture_role_checker.rs:314` — `_check_high_level_policy_only()`
-- `src-rust/capabilities/architecture_role_checker.rs:352` — `_check_coordinates_multiple_orchestrators()`
-- `src-rust/capabilities/architecture_role_checker.rs:426` — `_check_no_domain_logic()`
-- `src-rust/capabilities/architecture_role_checker.rs:117` — `_check_must_implement_contract_lazy()`
-- `src-rust/capabilities/architecture_role_checker.rs:466` — `_check_lazy_eager_init_only()`
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs:449` — Active line-count checker
+- `src-rust/role-rules/capabilities_role_checker.rs:30` — Dead-code full checker
+- `src-rust/role-rules/capabilities_role_checker.rs:261` — `_check_stateless_execution()`
+- `src-rust/role-rules/capabilities_role_checker.rs:314` — `_check_high_level_policy_only()`
+- `src-rust/role-rules/capabilities_role_checker.rs:352` — `_check_coordinates_multiple_orchestrators()`
+- `src-rust/role-rules/capabilities_role_checker.rs:426` — `_check_no_domain_logic()`
+- `src-rust/role-rules/capabilities_role_checker.rs:117` — `_check_must_implement_contract_lazy()`
+- `src-rust/role-rules/capabilities_role_checker.rs:466` — `_check_lazy_eager_init_only()`
 - `lint_arwaky.config.rust.yaml:333` — Agent_Container_Wiring_Mandate config
 - `lint_arwaky.config.rust.yaml:351` — Agent_Orchestrator_Stateless_Mandate config
 - `lint_arwaky.config.rust.yaml:369` — Agent_Coordinator_Strategic_Mandate config

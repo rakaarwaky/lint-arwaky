@@ -2,13 +2,14 @@
 **Feature Name:** Apply Safe Auto-Fixes (Rust + Python + JS/TS)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated file paths to reflect vertical slicing (26 feature folders) | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -116,35 +117,39 @@ NamingRenamerProcessor.rename_symbol(root, old_name, new_name)
 CLI output:
 ```
  Applying safe fixes to /project...
- ✅ architecture_import_checker.rs → renamed symbol (AES003)
- ✅ my_file.rs → removed unused import (AES015)
- ⚠️  architecture_lint_handler.rs → requires manual fix (AES001 - import violation)
+ Pending Review layer-rules/capabilities_import_checker.rs → renamed symbol (AES003)
+ Pending Review naming-rules/taxonomy_symbol_vo.rs → removed unused import (AES015)
+ Pending Review  pipeline-jobs/agent_lint_orchestrator.rs → requires manual fix (AES001 - import violation)
  ℹ️  Dry-run mode: 2 of 5 violations can be auto-fixed
 ```
 
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | File with AES003 naming violation | `fix .` runs | File renamed to correct 3-word pattern | ✅ `LintFixOrchestrator` calls `SymbolRenamerProcessor` for AES003 fixes |
-| AC-002 | File with `#[allow(...)]` bypass | `fix .` runs | `#[allow(...)]` line removed | ✅ `fix_bypass_comments()` implemented with dry-run support |
-| AC-003 | File with unused import | `fix .` runs | Unused import line removed | ✅ `fix_unused_import()` removes import line by line number |
-| AC-004 | `--dry-run` flag set | `fix . --dry-run` runs | Files inspected but NOT modified | ✅ `--dry-run` flag defined in CLI, wired to `LintFixOrchestrator::with_dry_run()` |
-| AC-005 | Non-fixable violations present | `fix .` runs | Listed as manual steps | ✅ `report_non_fixable()` classifies by AES code, lists manual steps |
-| AC-006 | Naming violation with AES003 | `NamingRenamerProcessor` runs | Symbol renamed project-wide | ✅ Working |
-| AC-007 | Clippy fixable issue in Rust file | `rust_linter_adapter.apply_fix()` | `cargo clippy --fix` executes | ✅ Real |
+| AC-001 | File with AES003 naming violation | `fix .` runs | File renamed to correct 3-word pattern | Pending Review `LintFixOrchestrator` calls `SymbolRenamerProcessor` for AES003 fixes |
+| AC-002 | File with `#[allow(...)]` bypass | `fix .` runs | `#[allow(...)]` line removed | Pending Review `fix_bypass_comments()` implemented with dry-run support |
+| AC-003 | File with unused import | `fix .` runs | Unused import line removed | Pending Review `fix_unused_import()` removes import line by line number |
+| AC-004 | `--dry-run` flag set | `fix . --dry-run` runs | Files inspected but NOT modified | Pending Review `--dry-run` flag defined in CLI, wired to `LintFixOrchestrator::with_dry_run()` |
+| AC-005 | Non-fixable violations present | `fix .` runs | Listed as manual steps | Pending Review `report_non_fixable()` classifies by AES code, lists manual steps |
+| AC-006 | Naming violation with AES003 | `NamingRenamerProcessor` runs | Symbol renamed project-wide | Pending Review Working |
+| AC-007 | Clippy fixable issue in Rust file | `rust_linter_adapter.apply_fix()` | `cargo clippy --fix` executes | Pending Review Real |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | FR-003 (Parsing) | Parser identifies violations to fix | Regex inaccuracy affects fix targeting | Use external tool's own fix mechanism |
 | External tools | clippy, ruff, eslint, prettier must be installed | Tool not found → fix fails | Check tool availability before fix |
 | `NamingRenamerProcessor` | Regex-based rename | False positives in strings/comments | Skip non-code contexts |
 
-## 9. Appendices
-- `src-rust/surfaces/cli_fix_command.rs` — CLI command (stub)
-- `src-rust/agent/lint_fix_orchestrator.rs` — Orchestrator (stub)
-- `src-rust/capabilities/naming_renamer_processor.rs` — Naming renamer (working)
-- `src-rust/taxonomy/fix_result_vo.rs` — FixResult VO
-- `src-rust/taxonomy/fix_applied_event.rs` — FixAppliedEvent
-- `src-rust/contract/lint_fix_aggregate.rs` — Fix orchestrator trait
-- `src-rust/contract/linter_adapter_port.rs` — `apply_fix()` trait method
+## 10. Appendices
+- `src-rust/cli-commands/surface_fix_command.rs` — CLI command
+- `src-rust/pipeline-jobs/agent_fix_orchestrator.rs` — Orchestrator
+- `src-rust/naming-rules/capabilities_renamer_processor.rs` — Naming renamer (working)
+- `src-rust/shared-common/taxonomy_fix_result_vo.rs` — FixResult VO
+- `src-rust/shared-common/taxonomy_fix_event.rs` — FixAppliedEvent
+- `src-rust/code-analysis/contract_fix_aggregate.rs` — Fix orchestrator trait
+- `src-rust/language-adapters/contract_adapter_port.rs` — `apply_fix()` trait method

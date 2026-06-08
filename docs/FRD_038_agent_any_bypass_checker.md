@@ -2,13 +2,14 @@
 **Feature Name:** Agent Any-Bypass Detector (AES024)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026
+**Version:** v1.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -16,7 +17,7 @@ This document defines the AES024 rule that detects forbidden type-escape pattern
 
 ### 2.2 Scope
 **In-Scope (active):**
-- Wildcard imports (`use crate::capabilities::*;`) in `/agent/` files
+- Wildcard imports (`use crate::capabilities::*;`) in files with `agent_` prefix
 - HIGH severity reporting
 
 **In-Scope (dead code):**
@@ -58,9 +59,9 @@ The agent orchestrator is the system's brain and must maintain strict type safet
 ### 4.2 Use Cases & Workflow
 **Active Pipeline (wildcard imports):**
 ```
-File: agent/wildcard_orchestrator.rs
+File: pipeline-jobs/agent_wildcard_orchestrator.rs
 
-1. Is file in /agent/ directory? → YES
+1. Does filename have agent_ prefix? → YES
 2. For each line:
    a. Does line contain ":*:" or "::* }"? → YES (wildcard)
    b. Flag AES024 HIGH
@@ -68,9 +69,9 @@ File: agent/wildcard_orchestrator.rs
 
 **Dead-Code Pipeline (any types — ArchRoleChecker):**
 ```
-File: agent/state_any_mess.py
+File: pipeline-jobs/agent_any_mess.py
 
-1. Is file in /agent/ directory? → YES
+1. Does filename have agent_ prefix? → YES
 2. Is suffix orchestrator? → YES
 3. Load LayerDefinition → forbid_any_type: true
 4. Scan for patterns: ": Any", "-> Any", "Any["
@@ -79,7 +80,7 @@ File: agent/state_any_mess.py
 
 ### 4.3 Business Rules
 - Severity: HIGH
-- Active rule: wildcard imports (`::*`) detected in any file under `/agent/`
+- Active rule: wildcard imports (`::*`) detected in any file with `agent_` prefix
 - Dead-code rule: `any` type annotations in orchestrator scope
 - Active rule is scope-independent (checks all agent files regardless of role)
 - Dead-code rule uses config `forbid_any_type` per role scope
@@ -93,12 +94,12 @@ File: agent/state_any_mess.py
 
 ## 6. UI/UX Requirements
 ```
-AES024 HIGH - src-rust/agent/wildcard_orchestrator.rs
+AES024 HIGH - src-rust/pipeline-jobs/agent_wildcard_orchestrator.rs
   AES024 AGENT_ANY_BYPASS: Wildcard import detected in agent layer.
   WHY? Wildcard imports bypass explicit type resolution in orchestrator code.
   FIX: Import specific types explicitly instead of using *.
 
-AES024 HIGH - src-rust/agent/state_any_mess.py
+AES024 HIGH - src-rust/pipeline-jobs/agent_any_mess.py
   AES024 AGENT_ANY_BYPASS: 'any' type annotation detected in orchestrator logic.
   WHY? Using 'any' bypasses the type system and hides architectural coupling.
   FIX: Replace with a concrete domain type or interface.
@@ -107,11 +108,11 @@ AES024 HIGH - src-rust/agent/state_any_mess.py
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Agent file with `::*` wildcard | `check_agent_any_bypass()` runs | AES024 HIGH flagged | ✅ |
-| AC-002 | Agent file without wildcard | `check_agent_any_bypass()` runs | No AES024 | ✅ |
-| AC-003 | Python agent with `: Any` annotation | Full checker runs | AES024 flagged | ❌ Dead code |
-| AC-004 | JS agent with `: any` annotation | Full checker runs | AES024 flagged | ❌ Dead code |
-| AC-005 | File outside /agent/ directory | Checker runs | Skipped | ✅ |
+| AC-001 | Agent file with `::*` wildcard | `check_agent_any_bypass()` runs | AES024 HIGH flagged | Pending Review |
+| AC-002 | Agent file without wildcard | `check_agent_any_bypass()` runs | No AES024 | Pending Review |
+| AC-003 | Python agent with `: Any` annotation | Full checker runs | AES024 flagged | Pending Review Dead code |
+| AC-004 | JS agent with `: any` annotation | Full checker runs | AES024 flagged | Pending Review Dead code |
+| AC-005 | File without agent_ prefix | Checker runs | Skipped | Pending Review |
 
 ## 8. Empirical Findings (Code Audit)
 
@@ -120,7 +121,7 @@ AES024 HIGH - src-rust/agent/state_any_mess.py
 #### 8.1.1 Wildcard Import Checker (ACTIVE) — `lint_checking_coordinator.rs:344-361`
 ```rust
 fn check_agent_any_bypass(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-    if !file.contains("/agent/") { return; }
+    if !file.starts_with("agent_") { return; }
     let wc1 = format!("{}*{}", ":", ":");
     let wc2 = format!("{}* {}", "::", "}");
     if line.trim().contains(&wc1) || line.trim().contains(&wc2) {
@@ -128,9 +129,9 @@ fn check_agent_any_bypass(file: &str, content: &str, violations: &mut Vec<LintRe
     }
 }
 ```
-**Status**: ✅ Active. Checks for `::*` patterns (wildcard imports). Called in `run_all_checks()` line 64.
+**Status**: Pending Review Active. Checks for `::*` patterns (wildcard imports). Called in `run_all_checks()` line 64.
 
-#### 8.1.2 Any-Type Checker (DEAD CODE) — `architecture_role_checker.rs:576-612`
+#### 8.1.2 Any-Type Checker (DEAD CODE) — `src-rust/role-rules/capabilities_role_checker.rs:576-612`
 ```rust
 fn _check_forbid_any_type(&self, ...) {
     // Scans for ": Any", "-> Any", "Any[" patterns
@@ -138,7 +139,7 @@ fn _check_forbid_any_type(&self, ...) {
     // Entire chain is dead code
 }
 ```
-**Status**: ❌ **Never called**. The entire `check_agent_roles()` → `_apply_agent_role_checks()` → `_check_forbid_any_type()` chain is unreachable.
+**Status**: Pending Review **Never called**. The entire `check_agent_roles()` → `_apply_agent_role_checks()` → `_check_forbid_any_type()` chain is unreachable.
 
 ### 8.2 Bugs Found
 
@@ -147,7 +148,7 @@ fn _check_forbid_any_type(&self, ...) {
    - Active code (line 344): detects `::*` wildcard imports only
    - **Impact**: documentation/UX doesn't match actual behavior
 
-2. **`_check_forbid_any_type()` is dead code** (`architecture_role_checker.rs:576-612`)
+2. **`_check_forbid_any_type()` is dead code** (`src-rust/role-rules/capabilities_role_checker.rs:576-612`)
    - Correctly detects `Any` type annotations via regex
    - Called from `_apply_agent_role_checks` which is called from `check_agent_roles` — never invoked
    - **Impact**: Python/JS test fixtures with `: Any` go undetected
@@ -163,14 +164,14 @@ fn _check_forbid_any_type(&self, ...) {
 - **Add test fixtures** for `any` type annotations in orchestrator files
 
 ### 8.4 What to Keep
-- **Active wildcard import checker** ✅ (catches real violations)
-- **`_check_forbid_any_type` implementation** ✅ (just needs wiring)
-- **Config YAML `forbid_any_type` flag** ✅ (correct structure)
+- **Active wildcard import checker** Pending Review (catches real violations)
+- **`_check_forbid_any_type` implementation** Pending Review (just needs wiring)
+- **Config YAML `forbid_any_type` flag** Pending Review (correct structure)
 
 ### 8.5 Empirical Evidence from Test Projects
-- `test-project-rust/src-rust/agent/wildcard_orchestrator.rs` — `use crate::capabilities::*;` → flagged AES024 ✅
-- `test-project-python/src-python/agent/state_any_mess.py` — `data: Any`, `event: Any` → NOT flagged ❌
-- `test-project-javascript/src-javascript/agent/state_any_mess.ts` — `const violatingAnyVar: any` → NOT flagged ❌
+- `test-project-rust/src-rust/pipeline-jobs/agent_wildcard_orchestrator.rs` — `use crate::capabilities::*;` → flagged AES024 Pending Review
+- `test-project-python/src-python/pipeline-jobs/agent_any_mess.py` — `data: Any`, `event: Any` → NOT flagged Pending Review
+- `test-project-javascript/src-javascript/pipeline-jobs/agent_any_mess.ts` — `const violatingAnyVar: any` → NOT flagged Pending Review
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
@@ -180,8 +181,8 @@ fn _check_forbid_any_type(&self, ...) {
 | ArchRoleChecker | Full checker circuit | Dead code | Wire into coordinator |
 
 ## 10. Appendices
-- `src-rust/agent/lint_checking_coordinator.rs:344` — Active wildcard checker
-- `src-rust/capabilities/architecture_role_checker.rs:576` — Dead-code any-type checker
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs:344` — Active wildcard checker
+- `src-rust/role-rules/capabilities_role_checker.rs:576` — Dead-code any-type checker
 - `lint_arwaky.config.rust.yaml:355` — `forbid_any_type` config for orchestrators
-- `test-project-rust/src-rust/agent/wildcard_orchestrator.rs` — Wildcard fixture
-- `test-project-python/src-python/agent/state_any_mess.py` — Any-type fixture
+- `test-project-rust/src-rust/pipeline-jobs/agent_wildcard_orchestrator.rs` — Wildcard fixture
+- `test-project-python/src-python/pipeline-jobs/agent_any_mess.py` — Any-type fixture

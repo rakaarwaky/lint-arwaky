@@ -2,13 +2,14 @@
 **Feature Name:** Orphan Code Detector (AES017)
 **Product:** Lint Arwaky v1.10.2
 **Author:** Raka
-**Date:** 08/06/2026
-**Version:** v1.0
+**Date:** 09/06/2026
+**Version:** v1.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -76,7 +77,7 @@ Files that are not imported by any other file and are not entry points are orpha
 
 ## 6. UI/UX Requirements
 ```
-AES017 HIGH - src-rust/capabilities/unused_checker.rs
+AES017 HIGH - src-rust/orphan-detector/capabilities_orphan_checker.rs
   AES017 ORPHAN_CODE: File has no imports, not an entry point.
   WHY? Every source file must be reachable through imports.
   FIX: Import this file from another module or delete if unused.
@@ -85,16 +86,16 @@ AES017 HIGH - src-rust/capabilities/unused_checker.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | File with 0 imports, not entry point | Orphan scan runs | AES017 HIGH flagged | ✅ |
-| AC-002 | File with 0 imports, is entry point | Orphan scan runs | No AES017 | ✅ |
-| AC-003 | Barrel file (mod.rs) with 0 imports | Orphan scan runs | No AES017 | ✅ |
-| AC-004 | Barrel file (index.js) with 0 imports | Orphan scan runs | No AES017 | ❌ index.js not excluded |
-| AC-005 | File with >0 imports | Orphan scan runs | No AES017 | ✅ |
+| AC-001 | File with 0 imports, not entry point | Orphan scan runs | AES017 HIGH flagged | Pending Review |
+| AC-002 | File with 0 imports, is entry point | Orphan scan runs | No AES017 | Pending Review |
+| AC-003 | Barrel file (mod.rs) with 0 imports | Orphan scan runs | No AES017 | Pending Review |
+| AC-004 | Barrel file (index.js) with 0 imports | Orphan scan runs | No AES017 | Pending Review index.js not excluded |
+| AC-005 | File with >0 imports | Orphan scan runs | No AES017 | Pending Review |
 
 ## 8. Empirical Findings (Code Audit)
 
 ### 8.1 Current Implementation
-- **Location**: `lint_checking_coordinator.rs:168-186`
+- **Location**: `src-rust/pipeline-jobs/agent_checking_coordinator.rs:168-186`
 - **Status**: **NEARLY COMPLETE** — one exclusion missing
 - Uses `OrphanGraphResolver` for graph construction and entry point identification
 
@@ -106,10 +107,10 @@ AES017 HIGH - src-rust/capabilities/unused_checker.rs
 - Add `/index.js` to the exclusion list alongside `/index.ts`
 
 ### 8.4 What to Keep
-- Import graph construction ✅
-- Entry point identification ✅
-- Barrel file exclusion for Rust/Python/TS ✅
-- Orphan detection logic ✅
+- Import graph construction Pending Review
+- Entry point identification Pending Review
+- Barrel file exclusion for Rust/Python/TS Pending Review
+- Orphan detection logic Pending Review
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
@@ -117,5 +118,5 @@ AES017 HIGH - src-rust/capabilities/unused_checker.rs
 | OrphanGraphResolver | Import graph building and entry point analysis | Graph may be incomplete for dynamic imports | Static analysis sufficient for Rust/Python |
 
 ## 10. Appendices
-- `src-rust/agent/lint_checking_coordinator.rs:168` — Orphan detection loop
-- `src-rust/capabilities/architecture_orphan_analyzer.rs` — `OrphanGraphResolver`
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs:168` — Orphan detection loop
+- `src-rust/orphan-detector/capabilities_orphan_analyzer.rs` — `OrphanGraphResolver`

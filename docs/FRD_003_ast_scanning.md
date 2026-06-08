@@ -2,13 +2,14 @@
 **Feature Name:** Source Code Parsing (Rust + Python + JS/TS)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated file paths to reflect vertical slicing (26 feature folders) | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -90,10 +91,12 @@ Line: "def detect_layer(self, path: str):"
 **Barrel Detection:**
 ```
 File ends with:
-  ├── /mod.rs OR /lib.rs → Rust barrel
+  ├── /mod.rs OR /lib.rs → Rust barrel (one per feature folder)
   ├── /__init__.py → Python barrel
   └── /index.ts OR /index.js OR /index.tsx OR /index.jsx → JS/TS barrel
 ```
+
+Note: In the Rust codebase, each of the 26 feature folders has its own `mod.rs` barrel. Module paths are declared in `src-rust/lib.rs` using `#[path]` attributes.
 
 ### 4.3 Business Rules
 - 17 methods defined in `ISourceParserPort` trait
@@ -115,28 +118,32 @@ No direct UI. Parser is consumed by other components internally.
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | A Rust file with `use crate::taxonomy::...` | `extract_imports()` runs | ImportInfo with path "taxonomy" | ✅ Simple cases work; ⚠️ fails on multi-line/group imports |
-| AC-002 | A Python file with `from taxonomy import FilePath` | `extract_imports()` runs | ImportInfo with source "taxonomy" | ✅ Simple cases work; ⚠️ fails on multi-line parenthesized imports |
-| AC-003 | A JS file with `import { X } from './module'` | `extract_imports()` runs | ImportInfo with path "./module" | ✅ Single-line imports work; JS `exported` set populated from `export` declarations |
-| AC-004 | File `src-rust/capabilities/mod.rs` | `is_barrel_file()` runs | Returns true | ✅ Path-based, not regex |
-| AC-005 | File `src-rust/capabilities/__init__.py` | `is_barrel_file()` runs | Returns true | ✅ Path-based |
-| AC-006 | File `src-rust/surfaces/index.ts` | `is_barrel_file()` runs | Returns true | ✅ Path-based |
-| AC-007 | File `mod.rs` containing `fn main` | `is_entry_point()` runs | Returns true | ✅ Simple keyword match |
-| AC-008 | File `cli_main_entry.rs` | `is_entry_point()` runs | Returns true | ✅ Name-based check |
-| AC-009 | Any file with class attributes (fields) | `get_class_attributes()` runs | Returns structured attribute data | ✅ Implemented in all 3 scanners: Rust struct fields via brace tracking, Python class attrs via indent tracking, JS class properties via brace counting |
-| AC-010 | JS file with `export function foo()` | `is_symbol_exported()` runs | Returns true | ✅ JS `exported` set populated for `export function/class/const/let/var` and `export { ... }` syntax |
+| AC-001 | A Rust file with `use crate::taxonomy::...` | `extract_imports()` runs | ImportInfo with path "taxonomy" | Pending Review Simple cases work; Pending Review fails on multi-line/group imports |
+| AC-002 | A Python file with `from taxonomy import FilePath` | `extract_imports()` runs | ImportInfo with source "taxonomy" | Pending Review Simple cases work; Pending Review fails on multi-line parenthesized imports |
+| AC-003 | A JS file with `import { X } from './module'` | `extract_imports()` runs | ImportInfo with path "./module" | Pending Review Single-line imports work; JS `exported` set populated from `export` declarations |
+| AC-004 | File `src-rust/layer-rules/mod.rs` | `is_barrel_file()` runs | Returns true | Pending Review Path-based, not regex |
+| AC-005 | File `src-rust/naming-rules/__init__.py` (hypothetical) | `is_barrel_file()` runs | Returns true | Pending Review Path-based |
+| AC-006 | File `src-rust/mcp-server/index.ts` (hypothetical) | `is_barrel_file()` runs | Returns true | Pending Review Path-based |
+| AC-007 | File `mod.rs` containing `fn main` | `is_entry_point()` runs | Returns true | Pending Review Simple keyword match |
+| AC-008 | File `cli_main_entry.rs` | `is_entry_point()` runs | Returns true | Pending Review Name-based check |
+| AC-009 | Any file with class attributes (fields) | `get_class_attributes()` runs | Returns structured attribute data | Pending Review Implemented in all 3 scanners: Rust struct fields via brace tracking, Python class attrs via indent tracking, JS class properties via brace counting |
+| AC-010 | JS file with `export function foo()` | `is_symbol_exported()` runs | Returns true | Pending Review JS `exported` set populated for `export function/class/const/let/var` and `export { ... }` syntax |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | regex crate | All parsing is regex-based | Regex fails on complex patterns | Document limitations; plan syn/swc integration |
 | Static LazyLock | Regex compiled once at startup | Memory overhead | Negligible (~50KB for all patterns) |
 | Multi-language support | Three parser implementations | Maintenance burden | Shared orchestration layer reduces duplication |
 
-## 9. Appendices
-- `src-rust/contract/source_parser_port.rs` — ISourceParserPort trait (17 methods)
-- `src-rust/infrastructure/ast_rust_scanner.rs` — Rust scanner (518 lines)
-- `src-rust/infrastructure/ast_py_scanner.rs` — Python scanner (569 lines)
-- `src-rust/infrastructure/ast_js_scanner.rs` — JS/TS scanner (603 lines)
-- `src-rust/infrastructure/source_parser_adapter.rs` — Orchestrator (143 lines)
-- `src-rust/agent/dependency_injection_container.rs` — Wiring
+## 10. Appendices
+- `src-rust/source-parsing/contract_parser_port.rs` — ISourceParserPort trait (17 methods)
+- `src-rust/language-adapters/infrastructure_rust_scanner.rs` — Rust scanner
+- `src-rust/language-adapters/infrastructure_python_scanner.rs` — Python scanner
+- `src-rust/language-adapters/infrastructure_javascript_scanner.rs` — JS/TS scanner
+- `src-rust/language-adapters/infrastructure_adapter_orchestrator.rs` — Orchestrator
+- `src-rust/di-containers/agent_injection_container.rs` — Wiring

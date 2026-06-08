@@ -2,17 +2,18 @@
 **Feature Name:** Contract Barrel Import Checker (AES007)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths to reflect 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
-This document defines the AES007 rule that enforces barrel-style imports from the contract layer. All imports from `contract/` must go through the layer barrel (`contract/mod.rs`) using `crate::contract::TypeName` instead of submodule paths.
+This document defines the AES007 rule that enforces barrel-style imports from the contract layer. Contract-prefixed types (`contract_*`) must be imported via the feature folder's barrel (`mod.rs`) using `crate::contract::TypeName` instead of submodule paths.
 
 ### 2.2 Scope
 **In-Scope:**
@@ -29,11 +30,11 @@ This document defines the AES007 rule that enforces barrel-style imports from th
 |------|------------|
 | **AES007** | Rule code for contract barrel import |
 | **check_contract_barrel()** | Main detection method |
-| **Barrel** | `contract/mod.rs` that re-exports all contract types |
+| **Barrel** | Feature folder's `mod.rs` that re-exports all contract types (e.g., `di-containers/contract_service_aggregate.rs`) |
 
 ## 3. Feature Overview
 ### 3.1 Background & Problem
-Contract types were imported via submodule paths like `crate::contract::source_parser_port::ISourceParserPort`, creating coupling to internal module structure. The contract barrel exists specifically to be the sole API surface — bypassing it defeats this purpose.
+Contract types were imported via submodule paths like `crate::contract::source_parser_port::ISourceParserPort`, creating coupling to internal module structure. The contract barrel (re-exported via `contract_service_aggregate.rs`) exists specifically to be the sole API surface — bypassing it defeats this purpose.
 
 ### 3.2 Business Goals
 - Ensure contract barrel is the only entry point to contract types
@@ -52,13 +53,13 @@ Contract types were imported via submodule paths like `crate::contract::source_p
 **Detection:**
 ```
 ✅ Correct:  use crate::contract::ServiceContainerAggregate;
-❌ Wrong:    use crate::contract::service_container::ServiceContainerAggregate;
+❌ Wrong:    use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
-Scan line: "use crate::contract::service_container::ServiceContainerAggregate"
-  └── Two segments after "contract" → submodule path → VIOLATION
+Scan line: "use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate"
+  └── Submodule path instead of barrel → VIOLATION (contract_-prefixed type via submodule)
 
 Scan line: "use crate::contract::ServiceContainerAggregate"
-  └── One segment after "contract" → barrel style → OK
+  └── Barrel import → OK
 ```
 
 ### 4.3 Business Rules
@@ -73,25 +74,29 @@ Scan line: "use crate::contract::ServiceContainerAggregate"
 
 ## 6. UI/UX Requirements
 ```
-AES007 MEDIUM - src-rust/surfaces/cli_check_command.rs:5
+AES007 MEDIUM - src-rust/cli-commands/surface_check_command.rs:5
   AES007 CONTRACT_BARREL: Contract import must be from barrel.
   Use: 'use crate::contract::ServiceContainerAggregate'
-  Instead of: 'use crate::contract::service_container::ServiceContainerAggregate'
+  Instead of: 'use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate'
 ```
 
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | File uses `crate::contract::submodule::Type` | `check_contract_barrel()` runs | AES007 MEDIUM flagged | ✅ |
-| AC-002 | File uses `crate::contract::Type` | `check_contract_barrel()` runs | No violation | ✅ |
+| AC-001 | File uses `crate::contract::submodule::Type` | `check_contract_barrel()` runs | AES007 MEDIUM flagged | Pending Review |
+| AC-002 | File uses `crate::contract::Type` | `check_contract_barrel()` runs | No violation | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
-| Rust module system | Only applies to Rust | ✅ By design |
+| Rust module system | Only applies to Rust | Pending Review By design |
 | Code duplication | Logic in 2 files | Maintenance burden | Consolidate to single path |
 
-## 9. Appendices
-- `src-rust/capabilities/architecture_compliance_analyzer.rs:414` — `check_contract_barrel()`
-- `src-rust/agent/lint_checking_coordinator.rs:191` — Duplicated implementation
-- `src-rust/contract/mod.rs` — Contract barrel
+## 10. Appendices
+- `src-rust/layer-rules/capabilities_compliance_analyzer.rs:414` — `check_contract_barrel()`
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs:191` — Duplicated implementation
+- `src-rust/di-containers/contract_service_aggregate.rs` — Contract barrel

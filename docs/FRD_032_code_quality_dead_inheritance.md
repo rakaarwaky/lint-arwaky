@@ -2,13 +2,14 @@
 **Feature Name:** Dead Inheritance Bypass Detector (AES016)
 **Product:** Lint Arwaky v1.10.2
 **Author:** Raka
-**Date:** 08/06/2026
-**Version:** v1.0
+**Date:** 09/06/2026
+**Version:** v1.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -53,7 +54,7 @@ Unit structs and empty impl blocks are often left behind during refactoring or c
 
 ### 4.2 Detection Pipeline
 ```
-File: src-rust/capabilities/some_checker.rs
+File: src-rust/layer-rules/capabilities_import_checker.rs
 
 1. For each line:
    a. Does line match `struct NAME;` pattern?
@@ -77,12 +78,12 @@ File: src-rust/capabilities/some_checker.rs
 
 ## 6. UI/UX Requirements
 ```
-AES016 MEDIUM - src-rust/capabilities/some_checker.rs:15
+AES016 MEDIUM - src-rust/layer-rules/capabilities_import_checker.rs:15
   AES016 DEAD_INHERITANCE: Unit struct — possibly dead inheritance.
   WHY? Unit structs (terminated with ;) indicate incomplete design.
   FIX: Remove if unused, or replace with a proper struct definition.
 
-AES016 MEDIUM - src-rust/capabilities/some_checker.rs:42
+AES016 MEDIUM - src-rust/layer-rules/capabilities_import_checker.rs:42
   AES016 DEAD_INHERITANCE: Empty impl block.
   WHY? Empty impl blocks are placeholders that bypass architectural intent.
   FIX: Remove or implement at least one method.
@@ -91,16 +92,16 @@ AES016 MEDIUM - src-rust/capabilities/some_checker.rs:42
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Rust file with `struct Foo;` | `check_dead_inheritance()` runs | AES016 flagged | ✅ |
-| AC-002 | Rust file with `impl Trait for Foo {}` | Checker runs | AES016 flagged | ✅ |
-| AC-003 | Rust file with `struct Foo { x: u32 }` | Checker runs | No AES016 | ✅ |
-| AC-004 | Rust file with `impl Trait for Foo { fn bar() {} }` | Checker runs | No AES016 | ✅ |
-| AC-005 | Multi-line empty impl block | Checker runs | AES016 flagged | ❌ Multi-line not supported |
+| AC-001 | Rust file with `struct Foo;` | `check_dead_inheritance()` runs | AES016 flagged | Pending Review |
+| AC-002 | Rust file with `impl Trait for Foo {}` | Checker runs | AES016 flagged | Pending Review |
+| AC-003 | Rust file with `struct Foo { x: u32 }` | Checker runs | No AES016 | Pending Review |
+| AC-004 | Rust file with `impl Trait for Foo { fn bar() {} }` | Checker runs | No AES016 | Pending Review |
+| AC-005 | Multi-line empty impl block | Checker runs | AES016 flagged | Pending Review Multi-line not supported |
 
 ## 8. Empirical Findings (Code Audit)
 
 ### 8.1 Current Implementation
-- **Location**: `lint_checking_coordinator.rs:320-342`
+- **Location**: `src-rust/pipeline-jobs/agent_checking_coordinator.rs:320-342`
 - **Status**: **PARTIALLY IMPLEMENTED** — single-line patterns only
 - Invoked from `run_all_checks()` line 60
 
@@ -114,9 +115,9 @@ AES016 MEDIUM - src-rust/capabilities/some_checker.rs:42
 - Proper AST-like matching to avoid false positives from macro invocations
 
 ### 8.4 What to Keep
-- Single-line struct detection ✅
-- Single-line impl detection ✅
-- MEDIUM severity ✅
+- Single-line struct detection Pending Review
+- Single-line impl detection Pending Review
+- MEDIUM severity Pending Review
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
@@ -124,4 +125,4 @@ AES016 MEDIUM - src-rust/capabilities/some_checker.rs:42
 | FR-003 (Line scanning) | Line-based regex-free detection | Multi-line patterns missed | Add multi-line support |
 
 ## 10. Appendices
-- `src-rust/agent/lint_checking_coordinator.rs:320` — `check_dead_inheritance()`
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs:320` — `check_dead_inheritance()`

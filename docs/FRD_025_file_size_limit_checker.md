@@ -2,13 +2,14 @@
 **Feature Name:** File Size Limit Checker (AES004)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -55,7 +56,7 @@ Before AES004, files had no size limit enforcement. Files could grow to thousand
 ### 4.2 Use Cases & Workflow
 **Detection Pipeline:**
 ```
-File: capabilities/my_checker.rs
+File: layer-rules/capabilities_metric_checker.rs
 
 1. Extract basename from file path
 2. Is basename == "__init__.py" or "mod.rs"? → SKIP (barrel)
@@ -80,7 +81,7 @@ File: capabilities/my_checker.rs
 
 ## 6. UI/UX Requirements
 ```
-AES004 HIGH - src-rust/capabilities/massive_file.rs
+AES004 HIGH - src-rust/layer-rules/massive_file.rs
   AES004 FILE_TOO_LARGE: File exceeds the 700-line limit.
   WHY? Large files violate the Single Responsibility Principle.
   FIX: Split the module into smaller, more focused files (max: 700).
@@ -89,19 +90,19 @@ AES004 HIGH - src-rust/capabilities/massive_file.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | 504-line file (massive_domain_entity.rs) | `check_line_counts()` runs | No AES004 (504 < 700) | ✅ |
-| AC-002 | File > 700 lines (no fixture exists) | `check_line_counts()` runs | AES004 HIGH flagged | ✅ (logic correct) |
-| AC-003 | Barrel file (`__init__.py` / `mod.rs`) | `check_line_counts()` runs | Skipped | ✅ |
-| AC-004 | Exception-listed file | `check_line_counts()` runs | Skipped | ✅ |
-| AC-005 | Unreadable file (count_lines fails) | `count_lines()` runs | Returns 0 — no overflow | ⚠️ OK for AES004 |
+| AC-001 | 504-line file (massive_domain_entity.rs) | `check_line_counts()` runs | No AES004 (504 < 700) | Pending Review |
+| AC-002 | File > 700 lines (no fixture exists) | `check_line_counts()` runs | AES004 HIGH flagged | Pending Review (logic correct) |
+| AC-003 | Barrel file (`__init__.py` / `mod.rs`) | `check_line_counts()` runs | Skipped | Pending Review |
+| AC-004 | Exception-listed file | `check_line_counts()` runs | Skipped | Pending Review |
+| AC-005 | Unreadable file (count_lines fails) | `count_lines()` runs | Returns 0 — no overflow | Pending Review OK for AES004 |
 
 ## 8. Empirical Findings (Code Audit)
 
 ### 8.1 Current Implementation
-- **Location**: `src-rust/capabilities/architecture_metric_checker.rs:75-128`
-- **AES004 portion**: `architecture_metric_checker.rs:114-127`
+- **Location**: `src-rust/layer-rules/capabilities_metric_checker.rs:75-128`
+- **AES004 portion**: `capabilities_metric_checker.rs:114-127`
 - **Status**: **FULLY IMPLEMENTED** — not a stub
-- Invoked from `lint_checking_coordinator.rs:98`
+- Invoked from `agent_checking_coordinator.rs:98`
 
 ### 8.2 Bugs Found
 
@@ -111,7 +112,7 @@ AES004 HIGH - src-rust/capabilities/massive_file.rs
    - **Fix**: support `max_lines` per scope in YAML
 
 2. **No Rust unit tests** for `ArchMetricChecker`
-   - No `#[cfg(test)]` module in `architecture_metric_checker.rs`
+   - No `#[cfg(test)]` module in `capabilities_metric_checker.rs`
    - Testing relies entirely on test-project fixtures
    - **Fix**: add unit tests for `count_lines()` and `check_line_counts()`
 
@@ -121,27 +122,27 @@ AES004 HIGH - src-rust/capabilities/massive_file.rs
 - **Rust AES004 test fixture**: TEST.md mentions `extremely_large_vo` (line 59) but that file **does not exist** in test-project-rust. Create a file > 700 lines for Rust.
 
 ### 8.4 What to Keep
-- **Barrel file exclusion logic** ✅ (lines 83-86)
-- **Clear, actionable default messages** ✅ (lines 119-124)
-- **Custom YAML message support** ✅ (lines 116-117)
-- **Coordinator pipeline integration** ✅ (lint_checking_coordinator.rs:98)
+- **Barrel file exclusion logic** Pending Review (lines 83-86)
+- **Clear, actionable default messages** Pending Review (lines 119-124)
+- **Custom YAML message support** Pending Review (lines 116-117)
+- **Coordinator pipeline integration** Pending Review (agent_checking_coordinator.rs:98)
 
 ### 8.5 Empirical Evidence from Test Projects
-- `test-project-rust/src-rust/taxonomy/massive_domain_entity.rs` (504 lines) → no overflow (504 < 700) ✅
+- `test-project-rust/src-rust/shared-common/massive_domain_entity.rs` (504 lines) → no overflow (504 < 700) Pending Review
 - `test-project-python/src-python/taxonomy/large_domain_entity.py` — needs line count check
-- **AES004 in TEST.md**: mentions `extremely_large_vo` but **file not found** → missing fixture ❌
+- **AES004 in TEST.md**: mentions `extremely_large_vo` but **file not found** → missing fixture Pending Review
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | FR-003 (Parsing) | File content reading | File unreadable → count_lines returns 0 (OK for AES004) | Low risk |
-| Config YAML | Threshold from config | Unreasonable threshold (0 or negative) | Skip if <= 0 ✅ |
+| Config YAML | Threshold from config | Unreasonable threshold (0 or negative) | Skip if <= 0 Pending Review |
 | Test fixtures | File > 700 lines | `extremely_large_vo` missing | Create new fixture |
 
 ## 10. Appendices
-- `src-rust/capabilities/architecture_metric_checker.rs:75` — `check_line_counts()`
-- `src-rust/capabilities/architecture_metric_checker.rs:38` — `count_lines()`
-- `src-rust/taxonomy/layer_definition_vo.rs` — `max_lines` field
-- `src-rust/agent/lint_checking_coordinator.rs:98` — Invocation
+- `src-rust/layer-rules/capabilities_metric_checker.rs:75` — `check_line_counts()`
+- `src-rust/layer-rules/capabilities_metric_checker.rs:38` — `count_lines()`
+- `src-rust/shared-common/taxonomy_layer_vo.rs` — `max_lines` field
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs:98` — Invocation
 - `lint_arwaky.config.rust.yaml:131` — max_lines config
-- `test-project-rust/src-rust/taxonomy/massive_domain_entity.rs` — Test fixture (504 lines)
+- `test-project-rust/src-rust/shared-common/massive_domain_entity.rs` — Test fixture (504 lines)

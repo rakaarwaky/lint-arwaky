@@ -2,13 +2,14 @@
 **Feature Name:** Self-Lint Target (`lint-arwaky-cli check .`)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated file paths and CLI output to reflect vertical slicing (26 feature folders, prefix-based layer detection) | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -63,8 +64,8 @@ The project could not verify its own architectural compliance. Architecture viol
 ```
 lint-arwaky-cli check .
   │
-  ├─► 1. Find source directory
-  │     src-rust/ → Rust
+  ├─► 1. Scan source directory
+  │     src-rust/ (26 feature folders) → Rust
   │
   ├─► 2. Load config
   │     lint_arwaky.config.rust.yaml → ArchitectureConfig
@@ -129,26 +130,30 @@ Score: 87.5 / 100
 CRITICAL: 0 | HIGH: 3 | MEDIUM: 5 | LOW: 2
 
 === HIGH ===
-AES011 - src-rust/capabilities/my_file.rs:12 - Suffix mismatch
-AES023 - src-rust/surfaces/cli_check.rs:42 - Direct infra import
+AES011 - src-rust/layer-rules/capabilities_import_checker.rs:12 - Suffix mismatch
+AES023 - src-rust/cli-commands/surface_check_command.rs:42 - Direct infra import
 
 === MEDIUM ===
-AES007 - src-rust/surfaces/command.rs:5 - Barrel import style
+AES007 - src-rust/cli-commands/surface_command_handler.rs:5 - Barrel import style
 ...
 ```
 
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | `lint-arwaky-cli check .` runs | Pipeline completes | Violations printed, exit 0 | ✅ |
-| AC-002 | CRITICAL violation exists | Score computed | auto-fail, exit 1 | ✅ |
-| AC-003 | `ci . --threshold 80` with score 75 | CI check runs | exit 1 | ✅ |
-| AC-004 | `ci . --threshold 80` with score 85 | CI check runs | exit 0 | ✅ |
-| AC-005 | `report --format json` | Report generated | Valid JSON output | ✅ |
-| AC-006 | `report --format sarif` | Report generated | SARIF 2.1.0 compliant | ✅ |
-| AC-007 | 31 AES rules all executed | `run_all_checks()` completes | All codes present in output | ✅ |
+| AC-001 | `lint-arwaky-cli check .` runs | Pipeline completes | Violations printed, exit 0 | Pending Review |
+| AC-002 | CRITICAL violation exists | Score computed | auto-fail, exit 1 | Pending Review |
+| AC-003 | `ci . --threshold 80` with score 75 | CI check runs | exit 1 | Pending Review |
+| AC-004 | `ci . --threshold 80` with score 85 | CI check runs | exit 0 | Pending Review |
+| AC-005 | `report --format json` | Report generated | Valid JSON output | Pending Review |
+| AC-006 | `report --format sarif` | Report generated | SARIF 2.1.0 compliant | Pending Review |
+| AC-007 | 31 AES rules all executed | `run_all_checks()` completes | All codes present in output | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | FR-001 (Architecture) | Layer definitions needed for rule checking | Architecture changes break rules | Config-driven |
@@ -156,9 +161,9 @@ AES007 - src-rust/surfaces/command.rs:5 - Barrel import style
 | FR-003 (Parsing) | Source parsing for all file analysis | Parser limitations affect accuracy | Document limitations |
 | 10 capability checkers | Rule implementations | Checker bugs cause false positives | Unit tests for each checker |
 
-## 9. Appendices
-- `src-rust/agent/architecture_lint_orchestrator.rs` — Orchestration entry
-- `src-rust/agent/lint_checking_coordinator.rs` — 31 rule coordinator
-- `src-rust/surfaces/cli_check_command.rs` — CLI command
-- `src-rust/cli_main_entry.rs` — CLI routing
+## 10. Appendices
+- `src-rust/pipeline-jobs/agent_lint_orchestrator.rs` — Orchestration entry
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs` — 31 rule coordinator
+- `src-rust/cli-commands/surface_check_command.rs` — CLI command
+- `src-rust/cli-commands/surface_main_entry.rs` — CLI routing
 - `docs/RULES_AES.md` — Full rule catalog

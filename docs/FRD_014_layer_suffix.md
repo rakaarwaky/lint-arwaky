@@ -2,13 +2,14 @@
 **Feature Name:** Layer Suffix Mismatch Detector (AES011)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths to reflect 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -53,9 +54,10 @@ Domain suffixes (`_vo`, `_entity`) were appearing in capabilities and infrastruc
 ### 4.2 Use Cases & Workflow
 **Detection:**
 ```
-File in capabilities/user_vo.rs
-  1. get_stem("user_vo.rs") → "user_vo"
-  2. get_suffix("user_vo") → "vo"
+File prefixed capabilities_ (e.g., capabilities_user_vo.rs)
+  filename starts with "capabilities_" → layer = "capabilities"
+  1. get_stem("capabilities_user_vo.rs") → "capabilities_user_vo"
+  2. get_suffix("capabilities_user_vo") → "vo"
   3. Look up forbidden_suffix for capabilities:
      → ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
   4. "vo" IS in forbidden list
@@ -76,7 +78,7 @@ File in capabilities/user_vo.rs
 
 ## 6. UI/UX Requirements
 ```
-AES011 HIGH - src-rust/capabilities/user_vo.rs
+AES011 HIGH - src-rust/layer-rules/capabilities_user_vo.rs
   AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.
   WHY? Forbidden suffixes prevent technical concepts from leaking.
   FIX: Rename or move to correct layer.
@@ -85,17 +87,21 @@ AES011 HIGH - src-rust/capabilities/user_vo.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | File in capabilities/ uses `_vo` suffix | `check_domain_suffixes()` runs | AES011 HIGH flagged | ✅ |
-| AC-002 | File in infrastructure/ uses `_port` suffix | `check_domain_suffixes()` runs | AES011 HIGH flagged | ✅ |
-| AC-003 | File uses allowed suffix | `check_domain_suffixes()` runs | No AES011 violation | ✅ |
-| AC-004 | Forbidden match found | AES011 triggers | Early return (no AES010) | ✅ |
+| AC-001 | File prefixed capabilities_ uses `_vo` suffix | `check_domain_suffixes()` runs | AES011 HIGH flagged | Pending Review |
+| AC-002 | File prefixed infrastructure_ uses `_port` suffix | `check_domain_suffixes()` runs | AES011 HIGH flagged | Pending Review |
+| AC-003 | File uses allowed suffix | `check_domain_suffixes()` runs | No AES011 violation | Pending Review |
+| AC-004 | Forbidden match found | AES011 triggers | Early return (no AES010) | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | YAML config | `forbidden_suffix` per layer | Missing list = no rules | Configured by default |
 
-## 9. Appendices
-- `src-rust/capabilities/architecture_naming_checker.rs:152` — AES011 path
-- `src-rust/taxonomy/layer_definition_vo.rs` — `forbidden_suffix` config field
+## 10. Appendices
+- `src-rust/layer-rules/capabilities_naming_checker.rs:152` — AES011 path
+- `src-rust/shared-common/taxonomy_layer_vo.rs` — `forbidden_suffix` config field
 - `docs/RULES_AES.md` — Forbidden suffix matrix

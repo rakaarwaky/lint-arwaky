@@ -2,13 +2,14 @@
 **Feature Name:** Surface Layer Rule Checker (AES022)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -58,14 +59,14 @@ Surfaces contained domain logic — CLI commands implemented business algorithms
 ### 4.2 Use Cases & Workflow
 **AES018 — Barrel Wiring Check:**
 ```
-For each file in surfaces/:
-  Is it declared in surfaces/mod.rs or __init__.py?
+For each file with surface_ prefix:
+  Is it declared in the feature folder's mod.rs or __init__.py?
     → NOT declared → AES018 violation
 ```
 
 **AES019 — Passive Surface Check:**
 ```
-File: surfaces/user_dashboard_view.rs
+File: cli-commands/surface_dashboard_view.rs
   1. Count public methods: 15
   2. Max allowed: 10
   3. 15 > 10 → VIOLATION
@@ -93,7 +94,7 @@ File: surfaces/user_dashboard_view.rs
 
 ## 6. UI/UX Requirements
 ```
-AES022 HIGH - src-rust/surfaces/user_dashboard_view.rs
+AES022 HIGH - src-rust/cli-commands/surface_dashboard_view.rs
   AES019 PASSIVE_SURFACE_VIOLATION: Surface contains domain logic.
   Found 15 public methods (max 10), function body 120 lines (max 80).
   WHY? Surfaces must be passive I/O layers.
@@ -103,17 +104,21 @@ AES022 HIGH - src-rust/surfaces/user_dashboard_view.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Surface with 15 methods (max 10) | AES019 check runs | Violation flagged | ✅ |
-| AC-002 | Surface with function body 120 lines (max 80) | AES019 check runs | Violation flagged | ✅ |
-| AC-003 | Surface declared in barrel | AES018 check runs | No violation | ✅ |
-| AC-004 | Surface NOT declared in barrel | AES018 check runs | Violation flagged | ✅ |
+| AC-001 | Surface with 15 methods (max 10) | AES019 check runs | Violation flagged | Pending Review |
+| AC-002 | Surface with function body 120 lines (max 80) | AES019 check runs | Violation flagged | Pending Review |
+| AC-003 | Surface declared in barrel | AES018 check runs | No violation | Pending Review |
+| AC-004 | Surface NOT declared in barrel | AES018 check runs | Violation flagged | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | FR-003 (Parsing) | Count methods, lines, depth | Regex inaccuracy affects thresholds | Conservative thresholds |
 | Thresholds | 10/80/3 hardcoded | Not configurable via YAML | Plan: move to YAML config |
 
-## 9. Appendices
-- `src-rust/capabilities/surface_hierarchy_checker.rs` — Full implementation (351 lines)
+## 10. Appendices
+- `src-rust/layer-rules/capabilities_hierarchy_checker.rs` — Full implementation (351 lines)
 - `docs/ARCHITECTURE.md` — Surface layer specification

@@ -2,21 +2,22 @@
 **Feature Name:** Naming Convention Checker (AES003)
 **Product:** Lint Arwaky v1.10.2
 **Author:** Raka
-**Date:** 08/06/2026
-**Version:** v1.0
+**Date:** 09/06/2026  
+**Version:** v1.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
-This document defines the AES003 rule that enforces strict 3-word snake_case naming convention. Every file must follow `word1_word2_word3.ext` pattern to communicate domain, concept, and architectural role through its filename.
+This document defines the AES003 rule that enforces the `[layer]_[concept]_[suffix]` naming pattern. Every file must follow `[layer]_[concept]_[suffix].rs` pattern where the layer prefix communicates architectural role, concept communicates domain purpose, and suffix communicates file type.
 
 ### 2.2 Scope
 **In-Scope:**
-- 3-word underscore-separated naming pattern
+- `[layer]_[concept]_[suffix]` prefix-based naming pattern
 - Stem extraction and regex validation
 - Barrel file and entry point exemption
 - Layer-specific exception list
@@ -32,7 +33,7 @@ This document defines the AES003 rule that enforces strict 3-word snake_case nam
 | **AES003** | Rule code for naming convention violation |
 | **check_file_naming()** | Main detection method |
 | **get_stem()** | Removes file extension |
-| **3-word pattern** | `^[a-z0-9]+(_[a-z0-9]+){2}$` |
+| **Prefix-based pattern** | `^(taxonomy_|contract_|capabilities_|infrastructure_|agent_|surface_)[a-z]+_[a-z]+$` |
 
 ## 3. Feature Overview
 ### 3.1 Background & Problem
@@ -40,7 +41,7 @@ Files had arbitrary names with no structural meaning — `helpers.rs`, `utils.rs
 
 ### 3.2 Business Goals
 - Every filename communicates domain + concept + role
-- Enforce consistent 3-word pattern across codebase
+- Enforce consistent prefix-based pattern across codebase
 - Provide clear rename guidance
 
 ### 3.3 Target Users
@@ -49,23 +50,23 @@ Files had arbitrary names with no structural meaning — `helpers.rs`, `utils.rs
 
 ## 4. Functional Requirements
 ### 4.1 User Stories
-- **US-001:** As a developer adding a file, I want to be told if my filename doesn't follow the 3-word pattern.
+- **US-001:** As a developer adding a file, I want to be told if my filename doesn't follow the `[layer]_[concept]_[suffix]` pattern.
 
 ### 4.2 Use Cases & Workflow
 **Validation:**
 ```
-"architecture_import_checker.rs" → stem "architecture_import_checker"
-  → regex ^[a-z0-9]+(_[a-z0-9]+){2}$ → MATCH ✅
+"capabilities_import_checker.rs" → stem "capabilities_import_checker"
+  → regex ^(taxonomy_|contract_|capabilities_|infrastructure_|agent_|surface_)[a-z]+_[a-z]+$ → MATCH Pending Review
 
-"project_helpers.rs" → stem "project_helpers"
-  → regex ^[a-z0-9]+(_[a-z0-9]+){2}$ → NO MATCH (2 words) ❌
+"helpers_utils.rs" → stem "helpers_utils"
+  → regex ^(taxonomy_|contract_|capabilities_|infrastructure_|agent_|surface_)[a-z]+_[a-z]+$ → NO MATCH (no layer prefix) Pending Review
 ```
 
 **Exceptions:** `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`
 
 ### 4.3 Business Rules
 - Severity: HIGH
-- Default word count: 3 (configurable via YAML)
+- Default pattern: `[layer]_[concept]_[suffix]` (configurable via YAML)
 - Barrel files and entry points are skipped
 - Layer-specific exception list honored
 
@@ -77,26 +78,30 @@ Files had arbitrary names with no structural meaning — `helpers.rs`, `utils.rs
 
 ## 6. UI/UX Requirements
 ```
-AES003 HIGH - src-rust/capabilities/project_helpers.rs
-  AES003 NAMING_CONVENTION: Filename does not follow the 3-word underscore pattern.
-  WHY? Strict three-word names ensure architectural consistency.
-  FIX: Rename to something like project_helper_utils.rs.
+AES003 HIGH - src-rust/shared-common/helpers_utils.rs
+  AES003 NAMING_CONVENTION: Filename does not follow the [layer]_[concept]_[suffix] pattern.
+  WHY? Prefix-based naming ensures architectural consistency across 26 feature folders.
+  FIX: Rename to something like taxonomy_helpers_utils.rs.
 ```
 
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | File with 2-word name | `check_file_naming()` runs | AES003 HIGH flagged | ✅ |
-| AC-002 | File with 3-word name | `check_file_naming()` runs | No violation | ✅ |
-| AC-003 | Barrel file (mod.rs) | `check_file_naming()` runs | Skipped | ✅ |
-| AC-004 | Entry point (main.rs) | `check_file_naming()` runs | Skipped | ✅ |
+| AC-001 | File without layer prefix | `check_file_naming()` runs | AES003 HIGH flagged | Pending Review |
+| AC-002 | File with valid [layer]_[concept]_[suffix] name | `check_file_naming()` runs | No violation | Pending Review |
+| AC-003 | Barrel file (mod.rs) | `check_file_naming()` runs | Skipped | Pending Review |
+| AC-004 | Entry point (main.rs) | `check_file_naming()` runs | Skipped | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
-| YAML config | Word count from config | Missing config = default 3 | Built-in default |
-| regex crate | Naming regex validation | Complex patterns may fail | Simple 3-word only |
+| YAML config | Pattern from config | Missing config = default [layer]_[concept]_[suffix] | Built-in default |
+| regex crate | Naming regex validation | Complex patterns may fail | Simple prefix pattern only |
 
-## 9. Appendices
-- `src-rust/capabilities/architecture_naming_checker.rs:65` — `check_file_naming()`
+## 10. Appendices
+- `src-rust/layer-rules/capabilities_naming_checker.rs:65` — `check_file_naming()`
 - `lint_arwaky.config.rust.yaml` — Global `Naming Convention` rule

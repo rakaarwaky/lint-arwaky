@@ -2,13 +2,14 @@
 **Feature Name:** Mandatory Struct/Trait Definition Checker (AES009)
 **Product:** Lint Arwaky v1.10.2
 **Author:** Raka
-**Date:** 08/06/2026
-**Version:** v1.0
+**Date:** 09/06/2026  
+**Version:** v1.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -54,13 +55,13 @@ Files could exist without defining any struct, enum, or trait — containing onl
 ### 4.2 Use Cases & Workflow
 **Detection:**
 ```
-File: capabilities/loose_functions.rs
+File: layer-rules/capabilities_loose_functions.rs
   Content: "fn do_something() { ... }"
   → No "struct", "enum", "trait", or "class" found
   → AES009 HIGH violation
 
-File: capabilities/my_checker.rs
-  Content: "pub struct MyChecker; impl Checker for MyChecker { ... }"
+File: layer-rules/capabilities_import_checker.rs
+  Content: "pub struct ImportChecker; impl Checker for ImportChecker { ... }"
   → "pub struct" found
   → No violation
 ```
@@ -80,7 +81,7 @@ File: capabilities/my_checker.rs
 
 ## 6. UI/UX Requirements
 ```
-AES009 HIGH - src-rust/capabilities/loose_functions.rs
+AES009 HIGH - src-rust/layer-rules/capabilities_loose_functions.rs
   AES009 MANDATORY_CLASS_DEFINITION: File is missing a struct, enum, or trait definition.
   WHY? Encapsulation in structs/traits is required for proper modularization.
   FIX: Group functions into a struct or implement a Trait.
@@ -89,17 +90,21 @@ AES009 HIGH - src-rust/capabilities/loose_functions.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | File with only functions (no struct/trait) | `check_mandatory_class_definition()` runs | AES009 HIGH flagged | ✅ |
-| AC-002 | File with struct definition | `check_mandatory_class_definition()` runs | No violation | ✅ |
-| AC-003 | Barrel file (mod.rs) | `check_mandatory_class_definition()` runs | Skipped | ✅ |
-| AC-004 | _constant file | `check_mandatory_class_definition()` runs | Skipped (AES033 precedence) | ✅ |
+| AC-001 | File with only functions (no struct/trait) | `check_mandatory_class_definition()` runs | AES009 HIGH flagged | Pending Review |
+| AC-002 | File with struct definition | `check_mandatory_class_definition()` runs | No violation | Pending Review |
+| AC-003 | Barrel file (mod.rs) | `check_mandatory_class_definition()` runs | Skipped | Pending Review |
+| AC-004 | _constant file | `check_mandatory_class_definition()` runs | Skipped (AES033 precedence) | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | YAML config | `mandatory_class_definition` flag | Missing flag = no enforcement | Built-in default |
 | Content regex | Rust/Python/JS keyword detection | False negative on complex generics | Conservative regex |
 
-## 9. Appendices
-- `src-rust/capabilities/architecture_metric_checker.rs:188` — `check_mandatory_class_definition()`
+## 10. Appendices
+- `src-rust/layer-rules/capabilities_metric_checker.rs:188` — `check_mandatory_class_definition()`
 - `lint_arwaky.config.rust.yaml` — Global `Mandatory Struct or Trait Definition` rule

@@ -2,13 +2,14 @@
 **Feature Name:** Import Layer Violation Detector (AES001)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated workflow to prefix-based layer detection; updated file paths | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -57,11 +58,11 @@ Before AES001, any module could import any other module — capabilities importe
 ### 4.2 Use Cases & Workflow
 **Detection Pipeline:**
 ```
-File: capabilities/my_checker.rs
-Layer: capabilities
+File: layer-rules/capabilities_import_checker.rs
+Layer (from prefix `capabilities_`): capabilities
 
-1. Parse import: "use crate::infrastructure::python_ruff::RuffAdapter"
-2. Extract module: "infrastructure"
+1. Parse import: "use crate::infrastructure_fs_scanner::FileSystemScanner"
+2. Extract target layer from import prefix: "infrastructure_"
 3. Look up forbidden list for capabilities:
    → ["infrastructure", "surfaces", "agent", "capabilities"]
 4. "infrastructure" IS in forbidden list
@@ -81,8 +82,8 @@ Layer: capabilities
 
 ## 6. UI/UX Requirements
 ```
-AES001 CRITICAL - src-rust/capabilities/my_file.rs:42
-  Layer 'capabilities' is importing from forbidden module 'infrastructure'.
+AES001 CRITICAL - src-rust/layer-rules/capabilities_import_checker.rs:42
+  Layer 'capabilities' (prefix `capabilities_`) is importing from forbidden layer 'infrastructure' (prefix `infrastructure_`).
   WHY? Cross-layer leakage breaks architectural decoupling.
   FIX: Use ports/protocols from the contract layer instead.
 ```
@@ -90,17 +91,21 @@ AES001 CRITICAL - src-rust/capabilities/my_file.rs:42
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Capabilities file imports infrastructure | `check_forbidden_imports()` runs | AES001 CRITICAL flagged | ✅ |
-| AC-002 | Surface file imports capabilities | `check_forbidden_imports()` runs | AES001 CRITICAL flagged | ✅ |
-| AC-003 | Contract file imports taxonomy | `check_forbidden_imports()` runs | No violation (allowed) | ✅ |
+| AC-001 | Capabilities file imports infrastructure | `check_forbidden_imports()` runs | AES001 CRITICAL flagged | Pending Review |
+| AC-002 | Surface file imports capabilities | `check_forbidden_imports()` runs | AES001 CRITICAL flagged | Pending Review |
+| AC-003 | Contract file imports taxonomy | `check_forbidden_imports()` runs | No violation (allowed) | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | FR-003 (Parsing) | Import parsing quality | Regex fails on complex imports | Document limitations |
 | Config YAML | Forbidden list from config | Missing config = no rules | `default_aes_config()` fallback |
 
-## 9. Appendices
-- `src-rust/capabilities/architecture_import_checker.rs:196` — `check_forbidden_imports()`
-- `src-rust/taxonomy/layer_definition_vo.rs` — `LayerDefinition.forbidden_import`
+## 10. Appendices
+- `src-rust/layer-rules/capabilities_import_checker.rs` — `check_forbidden_imports()`
+- `src-rust/shared-common/taxonomy_layer_vo.rs` — `LayerDefinition.forbidden_import`
 - `docs/RULES_AES.md` — Forbidden import matrix

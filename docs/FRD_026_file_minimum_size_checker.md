@@ -2,13 +2,14 @@
 **Feature Name:** File Minimum Size Checker (AES005)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -89,24 +90,24 @@ AES005 HIGH - src-rust/infrastructure/tiny.py
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | 1-line file (tiny.py) | `check_line_counts()` runs | AES005 HIGH flagged | ✅ |
-| AC-002 | File with 10+ lines | `check_line_counts()` runs | No AES005 | ✅ |
-| AC-003 | Barrel file (`__init__.py` / `mod.rs`) | `check_line_counts()` runs | Skipped | ✅ |
-| AC-004 | Exception-listed file | `check_line_counts()` runs | Skipped | ✅ |
-| AC-005 | Unreadable file (count_lines fails) | `count_lines()` runs | Returns 0 → **false positive AES005** | ❌ **BUG** |
+| AC-001 | 1-line file (tiny.py) | `check_line_counts()` runs | AES005 HIGH flagged | Pending Review |
+| AC-002 | File with 10+ lines | `check_line_counts()` runs | No AES005 | Pending Review |
+| AC-003 | Barrel file (`__init__.py` / `mod.rs`) | `check_line_counts()` runs | Skipped | Pending Review |
+| AC-004 | Exception-listed file | `check_line_counts()` runs | Skipped | Pending Review |
+| AC-005 | Unreadable file (count_lines fails) | `count_lines()` runs | Returns 0 → **false positive AES005** | Pending Review **BUG** |
 
 ## 8. Empirical Findings (Code Audit)
 
 ### 8.1 Current Implementation
-- **Location**: `src-rust/capabilities/architecture_metric_checker.rs:75-128`
-- **AES005 portion**: `architecture_metric_checker.rs:99-112`
+- **Location**: `src-rust/layer-rules/capabilities_metric_checker.rs:75-128`
+- **AES005 portion**: `capabilities_metric_checker.rs:99-112`
 - **Status**: **FULLY IMPLEMENTED** — not a stub
-- Invoked from `lint_checking_coordinator.rs:98`
+- Invoked from `agent_checking_coordinator.rs:98`
 
 ### 8.2 Bugs Found
 
-1. **`count_lines()` returns 0 on read failure** (CRITICAL — `architecture_metric_checker.rs:38-42`)
-   - **Location**: `architecture_metric_checker.rs:41` — `unwrap_or(0)`
+1. **`count_lines()` returns 0 on read failure** (CRITICAL — `capabilities_metric_checker.rs:38-42`)
+   - **Location**: `capabilities_metric_checker.rs:41` — `unwrap_or(0)`
    - If `fs::read_to_string` fails (missing file, permission denied, etc.), returns 0
    - Since 0 < `min_lines` (10), this causes a **false positive AES005**
    - **Impact**: unreadable files get flagged as too short even if they are valid
@@ -118,7 +119,7 @@ AES005 HIGH - src-rust/infrastructure/tiny.py
    - **Fix**: support `min_lines` per scope in YAML
 
 3. **No Rust unit tests** for `ArchMetricChecker`
-   - No `#[cfg(test)]` module in `architecture_metric_checker.rs`
+   - No `#[cfg(test)]` module in `capabilities_metric_checker.rs`
    - **Fix**: add unit tests for `count_lines()` and `check_line_counts()`, especially read-error edge case
 
 ### 8.3 What Needs to Be Added
@@ -128,31 +129,31 @@ AES005 HIGH - src-rust/infrastructure/tiny.py
 - **Unit tests**: at minimum for `count_lines()` with various conditions (normal, missing, empty file)
 
 ### 8.4 What to Keep
-- **Barrel file exclusion logic** ✅ (lines 83-86)
-- **Exceptions list handling** ✅ (lines 93-95)
-- **Clear, actionable default messages** ✅ (lines 104-109)
-- **Custom YAML message support** ✅ (lines 101-102)
-- **Skip if min_lines <= 0** ✅ (line 100)
-- **Coordinator pipeline integration** ✅ (lint_checking_coordinator.rs:98)
+- **Barrel file exclusion logic** Pending Review (lines 83-86)
+- **Exceptions list handling** Pending Review (lines 93-95)
+- **Clear, actionable default messages** Pending Review (lines 104-109)
+- **Custom YAML message support** Pending Review (lines 101-102)
+- **Skip if min_lines <= 0** Pending Review (line 100)
+- **Coordinator pipeline integration** Pending Review (agent_checking_coordinator.rs:98)
 
 ### 8.5 Empirical Evidence from Test Projects
-- **AES005**: `test-project-python/src-python/infrastructure/tiny.py` (1 line) → flagged ✅
+- **AES005**: `test-project-python/src-python/infrastructure/tiny.py` (1 line) → flagged Pending Review
 - **AES005**: TEST.md line 60 mentions Rust AES005 from `invalid_import_vo`, `removal_types`, `missing_import_analyzer`
-  - `test-project-rust/src-rust/taxonomy/bare_entity.rs` (2 lines) — will be flagged ✅
-  - `test-project-rust/src-rust/taxonomy/bypass_comment_entity.rs` — needs line count verification
+  - `test-project-rust/src-rust/shared-common/bare_entity.rs` (2 lines) — will be flagged Pending Review
+  - `test-project-rust/src-rust/shared-common/bypass_comment_entity.rs` — needs line count verification
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | FR-003 (Parsing) | File content reading | File unreadable → false positive AES005 | Fix: return Option instead of 0 |
-| Config YAML | Threshold from config | `min_lines: 0` or negative | Skip if <= 0 ✅ |
-| Test fixtures | File < 10 lines | Rust fixtures exist (bare_entity.rs = 2 lines) | ✅ sufficient |
+| Config YAML | Threshold from config | `min_lines: 0` or negative | Skip if <= 0 Pending Review |
+| Test fixtures | File < 10 lines | Rust fixtures exist (bare_entity.rs = 2 lines) | Pending Review sufficient |
 
 ## 10. Appendices
-- `src-rust/capabilities/architecture_metric_checker.rs:75` — `check_line_counts()`
-- `src-rust/capabilities/architecture_metric_checker.rs:38` — `count_lines()` (BUG: unwrap_or(0))
-- `src-rust/taxonomy/layer_definition_vo.rs` — `min_lines` field
-- `src-rust/agent/lint_checking_coordinator.rs:98` — Invocation
+- `src-rust/layer-rules/capabilities_metric_checker.rs:75` — `check_line_counts()`
+- `src-rust/layer-rules/capabilities_metric_checker.rs:38` — `count_lines()` (BUG: unwrap_or(0))
+- `src-rust/shared-common/taxonomy_layer_vo.rs` — `min_lines` field
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs:98` — Invocation
 - `lint_arwaky.config.rust.yaml:130` — min_lines config
 - `test-project-python/src-python/infrastructure/tiny.py` — Test fixture (1 line)
-- `test-project-rust/src-rust/taxonomy/bare_entity.rs` — Test fixture (2 lines)
+- `test-project-rust/src-rust/shared-common/bare_entity.rs` — Test fixture (2 lines)

@@ -2,13 +2,14 @@
 **Feature Name:** Surface Direct Import Checker (AES023)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -52,7 +53,7 @@ Surfaces imported infrastructure and capabilities directly instead of using the 
 ### 4.2 Use Cases & Workflow
 **Detection:**
 ```
-File: surfaces/cli_check_command.rs
+File: cli-commands/surface_check_command.rs
 
 1. Parse: "use crate::infrastructure::python_ruff::RuffAdapter" ← infra
              "use crate::contract::ServiceContainerAggregate" ← contract (allowed)
@@ -87,7 +88,7 @@ linter.run_self_lint(path).await;
 
 ## 6. UI/UX Requirements
 ```
-AES001 CRITICAL - src-rust/surfaces/cli_check_command.rs:42
+AES001 CRITICAL - src-rust/cli-commands/surface_check_command.rs:42
   [AES Layer Violation] Surfaces must NOT import infrastructure directly.
   File in 'surface' imports from 'infrastructure'.
   WHY? Surfaces must access infrastructure through ServiceContainerAggregate only.
@@ -97,19 +98,23 @@ AES001 CRITICAL - src-rust/surfaces/cli_check_command.rs:42
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Surface imports infrastructure directly | `check_legacy_import_rules()` runs | AES023 CRITICAL flagged | ✅ |
-| AC-002 | Surface imports capabilities directly | `check_legacy_import_rules()` runs | AES023 CRITICAL flagged | ✅ |
-| AC-003 | Surface imports contract/taxonomy only | `check_legacy_import_rules()` runs | No violation | ✅ |
-| AC-004 | Agent file imports infrastructure | `check_legacy_import_rules()` runs | Skipped (allowed) | ✅ |
+| AC-001 | Surface imports infrastructure directly | `check_legacy_import_rules()` runs | AES023 CRITICAL flagged | Pending Review |
+| AC-002 | Surface imports capabilities directly | `check_legacy_import_rules()` runs | AES023 CRITICAL flagged | Pending Review |
+| AC-003 | Surface imports contract/taxonomy only | `check_legacy_import_rules()` runs | No violation | Pending Review |
+| AC-004 | Agent file imports infrastructure | `check_legacy_import_rules()` runs | Skipped (allowed) | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | FR-003 (Parsing) | Import parsing for layer detection | Regex inaccuracy | Conservative matching |
 | Governance rules | Source→target pairs in YAML | Missing rules = no enforcement | Configured by default |
 
-## 9. Appendices
-- `src-rust/capabilities/architecture_import_checker.rs:244` — `check_legacy_import_rules()`
-- `src-rust/taxonomy/architecture_config_vo.rs` — `governance_rules` config
-- `src-rust/contract/service_container_aggregate.rs` — DI contract
+## 10. Appendices
+- `src-rust/layer-rules/capabilities_import_checker.rs:244` — `check_legacy_import_rules()`
+- `src-rust/shared-common/taxonomy_config_vo.rs` — `governance_rules` config
+- `src-rust/di-containers/contract_service_aggregate.rs` — DI contract
 - `docs/RULES_AES.md` — Layer import rules

@@ -2,13 +2,14 @@
 **Feature Name:** Track Quality Trends Over Time  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated file paths to reflect vertical slicing (26 feature folders) | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -113,7 +114,7 @@ lint-arwaky-cli trends .
 ```
 $ lint-arwaky-cli trends .
 Current score: 85.0 / 100
-Previous: 87.5 (Jun 7) | Delta: -2.5 — DECLINING ⚠️
+Previous: 87.5 (Jun 7) | Delta: -2.5 — DECLINING Pending Review
 All-time high: 92.0 (Jun 1)
 All-time low:  80.5 (May 28)
 History: 42 entries over 30 days
@@ -122,26 +123,30 @@ History: 42 entries over 30 days
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | `lint-arwaky-cli trends .` runs | Pipeline completes | Current score displayed | ✅ `handle_trends()` in `cli_main_entry.rs` lints, computes score, saves to history |
-| AC-002 | History file does not exist | `trends` runs | Auto-create `.lint-history.json` | ✅ `MetricsProvider.save_metric()` creates parent dirs + appends via `OpenOptions::create(true).append(true)` |
-| AC-003 | Current score = 85, previous = 87.5 | Trend analysis runs | delta = -2.5 → DECLINING | ✅ `handle_trends()` computes delta, classifies IMPROVING/DECLINING/STABLE using ±1 thresholds |
-| AC-004 | History has 42 entries | Stats computed | All-time high and low shown | ✅ `handle_trends()` computes `all_time_high` / `all_time_low` via `fold(f64::max)` / `fold(f64::min)` |
-| AC-005 | Score is 85.0 | `save_score()` runs | `{"score":85.0,...}` appended to history | ✅ `MetricsProvider.save_metric()` appends JSON-lines entry with score, timestamp, violations, critical count |
-| AC-006 | `MetricsProvider.get_history()` called | History read | Valid JSON-lines parsed | ✅ `get_history()` parses each line as json, skips empty lines |
-| AC-007 | Current score computed | Self-lint completes | Score 0-100 returned | ✅ `compute_score()` in taxonomy mod |
+| AC-001 | `lint-arwaky-cli trends .` runs | Pipeline completes | Current score displayed | Pending Review `handle_trends()` in `cli_main_entry.rs` lints, computes score, saves to history |
+| AC-002 | History file does not exist | `trends` runs | Auto-create `.lint-history.json` | Pending Review `MetricsProvider.save_metric()` creates parent dirs + appends via `OpenOptions::create(true).append(true)` |
+| AC-003 | Current score = 85, previous = 87.5 | Trend analysis runs | delta = -2.5 → DECLINING | Pending Review `handle_trends()` computes delta, classifies IMPROVING/DECLINING/STABLE using ±1 thresholds |
+| AC-004 | History has 42 entries | Stats computed | All-time high and low shown | Pending Review `handle_trends()` computes `all_time_high` / `all_time_low` via `fold(f64::max)` / `fold(f64::min)` |
+| AC-005 | Score is 85.0 | `save_score()` runs | `{"score":85.0,...}` appended to history | Pending Review `MetricsProvider.save_metric()` appends JSON-lines entry with score, timestamp, violations, critical count |
+| AC-006 | `MetricsProvider.get_history()` called | History read | Valid JSON-lines parsed | Pending Review `get_history()` parses each line as json, skips empty lines |
+| AC-007 | Current score computed | Self-lint completes | Score 0-100 returned | Pending Review `compute_score()` in taxonomy mod |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | FR-004 (Self-Lint) | Trends requires self-lint to compute current score | If self-lint fails, no score | Report error, don't crash |
 | File system | History file I/O | Concurrent writes corrupt file | Append-only, single-process |
 | `analyze_quality_trend()` | Not yet implemented | Trend direction not computed | Implement per spec |
 
-## 9. Appendices
-- `src-rust/surfaces/cli_analysis_command.rs` — CLI `trends` command
-- `src-rust/surfaces/cli_main_entry.rs` — `handle_trends()` handler
-- `src-rust/agent/analysis_execution_orchestrator.rs` — `get_trends()` orchestrator
-- `src-rust/infrastructure/python_metrics_adapter.rs` — MetricsProvider
-- `src-rust/infrastructure/python_analysis_adapter.rs` — TrendsAdapter
-- `src-rust/contract/metrics_provider_port.rs` — IMetricsProviderPort trait
-- `src-rust/contract/project_governance_protocol.rs` — analyze_quality_trend() trait
+## 10. Appendices
+- `src-rust/cli-commands/surface_trends_command.rs` — CLI `trends` command
+- `src-rust/cli-commands/surface_main_entry.rs` — `handle_trends()` handler
+- `src-rust/pipeline-jobs/agent_analysis_orchestrator.rs` — `get_trends()` orchestrator
+- `src-rust/metrics-service/infrastructure_metrics_adapter.rs` — MetricsProvider
+- `src-rust/metrics-service/infrastructure_analysis_adapter.rs` — TrendsAdapter
+- `src-rust/metrics-service/contract_metrics_port.rs` — IMetricsProviderPort trait
+- `src-rust/multi-project/contract_governance_protocol.rs` — analyze_quality_trend() trait

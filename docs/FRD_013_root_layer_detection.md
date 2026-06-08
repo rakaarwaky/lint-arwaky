@@ -2,13 +2,14 @@
 **Feature Name:** Root Layer Detection / Strict Suffix Policy (AES010)  
 **Product:** Lint Arwaky v1.10.2  
 **Author:** Raka  
-**Date:** 08/06/2026  
-**Version:** v1.0  
+**Date:** 09/06/2026  
+**Version:** v1.1  
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths to reflect 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -49,7 +50,7 @@ Files in capabilities, infrastructure, and other layers could have arbitrary nam
 
 ## 4. Functional Requirements
 ### 4.1 User Stories
-- **US-001:** As a developer adding a file to capabilities/, I want to be told which suffix to use, so my file follows the naming convention.
+- **US-001:** As a developer adding a capabilities_-prefixed file, I want to be told which suffix to use, so my file follows the naming convention.
 
 ### 4.2 Use Cases & Workflow
 **Suffix Extraction:**
@@ -65,7 +66,8 @@ Files in capabilities, infrastructure, and other layers could have arbitrary nam
 
 **Validation:**
 ```
-File in capabilities/project_helpers.rs
+File: capabilities_project_helpers.rs
+  filename starts with "capabilities_" → layer = "capabilities"
   suffix = "helpers"
 
 Look up capabilities layer definition:
@@ -89,7 +91,7 @@ Look up capabilities layer definition:
 
 ## 6. UI/UX Requirements
 ```
-AES010 HIGH - src-rust/capabilities/project_helpers.rs
+AES010 HIGH - src-rust/layer-rules/capabilities_project_helpers.rs
   AES010 SUFFIX_MISMATCH: File is missing a required strict suffix.
   WHY? Strict suffixes ensure every component has a clear role.
   FIX: Add one of: analyzer, checker, processor, evaluator, ...
@@ -98,18 +100,22 @@ AES010 HIGH - src-rust/capabilities/project_helpers.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | File in capabilities/ has no valid suffix | `check_domain_suffixes()` runs | AES010 HIGH flagged | ✅ |
-| AC-002 | Barrel file (mod.rs) | `check_domain_suffixes()` runs | Skipped | ✅ |
-| AC-003 | Entry point file (main.rs / index.ts / main.py) | `check_domain_suffixes()` runs | Skipped | ✅ Recognizes Rust (main.rs, lib.rs), Python (main.py, app.py, __init__.py), JS/TS (index.js, index.ts, index.jsx, index.tsx, main.ts) |
-| AC-004 | File has valid suffix for its layer | `check_domain_suffixes()` runs | No violation | ✅ |
+| AC-001 | File prefixed capabilities_ has no valid suffix | `check_domain_suffixes()` runs | AES010 HIGH flagged | Pending Review |
+| AC-002 | Barrel file (mod.rs) | `check_domain_suffixes()` runs | Skipped | Pending Review |
+| AC-003 | Entry point file (main.rs / index.ts / main.py) | `check_domain_suffixes()` runs | Skipped | Pending Review Recognizes Rust (main.rs, lib.rs), Python (main.py, app.py, __init__.py), JS/TS (index.js, index.ts, index.jsx, index.tsx, main.ts) |
+| AC-004 | File has valid suffix for its layer | `check_domain_suffixes()` runs | No violation | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | YAML config | `suffix_policy` and `allowed_suffix` | Missing config = no rules | Built-in defaults |
 
-## 9. Appendices
-- `src-rust/capabilities/architecture_naming_checker.rs:124` — `check_domain_suffixes()`
-- `src-rust/taxonomy/layer_definition_vo.rs` — `suffix_policy`, `allowed_suffix`
+## 10. Appendices
+- `src-rust/layer-rules/capabilities_naming_checker.rs:124` — `check_domain_suffixes()`
+- `src-rust/shared-common/taxonomy_layer_vo.rs` — `suffix_policy`, `allowed_suffix`
 - `docs/RULES_AES.md` — Allowed suffix lists per layer
 - `docs/ARCHITECTURE.md` — Layer specifications

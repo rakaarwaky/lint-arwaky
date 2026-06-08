@@ -2,13 +2,14 @@
 **Feature Name:** Barrel Completeness Checker (AES012)
 **Product:** Lint Arwaky v1.10.2
 **Author:** Raka
-**Date:** 08/06/2026
-**Version:** v1.0
+**Date:** 09/06/2026  
+**Version:** v1.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -53,11 +54,11 @@ Layer barrel files existed without exporting all modules — `mod.rs` declared m
 ### 4.2 Use Cases & Workflow
 **Detection:**
 ```
-File: src-rust/capabilities/mod.rs (barrel file)
+File: src-rust/layer-rules/mod.rs (barrel file)
   → Check for "pub use" in content
   → NOT found → AES012 MEDIUM violation
 
-File: src-rust/contract/mod.rs (barrel file)
+File: src-rust/di-containers/contract_service_aggregate.rs
   → Check for "pub use" in content
   → Found: pub use ... → No violation
 ```
@@ -65,9 +66,9 @@ File: src-rust/contract/mod.rs (barrel file)
 **Language-specific patterns:**
 | Language | Pattern | Example |
 |----------|---------|---------|
-| Rust | `pub use` | `pub use architecture_import_checker::ArchImportRuleChecker;` |
+| Rust | `pub use` | `pub use capabilities_import_checker::ArchImportRuleChecker;` |
 | Python | `__all__` | `__all__ = ["ArchImportRuleChecker"]` |
-| JS/TS | `export *` | `export * from './architecture_import_checker'` |
+| JS/TS | `export *` | `export * from './capabilities_import_checker'` |
 
 ### 4.3 Business Rules
 - Severity: MEDIUM
@@ -81,7 +82,7 @@ File: src-rust/contract/mod.rs (barrel file)
 
 ## 6. UI/UX Requirements
 ```
-AES012 MEDIUM - src-rust/capabilities/mod.rs
+AES012 MEDIUM - src-rust/layer-rules/mod.rs
   AES012 BARREL_COMPLETENESS: mod.rs is missing public modules or items exports.
   WHY? Layer boundaries must explicitly define their public API.
   FIX: Add explicit pub use declarations to mod.rs exposing public symbols.
@@ -90,15 +91,19 @@ AES012 MEDIUM - src-rust/capabilities/mod.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Barrel file without all-export | `check_barrel_completeness()` runs | AES012 MEDIUM flagged | ✅ |
-| AC-002 | Barrel file with all-export | `check_barrel_completeness()` runs | No violation | ✅ |
-| AC-003 | Non-barrel file | `check_barrel_completeness()` runs | Skipped (not barrel) | ✅ |
+| AC-001 | Barrel file without all-export | `check_barrel_completeness()` runs | AES012 MEDIUM flagged | Pending Review |
+| AC-002 | Barrel file with all-export | `check_barrel_completeness()` runs | No violation | Pending Review |
+| AC-003 | Non-barrel file | `check_barrel_completeness()` runs | Skipped (not barrel) | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | YAML config | `barrel_completeness` per layer | Missing for a layer = no check | Default enabled for all layers except root |
 
-## 9. Appendices
-- `src-rust/capabilities/architecture_internal_checker.rs:53` — `check_barrel_completeness()`
+## 10. Appendices
+- `src-rust/layer-rules/capabilities_internal_checker.rs:53` — `check_barrel_completeness()`
 - `lint_arwaky.config.rust.yaml` — Per-layer `Taxonomy_Standards`, `Contract_Standards`, etc.

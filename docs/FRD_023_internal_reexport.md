@@ -2,13 +2,14 @@
 **Feature Name:** Internal Re-export Forbidden Checker (AES013)
 **Product:** Lint Arwaky v1.10.2
 **Author:** Raka
-**Date:** 08/06/2026
-**Version:** v1.0
+**Date:** 09/06/2026  
+**Version:** v1.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -53,11 +54,11 @@ Sub-modules contained `pub use` and re-export statements, bypassing the barrel's
 ### 4.2 Use Cases & Workflow
 **Detection:**
 ```
-File: src-rust/capabilities/architecture_import_checker.rs (non-barrel)
+File: src-rust/layer-rules/capabilities_import_checker.rs (non-barrel)
   → Contains "pub use" somewhere in the file
   → NOT barrel file → AES013 MEDIUM violation
 
-File: src-rust/capabilities/mod.rs (barrel)
+File: src-rust/layer-rules/mod.rs (barrel)
   → Contains "pub use" (allowed)
   → IS barrel file → No violation
 ```
@@ -76,7 +77,7 @@ File: src-rust/capabilities/mod.rs (barrel)
 
 ## 6. UI/UX Requirements
 ```
-AES013 MEDIUM - src-rust/capabilities/architecture_import_checker.rs
+AES013 MEDIUM - src-rust/layer-rules/capabilities_import_checker.rs
   AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list detected in non-barrel sub-module.
   WHY? Only mod.rs barrel files should define the layer's public API surface.
   FIX: Remove pub use from this file and export via mod.rs instead.
@@ -85,15 +86,19 @@ AES013 MEDIUM - src-rust/capabilities/architecture_import_checker.rs
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Non-barrel file with pub use | `check_forbid_internal_all()` runs | AES013 MEDIUM flagged | ✅ |
-| AC-002 | Barrel file with pub use | `check_forbid_internal_all()` runs | No violation (barrel) | ✅ |
-| AC-003 | JS/TS file with export | `check_forbid_internal_all()` runs | Skipped (exempted) | ✅ |
+| AC-001 | Non-barrel file with pub use | `check_forbid_internal_all()` runs | AES013 MEDIUM flagged | Pending Review |
+| AC-002 | Barrel file with pub use | `check_forbid_internal_all()` runs | No violation (barrel) | Pending Review |
+| AC-003 | JS/TS file with export | `check_forbid_internal_all()` runs | Skipped (exempted) | Pending Review |
 
-## 8. Dependencies & Risks
+## 8. Empirical Findings (Code Audit)
+
+N/A — Pending review after vertical slicing refactoring.
+
+## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
 |------------|-------------|------|------------|
 | YAML config | `forbid_internal_all` per layer | Missing for a layer = no check | Default enabled for all layers except root |
 
-## 9. Appendices
-- `src-rust/capabilities/architecture_internal_checker.rs:83` — `check_forbid_internal_all()`
+## 10. Appendices
+- `src-rust/layer-rules/capabilities_internal_checker.rs:83` — `check_forbid_internal_all()`
 - `lint_arwaky.config.rust.yaml` — Per-layer standards with `forbid_internal_all: true`

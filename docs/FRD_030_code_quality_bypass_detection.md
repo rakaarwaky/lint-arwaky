@@ -2,13 +2,14 @@
 **Feature Name:** Bypass Comment Violation Detector (AES014)
 **Product:** Lint Arwaky v1.10.2
 **Author:** Raka
-**Date:** 08/06/2026
-**Version:** v1.0
+**Date:** 09/06/2026
+**Version:** v1.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -55,7 +56,7 @@ Developers use `#[allow(…)]` and bypass comments to silence warnings instead o
 
 ### 4.2 Detection Pipeline
 ```
-File: src-rust/capabilities/some_checker.rs
+File: src-rust/layer-rules/capabilities_import_checker.rs
 
 1. For each line:
    a. Does line start with #[allow( or #[expect(?
@@ -85,7 +86,7 @@ File: src-rust/capabilities/some_checker.rs
 
 ## 6. UI/UX Requirements
 ```
-AES014 CRITICAL - src-rust/capabilities/some_checker.rs:42
+AES014 CRITICAL - src-rust/layer-rules/capabilities_import_checker.rs:42
   AES014 BYPASS_COMMENT: Bypass comment detected: #[allow(dead_code)]
   WHY? Suppressing compiler/linter warnings reduces code quality guarantees.
   FIX: Remove the bypass and fix the underlying issue.
@@ -99,17 +100,17 @@ AES014 CRITICAL - src-python/module/handler.py:15
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Rust file with `#[allow(dead_code)]` | `check_bypass_comments()` runs | AES014 CRITICAL flagged | ✅ |
-| AC-002 | Python file with `# noqa` | Checker runs | AES014 flagged | ✅ |
-| AC-003 | TS file with `// @ts-ignore` | Checker runs | AES014 flagged | ✅ |
-| AC-004 | Rust file with `unwrap()` call | Checker runs | AES014 flagged | ❌ Not implemented |
-| AC-005 | Rust file with `panic!()` call | Checker runs | AES014 flagged | ❌ Not implemented |
-| AC-006 | Clean file with no bypass | Checker runs | No AES014 | ✅ |
+| AC-001 | Rust file with `#[allow(dead_code)]` | `check_bypass_comments()` runs | AES014 CRITICAL flagged | Pending Review |
+| AC-002 | Python file with `# noqa` | Checker runs | AES014 flagged | Pending Review |
+| AC-003 | TS file with `// @ts-ignore` | Checker runs | AES014 flagged | Pending Review |
+| AC-004 | Rust file with `unwrap()` call | Checker runs | AES014 flagged | Pending Review Not implemented |
+| AC-005 | Rust file with `panic!()` call | Checker runs | AES014 flagged | Pending Review Not implemented |
+| AC-006 | Clean file with no bypass | Checker runs | No AES014 | Pending Review |
 
 ## 8. Empirical Findings (Code Audit)
 
 ### 8.1 Current Implementation
-- **Location**: `lint_checking_coordinator.rs:208-252`
+- **Location**: `src-rust/pipeline-jobs/agent_checking_coordinator.rs:208-252`
 - **Status**: **PARTIALLY IMPLEMENTED**
 - Invoked from `run_all_checks()` line 57
 
@@ -124,9 +125,9 @@ AES014 CRITICAL - src-python/module/handler.py:15
 - `panic!()` / `panic()` macro/function detection
 
 ### 8.4 What to Keep
-- Rust `#[allow(…)]` / `#[expect(…)]` detection ✅
-- Python bypass comment detection ✅
-- JS/TS bypass comment detection ✅
+- Rust `#[allow(…)]` / `#[expect(…)]` detection Pending Review
+- Python bypass comment detection Pending Review
+- JS/TS bypass comment detection Pending Review
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
@@ -134,4 +135,4 @@ AES014 CRITICAL - src-python/module/handler.py:15
 | FR-003 (AST Scanning) | Line-level pattern matching | False positives on string literals containing patterns | Case-insensitive matching at line level |
 
 ## 10. Appendices
-- `src-rust/agent/lint_checking_coordinator.rs:208` — `check_bypass_comments()`
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs:208` — `check_bypass_comments()`

@@ -2,13 +2,14 @@
 **Feature Name:** Unused Import Detector (AES015)
 **Product:** Lint Arwaky v1.10.2
 **Author:** Raka
-**Date:** 08/06/2026
-**Version:** v1.0
+**Date:** 09/06/2026
+**Version:** v1.1
 
 ## 1. Document Control
 | Version | Date | Author | Description of Changes | Approved By |
 |---------|------|--------|----------------------|-------------|
 | v1.0 | 08/06/2026 | Raka | Initial document creation | [Stakeholder] |
+| v1.1 | 09/06/2026 | Raka | Updated to prefix-based architecture: layers are filename prefixes, not directories; updated file paths for 26 feature folders | [Stakeholder] |
 
 ## 2. Introduction
 ### 2.1 Purpose
@@ -52,7 +53,7 @@ Unused imports clutter the codebase, create false dependencies, and confuse deve
 
 ### 4.2 Detection Pipeline
 ```
-File: src-rust/capabilities/some_checker.rs
+File: src-rust/layer-rules/capabilities_import_checker.rs
 
 1. Find all `use X;` lines
 2. For each, extract the symbol name
@@ -77,7 +78,7 @@ File: src-rust/capabilities/some_checker.rs
 
 ## 6. UI/UX Requirements
 ```
-AES015 MEDIUM - src-rust/capabilities/some_checker.rs:10
+AES015 MEDIUM - src-rust/layer-rules/capabilities_import_checker.rs:10
   AES015 UNUSED_IMPORT: 'some_module::SomeStruct' imported but never used.
   WHY? Unused imports create false dependencies and confuse readers.
   FIX: Remove the unused import statement.
@@ -86,16 +87,16 @@ AES015 MEDIUM - src-rust/capabilities/some_checker.rs:10
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | Rust file with unused `use foo::Bar;` | `check_unused_imports()` runs | AES015 MEDIUM flagged | ✅ |
-| AC-002 | Rust file with std import | Checker runs | Skipped (stdlib exempt) | ✅ |
-| AC-003 | Rust file with used import | Checker runs | No AES015 | ✅ |
-| AC-004 | Python file with unused `import os` | Checker runs | AES015 flagged | ❌ Python not supported |
-| AC-005 | Rust file with `use foo::{A, B};` | Checker runs | AES015 flagged for unused | ❌ Multi-import skipped |
+| AC-001 | Rust file with unused `use foo::Bar;` | `check_unused_imports()` runs | AES015 MEDIUM flagged | Pending Review |
+| AC-002 | Rust file with std import | Checker runs | Skipped (stdlib exempt) | Pending Review |
+| AC-003 | Rust file with used import | Checker runs | No AES015 | Pending Review |
+| AC-004 | Python file with unused `import os` | Checker runs | AES015 flagged | Pending Review Python not supported |
+| AC-005 | Rust file with `use foo::{A, B};` | Checker runs | AES015 flagged for unused | Pending Review Multi-import skipped |
 
 ## 8. Empirical Findings (Code Audit)
 
 ### 8.1 Current Implementation
-- **Location**: `lint_checking_coordinator.rs:254-300`
+- **Location**: `src-rust/pipeline-jobs/agent_checking_coordinator.rs:254-300`
 - **Status**: **PARTIALLY IMPLEMENTED** — Rust `use` only
 - Invoked from `run_all_checks()` line 58
 
@@ -111,9 +112,9 @@ AES015 MEDIUM - src-rust/capabilities/some_checker.rs:10
 - Robust name extraction
 
 ### 8.4 What to Keep
-- Single-import Rust `use` detection ✅
-- Standard library exemption ✅
-- Case-insensitive name matching ✅
+- Single-import Rust `use` detection Pending Review
+- Standard library exemption Pending Review
+- Case-insensitive name matching Pending Review
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |
@@ -121,4 +122,4 @@ AES015 MEDIUM - src-rust/capabilities/some_checker.rs:10
 | FR-003 (Line scanning) | Regex-free name extraction | Fragile parsing | Improve with import-specific parsing |
 
 ## 10. Appendices
-- `src-rust/agent/lint_checking_coordinator.rs:254` — `check_unused_imports()`
+- `src-rust/pipeline-jobs/agent_checking_coordinator.rs:254` — `check_unused_imports()`
