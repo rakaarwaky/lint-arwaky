@@ -36,11 +36,20 @@ impl ArchInternalChecker {
 
     fn file_has_all_export(file: &str) -> bool {
         if let Ok(content) = fs::read_to_string(file) {
-            // Python: __all__ = [...], Rust: pub use ..., JS/TS: export *
-            return content.contains("__all__")
-                || content.contains("pub use")
-                || content.contains("export *")
-                || content.contains("export {");
+            let is_rs = file.ends_with(".rs");
+            // Rust: pub use (must be followed by space, not field name like use_retry)
+            let has_rust_export = content.contains("pub use ")
+                || content.contains("pub use{")
+                || content.contains("pub use(");
+            // Python: __all__ = [...] (only in .py files)
+            let has_python_export = !is_rs && content.contains("__all__")
+                && !content.contains("// __all__")
+                && !content.contains("# __all__");
+            // JS/TS: export * or export { (only in .js/.ts files, not in .rs comments)
+            let has_js_export = content.contains("export *");
+            return has_rust_export
+                || has_python_export
+                || has_js_export;
         }
         false
     }
@@ -53,7 +62,7 @@ impl ArchInternalChecker {
     pub fn check_barrel_completeness(
         &self,
         file: &str,
-        _filename: &str,
+        filename: &str,
         definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
@@ -71,7 +80,7 @@ impl ArchInternalChecker {
                     .value
                     .clone()
             } else {
-                "__init__.py missing __all__ export list.".to_string()
+                format!("{} missing export declarations. Barrel files must re-export all public items via pub use/__all__/export *.", filename)
             };
             violations.push(Self::make_result(file, "AES012", &msg, Severity::MEDIUM));
         }

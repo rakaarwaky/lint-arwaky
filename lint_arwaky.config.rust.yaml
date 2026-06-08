@@ -212,6 +212,7 @@ architecture:
 
       - name: "Taxonomy_Constant_Purity"
         scope: "taxonomy(constant)"
+        no_primitives: false
         forbid_non_constants: true
         forbid_non_constants_violation_message: >
           AES033 CONSTANT_PURITY: Taxonomy `_constant` file contains non-constant declarations (`pub fn`, `pub struct`, `pub enum`, `pub mod`, `pub use`, `impl`).
@@ -438,7 +439,7 @@ architecture:
       - name: "Taxonomy_Entity_Error_Event_Relations"
         scope: "taxonomy(entity, error, event)"
         allowed_import: ["taxonomy"]
-        mandatory_import: ["taxonomy(vo)"]
+        mandatory_import: ["taxonomy(vo|constant)"]
         exceptions: ["main.rs", "lib.rs", "mod.rs"]
         forbidden_import: ["agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
         mandatory_import_violation_message: >

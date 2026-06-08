@@ -51,15 +51,20 @@ impl ArchMetricChecker {
 
     fn file_has_class_definition(file: &str) -> bool {
         if let Ok(content) = fs::read_to_string(file) {
-            // Check for class/trait/enum definitions in Python, Rust, TypeScript/JavaScript
             return content.contains("\nclass ")
                 || content.starts_with("class ")
                 || content.contains("\npub struct ")
+                || content.starts_with("pub struct ")
                 || content.contains("\nstruct ")
+                || content.starts_with("struct ")
                 || content.contains("\npub trait ")
+                || content.starts_with("pub trait ")
                 || content.contains("\ntrait ")
+                || content.starts_with("trait ")
                 || content.contains("\npub enum ")
+                || content.starts_with("pub enum ")
                 || content.contains("\nenum ")
+                || content.starts_with("enum ")
                 || content.contains("\nexport class ")
                 || content.contains("\nexport default class ");
         }

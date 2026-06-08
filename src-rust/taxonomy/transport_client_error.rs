@@ -1,4 +1,4 @@
-use crate::taxonomy::{BooleanVO, ErrorMessage, TransportEndpoint, TransportProtocol};
+use crate::taxonomy::{ErrorMessage, TransportEndpoint, TransportProtocol};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]

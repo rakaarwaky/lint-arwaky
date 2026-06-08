@@ -3,7 +3,6 @@
 
 use std::path::Path;
 
-use crate::contract::ServiceContainerAggregate;
 use crate::capabilities::architecture_cycle_analyzer::detect_cycle_edges;
 use crate::capabilities::architecture_cycle_analyzer::DependencyEdge;
 use crate::capabilities::architecture_compliance_analyzer::ArchComplianceAnalyzer;

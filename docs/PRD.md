@@ -69,7 +69,7 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 | FR-005 | Apply safe auto-fixes (Rust + Python + JS/TS)                                                                                                                                                                                                            | FR-003                 |
 | FR-006 | Track quality trends over time                                                                                                                                                                                                                           | FR-004                 |
 
-### 5.2 Layer Import Rules 
+### 5.2 Layer Import Rules
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                              | Dependency |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
@@ -261,7 +261,7 @@ src-rust/
 
 ```
 agent          -> taxonomy, contract, infrastructure, capabilities
-surface        -> contract, taxonomy
+surface        -> taxonomy, contract
 capabilities   -> taxonomy, contract
 infrastructure -> taxonomy, contract
 contract       -> taxonomy

@@ -35,13 +35,16 @@ impl ArchNamingChecker {
     }
 
     fn is_barrel_file(filename: &str) -> bool {
-        matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js")
+        matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js" | "index.tsx" | "index.jsx")
     }
 
     fn is_entry_point(filename: &str) -> bool {
         matches!(
             filename,
-            "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs"
+            "__init__.py" | "main.py" | "py.typed" | "app.py"
+                | "lib.rs" | "main.rs"
+                | "index.ts" | "index.js" | "index.tsx" | "index.jsx"
+                | "main.ts" | "main.js" | "app.ts" | "app.js"
         )
     }
 

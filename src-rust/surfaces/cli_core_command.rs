@@ -1,12 +1,6 @@
 /// Core CLI commands: full surface aligned with SKILL.md.
 use clap::{Parser, Subcommand};
 
-
-
-
-
-
-
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 #[derive(Parser, Debug)]
 #[command(name = "lint-arwaky")]

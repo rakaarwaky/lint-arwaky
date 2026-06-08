@@ -1,5 +1,4 @@
 use super::job_registry_port::IJobRegistryPort;
-use crate::contract::ServiceContainerAggregate;
 use crate::taxonomy::source_path_vo::FilePath;
 
 pub trait WatchExecutionOrchestratorAggregate: Send + Sync {

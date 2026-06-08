@@ -4,7 +4,6 @@ use crate::capabilities::{
     collect_source_files, format_report, load_config,
 };
 use crate::contract::architecture_lint_protocol::IArchLintProtocol;
-use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use crate::taxonomy::{LintResult, LintResultList};
 
 pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {

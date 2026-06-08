@@ -1,4 +1,4 @@
-use crate::taxonomy::{AdapterName, BooleanVO, Timestamp};
+use crate::taxonomy::{AdapterName, Timestamp};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
