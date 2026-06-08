@@ -131,7 +131,57 @@ No direct UI. Parser is consumed by other components internally.
 
 ## 8. Empirical Findings (Code Audit)
 
-N/A — Pending review after vertical slicing refactoring.
+### 8.1 Current Implementation
+
+| Component | Location | Lines | Status |
+|-----------|----------|-------|--------|
+| ISourceParserPort trait (17 methods) | `source-parsing/contract_parser_port.rs` | 36 | **FULLY IMPLEMENTED** — 17 method signatures |
+| Rust scanner | `source-parsing/infrastructure_rust_scanner.rs` | 583 | **FULLY IMPLEMENTED** — regex-based line-by-line |
+| Python scanner | `source-parsing/infrastructure_py_scanner.rs` | 629 | **FULLY IMPLEMENTED** — regex-based line-by-line |
+| JS/TS scanner | `source-parsing/infrastructure_js_scanner.rs` | 712 | **FULLY IMPLEMENTED** — regex-based line-by-line |
+| SourceParserOrchestrator | `source-parsing/infrastructure_parser_adapter.rs` | 148 | **FULLY IMPLEMENTED** — extension-based routing |
+| Path normalization | `source-parsing/infrastructure_path_provider.rs` | — | **FULLY IMPLEMENTED** |
+| Provider port | `source-parsing/contract_provider_port.rs` | — | **FULLY IMPLEMENTED** |
+
+### 8.2 Bugs Found
+
+1. **Regex-based parsing, not true AST** — All three scanners use line-by-line regex matching, not actual AST parsing (syn/swc/tree-sitter). This is documented but limits accuracy:
+   - Multi-line imports: `use crate::{Foo, Bar};` is NOT handled — only `use crate::foo::Foo;` patterns
+   - Generic types: `HashMap<String, Vec<u32>>` may cause false positives in primitive detection
+   - Macro invocations: `vec![]` may be misidentified as function definitions
+
+2. **Import extraction accuracy varies by language**:
+   - Rust: `import_matches_scope()` (in `capabilities_import_checker.rs:54`) uses `lower.contains()` — matches partial substrings
+   - Python: Handles `from X import Y` but NOT parenthesized multi-line imports
+   - JS: Handles `import { X } from './module'` but NOT dynamic `import()` expressions
+
+3. **`has_all_export()` barrel detection**:
+   - Rust: Checks for `pub use` keyword presence — does NOT verify actual re-export completeness
+   - Python: Checks for `__all__` variable
+   - JS: Checks for `export *` or `export {` patterns
+
+### 8.3 What Needs to Be Added
+
+- **Multi-line import support**: Proper brace/group import parsing for Rust (`use foo::{A, B, C}`)
+- **True AST parsing**: Plan integration with `syn` (Rust), `tree-sitter` (multi-lang) for accuracy
+- **Python parenthesized imports**: `from X import (A, B, C)` not handled
+- **Dynamic JS imports**: `import('module').then(...)` not detected
+
+### 8.4 What to Keep
+
+- **Extension-based routing** ✅ — clean delegation pattern
+- **All 17 ISourceParserPort methods implemented** ✅ — consistent API across languages
+- **Static `LazyLock` regex compilation** ✅ — efficient
+- **Barrel + entry point detection** ✅ — path-based, reliable
+- **Control flow counting** ✅ — supports AES019/AES022 checks
+
+### 8.5 Empirical Evidence from Test Projects
+
+- Rust scanner tested on `test-project-rust/` — imports detected correctly for simple cases
+- Python scanner tested on `test-project-python/` — imports, classes, functions detected
+- JS scanner tested on `test-project-javascript/` — imports, exports, classes detected
+- No test fixture exists for multi-line imports, dynamic imports, or complex generics
+- Pending Review: All acceptance criteria
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

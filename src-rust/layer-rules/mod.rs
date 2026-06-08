@@ -1,5 +1,7 @@
 pub mod agent_compliance_orchestrator;
 pub mod capabilities_compliance_analyzer;
+pub mod capabilities_layer_checker;
+pub mod capabilities_renamer_processor;
 pub mod capabilities_cycle_analyzer;
 pub mod capabilities_hierarchy_checker;
 pub mod capabilities_import_checker;

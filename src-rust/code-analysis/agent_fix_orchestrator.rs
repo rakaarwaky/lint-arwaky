@@ -1,13 +1,13 @@
-use crate::naming_rules::capabilities_renamer_processor::SymbolRenamerProcessor;
+use crate::layer_rules::capabilities_renamer_processor::SymbolRenamerProcessor;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use crate::code_analysis::taxonomy_applied_event::FixApplied;
+use crate::shared_common::taxonomy_applied_event::FixApplied;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::code_analysis::taxonomy_fix_vo::FixResult;
+use crate::shared_common::taxonomy_fix_vo::FixResult;
 use std::sync::Arc;
 
 pub struct LintFixOrchestrator {

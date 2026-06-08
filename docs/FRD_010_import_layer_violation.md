@@ -97,7 +97,59 @@ AES001 CRITICAL - src-rust/layer-rules/capabilities_import_checker.rs:42
 
 ## 8. Empirical Findings (Code Audit)
 
-N/A — Pending review after vertical slicing refactoring.
+### 8.1 Current Implementation
+
+| Component | Location | Lines | Status |
+|-----------|----------|-------|--------|
+| `ArchImportRuleChecker` | `layer-rules/capabilities_import_checker.rs` | 557 | **FULLY IMPLEMENTED** |
+| `check_forbidden_imports()` | `capabilities_import_checker.rs:294` | 64 lines | **FULLY IMPLEMENTED** |
+| `check_mandatory_imports()` | `capabilities_import_checker.rs:212` | 82 lines | **FULLY IMPLEMENTED** |
+| `check_legacy_import_rules()` | `capabilities_import_checker.rs:358` | 200 lines | **FULLY IMPLEMENTED** |
+| `resolve_scope()` | `capabilities_import_checker.rs:29` | 22 lines | **FULLY IMPLEMENTED** — parses `contract(protocol)` notation |
+| `import_matches_scope()` | `capabilities_import_checker.rs:54` | — | **FULLY IMPLEMENTED** |
+| `detect_layer()` | `layer-rules/capabilities_compliance_analyzer.rs:166` | — | **FULLY IMPLEMENTED** — prefix-based detection |
+| Invocation | `code-analysis/agent_checking_coordinator.rs:139-141` | — | **FULLY IMPLEMENTED** — called in `run_all_checks()` |
+
+### 8.2 Bugs Found
+
+1. **`detect_module_layer()` uses substring matching, not prefix** (`capabilities_compliance_analyzer.rs:237`)
+   ```rust
+   if import_path.contains("::taxonomy::") { return Some("taxonomy".into()); }
+   ```
+   - Uses `contains("::taxonomy::")` which matches any occurrence, including type names
+   - A type named `TaxonomyConfig` in a fully qualified path could trigger false match
+   - **Should use**: prefix-based check on the first module segment after `crate::`
+
+2. **Forbidden import check emits AES001 for ALL violations** (`capabilities_import_checker.rs:339`)
+   - Surface hierarchy violations (AES018/AES019) are caught by the same checker
+   - But the error code is hardcoded as `AES001` instead of reading from config
+   - **Impact**: Surface tier violations display wrong error code
+
+3. **`import_matches_scope()` uses `lower.contains()`** — fragile for partial matches
+   - `lower.contains(&format!("::{}::", layer))` matches substrings
+   - Module path `some::infrastructure_extra::` would match `infrastructure` scope
+   - **Impact**: False positives on module paths containing layer names as substrings
+
+### 8.3 What Needs to Be Added
+
+- **Prefix-based module detection**: Use first-segment extraction, not substring contains
+- **Error code from config**: Read violation error codes from YAML instead of hardcoding AES001
+- **Unit tests**: `resolve_scope()`, `import_matches_scope()`, `detect_module_layer()` have no dedicated tests
+
+### 8.4 What to Keep
+
+- **Three-method interface** ✅ — `check_forbidden`, `check_mandatory`, `check_legacy` cleanly separated
+- **Scope resolution** ✅ — handles `contract(protocol)`, `taxonomy(entity,error,event)`, `contract(port|protocol|aggregate)`
+- **Config-driven forbidden lists** ✅ — fully loaded from YAML layer definitions
+- **Prefix-based layer detection** ✅ — `ArchComplianceAnalyzer::detect_layer()` uses filename prefix
+
+### 8.5 Empirical Evidence from Test Projects
+
+- `test-project-rust/` fixtures trigger AES001 for capabilities→infrastructure imports
+- `test-project-rust/` fixtures trigger AES023 for surface→infrastructure imports
+- `test-project-python/` fixtures trigger AES001 for cross-layer violations
+- No fixture tests `detect_module_layer()` substring matching bug (section 8.2 item 1)
+- Pending Review: All acceptance criteria
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

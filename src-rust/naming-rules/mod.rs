@@ -1,6 +1,5 @@
 pub mod capabilities_convention_checker;
 pub mod capabilities_naming_checker;
-pub mod capabilities_renamer_processor;
 pub mod capabilities_variant_analyzer;
 pub mod contract_provider_port;
 pub mod contract_variant_port;

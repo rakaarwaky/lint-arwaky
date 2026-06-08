@@ -101,7 +101,58 @@ AES008 HIGH - src-rust/di-containers/contract_project_helpers.rs
 
 ## 8. Empirical Findings (Code Audit)
 
-N/A — Pending review after vertical slicing refactoring.
+### 8.1 Current Implementation
+
+| Component | Location | Lines | Status |
+|-----------|----------|-------|--------|
+| AES008 code path (in `check_domain_suffixes()`) | `naming-rules/capabilities_naming_checker.rs:209` | 6 lines (209-214) | Active — conditional branch inside the AES010/AES011 method |
+| Contract suffix validation (inheritance context) | `layer-rules/capabilities_inheritance_checker.rs:82` | 6 lines | Active — checks `_port`, `_protocol`, `_aggregate` for import/inheritance resolution |
+| Contract layer config | `lint_arwaky.config.rust.yaml:48-49` | — | `strict: ["port", "protocol", "aggregate"]` |
+| Test fixture | `test-project-rust/` | — | **None present** — no AES008 fixture exists |
+
+AES008 is not a standalone method. It is a **code-path branch** inside `check_domain_suffixes()`:
+1. The AES010 strict suffix check runs identically for all layers (line 192)
+2. If a violation is found AND the layer is `"contract"`, the emitted code is `"AES008"` (line 209)
+3. For all other layers, the emitted code is `"AES010"` (line 212)
+4. The violation message is **identical** for AES008 and AES010 — it hardcodes `"AES011"` as the prefix regardless
+
+### 8.2 Bugs Found
+
+| # | Bug | Location | Impact | Fix |
+|---|-----|----------|--------|-----|
+| B1 | **Wrong code in violation message** | `capabilities_naming_checker.rs:203` | The violation message always starts with `"AES011 SUFFIX_MISMATCH: ..."` regardless of the actual code (`AES008` for contract, `AES010` for non-contract). An AES008 violation shows the wrong rule code in its message body, confusing developers about which rule was triggered. | Change the message format to use the `code` variable: `format!("{} SUFFIX_MISMATCH: ...", code)` or use `def.suffix_violation_message` which correctly references `AES008` in the YAML (line 242). |
+| B2 | **No test fixture for AES008** | `test-project-rust/` | Unlike AES010 and AES011 which have test fixtures, AES008 has **zero** test coverage. The contract-layer-only branch (line 209) is never exercised by any test project. | Create `test-project-rust/src-rust/contract/helpers_contract.rs` with a forbidden suffix and expect AES008. |
+| B3 | **Zero line number** | `capabilities_naming_checker.rs:28` | Same as AES010/AES011 — violation reports line 0. | Use `LineNumber::new(1)` for file-level violations. |
+| B4 | **AES008 depends on AES010's config** | `capabilities_naming_checker.rs:192` | AES008 only fires when `suffix_policy == "strict"` AND suffix is not in `allowed_suffix`. If someone changes the contract layer's policy to `flexible`, AES008 violations silently disappear. The rule should enforce contract suffixes regardless of policy. | Add a dedicated contract-suffix check outside the AES010/AES011 flow, or make contract layer always strict in code regardless of config. |
+
+### 8.3 What Needs to Be Added
+
+1. **Dedicated AES008 checker method** — AES008's logic is a 6-line branch inside a shared method. Extract it to a standalone `check_contract_suffix()` method for clarity and testability.
+2. **Unit tests**:
+   - `contract_helpers.rs` → AES008 HIGH (`_helpers` not in allowed list)
+   - `contract_service_aggregate.rs` → no violation (`_aggregate` is allowed)
+   - `contract/mod.rs` → skipped (barrel file)
+   - Contract layer with `suffix_policy: flexible` → should still enforce AES008
+3. **Integration test fixture** — add `test-project-rust/src-rust/contract/` directory with a violating file and wire it into the test runner.
+4. **Message fix** — use dynamic rule code in the violation message instead of hardcoding `"AES011"`.
+
+### 8.4 What to Keep
+
+1. **Config-driven allowed suffixes** — contract allowed suffixes are defined in YAML (`strict: ["port", "protocol", "aggregate"]`), making them customizable without code changes.
+2. **Shared code path reuse** — reusing `check_domain_suffixes()` for AES008 avoids duplication of the stem/suffix extraction logic and the strict policy check.
+3. **Barrel file skipping** — the check inherits `is_barrel_file()` and `is_entry_point()` filtering correctly.
+4. **YAML message override** — the YAML has a specific `suffix_violation_message` for the contract scope (config line 241-244) mentioning AES008. If `def.suffix_violation_message.value` is set, the correct message is used — the hardcoded fallback at line 203 is only reached when no override exists.
+
+### 8.5 Empirical Evidence from Test Projects
+
+| Project | File | Expected | Actual (current) | Notes |
+|---------|------|----------|------------------|-------|
+| `test-project-rust` | — | AES008 | ❌ **No test fixture exists** | No contract-layer file in test-project-rust exercises AES008. |
+| `self-lint` | `contract_adapter_port.rs` | No violation | ✅ | Correct `_port` suffix passes. |
+| `self-lint` | `contract_fix_aggregate.rs` | No violation | ✅ | Correct `_aggregate` suffix passes. |
+| `self-lint` | `contract_reporting_protocol.rs` | No violation | ✅ | Correct `_protocol` suffix passes. |
+| `self-lint` | `di-containers/contract_service_aggregate.rs` | No violation | ✅ | Correct suffix, though in `di-containers/` feature folder. |
+| `self-lint` | (hypothetical) `contract_helpers.rs` | AES008 HIGH | ❌ Would fire but with message saying `AES011` (B1) | The wrong-code-in-message bug affects all contract-layer violations. |
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

@@ -125,7 +125,56 @@ AES002 HIGH - src-rust/layer-rules/capabilities_my_file.rs
 
 ## 8. Empirical Findings (Code Audit)
 
-N/A — Pending review after vertical slicing refactoring.
+### 8.1 Current Implementation
+
+| Component | Location | Lines | Status |
+|-----------|----------|-------|--------|
+| `check_mandatory_imports()` | `layer-rules/capabilities_import_checker.rs:212` | 82 | **FULLY IMPLEMENTED** |
+| `resolve_scope()` | `capabilities_import_checker.rs:29` | 22 | **FULLY IMPLEMENTED** |
+| `import_matches_scope()` | `capabilities_import_checker.rs:54` | — | **FULLY IMPLEMENTED** |
+| `barrel_has_suffix_match()` | `capabilities_import_checker.rs` | — | **FULLY IMPLEMENTED** |
+| Invocation | `code-analysis/agent_checking_coordinator.rs:139` | — | **FULLY IMPLEMENTED** |
+
+Key features:
+- `genuinely_unreferenced` guard prevents false positives when mandatory types aren't needed
+- Barrel-verified suffix matching checks that imported types originate from correct suffix files
+- Scope resolution handles full notation: `contract(protocol)`, `taxonomy(entity,error,event)`
+
+### 8.2 Bugs Found
+
+1. **`content.contains(layer)` false positives** (line 239, 255)
+   - Content match uses substring contains — matches comments, strings, and documentation
+   - A file might "contain" the layer name in a comment without actually importing it
+   - **Impact**: Rare false negatives on genuinely_unreferenced check (conservative, low risk)
+
+2. **`barrel_has_suffix_match()` adds overhead** — called for every mandatory import check
+   - Reads barrel files (`mod.rs`/`__init__.py`) on every invocation
+   - **Impact**: Performance overhead for large projects with many mandatory imports
+
+3. **`read_import_lines()` reads file twice** — once in `check_mandatory_imports()` line 226, once for content at line 227
+   - `read_import_lines()` re-reads the file internally
+   - `fs::read_to_string()` reads it again for content matching
+   - **Impact**: Double file I/O per file
+
+### 8.3 What Needs to Be Added
+
+- **Stricter content matching**: Check for `use crate::layer::...` pattern instead of generic `contains()`
+- **Cache import lines**: Pass pre-parsed imports to avoid double file reads
+- **Unit tests**: No dedicated tests for mandatory import scope matching edge cases
+
+### 8.4 What to Keep
+
+- **Genuinely-unreferenced guard** ✅ — prevents forcing dead imports
+- **Barrel-verified suffix matching** ✅ — ensures contract(protocol) actually checks protocol files
+- **Scope resolution** ✅ — `contract(protocol)` correctly expands to suffix filtering
+- **YAML-driven messages** ✅ — custom violation messages supported
+
+### 8.5 Empirical Evidence from Test Projects
+
+- Capabilities files in test projects missing `contract(protocol)` trigger AES002
+- Files genuinely not using contract types are correctly skipped
+- No fixture tests the `barrel_has_suffix_match()` fallback path
+- Pending Review: All acceptance criteria
 
 ## 9. Dependencies & Risks
 

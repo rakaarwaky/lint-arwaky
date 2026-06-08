@@ -136,7 +136,52 @@ CLI output:
 
 ## 8. Empirical Findings (Code Audit)
 
-N/A — Pending review after vertical slicing refactoring.
+### 8.1 Current Implementation
+
+| Component | Location | Lines | Status |
+|-----------|----------|-------|--------|
+| CLI fix command | `cli-commands/surface_fix_command.rs` | 86 | **FULLY IMPLEMENTED** — `fix` and `fix --dry-run` |
+| Fix orchestrator | `code-analysis/agent_fix_orchestrator.rs` | — | **FULLY IMPLEMENTED** — bypass removal, unused import removal, dry-run |
+| Naming renamer | `naming-rules/capabilities_renamer_processor.rs` | — | **FULLY IMPLEMENTED** — project-wide symbol rename |
+| Fix aggregate trait | `code-analysis/contract_fix_aggregate.rs` | — | **STUB** — single method signature |
+| Fix result VO | `code-analysis/taxonomy_fix_vo.rs` | — | **FULLY IMPLEMENTED** |
+| Fix applied event | `code-analysis/taxonomy_applied_event.rs` | — | **FULLY IMPLEMENTED** |
+
+### 8.2 Bugs Found
+
+1. **Fix orchestrator only handles AES014 (bypass) and AES015 (unused import)**
+   - AES003 (naming) handled by `SymbolRenamerProcessor` — but not wired into `LintFixOrchestrator` pipeline
+   - AES016 (dead inheritance), AES024 (any-bypass) have no auto-fix support
+   - **Impact**: Most AES codes have no auto-fix capability
+
+2. **`fix_bypass_comments()` uses line-specific targeting** — only removes the exact line identified
+   - If a bypass comment spans multiple lines (e.g., `#[allow(dead_code)]` on a separate line before a struct), only the `#[allow(...)]` line is removed
+   - The actual `#[allow(...)]` attribute is removed but the struct it decorated remains intact — correct behavior, but may leave empty lines
+
+3. **`fix_unused_import()` removes by line number** — fragile if file changes between lint and fix
+   - No content-aware matching — relies on the line number from the lint result
+   - If the file was modified between lint and fix, the wrong line may be removed
+
+### 8.3 What Needs to Be Added
+
+- **Wire SymbolRenamerProcessor** into the fix pipeline for AES003 auto-fixes
+- **Content-aware fix**: Match by content, not line number, to prevent off-by-one errors
+- **Expand fixable codes**: Add support for AES016 (remove empty impl blocks), AES024 (remove wildcard imports)
+- **External tool fixes**: `cargo clippy --fix`, `ruff check --fix`, `eslint --fix` integration
+
+### 8.4 What to Keep
+
+- **Dry-run mode** ✅ — preview before applying
+- **Bypass comment removal** ✅ — correctly removes `#[allow(...)]`, `noqa`, `type: ignore`
+- **Unused import removal** ✅ — removes exact import line by line number
+- **Symbol renamer** ✅ — project-wide renaming with word boundaries, skip comments/strings
+
+### 8.5 Empirical Evidence from Test Projects
+
+- `cargo clippy --fix` works for Rust files in test projects (though not wired through the orchestrator)
+- `SymbolRenamerProcessor` tested on `test-project-rust/` — renames symbols across files
+- No end-to-end test exists for the full `fix` command pipeline from CLI → orchestration → file modification
+- Pending Review: All acceptance criteria
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

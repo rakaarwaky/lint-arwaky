@@ -8,6 +8,7 @@ use crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges;
 use crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge;
 use crate::layer_rules::capabilities_import_checker::ArchImportRuleChecker;
 use crate::layer_rules::capabilities_internal_checker::ArchInternalChecker;
+use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::code_analysis::capabilities_metric_checker::ArchMetricChecker;
 use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::capabilities_orphan_analyzer::OrphanGraphResolver;
@@ -18,7 +19,6 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
 use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
 use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;
@@ -49,6 +49,7 @@ impl LintCheckingCoordinator {
         let metric_checker = ArchMetricChecker::new();
         let naming_checker = ArchNamingChecker::new();
         let internal_checker = ArchInternalChecker::new();
+        let layer_checker = ArchLayerChecker::new();
         let mut file_paths: Vec<FilePath> = Vec::new();
         let mut import_edges: Vec<(String, String)> = Vec::new();
 
@@ -62,19 +63,14 @@ impl LintCheckingCoordinator {
             }
             let c = std::fs::read_to_string(file).unwrap_or_default();
 
+            // Layer-independent checks (run on ALL files)
             Self::check_bypass_comments(file, &c, &mut violations);
             Self::check_unused_imports(file, &c, &mut violations);
             Self::check_contract_barrel(file, &c, &mut violations);
             Self::check_dead_inheritance(file, &c, &mut violations);
-            Self::check_agent_role(file, &c, &mut violations);
-            Self::check_surface_role(file, &c, &mut violations);
-            Self::check_surface_imports(file, &c, &mut violations);
             Self::check_agent_any_bypass(file, &c, &mut violations);
             Self::check_mcp_schema(file, &c, &mut violations);
             Self::check_mandatory_inheritance(file, &c, &mut violations);
-            Self::check_capability_routing(file, &c, &mut violations);
-            Self::check_single_bottleneck(file, &c, &mut violations);
-            Self::check_missing_vo(file, &c, &mut violations);
 
             for line in c.lines() {
                 let t = line.trim();
@@ -131,7 +127,16 @@ impl LintCheckingCoordinator {
                 continue;
             }
 
-            Self::check_forbidden_inheritance(file, &c, def, &mut violations);
+            // Layer-dependent inline checks (prefix-based, FRD v1.1)
+            Self::check_agent_role(file, &c, &layer, &mut violations);
+            Self::check_surface_role(file, &c, &layer, &mut violations);
+            Self::check_single_bottleneck(file, &c, &layer, &mut violations);
+            Self::check_missing_vo(file, &c, &layer, &mut violations);
+
+            // Layer-rule checks (delegated to layer-rules/)
+            layer_checker.check_surface_imports(file, &c, &layer, &mut violations);
+            layer_checker.check_capability_routing(file, &c, &layer, &mut violations);
+            layer_checker.check_forbidden_inheritance(file, &c, def, &mut violations);
             import_checker.check_mandatory_imports(file, def, &mut violations);
             import_checker.check_forbidden_imports(file, &layer, def, &mut violations);
             import_checker.check_legacy_import_rules(file, &layer, config, &mut violations);
@@ -485,94 +490,8 @@ impl LintCheckingCoordinator {
         }
     }
 
-    fn check_forbidden_inheritance(
-        file: &str,
-        content: &str,
-        def: &LayerDefinition,
-        violations: &mut Vec<LintResult>,
-    ) {
-        if def.forbidden_inheritance.values.is_empty() {
-            return;
-        }
-        let mut forbidden_traits: Vec<String> = Vec::new();
-        for line in content.lines() {
-            let t = line.trim();
-            if !t.starts_with("use ") {
-                continue;
-            }
-            for pattern in &def.forbidden_inheritance.values {
-                let (layer, suffixes) = Self::resolve_scope_inheritance(pattern);
-                let lower = t.to_lowercase();
-                let layer_match = lower.contains(&format!("{}::", layer))
-                    || lower.contains(&format!("::{}::", layer));
-                if !layer_match {
-                    continue;
-                }
-                if !suffixes.is_empty() {
-                    let suffix_match = suffixes.iter().any(|s| {
-                        lower.contains(&format!("_{}", s)) || lower.contains(&format!("::{}", s))
-                    });
-                    if !suffix_match {
-                        continue;
-                    }
-                }
-                if let Some(name) = t.split("::").last() {
-                    let trait_name = name
-                        .trim_end_matches(';')
-                        .trim()
-                        .trim_start_matches('{')
-                        .trim_end_matches('}')
-                        .split(',')
-                        .next()
-                        .unwrap_or("")
-                        .trim()
-                        .to_string();
-                    if !trait_name.is_empty() {
-                        forbidden_traits.push(trait_name);
-                    }
-                }
-            }
-        }
-        for trait_name in &forbidden_traits {
-            if content.contains(&format!("impl {} for ", trait_name)) {
-                let msg = if !def.forbidden_inheritance_violation_message.value.is_empty() {
-                    def.forbidden_inheritance_violation_message.value.clone()
-                } else {
-                    format!(
-                        "AES026 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
-                        trait_name
-                    )
-                };
-                violations.push(Self::mk(file, 0, "AES026", Severity::HIGH, &msg));
-            }
-        }
-    }
-
-    fn resolve_scope_inheritance(scope: &str) -> (&str, Vec<&str>) {
-        if let Some(paren) = scope.find('(') {
-            let layer = scope[..paren].trim();
-            let inner = scope[paren + 1..].trim_end_matches(')').trim();
-            let suffixes: Vec<&str> = if inner.contains('|') {
-                inner
-                    .split('|')
-                    .map(|s| s.trim())
-                    .filter(|s| !s.is_empty())
-                    .collect()
-            } else {
-                inner
-                    .split(',')
-                    .map(|s| s.trim())
-                    .filter(|s| !s.is_empty())
-                    .collect()
-            };
-            (layer, suffixes)
-        } else {
-            (scope.trim(), vec![])
-        }
-    }
-
-    fn check_agent_role(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if !file.contains("/agent/") {
+    fn check_agent_role(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+        if layer != "agent" && !layer.starts_with("agent(") {
             return;
         }
         if content.lines().count() > 300 {
@@ -586,8 +505,8 @@ impl LintCheckingCoordinator {
         }
     }
 
-    fn check_surface_role(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if !file.contains("/surfaces/") {
+    fn check_surface_role(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+        if layer != "surfaces" && !layer.starts_with("surfaces(") {
             return;
         }
         if content.matches("fn ").count() > 15 {
@@ -598,29 +517,6 @@ impl LintCheckingCoordinator {
                 Severity::HIGH,
                 "AES022 SURFACE_ROLE: Surface file >10 functions.",
             ));
-        }
-    }
-
-    fn check_surface_imports(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if !file.contains("/surfaces/") {
-            return;
-        }
-        for line in content.lines() {
-            let t = line.trim();
-            if t.starts_with("use ")
-                && (t.contains("::capabilities::")
-                    || t.contains("::infrastructure::")
-                    || t.contains("::agent::"))
-            {
-                violations.push(Self::mk(
-                    file,
-                    0,
-                    "AES023",
-                    Severity::HIGH,
-                    "AES023 SURFACE_DEPENDENCY: Surface imports from forbidden layer.",
-                ));
-                break;
-            }
         }
     }
 
@@ -653,44 +549,8 @@ impl LintCheckingCoordinator {
         }
     }
 
-    fn check_capability_routing(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if !file.contains("/capabilities/") {
-            return;
-        }
-        let structs: Vec<&str> = content
-            .lines()
-            .filter_map(|l| {
-                let t = l.trim();
-                if t.starts_with("pub struct ") || t.starts_with("struct ") {
-                    Some(
-                        t.split_whitespace()
-                            .nth(1)
-                            .unwrap_or("")
-                            .trim_end_matches(';'),
-                    )
-                } else {
-                    None
-                }
-            })
-            .filter(|n| !n.is_empty() && !n.starts_with('_'))
-            .collect();
-        for s in &structs {
-            let hi = content.contains(&format!("impl I{}", s))
-                || content.contains(&format!(" for {} ", s));
-            if !hi && structs.len() <= 3 {
-                violations.push(Self::mk(
-                    file,
-                    0,
-                    "AES030",
-                    Severity::MEDIUM,
-                    &format!("AES030 CAPABILITY_ROUTING: Struct '{}' no trait impl.", s),
-                ));
-            }
-        }
-    }
-
-    fn check_single_bottleneck(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if !file.contains("/capabilities/") {
+    fn check_single_bottleneck(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+        if layer != "capabilities" && !layer.starts_with("capabilities(") {
             return;
         }
         let fc = content.matches("fn ").count();
@@ -715,8 +575,10 @@ impl LintCheckingCoordinator {
         }
     }
 
-    fn check_missing_vo(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if !file.contains("/capabilities/") && !file.contains("/infrastructure/") {
+    fn check_missing_vo(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+        let is_cap = layer == "capabilities" || layer.starts_with("capabilities(");
+        let is_infra = layer == "infrastructure" || layer.starts_with("infrastructure(");
+        if !is_cap && !is_infra {
             return;
         }
         for (i, line) in content.lines().enumerate() {

@@ -75,24 +75,6 @@ pub trait IMetricCheckerProtocol: Send + Sync {
 }
 
 #[async_trait]
-pub trait IRoleCheckerProtocol: Send + Sync {
-    async fn check_agent_roles(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    );
-    async fn check_surface_roles(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    );
-}
-
-#[async_trait]
 pub trait IArchImportProcessorProtocol: Send + Sync {
     async fn process_file_imports(
         &self,
@@ -207,20 +189,6 @@ pub trait IArchStructureProtocol: IArchRuleProtocol + Send + Sync {
         results: &mut LintResultList,
     );
     async fn check_mandatory_class_definition(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    );
-    async fn check_agent_roles(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    );
-    async fn check_surface_roles(
         &self,
         analyzer: &dyn IAnalyzer,
         files: &FilePathList,

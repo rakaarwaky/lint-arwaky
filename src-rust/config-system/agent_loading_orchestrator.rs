@@ -4,6 +4,7 @@ use crate::config_system::contract_reader_port::IConfigReaderPort;
 use crate::config_system::contract_detector_port::ILanguageDetectorPort;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::config_system::taxonomy_config_vo::default_config_for_language;
+use crate::config_system::taxonomy_config_vo::parse_config_yaml;
 use crate::config_system::taxonomy_source_vo::ConfigResult;
 use crate::config_system::taxonomy_source_vo::ConfigSource;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
@@ -44,31 +45,30 @@ impl IConfigOrchestrationProtocol for ConfigLoadingOrchestrator {
         project_root: &FilePath,
         language: &str,
     ) -> ConfigResult {
-        let config_path = FilePath::new(
-            std::path::Path::new(&project_root.value)
-                .join(format!("lint_arwaky.config.{language}.yaml"))
-                .to_string_lossy()
-                .to_string(),
-        )
-        .unwrap_or_else(|_| project_root.clone());
-
         match self.config_reader.read_config(project_root, language).await {
             Some(source) => {
-                match self.config_parser.parse_yaml_config(
-                    &FilePath::new(source.path.clone()).unwrap_or(config_path.clone()),
-                ) {
-                    Ok(_project_config) => {
-                        let config = default_config_for_language(language);
-                        ConfigResult::new(config, source, Vec::new())
+                // Read file content and parse through the proper YAML pipeline
+                // (with suffix array → policy/allowed/forbidden transformation)
+                let config = match std::fs::read_to_string(&source.path) {
+                    Ok(content) => {
+                        let parsed = parse_config_yaml(&content);
+                        if !parsed.layers.is_empty() {
+                            parsed
+                        } else {
+                            default_config_for_language(language)
+                        }
                     }
-                    Err(_) => {
-                        let warnings = vec![
-                            "Failed to parse config file, using built-in defaults".to_string()
-                        ];
-                        let config = default_config_for_language(language);
-                        let source = ConfigSource::new(language, "embedded", "");
-                        ConfigResult::new(config, source, warnings)
-                    }
+                    Err(_) => default_config_for_language(language),
+                };
+                if config.layers.is_empty() {
+                    let warnings = vec![
+                        "Config file had no architecture layers, using built-in defaults"
+                            .to_string(),
+                    ];
+                    let source = ConfigSource::new(language, "embedded", "");
+                    ConfigResult::new(config, source, warnings)
+                } else {
+                    ConfigResult::new(config, source, Vec::new())
                 }
             }
             None => {

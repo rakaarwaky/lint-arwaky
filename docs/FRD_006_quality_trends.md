@@ -133,7 +133,57 @@ History: 42 entries over 30 days
 
 ## 8. Empirical Findings (Code Audit)
 
-N/A — Pending review after vertical slicing refactoring.
+### 8.1 Current Implementation
+
+| Component | Location | Lines | Status |
+|-----------|----------|-------|--------|
+| CLI trends command | `cli-commands/surface_analysis_command.rs` | 156 | **FULLY IMPLEMENTED** — `trends()`, `complexity()`, `duplicates()`, `ci()`, `dependencies()` |
+| Analysis orchestrator | `code-analysis/agent_analysis_orchestrator.rs` | — | **FULLY IMPLEMENTED** — `get_trends()` with history read/delta/trend classification |
+| Analysis aggregate trait | `code-analysis/contract_analysis_aggregate.rs` | — | **FULLY IMPLEMENTED** — 5 method signatures |
+| Metrics provider port | `metrics-service/contract_metrics_port.rs` | — | **STUB** — trait only, `get_line_count`, `get_history`, `save_metric` |
+| Python metrics adapter | `language-adapters/infrastructure_py_metrics.rs` | — | **FULLY IMPLEMENTED** — Python-specific metrics collection |
+| Score computation | `output-report/taxonomy_score_constant.rs` | — | **FULLY IMPLEMENTED** — `compute_score()` with severity deductions |
+
+### 8.2 Bugs Found
+
+1. **Analysis orchestrator uses a `DummyContainer`** (`code-analysis/agent_analysis_orchestrator.rs:18-20`)
+   ```rust
+   struct DummyContainer {}
+   impl ServiceContainerAggregate for DummyContainer {}
+   ```
+   - The orchestrator creates a dummy container with NO methods implemented
+   - `container()` always returns a no-op container
+   - **Impact**: Any code path that calls `self.container()` receives a non-functional container
+
+2. **Trends history file path hardcoded** — `.lint-arwaky-trends.json` in project root
+   - Not configurable, not documented as an output artifact
+   - Mixed with project's own files — should be in `.lint-arwaky/` directory
+
+3. **No actual IMetricsProviderPort implementation for Rust**
+   - `contract_metrics_port.rs` defines the trait
+   - Only `infrastructure_py_metrics.rs` implements it (Python-specific)
+   - No Rust metrics provider exists — trends for Rust projects use fallback line counting
+
+### 8.3 What Needs to Be Added
+
+- **Real container**: Replace `DummyContainer` with proper DI container wiring
+- **Configurable history path**: Support custom output directory
+- **Rust metrics provider**: Implement `IMetricsProviderPort` for Rust code analysis
+- **History cleanup**: Add max entries limit or retention policy
+
+### 8.4 What to Keep
+
+- **Trend direction computation** ✅ — delta-based IMPROVING/STABLE/DECLINING classification
+- **Score persistence** ✅ — JSON-lines append-only format, auto-creates file
+- **All-time high/low tracking** ✅ — computed from full history
+- **CLI integration** ✅ — `lint-arwaky-cli trends .` command works end-to-end
+
+### 8.5 Empirical Evidence from Test Projects
+
+- `lint-arwaky-cli trends .` runs and produces `.lint-arwaky-trends.json`
+- History file format: `{"score":N,"timestamp":"...","violations":N,"critical":N}` per line
+- Trend direction correctly classifies IMPROVING/STABLE/DECLINING based on ±1 thresholds
+- Pending Review: All acceptance criteria
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

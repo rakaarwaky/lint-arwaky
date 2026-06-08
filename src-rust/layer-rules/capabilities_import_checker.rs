@@ -409,13 +409,45 @@ impl ArchImportRuleChecker {
     }
 
     fn detect_module_layer(&self, module: &str, config: &ArchitectureConfig) -> Option<String> {
-        let parts: Vec<&str> = module.split('.').collect();
+        // Try Rust-style :: separator first, then Python-style .
+        let parts: Vec<&str> = if module.contains("::") {
+            module.split("::").collect()
+        } else {
+            module.split('.').collect()
+        };
         for part in &parts {
+            // Prefix-based matching (FRD v1.1)
+            if let Some(layer) = Self::extract_layer_from_import(part) {
+                return Some(layer);
+            }
+            // Legacy path-based matching
             for (name, def) in &config.layers {
-                let path_last = def.path.value.split('/').last().unwrap_or("");
-                if *part == name.value.as_str() || *part == path_last {
+                if *part == name.value.as_str() {
                     return Some(name.value.clone());
                 }
+                let path_last = def.path.value.split('/').last().unwrap_or("");
+                if *part == path_last {
+                    return Some(name.value.clone());
+                }
+            }
+        }
+        None
+    }
+
+    /// Extract layer name from an import segment using filename prefix.
+    /// e.g. "capabilities_import_checker" → Some("capabilities")
+    fn extract_layer_from_import(segment: &str) -> Option<String> {
+        const PREFIX_MAP: &[(&str, &str)] = &[
+            ("taxonomy_", "taxonomy"),
+            ("contract_", "contract"),
+            ("capabilities_", "capabilities"),
+            ("infrastructure_", "infrastructure"),
+            ("agent_", "agent"),
+            ("surface_", "surfaces"),
+        ];
+        for (prefix, layer) in PREFIX_MAP {
+            if segment.starts_with(prefix) {
+                return Some(layer.to_string());
             }
         }
         None

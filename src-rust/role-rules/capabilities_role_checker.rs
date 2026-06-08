@@ -6,7 +6,8 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
 
-use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IRoleCheckerProtocol};
+use crate::layer_rules::contract_rule_protocol::IAnalyzer;
+use crate::role_rules::contract_role_protocol::IRoleCheckerProtocol;
 use crate::layer_rules::taxonomy_names_vo::{
     core_layer_names, layer_agent, layer_contract, layer_infrastructure, layer_surfaces,
     layer_taxonomy,

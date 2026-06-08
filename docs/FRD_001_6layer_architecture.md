@@ -179,7 +179,69 @@ This feature has no direct UI — it is an architectural constraint enforced at 
 
 ## 8. Empirical Findings (Code Audit)
 
-N/A — Pending review after vertical slicing refactoring.
+### 8.1 Current Implementation
+
+The 6-layer AES architecture is implemented through a distributed set of checker modules coordinated by `agent_compliance_orchestrator.rs`:
+
+| Component | Location | Lines | Status |
+|-----------|----------|-------|--------|
+| Layer detection & config resolution | `layer-rules/capabilities_compliance_analyzer.rs` | 390 | **FULLY IMPLEMENTED** |
+| Import rules (AES001/AES002/AES023) | `layer-rules/capabilities_import_checker.rs` | 557 | **FULLY IMPLEMENTED** |
+| Import processor | `layer-rules/capabilities_import_processor.rs` | 527 | **FULLY IMPLEMENTED** |
+| Surface hierarchy (AES018/AES019) | `layer-rules/capabilities_hierarchy_checker.rs` | 371 | **FULLY IMPLEMENTED** |
+| Barrel/internal (AES012/AES013) | `layer-rules/capabilities_internal_checker.rs` | 154 | **FULLY IMPLEMENTED** |
+| Inheritance (AES026/AES027) | `layer-rules/capabilities_inheritance_checker.rs` | 212 | **FULLY IMPLEMENTED** |
+| Cycle detection (AES020) | `layer-rules/capabilities_cycle_analyzer.rs` | 221 | **FULLY IMPLEMENTED** |
+| Unused check (AES015) | `layer-rules/capabilities_unused_checker.rs` | 139 | **FULLY IMPLEMENTED** |
+| Compliance orchestration | `layer-rules/agent_compliance_orchestrator.rs` | 485 | **FULLY IMPLEMENTED** |
+| Layer definitions | `layer-rules/taxonomy_definition_vo.rs` | 323 | **FULLY IMPLEMENTED** |
+| Rule definitions | `layer-rules/taxonomy_rule_vo.rs` | 302 | **FULLY IMPLEMENTED** |
+| Suffix definitions | `layer-rules/taxonomy_suffix_vo.rs` | 155 | **FULLY IMPLEMENTED** |
+| Naming checker (AES003) | `naming-rules/capabilities_naming_checker.rs` | — | **FULLY IMPLEMENTED** |
+| Role checker (AES021/AES022/AES024) | `role-rules/capabilities_role_checker.rs` | — | **DEAD CODE** (unwired) |
+| Orphan detector (AES017) | `orphan-detector/capabilities_orphan_analyzer.rs` | — | **FULLY IMPLEMENTED** |
+| Primitive checker (AES006) | `primitive-checker/capabilities_type_checker.rs` | — | **ORPHAN** (unused inline checker active instead) |
+
+- Invoked from `agent_compliance_orchestrator.rs:455` (`check_compliance`)
+- Prefix-based layer detection implemented in `ArchComplianceAnalyzer::detect_module_layer()` (uses filename prefix, not directory path)
+
+### 8.2 Bugs Found — Status
+
+| # | Bug | Status | Fixed In |
+|---|---|---|---|
+| 1 | **Project-level config file parsed but thrown away** — `agent_loading_orchestrator.rs:55-62` always returns `default_config_for_language()` | **✅ FIXED** — now reads file content and parses through `parse_config_yaml()` | `agent_loading_orchestrator.rs` |
+| 2 | **Path-based detection in inline checkers** — `check_agent_role`, `check_surface_role`, `check_surface_imports`, `check_capability_routing`, `check_single_bottleneck`, `check_missing_vo` used `file.contains("/agent/")` etc. | **✅ FIXED** — now use prefix-based layer parameter (`"agent"`, `"surfaces"`, etc.) | `agent_checking_coordinator.rs` |
+| 3 | **ArchRoleChecker unwired** — 658 lines, 7 sub-role checks, zero callers | **⏳ PENDING** — needs DI wiring via ServiceContainerAggregate | — |
+| 4 | **Inline checks before layer detection** — 13 checkers run on ALL files, including non-Rust/barrel | **✅ FIXED** — layer-dependent checks moved after `detect_layer()` | `agent_checking_coordinator.rs` |
+| 5 | **Legacy import checker path-based** — `detect_module_layer()` didn't use prefix detection | **✅ FIXED** — added prefix-matching + Rust `::` separator support | `capabilities_import_checker.rs` |
+| 6 | **AES003 naming doesn't validate prefix-layer** — only word count | **⏳ PENDING** — minor, prefix determines layer (by design) | — |
+
+### 8.3 What Needs to Be Added (Remaining)
+
+- **Wire ArchRoleChecker**: Integrate into `run_all_checks()` via DI container
+- **Logging for undetected files**: warn when `detect_layer()` returns `None`
+- **Test fixtures**: verify fixed bugs (config loading, prefix detection) with automated tests
+
+### 8.4 What to Keep (Already Implemented)
+
+- **Prefix-based layer detection** in `ArchComplianceAnalyzer` — `extract_layer_from_prefix()` with PREFIX_MAP
+- **Path-based fallback** for root entry files (`cli_main_entry.rs`, `mcp_main_entry.rs`)
+- **Inline bypass/unused/barrel checks** — AES014/AES015/AES007 (layer-independent)
+- **ArchRoleChecker implementation** — 658 lines, 7 sub-role checks (just needs wiring)
+- **YAML config structure** — per-layer violation messages, suffix policies, import rules
+- **Barrel-aware suffix resolution** in import checker — type→suffix map via barrel files
+
+### 8.5 Empirical Evidence from Test Projects
+
+| File | What it Tests | Active Check Result | Dead Code Would Catch |
+|------|--------------|--------------------|-----------------------|
+| `test-project-rust/src-rust/agent/large_orchestrator.rs` | 358-line orchestrator | **Flagged** AES021 (line count > 300) | Also flagged (stateless execution) |
+| `test-project-rust/src-rust/agent/stateful_orchestrator.rs` | Mutable `counter: u32` field | **NOT flagged** (line count ~40 < 300) | Flagged AES021 (mutable state in orchestrator) |
+| `test-project-python/src-python/agent/stateful.py` | `self.state`, `self.executed` | **NOT flagged** (no line count check) | Flagged AES021 (state persistence) |
+| `test-project-rust/src-rust/surfaces/passive_bad_view.rs` | Passive surface imports contract | **DEPENDS** on prefix detection | Flagged AES019 |
+| `test-project-rust/src-rust/capabilities/forbidden_suffix_vo.rs` | `_vo` suffix in capabilities | **NOT flagged** | Flagged AES011 |
+
+**Summary**: 4 of 6 bugs fixed. Active checks now use prefix-based layer detection (FRD v1.1 compliant). Stateful orchestrators still pass undetected — ArchRoleChecker remains unwired.
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

@@ -2,15 +2,14 @@
 use crate::code_analysis::contract_analysis_aggregate::AnalysisOrchestratorAggregate;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::layer_rules::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
 use async_trait::async_trait;
 
 pub struct AnalysisOrchestrator {}
 
 struct DummyContainer {}
-impl ServiceContainerAggregate for DummyContainer {
-}
+impl ServiceContainerAggregate for DummyContainer {}
 
 #[async_trait]
 impl AnalysisOrchestratorAggregate for AnalysisOrchestrator {
@@ -71,21 +70,34 @@ impl AnalysisOrchestratorAggregate for AnalysisOrchestrator {
                             file: path.clone(),
                             line: crate::shared_common::taxonomy_common_vo::LineNumber::new(0),
                             column: crate::shared_common::taxonomy_common_vo::ColumnNumber::new(0),
-                            code: crate::shared_common::taxonomy_error_vo::ErrorCode::raw("TREND001"),
-                            message: crate::shared_common::taxonomy_message_vo::LintMessage::new(format!(
-                                "Quality score: {:.1}, delta: {:.1}, trend: {}",
-                                current_score, delta, trend
+                            code: crate::shared_common::taxonomy_error_vo::ErrorCode::raw(
+                                "TREND001",
+                            ),
+                            message: crate::shared_common::taxonomy_message_vo::LintMessage::new(
+                                format!(
+                                    "Quality score: {:.1}, delta: {:.1}, trend: {}",
+                                    current_score, delta, trend
+                                ),
+                            ),
+                            source: Some(crate::shared_common::taxonomy_name_vo::AdapterName::raw(
+                                "trends",
                             )),
-                            source: Some(crate::shared_common::taxonomy_name_vo::AdapterName::raw("trends")),
                             severity: crate::output_report::taxonomy_severity_vo::Severity::INFO,
                             enclosing_scope: Default::default(),
                             related_locations: Default::default(),
                         };
                         return ArchitectureGovernanceEntity {
                             id: Default::default(),
-                            results: crate::output_report::taxonomy_result_vo::LintResultList::new(vec![trend_result]),
-                            score: crate::shared_common::taxonomy_common_vo::Score::new(current_score),
-                            is_passing: crate::shared_common::taxonomy_message_vo::ComplianceStatus::new(true),
+                            results: crate::output_report::taxonomy_result_vo::LintResultList::new(
+                                vec![trend_result],
+                            ),
+                            score: crate::shared_common::taxonomy_common_vo::Score::new(
+                                current_score,
+                            ),
+                            is_passing:
+                                crate::shared_common::taxonomy_message_vo::ComplianceStatus::new(
+                                    true,
+                                ),
                         };
                     }
                 }
@@ -100,7 +112,9 @@ impl AnalysisOrchestratorAggregate for AnalysisOrchestrator {
             message: crate::shared_common::taxonomy_message_vo::LintMessage::new(
                 "No trend history yet — first run".to_string(),
             ),
-            source: Some(crate::shared_common::taxonomy_name_vo::AdapterName::raw("trends")),
+            source: Some(crate::shared_common::taxonomy_name_vo::AdapterName::raw(
+                "trends",
+            )),
             severity: crate::output_report::taxonomy_severity_vo::Severity::INFO,
             enclosing_scope: Default::default(),
             related_locations: Default::default(),
