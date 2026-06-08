@@ -41,7 +41,7 @@ impl IConfigParserPort for ConfigParserProvider {
                 });
             }
         };
-        let config: ProjectConfig = serde_json::from_value(serde_json::to_value(&raw).unwrap())
+        let config: ProjectConfig = serde_json::from_value(serde_json::to_value(&raw).unwrap_or_default())
             .unwrap_or_else(|_| ProjectConfig::defaults());
         Ok(config)
     }
@@ -72,7 +72,7 @@ impl IConfigParserPort for ConfigParserProvider {
         };
         if let Some(tool_section) = toml_value.get("tool").and_then(|t| t.get("lint_arwaky")) {
             let config: ProjectConfig =
-                serde_json::from_value(serde_json::to_value(tool_section).unwrap())
+                serde_json::from_value(serde_json::to_value(tool_section).unwrap_or_default())
                     .unwrap_or_else(|_| ProjectConfig::defaults());
             Some(Ok(config))
         } else {

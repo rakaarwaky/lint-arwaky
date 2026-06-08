@@ -49,7 +49,7 @@ impl ASTRustParserAdapter {
         let content = fs::read_to_string(&path.value).map_err(|e| SourceParserError {
             path: path.clone(),
             message: ErrorMessage::new(format!("Failed to read file: {}", e)),
-            error_code: Some(ErrorCode::new("FILE_READ_ERROR").unwrap()),
+            error_code: Some(ErrorCode::raw("FILE_READ_ERROR")),
             cause: Some(Cause::new(e.to_string())),
         })?;
 
@@ -86,7 +86,7 @@ impl ASTRustParserAdapter {
             // Check for impl block
             if let Some(impl_cap) = IMPL_REGEX.captures(stripped) {
                 let trait_name = impl_cap.get(1).map(|m| m.as_str());
-                let struct_name = impl_cap.get(2).unwrap().as_str().to_string();
+                let struct_name = impl_cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string();
 
                 if let Some(t_name) = trait_name {
                     let clean_trait = t_name.split("::").last().unwrap_or(t_name).to_string();
@@ -108,7 +108,7 @@ impl ASTRustParserAdapter {
 
             // 1. Imports
             if let Some(use_cap) = USE_REGEX.captures(stripped) {
-                let raw_path = use_cap.get(1).unwrap().as_str().trim();
+                let raw_path = use_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
                 let mut clean_path = raw_path;
                 for prefix in &["crate::", "self::", "super::"] {
                     if clean_path.starts_with(prefix) {
@@ -145,7 +145,7 @@ impl ASTRustParserAdapter {
 
             // 2. Struct, Enum, Trait Definitions
             if let Some(struct_cap) = STRUCT_REGEX.captures(stripped) {
-                let name = struct_cap.get(1).unwrap().as_str().to_string();
+                let name = struct_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 defined.insert(name.clone());
 
                 let mut is_dead = stripped.contains(';') || stripped.contains("{}");
@@ -169,7 +169,7 @@ impl ASTRustParserAdapter {
 
             // 3. Functions / Methods
             if let Some(fn_cap) = FN_REGEX.captures(stripped) {
-                let name = fn_cap.get(1).unwrap().as_str().to_string();
+                let name = fn_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 defined.insert(name.clone());
 
                 if let Some(ref cimpl) = current_impl {
@@ -190,7 +190,7 @@ impl ASTRustParserAdapter {
             // 4. Assignments
             if stripped.starts_with("let ") {
                 if let Some(let_cap) = LET_REGEX.captures(stripped) {
-                    let name = let_cap.get(1).unwrap().as_str().to_string();
+                    let name = let_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                     let col_pos = line.find(&name).unwrap_or(0) as i64;
                     assignments.push(serde_json::json!({
                         "name": name,
@@ -212,16 +212,16 @@ impl ASTRustParserAdapter {
             // 7. Exported symbols (pub items)
             if stripped.starts_with("pub ") {
                 if let Some(cap) = PUB_STRUCT_REGEX.captures(stripped) {
-                    exported.insert(cap.get(2).unwrap().as_str().to_string());
+                    exported.insert(cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string());
                 }
                 if let Some(cap) = PUB_MOD_REGEX.captures(stripped) {
-                    exported.insert(cap.get(1).unwrap().as_str().to_string());
+                    exported.insert(cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string());
                 }
                 if let Some(cap) = PUB_USE_REGEX.captures(stripped) {
-                    exported.insert(cap.get(1).unwrap().as_str().to_string());
+                    exported.insert(cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string());
                 }
                 if let Some(cap) = PUB_USE_GROUP.captures(stripped) {
-                    for name in cap.get(1).unwrap().as_str().split(',') {
+                    for name in cap.get(1).map(|m| m.as_str()).unwrap_or("").split(',') {
                         let clean = name.trim();
                         if !clean.is_empty() {
                             exported.insert(clean.to_string());
@@ -321,7 +321,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
             for line in &lines {
                 let stripped = line.trim();
                 if let Some(cap) = STRUCT_REGEX.captures(stripped) {
-                    struct_name = cap.get(1).unwrap().as_str().to_string();
+                    struct_name = cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                     in_struct = true;
                     continue;
                 }
@@ -394,7 +394,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
 
             if TYPE_DECL_REGEX.is_match(stripped) {
                 for prim in &prim_keywords {
-                    let prim_regex = Regex::new(&format!(r"\b{}\b", prim)).unwrap();
+                    let prim_regex = Regex::new(&format!(r"\b{}\b", prim)).expect("valid regex");
                     if let Some(m) = prim_regex.find(stripped) {
                         let col = (line.find(m.as_str()).unwrap_or(0) + 1) as i64;
                         violations.push(PrimitiveViolation {

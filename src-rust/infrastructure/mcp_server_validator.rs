@@ -1,35 +1,10 @@
 /// mcp_server_validator — Input validation for MCP tools.
+pub use crate::taxonomy::ValidationError;
 use crate::taxonomy::{
-    BooleanVO, ErrorMessage, FieldName, MAX_PATH_DEPTH, MAX_PATH_LENGTH, MAX_STRING_LENGTH,
+    BooleanVO, Constraint, ErrorMessage, FieldName, MAX_PATH_DEPTH, MAX_PATH_LENGTH,
+    MAX_STRING_LENGTH,
 };
 use std::path::Path;
-
-#[derive(Debug, Clone)]
-pub enum ValidationErrorType {
-    PathTraversal,
-    PathTooLong,
-    PathDepthExceeded,
-    TooManyFiles,
-    StringTooLong,
-    UnsafeInput,
-}
-
-#[derive(Debug, Clone)]
-pub struct ValidationError {
-    pub error_type: ValidationErrorType,
-    pub message: ErrorMessage,
-    pub field: FieldName,
-}
-
-impl ValidationError {
-    pub fn new(error_type: ValidationErrorType, message: &str, field: &str) -> Self {
-        Self {
-            error_type,
-            message: ErrorMessage::new(message.to_string()),
-            field: FieldName::new(field.to_string()),
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct ValidationResult {
@@ -60,32 +35,38 @@ pub fn validate_path(
 ) -> ValidationResult {
     let mut errors = Vec::new();
     if user_input.len() > MAX_PATH_LENGTH {
-        errors.push(ValidationError::new(
-            ValidationErrorType::PathTooLong,
-            &format!(
+        errors.push(ValidationError {
+            field_name: FieldName::new("path"),
+            message: ErrorMessage::new(format!(
                 "Path length {} exceeds max {}",
                 user_input.len(),
                 MAX_PATH_LENGTH
-            ),
-            "path",
-        ));
+            )),
+            constraint: Some(Constraint::new("PathTooLong")),
+            value: None,
+        });
     }
     let depth = Path::new(user_input).components().count();
     if depth > MAX_PATH_DEPTH {
-        errors.push(ValidationError::new(
-            ValidationErrorType::PathDepthExceeded,
-            &format!("Path depth {} exceeds max {}", depth, MAX_PATH_DEPTH),
-            "path",
-        ));
+        errors.push(ValidationError {
+            field_name: FieldName::new("path"),
+            message: ErrorMessage::new(format!(
+                "Path depth {} exceeds max {}",
+                depth, MAX_PATH_DEPTH
+            )),
+            constraint: Some(Constraint::new("PathDepthExceeded")),
+            value: None,
+        });
     }
     if let Some(root) = allowed_root {
         let resolved = Path::new(root).join(user_input);
         if !resolved.exists() && must_exist {
-            errors.push(ValidationError::new(
-                ValidationErrorType::UnsafeInput,
-                &format!("Path does not exist: {}", user_input),
-                "path",
-            ));
+            errors.push(ValidationError {
+                field_name: FieldName::new("path"),
+                message: ErrorMessage::new(format!("Path does not exist: {}", user_input)),
+                constraint: Some(Constraint::new("UnsafeInput")),
+                value: None,
+            });
         }
     }
     if errors.is_empty() {
@@ -103,18 +84,24 @@ pub fn validate_string_input(
     let max = max_length.unwrap_or(MAX_STRING_LENGTH);
     let mut errors = Vec::new();
     if value.len() > max {
-        errors.push(ValidationError::new(
-            ValidationErrorType::StringTooLong,
-            &format!("Input length {} exceeds max {}", value.len(), max),
-            field_name,
-        ));
+        errors.push(ValidationError {
+            field_name: FieldName::new(field_name),
+            message: ErrorMessage::new(format!(
+                "Input length {} exceeds max {}",
+                value.len(),
+                max
+            )),
+            constraint: Some(Constraint::new("StringTooLong")),
+            value: None,
+        });
     }
     if value.contains('\x00') || value.contains('\0') {
-        errors.push(ValidationError::new(
-            ValidationErrorType::UnsafeInput,
-            "Input contains null bytes",
-            field_name,
-        ));
+        errors.push(ValidationError {
+            field_name: FieldName::new(field_name),
+            message: ErrorMessage::new("Input contains null bytes"),
+            constraint: Some(Constraint::new("UnsafeInput")),
+            value: None,
+        });
     }
     if errors.is_empty() {
         ValidationResult::valid()

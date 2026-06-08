@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::capabilities::{
     collect_source_files, format_report, load_config,
 };
+use crate::contract::IArchLintProtocol;
 use crate::taxonomy::{LintResult, LintResultList};
 
 pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
@@ -45,6 +46,20 @@ impl ArchitectureLintOrchestrator {
 
     pub fn format_report(&self, results: &[LintResult], project_root: &str) -> String {
         format_report(results, project_root)
+    }
+}
+
+impl IArchLintProtocol for ArchitectureLintOrchestrator {
+    fn run_self_lint(&self, project_root: &str) -> LintResultList {
+        LintResultList::new(self.run_self_lint(project_root))
+    }
+
+    fn run_self_lint_dir(&self, src_dir: &str) -> LintResultList {
+        LintResultList::new(self.run_self_lint_dir(src_dir))
+    }
+
+    fn format_report(&self, results: &LintResultList, project_root: &str) -> String {
+        self.format_report(&results.values, project_root)
     }
 }
 

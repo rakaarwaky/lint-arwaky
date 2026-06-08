@@ -1,7 +1,7 @@
 /// python_metrics_adapter — Thin adapters for Python metrics (Radon, file sizes, trends).
 use crate::contract::metrics_provider_port::IMetricsProviderPort;
 use crate::contract::path_normalization_port::IPathNormalizationPort;
-use crate::taxonomy::{Count, FilePath};
+use crate::taxonomy::{Count, ErrorMessage, FilePath, MetricsError};
 use std::sync::Arc;
 
 pub struct MetricsProvider {
@@ -62,7 +62,16 @@ impl IMetricsProviderPort for MetricsProvider {
         {
             Ok(mut file) => {
                 use std::io::Write;
-                let line = serde_json::to_string(&entry).unwrap_or_default();
+                let line = match serde_json::to_string(&entry) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        let _err = MetricsError::new(ErrorMessage::new(format!(
+                            "Failed to serialize metric entry: {}",
+                            e
+                        )));
+                        return false;
+                    }
+                };
                 writeln!(file, "{}", line).is_ok()
             }
             Err(_) => false,

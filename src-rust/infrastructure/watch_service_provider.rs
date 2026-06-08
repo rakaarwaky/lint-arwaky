@@ -41,7 +41,7 @@ impl WatchServiceProvider {
     pub fn stop_sync(&mut self) -> Result<(), WatchServiceError> {
         self.running = false;
         self.watch_path = None;
-        self.snapshots.lock().unwrap().clear();
+        self.snapshots.lock().expect("lock poisoned").clear();
         Ok(())
     }
 
@@ -54,7 +54,7 @@ impl WatchServiceProvider {
             None => return Vec::new(),
         };
         let mut changes = Vec::new();
-        let mut snapshots = self.snapshots.lock().unwrap();
+        let mut snapshots = self.snapshots.lock().expect("lock poisoned");
         self.scan_directory(&path.value, &mut snapshots, &mut changes);
         changes
     }
@@ -64,7 +64,7 @@ impl WatchServiceProvider {
             Some(p) => p,
             None => return,
         };
-        let mut snapshots = self.snapshots.lock().unwrap();
+        let mut snapshots = self.snapshots.lock().expect("lock poisoned");
         snapshots.clear();
         self.snapshot_directory(&path.value, &mut snapshots);
     }
@@ -76,7 +76,7 @@ impl WatchServiceProvider {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                let name = path.file_name().unwrap().to_string_lossy();
+                let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
                 if name == ".git" || name == "node_modules" || name == "__pycache__" {
                     continue;
                 }
@@ -101,7 +101,7 @@ impl WatchServiceProvider {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                let name = path.file_name().unwrap().to_string_lossy();
+                let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
                 if name == ".git" || name == "node_modules" || name == "__pycache__" {
                     continue;
                 }

@@ -123,8 +123,8 @@ impl LintCheckingCoordinator {
         LintResult {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(line as i64), column: ColumnNumber::new(0),
-            code: ErrorCode::new(code).unwrap(), message: LintMessage::new(msg),
-            source: Some(AdapterName::new("architecture").unwrap()), severity: sev,
+            code: ErrorCode::raw(code), message: LintMessage::new(msg),
+            source: Some(AdapterName::raw("architecture")), severity: sev,
             enclosing_scope: None, related_locations: LocationList::new(),
         }
     }

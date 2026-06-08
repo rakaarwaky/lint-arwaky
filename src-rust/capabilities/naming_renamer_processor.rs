@@ -60,7 +60,7 @@ impl SymbolRenamerProcessor {
             "#,
             old = regex::escape(old_name)
         ))
-        .unwrap();
+        .expect("valid rename pattern regex");
 
         let files = Self::collect_files(root_dir);
         let mut modified_count = 0;

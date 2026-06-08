@@ -71,12 +71,12 @@ impl CallChainAnalyzer {
 
     /// Find all call sites for the target name within the project.
     pub fn trace_call_chain(&self, root_dir: &str, target_name: &str) -> Vec<String> {
-        let call_pattern = Regex::new(&format!(r"\b{}\s*\(", regex::escape(target_name))).unwrap();
+        let call_pattern = Regex::new(&format!(r"\b{}\s*\(", regex::escape(target_name))).expect("valid call pattern regex");
         let def_pattern = Regex::new(&format!(
             r"(?:function|class)\s+{}\b",
             regex::escape(target_name)
         ))
-        .unwrap();
+        .expect("valid def pattern regex");
 
         let js_files = Self::collect_js_files(root_dir);
         let mut callers: Vec<String> = Vec::new();
@@ -107,7 +107,7 @@ impl CallChainAnalyzer {
         let pattern = Regex::new(&format!(
             r#"(`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|//[^\n]*|/\*(?:.|\n)*?\*/)|(\b{}\b)"#,
             regex::escape(old_name)
-        )).unwrap();
+        )).expect("valid rename pattern regex");
 
         let js_files = Self::collect_js_files(root_dir);
         let mut modified_count = 0;

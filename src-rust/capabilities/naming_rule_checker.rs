@@ -20,7 +20,7 @@ impl NamingRuleChecker {
     }
 
     fn has_snake_case(name: &str) -> bool {
-        let re = Regex::new(r"^_?[a-z][a-z0-9]*(_[a-z0-9]+)*$").unwrap();
+        let re = Regex::new(r"^_?[a-z][a-z0-9]*(_[a-z0-9]+)*$").expect("valid snake_case regex");
         re.is_match(name)
     }
 
@@ -55,12 +55,12 @@ impl NamingRuleChecker {
         sev: Severity,
     ) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap(),
+            file: FilePath::new(file.to_string()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default()),
             line: LineNumber::new(line),
             column: ColumnNumber::new(col),
-            code: ErrorCode::new(code).unwrap(),
+            code: ErrorCode::new(code).unwrap_or_else(|_| ErrorCode::raw(code)),
             message: LintMessage::new(msg),
-            source: Some(AdapterName::new("architecture").unwrap()),
+            source: Some(AdapterName::new("architecture").unwrap_or_else(|_| AdapterName::raw("architecture"))),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
                 name: crate::taxonomy::DescriptionVO::new(String::new()),

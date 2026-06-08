@@ -217,14 +217,14 @@ impl McpSchemaChecker {
                 file: f.clone(),
                 line: LineNumber::new((func_line_idx as i64) + 1),
                 column: ColumnNumber::new(1),
-                code: ErrorCode::new("AES025").unwrap(),
+                code: ErrorCode::raw("AES025"),
                 message: LintMessage::new(format!(
                     "AES025 MCP_TOOL_SCHEMA_VIOLATION: MCP tool '{}' is missing a descriptive docstring.\n\
                      WHY? The docstring becomes the tool description in tools/list response — models use it for routing.\n\
                      FIX: Add a docstring describing what this tool does, its inputs, and expected output.",
                     func_name
                 )),
-                source: Some(AdapterName::new("mcp_tool_schema").unwrap()),
+                source: Some(AdapterName::raw("mcp_tool_schema")),
                 severity: Severity::CRITICAL,
                 enclosing_scope: None,
                 related_locations: LocationList::new(),
@@ -263,14 +263,14 @@ impl McpSchemaChecker {
                     file: f.clone(),
                     line: LineNumber::new((func_line_idx as i64) + 1),
                     column: ColumnNumber::new(1),
-                    code: ErrorCode::new("AES025").unwrap(),
+                    code: ErrorCode::raw("AES025"),
                     message: LintMessage::new(format!(
                         "AES025 MCP_TOOL_SCHEMA_VIOLATION: MCP tool '{}' parameter '{}' lacks a type annotation.\n\
                          WHY? Untyped parameters cannot be mapped to JSON Schema in the tools/list schema — models won't know the input format.\n\
                          FIX: Add a type annotation (e.g., str, int, FilePath, or a Pydantic model).",
                         func_name, param_name
                     )),
-                    source: Some(AdapterName::new("mcp_tool_schema").unwrap()),
+                    source: Some(AdapterName::raw("mcp_tool_schema")),
                     severity: Severity::CRITICAL,
                     enclosing_scope: None,
                     related_locations: LocationList::new(),
@@ -382,7 +382,7 @@ impl McpSchemaChecker {
         if let Some(start) = props_start {
             let snippet = &schema_line[start..];
             // Count property entries that lack description
-            let re = Regex::new(r#""(\w+)"\s*:\s*\{[^}]*\}"#).unwrap();
+            let re = Regex::new(r#""(\w+)"\s*:\s*\{[^}]*\}"#).expect("valid regex");
             for cap in re.captures_iter(snippet) {
                 if let Some(prop_name) = cap.get(1) {
                     let prop_dict = cap.get(0).map(|m| m.as_str()).unwrap_or("");
@@ -433,14 +433,14 @@ impl McpSchemaChecker {
             file: f.clone(),
             line: LineNumber::new(line),
             column: ColumnNumber::new(1),
-            code: ErrorCode::new("AES025").unwrap(),
+            code: ErrorCode::new("AES025").unwrap_or_else(|_| ErrorCode::raw("AES025")),
             message: LintMessage::new(format!(
                 "AES025 MCP_TOOL_SCHEMA_VIOLATION: MCP tool '{}' has an invalid JSON Schema:\n{}\n\
                  WHY? MCP tools must declare valid JSON Schema so LLM clients can validate input before tool calls.\n\
                  FIX: Use a Pydantic BaseModel for tool parameters or provide a valid dict with 'type' and 'properties' keys.",
                 func_name, detail
             )),
-            source: Some(AdapterName::new("mcp_tool_schema").unwrap()),
+            source: Some(AdapterName::new("mcp_tool_schema").unwrap_or_else(|_| AdapterName::raw("mcp_tool_schema"))),
             severity: Severity::CRITICAL,
             enclosing_scope: None,
             related_locations: LocationList::new(),
@@ -456,11 +456,11 @@ fn param_annotated(param: &str) -> bool {
 /// Extract the value of a "type" key from a schema dict literal string.
 fn extract_schema_type_value(line: &str) -> Option<String> {
     // Match patterns like: "type": "string" or 'type': 'object'
-    let re = Regex::new(r#""type"\s*:\s*"([^"]+)""#).unwrap();
+    let re = Regex::new(r#""type"\s*:\s*"([^"]+)""#).expect("valid regex");
     if let Some(cap) = re.captures(line) {
         return cap.get(1).map(|m| m.as_str().to_string());
     }
-    let re = Regex::new(r#"'type'\s*:\s*'([^']+)'"#).unwrap();
+    let re = Regex::new(r#"'type'\s*:\s*'([^']+)'"#).expect("valid regex");
     if let Some(cap) = re.captures(line) {
         return cap.get(1).map(|m| m.as_str().to_string());
     }

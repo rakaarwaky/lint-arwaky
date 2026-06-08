@@ -56,7 +56,7 @@ impl ASTJSParserAdapter {
         let content = fs::read_to_string(&path.value).map_err(|e| SourceParserError {
             path: path.clone(),
             message: ErrorMessage::new(format!("Failed to read file: {}", e)),
-            error_code: Some(ErrorCode::new("FILE_READ_ERROR").unwrap()),
+            error_code: Some(ErrorCode::raw("FILE_READ_ERROR")),
             cause: Some(Cause::new(e.to_string())),
         })?;
 
@@ -151,7 +151,7 @@ impl ASTJSParserAdapter {
 
             let mut class_match_found = false;
             if let Some(class_cap) = CLASS_REGEX.captures(stripped) {
-                let name = class_cap.get(1).unwrap().as_str().to_string();
+                let name = class_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 data.defined.insert(name.clone());
 
                 let base = class_cap.get(2).map(|m| m.as_str().to_string());
@@ -187,7 +187,7 @@ impl ASTJSParserAdapter {
             if let Some(ref cname) = current_class {
                 if !class_match_found {
                     if let Some(m_cap) = METHOD_REGEX.captures(stripped) {
-                        let mname = m_cap.get(1).unwrap().as_str().to_string();
+                        let mname = m_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                         if !["if", "for", "while", "switch"].contains(&mname.as_ref()) {
                             data.class_methods
                                 .entry(cname.clone())
@@ -203,12 +203,12 @@ impl ASTJSParserAdapter {
             let mut module_path = "";
 
             if let Some(imp_cap) = IMPORT_REGEX.captures(stripped) {
-                raw_imports = imp_cap.get(1).unwrap().as_str().trim();
-                module_path = imp_cap.get(2).unwrap().as_str().trim();
+                raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
+                module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
                 import_found = true;
             } else if let Some(imp_cap) = IMPORT_DOUBLE_REGEX.captures(stripped) {
-                raw_imports = imp_cap.get(1).unwrap().as_str().trim();
-                module_path = imp_cap.get(2).unwrap().as_str().trim();
+                raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
+                module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
                 import_found = true;
             }
 
@@ -252,12 +252,12 @@ impl ASTJSParserAdapter {
                     });
                 }
             } else if let Some(req_cap) = REQUIRE_REGEX.captures(stripped) {
-                let alias = req_cap.get(1).unwrap().as_str().trim();
+                let alias = req_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
                 let mod_path_raw = req_cap
                     .get(2)
                     .or_else(|| req_cap.get(3))
-                    .unwrap()
-                    .as_str()
+                    .map(|m| m.as_str())
+                    .unwrap_or("")
                     .trim();
                 let mod_path = mod_path_raw
                     .replace('/', ".")
@@ -310,7 +310,7 @@ impl ASTJSParserAdapter {
             }
 
             if let Some(fn_cap) = FN_REGEX.captures(stripped) {
-                let name = fn_cap.get(1).unwrap().as_str().to_string();
+                let name = fn_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 data.defined.insert(name.clone());
                 let col_pos = line.find(&name).unwrap_or(0) as i64;
                 data.function_definitions.push(serde_json::json!({
@@ -321,7 +321,7 @@ impl ASTJSParserAdapter {
             }
 
             if let Some(let_cap) = LET_REGEX.captures(stripped) {
-                let name = let_cap.get(1).unwrap().as_str().to_string();
+                let name = let_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 let col_pos = line.find(&name).unwrap_or(0) as i64;
                 data.assignments.push(serde_json::json!({
                     "name": name,
@@ -400,7 +400,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
                     continue;
                 }
                 if let Some(cap) = CLASS_REGEX.captures(stripped) {
-                    class_name = cap.get(1).unwrap().as_str().to_string();
+                    class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                     in_class = true;
                     brace_count = 0;
                     continue;
@@ -578,7 +578,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
             let mut map = HashMap::new();
             map.insert(
                 "methods".to_string(),
-                serde_json::to_value(&data.class_methods).unwrap(),
+                serde_json::to_value(&data.class_methods).unwrap_or_default(),
             );
             MetadataVO::new(map)
         } else {
@@ -591,7 +591,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
             let mut map = HashMap::new();
             map.insert(
                 "bases".to_string(),
-                serde_json::to_value(&data.class_bases).unwrap(),
+                serde_json::to_value(&data.class_bases).unwrap_or_default(),
             );
             MetadataVO::new(map)
         } else {

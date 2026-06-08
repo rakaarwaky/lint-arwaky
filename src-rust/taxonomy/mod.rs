@@ -630,7 +630,7 @@ mod tests {
 
     #[test]
     fn test_factory_file_path() {
-        let fp = file_path("src/main.rs").unwrap();
+        let fp = file_path("src/main.rs").expect("valid file path");
         assert_eq!(fp.value, "src/main.rs");
     }
 

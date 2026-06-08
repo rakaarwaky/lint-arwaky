@@ -38,9 +38,9 @@ impl DomainTypeRuleChecker {
         // We look for patterns like `    field: str` or `    field: int = 0`
         let attr_pattern =
             Regex::new(r"^(\s+)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*([A-Za-z_][A-Za-z0-9_\[\], |]*)")
-                .unwrap();
+                .expect("valid attr pattern regex");
 
-        let class_pattern = Regex::new(r"^(\s*)class\s+[A-Za-z_]").unwrap();
+        let class_pattern = Regex::new(r"^(\s*)class\s+[A-Za-z_]").expect("valid class pattern regex");
 
         for (i, line) in content.lines().enumerate() {
             let line_no = i + 1;

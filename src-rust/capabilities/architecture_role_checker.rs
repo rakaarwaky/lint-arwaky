@@ -198,7 +198,7 @@ impl ArchRoleChecker {
             }
 
             let module_fp =
-                FilePath::new(module_str.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap());
+                FilePath::new(module_str.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
             let target_layer = match analyzer.detect_module_layer(&module_fp) {
                 Some(l) => l,
                 None => continue,
@@ -246,7 +246,7 @@ impl ArchRoleChecker {
             file: f.clone(),
             line: imp.line.clone(),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new("AES023").unwrap(),
+            code: ErrorCode::raw("AES023"),
             message: LintMessage::new(format!(
                 "SURFACE DEPENDENCY VIOLATION: Surface layer is only allowed to import from 'contract' and 'taxonomy'. Found import from '{}'.",
                 target_layer.value
@@ -299,7 +299,7 @@ impl ArchRoleChecker {
                         file: f.clone(),
                         line: line_vo,
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::new("AES021").unwrap(),
+                        code: ErrorCode::raw("AES021"),
                         message: LintMessage::new(message),
                         source: make_adapter("architecture"),
                         severity: Severity::HIGH,
@@ -338,7 +338,7 @@ impl ArchRoleChecker {
                     file: f.clone(),
                     line: imp.line.clone(),
                     column: ColumnNumber::new(0),
-                    code: ErrorCode::new("AES021").unwrap(),
+                    code: ErrorCode::raw("AES021"),
                     message: LintMessage::new(message),
                     source: make_adapter("architecture"),
                     severity: Severity::HIGH,
@@ -375,7 +375,7 @@ impl ArchRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::new("AES021").unwrap(),
+                        code: ErrorCode::raw("AES021"),
                         message: LintMessage::new(message),
                         source: make_adapter("architecture"),
                         severity: Severity::MEDIUM,
@@ -453,7 +453,7 @@ impl ArchRoleChecker {
                 file: f.clone(),
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
-                code: ErrorCode::new(code).unwrap(),
+                code: ErrorCode::raw(code),
                 message: LintMessage::new(violation_msg),
                 source: make_adapter("architecture"),
                 severity: Severity::HIGH,
@@ -494,7 +494,7 @@ impl ArchRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::new("AES021").unwrap(),
+                        code: ErrorCode::raw("AES021"),
                         message: LintMessage::new(message),
                         source: make_adapter("architecture"),
                         severity: Severity::HIGH,
@@ -532,7 +532,7 @@ impl ArchRoleChecker {
                     file: f.clone(),
                     line: LineNumber::new(0),
                     column: ColumnNumber::new(0),
-                    code: ErrorCode::new(code).unwrap(),
+                    code: ErrorCode::raw(code),
                     message: LintMessage::new(message),
                     source: make_adapter("architecture"),
                     severity: Severity::HIGH,
@@ -586,7 +586,7 @@ impl ArchRoleChecker {
         };
 
         static ANY_TYPE_RE: Lazy<Regex> =
-            Lazy::new(|| Regex::new(r":\s*[Aa]ny\b|->\s*[Aa]ny\b|\b[Aa]ny\s*\[").unwrap());
+            Lazy::new(|| Regex::new(r":\s*[Aa]ny\b|->\s*[Aa]ny\b|\b[Aa]ny\s*\[").expect("valid regex"));
 
         for (i, line) in content.lines().enumerate() {
             for mat in ANY_TYPE_RE.find_iter(line) {
@@ -596,7 +596,7 @@ impl ArchRoleChecker {
                     file: f.clone(),
                     line: LineNumber::new(line_num),
                     column: ColumnNumber::new(col),
-                    code: ErrorCode::new("AES024").unwrap(),
+                    code: ErrorCode::raw("AES024"),
                     message: LintMessage::new(format!(
                         "`Any` type annotation found in agent orchestrator layer: '{}'.",
                         line.trim()

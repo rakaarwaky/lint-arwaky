@@ -28,7 +28,7 @@ impl AppConfig {
             .unwrap_or_else(|| env::var("HOME").unwrap_or_else(|_| ".".to_string()));
         let _proj_root = project_root
             .or_else(|| env::var("PROJECT_ROOT").ok())
-            .unwrap_or_else(|| env::current_dir().unwrap().to_string_lossy().to_string());
+            .unwrap_or_else(|| env::current_dir().expect("failed to get current dir").to_string_lossy().to_string());
         let proj = project.unwrap_or_else(crate::taxonomy::ProjectConfig::defaults);
 
         Self {

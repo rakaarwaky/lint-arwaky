@@ -89,12 +89,12 @@ impl DependencyCycleAnalyzer {
 
     fn make_result(file: &str, msg: &str) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap(),
+            file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(1),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new("AES020").unwrap(),
+            code: ErrorCode::raw("AES020"),
             message: LintMessage::new(msg),
-            source: Some(AdapterName::new("architecture").unwrap()),
+            source: Some(AdapterName::raw("architecture")),
             severity: Severity::CRITICAL,
             enclosing_scope: Some(ScopeRef {
                 name: crate::taxonomy::DescriptionVO::new(String::new()),

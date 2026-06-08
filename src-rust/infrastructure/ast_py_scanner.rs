@@ -147,7 +147,7 @@ impl ASTPythonParserAdapter {
             // Track class scope via indentation
             while let Some(&(last_indent, _)) = indent_stack.last() {
                 if indent <= last_indent {
-                    let (_, cls) = indent_stack.pop().unwrap();
+                    let (_, cls) = indent_stack.pop().unwrap_or((0, None));
                     if cls.is_some() {
                         current_class = indent_stack.last().and_then(|(_, c)| c.clone());
                     }
@@ -158,7 +158,7 @@ impl ASTPythonParserAdapter {
 
             // 1. Imports
             if let Some(imp_cap) = IMPORT_REGEX.captures(stripped) {
-                let module = imp_cap.get(1).unwrap().as_str().to_string();
+                let module = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 let alias = module.split('.').last().unwrap_or(&module).to_string();
                 data.imported_aliases.insert(alias.clone(), module.clone());
                 data.imports_list.push(ImportInfo {
@@ -167,8 +167,8 @@ impl ASTPythonParserAdapter {
                     name: None,
                 });
             } else if let Some(from_cap) = FROM_IMPORT_REGEX.captures(stripped) {
-                let module = from_cap.get(1).unwrap().as_str().to_string();
-                let symbols_part = from_cap.get(2).unwrap().as_str().trim();
+                let module = from_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
+                let symbols_part = from_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
                 for sym in symbols_part
                     .split(',')
                     .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
@@ -207,7 +207,7 @@ impl ASTPythonParserAdapter {
 
             // 2. Class definitions
             if let Some(cls_cap) = CLASS_REGEX.captures(stripped) {
-                let name = cls_cap.get(1).unwrap().as_str().to_string();
+                let name = cls_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 data.defined.insert(name.clone());
 
                 let bases_str = cls_cap.get(2).map(|m| m.as_str()).unwrap_or("");
@@ -249,7 +249,7 @@ impl ASTPythonParserAdapter {
 
             // 3. Function/method definitions
             if let Some(fn_cap) = DEF_REGEX.captures(stripped) {
-                let name = fn_cap.get(1).unwrap().as_str().to_string();
+                let name = fn_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 data.defined.insert(name.clone());
 
                 if let Some(ref cname) = current_class {
@@ -268,7 +268,7 @@ impl ASTPythonParserAdapter {
 
             // 4. Assignments
             if let Some(let_cap) = LET_REGEX.captures(stripped) {
-                let name = let_cap.get(1).unwrap().as_str().to_string();
+                let name = let_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 if !PY_KEYWORDS.contains(name.as_str()) {
                     data.assignments.push(serde_json::json!({
                         "name": name,
@@ -348,7 +348,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
                     continue;
                 }
                 if let Some(cap) = CLASS_REGEX.captures(stripped) {
-                    class_name = cap.get(1).unwrap().as_str().to_string();
+                    class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                     in_class = true;
                     class_indent = line.len() - stripped.len();
                     continue;
@@ -447,13 +447,13 @@ impl ISourceParserPort for ASTPythonParserAdapter {
             let attr_re = Regex::new(
                 r"\b([a-zA-Z_]\w*)\s*:\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b",
             )
-            .unwrap();
+            .expect("valid regex");
             for cap in attr_re.captures_iter(stripped) {
-                let prim = cap.get(2).unwrap().as_str().to_string();
+                let prim = cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string();
                 if prim_set.contains(&prim) {
                     violations.push(PrimitiveViolation {
                         line: LineNumber::new((idx_zero + 1) as i64),
-                        column: ColumnNumber::new((cap.get(2).unwrap().start() + 1) as i64),
+                        column: ColumnNumber::new((cap.get(2).map(|m| m.start()).unwrap_or(0) + 1) as i64),
                         type_name: prim,
                     });
                 }
@@ -533,7 +533,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
             let mut map = HashMap::new();
             map.insert(
                 "methods".to_string(),
-                serde_json::to_value(&data.class_methods).unwrap(),
+                serde_json::to_value(&data.class_methods).unwrap_or_default(),
             );
             MetadataVO::new(map)
         } else {
@@ -546,7 +546,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
             let mut map = HashMap::new();
             map.insert(
                 "bases".to_string(),
-                serde_json::to_value(&data.class_bases).unwrap(),
+                serde_json::to_value(&data.class_bases).unwrap_or_default(),
             );
             MetadataVO::new(map)
         } else {

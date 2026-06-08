@@ -47,18 +47,18 @@ impl DataFlowAnalyzer {
             (None, None)
         };
 
-        let word_pattern = Regex::new(&format!(r"\b{}\b", regex::escape(var_name))).unwrap();
+        let word_pattern = Regex::new(&format!(r"\b{}\b", regex::escape(var_name))).expect("valid regex");
         let assign_pattern = Regex::new(&format!(
             r"(?:const|let|var)\s+{}\s*=|(?<![=!<>]){}s*=",
             regex::escape(var_name),
             regex::escape(var_name)
         ))
-        .unwrap();
+        .expect("valid regex");
         let mutation_pattern = Regex::new(&format!(
             r"\b{}\.(?:push|pop|shift|unshift|splice|sort|reverse|set|delete|add|assign|merge|update|append|extend)\b",
             regex::escape(var_name)
         ))
-        .unwrap();
+        .expect("valid regex");
 
         let mut flows: Vec<DataFlowEntry> = Vec::new();
         let mut seen: HashSet<String> = HashSet::new();

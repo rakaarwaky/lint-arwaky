@@ -63,18 +63,21 @@ impl GitDiffScanner {
             let status = parts[0];
             match status.chars().next() {
                 Some('A') if parts.len() > 1 => {
-                    added.push(FilePath::new(parts[1].to_string()).unwrap())
+                    if let Ok(fp) = FilePath::new(parts[1].to_string()) { added.push(fp); }
                 }
                 Some('M') if parts.len() > 1 => {
-                    modified.push(FilePath::new(parts[1].to_string()).unwrap())
+                    if let Ok(fp) = FilePath::new(parts[1].to_string()) { modified.push(fp); }
                 }
                 Some('D') if parts.len() > 1 => {
-                    deleted.push(FilePath::new(parts[1].to_string()).unwrap())
+                    if let Ok(fp) = FilePath::new(parts[1].to_string()) { deleted.push(fp); }
                 }
-                Some('R') if parts.len() > 2 => renamed.push(RenamedFile {
-                    old_path: FilePath::new(parts[1].to_string()).unwrap(),
-                    new_path: FilePath::new(parts[2].to_string()).unwrap(),
-                }),
+                Some('R') if parts.len() > 2 => {
+                    let old = FilePath::new(parts[1].to_string());
+                    let new = FilePath::new(parts[2].to_string());
+                    if let (Ok(old_fp), Ok(new_fp)) = (old, new) {
+                        renamed.push(RenamedFile { old_path: old_fp, new_path: new_fp });
+                    }
+                }
                 _ => {}
             }
         }
@@ -108,9 +111,9 @@ impl IScannerProviderPort for GitDiffScanner {
             .args(["diff", "--name-status", "HEAD"])
             .current_dir(work_dir)
             .output()
-            .map_err(|e| {
+                        .map_err(|e| {
                 FileSystemError::new(
-                    FilePath::new(".".to_string()).unwrap(),
+                    FilePath::new(".".to_string()).unwrap_or_default(),
                     ErrorMessage::new(format!("git diff failed: {}", e)),
                     ActionName::new("git_diff".to_string()),
                 )
@@ -118,7 +121,7 @@ impl IScannerProviderPort for GitDiffScanner {
 
         if !output.status.success() {
             return Err(FileSystemError::new(
-                FilePath::new(".".to_string()).unwrap(),
+                FilePath::new(".".to_string()).unwrap_or_default(),
                 ErrorMessage::new(String::from_utf8_lossy(&output.stderr).to_string()),
                 ActionName::new("git_diff".to_string()),
             ));
@@ -141,7 +144,7 @@ impl IScannerProviderPort for GitDiffScanner {
                     let files: Vec<FilePath> = String::from_utf8_lossy(&out.stdout)
                         .lines()
                         .filter(|l| !l.is_empty())
-                        .map(|l| FilePath::new(l.to_string()).unwrap())
+                        .filter_map(|l| FilePath::new(l.to_string()).ok())
                         .collect();
                     return FilePathList::new(files);
                 }

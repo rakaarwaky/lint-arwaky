@@ -291,9 +291,9 @@ impl SemanticScopeAnalyzer {
             (None, None)
         };
 
-        let assign_re = Regex::new(&format!(r"\b{}\s*=", regex::escape(vn))).unwrap();
-        let mutation_re = Regex::new(&format!(r"\b{}\.\w+", regex::escape(vn))).unwrap();
-        let word_re = Regex::new(&format!(r"\b{}\b", regex::escape(vn))).unwrap();
+        let assign_re = Regex::new(&format!(r"\b{}\s*=", regex::escape(vn))).expect("valid assign regex");
+        let mutation_re = Regex::new(&format!(r"\b{}\.\w+", regex::escape(vn))).expect("valid mutation regex");
+        let word_re = Regex::new(&format!(r"\b{}\b", regex::escape(vn))).expect("valid word regex");
 
         let mut flows: Vec<ErrorMessage> = Vec::new();
         let mut seen: HashSet<String> = HashSet::new();
@@ -409,7 +409,7 @@ impl SemanticScopeAnalyzer {
                         let new_source = pattern
                             .replace_all(&content, |caps: &regex::Captures| {
                                 if caps.get(1).is_some() {
-                                    caps.get(0).unwrap().as_str().to_string()
+                                    caps.get(0).map(|m| m.as_str()).unwrap_or("").to_string()
                                 } else {
                                     new.to_string()
                                 }

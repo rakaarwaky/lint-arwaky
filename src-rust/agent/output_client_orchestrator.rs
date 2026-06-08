@@ -45,7 +45,7 @@ impl OutputClientOrchestrator {
         let output_path = output_dir.join(&filename);
 
         let _ = std::fs::write(&output_path, &output.value);
-        Some(FilePath::new(output_path.to_string_lossy().to_string()).unwrap())
+        FilePath::new(output_path.to_string_lossy().to_string()).ok()
     }
 
     pub fn tee_stdout<F, R>(&self, f: F) -> io::Result<R>

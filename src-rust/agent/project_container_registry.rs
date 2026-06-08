@@ -18,14 +18,14 @@ impl ProjectContainerRegistry {
         let key = project_root
             .map(|p| p.value.clone())
             .unwrap_or_else(|| ".".to_string());
-        let mut registry = CONTAINER_REGISTRY.lock().unwrap();
+        let mut registry = CONTAINER_REGISTRY.lock().expect("lock poisoned");
         registry.insert(key.clone(), ());
         Box::new(StubContainer)
     }
 
     pub fn reset_container(project_root: Option<&FilePath>) {
         let key = project_root.map(|p| p.value.clone());
-        let mut registry = CONTAINER_REGISTRY.lock().unwrap();
+        let mut registry = CONTAINER_REGISTRY.lock().expect("lock poisoned");
         match key {
             Some(root) => {
                 registry.remove(&root);

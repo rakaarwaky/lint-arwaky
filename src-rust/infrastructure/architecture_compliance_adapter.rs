@@ -18,7 +18,7 @@ impl ArchComplianceAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for ArchComplianceAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("architecture").unwrap()
+        AdapterName::raw("architecture")
     }
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {

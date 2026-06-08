@@ -79,29 +79,29 @@ mod tests {
 
     #[test]
     fn test_error_code_new() {
-        let ec = ErrorCode::new("E123").unwrap();
+        let ec = ErrorCode::new("E123").expect("valid error code");
         assert_eq!(ec.code, "E123");
         assert!(ec.is_style());
         assert!(!ec.is_logic());
         assert!(!ec.is_security());
         assert!(!ec.is_architecture());
 
-        let ec = ErrorCode::new("W999").unwrap();
+        let ec = ErrorCode::new("W999").expect("valid error code");
         assert!(ec.is_style());
 
-        let ec = ErrorCode::new("D404").unwrap();
+        let ec = ErrorCode::new("D404").expect("valid error code");
         assert!(ec.is_style());
 
-        let ec = ErrorCode::new("F001").unwrap();
+        let ec = ErrorCode::new("F001").expect("valid error code");
         assert!(ec.is_logic());
 
-        let ec = ErrorCode::new("I999").unwrap();
+        let ec = ErrorCode::new("I999").expect("valid error code");
         assert!(ec.is_logic());
 
-        let ec = ErrorCode::new("B001").unwrap();
+        let ec = ErrorCode::new("B001").expect("valid error code");
         assert!(ec.is_security());
 
-        let ec = ErrorCode::new("AES123").unwrap();
+        let ec = ErrorCode::new("AES123").expect("valid error code");
         assert!(ec.is_architecture());
     }
 

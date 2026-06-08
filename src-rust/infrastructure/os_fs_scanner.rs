@@ -127,7 +127,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
     async fn get_cwd(&self) -> FilePath {
         let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
         FilePath::new(cwd.to_string_lossy().to_string())
-            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap())
+            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default())
     }
 
     async fn get_basename(&self, path: &FilePath) -> Identity {
@@ -146,7 +146,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
             path.push(&part.value);
         }
         FilePath::new(path.to_string_lossy().to_string())
-            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap())
+            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default())
     }
 
     async fn read_file(&self, path: &FilePath) -> Result<ContentString, FileSystemError> {

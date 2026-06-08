@@ -1,7 +1,14 @@
 /// javascript_naming_provider — Naming variants for JavaScript/TypeScript symbols.
 use crate::contract::naming_provider_port::INamingProviderPort;
-use crate::taxonomy::{NameVariants, SymbolName};
+use crate::taxonomy::{ErrorMessage, NameVariants, NamingError, SymbolName};
+use once_cell::sync::Lazy;
 use regex::Regex;
+
+static RE_WORDS: Lazy<Result<Regex, NamingError>> = Lazy::new(|| {
+    Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+").map_err(|e| {
+        NamingError::new(ErrorMessage::new(format!("Invalid regex pattern: {}", e)))
+    })
+});
 
 pub struct JavascriptNamingProvider;
 
@@ -14,8 +21,11 @@ impl JavascriptNamingProvider {
 impl INamingProviderPort for JavascriptNamingProvider {
     fn get_variants(&self, name: &SymbolName) -> NameVariants {
         let name_str = &name.value;
-        let words: Vec<String> = Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
-            .unwrap()
+        let re = match RE_WORDS.as_ref() {
+            Ok(r) => r,
+            Err(_) => return NameVariants::new(vec![SymbolName::new(name_str.clone())]),
+        };
+        let words: Vec<String> = re
             .find_iter(name_str)
             .map(|m| m.as_str().to_lowercase())
             .collect();

@@ -36,15 +36,15 @@ impl DispatchRoutingParser {
 
 impl IDispatchRoutingParserProtocol for DispatchRoutingParser {
     fn strip_docstrings(&self, text: &ContentString) -> ContentString {
-        let re = regex::Regex::new(r#""""[\s\S]*?""""|'''[\s\S]*?'''"|#[^\n]*"#).unwrap();
+        let re = regex::Regex::new(r#""""[\s\S]*?""""|'''[\s\S]*?'''"|#[^\n]*"#).expect("valid regex");
         ContentString::new(re.replace_all(&text.value, "").to_string())
     }
 
     fn extract_class_methods(&self, text: &ContentString) -> crate::taxonomy::ClassDefinitionMap {
         use std::collections::HashMap;
         let mut defs: HashMap<ClassNameVO, crate::taxonomy::ClassMethodsVO> = HashMap::new();
-        let class_re = regex::Regex::new(r"class\s+(\w+)").unwrap();
-        let method_re = regex::Regex::new(r"def\s+(\w+)\s*\(").unwrap();
+        let class_re = regex::Regex::new(r"class\s+(\w+)").expect("valid regex");
+        let method_re = regex::Regex::new(r"def\s+(\w+)\s*\(").expect("valid regex");
         let mut current_class: Option<ClassNameVO> = None;
         for line in text.value.lines() {
             if let Some(c) = class_re.captures(line) {
@@ -65,7 +65,7 @@ impl IDispatchRoutingParserProtocol for DispatchRoutingParser {
 }
 
 static CAPABILITY_REF_PATTERN: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"["']capability["']\s*:\s*["']([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)["']"#).unwrap()
+    Regex::new(r#"["']capability["']\s*:\s*["']([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)["']"#).expect("valid regex")
 });
 
 pub struct DispatchRoutingChecker {
@@ -174,9 +174,9 @@ impl DispatchRoutingChecker {
         refs: &mut CapabilityReferenceList,
     ) {
         for caps in CAPABILITY_REF_PATTERN.captures_iter(text) {
-            let class_name = ClassNameVO::new(caps.get(1).unwrap().as_str().to_string());
-            let method_name = DescriptionVO::new(caps.get(2).unwrap().as_str().to_string());
-            let line_no = text[..caps.get(0).unwrap().start()]
+            let class_name = ClassNameVO::new(caps.get(1).map(|m| m.as_str()).unwrap_or("").to_string());
+            let method_name = DescriptionVO::new(caps.get(2).map(|m| m.as_str()).unwrap_or("").to_string());
+            let line_no = text[..caps.get(0).map(|m| m.start()).unwrap_or(0)]
                 .chars()
                 .filter(|&c| c == '\n')
                 .count() as i64
@@ -249,7 +249,8 @@ impl DispatchRoutingChecker {
         let class_usage = self._group_capabilities_by_class(capability_refs);
 
         if class_usage.usage.len() == 1 {
-            let (single_class, usage_list) = class_usage.usage.iter().next().unwrap();
+            let (single_class, usage_list) = class_usage.usage.iter().next()
+                .expect("class_usage.usage should have at least one element when len() == 1");
             if !usage_list.items.is_empty() {
                 let other_classes: Vec<ClassNameVO> = class_defs
                     .definitions
@@ -349,8 +350,8 @@ impl DispatchRoutingChecker {
             Lazy::new(|| Regex::new(r"(?:await\s+)?self\.\w+\.(\w+)\s*\(").unwrap());
 
         for caps in CALL_PATTERN.captures_iter(&content) {
-            let method_name = caps.get(1).unwrap().as_str();
-            let paren_start = caps.get(0).unwrap().end() - 1;
+            let method_name = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+            let paren_start = caps.get(0).map(|m| m.end()).unwrap_or(1).saturating_sub(1);
             let args_vo = self._extract_args(&content, paren_start);
             if let Some(ref args_val) = args_vo.value {
                 let args_text = args_val.trim();
@@ -411,7 +412,7 @@ impl DispatchRoutingChecker {
             file: file.clone(),
             line: line.clone(),
             column: ColumnNumber::new(1),
-            code: ErrorCode::new(code).unwrap(),
+            code: ErrorCode::new(code).unwrap_or_else(|_| ErrorCode::raw(code)),
             message: LintMessage::new(message),
             severity: Severity::MEDIUM,
             source: Some(AdapterName::new("dispatch_routing").unwrap_or_default()),

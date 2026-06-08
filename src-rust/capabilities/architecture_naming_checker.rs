@@ -16,12 +16,12 @@ impl ArchNamingChecker {
 
     fn make_result(file: &str, code: &str, msg: &str, sev: Severity) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap(),
+            file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(0),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new(code).unwrap(),
+            code: ErrorCode::raw(code),
             message: LintMessage::new(msg),
-            source: Some(AdapterName::new("architecture").unwrap()),
+            source: Some(AdapterName::raw("architecture")),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
                 name: crate::taxonomy::DescriptionVO::new(String::new()),

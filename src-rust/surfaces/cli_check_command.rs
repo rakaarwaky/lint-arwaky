@@ -33,9 +33,9 @@ impl CheckCommandsSurface {
             "clippy", "rustfmt", "cargo-audit", "ruff", "mypy", "bandit",
             "eslint", "prettier", "tsc",
         ];
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
         let path_obj = crate::taxonomy::FilePath::new(path.to_string())
-            .unwrap_or_else(|_| crate::taxonomy::FilePath::new(".".to_string()).unwrap());
+            .unwrap_or_else(|_| crate::taxonomy::FilePath::new(".".to_string()).unwrap_or_default());
 
         for name in &adapter_names {
             let adapter_name =

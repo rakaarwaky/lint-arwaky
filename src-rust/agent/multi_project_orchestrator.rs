@@ -59,7 +59,7 @@ impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
                         return FilePathList::new(
                             projects
                                 .into_iter()
-                                .map(|p| FilePath::new(p).unwrap())
+                                .map(|p| FilePath::new(p).unwrap_or_default())
                                 .collect(),
                         );
                     }
@@ -80,9 +80,7 @@ impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
                         visit_dirs(&p, config_name, projects);
                     } else if p.file_name().is_some_and(|n| n == config_name) {
                         if let Some(parent) = p.parent() {
-                            let fp =
-                                FilePath::new(parent.to_string_lossy().to_string()).unwrap();
-                            projects.push(fp);
+                            if let Ok(fp) = FilePath::new(parent.to_string_lossy().to_string()) { projects.push(fp); }
                         }
                     }
                 }

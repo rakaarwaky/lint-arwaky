@@ -32,12 +32,12 @@ impl MandatoryInheritanceChecker {
 
     fn make_result(file: &str, msg: &str) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap(),
+            file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(0),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new("AES027").unwrap(),
+            code: ErrorCode::raw("AES027"),
             message: LintMessage::new(msg),
-            source: Some(AdapterName::new("architecture").unwrap()),
+            source: Some(AdapterName::raw("architecture")),
             severity: Severity::CRITICAL,
             enclosing_scope: Some(ScopeRef {
                 name: crate::taxonomy::DescriptionVO::new(String::new()),
@@ -80,7 +80,7 @@ impl MandatoryInheritanceChecker {
     fn extract_contract_imports(content: &str) -> Vec<String> {
         let mut imports: Vec<String> = Vec::new();
         // Match `from x import Y, Z` or `from x import (Y, Z)`
-        let from_re = Regex::new(r"from\s+(\S+)\s+import\s+(.+)").unwrap();
+        let from_re = Regex::new(r"from\s+(\S+)\s+import\s+(.+)").expect("valid regex");
 
         for line in content.lines() {
             let trimmed = line.trim();
@@ -105,7 +105,7 @@ impl MandatoryInheritanceChecker {
     }
 
     fn extract_class_bases(content: &str) -> Vec<String> {
-        let class_re = Regex::new(r"class\s+\w+\s*\(([^)]*)\)").unwrap();
+        let class_re = Regex::new(r"class\s+\w+\s*\(([^)]*)\)").expect("valid regex");
         let mut bases: Vec<String> = Vec::new();
 
         for line in content.lines() {

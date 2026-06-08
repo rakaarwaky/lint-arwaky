@@ -45,7 +45,7 @@ impl RustFmtAdapter {
                 || current.join(".git").is_dir()
             {
                 return FilePath::new(current.to_string_lossy().replace('\\', "/"))
-                    .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap());
+                    .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
             }
             if !current.pop() {
                 break;
@@ -130,7 +130,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
 
         if results.is_empty() {
             results.push(LintResult::new(
-                FilePath::new("Cargo.toml".to_string()).unwrap(),
+                FilePath::new("Cargo.toml".to_string()).unwrap_or_default(),
                 LineNumber::new(0),
                 ColumnNumber::new(0),
                 ErrorCode::raw("rustfmt::unformatted"),

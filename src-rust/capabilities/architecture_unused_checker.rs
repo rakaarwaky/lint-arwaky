@@ -8,7 +8,7 @@ use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
-static ALL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).unwrap());
+static ALL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).expect("valid regex"));
 
 /// Business logic for identifying imports that are not utilized in the code.
 pub struct UnusedImportRuleChecker;

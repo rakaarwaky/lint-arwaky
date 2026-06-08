@@ -31,13 +31,13 @@ impl OrphanGraphResolver {
         for f in files {
             import_graph.entry(f.clone()).or_default();
             if let Ok(content) = std::fs::read_to_string(f) {
-                let import_re = regex::Regex::new(r"(?:from|import)\s+([\w\.]+)").unwrap();
+                let import_re = regex::Regex::new(r"(?:from|import)\s+([\w\.]+)").expect("valid regex");
                 for cap in import_re.captures_iter(&content) {
                     let dep = cap[1].to_string();
                     import_graph.entry(f.clone()).or_default().push(dep.clone());
                     inbound_links.entry(dep).or_default().push(f.clone());
                 }
-                let inh_re = regex::Regex::new(r"class\s+\w+\(([^)]+)\)").unwrap();
+                let inh_re = regex::Regex::new(r"class\s+\w+\(([^)]+)\)").expect("valid regex");
                 for cap in inh_re.captures_iter(&content) {
                     for base in cap[1].split(',') {
                         inheritance_map
@@ -166,7 +166,7 @@ impl ArchOrphanAnalyzer {
         root_dir: &str,
     ) -> Vec<LintResult> {
         let mut results: Vec<LintResult> = Vec::new();
-        let root_fp = FilePath::new(root_dir).unwrap();
+        let root_fp = FilePath::new(root_dir).unwrap_or_default();
 
         // Build comprehensive context
         let context: GraphAnalysisContext = self.resolver.build_graph_context(files, root_dir);
@@ -178,7 +178,7 @@ impl ArchOrphanAnalyzer {
 
         // Evaluate each file
         for f in files {
-            let file_fp = FilePath::new(f.clone()).unwrap();
+            let file_fp = FilePath::new(f.clone()).unwrap_or_default();
             let layer_vo = match analyzer.detect_layer(&file_fp, &root_fp) {
                 Some(l) => l,
                 None => continue,
@@ -217,12 +217,12 @@ impl ArchOrphanAnalyzer {
 
     fn _make_result(&self, file: &str, msg: &str, sev: Severity) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap(),
+            file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),
-            code: ErrorCode::new("AES017").unwrap(),
+            code: ErrorCode::raw("AES017"),
             message: LintMessage::new(msg),
-            source: Some(AdapterName::new("architecture").unwrap()),
+            source: Some(AdapterName::raw("architecture")),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
                 name: crate::taxonomy::DescriptionVO::new(String::new()),

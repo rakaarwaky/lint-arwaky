@@ -22,7 +22,7 @@ Unlike traditional three-tier architectures, **Capabilities** and **Infrastructu
 
 ### 3. Dependency Inversion
 
-Higher-level orchestrating layers (Agent, Surfaces) never import concrete implementations. Instead, they interact with implementations exclusively through interfaces declared in the Contract layer using Dependency Injection (e.g., Surfaces call `ServiceContainerAggregate`, not concrete Orchestrators).
+Higher-level orchestrating layers  never import concrete implementations. Instead, they interact with implementations exclusively through interfaces declared in the Contract layer using Dependency Injection (e.g., Surfaces call `ServiceContainerAggregate`, not concrete Orchestrators).
 
 ### 4. The 3-Word Naming Philosophy (Virtual Namespacing)
 

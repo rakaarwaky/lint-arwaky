@@ -100,7 +100,7 @@ impl GitCommandsOrchestrator {
                 for line in String::from_utf8_lossy(&output.stdout).lines() {
                     let line = line.trim();
                     if !line.is_empty() {
-                        let fp = FilePath::new(line).unwrap();
+                        let fp = FilePath::new(line).unwrap_or_default();
                         changed_set.insert(fp);
                     }
                 }
@@ -119,7 +119,7 @@ impl GitCommandsOrchestrator {
                 for line in String::from_utf8_lossy(&output.stdout).lines() {
                     let line = line.trim();
                     if !line.is_empty() {
-                        let fp = FilePath::new(line).unwrap();
+                        let fp = FilePath::new(line).unwrap_or_default();
                         changed_set.insert(fp);
                     }
                 }
@@ -137,7 +137,7 @@ impl GitCommandsOrchestrator {
                 for line in String::from_utf8_lossy(&output.stdout).lines() {
                     let line = line.trim();
                     if !line.is_empty() {
-                        let fp = FilePath::new(line).unwrap();
+                        let fp = FilePath::new(line).unwrap_or_default();
                         changed_set.insert(fp);
                     }
                 }

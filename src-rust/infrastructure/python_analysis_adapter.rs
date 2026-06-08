@@ -33,7 +33,7 @@ impl ComplexityAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for ComplexityAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("radon").unwrap()
+        AdapterName::raw("radon")
     }
     async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         Ok(LintResultList::default())
@@ -66,7 +66,7 @@ impl DuplicateAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for DuplicateAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("duplicates").unwrap()
+        AdapterName::raw("duplicates")
     }
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
@@ -83,10 +83,10 @@ impl ILinterAdapterPort for DuplicateAdapter {
                                 if line_count > 500 {
                                     results.push(LintResult {
                                         file: FilePath::new(p.to_string_lossy().to_string())
-                                            .unwrap(),
+                                            .unwrap_or_default(),
                                         line: LineNumber::new(1),
                                         column: ColumnNumber::new(0),
-                                        code: ErrorCode::new("DUPE001").unwrap(),
+                                        code: ErrorCode::raw("DUPE001"),
                                         message: LintMessage::new(format!(
                                             "File exceeds 500 lines ({}); potential duplication.",
                                             line_count
@@ -133,7 +133,7 @@ impl TrendsAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for TrendsAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("trends").unwrap()
+        AdapterName::raw("trends")
     }
     async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         Ok(LintResultList::default())
@@ -166,7 +166,7 @@ impl DependencyAdapter {
 #[async_trait::async_trait]
 impl ILinterAdapterPort for DependencyAdapter {
     fn name(&self) -> AdapterName {
-        AdapterName::new("pip-audit").unwrap()
+        AdapterName::raw("pip-audit")
     }
     async fn scan(&self, _path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         Ok(LintResultList::default())

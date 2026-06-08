@@ -15,7 +15,7 @@ use crate::infrastructure::{
 use crate::taxonomy::{Count, FilePath};
 use crate::taxonomy::source_path_vo::DirectoryPath;
 use crate::taxonomy::AdapterName;
-use crate::capabilities::ArchLintHandler;
+use crate::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -41,7 +41,7 @@ impl DependencyInjectionContainer {
             Box::new(ASTRustParserAdapter::new()),
             Box::new(ASTJSParserAdapter::new()),
         ));
-        let arch_linter: Arc<dyn IArchLintProtocol> = Arc::new(ArchLintHandler::new(fs.clone(), source_parser.clone()));
+        let arch_linter: Arc<dyn IArchLintProtocol> = Arc::new(ArchitectureLintOrchestrator::new());
 
         let mut linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
 
@@ -72,7 +72,7 @@ impl DependencyInjectionContainer {
         let duplicate = Arc::new(DuplicateAdapter::new(executor.clone(), path_norm.clone(), None));
         linter_adapters.insert("duplicate".to_string(), duplicate);
 
-        let trends = Arc::new(TrendsAdapter::new(executor.clone(), path_norm.clone(), FilePath::new(".lint-trends.json".to_string()).unwrap()));
+        let trends = Arc::new(TrendsAdapter::new(executor.clone(), path_norm.clone(), FilePath::new(".lint-trends.json".to_string()).unwrap_or_default()));
         linter_adapters.insert("trends".to_string(), trends);
 
         let dependency = Arc::new(DependencyAdapter::new(executor.clone(), path_norm.clone(), None));

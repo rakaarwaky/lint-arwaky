@@ -278,7 +278,7 @@ mod tests {
     fn test_find_command_check() {
         let meta = find_command("check");
         assert!(meta.is_some());
-        let meta = meta.unwrap();
+        let meta = meta.expect("expected 'check' command");
         assert!(!meta.description.value.is_empty());
         assert!(!meta.example.value.is_empty());
     }

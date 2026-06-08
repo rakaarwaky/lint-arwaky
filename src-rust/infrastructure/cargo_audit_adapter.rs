@@ -35,7 +35,7 @@ impl CargoAuditAdapter {
                 || current.join(".git").is_dir()
             {
                 return FilePath::new(current.to_string_lossy().replace('\\', "/"))
-                    .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap());
+                    .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
             }
         }
         FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())

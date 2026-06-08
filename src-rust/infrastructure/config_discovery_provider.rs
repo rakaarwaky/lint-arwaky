@@ -27,7 +27,7 @@ impl ConfigDiscoveryProvider {
             for name in filenames {
                 let candidate = current.join(name);
                 if candidate.is_file() {
-                    return Some(FilePath::new(candidate.to_string_lossy().to_string()).unwrap());
+                    return FilePath::new(candidate.to_string_lossy().to_string()).ok();
                 }
             }
             if let Some(parent) = current.parent() {
@@ -62,7 +62,7 @@ impl IConfigDiscoveryPort for ConfigDiscoveryProvider {
         if let Some(ref path) = explicit {
             let p = Path::new(path);
             if p.is_file() {
-                return Some(Ok(FilePath::new(path.clone()).unwrap()));
+                return FilePath::new(path.clone()).ok().map(Ok);
             }
         }
         let base = start

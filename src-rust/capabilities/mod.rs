@@ -105,8 +105,7 @@ pub mod setup_management_processor;
 // --- Architecture: Core Orchestration ---
 pub use architecture_compliance_analyzer::ArchComplianceAnalyzer;
 pub use architecture_lint_handler::{
-    collect_rs_files, collect_source_files, format_report, load_config, run_lint_with_deps,
-    ArchLintHandler,
+    collect_rs_files, collect_source_files, format_report, load_config,
 };
 
 // --- Architecture: Per-File Checkers ---

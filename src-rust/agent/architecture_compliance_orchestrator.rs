@@ -106,7 +106,7 @@ impl WatchExecutionOrchestrator {
 
     pub async fn execute(&self, _request: &DirectoryWatchAggregate) -> WatchResult {
         WatchResult {
-            file: FilePath::new(".").unwrap(),
+            file: FilePath::new(".".to_string()).unwrap_or_default(),
             report: ArchitectureGovernanceEntity::default(),
         }
     }
@@ -434,7 +434,7 @@ impl ArchComplianceCoordinator {
     }
 
     pub fn name(&self) -> AdapterName {
-        AdapterName::new("architecture").unwrap()
+        AdapterName::raw("architecture")
     }
 }
 

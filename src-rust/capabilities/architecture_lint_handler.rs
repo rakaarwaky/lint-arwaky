@@ -1,13 +1,8 @@
 use std::fs;
 use std::path::Path;
-use std::sync::Arc;
 
-use crate::capabilities::architecture_compliance_analyzer::ArchComplianceAnalyzer;
-use crate::contract::source_parser_port::ISourceParserPort;
-use crate::contract::IFileSystemPort;
-use crate::contract::IArchLintProtocol;
 use crate::taxonomy::{
-    default_aes_config, ArchitectureConfig, LintResult, LintResultList,
+    default_aes_config, ArchitectureConfig, LintResult,
 };
 
 pub fn collect_source_files(dir: &Path) -> Vec<String> {
@@ -155,7 +150,7 @@ fn try_load_yaml_config(start: &Path) -> Option<ArchitectureConfig> {
                                     for (_, v) in obj.iter() {
                                         if let Some(arr) = v.as_array() {
                                             for item in arr {
-                                                flat.as_array_mut().unwrap().push(item.clone());
+                                                if let Some(arr) = flat.as_array_mut() { arr.push(item.clone()); }
                                             }
                                         }
                                     }
@@ -181,22 +176,6 @@ fn try_load_yaml_config(start: &Path) -> Option<ArchitectureConfig> {
 pub fn load_config(project_root: Option<&Path>, src_dir: &Path) -> ArchitectureConfig {
     let search_start = project_root.unwrap_or_else(|| src_dir.parent().unwrap_or(src_dir));
     try_load_yaml_config(search_start).unwrap_or_else(default_aes_config)
-}
-
-pub fn run_lint_with_deps(
-    src_dir: &Path,
-    project_root: Option<&Path>,
-    _fs: Arc<dyn IFileSystemPort>,
-    _parser: Arc<dyn ISourceParserPort>,
-) -> Vec<LintResult> {
-    let config = load_config(project_root, src_dir);
-    let analyzer = ArchComplianceAnalyzer::new(config);
-    let files = collect_source_files(src_dir);
-    if files.is_empty() {
-        return Vec::new();
-    }
-    let root_dir = src_dir.to_string_lossy().to_string();
-    analyzer.execute(&files, &root_dir)
 }
 
 pub fn format_report(results: &[LintResult], project_root: &str) -> String {
@@ -263,49 +242,4 @@ pub fn format_report(results: &[LintResult], project_root: &str) -> String {
     }
     lines.push("=".repeat(60));
     lines.join("\n")
-}
-
-pub struct ArchLintHandler {
-    fs: Arc<dyn IFileSystemPort>,
-    parser: Arc<dyn ISourceParserPort>,
-}
-
-impl ArchLintHandler {
-    pub fn new(fs: Arc<dyn IFileSystemPort>, parser: Arc<dyn ISourceParserPort>) -> Self {
-        Self { fs, parser }
-    }
-
-    pub fn find_source_dir(project_root: &Path) -> std::path::PathBuf {
-        for name in &["src-rust", "src-python", "src-javascript", "src"] {
-            let candidate = project_root.join(name);
-            if candidate.is_dir() {
-                return candidate;
-            }
-        }
-        project_root.join("src-rust")
-    }
-}
-
-impl IArchLintProtocol for ArchLintHandler {
-    fn run_self_lint(&self, project_root: &str) -> LintResultList {
-        let root = Path::new(project_root);
-        let src_dir = Self::find_source_dir(root);
-        let results =
-            run_lint_with_deps(&src_dir, Some(root), self.fs.clone(), self.parser.clone());
-        LintResultList::new(results)
-    }
-
-    fn run_self_lint_dir(&self, src_dir: &str) -> LintResultList {
-        let results = run_lint_with_deps(
-            Path::new(src_dir),
-            None,
-            self.fs.clone(),
-            self.parser.clone(),
-        );
-        LintResultList::new(results)
-    }
-
-    fn format_report(&self, results: &LintResultList, project_root: &str) -> String {
-        format_report(&results.values, project_root)
-    }
 }

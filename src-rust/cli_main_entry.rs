@@ -288,7 +288,7 @@ fn handle_trends(path: Option<String>) -> ExitCode {
         ),
     );
     let metrics = container.metrics_provider();
-    let rt = tokio::runtime::Runtime::new().unwrap();
+    let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
     
     // Read history
     let history: Vec<serde_json::Value> = if let Some(ref mp) = metrics {
@@ -487,7 +487,7 @@ fn handle_suggest(path: Option<String>) -> ExitCode {
 
 fn handle_install_hook() -> ExitCode {
     let hook = std::path::PathBuf::from(".githooks/pre-commit");
-    let _ = std::fs::create_dir_all(hook.parent().unwrap());
+    let _ = std::fs::create_dir_all(hook.parent().expect("hook path has no parent"));
     let _ = std::fs::write(&hook, "#!/bin/sh\nlint-arwaky check . || exit 1\n");
     println!("Installed hook at {}", hook.display());
     ExitCode::SUCCESS
@@ -543,7 +543,7 @@ fn normalize_project_root(path: &str) -> String {
 
 fn lint_path(path: &str) -> Vec<LintResult> {
     let root =
-        FilePath::new(normalize_project_root(path)).unwrap_or_else(|_| FilePath::new(".").unwrap());
+        FilePath::new(normalize_project_root(path)).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
     let orchestrator =
         lint_arwaky::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator::new();
     orchestrator.run_self_lint(&root)

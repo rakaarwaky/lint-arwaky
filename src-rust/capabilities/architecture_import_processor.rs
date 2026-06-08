@@ -73,7 +73,7 @@ impl ArchImportProcessor {
         results: &mut crate::taxonomy::LintResultList,
     ) {
         let module =
-            FilePath::new(imp.module.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap());
+            FilePath::new(imp.module.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         let target_layer = match analyzer.detect_module_layer(&module) {
             Some(l) => l,
             None => return,
@@ -182,7 +182,7 @@ impl ArchImportProcessor {
             file: file_path.clone(),
             line: imp.line.clone(),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new("AES001").unwrap(),
+            code: ErrorCode::raw("AES001"),
             message: LintMessage::new(message),
             source: make_adapter("architecture"),
             severity: Severity::CRITICAL,
@@ -314,7 +314,7 @@ impl ArchImportProcessor {
             file: file_path.clone(),
             line: LineNumber::new(0),
             column: ColumnNumber::new(0),
-            code: ErrorCode::new("AES002").unwrap(),
+            code: ErrorCode::raw("AES002"),
             message: LintMessage::new(message),
             source: make_adapter("architecture"),
             severity: Severity::HIGH,
@@ -410,10 +410,10 @@ impl ArchImportProcessor {
             return false;
         }
 
-        static CAPTURE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"contract\((.+)\)").unwrap());
+        static CAPTURE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"contract\((.+)\)").expect("valid regex"));
 
         if let Some(caps) = CAPTURE_RE.captures(req_layer_str) {
-            let _pattern = caps.get(1).unwrap().as_str();
+            let _pattern = caps.get(1).map(|m| m.as_str()).unwrap_or("");
         }
 
         true
@@ -443,7 +443,7 @@ impl ArchImportProcessor {
                     file: file_path.clone(),
                     line: LineNumber::new(0),
                     column: ColumnNumber::new(0),
-                    code: ErrorCode::new("AES007").unwrap(),
+                    code: ErrorCode::raw("AES007"),
                     message: LintMessage::new("Contract import must be from barrel."),
                     source: make_adapter("architecture"),
                     severity: Severity::MEDIUM,
@@ -464,7 +464,7 @@ impl ArchImportProcessor {
     ) -> bool {
         for (alias, fullname) in imported_aliases {
             let module =
-                FilePath::new(fullname.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap());
+                FilePath::new(fullname.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
             let detected = analyzer.detect_module_layer(&module);
             let layer_match = detected
                 .as_ref()

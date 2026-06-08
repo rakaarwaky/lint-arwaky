@@ -69,15 +69,15 @@ mod tests {
 
     #[test]
     fn test_adapter_name_new() {
-        let name = AdapterName::new("ruff").unwrap();
+        let name = AdapterName::new("ruff").expect("valid adapter name");
         assert_eq!(name.value, "ruff");
 
         // Test trimming
-        let name = AdapterName::new("  ruff  ").unwrap();
+        let name = AdapterName::new("  ruff  ").expect("valid adapter name");
         assert_eq!(name.value, "ruff");
 
         // Test that internal spaces are preserved
-        let name = AdapterName::new("my adapter").unwrap();
+        let name = AdapterName::new("my adapter").expect("valid adapter name");
         assert_eq!(name.value, "my adapter");
     }
 

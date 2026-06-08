@@ -1,7 +1,14 @@
 /// naming_variant_provider — Python naming variant generator.
 use crate::contract::naming_variant_port::INamingVariantPort;
-use crate::taxonomy::{SymbolName, SymbolNameList};
+use crate::taxonomy::{ErrorMessage, NamingError, SymbolName, SymbolNameList};
+use once_cell::sync::Lazy;
 use regex::Regex;
+
+static RE_WORDS: Lazy<Result<Regex, NamingError>> = Lazy::new(|| {
+    Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+").map_err(|e| {
+        NamingError::new(ErrorMessage::new(format!("Invalid regex pattern: {}", e)))
+    })
+});
 
 pub struct PythonNamingVariantProvider;
 
@@ -14,8 +21,13 @@ impl PythonNamingVariantProvider {
 impl INamingVariantPort for PythonNamingVariantProvider {
     fn get_variant_dict(&self, name: &SymbolName) -> serde_json::Value {
         let name_str = &name.value;
-        let words: Vec<String> = Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
-            .unwrap()
+        let re = match RE_WORDS.as_ref() {
+            Ok(r) => r,
+            Err(_) => {
+                return serde_json::json!({"snake_case": name_str, "pascal_case": name_str, "camel_case": name_str, "screaming_snake": name_str.to_uppercase()})
+            }
+        };
+        let words: Vec<String> = re
             .find_iter(name_str)
             .map(|m| m.as_str().to_lowercase())
             .collect();
