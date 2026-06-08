@@ -17,7 +17,7 @@ use crate::contract::{
 };
 use crate::infrastructure::MemoryJobRegistryAdapter;
 use crate::taxonomy::{
-    AdapterName, ArchitectureConfig, ArchitectureGovernanceEntity, ArchitectureRule, BooleanVO,
+    AdapterName, ArchitectureConfig, ArchitectureRule, BooleanVO,
     ComplianceStatus, FilePath, LayerDefinition, LayerMapVO, LayerNameVO, LintResultList, Score,
     WatchResult, LAYER_GLOBAL,
 };

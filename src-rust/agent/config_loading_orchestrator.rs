@@ -4,6 +4,7 @@ use crate::contract::config_orchestration_protocol::IConfigOrchestrationProtocol
 use crate::contract::config_reader_port::IConfigReaderPort;
 use crate::contract::config_parser_port::IConfigParserPort;
 use crate::contract::language_detector_port::ILanguageDetectorPort;
+use crate::contract::ServiceContainerAggregate;
 use crate::taxonomy::architecture_config_vo::default_config_for_language;
 use crate::taxonomy::{ConfigResult, ConfigSource, FilePath};
 
@@ -19,6 +20,7 @@ impl ConfigLoadingOrchestrator {
         config_reader: Arc<dyn IConfigReaderPort>,
         config_parser: Arc<dyn IConfigParserPort>,
     ) -> Self {
+        let _ = &ServiceContainerAggregate;
         Self {
             language_detector,
             config_reader,

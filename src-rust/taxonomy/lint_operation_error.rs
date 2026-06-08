@@ -1,4 +1,5 @@
 /// linter_operation_error — Unified error type for linter adapter operations.
+use crate::taxonomy::ErrorMessage;
 use crate::taxonomy::{lint_adapter_error::AdapterError, lint_adapter_error::ScanError};
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +10,12 @@ pub enum LinterOperationError {
 
     #[error("Adapter error: {0}")]
     Adapter(AdapterError),
+}
+
+impl LinterOperationError {
+    pub fn message(&self) -> ErrorMessage {
+        ErrorMessage::new(self.to_string())
+    }
 }
 
 impl From<ScanError> for LinterOperationError {

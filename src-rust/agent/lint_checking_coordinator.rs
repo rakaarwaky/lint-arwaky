@@ -12,6 +12,7 @@ use crate::capabilities::architecture_metric_checker::ArchMetricChecker;
 use crate::capabilities::architecture_naming_checker::ArchNamingChecker;
 use crate::capabilities::architecture_orphan_analyzer::OrphanGraphResolver;
 use crate::capabilities::surface_hierarchy_checker::SurfaceHierarchyChecker;
+use crate::contract::ServiceContainerAggregate;
 use crate::taxonomy::{
     AdapterName, ArchitectureConfig, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LineNumber,
     LintMessage, LintResult, LintResultList, LocationList, Severity,
@@ -26,6 +27,7 @@ impl LintCheckingCoordinator {
         &self, config: &ArchitectureConfig, files: &[String], root_dir: &str,
     ) -> Vec<LintResult> {
         if !config.enabled.value { return Vec::new(); }
+        let _container_ref: Option<&dyn ServiceContainerAggregate> = None;
         let analyzer = ArchComplianceAnalyzer::new(config.clone());
         let mut violations: Vec<LintResult> = Vec::new();
         let import_checker = ArchImportRuleChecker::new();
