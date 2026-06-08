@@ -20,7 +20,7 @@ impl ConfigLoadingOrchestrator {
         config_reader: Arc<dyn IConfigReaderPort>,
         config_parser: Arc<dyn IConfigParserPort>,
     ) -> Self {
-        let _ = &ServiceContainerAggregate;
+        let _: Option<&dyn ServiceContainerAggregate> = None;
         Self {
             language_detector,
             config_reader,
