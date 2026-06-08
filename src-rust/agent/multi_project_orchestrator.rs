@@ -5,7 +5,6 @@ use crate::taxonomy::{
 };
 use async_trait::async_trait;
 
-
 pub struct MultiProjectOrchestrator;
 
 #[async_trait]
@@ -50,10 +49,9 @@ impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
         if let Some(ext) = path.extension() {
             if ext == "json" {
                 if let Ok(content) = std::fs::read_to_string(path) {
-                    if let Ok(data) =
-                        serde_json::from_str::<std::collections::HashMap<String, Vec<String>>>(
-                            &content,
-                        )
+                    if let Ok(data) = serde_json::from_str::<
+                        std::collections::HashMap<String, Vec<String>>,
+                    >(&content)
                     {
                         let projects = data.get("projects").cloned().unwrap_or_default();
                         return FilePathList::new(
@@ -80,7 +78,9 @@ impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
                         visit_dirs(&p, config_name, projects);
                     } else if p.file_name().is_some_and(|n| n == config_name) {
                         if let Some(parent) = p.parent() {
-                            if let Ok(fp) = FilePath::new(parent.to_string_lossy().to_string()) { projects.push(fp); }
+                            if let Ok(fp) = FilePath::new(parent.to_string_lossy().to_string()) {
+                                projects.push(fp);
+                            }
                         }
                     }
                 }
@@ -124,5 +124,4 @@ impl MultiProjectOrchestrator {
             average_score: Score::new(avg_score),
         }
     }
-
 }

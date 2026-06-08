@@ -1,15 +1,5 @@
 use std::sync::Arc;
 
-
-
-
-
-
-
-
-
-
-
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 pub struct GitCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -20,7 +10,11 @@ impl GitCommandsSurface {
         Self { container: None }
     }
 
-    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>, _cli: Option<&str>) {
+    pub fn register_all(
+        &mut self,
+        container: Arc<dyn ServiceContainerAggregate>,
+        _cli: Option<&str>,
+    ) {
         self.container = Some(container);
     }
 

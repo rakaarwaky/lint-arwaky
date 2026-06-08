@@ -76,7 +76,10 @@ impl WatchServiceProvider {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                let name = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_default();
                 if name == ".git" || name == "node_modules" || name == "__pycache__" {
                     continue;
                 }
@@ -101,7 +104,10 @@ impl WatchServiceProvider {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                let name = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_default();
                 if name == ".git" || name == "node_modules" || name == "__pycache__" {
                     continue;
                 }

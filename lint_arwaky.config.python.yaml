@@ -156,7 +156,7 @@ architecture:
         max_lines: 700
         exceptions: ["__init__.py", "__main__.py"]
         max_lines_violation_message: >
-          AES004 FILE_TOO_LARGE: File exceeds the 700-line limit.
+          AES004 FILE_TOO_LARGE: File exceeds the line limit.
           WHY? Large files violate the Single Responsibility Principle and are difficult to maintain or test.
           FIX: Split the module into smaller, more focused files according to their specific roles.
 

@@ -291,8 +291,10 @@ impl SemanticScopeAnalyzer {
             (None, None)
         };
 
-        let assign_re = Regex::new(&format!(r"\b{}\s*=", regex::escape(vn))).expect("valid assign regex");
-        let mutation_re = Regex::new(&format!(r"\b{}\.\w+", regex::escape(vn))).expect("valid mutation regex");
+        let assign_re =
+            Regex::new(&format!(r"\b{}\s*=", regex::escape(vn))).expect("valid assign regex");
+        let mutation_re =
+            Regex::new(&format!(r"\b{}\.\w+", regex::escape(vn))).expect("valid mutation regex");
         let word_re = Regex::new(&format!(r"\b{}\b", regex::escape(vn))).expect("valid word regex");
 
         let mut flows: Vec<ErrorMessage> = Vec::new();

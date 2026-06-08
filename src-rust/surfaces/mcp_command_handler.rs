@@ -1,17 +1,7 @@
-use std::sync::Arc;
 /// MCP Tools: list_commands and read_skill_context.
 use std::collections::HashMap;
 use std::path::Path;
-
-
-
-
-
-
-
-
-
-
+use std::sync::Arc;
 
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use crate::taxonomy::command_catalog_constant::COMMAND_CATALOG;
@@ -21,7 +11,6 @@ pub struct CommandEntry {
     pub description: &'static str,
     pub example: &'static str,
 }
-
 
 pub fn list_commands_func(domain: Option<&str>) -> HashMap<String, HashMap<String, String>> {
     let mut result = HashMap::new();
@@ -62,7 +51,10 @@ impl McpCommandCatalogSurface {
         // In real impl: read SKILL.md from project root
         let skill_path = Path::new("SKILL.md");
         if !skill_path.exists() {
-            return format!("{{\"error\": \"SKILL.md not found\", \"path\": \"{}\"}}", skill_path.display());
+            return format!(
+                "{{\"error\": \"SKILL.md not found\", \"path\": \"{}\"}}",
+                skill_path.display()
+            );
         }
 
         match std::fs::read_to_string(skill_path) {
@@ -80,16 +72,22 @@ impl McpCommandCatalogSurface {
     }
 }
 
-pub fn register_catalog_commands(container: Arc<dyn ServiceContainerAggregate>) -> McpCommandCatalogSurface {
+pub fn register_catalog_commands(
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> McpCommandCatalogSurface {
     let mut surface = McpCommandCatalogSurface::new();
     surface.register_all(container);
     surface
 }
 
-pub fn register_list_commands(container: Arc<dyn ServiceContainerAggregate>) -> McpCommandCatalogSurface {
+pub fn register_list_commands(
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> McpCommandCatalogSurface {
     register_catalog_commands(container)
 }
 
-pub fn register_read_skill_context(container: Arc<dyn ServiceContainerAggregate>) -> McpCommandCatalogSurface {
+pub fn register_read_skill_context(
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> McpCommandCatalogSurface {
     register_catalog_commands(container)
 }

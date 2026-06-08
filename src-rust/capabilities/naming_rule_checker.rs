@@ -55,12 +55,16 @@ impl NamingRuleChecker {
         sev: Severity,
     ) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default()),
+            file: FilePath::new(file.to_string())
+                .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default()),
             line: LineNumber::new(line),
             column: ColumnNumber::new(col),
             code: ErrorCode::new(code).unwrap_or_else(|_| ErrorCode::raw(code)),
             message: LintMessage::new(msg),
-            source: Some(AdapterName::new("architecture").unwrap_or_else(|_| AdapterName::raw("architecture"))),
+            source: Some(
+                AdapterName::new("architecture")
+                    .unwrap_or_else(|_| AdapterName::raw("architecture")),
+            ),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
                 name: crate::taxonomy::DescriptionVO::new(String::new()),

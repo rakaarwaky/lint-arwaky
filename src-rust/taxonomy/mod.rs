@@ -108,8 +108,8 @@ pub mod naming_symbols_constant;
 pub mod naming_symbols_vo;
 pub mod plugin_group_vo;
 pub mod plugin_manager_error;
-pub mod project_summary_vo;
 pub mod project_language_vo;
+pub mod project_summary_vo;
 pub mod scan_completed_event;
 pub mod scan_failed_event;
 pub mod scan_started_event;
@@ -263,8 +263,8 @@ pub use plugin_group_vo::PluginGroup;
 pub use plugin_manager_error::{DiscoveryError, PluginError, RegistrationError};
 
 // --- Project Domain ---
-pub use project_summary_vo::{AggregatedResults, ProjectResult};
 pub use project_language_vo::{LanguageSource, ProjectLanguage};
+pub use project_summary_vo::{AggregatedResults, ProjectResult};
 
 // --- Semantic Domain ---
 pub use semantic_tracer_error::{CallChainError, ScopeResolutionError, SemanticError};

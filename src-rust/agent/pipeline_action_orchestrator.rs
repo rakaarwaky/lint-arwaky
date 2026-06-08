@@ -1,9 +1,6 @@
 // pipeline_action_orchestrator — Agent orchestrator for pipeline actions.
 use crate::contract::PipelineActionDispatcherAggregate;
-use crate::taxonomy::{
-    ActionArgs, ActionName, FilePath, ResponseData,
-    SuccessStatus,
-};
+use crate::taxonomy::{ActionArgs, ActionName, FilePath, ResponseData, SuccessStatus};
 use std::collections::HashMap;
 
 pub struct PipelineActionOrchestrator;
@@ -219,5 +216,4 @@ impl PipelineActionOrchestrator {
             metadata,
         }
     }
-
 }

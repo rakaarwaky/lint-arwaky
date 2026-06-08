@@ -1,7 +1,7 @@
+use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use crate::taxonomy::job_action_vo::JobId;
 use serde_json::json;
 use std::sync::Arc;
-use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 
 pub struct McpJobCommandsSurface;
 
@@ -31,9 +31,7 @@ impl McpJobCommandsSurface {
                 Ok(json!({ "jobs": jobs_list, "total": jobs_list.len() }).to_string())
             }
             Some(jid) => {
-                let job_info = job_registry
-                    .get_job(&JobId::new(&jid))
-                    .await;
+                let job_info = job_registry.get_job(&JobId::new(&jid)).await;
                 match job_info {
                     Some(_info) => Ok(json!({
                         "job_id": jid,
@@ -60,9 +58,7 @@ impl McpJobCommandsSurface {
             .get_job_registry()
             .ok_or_else(|| "Container not initialized".to_string())?;
 
-        let success = job_registry
-            .cancel_job(&JobId::new(&job_id))
-            .await;
+        let success = job_registry.cancel_job(&JobId::new(&job_id)).await;
 
         Ok(json!({
             "job_id": job_id,

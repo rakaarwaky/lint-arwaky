@@ -41,10 +41,10 @@ impl IJsTracerPort for JSScopeTracer {
             r"class\s+([A-Za-z_$][A-Za-z0-9_$]*)(?:\s+extends\s+[A-Za-z_$][A-Za-z0-9_$]*)?",
         )
         .expect("valid regex");
-        let func_re =
-            Regex::new(r"(?:async\s+)?function\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*\(").expect("valid regex");
-        let method_re =
-            Regex::new(r"^\s+(?:async\s+)?([A-Za-z_$][A-Za-z0-9_$]*)\s*\([^)]*\)\s*\{").expect("valid regex");
+        let func_re = Regex::new(r"(?:async\s+)?function\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*\(")
+            .expect("valid regex");
+        let method_re = Regex::new(r"^\s+(?:async\s+)?([A-Za-z_$][A-Za-z0-9_$]*)\s*\([^)]*\)\s*\{")
+            .expect("valid regex");
 
         let mut scope_stack: Vec<(String, usize)> = Vec::new();
         let mut brace_depth: i32 = 0;

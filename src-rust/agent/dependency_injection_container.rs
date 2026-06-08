@@ -1,8 +1,7 @@
 /// dependency_injection_container — Implementation of the DI container.
 use crate::contract::{
-    IArchLintProtocol, ICommandExecutorPort, IFileSystemPort,
-    ILinterAdapterPort, IMetricsProviderPort, IJobRegistryPort,
-    IPathNormalizationPort, ISourceParserPort, LintFixOrchestratorAggregate,
+    IArchLintProtocol, ICommandExecutorPort, IFileSystemPort, IJobRegistryPort, ILinterAdapterPort,
+    IMetricsProviderPort, IPathNormalizationPort, ISourceParserPort, LintFixOrchestratorAggregate,
     ServiceContainerAggregate,
 };
 use crate::infrastructure::{
@@ -10,11 +9,11 @@ use crate::infrastructure::{
     ComplexityAdapter, DependencyAdapter, DuplicateAdapter, ESLintAdapter,
     MemoryJobRegistryAdapter, MetricsProvider, MyPyAdapter, OSFileSystemAdapter,
     PathNormalizationProvider, PrettierAdapter, RuffAdapter, RustLinterAdapter,
-    SourceParserOrchestrator, StdioClient, TrendsAdapter, TSCAdapter,
+    SourceParserOrchestrator, StdioClient, TSCAdapter, TrendsAdapter,
 };
-use crate::taxonomy::{Count, FilePath};
 use crate::taxonomy::source_path_vo::DirectoryPath;
 use crate::taxonomy::AdapterName;
+use crate::taxonomy::{Count, FilePath};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -33,22 +32,28 @@ pub struct DependencyInjectionContainer {
 impl DependencyInjectionContainer {
     pub fn new(_root: DirectoryPath) -> Self {
         let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
-        let executor: Arc<dyn ICommandExecutorPort> = Arc::new(StdioClient::new(std::time::Duration::from_secs(60)));
+        let executor: Arc<dyn ICommandExecutorPort> =
+            Arc::new(StdioClient::new(std::time::Duration::from_secs(60)));
         let path_norm: Arc<dyn IPathNormalizationPort> = Arc::new(PathNormalizationProvider);
         let source_parser: Arc<dyn ISourceParserPort> = Arc::new(SourceParserOrchestrator::new(
             Box::new(ASTPythonParserAdapter::new()),
             Box::new(ASTRustParserAdapter::new()),
             Box::new(ASTJSParserAdapter::new()),
         ));
-        let arch_linter: Arc<dyn IArchLintProtocol> =
-            Arc::new(crate::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator::new());
+        let arch_linter: Arc<dyn IArchLintProtocol> = Arc::new(
+            crate::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator::new(),
+        );
 
         let mut linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
 
         let ruff = Arc::new(RuffAdapter::new(executor.clone(), path_norm.clone(), None));
         linter_adapters.insert("ruff".to_string(), ruff);
 
-        let bandit = Arc::new(BanditAdapter::new(executor.clone(), path_norm.clone(), None));
+        let bandit = Arc::new(BanditAdapter::new(
+            executor.clone(),
+            path_norm.clone(),
+            None,
+        ));
         linter_adapters.insert("bandit".to_string(), bandit);
 
         let mypy = Arc::new(MyPyAdapter::new(executor.clone(), path_norm.clone(), None));
@@ -63,22 +68,46 @@ impl DependencyInjectionContainer {
         let tsc = Arc::new(TSCAdapter::new(executor.clone(), path_norm.clone()));
         linter_adapters.insert("tsc".to_string(), tsc);
 
-        let clippy = Arc::new(RustLinterAdapter::new(executor.clone(), path_norm.clone(), None));
+        let clippy = Arc::new(RustLinterAdapter::new(
+            executor.clone(),
+            path_norm.clone(),
+            None,
+        ));
         linter_adapters.insert("clippy".to_string(), clippy);
 
-        let complexity = Arc::new(ComplexityAdapter::new(executor.clone(), path_norm.clone(), None, Count::new(10)));
+        let complexity = Arc::new(ComplexityAdapter::new(
+            executor.clone(),
+            path_norm.clone(),
+            None,
+            Count::new(10),
+        ));
         linter_adapters.insert("complexity".to_string(), complexity);
 
-        let duplicate = Arc::new(DuplicateAdapter::new(executor.clone(), path_norm.clone(), None));
+        let duplicate = Arc::new(DuplicateAdapter::new(
+            executor.clone(),
+            path_norm.clone(),
+            None,
+        ));
         linter_adapters.insert("duplicate".to_string(), duplicate);
 
-        let trends = Arc::new(TrendsAdapter::new(executor.clone(), path_norm.clone(), FilePath::new(".lint-trends.json".to_string()).unwrap_or_default()));
+        let trends = Arc::new(TrendsAdapter::new(
+            executor.clone(),
+            path_norm.clone(),
+            FilePath::new(".lint-trends.json".to_string()).unwrap_or_default(),
+        ));
         linter_adapters.insert("trends".to_string(), trends);
 
-        let dependency = Arc::new(DependencyAdapter::new(executor.clone(), path_norm.clone(), None));
+        let dependency = Arc::new(DependencyAdapter::new(
+            executor.clone(),
+            path_norm.clone(),
+            None,
+        ));
         linter_adapters.insert("dependency".to_string(), dependency);
 
-        let metrics_provider: Arc<dyn IMetricsProviderPort> = Arc::new(MetricsProvider::new(path_norm.clone(), ".lint-history.json"));
+        let metrics_provider: Arc<dyn IMetricsProviderPort> = Arc::new(MetricsProvider::new(
+            path_norm.clone(),
+            ".lint-history.json",
+        ));
 
         Self {
             file_system: fs,
@@ -120,7 +149,11 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
     fn get_job_registry(&self) -> Option<Arc<dyn IJobRegistryPort>> {
         use std::sync::OnceLock;
         static REGISTRY: OnceLock<Arc<dyn IJobRegistryPort>> = OnceLock::new();
-        Some(REGISTRY.get_or_init(|| Arc::new(MemoryJobRegistryAdapter::new())).clone())
+        Some(
+            REGISTRY
+                .get_or_init(|| Arc::new(MemoryJobRegistryAdapter::new()))
+                .clone(),
+        )
     }
 
     fn metrics_provider(&self) -> Option<Arc<dyn IMetricsProviderPort>> {
@@ -128,6 +161,11 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
     }
 
     fn get_fix_orchestrator(&self, dry_run: bool) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
-        Some(Arc::new(crate::agent::lint_fix_orchestrator::LintFixOrchestrator::with_dry_run(dry_run, self.architecture_linter.clone())))
+        Some(Arc::new(
+            crate::agent::lint_fix_orchestrator::LintFixOrchestrator::with_dry_run(
+                dry_run,
+                self.architecture_linter.clone(),
+            ),
+        ))
     }
 }

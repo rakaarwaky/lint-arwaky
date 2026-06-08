@@ -1,8 +1,6 @@
 use std::path::Path;
 
-use crate::capabilities::{
-    collect_source_files, format_report, load_config,
-};
+use crate::capabilities::{collect_source_files, format_report, load_config};
 use crate::contract::architecture_lint_protocol::IArchLintProtocol;
 use crate::contract::ServiceContainerAggregate;
 use crate::taxonomy::{LintResult, LintResultList};

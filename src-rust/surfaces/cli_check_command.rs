@@ -3,7 +3,6 @@ use std::sync::Arc;
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use crate::taxonomy::LintResultList;
 
-
 pub struct CheckCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
@@ -30,12 +29,20 @@ impl CheckCommandsSurface {
 
         let mut all_results = Vec::new();
         let adapter_names = [
-            "clippy", "rustfmt", "cargo-audit", "ruff", "mypy", "bandit",
-            "eslint", "prettier", "tsc",
+            "clippy",
+            "rustfmt",
+            "cargo-audit",
+            "ruff",
+            "mypy",
+            "bandit",
+            "eslint",
+            "prettier",
+            "tsc",
         ];
         let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
-        let path_obj = crate::taxonomy::FilePath::new(path.to_string())
-            .unwrap_or_else(|_| crate::taxonomy::FilePath::new(".".to_string()).unwrap_or_default());
+        let path_obj = crate::taxonomy::FilePath::new(path.to_string()).unwrap_or_else(|_| {
+            crate::taxonomy::FilePath::new(".".to_string()).unwrap_or_default()
+        });
 
         for name in &adapter_names {
             let adapter_name =

@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::taxonomy::architecture_config_vo::ArchitectureConfig;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ConfigSource {
@@ -9,7 +9,11 @@ pub struct ConfigSource {
 }
 
 impl ConfigSource {
-    pub fn new(language: impl Into<String>, path: impl Into<String>, raw_content: impl Into<String>) -> Self {
+    pub fn new(
+        language: impl Into<String>,
+        path: impl Into<String>,
+        raw_content: impl Into<String>,
+    ) -> Self {
         Self {
             language: language.into(),
             path: path.into(),
@@ -27,6 +31,10 @@ pub struct ConfigResult {
 
 impl ConfigResult {
     pub fn new(config: ArchitectureConfig, source: ConfigSource, warnings: Vec<String>) -> Self {
-        Self { config, source, warnings }
+        Self {
+            config,
+            source,
+            warnings,
+        }
     }
 }

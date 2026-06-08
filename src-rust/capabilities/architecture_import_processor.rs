@@ -72,8 +72,8 @@ impl ArchImportProcessor {
         definition: &LayerDefinition,
         results: &mut crate::taxonomy::LintResultList,
     ) {
-        let module =
-            FilePath::new(imp.module.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+        let module = FilePath::new(imp.module.clone())
+            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         let target_layer = match analyzer.detect_module_layer(&module) {
             Some(l) => l,
             None => return,
@@ -410,7 +410,8 @@ impl ArchImportProcessor {
             return false;
         }
 
-        static CAPTURE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"contract\((.+)\)").expect("valid regex"));
+        static CAPTURE_RE: Lazy<Regex> =
+            Lazy::new(|| Regex::new(r"contract\((.+)\)").expect("valid regex"));
 
         if let Some(caps) = CAPTURE_RE.captures(req_layer_str) {
             let _pattern = caps.get(1).map(|m| m.as_str()).unwrap_or("");
@@ -463,8 +464,8 @@ impl ArchImportProcessor {
         real_usages: &std::collections::HashSet<String>,
     ) -> bool {
         for (alias, fullname) in imported_aliases {
-            let module =
-                FilePath::new(fullname.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+            let module = FilePath::new(fullname.clone())
+                .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
             let detected = analyzer.detect_module_layer(&module);
             let layer_match = detected
                 .as_ref()
@@ -515,4 +516,3 @@ impl IArchImportProcessorProtocol for ArchImportProcessor {
         .await;
     }
 }
-

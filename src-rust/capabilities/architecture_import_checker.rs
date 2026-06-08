@@ -21,11 +21,19 @@ impl ArchImportRuleChecker {
     fn resolve_scope(scope: &str) -> (&str, Vec<&str>) {
         if let Some(paren) = scope.find('(') {
             let layer = scope[..paren].trim();
-            let inner = scope[paren+1..].trim_end_matches(')').trim();
+            let inner = scope[paren + 1..].trim_end_matches(')').trim();
             let suffixes: Vec<&str> = if inner.contains('|') {
-                inner.split('|').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+                inner
+                    .split('|')
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                    .collect()
             } else {
-                inner.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+                inner
+                    .split(',')
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                    .collect()
             };
             (layer, suffixes)
         } else {
@@ -37,8 +45,8 @@ impl ArchImportRuleChecker {
     /// e.g. scope "contract(protocol)" matches "use crate::contract::some_protocol::X"
     fn import_matches_scope(import_line: &str, layer: &str, suffixes: &[&str]) -> bool {
         let lower = import_line.to_lowercase();
-        let layer_match = lower.contains(&format!("{}::", layer))
-            || lower.contains(&format!("::{}::", layer));
+        let layer_match =
+            lower.contains(&format!("{}::", layer)) || lower.contains(&format!("::{}::", layer));
         if !layer_match {
             return false;
         }
@@ -83,7 +91,8 @@ impl ArchImportRuleChecker {
 
     fn make_result(file: &str, line: i64, code: &str, msg: &str, sev: Severity) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default()),
+            file: FilePath::new(file.to_string())
+                .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default()),
             line: LineNumber::new(line),
             column: ColumnNumber::new(0),
             code: ErrorCode::raw(code),
@@ -219,12 +228,12 @@ impl ArchImportRuleChecker {
         for required in &definition.mandatory_import.values {
             let (layer, suffixes) = Self::resolve_scope(required);
             let is_present = if suffixes.is_empty() {
-                content.contains(layer)
-                    || import_lines.iter().any(|(_, l)| l.contains(layer))
+                content.contains(layer) || import_lines.iter().any(|(_, l)| l.contains(layer))
             } else {
                 // Check import lines AND verify via barrel (mod.rs/__init__.py) that
                 // the imported type actually originates from a file with the required suffix.
-                let line_matches = import_lines.iter()
+                let line_matches = import_lines
+                    .iter()
                     .any(|(_, l)| Self::import_matches_scope(l, layer, &suffixes));
                 if line_matches {
                     true
@@ -246,11 +255,9 @@ impl ArchImportRuleChecker {
             // types/identifiers from this layer (not even inline qualifiers).
             // Prevents forcing unused imports just to satisfy AES002.
             let genuinely_unreferenced = if suffixes.is_empty() {
-                !content.contains(layer)
-                    && !import_lines.iter().any(|(_, l)| l.contains(layer))
+                !content.contains(layer) && !import_lines.iter().any(|(_, l)| l.contains(layer))
             } else {
-                !content.contains(layer)
-                    && !suffixes.iter().any(|s| content.contains(s))
+                !content.contains(layer) && !suffixes.iter().any(|s| content.contains(s))
             };
 
             if genuinely_unreferenced {
@@ -306,9 +313,8 @@ impl ArchImportRuleChecker {
                         } else {
                             // Verify with barrel — if barrel says the type has a DIFFERENT
                             // suffix, it's not actually forbidden.
-                            let barrel_confirms = Self::barrel_confirms_forbidden(
-                                file, layer, &suffixes, line
-                            );
+                            let barrel_confirms =
+                                Self::barrel_confirms_forbidden(file, layer, &suffixes, line);
                             // If barrel confirms the type has this suffix → forbidden
                             // If barrel disagrees → not forbidden (use barrel as source of truth)
                             barrel_confirms
@@ -418,7 +424,9 @@ impl ArchImportRuleChecker {
         import_lines: &[(usize, String)],
     ) -> bool {
         let type_suffix = Self::build_type_suffix_map(file, layer);
-        if type_suffix.is_empty() { return false; }
+        if type_suffix.is_empty() {
+            return false;
+        }
         // Check if any imported type from this layer has the required suffix
         for (_, line) in import_lines {
             if !line.contains(&format!("{}::", layer)) && !line.contains(&format!("{}.", layer)) {
@@ -433,12 +441,7 @@ impl ArchImportRuleChecker {
 
     /// Check if a SPECIFIC type in an import line has the forbidden suffix
     /// by resolving through the barrel's type→suffix map.
-    fn barrel_confirms_forbidden(
-        file: &str,
-        layer: &str,
-        suffixes: &[&str],
-        line: &str,
-    ) -> bool {
+    fn barrel_confirms_forbidden(file: &str, layer: &str, suffixes: &[&str], line: &str) -> bool {
         let type_suffix = Self::build_type_suffix_map(file, layer);
         if type_suffix.is_empty() {
             // Can't verify through barrel — trust the original suffix match
@@ -457,11 +460,15 @@ impl ArchImportRuleChecker {
         if let Some(pos) = rest.rfind("::") {
             rest = &rest[pos + 2..].trim();
             let types_str = rest
-                .strip_prefix('{').unwrap_or(rest)
-                .strip_suffix('}').unwrap_or(rest);
+                .strip_prefix('{')
+                .unwrap_or(rest)
+                .strip_suffix('}')
+                .unwrap_or(rest);
             for type_name in types_str.split(',') {
                 let tn = type_name.trim().to_string();
-                if tn.is_empty() { continue; }
+                if tn.is_empty() {
+                    continue;
+                }
                 if let Some(src_suffix) = type_suffix.get(&tn) {
                     if suffixes.contains(&src_suffix.as_str()) {
                         return true;
@@ -474,23 +481,27 @@ impl ArchImportRuleChecker {
 
     /// Build type→source_suffix map from barrel file (mod.rs/__init__.py).
     /// E.g., "pub use common_error_vo::ErrorMessage" → ("ErrorMessage", "vo")
-    fn build_type_suffix_map(
-        file: &str,
-        layer: &str,
-    ) -> std::collections::HashMap<String, String> {
+    fn build_type_suffix_map(file: &str, layer: &str) -> std::collections::HashMap<String, String> {
         let file_path = std::path::Path::new(file);
         let parent = file_path.parent().unwrap_or(std::path::Path::new("."));
-        let layer_root = parent.ancestors()
+        let layer_root = parent
+            .ancestors()
             .find(|a| a.ends_with(layer))
             .unwrap_or(parent);
         let barrel_names = ["mod.rs", "__init__.py", "index.ts", "index.js"];
-        let barrel = barrel_names.iter()
+        let barrel = barrel_names
+            .iter()
             .map(|n| layer_root.join(n))
             .find(|p| p.exists());
-        let Some(barrel_path) = barrel else { return std::collections::HashMap::new(); };
-        let Ok(content) = std::fs::read_to_string(&barrel_path) else { return std::collections::HashMap::new(); };
+        let Some(barrel_path) = barrel else {
+            return std::collections::HashMap::new();
+        };
+        let Ok(content) = std::fs::read_to_string(&barrel_path) else {
+            return std::collections::HashMap::new();
+        };
 
-        let mut type_suffix: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+        let mut type_suffix: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
         let lines: Vec<&str> = content.lines().collect();
         let mut i = 0;
         while i < lines.len() {
@@ -502,7 +513,7 @@ impl ArchImportRuleChecker {
                     let module_suffix = module.rsplit('_').next().unwrap_or("").to_string();
                     let mut types_part = rest[module_end + 2..].to_string();
                     if types_part.ends_with(';') {
-                        types_part = types_part[..types_part.len()-1].to_string();
+                        types_part = types_part[..types_part.len() - 1].to_string();
                     }
                     if types_part.contains('{') && !types_part.contains('}') {
                         let mut block_lines = types_part;
@@ -521,7 +532,7 @@ impl ArchImportRuleChecker {
                         types_part = types_part[1..].to_string();
                     }
                     if types_part.ends_with('}') {
-                        types_part = types_part[..types_part.len()-1].to_string();
+                        types_part = types_part[..types_part.len() - 1].to_string();
                     }
                     for type_name in types_part.split(',') {
                         let tn = type_name.trim().to_string();

@@ -86,7 +86,11 @@ impl ASTRustParserAdapter {
             // Check for impl block
             if let Some(impl_cap) = IMPL_REGEX.captures(stripped) {
                 let trait_name = impl_cap.get(1).map(|m| m.as_str());
-                let struct_name = impl_cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string();
+                let struct_name = impl_cap
+                    .get(2)
+                    .map(|m| m.as_str())
+                    .unwrap_or("")
+                    .to_string();
 
                 if let Some(t_name) = trait_name {
                     let clean_trait = t_name.split("::").last().unwrap_or(t_name).to_string();
@@ -145,7 +149,11 @@ impl ASTRustParserAdapter {
 
             // 2. Struct, Enum, Trait Definitions
             if let Some(struct_cap) = STRUCT_REGEX.captures(stripped) {
-                let name = struct_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
+                let name = struct_cap
+                    .get(1)
+                    .map(|m| m.as_str())
+                    .unwrap_or("")
+                    .to_string();
                 defined.insert(name.clone());
 
                 let mut is_dead = stripped.contains(';') || stripped.contains("{}");
@@ -326,16 +334,29 @@ impl ISourceParserPort for ASTRustParserAdapter {
                     continue;
                 }
                 if in_struct {
-                    if stripped.starts_with('}') || stripped.starts_with("//") || stripped.is_empty() {
+                    if stripped.starts_with('}')
+                        || stripped.starts_with("//")
+                        || stripped.is_empty()
+                    {
                         if stripped.starts_with('}') {
                             in_struct = false;
                         }
                         continue;
                     }
-                    if stripped.contains(':') && !stripped.starts_with("fn ") && !stripped.starts_with("impl ") {
-                        let field_name = stripped.split(':').next().unwrap_or("").trim().trim_start_matches("pub ").to_string();
+                    if stripped.contains(':')
+                        && !stripped.starts_with("fn ")
+                        && !stripped.starts_with("impl ")
+                    {
+                        let field_name = stripped
+                            .split(':')
+                            .next()
+                            .unwrap_or("")
+                            .trim()
+                            .trim_start_matches("pub ")
+                            .to_string();
                         if !field_name.is_empty() && !field_name.contains(' ') {
-                            attrs.entry(struct_name.clone())
+                            attrs
+                                .entry(struct_name.clone())
                                 .or_insert_with(Vec::new)
                                 .push(serde_json::json!({"name": field_name}));
                         }
