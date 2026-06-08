@@ -26,7 +26,15 @@ cargo clippy --all-targets -- -D warnings
 
 ## Layer-gated compilation (unique Cargo features)
 
-`src-rust/lib.rs` conditionally compiles modules by feature. Each `scripts/check_*.sh` invokes one layer:
+`src-rust/lib.rs` conditionally compiles modules by feature. Each `scripts/check_*.sh` invokes one layer.
+
+Use the interactive menu to check any layer interactively:
+
+```bash
+./scripts/check_layer.sh
+```
+
+Or run individual layer checks:
 
 ```
 check_taxonomy.sh     →  cargo check --lib --no-default-features --features check_taxonomy
@@ -43,14 +51,14 @@ Feature chain: `check_taxonomy` → `check_contract` → `check_infrastructure` 
 
 Layer ordering (bottom→top) and allowed filename suffixes:
 
-| Layer | Dir | Allowed suffixes |
-|---|---|---|
-| taxonomy | `src-rust/taxonomy/` | `_vo`, `_entity`, `_event`, `_error`, `_constant` |
-| contract | `src-rust/contract/` | `_port`, `_protocol`, `_aggregate` |
-| capabilities | `src-rust/capabilities/` | `_checker`, `_analyzer`, `_processor`, etc. |
-| infrastructure | `src-rust/infrastructure/` | `_adapter`, `_provider`, `_scanner`, etc. |
-| agent | `src-rust/agent/` | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager` |
-| surfaces | `src-rust/surfaces/` | `_command`, `_handler`, `_controller` |
+| Layer          | Dir                          | Allowed suffixes                                                                 |
+| -------------- | ---------------------------- | -------------------------------------------------------------------------------- |
+| taxonomy       | `src-rust/taxonomy/`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`                      |
+| contract       | `src-rust/contract/`       | `_port`, `_protocol`, `_aggregate`                                         |
+| capabilities   | `src-rust/capabilities/`   | `_checker`, `_analyzer`, `_processor`, etc.                                |
+| infrastructure | `src-rust/infrastructure/` | `_adapter`, `_provider`, `_scanner`, etc.                                  |
+| agent          | `src-rust/agent/`          | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager` |
+| surfaces       | `src-rust/surfaces/`       | `_command`, `_handler`, `_controller`                                      |
 
 Import flow: surfaces → agent → capabilities/infrastructure → contract → taxonomy.
 Surfaces must NOT import infrastructure/capabilities directly — they go through `ServiceContainerAggregate` trait (AES023).
@@ -94,7 +102,19 @@ jj git fetch         # fetch from remote
 
 `jj` interoperates with the git remote — the `.jj/` directory replaces `.git/` for local operations, but `jj git push` pushes to the configured git remote.
 
-## Stale files (do not trust)
+## Branch management (CRITICAL — must follow)
 
-- `.github/workflows/ci.yml` and `publish.yml` — leftover from Python v1.9.x, not active
-- `.vscode/settings.json` — references Python/JS configs from old project structure
+Allowed branch naming:
+- `main`
+- `develop`
+- `features/<name>` (plural `features/`, NOT `feature/`)
+
+When merging a PR to develop:
+- Use `gh pr merge <num> --squash` ONLY
+- **NEVER use `--delete-branch`** — feature branches must NOT be deleted after merge
+- Branches that were accidentally deleted must be restored immediately via:
+  ```bash
+  git branch <branch-name> origin/develop
+  jj git import
+  jj bookmark set <branch-name>
+  ```
