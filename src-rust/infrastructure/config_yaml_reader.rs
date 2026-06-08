@@ -1,8 +1,8 @@
-use std::sync::Arc;
-use async_trait::async_trait;
 use crate::contract::config_reader_port::IConfigReaderPort;
 use crate::contract::path_normalization_port::IPathNormalizationPort;
 use crate::taxonomy::{ConfigSource, FilePath};
+use async_trait::async_trait;
+use std::sync::Arc;
 
 pub struct ConfigYamlReader {
     _path_norm: Arc<dyn IPathNormalizationPort>,
@@ -10,7 +10,9 @@ pub struct ConfigYamlReader {
 
 impl ConfigYamlReader {
     pub fn new(path_norm: Arc<dyn IPathNormalizationPort>) -> Self {
-        Self { _path_norm: path_norm }
+        Self {
+            _path_norm: path_norm,
+        }
     }
 
     fn config_filename(language: &str) -> String {
@@ -33,7 +35,11 @@ impl IConfigReaderPort for ConfigYamlReader {
 
         if path.exists() {
             match std::fs::read_to_string(&path) {
-                Ok(content) => Some(ConfigSource::new(language, path.to_string_lossy().to_string(), content)),
+                Ok(content) => Some(ConfigSource::new(
+                    language,
+                    path.to_string_lossy().to_string(),
+                    content,
+                )),
                 Err(_) => None,
             }
         } else {

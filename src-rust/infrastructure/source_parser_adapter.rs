@@ -43,11 +43,7 @@ impl SourceParserOrchestrator {
         if p.ends_with(".rs") {
             return &*self.rust_parser;
         }
-        if p.ends_with(".ts")
-            || p.ends_with(".tsx")
-            || p.ends_with(".js")
-            || p.ends_with(".jsx")
-        {
+        if p.ends_with(".ts") || p.ends_with(".tsx") || p.ends_with(".js") || p.ends_with(".jsx") {
             return &*self.js_parser;
         }
         &*self.python_parser

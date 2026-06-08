@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
+use std::sync::Arc;
 pub struct PluginCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
@@ -32,7 +32,9 @@ impl PluginCommandsSurface {
     }
 }
 
-pub fn register_plugin_commands(container: Arc<dyn ServiceContainerAggregate>) -> PluginCommandsSurface {
+pub fn register_plugin_commands(
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> PluginCommandsSurface {
     let mut surface = PluginCommandsSurface::new();
     surface.register_all(container);
     surface

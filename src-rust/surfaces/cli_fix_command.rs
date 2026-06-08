@@ -1,8 +1,8 @@
-use std::sync::Arc;
-use std::path::PathBuf;
-use crate::taxonomy::FilePath;
 use crate::contract::ServiceContainerAggregate;
-use crate::surfaces::cli_output_controller::{get_output_dir, write_output, tee_stdout};
+use crate::surfaces::cli_output_controller::{get_output_dir, tee_stdout, write_output};
+use crate::taxonomy::FilePath;
+use std::path::PathBuf;
+use std::sync::Arc;
 
 pub struct FixCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -18,12 +18,12 @@ impl FixCommandsSurface {
     }
 
     pub fn fix(&self, path: &str) {
-        let project_path = FilePath { 
+        let project_path = FilePath {
             value: PathBuf::from(path)
                 .canonicalize()
                 .unwrap_or_else(|_| PathBuf::from(path))
                 .to_string_lossy()
-                .to_string() 
+                .to_string(),
         };
         self.run_fix(project_path, false);
     }
@@ -38,12 +38,15 @@ impl FixCommandsSurface {
                 println!("Applying safe fixes to {}...", project_path.value);
             }
 
-            let orchestrator = crate::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator::new();
+            let orchestrator =
+                crate::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator::new();
             let results = orchestrator.run_self_lint(&project_path);
             println!("Found {} violations before fix", results.len());
 
             // Get fix orchestrator from container (AES023: surfaces must not import agent directly)
-            let fix_orch = self.container.as_ref()
+            let fix_orch = self
+                .container
+                .as_ref()
                 .and_then(|c| c.get_fix_orchestrator(dry_run))
                 .expect("Fix orchestrator not available in container");
             let fix_result = fix_orch.execute(&project_path);
@@ -53,7 +56,11 @@ impl FixCommandsSurface {
             if !dry_run {
                 let after_results = orchestrator.run_self_lint(&project_path);
                 let fixed_count = results.len().saturating_sub(after_results.len());
-                println!("Fixed {} violations ({} remaining)", fixed_count, after_results.len());
+                println!(
+                    "Fixed {} violations ({} remaining)",
+                    fixed_count,
+                    after_results.len()
+                );
                 println!("Fix complete.");
             } else {
                 println!("Dry-run complete — no changes applied.");

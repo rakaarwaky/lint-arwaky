@@ -133,8 +133,7 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         }
     }
 
-    async fn cancel(&self, _job_id: JobId) {
-    }
+    async fn cancel(&self, _job_id: JobId) {}
 }
 
 fn walk_dir(dir: &Path, py_files: &mut Vec<PathBuf>) {

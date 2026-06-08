@@ -47,7 +47,8 @@ impl DataFlowAnalyzer {
             (None, None)
         };
 
-        let word_pattern = Regex::new(&format!(r"\b{}\b", regex::escape(var_name))).expect("valid regex");
+        let word_pattern =
+            Regex::new(&format!(r"\b{}\b", regex::escape(var_name))).expect("valid regex");
         let assign_pattern = Regex::new(&format!(
             r"(?:const|let|var)\s+{}\s*=|(?<![=!<>]){}s*=",
             regex::escape(var_name),
@@ -130,9 +131,7 @@ impl IDataFlowProtocol for DataFlowAnalyzer {
         );
         let messages: Vec<ErrorMessage> = entries
             .into_iter()
-            .map(|e| {
-                ErrorMessage::new(format!("Line {} [{}]: {}", e.line, e.kind, e.content))
-            })
+            .map(|e| ErrorMessage::new(format!("Line {} [{}]: {}", e.line, e.kind, e.content)))
             .collect();
         DataFlowList::new(messages)
     }

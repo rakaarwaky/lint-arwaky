@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::taxonomy::{
-    ArchitectureRule, BooleanVO, Count, ErrorMessage, FilePathList, LayerDefinition,
-    LayerNameVO, LegacyLayerRuleList, NamingConfig,
+    ArchitectureRule, BooleanVO, Count, ErrorMessage, FilePathList, LayerDefinition, LayerNameVO,
+    LegacyLayerRuleList, NamingConfig,
 };
 use std::collections::HashMap;
 
@@ -70,10 +70,14 @@ fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
             match val {
                 serde_json::Value::Object(m) => {
                     m.retain(|_, v| !v.is_null());
-                    for v in m.values_mut() { remove_nulls(v); }
+                    for v in m.values_mut() {
+                        remove_nulls(v);
+                    }
                 }
                 serde_json::Value::Array(arr) => {
-                    for v in arr.iter_mut() { remove_nulls(v); }
+                    for v in arr.iter_mut() {
+                        remove_nulls(v);
+                    }
                 }
                 _ => {}
             }
@@ -81,7 +85,12 @@ fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
         remove_nulls(&mut json);
         if let Some(layers_obj) = json.get_mut("layers") {
             if let Some(obj) = layers_obj.as_object_mut() {
-                let mut suffix_updates: Vec<(String, Option<String>, serde_json::Value, serde_json::Value)> = Vec::new();
+                let mut suffix_updates: Vec<(
+                    String,
+                    Option<String>,
+                    serde_json::Value,
+                    serde_json::Value,
+                )> = Vec::new();
                 for (layer_name, layer) in obj.iter() {
                     if let Some(suffix_val) = layer.get("suffix") {
                         if let Some(arr) = suffix_val.as_array() {
@@ -136,7 +145,9 @@ fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
                 for (_, v) in obj.iter() {
                     if let Some(arr) = v.as_array() {
                         for item in arr {
-                            flat.as_array_mut().expect("flat is always an array").push(item.clone());
+                            flat.as_array_mut()
+                                .expect("flat is always an array")
+                                .push(item.clone());
                         }
                     }
                 }

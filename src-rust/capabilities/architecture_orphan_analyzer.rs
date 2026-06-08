@@ -5,10 +5,10 @@ use crate::contract::architecture_orphan_protocol::IOrphanGraphProtocol;
 use crate::contract::architecture_orphan_protocol::IOrphanIndicatorProtocol;
 use crate::contract::IAnalyzer;
 use crate::taxonomy::{
-    AdapterName, ColumnNumber, ErrorCode, FileDefinitionMap, FilePath, FilePathList,
-    FilePathSet, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap,
-    LayerDefinition, LayerNameVO, LineNumber, LintMessage, LintResult, LocationList, ModuleName,
-    ModuleToFileMap, OrphanIndicatorResult, ReachabilityResult, ScopeRef, Severity,
+    AdapterName, ColumnNumber, ErrorCode, FileDefinitionMap, FilePath, FilePathList, FilePathSet,
+    GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap, LayerDefinition,
+    LayerNameVO, LineNumber, LintMessage, LintResult, LocationList, ModuleName, ModuleToFileMap,
+    OrphanIndicatorResult, ReachabilityResult, ScopeRef, Severity,
 };
 use async_trait::async_trait;
 use std::collections::HashMap;
@@ -31,7 +31,8 @@ impl OrphanGraphResolver {
         for f in files {
             import_graph.entry(f.clone()).or_default();
             if let Ok(content) = std::fs::read_to_string(f) {
-                let import_re = regex::Regex::new(r"(?:from|import)\s+([\w\.]+)").expect("valid regex");
+                let import_re =
+                    regex::Regex::new(r"(?:from|import)\s+([\w\.]+)").expect("valid regex");
                 for cap in import_re.captures_iter(&content) {
                     let dep = cap[1].to_string();
                     import_graph.entry(f.clone()).or_default().push(dep.clone());
@@ -447,7 +448,10 @@ impl IOrphanGraphProtocol for OrphanGraphResolver {
         full_project_files: &FilePathList,
         root_dir: &FilePath,
     ) -> GraphAnalysisContext {
-        let files: Vec<String> = full_project_files.iter().map(|f| f.value().to_string()).collect();
+        let files: Vec<String> = full_project_files
+            .iter()
+            .map(|f| f.value().to_string())
+            .collect();
         self.build_graph_context(&files, root_dir.value())
     }
 
@@ -486,8 +490,7 @@ impl IOrphanGraphProtocol for OrphanGraphResolver {
             .iter()
             .map(|fp| fp.value().to_string())
             .collect();
-        let mut queue: std::collections::VecDeque<String> =
-            reachable.iter().cloned().collect();
+        let mut queue: std::collections::VecDeque<String> = reachable.iter().cloned().collect();
         while let Some(current) = queue.pop_front() {
             if let Some(neighbors) = graph.mapping.get(&current) {
                 for neighbor in neighbors {
@@ -532,7 +535,12 @@ impl IOrphanIndicatorProtocol for OrphanIndicatorEvaluator {
         file_definitions: &FileDefinitionMap,
         inheritance_map: &InheritanceMap,
     ) -> OrphanIndicatorResult {
-        self.is_contract_orphan(f.value(), root_dir.value(), file_definitions, inheritance_map)
+        self.is_contract_orphan(
+            f.value(),
+            root_dir.value(),
+            file_definitions,
+            inheritance_map,
+        )
     }
 
     async fn is_infra_cap_orphan(
@@ -561,7 +569,11 @@ impl IOrphanIndicatorProtocol for OrphanIndicatorEvaluator {
         alive_files: &ReachabilityResult,
         definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult {
-        let alive: Vec<String> = alive_files.paths.iter().map(|fp| fp.value().to_string()).collect();
+        let alive: Vec<String> = alive_files
+            .paths
+            .iter()
+            .map(|fp| fp.value().to_string())
+            .collect();
         let def = match definition {
             Some(d) => d,
             None => {
@@ -577,7 +589,11 @@ impl IOrphanIndicatorProtocol for OrphanIndicatorEvaluator {
         alive_files: &ReachabilityResult,
         inbound_links: &InboundLinkMap,
     ) -> OrphanIndicatorResult {
-        let alive: Vec<String> = alive_files.paths.iter().map(|fp| fp.value().to_string()).collect();
+        let alive: Vec<String> = alive_files
+            .paths
+            .iter()
+            .map(|fp| fp.value().to_string())
+            .collect();
         self.is_generic_orphan(f.value(), &alive, inbound_links)
     }
 }

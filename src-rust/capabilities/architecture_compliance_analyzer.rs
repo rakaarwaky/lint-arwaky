@@ -4,9 +4,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use crate::taxonomy::{
-    ArchitectureConfig, ArchitectureRule, LayerDefinition, LayerNameVO,
-};
+use crate::taxonomy::{ArchitectureConfig, ArchitectureRule, LayerDefinition, LayerNameVO};
 
 pub struct ArchComplianceAnalyzer {
     pub config: ArchitectureConfig,
@@ -39,7 +37,9 @@ impl ArchComplianceAnalyzer {
                 if let Some(rules) = rules_by_layer.get(key.as_str()) {
                     for rule in rules {
                         // Skip specialized rules (e.g. contract(port)) when processing base layers
-                        if key.as_str() == base_name && rule.scope.value.contains('(') { continue; }
+                        if key.as_str() == base_name && rule.scope.value.contains('(') {
+                            continue;
+                        }
                         if !rule.exceptions.values.is_empty() {
                             ldef.exceptions = rule.exceptions.clone();
                         }
@@ -51,27 +51,34 @@ impl ArchComplianceAnalyzer {
                         }
                         if rule.min_lines.value > 0 {
                             ldef.min_lines = rule.min_lines.clone();
-                            ldef.min_lines_violation_message = rule.min_lines_violation_message.clone();
+                            ldef.min_lines_violation_message =
+                                rule.min_lines_violation_message.clone();
                         }
                         if rule.max_lines.value > 0 {
                             ldef.max_lines = rule.max_lines.clone();
-                            ldef.max_lines_violation_message = rule.max_lines_violation_message.clone();
+                            ldef.max_lines_violation_message =
+                                rule.max_lines_violation_message.clone();
                         }
                         if rule.barrel_completeness.value {
                             ldef.barrel_completeness = rule.barrel_completeness.clone();
-                            ldef.barrel_completeness_violation_message = rule.barrel_completeness_violation_message.clone();
+                            ldef.barrel_completeness_violation_message =
+                                rule.barrel_completeness_violation_message.clone();
                         }
                         if rule.forbid_internal_all.value {
                             ldef.forbid_internal_all = rule.forbid_internal_all.clone();
-                            ldef.forbid_internal_all_violation_message = rule.forbid_internal_all_violation_message.clone();
+                            ldef.forbid_internal_all_violation_message =
+                                rule.forbid_internal_all_violation_message.clone();
                         }
                         if rule.mandatory_class_definition.value {
-                            ldef.mandatory_class_definition = rule.mandatory_class_definition.clone();
-                            ldef.mandatory_class_definition_violation_message = rule.mandatory_class_definition_violation_message.clone();
+                            ldef.mandatory_class_definition =
+                                rule.mandatory_class_definition.clone();
+                            ldef.mandatory_class_definition_violation_message =
+                                rule.mandatory_class_definition_violation_message.clone();
                         }
                         if !rule.forbidden_inheritance.values.is_empty() {
                             ldef.forbidden_inheritance = rule.forbidden_inheritance.clone();
-                            ldef.forbidden_inheritance_violation_message = rule.forbidden_inheritance_violation_message.clone();
+                            ldef.forbidden_inheritance_violation_message =
+                                rule.forbidden_inheritance_violation_message.clone();
                         }
                     }
                 }
@@ -84,11 +91,13 @@ impl ArchComplianceAnalyzer {
         // and apply per-role forbidden/mandatory import rules correctly.
         for rule in &config.rules {
             let scope = rule.scope.to_string();
-            if !scope.contains('(') { continue; }
+            if !scope.contains('(') {
+                continue;
+            }
             // Extract suffixes from scope: "agent(container|registry|mixin)"
             if let Some(paren_start) = scope.find('(') {
                 let base_name = scope[..paren_start].trim();
-                let inner = scope[paren_start+1..].trim_end_matches(')').trim();
+                let inner = scope[paren_start + 1..].trim_end_matches(')').trim();
                 // Check if the base layer exists — clone def first to avoid borrow conflict
                 let base_key_str = base_name.to_string();
                 let base_def_opt = {
@@ -97,13 +106,24 @@ impl ArchComplianceAnalyzer {
                 };
                 if let Some(base_def) = base_def_opt {
                     let suffixes: Vec<&str> = if inner.contains('|') {
-                        inner.split('|').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+                        inner
+                            .split('|')
+                            .map(|s| s.trim())
+                            .filter(|s| !s.is_empty())
+                            .collect()
                     } else {
-                        inner.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+                        inner
+                            .split(',')
+                            .map(|s| s.trim())
+                            .filter(|s| !s.is_empty())
+                            .collect()
                     };
                     for suffix in suffixes {
-                        let specialized_key = LayerNameVO::new(format!("{}({})", base_name, suffix));
-                        if new_layers.contains_key(&specialized_key) { continue; }
+                        let specialized_key =
+                            LayerNameVO::new(format!("{}({})", base_name, suffix));
+                        if new_layers.contains_key(&specialized_key) {
+                            continue;
+                        }
                         let mut spec_def = base_def.clone();
                         // Apply specialized rules
                         if let Some(rules) = rules_by_layer.get(&scope) {
@@ -121,7 +141,8 @@ impl ArchComplianceAnalyzer {
                                     spec_def.allowed_import = r.allowed_import.clone();
                                 }
                                 if !r.forbidden_inheritance.values.is_empty() {
-                                    spec_def.forbidden_inheritance = r.forbidden_inheritance.clone();
+                                    spec_def.forbidden_inheritance =
+                                        r.forbidden_inheritance.clone();
                                     spec_def.forbidden_inheritance_violation_message =
                                         r.forbidden_inheritance_violation_message.clone();
                                 }
@@ -294,7 +315,9 @@ impl ArchComplianceAnalyzer {
 
     /// Look up a `LayerDefinition` by its layer name string.
     pub fn get_layer_def(&self, layer: &str) -> Option<&LayerDefinition> {
-        self.config.layers.get(&LayerNameVO::new(layer))
+        self.config
+            .layers
+            .get(&LayerNameVO::new(layer))
             .or_else(|| {
                 let base = layer.split('(').next().unwrap_or(layer);
                 self.config.layers.get(&LayerNameVO::new(base))
@@ -314,5 +337,4 @@ impl ArchComplianceAnalyzer {
             normalized_file
         }
     }
-
 }

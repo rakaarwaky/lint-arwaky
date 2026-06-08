@@ -7,7 +7,9 @@ pub struct ProjectLanguage {
 
 impl ProjectLanguage {
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
     }
 }
 

@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::taxonomy::{
-    AdapterName, ComplianceStatus, Count, Identity, LintResult, LintResultList, Score,
-    Severity,
+    AdapterName, ComplianceStatus, Count, Identity, LintResult, LintResultList, Score, Severity,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

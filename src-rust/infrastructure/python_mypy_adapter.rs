@@ -82,10 +82,11 @@ impl ILinterAdapterPort for MyPyAdapter {
                 let stdout = &response.stdout;
                 let re = Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$")
                     .unwrap_or_else(|_| {
-                        Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$").expect("valid regex")
+                        Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$")
+                            .expect("valid regex")
                     });
-                let re_simple =
-                    Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$").expect("valid regex");
+                let re_simple = Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$")
+                    .expect("valid regex");
                 let mut results = Vec::new();
 
                 for line in stdout.lines() {

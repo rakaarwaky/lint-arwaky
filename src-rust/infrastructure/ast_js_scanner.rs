@@ -151,7 +151,11 @@ impl ASTJSParserAdapter {
 
             let mut class_match_found = false;
             if let Some(class_cap) = CLASS_REGEX.captures(stripped) {
-                let name = class_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
+                let name = class_cap
+                    .get(1)
+                    .map(|m| m.as_str())
+                    .unwrap_or("")
+                    .to_string();
                 data.defined.insert(name.clone());
 
                 let base = class_cap.get(2).map(|m| m.as_str().to_string());
@@ -274,24 +278,21 @@ impl ASTJSParserAdapter {
 
             // Export detection
             if stripped.starts_with("export ") {
-                if let Some(export_name) = stripped
-                    .strip_prefix("export ")
-                    .and_then(|rest| {
-                        if rest.starts_with("default ") {
-                            rest.strip_prefix("default ")
-                                .and_then(|r| r.split_whitespace().nth(1))
-                        } else if rest.starts_with("function ")
-                            || rest.starts_with("class ")
-                            || rest.starts_with("const ")
-                            || rest.starts_with("let ")
-                            || rest.starts_with("var ")
-                        {
-                            rest.split_whitespace().nth(1)
-                        } else {
-                            None
-                        }
-                    })
-                {
+                if let Some(export_name) = stripped.strip_prefix("export ").and_then(|rest| {
+                    if rest.starts_with("default ") {
+                        rest.strip_prefix("default ")
+                            .and_then(|r| r.split_whitespace().nth(1))
+                    } else if rest.starts_with("function ")
+                        || rest.starts_with("class ")
+                        || rest.starts_with("const ")
+                        || rest.starts_with("let ")
+                        || rest.starts_with("var ")
+                    {
+                        rest.split_whitespace().nth(1)
+                    } else {
+                        None
+                    }
+                }) {
                     data.exported.insert(export_name.to_string());
                 }
                 // export { foo, bar as baz }
@@ -336,7 +337,9 @@ impl ASTJSParserAdapter {
 
             for cap in WORD_REGEX.find_iter(stripped) {
                 let word = cap.as_str();
-                if !js_keywords.contains(word) && !word.chars().next().is_none_or(|c| c.is_numeric()) {
+                if !js_keywords.contains(word)
+                    && !word.chars().next().is_none_or(|c| c.is_numeric())
+                {
                     data.used.insert(word.to_string());
                 }
             }
@@ -413,21 +416,29 @@ impl ISourceParserPort for ASTJSParserAdapter {
                         continue;
                     }
                     if stripped.starts_with("this.") {
-                        let field = stripped.strip_prefix("this.")
+                        let field = stripped
+                            .strip_prefix("this.")
                             .and_then(|s| s.split('=').next())
                             .map(|s| s.trim().trim_end_matches(';').to_string())
                             .unwrap_or_default();
                         if !field.is_empty() && !field.contains('(') {
-                            attrs.entry(class_name.clone())
+                            attrs
+                                .entry(class_name.clone())
                                 .or_insert_with(Vec::new)
                                 .push(serde_json::json!({"name": field}));
                         }
-                    } else if stripped.contains('=') && !stripped.starts_with("function") && !stripped.starts_with("static") {
-                        let field = stripped.split('=').next()
+                    } else if stripped.contains('=')
+                        && !stripped.starts_with("function")
+                        && !stripped.starts_with("static")
+                    {
+                        let field = stripped
+                            .split('=')
+                            .next()
                             .map(|s| s.trim().trim_start_matches("this.").trim().to_string())
                             .unwrap_or_default();
                         if !field.is_empty() && !field.contains('(') && !field.contains(' ') {
-                            attrs.entry(class_name.clone())
+                            attrs
+                                .entry(class_name.clone())
                                 .or_insert_with(Vec::new)
                                 .push(serde_json::json!({"name": field}));
                         }

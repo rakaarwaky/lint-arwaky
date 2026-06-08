@@ -1,9 +1,9 @@
-use std::sync::Arc;
 /// Analysis CLI commands: complexity, duplicates, trends, ci, batch, dependencies.
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
-use crate::surfaces::cli_output_controller::{get_output_dir, write_output, tee_stdout};
+use crate::surfaces::cli_output_controller::{get_output_dir, tee_stdout, write_output};
 
 pub struct AnalysisCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -21,7 +21,9 @@ impl AnalysisCommandsSurface {
     }
 
     pub fn complexity(&self, path: &str) {
-        let abs_path = PathBuf::from(path).canonicalize().unwrap_or_else(|_| PathBuf::from(path));
+        let abs_path = PathBuf::from(path)
+            .canonicalize()
+            .unwrap_or_else(|_| PathBuf::from(path));
         let abs_path_str = abs_path.to_string_lossy().to_string();
 
         let output_dir = get_output_dir(None);
@@ -38,7 +40,9 @@ impl AnalysisCommandsSurface {
     }
 
     pub fn duplicates(&self, path: &str) {
-        let abs_path = PathBuf::from(path).canonicalize().unwrap_or_else(|_| PathBuf::from(path));
+        let abs_path = PathBuf::from(path)
+            .canonicalize()
+            .unwrap_or_else(|_| PathBuf::from(path));
         let abs_path_str = abs_path.to_string_lossy().to_string();
 
         let output_dir = get_output_dir(None);
@@ -53,7 +57,9 @@ impl AnalysisCommandsSurface {
     }
 
     pub fn trends(&self, path: &str) {
-        let abs_path = PathBuf::from(path).canonicalize().unwrap_or_else(|_| PathBuf::from(path));
+        let abs_path = PathBuf::from(path)
+            .canonicalize()
+            .unwrap_or_else(|_| PathBuf::from(path));
         let _abs_path_str = abs_path.to_string_lossy().to_string();
 
         let output_dir = get_output_dir(None);
@@ -67,7 +73,9 @@ impl AnalysisCommandsSurface {
     }
 
     pub fn ci(&self, path: &str, exit_zero: bool) {
-        let abs_path = PathBuf::from(path).canonicalize().unwrap_or_else(|_| PathBuf::from(path));
+        let abs_path = PathBuf::from(path)
+            .canonicalize()
+            .unwrap_or_else(|_| PathBuf::from(path));
         let _abs_path_str = abs_path.to_string_lossy().to_string();
 
         let output_dir = get_output_dir(None);
@@ -100,7 +108,9 @@ impl AnalysisCommandsSurface {
 
         let output = tee_stdout(None, || {
             for path in paths {
-                let abs_path = PathBuf::from(path).canonicalize().unwrap_or_else(|_| PathBuf::from(path));
+                let abs_path = PathBuf::from(path)
+                    .canonicalize()
+                    .unwrap_or_else(|_| PathBuf::from(path));
                 println!("Checking {}...", abs_path.display());
                 // Run analysis per path
                 println!(" PASSED: {}", abs_path.display());
@@ -117,12 +127,17 @@ impl AnalysisCommandsSurface {
     }
 
     pub fn dependencies(&self, path: &str) {
-        let abs_path = PathBuf::from(path).canonicalize().unwrap_or_else(|_| PathBuf::from(path));
+        let abs_path = PathBuf::from(path)
+            .canonicalize()
+            .unwrap_or_else(|_| PathBuf::from(path));
         let abs_path_str = abs_path.to_string_lossy().to_string();
 
         let output_dir = get_output_dir(None);
         let output = tee_stdout(None, || {
-            println!(" Scanning for dependency vulnerabilities in {}...", abs_path_str);
+            println!(
+                " Scanning for dependency vulnerabilities in {}...",
+                abs_path_str
+            );
             println!(" No dependency vulnerabilities found.");
         });
 
@@ -132,7 +147,9 @@ impl AnalysisCommandsSurface {
     }
 }
 
-pub fn register_analysis_commands(container: Arc<dyn ServiceContainerAggregate>) -> AnalysisCommandsSurface {
+pub fn register_analysis_commands(
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> AnalysisCommandsSurface {
     let mut surface = AnalysisCommandsSurface::new(Some(container.clone()));
     surface.register_all(container);
     surface

@@ -17,8 +17,10 @@ impl JSCallAdapter {
     }
 
     fn get_variant_dict_raw(name: &str) -> std::collections::HashMap<String, String> {
-        let word_re = Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+").expect("valid regex");
-        let words: Vec<String> = word_re.find_iter(name)
+        let word_re = Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
+            .expect("valid regex");
+        let words: Vec<String> = word_re
+            .find_iter(name)
             .map(|m| m.as_str().to_lowercase())
             .collect();
 
@@ -65,14 +67,33 @@ impl JSCallAdapter {
 
     fn build_variants_raw(name: &str) -> Vec<String> {
         let d = Self::get_variant_dict_raw(name);
-        let kebab = d.get("snake_case").map(|s| s.replace("_", "-")).unwrap_or_default();
+        let kebab = d
+            .get("snake_case")
+            .map(|s| s.replace("_", "-"))
+            .unwrap_or_default();
 
         let mut set = std::collections::HashSet::new();
         set.insert(name.to_string());
-        set.insert(d.get("snake_case").map(|s| s.to_string()).unwrap_or_default());
-        set.insert(d.get("camel_case").map(|s| s.to_string()).unwrap_or_default());
-        set.insert(d.get("pascal_case").map(|s| s.to_string()).unwrap_or_default());
-        set.insert(d.get("screaming_snake").map(|s| s.to_string()).unwrap_or_default());
+        set.insert(
+            d.get("snake_case")
+                .map(|s| s.to_string())
+                .unwrap_or_default(),
+        );
+        set.insert(
+            d.get("camel_case")
+                .map(|s| s.to_string())
+                .unwrap_or_default(),
+        );
+        set.insert(
+            d.get("pascal_case")
+                .map(|s| s.to_string())
+                .unwrap_or_default(),
+        );
+        set.insert(
+            d.get("screaming_snake")
+                .map(|s| s.to_string())
+                .unwrap_or_default(),
+        );
         set.insert(kebab);
 
         set.into_iter().collect()
@@ -121,9 +142,10 @@ impl ISemanticTracerPort for JSCallAdapter {
         let name = target_name.to_string();
         let root = Path::new(&root_dir.value);
 
-        let call_pattern = Regex::new(&format!(r"\b{}\s*\(", regex::escape(&name))).expect("valid regex");
-        let def_pattern =
-            Regex::new(&format!(r"(?:function|class)\s+{}\b", regex::escape(&name))).expect("valid regex");
+        let call_pattern =
+            Regex::new(&format!(r"\b{}\s*\(", regex::escape(&name))).expect("valid regex");
+        let def_pattern = Regex::new(&format!(r"(?:function|class)\s+{}\b", regex::escape(&name)))
+            .expect("valid regex");
 
         let js_files = Self::find_js_files(root);
 
