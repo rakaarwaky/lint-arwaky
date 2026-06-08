@@ -1,17 +1,17 @@
-use lint_arwaky::agent::dependency_injection_container::DependencyInjectionContainer;
+use lint_arwaky::di_containers::agent_injection_container::DependencyInjectionContainer;
 use std::env;
 use std::process::ExitCode;
 use std::sync::Arc;
 
 /// CLI binary entry point for lint-arwaky-cli.
-pub struct CliMainEntry;
+pub struct CliMainEntry {}
 
 use clap::Parser;
-use lint_arwaky::capabilities::architecture_lint_handler::format_report;
-use lint_arwaky::contract::ServiceContainerAggregate;
-use lint_arwaky::surfaces::cli_core_command::{Cli, Commands, ConfigCommands, SetupCommands};
-use lint_arwaky::surfaces::cli_fix_command::register_fix_commands;
-use lint_arwaky::taxonomy::{DirectoryPath, FilePath, LintResult, Severity};
+use lint_arwaky::code_analysis::capabilities_lint_handler::format_report;
+use lint_arwaky::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use lint_arwaky::cli_commands::surface_core_command::{Cli, Commands, ConfigCommands, SetupCommands};
+use lint_arwaky::cli_commands::surface_fix_command::register_fix_commands;
+use lint_arwaky::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath}; use lint_arwaky::output_report::taxonomy_result_vo::LintResult; use lint_arwaky::output_report::taxonomy_severity_vo::Severity;
 
 fn main() -> ExitCode {
     let raw_args: Vec<String> = env::args().collect();
@@ -34,7 +34,7 @@ fn main() -> ExitCode {
         } => handle_report(path, output_format),
         Commands::Ci { path, threshold } => handle_ci(path, threshold),
         Commands::Version => {
-            lint_arwaky::surfaces::cli_core_command::CoreCommandsSurface::version();
+            lint_arwaky::cli_commands::surface_core_command::CoreCommandsSurface::version();
             ExitCode::SUCCESS
         }
         Commands::Adapters => handle_adapters(),
@@ -73,7 +73,7 @@ fn handle_scan(path: Option<String>) -> ExitCode {
     let container = Arc::new(DependencyInjectionContainer::new(
         DirectoryPath::new(&root).unwrap_or_default(),
     ));
-    let surface = lint_arwaky::surfaces::register_check_commands(container);
+    let surface = lint_arwaky::cli_commands::surface_check_command::register_check_commands(container);
     surface.scan(&root);
     ExitCode::SUCCESS
 }
@@ -284,7 +284,13 @@ fn handle_trends(path: Option<String>) -> ExitCode {
         DirectoryPath::new(&root).unwrap_or_default(),
     ));
     let metrics = container.metrics_provider();
-    let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
+    let rt = match tokio::runtime::Runtime::new() {
+        Ok(r) => r,
+        Err(_) => {
+            eprintln!("[error] failed to create tokio runtime");
+            return ExitCode::from(1);
+        }
+    };
 
     // Read history
     let history: Vec<serde_json::Value> = if let Some(ref mp) = metrics {
@@ -485,7 +491,9 @@ fn handle_suggest(path: Option<String>) -> ExitCode {
 
 fn handle_install_hook() -> ExitCode {
     let hook = std::path::PathBuf::from(".githooks/pre-commit");
-    let _ = std::fs::create_dir_all(hook.parent().expect("hook path has no parent"));
+    if let Some(parent) = hook.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
     let _ = std::fs::write(&hook, "#!/bin/sh\nlint-arwaky check . || exit 1\n");
     println!("Installed hook at {}", hook.display());
     ExitCode::SUCCESS
@@ -543,7 +551,7 @@ fn lint_path(path: &str) -> Vec<LintResult> {
     let root = FilePath::new(normalize_project_root(path))
         .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
     let orchestrator =
-        lint_arwaky::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator::new();
+        lint_arwaky::code_analysis::agent_lint_orchestrator::ArchitectureLintOrchestrator::new();
     orchestrator.run_self_lint(&root)
 }
 

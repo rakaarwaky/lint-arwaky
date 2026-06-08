@@ -24,50 +24,59 @@ cargo fmt --all
 cargo clippy --all-targets -- -D warnings
 ```
 
-## Layer-gated compilation (unique Cargo features)
+## Architecture (6-layer AES + Vertical Slicing)
 
-`src-rust/lib.rs` conditionally compiles modules by feature. Each `scripts/check_*.sh` invokes one layer.
+The codebase uses **6 architectural layers** as file prefixes, organized into **26 feature folders** (vertical slicing):
 
-Use the interactive menu to check any layer interactively:
+| Layer (prefix) | Allowed suffixes |
+| -------------- | ---------------- |
+| `taxonomy_`    | `_vo`, `_entity`, `_event`, `_error`, `_constant` |
+| `contract_`    | `_port`, `_protocol`, `_aggregate` |
+| `capabilities_` | `_checker`, `_analyzer`, `_processor`, etc. |
+| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc. |
+| `agent_`       | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager` |
+| `surface_`     | `_command`, `_handler`, `_controller` |
 
-```bash
-./scripts/check_layer.sh
+### Feature folders
+
+```
+src-rust/
+  layer-rules/       — Import, compliance, cycle, self-lint rules
+  role-rules/        — Unused, inheritance, bypass rules
+  orphan-detector/   — Orphan code detection
+  primitive-checker/ — Primitive obsession (AES006)
+  cli-commands/      — CLI command surfaces
+  cli-transport/     — CLI execution transport
+  config-system/     — Config loading & parsing
+  pipeline-jobs/     — Jobs, dispatcher, execution
+  naming-rules/      — Naming convention & variants
+  semantic-analysis/ — Data flow, scope, tracer
+  file-watch/        — File watching
+  git-hooks/         — Git hooks management
+  multi-project/     — Multi-project governance
+  project-setup/     — Project init, doctor, mcp-config
+  plugin-system/     — Plugin discovery & management
+  output-report/     — Output formatting & report generation
+  code-analysis/     — Code analysis (linting, data flow)
+  mcp-server/        — MCP server
+  source-parsing/    — Source code parsing
+  lifecycle-state/   — Agent lifecycle management
+  language-adapters/ — Python, JS, Rust adapters
+  di-containers/     — DI container aggregates
+  file-system/       — File system abstraction
+  http-client/       — HTTP client
+  metrics-service/   — Metrics provider
+  shared-common/     — Shared value objects & errors
 ```
 
-Or run individual layer checks:
-
-```
-check_taxonomy.sh     →  cargo check --lib --no-default-features --features check_taxonomy
-check_contract.sh     →  cargo check --lib --no-default-features --features check_contract
-check_infrastructure.sh  →  cargo check --lib --no-default-features --features check_infrastructure
-check_capabilities.sh    →  cargo check --lib --no-default-features --features check_capabilities
-check_agent.sh        →  cargo check --lib --no-default-features --features check_agent
-check_surfaces.sh     →  cargo check --lib --no-default-features --features check_surfaces
-```
-
-Feature chain: `check_taxonomy` → `check_contract` → `check_infrastructure` / `check_capabilities` → `check_agent` → `check_surfaces` (default).
-
-## Architecture (6-layer AES)
-
-Layer ordering (bottom→top) and allowed filename suffixes:
-
-| Layer          | Dir                          | Allowed suffixes                                                                 |
-| -------------- | ---------------------------- | -------------------------------------------------------------------------------- |
-| taxonomy       | `src-rust/taxonomy/`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`                      |
-| contract       | `src-rust/contract/`       | `_port`, `_protocol`, `_aggregate`                                         |
-| capabilities   | `src-rust/capabilities/`   | `_checker`, `_analyzer`, `_processor`, etc.                                |
-| infrastructure | `src-rust/infrastructure/` | `_adapter`, `_provider`, `_scanner`, etc.                                  |
-| agent          | `src-rust/agent/`          | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager` |
-| surfaces       | `src-rust/surfaces/`       | `_command`, `_handler`, `_controller`                                      |
-
-Import flow: surfaces → agent → capabilities/infrastructure → contract → taxonomy.
+Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
 Surfaces must NOT import infrastructure/capabilities directly — they go through `ServiceContainerAggregate` trait (AES023).
 
 AES rules enforced: 31 codes AES001–AES033 (AES028/029 reserved). Config: `lint_arwaky.config.rust.yaml`.
 
 ## Key conventions
 
-- Filenames: exactly 3-word snake_case with layer suffix (AES003)
+- Filenames: exactly `[layer]_[concept]_[suffix].rs` (AES003)
 - Every logic file must define a struct implementing a contract trait (AES009, AES027)
 - `#[allow(...)]`, `unwrap()`, `panic!` are forbidden (AES014)
 - `_constant` files may only contain `pub const` / `pub static` (AES033)

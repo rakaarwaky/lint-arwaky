@@ -1,17 +1,52 @@
-#[cfg(any(feature = "check_taxonomy", feature = "check_surfaces"))]
-pub mod taxonomy;
-
-#[cfg(any(feature = "check_contract", feature = "check_surfaces"))]
-pub mod contract;
-
-#[cfg(any(feature = "check_infrastructure", feature = "check_surfaces"))]
-pub mod infrastructure;
-
-#[cfg(any(feature = "check_capabilities", feature = "check_surfaces"))]
-pub mod capabilities;
-
-#[cfg(any(feature = "check_agent", feature = "check_surfaces"))]
-pub mod agent;
-
-#[cfg(feature = "check_surfaces")]
-pub mod surfaces;
+#[path = "cli-commands/mod.rs"]
+pub mod cli_commands;
+#[path = "cli-transport/mod.rs"]
+pub mod cli_transport;
+#[path = "code-analysis/mod.rs"]
+pub mod code_analysis;
+#[path = "config-system/mod.rs"]
+pub mod config_system;
+#[path = "di-containers/mod.rs"]
+pub mod di_containers;
+#[path = "file-system/mod.rs"]
+pub mod file_system;
+#[path = "file-watch/mod.rs"]
+pub mod file_watch;
+#[path = "git-hooks/mod.rs"]
+pub mod git_hooks;
+#[path = "http-client/mod.rs"]
+pub mod http_client;
+#[path = "language-adapters/mod.rs"]
+pub mod language_adapters;
+#[path = "layer-rules/mod.rs"]
+pub mod layer_rules;
+#[path = "lifecycle-state/mod.rs"]
+pub mod lifecycle_state;
+#[path = "mcp-server/mod.rs"]
+pub mod mcp_server;
+#[path = "metrics-service/mod.rs"]
+pub mod metrics_service;
+#[path = "multi-project/mod.rs"]
+pub mod multi_project;
+#[path = "naming-rules/mod.rs"]
+pub mod naming_rules;
+#[path = "orphan-detector/mod.rs"]
+pub mod orphan_detector;
+#[path = "output-report/mod.rs"]
+pub mod output_report;
+#[path = "pipeline-jobs/mod.rs"]
+pub mod pipeline_jobs;
+#[path = "plugin-system/mod.rs"]
+pub mod plugin_system;
+#[path = "primitive-checker/mod.rs"]
+pub mod primitive_checker;
+#[path = "project-setup/mod.rs"]
+pub mod project_setup;
+#[path = "role-rules/mod.rs"]
+pub mod role_rules;
+#[path = "semantic-analysis/mod.rs"]
+pub mod semantic_analysis;
+#[path = "shared-common/mod.rs"]
+pub mod shared_common;
+#[path = "source-parsing/mod.rs"]
+pub mod source_parsing;

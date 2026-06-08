@@ -1,0 +1,87 @@
+use std::path::Path;
+
+use crate::code_analysis::capabilities_lint_handler::{collect_source_files, format_report, load_config};
+use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use crate::output_report::taxonomy_result_vo::LintResult;
+use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
+
+pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
+    for name in &["src-rust", "src-python", "src-javascript", "src"] {
+        let candidate = project_root.join(name);
+        if candidate.is_dir() {
+            return candidate;
+        }
+    }
+    project_root.join("src-rust")
+}
+
+pub struct ArchitectureLintOrchestrator {}
+
+impl ArchitectureLintOrchestrator {
+    pub fn new() -> Self {
+        let _: Option<&dyn ServiceContainerAggregate> = None;
+        Self {}
+    }
+
+    pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
+        let root = Path::new(project_root);
+        let src_dir = detect_source_dir(root);
+        self.run_lint_at(&src_dir, Some(root))
+    }
+
+    pub fn run_self_lint_dir(&self, src_dir: &str) -> Vec<LintResult> {
+        self.run_lint_at(Path::new(src_dir), None)
+    }
+
+    fn run_lint_at(&self, src_dir: &Path, project_root: Option<&Path>) -> Vec<LintResult> {
+        let config = load_config(project_root, src_dir);
+        let files = collect_source_files(src_dir);
+        if files.is_empty() {
+            return Vec::new();
+        }
+        let root_dir = src_dir.to_string_lossy().to_string();
+        let coordinator = crate::code_analysis::agent_checking_coordinator::LintCheckingCoordinator::new();
+        coordinator.run_all_checks(&config, &files, &root_dir)
+    }
+
+    pub fn format_report(&self, results: &[LintResult], project_root: &str) -> String {
+        format_report(results, project_root)
+    }
+}
+
+impl IArchLintProtocol for ArchitectureLintOrchestrator {
+    fn run_self_lint(&self, project_root: &str) -> LintResultList {
+        LintResultList::new(self.run_self_lint(project_root))
+    }
+
+    fn run_self_lint_dir(&self, src_dir: &str) -> LintResultList {
+        LintResultList::new(self.run_self_lint_dir(src_dir))
+    }
+
+    fn format_report(&self, results: &LintResultList, project_root: &str) -> String {
+        self.format_report(&results.values, project_root)
+    }
+}
+
+pub struct ArchLintPipelineOrchestrator {
+    inner: ArchitectureLintOrchestrator,
+}
+
+impl ArchLintPipelineOrchestrator {
+    pub fn new() -> Self {
+        Self {
+            inner: ArchitectureLintOrchestrator::new(),
+        }
+    }
+
+    pub fn execute_pipeline(&self, project_root: &str) -> LintResultList {
+        let results = self.inner.run_self_lint(project_root);
+        LintResultList::new(results)
+    }
+
+    pub fn execute_pipeline_dir(&self, src_dir: &str) -> LintResultList {
+        let results = self.inner.run_self_lint_dir(src_dir);
+        LintResultList::new(results)
+    }
+}
