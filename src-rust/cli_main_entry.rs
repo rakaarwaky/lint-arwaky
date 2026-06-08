@@ -7,7 +7,7 @@ use std::sync::Arc;
 pub struct CliMainEntry {}
 
 use clap::Parser;
-use lint_arwaky::code_analysis::capabilities_lint_handler::format_report;
+use lint_arwaky::code_analysis::capabilities_lint_processor::format_report;
 use lint_arwaky::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use lint_arwaky::cli_commands::surface_core_command::{Cli, Commands, ConfigCommands, SetupCommands};
 use lint_arwaky::cli_commands::surface_fix_command::register_fix_commands;

@@ -2,7 +2,7 @@ pub mod agent_analysis_orchestrator;
 pub mod agent_checking_coordinator;
 pub mod agent_fix_orchestrator;
 pub mod agent_lint_orchestrator;
-pub mod capabilities_lint_handler;
+pub mod capabilities_lint_processor;
 pub mod capabilities_metric_checker;
 pub mod capabilities_quality_checker;
 pub mod contract_adapter_port;

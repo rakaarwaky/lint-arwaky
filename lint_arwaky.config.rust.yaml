@@ -48,7 +48,7 @@ architecture:
         - flexible:
             [
               "analyzer", "checker", "processor", "evaluator", "resolver", 
-              "validator", "formatter", "handler", "executor", "transformer", 
+              "validator", "formatter", "executor", "transformer", 
               "calculator", "builder", "compiler", "aggregator", "classifier", 
               "extractor", "reporter", "mapper", "filter", "collector", 
               "comparator", "scorer", "inspector", "reviewer", "assessor", "actions"
@@ -84,7 +84,7 @@ architecture:
         - strict:
             [
               "container", "manager", "orchestrator", "registry", "coordinator",
-              "mixin", "dispatcher", "handler", "result", "state"
+              "mixin", "result", "state"
             ]
 
   rules:
