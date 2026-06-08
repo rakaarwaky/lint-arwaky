@@ -32,7 +32,8 @@ impl IJavascriptFlowPort for JSFlowAdapter {
         let content = std::fs::read_to_string(path_str)
             .map_err(|e| SemanticError::new(ErrorMessage::new(format!("Failed to read: {}", e))))?;
         let lines: Vec<&str> = content.lines().collect();
-        let word_pattern = Regex::new(&format!(r"\b{}", regex::escape(var_str))).expect("valid regex");
+        let word_pattern =
+            Regex::new(&format!(r"\b{}", regex::escape(var_str))).expect("valid regex");
         let mut flows: Vec<ErrorMessage> = Vec::new();
         for (i, line) in lines.iter().enumerate() {
             if word_pattern.is_match(line) {

@@ -34,12 +34,13 @@
 pub mod analysis_execution_orchestrator;
 pub mod architecture_compliance_orchestrator;
 pub mod architecture_lint_orchestrator;
-pub mod lint_checking_coordinator;
+pub mod config_loading_orchestrator;
 pub mod dependency_injection_container;
 pub mod dev_commands_orchestrator;
 pub mod git_commands_orchestrator;
 pub mod hook_management_orchestrator;
 pub mod lifecycle_state_manager;
+pub mod lint_checking_coordinator;
 pub mod lint_fix_orchestrator;
 pub mod maintenance_commands_orchestrator;
 pub mod multi_project_orchestrator;
@@ -51,7 +52,6 @@ pub mod pipeline_job_registry;
 pub mod plugin_commands_orchestrator;
 pub mod project_container_registry;
 pub mod report_commands_orchestrator;
-pub mod config_loading_orchestrator;
 pub mod setup_management_orchestrator;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -66,6 +66,7 @@ pub use architecture_compliance_orchestrator::{
 pub use architecture_lint_orchestrator::{
     ArchLintPipelineOrchestrator, ArchitectureLintOrchestrator,
 };
+pub use config_loading_orchestrator::ConfigLoadingOrchestrator;
 pub use dependency_injection_container::{Container, DependencyInjectionContainer};
 pub use dev_commands_orchestrator::DevCommandsOrchestrator;
 pub use git_commands_orchestrator::GitCommandsOrchestrator;
@@ -82,5 +83,4 @@ pub use pipeline_job_registry::PipelineJobRegistry;
 pub use plugin_commands_orchestrator::PluginCommandsOrchestrator;
 pub use project_container_registry::ProjectContainerRegistry;
 pub use report_commands_orchestrator::ReportCommandsOrchestrator;
-pub use config_loading_orchestrator::ConfigLoadingOrchestrator;
 pub use setup_management_orchestrator::SetupManagementOrchestrator;

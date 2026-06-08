@@ -208,7 +208,9 @@ pub struct LayerNameVO {
 
 impl Default for LayerNameVO {
     fn default() -> Self {
-        Self { value: String::new() }
+        Self {
+            value: String::new(),
+        }
     }
 }
 

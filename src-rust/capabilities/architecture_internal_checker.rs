@@ -42,14 +42,13 @@ impl ArchInternalChecker {
                 || content.contains("pub use{")
                 || content.contains("pub use(");
             // Python: __all__ = [...] (only in .py files)
-            let has_python_export = !is_rs && content.contains("__all__")
+            let has_python_export = !is_rs
+                && content.contains("__all__")
                 && !content.contains("// __all__")
                 && !content.contains("# __all__");
             // JS/TS: export * or export { (only in .js/.ts files, not in .rs comments)
             let has_js_export = content.contains("export *");
-            return has_rust_export
-                || has_python_export
-                || has_js_export;
+            return has_rust_export || has_python_export || has_js_export;
         }
         false
     }

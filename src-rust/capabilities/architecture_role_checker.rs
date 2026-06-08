@@ -197,8 +197,8 @@ impl ArchRoleChecker {
                 continue;
             }
 
-            let module_fp =
-                FilePath::new(module_str.clone()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+            let module_fp = FilePath::new(module_str.clone())
+                .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
             let target_layer = match analyzer.detect_module_layer(&module_fp) {
                 Some(l) => l,
                 None => continue,
@@ -585,8 +585,9 @@ impl ArchRoleChecker {
             Err(_) => return,
         };
 
-        static ANY_TYPE_RE: Lazy<Regex> =
-            Lazy::new(|| Regex::new(r":\s*[Aa]ny\b|->\s*[Aa]ny\b|\b[Aa]ny\s*\[").expect("valid regex"));
+        static ANY_TYPE_RE: Lazy<Regex> = Lazy::new(|| {
+            Regex::new(r":\s*[Aa]ny\b|->\s*[Aa]ny\b|\b[Aa]ny\s*\[").expect("valid regex")
+        });
 
         for (i, line) in content.lines().enumerate() {
             for mat in ANY_TYPE_RE.find_iter(line) {
@@ -644,4 +645,3 @@ impl IRoleCheckerProtocol for ArchRoleChecker {
             .await;
     }
 }
-

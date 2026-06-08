@@ -167,7 +167,11 @@ impl ASTPythonParserAdapter {
                     name: None,
                 });
             } else if let Some(from_cap) = FROM_IMPORT_REGEX.captures(stripped) {
-                let module = from_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
+                let module = from_cap
+                    .get(1)
+                    .map(|m| m.as_str())
+                    .unwrap_or("")
+                    .to_string();
                 let symbols_part = from_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
                 for sym in symbols_part
                     .split(',')
@@ -355,15 +359,21 @@ impl ISourceParserPort for ASTPythonParserAdapter {
                 }
                 if in_class {
                     let indent = line.len() - stripped.len();
-                    if indent <= class_indent && !stripped.starts_with('#') && !stripped.is_empty() {
+                    if indent <= class_indent && !stripped.starts_with('#') && !stripped.is_empty()
+                    {
                         if stripped.starts_with("def ") || stripped.starts_with("class ") {
                             break;
                         }
                     }
-                    if indent > class_indent && stripped.contains('=') && !stripped.starts_with("def ") {
-                        let field_name = stripped.split('=').next().unwrap_or("").trim().to_string();
+                    if indent > class_indent
+                        && stripped.contains('=')
+                        && !stripped.starts_with("def ")
+                    {
+                        let field_name =
+                            stripped.split('=').next().unwrap_or("").trim().to_string();
                         if !field_name.is_empty() && !field_name.starts_with('_') {
-                            attrs.entry(class_name.clone())
+                            attrs
+                                .entry(class_name.clone())
                                 .or_insert_with(Vec::new)
                                 .push(serde_json::json!({"name": field_name}));
                         }
@@ -453,7 +463,9 @@ impl ISourceParserPort for ASTPythonParserAdapter {
                 if prim_set.contains(&prim) {
                     violations.push(PrimitiveViolation {
                         line: LineNumber::new((idx_zero + 1) as i64),
-                        column: ColumnNumber::new((cap.get(2).map(|m| m.start()).unwrap_or(0) + 1) as i64),
+                        column: ColumnNumber::new(
+                            (cap.get(2).map(|m| m.start()).unwrap_or(0) + 1) as i64,
+                        ),
                         type_name: prim,
                     });
                 }

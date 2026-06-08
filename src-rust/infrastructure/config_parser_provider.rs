@@ -41,8 +41,9 @@ impl IConfigParserPort for ConfigParserProvider {
                 });
             }
         };
-        let config: ProjectConfig = serde_json::from_value(serde_json::to_value(&raw).unwrap_or_default())
-            .unwrap_or_else(|_| ProjectConfig::defaults());
+        let config: ProjectConfig =
+            serde_json::from_value(serde_json::to_value(&raw).unwrap_or_default())
+                .unwrap_or_else(|_| ProjectConfig::defaults());
         Ok(config)
     }
 

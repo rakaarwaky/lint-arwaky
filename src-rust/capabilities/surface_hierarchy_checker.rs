@@ -321,31 +321,37 @@ mod tests {
 
     #[test]
     fn test_is_in_surfaces() {
-        let f = FilePath::new("src/surfaces/handler.py").unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+        let f = FilePath::new("src/surfaces/handler.py")
+            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert!(is_in_surfaces(&f));
 
-        let f = FilePath::new("src/capabilities/checker.py").unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+        let f = FilePath::new("src/capabilities/checker.py")
+            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert!(!is_in_surfaces(&f));
     }
 
     #[test]
     fn test_is_init() {
-        let f = FilePath::new("src/surfaces/__init__.py").unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+        let f = FilePath::new("src/surfaces/__init__.py")
+            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert!(is_init(&f));
 
-        let f = FilePath::new("src/surfaces/handler.py").unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+        let f = FilePath::new("src/surfaces/handler.py")
+            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert!(!is_init(&f));
     }
 
     #[test]
     fn test_stem() {
-        let f = FilePath::new("src/surfaces/handler.py").unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+        let f = FilePath::new("src/surfaces/handler.py")
+            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert_eq!(stem(&f), "handler");
     }
 
     #[test]
     fn test_directory() {
-        let f = FilePath::new("src/surfaces/handler.py").unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+        let f = FilePath::new("src/surfaces/handler.py")
+            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert_eq!(directory(&f), "src/surfaces");
     }
 }

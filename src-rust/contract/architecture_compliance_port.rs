@@ -3,9 +3,8 @@
 //! Defines the interface for scanning source trees for architecture
 //! violations and applying automated fixes.
 
+use crate::taxonomy::{ComplianceStatus, FilePath, LintResultList};
 use async_trait::async_trait;
-use crate::taxonomy::{FilePath, LintResultList, ComplianceStatus};
-
 
 #[async_trait]
 pub trait IArchCompliancePort: Send + Sync {

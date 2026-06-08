@@ -11,7 +11,8 @@ pub struct HookManagementOrchestrator;
 
 impl HookManagementOrchestratorAggregate for HookManagementOrchestrator {
     fn get_hook_manager(&self) -> &dyn IHookManagerPort {
-        HOOK_MANAGER.get_or_init(|| GitHookAdapter::new(FilePath::new(".".to_string()).unwrap_or_default()))
+        HOOK_MANAGER
+            .get_or_init(|| GitHookAdapter::new(FilePath::new(".".to_string()).unwrap_or_default()))
     }
 
     fn get_hook_manager_identity(&self) -> Identity {

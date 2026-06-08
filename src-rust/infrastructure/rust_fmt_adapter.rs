@@ -100,7 +100,8 @@ impl ILinterAdapterPort for RustFmtAdapter {
         let mut current_file = String::new();
         for line in output.lines() {
             if line.starts_with("Diff in ") {
-                current_file = line.trim_start_matches("Diff in ")
+                current_file = line
+                    .trim_start_matches("Diff in ")
                     .trim_end_matches(':')
                     .trim()
                     .to_string();
@@ -110,8 +111,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
 
             if line.starts_with('+') && !line.starts_with("+++") {
                 let resolved = self.path_norm.resolve_infrastructure_path(
-                    FilePath::new(current_file.clone())
-                        .unwrap_or_else(|_| path.clone()),
+                    FilePath::new(current_file.clone()).unwrap_or_else(|_| path.clone()),
                     Some(path.clone()),
                 );
                 results.push(LintResult::new(

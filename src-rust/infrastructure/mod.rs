@@ -36,13 +36,13 @@
 
 // --- Adapters: Linting ---
 pub mod architecture_compliance_adapter;
+pub mod cargo_audit_adapter;
 pub mod javascript_linter_adapter;
 pub mod python_bandit_adapter;
 pub mod python_mypy_adapter;
 pub mod python_ruff_adapter;
-pub mod rust_linter_adapter;
 pub mod rust_fmt_adapter;
-pub mod cargo_audit_adapter;
+pub mod rust_linter_adapter;
 
 // --- Adapters: Source Parsing ---
 pub mod ast_js_scanner;
@@ -102,13 +102,13 @@ pub mod memory_registry_adapter;
 
 // --- Linting Adapters ---
 pub use architecture_compliance_adapter::ArchComplianceAdapter;
+pub use cargo_audit_adapter::CargoAuditAdapter;
 pub use javascript_linter_adapter::{ESLintAdapter, PrettierAdapter, TSCAdapter};
 pub use python_bandit_adapter::BanditAdapter;
 pub use python_mypy_adapter::MyPyAdapter;
 pub use python_ruff_adapter::RuffAdapter;
-pub use rust_linter_adapter::RustLinterAdapter;
 pub use rust_fmt_adapter::RustFmtAdapter;
-pub use cargo_audit_adapter::CargoAuditAdapter;
+pub use rust_linter_adapter::RustLinterAdapter;
 
 // --- Source Parsing ---
 pub use ast_js_scanner::ASTJSParserAdapter;

@@ -1,8 +1,9 @@
 /// scope_boundary_analyzer — Scope boundary detection for JS/TS files.
 /// Used by data_flow_analyzer to determine enclosing scope bounds.
-
 use crate::contract::IScopeBoundaryProtocol;
-use crate::taxonomy::{ContentString, FilePath, LineContentVO, LineNumber, ScopeBounds, SymbolName};
+use crate::taxonomy::{
+    ContentString, FilePath, LineContentVO, LineNumber, ScopeBounds, SymbolName,
+};
 
 pub struct ScopeBoundaryAnalyzer;
 
@@ -102,7 +103,8 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
         content: &ContentString,
         scope_line: Option<LineNumber>,
     ) -> ScopeBounds {
-        let (start, end) = self.find_scope_bounds(content.value(), scope_line.map(|l| l.value() as usize));
+        let (start, end) =
+            self.find_scope_bounds(content.value(), scope_line.map(|l| l.value() as usize));
         ScopeBounds {
             start: start.map(|s| LineNumber::new(s as i64)),
             end: end.map(|e| LineNumber::new(e as i64)),

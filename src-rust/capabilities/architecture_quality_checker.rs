@@ -1,14 +1,12 @@
-/// Architecture rule checking: bypass comments and unused imports.
-use async_trait::async_trait;
-use crate::contract::{
-    IAnalyzer, IArchRuleProtocol, IFileSystemPort, ISourceParserPort,
-};
 use crate::contract::architecture_rule_protocol::ICodeQualityProtocol;
+use crate::contract::{IAnalyzer, IArchRuleProtocol, IFileSystemPort, ISourceParserPort};
 use crate::taxonomy::{
     AdapterName, ColumnNumber, CustomMessageVO, ErrorCode, ErrorMessage, FilePath, FilePathList,
     Identity, LayerNameVO, LineNumber, LintMessage, LintResult, LintResultList, ModuleName,
     PatternList, Severity,
 };
+/// Architecture rule checking: bypass comments and unused imports.
+use async_trait::async_trait;
 
 pub struct CodeQualityRuleChecker;
 

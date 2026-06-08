@@ -1,15 +1,5 @@
 use std::sync::Arc;
 
-
-
-
-
-
-
-
-
-
-
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 pub struct ReportCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -57,7 +47,9 @@ impl ReportCommandsSurface {
     }
 }
 
-pub fn register_report_commands(container: Arc<dyn ServiceContainerAggregate>) -> ReportCommandsSurface {
+pub fn register_report_commands(
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> ReportCommandsSurface {
     let mut surface = ReportCommandsSurface::new();
     surface.register_all(container);
     surface

@@ -1,6 +1,6 @@
-use async_trait::async_trait;
 use crate::contract::language_detector_port::ILanguageDetectorPort;
 use crate::taxonomy::{FilePath, LanguageSource};
+use async_trait::async_trait;
 
 pub struct LanguageDetectorProvider;
 
@@ -61,7 +61,9 @@ impl ILanguageDetectorPort for LanguageDetectorProvider {
         if let Ok(entries) = std::fs::read_dir(root) {
             for entry in entries.flatten() {
                 if let Some(ext) = entry.path().extension() {
-                    *counts.entry(ext.to_str().unwrap_or("").to_string()).or_insert(0) += 1;
+                    *counts
+                        .entry(ext.to_str().unwrap_or("").to_string())
+                        .or_insert(0) += 1;
                 }
             }
         }

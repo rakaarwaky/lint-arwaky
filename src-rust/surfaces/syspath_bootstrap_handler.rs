@@ -1,7 +1,6 @@
 /// SyspathBootstrapHandler — ensures the project's src directory is on sys.path (equivalent).
 /// In Rust, sys.path bootstrap is not needed. This is a structural stub matching the Python
 /// architecture 1:1, providing the same API surface for compatibility.
-
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use crate::taxonomy::{BooleanVO, FilePath};
 use std::sync::Arc;
