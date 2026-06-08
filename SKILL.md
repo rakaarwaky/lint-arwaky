@@ -1,5 +1,5 @@
 ---
-version: 1.10.2
+version: 1.11.0
 ---
 # Lint Arwaky Skill
 
@@ -39,7 +39,7 @@ Primary dispatch tool. Execute any CLI subcommand. Examples of valid `action` va
 
 ### `list_commands(domain)`
 
-List all available CLI subcommands grouped by domain. Returns rows from `COMMAND_CATALOG` in `src-rust/taxonomy/command_catalog_constant.rs`.
+List all available CLI subcommands grouped by domain. Returns rows from `COMMAND_CATALOG` in `src-rust/cli-commands/taxonomy_catalog_constant.rs`.
 
 ### `commands_schema(tool_name)`
 

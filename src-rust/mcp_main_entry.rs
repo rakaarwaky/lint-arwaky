@@ -4,10 +4,10 @@ use std::sync::Arc;
 /// MCP binary entry point for lint-arwaky-mcp.
 pub struct McpMainEntry {}
 
-use lint_arwaky::agent::dependency_injection_container::DependencyInjectionContainer;
-use lint_arwaky::contract::ServiceContainerAggregate;
-use lint_arwaky::surfaces::mcp_tools_command;
-use lint_arwaky::taxonomy::source_path_vo::DirectoryPath;
+use lint_arwaky::di_containers::agent_injection_container::DependencyInjectionContainer;
+use lint_arwaky::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use lint_arwaky::mcp_server::surface_tools_command;
+use lint_arwaky::source_parsing::taxonomy_path_vo::DirectoryPath;
 
 async fn handle_request(request: Value) -> Value {
     let method = request.get("method").and_then(|m| m.as_str()).unwrap_or("");
@@ -135,17 +135,17 @@ async fn handle_request(request: Value) -> Value {
                             DirectoryPath::new(".").unwrap_or_default(),
                         ));
 
-                    mcp_tools_command::execute_command_tool(container, action, args).await
+                    surface_tools_command::execute_command_tool(container, action, args).await
                 }
 
                 "list_commands" => {
                     let domain = arguments.get("domain").and_then(|d| d.as_str());
-                    mcp_tools_command::list_commands_tool(domain)
+                    surface_tools_command::list_commands_tool(domain)
                 }
 
                 "commands_schema" => {
                     let tool_name = arguments.get("tool_name").and_then(|t| t.as_str());
-                    mcp_tools_command::commands_schema_tool(tool_name)
+                    surface_tools_command::commands_schema_tool(tool_name)
                 }
 
                 "read_skill_context" => {
@@ -153,10 +153,10 @@ async fn handle_request(request: Value) -> Value {
                     let project_root = std::env::current_dir()
                         .map(|p| p.to_string_lossy().to_string())
                         .unwrap_or_else(|_| ".".to_string());
-                    mcp_tools_command::read_skill_context_tool(section, &project_root)
+                    surface_tools_command::read_skill_context_tool(section, &project_root)
                 }
 
-                "health_check" => mcp_tools_command::health_check_tool(),
+                "health_check" => surface_tools_command::health_check_tool(),
 
                 _ => {
                     json!({"error": format!("Unknown tool: {}", tool_name)})

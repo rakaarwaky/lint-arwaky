@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.11.0 (2026-06-09) — Vertical Slicing Refactoring
+
+### Changed
+- **Vertical slicing restructuring**: Replaced 6 layer directories (`taxonomy/`, `contract/`, `capabilities/`, `infrastructure/`, `agent/`, `surfaces/`) with 26 feature/domain folders under `src-rust/`.
+- **File naming convention**: Changed from `[domain]_[concept]_[suffix].rs` to `[layer]_[concept]_[suffix].rs`. Layer is now a file prefix, not a directory.
+- **All 258 source files moved and renamed** — zero architectural changes, zero new features. Pure structural refactoring.
+- **Build verified**: 0 errors, 0 warnings.
+
 ## 1.10.2 (2026-06-07) — 31 AES Rules Complete
 
 ### Added
