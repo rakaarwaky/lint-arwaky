@@ -50,6 +50,27 @@ impl LintResult {
         }
     }
 
+    /// Convenience constructor used by architecture checkers (make_result / mk pattern).
+    pub fn new_arch(file: &str, line: usize, code: &str, sev: Severity, msg: &str) -> Self {
+        Self {
+            file: FilePath::new(file.to_string()).unwrap_or_default(),
+            line: LineNumber::new(line as i64),
+            column: ColumnNumber::new(0),
+            code: ErrorCode::raw(code),
+            message: LintMessage::new(msg),
+            source: Some(AdapterName::raw("architecture")),
+            severity: sev,
+            enclosing_scope: Some(crate::shared_common::taxonomy_lint_vo::ScopeRef {
+                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
+                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
+                file: None,
+                start_line: None,
+                end_line: None,
+            }),
+            related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+        }
+    }
+
     pub fn position(&self) -> Position {
         Position {
             line: self.line.clone(),

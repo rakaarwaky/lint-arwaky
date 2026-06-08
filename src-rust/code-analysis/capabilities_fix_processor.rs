@@ -10,12 +10,12 @@ use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::shared_common::taxonomy_fix_vo::FixResult;
 use std::sync::Arc;
 
-pub struct LintFixOrchestrator {
+pub struct LintFixProcessor {
     dry_run: bool,
     linter: Arc<dyn IArchLintProtocol>,
 }
 
-impl LintFixOrchestrator {
+impl LintFixProcessor {
     pub fn new(linter: Arc<dyn IArchLintProtocol>) -> Self {
         Self {
             dry_run: false,
@@ -145,7 +145,7 @@ impl LintFixOrchestrator {
     }
 }
 
-impl LintFixOrchestratorAggregate for LintFixOrchestrator {
+impl LintFixOrchestratorAggregate for LintFixProcessor {
     fn execute(&self, path: &FilePath) -> FixResult {
         let results = self.linter.run_self_lint(&path.value).values;
 

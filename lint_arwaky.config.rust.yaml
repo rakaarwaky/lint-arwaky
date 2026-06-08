@@ -1,8 +1,7 @@
-# FRD v1.1: Prefix-Based Architecture
-# Layer detection uses filename PREFIX (e.g. "taxonomy_", "capabilities_"),
-# NOT directory path. Files are organized into 26 vertical feature folders.
-# The `path` fields below serve as fallback only (for root entry files).
-# See docs/FRD_001_6layer_architecture.md for full spec.
+# FRD v1.2: Prefix-Based Architecture
+# Layer detection uses filename PREFIX (e.g. "taxonomy_", "capabilities_").
+# NOT directory path — files organized in 26 vertical feature folders.
+# Each suffix is unique per layer (no suffix appears in multiple layers).
 
 thresholds:
   score: 100.0
@@ -32,65 +31,51 @@ ignored_paths:
 architecture:
   enabled: true
   layers:
-    root: 
-      path: "src-rust/"
-      recursive: false
+    root:
       suffix:
         - strict: ["entry"]
     taxonomy:
-      path: "src-rust/taxonomy"
-      recursive: true
       suffix:
         - strict: ["vo", "entity", "error", "event", "constant"]
     contract:
-      recursive: true
-      path: "src-rust/contract"
       suffix:
         - strict: ["port", "protocol", "aggregate"]
     capabilities:
-      recursive: true
-      path: "src-rust/capabilities"
       suffix:
         - flexible:
             [
-              "analyzer", "checker", "processor", "evaluator", "resolver", 
-              "validator", "formatter", "executor", "transformer", 
-              "calculator", "builder", "compiler", "aggregator", "classifier", 
-              "extractor", "reporter", "mapper", "filter", "collector", 
+              "analyzer", "checker", "processor", "evaluator", "resolver",
+              "validator", "formatter", "executor", "transformer",
+              "calculator", "builder", "compiler", "aggregator", "classifier",
+              "extractor", "reporter", "mapper", "filter", "collector",
               "comparator", "scorer", "inspector", "reviewer", "assessor", "actions"
             ]
         - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     infrastructure:
-      recursive: true
-      path: "src-rust/infrastructure"
       suffix:
         - flexible:
             [
-              "adapter", "provider", "scanner", "client", "constants", "schemas", 
-              "lifespan", "wrapper", "tracer", "tracker", "variants", "detector", 
-              "patterns", "util", "system", "repository", "cache", "store", "loader", 
-              "writer", "reader", "driver", "connector", "gateway", "serializer", 
-              "encoder", "decoder", "fetcher", "watcher", "indexer", "dispatcher", 
+              "adapter", "provider", "scanner", "client", "constants", "schemas",
+              "lifespan", "wrapper", "tracer", "tracker", "variants", "detector",
+              "patterns", "util", "system", "repository", "cache", "loader",
+              "writer", "reader", "driver", "connector", "gateway", "serializer",
+              "encoder", "decoder", "fetcher", "watcher", "indexer", "dispatcher",
               "recorder", "proxy", "publisher", "subscriber", "listener", "poller", "streamer"
             ]
         - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     surfaces:
-      recursive: true
-      path: "src-rust/surfaces"
       suffix:
-        - strict: 
+        - strict:
             [
-              "command", "handler", "controller", "page", "view", "component", 
-              "router", "layout", "entry", "hook", "store", "provider"
+              "command", "controller", "page", "view", "component",
+              "router", "layout", "entry", "hook", "store", "action", "screen"
             ]
     agent:
-      path: "src-rust/agent"
-      recursive: true
       suffix:
         - strict:
             [
               "container", "manager", "orchestrator", "registry", "coordinator",
-              "mixin", "result", "state"
+              "mixin", "state"
             ]
 
   rules:
@@ -375,7 +360,7 @@ architecture:
       - name: "Agent_Coordinator_Strategic_Mandate"
         scope: "agent(coordinator)"
         high_level_policy_only: true
-        coordinates_multiple_orchestrators: false
+        coordinates_multiple_orchestrators: true
         high_level_policy_only_violation_message: >
           AES021 AGENT_ROLE_VIOLATION: Low-level implementation details found in a Coordinator.
           WHY? Coordinators must only handle high-level cross-domain policy decisions and orchestration.

@@ -161,7 +161,7 @@ impl ArchComplianceAnalyzer {
         Self { config }
     }
 
-    /// Detect layer dari file — prioritaskan prefix-based detection (FRD v1.1),
+    /// Detect layer from filename — prioritize prefix-based detection (FRD v1.1),
     /// fallback ke path-based untuk root layer files.
     pub fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String> {
         let filename = Path::new(file_path)

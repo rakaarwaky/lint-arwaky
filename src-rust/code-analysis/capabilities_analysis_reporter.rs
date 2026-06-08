@@ -6,13 +6,13 @@ use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
-pub struct AnalysisOrchestrator {}
+pub struct AnalysisReporter {}
 
 struct DummyContainer {}
 impl ServiceContainerAggregate for DummyContainer {}
 
 #[async_trait]
-impl AnalysisOrchestratorAggregate for AnalysisOrchestrator {
+impl AnalysisOrchestratorAggregate for AnalysisReporter {
     fn container(&self) -> &dyn ServiceContainerAggregate {
         static DUMMY: DummyContainer = DummyContainer {};
         &DUMMY
@@ -132,7 +132,7 @@ impl AnalysisOrchestratorAggregate for AnalysisOrchestrator {
     }
 }
 
-impl AnalysisOrchestrator {
+impl AnalysisReporter {
     fn report_from_list(&self, list: LintResultList) -> ArchitectureGovernanceEntity {
         let mut report = ArchitectureGovernanceEntity::new();
         for result in list.values {

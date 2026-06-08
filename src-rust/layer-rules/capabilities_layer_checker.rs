@@ -1,32 +1,12 @@
 use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct ArchLayerChecker {}
 
 impl ArchLayerChecker {
     pub fn new() -> Self {
         Self {}
-    }
-
-    fn mk(file: &str, line: usize, code: &str, sev: Severity, msg: &str) -> LintResult {
-        LintResult {
-            file: FilePath::new(file.to_string()).unwrap_or_default(),
-            line: LineNumber::new(line as i64),
-            column: ColumnNumber::new(0),
-            code: ErrorCode::raw(code),
-            message: LintMessage::new(msg),
-            source: Some(AdapterName::raw("architecture")),
-            severity: sev,
-            enclosing_scope: None,
-            related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
-        }
     }
 
     fn resolve_scope_inheritance(scope: &str) -> (&str, Vec<&str>) {
@@ -103,7 +83,7 @@ impl ArchLayerChecker {
                         trait_name
                     )
                 };
-                violations.push(Self::mk(file, 0, "AES026", Severity::HIGH, &msg));
+                violations.push(LintResult::new_arch(file, 0, "AES026", Severity::HIGH, &msg));
             }
         }
     }
@@ -125,7 +105,7 @@ impl ArchLayerChecker {
                     || t.contains("::infrastructure::")
                     || t.contains("::agent::"))
             {
-                violations.push(Self::mk(
+                violations.push(LintResult::new_arch(
                     file,
                     0,
                     "AES023",
@@ -163,7 +143,7 @@ impl ArchLayerChecker {
             let hi = content.contains(&format!("impl I{}", s))
                 || content.contains(&format!(" for {} ", s));
             if !hi && structs.len() <= 3 {
-                violations.push(Self::mk(
+                violations.push(LintResult::new_arch(
                     file,
                     0,
                     "AES030",

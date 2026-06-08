@@ -38,8 +38,6 @@ pub mod output_report;
 pub mod pipeline_jobs;
 #[path = "plugin-system/mod.rs"]
 pub mod plugin_system;
-#[path = "primitive-checker/mod.rs"]
-pub mod primitive_checker;
 #[path = "project-setup/mod.rs"]
 pub mod project_setup;
 #[path = "role-rules/mod.rs"]

@@ -1,17 +1,9 @@
 // arch_import_checker — Import-related architectural checks.
 // Implements IArchImportProtocol: check_mandatory_imports, check_forbidden_imports, check_legacy_import_rules.
 
-use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use std::fs;
 use std::path::Path;
@@ -95,27 +87,6 @@ impl ArchImportRuleChecker {
                 })
             })
         })
-    }
-
-    fn make_result(file: &str, line: i64, code: &str, msg: &str, sev: Severity) -> LintResult {
-        LintResult {
-            file: FilePath::new(file.to_string())
-                .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default()),
-            line: LineNumber::new(line),
-            column: ColumnNumber::new(0),
-            code: ErrorCode::raw(code),
-            message: LintMessage::new(msg),
-            source: Some(AdapterName::raw("architecture")),
-            severity: sev,
-            enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                file: None,
-                start_line: None,
-                end_line: None,
-            }),
-            related_locations: LocationList::new(),
-        }
     }
 
     fn get_basename(file: &str) -> String {
@@ -285,7 +256,7 @@ impl ArchImportRuleChecker {
                         required
                     )
                 };
-                violations.push(Self::make_result(file, 0, "AES002", &msg, Severity::HIGH));
+                violations.push(LintResult::new_arch(file, 0, "AES002", Severity::HIGH, &msg));
             }
         }
     }
@@ -341,12 +312,12 @@ impl ArchImportRuleChecker {
                                 layer_name, module
                             )
                         };
-                        violations.push(Self::make_result(
+                        violations.push(LintResult::new_arch(
                             file,
-                            *line_num as i64,
+                            *line_num as usize,
                             "AES001",
-                            &msg,
                             Severity::CRITICAL,
+                            &msg,
                         ));
                     }
                 }
@@ -393,12 +364,12 @@ impl ArchImportRuleChecker {
                                 "[AES Layer Violation] {}. File in '{}' imports from '{}' via '{}'.",
                                 desc, file_layer, target, module
                             );
-                            violations.push(Self::make_result(
+                            violations.push(LintResult::new_arch(
                                 file,
-                                *line_num as i64,
+                                *line_num as usize,
                                 "AES001",
-                                &msg,
                                 Severity::CRITICAL,
+                                &msg,
                             ));
                             break;
                         }

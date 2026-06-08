@@ -1,10 +1,13 @@
 // report_formatter_processor — Capability for formatting reports (SARIF, JUnit).
 // Implements ILintReportingProtocol: format, get_formatted_payload, to_sarif, to_junit.
 use crate::layer_rules::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_score_vo::FileFormat;
+use crate::output_report::taxonomy_severity_vo::Severity;
 use /* UNKNOWN: LogOutput */ crate::shared_common::taxonomy_suggestion_vo::LogOutput;
 use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use serde_json::json;
+use std::collections::BTreeMap;
 
 /// Business logic for transforming ArchitectureGovernanceEntitys into standard formats.
 pub struct ReportFormatterProcessor {}
@@ -66,6 +69,67 @@ impl ReportFormatterProcessor {
                 value
             }
         }
+    }
+
+    /// Plain-text report format (AES self-lint style).
+    pub fn format_text(&self, results: &[LintResult], project_root: &str) -> String {
+        let mut lines: Vec<String> = Vec::new();
+        lines.push("=".repeat(60));
+        lines.push("  AES Architecture Compliance Report (Self-Lint)".to_string());
+        lines.push("=".repeat(60));
+        lines.push(format!("  Project: {}", project_root));
+        lines.push(format!("  Files scanned: {}", results.len()));
+        lines.push("=".repeat(60));
+        lines.push("".to_string());
+
+        let mut critical = Vec::new();
+        let mut high = Vec::new();
+        let mut medium = Vec::new();
+        let mut low = Vec::new();
+        for r in results {
+            match r.severity {
+                Severity::CRITICAL => critical.push(r),
+                Severity::HIGH => high.push(r),
+                Severity::MEDIUM => medium.push(r),
+                Severity::LOW => low.push(r),
+                _ => medium.push(r),
+            }
+        }
+        for (sev, items) in [("CRITICAL", &critical), ("HIGH", &high), ("MEDIUM", &medium), ("LOW", &low)] {
+            if items.is_empty() { continue; }
+            lines.push(format!("  [{}] {} violations", sev, items.len()));
+            lines.push("-".repeat(60));
+            for r in items.iter() {
+                let code_str = format!("{}", r.code);
+                lines.push(format!("  [{}] {}", code_str, r.file.value));
+                for msg_line in r.message.value.lines() {
+                    lines.push(format!("    {}", msg_line));
+                }
+            }
+            lines.push("".to_string());
+        }
+        let total = results.len();
+        let mut per_code: BTreeMap<String, usize> = BTreeMap::new();
+        for r in results {
+            *per_code.entry(format!("{}", r.code)).or_insert(0) += 1;
+        }
+        lines.push("=".repeat(60));
+        lines.push(format!("  Total AES Violations: {}", total));
+        lines.push(format!("  Total Category AES Violations: {}", per_code.len()));
+        if !per_code.is_empty() {
+            lines.push("-".repeat(60));
+            for (code, count) in &per_code {
+                lines.push(format!("  {}: {}", code, count));
+            }
+        }
+        lines.push("".to_string());
+        if total == 0 {
+            lines.push("  Status: PASS - No AES violations detected".to_string());
+        } else {
+            lines.push("  Status: FAIL - AES violations detected".to_string());
+        }
+        lines.push("=".repeat(60));
+        lines.join("\n")
     }
 
     /// Map severity string to SARIF level.

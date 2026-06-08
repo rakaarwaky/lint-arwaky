@@ -2,7 +2,6 @@ use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::shared_common::taxonomy_common_vo::Count;
-use /* UNKNOWN: CustomMessageVO */ crate::layer_rules::taxonomy_rule_vo::CustomMessageVO;
 use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
@@ -10,7 +9,6 @@ use crate::shared_common::taxonomy_layer_vo::Identity;
 use /* UNKNOWN: LayerMapVO */ crate::layer_rules::taxonomy_definition_vo::LayerMapVO;
 use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: ModuleName */ crate::shared_common::taxonomy_common_error::ModuleName;
 use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
 use async_trait::async_trait;
 
@@ -119,42 +117,6 @@ pub trait INamingRuleProtocol: IArchRuleProtocol + Send + Sync {
         files: &FilePathList,
         results: &mut LintResultList,
         source_parser: &dyn ISourceParserPort,
-    );
-}
-
-#[async_trait]
-pub trait ICodeQualityProtocol: IArchRuleProtocol + Send + Sync {
-    async fn check_no_bypass_comments(
-        &self,
-        file_path: &FilePath,
-        fs: &dyn IFileSystemPort,
-        results: &mut LintResultList,
-        forbidden_words: Option<&PatternList>,
-        violation_message: Option<&ErrorMessage>,
-        custom_messages: Option<&[CustomMessageVO]>,
-    );
-    async fn check_unused_mandatory_imports(
-        &self,
-        files: &FilePathList,
-        parser: &dyn ISourceParserPort,
-        results: &mut LintResultList,
-        violation_message: Option<&ErrorMessage>,
-        mandatory_imports: Option<&PatternList>,
-        layer_resolver: Option<&(dyn Fn(&ModuleName) -> Option<LayerNameVO> + Sync)>,
-    );
-    async fn check_dead_inheritance_bypass(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    );
-    async fn check_forbidden_inheritance(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
     );
 }
 

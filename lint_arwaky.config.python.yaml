@@ -32,64 +32,50 @@ architecture:
   enabled: true
   layers:
     root:
-      path: "src-python/"
-      recursive: false
       suffix:
         - strict: ["entry"]
     taxonomy:
-      path: "src-python/taxonomy"
-      recursive: true
       suffix:
         - strict: ["vo", "entity", "error", "event", "constant"]
     contract:
-      recursive: true
-      path: "src-python/contract"
       suffix:
         - strict: ["port", "protocol", "aggregate"]
     capabilities:
-      recursive: true
-      path: "src-python/capabilities"
       suffix:
         - flexible:
             [
               "analyzer", "checker", "processor", "evaluator", "resolver", 
-              "validator", "formatter", "handler", "executor", "transformer", 
+              "validator", "formatter", "executor", "transformer", 
               "calculator", "builder", "compiler", "aggregator", "classifier", 
               "extractor", "reporter", "mapper", "filter", "collector", 
               "comparator", "scorer", "inspector", "reviewer", "assessor", "actions"
             ]
         - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     infrastructure:
-      recursive: true
-      path: "src-python/infrastructure"
       suffix:
         - flexible:
             [
               "adapter", "provider", "scanner", "client", "constants", "schemas", 
               "lifespan", "wrapper", "tracer", "tracker", "variants", "detector", 
-              "patterns", "util", "system", "repository", "cache", "store", "loader", 
+              "patterns", "util", "system", "repository", "cache", "loader", 
               "writer", "reader", "driver", "connector", "gateway", "serializer", 
               "encoder", "decoder", "fetcher", "watcher", "indexer", "dispatcher", 
               "recorder", "proxy", "publisher", "subscriber", "listener", "poller", "streamer"
             ]
         - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     surfaces:
-      recursive: true
-      path: "src-python/surfaces"
       suffix:
         - strict: 
             [
-              "command", "handler", "controller", "page", "view", "component", 
-              "router", "layout", "entry", "hook", "store", "provider"
+              "command", "controller", "page", "view", "component", 
+              "router", "layout", "entry", "hook", "store", "action", "screen"
             ]
     agent:
-      path: "src-python/agent"
-      recursive: true
       suffix:
         - strict:
             [
               "container", "manager", "orchestrator", "registry", "coordinator",
-              "mixin", "dispatcher", "handler", "result", "state"
+              "mixin", "state"
             ]
 
   rules:

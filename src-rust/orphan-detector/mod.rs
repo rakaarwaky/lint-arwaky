@@ -1,1 +1,2 @@
 pub mod capabilities_orphan_analyzer;
+pub use capabilities_orphan_analyzer::{ArchOrphanAnalyzer,OrphanGraphResolver,OrphanIndicatorEvaluator};
