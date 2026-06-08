@@ -21,7 +21,7 @@ pub struct ArchitectureLintOrchestrator;
 
 impl ArchitectureLintOrchestrator {
     pub fn new() -> Self {
-        let _ = &ServiceContainerAggregate;
+        let _: Option<&dyn ServiceContainerAggregate> = None;
         Self
     }
 

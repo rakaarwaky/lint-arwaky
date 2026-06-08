@@ -301,11 +301,6 @@ impl ArchComplianceAnalyzer {
             })
     }
 
-    /// Returns true for conventional barrel / re-export files.
-    fn is_barrel_file(filename: &str) -> bool {
-        matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js")
-    }
-
     /// Compute the path of `file_path` relative to `root_dir`.
     /// Falls back to the normalised absolute path when no prefix match is found.
     fn get_relative_path(file_path: &str, root_dir: &str) -> String {
