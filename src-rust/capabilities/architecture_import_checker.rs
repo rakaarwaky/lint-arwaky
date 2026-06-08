@@ -491,18 +491,43 @@ impl ArchImportRuleChecker {
         let Ok(content) = std::fs::read_to_string(&barrel_path) else { return std::collections::HashMap::new(); };
 
         let mut type_suffix: std::collections::HashMap<String, String> = std::collections::HashMap::new();
-        for line in content.lines() {
-            let trimmed = line.trim();
+        let lines: Vec<&str> = content.lines().collect();
+        let mut i = 0;
+        while i < lines.len() {
+            let trimmed = lines[i].trim();
             if trimmed.starts_with("pub use ") {
                 let rest = trimmed.trim_start_matches("pub use ");
                 if let Some(module_end) = rest.find("::") {
                     let module = &rest[..module_end];
                     let module_suffix = module.rsplit('_').next().unwrap_or("").to_string();
-                    let types_part = &rest[module_end + 2..].trim_end_matches(';').trim();
-                    let types_str = types_part
-                        .strip_prefix('{').unwrap_or(types_part)
-                        .strip_suffix('}').unwrap_or(types_part);
-                    for type_name in types_str.split(',') {
+                    // Handle multi-line pub use: `pub use module::{Type1, Type2, ...}`
+                    let mut types_part = rest[module_end + 2..].to_string();
+                    // Remove trailing semicolons
+                    if types_part.ends_with(';') {
+                        types_part = types_part[..types_part.len()-1].to_string();
+                    }
+                    // If this is a multi-line block (ends with { without }),
+                    // read subsequent lines until we find the closing }
+                    if types_part.contains('{') && !types_part.contains('}') {
+                        let mut block_lines = types_part;
+                        i += 1;
+                        while i < lines.len() {
+                            let cont = lines[i].trim();
+                            block_lines.push_str(cont);
+                            if cont.contains('}') {
+                                break;
+                            }
+                            i += 1;
+                        }
+                        types_part = block_lines;
+                    }
+                    if types_part.starts_with('{') {
+                        types_part = types_part[1..].to_string();
+                    }
+                    if types_part.ends_with('}') {
+                        types_part = types_part[..types_part.len()-1].to_string();
+                    }
+                    for type_name in types_part.split(',') {
                         let tn = type_name.trim().to_string();
                         if !tn.is_empty() && !module_suffix.is_empty() {
                             type_suffix.insert(tn, module_suffix.clone());
@@ -510,6 +535,7 @@ impl ArchImportRuleChecker {
                     }
                 }
             }
+            i += 1;
         }
         type_suffix
     }

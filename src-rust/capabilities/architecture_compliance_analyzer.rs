@@ -108,6 +108,9 @@ impl ArchComplianceAnalyzer {
                         // Apply specialized rules
                         if let Some(rules) = rules_by_layer.get(&scope) {
                             for r in rules {
+                                if !r.exceptions.values.is_empty() {
+                                    spec_def.exceptions = r.exceptions.clone();
+                                }
                                 if !r.forbidden_import.values.is_empty() {
                                     spec_def.forbidden_import = r.forbidden_import.clone();
                                 }

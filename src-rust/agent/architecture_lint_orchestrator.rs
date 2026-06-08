@@ -4,6 +4,7 @@ use crate::capabilities::{
     collect_source_files, format_report, load_config,
 };
 use crate::contract::architecture_lint_protocol::IArchLintProtocol;
+use crate::contract::ServiceContainerAggregate;
 use crate::taxonomy::{LintResult, LintResultList};
 
 pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
@@ -20,6 +21,7 @@ pub struct ArchitectureLintOrchestrator;
 
 impl ArchitectureLintOrchestrator {
     pub fn new() -> Self {
+        let _ = &ServiceContainerAggregate;
         Self
     }
 
