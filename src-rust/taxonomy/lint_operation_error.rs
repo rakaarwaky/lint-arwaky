@@ -1,8 +1,5 @@
 /// linter_operation_error — Unified error type for linter adapter operations.
-<<<<<<< HEAD
 use crate::taxonomy::ErrorMessage;
-=======
->>>>>>> 6073c42fee5ad436692b5fe2fdf692e46b36a70c
 use crate::taxonomy::{lint_adapter_error::AdapterError, lint_adapter_error::ScanError};
 use serde::{Deserialize, Serialize};
 
