@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 
 static REGISTRY: OnceLock<MemoryJobRegistryAdapter> = OnceLock::new();
 
-pub struct PipelineExecutionOrchestrator;
+pub struct PipelineExecutionOrchestrator {}
 
 impl PipelineExecutionOrchestratorAggregate for PipelineExecutionOrchestrator {
     fn job_registry(&self) -> &dyn IJobRegistryPort {
@@ -17,7 +17,7 @@ impl PipelineExecutionOrchestratorAggregate for PipelineExecutionOrchestrator {
 
 impl PipelineExecutionOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub async fn execute(

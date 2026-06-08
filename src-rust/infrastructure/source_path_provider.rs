@@ -6,7 +6,7 @@ use crate::contract::path_normalization_port::IPathNormalizationPort;
 use crate::taxonomy::source_path_vo::FilePath;
 
 /// Implementation of path normalization services for infrastructure.
-pub struct PathNormalizationProvider;
+pub struct PathNormalizationProvider {}
 
 impl IPathNormalizationPort for PathNormalizationProvider {
     /// Normalize path: fix slashes, resolve phantom roots.

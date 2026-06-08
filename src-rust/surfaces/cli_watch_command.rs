@@ -2,7 +2,7 @@
 use std::sync::Arc;
 
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
-pub struct WatchdogBridge;
+pub struct WatchdogBridge {}
 
 pub struct WatchCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -19,7 +19,8 @@ impl WatchCommandsSurface {
 
     pub fn watch(&self, path: &str) {
         if self.container.is_none() {
-            panic!("WatchCommandsSurface not initialized with container");
+            eprintln!("[error] container not registered");
+            return;
         }
 
         let abs_path = std::path::Path::new(path);

@@ -4,11 +4,11 @@ use crate::taxonomy::{ArchitectureGovernanceEntity, FileFormat, LogOutput, Respo
 use serde_json::json;
 
 /// Business logic for transforming ArchitectureGovernanceEntitys into standard formats.
-pub struct ReportFormatterProcessor;
+pub struct ReportFormatterProcessor {}
 
 impl ReportFormatterProcessor {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     /// Standard entry point for formatting as JSON/Dict.

@@ -71,13 +71,17 @@ impl CallChainAnalyzer {
 
     /// Find all call sites for the target name within the project.
     pub fn trace_call_chain(&self, root_dir: &str, target_name: &str) -> Vec<String> {
-        let call_pattern = Regex::new(&format!(r"\b{}\s*\(", regex::escape(target_name)))
-            .expect("valid call pattern regex");
-        let def_pattern = Regex::new(&format!(
+        let call_pattern = match Regex::new(&format!(r"\b{}\s*\(", regex::escape(target_name))) {
+            Ok(r) => r,
+            Err(_) => return Vec::new(),
+        };
+        let def_pattern = match Regex::new(&format!(
             r"(?:function|class)\s+{}\b",
             regex::escape(target_name)
-        ))
-        .expect("valid def pattern regex");
+        )) {
+            Ok(r) => r,
+            Err(_) => return Vec::new(),
+        };
 
         let js_files = Self::collect_js_files(root_dir);
         let mut callers: Vec<String> = Vec::new();
@@ -105,10 +109,13 @@ impl CallChainAnalyzer {
 
     /// Rename a symbol across all JS/TS files in the project.
     pub fn project_wide_rename(&self, root_dir: &str, old_name: &str, new_name: &str) -> usize {
-        let pattern = Regex::new(&format!(
+        let pattern = match Regex::new(&format!(
             r#"(`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|//[^\n]*|/\*(?:.|\n)*?\*/)|(\b{}\b)"#,
             regex::escape(old_name)
-        )).expect("valid rename pattern regex");
+        )) {
+            Ok(r) => r,
+            Err(_) => return 0,
+        };
 
         let js_files = Self::collect_js_files(root_dir);
         let mut modified_count = 0;

@@ -2,7 +2,7 @@ use crate::contract::config_parser_port::IConfigParserPort;
 use crate::taxonomy::{ConfigError, ConfigKey, ErrorMessage, FilePath, ProjectConfig};
 use std::path::Path;
 
-pub struct ConfigParserProvider;
+pub struct ConfigParserProvider {}
 
 impl Default for ConfigParserProvider {
     fn default() -> Self {
@@ -12,7 +12,7 @@ impl Default for ConfigParserProvider {
 
 impl ConfigParserProvider {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }
 

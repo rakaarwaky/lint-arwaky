@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-pub struct PipelineExtendedOrchestrator;
+pub struct PipelineExtendedOrchestrator {}
 
 #[async_trait]
 impl PipelineExtendedOrchestratorAggregate for PipelineExtendedOrchestrator {
@@ -55,7 +55,7 @@ impl PipelineExtendedOrchestratorAggregate for PipelineExtendedOrchestrator {
 
 impl PipelineExtendedOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }
 

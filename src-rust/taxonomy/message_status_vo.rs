@@ -38,7 +38,7 @@ impl<'de> serde::Deserialize<'de> for ComplianceStatus {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ComplianceStatusVisitor;
+        struct ComplianceStatusVisitor {}
         impl<'de> serde::de::Visitor<'de> for ComplianceStatusVisitor {
             type Value = ComplianceStatus;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -66,7 +66,7 @@ impl<'de> serde::Deserialize<'de> for ComplianceStatus {
                 Ok(ComplianceStatus { value: val })
             }
         }
-        deserializer.deserialize_any(ComplianceStatusVisitor)
+        deserializer.deserialize_any(ComplianceStatusVisitor {})
     }
 }
 
@@ -120,7 +120,7 @@ impl<'de> serde::Deserialize<'de> for LintMessage {
     where
         D: serde::Deserializer<'de>,
     {
-        struct LintMessageVisitor;
+        struct LintMessageVisitor {}
         impl<'de> serde::de::Visitor<'de> for LintMessageVisitor {
             type Value = LintMessage;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -156,6 +156,6 @@ impl<'de> serde::Deserialize<'de> for LintMessage {
                 Ok(LintMessage { value: val })
             }
         }
-        deserializer.deserialize_any(LintMessageVisitor)
+        deserializer.deserialize_any(LintMessageVisitor {})
     }
 }

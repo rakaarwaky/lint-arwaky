@@ -9,11 +9,11 @@ static RE_WORDS: Lazy<Result<Regex, NamingError>> = Lazy::new(|| {
         .map_err(|e| NamingError::new(ErrorMessage::new(format!("Invalid regex pattern: {}", e))))
 });
 
-pub struct JavascriptNamingProvider;
+pub struct JavascriptNamingProvider {}
 
 impl JavascriptNamingProvider {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }
 

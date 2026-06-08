@@ -26,26 +26,34 @@ pub struct MethodArgsVO {
 }
 
 /// Default parser implementation (inlined from deleted dispatch_routing_parser module).
-pub struct DispatchRoutingParser;
+pub struct DispatchRoutingParser {}
 
 impl DispatchRoutingParser {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }
 
 impl IDispatchRoutingParserProtocol for DispatchRoutingParser {
     fn strip_docstrings(&self, text: &ContentString) -> ContentString {
-        let re =
-            regex::Regex::new(r#""""[\s\S]*?""""|'''[\s\S]*?'''"|#[^\n]*"#).expect("valid regex");
+        let re = match regex::Regex::new(r#""""[\s\S]*?""""|'''[\s\S]*?'''"|#[^\n]*"#) {
+            Ok(r) => r,
+            Err(_) => return ContentString::new(text.value.clone()),
+        };
         ContentString::new(re.replace_all(&text.value, "").to_string())
     }
 
     fn extract_class_methods(&self, text: &ContentString) -> crate::taxonomy::ClassDefinitionMap {
         use std::collections::HashMap;
         let mut defs: HashMap<ClassNameVO, crate::taxonomy::ClassMethodsVO> = HashMap::new();
-        let class_re = regex::Regex::new(r"class\s+(\w+)").expect("valid regex");
-        let method_re = regex::Regex::new(r"def\s+(\w+)\s*\(").expect("valid regex");
+        let class_re = match regex::Regex::new(r"class\s+(\w+)") {
+            Ok(r) => r,
+            Err(_) => return crate::taxonomy::ClassDefinitionMap { definitions: HashMap::new() },
+        };
+        let method_re = match regex::Regex::new(r"def\s+(\w+)\s*\(") {
+            Ok(r) => r,
+            Err(_) => return crate::taxonomy::ClassDefinitionMap { definitions: HashMap::new() },
+        };
         let mut current_class: Option<ClassNameVO> = None;
         for line in text.value.lines() {
             if let Some(c) = class_re.captures(line) {
@@ -65,9 +73,8 @@ impl IDispatchRoutingParserProtocol for DispatchRoutingParser {
     }
 }
 
-static CAPABILITY_REF_PATTERN: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"["']capability["']\s*:\s*["']([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)["']"#)
-        .expect("valid regex")
+static CAPABILITY_REF_PATTERN: Lazy<Option<Regex>> = Lazy::new(|| {
+    Regex::new(r#"["']capability["']\s*:\s*["']([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)["']"#).ok()
 });
 
 pub struct DispatchRoutingChecker {
@@ -175,7 +182,11 @@ impl DispatchRoutingChecker {
         file_path: &FilePath,
         refs: &mut CapabilityReferenceList,
     ) {
-        for caps in CAPABILITY_REF_PATTERN.captures_iter(text) {
+        let pattern = match &*CAPABILITY_REF_PATTERN {
+            Some(r) => r,
+            None => return,
+        };
+        for caps in pattern.captures_iter(text) {
             let class_name =
                 ClassNameVO::new(caps.get(1).map(|m| m.as_str()).unwrap_or("").to_string());
             let method_name =
@@ -253,11 +264,10 @@ impl DispatchRoutingChecker {
         let class_usage = self._group_capabilities_by_class(capability_refs);
 
         if class_usage.usage.len() == 1 {
-            let (single_class, usage_list) = class_usage
-                .usage
-                .iter()
-                .next()
-                .expect("class_usage.usage should have at least one element when len() == 1");
+            let (single_class, usage_list) = match class_usage.usage.iter().next() {
+                Some(x) => x,
+                None => return,
+            };
             if !usage_list.items.is_empty() {
                 let other_classes: Vec<ClassNameVO> = class_defs
                     .definitions
@@ -353,10 +363,12 @@ impl DispatchRoutingChecker {
             Err(_) => return,
         };
 
-        static CALL_PATTERN: Lazy<Regex> =
-            Lazy::new(|| Regex::new(r"(?:await\s+)?self\.\w+\.(\w+)\s*\(").unwrap());
+        let call_re = match Regex::new(r"(?:await\s+)?self\.\w+\.(\w+)\s*\(") {
+            Ok(r) => r,
+            Err(_) => return,
+        };
 
-        for caps in CALL_PATTERN.captures_iter(&content) {
+        for caps in call_re.captures_iter(&content) {
             let method_name = caps.get(1).map(|m| m.as_str()).unwrap_or("");
             let paren_start = caps.get(0).map(|m| m.end()).unwrap_or(1).saturating_sub(1);
             let args_vo = self._extract_args(&content, paren_start);

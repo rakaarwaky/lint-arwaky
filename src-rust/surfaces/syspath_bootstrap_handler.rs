@@ -5,7 +5,7 @@ use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use crate::taxonomy::{BooleanVO, FilePath};
 use std::sync::Arc;
 
-pub struct SyspathBootstrapHandler;
+pub struct SyspathBootstrapHandler {}
 
 impl SyspathBootstrapHandler {
     /// Ensure the project's src directory is resolved.

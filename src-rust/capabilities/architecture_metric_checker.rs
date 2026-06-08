@@ -8,11 +8,11 @@ use crate::taxonomy::{
 use std::fs;
 use std::path::Path;
 
-pub struct ArchMetricChecker;
+pub struct ArchMetricChecker {}
 
 impl ArchMetricChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn make_result(file: &str, line: i64, code: &str, msg: &str, sev: Severity) -> LintResult {
@@ -308,7 +308,7 @@ mod tests {
 
     fn test_definition() -> LayerDefinition {
         LayerDefinition {
-            path: DirectoryPath::new("src-rust/taxonomy".to_string()).unwrap(),
+            path: DirectoryPath::new("src-rust/taxonomy".to_string()).unwrap_or_default(),
             suffix_policy: SuffixPolicyVO::new("strict".to_string()),
             allowed_suffix: PatternList::new(vec!["_vo".to_string(), "_entity".to_string()]),
             forbidden_suffix: PatternList::new(Vec::<String>::new()),
@@ -386,9 +386,9 @@ mod tests {
         let dir = std::env::temp_dir();
         let path = dir.join("_test_count_lines_normal.txt");
         let content = "line1\nline2\nline3\n";
-        std::fs::write(&path, content).unwrap();
-        let result = ArchMetricChecker::count_lines(path.to_str().unwrap());
-        std::fs::remove_file(&path).unwrap();
+        let _ = std::fs::write(&path, content);
+        let result = ArchMetricChecker::count_lines(path.to_str().unwrap_or(""));
+        let _ = std::fs::remove_file(&path);
         assert_eq!(result, Some(3));
     }
 
@@ -396,9 +396,9 @@ mod tests {
     fn test_count_lines_empty_file() {
         let dir = std::env::temp_dir();
         let path = dir.join("_test_count_lines_empty.txt");
-        std::fs::write(&path, "").unwrap();
-        let result = ArchMetricChecker::count_lines(path.to_str().unwrap());
-        std::fs::remove_file(&path).unwrap();
+        let _ = std::fs::write(&path, "");
+        let result = ArchMetricChecker::count_lines(path.to_str().unwrap_or(""));
+        let _ = std::fs::remove_file(&path);
         assert_eq!(result, Some(0));
     }
 
@@ -471,10 +471,10 @@ mod tests {
         let def = test_definition();
         let dir = std::env::temp_dir();
         let path = dir.join("_test_aes005_too_short.txt");
-        std::fs::write(&path, "line1\n").unwrap();
+        let _ = std::fs::write(&path, "line1\n");
         let mut violations = Vec::new();
-        checker.check_line_counts(path.to_str().unwrap(), Some(&def), &mut violations);
-        std::fs::remove_file(&path).unwrap();
+        checker.check_line_counts(path.to_str().unwrap_or(""), Some(&def), &mut violations);
+        let _ = std::fs::remove_file(&path);
         assert_eq!(violations.len(), 1);
         assert!(violations[0].code.code().contains("AES005"));
     }
@@ -486,10 +486,10 @@ mod tests {
         let dir = std::env::temp_dir();
         let path = dir.join("_test_aes004_too_large.txt");
         let content = (0..60).map(|i| format!("line{}\n", i)).collect::<String>();
-        std::fs::write(&path, content).unwrap();
+        let _ = std::fs::write(&path, content);
         let mut violations = Vec::new();
-        checker.check_line_counts(path.to_str().unwrap(), Some(&def), &mut violations);
-        std::fs::remove_file(&path).unwrap();
+        checker.check_line_counts(path.to_str().unwrap_or(""), Some(&def), &mut violations);
+        let _ = std::fs::remove_file(&path);
         assert_eq!(violations.len(), 1);
         assert!(violations[0].code.code().contains("AES004"));
     }
@@ -501,10 +501,10 @@ mod tests {
         let dir = std::env::temp_dir();
         let path = dir.join("_test_aes004_005_ok.txt");
         let content = (0..20).map(|i| format!("line{}\n", i)).collect::<String>();
-        std::fs::write(&path, content).unwrap();
+        let _ = std::fs::write(&path, content);
         let mut violations = Vec::new();
-        checker.check_line_counts(path.to_str().unwrap(), Some(&def), &mut violations);
-        std::fs::remove_file(&path).unwrap();
+        checker.check_line_counts(path.to_str().unwrap_or(""), Some(&def), &mut violations);
+        let _ = std::fs::remove_file(&path);
         assert_eq!(violations.len(), 0);
     }
 }

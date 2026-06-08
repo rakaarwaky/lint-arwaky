@@ -23,6 +23,9 @@ impl std::fmt::Display for FileContentVO {
     }
 }
 
+impl Eq for FileContentVO {
+}
+
 impl std::hash::Hash for FileContentVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.value.hash(state);
@@ -35,7 +38,7 @@ impl PartialEq for FileContentVO {
     }
 }
 
-impl Eq for FileContentVO {}
+
 
 impl From<&str> for FileContentVO {
     fn from(s: &str) -> Self {
@@ -56,7 +59,7 @@ impl<'de> serde::Deserialize<'de> for FileContentVO {
     where
         D: serde::Deserializer<'de>,
     {
-        struct FileContentVOVisitor;
+        struct FileContentVOVisitor {}
         impl<'de> serde::de::Visitor<'de> for FileContentVOVisitor {
             type Value = FileContentVO;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -92,7 +95,7 @@ impl<'de> serde::Deserialize<'de> for FileContentVO {
                 Ok(FileContentVO { value: val })
             }
         }
-        deserializer.deserialize_any(FileContentVOVisitor)
+        deserializer.deserialize_any(FileContentVOVisitor {})
     }
 }
 
@@ -127,6 +130,9 @@ impl std::fmt::Display for Identity {
     }
 }
 
+impl Eq for Identity {
+}
+
 impl std::hash::Hash for Identity {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.value.hash(state);
@@ -139,7 +145,7 @@ impl PartialEq for Identity {
     }
 }
 
-impl Eq for Identity {}
+
 
 impl From<&str> for Identity {
     fn from(s: &str) -> Self {
@@ -160,7 +166,7 @@ impl<'de> serde::Deserialize<'de> for Identity {
     where
         D: serde::Deserializer<'de>,
     {
-        struct IdentityVisitor;
+        struct IdentityVisitor {}
         impl<'de> serde::de::Visitor<'de> for IdentityVisitor {
             type Value = Identity;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -196,7 +202,7 @@ impl<'de> serde::Deserialize<'de> for Identity {
                 Ok(Identity { value: val })
             }
         }
-        deserializer.deserialize_any(IdentityVisitor)
+        deserializer.deserialize_any(IdentityVisitor {})
     }
 }
 
@@ -231,6 +237,9 @@ impl std::fmt::Display for LayerNameVO {
     }
 }
 
+impl Eq for LayerNameVO {
+}
+
 impl std::hash::Hash for LayerNameVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.value.hash(state);
@@ -243,7 +252,7 @@ impl PartialEq for LayerNameVO {
     }
 }
 
-impl Eq for LayerNameVO {}
+
 
 impl From<&str> for LayerNameVO {
     fn from(s: &str) -> Self {
@@ -264,7 +273,7 @@ impl<'de> serde::Deserialize<'de> for LayerNameVO {
     where
         D: serde::Deserializer<'de>,
     {
-        struct LayerNameVOVisitor;
+        struct LayerNameVOVisitor {}
         impl<'de> serde::de::Visitor<'de> for LayerNameVOVisitor {
             type Value = LayerNameVO;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -300,7 +309,7 @@ impl<'de> serde::Deserialize<'de> for LayerNameVO {
                 Ok(LayerNameVO { value: val })
             }
         }
-        deserializer.deserialize_any(LayerNameVOVisitor)
+        deserializer.deserialize_any(LayerNameVOVisitor {})
     }
 }
 
@@ -327,6 +336,9 @@ impl std::fmt::Display for LineContentVO {
     }
 }
 
+impl Eq for LineContentVO {
+}
+
 impl std::hash::Hash for LineContentVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.value.hash(state);
@@ -339,7 +351,7 @@ impl PartialEq for LineContentVO {
     }
 }
 
-impl Eq for LineContentVO {}
+
 
 impl From<&str> for LineContentVO {
     fn from(s: &str) -> Self {
@@ -360,7 +372,7 @@ impl<'de> serde::Deserialize<'de> for LineContentVO {
     where
         D: serde::Deserializer<'de>,
     {
-        struct LineContentVOVisitor;
+        struct LineContentVOVisitor {}
         impl<'de> serde::de::Visitor<'de> for LineContentVOVisitor {
             type Value = LineContentVO;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -396,6 +408,6 @@ impl<'de> serde::Deserialize<'de> for LineContentVO {
                 Ok(LineContentVO { value: val })
             }
         }
-        deserializer.deserialize_any(LineContentVOVisitor)
+        deserializer.deserialize_any(LineContentVOVisitor {})
     }
 }

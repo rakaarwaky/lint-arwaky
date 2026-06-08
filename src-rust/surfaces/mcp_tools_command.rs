@@ -2,7 +2,7 @@
 use serde_json::{json, Value};
 
 /// Surface for MCP tools command implementations.
-pub struct McpToolsCommandSurface;
+pub struct McpToolsCommandSurface {}
 use std::path::Path;
 use std::sync::Arc;
 
@@ -23,9 +23,10 @@ pub async fn execute_command_tool(
     match action.as_ref() {
         "check" | "scan" => {
             let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
-            let linter = container
-                .get_architecture_linter()
-                .expect("Architecture linter not registered");
+            let linter = match container.get_architecture_linter() {
+                Some(l) => l,
+                None => return json!({"error": "Architecture linter not registered"}),
+            };
             let results = linter.run_self_lint(path);
             let report = linter.format_report(&results, path);
             let total = results.values.len();
@@ -65,9 +66,10 @@ pub async fn execute_command_tool(
                 .get("output-format")
                 .and_then(|v| v.as_str())
                 .unwrap_or("text");
-            let linter = container
-                .get_architecture_linter()
-                .expect("Architecture linter not registered");
+            let linter = match container.get_architecture_linter() {
+                Some(l) => l,
+                None => return json!({"error": "Architecture linter not registered"}),
+            };
             let results = linter.run_self_lint(path);
 
             match output_format {

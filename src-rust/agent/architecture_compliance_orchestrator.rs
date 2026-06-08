@@ -25,7 +25,7 @@ use crate::taxonomy::{
 // MIXIN CONTAINERS — DI initialization stubs (wired via DependencyInjectionContainer)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-pub struct InfrastructureMixinContainer;
+pub struct InfrastructureMixinContainer {}
 
 impl InfrastructureMixinContainer {
     pub fn init_infrastructure(&self) {}
@@ -39,9 +39,7 @@ impl InfrastructureContainerAggregate for InfrastructureMixinContainer {
     }
 }
 
-impl ServiceContainerAggregate for InfrastructureMixinContainer {}
-
-pub struct OrchestratorMixinContainer;
+pub struct OrchestratorMixinContainer {}
 
 impl OrchestratorContainerAggregate for OrchestratorMixinContainer {
     fn _init_orchestrators(&mut self) {}
@@ -50,8 +48,6 @@ impl OrchestratorContainerAggregate for OrchestratorMixinContainer {
 impl OrchestratorMixinContainer {
     pub fn init_orchestrators(&self) {}
 }
-
-impl ServiceContainerAggregate for OrchestratorMixinContainer {}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // WATCH ORCHESTRATORS — CLI watch command + file-change execution
@@ -82,7 +78,8 @@ impl WatchCommandsOrchestrator {
     }
 }
 
-pub struct WatchExecutionOrchestrator;
+
+pub struct WatchExecutionOrchestrator {}
 
 impl WatchExecutionOrchestratorAggregate for WatchExecutionOrchestrator {
     fn root_path(&self) -> Option<&FilePath> {
@@ -96,7 +93,7 @@ impl WatchExecutionOrchestratorAggregate for WatchExecutionOrchestrator {
 
 impl WatchExecutionOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn is_available(&self) -> bool {
@@ -124,7 +121,7 @@ impl WatchExecutionOrchestrator {
 // ARCHITECTURE COMPLIANCE — config resolution + multi-orchestrator coordination
 // ═══════════════════════════════════════════════════════════════════════════════
 
-pub struct ArchitectureOrchestrator;
+pub struct ArchitectureOrchestrator {}
 
 impl IArchComplianceProtocol for ArchitectureOrchestrator {
     fn execute(&self, _path: &FilePath) -> LintResultList {
@@ -134,7 +131,7 @@ impl IArchComplianceProtocol for ArchitectureOrchestrator {
 
 impl ArchitectureOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn resolve_effective_layer_map(&self, config: &ArchitectureConfig) -> LayerMapVO {

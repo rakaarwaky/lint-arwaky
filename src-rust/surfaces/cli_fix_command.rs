@@ -44,11 +44,17 @@ impl FixCommandsSurface {
             println!("Found {} violations before fix", results.len());
 
             // Get fix orchestrator from container (AES023: surfaces must not import agent directly)
-            let fix_orch = self
+            let fix_orch = match self
                 .container
                 .as_ref()
                 .and_then(|c| c.get_fix_orchestrator(dry_run))
-                .expect("Fix orchestrator not available in container");
+            {
+                Some(o) => o,
+                None => {
+                    println!("[error] Fix orchestrator not available in container");
+                    return;
+                }
+            };
             let fix_result = fix_orch.execute(&project_path);
 
             println!("{}", fix_result.output.value);

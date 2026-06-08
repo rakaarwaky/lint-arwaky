@@ -42,7 +42,7 @@ impl<'de> serde::Deserialize<'de> for Cause {
     where
         D: serde::Deserializer<'de>,
     {
-        struct CauseVisitor;
+        struct CauseVisitor {}
         impl<'de> serde::de::Visitor<'de> for CauseVisitor {
             type Value = Cause;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -78,7 +78,7 @@ impl<'de> serde::Deserialize<'de> for Cause {
                 Ok(Cause { value: val })
             }
         }
-        deserializer.deserialize_any(CauseVisitor)
+        deserializer.deserialize_any(CauseVisitor {})
     }
 }
 
@@ -124,7 +124,7 @@ impl<'de> serde::Deserialize<'de> for Constraint {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ConstraintVisitor;
+        struct ConstraintVisitor {}
         impl<'de> serde::de::Visitor<'de> for ConstraintVisitor {
             type Value = Constraint;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -160,7 +160,7 @@ impl<'de> serde::Deserialize<'de> for Constraint {
                 Ok(Constraint { value: val })
             }
         }
-        deserializer.deserialize_any(ConstraintVisitor)
+        deserializer.deserialize_any(ConstraintVisitor {})
     }
 }
 
@@ -214,7 +214,7 @@ impl<'de> serde::Deserialize<'de> for ErrorMessage {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ErrorMessageVisitor;
+        struct ErrorMessageVisitor {}
         impl<'de> serde::de::Visitor<'de> for ErrorMessageVisitor {
             type Value = ErrorMessage;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -250,7 +250,7 @@ impl<'de> serde::Deserialize<'de> for ErrorMessage {
                 Ok(ErrorMessage { value: val })
             }
         }
-        deserializer.deserialize_any(ErrorMessageVisitor)
+        deserializer.deserialize_any(ErrorMessageVisitor {})
     }
 }
 
@@ -286,7 +286,7 @@ impl<'de> serde::Deserialize<'de> for ExitCode {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ExitCodeVisitor;
+        struct ExitCodeVisitor {}
         impl<'de> serde::de::Visitor<'de> for ExitCodeVisitor {
             type Value = ExitCode;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -320,7 +320,7 @@ impl<'de> serde::Deserialize<'de> for ExitCode {
                 Ok(ExitCode { value: val })
             }
         }
-        deserializer.deserialize_any(ExitCodeVisitor)
+        deserializer.deserialize_any(ExitCodeVisitor {})
     }
 }
 
@@ -366,7 +366,7 @@ impl<'de> serde::Deserialize<'de> for FieldName {
     where
         D: serde::Deserializer<'de>,
     {
-        struct FieldNameVisitor;
+        struct FieldNameVisitor {}
         impl<'de> serde::de::Visitor<'de> for FieldNameVisitor {
             type Value = FieldName;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -402,7 +402,7 @@ impl<'de> serde::Deserialize<'de> for FieldName {
                 Ok(FieldName { value: val })
             }
         }
-        deserializer.deserialize_any(FieldNameVisitor)
+        deserializer.deserialize_any(FieldNameVisitor {})
     }
 }
 
@@ -448,7 +448,7 @@ impl<'de> serde::Deserialize<'de> for ModuleName {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ModuleNameVisitor;
+        struct ModuleNameVisitor {}
         impl<'de> serde::de::Visitor<'de> for ModuleNameVisitor {
             type Value = ModuleName;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -484,7 +484,7 @@ impl<'de> serde::Deserialize<'de> for ModuleName {
                 Ok(ModuleName { value: val })
             }
         }
-        deserializer.deserialize_any(ModuleNameVisitor)
+        deserializer.deserialize_any(ModuleNameVisitor {})
     }
 }
 
@@ -530,7 +530,7 @@ impl<'de> serde::Deserialize<'de> for PrimitiveTypeName {
     where
         D: serde::Deserializer<'de>,
     {
-        struct PrimitiveTypeNameVisitor;
+        struct PrimitiveTypeNameVisitor {}
         impl<'de> serde::de::Visitor<'de> for PrimitiveTypeNameVisitor {
             type Value = PrimitiveTypeName;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -566,6 +566,6 @@ impl<'de> serde::Deserialize<'de> for PrimitiveTypeName {
                 Ok(PrimitiveTypeName { value: val })
             }
         }
-        deserializer.deserialize_any(PrimitiveTypeNameVisitor)
+        deserializer.deserialize_any(PrimitiveTypeNameVisitor {})
     }
 }

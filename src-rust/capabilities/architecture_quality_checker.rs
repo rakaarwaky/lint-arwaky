@@ -8,11 +8,11 @@ use crate::taxonomy::{
 /// Architecture rule checking: bypass comments and unused imports.
 use async_trait::async_trait;
 
-pub struct CodeQualityRuleChecker;
+pub struct CodeQualityRuleChecker {}
 
 impl CodeQualityRuleChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn rule_name(&self) -> Identity {

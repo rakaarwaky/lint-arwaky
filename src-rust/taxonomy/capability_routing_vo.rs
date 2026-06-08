@@ -103,7 +103,7 @@ impl<'de> serde::Deserialize<'de> for ClassNameVO {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ClassNameVOVisitor;
+        struct ClassNameVOVisitor {}
         impl<'de> serde::de::Visitor<'de> for ClassNameVOVisitor {
             type Value = ClassNameVO;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -139,7 +139,7 @@ impl<'de> serde::Deserialize<'de> for ClassNameVO {
                 Ok(ClassNameVO { value: val })
             }
         }
-        deserializer.deserialize_any(ClassNameVOVisitor)
+        deserializer.deserialize_any(ClassNameVOVisitor {})
     }
 }
 

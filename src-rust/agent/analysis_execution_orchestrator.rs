@@ -3,15 +3,16 @@ use crate::contract::{AnalysisOrchestratorAggregate, ServiceContainerAggregate};
 use crate::taxonomy::{ArchitectureGovernanceEntity, FilePath, LintResultList};
 use async_trait::async_trait;
 
-pub struct AnalysisOrchestrator;
+pub struct AnalysisOrchestrator {}
 
-struct DummyContainer;
-impl ServiceContainerAggregate for DummyContainer {}
+struct DummyContainer {}
+impl ServiceContainerAggregate for DummyContainer {
+}
 
 #[async_trait]
 impl AnalysisOrchestratorAggregate for AnalysisOrchestrator {
     fn container(&self) -> &dyn ServiceContainerAggregate {
-        static DUMMY: DummyContainer = DummyContainer;
+        static DUMMY: DummyContainer = DummyContainer {};
         &DUMMY
     }
 

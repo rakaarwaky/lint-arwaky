@@ -5,11 +5,11 @@ use crate::taxonomy::{
     ContentString, FilePath, LineContentVO, LineNumber, ScopeBounds, SymbolName,
 };
 
-pub struct ScopeBoundaryAnalyzer;
+pub struct ScopeBoundaryAnalyzer {}
 
 impl ScopeBoundaryAnalyzer {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     /// Find scope bounds (start_line, end_line) around a given line.

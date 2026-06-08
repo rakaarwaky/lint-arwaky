@@ -30,14 +30,13 @@ impl AppConfig {
             .or_else(|| env::var("PROJECT_ROOT").ok())
             .unwrap_or_else(|| {
                 env::current_dir()
-                    .expect("failed to get current dir")
-                    .to_string_lossy()
-                    .to_string()
+                    .map(|d| d.to_string_lossy().to_string())
+                    .unwrap_or_else(|_| ".".to_string())
             });
         let proj = project.unwrap_or_else(crate::taxonomy::ProjectConfig::defaults);
 
         Self {
-            phantom_root: DirectoryPath::new(p_root).expect("Invalid phantom root"),
+            phantom_root: DirectoryPath::new(p_root).unwrap_or_default(),
             project: proj,
         }
     }

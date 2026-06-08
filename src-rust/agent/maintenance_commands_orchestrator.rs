@@ -7,7 +7,7 @@ use crate::taxonomy::{
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-pub struct MaintenanceCommandsOrchestrator;
+pub struct MaintenanceCommandsOrchestrator {}
 
 use async_trait::async_trait;
 
@@ -176,6 +176,6 @@ impl Default for MaintenanceCommandsOrchestrator {
 
 impl MaintenanceCommandsOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }

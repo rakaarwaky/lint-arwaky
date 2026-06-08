@@ -47,7 +47,7 @@ pub trait IArchImportProtocol: Send + Sync {
     );
 }
 
-pub struct DefaultArchImportProtocol;
+pub struct DefaultArchImportProtocol {}
 
 #[async_trait]
 impl IArchImportProtocol for DefaultArchImportProtocol {

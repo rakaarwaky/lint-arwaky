@@ -3,7 +3,7 @@ use crate::contract::OutputClientAggregate;
 use crate::taxonomy::{ContentString, FileFormat, FilePath, Identity, LogOutput};
 use std::io::{self, Write};
 
-pub struct OutputClientOrchestrator;
+pub struct OutputClientOrchestrator {}
 
 impl OutputClientAggregate for OutputClientOrchestrator {
     fn get_output_dir(&self) -> Option<&FilePath> {
@@ -23,7 +23,7 @@ impl OutputClientAggregate for OutputClientOrchestrator {
 
 impl OutputClientOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn write_output_inner(

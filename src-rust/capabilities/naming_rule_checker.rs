@@ -8,11 +8,11 @@ use crate::taxonomy::{
 use regex::Regex;
 use std::path::Path;
 
-pub struct NamingRuleChecker;
+pub struct NamingRuleChecker {}
 
 impl NamingRuleChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn rule_name(&self) -> Identity {
@@ -20,7 +20,10 @@ impl NamingRuleChecker {
     }
 
     fn has_snake_case(name: &str) -> bool {
-        let re = Regex::new(r"^_?[a-z][a-z0-9]*(_[a-z0-9]+)*$").expect("valid snake_case regex");
+        let re = match Regex::new(r"^_?[a-z][a-z0-9]*(_[a-z0-9]+)*$") {
+            Ok(r) => r,
+            Err(_) => return false,
+        };
         re.is_match(name)
     }
 

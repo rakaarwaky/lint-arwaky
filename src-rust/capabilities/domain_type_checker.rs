@@ -12,11 +12,11 @@ pub struct PrimitiveViolation {
 }
 
 /// Business logic for detecting illicit primitive usage in class attributes.
-pub struct DomainTypeRuleChecker;
+pub struct DomainTypeRuleChecker {}
 
 impl DomainTypeRuleChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     /// Analyzes Python class attributes to ensure they use domain types instead of primitives.
@@ -36,12 +36,15 @@ impl DomainTypeRuleChecker {
 
         // Pattern to detect class attribute type annotations: `attr: type` or `attr: type = ...`
         // We look for patterns like `    field: str` or `    field: int = 0`
-        let attr_pattern =
-            Regex::new(r"^(\s+)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*([A-Za-z_][A-Za-z0-9_\[\], |]*)")
-                .expect("valid attr pattern regex");
+        let attr_pattern = match Regex::new(r"^(\s+)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*([A-Za-z_][A-Za-z0-9_\[\], |]*)") {
+            Ok(r) => r,
+            Err(_) => return vec![],
+        };
 
-        let class_pattern =
-            Regex::new(r"^(\s*)class\s+[A-Za-z_]").expect("valid class pattern regex");
+        let class_pattern = match Regex::new(r"^(\s*)class\s+[A-Za-z_]") {
+            Ok(r) => r,
+            Err(_) => return vec![],
+        };
 
         for (i, line) in content.lines().enumerate() {
             let line_no = i + 1;

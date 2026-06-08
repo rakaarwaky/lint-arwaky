@@ -10,25 +10,25 @@ use crate::taxonomy::{
     PrimitiveViolationList, ResponseData, SourceParserError, SuccessStatus, SymbolName,
 };
 
-static IMPORT_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^import\s+(.+?)\s+from\s+'([^']+)'").unwrap());
-static IMPORT_DOUBLE_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"^import\s+(.+?)\s+from\s+"([^"]+)""#).unwrap());
-static REQUIRE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"^(?:const|let|var)\s+(\w+)\s*=\s*require\((?:'([^']+)'|"([^"]+)")\)"#).unwrap()
+static IMPORT_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^import\s+(.+?)\s+from\s+'([^']+)'").ok());
+static IMPORT_DOUBLE_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r#"^import\s+(.+?)\s+from\s+"([^"]+)""#).ok());
+static REQUIRE_REGEX: LazyLock<Option<Regex>> = LazyLock::new(|| {
+    Regex::new(r#"^(?:const|let|var)\s+(\w+)\s*=\s*require\((?:'([^']+)'|"([^"]+)")\)"#).ok()
 });
-static CLASS_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^class\s+(\w+)(?:\s+extends\s+(\w+))?").unwrap());
-static FN_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(?:async\s+)?function\s+(\w+)").unwrap());
-static CF_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\b(if|for|while|switch|catch)\b").unwrap());
-static LET_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(?:const|let|var)\s+(\w+)\s*=").unwrap());
-static METHOD_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(?:async\s+)?(\w+)\s*\([^)]*\)\s*\{").unwrap());
-static WORD_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").unwrap());
+static CLASS_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^class\s+(\w+)(?:\s+extends\s+(\w+))?").ok());
+static FN_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^(?:async\s+)?function\s+(\w+)").ok());
+static CF_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\b(if|for|while|switch|catch)\b").ok());
+static LET_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^(?:const|let|var)\s+(\w+)\s*=").ok());
+static METHOD_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^(?:async\s+)?(\w+)\s*\([^)]*\)\s*\{").ok());
+static WORD_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").ok());
 
 #[derive(Debug, Default)]
 struct ParsedData {
@@ -45,11 +45,11 @@ struct ParsedData {
     control_flow_count: i64,
 }
 
-pub struct ASTJSParserAdapter;
+pub struct ASTJSParserAdapter {}
 
 impl ASTJSParserAdapter {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn read_and_parse(&self, path: &FilePath) -> Result<ParsedData, SourceParserError> {
@@ -150,7 +150,7 @@ impl ASTJSParserAdapter {
             let close_braces = stripped.matches('}').count() as i32;
 
             let mut class_match_found = false;
-            if let Some(class_cap) = CLASS_REGEX.captures(stripped) {
+            if let Some(class_cap) = CLASS_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let name = class_cap
                     .get(1)
                     .map(|m| m.as_str())
@@ -190,7 +190,7 @@ impl ASTJSParserAdapter {
 
             if let Some(ref cname) = current_class {
                 if !class_match_found {
-                    if let Some(m_cap) = METHOD_REGEX.captures(stripped) {
+                    if let Some(m_cap) = METHOD_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                         let mname = m_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                         if !["if", "for", "while", "switch"].contains(&mname.as_ref()) {
                             data.class_methods
@@ -206,11 +206,11 @@ impl ASTJSParserAdapter {
             let mut raw_imports = "";
             let mut module_path = "";
 
-            if let Some(imp_cap) = IMPORT_REGEX.captures(stripped) {
+            if let Some(imp_cap) = IMPORT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
                 module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
                 import_found = true;
-            } else if let Some(imp_cap) = IMPORT_DOUBLE_REGEX.captures(stripped) {
+            } else if let Some(imp_cap) = IMPORT_DOUBLE_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
                 module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
                 import_found = true;
@@ -255,7 +255,7 @@ impl ASTJSParserAdapter {
                         name: None,
                     });
                 }
-            } else if let Some(req_cap) = REQUIRE_REGEX.captures(stripped) {
+            } else if let Some(req_cap) = REQUIRE_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let alias = req_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
                 let mod_path_raw = req_cap
                     .get(2)
@@ -310,7 +310,7 @@ impl ASTJSParserAdapter {
                 }
             }
 
-            if let Some(fn_cap) = FN_REGEX.captures(stripped) {
+            if let Some(fn_cap) = FN_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let name = fn_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 data.defined.insert(name.clone());
                 let col_pos = line.find(&name).unwrap_or(0) as i64;
@@ -321,7 +321,7 @@ impl ASTJSParserAdapter {
                 }));
             }
 
-            if let Some(let_cap) = LET_REGEX.captures(stripped) {
+            if let Some(let_cap) = LET_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let name = let_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 let col_pos = line.find(&name).unwrap_or(0) as i64;
                 data.assignments.push(serde_json::json!({
@@ -332,15 +332,17 @@ impl ASTJSParserAdapter {
                 }));
             }
 
-            let cf_matches = CF_REGEX.find_iter(stripped).count() as i64;
+            let cf_matches = CF_REGEX.as_ref().map_or(0, |r| r.find_iter(stripped).count()) as i64;
             data.control_flow_count += cf_matches;
 
-            for cap in WORD_REGEX.find_iter(stripped) {
-                let word = cap.as_str();
-                if !js_keywords.contains(word)
-                    && !word.chars().next().is_none_or(|c| c.is_numeric())
-                {
-                    data.used.insert(word.to_string());
+            if let Some(word_re) = WORD_REGEX.as_ref() {
+                for cap in word_re.find_iter(stripped) {
+                    let word = cap.as_str();
+                    if !js_keywords.contains(word)
+                        && !word.chars().next().is_none_or(|c| c.is_numeric())
+                    {
+                        data.used.insert(word.to_string());
+                    }
                 }
             }
         }
@@ -402,7 +404,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
                 if stripped.starts_with("//") || stripped.starts_with("/*") {
                     continue;
                 }
-                if let Some(cap) = CLASS_REGEX.captures(stripped) {
+                if let Some(cap) = CLASS_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                     class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                     in_class = true;
                     brace_count = 0;

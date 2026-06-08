@@ -27,7 +27,7 @@ impl<'de> serde::Deserialize<'de> for Duration {
     where
         D: serde::Deserializer<'de>,
     {
-        struct DurationVisitor;
+        struct DurationVisitor {}
         impl<'de> serde::de::Visitor<'de> for DurationVisitor {
             type Value = Duration;
             fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -64,7 +64,7 @@ impl<'de> serde::Deserialize<'de> for Duration {
                 })
             }
         }
-        deserializer.deserialize_any(DurationVisitor)
+        deserializer.deserialize_any(DurationVisitor {})
     }
 }
 
@@ -95,7 +95,7 @@ impl<'de> serde::Deserialize<'de> for Timeout {
     where
         D: serde::Deserializer<'de>,
     {
-        struct TimeoutVisitor;
+        struct TimeoutVisitor {}
         impl<'de> serde::de::Visitor<'de> for TimeoutVisitor {
             type Value = Timeout;
             fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -126,6 +126,6 @@ impl<'de> serde::Deserialize<'de> for Timeout {
                 })
             }
         }
-        deserializer.deserialize_any(TimeoutVisitor)
+        deserializer.deserialize_any(TimeoutVisitor {})
     }
 }

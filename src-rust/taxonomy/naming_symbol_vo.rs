@@ -58,7 +58,8 @@ impl PartialEq for SymbolName {
     }
 }
 
-impl Eq for SymbolName {}
+impl Eq for SymbolName {
+}
 
 impl From<&str> for SymbolName {
     fn from(s: &str) -> Self {
@@ -79,7 +80,7 @@ impl<'de> serde::Deserialize<'de> for SymbolName {
     where
         D: serde::Deserializer<'de>,
     {
-        struct SymbolNameVisitor;
+        struct SymbolNameVisitor {}
         impl<'de> serde::de::Visitor<'de> for SymbolNameVisitor {
             type Value = SymbolName;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -115,6 +116,6 @@ impl<'de> serde::Deserialize<'de> for SymbolName {
                 Ok(SymbolName { value: val })
             }
         }
-        deserializer.deserialize_any(SymbolNameVisitor)
+        deserializer.deserialize_any(SymbolNameVisitor {})
     }
 }

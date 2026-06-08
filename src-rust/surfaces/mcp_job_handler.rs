@@ -3,7 +3,7 @@ use crate::taxonomy::job_action_vo::JobId;
 use serde_json::json;
 use std::sync::Arc;
 
-pub struct McpJobCommandsSurface;
+pub struct McpJobCommandsSurface {}
 
 impl Default for McpJobCommandsSurface {
     fn default() -> Self {
@@ -13,7 +13,7 @@ impl Default for McpJobCommandsSurface {
 
 impl McpJobCommandsSurface {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub async fn check_status(

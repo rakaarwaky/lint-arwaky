@@ -24,7 +24,7 @@
 //! use lint_arwaky::taxonomy::*;
 //!
 //! let line = line_number(42);
-//! let path = file_path("src/main.rs").unwrap();
+//! let path = file_path("src/main.rs");
 //! let score = score(95.5);
 //! ```
 //!
@@ -630,7 +630,7 @@ mod tests {
 
     #[test]
     fn test_factory_file_path() {
-        let fp = file_path("src/main.rs").expect("valid file path");
+        let fp = file_path("src/main.rs").unwrap_or_default();
         assert_eq!(fp.value, "src/main.rs");
     }
 

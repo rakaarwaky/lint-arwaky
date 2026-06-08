@@ -1,7 +1,7 @@
 use crate::taxonomy::{ActionName, CommandMetadataVO, DescriptionVO, Suggestion};
 use std::collections::HashMap;
 
-pub struct DispatchCommandsAggregate;
+pub struct DispatchCommandsAggregate {}
 
 impl DispatchCommandsAggregate {
     pub fn command_catalog() -> HashMap<ActionName, CommandMetadataVO> {

@@ -51,7 +51,8 @@ impl PartialEq for ActionName {
     }
 }
 
-impl Eq for ActionName {}
+impl Eq for ActionName {
+}
 
 impl From<&str> for ActionName {
     fn from(s: &str) -> Self {
@@ -72,7 +73,7 @@ impl<'de> serde::Deserialize<'de> for ActionName {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ActionNameVisitor;
+        struct ActionNameVisitor {}
         impl<'de> serde::de::Visitor<'de> for ActionNameVisitor {
             type Value = ActionName;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -108,7 +109,7 @@ impl<'de> serde::Deserialize<'de> for ActionName {
                 Ok(ActionName { value: val })
             }
         }
-        deserializer.deserialize_any(ActionNameVisitor)
+        deserializer.deserialize_any(ActionNameVisitor {})
     }
 }
 
@@ -147,7 +148,6 @@ impl PartialEq for JobId {
     }
 }
 
-impl Eq for JobId {}
 
 impl From<&str> for JobId {
     fn from(s: &str) -> Self {
@@ -168,7 +168,7 @@ impl<'de> serde::Deserialize<'de> for JobId {
     where
         D: serde::Deserializer<'de>,
     {
-        struct JobIdVisitor;
+        struct JobIdVisitor {}
         impl<'de> serde::de::Visitor<'de> for JobIdVisitor {
             type Value = JobId;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -204,6 +204,6 @@ impl<'de> serde::Deserialize<'de> for JobId {
                 Ok(JobId { value: val })
             }
         }
-        deserializer.deserialize_any(JobIdVisitor)
+        deserializer.deserialize_any(JobIdVisitor {})
     }
 }

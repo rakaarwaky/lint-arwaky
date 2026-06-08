@@ -41,7 +41,7 @@ impl<'de> serde::Deserialize<'de> for GitRef {
     where
         D: serde::Deserializer<'de>,
     {
-        struct GitRefVisitor;
+        struct GitRefVisitor {}
         impl<'de> serde::de::Visitor<'de> for GitRefVisitor {
             type Value = GitRef;
             fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -78,6 +78,6 @@ impl<'de> serde::Deserialize<'de> for GitRef {
                 })
             }
         }
-        deserializer.deserialize_any(GitRefVisitor)
+        deserializer.deserialize_any(GitRefVisitor {})
     }
 }

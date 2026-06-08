@@ -20,11 +20,11 @@ fn make_adapter(name: &str) -> Option<AdapterName> {
     AdapterName::new(name).ok()
 }
 
-pub struct ArchRoleChecker;
+pub struct ArchRoleChecker {}
 
 impl ArchRoleChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub async fn check_agent_roles(
@@ -585,28 +585,30 @@ impl ArchRoleChecker {
             Err(_) => return,
         };
 
-        static ANY_TYPE_RE: Lazy<Regex> = Lazy::new(|| {
-            Regex::new(r":\s*[Aa]ny\b|->\s*[Aa]ny\b|\b[Aa]ny\s*\[").expect("valid regex")
+        static ANY_TYPE_RE: Lazy<Option<Regex>> = Lazy::new(|| {
+            Regex::new(r":\s*[Aa]ny\b|->\s*[Aa]ny\b|\b[Aa]ny\s*\[").ok()
         });
 
         for (i, line) in content.lines().enumerate() {
-            for mat in ANY_TYPE_RE.find_iter(line) {
-                let line_num = (i + 1) as i64;
-                let col = mat.start() as i64;
-                results.push(LintResult {
-                    file: f.clone(),
-                    line: LineNumber::new(line_num),
-                    column: ColumnNumber::new(col),
-                    code: ErrorCode::raw("AES024"),
-                    message: LintMessage::new(format!(
-                        "`Any` type annotation found in agent orchestrator layer: '{}'.",
-                        line.trim()
-                    )),
-                    source: make_adapter("architecture"),
-                    severity: Severity::HIGH,
-                    enclosing_scope: None,
-                    related_locations: crate::taxonomy::LocationList::new(),
-                });
+            if let Some(ref re) = *ANY_TYPE_RE {
+                for mat in re.find_iter(line) {
+                    let line_num = (i + 1) as i64;
+                    let col = mat.start() as i64;
+                    results.push(LintResult {
+                        file: f.clone(),
+                        line: LineNumber::new(line_num),
+                        column: ColumnNumber::new(col),
+                        code: ErrorCode::raw("AES024"),
+                        message: LintMessage::new(format!(
+                            "`Any` type annotation found in agent orchestrator layer: '{}'.",
+                            line.trim()
+                        )),
+                        source: make_adapter("architecture"),
+                        severity: Severity::HIGH,
+                        enclosing_scope: None,
+                        related_locations: crate::taxonomy::LocationList::new(),
+                    });
+                }
             }
         }
     }

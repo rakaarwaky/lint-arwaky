@@ -16,11 +16,11 @@ fn make_adapter(name: &str) -> Option<AdapterName> {
     AdapterName::new(name).ok()
 }
 
-pub struct ArchImportProcessor;
+pub struct ArchImportProcessor {}
 
 impl ArchImportProcessor {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub async fn process_file_imports(
@@ -410,10 +410,10 @@ impl ArchImportProcessor {
             return false;
         }
 
-        static CAPTURE_RE: Lazy<Regex> =
-            Lazy::new(|| Regex::new(r"contract\((.+)\)").expect("valid regex"));
+        static CAPTURE_RE: Lazy<Option<Regex>> =
+            Lazy::new(|| Regex::new(r"contract\((.+)\)").ok());
 
-        if let Some(caps) = CAPTURE_RE.captures(req_layer_str) {
+        if let Some(caps) = CAPTURE_RE.as_ref().and_then(|re| re.captures(req_layer_str)) {
             let _pattern = caps.get(1).map(|m| m.as_str()).unwrap_or("");
         }
 

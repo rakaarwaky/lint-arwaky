@@ -7,11 +7,11 @@ use crate::taxonomy::{
 };
 use std::fs;
 
-pub struct ArchInternalChecker;
+pub struct ArchInternalChecker {}
 
 impl ArchInternalChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn make_result(file: &str, code: &str, msg: &str, sev: Severity) -> LintResult {

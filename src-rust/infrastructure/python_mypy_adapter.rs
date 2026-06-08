@@ -80,13 +80,17 @@ impl ILinterAdapterPort for MyPyAdapter {
         {
             Ok(response) => {
                 let stdout = &response.stdout;
-                let re = Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$")
-                    .unwrap_or_else(|_| {
-                        Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$")
-                            .expect("valid regex")
-                    });
-                let re_simple = Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$")
-                    .expect("valid regex");
+                let re = match Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
+                    Ok(r) => r,
+                    Err(_) => match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
+                        Ok(r) => r,
+                        Err(_) => return Ok(LintResultList::new(vec![])),
+                    },
+                };
+                let re_simple = match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
+                    Ok(r) => r,
+                    Err(_) => return Ok(LintResultList::new(vec![])),
+                };
                 let mut results = Vec::new();
 
                 for line in stdout.lines() {

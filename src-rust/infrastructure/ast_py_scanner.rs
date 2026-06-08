@@ -11,23 +11,23 @@ use crate::taxonomy::{
     ResponseData, SourceParserError, SuccessStatus, SymbolName,
 };
 
-static IMPORT_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^import\s+(\w+(?:\.\w+)*)").unwrap());
-static FROM_IMPORT_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^from\s+(\w+(?:\.\w+)*)\s+import\s+(.+)$").unwrap());
-static CLASS_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^class\s+(\w+)\s*(?:\(([^)]*)\))?:").unwrap());
-static DEF_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^def\s+(\w+)\s*\(").unwrap());
-static CF_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\b(if|for|while|try|except|with|async for)\b").unwrap());
-static LET_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(\w+)\s*=").unwrap());
-static WORD_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").unwrap());
-static TYPE_ANNOT_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r":\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b").unwrap()
+static IMPORT_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^import\s+(\w+(?:\.\w+)*)").ok());
+static FROM_IMPORT_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^from\s+(\w+(?:\.\w+)*)\s+import\s+(.+)$").ok());
+static CLASS_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^class\s+(\w+)\s*(?:\(([^)]*)\))?:").ok());
+static DEF_REGEX: LazyLock<Option<Regex>> = LazyLock::new(|| Regex::new(r"^def\s+(\w+)\s*\(").ok());
+static CF_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\b(if|for|while|try|except|with|async for)\b").ok());
+static LET_REGEX: LazyLock<Option<Regex>> = LazyLock::new(|| Regex::new(r"^(\w+)\s*=").ok());
+static WORD_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").ok());
+static TYPE_ANNOT_RE: LazyLock<Option<Regex>> = LazyLock::new(|| {
+    Regex::new(r":\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b").ok()
 });
-static RETURN_TYPE_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"->\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b").unwrap()
+static RETURN_TYPE_RE: LazyLock<Option<Regex>> = LazyLock::new(|| {
+    Regex::new(r"->\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b").ok()
 });
 
 static PY_KEYWORDS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
@@ -115,11 +115,11 @@ struct ParsedData {
     is_barrel: bool,
 }
 
-pub struct ASTPythonParserAdapter;
+pub struct ASTPythonParserAdapter {}
 
 impl ASTPythonParserAdapter {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn read_and_parse(&self, path: &FilePath) -> Result<ParsedData, SourceParserError> {
@@ -157,7 +157,7 @@ impl ASTPythonParserAdapter {
             }
 
             // 1. Imports
-            if let Some(imp_cap) = IMPORT_REGEX.captures(stripped) {
+            if let Some(imp_cap) = IMPORT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let module = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 let alias = module.split('.').last().unwrap_or(&module).to_string();
                 data.imported_aliases.insert(alias.clone(), module.clone());
@@ -166,7 +166,7 @@ impl ASTPythonParserAdapter {
                     module,
                     name: None,
                 });
-            } else if let Some(from_cap) = FROM_IMPORT_REGEX.captures(stripped) {
+            } else if let Some(from_cap) = FROM_IMPORT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let module = from_cap
                     .get(1)
                     .map(|m| m.as_str())
@@ -210,7 +210,7 @@ impl ASTPythonParserAdapter {
             }
 
             // 2. Class definitions
-            if let Some(cls_cap) = CLASS_REGEX.captures(stripped) {
+            if let Some(cls_cap) = CLASS_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let name = cls_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 data.defined.insert(name.clone());
 
@@ -252,7 +252,7 @@ impl ASTPythonParserAdapter {
             }
 
             // 3. Function/method definitions
-            if let Some(fn_cap) = DEF_REGEX.captures(stripped) {
+            if let Some(fn_cap) = DEF_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let name = fn_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 data.defined.insert(name.clone());
 
@@ -271,7 +271,7 @@ impl ASTPythonParserAdapter {
             }
 
             // 4. Assignments
-            if let Some(let_cap) = LET_REGEX.captures(stripped) {
+            if let Some(let_cap) = LET_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let name = let_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 if !PY_KEYWORDS.contains(name.as_str()) {
                     data.assignments.push(serde_json::json!({
@@ -284,13 +284,15 @@ impl ASTPythonParserAdapter {
             }
 
             // 5. Control flow
-            data.control_flow_count += CF_REGEX.find_iter(stripped).count() as i64;
+            data.control_flow_count += CF_REGEX.as_ref().map_or(0, |r| r.find_iter(stripped).count()) as i64;
 
             // 6. Used symbols
-            for cap in WORD_REGEX.find_iter(stripped) {
+            if let Some(word_re) = WORD_REGEX.as_ref() {
+                for cap in word_re.find_iter(stripped) {
                 let word = cap.as_str();
-                if !PY_KEYWORDS.contains(word) && !word.starts_with(|c: char| c.is_numeric()) {
-                    data.used.insert(word.to_string());
+                    if !PY_KEYWORDS.contains(word) && !word.starts_with(|c: char| c.is_numeric()) {
+                        data.used.insert(word.to_string());
+                    }
                 }
             }
         }
@@ -351,7 +353,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
                 if stripped.is_empty() || stripped.starts_with('#') {
                     continue;
                 }
-                if let Some(cap) = CLASS_REGEX.captures(stripped) {
+                if let Some(cap) = CLASS_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                     class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                     in_class = true;
                     class_indent = line.len() - stripped.len();
@@ -429,7 +431,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
             }
 
             // Check type annotations in function defs: def foo(x: int, y: str) -> bool:
-            if let Some(m) = TYPE_ANNOT_RE.find(stripped) {
+            if let Some(m) = TYPE_ANNOT_RE.as_ref().and_then(|r| r.find(stripped)) {
                 let prim = m.as_str().trim_start_matches(": ").to_string();
                 if prim_set.contains(&prim) {
                     violations.push(PrimitiveViolation {
@@ -441,7 +443,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
             }
 
             // Check return type annotations: -> int
-            if let Some(m) = RETURN_TYPE_RE.find(stripped) {
+            if let Some(m) = RETURN_TYPE_RE.as_ref().and_then(|r| r.find(stripped)) {
                 let prim = m.as_str().trim_start_matches("-> ").to_string();
                 if prim_set.contains(&prim) {
                     violations.push(PrimitiveViolation {
@@ -454,10 +456,9 @@ impl ISourceParserPort for ASTPythonParserAdapter {
 
             // Check class attribute annotations: x: int = 5
             // simple pattern: word: type = or word: type  (on its own line or after comment)
-            let attr_re = Regex::new(
+            let Ok(attr_re) = Regex::new(
                 r"\b([a-zA-Z_]\w*)\s*:\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b",
-            )
-            .expect("valid regex");
+            ) else { continue };
             for cap in attr_re.captures_iter(stripped) {
                 let prim = cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string();
                 if prim_set.contains(&prim) {

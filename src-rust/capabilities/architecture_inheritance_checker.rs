@@ -80,7 +80,10 @@ impl MandatoryInheritanceChecker {
     fn extract_contract_imports(content: &str) -> Vec<String> {
         let mut imports: Vec<String> = Vec::new();
         // Match `from x import Y, Z` or `from x import (Y, Z)`
-        let from_re = Regex::new(r"from\s+(\S+)\s+import\s+(.+)").expect("valid regex");
+        let from_re = match Regex::new(r"from\s+(\S+)\s+import\s+(.+)") {
+            Ok(r) => r,
+            Err(_) => return Vec::new(),
+        };
 
         for line in content.lines() {
             let trimmed = line.trim();
@@ -105,7 +108,10 @@ impl MandatoryInheritanceChecker {
     }
 
     fn extract_class_bases(content: &str) -> Vec<String> {
-        let class_re = Regex::new(r"class\s+\w+\s*\(([^)]*)\)").expect("valid regex");
+        let class_re = match Regex::new(r"class\s+\w+\s*\(([^)]*)\)") {
+            Ok(r) => r,
+            Err(_) => return Vec::new(),
+        };
         let mut bases: Vec<String> = Vec::new();
 
         for line in content.lines() {

@@ -13,7 +13,7 @@ pub trait IArchInheritanceProtocol: Send + Sync {
     );
 }
 
-pub struct DefaultArchInheritanceProtocol;
+pub struct DefaultArchInheritanceProtocol {}
 
 #[async_trait]
 impl IArchInheritanceProtocol for DefaultArchInheritanceProtocol {

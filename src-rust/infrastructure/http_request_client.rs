@@ -7,11 +7,11 @@ use crate::taxonomy::{
 use std::collections::HashMap;
 use std::time::Duration;
 
-pub struct SyncHttpProvider;
+pub struct SyncHttpProvider {}
 
 impl SyncHttpProvider {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }
 

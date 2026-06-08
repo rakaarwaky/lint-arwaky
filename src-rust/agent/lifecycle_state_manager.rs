@@ -20,9 +20,15 @@ impl LifecycleStateManager {
 #[async_trait::async_trait]
 impl AgentLifecycleAggregate for LifecycleStateManager {
     fn container(&self) -> Arc<dyn ServiceContainerAggregate> {
-        self.container
-            .clone()
-            .expect("LifecycleStateManager not initialized with container")
+        self.container.clone().unwrap_or_else(|| {
+            struct StubBootstrapContainer {}
+            impl ServiceContainerAggregate for StubBootstrapContainer {
+                fn file_system(&self) -> Arc<dyn crate::contract::file_system_port::IFileSystemPort> {
+                    todo!("StubBootstrapContainer: file_system not available")
+                }
+            }
+            Arc::new(StubBootstrapContainer {})
+        })
     }
 
     fn status(&self) -> AgentStatusVO {

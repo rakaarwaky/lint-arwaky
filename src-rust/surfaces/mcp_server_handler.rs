@@ -2,7 +2,7 @@
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 use crate::surfaces::mcp_tools_handler::register_tools;
 
-pub struct McpServerHandlerSurface;
+pub struct McpServerHandlerSurface {}
 
 impl Default for McpServerHandlerSurface {
     fn default() -> Self {
@@ -12,7 +12,7 @@ impl Default for McpServerHandlerSurface {
 
 impl McpServerHandlerSurface {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn run_server(&self, container: std::sync::Arc<dyn ServiceContainerAggregate>) {

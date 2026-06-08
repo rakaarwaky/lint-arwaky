@@ -52,7 +52,8 @@ impl PartialEq for ConfigKey {
     }
 }
 
-impl Eq for ConfigKey {}
+impl Eq for ConfigKey {
+}
 
 impl From<&str> for ConfigKey {
     fn from(s: &str) -> Self {
@@ -81,7 +82,7 @@ impl<'de> serde::Deserialize<'de> for ConfigKey {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ConfigKeyVisitor;
+        struct ConfigKeyVisitor {}
         impl<'de> serde::de::Visitor<'de> for ConfigKeyVisitor {
             type Value = ConfigKey;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -117,6 +118,6 @@ impl<'de> serde::Deserialize<'de> for ConfigKey {
                 Ok(ConfigKey { value: val })
             }
         }
-        deserializer.deserialize_any(ConfigKeyVisitor)
+        deserializer.deserialize_any(ConfigKeyVisitor {})
     }
 }

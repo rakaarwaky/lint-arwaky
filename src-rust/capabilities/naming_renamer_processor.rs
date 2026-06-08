@@ -5,11 +5,11 @@ use regex::Regex;
 use std::fs;
 
 /// Business logic for renaming symbols across the entire codebase.
-pub struct SymbolRenamerProcessor;
+pub struct SymbolRenamerProcessor {}
 
 impl SymbolRenamerProcessor {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn collect_files(root_dir: &str) -> Vec<String> {
@@ -43,7 +43,7 @@ impl SymbolRenamerProcessor {
     /// Returns count of modified files.
     pub fn rename_symbol(&self, root_dir: &str, old_name: &str, new_name: &str) -> usize {
         // Pattern that skips strings and comments, captures word boundary matches
-        let pattern = Regex::new(&format!(
+        let pattern = match Regex::new(&format!(
             r#"(?x)
             (
                 \"\"\"(?:\\.|[^\\])*?\"\"\"  |   # Python triple-double
@@ -59,8 +59,10 @@ impl SymbolRenamerProcessor {
             \b({old})\b
             "#,
             old = regex::escape(old_name)
-        ))
-        .expect("valid rename pattern regex");
+        )) {
+            Ok(r) => r,
+            Err(_) => return 0,
+        };
 
         let files = Self::collect_files(root_dir);
         let mut modified_count = 0;

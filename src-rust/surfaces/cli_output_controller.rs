@@ -41,7 +41,7 @@ impl OutputControllerSurface {
 static INSTANCE: Mutex<Option<OutputControllerSurface>> = Mutex::new(None);
 
 fn get_instance() -> std::sync::MutexGuard<'static, Option<OutputControllerSurface>> {
-    let mut guard = INSTANCE.lock().expect("lock poisoned");
+    let mut guard = INSTANCE.lock().unwrap_or_else(|e| e.into_inner());
     if guard.is_none() {
         *guard = Some(OutputControllerSurface::new());
     }
@@ -72,7 +72,7 @@ pub fn tee_stdout<F: FnOnce()>(_container: Option<&str>, f: F) -> String {
 }
 
 pub fn set_container(container: Arc<dyn ServiceContainerAggregate>) {
-    let mut guard = INSTANCE.lock().expect("lock poisoned");
+    let mut guard = INSTANCE.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(ref mut s) = *guard {
         s.container = Some(container);
     } else {

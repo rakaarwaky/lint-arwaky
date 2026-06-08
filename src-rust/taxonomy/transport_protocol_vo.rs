@@ -120,7 +120,7 @@ impl<'de> serde::Deserialize<'de> for TransportUrlVO {
     where
         D: serde::Deserializer<'de>,
     {
-        struct TransportUrlVOVisitor;
+        struct TransportUrlVOVisitor {}
         impl<'de> serde::de::Visitor<'de> for TransportUrlVOVisitor {
             type Value = TransportUrlVO;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -156,6 +156,6 @@ impl<'de> serde::Deserialize<'de> for TransportUrlVO {
                 Ok(TransportUrlVO { value: val })
             }
         }
-        deserializer.deserialize_any(TransportUrlVOVisitor)
+        deserializer.deserialize_any(TransportUrlVOVisitor {})
     }
 }

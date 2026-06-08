@@ -145,9 +145,9 @@ fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
                 for (_, v) in obj.iter() {
                     if let Some(arr) = v.as_array() {
                         for item in arr {
-                            flat.as_array_mut()
-                                .expect("flat is always an array")
-                                .push(item.clone());
+                            if let Some(arr) = flat.as_array_mut() {
+                                arr.push(item.clone());
+                            }
                         }
                     }
                 }

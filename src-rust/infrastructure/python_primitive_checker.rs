@@ -1,9 +1,9 @@
 // Placeholder for generated Python primitive checker utilities.
 
-pub struct PythonPrimitiveChecker;
+pub struct PythonPrimitiveChecker {}
 
 impl PythonPrimitiveChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }

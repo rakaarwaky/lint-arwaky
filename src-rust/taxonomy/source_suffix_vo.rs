@@ -35,7 +35,7 @@ impl<'de> serde::Deserialize<'de> for SuffixVO {
     where
         D: serde::Deserializer<'de>,
     {
-        struct SuffixVOVisitor;
+        struct SuffixVOVisitor {}
         impl<'de> serde::de::Visitor<'de> for SuffixVOVisitor {
             type Value = SuffixVO;
             fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -66,7 +66,7 @@ impl<'de> serde::Deserialize<'de> for SuffixVO {
                 })
             }
         }
-        deserializer.deserialize_any(SuffixVOVisitor)
+        deserializer.deserialize_any(SuffixVOVisitor {})
     }
 }
 
@@ -119,7 +119,7 @@ impl<'de> serde::Deserialize<'de> for SuffixPolicyVO {
     where
         D: serde::Deserializer<'de>,
     {
-        struct SuffixPolicyVOVisitor;
+        struct SuffixPolicyVOVisitor {}
         impl<'de> serde::de::Visitor<'de> for SuffixPolicyVOVisitor {
             type Value = SuffixPolicyVO;
             fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -150,6 +150,6 @@ impl<'de> serde::Deserialize<'de> for SuffixPolicyVO {
                 })
             }
         }
-        deserializer.deserialize_any(SuffixPolicyVOVisitor)
+        deserializer.deserialize_any(SuffixPolicyVOVisitor {})
     }
 }

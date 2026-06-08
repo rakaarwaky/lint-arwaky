@@ -41,7 +41,7 @@ impl<'de> serde::Deserialize<'de> for PluginGroup {
     where
         D: serde::Deserializer<'de>,
     {
-        struct PluginGroupVisitor;
+        struct PluginGroupVisitor {}
         impl<'de> serde::de::Visitor<'de> for PluginGroupVisitor {
             type Value = PluginGroup;
             fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -78,6 +78,6 @@ impl<'de> serde::Deserialize<'de> for PluginGroup {
                 })
             }
         }
-        deserializer.deserialize_any(PluginGroupVisitor)
+        deserializer.deserialize_any(PluginGroupVisitor {})
     }
 }

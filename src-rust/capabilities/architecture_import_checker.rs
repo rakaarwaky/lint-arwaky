@@ -8,11 +8,11 @@ use crate::taxonomy::{
 use std::fs;
 use std::path::Path;
 
-pub struct ArchImportRuleChecker;
+pub struct ArchImportRuleChecker {}
 
 impl ArchImportRuleChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     /// Resolve a scope value (e.g. "contract(protocol)", "taxonomy(entity,error,event)",

@@ -1,11 +1,11 @@
 /// semantic_boundary_resolver — Resolves enclosing scope for semantic tracer.
 /// Used by semantic_tracer_analyzer for scope resolution.
 
-pub struct ScopeBoundaryResolver;
+pub struct ScopeBoundaryResolver {}
 
 impl ScopeBoundaryResolver {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     /// Resolve the enclosing scope name for a given file and line.

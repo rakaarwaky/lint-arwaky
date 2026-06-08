@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-pub struct PluginCommandsOrchestrator;
+pub struct PluginCommandsOrchestrator {}
 
 #[async_trait]
 impl PluginCommandsAggregate for PluginCommandsOrchestrator {
@@ -24,7 +24,7 @@ impl PluginCommandsAggregate for PluginCommandsOrchestrator {
 
 impl PluginCommandsOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn get_adapter_names(&self) -> Vec<String> {

@@ -40,7 +40,7 @@ impl<'de> serde::Deserialize<'de> for BooleanVO {
     where
         D: serde::Deserializer<'de>,
     {
-        struct BooleanVOVisitor;
+        struct BooleanVOVisitor {}
         impl<'de> serde::de::Visitor<'de> for BooleanVOVisitor {
             type Value = BooleanVO;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -68,7 +68,7 @@ impl<'de> serde::Deserialize<'de> for BooleanVO {
                 Ok(BooleanVO { value: val })
             }
         }
-        deserializer.deserialize_any(BooleanVOVisitor)
+        deserializer.deserialize_any(BooleanVOVisitor {})
     }
 }
 
@@ -110,7 +110,7 @@ impl<'de> serde::Deserialize<'de> for ColumnNumber {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ColumnNumberVisitor;
+        struct ColumnNumberVisitor {}
         impl<'de> serde::de::Visitor<'de> for ColumnNumberVisitor {
             type Value = ColumnNumber;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -144,7 +144,7 @@ impl<'de> serde::Deserialize<'de> for ColumnNumber {
                 Ok(ColumnNumber { value: val })
             }
         }
-        deserializer.deserialize_any(ColumnNumberVisitor)
+        deserializer.deserialize_any(ColumnNumberVisitor {})
     }
 }
 
@@ -186,7 +186,7 @@ impl<'de> serde::Deserialize<'de> for Count {
     where
         D: serde::Deserializer<'de>,
     {
-        struct CountVisitor;
+        struct CountVisitor {}
         impl<'de> serde::de::Visitor<'de> for CountVisitor {
             type Value = Count;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -220,7 +220,7 @@ impl<'de> serde::Deserialize<'de> for Count {
                 Ok(Count { value: val })
             }
         }
-        deserializer.deserialize_any(CountVisitor)
+        deserializer.deserialize_any(CountVisitor {})
     }
 }
 
@@ -340,7 +340,7 @@ impl<'de> serde::Deserialize<'de> for LineNumber {
     where
         D: serde::Deserializer<'de>,
     {
-        struct LineNumberVisitor;
+        struct LineNumberVisitor {}
         impl<'de> serde::de::Visitor<'de> for LineNumberVisitor {
             type Value = LineNumber;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -374,7 +374,7 @@ impl<'de> serde::Deserialize<'de> for LineNumber {
                 Ok(LineNumber { value: val })
             }
         }
-        deserializer.deserialize_any(LineNumberVisitor)
+        deserializer.deserialize_any(LineNumberVisitor {})
     }
 }
 
@@ -485,7 +485,7 @@ impl<'de> serde::Deserialize<'de> for Score {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ScoreVisitor;
+        struct ScoreVisitor {}
         impl<'de> serde::de::Visitor<'de> for ScoreVisitor {
             type Value = Score;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -513,7 +513,7 @@ impl<'de> serde::Deserialize<'de> for Score {
                 Ok(Score { value: val })
             }
         }
-        deserializer.deserialize_any(ScoreVisitor)
+        deserializer.deserialize_any(ScoreVisitor {})
     }
 }
 
@@ -573,7 +573,7 @@ impl<'de> serde::Deserialize<'de> for Timestamp {
     where
         D: serde::Deserializer<'de>,
     {
-        struct TimestampVisitor;
+        struct TimestampVisitor {}
         impl<'de> serde::de::Visitor<'de> for TimestampVisitor {
             type Value = Timestamp;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -609,7 +609,7 @@ impl<'de> serde::Deserialize<'de> for Timestamp {
                 Ok(Timestamp { value: val })
             }
         }
-        deserializer.deserialize_any(TimestampVisitor)
+        deserializer.deserialize_any(TimestampVisitor {})
     }
 }
 

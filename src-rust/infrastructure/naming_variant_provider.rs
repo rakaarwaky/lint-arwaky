@@ -9,11 +9,11 @@ static RE_WORDS: Lazy<Result<Regex, NamingError>> = Lazy::new(|| {
         .map_err(|e| NamingError::new(ErrorMessage::new(format!("Invalid regex pattern: {}", e))))
 });
 
-pub struct PythonNamingVariantProvider;
+pub struct PythonNamingVariantProvider {}
 
 impl PythonNamingVariantProvider {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }
 

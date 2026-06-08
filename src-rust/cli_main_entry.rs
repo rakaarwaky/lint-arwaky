@@ -4,7 +4,7 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 /// CLI binary entry point for lint-arwaky-cli.
-pub struct CliMainEntry;
+pub struct CliMainEntry {}
 
 use clap::Parser;
 use lint_arwaky::capabilities::architecture_lint_handler::format_report;
@@ -284,7 +284,13 @@ fn handle_trends(path: Option<String>) -> ExitCode {
         DirectoryPath::new(&root).unwrap_or_default(),
     ));
     let metrics = container.metrics_provider();
-    let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
+    let rt = match tokio::runtime::Runtime::new() {
+        Ok(r) => r,
+        Err(_) => {
+            eprintln!("[error] failed to create tokio runtime");
+            return ExitCode::from(1);
+        }
+    };
 
     // Read history
     let history: Vec<serde_json::Value> = if let Some(ref mp) = metrics {
@@ -485,7 +491,9 @@ fn handle_suggest(path: Option<String>) -> ExitCode {
 
 fn handle_install_hook() -> ExitCode {
     let hook = std::path::PathBuf::from(".githooks/pre-commit");
-    let _ = std::fs::create_dir_all(hook.parent().expect("hook path has no parent"));
+    if let Some(parent) = hook.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
     let _ = std::fs::write(&hook, "#!/bin/sh\nlint-arwaky check . || exit 1\n");
     println!("Installed hook at {}", hook.display());
     ExitCode::SUCCESS

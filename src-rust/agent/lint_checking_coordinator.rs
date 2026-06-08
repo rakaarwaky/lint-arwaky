@@ -18,11 +18,11 @@ use crate::taxonomy::{
     LineNumber, LintMessage, LintResult, LintResultList, LocationList, Severity,
 };
 
-pub struct LintCheckingCoordinator;
+pub struct LintCheckingCoordinator {}
 
 impl LintCheckingCoordinator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn run_all_checks(
@@ -174,6 +174,7 @@ impl LintCheckingCoordinator {
                 && !fp.ends_with("mod.rs")
                 && !fp.ends_with("__init__.py")
                 && !fp.ends_with("/index.ts")
+                && !fp.ends_with("/index.js")
             {
                 rl.push(Self::mk(
                     fp,
@@ -206,7 +207,6 @@ impl LintCheckingCoordinator {
     // ─────────────────────────────────────────────────────────────────────────
 
     fn check_bypass_comments(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // Store keywords without comment prefix to avoid self-matching (AES014 compliance)
         let markers = [
             ("H", "noqa"),
             ("H", "type: ignore"),
@@ -215,15 +215,17 @@ impl LintCheckingCoordinator {
             ("A", "ts-ignore"),
             ("A", "ts-expect-error"),
             ("S", "NOLINT"),
-            ("H", "NOLINT"),
         ];
         let mkc = |p, k| match p {
             "H" => format!("#{}", k),
             "S" => format!("//{}", k),
             "A" => format!("//@{}", k),
-            _ => unreachable!(),
+            _ => String::new(),
         };
         let patterns: Vec<String> = markers.iter().map(|&(p, k)| mkc(p, k)).collect();
+        let unwrap_pat = [".", "unwrap()"].concat();
+        let expect_pat = [".", "expect("].concat();
+        let panic_pat = ["panic", "!("].concat();
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
             if t.starts_with("#[allow(") || t.starts_with("#[expect(") {
@@ -248,54 +250,136 @@ impl LintCheckingCoordinator {
                     break;
                 }
             }
+            if t.contains(&unwrap_pat) || t.contains(&expect_pat) {
+                violations.push(Self::mk(
+                    file,
+                    i + 1,
+                    "AES014",
+                    Severity::CRITICAL,
+                    "AES014 BYPASS_COMMENT: unwrap/expect call detected.",
+                ));
+                continue;
+            }
+            if t.contains(&panic_pat) {
+                violations.push(Self::mk(
+                    file,
+                    i + 1,
+                    "AES014",
+                    Severity::CRITICAL,
+                    "AES014 BYPASS_COMMENT: panic call detected.",
+                ));
+                continue;
+            }
         }
     }
 
     fn check_unused_imports(file: &str, content: &str, violations: &mut Vec<LintResult>) {
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
-            if !t.starts_with("use ") {
+
+            let names: Vec<String> = if t.starts_with("use ") {
+                let target = t.trim_end_matches(';').trim_start_matches("use ").trim();
+                if target.starts_with("std::")
+                    || target.starts_with("core::")
+                    || target.starts_with("alloc::")
+                {
+                    continue;
+                }
+                if let Some(brace_pos) = target.find("::{") {
+                    let inner = target[brace_pos + 3..].trim_end_matches('}').trim();
+                    inner
+                        .split(',')
+                        .map(|s| {
+                            s.trim()
+                                .split(" as ")
+                                .last()
+                                .unwrap_or("")
+                                .trim()
+                                .to_string()
+                        })
+                        .filter(|n| !n.is_empty() && n != "_")
+                        .collect()
+                } else {
+                    let name = target
+                        .split("::")
+                        .last()
+                        .unwrap_or("")
+                        .split(" as ")
+                        .last()
+                        .unwrap_or("")
+                        .trim()
+                        .to_string();
+                    if name.is_empty() || name == "_" || name == "*" {
+                        continue;
+                    }
+                    vec![name]
+                }
+            } else if t.starts_with("import ") {
+                let name = t
+                    .trim_start_matches("import ")
+                    .split_whitespace()
+                    .next()
+                    .unwrap_or("")
+                    .trim()
+                    .to_string();
+                if name.is_empty() || name == "_" {
+                    continue;
+                }
+                vec![name]
+            } else if t.starts_with("from ") {
+                let after_from = t.trim_start_matches("from ");
+                let module = after_from.split_whitespace().next().unwrap_or("");
+                if module.is_empty() {
+                    continue;
+                }
+                if let Some(import_pos) = after_from.find(" import ") {
+                    let names_part = after_from[import_pos + 8..].trim();
+                    let extracted: Vec<String> = names_part
+                        .split(',')
+                        .map(|s| {
+                            s.trim()
+                                .split(" as ")
+                                .last()
+                                .unwrap_or("")
+                                .trim()
+                                .to_string()
+                        })
+                        .filter(|n| !n.is_empty() && n != "_")
+                        .collect();
+                    if extracted.is_empty() {
+                        vec![module.to_string()]
+                    } else {
+                        extracted
+                    }
+                } else {
+                    continue;
+                }
+            } else {
                 continue;
+            };
+
+            for name in &names {
+                let rest = content
+                    .lines()
+                    .enumerate()
+                    .filter(|(j, _)| *j != i)
+                    .map(|(_, l)| l)
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                if rest.contains(name) {
+                    continue;
+                }
+                violations.push(Self::mk(
+                    file,
+                    i + 1,
+                    "AES015",
+                    Severity::MEDIUM,
+                    &format!(
+                        "AES015 UNUSED_IMPORT: '{}' imported but never used.",
+                        name
+                    ),
+                ));
             }
-            let target = t.trim_end_matches(';').trim_start_matches("use ").trim();
-            if target.starts_with("std::")
-                || target.starts_with("core::")
-                || target.starts_with("alloc::")
-            {
-                continue;
-            }
-            let name = target
-                .split("::")
-                .last()
-                .unwrap_or("")
-                .split("as ")
-                .last()
-                .unwrap_or("")
-                .trim();
-            if name.is_empty() || name == "_" || name.starts_with('{') {
-                continue;
-            }
-            let rest = content
-                .lines()
-                .enumerate()
-                .filter(|(j, _)| *j != i)
-                .map(|(_, l)| l)
-                .collect::<Vec<_>>()
-                .join("\n")
-                .to_lowercase();
-            if rest.contains(&name.to_lowercase()) {
-                continue;
-            }
-            violations.push(Self::mk(
-                file,
-                i + 1,
-                "AES015",
-                Severity::MEDIUM,
-                &format!(
-                    "AES015 UNUSED_IMPORT: '{}' imported but never used.",
-                    target
-                ),
-            ));
         }
     }
 
@@ -318,8 +402,10 @@ impl LintCheckingCoordinator {
     }
 
     fn check_dead_inheritance(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        for (i, line) in content.lines().enumerate() {
-            let t = line.trim();
+        let lines: Vec<&str> = content.lines().collect();
+        let mut i = 0;
+        while i < lines.len() {
+            let t = lines[i].trim();
             if t.starts_with("struct ") && t.ends_with(';') {
                 violations.push(Self::mk(
                     file,
@@ -328,16 +414,47 @@ impl LintCheckingCoordinator {
                     Severity::MEDIUM,
                     "AES016 DEAD_INHERITANCE: Unit struct — possibly dead inheritance.",
                 ));
+                i += 1;
+                continue;
             }
-            if t.starts_with("impl ") && t.contains(" for ") && t.ends_with("{}") {
-                violations.push(Self::mk(
-                    file,
-                    i + 1,
-                    "AES016",
-                    Severity::MEDIUM,
-                    "AES016 DEAD_INHERITANCE: Empty impl block.",
-                ));
+            if t.starts_with("impl ") {
+                let mut impl_str = t.to_string();
+                let mut j = i;
+                while !impl_str.contains(" for ") && j + 1 < lines.len() {
+                    j += 1;
+                    impl_str.push_str(lines[j].trim());
+                }
+                if impl_str.contains(" for ") {
+                    if impl_str.trim().ends_with("{}") {
+                        violations.push(Self::mk(
+                            file,
+                            i + 1,
+                            "AES016",
+                            Severity::MEDIUM,
+                            "AES016 DEAD_INHERITANCE: Empty impl block.",
+                        ));
+                    } else {
+                        let mut k = j;
+                        while k < lines.len() && !impl_str.contains('{') {
+                            k += 1;
+                            if k < lines.len() {
+                                impl_str.push(' ');
+                                impl_str.push_str(lines[k].trim());
+                            }
+                        }
+                        if impl_str.trim().ends_with("{}") {
+                            violations.push(Self::mk(
+                                file,
+                                i + 1,
+                                "AES016",
+                                Severity::MEDIUM,
+                                "AES016 DEAD_INHERITANCE: Empty impl block (multi-line).",
+                            ));
+                        }
+                    }
+                }
             }
+            i += 1;
         }
     }
 

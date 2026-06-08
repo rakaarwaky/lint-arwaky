@@ -18,17 +18,17 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 // Regex: detect Python function/method definitions inside a class
-static PY_METHOD_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(").unwrap());
+static PY_METHOD_RE: Lazy<Option<Regex>> =
+    Lazy::new(|| Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(").ok());
 
 // Regex: detect class definitions
-static PY_CLASS_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^class\s+(\w+)").unwrap());
+static PY_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^class\s+(\w+)").ok());
 
 // Regex: detect if statements for nesting depth
-static IF_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\s*if\s+").unwrap());
+static IF_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^\s*if\s+").ok());
 
 /// AES018 + AES019 — surface barrel wiring and passivity checks.
-pub struct SurfaceHierarchyChecker;
+pub struct SurfaceHierarchyChecker {}
 
 // Thresholds for AES019
 const MAX_PUBLIC_METHODS: usize = 10;
@@ -37,7 +37,7 @@ const MAX_IF_DEPTH: usize = 3;
 
 impl SurfaceHierarchyChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     /// Main entry point — run AES018 (barrel wiring) and AES019 (passive surface).
@@ -96,7 +96,11 @@ impl SurfaceHierarchyChecker {
         // Find classes in the file and check their methods
         for (i, raw_line) in lines.iter().enumerate() {
             let stripped = raw_line.trim();
-            if let Some(cap) = PY_CLASS_RE.captures(stripped) {
+            let class_re = match &*PY_CLASS_RE {
+                Some(r) => r,
+                None => continue,
+            };
+            if let Some(cap) = class_re.captures(stripped) {
                 let class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
                 let _class_start = i;
                 let indent = raw_line.len() - raw_line.trim_start().len();
@@ -116,7 +120,11 @@ impl SurfaceHierarchyChecker {
                         break;
                     }
 
-                    if let Some(mcap) = PY_METHOD_RE.captures(method_line.trim()) {
+                    let method_re = match &*PY_METHOD_RE {
+                        Some(r) => r,
+                        None => break,
+                    };
+                    if let Some(mcap) = method_re.captures(method_line.trim()) {
                         let method_name = mcap.get(1).map(|m| m.as_str()).unwrap_or("");
                         // Public methods don't start with underscore
                         if !method_name.starts_with('_') {
@@ -208,7 +216,7 @@ impl SurfaceHierarchyChecker {
                 let trimmed = line.trim();
 
                 // Count nesting by indentation increase relative to method body
-                if IF_RE.is_match(trimmed) {
+                if IF_RE.as_ref().map_or(false, |re| re.is_match(trimmed)) {
                     let indent = line.len() - line.trim_start().len();
                     // Simple heuristic: count leading whitespace / 4 as depth
                     let depth = indent / 4;

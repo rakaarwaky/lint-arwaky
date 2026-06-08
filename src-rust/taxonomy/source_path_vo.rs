@@ -192,23 +192,23 @@ mod tests {
 
     #[test]
     fn test_file_path_new() {
-        let fp = FilePath::new("test.txt").expect("valid file path");
+        let fp = FilePath::new("test.txt").unwrap_or_default();
         assert_eq!(fp.value, "test.txt");
         assert_eq!(fp.extension(), "txt");
         assert!(fp.has_extension("txt"));
         assert!(!fp.has_extension("md"));
 
         // Test normalization
-        let fp = FilePath::new("path\\to\\file.txt").expect("valid file path");
+        let fp = FilePath::new("path\\to\\file.txt").unwrap_or_default();
         assert_eq!(fp.value, "path/to/file.txt");
 
-        let fp = FilePath::new("path/to/file/").expect("valid file path");
+        let fp = FilePath::new("path/to/file/").unwrap_or_default();
         assert_eq!(fp.value, "path/to/file");
 
-        let fp = FilePath::new("/").expect("valid file path");
+        let fp = FilePath::new("/").unwrap_or_default();
         assert_eq!(fp.value, "/");
 
-        let fp = FilePath::new("///").expect("valid file path");
+        let fp = FilePath::new("///").unwrap_or_default();
         assert_eq!(fp.value, "/");
     }
 
@@ -220,13 +220,13 @@ mod tests {
 
     #[test]
     fn test_directory_path_new() {
-        let dp = DirectoryPath::new("test/dir").expect("valid directory path");
+        let dp = DirectoryPath::new("test/dir").unwrap_or_default();
         assert_eq!(dp.value, "test/dir");
 
-        let dp = DirectoryPath::new("test/dir/").expect("valid directory path");
+        let dp = DirectoryPath::new("test/dir/").unwrap_or_default();
         assert_eq!(dp.value, "test/dir");
 
-        let dp = DirectoryPath::new("/").expect("valid directory path");
+        let dp = DirectoryPath::new("/").unwrap_or_default();
         assert_eq!(dp.value, "/");
     }
 

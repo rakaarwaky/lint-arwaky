@@ -5,7 +5,7 @@ use crate::taxonomy::{SymbolName, SymbolNameList};
 use std::collections::HashSet;
 
 /// Business logic for transforming symbol names into various naming conventions.
-pub struct NamingVariantAnalyzer;
+pub struct NamingVariantAnalyzer {}
 
 /// A mapping of naming convention variants for a symbol.
 pub struct NamingVariantDict {
@@ -18,7 +18,7 @@ pub struct NamingVariantDict {
 
 impl NamingVariantAnalyzer {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     /// Split a name into lowercase words by camelCase, PascalCase, underscores, hyphens.

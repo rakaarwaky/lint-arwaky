@@ -56,7 +56,7 @@ impl SetupManagementSurface {
 static INSTANCE: std::sync::Mutex<Option<SetupManagementSurface>> = std::sync::Mutex::new(None);
 
 fn get_instance() -> std::sync::MutexGuard<'static, Option<SetupManagementSurface>> {
-    let mut guard = INSTANCE.lock().expect("lock poisoned");
+    let mut guard = INSTANCE.lock().unwrap_or_else(|e| e.into_inner());
     if guard.is_none() {
         *guard = Some(SetupManagementSurface::new());
     }
@@ -64,7 +64,7 @@ fn get_instance() -> std::sync::MutexGuard<'static, Option<SetupManagementSurfac
 }
 
 pub fn register_setup_management(container: Arc<dyn ServiceContainerAggregate>) {
-    let mut guard = INSTANCE.lock().expect("lock poisoned");
+    let mut guard = INSTANCE.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(ref mut s) = *guard {
         s.register_all(container);
     } else {

@@ -11,21 +11,21 @@ use std::sync::Mutex;
 static CONTAINER_REGISTRY: Lazy<Mutex<HashMap<String, ()>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
-pub struct ProjectContainerRegistry;
+pub struct ProjectContainerRegistry {}
 
 impl ProjectContainerRegistry {
     pub fn get_container(project_root: Option<&FilePath>) -> Box<dyn ServiceContainerAggregate> {
         let key = project_root
             .map(|p| p.value.clone())
             .unwrap_or_else(|| ".".to_string());
-        let mut registry = CONTAINER_REGISTRY.lock().expect("lock poisoned");
+        let mut registry = CONTAINER_REGISTRY.lock().unwrap_or_else(|e| e.into_inner());
         registry.insert(key.clone(), ());
-        Box::new(StubContainer)
+        Box::new(StubContainer {})
     }
 
     pub fn reset_container(project_root: Option<&FilePath>) {
         let key = project_root.map(|p| p.value.clone());
-        let mut registry = CONTAINER_REGISTRY.lock().expect("lock poisoned");
+        let mut registry = CONTAINER_REGISTRY.lock().unwrap_or_else(|e| e.into_inner());
         match key {
             Some(root) => {
                 registry.remove(&root);
@@ -46,5 +46,6 @@ impl ContainerRegistryAggregate for ProjectContainerRegistry {
     }
 }
 
-struct StubContainer;
-impl ServiceContainerAggregate for StubContainer {}
+struct StubContainer {}
+impl ServiceContainerAggregate for StubContainer {
+}

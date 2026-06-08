@@ -147,7 +147,7 @@ pub fn register_setup_commands(
     container: impl ServiceContainerAggregate + Clone + 'static,
 ) -> SetupCommandsSurface {
     let arc_container = std::sync::Arc::new(container);
-    let mut guard = INSTANCE.lock().expect("lock poisoned");
+    let mut guard = INSTANCE.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(ref mut s) = *guard {
         s.register_all(arc_container.clone());
         return s.clone();
@@ -159,6 +159,6 @@ pub fn register_setup_commands(
 }
 
 pub fn get_setup() -> Option<SetupCommandsSurface> {
-    let guard = INSTANCE.lock().expect("lock poisoned");
+    let guard = INSTANCE.lock().unwrap_or_else(|e| e.into_inner());
     guard.as_ref().cloned()
 }

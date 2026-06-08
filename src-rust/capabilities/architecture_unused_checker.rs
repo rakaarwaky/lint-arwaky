@@ -8,15 +8,15 @@ use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
-static ALL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).expect("valid regex"));
+static ALL_RE: Lazy<Option<Regex>> =
+    Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
 
 /// Business logic for identifying imports that are not utilized in the code.
-pub struct UnusedImportRuleChecker;
+pub struct UnusedImportRuleChecker {}
 
 impl UnusedImportRuleChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn extract_imported_aliases(content: &str) -> HashMap<String, String> {
@@ -66,7 +66,7 @@ impl UnusedImportRuleChecker {
 
     fn extract_exported_symbols(content: &str) -> HashSet<String> {
         let mut exported: HashSet<String> = HashSet::new();
-        if let Some(caps) = ALL_RE.captures(content) {
+        if let Some(caps) = ALL_RE.as_ref().and_then(|re| re.captures(content)) {
             let inner = caps.get(1).map(|m| m.as_str()).unwrap_or("");
             for item in inner.split(',') {
                 let name = item.trim().trim_matches('"').trim_matches('\'').to_string();

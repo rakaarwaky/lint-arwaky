@@ -34,7 +34,7 @@ impl DependencyInjectionContainer {
         let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
         let executor: Arc<dyn ICommandExecutorPort> =
             Arc::new(StdioClient::new(std::time::Duration::from_secs(60)));
-        let path_norm: Arc<dyn IPathNormalizationPort> = Arc::new(PathNormalizationProvider);
+        let path_norm: Arc<dyn IPathNormalizationPort> = Arc::new(PathNormalizationProvider {});
         let source_parser: Arc<dyn ISourceParserPort> = Arc::new(SourceParserOrchestrator::new(
             Box::new(ASTPythonParserAdapter::new()),
             Box::new(ASTRustParserAdapter::new()),

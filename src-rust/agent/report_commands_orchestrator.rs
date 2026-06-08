@@ -4,7 +4,7 @@ use crate::taxonomy::{ArchitectureGovernanceEntity, FileFormat, FilePath};
 
 use async_trait::async_trait;
 
-pub struct ReportCommandsOrchestrator;
+pub struct ReportCommandsOrchestrator {}
 
 #[async_trait]
 impl ReportCommandsAggregate for ReportCommandsOrchestrator {
@@ -23,7 +23,7 @@ impl ReportCommandsAggregate for ReportCommandsOrchestrator {
 
 impl ReportCommandsOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub async fn run_analysis(&self, _path: &FilePath) -> ArchitectureGovernanceEntity {

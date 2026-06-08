@@ -2,11 +2,11 @@ use crate::contract::language_detector_port::ILanguageDetectorPort;
 use crate::taxonomy::{FilePath, LanguageSource};
 use async_trait::async_trait;
 
-pub struct LanguageDetectorProvider;
+pub struct LanguageDetectorProvider {}
 
 impl LanguageDetectorProvider {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }
 

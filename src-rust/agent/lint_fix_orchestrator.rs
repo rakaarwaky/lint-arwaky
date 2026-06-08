@@ -160,7 +160,7 @@ impl LintFixOrchestratorAggregate for LintFixOrchestrator {
         let mut total_fixable =
             naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
 
-        let renamer = SymbolRenamerProcessor;
+        let renamer = SymbolRenamerProcessor {};
         for violation in &naming_violations {
             let msg = violation.message.value();
             if let Some(old_name) = msg

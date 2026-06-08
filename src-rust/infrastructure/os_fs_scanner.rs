@@ -10,11 +10,11 @@ use crate::taxonomy::{
     Identity, PatternList, SuccessStatus,
 };
 
-pub struct OSFileSystemAdapter;
+pub struct OSFileSystemAdapter {}
 
 impl OSFileSystemAdapter {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn walk_recursive(&self, dir: &Path, ignored: &[String], results: &mut Vec<FilePath>) {

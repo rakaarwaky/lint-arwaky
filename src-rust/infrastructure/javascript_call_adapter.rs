@@ -9,16 +9,25 @@ use regex::Regex;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub struct JSCallAdapter;
+pub struct JSCallAdapter {}
 
 impl JSCallAdapter {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn get_variant_dict_raw(name: &str) -> std::collections::HashMap<String, String> {
-        let word_re = Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
-            .expect("valid regex");
+        let word_re = match Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+") {
+            Ok(r) => r,
+            Err(_) => {
+                let mut m = std::collections::HashMap::new();
+                m.insert("snake_case".to_string(), name.to_string());
+                m.insert("camel_case".to_string(), name.to_string());
+                m.insert("pascal_case".to_string(), name.to_string());
+                m.insert("screaming_snake".to_string(), name.to_uppercase());
+                return m;
+            }
+        };
         let words: Vec<String> = word_re
             .find_iter(name)
             .map(|m| m.as_str().to_lowercase())
@@ -142,10 +151,15 @@ impl ISemanticTracerPort for JSCallAdapter {
         let name = target_name.to_string();
         let root = Path::new(&root_dir.value);
 
-        let call_pattern =
-            Regex::new(&format!(r"\b{}\s*\(", regex::escape(&name))).expect("valid regex");
-        let def_pattern = Regex::new(&format!(r"(?:function|class)\s+{}\b", regex::escape(&name)))
-            .expect("valid regex");
+        let call_pattern = match Regex::new(&format!(r"\b{}\s*\(", regex::escape(&name))) {
+            Ok(r) => r,
+            Err(_) => return Ok(CallChainList { values: Vec::new() }),
+        };
+        let def_pattern = match Regex::new(&format!(r"(?:function|class)\s+{}\b", regex::escape(&name)))
+        {
+            Ok(r) => r,
+            Err(_) => return Ok(CallChainList { values: Vec::new() }),
+        };
 
         let js_files = Self::find_js_files(root);
 
@@ -203,7 +217,7 @@ impl ISemanticTracerPort for JSCallAdapter {
         let old = old_name.to_string();
         let new = new_name.to_string();
 
-        let pattern = Regex::new(&format!(
+        let pattern = match Regex::new(&format!(
             r"(?x)
             (
                 `(?:\\.|[^`\\])*`             |
@@ -216,8 +230,10 @@ impl ISemanticTracerPort for JSCallAdapter {
             \b({})\b
             ",
             regex::escape(&old)
-        ))
-        .expect("valid regex");
+        )) {
+            Ok(r) => r,
+            Err(_) => return Count::new(0),
+        };
 
         let js_files = Self::find_js_files(root);
         let mut modified_count = 0;

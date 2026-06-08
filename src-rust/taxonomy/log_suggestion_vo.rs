@@ -42,7 +42,7 @@ impl<'de> serde::Deserialize<'de> for ClassPath {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ClassPathVisitor;
+        struct ClassPathVisitor {}
         impl<'de> serde::de::Visitor<'de> for ClassPathVisitor {
             type Value = ClassPath;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -78,7 +78,7 @@ impl<'de> serde::Deserialize<'de> for ClassPath {
                 Ok(ClassPath { value: val })
             }
         }
-        deserializer.deserialize_any(ClassPathVisitor)
+        deserializer.deserialize_any(ClassPathVisitor {})
     }
 }
 
@@ -132,7 +132,7 @@ impl<'de> serde::Deserialize<'de> for DescriptionVO {
     where
         D: serde::Deserializer<'de>,
     {
-        struct DescriptionVOVisitor;
+        struct DescriptionVOVisitor {}
         impl<'de> serde::de::Visitor<'de> for DescriptionVOVisitor {
             type Value = DescriptionVO;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -168,7 +168,7 @@ impl<'de> serde::Deserialize<'de> for DescriptionVO {
                 Ok(DescriptionVO { value: val })
             }
         }
-        deserializer.deserialize_any(DescriptionVOVisitor)
+        deserializer.deserialize_any(DescriptionVOVisitor {})
     }
 }
 
@@ -214,7 +214,7 @@ impl<'de> serde::Deserialize<'de> for LogOutput {
     where
         D: serde::Deserializer<'de>,
     {
-        struct LogOutputVisitor;
+        struct LogOutputVisitor {}
         impl<'de> serde::de::Visitor<'de> for LogOutputVisitor {
             type Value = LogOutput;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -250,7 +250,7 @@ impl<'de> serde::Deserialize<'de> for LogOutput {
                 Ok(LogOutput { value: val })
             }
         }
-        deserializer.deserialize_any(LogOutputVisitor)
+        deserializer.deserialize_any(LogOutputVisitor {})
     }
 }
 
@@ -310,7 +310,7 @@ impl<'de> serde::Deserialize<'de> for StdError {
     where
         D: serde::Deserializer<'de>,
     {
-        struct StdErrorVisitor;
+        struct StdErrorVisitor {}
         impl<'de> serde::de::Visitor<'de> for StdErrorVisitor {
             type Value = StdError;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -346,7 +346,7 @@ impl<'de> serde::Deserialize<'de> for StdError {
                 Ok(StdError { value: val })
             }
         }
-        deserializer.deserialize_any(StdErrorVisitor)
+        deserializer.deserialize_any(StdErrorVisitor {})
     }
 }
 
@@ -392,7 +392,7 @@ impl<'de> serde::Deserialize<'de> for StdOutput {
     where
         D: serde::Deserializer<'de>,
     {
-        struct StdOutputVisitor;
+        struct StdOutputVisitor {}
         impl<'de> serde::de::Visitor<'de> for StdOutputVisitor {
             type Value = StdOutput;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -428,7 +428,7 @@ impl<'de> serde::Deserialize<'de> for StdOutput {
                 Ok(StdOutput { value: val })
             }
         }
-        deserializer.deserialize_any(StdOutputVisitor)
+        deserializer.deserialize_any(StdOutputVisitor {})
     }
 }
 
@@ -474,7 +474,7 @@ impl<'de> serde::Deserialize<'de> for Suggestion {
     where
         D: serde::Deserializer<'de>,
     {
-        struct SuggestionVisitor;
+        struct SuggestionVisitor {}
         impl<'de> serde::de::Visitor<'de> for SuggestionVisitor {
             type Value = Suggestion;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -510,6 +510,6 @@ impl<'de> serde::Deserialize<'de> for Suggestion {
                 Ok(Suggestion { value: val })
             }
         }
-        deserializer.deserialize_any(SuggestionVisitor)
+        deserializer.deserialize_any(SuggestionVisitor {})
     }
 }

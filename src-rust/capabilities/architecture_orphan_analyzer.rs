@@ -14,11 +14,11 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 
 /// Build graph context and identify entry points for orphan analysis.
-pub struct OrphanGraphResolver;
+pub struct OrphanGraphResolver {}
 
 impl OrphanGraphResolver {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn build_graph_context(&self, files: &[String], _root_dir: &str) -> GraphAnalysisContext {
@@ -31,20 +31,21 @@ impl OrphanGraphResolver {
         for f in files {
             import_graph.entry(f.clone()).or_default();
             if let Ok(content) = std::fs::read_to_string(f) {
-                let import_re =
-                    regex::Regex::new(r"(?:from|import)\s+([\w\.]+)").expect("valid regex");
-                for cap in import_re.captures_iter(&content) {
-                    let dep = cap[1].to_string();
-                    import_graph.entry(f.clone()).or_default().push(dep.clone());
-                    inbound_links.entry(dep).or_default().push(f.clone());
+                if let Some(import_re) = regex::Regex::new(r"(?:from|import)\s+([\w\.]+)").ok() {
+                    for cap in import_re.captures_iter(&content) {
+                        let dep = cap[1].to_string();
+                        import_graph.entry(f.clone()).or_default().push(dep.clone());
+                        inbound_links.entry(dep).or_default().push(f.clone());
+                    }
                 }
-                let inh_re = regex::Regex::new(r"class\s+\w+\(([^)]+)\)").expect("valid regex");
-                for cap in inh_re.captures_iter(&content) {
-                    for base in cap[1].split(',') {
-                        inheritance_map
-                            .entry(f.clone())
-                            .or_default()
-                            .push(base.trim().to_string());
+                if let Some(inh_re) = regex::Regex::new(r"class\s+\w+\(([^)]+)\)").ok() {
+                    for cap in inh_re.captures_iter(&content) {
+                        for base in cap[1].split(',') {
+                            inheritance_map
+                                .entry(f.clone())
+                                .or_default()
+                                .push(base.trim().to_string());
+                        }
                     }
                 }
             }
@@ -67,11 +68,11 @@ impl OrphanGraphResolver {
 }
 
 /// Evaluate orphan indicators per layer type.
-pub struct OrphanIndicatorEvaluator;
+pub struct OrphanIndicatorEvaluator {}
 
 impl OrphanIndicatorEvaluator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn is_taxonomy_orphan(

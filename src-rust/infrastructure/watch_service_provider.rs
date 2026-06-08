@@ -41,7 +41,7 @@ impl WatchServiceProvider {
     pub fn stop_sync(&mut self) -> Result<(), WatchServiceError> {
         self.running = false;
         self.watch_path = None;
-        self.snapshots.lock().expect("lock poisoned").clear();
+        self.snapshots.lock().unwrap_or_else(|e| e.into_inner()).clear();
         Ok(())
     }
 
@@ -54,7 +54,7 @@ impl WatchServiceProvider {
             None => return Vec::new(),
         };
         let mut changes = Vec::new();
-        let mut snapshots = self.snapshots.lock().expect("lock poisoned");
+        let mut snapshots = self.snapshots.lock().unwrap_or_else(|e| e.into_inner());
         self.scan_directory(&path.value, &mut snapshots, &mut changes);
         changes
     }
@@ -64,7 +64,7 @@ impl WatchServiceProvider {
             Some(p) => p,
             None => return,
         };
-        let mut snapshots = self.snapshots.lock().expect("lock poisoned");
+        let mut snapshots = self.snapshots.lock().unwrap_or_else(|e| e.into_inner());
         snapshots.clear();
         self.snapshot_directory(&path.value, &mut snapshots);
     }

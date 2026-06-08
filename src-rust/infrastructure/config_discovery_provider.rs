@@ -4,7 +4,7 @@ use crate::taxonomy::{ConfigError, DirectoryPath, FilePath};
 use std::env;
 use std::path::Path;
 
-pub struct ConfigDiscoveryProvider;
+pub struct ConfigDiscoveryProvider {}
 
 impl Default for ConfigDiscoveryProvider {
     fn default() -> Self {
@@ -14,7 +14,7 @@ impl Default for ConfigDiscoveryProvider {
 
 impl ConfigDiscoveryProvider {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn walk_up(start: &Path, filenames: &[&str]) -> Option<FilePath> {

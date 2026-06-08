@@ -7,11 +7,11 @@ use crate::taxonomy::{
 };
 use regex::Regex;
 
-pub struct ArchNamingChecker;
+pub struct ArchNamingChecker {}
 
 impl ArchNamingChecker {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn make_result(file: &str, code: &str, msg: &str, sev: Severity) -> LintResult {

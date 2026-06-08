@@ -15,12 +15,12 @@ pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
     project_root.join("src-rust")
 }
 
-pub struct ArchitectureLintOrchestrator;
+pub struct ArchitectureLintOrchestrator {}
 
 impl ArchitectureLintOrchestrator {
     pub fn new() -> Self {
         let _: Option<&dyn ServiceContainerAggregate> = None;
-        Self
+        Self {}
     }
 
     pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
@@ -70,7 +70,7 @@ pub struct ArchLintPipelineOrchestrator {
 impl ArchLintPipelineOrchestrator {
     pub fn new() -> Self {
         Self {
-            inner: ArchitectureLintOrchestrator,
+            inner: ArchitectureLintOrchestrator::new(),
         }
     }
 

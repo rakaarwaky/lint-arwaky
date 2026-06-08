@@ -39,7 +39,13 @@ impl CheckCommandsSurface {
             "prettier",
             "tsc",
         ];
-        let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(r) => r,
+            Err(_) => {
+                eprintln!("[error] failed to create tokio runtime");
+                return;
+            }
+        };
         let path_obj = crate::taxonomy::FilePath::new(path.to_string()).unwrap_or_else(|_| {
             crate::taxonomy::FilePath::new(".".to_string()).unwrap_or_default()
         });

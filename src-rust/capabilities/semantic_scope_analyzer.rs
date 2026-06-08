@@ -65,18 +65,18 @@ fn split_name_into_words(name: &str) -> Vec<String> {
 }
 
 /// Regex to detect Python function definitions.
-static PY_DEF_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(").unwrap());
+static PY_DEF_RE: Lazy<Option<Regex>> =
+    Lazy::new(|| Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(").ok());
 
 /// Regex to detect Python class definitions.
-static PY_CLASS_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^class\s+(\w+)").unwrap());
+static PY_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^class\s+(\w+)").ok());
 
 /// AST-based semantic scope analyzer for Python code.
-pub struct SemanticScopeAnalyzer;
+pub struct SemanticScopeAnalyzer {}
 
 impl SemanticScopeAnalyzer {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     /// Split a name into lowercase words by camelCase, PascalCase, underscores, hyphens.
@@ -165,6 +165,14 @@ impl SemanticScopeAnalyzer {
 
         let content = std::fs::read_to_string(file_path.to_string()).ok()?;
         let lines: Vec<&str> = content.lines().collect();
+        let py_class_re = match &*PY_CLASS_RE {
+            Some(r) => r,
+            None => return None,
+        };
+        let py_def_re = match &*PY_DEF_RE {
+            Some(r) => r,
+            None => return None,
+        };
 
         // Stack of (scope_name, start_line, end_line)
         let mut scope_stack: Vec<(String, i64, i64)> = Vec::new();
@@ -178,7 +186,7 @@ impl SemanticScopeAnalyzer {
             scope_stack.retain(|&(_, _, end)| end >= current_line);
 
             // Detect new scope
-            if let Some(cap) = PY_CLASS_RE.captures(stripped) {
+            if let Some(cap) = py_class_re.captures(stripped) {
                 if let Some(name) = cap.get(1) {
                     let scope_name = format!("class {}", name.as_str());
                     let indent = raw_line.len() - raw_line.trim_start().len();
@@ -188,7 +196,7 @@ impl SemanticScopeAnalyzer {
                         if !l.trim().is_empty() {
                             let l_indent = l.len() - l.trim_start().len();
                             if l_indent <= indent
-                                && (PY_CLASS_RE.is_match(l.trim()) || PY_DEF_RE.is_match(l.trim()))
+                                && (py_class_re.is_match(l.trim()) || py_def_re.is_match(l.trim()))
                             {
                                 end_line = j as i64;
                                 break;
@@ -200,7 +208,7 @@ impl SemanticScopeAnalyzer {
                         best_match = scope_stack.iter().map(|(n, _, _)| n.clone()).collect();
                     }
                 }
-            } else if let Some(cap) = PY_DEF_RE.captures(stripped) {
+            } else if let Some(cap) = py_def_re.captures(stripped) {
                 if let Some(name) = cap.get(1) {
                     let scope_name = format!("def {}", name.as_str());
                     let indent = raw_line.len() - raw_line.trim_start().len();
@@ -210,7 +218,7 @@ impl SemanticScopeAnalyzer {
                         if !l.trim().is_empty() {
                             let l_indent = l.len() - l.trim_start().len();
                             if l_indent <= indent
-                                && (PY_CLASS_RE.is_match(l.trim()) || PY_DEF_RE.is_match(l.trim()))
+                                && (py_class_re.is_match(l.trim()) || py_def_re.is_match(l.trim()))
                             {
                                 end_line = j as i64;
                                 break;
@@ -261,6 +269,14 @@ impl SemanticScopeAnalyzer {
 
         let lines: Vec<&str> = content.lines().collect();
         let vn = &var_name.value;
+        let py_def_re = match &*PY_DEF_RE {
+            Some(r) => r,
+            None => return DataFlowList { values: Vec::new() },
+        };
+        let py_class_re = match &*PY_CLASS_RE {
+            Some(r) => r,
+            None => return DataFlowList { values: Vec::new() },
+        };
         let sl = start_line.value as usize;
 
         // Determine target scope bounds
@@ -272,13 +288,13 @@ impl SemanticScopeAnalyzer {
                 let line_no = i + 1;
                 let stripped = raw_line.trim();
                 if line_no <= sl {
-                    if PY_DEF_RE.is_match(stripped) || PY_CLASS_RE.is_match(stripped) {
+                    if py_def_re.is_match(stripped) || py_class_re.is_match(stripped) {
                         start = line_no;
                     }
                 } else if !stripped.is_empty() {
                     let indent = raw_line.len() - raw_line.trim_start().len();
                     if indent == 0
-                        && (PY_DEF_RE.is_match(stripped) || PY_CLASS_RE.is_match(stripped))
+                        && (py_def_re.is_match(stripped) || py_class_re.is_match(stripped))
                     {
                         end = line_no;
                         break;
@@ -291,11 +307,18 @@ impl SemanticScopeAnalyzer {
             (None, None)
         };
 
-        let assign_re =
-            Regex::new(&format!(r"\b{}\s*=", regex::escape(vn))).expect("valid assign regex");
-        let mutation_re =
-            Regex::new(&format!(r"\b{}\.\w+", regex::escape(vn))).expect("valid mutation regex");
-        let word_re = Regex::new(&format!(r"\b{}\b", regex::escape(vn))).expect("valid word regex");
+        let assign_re = match Regex::new(&format!(r"\b{}\s*=", regex::escape(vn))) {
+            Ok(r) => r,
+            Err(_) => return DataFlowList { values: Vec::new() },
+        };
+        let mutation_re = match Regex::new(&format!(r"\b{}\.\w+", regex::escape(vn))) {
+            Ok(r) => r,
+            Err(_) => return DataFlowList { values: Vec::new() },
+        };
+        let word_re = match Regex::new(&format!(r"\b{}\b", regex::escape(vn))) {
+            Ok(r) => r,
+            Err(_) => return DataFlowList { values: Vec::new() },
+        };
 
         let mut flows: Vec<ErrorMessage> = Vec::new();
         let mut seen: HashSet<String> = HashSet::new();

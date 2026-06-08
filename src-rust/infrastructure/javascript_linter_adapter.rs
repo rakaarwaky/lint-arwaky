@@ -267,10 +267,14 @@ impl ILinterAdapterPort for TSCAdapter {
         let output = format!("{}{}", response.stdout, response.stderr);
         let mut results = Vec::new();
 
-        let pattern1 = Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$")
-            .expect("valid regex");
-        let pattern2 = Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$")
-            .expect("valid regex");
+        let pattern1 = match Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$") {
+            Ok(r) => r,
+            Err(_) => return Ok(LintResultList::new(vec![])),
+        };
+        let pattern2 = match Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$") {
+            Ok(r) => r,
+            Err(_) => return Ok(LintResultList::new(vec![])),
+        };
 
         for line in output.lines() {
             let line = line.trim();

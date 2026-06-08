@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 
 static HOOK_MANAGER: OnceLock<GitHookAdapter> = OnceLock::new();
 
-pub struct HookManagementOrchestrator;
+pub struct HookManagementOrchestrator {}
 
 impl HookManagementOrchestratorAggregate for HookManagementOrchestrator {
     fn get_hook_manager(&self) -> &dyn IHookManagerPort {
@@ -28,7 +28,7 @@ impl Default for HookManagementOrchestrator {
 
 impl HookManagementOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn install(&self, executable: Option<AdapterName>) -> SuccessStatus {

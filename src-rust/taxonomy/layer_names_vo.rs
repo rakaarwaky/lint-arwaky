@@ -4,7 +4,7 @@ use crate::taxonomy::{
 };
 
 /// Value object holding the set of core layer names.
-pub struct LayerNames;
+pub struct LayerNames {}
 
 pub fn layer_agent() -> LayerNameVO {
     LayerNameVO::new(LAYER_AGENT)

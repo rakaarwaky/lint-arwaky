@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use crate::taxonomy::{BooleanVO, FileFormat, FilePath, Identity};
 use async_trait::async_trait;
 
-pub struct DevCommandsOrchestrator;
+pub struct DevCommandsOrchestrator {}
 
 #[async_trait]
 impl DevCommandsAggregate for DevCommandsOrchestrator {
@@ -58,7 +58,7 @@ impl Default for DevCommandsOrchestrator {
 
 impl DevCommandsOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub async fn get_diff_data(

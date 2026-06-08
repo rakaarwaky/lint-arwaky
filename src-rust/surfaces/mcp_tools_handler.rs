@@ -2,7 +2,7 @@
 use crate::contract::service_container_aggregate::ServiceContainerAggregate;
 
 /// Handler for registering MCP tools.
-pub struct McpToolsHandler;
+pub struct McpToolsHandler {}
 use std::sync::Arc;
 
 pub fn register_tools(container: Arc<dyn ServiceContainerAggregate>) {

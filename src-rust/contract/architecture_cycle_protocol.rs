@@ -13,7 +13,7 @@ pub trait ICycleAnalysisProtocol: Send + Sync {
     );
 }
 
-pub struct DefaultCycleAnalysisProtocol;
+pub struct DefaultCycleAnalysisProtocol {}
 
 #[async_trait]
 impl ICycleAnalysisProtocol for DefaultCycleAnalysisProtocol {

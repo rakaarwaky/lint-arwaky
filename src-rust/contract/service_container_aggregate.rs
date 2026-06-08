@@ -12,16 +12,16 @@ use std::sync::Arc;
 
 pub trait ServiceContainerAggregate: Send + Sync {
     fn file_system(&self) -> Arc<dyn IFileSystemPort> {
-        panic!("file_system not implemented");
+        todo!("file_system not implemented")
     }
     fn command_executor(&self) -> Arc<dyn ICommandExecutorPort> {
-        panic!("command_executor not implemented");
+        todo!("command_executor not implemented")
     }
     fn path_normalization(&self) -> Arc<dyn IPathNormalizationPort> {
-        panic!("path_normalization not implemented");
+        todo!("path_normalization not implemented")
     }
     fn source_parser(&self) -> Arc<dyn ISourceParserPort> {
-        panic!("source_parser not implemented");
+        todo!("source_parser not implemented")
     }
     fn linter_adapter(&self, _name: &AdapterName) -> Option<Arc<dyn ILinterAdapterPort>> {
         None
@@ -43,6 +43,4 @@ pub trait ServiceContainerAggregate: Send + Sync {
     }
 }
 
-pub struct DefaultServiceContainer;
-
-impl ServiceContainerAggregate for DefaultServiceContainer {}
+pub struct DefaultServiceContainer {}

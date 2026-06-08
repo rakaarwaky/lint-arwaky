@@ -43,7 +43,7 @@ impl<'de> serde::Deserialize<'de> for FileFormat {
     where
         D: serde::Deserializer<'de>,
     {
-        struct FileFormatVisitor;
+        struct FileFormatVisitor {}
         impl<'de> serde::de::Visitor<'de> for FileFormatVisitor {
             type Value = FileFormat;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -79,6 +79,6 @@ impl<'de> serde::Deserialize<'de> for FileFormat {
                 Ok(FileFormat { name: val })
             }
         }
-        deserializer.deserialize_any(FileFormatVisitor)
+        deserializer.deserialize_any(FileFormatVisitor {})
     }
 }

@@ -37,7 +37,8 @@ impl PartialEq for ContentString {
     }
 }
 
-impl Eq for ContentString {}
+impl Eq for ContentString {
+}
 
 impl From<&str> for ContentString {
     fn from(s: &str) -> Self {
@@ -58,7 +59,7 @@ impl<'de> serde::Deserialize<'de> for ContentString {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ContentStringVisitor;
+        struct ContentStringVisitor {}
         impl<'de> serde::de::Visitor<'de> for ContentStringVisitor {
             type Value = ContentString;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -94,7 +95,7 @@ impl<'de> serde::Deserialize<'de> for ContentString {
                 Ok(ContentString { value: val })
             }
         }
-        deserializer.deserialize_any(ContentStringVisitor)
+        deserializer.deserialize_any(ContentStringVisitor {})
     }
 }
 

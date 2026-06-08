@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-pub struct SetupManagementOrchestrator;
+pub struct SetupManagementOrchestrator {}
 
 #[async_trait]
 impl SetupManagementAggregate for SetupManagementOrchestrator {
@@ -63,6 +63,6 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
 
 impl SetupManagementOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 }

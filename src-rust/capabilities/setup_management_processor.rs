@@ -14,7 +14,7 @@ pub struct McpConfig {
 }
 
 /// Business logic for generating setup and configuration artifacts.
-pub struct SetupManagementProcessor;
+pub struct SetupManagementProcessor {}
 
 impl Default for SetupManagementProcessor {
     fn default() -> Self {
@@ -24,7 +24,7 @@ impl Default for SetupManagementProcessor {
 
 impl SetupManagementProcessor {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     /// Generate .env content for the lint-arwaky environment.

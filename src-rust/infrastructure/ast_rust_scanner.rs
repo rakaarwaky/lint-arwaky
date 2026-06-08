@@ -10,39 +10,39 @@ use crate::taxonomy::{
     PrimitiveViolationList, ResponseData, SourceParserError, SuccessStatus, SymbolName,
 };
 
-static USE_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(?:pub\s+)?use\s+([^;]+);").unwrap());
-static STRUCT_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+static USE_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^(?:pub\s+)?use\s+([^;]+);").ok());
+static STRUCT_REGEX: LazyLock<Option<Regex>> = LazyLock::new(|| {
     Regex::new(r"^(?:pub\s+)?(?:pub\s*\([^)]*\)\s+)?(?:struct|enum|trait)\s+([a-zA-Z0-9_]+)")
-        .unwrap()
+        .ok()
 });
-static FN_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(?:pub\s+)?(?:async\s+)?fn\s+([a-zA-Z0-9_]+)").unwrap());
-static IMPL_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^impl\s+(?:([a-zA-Z0-9_:]+)\s+for\s+)?([a-zA-Z0-9_]+)").unwrap());
-static CF_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\b(if|for|while|match|loop)\b").unwrap());
-static LET_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^let\s+(?:mut\s+)?([a-zA-Z0-9_]+)").unwrap());
-static WORD_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").unwrap());
+static FN_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^(?:pub\s+)?(?:async\s+)?fn\s+([a-zA-Z0-9_]+)").ok());
+static IMPL_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^impl\s+(?:([a-zA-Z0-9_:]+)\s+for\s+)?([a-zA-Z0-9_]+)").ok());
+static CF_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\b(if|for|while|match|loop)\b").ok());
+static LET_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^let\s+(?:mut\s+)?([a-zA-Z0-9_]+)").ok());
+static WORD_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").ok());
 
-static PUB_STRUCT_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\b(struct|enum|trait|fn|const)\s+([a-zA-Z0-9_]+)").unwrap());
-static PUB_MOD_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\bmod\s+([a-zA-Z0-9_]+)").unwrap());
-static PUB_USE_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\buse\s+(?:.*::)?([a-zA-Z0-9_]+)\s*(?:::\{|;|$)").unwrap());
-static PUB_USE_GROUP: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\buse\s+.*::\{([^}]+)\}").unwrap());
-static TYPE_DECL_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\b(struct|enum|trait|fn|impl|pub)\b").unwrap());
+static PUB_STRUCT_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\b(struct|enum|trait|fn|const)\s+([a-zA-Z0-9_]+)").ok());
+static PUB_MOD_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\bmod\s+([a-zA-Z0-9_]+)").ok());
+static PUB_USE_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\buse\s+(?:.*::)?([a-zA-Z0-9_]+)\s*(?:::\{|;|$)").ok());
+static PUB_USE_GROUP: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\buse\s+.*::\{([^}]+)\}").ok());
+static TYPE_DECL_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\b(struct|enum|trait|fn|impl|pub)\b").ok());
 
-pub struct ASTRustParserAdapter;
+pub struct ASTRustParserAdapter {}
 
 impl ASTRustParserAdapter {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn read_and_parse(&self, path: &FilePath) -> Result<ParsedData, SourceParserError> {
@@ -84,7 +84,7 @@ impl ASTRustParserAdapter {
             let close_braces = stripped.matches('}').count() as i32;
 
             // Check for impl block
-            if let Some(impl_cap) = IMPL_REGEX.captures(stripped) {
+            if let Some(impl_cap) = IMPL_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let trait_name = impl_cap.get(1).map(|m| m.as_str());
                 let struct_name = impl_cap
                     .get(2)
@@ -111,7 +111,7 @@ impl ASTRustParserAdapter {
             }
 
             // 1. Imports
-            if let Some(use_cap) = USE_REGEX.captures(stripped) {
+            if let Some(use_cap) = USE_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let raw_path = use_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
                 let mut clean_path = raw_path;
                 for prefix in &["crate::", "self::", "super::"] {
@@ -148,7 +148,7 @@ impl ASTRustParserAdapter {
             }
 
             // 2. Struct, Enum, Trait Definitions
-            if let Some(struct_cap) = STRUCT_REGEX.captures(stripped) {
+            if let Some(struct_cap) = STRUCT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let name = struct_cap
                     .get(1)
                     .map(|m| m.as_str())
@@ -176,7 +176,7 @@ impl ASTRustParserAdapter {
             }
 
             // 3. Functions / Methods
-            if let Some(fn_cap) = FN_REGEX.captures(stripped) {
+            if let Some(fn_cap) = FN_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let name = fn_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                 defined.insert(name.clone());
 
@@ -197,7 +197,7 @@ impl ASTRustParserAdapter {
 
             // 4. Assignments
             if stripped.starts_with("let ") {
-                if let Some(let_cap) = LET_REGEX.captures(stripped) {
+                if let Some(let_cap) = LET_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                     let name = let_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                     let col_pos = line.find(&name).unwrap_or(0) as i64;
                     assignments.push(serde_json::json!({
@@ -210,25 +210,27 @@ impl ASTRustParserAdapter {
             }
 
             // 5. Control Flow
-            control_flow_count += CF_REGEX.find_iter(stripped).count() as i64;
+            control_flow_count += CF_REGEX.as_ref().map_or(0, |r| r.find_iter(stripped).count()) as i64;
 
             // 6. Used symbols
-            for word_match in WORD_REGEX.find_iter(stripped) {
-                used.insert(word_match.as_str().to_string());
+            if let Some(word_re) = WORD_REGEX.as_ref() {
+                for word_match in word_re.find_iter(stripped) {
+                    used.insert(word_match.as_str().to_string());
+                }
             }
 
             // 7. Exported symbols (pub items)
             if stripped.starts_with("pub ") {
-                if let Some(cap) = PUB_STRUCT_REGEX.captures(stripped) {
+                    if let Some(cap) = PUB_STRUCT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                     exported.insert(cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string());
                 }
-                if let Some(cap) = PUB_MOD_REGEX.captures(stripped) {
+                    if let Some(cap) = PUB_MOD_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                     exported.insert(cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string());
                 }
-                if let Some(cap) = PUB_USE_REGEX.captures(stripped) {
+                    if let Some(cap) = PUB_USE_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                     exported.insert(cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string());
                 }
-                if let Some(cap) = PUB_USE_GROUP.captures(stripped) {
+                    if let Some(cap) = PUB_USE_GROUP.as_ref().and_then(|r| r.captures(stripped)) {
                     for name in cap.get(1).map(|m| m.as_str()).unwrap_or("").split(',') {
                         let clean = name.trim();
                         if !clean.is_empty() {
@@ -328,7 +330,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
             let mut struct_name = String::new();
             for line in &lines {
                 let stripped = line.trim();
-                if let Some(cap) = STRUCT_REGEX.captures(stripped) {
+                if let Some(cap) = STRUCT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                     struct_name = cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
                     in_struct = true;
                     continue;
@@ -413,9 +415,9 @@ impl ISourceParserPort for ASTRustParserAdapter {
                 continue;
             }
 
-            if TYPE_DECL_REGEX.is_match(stripped) {
+            if TYPE_DECL_REGEX.as_ref().map_or(false, |r| r.is_match(stripped)) {
                 for prim in &prim_keywords {
-                    let prim_regex = Regex::new(&format!(r"\b{}\b", prim)).expect("valid regex");
+                    let Ok(prim_regex) = Regex::new(&format!(r"\b{}\b", prim)) else { continue };
                     if let Some(m) = prim_regex.find(stripped) {
                         let col = (line.find(m.as_str()).unwrap_or(0) + 1) as i64;
                         violations.push(PrimitiveViolation {

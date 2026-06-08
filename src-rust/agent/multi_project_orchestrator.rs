@@ -5,7 +5,7 @@ use crate::taxonomy::{
 };
 use async_trait::async_trait;
 
-pub struct MultiProjectOrchestrator;
+pub struct MultiProjectOrchestrator {}
 
 #[async_trait]
 impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
@@ -99,7 +99,7 @@ impl Default for MultiProjectOrchestrator {
 
 impl MultiProjectOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     pub fn aggregate_results(&self, projects: Vec<ProjectResult>) -> AggregatedResults {

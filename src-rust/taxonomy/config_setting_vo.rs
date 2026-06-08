@@ -50,7 +50,7 @@ impl<'de> serde::Deserialize<'de> for ActualValue {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ActualValueVisitor;
+        struct ActualValueVisitor {}
         impl<'de> serde::de::Visitor<'de> for ActualValueVisitor {
             type Value = ActualValue;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -86,7 +86,7 @@ impl<'de> serde::Deserialize<'de> for ActualValue {
                 Ok(ActualValue { value: val })
             }
         }
-        deserializer.deserialize_any(ActualValueVisitor)
+        deserializer.deserialize_any(ActualValueVisitor {})
     }
 }
 
@@ -133,7 +133,7 @@ impl<'de> serde::Deserialize<'de> for ExpectedValue {
     where
         D: serde::Deserializer<'de>,
     {
-        struct ExpectedValueVisitor;
+        struct ExpectedValueVisitor {}
         impl<'de> serde::de::Visitor<'de> for ExpectedValueVisitor {
             type Value = ExpectedValue;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -169,7 +169,7 @@ impl<'de> serde::Deserialize<'de> for ExpectedValue {
                 Ok(ExpectedValue { value: val })
             }
         }
-        deserializer.deserialize_any(ExpectedValueVisitor)
+        deserializer.deserialize_any(ExpectedValueVisitor {})
     }
 }
 

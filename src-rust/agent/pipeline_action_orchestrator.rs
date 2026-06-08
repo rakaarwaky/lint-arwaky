@@ -3,7 +3,7 @@ use crate::contract::PipelineActionDispatcherAggregate;
 use crate::taxonomy::{ActionArgs, ActionName, FilePath, ResponseData, SuccessStatus};
 use std::collections::HashMap;
 
-pub struct PipelineActionOrchestrator;
+pub struct PipelineActionOrchestrator {}
 
 #[async_trait::async_trait]
 impl PipelineActionDispatcherAggregate for PipelineActionOrchestrator {
@@ -69,7 +69,7 @@ impl PipelineActionDispatcherAggregate for PipelineActionOrchestrator {
 
 impl PipelineActionOrchestrator {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     async fn handle_check(&self, _action: &str) -> ResponseData {
