@@ -1,8 +1,8 @@
 // pipeline_execution_orchestrator — Agent pipeline: receive→think→act→respond orchestrator.
 use crate::contract::{
-    IJobRegistryPort, PipelineExecutionOrchestratorAggregate, PipelineInputAggregate,
-    PipelineOutputAggregate,
+    IJobRegistryPort, PipelineInputAggregate, PipelineOutputAggregate, ServiceContainerAggregate,
 };
+use crate::contract::execution_orchestrator_aggregate::PipelineExecutionOrchestratorAggregate;
 use crate::infrastructure::MemoryJobRegistryAdapter;
 use crate::taxonomy::{ErrorMessage, JobId, ResponseData, SuccessStatus};
 use std::sync::OnceLock;

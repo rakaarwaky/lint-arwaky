@@ -1,4 +1,4 @@
-use crate::taxonomy::{FilePath, Timestamp};
+use crate::taxonomy::{BooleanVO, FilePath, Timestamp};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

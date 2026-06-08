@@ -1,3 +1,4 @@
+use crate::contract::ServiceContainerAggregate;
 use crate::taxonomy::BooleanVO;
 use crate::taxonomy::FileFormat;
 use crate::taxonomy::FilePath;

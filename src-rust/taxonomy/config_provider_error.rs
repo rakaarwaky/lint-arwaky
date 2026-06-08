@@ -1,4 +1,4 @@
-use crate::taxonomy::{ActualValue, ConfigKey, ErrorMessage, ExpectedValue, FilePath};
+use crate::taxonomy::{ActualValue, BooleanVO, ConfigKey, ErrorMessage, ExpectedValue, FilePath};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]

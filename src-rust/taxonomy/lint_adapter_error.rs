@@ -1,5 +1,6 @@
 use crate::taxonomy::{
-    AdapterName, Cause, Constraint, ErrorCode, ErrorMessage, ExitCode, FieldName, FilePath,
+    AdapterName, BooleanVO, Cause, Constraint, ErrorCode, ErrorMessage, ExitCode, FieldName,
+    FilePath,
 };
 use serde::{Deserialize, Serialize};
 

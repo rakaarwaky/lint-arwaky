@@ -122,13 +122,13 @@ History: 42 entries over 30 days
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | `lint-arwaky-cli trends .` runs | Pipeline completes | Current score displayed | ✅ |
-| AC-002 | History file does not exist | `trends` runs | Auto-create `.lint-history.json` | ❌ Missing |
-| AC-003 | Current score = 85, previous = 87.5 | Trend analysis runs | delta = -2.5 → DECLINING | ❌ Missing |
-| AC-004 | History has 42 entries | Stats computed | All-time high and low shown | ❌ Missing |
-| AC-005 | Score is 85.0 | `save_score()` runs | `{"score":85.0,...}` appended to history | ❌ Missing |
-| AC-006 | `MetricsProvider.get_history()` called | History read | Valid JSON-lines parsed | ✅ |
-| AC-007 | Current score computed | Self-lint completes | Score 0-100 returned | ✅ |
+| AC-001 | `lint-arwaky-cli trends .` runs | Pipeline completes | Current score displayed | ✅ `handle_trends()` in `cli_main_entry.rs` lints, computes score, saves to history |
+| AC-002 | History file does not exist | `trends` runs | Auto-create `.lint-history.json` | ✅ `MetricsProvider.save_metric()` creates parent dirs + appends via `OpenOptions::create(true).append(true)` |
+| AC-003 | Current score = 85, previous = 87.5 | Trend analysis runs | delta = -2.5 → DECLINING | ✅ `handle_trends()` computes delta, classifies IMPROVING/DECLINING/STABLE using ±1 thresholds |
+| AC-004 | History has 42 entries | Stats computed | All-time high and low shown | ✅ `handle_trends()` computes `all_time_high` / `all_time_low` via `fold(f64::max)` / `fold(f64::min)` |
+| AC-005 | Score is 85.0 | `save_score()` runs | `{"score":85.0,...}` appended to history | ✅ `MetricsProvider.save_metric()` appends JSON-lines entry with score, timestamp, violations, critical count |
+| AC-006 | `MetricsProvider.get_history()` called | History read | Valid JSON-lines parsed | ✅ `get_history()` parses each line as json, skips empty lines |
+| AC-007 | Current score computed | Self-lint completes | Score 0-100 returned | ✅ `compute_score()` in taxonomy mod |
 
 ## 8. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

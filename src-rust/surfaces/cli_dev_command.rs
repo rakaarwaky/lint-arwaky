@@ -5,11 +5,11 @@ pub struct DevCommandsSurface {
 }
 
 impl DevCommandsSurface {
-    pub fn new(container: Option<Box<dyn ServiceContainerAggregate>>) -> Self {
+    fn new(container: Option<Box<dyn ServiceContainerAggregate>>) -> Self {
         Self { container }
     }
 
-    pub fn register_all(&mut self, container: Box<dyn ServiceContainerAggregate>) {
+    fn register_all(&mut self, container: Box<dyn ServiceContainerAggregate>) {
         self.container = Some(container);
     }
 
@@ -130,12 +130,12 @@ impl DevCommandsSurface {
         println!(" Imported config from {config_file} -> lint_arwaky.config.yaml");
     }
 
-    pub fn install_hook(&self, _path: &str) {
-        println!(" Pre-commit hook installed successfully.");
-    }
-
-    pub fn uninstall_hook(&self, _path: &str) {
-        println!(" Pre-commit hook removed successfully.");
+    pub fn set_hook(&self, _install: bool) {
+        if _install {
+            println!(" Pre-commit hook installed successfully.");
+        } else {
+            println!(" Pre-commit hook removed successfully.");
+        }
     }
 }
 

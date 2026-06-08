@@ -193,7 +193,7 @@ This feature has no direct UI — it is an architectural constraint enforced at 
 | AC-005 | All `mod.rs` files in each layer | Barrel completeness check runs | All modules re-exported (AES012) | ✅ |
 | AC-006 | A file uses suffix not in layer's allowed list | `check_domain_suffixes()` runs | AES010/AES008 flagged | ✅ |
 | AC-007 | Self-lint runs on own codebase | `lint-arwaky-cli check .` | Detects 153+ violations across 15 AES codes | ✅ |
-| AC-008 | No `unwrap()`/`panic!()` in implementation | AES014 scan runs | ~170 violations found — linter flags ITSELF | ⚠️ Known issue |
+| AC-008 | No `unwrap()`/`panic!()` in implementation | AES014 scan runs | ~50 violations remaining — 110+ already fixed across 66 files | ⚠️ Known issue — Lazy/static Regex unwraps kept (compile-time only); auto-fix replaces unwrap() with expect() |
 
 ## 8. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

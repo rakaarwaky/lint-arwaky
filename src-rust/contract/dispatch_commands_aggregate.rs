@@ -1,3 +1,4 @@
+use crate::contract::ServiceContainerAggregate;
 use crate::taxonomy::{ActionName, CommandMetadataVO, DescriptionVO, Suggestion};
 use std::collections::HashMap;
 

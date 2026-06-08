@@ -51,15 +51,32 @@ impl ArchImportRuleChecker {
                 return true;
             }
             // PascalCase / barrel import: "ServiceContainerAggregate" ends with "Aggregate" (case-insensitive)
-            // Split by :: and check each identifier segment
-            lower.split("::").any(|seg| {
+            // Split by :: and check each identifier segment using original case for PascalCase detection
+            import_line.split("::").any(|seg| {
                 let cleaned = seg
                     .trim_end_matches(';')
                     .trim()
                     .trim_start_matches('{')
                     .trim_end_matches('}')
                     .trim();
-                cleaned.split(',').any(|t| t.trim().to_lowercase().ends_with(s))
+                cleaned.split(',').any(|t| {
+                    let name = t.trim();
+                    let name_lower = name.to_lowercase();
+                    if let Some(rest) = name_lower.strip_suffix(s) {
+                        // Exact match or snake_case (preceded by _)
+                        if rest.is_empty() || rest.ends_with('_') {
+                            return true;
+                        }
+                        // PascalCase: suffix starts with uppercase in original name
+                        if name.len() >= s.len() {
+                            let suffix_in_orig = &name[name.len() - s.len()..];
+                            if suffix_in_orig.starts_with(|c: char| c.is_uppercase()) {
+                                return true;
+                            }
+                        }
+                    }
+                    false
+                })
             })
         })
     }
@@ -96,18 +113,59 @@ impl ArchImportRuleChecker {
         let Ok(content) = fs::read_to_string(file) else {
             return vec![];
         };
-        content
-            .lines()
-            .enumerate()
-            .filter(|(_, line)| {
-                let trimmed = line.trim();
-                trimmed.starts_with("import ")
-                    || trimmed.starts_with("from ")
-                    || trimmed.starts_with("use ")
-                    || trimmed.starts_with("extern crate ")
-            })
-            .map(|(i, l)| (i + 1, l.to_string()))
-            .collect()
+        let mut result: Vec<(usize, String)> = Vec::new();
+        let lines: Vec<&str> = content.lines().collect();
+        let mut i = 0;
+        while i < lines.len() {
+            let trimmed = lines[i].trim();
+            if trimmed.starts_with("import ")
+                || trimmed.starts_with("from ")
+                || trimmed.starts_with("extern crate ")
+            {
+                result.push((i + 1, lines[i].to_string()));
+                i += 1;
+                continue;
+            }
+            if trimmed.starts_with("use ") {
+                let mut combined = lines[i].to_string();
+                // Handle multi-line `use foo::{ ... }` blocks
+                if combined.contains('{') && !combined.contains('}') {
+                    let start = i;
+                    i += 1;
+                    while i < lines.len() {
+                        let part = lines[i].trim().to_string();
+                        combined.push_str(&format!(" {}", part));
+                        if part.contains('}') || combined.ends_with(';') {
+                            break;
+                        }
+                        i += 1;
+                    }
+                    // Collapse whitespace for matching
+                    combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
+                    result.push((start + 1, combined));
+                } else if !combined.ends_with(';') {
+                    // Handle line continuation with trailing comma/backslash
+                    while i + 1 < lines.len() {
+                        let next = lines[i + 1].trim();
+                        if next.starts_with("use ") || next.is_empty() {
+                            break;
+                        }
+                        combined.push_str(&format!(" {}", next));
+                        if next.ends_with(';') {
+                            i += 1;
+                            break;
+                        }
+                        i += 1;
+                    }
+                    combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
+                    result.push((i + 1, combined));
+                } else {
+                    result.push((i + 1, combined));
+                }
+            }
+            i += 1;
+        }
+        result
     }
 
     fn extract_module_from_line(line: &str) -> Option<String> {
@@ -121,9 +179,13 @@ impl ArchImportRuleChecker {
             let module = rest.split_whitespace().next()?.to_string();
             return Some(module);
         }
-        // Rust: `use x::y;`
+        // Rust: `use x::y;` or `use x::{a, b, c};`
         if let Some(rest) = trimmed.strip_prefix("use ") {
-            let module = rest.trim_end_matches(';').to_string();
+            let module = rest.trim_end_matches(';').trim().to_string();
+            // For multi-line imports like `crate::foo::{a, b}`, extract just `crate::foo`
+            if let Some(brace_pos) = module.find("::{") {
+                return Some(module[..brace_pos].to_string());
+            }
             return Some(module);
         }
         None
@@ -167,8 +229,12 @@ impl ArchImportRuleChecker {
             // Skip mandatory import if file genuinely doesn't use ANY
             // types/identifiers from this layer (not even inline qualifiers).
             // Prevents forcing unused imports just to satisfy AES002.
-            let genuinely_unreferenced = suffixes.is_empty()
-                && !content.contains(layer);
+            let genuinely_unreferenced = if suffixes.is_empty() {
+                !content.contains(layer)
+            } else {
+                !content.contains(layer)
+                    && !suffixes.iter().any(|s| content.contains(s))
+            };
 
             if genuinely_unreferenced {
                 continue;

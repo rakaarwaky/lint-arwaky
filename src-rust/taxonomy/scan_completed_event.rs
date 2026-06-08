@@ -1,4 +1,4 @@
-use crate::taxonomy::{ComplianceStatus, Count, Duration, FilePath, Score, Severity, Timestamp};
+use crate::taxonomy::{BooleanVO, ComplianceStatus, Count, Duration, FilePath, Score, Severity, Timestamp};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

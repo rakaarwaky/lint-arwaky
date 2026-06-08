@@ -14,25 +14,32 @@ pub struct ArchComplianceAnalyzer {
 
 impl ArchComplianceAnalyzer {
     pub fn new(mut config: ArchitectureConfig) -> Self {
-        // Group rules by layer name (including global/empty scope)
+        // Group rules by layer name — both base name and full scope
         let mut rules_by_layer: HashMap<String, Vec<&ArchitectureRule>> = HashMap::new();
         for rule in &config.rules {
             let scope = rule.scope.to_string();
-            let layer = if scope.is_empty() {
+            let base_key = if scope.is_empty() {
                 String::new()
             } else {
                 scope.split('(').next().unwrap_or(&scope).to_string()
             };
-            rules_by_layer.entry(layer).or_default().push(rule);
+            rules_by_layer.entry(base_key).or_default().push(rule);
+            // Also index by full scope (e.g. "agent(container|registry|mixin)")
+            if scope.contains('(') {
+                rules_by_layer.entry(scope.clone()).or_default().push(rule);
+            }
         }
 
         let mut new_layers: HashMap<LayerNameVO, LayerDefinition> = HashMap::new();
         for (lname, mut ldef) in config.layers {
             let lstr = lname.to_string();
-            // Apply global rules (empty scope) to all layers, then layer-specific rules
-            for key in ["", &lstr] {
-                if let Some(rules) = rules_by_layer.get(key) {
+            let base_name = lstr.split('(').next().unwrap_or(&lstr).to_string();
+            // Apply: global rules + base-layer rules
+            for key in &[String::new(), base_name.clone()] {
+                if let Some(rules) = rules_by_layer.get(key.as_str()) {
                     for rule in rules {
+                        // Skip specialized rules (e.g. contract(port)) when processing base layers
+                        if key.as_str() == base_name && rule.scope.value.contains('(') { continue; }
                         if !rule.exceptions.values.is_empty() {
                             ldef.exceptions = rule.exceptions.clone();
                         }
@@ -71,6 +78,58 @@ impl ArchComplianceAnalyzer {
             }
             new_layers.insert(lname, ldef);
         }
+
+        // Create specialized sub-layer entries from rules (e.g., "agent(container)")
+        // This enables resolve_specialized_layer to find and return these sub-layers
+        // and apply per-role forbidden/mandatory import rules correctly.
+        for rule in &config.rules {
+            let scope = rule.scope.to_string();
+            if !scope.contains('(') { continue; }
+            // Extract suffixes from scope: "agent(container|registry|mixin)"
+            if let Some(paren_start) = scope.find('(') {
+                let base_name = scope[..paren_start].trim();
+                let inner = scope[paren_start+1..].trim_end_matches(')').trim();
+                // Check if the base layer exists — clone def first to avoid borrow conflict
+                let base_key_str = base_name.to_string();
+                let base_def_opt = {
+                    let base_key = LayerNameVO::new(&base_key_str);
+                    new_layers.get(&base_key).cloned()
+                };
+                if let Some(base_def) = base_def_opt {
+                    let suffixes: Vec<&str> = if inner.contains('|') {
+                        inner.split('|').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+                    } else {
+                        inner.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+                    };
+                    for suffix in suffixes {
+                        let specialized_key = LayerNameVO::new(format!("{}({})", base_name, suffix));
+                        if new_layers.contains_key(&specialized_key) { continue; }
+                        let mut spec_def = base_def.clone();
+                        // Apply specialized rules
+                        if let Some(rules) = rules_by_layer.get(&scope) {
+                            for r in rules {
+                                if !r.forbidden_import.values.is_empty() {
+                                    spec_def.forbidden_import = r.forbidden_import.clone();
+                                }
+                                if !r.mandatory_import.values.is_empty() {
+                                    spec_def.mandatory_import = r.mandatory_import.clone();
+                                }
+                                if !r.allowed_import.values.is_empty() {
+                                    spec_def.allowed_import = r.allowed_import.clone();
+                                }
+                                if !r.forbidden_inheritance.values.is_empty() {
+                                    spec_def.forbidden_inheritance = r.forbidden_inheritance.clone();
+                                    spec_def.forbidden_inheritance_violation_message =
+                                        r.forbidden_inheritance_violation_message.clone();
+                                }
+                            }
+                        }
+                        new_layers.insert(specialized_key, spec_def);
+                    }
+                }
+            }
+        }
+
         config.layers = new_layers;
         Self { config }
     }
@@ -233,6 +292,10 @@ impl ArchComplianceAnalyzer {
     /// Look up a `LayerDefinition` by its layer name string.
     pub fn get_layer_def(&self, layer: &str) -> Option<&LayerDefinition> {
         self.config.layers.get(&LayerNameVO::new(layer))
+            .or_else(|| {
+                let base = layer.split('(').next().unwrap_or(layer);
+                self.config.layers.get(&LayerNameVO::new(base))
+            })
     }
 
     /// Returns true for conventional barrel / re-export files.

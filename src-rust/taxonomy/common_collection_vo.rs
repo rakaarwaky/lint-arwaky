@@ -442,7 +442,7 @@ impl ResponseDataList {
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct Score {
     pub(crate) value: f64,

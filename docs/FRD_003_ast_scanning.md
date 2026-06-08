@@ -117,14 +117,14 @@ No direct UI. Parser is consumed by other components internally.
 |----|-------|------|------|--------|
 | AC-001 | A Rust file with `use crate::taxonomy::...` | `extract_imports()` runs | ImportInfo with path "taxonomy" | ✅ Simple cases work; ⚠️ fails on multi-line/group imports |
 | AC-002 | A Python file with `from taxonomy import FilePath` | `extract_imports()` runs | ImportInfo with source "taxonomy" | ✅ Simple cases work; ⚠️ fails on multi-line parenthesized imports |
-| AC-003 | A JS file with `import { X } from './module'` | `extract_imports()` runs | ImportInfo with path "./module" | ✅ Simple cases work; ❌ JS `exported` set never populated |
+| AC-003 | A JS file with `import { X } from './module'` | `extract_imports()` runs | ImportInfo with path "./module" | ✅ Single-line imports work; JS `exported` set populated from `export` declarations |
 | AC-004 | File `src-rust/capabilities/mod.rs` | `is_barrel_file()` runs | Returns true | ✅ Path-based, not regex |
 | AC-005 | File `src-rust/capabilities/__init__.py` | `is_barrel_file()` runs | Returns true | ✅ Path-based |
 | AC-006 | File `src-rust/surfaces/index.ts` | `is_barrel_file()` runs | Returns true | ✅ Path-based |
 | AC-007 | File `mod.rs` containing `fn main` | `is_entry_point()` runs | Returns true | ✅ Simple keyword match |
 | AC-008 | File `cli_main_entry.rs` | `is_entry_point()` runs | Returns true | ✅ Name-based check |
-| AC-009 | Any file with class attributes (fields) | `get_class_attributes()` runs | Returns structured attribute data | ❌ STUB — returns empty HashMap in all 3 scanners |
-| AC-010 | JS file with `export function foo()` | `is_symbol_exported()` runs | Returns true | ❌ BROKEN — JS `exported` set never populated |
+| AC-009 | Any file with class attributes (fields) | `get_class_attributes()` runs | Returns structured attribute data | ✅ Implemented in all 3 scanners: Rust struct fields via brace tracking, Python class attrs via indent tracking, JS class properties via brace counting |
+| AC-010 | JS file with `export function foo()` | `is_symbol_exported()` runs | Returns true | ✅ JS `exported` set populated for `export function/class/const/let/var` and `export { ... }` syntax |
 
 ## 8. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

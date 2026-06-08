@@ -18,7 +18,7 @@ use crate::contract::{
 use crate::infrastructure::MemoryJobRegistryAdapter;
 use crate::taxonomy::{
     AdapterName, ArchitectureConfig, ArchitectureGovernanceEntity, ArchitectureRule, BooleanVO,
-    ComplianceStatus, FilePath, LayerDefinition, LayerMapVO, LayerNameVO, LintResultList,
+    ComplianceStatus, FilePath, LayerDefinition, LayerMapVO, LayerNameVO, LintResultList, Score,
     WatchResult, LAYER_GLOBAL,
 };
 
@@ -107,7 +107,8 @@ impl WatchExecutionOrchestrator {
     pub async fn execute(&self, _request: &DirectoryWatchAggregate) -> WatchResult {
         WatchResult {
             file: FilePath::new(".".to_string()).unwrap_or_default(),
-            report: ArchitectureGovernanceEntity::default(),
+            score: Score::new(100.0),
+            is_passing: ComplianceStatus::new(true),
         }
     }
 

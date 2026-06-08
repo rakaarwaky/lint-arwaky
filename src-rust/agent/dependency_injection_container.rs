@@ -15,7 +15,6 @@ use crate::infrastructure::{
 use crate::taxonomy::{Count, FilePath};
 use crate::taxonomy::source_path_vo::DirectoryPath;
 use crate::taxonomy::AdapterName;
-use crate::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -41,7 +40,8 @@ impl DependencyInjectionContainer {
             Box::new(ASTRustParserAdapter::new()),
             Box::new(ASTJSParserAdapter::new()),
         ));
-        let arch_linter: Arc<dyn IArchLintProtocol> = Arc::new(ArchitectureLintOrchestrator::new());
+        let arch_linter: Arc<dyn IArchLintProtocol> =
+            Arc::new(crate::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator::new());
 
         let mut linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
 
@@ -128,6 +128,6 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
     }
 
     fn get_fix_orchestrator(&self, dry_run: bool) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
-        Some(Arc::new(crate::agent::lint_fix_orchestrator::LintFixOrchestrator::with_dry_run(dry_run)))
+        Some(Arc::new(crate::agent::lint_fix_orchestrator::LintFixOrchestrator::with_dry_run(dry_run, self.architecture_linter.clone())))
     }
 }

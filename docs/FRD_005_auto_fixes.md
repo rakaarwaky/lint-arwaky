@@ -57,7 +57,7 @@ Violations were only reported, never fixed automatically. Developers had to manu
 - **US-003:** As a developer, I want non-fixable violations to be listed as manual steps, so I know what still needs attention.
 
 ### 4.2 Use Cases & Workflow
-**Fix Pipeline (Target):**
+**Fix Pipeline (Implemented):**
 ```
 lint-arwaky-cli fix .
   │
@@ -125,11 +125,11 @@ CLI output:
 ## 7. Acceptance Criteria
 | ID | Given | When | Then | Status |
 |----|-------|------|------|--------|
-| AC-001 | File with AES003 naming violation | `fix .` runs | File renamed to correct 3-word pattern | ⚠️ Stub |
-| AC-002 | File with `#[allow(...)]` bypass | `fix .` runs | `#[allow(...)]` line removed | ⚠️ Stub |
-| AC-003 | File with unused import | `fix .` runs | Unused import line removed | ⚠️ Stub |
-| AC-004 | `--dry-run` flag set | `fix . --dry-run` runs | Files inspected but NOT modified | ❌ Missing |
-| AC-005 | Non-fixable violations present | `fix .` runs | Listed as manual steps | ⚠️ Stub |
+| AC-001 | File with AES003 naming violation | `fix .` runs | File renamed to correct 3-word pattern | ✅ `LintFixOrchestrator` calls `SymbolRenamerProcessor` for AES003 fixes |
+| AC-002 | File with `#[allow(...)]` bypass | `fix .` runs | `#[allow(...)]` line removed | ✅ `fix_bypass_comments()` implemented with dry-run support |
+| AC-003 | File with unused import | `fix .` runs | Unused import line removed | ✅ `fix_unused_import()` removes import line by line number |
+| AC-004 | `--dry-run` flag set | `fix . --dry-run` runs | Files inspected but NOT modified | ✅ `--dry-run` flag defined in CLI, wired to `LintFixOrchestrator::with_dry_run()` |
+| AC-005 | Non-fixable violations present | `fix .` runs | Listed as manual steps | ✅ `report_non_fixable()` classifies by AES code, lists manual steps |
 | AC-006 | Naming violation with AES003 | `NamingRenamerProcessor` runs | Symbol renamed project-wide | ✅ Working |
 | AC-007 | Clippy fixable issue in Rust file | `rust_linter_adapter.apply_fix()` | `cargo clippy --fix` executes | ✅ Real |
 

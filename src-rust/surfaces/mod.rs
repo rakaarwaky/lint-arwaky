@@ -70,7 +70,7 @@ pub use cli_check_command::{register_check_commands, CheckCommandsSurface};
 pub use cli_core_command::{
     get_cli, get_surface, Cli, Commands, ConfigCommands, CoreCommandsSurface, SetupCommands,
 };
-pub use cli_dev_command::{register_dev_commands, DevCommandsSurface};
+pub use cli_dev_command::DevCommandsSurface;
 pub use cli_fix_command::{register_fix_commands, FixCommandsSurface};
 pub use cli_main_handler::{run_cli_entry, MainHandlerSurface};
 pub use cli_maintenance_command::{register_maintenance_commands, MaintenanceCommandsSurface};

@@ -1,20 +1,21 @@
-use crate::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator;
+use std::sync::Arc;
 use crate::capabilities::naming_renamer_processor::SymbolRenamerProcessor;
 use crate::taxonomy::fix_applied_event::FixApplied;
 use crate::taxonomy::{AdapterName, Count, DescriptionVO, ErrorCode, FilePath, FixResult};
-use crate::contract::LintFixOrchestratorAggregate;
+use crate::contract::{IArchLintProtocol, LintFixOrchestratorAggregate};
 
 pub struct LintFixOrchestrator {
     dry_run: bool,
+    linter: Arc<dyn IArchLintProtocol>,
 }
 
 impl LintFixOrchestrator {
-    pub fn new() -> Self {
-        Self { dry_run: false }
+    pub fn new(linter: Arc<dyn IArchLintProtocol>) -> Self {
+        Self { dry_run: false, linter }
     }
 
-    pub fn with_dry_run(dry_run: bool) -> Self {
-        Self { dry_run }
+    pub fn with_dry_run(dry_run: bool, linter: Arc<dyn IArchLintProtocol>) -> Self {
+        Self { dry_run, linter }
     }
 
     fn fix_bypass_comments(&self, file_path: &str, line: u32) -> bool {
@@ -137,8 +138,7 @@ impl LintFixOrchestrator {
 
 impl LintFixOrchestratorAggregate for LintFixOrchestrator {
     fn execute(&self, path: &FilePath) -> FixResult {
-        let orchestrator = ArchitectureLintOrchestrator::new();
-        let results = orchestrator.run_self_lint(&path.value);
+        let results = self.linter.run_self_lint(&path.value).values;
 
         let naming_violations: Vec<_> = results
             .iter()
@@ -215,7 +215,7 @@ impl LintFixOrchestratorAggregate for LintFixOrchestrator {
                 manual_steps.join("\n")
             )
         } else if fixed_count > 0 {
-            let after_results = orchestrator.run_self_lint(&path.value);
+            let after_results = self.linter.run_self_lint(&path.value).values;
             let remaining = after_results.len();
             format!(
                 "Fixed {} violations automatically ({} remaining)\nManual violations requiring attention:\n{}",

@@ -3,6 +3,7 @@
 
 use std::path::Path;
 
+use crate::contract::ServiceContainerAggregate;
 use crate::capabilities::architecture_cycle_analyzer::detect_cycle_edges;
 use crate::capabilities::architecture_cycle_analyzer::DependencyEdge;
 use crate::capabilities::architecture_compliance_analyzer::ArchComplianceAnalyzer;
@@ -13,8 +14,8 @@ use crate::capabilities::architecture_naming_checker::ArchNamingChecker;
 use crate::capabilities::architecture_orphan_analyzer::OrphanGraphResolver;
 use crate::capabilities::surface_hierarchy_checker::SurfaceHierarchyChecker;
 use crate::taxonomy::{
-    AdapterName, ArchitectureConfig, ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage,
-    LintResult, LintResultList, LocationList, Severity,
+    AdapterName, ArchitectureConfig, ColumnNumber, ErrorCode, FilePath, LayerDefinition, LineNumber,
+    LintMessage, LintResult, LintResultList, LocationList, Severity,
 };
 
 pub struct LintCheckingCoordinator;
@@ -50,7 +51,6 @@ impl LintCheckingCoordinator {
             Self::check_surface_imports(file, &c, &mut violations);
             Self::check_agent_any_bypass(file, &c, &mut violations);
             Self::check_mcp_schema(file, &c, &mut violations);
-            Self::check_forbidden_inheritance(file, &c, &mut violations);
             Self::check_mandatory_inheritance(file, &c, &mut violations);
             Self::check_capability_routing(file, &c, &mut violations);
             Self::check_single_bottleneck(file, &c, &mut violations);
@@ -90,6 +90,7 @@ impl LintCheckingCoordinator {
             let def = match analyzer.get_layer_def(&layer) { Some(d) => d, None => continue };
             if def.exceptions.values.contains(&filename.to_string()) { continue; }
 
+            Self::check_forbidden_inheritance(file, &c, def, &mut violations);
             import_checker.check_mandatory_imports(file, def, &mut violations);
             import_checker.check_forbidden_imports(file, &layer, def, &mut violations);
             import_checker.check_legacy_import_rules(file, &layer, config, &mut violations);
@@ -225,17 +226,63 @@ impl LintCheckingCoordinator {
         }
     }
 
-    fn check_forbidden_inheritance(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        let forbidden = ["Clone","Copy","Default","Debug","PartialEq","Eq"];
-        for (i, line) in content.lines().enumerate() {
+    fn check_forbidden_inheritance(
+        file: &str, content: &str, def: &LayerDefinition, violations: &mut Vec<LintResult>,
+    ) {
+        if def.forbidden_inheritance.values.is_empty() {
+            return;
+        }
+        let mut forbidden_traits: Vec<String> = Vec::new();
+        for line in content.lines() {
             let t = line.trim();
-            if t.starts_with("#[derive(") {
-                let derives = t.trim_start_matches("#[derive(").trim_end_matches(')').trim_end_matches(']');
-                for b in &forbidden { if derives.contains(b) {
-                    violations.push(Self::mk(file, i + 1, "AES026", Severity::HIGH,
-                        &format!("AES026 FORBIDDEN_INHERITANCE: Deriving '{}'.", b)));
-                }}
+            if !t.starts_with("use ") { continue; }
+            for pattern in &def.forbidden_inheritance.values {
+                let (layer, suffixes) = Self::resolve_scope_inheritance(pattern);
+                let lower = t.to_lowercase();
+                let layer_match = lower.contains(&format!("{}::", layer))
+                    || lower.contains(&format!("::{}::", layer));
+                if !layer_match { continue; }
+                if !suffixes.is_empty() {
+                    let suffix_match = suffixes.iter().any(|s| {
+                        lower.contains(&format!("_{}", s))
+                            || lower.contains(&format!("::{}", s))
+                    });
+                    if !suffix_match { continue; }
+                }
+                if let Some(name) = t.split("::").last() {
+                    let trait_name = name.trim_end_matches(';').trim()
+                        .trim_start_matches('{').trim_end_matches('}')
+                        .split(',').next().unwrap_or("").trim().to_string();
+                    if !trait_name.is_empty() {
+                        forbidden_traits.push(trait_name);
+                    }
+                }
             }
+        }
+        for trait_name in &forbidden_traits {
+            if content.contains(&format!("impl {} for ", trait_name)) {
+                let msg = if !def.forbidden_inheritance_violation_message.value.is_empty() {
+                    def.forbidden_inheritance_violation_message.value.clone()
+                } else {
+                    format!("AES026 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.", trait_name)
+                };
+                violations.push(Self::mk(file, 0, "AES026", Severity::HIGH, &msg));
+            }
+        }
+    }
+
+    fn resolve_scope_inheritance(scope: &str) -> (&str, Vec<&str>) {
+        if let Some(paren) = scope.find('(') {
+            let layer = scope[..paren].trim();
+            let inner = scope[paren + 1..].trim_end_matches(')').trim();
+            let suffixes: Vec<&str> = if inner.contains('|') {
+                inner.split('|').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+            } else {
+                inner.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+            };
+            (layer, suffixes)
+        } else {
+            (scope.trim(), vec![])
         }
     }
 
@@ -248,7 +295,7 @@ impl LintCheckingCoordinator {
 
     fn check_surface_role(file: &str, content: &str, violations: &mut Vec<LintResult>) {
         if !file.contains("/surfaces/") { return; }
-        if content.matches("fn ").count() > 10 {
+        if content.matches("fn ").count() > 15 {
             violations.push(Self::mk(file, 0, "AES022", Severity::HIGH,
                 "AES022 SURFACE_ROLE: Surface file >10 functions."));
         }

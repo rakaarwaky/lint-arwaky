@@ -488,7 +488,7 @@ architecture:
 
       - name: "Capabilities_Relations"
         scope: "capabilities"
-        check_orphan: false
+        check_orphan: true
         allowed_import: ["taxonomy", "contract"]
         mandatory_import: ["taxonomy", "contract(protocol)"]
         exceptions: ["main.rs", "lib.rs", "mod.rs", "architecture_compliance_analyzer.rs", "surface_hierarchy_checker.rs", "architecture_cycle_analyzer.rs", "architecture_import_checker.rs", "architecture_internal_checker.rs", "architecture_lint_handler.rs", "architecture_metric_checker.rs", "architecture_naming_checker.rs", "architecture_unused_checker.rs", "config_rules_validator.rs", "data_flow_analyzer.rs", "domain_type_checker.rs", "lint_reporting_formatter.rs", "mcp_schema_checker.rs", "naming_renamer_processor.rs", "naming_rule_checker.rs", "naming_variant_analyzer.rs", "scope_boundary_analyzer.rs", "semantic_boundary_resolver.rs", "semantic_scope_analyzer.rs", "semantic_tracer_analyzer.rs", "setup_management_processor.rs", "surface_hierarchy_checker.rs"]

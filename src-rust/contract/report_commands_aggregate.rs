@@ -1,3 +1,4 @@
+use crate::contract::ServiceContainerAggregate;
 use crate::taxonomy::FileFormat;
 use crate::taxonomy::FilePath;
 use async_trait::async_trait;

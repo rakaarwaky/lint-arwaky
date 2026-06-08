@@ -100,7 +100,7 @@ AES010 HIGH - src-rust/capabilities/project_helpers.rs
 |----|-------|------|------|--------|
 | AC-001 | File in capabilities/ has no valid suffix | `check_domain_suffixes()` runs | AES010 HIGH flagged | ✅ |
 | AC-002 | Barrel file (mod.rs) | `check_domain_suffixes()` runs | Skipped | ✅ |
-| AC-003 | Entry point file (main.rs) | `check_domain_suffixes()` runs | Skipped | ✅ |
+| AC-003 | Entry point file (main.rs / index.ts / main.py) | `check_domain_suffixes()` runs | Skipped | ✅ Recognizes Rust (main.rs, lib.rs), Python (main.py, app.py, __init__.py), JS/TS (index.js, index.ts, index.jsx, index.tsx, main.ts) |
 | AC-004 | File has valid suffix for its layer | `check_domain_suffixes()` runs | No violation | ✅ |
 
 ## 8. Dependencies & Risks

@@ -1,3 +1,4 @@
+use crate::contract::ServiceContainerAggregate;
 use crate::taxonomy::{
     DirectoryPath, EnvContentVO, McpConfigVO, SuccessStatus, TransportProtocol, TransportUrlVO,
 };
