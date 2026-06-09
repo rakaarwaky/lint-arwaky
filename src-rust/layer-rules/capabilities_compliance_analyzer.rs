@@ -340,7 +340,10 @@ impl ArchComplianceAnalyzer {
         }
 
         // Case 3: rel has no directory but layer path appears as a suffix of rel
-        if parent_dir == "." && rel.ends_with(norm_path_def) {
+        // NOTE: norm_path_def must be non-empty to avoid matching files at the project
+        // root (e.g. cli_main_action.rs) against layers with no path defined.
+        // An empty path definition causes rel.ends_with("") to match every file.
+        if parent_dir == "." && !norm_path_def.is_empty() && rel.ends_with(norm_path_def) {
             return true;
         }
 
