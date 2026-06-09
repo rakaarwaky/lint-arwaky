@@ -1,7 +1,7 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use crate::cli_commands::surface_output_controller::{print_json, print_sarif, print_junit};
+use crate::cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};
 use crate::cli_commands::taxonomy_entry_vo::{has_critical, lint_path, resolve_target};
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;

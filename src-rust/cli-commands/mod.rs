@@ -54,7 +54,9 @@ pub use surface_watch_command::{register_watch_command, WatchCommandsSurface, Wa
 pub mod surface_config_command;
 pub use surface_config_command::handle_config;
 pub mod surface_map_command;
-pub use surface_map_command::{handle_cancel, handle_diff, handle_export, handle_import, handle_suggest};
+pub use surface_map_command::{
+    handle_cancel, handle_diff, handle_export, handle_import, handle_suggest,
+};
 pub mod taxonomy_entry_vo;
 pub use taxonomy_entry_vo::{
     compute_score, count_loc, has_critical, lint_path, normalize_project_root, resolve_target,

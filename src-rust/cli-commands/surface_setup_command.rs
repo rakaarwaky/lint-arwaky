@@ -182,8 +182,7 @@ pub fn handle_setup(command: SetupCommands) -> ExitCode {
                 "rust"
             };
 
-            let target =
-                std::path::PathBuf::from(format!("lint_arwaky.config.{}.yaml", language));
+            let target = std::path::PathBuf::from(format!("lint_arwaky.config.{}.yaml", language));
             if target.exists() {
                 println!("Config already exists: {}", target.display());
                 println!("Overwrite? [y/N] (skipping in non-interactive mode)");
