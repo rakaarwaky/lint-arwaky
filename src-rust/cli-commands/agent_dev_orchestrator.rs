@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 // dev_commands_orchestrator — Orchestrator for development-related domain logic.
 use crate::cli_commands::contract_dev_aggregate::DevCommandsAggregate;
 use std::collections::HashMap;

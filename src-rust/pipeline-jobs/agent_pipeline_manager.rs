@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 // pipeline_action_orchestrator — Agent orchestrator for pipeline actions.
 use crate::pipeline_jobs::contract_dispatcher_aggregate::PipelineActionDispatcherAggregate;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionArgs;

@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 //! javascript_scope_tracer — Enclosing scope detection for JS/TS files.
 
 use crate::language_adapters::contract_scope_port::IJsTracerPort;

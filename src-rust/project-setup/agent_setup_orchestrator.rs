@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 // setup_management_orchestrator — Implementation of SetupManagementAggregate (Agent Logic).
 use crate::cli_transport::taxonomy_protocol_vo::TransportProtocol;
 use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;

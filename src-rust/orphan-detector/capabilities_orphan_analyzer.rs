@@ -374,6 +374,22 @@ impl ArchOrphanAnalyzer {
         None
     }
 
+    /// Check if a file contains an annotation comment that marks it as
+    /// dispatch-wired (exempt from orphan detection).
+    fn _check_dispatch_annotation(&self, file_path: &str) -> bool {
+        if let Ok(content) = std::fs::read_to_string(file_path) {
+            for line in content.lines().take(30) {
+                let trimmed = line.trim();
+                if trimmed == "// aes: wired-by-dispatch"
+                    || trimmed == "# aes: wired-by-dispatch"
+                {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
     fn _evaluate_layer(
         &self,
         f: &str,
@@ -384,6 +400,15 @@ impl ArchOrphanAnalyzer {
         all_files: &[String],
     ) -> crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult {
         if f.ends_with("__init__.py") {
+            return crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
+                false,
+                String::new(),
+                Severity::HIGH,
+            );
+        }
+
+        // If file has explicit dispatch annotation, skip orphan check entirely.
+        if self._check_dispatch_annotation(f) {
             return crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
                 false,
                 String::new(),

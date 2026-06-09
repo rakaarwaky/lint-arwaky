@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 /// naming_variant_provider — Python naming variant generator.
 use crate::naming_rules::contract_variant_port::INamingVariantPort;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

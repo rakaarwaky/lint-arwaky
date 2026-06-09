@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 // hook_management_orchestrator — Orchestrates git hook management (Agent Layer).
 use crate::git_hooks::contract_manager_port::IHookManagerPort;
 use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;

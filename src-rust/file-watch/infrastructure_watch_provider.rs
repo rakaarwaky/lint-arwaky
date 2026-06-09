@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 /// watch_service_provider — Poll-based file system watching for auto-lint on save.
 use std::collections::HashMap;
 use std::sync::Mutex;

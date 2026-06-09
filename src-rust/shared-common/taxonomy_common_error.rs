@@ -255,8 +255,8 @@ pub struct ExitCode {
 }
 
 impl ExitCode {
-    pub fn new(value: i64) -> Self {
-        Self { value }
+    pub fn new(value: impl Into<i64>) -> Self {
+        Self { value: value.into() }
     }
     pub fn value(&self) -> i64 {
         self.value

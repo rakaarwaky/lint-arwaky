@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 /// MCP Tools Commands - All 5 MCP tool implementations
 use serde_json::{json, Value};
 

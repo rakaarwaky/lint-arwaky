@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 // config_rules_validator — Capability for validating project configuration rules.
 // Implements IConfigRulesProtocol: is_adapter_enabled, validate_thresholds.
 

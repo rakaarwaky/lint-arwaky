@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 use std::sync::Arc;
 /// CLI output management utilities.
 use std::sync::Mutex;

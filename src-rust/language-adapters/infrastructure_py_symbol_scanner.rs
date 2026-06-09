@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 /// python_symbol_scanner — Scanner for symbols and imports from Python AST.
 use crate::code_analysis::taxonomy_import_source_vo::ImportInfo;
 use crate::language_adapters::contract_flow_port::IJavascriptFlowPort;

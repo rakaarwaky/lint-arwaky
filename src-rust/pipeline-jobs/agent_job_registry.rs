@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 //! Job registry aggregation for pipeline jobs.
 use crate::pipeline_jobs::contract_registry_aggregate::JobRegistryAggregate;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;

@@ -87,6 +87,12 @@ impl TaxonomyRoleChecker {
             if t.contains("pub(crate) value:") || t.trim_start().starts_with("pub value:") {
                 continue;
             }
+            // Skip trait-mandated conversion boundaries: From<Primitive>::from()
+            // and Visitor::visit_*() method parameters. The primitive type is
+            // mandated by the trait definition and cannot be replaced with a VO.
+            if t.starts_with("fn from(") || t.starts_with("fn visit_") {
+                continue;
+            }
             if !(t.ends_with(',') || t.ends_with('}') || t.ends_with(')') || t.contains("-> ")) {
                 continue;
             }
