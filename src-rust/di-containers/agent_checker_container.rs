@@ -20,10 +20,10 @@ use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
-use crate::code_analysis::agent_bypass_inspector::{check_agent_any_bypass, check_bypass_comments};
-use crate::code_analysis::agent_inheritance_inspector::{check_dead_inheritance, check_mandatory_inheritance};
-use crate::code_analysis::agent_layer_inspector::{check_agent_role, check_missing_vo, check_single_bottleneck, check_surface_role};
-use crate::code_analysis::agent_unused_import_inspector::check_unused_imports;
+use crate::code_analysis::agent_bypass_mixin::{check_agent_any_bypass, check_bypass_comments};
+use crate::code_analysis::agent_inheritance_coordinator::{check_dead_inheritance, check_mandatory_inheritance};
+use crate::code_analysis::agent_layer_coordinator::{check_agent_role, check_missing_vo, check_single_bottleneck, check_surface_role};
+use crate::code_analysis::agent_unused_import_coordinator::check_unused_imports;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 

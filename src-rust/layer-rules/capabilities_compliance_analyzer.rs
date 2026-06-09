@@ -200,6 +200,8 @@ impl ArchComplianceAnalyzer {
             .unwrap_or("");
 
         const PREFIX_MAP: &[(&str, &str)] = &[
+            ("cli_", "root"),
+            ("mcp_", "root"),
             ("taxonomy_", "taxonomy"),
             ("contract_", "contract"),
             ("capabilities_", "capabilities"),

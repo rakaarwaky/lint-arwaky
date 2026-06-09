@@ -6,7 +6,7 @@ use crate::shared_common::taxonomy_violationrs_constant::{
     AES031_SURFACE_ROLE_VIOLATION, AES036_SINGLE_BOTTLENECK, AES038_MISSING_VO,
 };
 
-use crate::code_analysis::agent_checker_helpers::mk_result;
+use crate::code_analysis::contract_checker_aggregate::mk_result;
 
 /// Check that agent files don't exceed 300 lines (AES032).
 pub fn check_agent_role(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
