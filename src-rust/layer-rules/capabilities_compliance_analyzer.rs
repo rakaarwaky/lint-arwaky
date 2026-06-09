@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
-use crate::layer_rules::taxonomy_rule_vo::ArchitectureRule;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 
 pub struct ArchComplianceAnalyzer {

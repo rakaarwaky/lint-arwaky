@@ -1,6 +1,6 @@
 // lint_reporting_protocol — Protocols for report formatting and output.
 // Defines interfaces for transforming ArchitectureGovernanceEntitys into various output formats.
-use crate::layer_rules::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use /* UNKNOWN: LogOutput */ crate::shared_common::taxonomy_suggestion_vo::LogOutput;
 use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;

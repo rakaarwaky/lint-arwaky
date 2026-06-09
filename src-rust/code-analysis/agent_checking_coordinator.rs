@@ -10,13 +10,11 @@ use crate::layer_rules::capabilities_import_checker::ArchImportRuleChecker;
 use crate::layer_rules::capabilities_internal_checker::ArchInternalChecker;
 use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::code_analysis::capabilities_class_checker::ArchClassChecker;
-use crate::code_analysis::capabilities_constant_checker::ArchConstantChecker;
 use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
-use crate::code_analysis::capabilities_primitive_checker::ArchPrimitiveChecker;
 use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use crate::code_analysis::contract_constant_protocol::IConstantPurityProtocol;
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use crate::code_analysis::contract_primitive_protocol::IPrimitiveCheckerProtocol;
+use crate::role_rules::capabilities_taxonomyrole_checker::TaxonomyRoleChecker;
+use crate::role_rules::capabilities_contractrole_checker::ContractRoleChecker;
 use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::capabilities_orphan_analyzer::OrphanGraphResolver;
 use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
@@ -54,9 +52,9 @@ impl LintCheckingCoordinator {
         let mut violations: Vec<LintResult> = Vec::new();
         let import_checker = ArchImportRuleChecker::new();
         let line_checker = ArchLineChecker::new();
-        let constant_checker = ArchConstantChecker::new();
         let class_checker = ArchClassChecker::new();
-        let primitive_checker = ArchPrimitiveChecker::new();
+        let taxonomy_checker = TaxonomyRoleChecker::new();
+        let contract_checker = ContractRoleChecker::new();
         let naming_checker = ArchNamingChecker::new();
         let internal_checker = ArchInternalChecker::new();
         let layer_checker = ArchLayerChecker::new();
@@ -146,13 +144,16 @@ impl LintCheckingCoordinator {
             // Layer-rule checks (delegated to layer-rules/)
             layer_checker.check_surface_imports(file, &c, &layer, &mut violations);
             layer_checker.check_capability_routing(file, &c, &layer, &mut violations);
-            layer_checker.check_forbidden_inheritance(file, &c, def, &mut violations);
             import_checker.check_mandatory_imports(file, def, &mut violations);
             import_checker.check_forbidden_imports(file, &layer, def, &mut violations);
             import_checker.check_legacy_import_rules(file, &layer, config, &mut violations);
             line_checker.check_line_counts(file, Some(def), &mut violations);
-            primitive_checker.check_primitive_usage(file, &c, filename, def, &mut violations);
-            constant_checker.check_constant_purity(file, &mut violations);
+            
+            taxonomy_checker.check_entity(file, &c, &mut violations);
+            taxonomy_checker.check_error(file, &c, &mut violations);
+            taxonomy_checker.check_event(file, &c, &mut violations);
+            taxonomy_checker.check_constant(file, &mut violations);
+            contract_checker.check_aggregate(file, &c, def, &mut violations);
             class_checker.check_mandatory_class_definition(file, Some(def), &mut violations);
             naming_checker.check_file_naming(
                 file,

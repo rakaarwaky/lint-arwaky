@@ -18,17 +18,17 @@ use crate::di_containers::contract_service_aggregate::{
 use crate::pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::taxonomy_rule_vo::ArchitectureRule;
+use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
-use /* UNKNOWN: LayerMapVO */ crate::layer_rules::taxonomy_definition_vo::LayerMapVO;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use /* UNKNOWN: LayerMapVO */ crate::shared_common::taxonomy_definition_vo::LayerMapVO;
 use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
 use /* UNKNOWN: Score */ crate::shared_common::taxonomy_common_vo::Score;
 use crate::file_watch::taxonomy_result_vo::WatchResult;
-use /* UNKNOWN: LAYER_GLOBAL */ crate::layer_rules::taxonomy_names_constant::LAYER_GLOBAL;
+use /* UNKNOWN: LAYER_GLOBAL */ crate::shared_common::taxonomy_names_constant::LAYER_GLOBAL;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MIXIN CONTAINERS — DI initialization stubs (wired via DependencyInjectionContainer)

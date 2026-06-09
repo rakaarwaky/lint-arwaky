@@ -2,7 +2,7 @@
 // Implements IArchImportProtocol: check_mandatory_imports, check_forbidden_imports, check_legacy_import_rules.
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use std::fs;

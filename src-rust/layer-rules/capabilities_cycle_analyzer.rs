@@ -141,7 +141,7 @@ impl DependencyCycleAnalyzer {
             .strip_prefix(root_dir)
             .unwrap_or(file)
             .trim_start_matches('/');
-        let mut layers: Vec<(&LayerNameVO, &crate::layer_rules::taxonomy_definition_vo::LayerDefinition)> =
+        let mut layers: Vec<(&LayerNameVO, &crate::shared_common::taxonomy_definition_vo::LayerDefinition)> =
             self.config.layers.iter().collect();
         layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
 

@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 

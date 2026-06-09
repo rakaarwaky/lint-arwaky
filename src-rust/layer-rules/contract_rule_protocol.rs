@@ -6,7 +6,7 @@ use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::Err
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use crate::shared_common::taxonomy_layer_vo::Identity;
-use /* UNKNOWN: LayerMapVO */ crate::layer_rules::taxonomy_definition_vo::LayerMapVO;
+use /* UNKNOWN: LayerMapVO */ crate::shared_common::taxonomy_definition_vo::LayerMapVO;
 use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
 use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;

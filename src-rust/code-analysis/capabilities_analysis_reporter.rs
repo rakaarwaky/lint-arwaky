@@ -1,7 +1,7 @@
 // analysis_execution_orchestrator — Implementation of the analysis orchestration domain contract.
 use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::layer_rules::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;

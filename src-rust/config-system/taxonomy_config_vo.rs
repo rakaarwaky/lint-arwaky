@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-use crate::layer_rules::taxonomy_rule_vo::ArchitectureRule;
+use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::Count;
 use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use /* UNKNOWN: LegacyLayerRuleList */ crate::layer_rules::taxonomy_rule_vo::LegacyLayerRuleList;
-use /* UNKNOWN: NamingConfig */ crate::layer_rules::taxonomy_definition_vo::NamingConfig;
+use /* UNKNOWN: LegacyLayerRuleList */ crate::shared_common::taxonomy_rule_vo::LegacyLayerRuleList;
+use /* UNKNOWN: NamingConfig */ crate::shared_common::taxonomy_definition_vo::NamingConfig;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

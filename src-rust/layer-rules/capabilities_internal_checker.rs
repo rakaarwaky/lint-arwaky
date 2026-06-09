@@ -1,7 +1,7 @@
 // arch_internal_checker — Internal architectural rule checks (barrels, primitives).
 // Implements IInternalCheckerProtocol: barrel completeness, forbid_internal_all, no_primitives.
 
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use std::fs;

@@ -2,147 +2,166 @@ use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use /* UNKNOWN: CustomMessageVO */ crate::shared_common::taxonomy_rule_vo::CustomMessageVO;
+use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
 use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use /* UNKNOWN: MandatoryImportRuleVO */ crate::shared_common::taxonomy_rule_vo::MandatoryImportRuleVO;
 use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
-use /* UNKNOWN: SuffixPolicyVO */ crate::layer_rules::taxonomy_suffix_vo::SuffixPolicyVO;
-use /* UNKNOWN: SuffixVO */ crate::layer_rules::taxonomy_suffix_vo::SuffixVO;
+use /* UNKNOWN: SuffixPolicyVO */ crate::shared_common::taxonomy_suffix_vo::SuffixPolicyVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-#[serde(default)]
-pub struct ArchitectureRule {
-    pub name: DescriptionVO,
-    pub description: DescriptionVO,
-    pub rule_type: ErrorCode,
-    pub scope: LayerNameVO,
-    pub word_count: Count,
-    pub exceptions: PatternList,
-    pub allowed_import: PatternList,
-    pub forbidden_import: PatternList,
-    pub mandatory_import: PatternList,
-    pub mandatory_import_violation_message: ErrorMessage,
-    pub forbidden_import_violation_message: ErrorMessage,
+pub struct LayerDefinition {
+    pub path: DirectoryPath,
     pub suffix_policy: SuffixPolicyVO,
+    #[serde(default, alias = "allowed_suffix")]
     pub allowed_suffix: PatternList,
+    #[serde(default, alias = "forbidden_suffix")]
     pub forbidden_suffix: PatternList,
+    #[serde(default)]
+    pub allowed_import: PatternList,
+    #[serde(default)]
+    pub forbidden_import: PatternList,
+    #[serde(default)]
+    pub mandatory_import: PatternList,
+    #[serde(default)]
+    pub mandatory_import_violation_message: ErrorMessage,
+    #[serde(default)]
+    pub forbidden_import_violation_message: ErrorMessage,
+    #[serde(default)]
+    pub word_count: Count,
+    #[serde(default)]
+    pub exceptions: PatternList,
+    #[serde(default)]
+    pub recursive: BooleanVO,
+    #[serde(default)]
     pub no_primitives: BooleanVO,
+    #[serde(default)]
     pub mandatory_imports: Vec<MandatoryImportRuleVO>,
+    #[serde(default)]
     pub barrel_completeness: BooleanVO,
+    #[serde(default)]
     pub min_lines: Count,
+    #[serde(default)]
     pub max_lines: Count,
+    #[serde(default)]
     pub word_count_violation_message: ErrorMessage,
+    #[serde(default)]
     pub suffix_violation_message: ErrorMessage,
+    #[serde(default)]
     pub no_primitives_violation_message: ErrorMessage,
+    #[serde(default)]
     pub min_lines_violation_message: ErrorMessage,
+    #[serde(default)]
     pub max_lines_violation_message: ErrorMessage,
+    #[serde(default)]
     pub barrel_completeness_violation_message: ErrorMessage,
-    pub forbidden_bypass: PatternList,
-    pub forbidden_bypass_violation_message: ErrorMessage,
-    pub forbidden_bypass_custom_messages: Vec<CustomMessageVO>,
+    #[serde(default)]
     pub forbid_internal_all: BooleanVO,
+    #[serde(default)]
     pub forbid_internal_all_violation_message: ErrorMessage,
+    #[serde(default)]
+    pub forbidden_bypass: PatternList,
+    #[serde(default)]
+    pub forbidden_bypass_violation_message: ErrorMessage,
+    #[serde(default)]
+    pub forbidden_bypass_custom_messages: Vec<CustomMessageVO>,
+    #[serde(default)]
     pub mandatory_class_definition: BooleanVO,
+    #[serde(default)]
     pub mandatory_class_definition_violation_message: ErrorMessage,
+    #[serde(default)]
     pub dead_inheritance_bypass: BooleanVO,
+    #[serde(default)]
     pub dead_inheritance_bypass_violation_message: ErrorMessage,
+    #[serde(default)]
     pub dead_inheritance_bypass_custom_messages: Vec<CustomMessageVO>,
+    #[serde(default)]
     pub check_orphan: BooleanVO,
+    #[serde(default)]
     pub orphan_entry_points: PatternList,
+    #[serde(default)]
     pub orphan_violation_message: ErrorMessage,
+    #[serde(default)]
     pub check_unused_mandatory_imports: BooleanVO,
+    #[serde(default)]
     pub check_unused_mandatory_imports_violation_message: ErrorMessage,
+    #[serde(default)]
     pub forbidden_inheritance: PatternList,
+    #[serde(default)]
     pub forbidden_inheritance_violation_message: ErrorMessage,
+    #[serde(default)]
     pub no_domain_logic: BooleanVO,
+    #[serde(default)]
     pub no_domain_logic_violation_message: ErrorMessage,
+    #[serde(default)]
     pub must_implement_service_container_aggregate: BooleanVO,
+    #[serde(default)]
     pub must_implement_service_container_aggregate_violation_message: ErrorMessage,
+    #[serde(default)]
     pub lazy_eager_initialization_only: BooleanVO,
+    #[serde(default)]
     pub lazy_eager_initialization_only_violation_message: ErrorMessage,
+    #[serde(default)]
     pub stateless_execution: BooleanVO,
+    #[serde(default)]
     pub stateless_execution_violation_message: ErrorMessage,
+    #[serde(default)]
     pub single_execution_goal: BooleanVO,
+    #[serde(default)]
     pub single_execution_goal_violation_message: ErrorMessage,
+    #[serde(default)]
     pub high_level_policy_only: BooleanVO,
+    #[serde(default)]
     pub high_level_policy_only_violation_message: ErrorMessage,
+    #[serde(default)]
     pub coordinates_multiple_orchestrators: BooleanVO,
+    #[serde(default)]
     pub coordinates_multiple_orchestrators_violation_message: ErrorMessage,
+    #[serde(default)]
     pub crud_only: BooleanVO,
+    #[serde(default)]
     pub crud_only_violation_message: ErrorMessage,
+    #[serde(default)]
     pub no_decision_logic: BooleanVO,
+    #[serde(default)]
     pub no_decision_logic_violation_message: ErrorMessage,
+    #[serde(default)]
     pub thread_async_safe: BooleanVO,
+    #[serde(default)]
     pub thread_async_safe_violation_message: ErrorMessage,
+    #[serde(default)]
     pub no_domain_data_storage: BooleanVO,
+    #[serde(default)]
     pub no_domain_data_storage_violation_message: ErrorMessage,
+    #[serde(default)]
     pub owns_system_health_transitions: BooleanVO,
+    #[serde(default)]
     pub owns_system_health_transitions_violation_message: ErrorMessage,
+    #[serde(default)]
     pub lifecycle_tracking_only: BooleanVO,
+    #[serde(default)]
     pub lifecycle_tracking_only_violation_message: ErrorMessage,
+    #[serde(default)]
     pub forbid_any_type: BooleanVO,
+    #[serde(default)]
     pub forbid_any_type_violation_message: ErrorMessage,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct CustomMessageVO {
-    pub pattern: String,
-    pub message: ErrorMessage,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct LegacyLayerRule {
-    pub source_layer: LayerNameVO,
-    pub forbidden_target: LayerNameVO,
-    pub description: ErrorMessage,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct LegacyLayerRuleList {
-    pub values: Vec<LegacyLayerRule>,
-}
-
-impl LegacyLayerRuleList {
-    pub fn new(value: Vec<LegacyLayerRule>) -> Self {
-        Self { values: value }
-    }
-    pub fn iter(&self) -> std::slice::Iter<'_, LegacyLayerRule> {
-        self.values.iter()
-    }
-    pub fn len(&self) -> usize {
-        self.values.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-    pub fn push(&mut self, item: LegacyLayerRule) {
-        self.values.push(item);
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct MandatoryImportRuleVO {
-    pub suffix: SuffixVO,
-    pub imports: PatternList,
-}
-
-impl ArchitectureRule {
+impl LayerDefinition {
     pub fn new(
-        name: DescriptionVO,
-        description: DescriptionVO,
-        rule_type: ErrorCode,
-        scope: LayerNameVO,
-        word_count: Count,
-        exceptions: PatternList,
+        path: DirectoryPath,
+        suffix_policy: SuffixPolicyVO,
+        allowed_suffix: PatternList,
+        forbidden_suffix: PatternList,
         allowed_import: PatternList,
         forbidden_import: PatternList,
         mandatory_import: PatternList,
         mandatory_import_violation_message: ErrorMessage,
         forbidden_import_violation_message: ErrorMessage,
-        suffix_policy: SuffixPolicyVO,
-        allowed_suffix: PatternList,
-        forbidden_suffix: PatternList,
+        word_count: Count,
+        exceptions: PatternList,
+        recursive: BooleanVO,
         no_primitives: BooleanVO,
         mandatory_imports: Vec<MandatoryImportRuleVO>,
         barrel_completeness: BooleanVO,
@@ -154,11 +173,11 @@ impl ArchitectureRule {
         min_lines_violation_message: ErrorMessage,
         max_lines_violation_message: ErrorMessage,
         barrel_completeness_violation_message: ErrorMessage,
+        forbid_internal_all: BooleanVO,
+        forbid_internal_all_violation_message: ErrorMessage,
         forbidden_bypass: PatternList,
         forbidden_bypass_violation_message: ErrorMessage,
         forbidden_bypass_custom_messages: Vec<CustomMessageVO>,
-        forbid_internal_all: BooleanVO,
-        forbid_internal_all_violation_message: ErrorMessage,
         mandatory_class_definition: BooleanVO,
         mandatory_class_definition_violation_message: ErrorMessage,
         dead_inheritance_bypass: BooleanVO,
@@ -201,20 +220,18 @@ impl ArchitectureRule {
         forbid_any_type_violation_message: ErrorMessage,
     ) -> Self {
         Self {
-            name,
-            description,
-            rule_type,
-            scope,
-            word_count,
-            exceptions,
+            path,
+            suffix_policy,
+            allowed_suffix,
+            forbidden_suffix,
             allowed_import,
             forbidden_import,
             mandatory_import,
             mandatory_import_violation_message,
             forbidden_import_violation_message,
-            suffix_policy,
-            allowed_suffix,
-            forbidden_suffix,
+            word_count,
+            exceptions,
+            recursive,
             no_primitives,
             mandatory_imports,
             barrel_completeness,
@@ -226,11 +243,11 @@ impl ArchitectureRule {
             min_lines_violation_message,
             max_lines_violation_message,
             barrel_completeness_violation_message,
+            forbid_internal_all,
+            forbid_internal_all_violation_message,
             forbidden_bypass,
             forbidden_bypass_violation_message,
             forbidden_bypass_custom_messages,
-            forbid_internal_all,
-            forbid_internal_all_violation_message,
             mandatory_class_definition,
             mandatory_class_definition_violation_message,
             dead_inheritance_bypass,
@@ -273,30 +290,34 @@ impl ArchitectureRule {
             forbid_any_type_violation_message,
         }
     }
-}
 
-impl CustomMessageVO {
-    pub fn new(pattern: String, message: ErrorMessage) -> Self {
-        Self { pattern, message }
+    pub fn path_str(&self) -> String {
+        self.path.value.clone()
     }
 }
 
-impl MandatoryImportRuleVO {
-    pub fn new(suffix: SuffixVO, imports: PatternList) -> Self {
-        Self { suffix, imports }
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LayerMapVO {
+    pub values: std::collections::HashMap<LayerNameVO, LayerDefinition>,
+}
+
+impl LayerMapVO {
+    pub fn new(value: std::collections::HashMap<LayerNameVO, LayerDefinition>) -> Self {
+        Self { values: value }
     }
 }
 
-impl LegacyLayerRule {
-    pub fn new(
-        source_layer: LayerNameVO,
-        forbidden_target: LayerNameVO,
-        description: ErrorMessage,
-    ) -> Self {
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct NamingConfig {
+    pub word_count: Count,
+    pub word_count_violation_message: ErrorMessage,
+}
+
+impl NamingConfig {
+    pub fn new(word_count: Count, word_count_violation_message: ErrorMessage) -> Self {
         Self {
-            source_layer,
-            forbidden_target,
-            description,
+            word_count,
+            word_count_violation_message,
         }
     }
 }

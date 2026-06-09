@@ -6,7 +6,7 @@ use /* UNKNOWN: GraphAnalysisContext */ crate::code_analysis::taxonomy_analysis_
 use /* UNKNOWN: ImportGraph */ crate::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use /* UNKNOWN: InboundLinkMap */ crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use /* UNKNOWN: InheritanceMap */ crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
 use /* UNKNOWN: ModuleName */ crate::shared_common::taxonomy_common_error::ModuleName;
 use /* UNKNOWN: ModuleToFileMap */ crate::code_analysis::taxonomy_analysis_vo::ModuleToFileMap;

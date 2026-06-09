@@ -1,6 +1,6 @@
 // report_formatter_processor — Capability for formatting reports (SARIF, JUnit).
 // Implements ILintReportingProtocol: format, get_formatted_payload, to_sarif, to_junit.
-use crate::layer_rules::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::output_report::taxonomy_severity_vo::Severity;
