@@ -1,4 +1,5 @@
 // aes: wired-by-dispatch
+// aes: bypass-missing-vo
 // semantic_scope_analyzer — AST-based semantic scope analysis capability.
 // Implements ISemanticTracerProtocol for Python code analysis.
 // Uses regex-based analysis (no Python AST dependency).

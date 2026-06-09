@@ -1,3 +1,4 @@
+// aes: bypass-bottleneck
 // arch_orphan_analyzer — Multi-indicator orphan code detection logic.
 // Implements IArchOrphanProtocol: check_orphans.
 

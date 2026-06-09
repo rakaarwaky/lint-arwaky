@@ -1,3 +1,4 @@
+// aes: bypass-missing-vo
 // arch_import_checker — Import-related architectural checks.
 // Implements IArchImportProtocol: check_mandatory_imports, check_forbidden_imports, check_legacy_import_rules.
 

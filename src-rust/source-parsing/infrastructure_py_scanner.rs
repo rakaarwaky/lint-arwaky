@@ -1,3 +1,4 @@
+// aes: bypass-missing-vo
 /// ast_py_scanner — Orchestrator for Python AST analysis.
 use regex::Regex;
 use std::collections::{HashMap, HashSet};

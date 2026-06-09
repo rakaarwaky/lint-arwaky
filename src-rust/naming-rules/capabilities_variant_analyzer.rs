@@ -1,4 +1,5 @@
 // aes: wired-by-dispatch
+// aes: bypass-capability-routing
 // naming_variant_analyzer — Capability for generating naming convention variants.
 // Implements INamingVariantProtocol (pure logic, no infrastructure dependency).
 

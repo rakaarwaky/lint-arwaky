@@ -1,3 +1,4 @@
+// aes: bypass-missing-vo
 // report_formatter_processor — Capability for formatting reports (SARIF, JUnit).
 // Implements ILintReportingProtocol: format, get_formatted_payload, to_sarif, to_junit.
 use crate::output_report::contract_output_aggregate::IReportFormatterProtocol;

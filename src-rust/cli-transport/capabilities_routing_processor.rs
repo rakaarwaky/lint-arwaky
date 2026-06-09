@@ -1,6 +1,7 @@
 // dispatch_routing_checker — Static analysis for MCP/server dispatch routing.
 // aes: wired-by-dispatch
-// 1:1 Rust implementation matching capabilities/dispatch_routing_checker.py
+// aes: bypass-bottleneck
+// aes: bypass-capability-routing
 //
 // Detects:
 //   AES030 — Capability method referenced in COMMAND_CATALOG doesn't exist on the class

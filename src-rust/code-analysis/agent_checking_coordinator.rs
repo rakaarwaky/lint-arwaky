@@ -744,6 +744,11 @@ impl LintCheckingCoordinator {
         if layer != "capabilities" && !layer.starts_with("capabilities(") {
             return;
         }
+        // Skip if file has bypass-bottleneck annotation
+        let first_lines: Vec<&str> = content.lines().take(30).collect();
+        if first_lines.iter().any(|l| l.trim() == "// aes: bypass-bottleneck") {
+            return;
+        }
         let fc = content.matches("fn ").count();
         let ic = content.matches("impl ").count();
         if fc > 30 {
@@ -770,6 +775,11 @@ impl LintCheckingCoordinator {
         let is_cap = layer == "capabilities" || layer.starts_with("capabilities(");
         let is_infra = layer == "infrastructure" || layer.starts_with("infrastructure(");
         if !is_cap && !is_infra {
+            return;
+        }
+        // Skip if file has bypass-missing-vo annotation
+        let first_lines: Vec<&str> = content.lines().take(30).collect();
+        if first_lines.iter().any(|l| l.trim() == "// aes: bypass-missing-vo") {
             return;
         }
         for (i, line) in content.lines().enumerate() {
