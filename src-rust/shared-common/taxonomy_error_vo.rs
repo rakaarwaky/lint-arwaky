@@ -4,12 +4,10 @@ use std::hash::{Hash, Hasher};
 /// error_code_vo — Error code value object.
 ///
 /// Linter error code.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ErrorCode {
     code: String,
 }
-
 
 impl ErrorCode {
     pub fn code(&self) -> &str {

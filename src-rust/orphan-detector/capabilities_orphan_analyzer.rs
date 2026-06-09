@@ -15,6 +15,7 @@ use crate::orphan_detector::contract_orphan_protocol::IOrphanGraphProtocol;
 use crate::orphan_detector::contract_orphan_protocol::IOrphanIndicatorProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_error::ModuleName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
@@ -24,7 +25,6 @@ use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
@@ -68,16 +68,50 @@ impl OrphanGraphResolver {
                             dep = dep[..colon].to_string();
                         }
                         // Skip external crates and keywords
-                        if matches!(dep.as_str(), "crate" | "self" | "super"
-                            | "std" | "core" | "alloc" | "serde" | "tokio"
-                            | "regex" | "once_cell" | "thiserror" | "anyhow"
-                            | "async_trait" | "clap" | "chrono" | "tracing"
-                            | "rand" | "toml" | "serde_json" | "serde_yaml"
-                            | "mcp_sdk_rs" | "reqwest" | "futures" | "dashmap"
-                            | "rustpython" | "rustpython_vm" | "rustpython_parser"
-                            | "num_traits" | "enum_dispatch" | "pyo3" | "nom"
-                            | "log" | "env_logger" | "colored" | "indicatif"
-                            | "uuid" | "sha2" | "hex" | "base64") { continue; }
+                        if matches!(
+                            dep.as_str(),
+                            "crate"
+                                | "self"
+                                | "super"
+                                | "std"
+                                | "core"
+                                | "alloc"
+                                | "serde"
+                                | "tokio"
+                                | "regex"
+                                | "once_cell"
+                                | "thiserror"
+                                | "anyhow"
+                                | "async_trait"
+                                | "clap"
+                                | "chrono"
+                                | "tracing"
+                                | "rand"
+                                | "toml"
+                                | "serde_json"
+                                | "serde_yaml"
+                                | "mcp_sdk_rs"
+                                | "reqwest"
+                                | "futures"
+                                | "dashmap"
+                                | "rustpython"
+                                | "rustpython_vm"
+                                | "rustpython_parser"
+                                | "num_traits"
+                                | "enum_dispatch"
+                                | "pyo3"
+                                | "nom"
+                                | "log"
+                                | "env_logger"
+                                | "colored"
+                                | "indicatif"
+                                | "uuid"
+                                | "sha2"
+                                | "hex"
+                                | "base64"
+                        ) {
+                            continue;
+                        }
                         import_graph.entry(f.clone()).or_default().push(dep.clone());
                         inbound_links.entry(dep).or_default().push(f.clone());
                     }
@@ -256,14 +290,8 @@ impl ArchOrphanAnalyzer {
                 continue;
             }
 
-            let res = self._evaluate_layer(
-                f,
-                definition,
-                &context,
-                &alive_files_set,
-                &layer_vo,
-                files,
-            );
+            let res =
+                self._evaluate_layer(f, definition, &context, &alive_files_set, &layer_vo, files);
 
             if res.is_orphan {
                 results.push(self._make_result(f, &res.reason, res.severity));
@@ -357,7 +385,9 @@ impl ArchOrphanAnalyzer {
     ) -> crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult {
         if f.ends_with("__init__.py") {
             return crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
-                false, String::new(), Severity::HIGH,
+                false,
+                String::new(),
+                Severity::HIGH,
             );
         }
 
@@ -369,14 +399,21 @@ impl ArchOrphanAnalyzer {
             let mut imported = false;
             for cf in all_files {
                 let cb = cf.split('/').next_back().unwrap_or("");
-                if !cb.starts_with("contract_") { continue; }
+                if !cb.starts_with("contract_") {
+                    continue;
+                }
                 if let Ok(c) = std::fs::read_to_string(cf) {
                     if c.contains(&stem) {
-                        imported = true; break;
+                        imported = true;
+                        break;
                     }
                 }
             }
-            return OrphanIndicatorResult::new(!imported, "Taxonomy not imported by any contract.".into(), Severity::LOW);
+            return OrphanIndicatorResult::new(
+                !imported,
+                "Taxonomy not imported by any contract.".into(),
+                Severity::LOW,
+            );
         }
 
         if layer_str.contains(LAYER_CONTRACT) {
@@ -387,21 +424,35 @@ impl ArchOrphanAnalyzer {
                 "aggregate" => "agent",
                 _ => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
             };
-            let trait_name = basename.strip_prefix("contract_").unwrap_or(basename).replace(".rs", "");
+            let trait_name = basename
+                .strip_prefix("contract_")
+                .unwrap_or(basename)
+                .replace(".rs", "");
             let mut has_impl = false;
             for cf in all_files {
                 let cb = cf.split('/').next_back().unwrap_or("");
-                if !cb.starts_with(target_prefix) { continue; }
+                if !cb.starts_with(target_prefix) {
+                    continue;
+                }
                 if let Ok(c) = std::fs::read_to_string(cf) {
-                    if c.contains(&format!("impl {} for", trait_name)) { has_impl = true; break; }
+                    if c.contains(&format!("impl {} for", trait_name)) {
+                        has_impl = true;
+                        break;
+                    }
                 }
             }
-            return OrphanIndicatorResult::new(!has_impl, format!("Contract {} '{}' not implemented.", suffix, trait_name), Severity::HIGH);
+            return OrphanIndicatorResult::new(
+                !has_impl,
+                format!("Contract {} '{}' not implemented.", suffix, trait_name),
+                Severity::HIGH,
+            );
         }
 
         if layer_str.contains(LAYER_INFRASTRUCTURE) || layer_str.contains(LAYER_CAPABILITIES) {
             let is_wired = self._is_wired_in_container(basename, all_files);
-            return self.evaluator.is_infra_cap_orphan(is_wired, alive_files_set.contains(&f.to_string()));
+            return self
+                .evaluator
+                .is_infra_cap_orphan(is_wired, alive_files_set.contains(&f.to_string()));
         }
 
         if layer_str.contains(LAYER_AGENT) {
@@ -410,10 +461,13 @@ impl ArchOrphanAnalyzer {
         }
 
         if layer_str.contains(LAYER_SURFACES) {
-            return self.evaluator.is_surface_orphan(f, alive_files_set, definition);
+            return self
+                .evaluator
+                .is_surface_orphan(f, alive_files_set, definition);
         }
 
-        self.evaluator.is_generic_orphan(f, alive_files_set, &context.inbound_links)
+        self.evaluator
+            .is_generic_orphan(f, alive_files_set, &context.inbound_links)
     }
 
     fn _is_wired_in_container(&self, basename: &str, all_files: &[String]) -> bool {
@@ -421,7 +475,9 @@ impl ArchOrphanAnalyzer {
         for f in all_files {
             let fb = f.split('/').next_back().unwrap_or("");
             let suffix = fb.rsplit('_').next().unwrap_or("").replace(".rs", "");
-            if suffix != "container" && suffix != "aggregate" && suffix != "registry" { continue; }
+            if suffix != "container" && suffix != "aggregate" && suffix != "registry" {
+                continue;
+            }
             if let Ok(c) = std::fs::read_to_string(f) {
                 if c.contains(&stem) || c.contains(&format!("mod {}", stem)) {
                     return true;

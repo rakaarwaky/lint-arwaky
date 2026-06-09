@@ -169,8 +169,7 @@ pub fn print_junit(results: &[LintResult]) {
         let safe = r.message.value().replace('"', "&quot;");
         xml.push_str(&format!(
             "  <testcase classname=\"{}\" name=\"{}\">\n",
-            r.code,
-            safe
+            r.code, safe
         ));
         match r.severity {
             Severity::CRITICAL => {

@@ -228,10 +228,7 @@ impl ASTRustParserAdapter {
                 defined.insert(name.clone());
 
                 if let Some(ref cimpl) = current_impl {
-                    class_methods
-                        .entry(cimpl.clone())
-                        .or_default()
-                        .push(name);
+                    class_methods.entry(cimpl.clone()).or_default().push(name);
                 } else {
                     let col_pos = line.find(&name).unwrap_or(0) as i64;
                     func_defs.push(serde_json::json!({

@@ -4,12 +4,10 @@ use std::hash::{Hash, Hasher};
 /// file_path_vo — File and directory path value objects.
 ///
 /// File path identifier.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct FilePath {
     pub(crate) value: String,
 }
-
 
 impl FilePath {
     pub fn value(&self) -> &str {
@@ -114,12 +112,10 @@ impl Hash for FilePath {
 }
 
 /// Directory path identifier.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Default)]
 pub struct DirectoryPath {
     pub(crate) value: String,
 }
-
 
 impl DirectoryPath {
     pub fn value(&self) -> &str {

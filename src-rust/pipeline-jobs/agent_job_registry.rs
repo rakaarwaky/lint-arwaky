@@ -1,6 +1,6 @@
 //! Job registry aggregation for pipeline jobs.
-use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::pipeline_jobs::contract_registry_aggregate::JobRegistryAggregate;
+use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;

@@ -35,8 +35,7 @@ impl AppConfig {
                     .map(|d| d.to_string_lossy().to_string())
                     .unwrap_or_else(|_| ".".to_string())
             });
-        let proj = project
-            .unwrap_or_default();
+        let proj = project.unwrap_or_default();
 
         Self {
             phantom_root: DirectoryPath::new(p_root).unwrap_or_default(),

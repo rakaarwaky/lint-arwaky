@@ -22,7 +22,6 @@ impl BooleanVO {
     }
 }
 
-
 impl std::fmt::Display for BooleanVO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
@@ -87,7 +86,6 @@ impl ColumnNumber {
         self.value
     }
 }
-
 
 impl std::fmt::Display for ColumnNumber {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -159,7 +157,6 @@ impl Count {
         self.value
     }
 }
-
 
 impl std::fmt::Display for Count {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -310,7 +307,6 @@ impl LineNumber {
     }
 }
 
-
 impl std::fmt::Display for LineNumber {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
@@ -383,7 +379,6 @@ impl PatternList {
         &self.values
     }
 }
-
 
 impl PatternList {
     pub fn iter(&self) -> std::slice::Iter<'_, String> {
@@ -507,7 +502,6 @@ impl<'de> serde::Deserialize<'de> for Score {
 pub struct Timestamp {
     pub(crate) value: String,
 }
-
 
 impl Timestamp {
     pub fn value(&self) -> &str {

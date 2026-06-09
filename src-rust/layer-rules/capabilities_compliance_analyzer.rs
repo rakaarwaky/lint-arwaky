@@ -178,7 +178,11 @@ impl ArchComplianceAnalyzer {
         }
 
         // If no layer matches and file is at project root (no subdirectory), classify as "root"
-        if Path::new(&rel).parent().map(|p| p.to_string_lossy() == "").unwrap_or(false) {
+        if Path::new(&rel)
+            .parent()
+            .map(|p| p.to_string_lossy() == "")
+            .unwrap_or(false)
+        {
             return Some("root".to_string());
         }
 

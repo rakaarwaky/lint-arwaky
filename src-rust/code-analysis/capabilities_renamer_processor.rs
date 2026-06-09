@@ -94,10 +94,9 @@ impl SymbolRenamerProcessor {
                 })
                 .to_string();
 
-            if new_source != source
-                && fs::write(file_path, &new_source).is_ok() {
-                    modified_count += 1;
-                }
+            if new_source != source && fs::write(file_path, &new_source).is_ok() {
+                modified_count += 1;
+            }
         }
 
         modified_count

@@ -6,8 +6,8 @@ use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use crate::source_parsing::contract_parser_port::ISourceParserPort;
+use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use std::sync::Arc;
 
 pub trait ServiceContainerAggregate: Send + Sync {

@@ -4,12 +4,10 @@ use std::hash::{Hash, Hasher};
 /// adapter_name_vo — Adapter and tool identifier value objects.
 ///
 /// Adapter/tool identifier.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct AdapterName {
     pub(crate) value: String,
 }
-
 
 impl AdapterName {
     pub fn value(&self) -> &str {

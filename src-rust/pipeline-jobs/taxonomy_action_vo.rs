@@ -52,8 +52,6 @@ impl PartialEq for ActionName {
     }
 }
 
-
-
 impl From<&str> for ActionName {
     fn from(s: &str) -> Self {
         Self {

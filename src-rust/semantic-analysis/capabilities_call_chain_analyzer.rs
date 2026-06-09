@@ -4,8 +4,8 @@
 use crate::naming_rules::capabilities_variant_analyzer::NamingVariantAnalyzer;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
-use crate::semantic_analysis::capabilities_scope_enclosing_resolver::ScopeBoundaryResolver;
 use crate::semantic_analysis::capabilities_data_flow_analyzer::DataFlowAnalyzer;
+use crate::semantic_analysis::capabilities_scope_enclosing_resolver::ScopeBoundaryResolver;
 use regex::Regex;
 use std::fs;
 
@@ -145,10 +145,9 @@ impl CallChainAnalyzer {
                 })
                 .to_string();
 
-            if new_source != source
-                && fs::write(filepath, &new_source).is_ok() {
-                    modified_count += 1;
-                }
+            if new_source != source && fs::write(filepath, &new_source).is_ok() {
+                modified_count += 1;
+            }
         }
 
         modified_count

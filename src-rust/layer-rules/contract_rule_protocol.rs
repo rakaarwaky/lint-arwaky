@@ -92,10 +92,7 @@ pub trait IArchImportProcessorProtocol: Send + Sync {
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
-    async fn validate_imports_present(
-        &self,
-        params: ValidateImportsParams<'_>,
-    );
+    async fn validate_imports_present(&self, params: ValidateImportsParams<'_>);
 }
 
 pub struct CheckFileNamingParams<'a> {
@@ -110,10 +107,7 @@ pub struct CheckFileNamingParams<'a> {
 
 #[async_trait]
 pub trait INamingRuleProtocol: IArchRuleProtocol + Send + Sync {
-    async fn check_file_naming(
-        &self,
-        params: CheckFileNamingParams<'_>,
-    );
+    async fn check_file_naming(&self, params: CheckFileNamingParams<'_>);
     async fn check_class_naming(
         &self,
         files: &FilePathList,

@@ -63,69 +63,115 @@ impl ICheckerAggregate for CheckerContainer {
     }
 
     fn check_mandatory_imports(
-        &self, file: &str, def: &LayerDefinition, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        def: &LayerDefinition,
+        violations: &mut Vec<LintResult>,
     ) {
-        self.import_checker.check_mandatory_imports(file, def, violations);
+        self.import_checker
+            .check_mandatory_imports(file, def, violations);
     }
 
     fn check_forbidden_imports(
-        &self, file: &str, layer: &str, def: &LayerDefinition, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        layer: &str,
+        def: &LayerDefinition,
+        violations: &mut Vec<LintResult>,
     ) {
-        self.import_checker.check_forbidden_imports(file, layer, def, violations);
+        self.import_checker
+            .check_forbidden_imports(file, layer, def, violations);
     }
 
     fn check_scope_forbidden_imports(
-        &self, file: &str, config: &ArchitectureConfig, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        config: &ArchitectureConfig,
+        violations: &mut Vec<LintResult>,
     ) {
-        self.import_checker.check_scope_forbidden_imports(file, config, violations);
+        self.import_checker
+            .check_scope_forbidden_imports(file, config, violations);
     }
 
     fn check_legacy_import_rules(
-        &self, file: &str, file_layer: &str, config: &ArchitectureConfig, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        file_layer: &str,
+        config: &ArchitectureConfig,
+        violations: &mut Vec<LintResult>,
     ) {
-        self.import_checker.check_legacy_import_rules(file, file_layer, config, violations);
+        self.import_checker
+            .check_legacy_import_rules(file, file_layer, config, violations);
     }
 
     fn check_line_counts(
-        &self, file: &str, def: Option<&LayerDefinition>, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        def: Option<&LayerDefinition>,
+        violations: &mut Vec<LintResult>,
     ) {
         self.line_checker.check_line_counts(file, def, violations);
     }
 
     fn check_surface_imports(
-        &self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
     ) {
-        self.layer_checker.check_surface_imports(file, content, layer, violations);
+        self.layer_checker
+            .check_surface_imports(file, content, layer, violations);
     }
 
     fn check_capability_routing(
-        &self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
     ) {
-        self.layer_checker.check_capability_routing(file, content, layer, violations);
+        self.layer_checker
+            .check_capability_routing(file, content, layer, violations);
     }
 
     fn check_mandatory_class_definition(
-        &self, file: &str, def: Option<&LayerDefinition>, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        def: Option<&LayerDefinition>,
+        violations: &mut Vec<LintResult>,
     ) {
         self.class_checker
             .check_mandatory_class_definition(file, def, violations);
     }
     fn check_file_naming(
-        &self, file: &str, filename: &str, layer: &Option<String>, def: Option<&LayerDefinition>,
-        config: &ArchitectureConfig, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        filename: &str,
+        layer: &Option<String>,
+        def: Option<&LayerDefinition>,
+        config: &ArchitectureConfig,
+        violations: &mut Vec<LintResult>,
     ) {
-        self.naming_checker.check_file_naming(file, filename, layer, def, config, violations);
+        self.naming_checker
+            .check_file_naming(file, filename, layer, def, config, violations);
     }
 
     fn check_domain_suffixes(
-        &self, file: &str, filename: &str, def: Option<&LayerDefinition>,
-        layer: &Option<String>, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        filename: &str,
+        def: Option<&LayerDefinition>,
+        layer: &Option<String>,
+        violations: &mut Vec<LintResult>,
     ) {
-        self.naming_checker.check_domain_suffixes(file, filename, def, layer, violations);
+        self.naming_checker
+            .check_domain_suffixes(file, filename, def, layer, violations);
     }
 
     fn check_entity(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        self.taxonomy_checker.check_entity(file, content, violations);
+        self.taxonomy_checker
+            .check_entity(file, content, violations);
     }
 
     fn check_error(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
@@ -141,12 +187,22 @@ impl ICheckerAggregate for CheckerContainer {
     }
 
     fn check_aggregate(
-        &self, file: &str, content: &str, def: &LayerDefinition, violations: &mut Vec<LintResult>,
+        &self,
+        file: &str,
+        content: &str,
+        def: &LayerDefinition,
+        violations: &mut Vec<LintResult>,
     ) {
-        self.contract_checker.check_aggregate(file, content, def, violations);
+        self.contract_checker
+            .check_aggregate(file, content, def, violations);
     }
 
-    fn check_surface_hierarchy(&self, files: &[FilePath], root_dir: &FilePath, violations: &mut LintResultList) {
+    fn check_surface_hierarchy(
+        &self,
+        files: &[FilePath],
+        root_dir: &FilePath,
+        violations: &mut LintResultList,
+    ) {
         SurfaceHierarchyChecker::new().check_surface_hierarchy(files, root_dir, violations);
     }
 
@@ -155,13 +211,22 @@ impl ICheckerAggregate for CheckerContainer {
     }
 
     fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String> {
-        self.orphan_resolver.identify_entry_points(files).into_iter().collect()
+        self.orphan_resolver
+            .identify_entry_points(files)
+            .into_iter()
+            .collect()
     }
 
     fn detect_cycle_edges(&self, edges: &[(String, String)]) -> bool {
-        let deps: Vec<_> = edges.iter().map(|(s, t)| {
-            crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge::new(s.clone(), t.clone())
-        }).collect();
+        let deps: Vec<_> = edges
+            .iter()
+            .map(|(s, t)| {
+                crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge::new(
+                    s.clone(),
+                    t.clone(),
+                )
+            })
+            .collect();
         !crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges(&deps).is_empty()
     }
 }

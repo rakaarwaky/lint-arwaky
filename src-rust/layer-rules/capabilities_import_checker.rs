@@ -272,7 +272,9 @@ impl ArchImportRuleChecker {
             let is_present = if suffixes.is_empty() {
                 import_lines.iter().any(|(_, l)| l.contains(layer))
             } else {
-                import_lines.iter().any(|(_, l)| Self::import_matches_scope(l, layer, &suffixes))
+                import_lines
+                    .iter()
+                    .any(|(_, l)| Self::import_matches_scope(l, layer, &suffixes))
             };
 
             // Skip mandatory import if file genuinely doesn't use ANY

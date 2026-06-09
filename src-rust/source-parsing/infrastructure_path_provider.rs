@@ -52,16 +52,17 @@ impl IPathNormalizationPort for PathNormalizationProvider {
 
         // 3. Handle src/ and src-* pathing only if it's NOT explicitly relative or absolute
         if (path_str.starts_with("src/") || path_str.starts_with("src-"))
-            && !Path::new(&path_str).exists() {
-                if let Ok(project_root) = env::var("PROJECT_ROOT") {
-                    let candidate = Path::new(&project_root).join(&path_str);
-                    if candidate.exists() {
-                        return FilePath {
-                            value: candidate.to_string_lossy().replace("\\\\", "/"),
-                        };
-                    }
+            && !Path::new(&path_str).exists()
+        {
+            if let Ok(project_root) = env::var("PROJECT_ROOT") {
+                let candidate = Path::new(&project_root).join(&path_str);
+                if candidate.exists() {
+                    return FilePath {
+                        value: candidate.to_string_lossy().replace("\\\\", "/"),
+                    };
                 }
             }
+        }
 
         FilePath { value: path_str }
     }

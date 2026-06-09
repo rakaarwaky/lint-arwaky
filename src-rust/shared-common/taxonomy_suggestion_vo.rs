@@ -89,7 +89,6 @@ pub struct DescriptionVO {
     pub(crate) value: String,
 }
 
-
 impl DescriptionVO {
     pub fn new(value: impl Into<String>) -> Self {
         Self {

@@ -5,13 +5,13 @@ use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
-use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
+use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use crate::source_parsing::contract_parser_port::ISourceParserPort;
+use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 
-use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
+use crate::shared_common::taxonomy_common_vo::Count;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashMap;
@@ -31,8 +31,9 @@ pub struct DependencyInjectionContainer {
 
 impl DependencyInjectionContainer {
     pub fn new(_root: DirectoryPath) -> Self {
-        let fs: Arc<dyn IFileSystemPort> =
-            Arc::new(crate::file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
+        let fs: Arc<dyn IFileSystemPort> = Arc::new(
+            crate::file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
+        );
         let executor: Arc<dyn ICommandExecutorPort> = Arc::new(
             crate::cli_transport::infrastructure_transport_client::StdioClient::new(
                 std::time::Duration::from_secs(60),

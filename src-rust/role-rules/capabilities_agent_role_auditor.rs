@@ -5,21 +5,19 @@ use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes035_must_implement_contract, aes035_any_type, AES035_COORDINATES_MULTIPLE,
+    aes035_any_type, aes035_must_implement_contract, AES035_COORDINATES_MULTIPLE,
     AES035_HIGH_LEVEL_POLICY, AES035_LAZY_EAGER_INIT, AES035_MUST_IMPLEMENT_CONTRACT,
     AES035_NO_DOMAIN_LOGIC, AES035_STATELESS_EXECUTION,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-
-
 
 pub struct AgentRoleChecker {}
 impl Default for AgentRoleChecker {

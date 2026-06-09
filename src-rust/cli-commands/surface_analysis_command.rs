@@ -410,8 +410,12 @@ pub fn handle_trends(path: Option<String>) -> ExitCode {
             let mut min_s = f64::INFINITY;
             let mut max_s = f64::NEG_INFINITY;
             for &s in &scores {
-                if s < min_s { min_s = s; }
-                if s > max_s { max_s = s; }
+                if s < min_s {
+                    min_s = s;
+                }
+                if s > max_s {
+                    max_s = s;
+                }
             }
             let range = (max_s - min_s).max(1.0);
             let spark: String = scores

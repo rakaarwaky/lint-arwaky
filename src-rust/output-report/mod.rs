@@ -1,5 +1,5 @@
-pub mod agent_output_writer;
-pub use agent_output_writer::OutputClientOrchestrator;
+pub mod agent_output_manager;
+pub use agent_output_manager::OutputClientOrchestrator;
 pub mod agent_commands_orchestrator;
 pub use agent_commands_orchestrator::ReportCommandsOrchestrator;
 pub mod capabilities_reporting_formatter;
@@ -12,10 +12,8 @@ pub use taxonomy_position_vo::Position;
 pub mod taxonomy_result_vo;
 pub use taxonomy_result_vo::{LintResult, LintResultList};
 pub mod taxonomy_score_constant;
-pub use taxonomy_score_constant::{
-    compute_score, FORMAT_JSON, FORMAT_JUNIT, FORMAT_SARIF, FORMAT_TEXT,
-};
+pub use taxonomy_score_constant::{FORMAT_JSON, FORMAT_JUNIT, FORMAT_SARIF, FORMAT_TEXT};
 pub mod taxonomy_score_vo;
-pub use taxonomy_score_vo::FileFormat;
+pub use taxonomy_score_vo::{compute_score, FileFormat};
 pub mod taxonomy_severity_vo;
 pub use taxonomy_severity_vo::Severity;

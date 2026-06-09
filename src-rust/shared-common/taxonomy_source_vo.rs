@@ -37,8 +37,6 @@ impl PartialEq for ContentString {
     }
 }
 
-
-
 impl From<&str> for ContentString {
     fn from(s: &str) -> Self {
         Self {

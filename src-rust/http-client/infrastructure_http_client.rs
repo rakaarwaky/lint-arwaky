@@ -1,6 +1,6 @@
-use crate::cli_transport::taxonomy_transport_error::TransportError;
 use crate::cli_transport::taxonomy_protocol_vo::TransportProtocol;
 use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;
+use crate::cli_transport::taxonomy_transport_error::TransportError;
 use crate::http_client::contract_http_provider_port::IHttpProviderPort;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

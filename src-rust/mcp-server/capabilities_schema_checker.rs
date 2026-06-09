@@ -3,12 +3,12 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -70,30 +70,27 @@ static JSON_SCHEMA_TYPE_VALUES: Lazy<std::collections::HashSet<&'static str>> = 
 
 // Regex: captures a function definition line
 static FUNC_DEF_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)")
-        .unwrap_or_else(|_| Regex::new(r"^$").unwrap_or_else(|_| {
-            loop {
-                std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
-            }
-        }))
+    Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)").unwrap_or_else(|_| {
+        Regex::new(r"^$").unwrap_or_else(|_| loop {
+            std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
+        })
+    })
 });
 
 // Regex: captures decorator lines
 static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\s*@(.+)$").unwrap_or_else(|_| Regex::new(r"^$").unwrap_or_else(|_| {
-        loop {
+    Regex::new(r"^\s*@(.+)$").unwrap_or_else(|_| {
+        Regex::new(r"^$").unwrap_or_else(|_| loop {
             std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
-        }
-    }))
+        })
+    })
 });
 
 // Regex: triple-quoted docstring
 static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#).unwrap_or_else(|_| {
-        Regex::new(r"^$").unwrap_or_else(|_| {
-            loop {
-                std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
-            }
+        Regex::new(r"^$").unwrap_or_else(|_| loop {
+            std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
         })
     })
 });

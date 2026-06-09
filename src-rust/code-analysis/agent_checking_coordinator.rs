@@ -1,26 +1,25 @@
 // lint_checking_coordinator — Agent-layer orchestration of ALL AES checkers.
 // This is the CORRECT architectural location for wiring checkers (Agent layer).
 
-use std::sync::Arc;
 use std::path::Path;
+use std::sync::Arc;
 use std::sync::OnceLock;
 
+use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
     aes023_unused_import, aes024_dead_inheritance, aes034_mandatory_inheritance,
-    AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
-    AES012_CIRCULAR_IMPORT, AES036_SURFACE_ROLE_VIOLATION,
-    AES033_SINGLE_BOTTLENECK, AES033_MISSING_VO,
+    AES012_CIRCULAR_IMPORT, AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
+    AES033_MISSING_VO, AES033_SINGLE_BOTTLENECK, AES036_SURFACE_ROLE_VIOLATION,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -44,7 +43,10 @@ impl Default for LintCheckingCoordinator {
 impl LintCheckingCoordinator {
     pub fn new() -> Self {
         Self {
-            checker: GLOBAL_CHECKER.get().expect("init_global_checker must be called before LintCheckingCoordinator::new()").clone(),
+            checker: GLOBAL_CHECKER
+                .get()
+                .expect("init_global_checker must be called before LintCheckingCoordinator::new()")
+                .clone(),
         }
     }
 
@@ -129,25 +131,34 @@ impl LintCheckingCoordinator {
             Self::check_missing_vo(file, &c, &layer, &mut violations);
 
             // Layer-rule checks (delegated to layer-rules/)
-            self.checker.check_surface_imports(file, &c, &layer, &mut violations);
-            self.checker.check_capability_routing(file, &c, &layer, &mut violations);
-            self.checker.check_mandatory_imports(file, &def, &mut violations);
-            self.checker.check_forbidden_imports(file, &layer, &def, &mut violations);
-            self.checker.check_scope_forbidden_imports(file, config, &mut violations);
-            self.checker.check_legacy_import_rules(file, &layer, config, &mut violations);
-            self.checker.check_line_counts(file, Some(&def), &mut violations);
- 
-                         self.checker.check_entity(file, &c, &mut violations);
-                         self.checker.check_error(file, &c, &mut violations);
-                         self.checker.check_event(file, &c, &mut violations);
-                         self.checker.check_constant(file, &mut violations);
-                         self.checker.check_aggregate(file, &c, &def, &mut violations);
-                         self.checker.check_mandatory_class_definition(file, Some(&def), &mut violations);
-                         self.checker.check_file_naming(
-                             file,
-                             filename,
-                             &Some(layer.clone()),
-                             Some(&def),
+            self.checker
+                .check_surface_imports(file, &c, &layer, &mut violations);
+            self.checker
+                .check_capability_routing(file, &c, &layer, &mut violations);
+            self.checker
+                .check_mandatory_imports(file, &def, &mut violations);
+            self.checker
+                .check_forbidden_imports(file, &layer, &def, &mut violations);
+            self.checker
+                .check_scope_forbidden_imports(file, config, &mut violations);
+            self.checker
+                .check_legacy_import_rules(file, &layer, config, &mut violations);
+            self.checker
+                .check_line_counts(file, Some(&def), &mut violations);
+
+            self.checker.check_entity(file, &c, &mut violations);
+            self.checker.check_error(file, &c, &mut violations);
+            self.checker.check_event(file, &c, &mut violations);
+            self.checker.check_constant(file, &mut violations);
+            self.checker
+                .check_aggregate(file, &c, &def, &mut violations);
+            self.checker
+                .check_mandatory_class_definition(file, Some(&def), &mut violations);
+            self.checker.check_file_naming(
+                file,
+                filename,
+                &Some(layer.clone()),
+                Some(&def),
                 config,
                 &mut violations,
             );
@@ -162,7 +173,8 @@ impl LintCheckingCoordinator {
 
         let mut rl = LintResultList::new(violations);
         let root_fp = FilePath::new(root_dir.to_string()).unwrap_or_default();
-        self.checker.check_surface_hierarchy(&file_paths, &root_fp, &mut rl);
+        self.checker
+            .check_surface_hierarchy(&file_paths, &root_fp, &mut rl);
         let ce: Vec<(String, String)> = import_edges
             .iter()
             .map(|(s, t)| (s.clone(), t.clone()))
@@ -181,8 +193,11 @@ impl LintCheckingCoordinator {
         let eps = self.checker.identify_orphan_entry_points(files);
 
         for fp in files {
-            if eps.contains(fp) || fp.ends_with("mod.rs") || fp.ends_with("__init__.py")
-                || fp.ends_with("/index.ts") || fp.ends_with("/index.js")
+            if eps.contains(fp)
+                || fp.ends_with("mod.rs")
+                || fp.ends_with("__init__.py")
+                || fp.ends_with("/index.ts")
+                || fp.ends_with("/index.js")
             {
                 continue;
             }
@@ -200,27 +215,42 @@ impl LintCheckingCoordinator {
             if prefix == "infrastructure" || prefix == "capabilities" || prefix == "agent" {
                 let stem = basename.replace(".rs", "").replace(".py", "");
                 // Convert snake_case to PascalCase for matching container references
-                let pascal_stem: String = stem.split('_')
+                let pascal_stem: String = stem
+                    .split('_')
                     .filter(|s| !s.is_empty())
                     .map(|s| {
                         let mut c = s.chars();
-                        c.next().map(|f| f.to_uppercase().to_string() + c.as_str()).unwrap_or_default()
+                        c.next()
+                            .map(|f| f.to_uppercase().to_string() + c.as_str())
+                            .unwrap_or_default()
                     })
                     .collect();
                 let mut wired = false;
                 for cf in files {
                     let cb = cf.split('/').next_back().unwrap_or("");
                     let csuffix = cb.rsplit('_').next().unwrap_or("").replace(".rs", "");
-                    if csuffix != "container" && csuffix != "aggregate" && csuffix != "registry" { continue; }
+                    if csuffix != "container" && csuffix != "aggregate" && csuffix != "registry" {
+                        continue;
+                    }
                     if let Ok(c) = std::fs::read_to_string(cf) {
-                        if c.contains(&stem) || c.contains(&format!("mod {}", stem))
+                        if c.contains(&stem)
+                            || c.contains(&format!("mod {}", stem))
                             || c.contains(&pascal_stem)
                         {
-                            wired = true; break;
+                            wired = true;
+                            break;
                         }
                     }
                 }
-                if !wired { rl.push(Self::mk(fp, 0, "AES030", Severity::HIGH, &format!("{} '{}' not wired in container.", prefix, stem))); }
+                if !wired {
+                    rl.push(Self::mk(
+                        fp,
+                        0,
+                        "AES030",
+                        Severity::HIGH,
+                        &format!("{} '{}' not wired in container.", prefix, stem),
+                    ));
+                }
                 continue;
             }
 
@@ -228,14 +258,20 @@ impl LintCheckingCoordinator {
             if prefix == "surface" {
                 let imps = ctx.import_graph.mapping.get(fp);
                 if imps.map(std::vec::Vec::is_empty).unwrap_or(true) {
-                    rl.push(Self::mk(fp, 0,                     "AES030", Severity::MEDIUM, "Surface unreachable."));
+                    rl.push(Self::mk(
+                        fp,
+                        0,
+                        "AES030",
+                        Severity::MEDIUM,
+                        "Surface unreachable.",
+                    ));
                 }
                 continue;
             }
         }
         // Wire role orchestrator for agent and surface role checks
         let role_orch = crate::role_rules::agent_role_orchestrator::RoleOrchestrator::new(
-            Box::new(crate::role_rules::agent_role_aggregator::RoleAggregateImpl::new()),
+            Box::new(crate::role_rules::agent_role_mixin::RoleAggregateImpl::new()),
         );
         role_orch.run_all_role_checks(files, &mut rl.values);
 
@@ -416,7 +452,8 @@ impl LintCheckingCoordinator {
                 // Skip trait imports (start with 'I' or end with common trait suffixes)
                 // These are needed for method resolution even if the trait name
                 // doesn't appear literally in the file body.
-                if (name.starts_with('I') && name.len() > 1
+                if (name.starts_with('I')
+                    && name.len() > 1
                     && name.chars().nth(1).unwrap_or(' ').is_uppercase())
                     || name.ends_with("Protocol")
                     || name.ends_with("Port")
@@ -475,10 +512,10 @@ impl LintCheckingCoordinator {
                         violations.push(Self::mk(
                             file,
                             i + 1,
-"AES024",
-                    Severity::MEDIUM,
-                    &aes024_dead_inheritance("impl block"),
-                ));
+                            "AES024",
+                            Severity::MEDIUM,
+                            &aes024_dead_inheritance("impl block"),
+                        ));
                     } else {
                         let mut k = j;
                         while k < lines.len() && !impl_str.contains('{') {
@@ -585,13 +622,42 @@ impl LintCheckingCoordinator {
         let stem = filename.rsplit('.').next_back().unwrap_or(filename);
         let own_suffix = stem.rsplit('_').next().unwrap_or("");
         let implementer_suffixes = [
-            "adapter", "provider", "scanner", "client", "gateway", "repository",
-            "connector", "cache", "loader", "writer", "reader", "driver",
-            "analyzer", "checker", "processor", "evaluator", "resolver",
-            "validator", "formatter", "executor", "transformer", "builder",
-            "compiler", "aggregator", "classifier", "extractor", "reporter",
-            "mapper", "filter", "collector", "comparator", "scorer",
-            "inspector", "reviewer", "assessor", "actions",
+            "adapter",
+            "provider",
+            "scanner",
+            "client",
+            "gateway",
+            "repository",
+            "connector",
+            "cache",
+            "loader",
+            "writer",
+            "reader",
+            "driver",
+            "analyzer",
+            "checker",
+            "processor",
+            "evaluator",
+            "resolver",
+            "validator",
+            "formatter",
+            "executor",
+            "transformer",
+            "builder",
+            "compiler",
+            "aggregator",
+            "classifier",
+            "extractor",
+            "reporter",
+            "mapper",
+            "filter",
+            "collector",
+            "comparator",
+            "scorer",
+            "inspector",
+            "reviewer",
+            "assessor",
+            "actions",
         ];
         let is_implementer = implementer_suffixes.contains(&own_suffix);
         if !is_implementer {
@@ -611,7 +677,9 @@ impl LintCheckingCoordinator {
             }
         }
         // If file implements at least one contract, skip — other imports are dependencies
-        let has_impl = imported.iter().any(|t| content.contains(&format!("impl {} for ", t)));
+        let has_impl = imported
+            .iter()
+            .any(|t| content.contains(&format!("impl {} for ", t)));
         if !has_impl {
             // Check if all imported contracts are used as dependencies (Arc<dyn, Box<dyn, &dyn)
             let all_are_deps: bool = imported.iter().all(|t| {
@@ -652,21 +720,21 @@ impl LintCheckingCoordinator {
         let fc = content.matches("fn ").count();
         let ic = content.matches("impl ").count();
         if fc > 30 {
-                violations.push(Self::mk(
-                    file,
-                    0,
-                    "AES033",
-                    Severity::MEDIUM,
-                    &format!("{} Found {} functions.", AES033_SINGLE_BOTTLENECK, fc),
-                ));
-            }
-            if ic > 5 {
-                violations.push(Self::mk(
-                    file,
-                    0,
-                    "AES033",
-                    Severity::MEDIUM,
-                    &format!("{} Found {} impl blocks.", AES033_SINGLE_BOTTLENECK, ic),
+            violations.push(Self::mk(
+                file,
+                0,
+                "AES033",
+                Severity::MEDIUM,
+                &format!("{} Found {} functions.", AES033_SINGLE_BOTTLENECK, fc),
+            ));
+        }
+        if ic > 5 {
+            violations.push(Self::mk(
+                file,
+                0,
+                "AES033",
+                Severity::MEDIUM,
+                &format!("{} Found {} impl blocks.", AES033_SINGLE_BOTTLENECK, ic),
             ));
         }
     }
@@ -685,16 +753,15 @@ impl LintCheckingCoordinator {
                     || rhs.parse::<i64>().is_ok()
                     || rhs.parse::<f64>().is_ok()
                 {
-                violations.push(Self::mk(
-                    file,
-                    i + 1,
-                    "AES033",
-                    Severity::MEDIUM,
-                    AES033_MISSING_VO,
+                    violations.push(Self::mk(
+                        file,
+                        i + 1,
+                        "AES033",
+                        Severity::MEDIUM,
+                        AES033_MISSING_VO,
                     ));
                 }
             }
         }
     }
-
 }

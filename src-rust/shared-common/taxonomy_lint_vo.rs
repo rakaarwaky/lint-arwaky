@@ -104,8 +104,7 @@ impl std::fmt::Display for Location {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LocationList {
     #[serde(default)]
     pub values: Vec<Location>,
@@ -116,7 +115,6 @@ impl LocationList {
         Self { values: Vec::new() }
     }
 }
-
 
 impl LocationList {
     pub fn push(&mut self, item: Location) {

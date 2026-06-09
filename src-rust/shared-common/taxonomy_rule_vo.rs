@@ -97,8 +97,6 @@ pub struct MandatoryImportRuleVO {
     pub imports: PatternList,
 }
 
-
-
 impl CustomMessageVO {
     pub fn new(pattern: String, message: ErrorMessage) -> Self {
         Self { pattern, message }

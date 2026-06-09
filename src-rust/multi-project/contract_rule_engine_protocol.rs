@@ -1,10 +1,10 @@
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::ResponseDataList;
 use crate::shared_common::taxonomy_common_vo::Score;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 

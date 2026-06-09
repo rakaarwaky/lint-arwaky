@@ -3,18 +3,18 @@ use std::path::Path;
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::{
     core_layer_names, layer_agent, layer_contract, layer_surfaces, layer_taxonomy,
 };
 use crate::shared_common::taxonomy_violationrs_constant::{
-    AES035_NO_DOMAIN_LOGIC, AES001_SURFACE_DEPENDENCY,
+    AES001_SURFACE_DEPENDENCY, AES035_NO_DOMAIN_LOGIC,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 

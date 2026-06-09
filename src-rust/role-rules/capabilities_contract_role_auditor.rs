@@ -50,9 +50,10 @@ impl ContractRoleChecker {
                 if !suffixes.is_empty()
                     && !suffixes.iter().any(|s| {
                         lower.contains(&format!("_{}", s)) || lower.contains(&format!("::{}", s))
-                    }) {
-                        continue;
-                    }
+                    })
+                {
+                    continue;
+                }
                 if let Some(name) = t.split("::").last() {
                     let tn = name
                         .trim_end_matches(';')

@@ -101,7 +101,6 @@ pub struct Identity {
     pub(crate) value: String,
 }
 
-
 impl Identity {
     pub fn value(&self) -> &str {
         &self.value
@@ -196,7 +195,6 @@ impl<'de> serde::Deserialize<'de> for Identity {
 pub struct LayerNameVO {
     pub(crate) value: String,
 }
-
 
 impl LayerNameVO {
     pub fn value(&self) -> &str {

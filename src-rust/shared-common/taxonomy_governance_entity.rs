@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::Score;
 use crate::shared_common::taxonomy_layer_vo::Identity;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ArchitectureGovernanceEntity {

@@ -1,5 +1,12 @@
 use serde::Serialize;
 
+use crate::output_report::taxonomy_result_vo::LintResult;
+
+pub fn compute_score(results: &[LintResult]) -> f64 {
+    let penalty: f64 = results.iter().map(|r| r.severity.score_impact()).sum();
+    (100.0 - penalty).max(0.0)
+}
+
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct FileFormat {

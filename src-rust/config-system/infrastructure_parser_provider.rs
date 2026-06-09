@@ -1,6 +1,6 @@
 use crate::config_system::contract_parser_port::IConfigParserPort;
-use crate::config_system::taxonomy_identifier_vo::ConfigKey;
 use crate::config_system::taxonomy_config_error::ConfigError;
+use crate::config_system::taxonomy_identifier_vo::ConfigKey;
 use crate::config_system::taxonomy_setting_vo::ProjectConfig;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

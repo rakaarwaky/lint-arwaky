@@ -400,10 +400,13 @@ impl ISourceParserPort for ASTPythonParserAdapter {
                 }
                 if in_class {
                     let indent = line.len() - stripped.len();
-                    if indent <= class_indent && !stripped.starts_with('#') && !stripped.is_empty()
-                        && (stripped.starts_with("def ") || stripped.starts_with("class ")) {
-                            break;
-                        }
+                    if indent <= class_indent
+                        && !stripped.starts_with('#')
+                        && !stripped.is_empty()
+                        && (stripped.starts_with("def ") || stripped.starts_with("class "))
+                    {
+                        break;
+                    }
                     if indent > class_indent
                         && stripped.contains('=')
                         && !stripped.starts_with("def ")
@@ -494,17 +497,17 @@ impl ISourceParserPort for ASTPythonParserAdapter {
             // Check class attribute annotations: x: int = 5
             if let Some(ref attr_re) = *ATTR_ANNOT_RE {
                 for cap in attr_re.captures_iter(stripped) {
-                let prim = cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string();
-                if prim_set.contains(&prim) {
-                    violations.push(PrimitiveViolation {
-                        line: LineNumber::new((idx_zero + 1) as i64),
-                        column: ColumnNumber::new(
-                            (cap.get(2).map(|m| m.start()).unwrap_or(0) + 1) as i64,
-                        ),
-                        type_name: prim,
-                    });
+                    let prim = cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string();
+                    if prim_set.contains(&prim) {
+                        violations.push(PrimitiveViolation {
+                            line: LineNumber::new((idx_zero + 1) as i64),
+                            column: ColumnNumber::new(
+                                (cap.get(2).map(|m| m.start()).unwrap_or(0) + 1) as i64,
+                            ),
+                            type_name: prim,
+                        });
+                    }
                 }
-            }
             }
         }
 

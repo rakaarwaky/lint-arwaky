@@ -53,8 +53,6 @@ impl PartialEq for ConfigKey {
     }
 }
 
-
-
 impl From<&str> for ConfigKey {
     fn from(s: &str) -> Self {
         Self {
@@ -68,7 +66,6 @@ impl From<String> for ConfigKey {
         Self { value: s }
     }
 }
-
 
 impl<'de> serde::Deserialize<'de> for ConfigKey {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>

@@ -44,22 +44,22 @@ impl IAnalysisProtocol for AnalysisReporter {
 
     async fn get_complexity(&self, path: &FilePath) -> ArchitectureGovernanceEntity {
         let report = self.run(path).await;
-        let source_adapter = crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("radon");
+        let source_adapter =
+            crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("radon");
         self.report_from_list(report.results_by_source(&source_adapter))
     }
 
     async fn get_duplicates(&self, path: &FilePath) -> ArchitectureGovernanceEntity {
         let report = self.run(path).await;
-        let source_adapter = crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("duplicates");
+        let source_adapter =
+            crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("duplicates");
         self.report_from_list(report.results_by_source(&source_adapter))
     }
 
     async fn get_trends(&self, path: &FilePath) -> ArchitectureGovernanceEntity {
         let report = self.run(path).await;
-        let current_score = crate::output_report::taxonomy_score_constant::compute_score(
-            &report
-                .results
-                .values.to_vec(),
+        let current_score = crate::output_report::taxonomy_score_vo::compute_score(
+            &report.results.values.to_vec(),
         );
 
         // Read history file (configurable via self.history_path)
@@ -96,9 +96,11 @@ impl IAnalysisProtocol for AnalysisReporter {
                                     current_score, delta, trend
                                 ),
                             ),
-                            source: Some(crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw(
-                                "trends",
-                            )),
+                            source: Some(
+                                crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw(
+                                    "trends",
+                                ),
+                            ),
                             severity: crate::output_report::taxonomy_severity_vo::Severity::INFO,
                             enclosing_scope: Default::default(),
                             related_locations: Default::default(),
@@ -129,9 +131,9 @@ impl IAnalysisProtocol for AnalysisReporter {
             message: crate::shared_common::taxonomy_message_vo::LintMessage::new(
                 "No trend history yet — first run".to_string(),
             ),
-            source: Some(crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw(
-                "trends",
-            )),
+            source: Some(
+                crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("trends"),
+            ),
             severity: crate::output_report::taxonomy_severity_vo::Severity::INFO,
             enclosing_scope: Default::default(),
             related_locations: Default::default(),
@@ -144,7 +146,8 @@ impl IAnalysisProtocol for AnalysisReporter {
 
     async fn get_dependencies(&self, path: &FilePath) -> ArchitectureGovernanceEntity {
         let report = self.run(path).await;
-        let source_adapter = crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("pip-audit");
+        let source_adapter =
+            crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("pip-audit");
         self.report_from_list(report.results_by_source(&source_adapter))
     }
 }

@@ -1,8 +1,8 @@
 /// javascript_naming_provider — Naming variants for JavaScript/TypeScript symbols.
 use crate::naming_rules::contract_naming_port::INamingProviderPort;
-use crate::naming_rules::taxonomy_naming_error::NamingError;
 use crate::naming_rules::taxonomy_name_vo::NameVariants;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::naming_rules::taxonomy_naming_error::NamingError;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use once_cell::sync::Lazy;
 use regex::Regex;

@@ -1,7 +1,7 @@
 /// naming_variant_provider — Python naming variant generator.
 use crate::naming_rules::contract_variant_port::INamingVariantPort;
-use crate::naming_rules::taxonomy_naming_error::NamingError;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::naming_rules::taxonomy_naming_error::NamingError;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use once_cell::sync::Lazy;

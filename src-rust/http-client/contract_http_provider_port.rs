@@ -1,5 +1,5 @@
-use crate::cli_transport::taxonomy_transport_error::TransportError;
 use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;
+use crate::cli_transport::taxonomy_transport_error::TransportError;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::shared_common::taxonomy_duration_vo::Timeout;
 use crate::shared_common::taxonomy_source_vo::ContentString;

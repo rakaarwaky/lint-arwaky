@@ -1,11 +1,11 @@
 use crate::code_analysis::capabilities_renamer_processor::SymbolRenamerProcessor;
 use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
-use crate::shared_common::taxonomy_fix_applied_event::FixApplied;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_fix_applied_event::FixApplied;
 use crate::shared_common::taxonomy_fix_vo::FixResult;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
@@ -199,7 +199,7 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
             let fixed = self.fix_bypass_comments(&violation.file.value, line);
             if fixed {
                 fixed_count += 1;
-                    self.emit_fix_event(&violation.file, "AES022", 1);
+                self.emit_fix_event(&violation.file, "AES022", 1);
             } else {
                 total_fixable -= 1;
             }

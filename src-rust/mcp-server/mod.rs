@@ -8,11 +8,13 @@ pub use infrastructure_server_lifespan::WrapperContext;
 pub mod infrastructure_server_schemas;
 pub use infrastructure_server_schemas::{build_tool_schemas, ToolSchema};
 pub mod infrastructure_server_validation_util;
-pub use infrastructure_server_validation_util::{validate_path, validate_string_input, ValidationResult};
+pub use infrastructure_server_validation_util::{
+    validate_path, validate_string_input, ValidationResult,
+};
 pub mod infrastructure_server_wrapper;
 pub use infrastructure_server_wrapper::McpServerWrapper;
-pub mod surface_bootstrap_entry;
-pub use surface_bootstrap_entry::SyspathBootstrapHandler;
+pub mod surface_bootstrap_action;
+pub use surface_bootstrap_action::SyspathBootstrapHandler;
 pub mod surface_client_controller;
 pub use surface_client_controller::{register_desktop_client, McpDesktopClientSurface};
 pub mod surface_command_controller;

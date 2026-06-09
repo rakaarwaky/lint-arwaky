@@ -4,6 +4,7 @@
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
@@ -11,9 +12,8 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes010_naming_convention, AES011_SUFFIX_MISMATCH, AES011_SUFFIX_FORBIDDEN,
+    aes010_naming_convention, AES011_SUFFIX_FORBIDDEN, AES011_SUFFIX_MISMATCH,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;

@@ -453,10 +453,9 @@ impl SemanticScopeAnalyzer {
                                 }
                             })
                             .to_string();
-                        if new_source != content
-                            && std::fs::write(filepath, &new_source).is_ok() {
-                                modified_count += 1;
-                            }
+                        if new_source != content && std::fs::write(filepath, &new_source).is_ok() {
+                            modified_count += 1;
+                        }
                     }
                 }
             }

@@ -1,11 +1,11 @@
 pub mod agent_job_registry;
 pub use agent_job_registry::PipelineJobRegistry;
-pub mod agent_pipeline_dispatcher;
-pub use agent_pipeline_dispatcher::PipelineActionOrchestrator;
-pub mod agent_pipeline_lifecycle;
-pub use agent_pipeline_lifecycle::PipelineExecutionOrchestrator;
-pub mod agent_pipeline_multiwatch;
-pub use agent_pipeline_multiwatch::PipelineExtendedOrchestrator;
+pub mod agent_pipeline_action;
+pub use agent_pipeline_action::PipelineActionOrchestrator;
+pub mod agent_pipeline_execution;
+pub use agent_pipeline_execution::PipelineExecutionOrchestrator;
+pub mod agent_pipeline_extended;
+pub use agent_pipeline_extended::PipelineExtendedOrchestrator;
 pub mod contract_dispatcher_aggregate;
 pub use contract_dispatcher_aggregate::PipelineActionDispatcherAggregate;
 pub mod contract_extended_aggregate;

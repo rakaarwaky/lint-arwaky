@@ -263,10 +263,9 @@ impl ISemanticTracerPort for JSCallAdapter {
                         }
                     });
 
-                    if new_source != source
-                        && fs::write(&filepath, new_source.as_ref()).is_ok() {
-                            modified_count += 1;
-                        }
+                    if new_source != source && fs::write(&filepath, new_source.as_ref()).is_ok() {
+                        modified_count += 1;
+                    }
                 }
             }
         }

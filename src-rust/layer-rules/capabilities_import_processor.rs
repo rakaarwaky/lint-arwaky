@@ -6,20 +6,20 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
 
-use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchImportProcessorProtocol, ValidateImportsParams};
+use crate::layer_rules::contract_rule_protocol::{
+    IAnalyzer, IArchImportProcessorProtocol, ValidateImportsParams,
+};
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_violationrs_constant::{
-    AES001_FORBIDDEN_IMPORT,
-};
+use crate::shared_common::taxonomy_violationrs_constant::AES001_FORBIDDEN_IMPORT;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct ImportCheckerContext<'a> {
@@ -66,9 +66,7 @@ impl ArchImportProcessor {
             return;
         }
 
-        if definition.forbidden.values.is_empty()
-            && definition.allowed.values.is_empty()
-        {
+        if definition.forbidden.values.is_empty() && definition.allowed.values.is_empty() {
             return;
         }
 
@@ -148,11 +146,15 @@ impl ArchImportProcessor {
         }
         if pattern.contains('(') && layer_name.contains('(') {
             let p_base = pattern.split('(').next().unwrap_or(pattern);
-            let p_subs_raw = pattern.split_once('(').map(|x| x.1)
+            let p_subs_raw = pattern
+                .split_once('(')
+                .map(|x| x.1)
                 .unwrap_or("")
                 .trim_end_matches(')');
             let l_base = layer_name.split('(').next().unwrap_or(layer_name);
-            let l_sub_raw = layer_name.split_once('(').map(|x| x.1)
+            let l_sub_raw = layer_name
+                .split_once('(')
+                .map(|x| x.1)
                 .unwrap_or("")
                 .trim_end_matches(')');
             if p_base != l_base {
@@ -195,10 +197,7 @@ impl ArchImportProcessor {
         });
     }
 
-    pub async fn validate_imports_present(
-        &self,
-        params: ValidateImportsParams<'_>,
-    ) {
+    pub async fn validate_imports_present(&self, params: ValidateImportsParams<'_>) {
         let symbols_data = match params.analyzer.parser().get_raw_symbols(params.file_path) {
             Ok(data) => data,
             Err(_) => return,
@@ -262,14 +261,20 @@ impl ArchImportProcessor {
                     params.results,
                 )
             } else {
-                self._check_general_layer(params.analyzer, req_layer, &imported_aliases, &real_usages)
+                self._check_general_layer(
+                    params.analyzer,
+                    req_layer,
+                    &imported_aliases,
+                    &real_usages,
+                )
             };
             if satisfied {
                 found_layers.insert(req_layer.clone());
             }
         }
 
-        let missing: Vec<String> = params.required_layers
+        let missing: Vec<String> = params
+            .required_layers
             .values
             .iter()
             .filter(|r| !found_layers.contains(*r))
@@ -400,8 +405,12 @@ impl ArchImportProcessor {
         if aliases.is_empty() {
             return false;
         }
-        let used_as_base =
-            self._check_import_stem_matches(&aliases, context.imported_aliases, context.class_bases, file_path);
+        let used_as_base = self._check_import_stem_matches(
+            &aliases,
+            context.imported_aliases,
+            context.class_bases,
+            file_path,
+        );
         if used_as_base.is_empty() {
             return false;
         }
@@ -479,10 +488,7 @@ impl IArchImportProcessorProtocol for ArchImportProcessor {
             .await;
     }
 
-    async fn validate_imports_present(
-        &self,
-        params: ValidateImportsParams<'_>,
-    ) {
+    async fn validate_imports_present(&self, params: ValidateImportsParams<'_>) {
         self.validate_imports_present(params).await;
     }
 }

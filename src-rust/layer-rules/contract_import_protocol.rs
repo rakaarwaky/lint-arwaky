@@ -27,10 +27,7 @@ pub trait IArchImportProtocol: Send + Sync {
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
-    async fn validate_imports_present(
-        &self,
-        params: ValidateImportsParams<'_>,
-    );
+    async fn validate_imports_present(&self, params: ValidateImportsParams<'_>);
     async fn check_mandatory_imports(
         &self,
         analyzer: &dyn IAnalyzer,
@@ -68,10 +65,7 @@ impl IArchImportProtocol for DefaultArchImportProtocol {
         todo!()
     }
 
-    async fn validate_imports_present(
-        &self,
-        _params: ValidateImportsParams<'_>,
-    ) {
+    async fn validate_imports_present(&self, _params: ValidateImportsParams<'_>) {
         todo!()
     }
 

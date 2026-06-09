@@ -1,9 +1,9 @@
 /// config_discovery_provider — Provider for discovering configuration files in the filesystem.
 use crate::config_system::contract_discovery_port::IConfigDiscoveryPort;
+use crate::config_system::taxonomy_config_error::ConfigError;
 use crate::config_system::taxonomy_config_vo::default_aes_config;
 use crate::config_system::taxonomy_config_vo::parse_config_yaml;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::config_system::taxonomy_config_error::ConfigError;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::env;

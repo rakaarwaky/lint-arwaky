@@ -134,18 +134,12 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
             }
             let trimmed = l.trim();
             if let Some(name) = trimmed.strip_prefix("function ") {
-                let name = name
-                    .split(['(', ' '])
-                    .next()
-                    .unwrap_or("");
+                let name = name.split(['(', ' ']).next().unwrap_or("");
                 if !name.is_empty() {
                     current_scope = Some(name.to_string());
                 }
             } else if let Some(name) = trimmed.strip_prefix("class ") {
-                let name = name
-                    .split(['(', ' ', '{'])
-                    .next()
-                    .unwrap_or("");
+                let name = name.split(['(', ' ', '{']).next().unwrap_or("");
                 if !name.is_empty() {
                     current_scope = Some(name.to_string());
                 }
