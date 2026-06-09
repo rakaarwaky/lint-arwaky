@@ -57,12 +57,10 @@ impl ArchImportRuleChecker {
         let segments: Vec<&str> = import_line.split("::").collect();
         let layer_lower = layer.to_lowercase();
         let layer_prefix = format!("{}_", layer_lower);
-        let layer_match = segments
-            .iter()
-            .any(|s| {
-                let trimmed = s.trim().to_lowercase();
-                trimmed == layer_lower || trimmed.starts_with(&layer_prefix)
-            });
+        let layer_match = segments.iter().any(|s| {
+            let trimmed = s.trim().to_lowercase();
+            trimmed == layer_lower || trimmed.starts_with(&layer_prefix)
+        });
         if !layer_match {
             return false;
         }

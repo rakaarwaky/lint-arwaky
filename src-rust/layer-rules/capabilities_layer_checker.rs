@@ -58,7 +58,10 @@ impl ArchLayerChecker {
         }
         // Skip if file has bypass-capability-routing annotation
         let first_lines: Vec<&str> = content.lines().take(30).collect();
-        if first_lines.iter().any(|l| l.trim() == "// aes: bypass-capability-routing") {
+        if first_lines
+            .iter()
+            .any(|l| l.trim() == "// aes: bypass-capability-routing")
+        {
             return;
         }
         let structs: Vec<&str> = content
@@ -66,12 +69,15 @@ impl ArchLayerChecker {
             .filter_map(|l| {
                 let t = l.trim();
                 let words: Vec<&str> = t.split_whitespace().collect();
-                if (t.starts_with("pub struct ") || t.starts_with("struct "))
-                    && words.len() >= 2
-                {
+                if (t.starts_with("pub struct ") || t.starts_with("struct ")) && words.len() >= 2 {
                     // Find the word "struct" and take the NEXT word as the name
                     let struct_idx = words.iter().position(|w| *w == "struct").unwrap_or(0);
-                    Some(words.get(struct_idx + 1).unwrap_or(&"").trim_end_matches(';'))
+                    Some(
+                        words
+                            .get(struct_idx + 1)
+                            .unwrap_or(&"")
+                            .trim_end_matches(';'),
+                    )
                 } else {
                     None
                 }

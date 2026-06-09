@@ -381,9 +381,7 @@ impl ArchOrphanAnalyzer {
         if let Ok(content) = std::fs::read_to_string(file_path) {
             for line in content.lines().take(30) {
                 let trimmed = line.trim();
-                if trimmed == "// aes: wired-by-dispatch"
-                    || trimmed == "# aes: wired-by-dispatch"
-                {
+                if trimmed == "// aes: wired-by-dispatch" || trimmed == "# aes: wired-by-dispatch" {
                     return true;
                 }
             }

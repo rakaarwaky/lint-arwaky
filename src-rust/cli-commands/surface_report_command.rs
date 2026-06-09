@@ -75,7 +75,10 @@ pub fn handle_report(path: Option<String>, output_format: String) -> ExitCode {
         _ => {
             println!("=== AES Compliance Report for {} ===", root);
             for r in &results {
-                println!("[{}] {}:{}:{} {} - {}", r.severity, r.file, r.line, r.column, r.code, r.message);
+                println!(
+                    "[{}] {}:{}:{} {} - {}",
+                    r.severity, r.file, r.line, r.column, r.code, r.message
+                );
             }
             println!("Total violations: {}", results.len());
         }

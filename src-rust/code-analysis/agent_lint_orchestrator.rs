@@ -43,10 +43,8 @@ impl ArchitectureLintOrchestrator {
 
     fn run_lint_at(&self, src_dir: &Path, _project_root: Option<&Path>) -> Vec<LintResult> {
         let config = default_aes_config();
-        let dir_path = DirectoryPath::new(
-            src_dir.to_string_lossy().to_string(),
-        )
-        .unwrap_or_default();
+        let dir_path =
+            DirectoryPath::new(src_dir.to_string_lossy().to_string()).unwrap_or_default();
         let files = collect_source_files(&dir_path);
         if files.is_empty() {
             return Vec::new();
@@ -67,7 +65,10 @@ impl ArchitectureLintOrchestrator {
         output.push_str(&format!("  Violations: {}\n", results.len()));
         output.push('\n');
         for r in results {
-            output.push_str(&format!("  [{}] {} - {}\n", r.code, r.file.value, r.message.value));
+            output.push_str(&format!(
+                "  [{}] {} - {}\n",
+                r.code, r.file.value, r.message.value
+            ));
         }
         output
     }

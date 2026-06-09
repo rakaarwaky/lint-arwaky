@@ -18,9 +18,9 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes023_unused_import, aes024_dead_inheritance, aes014_mandatory_inheritance,
+    aes014_mandatory_inheritance, aes023_unused_import, aes024_dead_inheritance,
     AES012_CIRCULAR_IMPORT, AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
-    AES038_MISSING_VO, AES036_SINGLE_BOTTLENECK, AES031_SURFACE_ROLE_VIOLATION,
+    AES031_SURFACE_ROLE_VIOLATION, AES036_SINGLE_BOTTLENECK, AES038_MISSING_VO,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -45,8 +45,11 @@ impl LintCheckingCoordinator {
     /// Create a new coordinator. Panics if init_global_checker has not been called.
     pub fn new() -> Self {
         Self {
-            checker: GLOBAL_CHECKER.get().cloned()
-                .unwrap_or_else(|| unreachable!("init_global_checker must be called before LintCheckingCoordinator::new()")),
+            checker: GLOBAL_CHECKER.get().cloned().unwrap_or_else(|| {
+                unreachable!(
+                    "init_global_checker must be called before LintCheckingCoordinator::new()"
+                )
+            }),
         }
     }
 
@@ -500,7 +503,11 @@ impl LintCheckingCoordinator {
     fn check_dead_inheritance(file: &str, content: &str, violations: &mut Vec<LintResult>) {
         // aes: bypass-dead-inheritance — suppress AES024 for stub impls that must implement
         // a trait with empty structs (e.g. SimpleJobRegistry for IJobRegistryPort)
-        if content.lines().take(30).any(|l| l.contains("aes: bypass-dead-inheritance")) {
+        if content
+            .lines()
+            .take(30)
+            .any(|l| l.contains("aes: bypass-dead-inheritance"))
+        {
             return;
         }
         let lines: Vec<&str> = content.lines().collect();
@@ -587,7 +594,11 @@ impl LintCheckingCoordinator {
             return;
         }
         // aes: bypass-agent-role — suppress AES032 for files wired via DI dispatch
-        if content.lines().take(30).any(|l| l.contains("aes: bypass-agent-role")) {
+        if content
+            .lines()
+            .take(30)
+            .any(|l| l.contains("aes: bypass-agent-role"))
+        {
             return;
         }
         if content.lines().count() > 300 {
@@ -612,7 +623,11 @@ impl LintCheckingCoordinator {
         }
         // aes: bypass-surface-role — suppress AES031 for CLI command surfaces
         // that legitimately register many subcommands via dispatch pattern.
-        if content.lines().take(30).any(|l| l.contains("aes: bypass-surface-role")) {
+        if content
+            .lines()
+            .take(30)
+            .any(|l| l.contains("aes: bypass-surface-role"))
+        {
             return;
         }
         if content.matches("fn ").count() > 15 {
@@ -746,7 +761,10 @@ impl LintCheckingCoordinator {
         }
         // Skip if file has bypass-bottleneck annotation
         let first_lines: Vec<&str> = content.lines().take(30).collect();
-        if first_lines.iter().any(|l| l.trim() == "// aes: bypass-bottleneck") {
+        if first_lines
+            .iter()
+            .any(|l| l.trim() == "// aes: bypass-bottleneck")
+        {
             return;
         }
         let fc = content.matches("fn ").count();
@@ -779,7 +797,10 @@ impl LintCheckingCoordinator {
         }
         // Skip if file has bypass-missing-vo annotation
         let first_lines: Vec<&str> = content.lines().take(30).collect();
-        if first_lines.iter().any(|l| l.trim() == "// aes: bypass-missing-vo") {
+        if first_lines
+            .iter()
+            .any(|l| l.trim() == "// aes: bypass-missing-vo")
+        {
             return;
         }
         for (i, line) in content.lines().enumerate() {

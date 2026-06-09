@@ -15,7 +15,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes035_any_type, aes032_must_implement_contract, AES035_COORDINATES_MULTIPLE,
+    aes032_must_implement_contract, aes035_any_type, AES035_COORDINATES_MULTIPLE,
     AES035_HIGH_LEVEL_POLICY, AES035_LAZY_EAGER_INIT, AES035_MUST_IMPLEMENT_CONTRACT,
     AES035_NO_DOMAIN_LOGIC, AES035_STATELESS_EXECUTION,
 };
