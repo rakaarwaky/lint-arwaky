@@ -6,7 +6,6 @@ use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
-use crate::output_report::contract_output_aggregate::IReportFormatterProtocol;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
@@ -223,12 +222,6 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
                 dry_run,
                 self.architecture_linter.clone(),
             ),
-        ))
-    }
-
-    fn get_report_formatter(&self) -> Option<Box<dyn IReportFormatterProtocol>> {
-        Some(Box::new(
-            crate::output_report::capabilities_reporting_formatter::ReportFormatterProcessor::new(),
         ))
     }
 }

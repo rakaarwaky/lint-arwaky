@@ -28,7 +28,6 @@ architecture:
   enabled: true
   layers:
     root:
-      exceptions: ["cli_main_action.rs", "mcp_main_action.rs"]
       suffix:
         - strict: ["hook", "store", "action", "screen"]
     taxonomy:
@@ -71,7 +70,7 @@ architecture:
     AES001:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_action.rs", "mcp_main_action.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -141,17 +140,17 @@ architecture:
     AES002:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES010:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces", "root"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES011:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces", "root"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_action.rs", "mcp_main_action.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES012:
       enabled: true
@@ -164,7 +163,7 @@ architecture:
     AES032:
       enabled: true
       scope: ["contract(aggregate)"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES033:
       enabled: true
@@ -175,7 +174,7 @@ architecture:
     AES034:
       enabled: true
       scope: ["infrastructure", "capabilities", "agent"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES035:
       enabled: true
@@ -197,7 +196,7 @@ architecture:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
       min_lines: 10
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES022:
       enabled: true
@@ -212,7 +211,7 @@ architecture:
     AES024:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES030:
       enabled: true

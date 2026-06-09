@@ -4,7 +4,6 @@ use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
-use crate::output_report::contract_output_aggregate::IReportFormatterProtocol;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::contract_parser_port::ISourceParserPort;
@@ -40,9 +39,6 @@ pub trait ServiceContainerAggregate: Send + Sync {
         &self,
         _dry_run: bool,
     ) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
-        None
-    }
-    fn get_report_formatter(&self) -> Option<Box<dyn IReportFormatterProtocol>> {
         None
     }
 }
