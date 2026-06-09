@@ -7,6 +7,7 @@ use crate::shared_common::taxonomy_common_error::Constraint;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_error::FieldName;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
+use crate::shared_common::taxonomy_source_vo::ContentString;
 use std::path::Path;
 
 #[derive(Debug, Clone)]
@@ -46,7 +47,7 @@ pub fn validate_path(
                 MAX_PATH_LENGTH
             )),
             constraint: Some(Constraint::new("PathTooLong")),
-            value: None,
+            value: None::<ContentString>,
         });
     }
     let depth = Path::new(user_input).components().count();
@@ -58,7 +59,7 @@ pub fn validate_path(
                 depth, MAX_PATH_DEPTH
             )),
             constraint: Some(Constraint::new("PathDepthExceeded")),
-            value: None,
+            value: None::<ContentString>,
         });
     }
     if let Some(root) = allowed_root {
@@ -68,7 +69,7 @@ pub fn validate_path(
                 field_name: FieldName::new("path"),
                 message: ErrorMessage::new(format!("Path does not exist: {}", user_input)),
                 constraint: Some(Constraint::new("UnsafeInput")),
-                value: None,
+                value: None::<ContentString>,
             });
         }
     }
@@ -91,7 +92,7 @@ pub fn validate_string_input(
             field_name: FieldName::new(field_name),
             message: ErrorMessage::new(format!("Input length {} exceeds max {}", value.len(), max)),
             constraint: Some(Constraint::new("StringTooLong")),
-            value: None,
+            value: None::<ContentString>,
         });
     }
     if value.contains('\x00') || value.contains('\0') {
@@ -99,7 +100,7 @@ pub fn validate_string_input(
             field_name: FieldName::new(field_name),
             message: ErrorMessage::new("Input contains null bytes"),
             constraint: Some(Constraint::new("UnsafeInput")),
-            value: None,
+            value: None::<ContentString>,
         });
     }
     if errors.is_empty() {
