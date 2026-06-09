@@ -1,7 +1,7 @@
 // file_system_port — Abstract port for file system operations (Contract Layer).
 use async_trait::async_trait;
 
-use crate::file_system::taxonomy_system_error::FileSystemError;
+use crate::file_system::taxonomy_filesystem_error::FileSystemError;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::PatternList;

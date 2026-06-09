@@ -66,8 +66,8 @@ impl ArchImportProcessor {
             return;
         }
 
-        if definition.forbidden_import.values.is_empty()
-            && definition.allowed_import.values.is_empty()
+        if definition.forbidden.values.is_empty()
+            && definition.allowed.values.is_empty()
         {
             return;
         }
@@ -97,10 +97,10 @@ impl ArchImportProcessor {
             None => return,
         };
 
-        if !definition.allowed_import.values.is_empty() {
+        if !definition.allowed.values.is_empty() {
             let is_same = self._is_same_domain_layer(&target_layer, file_layer);
             let allowed = definition
-                .allowed_import
+                .allowed
                 .values
                 .iter()
                 .any(|p| self._is_layer_match(&target_layer, p));
@@ -119,7 +119,7 @@ impl ArchImportProcessor {
         }
 
         if definition
-            .forbidden_import
+            .forbidden
             .values
             .iter()
             .any(|p| self._is_layer_match(&target_layer, p))

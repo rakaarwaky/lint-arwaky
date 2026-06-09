@@ -6,7 +6,7 @@ use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use crate::source_parsing::contract_normalization_port::IPathNormalizationPort;
+use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
 
@@ -32,7 +32,7 @@ pub struct DependencyInjectionContainer {
 impl DependencyInjectionContainer {
     pub fn new(_root: DirectoryPath) -> Self {
         let fs: Arc<dyn IFileSystemPort> =
-            Arc::new(crate::file_system::infrastructure_fs_scanner::OSFileSystemAdapter::new());
+            Arc::new(crate::file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
         let executor: Arc<dyn ICommandExecutorPort> = Arc::new(
             crate::cli_transport::infrastructure_transport_client::StdioClient::new(
                 std::time::Duration::from_secs(60),
@@ -61,7 +61,7 @@ impl DependencyInjectionContainer {
         let mut linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
 
         let ruff = Arc::new(
-            crate::language_adapters::infrastructure_py_ruff::RuffAdapter::new(
+            crate::language_adapters::infrastructure_py_ruff_adapter::RuffAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -70,7 +70,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("ruff".to_string(), ruff);
 
         let bandit = Arc::new(
-            crate::language_adapters::infrastructure_py_bandit::BanditAdapter::new(
+            crate::language_adapters::infrastructure_py_bandit_adapter::BanditAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -79,7 +79,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("bandit".to_string(), bandit);
 
         let mypy = Arc::new(
-            crate::language_adapters::infrastructure_py_mypy::MyPyAdapter::new(
+            crate::language_adapters::infrastructure_py_mypy_adapter::MyPyAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -88,7 +88,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("mypy".to_string(), mypy);
 
         let eslint = Arc::new(
-            crate::language_adapters::infrastructure_js_linter::ESLintAdapter::new(
+            crate::language_adapters::infrastructure_js_linter_adapter::ESLintAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
             ),
@@ -96,7 +96,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("eslint".to_string(), eslint);
 
         let prettier = Arc::new(
-            crate::language_adapters::infrastructure_js_linter::PrettierAdapter::new(
+            crate::language_adapters::infrastructure_js_linter_adapter::PrettierAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
             ),
@@ -104,7 +104,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("prettier".to_string(), prettier);
 
         let tsc = Arc::new(
-            crate::language_adapters::infrastructure_js_linter::TSCAdapter::new(
+            crate::language_adapters::infrastructure_js_linter_adapter::TSCAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
             ),
@@ -112,7 +112,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("tsc".to_string(), tsc);
 
         let clippy = Arc::new(
-            crate::language_adapters::infrastructure_rs_linter::RustLinterAdapter::new(
+            crate::language_adapters::infrastructure_rs_linter_adapter::RustLinterAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -121,7 +121,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("clippy".to_string(), clippy);
 
         let complexity = Arc::new(
-            crate::language_adapters::infrastructure_py_analysis::ComplexityAdapter::new(
+            crate::language_adapters::infrastructure_py_analysis_adapter::ComplexityAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -131,7 +131,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("complexity".to_string(), complexity);
 
         let duplicate = Arc::new(
-            crate::language_adapters::infrastructure_py_analysis::DuplicateAdapter::new(
+            crate::language_adapters::infrastructure_py_analysis_adapter::DuplicateAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -140,7 +140,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("duplicate".to_string(), duplicate);
 
         let trends = Arc::new(
-            crate::language_adapters::infrastructure_py_analysis::TrendsAdapter::new(
+            crate::language_adapters::infrastructure_py_analysis_adapter::TrendsAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 FilePath::new(".lint_trends.json".to_string()).unwrap_or_default(),
@@ -149,7 +149,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("trends".to_string(), trends);
 
         let dependency = Arc::new(
-            crate::language_adapters::infrastructure_py_analysis::DependencyAdapter::new(
+            crate::language_adapters::infrastructure_py_analysis_adapter::DependencyAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -158,7 +158,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("dependency".to_string(), dependency);
 
         let metrics_provider: Arc<dyn IMetricsProviderPort> = Arc::new(
-            crate::language_adapters::infrastructure_py_metrics::MetricsProvider::new(
+            crate::language_adapters::infrastructure_py_metrics_adapter::MetricsProvider::new(
                 path_norm.clone(),
                 ".lint_history.json",
             ),

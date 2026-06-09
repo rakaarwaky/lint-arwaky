@@ -249,7 +249,7 @@ impl ArchImportRuleChecker {
         definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
-        if definition.mandatory_import.values.is_empty() {
+        if definition.mandatory.values.is_empty() {
             return;
         }
 
@@ -267,7 +267,7 @@ impl ArchImportRuleChecker {
         };
         let import_lines = Self::parse_import_lines(&content);
 
-        for required in &definition.mandatory_import.values {
+        for required in &definition.mandatory.values {
             let (layer, suffixes) = Self::resolve_scope(required);
             let is_present = if suffixes.is_empty() {
                 import_lines.iter().any(|(_, l)| l.contains(layer))
@@ -311,7 +311,7 @@ impl ArchImportRuleChecker {
         definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
-        if definition.forbidden_import.values.is_empty() {
+        if definition.forbidden.values.is_empty() {
             return;
         }
 
@@ -319,7 +319,7 @@ impl ArchImportRuleChecker {
 
         for (line_num, line) in &import_lines {
             if let Some(module) = Self::extract_module_from_line(line) {
-                for forbidden in &definition.forbidden_import.values {
+                for forbidden in &definition.forbidden.values {
                     let (layer, suffixes) = Self::resolve_scope(forbidden);
                     let is_forbidden = if suffixes.is_empty() {
                         module.contains(forbidden.as_str()) || module.contains(layer)

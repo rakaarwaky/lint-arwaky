@@ -5,7 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::file_system::contract_system_port::IFileSystemPort;
-use crate::file_system::taxonomy_system_error::FileSystemError;
+use crate::file_system::taxonomy_filesystem_error::FileSystemError;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

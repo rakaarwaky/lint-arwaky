@@ -26,8 +26,8 @@ pub mod taxonomy_config_vo;
 pub use taxonomy_config_vo::{default_aes_config, default_config_for_language, ArchitectureConfig};
 pub mod taxonomy_identifier_vo;
 pub use taxonomy_identifier_vo::ConfigKey;
-pub mod taxonomy_provider_error;
-pub use taxonomy_provider_error::ConfigError;
+pub mod taxonomy_config_error;
+pub use taxonomy_config_error::ConfigError;
 pub mod taxonomy_setting_vo;
 pub use taxonomy_setting_vo::{
     ActualValue, AdapterEntry, AdapterStatus, ExpectedValue, ProjectConfig, Thresholds,

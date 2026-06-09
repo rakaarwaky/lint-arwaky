@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::Path;
 
-use crate::file_system::taxonomy_system_error::FileSystemError;
-use crate::source_parsing::contract_provider_port::IScannerProviderPort;
+use crate::file_system::taxonomy_filesystem_error::FileSystemError;
+use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;

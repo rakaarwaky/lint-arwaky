@@ -1,4 +1,4 @@
-pub mod contract_provider_port;
-pub use contract_provider_port::IHttpProviderPort;
-pub mod infrastructure_request_client;
-pub use infrastructure_request_client::SyncHttpProvider;
+pub mod contract_http_provider_port;
+pub use contract_http_provider_port::IHttpProviderPort;
+pub mod infrastructure_http_client;
+pub use infrastructure_http_client::SyncHttpProvider;

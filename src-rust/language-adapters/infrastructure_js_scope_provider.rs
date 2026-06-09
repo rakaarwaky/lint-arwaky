@@ -1,7 +1,7 @@
 /// javascript_scope_provider — JS/TS regex patterns and scope detection helpers.
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
 use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
+use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_layer_vo::LineContentVO;
 use crate::shared_common::taxonomy_lint_vo::ScopeBounds;

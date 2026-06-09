@@ -4,7 +4,7 @@ use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 use crate::naming_rules::taxonomy_symbols_vo::CallChainList;
 use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
+use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;
 use crate::shared_common::taxonomy_common_vo::LineNumber;

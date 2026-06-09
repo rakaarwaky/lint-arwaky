@@ -1,9 +1,9 @@
 /// python_metrics_adapter — Thin adapters for Python metrics (Radon, file sizes, trends).
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
-use crate::metrics_service::taxonomy_provider_error::MetricsError;
+use crate::metrics_service::taxonomy_metrics_error::MetricsError;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::Count;
-use crate::source_parsing::contract_normalization_port::IPathNormalizationPort;
+use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 

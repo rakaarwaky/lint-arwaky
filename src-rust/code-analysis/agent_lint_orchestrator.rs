@@ -6,7 +6,7 @@ use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
-use crate::source_parsing::contract_provider_port::IScannerProviderPort;
+use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use crate::source_parsing::infrastructure_file_collector::FileCollectorProvider;
 
 pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {

@@ -1,4 +1,4 @@
-use crate::cli_transport::taxonomy_client_error::TransportError;
+use crate::cli_transport::taxonomy_transport_error::TransportError;
 /// mcp_server_wrapper — Infrastructure adapter providing MCP spec compliance.
 use crate::mcp_server::contract_server_port::IMcpServerPort;
 use crate::naming_rules::taxonomy_symbol_vo::SymbolName;

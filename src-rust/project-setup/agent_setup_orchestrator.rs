@@ -4,7 +4,7 @@ use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;
 use crate::pipeline_jobs::taxonomy_job_vo::EnvContentVO;
 use crate::pipeline_jobs::taxonomy_job_vo::McpConfigVO;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use crate::project_setup::contract_management_aggregate::SetupManagementAggregate;
+use crate::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use std::collections::HashMap;
 

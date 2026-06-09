@@ -3,7 +3,7 @@
 //! Provides outbound interfaces for parsing YAML and TOML
 //! configuration formats into structured project configuration.
 
-use crate::config_system::taxonomy_provider_error::ConfigError;
+use crate::config_system::taxonomy_config_error::ConfigError;
 /* UNKNOWN: ProjectConfig */
 use crate::config_system::taxonomy_setting_vo::ProjectConfig;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

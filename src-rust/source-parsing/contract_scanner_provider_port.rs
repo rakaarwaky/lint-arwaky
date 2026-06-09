@@ -3,7 +3,7 @@
 //! Defines the outbound interface for recursively scanning
 //! directories and retrieving git-ignored file patterns.
 
-use crate::file_system::taxonomy_system_error::FileSystemError;
+use crate::file_system::taxonomy_filesystem_error::FileSystemError;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 

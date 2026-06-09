@@ -7,8 +7,8 @@ use std::fs;
 use regex::Regex;
 
 use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use crate::semantic_analysis::capabilities_boundary_analyzer::ScopeBoundaryAnalyzer;
-use crate::semantic_analysis::contract_flow_protocol::IDataFlowProtocol;
+use crate::semantic_analysis::capabilities_scope_boundary_analyzer::ScopeBoundaryAnalyzer;
+use crate::semantic_analysis::contract_data_flow_protocol::IDataFlowProtocol;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;
 use crate::shared_common::taxonomy_common_vo::LineNumber;

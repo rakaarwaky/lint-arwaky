@@ -1,12 +1,12 @@
-use crate::role_rules::capabilities_agentrole_checker::AgentRoleChecker;
-use crate::role_rules::capabilities_contractrole_checker::ContractRoleChecker;
-use crate::role_rules::capabilities_surfacesrole_checker::SurfaceRoleChecker;
-use crate::role_rules::capabilities_taxonomyrole_checker::TaxonomyRoleChecker;
-use crate::role_rules::contract_agentrole_protocol::IAgentRoleChecker;
-use crate::role_rules::contract_contractrole_protocol::IContractRoleChecker;
+use crate::role_rules::capabilities_agent_role_auditor::AgentRoleChecker;
+use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
+use crate::role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
+use crate::role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use crate::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use crate::role_rules::contract_role_protocol::IContractRoleChecker;
 use crate::role_rules::contract_role_aggregate::IRoleAggregate;
-use crate::role_rules::contract_surfacerole_protocol::ISurfaceRoleChecker;
-use crate::role_rules::contract_taxonomyrole_protocol::ITaxonomyRoleChecker;
+use crate::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
+use crate::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 
 pub struct RoleAggregateImpl {
     taxonomy: TaxonomyRoleChecker,

@@ -46,11 +46,11 @@ impl ArchComplianceAnalyzer {
                         if !rule.exceptions.values.is_empty() {
                             ldef.exceptions = rule.exceptions.clone();
                         }
-                        if !rule.mandatory_import.values.is_empty() {
-                            ldef.mandatory_import = rule.mandatory_import.clone();
+                        if !rule.mandatory.values.is_empty() {
+                            ldef.mandatory = rule.mandatory.clone();
                         }
-                        if !rule.forbidden_import.values.is_empty() {
-                            ldef.forbidden_import = rule.forbidden_import.clone();
+                        if !rule.forbidden.values.is_empty() {
+                            ldef.forbidden = rule.forbidden.clone();
                         }
                         if rule.min_lines.value > 0 {
                             ldef.min_lines = rule.min_lines.clone();
@@ -116,14 +116,14 @@ impl ArchComplianceAnalyzer {
                                 if !r.exceptions.values.is_empty() {
                                     spec_def.exceptions = r.exceptions.clone();
                                 }
-                                if !r.forbidden_import.values.is_empty() {
-                                    spec_def.forbidden_import = r.forbidden_import.clone();
+                                if !r.forbidden.values.is_empty() {
+                                    spec_def.forbidden = r.forbidden.clone();
                                 }
-                                if !r.mandatory_import.values.is_empty() {
-                                    spec_def.mandatory_import = r.mandatory_import.clone();
+                                if !r.mandatory.values.is_empty() {
+                                    spec_def.mandatory = r.mandatory.clone();
                                 }
-                                if !r.allowed_import.values.is_empty() {
-                                    spec_def.allowed_import = r.allowed_import.clone();
+                                if !r.allowed.values.is_empty() {
+                                    spec_def.allowed = r.allowed.clone();
                                 }
                                 if !r.forbidden_inheritance.values.is_empty() {
                                     spec_def.forbidden_inheritance =

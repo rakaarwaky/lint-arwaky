@@ -1,9 +1,9 @@
-pub mod contract_normalization_port;
-pub use contract_normalization_port::IPathNormalizationPort;
+pub mod contract_path_normalization_port;
+pub use contract_path_normalization_port::IPathNormalizationPort;
 pub mod contract_parser_port;
 pub use contract_parser_port::ISourceParserPort;
-pub mod contract_provider_port;
-pub use contract_provider_port::IScannerProviderPort;
+pub mod contract_scanner_provider_port;
+pub use contract_scanner_provider_port::IScannerProviderPort;
 pub mod infrastructure_file_collector;
 pub use infrastructure_file_collector::FileCollectorProvider;
 pub mod infrastructure_js_scanner;

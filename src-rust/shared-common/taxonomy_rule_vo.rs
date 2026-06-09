@@ -19,9 +19,12 @@ pub struct ArchitectureRule {
     pub scope: LayerNameVO,
     pub naming_convention: BooleanVO,
     pub exceptions: PatternList,
-    pub allowed_import: PatternList,
-    pub forbidden_import: PatternList,
-    pub mandatory_import: PatternList,
+    #[serde(default)]
+    pub allowed: PatternList,
+    #[serde(default)]
+    pub forbidden: PatternList,
+    #[serde(default)]
+    pub mandatory: PatternList,
     pub suffix_policy: SuffixPolicyVO,
     pub allowed_suffix: PatternList,
     pub forbidden_suffix: PatternList,

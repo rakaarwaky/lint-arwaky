@@ -17,11 +17,11 @@ pub struct LayerDefinition {
     #[serde(default, alias = "forbidden_suffix")]
     pub forbidden_suffix: PatternList,
     #[serde(default)]
-    pub allowed_import: PatternList,
+    pub allowed: PatternList,
     #[serde(default)]
-    pub forbidden_import: PatternList,
+    pub forbidden: PatternList,
     #[serde(default)]
-    pub mandatory_import: PatternList,
+    pub mandatory: PatternList,
     #[serde(default)]
     pub word_count: Count,
     #[serde(default)]

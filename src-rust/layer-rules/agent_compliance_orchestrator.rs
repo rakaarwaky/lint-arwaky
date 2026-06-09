@@ -260,14 +260,14 @@ impl ArchitectureOrchestrator {
         if rule.no_primitives != BooleanVO::new(false) {
             def.no_primitives = rule.no_primitives.clone();
         }
-        if !rule.allowed_import.values.is_empty() {
-            def.allowed_import = rule.allowed_import.clone();
+        if !rule.allowed.values.is_empty() {
+            def.allowed = rule.allowed.clone();
         }
-        if !rule.forbidden_import.values.is_empty() {
-            def.forbidden_import = rule.forbidden_import.clone();
+        if !rule.forbidden.values.is_empty() {
+            def.forbidden = rule.forbidden.clone();
         }
-        if !rule.mandatory_import.values.is_empty() {
-            def.mandatory_import = rule.mandatory_import.clone();
+        if !rule.mandatory.values.is_empty() {
+            def.mandatory = rule.mandatory.clone();
         }
         if !rule.allowed_suffix.values.is_empty() {
             def.allowed_suffix = rule.allowed_suffix.clone();

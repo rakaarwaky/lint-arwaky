@@ -1,8 +1,8 @@
-use crate::file_system::taxonomy_system_error::FileSystemError;
+use crate::file_system::taxonomy_filesystem_error::FileSystemError;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 /// git_diff_scanner — Git-aware file change detection for linting only modified files.
-use crate::source_parsing::contract_provider_port::IScannerProviderPort;
+use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;

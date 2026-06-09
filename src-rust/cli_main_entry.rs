@@ -9,7 +9,7 @@ use lint_arwaky::cli_commands::surface_core_command::{Cli, Commands};
 use lint_arwaky::cli_commands::surface_dev_command;
 use lint_arwaky::cli_commands::surface_fix_command;
 use lint_arwaky::cli_commands::surface_git_command;
-use lint_arwaky::cli_commands::surface_main_handler;
+use lint_arwaky::cli_commands::surface_main_entry;
 use lint_arwaky::cli_commands::surface_maintenance_command;
 use lint_arwaky::cli_commands::surface_map_command;
 use lint_arwaky::cli_commands::surface_multi_command;
@@ -43,7 +43,7 @@ fn main() -> ExitCode {
         Commands::Ci { path, threshold } => surface_dev_command::handle_ci(path, threshold),
         Commands::Version => {
             let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
-            surface_main_handler::handle_version(verbose)
+            surface_main_entry::handle_version(verbose)
         }
         Commands::Adapters => surface_plugin_command::handle_adapters(),
         Commands::Config { command } => surface_config_command::handle_config(command),

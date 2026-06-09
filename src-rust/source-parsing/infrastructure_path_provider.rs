@@ -2,7 +2,7 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::source_parsing::contract_normalization_port::IPathNormalizationPort;
+use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 /// Implementation of path normalization services for infrastructure.

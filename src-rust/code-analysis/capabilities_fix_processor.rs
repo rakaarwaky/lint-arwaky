@@ -1,7 +1,7 @@
 use crate::code_analysis::capabilities_renamer_processor::SymbolRenamerProcessor;
 use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
-use crate::shared_common::taxonomy_applied_event::FixApplied;
+use crate::shared_common::taxonomy_fix_applied_event::FixApplied;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_fix_vo::FixResult;

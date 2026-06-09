@@ -1,7 +1,7 @@
 //! Agent lifecycle management.
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
-use crate::lifecycle_state::taxonomy_status_vo::AgentStatusVO;
+use crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatusVO;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_duration_vo::Duration;
@@ -45,7 +45,7 @@ impl AgentLifecycleAggregate for LifecycleStateManager {
     }
 
     fn status(&self) -> AgentStatusVO {
-        AgentStatusVO::new(crate::lifecycle_state::taxonomy_status_vo::AgentStatus::INIT)
+        AgentStatusVO::new(crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatus::INIT)
     }
 
     fn started(&self) -> BooleanVO {

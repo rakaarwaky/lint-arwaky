@@ -1,6 +1,6 @@
 // javascript_flow_port — Port for JS variable flow tracking.
 use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
+use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

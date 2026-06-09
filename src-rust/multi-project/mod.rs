@@ -4,8 +4,8 @@ pub mod contract_governance_protocol;
 pub use contract_governance_protocol::{
     IArchRuleEngineProtocol, IConfigRulesProtocol, IMetricAnalyzerProtocol,
 };
-pub mod contract_multi_aggregate;
-pub use contract_multi_aggregate::MultiProjectAggregate;
+pub mod contract_project_aggregate;
+pub use contract_project_aggregate::MultiProjectAggregate;
 pub mod contract_orchestrator_aggregate;
 pub use contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 pub mod taxonomy_summary_vo;
