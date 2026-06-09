@@ -1,4 +1,5 @@
 // dispatch_routing_checker — Static analysis for MCP/server dispatch routing.
+// aes: wired-by-dispatch
 // 1:1 Rust implementation matching capabilities/dispatch_routing_checker.py
 //
 // Detects:

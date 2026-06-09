@@ -1,4 +1,5 @@
 // arch_import_processor — Logic for evaluating architectural import rules.
+// aes: wired-by-dispatch
 // 1:1 Rust implementation matching capabilities/arch_import_processor.py
 
 use async_trait::async_trait;

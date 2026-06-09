@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 /// Analysis CLI commands: complexity, duplicates, trends, ci, batch, dependencies.
 use std::path::PathBuf;
 use std::process::ExitCode;

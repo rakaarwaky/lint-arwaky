@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 //! Agent lifecycle management.
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;

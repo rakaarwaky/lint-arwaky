@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 // data_flow_analyzer — Capability for analyzing data flow patterns.
 // Implements IDataFlowProtocol: find_flow — tracks variable lifecycle in JS/TS files.
 

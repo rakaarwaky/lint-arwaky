@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 /// javascript_scope_provider — JS/TS regex patterns and scope detection helpers.
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

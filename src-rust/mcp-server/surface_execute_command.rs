@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 /// MCP Tool: execute_command - Universal CLI executor.
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 

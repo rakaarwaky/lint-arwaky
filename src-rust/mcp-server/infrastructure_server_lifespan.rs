@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 //! mcp_server_lifespan — MCP server startup/shutdown lifecycle management.
 
 use std::path::PathBuf;

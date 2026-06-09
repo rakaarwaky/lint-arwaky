@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 /// dependency_injection_container — Implementation of the DI container.
 use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;

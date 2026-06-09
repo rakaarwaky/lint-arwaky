@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 use std::process::ExitCode;
 
 use crate::cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};

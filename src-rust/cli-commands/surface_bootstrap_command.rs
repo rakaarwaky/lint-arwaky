@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 use std::process::ExitCode;
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
