@@ -18,14 +18,6 @@ pub const AES011_SUFFIX_FORBIDDEN: &str =
     "AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.\n\
     WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
     FIX: Rename the file to use an allowed suffix or move it to the correct layer.";
-pub const AES012_BARREL_COMPLETENESS: &str =
-    "AES012 BARREL_COMPLETENESS: mod.rs is missing pub use declarations for public items.\n\
-    WHY? Barrel files must re-export all public items via pub use.\n\
-    FIX: Add pub use declarations to mod.rs.";
-pub const AES013_INTERNAL_ALL_FORBIDDEN: &str =
-    "AES013 INTERNAL_ALL_FORBIDDEN: pub use is forbidden in non-barrel files.\n\
-    WHY? Only mod.rs barrel files should define the layer's public API surface.\n\
-    FIX: Remove pub use from this file and centralize exports in mod.rs.";
 pub const AES021_STATELESS_EXECUTION: &str =
     "Non-stateless behavior detected: state assignment found outside __init__.";
 pub const AES021_HIGH_LEVEL_POLICY: &str =
@@ -103,8 +95,6 @@ pub fn aes024_any_type(line: &str) -> String {
     )
 }
 
-pub const AES007_CONTRACT_BARREL: &str =
-    "AES007 CONTRACT_BARREL: Must use barrel import (crate::contract::TypeName).";
 pub const AES008_SUFFIX_MISMATCH: &str =
     "AES008 SUFFIX_MISMATCH: Contract file missing _port, _protocol, or _aggregate suffix.";
 pub const AES014_BYPASS_COMMENT: &str = "AES014 BYPASS_COMMENT: Bypass comment detected.";
@@ -134,9 +124,6 @@ pub const AES031_SINGLE_BOTTLENECK: &str =
 pub const AES032_MISSING_VO: &str =
     "AES032 MISSING_VO: Capability method call missing required VO parameter.";
 
-pub fn aes007_contract_barrel(submodule: &str) -> String {
-    format!("AES007 CONTRACT_BARREL: Must use barrel import (crate::contract::TypeName) instead of '{}'.", submodule)
-}
 pub fn aes014_bypass_comment(line: &str) -> String {
     format!(
         "AES014 BYPASS_COMMENT: Bypass comment detected on line: '{}'.",

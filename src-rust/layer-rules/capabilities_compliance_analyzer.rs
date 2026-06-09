@@ -58,12 +58,6 @@ impl ArchComplianceAnalyzer {
                         if rule.max_lines.value > 0 {
                             ldef.max_lines = rule.max_lines.clone();
                         }
-                        if rule.barrel_completeness.value {
-                            ldef.barrel_completeness = rule.barrel_completeness.clone();
-                        }
-                        if rule.forbid_internal_all.value {
-                            ldef.forbid_internal_all = rule.forbid_internal_all.clone();
-                        }
                         if rule.mandatory_class_definition.value {
                             ldef.mandatory_class_definition =
                                 rule.mandatory_class_definition.clone();

@@ -33,13 +33,9 @@ pub struct LayerDefinition {
     #[serde(default)]
     pub mandatory_imports: Vec<MandatoryImportRuleVO>,
     #[serde(default)]
-    pub barrel_completeness: BooleanVO,
-    #[serde(default)]
     pub min_lines: Count,
     #[serde(default)]
     pub max_lines: Count,
-    #[serde(default)]
-    pub forbid_internal_all: BooleanVO,
     #[serde(default)]
     pub forbidden_bypass: PatternList,
     #[serde(default)]

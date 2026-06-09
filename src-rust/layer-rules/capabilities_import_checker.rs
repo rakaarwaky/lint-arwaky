@@ -272,25 +272,7 @@ impl ArchImportRuleChecker {
             let is_present = if suffixes.is_empty() {
                 import_lines.iter().any(|(_, l)| l.contains(layer))
             } else {
-                // Check import lines AND verify via barrel (mod.rs/__init__.py) that
-                // the imported type actually originates from a file with the required suffix.
-                let line_matches = import_lines
-                    .iter()
-                    .any(|(_, l)| Self::import_matches_scope(l, layer, &suffixes));
-                if line_matches {
-                    true
-                } else {
-                    // Fallback: check if any imported type from this layer comes from
-                    // a file with the required suffix by inspecting the barrel file.
-                    // For flat layers like taxonomy, barrel re-exports tell us the source suffix.
-                    let barrel_matches = import_lines.iter().any(|(_, l)| {
-                        l.contains(&format!("{}::", layer)) || l.contains(&format!("{}.", layer))
-                    }) && {
-                        // Extract type names from imports and check barrel for source suffix
-                        Self::barrel_has_suffix_match(file, layer, &suffixes, &import_lines)
-                    };
-                    barrel_matches
-                }
+                import_lines.iter().any(|(_, l)| Self::import_matches_scope(l, layer, &suffixes))
             };
 
             // Skip mandatory import if file genuinely doesn't use ANY
@@ -342,22 +324,7 @@ impl ArchImportRuleChecker {
                     let is_forbidden = if suffixes.is_empty() {
                         module.contains(forbidden.as_str()) || module.contains(layer)
                     } else {
-                        // Barrel-aware suffix check: verify via barrel that the type
-                        // actually originates from a file with the forbidden suffix.
-                        // E.g., ServiceContainerAggregate ends with "aggregate" not "port",
-                        // so contract(port) should NOT flag it.
-                        let suffix_match = Self::import_matches_scope(line, layer, &suffixes);
-                        if !suffix_match {
-                            false
-                        } else {
-                            // Verify with barrel — if barrel says the type has a DIFFERENT
-                            // suffix, it's not actually forbidden.
-                            let barrel_confirms =
-                                Self::barrel_confirms_forbidden(file, layer, &suffixes, line);
-                            // If barrel confirms the type has this suffix → forbidden
-                            // If barrel disagrees → not forbidden (use barrel as source of truth)
-                            barrel_confirms
-                        }
+                        Self::import_matches_scope(line, layer, &suffixes)
                     };
                     if is_forbidden {
                         violations.push(LintResult::new_arch(
@@ -472,137 +439,4 @@ impl ArchImportRuleChecker {
         None
     }
 
-    /// Check if the barrel file for `layer` re-exports any type from a file
-    /// whose suffix matches one of the required `suffixes`.
-    /// E.g., for taxonomy(vo), reads taxonomy/mod.rs and finds that ErrorMessage
-    /// comes from common_error_vo.rs → suffix "vo" → match!
-    fn barrel_has_suffix_match(
-        file: &str,
-        layer: &str,
-        suffixes: &[&str],
-        import_lines: &[(usize, String)],
-    ) -> bool {
-        let type_suffix = Self::build_type_suffix_map(file, layer);
-        if type_suffix.is_empty() {
-            return false;
-        }
-        // Check if any imported type from this layer has the required suffix
-        for (_, line) in import_lines {
-            if !line.contains(&format!("{}::", layer)) && !line.contains(&format!("{}.", layer)) {
-                continue;
-            }
-            if Self::line_imports_suffix_type(line, &type_suffix, suffixes) {
-                return true;
-            }
-        }
-        false
-    }
-
-    /// Check if a SPECIFIC type in an import line has the forbidden suffix
-    /// by resolving through the barrel's type→suffix map.
-    fn barrel_confirms_forbidden(file: &str, layer: &str, suffixes: &[&str], line: &str) -> bool {
-        let type_suffix = Self::build_type_suffix_map(file, layer);
-        if type_suffix.is_empty() {
-            // Can't verify through barrel — trust the original suffix match
-            return true;
-        }
-        Self::line_imports_suffix_type(line, &type_suffix, suffixes)
-    }
-
-    /// Extract type names from an import line and check if any have the required suffix.
-    fn line_imports_suffix_type(
-        line: &str,
-        type_suffix: &std::collections::HashMap<String, String>,
-        suffixes: &[&str],
-    ) -> bool {
-        let mut rest: &str = line.trim().trim_end_matches(';');
-        if let Some(pos) = rest.rfind("::") {
-            rest = rest[pos + 2..].trim();
-            let types_str = rest
-                .strip_prefix('{')
-                .unwrap_or(rest)
-                .strip_suffix('}')
-                .unwrap_or(rest);
-            for type_name in types_str.split(',') {
-                let tn = type_name.trim().to_string();
-                if tn.is_empty() {
-                    continue;
-                }
-                if let Some(src_suffix) = type_suffix.get(&tn) {
-                    if suffixes.contains(&src_suffix.as_str()) {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    /// Build type→source_suffix map from barrel file (mod.rs/__init__.py).
-    /// E.g., "pub use common_error_vo::ErrorMessage" → ("ErrorMessage", "vo")
-    fn build_type_suffix_map(file: &str, layer: &str) -> std::collections::HashMap<String, String> {
-        let file_path = std::path::Path::new(file);
-        let parent = file_path.parent().unwrap_or(std::path::Path::new("."));
-        let layer_root = parent
-            .ancestors()
-            .find(|a| a.ends_with(layer))
-            .unwrap_or(parent);
-        let barrel_names = ["mod.rs", "__init__.py", "index.ts", "index.js"];
-        let barrel = barrel_names
-            .iter()
-            .map(|n| layer_root.join(n))
-            .find(|p| p.exists());
-        let Some(barrel_path) = barrel else {
-            return std::collections::HashMap::new();
-        };
-        let Ok(content) = std::fs::read_to_string(&barrel_path) else {
-            return std::collections::HashMap::new();
-        };
-
-        let mut type_suffix: std::collections::HashMap<String, String> =
-            std::collections::HashMap::new();
-        let lines: Vec<&str> = content.lines().collect();
-        let mut i = 0;
-        while i < lines.len() {
-            let trimmed = lines[i].trim();
-            if trimmed.starts_with("pub use ") {
-                let rest = trimmed.trim_start_matches("pub use ");
-                if let Some(module_end) = rest.find("::") {
-                    let module = &rest[..module_end];
-                    let module_suffix = module.rsplit('_').next().unwrap_or("").to_string();
-                    let mut types_part = rest[module_end + 2..].to_string();
-                    if types_part.ends_with(';') {
-                        types_part = types_part[..types_part.len() - 1].to_string();
-                    }
-                    if types_part.contains('{') && !types_part.contains('}') {
-                        let mut block_lines = types_part;
-                        i += 1;
-                        while i < lines.len() {
-                            let cont = lines[i].trim();
-                            block_lines.push_str(cont);
-                            if cont.contains('}') {
-                                break;
-                            }
-                            i += 1;
-                        }
-                        types_part = block_lines;
-                    }
-                    if types_part.starts_with('{') {
-                        types_part = types_part[1..].to_string();
-                    }
-                    if types_part.ends_with('}') {
-                        types_part = types_part[..types_part.len() - 1].to_string();
-                    }
-                    for type_name in types_part.split(',') {
-                        let tn = type_name.trim().to_string();
-                        if !tn.is_empty() && !module_suffix.is_empty() {
-                            type_suffix.insert(tn, module_suffix.clone());
-                        }
-                    }
-                }
-            }
-            i += 1;
-        }
-        type_suffix
-    }
 }

@@ -14,7 +14,6 @@ use crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges;
 use crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge;
 use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
 use crate::layer_rules::capabilities_import_checker::ArchImportRuleChecker;
-use crate::layer_rules::capabilities_internal_checker::ArchInternalChecker;
 use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::capabilities_orphan_analyzer::OrphanGraphResolver;
@@ -68,7 +67,6 @@ impl LintCheckingCoordinator {
         let taxonomy_checker = TaxonomyRoleChecker::new();
         let contract_checker = ContractRoleChecker::new();
         let naming_checker = ArchNamingChecker::new();
-        let internal_checker = ArchInternalChecker::new();
         let layer_checker = ArchLayerChecker::new();
         let mut file_paths: Vec<FilePath> = Vec::new();
         let mut import_edges: Vec<(String, String)> = Vec::new();
@@ -121,17 +119,6 @@ impl LintCheckingCoordinator {
                 }
             }
             if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
-                // AES012: barrel completeness check on barrel files
-                let b_layer = analyzer.detect_layer(file, root_dir);
-                let b_def = b_layer.as_ref().and_then(|l| analyzer.get_layer_def(l));
-                if let Some(bd) = b_def {
-                    internal_checker.check_internal_rules(
-                        file,
-                        filename,
-                        Some(bd),
-                        &mut violations,
-                    );
-                }
                 continue;
             }
             let layer = match analyzer.detect_layer(file, root_dir) {
@@ -181,7 +168,6 @@ impl LintCheckingCoordinator {
                 &Some(layer.clone()),
                 &mut violations,
             );
-            internal_checker.check_internal_rules(file, filename, Some(def), &mut violations);
         }
 
         let mut rl = LintResultList::new(violations);

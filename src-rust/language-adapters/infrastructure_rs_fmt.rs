@@ -1,9 +1,9 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::di_containers::contract_service_aggregate::{
-    ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort,
-};
+use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use crate::source_parsing::contract_normalization_port::IPathNormalizationPort;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;

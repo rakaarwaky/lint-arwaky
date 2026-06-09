@@ -26,10 +26,10 @@ Higher-level orchestrating layers  never import concrete implementations. Instea
 
 ### 4. The 3-Word Naming Philosophy (Layer Prefix + Vertical Slicing)
 
-AES enforces a **3-Word File Naming Convention**: `[layer]_[concept]_[suffix]`.
+AES enforces a **3-Word File Naming Convention**: `[layer]_[concept]_[suffix]` or `[layer]_[concept1]_[concept2]_[suffix]`
 
 1. **Layer (prefix)**: The architectural layer (e.g., `contract_`, `capabilities_`, `taxonomy_`).
-2. **Concept (middle)**: A single word defining the core concept (e.g., `compliance`, `import`, `rule`).
+2. **Concept (middle)**: A single/multiple word defining the core concept (e.g., `compliance`, `import_rule`).
 3. **Role (suffix)**: Defines the architectural role (e.g., `_port`, `_protocol`, `_checker`).
 
 *Example:* `contract_compliance_port.rs` = layer=contract, concept=compliance, suffix=port.
@@ -93,10 +93,10 @@ Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[
 
 ```
 src-rust/
-  layer-rules/        — Prefix rules: layer detection (by filename prefix), import validation (AES001/AES002), naming convention (AES003), cycle detection (AES020), hierarchy (AES018/AES019), internal checks (AES012/AES013), self-lint (AES014), compliance coordination. NOT role/suffix or quality logic.
-  role-rules/         — Suffix/role behavior rules: agent role violations (AES021), surface role violations (AES022), taxonomy role (AES006/AES033), contract role (AES026), mandatory inheritance (AES027). Each suffix type has a dedicated checker with its own protocol + aggregate.
-  orphan-detector/    — Orphan code detection (AES017). Protocol defined in `contract_orphan_protocol.rs` within this folder.
-  primitive-checker/  — Primitive obsession detection (AES006) — shared utility for scanning raw types.
+  layer-rules/        — Prefix rules: layer detection (by filename prefix), import validation (AES001/AES002), naming convention (AES010), cycle detection (AES012), hierarchy (AES033/AES034), self-lint (AES022), compliance coordination. NOT role/suffix or quality logic.
+  role-rules/         — Suffix/role behavior rules: agent role violations (AES032), surface role violations (AES031), taxonomy role (AES016/AES015), contract role (AES013), mandatory inheritance (AES014). Each suffix type has a dedicated checker with its own protocol + aggregate.
+  orphan-detector/    — Orphan code detection (AES030). Protocol defined in `contract_orphan_protocol.rs` within this folder.
+  primitive-checker/  — Primitive obsession detection (AES016) — shared utility for scanning raw types.
   cli-commands/       — CLI command surfaces
   cli-transport/      — CLI execution transport
   config-system/      — Config loading & parsing
@@ -109,7 +109,7 @@ src-rust/
   project-setup/      — Project init, doctor, mcp-config
   plugin-system/      — Plugin discovery & management
   output-report/      — Output formatting & report generation
-  code-analysis/      — Quality algorithms: unused imports (AES015), class/line checking (AES009, AES004/AES005), type detection (AES006 protocol), fix processor (AES030/AES031/AES032), symbol renamer. Wires into coordinator pipeline.
+  code-analysis/      — Quality algorithms: unused imports (AES023), class/line checking (AES011, AES020/AES021), type detection (AES016 protocol), fix processor (AES036/AES037/AES038), symbol renamer. Wires into coordinator pipeline.
   mcp-server/         — MCP server
   source-parsing/     — Source code parsing
   lifecycle-state/    — Agent lifecycle management

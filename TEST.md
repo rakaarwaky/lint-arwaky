@@ -87,12 +87,13 @@ echo "=== JAVASCRIPT ===" && cargo run --bin lint-arwaky-cli -- scan test-projec
 | Project | Command | Total Violations | Unique AES Codes | Status |
 |---------|---------|----------------|-----------------|--------|
 | Self-lint (lint-arwaky) | `check .` | 153 | 15 | ✅ detects own violations |
-| Rust test project | `scan test-project-rust/` | 34 | 14 | ✅ >= 30 unique combined |
-| Python test project | `scan test-project-python/` | 238 | 9 | ✅ >= 30 unique combined |
-| JavaScript test project | `scan test-project-javascript/` | 323 | 12 | ✅ >= 30 unique combined |
-| **Combined** | | | **30** | ✅ AES001–AES033 minus reserved |
+| Rust test project | `scan test-project-rust/` | 34 | 14 | ✅ >= 27 unique combined |
+| Python test project | `scan test-project-python/` | 238 | 9 | ✅ >= 27 unique combined |
+| JavaScript test project | `scan test-project-javascript/` | 323 | 12 | ✅ >= 27 unique combined |
+| **Combined** | | | **27** | ✅ AES codes (v2.0 numbering) |
 
-**30 Unique AES Codes Terdeteksi:**
-AES001, AES002, AES003, AES004, AES005, AES006, AES007, AES008, AES009, AES010,
-AES011, AES012, AES013, AES014, AES015, AES016, AES017, AES018, AES019, AES020,
-AES021, AES022, AES023, AES024, AES025, AES026, AES027, AES030, AES032, AES033
+**27 Unique AES Codes (v2.0):**
+AES001, AES002, AES003, AES004, AES005, AES006,
+AES010, AES011, AES012, AES013, AES014, AES015, AES016,
+AES020, AES021, AES022, AES023, AES024,
+AES030, AES031, AES032, AES033, AES034, AES035, AES036, AES037, AES038

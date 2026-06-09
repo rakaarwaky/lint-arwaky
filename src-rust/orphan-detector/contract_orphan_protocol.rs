@@ -6,7 +6,7 @@ use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use crate::code_analysis::taxonomy_analysis_vo::ModuleToFileMap;
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use crate::di_containers::contract_service_aggregate::{IAnalyzer, IArchRuleProtocol};
+use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchRuleProtocol};
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_common_error::ModuleName;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;

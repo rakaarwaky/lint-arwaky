@@ -1,9 +1,13 @@
 /// dependency_injection_container — Implementation of the DI container.
-use crate::di_containers::contract_service_aggregate::{
-    IArchLintProtocol, ICommandExecutorPort, IFileSystemPort, IJobRegistryPort, ILinterAdapterPort,
-    IPathNormalizationPort, ISourceParserPort, LintFixOrchestratorAggregate,
-    ServiceContainerAggregate,
-};
+use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use crate::file_system::contract_system_port::IFileSystemPort;
+use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
+use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use crate::source_parsing::contract_normalization_port::IPathNormalizationPort;
+use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
 
 use crate::shared_common::taxonomy_common_vo::Count;

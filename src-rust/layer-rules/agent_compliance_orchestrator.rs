@@ -10,11 +10,15 @@ use std::sync::OnceLock;
 use async_trait::async_trait;
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::di_containers::contract_service_aggregate::{
-    ArchCoordinatorAggregate, DirectoryWatchAggregate, IArchCompliancePort,
-    IArchComplianceProtocol, IJobRegistryPort, InfrastructureContainerAggregate,
-    OrchestratorContainerAggregate, WatchCommandsAggregate, WatchExecutionOrchestratorAggregate,
-};
+use crate::di_containers::contract_infra_aggregate::InfrastructureContainerAggregate;
+use crate::di_containers::contract_orchestrator_aggregate::OrchestratorContainerAggregate;
+use crate::file_watch::contract_commands_aggregate::WatchCommandsAggregate;
+use crate::file_watch::contract_orchestrator_aggregate::WatchExecutionOrchestratorAggregate;
+use crate::file_watch::contract_watch_aggregate::DirectoryWatchAggregate;
+use crate::layer_rules::contract_compliance_port::IArchCompliancePort;
+use crate::layer_rules::contract_compliance_protocol::IArchComplianceProtocol;
+use crate::layer_rules::contract_coordinator_aggregate::ArchCoordinatorAggregate;
+use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::file_watch::taxonomy_result_vo::WatchResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
@@ -255,9 +259,6 @@ impl ArchitectureOrchestrator {
         }
         if rule.no_primitives != BooleanVO::new(false) {
             def.no_primitives = rule.no_primitives.clone();
-        }
-        if !rule.barrel_completeness.value {
-            def.barrel_completeness = rule.barrel_completeness.clone();
         }
         if !rule.allowed_import.values.is_empty() {
             def.allowed_import = rule.allowed_import.clone();

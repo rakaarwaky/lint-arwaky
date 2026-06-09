@@ -18,7 +18,7 @@ use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    AES001_FORBIDDEN_IMPORT, AES007_CONTRACT_BARREL,
+    AES001_FORBIDDEN_IMPORT,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -422,9 +422,9 @@ impl ArchImportProcessor {
         &self,
         imported_aliases: &std::collections::HashMap<String, String>,
         real_usages: &std::collections::HashSet<String>,
-        file_path: &FilePath,
+        _file_path: &FilePath,
         _layer_vo: &LayerNameVO,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
+        _results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) -> Vec<String> {
         let mut aliases = Vec::new();
         for (alias, fullname) in imported_aliases {
@@ -436,23 +436,8 @@ impl ArchImportProcessor {
             if !parts.contains(&"contract") {
                 continue;
             }
-            let is_barrel = parts.len() >= 2 && parts[parts.len() - 2] == "contract";
-            if is_barrel {
-                if alias != "contract" {
-                    aliases.push(alias.clone());
-                }
-            } else if real_usages.contains(alias) {
-                results.push(LintResult {
-                    file: file_path.clone(),
-                    line: LineNumber::new(1),
-                    column: ColumnNumber::new(0),
-                    code: ErrorCode::raw("AES007"),
-                    message: LintMessage::new(AES007_CONTRACT_BARREL),
-                    source: Some(AdapterName::raw("architecture")),
-                    severity: Severity::MEDIUM,
-                    enclosing_scope: None,
-                    related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
-                });
+            if alias != "contract" && real_usages.contains(alias) {
+                aliases.push(alias.clone());
             }
         }
         aliases

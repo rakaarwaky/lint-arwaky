@@ -18,14 +18,6 @@ pub const AES011_SUFFIX_FORBIDDEN: &str =
     "AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.\n\
     WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
     FIX: Rename the file to use an allowed suffix or move it to the correct layer.";
-pub const AES012_BARREL_COMPLETENESS: &str =
-    "AES012 BARREL_COMPLETENESS: __init__.py is missing __all__ or import declarations.\n\
-    WHY? Barrel files must export all public items via __all__.\n\
-    FIX: Add __all__ or import statements to __init__.py.";
-pub const AES013_INTERNAL_ALL_FORBIDDEN: &str =
-    "AES013 INTERNAL_ALL_FORBIDDEN: __all__ is forbidden in non-barrel files.\n\
-    WHY? Only __init__.py barrel files should define the layer's public API surface.\n\
-    FIX: Remove __all__ from this file and centralize exports in __init__.py.";
 pub const AES021_STATELESS_EXECUTION: &str =
     "Non-stateless behavior detected: state assignment found outside __init__.";
 pub const AES021_HIGH_LEVEL_POLICY: &str =

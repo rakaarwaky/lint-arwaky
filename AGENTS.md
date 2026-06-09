@@ -72,7 +72,7 @@ src-rust/
 Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
 Surfaces must NOT import infrastructure/capabilities directly — they go through `ServiceContainerAggregate` trait (AES023).
 
-AES rules enforced: 31 codes AES001–AES033 (AES028/029 reserved). Config: `lint_arwaky.config.rust.yaml`.
+AES rules enforced: 27 codes across 4 groups (Layer & Import, Naming & Structure, File & Content, Role Violations). See `RULES_AES.md` for the complete catalog with old-to-new mapping.
 
 ## Key conventions
 

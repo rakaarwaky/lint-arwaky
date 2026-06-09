@@ -73,23 +73,20 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                              | Dependency |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| FR-010 | **Import layer violation detector** (AES001) — cross-layer import detection — see [`docs/FRD_010_import_layer_violation.md`](FRD_010_import_layer_violation.md)                                                                                                                                                                   | FR-001     |
-| FR-011 | **Mandatory import missing detector** (AES002) — required imports per layer — see [`docs/FRD_011_mandatory_import.md`](FRD_011_mandatory_import.md)                                                                                                                                                                               | FR-001     |
-| FR-012 | **Layer import alias checker** (AES007) — contract imports via barrel — see [`docs/FRD_012_contract_barrel.md`](FRD_012_contract_barrel.md)                                                                                                                                                                                       | FR-001     |
-| FR-013 | **Root layer detection** (AES010) — forbidden root import patterns — see [`docs/FRD_013_root_layer_detection.md`](FRD_013_root_layer_detection.md)                                                                                                                                                                                | FR-001     |
-| FR-014 | **Layer suffix mismatch detector** (AES011) — file suffix must match layer — see [`docs/FRD_014_layer_suffix.md`](FRD_014_layer_suffix.md)                                                                                                                                                                                        | FR-001     |
-| FR-015 | **Contract suffix mismatch detector** (AES008) — contract needs _port/_protocol/_aggregate — see [`docs/FRD_015_contract_suffix.md`](FRD_015_contract_suffix.md)                                                                                                                                                                  | FR-001     |
-| FR-016 | **Surface layer rule checker** (AES022) — surface must not implement domain logic; Smart surfaces parse input and delegate via `ServiceContainerAggregate`; Passive surfaces (`_component`, `_layout`, `_view`) import taxonomy only (AES019) — see [`docs/FRD_016_surface_layer_rule.md`](FRD_016_surface_layer_rule.md) | FR-001     |
-| FR-017 | **Surface direct import checker** (AES023) — no direct infra/cap imports — see [`docs/FRD_017_surface_direct_import.md`](FRD_017_surface_direct_import.md)                                                                                                                                                                        | FR-001     |
+| FR-010 | **Import layer violation detector** (AES001) — cross-layer import detection                                                                                                                                                                                                                                   | FR-001     |
+| FR-011 | **Mandatory import missing detector** (AES002) — required imports per layer                                                                                                                                                                                                                                               | FR-001     |
+| FR-013 | **Root layer detection** (AES004) — forbidden root import patterns                                                                                                                                                                                                                                                | FR-001     |
+| FR-014 | **Layer suffix mismatch detector** (AES005) — file suffix must match layer                                                                                                                                                                                                                                                        | FR-001     |
+| FR-015 | **Contract suffix mismatch detector** (AES006) — contract needs _port/_protocol/_aggregate                                                                                                                                                                                                                                  | FR-001     |
+| FR-016 | **Surface layer rule checker** (AES031) — surface must not implement domain logic; Smart surfaces parse input and delegate via `ServiceContainerAggregate`; Passive surfaces (`_component`, `_layout`, `_view`) import taxonomy only (AES034) | FR-001     |
+| FR-017 | **Surface direct import checker** (AES003) — no direct infra/cap imports                                                                                                                                                                                                                                        | FR-001     |
 
 ### 5.3 Naming & Structure Rules
 
 | ID     | Requirement                                                                                        | Dependency |
 | ------ | -------------------------------------------------------------------------------------------------- | ---------- |
-| FR-020 | **Naming convention checker** (AES003) — strict 3-word snake_case                           | FR-003     |
-| FR-021 | **Mandatory struct/trait definition checker** (AES009) — every file needs struct/enum/trait | FR-003     |
-| FR-022 | **Barrel completeness checker** (AES012) — mod.rs must export all                           | FR-001     |
-| FR-023 | **Internal re-export forbidden checker** (AES013) — no pub mod/use in sub-modules           | FR-001     |
+| FR-020 | **Naming convention checker** (AES010) — strict word snake_case                           | FR-003     |
+| FR-021 | **Mandatory struct/trait definition checker** (AES011) — every file needs struct/enum/trait | FR-003     |
 
 ### 5.4 File & Content Rules
 
@@ -291,7 +288,7 @@ Severity levels and their point penalty per finding:
 | Severity | Penalty | Description                                   |
 | -------- | ------- | --------------------------------------------- |
 | LOW      | -1      | Minor style or naming issue                   |
-| MEDIUM   | -2      | Structural concern, barrel/import patterns    |
+| MEDIUM   | -2      | Structural concern, import patterns            |
 | HIGH     | -3      | Architecture violation, mandatory requirement |
 | CRITICAL | -5      | Bypass markers, dead inheritance, layer fraud |
 
@@ -303,9 +300,9 @@ Total score starts at 100.0 and is deducted per finding. If any CRITICAL finding
 - `infrastructure`, `capabilities`, `surfaces` → `no_primitives: false` (adapter layers may use primitives as supporting types)
 - `taxonomy(constant)` → raw primitives allowed by definition; must contain ONLY constant declarations (AES033)
 
-**AES033 Constant Purity (v1.10.2)**: Taxonomy files ending in `_constant` must contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, or `impl` block in a `_constant` file is a violation.
+**AES015 Constant Purity (v2.0)**: Taxonomy files ending in `_constant` must contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, or `impl` block in a `_constant` file is a violation.
 
-See [docs/AES_RULES.md](docs/AES_RULES.md) for the full rule catalog (31 codes: AES001–AES033, AES028/029 reserved) and [docs/AESArchitecture.md](docs/AESArchitecture.md) for the layered specification with Mermaid diagrams.
+See [docs/AES_RULES.md](docs/AES_RULES.md) for the full rule catalog (27 active codes across 4 groups) and [docs/AESArchitecture.md](docs/AESArchitecture.md) for the layered specification with Mermaid diagrams.
 
 ---
 

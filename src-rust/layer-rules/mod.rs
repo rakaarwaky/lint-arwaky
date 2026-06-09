@@ -17,8 +17,6 @@ pub mod capabilities_import_checker;
 pub use capabilities_import_checker::ArchImportRuleChecker;
 pub mod capabilities_import_processor;
 pub use capabilities_import_processor::ArchImportProcessor;
-pub mod capabilities_internal_checker;
-pub use capabilities_internal_checker::ArchInternalChecker;
 pub mod contract_compliance_port;
 pub use contract_compliance_port::IArchCompliancePort;
 pub mod contract_compliance_protocol;

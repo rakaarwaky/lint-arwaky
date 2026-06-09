@@ -18,14 +18,6 @@ pub const AES011_SUFFIX_FORBIDDEN: &str =
     "AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.\n\
     WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
     FIX: Rename the file to use an allowed suffix or move it to the correct layer.";
-pub const AES012_BARREL_COMPLETENESS: &str =
-    "AES012 BARREL_COMPLETENESS: index.ts/index.js is missing export declarations.\n\
-    WHY? Barrel files must export all public items via export statements.\n\
-    FIX: Add export declarations to index.ts or index.js.";
-pub const AES013_INTERNAL_ALL_FORBIDDEN: &str =
-    "AES013 INTERNAL_ALL_FORBIDDEN: Public exports detected in a non-barrel file.\n\
-    WHY? Only index.ts/index.js barrel files should define the layer's public API surface.\n\
-    FIX: Remove public exports from this file and centralize them in index.ts/index.js.";
 pub const AES021_STATELESS_EXECUTION: &str =
     "Non-stateless behavior detected: state assignment found outside constructor.";
 pub const AES021_HIGH_LEVEL_POLICY: &str =

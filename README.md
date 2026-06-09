@@ -7,7 +7,7 @@
 
 **Autonomous code quality and architecture enforcement for AI agents and developers — written in Rust.**
 
-Lint Arwaky audits Rust, Python, and JavaScript/TypeScript source code in a single pass. It enforces 31 Agentic Engineering System (AES) rules (codes AES001–AES033, with AES028 and AES029 reserved) that check layer boundaries, naming conventions, type safety, dead code, and architectural bypass attempts — all at the code level with zero bypass allowed.
+Lint Arwaky audits Rust, Python, and JavaScript/TypeScript source code in a single pass. It enforces 27 Agentic Engineering System (AES) rules across 4 groups (Layer & Import, Naming & Structure, File & Content, Role Violations) that check layer boundaries, naming conventions, type safety, dead code, and architectural bypass attempts — all at the code level with zero bypass allowed.
 
 The project is its own first customer: running `lint-arwaky-cli check .` on the repository audits itself under the same AES ruleset.
 
@@ -32,7 +32,7 @@ The project is its own first customer: running `lint-arwaky-cli check .` on the 
 | Feature                      | Description                                                                                                        |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | **Multi-Language**     | Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon), JavaScript/TypeScript (ESLint, Prettier, TSC)             |
-| **Architecture Audit** | 31 AES rules enforce clean architecture layer boundaries, naming, type safety, and dead code (AES028/029 reserved) |
+| **Architecture Audit** | 27 AES rules enforce clean architecture layer boundaries, naming, type safety, and dead code |
 | **MCP Server**         | 5 tools for autonomous AI-agent integration over JSON-RPC 2.0                                                      |
 | **Zero Bypass**        | `noqa`, `type: ignore`, and `#[allow(...)]` suppressions are detected and flagged (**AES014**)         |
 | **CI Ready**           | SARIF 2.1.0, JUnit XML, and JSON reports with proper exit codes                                                    |
@@ -281,7 +281,7 @@ The CLI is implemented in `src-rust/surfaces/cli_core_command.rs` (with subcomma
 | Binaries           | `lint-arwaky-cli`, `lint-arwaky-mcp`                                                            |
 | Source files       | 271 (across 6 layers + 2 entry points +`lib.rs`)                                                  |
 | Layers             | 6 (taxonomy, contract, capabilities, infrastructure, agent, surfaces)                               |
-| AES rules enforced | 31                                                                                                 |
+| AES rules enforced | 27 (4 groups: Layer & Import, Naming & Structure, File & Content, Role Violations)                                |
 | Linter adapters    | 9 (Rust AST + Clippy, Python AST + Ruff + MyPy + Bandit + Metrics, JS/TS AST + ESLint/Prettier/TSC) |
 | MCP tools          | 5 (execute_command, list_commands, commands_schema, read_skill_context, health_check)               |
 | CLI subcommands    | 20+ across core/scans/setup/dev                                                                     |
