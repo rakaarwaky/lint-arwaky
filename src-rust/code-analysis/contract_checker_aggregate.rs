@@ -9,7 +9,7 @@ use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 /// The checker protocol that agents implementing this aggregate must use.
-pub type CheckerProtocol = dyn ILineCheckerProtocol;
+pub type CheckerProtocol = Box<dyn ILineCheckerProtocol>;
 
 pub trait ICheckerAggregate: Send + Sync {
     // Layer detection
