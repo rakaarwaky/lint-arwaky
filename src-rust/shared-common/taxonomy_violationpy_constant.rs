@@ -28,8 +28,8 @@ pub const AES035_LAZY_EAGER_INIT: &str = "Complex initialization logic found in 
 pub const AES035_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceContainerAggregate.";
 pub const AES035_ANY_TYPE: &str = "Any type annotation found in agent orchestrator layer.";
 pub const AES032_FORBIDDEN_INHERITANCE: &str =
-    "AES032 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
+    "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
 pub const AES031_CONSTANT_PURITY: &str =
-    "AES031 CONSTANT_PURITY: _constant file contains non-constant declaration.";
+    "AES015 CONSTANT_PURITY: _constant file contains non-constant declaration.";
 
 pub use crate::shared_common::taxonomy_violationpy_vo::*;

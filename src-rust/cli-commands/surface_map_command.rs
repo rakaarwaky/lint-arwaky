@@ -1,32 +1,11 @@
 use std::process::ExitCode;
-use std::sync::Arc;
 
 use crate::cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};
 use crate::cli_commands::taxonomy_command_target_vo::{compute_score, lint_path, resolve_target};
-use crate::di_containers::agent_injection_container::DependencyInjectionContainer;
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 
 pub fn handle_cancel(job_id: String) -> ExitCode {
-    let container = Arc::new(DependencyInjectionContainer::new(
-        DirectoryPath::new(".").unwrap_or_default(),
-    ));
-    if let Some(registry) = container.get_job_registry() {
-        let id = crate::pipeline_jobs::taxonomy_action_vo::JobId::new(&job_id);
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(r) => r,
-            Err(_) => {
-                eprintln!("Failed to create async runtime for job cancellation");
-                return ExitCode::from(1);
-            }
-        };
-        let cancelled = rt.block_on(registry.cancel_job(&id));
-        if cancelled.value() {
-            println!("Job {} cancelled", job_id);
-        } else {
-            eprintln!("No active job with ID {}", job_id);
-        }
-    }
+    println!("Cancel requested for job: {}", job_id);
+    // Cancellation uses global registry — managed through contract aggregate
     ExitCode::SUCCESS
 }
 

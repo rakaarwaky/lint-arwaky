@@ -6,38 +6,37 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct WatchServiceError {
-    #[serde(default)]
-    pub path: Option<FilePath>,
+    pub path: FilePath,
     pub message: ErrorMessage,
-    #[serde(default)]
-    pub error_code: Option<ErrorCode>,
-    #[serde(default)]
-    pub cause: Option<Cause>,
+    pub error_code: ErrorCode,
+    pub cause: Cause,
 }
 
 impl WatchServiceError {
     pub fn new(message: ErrorMessage) -> Self {
         Self {
-            path: None,
+            path: FilePath::default(),
             message,
-            error_code: None,
-            cause: None,
+            error_code: ErrorCode::default(),
+            cause: Cause::default(),
         }
     }
 }
 
 impl std::fmt::Display for WatchServiceError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let target = self
-            .path
-            .as_ref()
-            .map(|p| format!(" on {}", p))
-            .unwrap_or_default();
-        let code = self
-            .error_code
-            .as_ref()
-            .map(|c| format!(" [{}]", c))
-            .unwrap_or_default();
+        let path_str = self.path.to_string();
+        let target = if path_str.is_empty() {
+            String::new()
+        } else {
+            format!(" on {}", path_str)
+        };
+        let code_str = self.error_code.to_string();
+        let code = if code_str.is_empty() {
+            String::new()
+        } else {
+            format!(" [{}]", code_str)
+        };
         write!(f, "Watch Error{}{}: {}", target, code, self.message)
     }
 }

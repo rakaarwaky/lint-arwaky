@@ -6,6 +6,15 @@ pub struct TransportEndpoint {
     pub address: String,
 }
 
+impl Default for TransportEndpoint {
+    fn default() -> Self {
+        Self {
+            protocol: TransportProtocol::STDAggregate,
+            address: String::new(),
+        }
+    }
+}
+
 impl TransportEndpoint {
     pub fn new(protocol: TransportProtocol, address: String) -> Self {
         Self { protocol, address }

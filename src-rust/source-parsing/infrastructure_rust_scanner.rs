@@ -68,8 +68,8 @@ impl ASTRustParserAdapter {
         let content = fs::read_to_string(&path.value).map_err(|e| SourceParserError {
             path: path.clone(),
             message: ErrorMessage::new(format!("Failed to read file: {}", e)),
-            error_code: Some(ErrorCode::raw("FILE_READ_ERROR")),
-            cause: Some(Cause::new(e.to_string())),
+            error_code: ErrorCode::raw("FILE_READ_ERROR"),
+            cause: Cause::new(e.to_string()),
         })?;
 
         let mut defined = HashSet::new();

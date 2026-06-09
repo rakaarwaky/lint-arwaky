@@ -2,6 +2,7 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct Cause {
     pub(crate) value: String,
 }

@@ -7,37 +7,43 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct SemanticError {
     #[serde(default)]
-    pub path: Option<FilePath>,
+    pub path: FilePath,
     pub message: ErrorMessage,
     #[serde(default)]
-    pub error_code: Option<ErrorCode>,
+    pub error_code: ErrorCode,
     #[serde(default)]
-    pub cause: Option<Cause>,
+    pub cause: Cause,
 }
 
 impl SemanticError {
     pub fn new(message: ErrorMessage) -> Self {
         Self {
-            path: None,
+            path: FilePath::default(),
             message,
-            error_code: None,
-            cause: None,
+            error_code: ErrorCode::default(),
+            cause: Cause::default(),
         }
     }
 }
 
 impl std::fmt::Display for SemanticError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let target = self
-            .path
-            .as_ref()
-            .map(|p| format!(" on {}", p))
-            .unwrap_or_default();
-        let code = self
-            .error_code
-            .as_ref()
-            .map(|c| format!(" [{}]", c))
-            .unwrap_or_default();
+        let target = {
+            let p: &str = &self.path;
+            if p.is_empty() {
+                String::new()
+            } else {
+                format!(" on {}", p)
+            }
+        };
+        let code = {
+            let c: &str = &self.error_code;
+            if c.is_empty() {
+                String::new()
+            } else {
+                format!(" [{}]", c)
+            }
+        };
         write!(f, "Semantic Error{}{}: {}", target, code, self.message)
     }
 }

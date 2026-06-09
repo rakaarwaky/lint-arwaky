@@ -2,10 +2,8 @@ use std::collections::BTreeMap;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use crate::di_containers::agent_injection_container::DependencyInjectionContainer;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 pub struct PluginCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
@@ -52,10 +50,7 @@ pub fn register_plugin_commands(
     surface
 }
 
-pub fn handle_adapters() -> ExitCode {
-    let container = Arc::new(DependencyInjectionContainer::new(
-        DirectoryPath::new(".").unwrap_or_default(),
-    ));
+pub fn handle_adapters(container: Arc<dyn ServiceContainerAggregate>) -> ExitCode {
     let adapter_names = [
         ("clippy", "Rust", "lint, fix"),
         ("ruff", "Python", "lint, fix"),

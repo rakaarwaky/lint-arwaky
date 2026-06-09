@@ -1,6 +1,8 @@
 // report_formatter_processor — Capability for formatting reports (SARIF, JUnit).
 // Implements ILintReportingProtocol: format, get_formatted_payload, to_sarif, to_junit.
+use crate::output_report::contract_output_aggregate::IReportFormatterProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
@@ -352,6 +354,21 @@ impl ReportFormatterProcessor {
         }
 
         data
+    }
+}
+
+impl IReportFormatterProtocol for ReportFormatterProcessor {
+    fn format_text(&self, results: &LintResultList, path: &str) -> String {
+        self.format_text(&results.values, path)
+    }
+
+    fn format_json(&self, results: &LintResultList, path: &str) -> String {
+        let data = serde_json::json!({
+            "project": path,
+            "results_count": results.len(),
+            "results": results.values
+        });
+        serde_json::to_string_pretty(&data).unwrap_or_else(|_| "{}".to_string())
     }
 }
 

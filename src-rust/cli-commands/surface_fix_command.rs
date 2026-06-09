@@ -4,9 +4,8 @@ use std::sync::Arc;
 
 use crate::cli_commands::surface_output_controller::{get_output_dir, tee_stdout, write_output};
 use crate::cli_commands::taxonomy_command_target_vo::resolve_target;
-use crate::di_containers::agent_injection_container::DependencyInjectionContainer;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct FixCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -89,11 +88,8 @@ pub fn register_fix_commands(container: Arc<dyn ServiceContainerAggregate>) -> F
     surface
 }
 
-pub fn handle_fix(path: Option<String>, dry_run: bool) -> ExitCode {
+pub fn handle_fix(path: Option<String>, dry_run: bool, container: Arc<dyn ServiceContainerAggregate>) -> ExitCode {
     let root = resolve_target(path);
-    let container = Arc::new(DependencyInjectionContainer::new(
-        DirectoryPath::new(&root).unwrap_or_default(),
-    ));
     let fix_surface = register_fix_commands(container);
     fix_surface.run_fix(FilePath::new(root).unwrap_or_default(), dry_run);
     ExitCode::SUCCESS
