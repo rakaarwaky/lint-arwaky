@@ -86,10 +86,6 @@ architecture:
       - name: "Naming Convention"
         word_count: 3
         exceptions: ["__init__.py", "__main__.py"]
-        word_count_violation_message: >
-          AES003 NAMING_CONVENTION: Filename does not follow the word1_word2_word3.py pattern.
-          WHY? Strict three-word names ensure architectural consistency and prevent naming ambiguity.
-          FIX: Rename the file to exactly three words separated by underscores (e.g., auth_session_vo.py).
 
       - name: "forbidden bypass / cheating"
         forbidden_bypass:
@@ -98,95 +94,34 @@ architecture:
             "# pylint: disable", "Any", "except:", "pass"
           ]
         exceptions: []
-        forbidden_bypass_violation_message: >
-          AES014 BYPASS_COMMENT_VIOLATION: Forbidden bypass, blanket exception, or dynamic type detected.
-          WHY? Suppressing linter/type-checker warnings or using dynamic types bypasses safe error handling.
-          FIX: Use strict type annotations and targeted exception handling instead of blanket suppressions.
-        forbidden_bypass_custom_messages:
-          - pattern: "# noqa"
-            message: >
-              AES014 BYPASS_COMMENT_VIOLATION: '# noqa' comment detected in Python source.
-              WHY? Suppressing linter checks can hide underlying logical errors or style issues.
-              FIX: Resolve the lint warning instead of suppressing it with noqa comments.
-          - pattern: "# type: ignore"
-            message: >
-              AES014 BYPASS_COMMENT_VIOLATION: '# type: ignore' comment detected in Python source.
-              WHY? Bypassing type checker hides potential type mismatches and runtime errors.
-              FIX: Add proper type annotations or restructure code to satisfy the type checker.
-          - pattern: "Any"
-            message: >
-              AES024 AGENT_ANY_BYPASS: 'Any' type annotation detected in Python source.
-              WHY? Using 'Any' bypasses static type checking and masks method name or argument mismatches.
-              FIX: Use precise type annotations (TypedDict, Protocol, Union) instead of Any.
-          - pattern: "except:"
-            message: >
-              AES014 BYPASS_COMMENT_VIOLATION: Bare 'except:' clause detected in Python source.
-              WHY? Bare excepts catch unexpected exceptions like SystemExit and KeyboardInterrupt.
-              FIX: Use 'except Exception:' or target specific exception types.
 
       - name: "Mandatory Class or Protocol Definition"
         mandatory_class_definition: true
         exceptions: ["__init__.py", "__main__.py"]
-        mandatory_class_definition_violation_message: >
-          AES009 MANDATORY_CLASS_DEFINITION: File is missing a class, dataclass, or Protocol definition.
-          WHY? Encapsulation in classes/Protocols is required for proper modularization and contract adherence.
-          FIX: Group functions into a class or implement a Protocol that defines the module interface.
 
       - name: "Line Count Limits"
         min_lines: 10
         exceptions: ["__init__.py", "__main__.py"]
-        min_lines_violation_message: >
-          AES005 FILE_TOO_SHORT: File contains fewer than 10 lines of code.
-          WHY? Excessively small files clutter the project structure; logic should be merged into a parent module.
-          FIX: Merge this logic into a related module or expand the component with more functionality.
         max_lines: 700
         exceptions: ["__init__.py", "__main__.py"]
-        max_lines_violation_message: >
-          AES004 FILE_TOO_LARGE: File exceeds the line limit.
-          WHY? Large files violate the Single Responsibility Principle and are difficult to maintain or test.
-          FIX: Split the module into smaller, more focused files according to their specific roles.
 
       - name: "Dead Inheritance Bypass"
         dead_inheritance_bypass: true
         exceptions: ["__init__.py", "__main__.py"]
-        dead_inheritance_bypass_violation_message: >
-          AES016 DEAD_INHERITANCE_BYPASS: Empty class or Protocol detected.
-          WHY? Empty classes or marker protocols are used to bypass architectural enforcement logic.
-          FIX: Implement the required methods or define attributes in the class.
 
       - name: "Unused Mandatory Imports"
         check_unused_mandatory_imports: true
-        check_unused_mandatory_imports_violation_message: >
-          AES015 UNUSED_MANDATORY_IMPORT: Mandatory symbols are imported but never used in scope.
-          WHY? Importing required modules without usage is an architectural bypass attempt.
-          FIX: Utilize the imported symbols in your logic or remove the dependency from the module.
 
     internal:
       - name: "Root_Standards"
         scope: "root"
         mandatory_class_definition: false
         barrel_completeness: false
-        suffix_violation_message: >
-          AES011 SUFFIX_MISMATCH: Root file is missing the required '_entry' suffix.
-          WHY? The root layer is reserved for system entry points.
-          FIX: Rename the file to include the '_entry' suffix.
 
       - name: "Taxonomy_Standards"
         scope: "taxonomy"
         barrel_completeness: true
         forbid_internal_all: true
-        barrel_completeness_violation_message: >
-          AES012 BARREL_COMPLETENESS: __init__.py is missing public module or class exports.
-          WHY? Taxonomy is the system foundation; all public symbols must be explicitly exported via __init__.py.
-          FIX: Add explicit __all__ declarations or import statements in __init__.py exposing public Value Objects.
-        forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
-          WHY? Only __init__.py barrel files should define the layer's public API surface.
-          FIX: Remove __all__ from this file and centralize exports in the layer's __init__.py.
-        suffix_violation_message: >
-          AES011 SUFFIX_MISMATCH: Taxonomy file is missing a required role-based suffix.
-          WHY? Suffixes (_vo, _entity, _error, _event, _constant) are required to communicate component roles.
-          FIX: Rename the file to include the correct suffix matching its architectural purpose.
 
       - name: "Taxonomy_VO_Integrity"
         scope: "taxonomy(vo)"
@@ -196,56 +131,24 @@ architecture:
         scope: "taxonomy(entity)"
         no_primitives: true
         exceptions: ["__init__.py", "__main__.py"]
-        no_primitives_violation_message: >
-          AES006 PRIMITIVE_USAGE: Raw primitive types detected in a domain entity.
-          WHY? Entities must use Value Objects to encapsulate domain rules and preserve semantics.
-          FIX: Replace raw types (str, int, float, bool) with proper Value Object (_vo) components.
 
       - name: "Taxonomy_Error_Integrity"
         scope: "taxonomy(error)"
         no_primitives: true
-        no_primitives_violation_message: >
-          AES006 PRIMITIVE_USAGE: Raw primitive types detected in a domain error.
-          WHY? Domain errors must use Value Objects for consistent structure and metadata handling.
-          FIX: Replace raw error message types with proper Value Object (_vo) components.
 
       - name: "Taxonomy_Event_Integrity"
         scope: "taxonomy(event)"
         no_primitives: true
-        no_primitives_violation_message: >
-          AES006 PRIMITIVE_USAGE: Raw primitive types detected in a domain event.
-          WHY? Events represent state changes and must be composed of Value Objects to ensure domain integrity.
-          FIX: Replace raw event data types with proper Value Object (_vo) components.
 
       - name: "Taxonomy_Constant_Purity"
         scope: "taxonomy(constant)"
         forbid_non_constants: true
-        forbid_non_constants_violation_message: >
-          AES033 CONSTANT_PURITY: Taxonomy `_constant` file contains non-constant declarations (`def`, `class`, `import`, `from ... import`).
-          WHY? Constants are the only Taxonomy role permitted to expose raw primitives. Mixing in functions, classes, or imports collapses the role boundary and reintroduces primitive leakage.
-          FIX: Move non-constant declarations to the appropriate file (`_vo`, `_entity`, or capability module) and keep the `_constant` file restricted to uppercase variable assignments only.
 
       - name: "Contract_Standards"
         scope: "contract"
         no_primitives: true
         barrel_completeness: true
         forbid_internal_all: true
-        barrel_completeness_violation_message: >
-          AES012 BARREL_COMPLETENESS: __init__.py is missing public Protocol re-exports.
-          WHY? Contracts define the public boundary and must explicitly export their interfaces.
-          FIX: Add explicit __all__ or import statements in __init__.py exposing only public interfaces.
-        forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
-          WHY? Contract consumption must be centralized through the layer's __init__.py barrel file.
-          FIX: Remove __all__ from this file and export the interfaces via the layer's __init__.py.
-        suffix_violation_message: >
-          AES008 CONTRACT_SUFFIX_MISMATCH: File is missing a required contract-specific suffix.
-          WHY? Every contract must communicate its role as a port, protocol, or composition boundary via suffixes.
-          FIX: Rename the file with the correct _port, _protocol, or _aggregate suffix.
-        no_primitives_violation_message: >
-          AES006 PRIMITIVE_USAGE: Raw primitive types detected in a contract interface.
-          WHY? Contracts must use domain types to prevent technical implementation details from leaking.
-          FIX: Use taxonomy types (_vo or _entity) instead of raw primitives in Protocol definitions.
 
       - name: "Capabilities_Standards"
         scope: "capabilities"
@@ -255,48 +158,12 @@ architecture:
         check_method_existence: true
         check_vo_parameter_usage: true
         check_dispatch_distribution: true
-        barrel_completeness_violation_message: >
-          AES012 BARREL_COMPLETENESS: __init__.py is missing public re-exports.
-          WHY? Explicit exports ensure a clean and predictable API surface for the agent layer.
-          FIX: Add proper __all__ or imports in __init__.py listing public capabilities.
-        forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
-          WHY? Use case implementations must be exported exclusively through the layer's barrel file.
-          FIX: Remove __all__ from this file and centralize them in __init__.py.
-        suffix_violation_message: >
-          AES011 SUFFIX_MISMATCH: Capability file uses an incorrect or forbidden suffix.
-          WHY? Capability suffixes must reflect specific use-case roles like _analyzer or _executor.
-          FIX: Rename the file to use an allowed capability suffix defined in the architecture.
-        method_existence_violation_message: >
-          AES030 CAPABILITY_METHOD_NOT_FOUND: Capability method referenced in a dispatch catalog or command map does not exist on the target class.
-          WHY? Mismatched method names between dispatch catalog and capability class cause runtime dispatch failures.
-          FIX: Sync the method name in the dispatch catalog with the actual method defined on the capability class.
-        vo_parameter_usage_violation_message: >
-          AES032 MISSING_VO_CONSTRUCTION: Capability method call missing required request/data Value Object parameter.
-          WHY? Capability methods expect typed VO arguments. Calling without them bypasses domain validation and creates runtime fragility.
-          FIX: Pass the appropriate request or data VO to every capability method call.
-        dispatch_distribution_violation_message: >
-          AES031 SINGLE_CAPABILITY_BOTTLENECK: All dispatch routes go to a single capability class when multiple specialized options exist.
-          WHY? Dispatch should distribute actions across capabilities by concern. A single class handling everything indicates under-utilization of the architecture.
-          FIX: Create or use specialized capability classes for distinct action types.
 
       - name: "Infrastructure_Standards"
         scope: "infrastructure"
         no_primitives: false
         barrel_completeness: true
         forbid_internal_all: true
-        barrel_completeness_violation_message: >
-          AES012 BARREL_COMPLETENESS: __init__.py is missing public re-exports.
-          WHY? Centralized exports in __init__.py allow the agent to discover adapters consistently.
-          FIX: Add proper __all__ or imports in __init__.py listing all public adapters.
-        forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
-          WHY? Technical implementation details should not define their own public API surface.
-          FIX: Remove __all__ from this file and centralize them in __init__.py.
-        suffix_violation_message: >
-          AES011 SUFFIX_MISMATCH: Infrastructure file uses a reserved domain or contract suffix.
-          WHY? Infrastructure is for technical implementations; domain concepts are strictly forbidden here.
-          FIX: Use technical suffixes such as _adapter, _client, or _scanner for these files.
 
       - name: "Surfaces_Standards"
         scope: "surfaces"
@@ -304,18 +171,6 @@ architecture:
         barrel_completeness: true
         forbid_internal_all: true
         exceptions: ["__init__.py", "__main__.py"]
-        barrel_completeness_violation_message: >
-          AES012 BARREL_COMPLETENESS: __init__.py is missing public re-exports.
-          WHY? Surfaces are entry points; all public commands and presenters must be explicitly exported.
-          FIX: Add proper __all__ or imports in __init__.py for all public surface classes.
-        forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
-          WHY? Surface submodules must export via the barrel to maintain a clean boundary.
-          FIX: Remove __all__ from this file and centralize them in __init__.py.
-        suffix_violation_message: >
-          AES011 SUFFIX_MISMATCH: Surface file uses a forbidden suffix or domain type.
-          WHY? Surfaces must not define domain concepts; those belong exclusively in the taxonomy layer.
-          FIX: Rename to use surface-specific suffixes like _command, _page, or _handler.
 
       - name: "Agent_Standards"
         scope: "agent"
@@ -323,112 +178,40 @@ architecture:
         barrel_completeness: true
         forbid_internal_all: true
         exceptions: ["__init__.py", "__main__.py"]
-        barrel_completeness_violation_message: >
-          AES012 BARREL_COMPLETENESS: __init__.py is missing public re-exports.
-          WHY? The agent is the system's brain; its public API must be explicitly exported to surfaces.
-          FIX: Add proper __all__ or imports in __init__.py exposing orchestrators and containers.
-        forbid_internal_all_violation_message: >
-          AES013 INTERNAL_ALL_FORBIDDEN: Public re-exports list (__all__) detected in a non-barrel sub-module.
-          WHY? Agent internal submodules must centralize their exports in the layer's barrel file.
-          FIX: Remove __all__ from this file and handle them via __init__.py.
-        suffix_violation_message: >
-          AES011 SUFFIX_MISMATCH: Agent file uses a forbidden or non-specialized role suffix.
-          WHY? We enforce strict role specialization (container, manager, orchestrator, registry, coordinator, and support modules).
-          FIX: Rename the file to use one of the allowed agent-specific suffixes.
 
       - name: "Agent_Container_Wiring_Mandate"
         scope: "agent(container)"
         no_domain_logic: true
         must_implement_service_container_aggregate: true
         lazy_eager_initialization_only: true
-        no_domain_logic_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Domain logic detected in the structural Container.
-          WHY? The Container acts as an 'Electrician' and must only handle structural wiring and DI.
-          FIX: Move business or domain logic to an Orchestrator or Coordinator component.
-        must_implement_service_container_aggregate_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Container does not implement the ServiceContainerAggregate interface.
-          WHY? All structural containers must adhere to the standard Dependency Injection interface.
-          FIX: Implement the ServiceContainerAggregate contract in this class to satisfy the architectural mandate.
-        lazy_eager_initialization_only_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Complex logic found in the Container initialization process.
-          WHY? Containers should only handle lazy or eager wiring setup without performing IO.
-          FIX: Move complex initialization or branching logic to a Manager or Orchestrator.
 
       - name: "Agent_Orchestrator_Stateless_Mandate"
         scope: "agent(orchestrator)"
         stateless_execution: true
         single_execution_goal: true
         forbid_any_type: true
-        stateless_execution_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Non-stateless behavior detected in an Orchestrator.
-          WHY? Orchestrators are 'Conductors' and must not hold internal execution state between calls.
-          FIX: Shift any state persistence to a Registry or an external storage component.
-        single_execution_goal_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Multiple distinct domain goals detected in an Orchestrator.
-          WHY? Orchestrators must focus on a single execution objective to ensure maintainability.
-          FIX: Split the component into multiple specialized orchestrators for each specific goal.
-        forbid_any_type_violation_message: >
-          AES024 AGENT_ANY_BYPASS: 'Any' type detected in the agent orchestrator logic.
-          WHY? Bypassing type safety for DI containers masks method name or argument mismatches.
-          FIX: Use Protocol types or TypedDict instead of Any to ensure architectural integrity.
 
       - name: "Agent_Coordinator_Strategic_Mandate"
         scope: "agent(coordinator)"
         high_level_policy_only: true
         coordinates_multiple_orchestrators: false
-        high_level_policy_only_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Low-level implementation details found in a Coordinator.
-          WHY? Coordinators must only handle high-level cross-domain policy decisions and orchestration.
-          FIX: Abstract technical details into contracts or delegate them to specialized Orchestrators.
-        coordinates_multiple_orchestrators_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Coordinator is not performing cross-orchestrator coordination.
-          WHY? Coordinators exist solely to manage the interaction between multiple distinct orchestrators.
-          FIX: Ensure this class coordinates logic across at least two different orchestrator workflows.
 
       - name: "Agent_Registry_Inventory_Mandate"
         scope: "agent(registry)"
         crud_only: true
         no_decision_logic: true
         thread_async_safe: true
-        crud_only_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Business or decision logic detected in a Registry.
-          WHY? Registries are 'Librarians' meant strictly for inventory management and lookups.
-          FIX: Move all business decision-making logic to an Orchestrator or Manager component.
-        no_decision_logic_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Decision-making code found in a data Registry.
-          WHY? Registries must be 'dumb' storage units without complex conditional or branching logic.
-          FIX: Move the logic to the calling Agent component or a specialized Orchestrator.
-        thread_async_safe_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Non-thread-safe operations in a Registry.
-          WHY? Registries are shared resources and must handle concurrent access safely across threads.
-          FIX: Use threading.Lock, asyncio.Lock, or queue.Queue to ensure safe concurrent access.
 
       - name: "Agent_Manager_Lifecycle_Mandate"
         scope: "agent(manager)"
         no_domain_data_storage: true
         owns_system_health_transitions: true
         lifecycle_tracking_only: true
-        no_domain_data_storage_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Domain data storage detected in a lifecycle Manager.
-          WHY? Managers are 'Supervisors' of system health and lifecycle, not domain data containers.
-          FIX: Move domain-specific data to a Registry or a Taxonomy component.
-        owns_system_health_transitions_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Manager is ignoring system lifecycle or health states.
-          WHY? Managers must actively track and manage system health transitions and component lifecycles.
-          FIX: Implement proper health-checking logic or lifecycle state tracking within this manager.
-        lifecycle_tracking_only_violation_message: >
-          AES021 AGENT_ROLE_VIOLATION: Manager is performing operational domain-specific tasks.
-          WHY? Managers should only supervise lifecycles, not execute business or operational workflows.
-          FIX: Delegate operational domain tasks to specialized Orchestrators for proper segregation.
 
     external:
       - name: "Taxonomy_Relations"
         scope: "taxonomy"
         check_orphan: true
-        orphan_violation_message: >
-          AES017 ORPHAN_CODE_DETECTION: Taxonomy component is unreachable and unused.
-          WHY? Taxonomy must be consumed by Contract, Infra, Capability, or Surface to be alive.
-          FIX: Register in __init__.py and import it in at least one consumer layer.
 
       - name: "Taxonomy_Vo_Relations"
         scope: "taxonomy(vo)"
@@ -437,10 +220,6 @@ architecture:
         exceptions: ["__init__.py", "__main__.py"]
         forbidden_import:
           ["taxonomy(entity,error,event)", "agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
-        forbidden_import_violation_message: >
-          AES001 IMPORT_LAYER_VIOLATION: Taxonomy VO imported from an outer layer.
-          WHY? Taxonomy is the system's foundation and must have zero dependencies on outer layers.
-          FIX: Remove all imports to agent, infrastructure, surfaces, contract, or capabilities layers.
 
       - name: "Taxonomy_Entity_Error_Event_Relations"
         scope: "taxonomy(entity, error, event)"
@@ -448,22 +227,10 @@ architecture:
         mandatory_import: ["taxonomy(vo)"]
         exceptions: ["__init__.py", "__main__.py"]
         forbidden_import: ["agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
-        mandatory_import_violation_message: >
-          AES002 MANDATORY_IMPORT_MISSING: Entity, Error, or Event missing VO import.
-          WHY? Core domain structures must be composed of Value Objects to ensure domain integrity.
-          FIX: Import and use Value Objects (VOs) from the taxonomy layer.
-        forbidden_import_violation_message: >
-          AES001 IMPORT_LAYER_VIOLATION: Taxonomy imported from an outer layer.
-          WHY? Taxonomy is the bottom-most layer and must not depend on outer system layers.
-          FIX: Remove all imports to agent, infrastructure, contract, or capabilities layers.
 
       - name: "Contract_Relations"
         scope: "contract"
         check_orphan: true
-        orphan_violation_message: >
-          AES017 ORPHAN_CODE_DETECTION: Contract has no heirs.
-          WHY? A contract without an implementation in Infrastructure, Capabilities, or Agent is dead code.
-          FIX: Implement this contract in a corresponding file or remove it.
         exceptions: ["__init__.py", "__main__.py"]
 
       - name: "Contract_Port_Protocol_Relations"
@@ -472,10 +239,6 @@ architecture:
         mandatory_import: ["taxonomy"]
         exceptions: ["__init__.py", "__main__.py"]
         forbidden_import: ["agent", "infrastructure", "surfaces", "capabilities", "contract(aggregate)", "root"]
-        forbidden_import_violation_message: >
-          AES001 IMPORT_LAYER_VIOLATION: Pure contract (_port/_protocol) depends on execution logic.
-          WHY? Ports and Protocols define logic shapes and must not know about orchestration or implementation.
-          FIX: Remove all imports except from taxonomy.
 
       - name: "Contract_Aggregate_Relations"
         scope: "contract(aggregate)"
@@ -484,14 +247,6 @@ architecture:
         forbidden_inheritance: ["contract(port|protocol)"]
         exceptions: ["__init__.py", "__main__.py"]
         forbidden_import: ["agent", "infrastructure", "surfaces", "capabilities", "root"]
-        forbidden_import_violation_message: >
-          AES001 IMPORT_LAYER_VIOLATION: Contract Aggregate depends on implementation layers.
-          WHY? The Aggregate represents the system's formal promise and must remain agnostic to implementation details.
-          FIX: Remove all imports from infrastructure, capabilities, agent, or surfaces layers.
-        forbidden_inheritance_violation_message: >
-          AES026 INHERITANCE_VIOLATION: Contract Aggregate must NOT inherit from Port or Protocol.
-          WHY? The Aggregate is a composition contract. Inheriting from Port/Protocol violates the aggregate's role as a facade.
-          FIX: Change inheritance to composition. Define Ports/Protocols as fields or abstract methods within the Aggregate class.
 
       - name: "Capabilities_Relations"
         scope: "capabilities"
@@ -500,18 +255,6 @@ architecture:
         mandatory_import: ["taxonomy", "contract(protocol)"]
         exceptions: ["__init__.py", "__main__.py"]
         forbidden_import: ["infrastructure", "surfaces", "agent", "capabilities", "root"]
-        orphan_violation_message: >
-          AES017 ORPHAN_CODE_DETECTION: Capability is not wired or executed.
-          WHY? To be alive, a capability must be registered in the Agent Container AND invoked by an Orchestrator.
-          FIX: Register in the capability mixin container and ensure it's called during execution.
-        mandatory_import_violation_message: >
-          AES002 MANDATORY_IMPORT_MISSING: Capability missing taxonomy or contract protocol.
-          WHY? Capabilities implement use cases and require domain types and interface protocols.
-          FIX: Import the correct _protocol file and inherit from it immediately.
-        forbidden_import_violation_message: >
-          AES001 IMPORT_LAYER_VIOLATION: Capability imported from an unauthorized layer or sibling module.
-          WHY? Capabilities must be independent; importing siblings or outer layers causes circular cycles.
-          FIX: Remove imports from other capabilities, infrastructure, surfaces, or agent layers. Use Dependency Injection.
 
       - name: "Infrastructure_Relations"
         scope: "infrastructure"
@@ -520,18 +263,6 @@ architecture:
         exceptions: ["__init__.py", "__main__.py"]
         forbidden_import: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
         allowed_import: ["taxonomy", "contract"]
-        orphan_violation_message: >
-          AES017 ORPHAN_CODE_DETECTION: Infrastructure adapter is not wired or executed.
-          WHY? To be alive, infrastructure must be registered in the Agent Container AND invoked via a port.
-          FIX: Register in the infrastructure mixin container and ensure it implements a port.
-        mandatory_import_violation_message: >
-          AES002 MANDATORY_IMPORT_MISSING: Infrastructure missing taxonomy or port import.
-          WHY? Infrastructure provides technical services and must implement a port from the contract layer.
-          FIX: Import the correct _port contract and inherit from it.
-        forbidden_import_violation_message: >
-          AES001 IMPORT_LAYER_VIOLATION: Infrastructure component imported from an unauthorized layer or sibling.
-          WHY? Infrastructure adapters must be isolated; importing siblings creates technical coupling and cycles.
-          FIX: Remove imports from other infrastructure, surfaces, capabilities, or agent modules.
 
       - name: "Root_Relations"
         scope: "root"
@@ -552,10 +283,6 @@ architecture:
         mandatory_import: ["taxonomy", "contract"]
         exceptions: ["__init__.py", "__main__.py"]
         forbidden_import: ["surfaces", "root"]
-        orphan_violation_message: >
-          AES017 ORPHAN_CODE_DETECTION: Agent Governance component is unreachable.
-          WHY? The wiring layer must be accessible from the surface entry points.
-          FIX: Ensure the container is imported in the surface or __init__.py.
 
       - name: "Agent_Orchestration_Relations"
         scope: "agent(orchestrator|coordinator|dispatcher)"
@@ -569,10 +296,6 @@ architecture:
           "agent(container|registry|mixin)",
           "root"
         ]
-        forbidden_import_violation_message: >
-          AES001 IMPORT_LAYER_VIOLATION: Orchestrator depends on a sibling or governance component.
-          WHY? Orchestrators must only use ServiceContainerAggregate (contract) to avoid circular dependencies with the implementation.
-          FIX: Use self.container.get(ContractAggregate) and only import from the 'contract' and 'taxonomy' layers.
 
       - name: "Agent_Support_Relations"
         scope: "agent(manager|handler|result|state)"
@@ -580,10 +303,6 @@ architecture:
         mandatory_import: ["taxonomy"]
         exceptions: ["__init__.py", "__main__.py"]
         forbidden_import: ["agent", "infrastructure", "capabilities", "surfaces", "root"]
-        forbidden_import_violation_message: >
-          AES001 IMPORT_LAYER_VIOLATION: Support module (leaf node) depends on orchestration or outer layers.
-          WHY? Manager/Result must be independent of the wiring and logic flow to prevent cycles.
-          FIX: Remove all Agent/Infra/Cap imports. Stick to Taxonomy and Contract Aggregate.
 
       - name: "Smart_Surface_Relations"
         scope: "surfaces(page|command|handler|controller)"
@@ -591,10 +310,6 @@ architecture:
         mandatory_import: ["taxonomy", "contract(aggregate)"]
         exceptions: ["__init__.py", "__main__.py"]
         forbidden_import: ["agent", "infrastructure", "capabilities", "contract(port)", "contract(protocol)", "root"]
-        mandatory_import_violation_message: >
-          AES002 MANDATORY_IMPORT_MISSING: Smart Surface missing required layers (Taxonomy/Contract Aggregate).
-          WHY? Smart surfaces are entry points that orchestrate via ServiceContainerAggregate (contract) using standard VO and Aggregate contracts.
-          FIX: Import taxonomy value objects and contract aggregate for data exchange.
 
       - name: "Utility_Surface_Relations"
         scope: "surfaces(hook|store|provider|router)"
@@ -608,10 +323,6 @@ architecture:
           "surfaces(page|command|handler|controller|entry)",
           "root"
         ]
-        forbidden_import_violation_message: >
-          AES018 SURFACE_HIERARCHY_VIOLATION: Utility surface cannot depend on a Smart surface.
-          WHY? Smart surfaces are entry points that orchestrate flow; utility surfaces are helpers that should be stateless or leaf-oriented.
-          FIX: Move shared logic to Agent or Taxonomy, or refactor the utility to be independent.
 
       - name: "Passive_Surface_Relations"
         scope: "surfaces(component|layout|view)"
@@ -626,7 +337,3 @@ architecture:
           "surfaces(page|command|handler|controller|entry|hook|store|provider|router)",
           "root"
         ]
-        forbidden_import_violation_message: >
-          AES019 PASSIVE_SURFACE_VIOLATION: Passive surface must only import Taxonomy.
-          WHY? Components and views should only know about data structures (Taxonomy), not logic or orchestration.
-          FIX: Pass necessary callbacks or data via parameters from the Smart surface. Remove Agent/Contract/Infra/Cap imports.

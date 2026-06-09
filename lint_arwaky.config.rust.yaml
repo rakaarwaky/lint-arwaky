@@ -1,8 +1,3 @@
-# FRD v1.2: Prefix-Based Architecture
-# Layer detection uses filename PREFIX (e.g. "taxonomy_", "capabilities_").
-# NOT directory path — files organized in 26 vertical feature folders.
-# Each suffix is unique per layer (no suffix appears in multiple layers).
-
 thresholds:
   score: 100.0
   complexity: 15

@@ -3,7 +3,7 @@ use std::path::Path;
 
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_constant::{AES004_FILE_TOO_LARGE_MSG, AES005_FILE_TOO_SHORT_MSG};
+use crate::shared_common::taxonomy_violationrs_constant::{AES004_FILE_TOO_LARGE_MSG, AES005_FILE_TOO_SHORT_MSG};
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 

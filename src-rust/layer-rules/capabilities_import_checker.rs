@@ -3,7 +3,7 @@
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_constant::{aes001_forbidden_import, aes002_mandatory_import};
+use crate::shared_common::taxonomy_violationrs_constant::{aes001_forbidden_import, aes002_mandatory_import};
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use std::fs;

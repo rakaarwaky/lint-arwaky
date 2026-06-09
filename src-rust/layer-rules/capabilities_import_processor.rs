@@ -12,7 +12,7 @@ use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_constant::AES001_FORBIDDEN_IMPORT;
+use crate::shared_common::taxonomy_violationrs_constant::AES001_FORBIDDEN_IMPORT;
 use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
 use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;

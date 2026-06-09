@@ -12,7 +12,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::layer_infrastructure;
-use crate::shared_common::taxonomy_violation_constant::{
+use crate::shared_common::taxonomy_violationrs_constant::{
     aes021_must_implement_contract, aes024_any_type,
     AES021_COORDINATES_MULTIPLE, AES021_HIGH_LEVEL_POLICY, AES021_LAZY_EAGER_INIT,
     AES021_MUST_IMPLEMENT_CONTRACT, AES021_NO_DOMAIN_LOGIC, AES021_STATELESS_EXECUTION,

@@ -7,7 +7,7 @@ use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_constant::{aes003_naming_convention, aes011_suffix_mismatch, AES011_SUFFIX_FORBIDDEN};
+use crate::shared_common::taxonomy_violationrs_constant::{aes003_naming_convention, aes011_suffix_mismatch, AES011_SUFFIX_FORBIDDEN};
 use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
 use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;

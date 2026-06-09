@@ -3,7 +3,7 @@ use std::path::Path;
 
 use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_constant::AES009_MANDATORY_CLASS_DEFINITION;
+use crate::shared_common::taxonomy_violationrs_constant::AES009_MANDATORY_CLASS_DEFINITION;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 

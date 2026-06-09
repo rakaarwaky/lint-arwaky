@@ -11,7 +11,7 @@ use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNam
 use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
 use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::shared_common::taxonomy_violation_constant::aes003_naming_convention;
+use crate::shared_common::taxonomy_violationrs_constant::aes003_naming_convention;
 use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
 use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::output_report::taxonomy_severity_vo::Severity;

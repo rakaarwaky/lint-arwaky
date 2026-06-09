@@ -13,7 +13,7 @@ use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::{
     core_layer_names, layer_agent, layer_contract, layer_surfaces, layer_taxonomy,
 };
-use crate::shared_common::taxonomy_violation_constant::AES021_NO_DOMAIN_LOGIC;
+use crate::shared_common::taxonomy_violationrs_constant::AES021_NO_DOMAIN_LOGIC;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 fn make_adapter(name: &str) -> Option<AdapterName> {

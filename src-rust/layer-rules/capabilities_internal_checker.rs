@@ -2,7 +2,7 @@
 // Implements IInternalCheckerProtocol: barrel completeness, forbid_internal_all, no_primitives.
 
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_constant::{AES012_BARREL_COMPLETENESS, AES013_INTERNAL_ALL_FORBIDDEN};
+use crate::shared_common::taxonomy_violationrs_constant::{AES012_BARREL_COMPLETENESS, AES013_INTERNAL_ALL_FORBIDDEN};
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use std::fs;

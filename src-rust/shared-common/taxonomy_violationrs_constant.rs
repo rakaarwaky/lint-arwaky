@@ -1,9 +1,8 @@
+
 pub const AES001_FORBIDDEN_IMPORT: &str =
     "AES001 FORBIDDEN_IMPORT: Layer is importing from a forbidden module.";
 pub const AES002_MANDATORY_IMPORT: &str =
     "AES002 MANDATORY_IMPORT: Missing required import.";
-pub const AES003_NAMING_CONVENTION: &str =
-    "AES003 NAMING_CONVENTION: Filename does not follow the underscore-separated pattern.";
 pub const AES004_FILE_TOO_LARGE_MSG: &str =
     "AES004 FILE_TOO_LARGE: File exceeds the maximum allowed line count.\n\
     WHY? Large files violate the Single Responsibility Principle.\n\
@@ -15,21 +14,21 @@ pub const AES005_FILE_TOO_SHORT_MSG: &str =
 pub const AES006_PRIMITIVE_USAGE: &str =
     "AES006 PRIMITIVE_USAGE: Direct primitive in taxonomy.";
 pub const AES009_MANDATORY_CLASS_DEFINITION: &str =
-    "AES009 MANDATORY_CLASS_DEFINITION: File is missing a class definition.\n\
-    WHY? Encapsulation in classes is required for proper dependency injection.\n\
-    FIX: Move standalone functions into a class that implements its corresponding domain contract.";
+    "AES009 MANDATORY_CLASS_DEFINITION: File is missing a struct, enum, or trait definition.\n\
+    WHY? Encapsulation in structs/traits is required for proper modularization and contract adherence.\n\
+    FIX: Group functions into a struct or implement a Trait that defines the module interface.";
 pub const AES011_SUFFIX_FORBIDDEN: &str =
     "AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.\n\
     WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
     FIX: Rename the file to use an allowed suffix or move it to the correct layer.";
 pub const AES012_BARREL_COMPLETENESS: &str =
-    "AES012 BARREL_COMPLETENESS: Barrel file missing export declarations.\n\
-    WHY? Barrel files must re-export all public items via pub use/__all__/export *.\n\
-    FIX: Add pub use or __all__ declarations to the barrel file.";
+    "AES012 BARREL_COMPLETENESS: mod.rs is missing pub use declarations for public items.\n\
+    WHY? Barrel files must re-export all public items via pub use.\n\
+    FIX: Add pub use declarations to mod.rs.";
 pub const AES013_INTERNAL_ALL_FORBIDDEN: &str =
-    "AES013 INTERNAL_ALL_FORBIDDEN: pub use/__all__ is forbidden in non-barrel files.\n\
-    WHY? Only barrel files should define the layer's public API surface.\n\
-    FIX: Remove public exports from this file and centralize them in mod.rs.";
+    "AES013 INTERNAL_ALL_FORBIDDEN: pub use is forbidden in non-barrel files.\n\
+    WHY? Only mod.rs barrel files should define the layer's public API surface.\n\
+    FIX: Remove pub use from this file and centralize exports in mod.rs.";
 pub const AES021_STATELESS_EXECUTION: &str =
     "Non-stateless behavior detected: state assignment found outside __init__.";
 pub const AES021_HIGH_LEVEL_POLICY: &str =
@@ -53,31 +52,23 @@ pub fn aes003_naming_convention(expected_word_count: i32) -> String {
     format!(
         "AES003 NAMING_CONVENTION: Filename does not follow the {}-word underscore-separated pattern.\n\
         WHY? Strict three-word names ensure architectural consistency.\n\
-        FIX: Rename the file to exactly {} words separated by underscores.",
-        expected_word_count, expected_word_count
+        FIX: Rename the file to exactly {} words separated by underscores.", expected_word_count, expected_word_count
     )
 }
 
 pub fn aes001_forbidden_import(layer_name: &str, module: &str) -> String {
-    format!(
-        "AES001 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden module '{}'.",
-        layer_name, module
-    )
+    format!("AES001 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden module '{}'.", layer_name, module)
 }
 
 pub fn aes002_mandatory_import(required: &str) -> String {
-    format!(
-        "AES002 MANDATORY_IMPORT: Missing required import: '{}'.",
-        required
-    )
+    format!("AES002 MANDATORY_IMPORT: Missing required import: '{}'.", required)
 }
 
 pub fn aes011_suffix_mismatch(allowed_list: &str) -> String {
     format!(
         "AES011 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
         WHY? Strict suffixes ensure every component has a clear role.\n\
-        FIX: Add one of the required suffixes: {}.",
-        allowed_list
+        FIX: Add one of the required suffixes: {}.", allowed_list
     )
 }
 
@@ -98,5 +89,5 @@ pub fn aes021_must_implement_contract(contract_name: &str) -> String {
 }
 
 pub fn aes024_any_type(line: &str) -> String {
-    format!("`Any` type annotation found in agent orchestrator layer: '{}'.", line.trim())
+    format!("Any type annotation found in agent orchestrator layer: '{}'.", line.trim())
 }
