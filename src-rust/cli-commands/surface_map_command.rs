@@ -13,7 +13,13 @@ pub fn handle_cancel(job_id: String) -> ExitCode {
     ));
     if let Some(registry) = container.get_job_registry() {
         let id = crate::pipeline_jobs::taxonomy_action_vo::JobId::new(&job_id);
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(r) => r,
+            Err(_) => {
+                eprintln!("Failed to create async runtime for job cancellation");
+                return ExitCode::from(1);
+            }
+        };
         let cancelled = rt.block_on(registry.cancel_job(&id));
         if cancelled.value() {
             println!("Job {} cancelled", job_id);

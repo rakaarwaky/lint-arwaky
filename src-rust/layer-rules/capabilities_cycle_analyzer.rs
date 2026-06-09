@@ -78,9 +78,10 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
     ) {
         if path_stack.contains(&node.to_string()) {
             // Found a cycle — extract the cycle path
-            let pos = path_stack.iter().position(|n| n == node).unwrap();
-            let cycle: Vec<String> = path_stack[pos..].to_vec();
-            cycles.push(cycle);
+            if let Some(pos) = path_stack.iter().position(|n| n == node) {
+                let cycle: Vec<String> = path_stack[pos..].to_vec();
+                cycles.push(cycle);
+            }
             return;
         }
         if visited.contains(node) {

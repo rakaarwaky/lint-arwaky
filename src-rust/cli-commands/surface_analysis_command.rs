@@ -404,20 +404,24 @@ pub fn handle_trends(path: Option<String>) -> ExitCode {
                 .iter()
                 .filter_map(|e| e.get("score").and_then(|s| s.as_f64()))
                 .collect();
-            if let (Some(&min_s), Some(&max_s)) = (
-                scores.iter().min_by(|a, b| a.partial_cmp(b).unwrap()),
-                scores.iter().max_by(|a, b| a.partial_cmp(b).unwrap()),
-            ) {
-                let range = (max_s - min_s).max(1.0);
-                let spark: String = scores
-                    .iter()
-                    .map(|s| {
-                        let idx = ((s - min_s) / range * 7.0).round() as usize;
-                        bar.chars().nth(idx.min(7)).unwrap_or('▁')
-                    })
-                    .collect();
-                println!("Sparkline: {}", spark);
+            if scores.is_empty() {
+                return ExitCode::SUCCESS;
             }
+            let mut min_s = f64::INFINITY;
+            let mut max_s = f64::NEG_INFINITY;
+            for &s in &scores {
+                if s < min_s { min_s = s; }
+                if s > max_s { max_s = s; }
+            }
+            let range = (max_s - min_s).max(1.0);
+            let spark: String = scores
+                .iter()
+                .map(|s| {
+                    let idx = ((s - min_s) / range * 7.0).round() as usize;
+                    bar.chars().nth(idx.min(7)).unwrap_or('▁')
+                })
+                .collect();
+            println!("Sparkline: {}", spark);
         }
     } else {
         println!();
