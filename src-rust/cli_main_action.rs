@@ -40,14 +40,16 @@ fn main() -> ExitCode {
         Err(e) => e.exit(),
     };
 
-    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(DependencyInjectionContainer::new(
-        DirectoryPath::new(".").unwrap_or_default(),
-    ));
+    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(
+        DependencyInjectionContainer::new(DirectoryPath::new(".").unwrap_or_default()),
+    );
 
     match cli.command {
         Commands::Check { path, git_diff } => surface_check_command::handle_check(path, git_diff),
         Commands::Scan { path } => surface_check_command::handle_scan(path, container.clone()),
-        Commands::Fix { path, dry_run } => surface_fix_command::handle_fix(path, dry_run, container.clone()),
+        Commands::Fix { path, dry_run } => {
+            surface_fix_command::handle_fix(path, dry_run, container.clone())
+        }
         Commands::Report {
             path,
             output_format,

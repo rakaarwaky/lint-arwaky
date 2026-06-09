@@ -23,8 +23,7 @@ impl Default for CallChainAnalyzer {
 
 impl CallChainAnalyzer {
     pub fn new() -> Self {
-        Self {
-        }
+        Self {}
     }
 
     /// Build all naming variants for a symbol.

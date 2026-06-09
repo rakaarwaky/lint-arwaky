@@ -106,7 +106,10 @@ pub fn handle_check(path: Option<String>, _git_diff: bool) -> ExitCode {
     run_lint_and_report(&root)
 }
 
-pub fn handle_scan(path: Option<String>, container: Arc<dyn ServiceContainerAggregate>) -> ExitCode {
+pub fn handle_scan(
+    path: Option<String>,
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> ExitCode {
     let root = resolve_target(path);
     let surface = register_check_commands(container);
     surface.scan(&root);
@@ -117,7 +120,10 @@ fn run_lint_and_report(root: &str) -> ExitCode {
     let results = lint_path(root);
     println!("=== AES Compliance Report for {} ===", root);
     for r in &results {
-        println!("[{}] {}:{}:{} {} - {}", r.severity, r.file, r.line, r.column, r.code, r.message);
+        println!(
+            "[{}] {}:{}:{} {} - {}",
+            r.severity, r.file, r.line, r.column, r.code, r.message
+        );
     }
     println!("Total violations: {}", results.len());
     if has_critical(&results) {

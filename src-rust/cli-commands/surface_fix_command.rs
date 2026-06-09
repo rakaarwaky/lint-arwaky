@@ -88,7 +88,11 @@ pub fn register_fix_commands(container: Arc<dyn ServiceContainerAggregate>) -> F
     surface
 }
 
-pub fn handle_fix(path: Option<String>, dry_run: bool, container: Arc<dyn ServiceContainerAggregate>) -> ExitCode {
+pub fn handle_fix(
+    path: Option<String>,
+    dry_run: bool,
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> ExitCode {
     let root = resolve_target(path);
     let fix_surface = register_fix_commands(container);
     fix_surface.run_fix(FilePath::new(root).unwrap_or_default(), dry_run);

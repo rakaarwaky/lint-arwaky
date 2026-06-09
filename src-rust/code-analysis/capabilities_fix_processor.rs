@@ -267,7 +267,7 @@ impl SimpleSymbolRenamer {
         }
         let new_content = content.replace(old_name, new_name);
         if new_content != content && std::fs::write(path, &new_content).is_ok() {
-                return 1;
+            return 1;
         }
         0
     }

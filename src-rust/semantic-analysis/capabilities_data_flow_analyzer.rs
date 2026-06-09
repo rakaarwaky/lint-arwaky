@@ -23,8 +23,7 @@ pub struct DataFlowEntry {
 }
 
 /// Business logic for tracking variable lifecycle in JS/TS files.
-pub struct DataFlowAnalyzer {
-}
+pub struct DataFlowAnalyzer {}
 
 impl Default for DataFlowAnalyzer {
     fn default() -> Self {
@@ -34,8 +33,7 @@ impl Default for DataFlowAnalyzer {
 
 impl DataFlowAnalyzer {
     pub fn new() -> Self {
-        Self {
-        }
+        Self {}
     }
 
     /// Track assignments and usages of a variable in a JS/TS file.

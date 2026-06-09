@@ -32,7 +32,6 @@ impl AnalysisReporter {
 
 #[async_trait]
 impl IAnalysisProtocol for AnalysisReporter {
-
     async fn run(&self, _path: &FilePath) -> ArchitectureGovernanceEntity {
         ArchitectureGovernanceEntity::default()
     }
@@ -53,9 +52,8 @@ impl IAnalysisProtocol for AnalysisReporter {
 
     async fn get_trends(&self, path: &FilePath) -> ArchitectureGovernanceEntity {
         let report = self.run(path).await;
-        let current_score = crate::output_report::taxonomy_score_vo::compute_score(
-            &report.results.values.to_vec(),
-        );
+        let current_score =
+            crate::output_report::taxonomy_score_vo::compute_score(&report.results.values.to_vec());
 
         // Read history file (configurable via self.history_path)
         let history_path = std::path::Path::new(&path.value).join(&self.history_path);

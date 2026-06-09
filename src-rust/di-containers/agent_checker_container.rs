@@ -2,7 +2,6 @@
 //! WIRES concrete capabilities implementations; allowed to import capabilities/infrastructure.
 //! agent(orchestrator|coordinator) uses this through the contract trait.
 
-use std::collections::HashSet;
 use crate::code_analysis::capabilities_class_checker::ArchClassChecker;
 use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
 use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
@@ -22,6 +21,7 @@ use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use std::collections::HashSet;
 
 pub struct CheckerContainer {
     analyzer: ArchComplianceAnalyzer,
