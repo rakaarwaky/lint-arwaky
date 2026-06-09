@@ -22,6 +22,9 @@ use lint_arwaky::cli_commands::taxonomy_command_target_vo;
 use lint_arwaky::code_analysis::agent_checking_coordinator::init_global_checker;
 use lint_arwaky::config_system::taxonomy_config_vo::default_aes_config;
 use lint_arwaky::di_containers::agent_checker_container::CheckerContainer;
+use lint_arwaky::di_containers::agent_injection_container::DependencyInjectionContainer;
+use lint_arwaky::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use lint_arwaky::source_parsing::taxonomy_path_vo::DirectoryPath;
 
 pub struct CliMainEntry {}
 
@@ -37,10 +40,14 @@ fn main() -> ExitCode {
         Err(e) => e.exit(),
     };
 
+    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(DependencyInjectionContainer::new(
+        DirectoryPath::new(".").unwrap_or_default(),
+    ));
+
     match cli.command {
         Commands::Check { path, git_diff } => surface_check_command::handle_check(path, git_diff),
-        Commands::Scan { path } => surface_check_command::handle_scan(path),
-        Commands::Fix { path, dry_run } => surface_fix_command::handle_fix(path, dry_run),
+        Commands::Scan { path } => surface_check_command::handle_scan(path, container.clone()),
+        Commands::Fix { path, dry_run } => surface_fix_command::handle_fix(path, dry_run, container.clone()),
         Commands::Report {
             path,
             output_format,
@@ -50,7 +57,7 @@ fn main() -> ExitCode {
             let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
             surface_bootstrap_command::handle_version(verbose)
         }
-        Commands::Adapters => surface_plugin_command::handle_adapters(),
+        Commands::Adapters => surface_plugin_command::handle_adapters(container.clone()),
         Commands::Config { command } => surface_config_command::handle_config(command),
         Commands::GitDiff { base } => surface_git_command::handle_git_diff(base),
         Commands::MultiProject { paths } => surface_multi_command::handle_multi_project(paths),

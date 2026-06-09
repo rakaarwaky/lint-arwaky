@@ -83,6 +83,10 @@ impl TaxonomyRoleChecker {
             if !t.contains(':') {
                 continue;
             }
+            // Skip value object newtype wrappers: pub(crate) value: Primitive
+            if t.contains("pub(crate) value:") || t.trim_start().starts_with("pub value:") {
+                continue;
+            }
             if !(t.ends_with(',') || t.ends_with('}') || t.ends_with(')') || t.contains("-> ")) {
                 continue;
             }
@@ -96,7 +100,32 @@ impl TaxonomyRoleChecker {
                 .trim_end_matches('}')
                 .trim();
             for p in primitives {
-                if type_candidate.starts_with(p) || type_candidate == p.trim_end_matches('<') {
+                // For generic wrappers like Option<X>, Vec<X>, check if X is a primitive
+                if p.ends_with('<') {
+                    if type_candidate.starts_with(p) {
+                        let inner = type_candidate
+                            .strip_prefix(p)
+                            .unwrap_or(type_candidate)
+                            .trim_end_matches('>');
+                        let inner_trimmed = inner.trim();
+                        if primitives.iter().any(|prim| {
+                            let prim_clean = prim.trim_end_matches('<');
+                            inner_trimmed == prim_clean || inner_trimmed.starts_with(prim_clean)
+                        }) {
+                            violations.push(LintResult::new_arch(
+                                file,
+                                i + 1,
+                                "AES016",
+                                Severity::HIGH,
+                                &aes016_primitive_usage(p),
+                            ));
+                            break;
+                        }
+                    }
+                    continue; // Skip starts_with for generic wrappers
+                }
+                // Direct primitive types (String, i64, etc.)
+                if type_candidate.starts_with(p) || type_candidate == *p {
                     violations.push(LintResult::new_arch(
                         file,
                         i + 1,

@@ -15,3 +15,10 @@ pub trait OutputClientAggregate: Send + Sync {
         output_format: Option<&FileFormat>,
     ) -> Option<FilePath>;
 }
+
+use crate::output_report::taxonomy_result_vo::LintResultList;
+
+pub trait IReportFormatterProtocol: Send + Sync {
+    fn format_text(&self, results: &LintResultList, path: &str) -> String;
+    fn format_json(&self, results: &LintResultList, path: &str) -> String;
+}

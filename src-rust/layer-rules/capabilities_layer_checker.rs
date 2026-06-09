@@ -77,7 +77,9 @@ impl ArchLayerChecker {
             let hi = content.contains(&format!("impl I{}", s))
                 || content.contains(&format!("for {} ", s))
                 || content.contains(&format!("for {}{{", s))
-                || content.contains(&format!("for {} {{", s));
+                || content.contains(&format!("for {} {{", s))
+                || content.contains(&format!("impl {} ", s))
+                || content.contains(&format!("impl {}{{", s));
             if !hi && structs.len() <= 3 {
                 violations.push(LintResult::new_arch(
                     file,

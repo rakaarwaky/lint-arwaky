@@ -4,7 +4,6 @@ use std::sync::Arc;
 use crate::cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};
 use crate::cli_commands::taxonomy_command_target_vo::{has_critical, lint_path, resolve_target};
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
 pub struct ReportCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
@@ -73,9 +72,11 @@ pub fn handle_report(path: Option<String>, output_format: String) -> ExitCode {
         "sarif" => print_sarif(&results, &root),
         "junit" => print_junit(&results),
         _ => {
-            let formatter = ReportFormatterProcessor::new();
-            let report = formatter.format_text(&results, &root);
-            println!("{}", report);
+            println!("=== AES Compliance Report for {} ===", root);
+            for r in &results {
+                println!("[{}] {}:{}:{} {} - {}", r.severity, r.file, r.line, r.column, r.code, r.message);
+            }
+            println!("Total violations: {}", results.len());
         }
     }
     if has_critical(&results) {
