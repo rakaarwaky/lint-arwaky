@@ -1,5 +1,5 @@
-pub mod agent_loading_orchestrator;
-pub use agent_loading_orchestrator::ConfigLoadingOrchestrator;
+pub mod agent_config_loading_orchestrator;
+pub use agent_config_loading_orchestrator::ConfigLoadingOrchestrator;
 pub mod capabilities_rules_validator;
 pub use capabilities_rules_validator::{ConfigRulesValidator, ValidationResult};
 pub mod contract_detector_port;

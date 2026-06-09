@@ -11,7 +11,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
     aes010_naming_convention, AES011_SUFFIX_MISMATCH, AES011_SUFFIX_FORBIDDEN,
 };

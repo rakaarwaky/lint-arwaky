@@ -4,7 +4,7 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::cli_commands::surface_output_controller::{get_output_dir, tee_stdout, write_output};
-use crate::cli_commands::taxonomy_entry_vo::{
+use crate::cli_commands::taxonomy_command_target_vo::{
     compute_score, lint_path, resolve_target, walk_rs_files,
 };
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;

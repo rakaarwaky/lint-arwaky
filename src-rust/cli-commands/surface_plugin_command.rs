@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::di_containers::agent_injection_container::DependencyInjectionContainer;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 pub struct PluginCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,

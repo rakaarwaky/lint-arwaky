@@ -1,7 +1,7 @@
-pub mod capabilities_scope_boundary_analyzer;
-pub use capabilities_scope_boundary_analyzer::ScopeBoundaryAnalyzer;
-pub mod capabilities_scope_boundary_resolver;
-pub use capabilities_scope_boundary_resolver::ScopeBoundaryResolver;
+pub mod capabilities_scope_bounds_detector;
+pub use capabilities_scope_bounds_detector::ScopeBoundaryAnalyzer;
+pub mod capabilities_scope_enclosing_resolver;
+pub use capabilities_scope_enclosing_resolver::ScopeBoundaryResolver;
 pub mod capabilities_data_flow_analyzer;
 pub use capabilities_data_flow_analyzer::{DataFlowAnalyzer, DataFlowEntry};
 pub mod capabilities_semantic_scope_analyzer;

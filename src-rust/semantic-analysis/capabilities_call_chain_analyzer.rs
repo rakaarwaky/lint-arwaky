@@ -2,9 +2,9 @@
 // Implements ISemanticTracerProtocol: trace_call_chain, project_wide_rename.
 
 use crate::naming_rules::capabilities_variant_analyzer::NamingVariantAnalyzer;
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
-use crate::semantic_analysis::capabilities_scope_boundary_resolver::ScopeBoundaryResolver;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
+use crate::semantic_analysis::capabilities_scope_enclosing_resolver::ScopeBoundaryResolver;
 use crate::semantic_analysis::capabilities_data_flow_analyzer::DataFlowAnalyzer;
 use regex::Regex;
 use std::fs;

@@ -16,7 +16,7 @@ use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
     AES001_FORBIDDEN_IMPORT,
 };
@@ -84,7 +84,7 @@ impl ArchImportProcessor {
     fn _evaluate_import(
         &self,
         analyzer: &dyn IAnalyzer,
-        imp: &crate::code_analysis::taxonomy_source_vo::ImportInfo,
+        imp: &crate::code_analysis::taxonomy_import_source_vo::ImportInfo,
         file_path: &FilePath,
         file_layer: &LayerNameVO,
         definition: &LayerDefinition,
@@ -177,7 +177,7 @@ impl ArchImportProcessor {
         &self,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
         file_path: &FilePath,
-        imp: &crate::code_analysis::taxonomy_source_vo::ImportInfo,
+        imp: &crate::code_analysis::taxonomy_import_source_vo::ImportInfo,
         _layer_name: &LayerNameVO,
         _target_layer_name: &LayerNameVO,
         message: &str,

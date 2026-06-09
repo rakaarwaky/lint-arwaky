@@ -1,5 +1,5 @@
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;

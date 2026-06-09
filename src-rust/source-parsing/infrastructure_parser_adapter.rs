@@ -4,10 +4,10 @@
 //! the three language-specific adapters and routes calls based on file extension.
 //! Uses DI via Box<dyn ISourceParserPort> to avoid sibling infrastructure imports (AES001).
 
-use crate::code_analysis::taxonomy_source_vo::ImportInfoList;
-use crate::code_analysis::taxonomy_source_vo::PrimitiveViolationList;
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use crate::naming_rules::taxonomy_symbols_vo::PrimitiveTypeList;
+use crate::code_analysis::taxonomy_import_source_vo::ImportInfoList;
+use crate::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::naming_rules::taxonomy_naming_list_vo::PrimitiveTypeList;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;

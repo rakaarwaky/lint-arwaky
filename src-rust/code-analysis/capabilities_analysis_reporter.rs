@@ -44,13 +44,13 @@ impl IAnalysisProtocol for AnalysisReporter {
 
     async fn get_complexity(&self, path: &FilePath) -> ArchitectureGovernanceEntity {
         let report = self.run(path).await;
-        let source_adapter = crate::shared_common::taxonomy_name_vo::AdapterName::raw("radon");
+        let source_adapter = crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("radon");
         self.report_from_list(report.results_by_source(&source_adapter))
     }
 
     async fn get_duplicates(&self, path: &FilePath) -> ArchitectureGovernanceEntity {
         let report = self.run(path).await;
-        let source_adapter = crate::shared_common::taxonomy_name_vo::AdapterName::raw("duplicates");
+        let source_adapter = crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("duplicates");
         self.report_from_list(report.results_by_source(&source_adapter))
     }
 
@@ -96,7 +96,7 @@ impl IAnalysisProtocol for AnalysisReporter {
                                     current_score, delta, trend
                                 ),
                             ),
-                            source: Some(crate::shared_common::taxonomy_name_vo::AdapterName::raw(
+                            source: Some(crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw(
                                 "trends",
                             )),
                             severity: crate::output_report::taxonomy_severity_vo::Severity::INFO,
@@ -129,7 +129,7 @@ impl IAnalysisProtocol for AnalysisReporter {
             message: crate::shared_common::taxonomy_message_vo::LintMessage::new(
                 "No trend history yet — first run".to_string(),
             ),
-            source: Some(crate::shared_common::taxonomy_name_vo::AdapterName::raw(
+            source: Some(crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw(
                 "trends",
             )),
             severity: crate::output_report::taxonomy_severity_vo::Severity::INFO,
@@ -144,7 +144,7 @@ impl IAnalysisProtocol for AnalysisReporter {
 
     async fn get_dependencies(&self, path: &FilePath) -> ArchitectureGovernanceEntity {
         let report = self.run(path).await;
-        let source_adapter = crate::shared_common::taxonomy_name_vo::AdapterName::raw("pip-audit");
+        let source_adapter = crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("pip-audit");
         self.report_from_list(report.results_by_source(&source_adapter))
     }
 }

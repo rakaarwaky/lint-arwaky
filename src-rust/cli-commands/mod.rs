@@ -28,8 +28,8 @@ pub mod surface_fix_command;
 pub use surface_fix_command::{register_fix_commands, FixCommandsSurface};
 pub mod surface_git_command;
 pub use surface_git_command::{register_git_commands, GitCommandsSurface};
-pub mod surface_main_entry;
-pub use surface_main_entry::{run_cli_entry, MainHandlerSurface};
+pub mod surface_bootstrap_command;
+pub use surface_bootstrap_command::{run_cli_entry, BootstrapCommandSurface};
 pub mod surface_maintenance_command;
 pub use surface_maintenance_command::{register_maintenance_commands, MaintenanceCommandsSurface};
 pub mod surface_multi_command;
@@ -57,8 +57,8 @@ pub mod surface_map_command;
 pub use surface_map_command::{
     handle_cancel, handle_diff, handle_export, handle_import, handle_suggest,
 };
-pub mod taxonomy_entry_vo;
-pub use taxonomy_entry_vo::{
+pub mod taxonomy_command_target_vo;
+pub use taxonomy_command_target_vo::{
     compute_score, count_loc, has_critical, lint_path, normalize_project_root, resolve_target,
     walk_rs_files,
 };

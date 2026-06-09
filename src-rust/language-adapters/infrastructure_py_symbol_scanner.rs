@@ -1,7 +1,7 @@
 /// python_symbol_scanner — Scanner for symbols and imports from Python AST.
-use crate::code_analysis::taxonomy_source_vo::ImportInfo;
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::code_analysis::taxonomy_import_source_vo::ImportInfo;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
 use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
 
 pub struct SymbolCollector {

@@ -3,7 +3,7 @@ use crate::git_hooks::contract_manager_port::IHookManagerPort;
 use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::shared_common::taxonomy_layer_vo::Identity;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 use crate::git_hooks::infrastructure_hook_adapter::GitHookAdapter;

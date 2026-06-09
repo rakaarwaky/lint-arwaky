@@ -1,8 +1,8 @@
 // semantic_tracer_port — Protocol interface for semantic analysis capabilities.
 // Infrastructure implements this. Capabilities consume it via DI.
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use crate::naming_rules::taxonomy_symbols_vo::CallChainList;
-use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::naming_rules::taxonomy_naming_list_vo::CallChainList;
+use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::Count;

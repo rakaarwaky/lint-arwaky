@@ -27,7 +27,7 @@ use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
     aes023_unused_import, aes024_dead_inheritance, aes034_mandatory_inheritance,
     AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
@@ -244,7 +244,7 @@ impl LintCheckingCoordinator {
         }
         // Wire role orchestrator for agent and surface role checks
         let role_orch = crate::role_rules::agent_role_orchestrator::RoleOrchestrator::new(
-            Box::new(crate::role_rules::agent_role_mixin::RoleAggregateImpl::new()),
+            Box::new(crate::role_rules::agent_role_aggregator::RoleAggregateImpl::new()),
         );
         role_orch.run_all_role_checks(files, &mut rl.values);
 

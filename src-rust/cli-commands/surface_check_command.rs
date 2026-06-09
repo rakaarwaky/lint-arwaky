@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use std::process::ExitCode;
 
-use crate::cli_commands::taxonomy_entry_vo::{has_critical, lint_path, resolve_target};
+use crate::cli_commands::taxonomy_command_target_vo::{has_critical, lint_path, resolve_target};
 use crate::di_containers::agent_injection_container::DependencyInjectionContainer;
 use crate::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
 use crate::output_report::taxonomy_result_vo::LintResultList;
@@ -66,7 +66,7 @@ impl CheckCommandsSurface {
 
         for name in &adapter_names {
             let adapter_name =
-                crate::shared_common::taxonomy_name_vo::AdapterName::new(name.to_string())
+                crate::shared_common::taxonomy_adapter_name_vo::AdapterName::new(name.to_string())
                     .unwrap_or_default();
             if let Some(adapter) = container.linter_adapter(&adapter_name) {
                 match rt.block_on(adapter.scan(&path_obj)) {

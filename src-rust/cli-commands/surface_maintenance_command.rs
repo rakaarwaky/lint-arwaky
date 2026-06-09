@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 
-use crate::cli_commands::taxonomy_entry_vo::resolve_target;
+use crate::cli_commands::taxonomy_command_target_vo::resolve_target;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 pub struct MaintenanceCommandsSurface {

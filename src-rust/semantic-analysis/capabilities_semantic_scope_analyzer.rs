@@ -1,8 +1,8 @@
 // semantic_scope_analyzer — AST-based semantic scope analysis capability.
 // Implements ISemanticTracerProtocol for Python code analysis.
 // Uses regex-based analysis (no Python AST dependency).
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;

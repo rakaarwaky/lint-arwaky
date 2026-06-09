@@ -23,8 +23,8 @@ pub use taxonomy_lint_vo::{
 };
 pub mod taxonomy_message_vo;
 pub use taxonomy_message_vo::{ComplianceStatus, LintMessage};
-pub mod taxonomy_name_vo;
-pub use taxonomy_name_vo::AdapterName;
+pub mod taxonomy_adapter_name_vo;
+pub use taxonomy_adapter_name_vo::AdapterName;
 pub mod taxonomy_operation_error;
 pub use taxonomy_operation_error::LinterOperationError;
 pub mod taxonomy_adapter_registered_event;

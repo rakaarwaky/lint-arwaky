@@ -2,7 +2,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
@@ -10,7 +10,7 @@ use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_violationrs_constant::{
     aes035_must_implement_contract, aes035_any_type, AES035_COORDINATES_MULTIPLE,

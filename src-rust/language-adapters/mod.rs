@@ -14,8 +14,8 @@ pub mod infrastructure_js_scope_provider;
 pub use infrastructure_js_scope_provider::JSScopeProvider;
 pub mod infrastructure_js_scope_adapter;
 pub use infrastructure_js_scope_adapter::JSScopeTracer;
-pub mod infrastructure_py_analysis_adapter;
-pub use infrastructure_py_analysis_adapter::{
+pub mod infrastructure_py_quality_adapter;
+pub use infrastructure_py_quality_adapter::{
     ComplexityAdapter, DependencyAdapter, DuplicateAdapter, TrendsAdapter,
 };
 pub mod infrastructure_py_ast_tracer;

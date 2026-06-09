@@ -1,4 +1,4 @@
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

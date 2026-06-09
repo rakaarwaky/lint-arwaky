@@ -82,7 +82,7 @@ Enforces file-level quality standards and prohibits bypass mechanisms.
 | AES021 | File Minimum Size | LOW | File contains fewer than minimum required lines. WHY? Tiny files clutter structure. FIX: Merge into related module. |
 | AES022 | Bypass Comment | CRITICAL | Forbidden bypass detected (#[allow], unwrap(), panic!, noqa, type: ignore). WHY? Suppressions bypass type safety. FIX: Use proper error handling. |
 | AES023 | Unused Import | MEDIUM | Symbol imported but never used in scope. WHY? Unused imports indicate architectural bypass attempt. FIX: Remove unused import or use the symbol. |
-| AES024 | Dead Inheritance | MEDIUM | Empty struct or trait detected. WHY? Empty traits/structs bypass architectural enforcement. FIX: Implement trait methods or define struct attributes. |
+| AES024 | Dead Inheritance | MEDIUM | Empty class, struct, or trait detected. WHY? Empty classes/traits/structs bypass architectural enforcement. FIX: Implement trait methods, class methods, or define struct attributes. |
 
 ---
 

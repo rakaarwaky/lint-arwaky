@@ -5,7 +5,7 @@ use crate::shared_common::taxonomy_fix_applied_event::FixApplied;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_fix_vo::FixResult;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;

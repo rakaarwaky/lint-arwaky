@@ -6,7 +6,7 @@ use crate::plugin_system::taxonomy_manager_error::PluginError;
 use crate::shared_common::taxonomy_adapter_vo::AdapterClassMap;
 use crate::shared_common::taxonomy_adapter_vo::AdapterMetadataList;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 use std::collections::HashMap;
 use std::sync::Mutex;

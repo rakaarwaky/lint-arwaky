@@ -33,7 +33,7 @@ architecture:
   layers:
     root:
       suffix:
-        - strict: ["entry"]
+        - strict: ["hook", "store", "action", "screen"]
     taxonomy:
       suffix:
         - strict: ["vo", "entity", "error", "event", "constant"]
@@ -47,7 +47,7 @@ architecture:
              "validator", "formatter", "executor", "transformer",
              "calculator", "builder", "compiler", "aggregator", "classifier",
              "extractor", "reporter", "mapper", "filter", "collector",
-             "comparator", "scorer", "inspector", "reviewer", "assessor", "actions"]
+             "comparator", "scorer", "inspector", "reviewer", "assessor", "auditor", "actions"]
         - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     infrastructure:
       suffix:
@@ -63,7 +63,7 @@ architecture:
       suffix:
         - strict:
             ["command", "controller", "page", "view", "component",
-             "router", "layout", "entry", "hook", "store", "action", "screen"]
+             "router", "layout", "hook", "store", "action", "screen"]
     agent:
       suffix:
         - strict:

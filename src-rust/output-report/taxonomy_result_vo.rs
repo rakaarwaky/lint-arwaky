@@ -9,7 +9,7 @@ use crate::shared_common::taxonomy_layer_vo::Identity;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]

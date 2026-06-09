@@ -5,7 +5,7 @@ use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use std::sync::Arc;

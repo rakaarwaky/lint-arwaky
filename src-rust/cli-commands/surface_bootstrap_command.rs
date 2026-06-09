@@ -2,11 +2,11 @@ use std::process::ExitCode;
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
-pub struct MainHandlerSurface {
+pub struct BootstrapCommandSurface {
     _container: Option<Box<dyn ServiceContainerAggregate>>,
 }
 
-impl MainHandlerSurface {
+impl BootstrapCommandSurface {
     pub fn new(container: Option<Box<dyn ServiceContainerAggregate>>) -> Self {
         Self {
             _container: container,
@@ -24,7 +24,7 @@ impl MainHandlerSurface {
 }
 
 pub fn run_cli_entry() {
-    let surface = MainHandlerSurface::new(None);
+    let surface = BootstrapCommandSurface::new(None);
     surface.execute();
 }
 

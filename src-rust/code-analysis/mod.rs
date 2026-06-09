@@ -39,4 +39,4 @@ pub use taxonomy_analysis_vo::{
     FileDefinitionMap, FilePathSet, GraphAnalysisContext, ImportGraph, InboundLinkMap,
     InheritanceMap, ModuleToFileMap, OrphanIndicatorResult, ReachabilityResult,
 };
-pub mod taxonomy_source_vo;
+pub mod taxonomy_import_source_vo;

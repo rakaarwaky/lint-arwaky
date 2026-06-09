@@ -29,7 +29,7 @@ use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::shared_common::taxonomy_violationrs_constant::{

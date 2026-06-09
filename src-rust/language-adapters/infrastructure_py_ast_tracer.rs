@@ -1,8 +1,8 @@
 /// python_ast_tracer — AST-based tracer for Python code analysis.
 use crate::naming_rules::contract_variant_port::INamingVariantPort;
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use crate::naming_rules::taxonomy_symbols_vo::CallChainList;
-use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::naming_rules::taxonomy_naming_list_vo::CallChainList;
+use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::semantic_analysis::contract_semantic_tracer_port::ISemanticTracerPort;
 use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;

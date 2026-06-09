@@ -9,7 +9,7 @@ use lint_arwaky::cli_commands::surface_core_command::{Cli, Commands};
 use lint_arwaky::cli_commands::surface_dev_command;
 use lint_arwaky::cli_commands::surface_fix_command;
 use lint_arwaky::cli_commands::surface_git_command;
-use lint_arwaky::cli_commands::surface_main_entry;
+use lint_arwaky::cli_commands::surface_bootstrap_command;
 use lint_arwaky::cli_commands::surface_maintenance_command;
 use lint_arwaky::cli_commands::surface_map_command;
 use lint_arwaky::cli_commands::surface_multi_command;
@@ -17,7 +17,7 @@ use lint_arwaky::cli_commands::surface_plugin_command;
 use lint_arwaky::cli_commands::surface_report_command;
 use lint_arwaky::cli_commands::surface_setup_command;
 use lint_arwaky::cli_commands::surface_watch_command;
-use lint_arwaky::cli_commands::taxonomy_entry_vo;
+use lint_arwaky::cli_commands::taxonomy_command_target_vo;
 
 pub struct CliMainEntry {}
 
@@ -43,7 +43,7 @@ fn main() -> ExitCode {
         Commands::Ci { path, threshold } => surface_dev_command::handle_ci(path, threshold),
         Commands::Version => {
             let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
-            surface_main_entry::handle_version(verbose)
+            surface_bootstrap_command::handle_version(verbose)
         }
         Commands::Adapters => surface_plugin_command::handle_adapters(),
         Commands::Config { command } => surface_config_command::handle_config(command),
@@ -68,14 +68,14 @@ fn main() -> ExitCode {
 
 fn run_default_check(project_root: &str) -> ExitCode {
     use lint_arwaky::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
-    let results = taxonomy_entry_vo::lint_path(project_root);
+    let results = taxonomy_command_target_vo::lint_path(project_root);
     let formatter = ReportFormatterProcessor::new();
     let report = formatter.format_text(&results, project_root);
     println!("Lint Arwaky v{} (AES Self-Lint)", env!("CARGO_PKG_VERSION"));
     println!("Scanning: {}", project_root);
     println!();
     println!("{}", report);
-    if taxonomy_entry_vo::has_critical(&results) {
+    if taxonomy_command_target_vo::has_critical(&results) {
         ExitCode::from(1)
     } else {
         ExitCode::SUCCESS

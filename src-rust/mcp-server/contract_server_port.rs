@@ -1,5 +1,5 @@
 use crate::cli_transport::taxonomy_transport_error::TransportError;
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 /// mcp_server_port — Port interface for MCP server lifecycle and tool management.

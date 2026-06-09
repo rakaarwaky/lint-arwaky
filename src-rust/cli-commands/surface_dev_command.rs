@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 
-use crate::cli_commands::taxonomy_entry_vo::{
+use crate::cli_commands::taxonomy_command_target_vo::{
     compute_score, has_critical, lint_path, resolve_target,
 };
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;

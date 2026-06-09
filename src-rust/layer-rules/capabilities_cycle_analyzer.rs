@@ -2,7 +2,7 @@
 // Implements ICycleAnalysisProtocol: scan files for circular import violations.
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
@@ -12,7 +12,7 @@ use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::aes012_circular_import;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::{HashMap, HashSet};

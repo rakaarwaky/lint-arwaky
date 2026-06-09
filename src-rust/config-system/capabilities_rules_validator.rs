@@ -3,7 +3,7 @@
 
 use crate::config_system::taxonomy_setting_vo::AdapterStatus;
 use crate::config_system::taxonomy_setting_vo::ProjectConfig;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 
 /// Result of a validation operation.
 pub struct ValidationResult {

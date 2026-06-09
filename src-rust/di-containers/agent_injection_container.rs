@@ -11,7 +11,7 @@ use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
 
 use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashMap;
@@ -121,7 +121,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("clippy".to_string(), clippy);
 
         let complexity = Arc::new(
-            crate::language_adapters::infrastructure_py_analysis_adapter::ComplexityAdapter::new(
+            crate::language_adapters::infrastructure_py_quality_adapter::ComplexityAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -131,7 +131,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("complexity".to_string(), complexity);
 
         let duplicate = Arc::new(
-            crate::language_adapters::infrastructure_py_analysis_adapter::DuplicateAdapter::new(
+            crate::language_adapters::infrastructure_py_quality_adapter::DuplicateAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -140,7 +140,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("duplicate".to_string(), duplicate);
 
         let trends = Arc::new(
-            crate::language_adapters::infrastructure_py_analysis_adapter::TrendsAdapter::new(
+            crate::language_adapters::infrastructure_py_quality_adapter::TrendsAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 FilePath::new(".lint_trends.json".to_string()).unwrap_or_default(),
@@ -149,7 +149,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("trends".to_string(), trends);
 
         let dependency = Arc::new(
-            crate::language_adapters::infrastructure_py_analysis_adapter::DependencyAdapter::new(
+            crate::language_adapters::infrastructure_py_quality_adapter::DependencyAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,

@@ -6,7 +6,7 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::PatternList;
 use crate::shared_common::taxonomy_common_vo::Score;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;

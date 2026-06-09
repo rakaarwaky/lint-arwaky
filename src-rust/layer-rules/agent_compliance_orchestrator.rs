@@ -28,7 +28,7 @@ use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_definition_vo::LayerMapVO;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_constant::LAYER_GLOBAL;
 use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

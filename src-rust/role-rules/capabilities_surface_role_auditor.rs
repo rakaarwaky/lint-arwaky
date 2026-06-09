@@ -9,7 +9,7 @@ use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::{
     core_layer_names, layer_agent, layer_contract, layer_surfaces, layer_taxonomy,
 };
@@ -157,7 +157,7 @@ impl SurfaceRoleChecker {
     fn _report_surface_dependency_violation(
         &self,
         f: &FilePath,
-        imp: &crate::code_analysis::taxonomy_source_vo::ImportInfo,
+        imp: &crate::code_analysis::taxonomy_import_source_vo::ImportInfo,
         target_layer: &LayerNameVO,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) {
