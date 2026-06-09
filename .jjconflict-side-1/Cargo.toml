@@ -1,0 +1,47 @@
+[package]
+name = "lint_arwaky"
+version = "1.10.2"
+edition = "2021"
+
+[lib]
+name = "lint_arwaky"
+path = "src-rust/lib.rs"
+
+[[bin]]
+name = "lint-arwaky-cli"
+path = "src-rust/cli_main_action.rs"
+
+[[bin]]
+name = "lint-arwaky-mcp"
+path = "src-rust/mcp_main_action.rs"
+
+[features]
+default = ["check_surfaces"]
+watch = []
+check_taxonomy = []
+check_contract = ["check_taxonomy"]
+check_capabilities = ["check_contract"]
+check_infrastructure = ["check_contract"]
+check_agent = ["check_capabilities", "check_infrastructure"]
+check_surfaces = ["check_agent"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+regex = "1.10"
+tokio = { version = "1.52.3", features = ["full"] }
+once_cell = "1.21.4"
+async-trait = "0.1.89"
+thiserror = "1.0.52"
+anyhow = "1.0.102"
+serde_yaml = "0.9.34"
+toml = "1.1.2"
+clap = { version = "4.6.1", features = ["derive"] }
+reqwest = { version = "0.13.4", features = ["blocking"] }
+chrono = "0.4.44"
+mcp-sdk-rs = "0.3.4"
+rand = "0.10.1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+rustsec = "0.33"
+dirs = "6.0"

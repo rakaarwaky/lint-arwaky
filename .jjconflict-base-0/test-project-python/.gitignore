@@ -1,0 +1,27 @@
+# Bytecode
+__pycache__/
+*.py[cod]
+
+# Env
+.venv/
+venv/
+.env
+
+# Cache
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Build
+*.egg-info/
+dist/
+build/
+
+# Output
+output/
+scratch/
+
+# IDE
+.vscode/
+.idea/
+*.swp
