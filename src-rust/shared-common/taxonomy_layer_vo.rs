@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 pub struct FileContentVO {
     pub(crate) value: String,
@@ -22,8 +22,6 @@ impl std::fmt::Display for FileContentVO {
         write!(f, "{}", self.value)
     }
 }
-
-impl Eq for FileContentVO {}
 
 impl std::hash::Hash for FileContentVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -96,7 +94,7 @@ impl<'de> serde::Deserialize<'de> for FileContentVO {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 #[derive(Default)]
 pub struct Identity {
@@ -120,8 +118,6 @@ impl std::fmt::Display for Identity {
         write!(f, "{}", self.value)
     }
 }
-
-impl Eq for Identity {}
 
 impl std::hash::Hash for Identity {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -194,7 +190,7 @@ impl<'de> serde::Deserialize<'de> for Identity {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 #[derive(Default)]
 pub struct LayerNameVO {
@@ -218,8 +214,6 @@ impl std::fmt::Display for LayerNameVO {
         write!(f, "{}", self.value)
     }
 }
-
-impl Eq for LayerNameVO {}
 
 impl std::hash::Hash for LayerNameVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -292,7 +286,7 @@ impl<'de> serde::Deserialize<'de> for LayerNameVO {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 pub struct LineContentVO {
     pub(crate) value: String,
@@ -314,8 +308,6 @@ impl std::fmt::Display for LineContentVO {
         write!(f, "{}", self.value)
     }
 }
-
-impl Eq for LineContentVO {}
 
 impl std::hash::Hash for LineContentVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {

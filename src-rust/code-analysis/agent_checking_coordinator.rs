@@ -17,7 +17,6 @@ use crate::layer_rules::capabilities_import_checker::ArchImportRuleChecker;
 use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::capabilities_orphan_analyzer::OrphanGraphResolver;
-use crate::source_parsing::infrastructure_barrel_provider::BarrelImportResolver;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
@@ -189,7 +188,6 @@ impl LintCheckingCoordinator {
         let orphan = OrphanGraphResolver::new();
         let ctx = orphan.build_graph_context(files, root_dir);
         let eps = orphan.identify_entry_points(files);
-        let barrel_map = BarrelImportResolver::build_barrel_map(files);
 
         for fp in files {
             if eps.contains(fp) || fp.ends_with("mod.rs") || fp.ends_with("__init__.py")
@@ -200,53 +198,38 @@ impl LintCheckingCoordinator {
             let basename = fp.split('/').next_back().unwrap_or("");
             let prefix = basename.split('_').next().unwrap_or("");
 
-            // Taxonomy: barrel-aware contract import check
-            if prefix == "taxonomy" {
-                let imported = BarrelImportResolver::is_imported_by_contract(fp, &barrel_map, files);
-                if !imported {
-                    let stem = basename.replace(".rs", "").replace(".py", "");
-                    rl.push(Self::mk(fp, 0,                     "AES030", Severity::LOW, &format!("Taxonomy '{}' not imported by contract.", stem)));
-                }
+            // Taxonomy and Contract are standalone types/interfaces — skip orphan check
+            if prefix == "taxonomy" || prefix == "contract" {
                 continue;
             }
 
-            // Contract: suffix-based with barrel resolution
-            if prefix == "contract" {
-                let suffix = basename.rsplit('_').next().unwrap_or("").replace(".rs", "");
-                let target_prefix = match suffix.as_str() {
-                    "port" => "infrastructure",
-                    "protocol" => "capabilities",
-                    "aggregate" => "agent",
-                    _ => { continue; }
-                };
-                let trait_name = basename.strip_prefix("contract_").unwrap_or(basename).replace(".rs", "");
-                let mut has_impl = false;
-                for cf in files {
-                    let cb = cf.split('/').next_back().unwrap_or("");
-                    if !cb.starts_with(target_prefix) { continue; }
-                    let resolved = BarrelImportResolver::resolve_imports_for_file(cf, &barrel_map, files);
-                    if resolved.iter().any(|r| r.contains(&trait_name)) { has_impl = true; break; }
-                    if let Ok(c) = std::fs::read_to_string(cf) {
-                        if c.contains(&format!("impl {} for", trait_name)) { has_impl = true; break; }
-                    }
-                }
-                if !has_impl { rl.push(Self::mk(fp, 0,                     "AES030", Severity::HIGH, &format!("Contract {} '{}' not implemented.", suffix, trait_name))); }
-                continue;
-            }
-
-            // Infra/Cap/Agent: check wiring in container files
+            // Infra/Cap/Agent: check wiring in container/aggregate/registry files
+            // Infrastructure must be wired by Agent containers. Capabilities must be wired
+            // by Agent registries/mixins. If no agent file wires them, they're genuinely orphaned.
             if prefix == "infrastructure" || prefix == "capabilities" || prefix == "agent" {
                 let stem = basename.replace(".rs", "").replace(".py", "");
+                // Convert snake_case to PascalCase for matching container references
+                let pascal_stem: String = stem.split('_')
+                    .filter(|s| !s.is_empty())
+                    .map(|s| {
+                        let mut c = s.chars();
+                        c.next().map(|f| f.to_uppercase().to_string() + c.as_str()).unwrap_or_default()
+                    })
+                    .collect();
                 let mut wired = false;
                 for cf in files {
                     let cb = cf.split('/').next_back().unwrap_or("");
                     let csuffix = cb.rsplit('_').next().unwrap_or("").replace(".rs", "");
                     if csuffix != "container" && csuffix != "aggregate" && csuffix != "registry" { continue; }
                     if let Ok(c) = std::fs::read_to_string(cf) {
-                        if c.contains(&stem) || c.contains(&format!("mod {}", stem)) { wired = true; break; }
+                        if c.contains(&stem) || c.contains(&format!("mod {}", stem))
+                            || c.contains(&pascal_stem)
+                        {
+                            wired = true; break;
+                        }
                     }
                 }
-                if !wired { rl.push(Self::mk(fp, 0,                     "AES030", Severity::HIGH, &format!("{} '{}' not wired.", prefix, stem))); }
+                if !wired { rl.push(Self::mk(fp, 0, "AES030", Severity::HIGH, &format!("{} '{}' not wired in container.", prefix, stem))); }
                 continue;
             }
 
@@ -439,6 +422,19 @@ impl LintCheckingCoordinator {
             };
 
             for name in &names {
+                // Skip trait imports (start with 'I' or end with common trait suffixes)
+                // These are needed for method resolution even if the trait name
+                // doesn't appear literally in the file body.
+                if (name.starts_with('I') && name.len() > 1
+                    && name.chars().nth(1).unwrap_or(' ').is_uppercase())
+                    || name.ends_with("Protocol")
+                    || name.ends_with("Port")
+                    || name.ends_with("Trait")
+                    || name.ends_with("Aggregate")
+                    || name == "Parser"
+                {
+                    continue;
+                }
                 let rest = content
                     .lines()
                     .enumerate()
@@ -589,6 +585,28 @@ impl LintCheckingCoordinator {
         } else {
             return;
         };
+
+        // Extract file's own suffix to determine if it's an IMPLEMENTER or COORDINATOR
+        // IMPLEMENTER suffixes (_adapter, _provider, _scanner, _analyzer, _checker, _processor, etc.)
+        // MUST implement the contracts they import.
+        // COORDINATOR suffixes (_orchestrator, _coordinator, _container, _registry, etc.)
+        // may import contracts for calling purposes without implementing them.
+        let stem = filename.rsplit('.').next_back().unwrap_or(filename);
+        let own_suffix = stem.rsplit('_').next().unwrap_or("");
+        let implementer_suffixes = [
+            "adapter", "provider", "scanner", "client", "gateway", "repository",
+            "connector", "cache", "loader", "writer", "reader", "driver",
+            "analyzer", "checker", "processor", "evaluator", "resolver",
+            "validator", "formatter", "executor", "transformer", "builder",
+            "compiler", "aggregator", "classifier", "extractor", "reporter",
+            "mapper", "filter", "collector", "comparator", "scorer",
+            "inspector", "reviewer", "assessor", "actions",
+        ];
+        let is_implementer = implementer_suffixes.contains(&own_suffix);
+        if !is_implementer {
+            return;
+        }
+
         let mut imported: Vec<String> = Vec::new();
         for line in content.lines() {
             let t = line.trim();

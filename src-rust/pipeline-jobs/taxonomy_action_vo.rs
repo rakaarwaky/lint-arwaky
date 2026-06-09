@@ -17,7 +17,7 @@ impl ActionArgs {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 pub struct ActionName {
     pub(crate) value: String,
@@ -52,7 +52,7 @@ impl PartialEq for ActionName {
     }
 }
 
-impl Eq for ActionName {}
+
 
 impl From<&str> for ActionName {
     fn from(s: &str) -> Self {

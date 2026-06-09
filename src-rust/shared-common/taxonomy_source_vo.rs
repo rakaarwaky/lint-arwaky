@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 pub struct ContentString {
     pub(crate) value: String,
@@ -37,7 +37,7 @@ impl PartialEq for ContentString {
     }
 }
 
-impl Eq for ContentString {}
+
 
 impl From<&str> for ContentString {
     fn from(s: &str) -> Self {

@@ -23,7 +23,7 @@ impl NameVariants {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 pub struct SymbolName {
     pub(crate) value: String,
@@ -58,7 +58,7 @@ impl PartialEq for SymbolName {
     }
 }
 
-impl Eq for SymbolName {}
+
 
 impl From<&str> for SymbolName {
     fn from(s: &str) -> Self {

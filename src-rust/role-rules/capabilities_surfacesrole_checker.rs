@@ -72,7 +72,17 @@ impl SurfaceRoleChecker {
             };
 
             if definition.no_domain_logic.value {
-                self._check_no_domain_logic(f, &definition, analyzer, results, "AES036");
+                let basename = std::path::Path::new(&f.value)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("");
+                let is_smart = basename.ends_with("_command")
+                    || basename.ends_with("_controller")
+                    || basename.ends_with("_page")
+                    || basename.ends_with("_entry");
+                if !is_smart {
+                    self._check_no_domain_logic(f, &definition, analyzer, results, "AES036");
+                }
             }
 
             self._check_forbidden_mandatory_imports(f, &definition, analyzer, results);

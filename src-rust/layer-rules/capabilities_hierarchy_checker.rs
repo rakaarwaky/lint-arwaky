@@ -99,7 +99,22 @@ impl SurfaceHierarchyChecker {
     }
 
     /// Check if a surface file is passive (thin I/O boundary).
+    /// Smart surfaces (_command, _controller, _page, _entry) are exempted
+    /// — they are expected to contain orchestration logic.
     fn _check_passive(&self, f: &FilePath, results: &mut LintResultList) {
+        let f_str = f.to_string();
+        let basename = std::path::Path::new(&f_str)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("");
+        if basename.ends_with("_command")
+            || basename.ends_with("_controller")
+            || basename.ends_with("_page")
+            || basename.ends_with("_entry")
+        {
+            return;
+        }
+
         let content = match std::fs::read_to_string(f.to_string()) {
             Ok(c) => c,
             Err(_) => return,

@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 #[derive(Default)]
 pub struct ConfigKey {
@@ -53,7 +53,7 @@ impl PartialEq for ConfigKey {
     }
 }
 
-impl Eq for ConfigKey {}
+
 
 impl From<&str> for ConfigKey {
     fn from(s: &str) -> Self {

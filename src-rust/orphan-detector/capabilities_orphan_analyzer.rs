@@ -51,14 +51,33 @@ impl OrphanGraphResolver {
         let mut inheritance_map: HashMap<String, Vec<String>> = HashMap::new();
         let file_definitions: HashMap<String, Vec<String>> = HashMap::new();
 
-        let import_re = regex::Regex::new(r"(?:from|import)\s+([\w\.]+)");
+        // Rust + Python import regex: capture module paths after use/import/from
+        let import_re = regex::Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.]*)");
         let inh_re = regex::Regex::new(r"class\s+\w+\(([^)]+)\)");
         for f in files {
             import_graph.entry(f.clone()).or_default();
             if let Ok(content) = std::fs::read_to_string(f) {
                 if let Ok(ref import_re) = import_re {
                     for cap in import_re.captures_iter(&content) {
-                        let dep = cap[1].to_string();
+                        let mut dep = cap[1].to_string();
+                        // Extract first segment (strip dots/paths)
+                        if let Some(dot) = dep.find('.') {
+                            dep = dep[..dot].to_string();
+                        }
+                        if let Some(colon) = dep.find("::") {
+                            dep = dep[..colon].to_string();
+                        }
+                        // Skip external crates and keywords
+                        if matches!(dep.as_str(), "crate" | "self" | "super"
+                            | "std" | "core" | "alloc" | "serde" | "tokio"
+                            | "regex" | "once_cell" | "thiserror" | "anyhow"
+                            | "async_trait" | "clap" | "chrono" | "tracing"
+                            | "rand" | "toml" | "serde_json" | "serde_yaml"
+                            | "mcp_sdk_rs" | "reqwest" | "futures" | "dashmap"
+                            | "rustpython" | "rustpython_vm" | "rustpython_parser"
+                            | "num_traits" | "enum_dispatch" | "pyo3" | "nom"
+                            | "log" | "env_logger" | "colored" | "indicatif"
+                            | "uuid" | "sha2" | "hex" | "base64") { continue; }
                         import_graph.entry(f.clone()).or_default().push(dep.clone());
                         inbound_links.entry(dep).or_default().push(f.clone());
                     }

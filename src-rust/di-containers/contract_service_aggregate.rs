@@ -45,4 +45,35 @@ pub trait ServiceContainerAggregate: Send + Sync {
 
 pub struct DefaultServiceContainer {}
 
-impl ServiceContainerAggregate for DefaultServiceContainer {}
+impl ServiceContainerAggregate for DefaultServiceContainer {
+    fn file_system(&self) -> Arc<dyn IFileSystemPort> {
+        todo!()
+    }
+    fn command_executor(&self) -> Arc<dyn ICommandExecutorPort> {
+        todo!()
+    }
+    fn path_normalization(&self) -> Arc<dyn IPathNormalizationPort> {
+        todo!()
+    }
+    fn source_parser(&self) -> Arc<dyn ISourceParserPort> {
+        todo!()
+    }
+    fn linter_adapter(&self, _name: &AdapterName) -> Option<Arc<dyn ILinterAdapterPort>> {
+        None
+    }
+    fn get_architecture_linter(&self) -> Option<Arc<dyn IArchLintProtocol>> {
+        None
+    }
+    fn get_job_registry(&self) -> Option<Arc<dyn IJobRegistryPort>> {
+        None
+    }
+    fn metrics_provider(&self) -> Option<Arc<dyn IMetricsProviderPort>> {
+        None
+    }
+    fn get_fix_orchestrator(
+        &self,
+        _dry_run: bool,
+    ) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
+        None
+    }
+}

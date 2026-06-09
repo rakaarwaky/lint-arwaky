@@ -35,7 +35,6 @@ impl BarrelImportResolver {
                     if let Some(rest) = t.strip_prefix("pub mod ").or_else(|| t.strip_prefix("mod ")) {
                         let mod_name = rest.trim_end_matches(';').trim();
                         let dir = f.trim_end_matches(basename).trim_end_matches('/');
-                        // mod xxx; → dir/xxx.rs or dir/xxx/mod.rs
                         let candidates = vec![
                             format!("{}/{}.rs", dir, mod_name),
                             format!("{}/{}/mod.rs", dir, mod_name),
@@ -51,19 +50,36 @@ impl BarrelImportResolver {
                     if t.contains("pub use ") && t.contains("::*") {
                         let prefix = t.strip_prefix("pub use ").unwrap_or(t)
                             .split("::*").next().unwrap_or("").trim();
-                        if let Some(resolved) = stem_map.get(prefix) {
+                        // Normalize hyphens to underscores for module name matching
+                        let normalized = prefix.replace('-', "_");
+                        if let Some(resolved) = stem_map.get(&normalized)
+                            .or_else(|| stem_map.get(prefix))
+                        {
                             barrel_map.entry(f.clone()).or_default().extend(resolved.clone());
                         }
                     }
-                    // pub use crate::xxx::SomeType; → find the file defining SomeType
+                    // pub use crate::xxx::SomeType; AND pub use crate::xxx::{A, B, C};
                     if t.starts_with("pub use ") && !t.contains("::*") {
                         let import_path = t.strip_prefix("pub use ").unwrap_or(t)
                             .trim_end_matches(';').trim();
-                        let parts: Vec<&str> = import_path.split("::").collect();
-                        if parts.len() >= 2 {
-                            let module_name = parts[1]; // crate::xxx → xxx
-                            if let Some(resolved) = stem_map.get(module_name) {
-                                barrel_map.entry(f.clone()).or_default().extend(resolved.clone());
+                        // Handle braced multi-import: crate::module::{A, B}
+                        if let Some(brace_pos) = import_path.find("::{") {
+                            let module_part = &import_path[..brace_pos];
+                            // Extract module name from crate::xxx::{...}
+                            let parts: Vec<&str> = module_part.split("::").collect();
+                            if parts.len() >= 2 {
+                                let module_name = parts[1].replace('-', "_");
+                                if let Some(resolved) = stem_map.get(&module_name) {
+                                    barrel_map.entry(f.clone()).or_default().extend(resolved.clone());
+                                }
+                            }
+                        } else {
+                            let parts: Vec<&str> = import_path.split("::").collect();
+                            if parts.len() >= 2 {
+                                let module_name = parts[1].replace('-', "_");
+                                if let Some(resolved) = stem_map.get(&module_name) {
+                                    barrel_map.entry(f.clone()).or_default().extend(resolved.clone());
+                                }
                             }
                         }
                     }
@@ -103,7 +119,7 @@ impl BarrelImportResolver {
                         .split("::")
                         .collect::<Vec<_>>();
                     if path.len() >= 2 && path[0] == "crate" {
-                        let module_name = path[1];
+                        let module_name = path[1].replace('-', "_");
                         // Check if this module has a barrel
                         for (barrel_file, sources) in barrel_map {
                             let barrel_stem = barrel_file.split('/').next_back().unwrap_or("");

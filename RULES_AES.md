@@ -12,23 +12,23 @@ Enforces strict import direction between architectural layers. Layer is identifi
 
 ### AES001 — Import Layer Violation (CRITICAL)
 
-Satu rule dengan **13 sub-conditions** — message dinamis tergantung layer, target, dan suffix.
+Satu rule dengan **13 sub-conditions** — masing-masing punya `allowed`, `mandatory`, `forbidden`.
 
-| # | Scope (prefix + suffix) | Forbidden Imports | Mandatory Imports |
-|---|---|---|---|
-| 1 | `taxonomy_` + `_vo` | agent_, infrastructure_, surface_, contract_, capabilities_, root | None |
-| 2 | `taxonomy_` + `_entity`/`_error`/`_event` | agent_, infrastructure_, surface_, contract_, capabilities_, root | taxonomy_ + _vo |
-| 3 | `taxonomy_` + `_constant` | agent_, infrastructure_, surface_, contract_, capabilities_, root | None |
-| 4 | `contract_` + `_port`/`_protocol` | agent_, infrastructure_, surface_, capabilities_, contract_aggregate_, root | taxonomy_ |
-| 5 | `contract_` + `_aggregate` | agent_, infrastructure_, surface_, capabilities_, root | taxonomy_, contract_ |
-| 6 | `capabilities_` | infrastructure_, surface_, agent_, capabilities_, root | taxonomy_, contract_protocol_ |
-| 7 | `infrastructure_` | surface_, capabilities_, agent_, infrastructure_, root | taxonomy_, contract_port_ |
-| 8 | `agent_` + `_container`/`_registry`/`_mixin` | surface_, root | taxonomy_, contract_ |
-| 9 | `agent_` + `_orchestrator`/`_coordinator` | surface_, agent_, root | taxonomy_, contract_aggregate_ |
-| 10 | `agent_` + `_state`/`_manager` | agent_, infrastructure_, capabilities_, surface_, root | taxonomy_, contract_aggregate_ |
-| 11 | `surface_` + `_command`/`_controller`/`_page`/`_entry` | agent_, infrastructure_, capabilities_, contract_port_, contract_protocol_, root | taxonomy_, contract_aggregate_ |
-| 12 | `surface_` + `_hook`/`_store`/`_action`/`_screen`/`_router` | agent_, infrastructure_, capabilities_, contract_port_, contract_protocol_, smart surfaces_, root | taxonomy_ |
-| 13 | `surface_` + `_component`/`_view`/`_layout` | agent_, contract_, infrastructure_, capabilities_, all surface_, root | taxonomy_ |
+| # | Scope | Allowed Imports | Mandatory Imports | Forbidden Imports |
+|---|---|---|---|---|
+| 1 | `taxonomy(vo)` | taxonomy | None | agent_, infrastructure_, surface_, contract_, capabilities_, root |
+| 2 | `taxonomy(entity,error,event)` | taxonomy | taxonomy(vo\|constant) | agent_, infrastructure_, surface_, contract_, capabilities_, root |
+| 3 | `taxonomy(constant)` | taxonomy | None | agent_, infrastructure_, surface_, contract_, capabilities_, root |
+| 4 | `contract(port\|protocol)` | taxonomy, contract | taxonomy | agent_, infrastructure_, surface_, capabilities_, contract(aggregate), root |
+| 5 | `contract(aggregate)` | taxonomy, contract | taxonomy, contract(port\|protocol\|aggregate) | agent_, infrastructure_, surface_, capabilities_, root |
+| 6 | `capabilities` | taxonomy, contract | taxonomy, contract(protocol) | infrastructure_, surface_, agent_, capabilities_, root |
+| 7 | `infrastructure` | taxonomy, contract | taxonomy, contract(port) | surface_, capabilities_, agent_, infrastructure_, root |
+| 8 | `agent(container\|registry\|mixin)` | taxonomy, contract, infrastructure, capabilities | taxonomy, contract | surface_, root |
+| 9 | `agent(orchestrator\|coordinator)` | taxonomy, contract | taxonomy, contract(aggregate) | surface_, agent(orchestrator\|coordinator\|manager\|handler\|state), agent(container\|registry\|mixin), infrastructure, capabilities, root |
+| 10 | `agent(manager\|state)` | taxonomy, contract | taxonomy, contract(aggregate) | agent_, infrastructure_, capabilities_, surface_, root |
+| 11 | `surfaces(command\|controller\|page\|entry)` | taxonomy, contract | taxonomy, contract(aggregate) | agent_, infrastructure_, capabilities_, contract(port), contract(protocol), root |
+| 12 | `surfaces(hook\|store\|action\|screen\|router)` | taxonomy | None | agent_, infrastructure_, capabilities_, contract(port), contract(protocol), smart surfaces_, root |
+| 13 | `surfaces(component\|view\|layout)` | taxonomy | taxonomy | agent_, contract_, infrastructure_, capabilities_, all surface_, root |
 
 ### AES002 — Mandatory Import Missing (HIGH)
 
