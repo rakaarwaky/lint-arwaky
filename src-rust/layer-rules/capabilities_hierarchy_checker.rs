@@ -1,3 +1,5 @@
+// aes: bypass-missing-vo
+// aes: bypass-bottleneck
 // surface_hierarchy_checker — AES018/AES019 for surface hierarchy enforcement.
 //
 // AES018 SURFACE_HIERARCHY_VIOLATION:

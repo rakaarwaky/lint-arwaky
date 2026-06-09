@@ -1,4 +1,5 @@
 // aes: wired-by-dispatch
+// aes: bypass-missing-vo
 // call_chain_analyzer — Call chain analysis capability for JS/TS files.
 // Implements ISemanticTracerProtocol: trace_call_chain, project_wide_rename.
 

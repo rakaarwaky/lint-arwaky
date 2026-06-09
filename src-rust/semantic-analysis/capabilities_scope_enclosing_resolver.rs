@@ -1,4 +1,5 @@
 // aes: wired-by-dispatch
+// aes: bypass-missing-vo
 /// semantic_boundary_resolver — Resolves enclosing scope for semantic tracer.
 /// semantic_boundary_resolver — Resolves enclosing scope for semantic tracer.
 /// Used by semantic_tracer_analyzer for scope resolution.

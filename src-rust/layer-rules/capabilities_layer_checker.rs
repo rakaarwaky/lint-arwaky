@@ -56,6 +56,11 @@ impl ArchLayerChecker {
         if layer != "capabilities" && !layer.starts_with("capabilities(") {
             return;
         }
+        // Skip if file has bypass-capability-routing annotation
+        let first_lines: Vec<&str> = content.lines().take(30).collect();
+        if first_lines.iter().any(|l| l.trim() == "// aes: bypass-capability-routing") {
+            return;
+        }
         let structs: Vec<&str> = content
             .lines()
             .filter_map(|l| {

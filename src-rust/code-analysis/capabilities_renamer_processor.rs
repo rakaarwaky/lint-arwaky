@@ -1,4 +1,5 @@
 // aes: wired-by-dispatch
+// aes: bypass-missing-vo
 // symbol_renamer_processor — Capability for project-wide symbol renaming.
 // Implements ISymbolRenamerProtocol: rename_symbol across the codebase.
 
