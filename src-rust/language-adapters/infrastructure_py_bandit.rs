@@ -120,17 +120,17 @@ impl ILinterAdapterPort for BanditAdapter {
                         Some(path.clone()),
                     );
 
-                    results.push(LintResult::new(
-                        resolved,
-                        LineNumber::new(line_number),
-                        ColumnNumber::new(line_range),
-                        ErrorCode::raw(test_id),
-                        LintMessage::new(issue_text),
-                        Some(self.name()),
-                        self.map_severity(issue_severity),
-                        None,
-                        LocationList::new(),
-                    ));
+                    results.push(LintResult {
+                        file: resolved,
+                        line: LineNumber::new(line_number),
+                        column: ColumnNumber::new(line_range),
+                        code: ErrorCode::raw(test_id),
+                        message: LintMessage::new(issue_text),
+                        source: Some(self.name()),
+                        severity: self.map_severity(issue_severity),
+                        enclosing_scope: None,
+                        related_locations: LocationList::new(),
+                    });
                 }
                 Ok(LintResultList::new(results))
             }

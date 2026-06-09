@@ -183,17 +183,17 @@ impl ILinterAdapterPort for RustLinterAdapter {
                         } else {
                             Severity::MEDIUM
                         };
-                        results.push(LintResult::new(
-                            resolved_file,
-                            LineNumber::new(line_num),
-                            ColumnNumber::new(column_num),
-                            ErrorCode::raw(code.as_str()),
-                            LintMessage::new(message_text.as_str()),
-                            Some(AdapterName::raw("clippy")),
+                        results.push(LintResult {
+                            file: resolved_file,
+                            line: LineNumber::new(line_num),
+                            column: ColumnNumber::new(column_num),
+                            code: ErrorCode::raw(code.as_str()),
+                            message: LintMessage::new(message_text.as_str()),
+                            source: Some(AdapterName::raw("clippy")),
                             severity,
-                            None,
-                            LocationList::new(),
-                        ));
+                            enclosing_scope: None,
+                            related_locations: LocationList::new(),
+                        });
                     }
                 }
                 Err(_) => continue,

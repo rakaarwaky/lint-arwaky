@@ -266,6 +266,7 @@ impl AdapterEntry {
 
 /// Project configuration.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Default)]
 pub struct ProjectConfig {
     #[serde(default = "default_project_name")]
     pub project_name: DescriptionVO,
@@ -290,29 +291,6 @@ fn default_project_name() -> DescriptionVO {
 }
 
 impl ProjectConfig {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        project_name: DescriptionVO,
-        thresholds: Thresholds,
-        adapters: Vec<AdapterEntry>,
-        ignored_paths: FilePathList,
-        ignored_rules: PatternList,
-        layer_map: std::collections::HashMap<String, String>,
-        output_dir: Option<DirectoryPath>,
-        architecture: ArchitectureConfig,
-    ) -> Self {
-        Self {
-            project_name,
-            thresholds,
-            adapters,
-            ignored_paths,
-            ignored_rules,
-            layer_map,
-            output_dir,
-            architecture,
-        }
-    }
-
     /// Returns a ProjectConfig with default linter adapters enabled.
     pub fn defaults() -> Self {
         Self {
@@ -333,8 +311,4 @@ impl ProjectConfig {
     }
 }
 
-impl Default for ProjectConfig {
-    fn default() -> Self {
-        Self::defaults()
-    }
-}
+

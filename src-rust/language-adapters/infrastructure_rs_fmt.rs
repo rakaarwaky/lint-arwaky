@@ -128,32 +128,32 @@ impl ILinterAdapterPort for RustFmtAdapter {
                     FilePath::new(current_file.clone()).unwrap_or_else(|_| path.clone()),
                     Some(path.clone()),
                 );
-                results.push(LintResult::new(
-                    resolved,
-                    LineNumber::new(0),
-                    ColumnNumber::new(0),
-                    ErrorCode::raw("rustfmt::unformatted"),
-                    LintMessage::new(line.trim().to_string()),
-                    Some(AdapterName::raw("rustfmt")),
-                    Severity::MEDIUM,
-                    None,
-                    LocationList::new(),
-                ));
+                results.push(LintResult {
+                    file: resolved,
+                    line: LineNumber::new(0),
+                    column: ColumnNumber::new(0),
+                    code: ErrorCode::raw("rustfmt::unformatted"),
+                    message: LintMessage::new(line.trim().to_string()),
+                    source: Some(AdapterName::raw("rustfmt")),
+                    severity: Severity::MEDIUM,
+                    enclosing_scope: None,
+                    related_locations: LocationList::new(),
+                });
             }
         }
 
         if results.is_empty() {
-            results.push(LintResult::new(
-                FilePath::new("Cargo.toml".to_string()).unwrap_or_default(),
-                LineNumber::new(0),
-                ColumnNumber::new(0),
-                ErrorCode::raw("rustfmt::unformatted"),
-                LintMessage::new("Project is not formatted by rustfmt".to_string()),
-                Some(AdapterName::raw("rustfmt")),
-                Severity::MEDIUM,
-                None,
-                LocationList::new(),
-            ));
+            results.push(LintResult {
+                file: FilePath::new("Cargo.toml".to_string()).unwrap_or_default(),
+                line: LineNumber::new(0),
+                column: ColumnNumber::new(0),
+                code: ErrorCode::raw("rustfmt::unformatted"),
+                message: LintMessage::new("Project is not formatted by rustfmt".to_string()),
+                source: Some(AdapterName::raw("rustfmt")),
+                severity: Severity::MEDIUM,
+                enclosing_scope: None,
+                related_locations: LocationList::new(),
+            });
         }
 
         Ok(LintResultList::new(results))

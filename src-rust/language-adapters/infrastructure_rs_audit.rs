@@ -130,20 +130,20 @@ impl ILinterAdapterPort for CargoAuditAdapter {
                 FilePath::new("Cargo.lock".to_string()).unwrap_or_else(|_| path.clone()),
                 Some(path.clone()),
             );
-            results.push(LintResult::new(
-                resolved,
-                LineNumber::new(0),
-                ColumnNumber::new(0),
-                ErrorCode::raw(format!("cargo-audit::{}", id)),
-                LintMessage::new(format!(
+            results.push(LintResult {
+                file: resolved,
+                line: LineNumber::new(0),
+                column: ColumnNumber::new(0),
+                code: ErrorCode::raw(format!("cargo-audit::{}", id)),
+                message: LintMessage::new(format!(
                     "{}: {} ({} v{})",
                     id, title, vuln.package.name, vuln.package.version
                 )),
-                Some(AdapterName::raw("cargo-audit")),
+                source: Some(AdapterName::raw("cargo-audit")),
                 severity,
-                None,
-                LocationList::new(),
-            ));
+                enclosing_scope: None,
+                related_locations: LocationList::new(),
+            });
         }
 
         Ok(LintResultList::new(results))

@@ -26,31 +26,6 @@ pub struct LintResult {
 }
 
 impl LintResult {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        file: FilePath,
-        line: LineNumber,
-        column: ColumnNumber,
-        code: ErrorCode,
-        message: LintMessage,
-        source: Option<AdapterName>,
-        severity: Severity,
-        enclosing_scope: Option<ScopeRef>,
-        related_locations: LocationList,
-    ) -> Self {
-        Self {
-            file,
-            line,
-            column,
-            code,
-            message,
-            source,
-            severity,
-            enclosing_scope,
-            related_locations,
-        }
-    }
-
     /// Convenience constructor used by architecture checkers (make_result / mk pattern).
     pub fn new_arch(file: &str, line: usize, code: &str, sev: Severity, msg: &str) -> Self {
         Self {

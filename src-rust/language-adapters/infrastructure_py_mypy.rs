@@ -132,17 +132,17 @@ impl ILinterAdapterPort for MyPyAdapter {
                             Some(path.clone()),
                         );
 
-                        results.push(LintResult::new(
-                            resolved,
-                            LineNumber::new(line_number),
-                            ColumnNumber::new(column),
-                            ErrorCode::raw(code),
-                            LintMessage::new(message),
-                            Some(self.name()),
-                            Self::map_severity(msg_type, message),
-                            None,
-                            LocationList::new(),
-                        ));
+                        results.push(LintResult {
+                            file: resolved,
+                            line: LineNumber::new(line_number),
+                            column: ColumnNumber::new(column),
+                            code: ErrorCode::raw(code),
+                            message: LintMessage::new(message),
+                            source: Some(self.name()),
+                            severity: Self::map_severity(msg_type, message),
+                            enclosing_scope: None,
+                            related_locations: LocationList::new(),
+                        });
                     } else if let Some(caps) = re_simple.captures(line) {
                         let filename = caps.get(1).map(|m| m.as_str()).unwrap_or("");
                         let line_number: i64 = caps
@@ -158,17 +158,17 @@ impl ILinterAdapterPort for MyPyAdapter {
                             Some(path.clone()),
                         );
 
-                        results.push(LintResult::new(
-                            resolved,
-                            LineNumber::new(line_number),
-                            ColumnNumber::new(0),
-                            ErrorCode::raw(code),
-                            LintMessage::new(message),
-                            Some(self.name()),
-                            Self::map_severity(msg_type, message),
-                            None,
-                            LocationList::new(),
-                        ));
+                        results.push(LintResult {
+                            file: resolved,
+                            line: LineNumber::new(line_number),
+                            column: ColumnNumber::new(0),
+                            code: ErrorCode::raw(code),
+                            message: LintMessage::new(message),
+                            source: Some(self.name()),
+                            severity: Self::map_severity(msg_type, message),
+                            enclosing_scope: None,
+                            related_locations: LocationList::new(),
+                        });
                     }
                 }
                 Ok(LintResultList::new(results))

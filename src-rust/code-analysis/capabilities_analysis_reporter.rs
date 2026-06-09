@@ -5,28 +5,26 @@ use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
-use std::sync::Arc;
 
 pub struct AnalysisReporter {
-    #[allow(dead_code)]
-    container: Option<Arc<dyn ServiceContainerAggregate>>,
     history_path: String,
 }
 
+impl Default for AnalysisReporter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AnalysisReporter {
-    pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
+    pub fn new() -> Self {
         Self {
-            container,
             history_path: ".lint-arwaky-trends.json".to_string(),
         }
     }
 
-    pub fn with_history_path(
-        container: Option<Arc<dyn ServiceContainerAggregate>>,
-        history_path: &str,
-    ) -> Self {
+    pub fn with_history_path(history_path: &str) -> Self {
         Self {
-            container,
             history_path: history_path.to_string(),
         }
     }

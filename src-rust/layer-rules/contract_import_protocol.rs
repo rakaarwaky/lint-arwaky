@@ -7,6 +7,17 @@ use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
 
+pub struct ValidateImportsParams<'a> {
+    pub analyzer: &'a dyn IAnalyzer,
+    pub file_path: &'a FilePath,
+    pub root_dir: &'a FilePath,
+    pub required_layers: &'a PatternList,
+    pub results: &'a mut LintResultList,
+    pub message_template: &'a ErrorMessage,
+    pub layer_name: &'a LayerNameVO,
+    pub layers_display: &'a PatternList,
+}
+
 #[async_trait]
 pub trait IArchImportProtocol: Send + Sync {
     async fn process_file_imports(
@@ -16,17 +27,9 @@ pub trait IArchImportProtocol: Send + Sync {
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
-    #[allow(clippy::too_many_arguments)]
     async fn validate_imports_present(
         &self,
-        analyzer: &dyn IAnalyzer,
-        file_path: &FilePath,
-        root_dir: &FilePath,
-        required_layers: &PatternList,
-        results: &mut LintResultList,
-        message_template: &ErrorMessage,
-        layer_name: &LayerNameVO,
-        layers_display: &PatternList,
+        params: ValidateImportsParams<'_>,
     );
     async fn check_mandatory_imports(
         &self,
@@ -67,14 +70,7 @@ impl IArchImportProtocol for DefaultArchImportProtocol {
 
     async fn validate_imports_present(
         &self,
-        _analyzer: &dyn IAnalyzer,
-        _file_path: &FilePath,
-        _root_dir: &FilePath,
-        _required_layers: &PatternList,
-        _results: &mut LintResultList,
-        _message_template: &ErrorMessage,
-        _layer_name: &LayerNameVO,
-        _layers_display: &PatternList,
+        _params: ValidateImportsParams<'_>,
     ) {
         todo!()
     }

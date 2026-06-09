@@ -115,17 +115,17 @@ impl ILinterAdapterPort for RuffAdapter {
                         Some(path.clone()),
                     );
 
-                    results.push(LintResult::new(
-                        resolved,
-                        LineNumber::new(row),
-                        ColumnNumber::new(col),
-                        ErrorCode::raw(code),
-                        LintMessage::new(message),
-                        Some(self.name()),
-                        self.map_severity(severity_str, code),
-                        None,
-                        LocationList::new(),
-                    ));
+                    results.push(LintResult {
+                        file: resolved,
+                        line: LineNumber::new(row),
+                        column: ColumnNumber::new(col),
+                        code: ErrorCode::raw(code),
+                        message: LintMessage::new(message),
+                        source: Some(self.name()),
+                        severity: self.map_severity(severity_str, code),
+                        enclosing_scope: None,
+                        related_locations: LocationList::new(),
+                    });
                 }
                 Ok(LintResultList::new(results))
             }

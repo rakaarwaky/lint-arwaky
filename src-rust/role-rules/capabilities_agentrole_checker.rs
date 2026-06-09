@@ -19,10 +19,7 @@ use crate::shared_common::taxonomy_violationrs_constant::{
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
-#[allow(dead_code)]
-fn make_adapter(name: &str) -> Option<AdapterName> {
-    AdapterName::new(name).ok()
-}
+
 
 pub struct AgentRoleChecker {}
 impl Default for AgentRoleChecker {
@@ -111,7 +108,7 @@ impl AgentRoleChecker {
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES021"),
                         message: LintMessage::new(AES021_STATELESS_EXECUTION),
-                        source: make_adapter("architecture"),
+                        source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
@@ -142,7 +139,7 @@ impl AgentRoleChecker {
                     column: ColumnNumber::new(0),
                     code: ErrorCode::raw("AES021"),
                     message: LintMessage::new(AES021_HIGH_LEVEL_POLICY),
-                    source: make_adapter("architecture"),
+                    source: Some(AdapterName::raw("architecture")),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
                     related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
@@ -170,7 +167,7 @@ impl AgentRoleChecker {
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES021"),
                         message: LintMessage::new(AES021_COORDINATES_MULTIPLE),
-                        source: make_adapter("architecture"),
+                        source: Some(AdapterName::raw("architecture")),
                         severity: Severity::MEDIUM,
                         enclosing_scope: None,
                         related_locations:
@@ -233,7 +230,7 @@ impl AgentRoleChecker {
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
                 message: LintMessage::new(AES021_NO_DOMAIN_LOGIC),
-                source: make_adapter("architecture"),
+                source: Some(AdapterName::raw("architecture")),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
                 related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
@@ -265,7 +262,7 @@ impl AgentRoleChecker {
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES021"),
                         message: LintMessage::new(AES021_LAZY_EAGER_INIT),
-                        source: make_adapter("architecture"),
+                        source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
@@ -299,7 +296,7 @@ impl AgentRoleChecker {
                     column: ColumnNumber::new(0),
                     code: ErrorCode::raw(code),
                     message: LintMessage::new(message),
-                    source: make_adapter("architecture"),
+                    source: Some(AdapterName::raw("architecture")),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
                     related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
@@ -364,7 +361,7 @@ impl AgentRoleChecker {
                         column: ColumnNumber::new(col),
                         code: ErrorCode::raw("AES024"),
                         message: LintMessage::new(aes024_any_type(line)),
-                        source: make_adapter("architecture"),
+                        source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
