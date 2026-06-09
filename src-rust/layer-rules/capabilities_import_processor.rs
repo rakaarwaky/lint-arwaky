@@ -6,27 +6,35 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
 
-use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchImportProcessorProtocol};
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violationrs_constant::AES001_FORBIDDEN_IMPORT;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchImportProcessorProtocol, ValidateImportsParams};
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    AES001_FORBIDDEN_IMPORT,
+};
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
-fn make_adapter(name: &str) -> Option<AdapterName> {
-    AdapterName::new(name).ok()
+pub struct ImportCheckerContext<'a> {
+    pub imported_aliases: &'a std::collections::HashMap<String, String>,
+    pub real_usages: &'a std::collections::HashSet<String>,
+    pub class_bases: &'a std::collections::HashMap<String, Vec<String>>,
 }
 
 pub struct ArchImportProcessor {}
+
+impl Default for ArchImportProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ArchImportProcessor {
     pub fn new() -> Self {
@@ -98,7 +106,14 @@ impl ArchImportProcessor {
                 .any(|p| self._is_layer_match(&target_layer, p));
             if !is_same && !allowed {
                 let msg = AES001_FORBIDDEN_IMPORT;
-                self._add_forbidden_violation(results, file_path, imp, file_layer, &target_layer, msg);
+                self._add_forbidden_violation(
+                    results,
+                    file_path,
+                    imp,
+                    file_layer,
+                    &target_layer,
+                    msg,
+                );
                 return;
             }
         }
@@ -109,7 +124,14 @@ impl ArchImportProcessor {
             .iter()
             .any(|p| self._is_layer_match(&target_layer, p))
         {
-            self._add_forbidden_violation(results, file_path, imp, file_layer, &target_layer, AES001_FORBIDDEN_IMPORT);
+            self._add_forbidden_violation(
+                results,
+                file_path,
+                imp,
+                file_layer,
+                &target_layer,
+                AES001_FORBIDDEN_IMPORT,
+            );
         }
     }
 
@@ -126,15 +148,11 @@ impl ArchImportProcessor {
         }
         if pattern.contains('(') && layer_name.contains('(') {
             let p_base = pattern.split('(').next().unwrap_or(pattern);
-            let p_subs_raw = pattern
-                .splitn(2, '(')
-                .nth(1)
+            let p_subs_raw = pattern.split_once('(').map(|x| x.1)
                 .unwrap_or("")
                 .trim_end_matches(')');
             let l_base = layer_name.split('(').next().unwrap_or(layer_name);
-            let l_sub_raw = layer_name
-                .splitn(2, '(')
-                .nth(1)
+            let l_sub_raw = layer_name.split_once('(').map(|x| x.1)
                 .unwrap_or("")
                 .trim_end_matches(')');
             if p_base != l_base {
@@ -170,7 +188,7 @@ impl ArchImportProcessor {
             column: ColumnNumber::new(0),
             code: ErrorCode::raw("AES001"),
             message: LintMessage::new(message),
-            source: make_adapter("architecture"),
+            source: Some(AdapterName::raw("architecture")),
             severity: Severity::CRITICAL,
             enclosing_scope: None,
             related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
@@ -179,16 +197,9 @@ impl ArchImportProcessor {
 
     pub async fn validate_imports_present(
         &self,
-        analyzer: &dyn IAnalyzer,
-        file_path: &FilePath,
-        _root_dir: &FilePath,
-        required_layers: &crate::shared_common::taxonomy_common_vo::PatternList,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
-        message_template: &crate::shared_common::taxonomy_common_error::ErrorMessage,
-        layer_vo: &LayerNameVO,
-        layers_display: &crate::shared_common::taxonomy_common_vo::PatternList,
+        params: ValidateImportsParams<'_>,
     ) {
-        let symbols_data = match analyzer.parser().get_raw_symbols(file_path) {
+        let symbols_data = match params.analyzer.parser().get_raw_symbols(params.file_path) {
             Ok(data) => data,
             Err(_) => return,
         };
@@ -236,27 +247,29 @@ impl ArchImportProcessor {
             .collect();
         let mut found_layers: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-        for req_layer in &required_layers.values {
+        for req_layer in &params.required_layers.values {
             let satisfied = if req_layer.starts_with("contract") {
+                let import_ctx = ImportCheckerContext {
+                    imported_aliases: &imported_aliases,
+                    real_usages: &real_usages,
+                    class_bases: &class_bases,
+                };
                 self._check_contract_layer(
-                    analyzer,
                     req_layer,
-                    &imported_aliases,
-                    &real_usages,
-                    &class_bases,
-                    file_path,
-                    layer_vo,
-                    results,
+                    &import_ctx,
+                    params.file_path,
+                    params.layer_name,
+                    params.results,
                 )
             } else {
-                self._check_general_layer(analyzer, req_layer, &imported_aliases, &real_usages)
+                self._check_general_layer(params.analyzer, req_layer, &imported_aliases, &real_usages)
             };
             if satisfied {
                 found_layers.insert(req_layer.clone());
             }
         }
 
-        let missing: Vec<String> = required_layers
+        let missing: Vec<String> = params.required_layers
             .values
             .iter()
             .filter(|r| !found_layers.contains(*r))
@@ -264,12 +277,12 @@ impl ArchImportProcessor {
             .collect();
         if !missing.is_empty() {
             self._report_missing_imports(
-                results,
-                file_path,
-                layer_vo,
-                layers_display,
+                params.results,
+                params.file_path,
+                params.layer_name,
+                params.layers_display,
                 &missing,
-                &message_template.value,
+                &params.message_template.value,
             );
         }
     }
@@ -298,11 +311,11 @@ impl ArchImportProcessor {
 
         results.push(LintResult {
             file: file_path.clone(),
-            line: LineNumber::new(0),
+            line: LineNumber::new(1),
             column: ColumnNumber::new(0),
             code: ErrorCode::raw("AES002"),
             message: LintMessage::new(message),
-            source: make_adapter("architecture"),
+            source: Some(AdapterName::raw("architecture")),
             severity: Severity::HIGH,
             enclosing_scope: None,
             related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
@@ -351,7 +364,7 @@ impl ArchImportProcessor {
                 all_bases.contains(*a)
                     || imported_aliases
                         .get(*a)
-                        .map_or(false, |v| all_bases.contains(v))
+                        .is_some_and(|v| all_bases.contains(v))
                     || all_bases.iter().any(|b| b.starts_with(&format!("{}.", a)))
             })
             .cloned()
@@ -371,18 +384,15 @@ impl ArchImportProcessor {
 
     fn _check_contract_layer(
         &self,
-        _analyzer: &dyn IAnalyzer,
         req_layer_str: &str,
-        imported_aliases: &std::collections::HashMap<String, String>,
-        real_usages: &std::collections::HashSet<String>,
-        class_bases: &std::collections::HashMap<String, Vec<String>>,
+        context: &ImportCheckerContext,
         file_path: &FilePath,
         layer_vo: &LayerNameVO,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) -> bool {
         let aliases = self._get_contract_barrel_aliases(
-            imported_aliases,
-            real_usages,
+            context.imported_aliases,
+            context.real_usages,
             file_path,
             layer_vo,
             results,
@@ -391,15 +401,17 @@ impl ArchImportProcessor {
             return false;
         }
         let used_as_base =
-            self._check_import_stem_matches(&aliases, imported_aliases, class_bases, file_path);
+            self._check_import_stem_matches(&aliases, context.imported_aliases, context.class_bases, file_path);
         if used_as_base.is_empty() {
             return false;
         }
 
-        static CAPTURE_RE: Lazy<Option<Regex>> =
-            Lazy::new(|| Regex::new(r"contract\((.+)\)").ok());
+        static CAPTURE_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"contract\((.+)\)").ok());
 
-        if let Some(caps) = CAPTURE_RE.as_ref().and_then(|re| re.captures(req_layer_str)) {
+        if let Some(caps) = CAPTURE_RE
+            .as_ref()
+            .and_then(|re| re.captures(req_layer_str))
+        {
             let _pattern = caps.get(1).map(|m| m.as_str()).unwrap_or("");
         }
 
@@ -410,33 +422,22 @@ impl ArchImportProcessor {
         &self,
         imported_aliases: &std::collections::HashMap<String, String>,
         real_usages: &std::collections::HashSet<String>,
-        file_path: &FilePath,
+        _file_path: &FilePath,
         _layer_vo: &LayerNameVO,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
+        _results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) -> Vec<String> {
         let mut aliases = Vec::new();
         for (alias, fullname) in imported_aliases {
-            let parts: Vec<&str> = fullname.split('.').collect();
+            let parts: Vec<&str> = if fullname.contains("::") {
+                fullname.split("::").collect()
+            } else {
+                fullname.split('.').collect()
+            };
             if !parts.contains(&"contract") {
                 continue;
             }
-            let is_barrel = parts.len() >= 2 && parts[parts.len() - 2] == "contract";
-            if is_barrel {
-                if alias != "contract" {
-                    aliases.push(alias.clone());
-                }
-            } else if real_usages.contains(alias) {
-                results.push(LintResult {
-                    file: file_path.clone(),
-                    line: LineNumber::new(0),
-                    column: ColumnNumber::new(0),
-                    code: ErrorCode::raw("AES007"),
-                    message: LintMessage::new("Contract import must be from barrel."),
-                    source: make_adapter("architecture"),
-                    severity: Severity::MEDIUM,
-                    enclosing_scope: None,
-                    related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
-                });
+            if alias != "contract" && real_usages.contains(alias) {
+                aliases.push(alias.clone());
             }
         }
         aliases
@@ -455,7 +456,7 @@ impl ArchImportProcessor {
             let detected = analyzer.detect_module_layer(&module);
             let layer_match = detected
                 .as_ref()
-                .map_or(false, |l| self._is_layer_match(l, req_layer));
+                .is_some_and(|l| self._is_layer_match(l, req_layer));
             let segment_match = fullname.split('.').any(|s| s == req_layer);
             if (layer_match || segment_match) && real_usages.contains(alias) {
                 return true;
@@ -480,25 +481,8 @@ impl IArchImportProcessorProtocol for ArchImportProcessor {
 
     async fn validate_imports_present(
         &self,
-        analyzer: &dyn IAnalyzer,
-        file_path: &FilePath,
-        root_dir: &FilePath,
-        required_layers: &PatternList,
-        results: &mut LintResultList,
-        message_template: &ErrorMessage,
-        layer_name: &LayerNameVO,
-        layers_display: &PatternList,
+        params: ValidateImportsParams<'_>,
     ) {
-        self.validate_imports_present(
-            analyzer,
-            file_path,
-            root_dir,
-            required_layers,
-            results,
-            message_template,
-            layer_name,
-            layers_display,
-        )
-        .await;
+        self.validate_imports_present(params).await;
     }
 }

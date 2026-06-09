@@ -1,15 +1,15 @@
 // semantic_scope_analyzer — AST-based semantic scope analysis capability.
 // Implements ISemanticTracerProtocol for Python code analysis.
 // Uses regex-based analysis (no Python AST dependency).
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::Count;
-use /* UNKNOWN: DataFlowList */ crate::shared_common::taxonomy_common_vo::DataFlowList;
+use crate::shared_common::taxonomy_common_vo::DataFlowList;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use /* UNKNOWN: SymbolNameList */ crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;
@@ -42,8 +42,8 @@ fn split_name_into_words(name: &str) -> Vec<String> {
             // End current word if it's not empty
             if !current.is_empty() {
                 // Check if this uppercase starts a new word or continues an acronym
-                let next_is_lower = chars.peek().map_or(false, |n| n.is_lowercase());
-                let prev_is_upper = current.chars().last().map_or(false, |c| c.is_uppercase());
+                let next_is_lower = chars.peek().is_some_and(|n| n.is_lowercase());
+                let prev_is_upper = current.chars().last().is_some_and(|c| c.is_uppercase());
 
                 if next_is_lower || (prev_is_upper && current.len() > 1) {
                     words.push(current.clone().to_lowercase());
@@ -78,6 +78,12 @@ static PY_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^class\s+(\w
 
 /// AST-based semantic scope analyzer for Python code.
 pub struct SemanticScopeAnalyzer {}
+
+impl Default for SemanticScopeAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl SemanticScopeAnalyzer {
     pub fn new() -> Self {
@@ -196,8 +202,7 @@ impl SemanticScopeAnalyzer {
                     let scope_name = format!("class {}", name.as_str());
                     let indent = raw_line.len() - raw_line.trim_start().len();
                     let mut end_line = lines.len() as i64;
-                    for j in (i + 1)..lines.len() {
-                        let l = lines[j];
+                    for (j, l) in lines.iter().enumerate().skip(i + 1) {
                         if !l.trim().is_empty() {
                             let l_indent = l.len() - l.trim_start().len();
                             if l_indent <= indent
@@ -218,8 +223,7 @@ impl SemanticScopeAnalyzer {
                     let scope_name = format!("def {}", name.as_str());
                     let indent = raw_line.len() - raw_line.trim_start().len();
                     let mut end_line = lines.len() as i64;
-                    for j in (i + 1)..lines.len() {
-                        let l = lines[j];
+                    for (j, l) in lines.iter().enumerate().skip(i + 1) {
                         if !l.trim().is_empty() {
                             let l_indent = l.len() - l.trim_start().len();
                             if l_indent <= indent
@@ -240,8 +244,12 @@ impl SemanticScopeAnalyzer {
 
         if !best_match.is_empty() {
             Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(best_match.join(" -> ")),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
+                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    best_match.join(" -> "),
+                ),
+                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
                 file: Some(file_path.clone()),
                 start_line: None,
                 end_line: None,
@@ -366,7 +374,7 @@ impl SemanticScopeAnalyzer {
             flows.push(ErrorMessage::new(entry_str));
         }
 
-        flows.sort_by(|a, b| extract_lineno(&a.value).cmp(&extract_lineno(&b.value)));
+        flows.sort_by_key(|a| extract_lineno(&a.value));
         DataFlowList { values: flows }
     }
 
@@ -445,11 +453,10 @@ impl SemanticScopeAnalyzer {
                                 }
                             })
                             .to_string();
-                        if new_source != content {
-                            if std::fs::write(filepath, &new_source).is_ok() {
+                        if new_source != content
+                            && std::fs::write(filepath, &new_source).is_ok() {
                                 modified_count += 1;
                             }
-                        }
                     }
                 }
             }

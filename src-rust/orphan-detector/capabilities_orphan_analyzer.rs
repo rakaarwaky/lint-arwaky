@@ -1,37 +1,43 @@
 // arch_orphan_analyzer — Multi-indicator orphan code detection logic.
 // Implements IArchOrphanProtocol: check_orphans.
 
+use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
+use crate::code_analysis::taxonomy_analysis_vo::FilePathSet;
+use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
+use crate::code_analysis::taxonomy_analysis_vo::ImportGraph;
+use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
+use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
+use crate::code_analysis::taxonomy_analysis_vo::ModuleToFileMap;
+use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::orphan_detector::contract_orphan_protocol::IOrphanGraphProtocol;
 use crate::orphan_detector::contract_orphan_protocol::IOrphanIndicatorProtocol;
-use crate::layer_rules::contract_rule_protocol::IAnalyzer;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::output_report::taxonomy_result_vo::LintResult;
+use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_common_error::ModuleName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use /* UNKNOWN: FileDefinitionMap */ crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_lint_vo::ScopeRef;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use /* UNKNOWN: FilePathSet */ crate::code_analysis::taxonomy_analysis_vo::FilePathSet;
-use /* UNKNOWN: GraphAnalysisContext */ crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-use /* UNKNOWN: ImportGraph */ crate::code_analysis::taxonomy_analysis_vo::ImportGraph;
-use /* UNKNOWN: InboundLinkMap */ crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use /* UNKNOWN: InheritanceMap */ crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
-use /* UNKNOWN: ModuleName */ crate::shared_common::taxonomy_common_error::ModuleName;
-use /* UNKNOWN: ModuleToFileMap */ crate::code_analysis::taxonomy_analysis_vo::ModuleToFileMap;
-use /* UNKNOWN: OrphanIndicatorResult */ crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use /* UNKNOWN: ReachabilityResult */ crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use crate::output_report::taxonomy_severity_vo::Severity;
 use async_trait::async_trait;
 use std::collections::HashMap;
 
 /// Build graph context and identify entry points for orphan analysis.
 pub struct OrphanGraphResolver {}
+
+impl Default for OrphanGraphResolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl OrphanGraphResolver {
     pub fn new() -> Self {
@@ -45,17 +51,19 @@ impl OrphanGraphResolver {
         let mut inheritance_map: HashMap<String, Vec<String>> = HashMap::new();
         let file_definitions: HashMap<String, Vec<String>> = HashMap::new();
 
+        let import_re = regex::Regex::new(r"(?:from|import)\s+([\w\.]+)");
+        let inh_re = regex::Regex::new(r"class\s+\w+\(([^)]+)\)");
         for f in files {
             import_graph.entry(f.clone()).or_default();
             if let Ok(content) = std::fs::read_to_string(f) {
-                if let Some(import_re) = regex::Regex::new(r"(?:from|import)\s+([\w\.]+)").ok() {
+                if let Ok(ref import_re) = import_re {
                     for cap in import_re.captures_iter(&content) {
                         let dep = cap[1].to_string();
                         import_graph.entry(f.clone()).or_default().push(dep.clone());
                         inbound_links.entry(dep).or_default().push(f.clone());
                     }
                 }
-                if let Some(inh_re) = regex::Regex::new(r"class\s+\w+\(([^)]+)\)").ok() {
+                if let Ok(ref inh_re) = inh_re {
                     for cap in inh_re.captures_iter(&content) {
                         for base in cap[1].split(',') {
                             inheritance_map
@@ -86,6 +94,12 @@ impl OrphanGraphResolver {
 
 /// Evaluate orphan indicators per layer type.
 pub struct OrphanIndicatorEvaluator {}
+
+impl Default for OrphanIndicatorEvaluator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl OrphanIndicatorEvaluator {
     pub fn new() -> Self {
@@ -137,7 +151,7 @@ impl OrphanIndicatorEvaluator {
     pub fn is_surface_orphan(
         &self,
         f: &str,
-        alive: &Vec<String>,
+        alive: &[String],
         _def: &LayerDefinition,
     ) -> OrphanIndicatorResult {
         let orphan = !alive.contains(&f.to_string());
@@ -147,7 +161,7 @@ impl OrphanIndicatorEvaluator {
     pub fn is_generic_orphan(
         &self,
         f: &str,
-        alive: &Vec<String>,
+        alive: &[String],
         inbound: &InboundLinkMap,
     ) -> OrphanIndicatorResult {
         let orphan = !alive.contains(&f.to_string()) && !inbound.mapping.contains_key(f);
@@ -167,6 +181,12 @@ use crate::shared_common::taxonomy_names_constant::{
 pub struct ArchOrphanAnalyzer {
     resolver: OrphanGraphResolver,
     evaluator: OrphanIndicatorEvaluator,
+}
+
+impl Default for ArchOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ArchOrphanAnalyzer {
@@ -219,11 +239,11 @@ impl ArchOrphanAnalyzer {
 
             let res = self._evaluate_layer(
                 f,
-                root_dir,
                 definition,
                 &context,
                 &alive_files_set,
                 &layer_vo,
+                files,
             );
 
             if res.is_orphan {
@@ -239,13 +259,17 @@ impl ArchOrphanAnalyzer {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),
-            code: ErrorCode::raw("AES017"),
+            code: ErrorCode::raw("AES037"),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
+                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
+                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
                 file: None,
                 start_line: None,
                 end_line: None,
@@ -286,7 +310,7 @@ impl ArchOrphanAnalyzer {
 
         // Sort by path-length descending
         let mut sorted_layers: Vec<(&LayerNameVO, &LayerDefinition)> = layer_map.iter().collect();
-        sorted_layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
+        sorted_layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 
         for (name, def) in &sorted_layers {
             if name.value.contains('(') {
@@ -294,7 +318,7 @@ impl ArchOrphanAnalyzer {
             }
 
             if rel.starts_with(&def.path.value)
-                || rel.starts_with(&def.path.value.split('/').last().unwrap_or(""))
+                || rel.starts_with(def.path.value.split('/').next_back().unwrap_or(""))
             {
                 return Some(LayerNameVO::new(&name.value));
             }
@@ -306,151 +330,82 @@ impl ArchOrphanAnalyzer {
     fn _evaluate_layer(
         &self,
         f: &str,
-        root_dir: &str,
         definition: &LayerDefinition,
         context: &GraphAnalysisContext,
-        alive_files_set: &Vec<String>,
+        alive_files_set: &[String],
         layer_vo: &LayerNameVO,
+        all_files: &[String],
     ) -> crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult {
-        // Skip barrel files
         if f.ends_with("__init__.py") {
             return crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
-                false,
-                String::new(),
-                Severity::HIGH,
+                false, String::new(), Severity::HIGH,
             );
         }
 
         let layer_str = layer_vo.value.to_lowercase();
+        let basename = f.split('/').next_back().unwrap_or("");
 
         if layer_str.contains(LAYER_TAXONOMY) {
-            return self.evaluator.is_taxonomy_orphan(
-                f,
-                root_dir,
-                definition,
-                &context.inbound_links,
-            );
+            let stem = basename.replace(".rs", "").replace(".py", "");
+            let mut imported = false;
+            for cf in all_files {
+                let cb = cf.split('/').next_back().unwrap_or("");
+                if !cb.starts_with("contract_") { continue; }
+                if let Ok(c) = std::fs::read_to_string(cf) {
+                    if c.contains(&stem) {
+                        imported = true; break;
+                    }
+                }
+            }
+            return OrphanIndicatorResult::new(!imported, "Taxonomy not imported by any contract.".into(), Severity::LOW);
         }
 
         if layer_str.contains(LAYER_CONTRACT) {
-            return self.evaluator.is_contract_orphan(
-                f,
-                root_dir,
-                &context.file_definitions,
-                &context.inheritance_map,
-            );
+            let suffix = basename.rsplit('_').next().unwrap_or("").replace(".rs", "");
+            let target_prefix = match suffix.as_str() {
+                "port" => "infrastructure",
+                "protocol" => "capabilities",
+                "aggregate" => "agent",
+                _ => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
+            };
+            let trait_name = basename.strip_prefix("contract_").unwrap_or(basename).replace(".rs", "");
+            let mut has_impl = false;
+            for cf in all_files {
+                let cb = cf.split('/').next_back().unwrap_or("");
+                if !cb.starts_with(target_prefix) { continue; }
+                if let Ok(c) = std::fs::read_to_string(cf) {
+                    if c.contains(&format!("impl {} for", trait_name)) { has_impl = true; break; }
+                }
+            }
+            return OrphanIndicatorResult::new(!has_impl, format!("Contract {} '{}' not implemented.", suffix, trait_name), Severity::HIGH);
         }
 
         if layer_str.contains(LAYER_INFRASTRUCTURE) || layer_str.contains(LAYER_CAPABILITIES) {
-            let is_wired = self._is_wired_in_container(f, root_dir);
-            let is_reachable = alive_files_set.contains(&f.to_string());
-            return self.evaluator.is_infra_cap_orphan(is_wired, is_reachable);
+            let is_wired = self._is_wired_in_container(basename, all_files);
+            return self.evaluator.is_infra_cap_orphan(is_wired, alive_files_set.contains(&f.to_string()));
         }
 
         if layer_str.contains(LAYER_AGENT) {
-            let is_wired = self._is_wired_in_container(f, root_dir);
+            let is_wired = self._is_wired_in_container(basename, all_files);
             return self.evaluator.is_agent_orphan(is_wired);
         }
 
         if layer_str.contains(LAYER_SURFACES) {
-            return self
-                .evaluator
-                .is_surface_orphan(f, alive_files_set, definition);
+            return self.evaluator.is_surface_orphan(f, alive_files_set, definition);
         }
 
-        self.evaluator
-            .is_generic_orphan(f, alive_files_set, &context.inbound_links)
+        self.evaluator.is_generic_orphan(f, alive_files_set, &context.inbound_links)
     }
 
-    fn _is_wired_in_container(&self, file_path: &str, root_dir: &str) -> bool {
-        let stem = file_path
-            .split('/')
-            .next_back()
-            .unwrap_or("")
-            .replace(".py", "")
-            .replace(".rs", "");
-
-        // Look for container files in agent layer
-        let container_dir = if root_dir.ends_with("/src") {
-            format!("{}/{}", root_dir, LAYER_AGENT)
-        } else {
-            format!("{}/src/{}", root_dir, LAYER_AGENT)
-        };
-
-        // Scan for container files and check patterns
-        self._scan_container_for_patterns(&container_dir, &stem, file_path)
-    }
-
-    fn _scan_container_for_patterns(
-        &self,
-        container_dir: &str,
-        stem: &str,
-        _file_path: &str,
-    ) -> bool {
-        use std::path::Path;
-
-        if !Path::new(container_dir).exists() {
-            return false;
-        }
-
-        // Walk through agent directory looking for container files
-        let container_path = Path::new(container_dir);
-        if let Ok(entries) = std::fs::read_dir(container_path) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                let path_str = path.to_string_lossy();
-
-                // Check if this is a container file
-                if path_str.to_lowercase().contains("container")
-                    && (path_str.ends_with(".py") || path_str.ends_with(".rs"))
-                {
-                    if let Ok(content) = std::fs::read_to_string(&path) {
-                        // Check for module stem in imports
-                        if content.contains(&format!("import {}", stem))
-                            || content.contains(&format!("from {} ", stem))
-                            || content.contains(&stem)
-                            || content.contains(&format!("use {};", stem.replace(".", "::")))
-                            || content.contains(&format!("use crate::{}", stem))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Also scan subdirectories recursively
-        self._scan_recursive_for_patterns(container_dir, stem)
-    }
-
-    fn _scan_recursive_for_patterns(&self, dir: &str, stem: &str) -> bool {
-        use std::path::Path;
-
-        let path = Path::new(dir);
-        if !path.is_dir() {
-            return false;
-        }
-
-        if let Ok(entries) = std::fs::read_dir(path) {
-            for entry in entries.flatten() {
-                let entry_path = entry.path();
-                if entry_path.is_dir() {
-                    if self
-                        ._scan_recursive_for_patterns(entry_path.to_string_lossy().as_ref(), stem)
-                    {
-                        return true;
-                    }
-                } else if entry_path.is_file() {
-                    let path_str = entry_path.to_string_lossy();
-                    if path_str.to_lowercase().contains("container")
-                        && (path_str.ends_with(".py") || path_str.ends_with(".rs"))
-                    {
-                        if let Ok(content) = std::fs::read_to_string(&entry_path) {
-                            if content.contains(stem) {
-                                return true;
-                            }
-                        }
-                    }
+    fn _is_wired_in_container(&self, basename: &str, all_files: &[String]) -> bool {
+        let stem = basename.replace(".rs", "").replace(".py", "");
+        for f in all_files {
+            let fb = f.split('/').next_back().unwrap_or("");
+            let suffix = fb.rsplit('_').next().unwrap_or("").replace(".rs", "");
+            if suffix != "container" && suffix != "aggregate" && suffix != "registry" { continue; }
+            if let Ok(c) = std::fs::read_to_string(f) {
+                if c.contains(&stem) || c.contains(&format!("mod {}", stem)) {
+                    return true;
                 }
             }
         }

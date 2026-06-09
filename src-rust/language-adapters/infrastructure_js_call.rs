@@ -1,17 +1,17 @@
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::CallChainList;
+use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 /// javascript_call_tracer — Semantic analysis adapter for JavaScript/TypeScript files.
 use crate::semantic_analysis::contract_tracer_port::ISemanticTracerPort;
-use /* UNKNOWN: CallChainList */ crate::naming_rules::taxonomy_symbols_vo::CallChainList;
+use crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::Count;
-use /* UNKNOWN: DataFlowList */ crate::shared_common::taxonomy_common_vo::DataFlowList;
+use crate::shared_common::taxonomy_common_vo::DataFlowList;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::ResponseDataList;
+use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use /* UNKNOWN: ResponseDataList */ crate::shared_common::taxonomy_common_vo::ResponseDataList;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use /* UNKNOWN: SemanticError */ crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use /* UNKNOWN: SymbolNameList */ crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
 use async_trait::async_trait;
 use regex::Regex;
 use std::fs;
@@ -19,13 +19,19 @@ use std::path::{Path, PathBuf};
 
 pub struct JSCallAdapter {}
 
+impl Default for JSCallAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JSCallAdapter {
     pub fn new() -> Self {
         Self {}
     }
 
     fn get_variant_dict_raw(name: &str) -> std::collections::HashMap<String, String> {
-        let word_re = match Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+") {
+        let word_re = match Regex::new(r"[A-Z]{2,}|[A-Z][a-z0-9]*|[a-z0-9]+") {
             Ok(r) => r,
             Err(_) => {
                 let mut m = std::collections::HashMap::new();
@@ -163,11 +169,11 @@ impl ISemanticTracerPort for JSCallAdapter {
             Ok(r) => r,
             Err(_) => return Ok(CallChainList { values: Vec::new() }),
         };
-        let def_pattern = match Regex::new(&format!(r"(?:function|class)\s+{}\b", regex::escape(&name)))
-        {
-            Ok(r) => r,
-            Err(_) => return Ok(CallChainList { values: Vec::new() }),
-        };
+        let def_pattern =
+            match Regex::new(&format!(r"(?:function|class)\s+{}\b", regex::escape(&name))) {
+                Ok(r) => r,
+                Err(_) => return Ok(CallChainList { values: Vec::new() }),
+            };
 
         let js_files = Self::find_js_files(root);
 
@@ -257,11 +263,10 @@ impl ISemanticTracerPort for JSCallAdapter {
                         }
                     });
 
-                    if new_source != source {
-                        if fs::write(&filepath, new_source.as_ref()).is_ok() {
+                    if new_source != source
+                        && fs::write(&filepath, new_source.as_ref()).is_ok() {
                             modified_count += 1;
                         }
-                    }
                 }
             }
         }

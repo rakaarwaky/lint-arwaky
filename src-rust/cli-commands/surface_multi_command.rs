@@ -1,8 +1,17 @@
+use std::process::ExitCode;
 use std::sync::Arc;
 
+use crate::cli_commands::taxonomy_entry_vo::{compute_score, count_loc, lint_path};
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use crate::output_report::taxonomy_severity_vo::Severity;
 pub struct MultiCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
+}
+
+impl Default for MultiCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MultiCommandsSurface {
@@ -47,4 +56,70 @@ pub fn register_multi_commands(
     let mut surface = MultiCommandsSurface::new();
     surface.register_all(container);
     surface
+}
+
+pub fn handle_multi_project(paths: Vec<String>) -> ExitCode {
+    println!(
+        "Lint Arwaky v{} (Multi-Project Mode)",
+        env!("CARGO_PKG_VERSION")
+    );
+    println!("Projects found: {}", paths.len());
+    println!();
+    let mut total_violations = 0;
+    let mut total_score_weight = 0.0;
+    let mut total_loc = 0usize;
+    struct ProjectResult {
+        name: String,
+        violations: usize,
+        score: f64,
+        loc: usize,
+        critical: usize,
+    }
+    let mut results: Vec<ProjectResult> = Vec::new();
+
+    for p in &paths {
+        let r = lint_path(p);
+        let score = compute_score(&r);
+        let loc = count_loc(p);
+        let critical = r
+            .iter()
+            .filter(|x| x.severity == Severity::CRITICAL)
+            .count();
+        total_violations += r.len();
+        total_score_weight += score * loc as f64;
+        total_loc += loc;
+        results.push(ProjectResult {
+            name: p.clone(),
+            violations: r.len(),
+            score,
+            loc,
+            critical,
+        });
+    }
+
+    println!(
+        "{:<25} {:>10} {:>8} {:>8}",
+        "Project", "Violations", "Score", "LOC"
+    );
+    for pr in &results {
+        println!(
+            "{:<25} {:>10} {:>8.1} {:>8}",
+            pr.name, pr.violations, pr.score, pr.loc
+        );
+    }
+    println!();
+    let aggregate = if total_loc > 0 {
+        total_score_weight / total_loc as f64
+    } else {
+        0.0
+    };
+    println!("Aggregate Score: {:.1} / 100", aggregate);
+    println!("Total Violations: {}", total_violations);
+    let has_any_critical = results.iter().any(|r| r.critical > 0);
+    if has_any_critical {
+        println!("CRITICAL violations found in some projects");
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
 }

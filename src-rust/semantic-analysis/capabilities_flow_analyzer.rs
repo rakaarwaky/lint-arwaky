@@ -6,13 +6,13 @@ use std::fs;
 
 use regex::Regex;
 
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 use crate::semantic_analysis::capabilities_boundary_analyzer::ScopeBoundaryAnalyzer;
 use crate::semantic_analysis::contract_flow_protocol::IDataFlowProtocol;
-use /* UNKNOWN: DataFlowList */ crate::shared_common::taxonomy_common_vo::DataFlowList;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::DataFlowList;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 
 /// A single data flow entry describing a variable's usage at a line.
 pub struct DataFlowEntry {
@@ -24,6 +24,12 @@ pub struct DataFlowEntry {
 /// Business logic for tracking variable lifecycle in JS/TS files.
 pub struct DataFlowAnalyzer {
     scope: ScopeBoundaryAnalyzer,
+}
+
+impl Default for DataFlowAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DataFlowAnalyzer {

@@ -10,16 +10,19 @@
 // control flow) instead of acting as a thin pass-through to the agent layer.
 // Surfaces must be declarative/passive — I/O parsing + delegation only.
 
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    aes033_hierarchy_violation, aes034_passive_viotation_details,
+};
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -33,17 +36,30 @@ static PY_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^class\s+(\w
 // Regex: detect if statements for nesting depth
 static IF_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^\s*if\s+").ok());
 
-/// AES018 + AES019 — surface barrel wiring and passivity checks.
-pub struct SurfaceHierarchyChecker {}
+// Regex: detect Rust impl blocks
+static RUST_IMPL_RE: Lazy<Option<Regex>> =
+    Lazy::new(|| Regex::new(r"^\s*(?:pub\s+)?(?:unsafe\s+)?impl\s+").ok());
 
-// Thresholds for AES019
+// Regex: detect Rust fn definitions
+static RUST_FN_RE: Lazy<Option<Regex>> =
+    Lazy::new(|| Regex::new(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+(\w+)\s*\(").ok());
+
 const MAX_PUBLIC_METHODS: usize = 10;
 const MAX_FUNCTION_BODY_LINES: i64 = 80;
 const MAX_IF_DEPTH: usize = 3;
 
+/// AES018 + AES019 — surface barrel wiring and passivity checks.
+pub struct SurfaceHierarchyChecker;
+
+impl Default for SurfaceHierarchyChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SurfaceHierarchyChecker {
     pub fn new() -> Self {
-        Self {}
+        Self
     }
 
     /// Main entry point — run AES018 (barrel wiring) and AES019 (passive surface).
@@ -63,22 +79,15 @@ impl SurfaceHierarchyChecker {
 
             // AES018: check if file is wired in barrel
             if !is_wired(f) {
-                let desc = format!(
-                    "AES018 SURFACE_HIERARCHY_VIOLATION: Surface file '{}' is not imported from the layer barrel.\n\
-                     WHY? All surface files must be reachable through __init__.py to maintain a clear entry-point hierarchy.\n\
-                     FIX: Add 'from .{} import ...' to {}/__init__.py, or delete if unused.",
-                    f,
-                    stem(f),
-                    directory(f)
-                );
+                let desc = aes033_hierarchy_violation(&f.to_string());
                 results.push(LintResult {
                     file: f.clone(),
                     line: LineNumber::new(1),
                     column: ColumnNumber::new(1),
-                    code: ErrorCode::raw("AES018"),
+                    code: ErrorCode::raw("AES033"),
                     message: LintMessage::new(desc),
                     source: Some(AdapterName::raw("surface_hierarchy")),
-                    severity: Severity::CRITICAL,
+                    severity: Severity::HIGH,
                     enclosing_scope: None,
                     related_locations: LocationList::new(),
                 });
@@ -98,7 +107,125 @@ impl SurfaceHierarchyChecker {
 
         let lines: Vec<&str> = content.lines().collect();
         let mut violations: Vec<String> = Vec::new();
+        let is_rust = f.to_string().ends_with(".rs");
 
+        if is_rust {
+            self._check_rust_passive(f, &lines, &mut violations);
+        } else {
+            self._check_python_passive(f, &lines, &mut violations);
+        }
+
+        if !violations.is_empty() {
+            self._report_aes019(f, violations, results);
+        }
+    }
+
+    /// Rust-specific passive check: detect impl blocks and fn methods.
+    fn _check_rust_passive(&self, _f: &FilePath, lines: &[&str], violations: &mut Vec<String>) {
+        let impl_re = match &*RUST_IMPL_RE {
+            Some(r) => r,
+            None => return,
+        };
+        let fn_re = match &*RUST_FN_RE {
+            Some(r) => r,
+            None => return,
+        };
+
+        let mut current_impl: Option<(String, usize)> = None;
+        let mut methods: Vec<(String, usize, Option<usize>)> = Vec::new();
+        let mut impl_indent: usize = 0;
+
+        for (i, raw_line) in lines.iter().enumerate() {
+            let trimmed = raw_line.trim();
+            if trimmed.starts_with("use ") || trimmed.starts_with("//") || trimmed.starts_with("/*")
+            {
+                continue;
+            }
+            if trimmed.starts_with("pub mod ") || trimmed.starts_with("mod ") {
+                continue;
+            }
+
+            if impl_re.captures(trimmed).is_some() {
+                if let Some((_name, start)) = current_impl.take() {
+                    self._add_impl_violations(&methods, "impl", start, violations);
+                }
+                let trait_name = if let Some(pos) = trimmed.find(" for ") {
+                    trimmed[pos + 5..].trim().to_string()
+                } else {
+                    String::new()
+                };
+                current_impl = Some((trait_name, i));
+                impl_indent = raw_line.len() - raw_line.trim_start().len();
+                methods.clear();
+                continue;
+            }
+
+            if let (Some((name, _start)), Some(cap)) = (&current_impl, fn_re.captures(trimmed)) {
+                let method_name = cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
+                if !method_name.starts_with('_')
+                    && !name.contains("Drop")
+                    && !name.contains("Clone")
+                {
+                    // Scan for end of this method body (next fn at same or less indent)
+                    let _m_indent = raw_line.len() - raw_line.trim_start().len();
+                    let mut end_line = lines.len();
+                    for (k, line) in lines.iter().enumerate().skip(i + 1) {
+                        let next = line.trim();
+                        if next.starts_with("fn ") || next.starts_with("impl ") {
+                            end_line = k;
+                            break;
+                        }
+                    }
+                    methods.push((method_name, i + 1, Some(end_line)));
+                }
+            }
+
+            // If we exit an impl block, finalize
+            if current_impl.is_some() {
+                let line_indent = raw_line.len() - raw_line.trim_start().len();
+                if !trimmed.is_empty() && trimmed != "}" && line_indent <= impl_indent {
+                    if let Some((_name, start)) = current_impl.take() {
+                        self._add_impl_violations(&methods, "impl", start, violations);
+                    }
+                }
+            }
+        }
+        // Finalize any remaining impl block
+        if let Some((_name, start)) = current_impl.take() {
+            self._add_impl_violations(&methods, "impl", start, violations);
+        }
+    }
+
+    fn _add_impl_violations(
+        &self,
+        methods: &[(String, usize, Option<usize>)],
+        impl_name: &str,
+        _start: usize,
+        violations: &mut Vec<String>,
+    ) {
+        if methods.len() > MAX_PUBLIC_METHODS {
+            violations.push(format!(
+                "Impl block '{}' has {} public methods (max {})",
+                impl_name,
+                methods.len(),
+                MAX_PUBLIC_METHODS
+            ));
+        }
+        for (method_name, s, e) in methods {
+            if let Some(end_line) = e {
+                let body_len = (*end_line as i64) - (*s as i64);
+                if body_len > MAX_FUNCTION_BODY_LINES {
+                    violations.push(format!(
+                        "Method '{}' is {} lines (max {})",
+                        method_name, body_len, MAX_FUNCTION_BODY_LINES
+                    ));
+                }
+            }
+        }
+    }
+
+    /// Python-specific passive check: detect classes and methods.
+    fn _check_python_passive(&self, _f: &FilePath, lines: &[&str], violations: &mut Vec<String>) {
         // Find classes in the file and check their methods
         for (i, raw_line) in lines.iter().enumerate() {
             let stripped = raw_line.trim();
@@ -108,7 +235,6 @@ impl SurfaceHierarchyChecker {
             };
             if let Some(cap) = class_re.captures(stripped) {
                 let class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
-                let _class_start = i;
                 let indent = raw_line.len() - raw_line.trim_start().len();
 
                 // Collect public methods in this class
@@ -121,7 +247,6 @@ impl SurfaceHierarchyChecker {
                     }
                     let m_indent = method_line.len() - method_line.trim_start().len();
 
-                    // If indent <= class indent, we've left the class
                     if m_indent <= indent && !method_line.trim().is_empty() {
                         break;
                     }
@@ -132,12 +257,9 @@ impl SurfaceHierarchyChecker {
                     };
                     if let Some(mcap) = method_re.captures(method_line.trim()) {
                         let method_name = mcap.get(1).map(|m| m.as_str()).unwrap_or("");
-                        // Public methods don't start with underscore
                         if !method_name.starts_with('_') {
-                            // Estimate end line
                             let mut end_line = lines.len();
-                            for k in (j + 1)..lines.len() {
-                                let next = lines[k];
+                            for (k, next) in lines.iter().enumerate().skip(j + 1) {
                                 if !next.trim().is_empty() {
                                     let n_indent = next.len() - next.trim_start().len();
                                     if n_indent <= m_indent {
@@ -151,14 +273,10 @@ impl SurfaceHierarchyChecker {
                     }
                 }
 
-                self._check_methods_too_public(class_name, &pub_methods, &mut violations);
-                self._check_method_lengths(class_name, &lines, &pub_methods, &mut violations);
-                self._check_method_nesting(class_name, &lines, &pub_methods, &mut violations);
+                self._check_methods_too_public(class_name, &pub_methods, violations);
+                self._check_method_lengths(class_name, lines, &pub_methods, violations);
+                self._check_method_nesting(class_name, lines, &pub_methods, violations);
             }
-        }
-
-        if !violations.is_empty() {
-            self._report_aes019(f, violations, results);
         }
     }
 
@@ -222,7 +340,7 @@ impl SurfaceHierarchyChecker {
                 let trimmed = line.trim();
 
                 // Count nesting by indentation increase relative to method body
-                if IF_RE.as_ref().map_or(false, |re| re.is_match(trimmed)) {
+                if IF_RE.as_ref().is_some_and(|re| re.is_match(trimmed)) {
                     let indent = line.len() - line.trim_start().len();
                     // Simple heuristic: count leading whitespace / 4 as depth
                     let depth = indent / 4;
@@ -253,15 +371,10 @@ impl SurfaceHierarchyChecker {
             file: f.clone(),
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),
-            code: ErrorCode::raw("AES019"),
-            message: LintMessage::new(format!(
-                "AES019 PASSIVE_SURFACE_VIOLATION: Surface file '{}' contains active domain logic:\n{}\n\
-                 WHY? Surfaces must be passive I/O boundaries. Business logic belongs in capabilities/agent layers.\n\
-                 FIX: Move logic to a handler or orchestrator.",
-                f, detail
-            )),
+            code: ErrorCode::raw("AES034"),
+            message: LintMessage::new(aes034_passive_viotation_details(&f.to_string(), &detail)),
             source: Some(AdapterName::raw("surface_hierarchy")),
-            severity: Severity::CRITICAL,
+            severity: Severity::HIGH,
             enclosing_scope: None,
             related_locations: LocationList::new(),
         });
@@ -270,9 +383,12 @@ impl SurfaceHierarchyChecker {
 
 // --- helpers -----------------------------------------------------------------
 
-/// Check if the file path is in a surfaces directory.
+/// Check if the file is a surface file by filename prefix `surface_`.
 fn is_in_surfaces(f: &FilePath) -> bool {
-    f.to_string().contains("/surfaces/") || f.to_string().ends_with("/surfaces")
+    let path_str = f.to_string();
+    let basename = path_str.rsplit('/').next().unwrap_or(&path_str);
+    let stem = basename.split('.').next().unwrap_or(basename);
+    stem.starts_with("surface_")
 }
 
 /// Check if the file is a barrel/init file.
@@ -294,7 +410,7 @@ fn stem(f: &FilePath) -> String {
 /// Get the directory portion of the file path.
 fn directory(f: &FilePath) -> String {
     let path_str = f.to_string();
-    let pos = path_str.rfind('/').map(|i| i).unwrap_or(0);
+    let pos = path_str.rfind('/').unwrap_or(0);
     if pos == 0 {
         if path_str.starts_with('/') {
             "/".to_string()
@@ -335,13 +451,18 @@ mod tests {
 
     #[test]
     fn test_is_in_surfaces() {
-        let f = FilePath::new("src/surfaces/handler.py")
+        let f = FilePath::new("src/surfaces/surface_handler.py")
             .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert!(is_in_surfaces(&f));
 
-        let f = FilePath::new("src/capabilities/checker.py")
+        let f = FilePath::new("src/capabilities/capabilities_not_checker.py")
             .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert!(!is_in_surfaces(&f));
+
+        // Prefix-based: any file starting with surface_ is a surface file
+        let f = FilePath::new("src/cli-commands/surface_check_command.rs")
+            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+        assert!(is_in_surfaces(&f));
     }
 
     #[test]

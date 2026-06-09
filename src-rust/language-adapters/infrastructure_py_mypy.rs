@@ -3,22 +3,24 @@ use async_trait::async_trait;
 use regex::Regex;
 use std::sync::Arc;
 
-use crate::di_containers::contract_service_aggregate::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
-use /* UNKNOWN: AdapterError */ crate::shared_common::taxonomy_adapter_error::AdapterError;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use crate::source_parsing::contract_normalization_port::IPathNormalizationPort;
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: LinterOperationError */ crate::shared_common::taxonomy_operation_error::LinterOperationError;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_adapter_error::AdapterError;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_operation_error::LinterOperationError;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct MyPyAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
@@ -84,7 +86,9 @@ impl ILinterAdapterPort for MyPyAdapter {
             .execute_command(
                 command,
                 working_dir,
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(120.0)),
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                    120.0,
+                )),
             )
             .await
         {
@@ -128,17 +132,17 @@ impl ILinterAdapterPort for MyPyAdapter {
                             Some(path.clone()),
                         );
 
-                        results.push(LintResult::new(
-                            resolved,
-                            LineNumber::new(line_number),
-                            ColumnNumber::new(column),
-                            ErrorCode::raw(code),
-                            LintMessage::new(message),
-                            Some(self.name()),
-                            Self::map_severity(msg_type, message),
-                            None,
-                            LocationList::new(),
-                        ));
+                        results.push(LintResult {
+                            file: resolved,
+                            line: LineNumber::new(line_number),
+                            column: ColumnNumber::new(column),
+                            code: ErrorCode::raw(code),
+                            message: LintMessage::new(message),
+                            source: Some(self.name()),
+                            severity: Self::map_severity(msg_type, message),
+                            enclosing_scope: None,
+                            related_locations: LocationList::new(),
+                        });
                     } else if let Some(caps) = re_simple.captures(line) {
                         let filename = caps.get(1).map(|m| m.as_str()).unwrap_or("");
                         let line_number: i64 = caps
@@ -154,17 +158,17 @@ impl ILinterAdapterPort for MyPyAdapter {
                             Some(path.clone()),
                         );
 
-                        results.push(LintResult::new(
-                            resolved,
-                            LineNumber::new(line_number),
-                            ColumnNumber::new(0),
-                            ErrorCode::raw(code),
-                            LintMessage::new(message),
-                            Some(self.name()),
-                            Self::map_severity(msg_type, message),
-                            None,
-                            LocationList::new(),
-                        ));
+                        results.push(LintResult {
+                            file: resolved,
+                            line: LineNumber::new(line_number),
+                            column: ColumnNumber::new(0),
+                            code: ErrorCode::raw(code),
+                            message: LintMessage::new(message),
+                            source: Some(self.name()),
+                            severity: Self::map_severity(msg_type, message),
+                            enclosing_scope: None,
+                            related_locations: LocationList::new(),
+                        });
                     }
                 }
                 Ok(LintResultList::new(results))

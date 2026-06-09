@@ -73,72 +73,69 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 | ID     | Requirement                                                                                                                                                                                                                                                                                                                              | Dependency |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| FR-010 | **Import layer violation detector** (AES001) — cross-layer import detection — see [`docs/FRD_010_import_layer_violation.md`](FRD_010_import_layer_violation.md)                                                                                                                                                                   | FR-001     |
-| FR-011 | **Mandatory import missing detector** (AES002) — required imports per layer — see [`docs/FRD_011_mandatory_import.md`](FRD_011_mandatory_import.md)                                                                                                                                                                               | FR-001     |
-| FR-012 | **Layer import alias checker** (AES007) — contract imports via barrel — see [`docs/FRD_012_contract_barrel.md`](FRD_012_contract_barrel.md)                                                                                                                                                                                       | FR-001     |
-| FR-013 | **Root layer detection** (AES010) — forbidden root import patterns — see [`docs/FRD_013_root_layer_detection.md`](FRD_013_root_layer_detection.md)                                                                                                                                                                                | FR-001     |
-| FR-014 | **Layer suffix mismatch detector** (AES011) — file suffix must match layer — see [`docs/FRD_014_layer_suffix.md`](FRD_014_layer_suffix.md)                                                                                                                                                                                        | FR-001     |
-| FR-015 | **Contract suffix mismatch detector** (AES008) — contract needs _port/_protocol/_aggregate — see [`docs/FRD_015_contract_suffix.md`](FRD_015_contract_suffix.md)                                                                                                                                                                  | FR-001     |
-| FR-016 | **Surface layer rule checker** (AES022) — surface must not implement domain logic; Smart surfaces parse input and delegate via `ServiceContainerAggregate`; Passive surfaces (`_component`, `_layout`, `_view`) import taxonomy only (AES019) — see [`docs/FRD_016_surface_layer_rule.md`](FRD_016_surface_layer_rule.md) | FR-001     |
-| FR-017 | **Surface direct import checker** (AES023) — no direct infra/cap imports — see [`docs/FRD_017_surface_direct_import.md`](FRD_017_surface_direct_import.md)                                                                                                                                                                        | FR-001     |
+| FR-010 | **Import layer violation detector** (AES001) — cross-layer import detection                                                                                                                                                                                                                                   | FR-001     |
+| FR-011 | **Mandatory import missing detector** (AES002) — required imports per layer                                                                                                                                                                                                                                               | FR-001     |
+| FR-013 | **Root layer detection** (AES004) — forbidden root import patterns                                                                                                                                                                                                                                                | FR-001     |
+| FR-014 | **Layer suffix mismatch detector** (AES005) — file suffix must match layer                                                                                                                                                                                                                                                        | FR-001     |
+| FR-015 | **Contract suffix mismatch detector** (AES006) — contract needs _port/_protocol/_aggregate                                                                                                                                                                                                                                  | FR-001     |
+| FR-016 | **Surface layer rule checker** (AES031) — surface must not implement domain logic; Smart surfaces parse input and delegate via `ServiceContainerAggregate`; Passive surfaces (`_component`, `_layout`, `_view`) import taxonomy only (AES034) | FR-001     |
+| FR-017 | **Surface direct import checker** (AES003) — no direct infra/cap imports                                                                                                                                                                                                                                        | FR-001     |
 
 ### 5.3 Naming & Structure Rules
 
 | ID     | Requirement                                                                                        | Dependency |
 | ------ | -------------------------------------------------------------------------------------------------- | ---------- |
-| FR-020 | **Naming convention checker** (AES003) — strict 3-word snake_case                           | FR-003     |
-| FR-021 | **Mandatory struct/trait definition checker** (AES009) — every file needs struct/enum/trait | FR-003     |
-| FR-022 | **Barrel completeness checker** (AES012) — mod.rs must export all                           | FR-001     |
-| FR-023 | **Internal re-export forbidden checker** (AES013) — no pub mod/use in sub-modules           | FR-001     |
+| FR-020 | **Naming convention checker** (AES010) — strict word snake_case                           | FR-003     |
+| FR-021 | **Mandatory struct/trait definition checker** (AES011) — every file needs struct/enum/trait | FR-003     |
 
 ### 5.4 File & Content Rules
 
 | ID     | Requirement                                                                     | Dependency |
 | ------ | ------------------------------------------------------------------------------- | ---------- |
-| FR-025 | **File size limit checker** (AES004) — max line threshold                | FR-003     |
-| FR-026 | **File minimum size checker** (AES005) — min line threshold              | FR-003     |
-| FR-027 | **Primitive usage checker** (AES006) — no raw primitives in domain types | FR-003     |
+| FR-025 | **File size limit checker** (AES020) — max line threshold                | FR-003     |
+| FR-026 | **File minimum size checker** (AES021) — min line threshold              | FR-003     |
+| FR-027 | **Primitive usage checker** (AES016) — no raw primitives in domain types | FR-003     |
 
 ### 5.5 Code Quality & Bypass Detection
 
 | ID     | Requirement                                                                             | Dependency |
 | ------ | --------------------------------------------------------------------------------------- | ---------- |
-| FR-030 | **Bypass comment violation detector** (AES014) — no #[allow, unwrap, panic, noqa | FR-003     |
-| FR-031 | **Unused mandatory import detector** (AES015) — unused imports flagged           | FR-003     |
-| FR-032 | **Dead inheritance bypass detector** (AES016) — empty struct/trait               | FR-003     |
-| FR-033 | **Orphan code detector** (AES017) — unreachable components                       | FR-003     |
+| FR-030 | **Bypass comment violation detector** (AES022) — no #[allow, unwrap, panic, noqa | FR-003     |
+| FR-031 | **Unused mandatory import detector** (AES023) — unused imports flagged           | FR-003     |
+| FR-032 | **Dead inheritance bypass detector** (AES024) — empty struct/trait               | FR-003     |
+| FR-033 | **Orphan code detector** (AES030) — unreachable components                       | FR-003     |
 
 ### 5.6 Surface & Agent Rules
 
 | ID     | Requirement                                                                              | Dependency |
 | ------ | ---------------------------------------------------------------------------------------- | ---------- |
-| FR-035 | **Surface hierarchy violation detector** (AES018) — utility imports smart surface | FR-001     |
-| FR-036 | **Passive surface violation detector** (AES019) — passive imports taxonomy only   | FR-001     |
-| FR-037 | **Agent role violation detector** (AES021) — behavioral mandates per agent role   | FR-001     |
-| FR-038 | **Agent any-bypass detector** (AES024) — no `any` type in orchestrators         | FR-003     |
+| FR-035 | **Surface hierarchy violation detector** (AES033) — utility imports smart surface | FR-001     |
+| FR-036 | **Passive surface violation detector** (AES034) — passive imports taxonomy only   | FR-001     |
+| FR-037 | **Agent role violation detector** (AES032) — behavioral mandates per agent role   | FR-001     |
+| FR-038 | **Agent any-bypass detector** (AES035) — no `any` type in orchestrators         | FR-003     |
 
 ### 5.7 Contract & Aggregate Rules
 
 | ID     | Requirement                                                                              | Dependency |
 | ------ | ---------------------------------------------------------------------------------------- | ---------- |
 | FR-040 | **MCP schema checker** (AES025) — MCP tools need docstrings + JSON Schema         | FR-003     |
-| FR-041 | **Forbidden inheritance detector** (AES026) — aggregate not inherit port/protocol | FR-003     |
-| FR-042 | **Mandatory inheritance checker** (AES027) — every file implements a contract     | FR-003     |
+| FR-041 | **Forbidden inheritance detector** (AES013) — aggregate not inherit port/protocol | FR-003     |
+| FR-042 | **Mandatory inheritance checker** (AES014) — every file implements a contract     | FR-003     |
 
 ### 5.8 Capability Dispatch & Constants
 
 | ID     | Requirement                                                                          | Dependency |
 | ------ | ------------------------------------------------------------------------------------ | ---------- |
-| FR-045 | **Capability method existence checker** (AES030) — dispatch method exists     | FR-003     |
-| FR-046 | **Single capability bottleneck detector** (AES031) — balance dispatch routes  | FR-003     |
-| FR-047 | **Missing VO construction detector** (AES032) — capability needs typed VOs    | FR-003     |
-| FR-048 | **Constant purity checker** (AES033) — _constant files: only pub const/static | FR-003     |
+| FR-045 | **Capability method existence checker** (AES037) — dispatch method exists     | FR-003     |
+| FR-046 | **Single capability bottleneck detector** (AES036) — balance dispatch routes  | FR-003     |
+| FR-047 | **Missing VO construction detector** (AES038) — capability needs typed VOs    | FR-003     |
+| FR-048 | **Constant purity checker** (AES015) — _constant files: only pub const/static | FR-003     |
 
 ### 5.9 Project-Wide Analysis
 
 | ID     | Requirement                                                                      | Dependency |
 | ------ | -------------------------------------------------------------------------------- | ---------- |
-| FR-050 | **Circular dependency cycle analyzer** (AES020) — detect circular imports | FR-003     |
+| FR-050 | **Circular dependency cycle analyzer** (AES012) — detect circular imports | FR-003     |
 
 ### 5.10 CLI Interface
 
@@ -268,7 +265,7 @@ contract       -> taxonomy
 taxonomy       -> taxonomy
 ```
 
-Surfaces must NOT import from `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through the `ServiceContainerAggregate` trait in the contract layer (AES023, AES022). The DI container is created in `cli_main_entry.rs` (root layer, not a surface) and passed to surfaces. This enforces strict dependency inversion per ARCHITECTURE.md.
+Surfaces must NOT import from `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through the `ServiceContainerAggregate` trait in the contract layer (AES001 sub-condition surface_direct). The DI container is created in `cli_main_entry.rs` (root layer, not a surface) and passed to surfaces. This enforces strict dependency inversion per ARCHITECTURE.md.
 
 ### 7.3 MCP Server Architecture
 
@@ -291,21 +288,21 @@ Severity levels and their point penalty per finding:
 | Severity | Penalty | Description                                   |
 | -------- | ------- | --------------------------------------------- |
 | LOW      | -1      | Minor style or naming issue                   |
-| MEDIUM   | -2      | Structural concern, barrel/import patterns    |
+| MEDIUM   | -2      | Structural concern, import patterns            |
 | HIGH     | -3      | Architecture violation, mandatory requirement |
 | CRITICAL | -5      | Bypass markers, dead inheritance, layer fraud |
 
 Total score starts at 100.0 and is deducted per finding. If any CRITICAL finding exists, the run fails regardless of score.
 
-**AES006 Primitive Policy**: Value Object enforcement is **granular per layer**:
+**AES016 Primitive Policy**: Value Object enforcement is **granular per layer**:
 
 - `contract` and `taxonomy(entity|error|event)` → `no_primitives: true` (strict)
 - `infrastructure`, `capabilities`, `surfaces` → `no_primitives: false` (adapter layers may use primitives as supporting types)
 - `taxonomy(constant)` → raw primitives allowed by definition; must contain ONLY constant declarations (AES033)
 
-**AES033 Constant Purity (v1.10.2)**: Taxonomy files ending in `_constant` must contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, or `impl` block in a `_constant` file is a violation.
+**AES015 Constant Purity (v2.0)**: Taxonomy files ending in `_constant` must contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, or `impl` block in a `_constant` file is a violation.
 
-See [docs/AES_RULES.md](docs/AES_RULES.md) for the full rule catalog (31 codes: AES001–AES033, AES028/029 reserved) and [docs/AESArchitecture.md](docs/AESArchitecture.md) for the layered specification with Mermaid diagrams.
+See [docs/AES_RULES.md](docs/AES_RULES.md) for the full rule catalog (27 active codes across 4 groups) and [docs/AESArchitecture.md](docs/AESArchitecture.md) for the layered specification with Mermaid diagrams.
 
 ---
 
@@ -342,7 +339,7 @@ Subcommands are defined in `src-rust/surfaces/cli_core_command.rs` and dispatche
 - Pure-Rust implementation (no embedded Python or Node.js runtime)
 - No database required (file-based history only for trends)
 - Static binary release via `cargo build --release`
-- Platform: Linux, macOS, Windows (MSVC and GNU)
+- Platform: Linux
 
 ---
 
@@ -369,20 +366,3 @@ Subcommands are defined in `src-rust/surfaces/cli_core_command.rs` and dispatche
 | tracing-subscriber | 0.3               | Log filtering             |
 
 ---
-
-## 12. Sign-off & Implementation Status
-
-**Sign-off Date**: 7 Juni 2026
-**Status**: ✅ SIGNED OFF — All functional requirements implemented and verified
-
-| Milestone                          | Status      | Notes                                                              |
-| ---------------------------------- | ----------- | ------------------------------------------------------------------ |
-| AES Rules Engine (31 codes)        | ✅ Complete | All 31 AES codes implemented (AES001–AES033, AES028/029 reserved) |
-| Rust Self-Lint (`check .`)       | ✅ Verified | Detects 153 violations across 15 AES codes on own codebase         |
-| Rust Test Project (`scan`)       | ✅ Verified | Detects 34 violations across 14 AES codes                          |
-| Python Test Project (`scan`)     | ✅ Verified | Detects 238 violations across 9 tools (ruff/mypy/bandit)           |
-| JavaScript Test Project (`scan`) | ✅ Verified | Detects 323 violations across 12 tools (eslint/prettier/tsc)       |
-| Unique AES Codes Detected          | ✅ 30/31    | AES001–AES033 minus AES028/029 (reserved), AES031 pending         |
-| CLI (20+ subcommands)              | ✅ Complete | check, scan, fix, report, ci, watch, git-diff, setup, clean, etc.  |
-| MCP Server (5 tools)               | ✅ Complete | JSON-RPC 2.0 over stdin/stdout via mcp-sdk-rs                      |
-| Zero Bypass Tolerance              | ✅ Complete | `noqa`, `type: ignore`, `#[allow(...)]` all flagged          |

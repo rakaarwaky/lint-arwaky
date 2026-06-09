@@ -1,9 +1,15 @@
 use crate::config_system::contract_detector_port::ILanguageDetectorPort;
+use crate::project_setup::taxonomy_language_vo::LanguageSource;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LanguageSource */ crate::project_setup::taxonomy_language_vo::LanguageSource;
 use async_trait::async_trait;
 
 pub struct LanguageDetectorProvider {}
+
+impl Default for LanguageDetectorProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl LanguageDetectorProvider {
     pub fn new() -> Self {

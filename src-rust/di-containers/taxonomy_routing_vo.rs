@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CapabilityReference {
@@ -131,7 +131,7 @@ impl<'de> serde::Deserialize<'de> for ClassNameVO {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;

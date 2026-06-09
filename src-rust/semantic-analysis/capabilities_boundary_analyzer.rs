@@ -1,14 +1,20 @@
 /// scope_boundary_analyzer — Scope boundary detection for JS/TS files.
 /// Used by data_flow_analyzer to determine enclosing scope bounds.
 use crate::layer_rules::contract_compliance_protocol::IScopeBoundaryProtocol;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_layer_vo::LineContentVO;
+use crate::shared_common::taxonomy_lint_vo::ScopeBounds;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineContentVO */ crate::shared_common::taxonomy_layer_vo::LineContentVO;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: ScopeBounds */ crate::shared_common::taxonomy_lint_vo::ScopeBounds;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 
 pub struct ScopeBoundaryAnalyzer {}
+
+impl Default for ScopeBoundaryAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ScopeBoundaryAnalyzer {
     pub fn new() -> Self {
@@ -57,7 +63,7 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
         if line.starts_with("function ") {
             let name = line
                 .trim_start_matches("function ")
-                .split(|c: char| c == '(' || c == ' ')
+                .split(['(', ' '])
                 .next()
                 .unwrap_or("");
             if !name.is_empty() {
@@ -67,7 +73,7 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
         if line.starts_with("class ") {
             let name = line
                 .trim_start_matches("class ")
-                .split(|c: char| c == '(' || c == ' ' || c == '{')
+                .split(['(', ' ', '{'])
                 .next()
                 .unwrap_or("");
             if !name.is_empty() {
@@ -129,7 +135,7 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
             let trimmed = l.trim();
             if let Some(name) = trimmed.strip_prefix("function ") {
                 let name = name
-                    .split(|c: char| c == '(' || c == ' ')
+                    .split(['(', ' '])
                     .next()
                     .unwrap_or("");
                 if !name.is_empty() {
@@ -137,7 +143,7 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
                 }
             } else if let Some(name) = trimmed.strip_prefix("class ") {
                 let name = name
-                    .split(|c: char| c == '(' || c == ' ' || c == '{')
+                    .split(['(', ' ', '{'])
                     .next()
                     .unwrap_or("");
                 if !name.is_empty() {
@@ -166,6 +172,6 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
                 }
             }
         }
-        current_scope.map(|s| SymbolName::new(s))
+        current_scope.map(SymbolName::new)
     }
 }

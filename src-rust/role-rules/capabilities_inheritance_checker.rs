@@ -2,22 +2,23 @@
 // Checks that files in agent/capabilities/infrastructure that import contracts
 // also have a class inheriting from them.
 
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::contract_inheritance_protocol::IArchInheritanceProtocol;
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::output_report::taxonomy_result_vo::LintResult;
+use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_lint_vo::ScopeRef;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_violationrs_constant::aes014_mandatory_inheritance;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use crate::output_report::taxonomy_severity_vo::Severity;
 use async_trait::async_trait;
 use regex::Regex;
 use std::fs;
@@ -45,13 +46,17 @@ impl MandatoryInheritanceChecker {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(0),
             column: ColumnNumber::new(0),
-            code: ErrorCode::raw("AES027"),
+            code: ErrorCode::raw("AES014"),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),
             severity: Severity::CRITICAL,
             enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
+                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
+                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
                 file: None,
                 start_line: None,
                 end_line: None,
@@ -66,9 +71,11 @@ impl MandatoryInheritanceChecker {
             .unwrap_or(file)
             .trim_start_matches('/');
 
-        let mut layers: Vec<(&LayerNameVO, &crate::shared_common::taxonomy_definition_vo::LayerDefinition)> =
-            self.config.layers.iter().collect();
-        layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
+        let mut layers: Vec<(
+            &LayerNameVO,
+            &crate::shared_common::taxonomy_definition_vo::LayerDefinition,
+        )> = self.config.layers.iter().collect();
+        layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 
         for (name, def) in layers {
             if rel.starts_with(&def.path.value) {
@@ -81,10 +88,10 @@ impl MandatoryInheritanceChecker {
     fn is_contract_import(name: &str, module: &str) -> bool {
         let contract_suffixes = ["_port", "_protocol", "_aggregate"];
         let has_suffix = contract_suffixes.iter().any(|s| name.ends_with(s));
-        let is_interface = name.starts_with('I') && name.len() > 1;
-        let from_contract = module.contains("contract");
+        let _is_interface = name.starts_with('I') && name.len() > 1;
+        let _from_contract = module.contains("contract");
 
-        (has_suffix || (is_interface && has_suffix)) || (from_contract && has_suffix)
+        has_suffix
     }
 
     fn extract_contract_imports(content: &str) -> Vec<String> {
@@ -104,7 +111,7 @@ impl MandatoryInheritanceChecker {
                 let names = names_str
                     .trim_matches(|c| c == '(' || c == ')')
                     .split(',')
-                    .map(|s| s.trim().split_whitespace().next().unwrap_or("").to_string())
+                    .map(|s| s.split_whitespace().next().unwrap_or("").to_string())
                     .filter(|s| !s.is_empty());
 
                 for name in names {
@@ -146,7 +153,7 @@ impl MandatoryInheritanceChecker {
         violations: &mut Vec<LintResult>,
     ) {
         for file in files {
-            let basename = file.split('/').last().unwrap_or("");
+            let basename = file.split('/').next_back().unwrap_or("");
 
             // Skip barrel files
             if basename == "__init__.py" || basename == "mod.rs" {
@@ -185,12 +192,7 @@ impl MandatoryInheritanceChecker {
 
             if !inherited {
                 let imported_list = contract_imports.join(", ");
-                let msg = format!(
-                    "AES027 MANDATORY_INHERITANCE_VIOLATION: File imports contracts ({}) but no class inherits from any of them. \
-                    Layer '{}' must implement its contract via inheritance. \
-                    FIX: Make at least one class in this file inherit from one of the imported contracts.",
-                    imported_list, layer
-                );
+                let msg = aes014_mandatory_inheritance(&imported_list);
                 violations.push(Self::make_result(file, &msg));
             }
         }

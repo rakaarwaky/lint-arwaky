@@ -1,11 +1,11 @@
 // call_chain_analyzer — Call chain analysis capability for JS/TS files.
 // Implements ISemanticTracerProtocol: trace_call_chain, project_wide_rename.
 
-use crate::semantic_analysis::capabilities_flow_analyzer::DataFlowAnalyzer;
 use crate::naming_rules::capabilities_variant_analyzer::NamingVariantAnalyzer;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
 use crate::semantic_analysis::capabilities_boundary_resolver::ScopeBoundaryResolver;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use /* UNKNOWN: SymbolNameList */ crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::semantic_analysis::capabilities_flow_analyzer::DataFlowAnalyzer;
 use regex::Regex;
 use std::fs;
 
@@ -16,6 +16,12 @@ pub struct CallChainAnalyzer {
     naming: NamingVariantAnalyzer,
     scope: ScopeBoundaryResolver,
     data_flow: DataFlowAnalyzer,
+}
+
+impl Default for CallChainAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CallChainAnalyzer {
@@ -139,11 +145,10 @@ impl CallChainAnalyzer {
                 })
                 .to_string();
 
-            if new_source != source {
-                if fs::write(filepath, &new_source).is_ok() {
+            if new_source != source
+                && fs::write(filepath, &new_source).is_ok() {
                     modified_count += 1;
                 }
-            }
         }
 
         modified_count

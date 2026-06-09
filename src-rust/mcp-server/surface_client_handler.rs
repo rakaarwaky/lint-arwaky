@@ -5,6 +5,12 @@ pub struct McpDesktopClientSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
+impl Default for McpDesktopClientSurface {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl McpDesktopClientSurface {
     pub fn new() -> Self {
         Self { container: None }

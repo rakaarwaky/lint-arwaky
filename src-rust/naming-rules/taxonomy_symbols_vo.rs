@@ -1,4 +1,4 @@
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 use crate::naming_rules::taxonomy_symbols_constant::CORE_PRIMITIVE_TYPES;
 use serde::{Deserialize, Serialize};
 
@@ -6,6 +6,12 @@ use serde::{Deserialize, Serialize};
 pub struct SymbolNameList {
     #[serde(default)]
     pub values: Vec<SymbolName>,
+}
+
+impl Default for SymbolNameList {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SymbolNameList {
@@ -32,6 +38,12 @@ pub struct ImportNameList {
     pub values: Vec<SymbolName>,
 }
 
+impl Default for ImportNameList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ImportNameList {
     pub fn new() -> Self {
         Self { values: Vec::new() }
@@ -48,6 +60,12 @@ impl ImportNameList {
 pub struct PrimitiveTypeList {
     #[serde(default)]
     pub values: Vec<SymbolName>,
+}
+
+impl Default for PrimitiveTypeList {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PrimitiveTypeList {
@@ -69,6 +87,12 @@ impl PrimitiveTypeList {
 pub struct CallChainList {
     #[serde(default)]
     pub values: Vec<SymbolName>,
+}
+
+impl Default for CallChainList {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CallChainList {

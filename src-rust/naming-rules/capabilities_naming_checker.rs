@@ -1,22 +1,30 @@
 // arch_naming_checker — Architectural naming convention checks.
 // Implements INamingCheckerProtocol: check_file_naming and check_domain_suffixes.
 
-use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violationrs_constant::{aes003_naming_convention, aes011_suffix_mismatch, AES011_SUFFIX_FORBIDDEN};
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_lint_vo::ScopeRef;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    aes010_naming_convention, AES011_SUFFIX_MISMATCH, AES011_SUFFIX_FORBIDDEN,
+};
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
 
 pub struct ArchNamingChecker {}
+
+impl Default for ArchNamingChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ArchNamingChecker {
     pub fn new() -> Self {
@@ -26,15 +34,19 @@ impl ArchNamingChecker {
     fn make_result(file: &str, code: &str, msg: &str, sev: Severity) -> LintResult {
         LintResult {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
-            line: LineNumber::new(0),
+            line: LineNumber::new(1),
             column: ColumnNumber::new(0),
             code: ErrorCode::raw(code),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
+                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
+                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
                 file: None,
                 start_line: None,
                 end_line: None,
@@ -79,11 +91,7 @@ impl ArchNamingChecker {
     }
 
     fn get_suffix(stem: &str) -> Option<String> {
-        if let Some(pos) = stem.rfind('_') {
-            Some(stem[pos + 1..].to_string())
-        } else {
-            None
-        }
+        stem.rfind('_').map(|pos| stem[pos + 1..].to_string())
     }
 
     /// Check file naming conventions (underscore word count) per layer definition.
@@ -93,7 +101,7 @@ impl ArchNamingChecker {
         filename: &str,
         _layer_name: &Option<String>,
         definition: Option<&LayerDefinition>,
-        config: &ArchitectureConfig,
+        _config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
         if Self::is_barrel_file(filename) || Self::is_entry_point(filename) {
@@ -106,22 +114,18 @@ impl ArchNamingChecker {
             }
         }
 
-        let expected_word_count = if let Some(def) = definition {
-            if def.word_count.value > 0 {
-                def.word_count.value as i32
-            } else {
-                config.naming.word_count.value as i32
-            }
-        } else {
-            config.naming.word_count.value as i32
-        };
-
         let stem = filename.split('.').next().unwrap_or("");
-        let naming_regex = format!(r"^[a-z0-9]+(_[a-z0-9]+){{{}}}$", expected_word_count - 1);
+        // Unlimited words: at least `prefix_suffix` (2 words), any concept words in between
+        let naming_regex = r"^[a-z0-9]+(_[a-z0-9]+)+$";
 
-        if let Ok(re) = Regex::new(&naming_regex) {
+        if let Ok(re) = Regex::new(naming_regex) {
             if !re.is_match(stem) {
-                violations.push(Self::make_result(file, "AES003", &aes003_naming_convention(expected_word_count), Severity::HIGH));
+                violations.push(Self::make_result(
+                    file,
+                    "AES010",
+                    &aes010_naming_convention(0),
+                    Severity::HIGH,
+                ));
             }
         }
     }
@@ -158,12 +162,17 @@ impl ArchNamingChecker {
         // AES011: Forbidden suffix check
         if let Some(ref suf) = suffix {
             if def.forbidden_suffix.values.contains(suf) {
-                violations.push(Self::make_result(file, "AES011", AES011_SUFFIX_FORBIDDEN, Severity::HIGH));
+                violations.push(Self::make_result(
+                    file,
+                    "AES011",
+                    AES011_SUFFIX_FORBIDDEN,
+                    Severity::HIGH,
+                ));
                 return;
             }
         }
 
-        // AES010: Strict suffix policy check
+        // AES001: Strict suffix policy check
         if def.suffix_policy.value == "strict" {
             let valid = suffix
                 .as_ref()
@@ -171,13 +180,22 @@ impl ArchNamingChecker {
                 .unwrap_or(false);
             if !valid {
                 let allowed_list = def.allowed_suffix.values.join(", ");
-                let msg = aes011_suffix_mismatch(&allowed_list);
-                let code = if _layer_name.as_ref().map(|l| l.as_str()) == Some("contract") {
-                    "AES008"
+                if _layer_name.as_ref().map(|l| l.as_str()) == Some("contract") {
+                    violations.push(Self::make_result(
+                        file,
+                        "AES011",
+                        AES011_SUFFIX_MISMATCH,
+                        Severity::HIGH,
+                    ));
                 } else {
-                    "AES010"
-                };
-                violations.push(Self::make_result(file, code, &msg, Severity::HIGH));
+                    let msg = format!(
+                        "AES001 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
+                        WHY? Strict suffixes ensure every component has a clear role.\n\
+                        FIX: Add one of the required suffixes: {}.",
+                        allowed_list
+                    );
+                    violations.push(Self::make_result(file, "AES001", &msg, Severity::HIGH));
+                }
             }
         }
     }

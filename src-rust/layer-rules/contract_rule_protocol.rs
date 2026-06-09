@@ -1,15 +1,15 @@
-use crate::file_system::contract_system_port::IFileSystemPort;
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::file_system::contract_system_port::IFileSystemPort;
+use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::Count;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::shared_common::taxonomy_definition_vo::LayerMapVO;
+use crate::shared_common::taxonomy_layer_vo::Identity;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use crate::shared_common::taxonomy_layer_vo::Identity;
-use /* UNKNOWN: LayerMapVO */ crate::shared_common::taxonomy_definition_vo::LayerMapVO;
-use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
 use async_trait::async_trait;
 
 pub trait IAnalyzer: Send + Sync {
@@ -72,6 +72,17 @@ pub trait IMetricCheckerProtocol: Send + Sync {
     );
 }
 
+pub struct ValidateImportsParams<'a> {
+    pub analyzer: &'a dyn IAnalyzer,
+    pub file_path: &'a FilePath,
+    pub root_dir: &'a FilePath,
+    pub required_layers: &'a PatternList,
+    pub results: &'a mut LintResultList,
+    pub message_template: &'a ErrorMessage,
+    pub layer_name: &'a LayerNameVO,
+    pub layers_display: &'a PatternList,
+}
+
 #[async_trait]
 pub trait IArchImportProcessorProtocol: Send + Sync {
     async fn process_file_imports(
@@ -83,28 +94,25 @@ pub trait IArchImportProcessorProtocol: Send + Sync {
     );
     async fn validate_imports_present(
         &self,
-        analyzer: &dyn IAnalyzer,
-        file_path: &FilePath,
-        root_dir: &FilePath,
-        required_layers: &PatternList,
-        results: &mut LintResultList,
-        message_template: &ErrorMessage,
-        layer_name: &LayerNameVO,
-        layers_display: &PatternList,
+        params: ValidateImportsParams<'_>,
     );
+}
+
+pub struct CheckFileNamingParams<'a> {
+    pub files: &'a FilePathList,
+    pub root_dir: &'a FilePath,
+    pub layer_map: &'a LayerMapVO,
+    pub global_expected: Count,
+    pub global_exceptions: &'a PatternList,
+    pub results: &'a mut LintResultList,
+    pub detect_layer_fn: &'a dyn Fn(&FilePath, &FilePath) -> Option<LayerNameVO>,
 }
 
 #[async_trait]
 pub trait INamingRuleProtocol: IArchRuleProtocol + Send + Sync {
     async fn check_file_naming(
         &self,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        layer_map: &LayerMapVO,
-        global_expected: Count,
-        global_exceptions: &PatternList,
-        results: &mut LintResultList,
-        detect_layer_fn: &dyn Fn(&FilePath, &FilePath) -> Option<LayerNameVO>,
+        params: CheckFileNamingParams<'_>,
     );
     async fn check_class_naming(
         &self,

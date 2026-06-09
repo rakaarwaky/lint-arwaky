@@ -1,31 +1,27 @@
 use serde::{Deserialize, Serialize};
 
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use /* UNKNOWN: JobId */ crate::pipeline_jobs::taxonomy_action_vo::JobId;
-use /* UNKNOWN: LineContentVO */ crate::shared_common::taxonomy_layer_vo::LineContentVO;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::pipeline_jobs::taxonomy_action_vo::JobId;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_layer_vo::LineContentVO;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct BooleanVO {
     pub(crate) value: bool,
 }
 
 impl BooleanVO {
     pub fn new(value: bool) -> Self {
-        Self { value: value }
+        Self { value }
     }
     pub fn value(&self) -> bool {
         self.value
     }
 }
 
-impl Default for BooleanVO {
-    fn default() -> Self {
-        BooleanVO { value: false }
-    }
-}
 
 impl std::fmt::Display for BooleanVO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -62,7 +58,7 @@ impl<'de> serde::Deserialize<'de> for BooleanVO {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<bool>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -78,24 +74,20 @@ impl<'de> serde::Deserialize<'de> for BooleanVO {
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct ColumnNumber {
     pub(crate) value: i64,
 }
 
 impl ColumnNumber {
     pub fn new(value: i64) -> Self {
-        Self { value: value }
+        Self { value }
     }
     pub fn value(&self) -> i64 {
         self.value
     }
 }
 
-impl Default for ColumnNumber {
-    fn default() -> Self {
-        ColumnNumber { value: 0 }
-    }
-}
 
 impl std::fmt::Display for ColumnNumber {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -138,7 +130,7 @@ impl<'de> serde::Deserialize<'de> for ColumnNumber {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<i64>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -154,24 +146,20 @@ impl<'de> serde::Deserialize<'de> for ColumnNumber {
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct Count {
     pub(crate) value: i64,
 }
 
 impl Count {
     pub fn new(value: i64) -> Self {
-        Self { value: value }
+        Self { value }
     }
     pub fn value(&self) -> i64 {
         self.value
     }
 }
 
-impl Default for Count {
-    fn default() -> Self {
-        Count { value: 0 }
-    }
-}
 
 impl std::fmt::Display for Count {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -214,7 +202,7 @@ impl<'de> serde::Deserialize<'de> for Count {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<i64>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -308,24 +296,20 @@ impl LineContentList {
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct LineNumber {
     pub(crate) value: i64,
 }
 
 impl LineNumber {
     pub fn new(value: i64) -> Self {
-        Self { value: value }
+        Self { value }
     }
     pub fn value(&self) -> i64 {
         self.value
     }
 }
 
-impl Default for LineNumber {
-    fn default() -> Self {
-        LineNumber { value: 0 }
-    }
-}
 
 impl std::fmt::Display for LineNumber {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -368,7 +352,7 @@ impl<'de> serde::Deserialize<'de> for LineNumber {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<i64>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -384,6 +368,7 @@ impl<'de> serde::Deserialize<'de> for LineNumber {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct PatternList {
     pub(crate) values: Vec<String>,
 }
@@ -399,11 +384,6 @@ impl PatternList {
     }
 }
 
-impl Default for PatternList {
-    fn default() -> Self {
-        PatternList { values: Vec::new() }
-    }
-}
 
 impl PatternList {
     pub fn iter(&self) -> std::slice::Iter<'_, String> {
@@ -454,7 +434,7 @@ pub struct Score {
 
 impl Score {
     pub fn new(value: f64) -> Self {
-        Self { value: value }
+        Self { value }
     }
     pub fn value(&self) -> f64 {
         self.value
@@ -507,7 +487,7 @@ impl<'de> serde::Deserialize<'de> for Score {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<f64>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -523,17 +503,11 @@ impl<'de> serde::Deserialize<'de> for Score {
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct Timestamp {
     pub(crate) value: String,
 }
 
-impl Default for Timestamp {
-    fn default() -> Self {
-        Self {
-            value: String::new(),
-        }
-    }
-}
 
 impl Timestamp {
     pub fn value(&self) -> &str {
@@ -603,7 +577,7 @@ impl<'de> serde::Deserialize<'de> for Timestamp {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;

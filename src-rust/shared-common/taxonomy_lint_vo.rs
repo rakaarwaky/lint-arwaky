@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ScopeRef {
@@ -30,8 +30,8 @@ impl ScopeRef {
         }
     }
     pub fn has_range(&self) -> bool {
-        self.start_line.as_ref().map_or(false, |l| l.value > 0)
-            && self.end_line.as_ref().map_or(false, |l| l.value > 0)
+        self.start_line.as_ref().is_some_and(|l| l.value > 0)
+            && self.end_line.as_ref().is_some_and(|l| l.value > 0)
     }
 }
 
@@ -57,6 +57,12 @@ pub struct Location {
     pub column: Option<ColumnNumber>,
     #[serde(default)]
     pub description: DescriptionVO,
+}
+
+impl Default for Location {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Location {
@@ -99,6 +105,7 @@ impl std::fmt::Display for Location {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Default)]
 pub struct LocationList {
     #[serde(default)]
     pub values: Vec<Location>,
@@ -110,11 +117,6 @@ impl LocationList {
     }
 }
 
-impl Default for LocationList {
-    fn default() -> Self {
-        LocationList { values: Vec::new() }
-    }
-}
 
 impl LocationList {
     pub fn push(&mut self, item: Location) {
@@ -164,6 +166,12 @@ impl std::fmt::Display for ViolationConstraint {
 pub struct CommandArgs {
     #[serde(default)]
     pub args: Vec<ContentString>,
+}
+
+impl Default for CommandArgs {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CommandArgs {

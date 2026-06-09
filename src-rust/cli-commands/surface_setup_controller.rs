@@ -1,5 +1,6 @@
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use std::sync::Arc;
+
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 pub struct SetupManagementSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -112,4 +113,38 @@ pub fn mcp_config_vscode() -> String {
         .as_ref()
         .map(|s| s.mcp_config_vscode())
         .unwrap_or_default()
+}
+
+pub fn which_mcp_binary() -> String {
+    let candidates = [
+        std::env::current_exe()
+            .ok()
+            .and_then(|p| {
+                p.parent()
+                    .map(|d| d.join("lint-arwaky-mcp").to_string_lossy().to_string())
+            })
+            .unwrap_or_default(),
+        format!(
+            "{}/bin/lint-arwaky-mcp",
+            std::env::var("CARGO_HOME").unwrap_or_else(|_| "~/.cargo".to_string())
+        ),
+        "lint-arwaky-mcp".to_string(),
+    ];
+    for c in &candidates {
+        if !c.is_empty() && std::path::Path::new(c).exists() {
+            return c.clone();
+        }
+    }
+    std::process::Command::new("which")
+        .arg("lint-arwaky-mcp")
+        .output()
+        .ok()
+        .and_then(|o| {
+            if o.status.success() {
+                Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
+            } else {
+                None
+            }
+        })
+        .unwrap_or_else(|| "lint-arwaky-mcp".to_string())
 }

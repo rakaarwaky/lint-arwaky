@@ -7,6 +7,12 @@ use std::fs;
 /// Business logic for renaming symbols across the entire codebase.
 pub struct SymbolRenamerProcessor {}
 
+impl Default for SymbolRenamerProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SymbolRenamerProcessor {
     pub fn new() -> Self {
         Self {}
@@ -88,11 +94,10 @@ impl SymbolRenamerProcessor {
                 })
                 .to_string();
 
-            if new_source != source {
-                if fs::write(file_path, &new_source).is_ok() {
+            if new_source != source
+                && fs::write(file_path, &new_source).is_ok() {
                     modified_count += 1;
                 }
-            }
         }
 
         modified_count

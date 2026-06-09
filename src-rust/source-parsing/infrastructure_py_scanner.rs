@@ -4,24 +4,24 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::sync::LazyLock;
 
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
+use crate::code_analysis::taxonomy_source_vo::ImportInfo;
+use crate::code_analysis::taxonomy_source_vo::ImportInfoList;
+use crate::code_analysis::taxonomy_source_vo::PrimitiveViolation;
+use crate::code_analysis::taxonomy_source_vo::PrimitiveViolationList;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::PrimitiveTypeList;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::Count;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: ImportInfo */ crate::code_analysis::taxonomy_source_vo::ImportInfo;
-use /* UNKNOWN: ImportInfoList */ crate::code_analysis::taxonomy_source_vo::ImportInfoList;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: MetadataVO */ crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
-use /* UNKNOWN: PrimitiveTypeList */ crate::naming_rules::taxonomy_symbols_vo::PrimitiveTypeList;
-use /* UNKNOWN: PrimitiveViolation */ crate::code_analysis::taxonomy_source_vo::PrimitiveViolation;
-use /* UNKNOWN: PrimitiveViolationList */ crate::code_analysis::taxonomy_source_vo::PrimitiveViolationList;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
+use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::source_parsing::taxonomy_parser_error::SourceParserError;
-use /* UNKNOWN: SuccessStatus */ crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 static IMPORT_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^import\s+(\w+(?:\.\w+)*)").ok());
@@ -35,11 +35,13 @@ static CF_REGEX: LazyLock<Option<Regex>> =
 static LET_REGEX: LazyLock<Option<Regex>> = LazyLock::new(|| Regex::new(r"^(\w+)\s*=").ok());
 static WORD_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b").ok());
-static TYPE_ANNOT_RE: LazyLock<Option<Regex>> = LazyLock::new(|| {
-    Regex::new(r":\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b").ok()
-});
+static TYPE_ANNOT_RE: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r":\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b").ok());
 static RETURN_TYPE_RE: LazyLock<Option<Regex>> = LazyLock::new(|| {
     Regex::new(r"->\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b").ok()
+});
+static ATTR_ANNOT_RE: LazyLock<Option<Regex>> = LazyLock::new(|| {
+    Regex::new(r"\b([a-zA-Z_]\w*)\s*:\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b").ok()
 });
 
 static PY_KEYWORDS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
@@ -129,6 +131,12 @@ struct ParsedData {
 
 pub struct ASTPythonParserAdapter {}
 
+impl Default for ASTPythonParserAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ASTPythonParserAdapter {
     pub fn new() -> Self {
         Self {}
@@ -171,28 +179,59 @@ impl ASTPythonParserAdapter {
             // 1. Imports
             if let Some(imp_cap) = IMPORT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let module = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
-                let alias = module.split('.').last().unwrap_or(&module).to_string();
+                let alias = module.split('.').next_back().unwrap_or(&module).to_string();
                 data.imported_aliases.insert(alias.clone(), module.clone());
                 data.imports_list.push(ImportInfo {
                     line: LineNumber::new((idx_zero + 1) as i64),
                     module,
                     name: None,
                 });
-            } else if let Some(from_cap) = FROM_IMPORT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
+            } else if let Some(from_cap) = FROM_IMPORT_REGEX
+                .as_ref()
+                .and_then(|r| r.captures(stripped))
+            {
                 let module = from_cap
                     .get(1)
                     .map(|m| m.as_str())
                     .unwrap_or("")
                     .to_string();
                 let symbols_part = from_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
-                for sym in symbols_part
+
+                // Handle parenthesized imports: from X import (A, B, C)
+                // single-line or multi-line (opening paren on import line)
+                let unwrapped: String = if symbols_part.starts_with('(') {
+                    let mut combined = symbols_part.to_string();
+                    // Multi-line: closing paren may be on subsequent lines
+                    if !combined.contains(')') {
+                        let mut j = idx_zero + 1;
+                        while j < lines.len() {
+                            let cont = lines[j].trim();
+                            combined.push(' ');
+                            combined.push_str(cont);
+                            if cont.contains(')') {
+                                break;
+                            }
+                            j += 1;
+                        }
+                    }
+                    // Strip parentheses, extract inner content
+                    combined
+                        .trim_start_matches('(')
+                        .trim_end_matches(')')
+                        .trim()
+                        .to_string()
+                } else {
+                    symbols_part.to_string()
+                };
+
+                for sym in unwrapped
                     .split(',')
                     .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
                 {
-                    if sym.is_empty() || sym.starts_with('(') {
+                    let clean = sym.trim();
+                    if clean.is_empty() || clean == "(" || clean == ")" {
                         continue;
                     }
-                    let clean = sym.trim();
                     if !clean.is_empty() {
                         let fullname = format!("{}.{}", module, clean);
                         data.imported_aliases
@@ -202,21 +241,6 @@ impl ASTPythonParserAdapter {
                             module: fullname,
                             name: Some(clean.to_string()),
                         });
-                    }
-                }
-                // handle "from X import (" multi-line
-                if symbols_part.trim() == "(" {
-                    // simple case: single-line from X import (A, B, C)
-                    if let Some(close_paren) = symbols_part.rfind(')') {
-                        let inner = &symbols_part[1..close_paren];
-                        for sym in inner.split(',').map(|s| s.trim()) {
-                            let clean = sym.trim();
-                            if !clean.is_empty() {
-                                let fullname = format!("{}.{}", module, clean);
-                                data.imported_aliases
-                                    .insert(clean.to_string(), fullname.clone());
-                            }
-                        }
                     }
                 }
             }
@@ -296,12 +320,15 @@ impl ASTPythonParserAdapter {
             }
 
             // 5. Control flow
-            data.control_flow_count += CF_REGEX.as_ref().map_or(0, |r| r.find_iter(stripped).count()) as i64;
+            data.control_flow_count += CF_REGEX
+                .as_ref()
+                .map_or(0, |r| r.find_iter(stripped).count())
+                as i64;
 
             // 6. Used symbols
             if let Some(word_re) = WORD_REGEX.as_ref() {
                 for cap in word_re.find_iter(stripped) {
-                let word = cap.as_str();
+                    let word = cap.as_str();
                     if !PY_KEYWORDS.contains(word) && !word.starts_with(|c: char| c.is_numeric()) {
                         data.used.insert(word.to_string());
                     }
@@ -374,11 +401,9 @@ impl ISourceParserPort for ASTPythonParserAdapter {
                 if in_class {
                     let indent = line.len() - stripped.len();
                     if indent <= class_indent && !stripped.starts_with('#') && !stripped.is_empty()
-                    {
-                        if stripped.starts_with("def ") || stripped.starts_with("class ") {
+                        && (stripped.starts_with("def ") || stripped.starts_with("class ")) {
                             break;
                         }
-                    }
                     if indent > class_indent
                         && stripped.contains('=')
                         && !stripped.starts_with("def ")
@@ -467,11 +492,8 @@ impl ISourceParserPort for ASTPythonParserAdapter {
             }
 
             // Check class attribute annotations: x: int = 5
-            // simple pattern: word: type = or word: type  (on its own line or after comment)
-            let Ok(attr_re) = Regex::new(
-                r"\b([a-zA-Z_]\w*)\s*:\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b",
-            ) else { continue };
-            for cap in attr_re.captures_iter(stripped) {
+            if let Some(ref attr_re) = *ATTR_ANNOT_RE {
+                for cap in attr_re.captures_iter(stripped) {
                 let prim = cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string();
                 if prim_set.contains(&prim) {
                     violations.push(PrimitiveViolation {
@@ -482,6 +504,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
                         type_name: prim,
                     });
                 }
+            }
             }
         }
 

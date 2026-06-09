@@ -1,21 +1,41 @@
 // analysis_execution_orchestrator — Implementation of the analysis orchestration domain contract.
 use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
-pub struct AnalysisReporter {}
+pub struct AnalysisReporter {
+    history_path: String,
+}
 
-struct DummyContainer {}
-impl ServiceContainerAggregate for DummyContainer {}
+impl Default for AnalysisReporter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AnalysisReporter {
+    pub fn new() -> Self {
+        Self {
+            history_path: ".lint-arwaky-trends.json".to_string(),
+        }
+    }
+
+    pub fn with_history_path(history_path: &str) -> Self {
+        Self {
+            history_path: history_path.to_string(),
+        }
+    }
+}
 
 #[async_trait]
 impl IAnalysisProtocol for AnalysisReporter {
     fn container(&self) -> &dyn ServiceContainerAggregate {
-        static DUMMY: DummyContainer = DummyContainer {};
-        &DUMMY
+        static DEFAULT: crate::di_containers::contract_service_aggregate::DefaultServiceContainer =
+            crate::di_containers::contract_service_aggregate::DefaultServiceContainer {};
+        &DEFAULT
     }
 
     async fn run(&self, _path: &FilePath) -> ArchitectureGovernanceEntity {
@@ -39,14 +59,11 @@ impl IAnalysisProtocol for AnalysisReporter {
         let current_score = crate::output_report::taxonomy_score_constant::compute_score(
             &report
                 .results
-                .values
-                .iter()
-                .map(|r| r.clone())
-                .collect::<Vec<_>>(),
+                .values.to_vec(),
         );
 
-        // Read history file
-        let history_path = std::path::Path::new(&path.value).join(".lint-arwaky-trends.json");
+        // Read history file (configurable via self.history_path)
+        let history_path = std::path::Path::new(&path.value).join(&self.history_path);
         if history_path.exists() {
             if let Ok(content) = std::fs::read_to_string(&history_path) {
                 let history: Vec<serde_json::Value> = content

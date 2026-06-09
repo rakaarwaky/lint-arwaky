@@ -1,7 +1,7 @@
 // report_commands_orchestrator — Orchestrator for report and security CLI commands logic.
 use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::output_report::taxonomy_score_vo::FileFormat;
+use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 use async_trait::async_trait;
@@ -20,6 +20,12 @@ impl ReportCommandsAggregate for ReportCommandsOrchestrator {
     }
     async fn security(&self, path: &FilePath) {
         println!("Running security scan for: {:?}", path);
+    }
+}
+
+impl Default for ReportCommandsOrchestrator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

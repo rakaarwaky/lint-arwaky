@@ -38,6 +38,7 @@ impl RenamedFile {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Default)]
 pub struct FilePathList {
     pub values: Vec<FilePath>,
 }
@@ -48,11 +49,6 @@ impl FilePathList {
     }
 }
 
-impl Default for FilePathList {
-    fn default() -> Self {
-        FilePathList { values: Vec::new() }
-    }
-}
 
 impl FilePathList {
     pub fn iter(&self) -> std::slice::Iter<'_, FilePath> {

@@ -3,35 +3,47 @@
 
 use std::path::Path;
 
-use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
-use crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges;
-use crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge;
-use crate::layer_rules::capabilities_import_checker::ArchImportRuleChecker;
-use crate::layer_rules::capabilities_internal_checker::ArchInternalChecker;
-use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::code_analysis::capabilities_class_checker::ArchClassChecker;
 use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
 use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use crate::role_rules::capabilities_taxonomyrole_checker::TaxonomyRoleChecker;
-use crate::role_rules::capabilities_contractrole_checker::ContractRoleChecker;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+
+use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
+use crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges;
+use crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge;
+use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
+use crate::layer_rules::capabilities_import_checker::ArchImportRuleChecker;
+use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::capabilities_orphan_analyzer::OrphanGraphResolver;
-use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::source_parsing::infrastructure_barrel_provider::BarrelImportResolver;
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::role_rules::capabilities_contractrole_checker::ContractRoleChecker;
+use crate::role_rules::capabilities_taxonomyrole_checker::TaxonomyRoleChecker;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    aes023_unused_import, aes024_dead_inheritance, aes014_mandatory_inheritance,
+    AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
+    AES012_CIRCULAR_IMPORT, AES031_SURFACE_ROLE_VIOLATION,
+    AES036_SINGLE_BOTTLENECK, AES038_MISSING_VO,
+};
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct LintCheckingCoordinator {}
+
+impl Default for LintCheckingCoordinator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl LintCheckingCoordinator {
     pub fn new() -> Self {
@@ -47,7 +59,6 @@ impl LintCheckingCoordinator {
         if !config.enabled.value {
             return Vec::new();
         }
-        let _container_ref: Option<&dyn ServiceContainerAggregate> = None;
         let analyzer = ArchComplianceAnalyzer::new(config.clone());
         let mut violations: Vec<LintResult> = Vec::new();
         let import_checker = ArchImportRuleChecker::new();
@@ -56,7 +67,6 @@ impl LintCheckingCoordinator {
         let taxonomy_checker = TaxonomyRoleChecker::new();
         let contract_checker = ContractRoleChecker::new();
         let naming_checker = ArchNamingChecker::new();
-        let internal_checker = ArchInternalChecker::new();
         let layer_checker = ArchLayerChecker::new();
         let mut file_paths: Vec<FilePath> = Vec::new();
         let mut import_edges: Vec<(String, String)> = Vec::new();
@@ -74,10 +84,8 @@ impl LintCheckingCoordinator {
             // Layer-independent checks (run on ALL files)
             Self::check_bypass_comments(file, &c, &mut violations);
             Self::check_unused_imports(file, &c, &mut violations);
-            Self::check_contract_barrel(file, &c, &mut violations);
             Self::check_dead_inheritance(file, &c, &mut violations);
             Self::check_agent_any_bypass(file, &c, &mut violations);
-            Self::check_mcp_schema(file, &c, &mut violations);
             Self::check_mandatory_inheritance(file, &c, &mut violations);
 
             for line in c.lines() {
@@ -110,17 +118,6 @@ impl LintCheckingCoordinator {
                 }
             }
             if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
-                // AES012: barrel completeness check on barrel files
-                let b_layer = analyzer.detect_layer(file, root_dir);
-                let b_def = b_layer.as_ref().and_then(|l| analyzer.get_layer_def(l));
-                if let Some(bd) = b_def {
-                    internal_checker.check_internal_rules(
-                        file,
-                        filename,
-                        Some(bd),
-                        &mut violations,
-                    );
-                }
                 continue;
             }
             let layer = match analyzer.detect_layer(file, root_dir) {
@@ -148,7 +145,7 @@ impl LintCheckingCoordinator {
             import_checker.check_forbidden_imports(file, &layer, def, &mut violations);
             import_checker.check_legacy_import_rules(file, &layer, config, &mut violations);
             line_checker.check_line_counts(file, Some(def), &mut violations);
-            
+
             taxonomy_checker.check_entity(file, &c, &mut violations);
             taxonomy_checker.check_error(file, &c, &mut violations);
             taxonomy_checker.check_event(file, &c, &mut violations);
@@ -170,7 +167,6 @@ impl LintCheckingCoordinator {
                 &Some(layer.clone()),
                 &mut violations,
             );
-            internal_checker.check_internal_rules(file, filename, Some(def), &mut violations);
         }
 
         let mut rl = LintResultList::new(violations);
@@ -184,31 +180,91 @@ impl LintCheckingCoordinator {
             rl.push(Self::mk(
                 "",
                 0,
-                "AES020",
+                "AES012",
                 Severity::CRITICAL,
-                "AES020 CIRCULAR_IMPORT: Circular dependencies detected.",
+                AES012_CIRCULAR_IMPORT,
             ));
         }
+        // Inline orphan check: prefix/suffix based per-layer logic with barrel resolution
         let orphan = OrphanGraphResolver::new();
         let ctx = orphan.build_graph_context(files, root_dir);
         let eps = orphan.identify_entry_points(files);
-        for (fp, imps) in &ctx.import_graph.mapping {
-            if imps.is_empty()
-                && !eps.contains(fp)
-                && !fp.ends_with("mod.rs")
-                && !fp.ends_with("__init__.py")
-                && !fp.ends_with("/index.ts")
-                && !fp.ends_with("/index.js")
+        let barrel_map = BarrelImportResolver::build_barrel_map(files);
+
+        for fp in files {
+            if eps.contains(fp) || fp.ends_with("mod.rs") || fp.ends_with("__init__.py")
+                || fp.ends_with("/index.ts") || fp.ends_with("/index.js")
             {
-                rl.push(Self::mk(
-                    fp,
-                    0,
-                    "AES017",
-                    Severity::HIGH,
-                    "AES017 ORPHAN_CODE: File has no imports, not an entry point.",
-                ));
+                continue;
+            }
+            let basename = fp.split('/').next_back().unwrap_or("");
+            let prefix = basename.split('_').next().unwrap_or("");
+
+            // Taxonomy: barrel-aware contract import check
+            if prefix == "taxonomy" {
+                let imported = BarrelImportResolver::is_imported_by_contract(fp, &barrel_map, files);
+                if !imported {
+                    let stem = basename.replace(".rs", "").replace(".py", "");
+                    rl.push(Self::mk(fp, 0,                     "AES030", Severity::LOW, &format!("Taxonomy '{}' not imported by contract.", stem)));
+                }
+                continue;
+            }
+
+            // Contract: suffix-based with barrel resolution
+            if prefix == "contract" {
+                let suffix = basename.rsplit('_').next().unwrap_or("").replace(".rs", "");
+                let target_prefix = match suffix.as_str() {
+                    "port" => "infrastructure",
+                    "protocol" => "capabilities",
+                    "aggregate" => "agent",
+                    _ => { continue; }
+                };
+                let trait_name = basename.strip_prefix("contract_").unwrap_or(basename).replace(".rs", "");
+                let mut has_impl = false;
+                for cf in files {
+                    let cb = cf.split('/').next_back().unwrap_or("");
+                    if !cb.starts_with(target_prefix) { continue; }
+                    let resolved = BarrelImportResolver::resolve_imports_for_file(cf, &barrel_map, files);
+                    if resolved.iter().any(|r| r.contains(&trait_name)) { has_impl = true; break; }
+                    if let Ok(c) = std::fs::read_to_string(cf) {
+                        if c.contains(&format!("impl {} for", trait_name)) { has_impl = true; break; }
+                    }
+                }
+                if !has_impl { rl.push(Self::mk(fp, 0,                     "AES030", Severity::HIGH, &format!("Contract {} '{}' not implemented.", suffix, trait_name))); }
+                continue;
+            }
+
+            // Infra/Cap/Agent: check wiring in container files
+            if prefix == "infrastructure" || prefix == "capabilities" || prefix == "agent" {
+                let stem = basename.replace(".rs", "").replace(".py", "");
+                let mut wired = false;
+                for cf in files {
+                    let cb = cf.split('/').next_back().unwrap_or("");
+                    let csuffix = cb.rsplit('_').next().unwrap_or("").replace(".rs", "");
+                    if csuffix != "container" && csuffix != "aggregate" && csuffix != "registry" { continue; }
+                    if let Ok(c) = std::fs::read_to_string(cf) {
+                        if c.contains(&stem) || c.contains(&format!("mod {}", stem)) { wired = true; break; }
+                    }
+                }
+                if !wired { rl.push(Self::mk(fp, 0,                     "AES030", Severity::HIGH, &format!("{} '{}' not wired.", prefix, stem))); }
+                continue;
+            }
+
+            // Surface: reachability check
+            if prefix == "surface" {
+                let imps = ctx.import_graph.mapping.get(fp);
+                if imps.map(std::vec::Vec::is_empty).unwrap_or(true) {
+                    rl.push(Self::mk(fp, 0,                     "AES030", Severity::MEDIUM, "Surface unreachable."));
+                }
+                continue;
             }
         }
+        // Wire role orchestrator for agent and surface role checks
+        let role_orch = crate::role_rules::agent_role_orchestrator::RoleOrchestrator::new(
+            Box::new(crate::role_rules::agent_role_mixin::RoleAggregateImpl::new()),
+        );
+        role_orch.run_all_role_checks(files, &mut rl.values);
+
         rl.values
     }
 
@@ -227,7 +283,7 @@ impl LintCheckingCoordinator {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // INLINE CHECKER METHODS (AES007, 014, 015, 016, 021, 022, 024, 025)
+    // INLINE CHECKER METHODS
     // ─────────────────────────────────────────────────────────────────────────
 
     fn check_bypass_comments(file: &str, content: &str, violations: &mut Vec<LintResult>) {
@@ -256,9 +312,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES014",
+                    "AES022",
                     Severity::CRITICAL,
-                    "AES014 BYPASS_COMMENT: Bypass comment detected.",
+                    AES022_BYPASS_COMMENT,
                 ));
                 continue;
             }
@@ -267,9 +323,9 @@ impl LintCheckingCoordinator {
                     violations.push(Self::mk(
                         file,
                         i + 1,
-                        "AES014",
+                        "AES022",
                         Severity::CRITICAL,
-                        "AES014 BYPASS_COMMENT: Bypass comment detected.",
+                        AES022_BYPASS_COMMENT,
                     ));
                     break;
                 }
@@ -278,9 +334,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES014",
+                    "AES022",
                     Severity::CRITICAL,
-                    "AES014 BYPASS_COMMENT: unwrap/expect call detected.",
+                    AES022_UNWRAP_EXPECT,
                 ));
                 continue;
             }
@@ -288,9 +344,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES014",
+                    "AES022",
                     Severity::CRITICAL,
-                    "AES014 BYPASS_COMMENT: panic call detected.",
+                    AES022_PANIC,
                 ));
                 continue;
             }
@@ -396,30 +452,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES015",
+                    "AES023",
                     Severity::MEDIUM,
-                    &format!(
-                        "AES015 UNUSED_IMPORT: '{}' imported but never used.",
-                        name
-                    ),
-                ));
-            }
-        }
-    }
-
-    fn check_contract_barrel(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        for (i, line) in content.lines().enumerate() {
-            let t = line.trim();
-            if !t.starts_with("use crate::di_containers::contract_service_aggregate::") {
-                continue;
-            }
-            if t.split("::").count() > 4 {
-                violations.push(Self::mk(
-                    file,
-                    i + 1,
-                    "AES007",
-                    Severity::MEDIUM,
-                    "AES007 CONTRACT_BARREL: Must use barrel import (crate::contract::TypeName).",
+                    &aes023_unused_import(name),
                 ));
             }
         }
@@ -434,9 +469,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES016",
+                    "AES024",
                     Severity::MEDIUM,
-                    "AES016 DEAD_INHERITANCE: Unit struct — possibly dead inheritance.",
+                    &aes024_dead_inheritance("unit struct"),
                 ));
                 i += 1;
                 continue;
@@ -453,10 +488,10 @@ impl LintCheckingCoordinator {
                         violations.push(Self::mk(
                             file,
                             i + 1,
-                            "AES016",
-                            Severity::MEDIUM,
-                            "AES016 DEAD_INHERITANCE: Empty impl block.",
-                        ));
+"AES024",
+                    Severity::MEDIUM,
+                    &aes024_dead_inheritance("impl block"),
+                ));
                     } else {
                         let mut k = j;
                         while k < lines.len() && !impl_str.contains('{') {
@@ -470,9 +505,9 @@ impl LintCheckingCoordinator {
                             violations.push(Self::mk(
                                 file,
                                 i + 1,
-                                "AES016",
+                                "AES024",
                                 Severity::MEDIUM,
-                                "AES016 DEAD_INHERITANCE: Empty impl block (multi-line).",
+                                &aes024_dead_inheritance("impl block (multi-line)"),
                             ));
                         }
                     }
@@ -483,7 +518,11 @@ impl LintCheckingCoordinator {
     }
 
     fn check_agent_any_bypass(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if !file.contains("/agent/") {
+        let filename = Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        if !filename.starts_with("agent_") {
             return;
         }
         for (i, line) in content.lines().enumerate() {
@@ -493,9 +532,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES024",
+                    "AES035",
                     Severity::HIGH,
-                    "AES024 AGENT_ANY_BYPASS: Wildcard import in agent layer.",
+                    "AES035 AGENT_ANY_BYPASS: Wildcard import in agent layer.",
                 ));
             }
         }
@@ -509,14 +548,19 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES021",
+                "AES032",
                 Severity::HIGH,
-                "AES021 AGENT_ROLE: Agent file >300 lines.",
+                "AES032 AGENT_ROLE: Agent file exceeds 300 lines.",
             ));
         }
     }
 
-    fn check_surface_role(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+    fn check_surface_role(
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
         if layer != "surfaces" && !layer.starts_with("surfaces(") {
             return;
         }
@@ -524,18 +568,31 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES022",
+                "AES031",
                 Severity::HIGH,
-                "AES022 SURFACE_ROLE: Surface file >10 functions.",
+                AES031_SURFACE_ROLE_VIOLATION,
             ));
         }
     }
 
     fn check_mandatory_inheritance(file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let filename = Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        let contract_suffix = if filename.starts_with("infrastructure_") {
+            "_port"
+        } else if filename.starts_with("capabilities_") {
+            "_protocol"
+        } else if filename.starts_with("agent_") {
+            "_aggregate"
+        } else {
+            return;
+        };
         let mut imported: Vec<String> = Vec::new();
         for line in content.lines() {
             let t = line.trim();
-            if t.starts_with("use ") && t.contains("_protocol::") {
+            if t.starts_with("use ") && t.contains(contract_suffix) {
                 if let Some(name) = t.split("::").last() {
                     let c = name.trim_end_matches(';').trim();
                     if c.starts_with('I') || c.ends_with("Protocol") || c.ends_with("Port") {
@@ -549,18 +606,20 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     0,
-                    "AES027",
+                    "AES014",
                     Severity::HIGH,
-                    &format!(
-                        "AES027 MANDATORY_INHERITANCE: Trait '{}' not implemented.",
-                        t
-                    ),
+                    &aes014_mandatory_inheritance(t),
                 ));
             }
         }
     }
 
-    fn check_single_bottleneck(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+    fn check_single_bottleneck(
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
         if layer != "capabilities" && !layer.starts_with("capabilities(") {
             return;
         }
@@ -570,18 +629,18 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES031",
+                "AES036",
                 Severity::MEDIUM,
-                &format!("AES031 SINGLE_BOTTLENECK: {} functions.", fc),
+                &format!("{} Found {} functions.", AES036_SINGLE_BOTTLENECK, fc),
             ));
         }
         if ic > 5 {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES031",
+                "AES036",
                 Severity::MEDIUM,
-                &format!("AES031 SINGLE_BOTTLENECK: {} impl blocks.", ic),
+                &format!("{} Found {} impl blocks.", AES036_SINGLE_BOTTLENECK, ic),
             ));
         }
     }
@@ -596,41 +655,20 @@ impl LintCheckingCoordinator {
             let t = line.trim();
             if t.starts_with("let ") && t.contains(" = ") {
                 let rhs = t.split(" = ").nth(1).unwrap_or("").trim_end_matches(';');
-                if rhs.starts_with('"') && rhs.ends_with('"') && !rhs.contains("::") {
+                if (rhs.starts_with('"') && rhs.ends_with('"') && !rhs.contains("::"))
+                    || rhs.parse::<i64>().is_ok()
+                    || rhs.parse::<f64>().is_ok()
+                {
                     violations.push(Self::mk(
                         file,
                         i + 1,
-                        "AES032",
+                        "AES038",
                         Severity::MEDIUM,
-                        "AES032 MISSING_VO: Direct string literal.",
-                    ));
-                } else if rhs.parse::<i64>().is_ok() || rhs.parse::<f64>().is_ok() {
-                    violations.push(Self::mk(
-                        file,
-                        i + 1,
-                        "AES032",
-                        Severity::MEDIUM,
-                        "AES032 MISSING_VO: Direct numeric literal.",
+                        AES038_MISSING_VO,
                     ));
                 }
             }
         }
     }
 
-    fn check_mcp_schema(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if !file.contains("mcp_") && !file.contains("_schema") {
-            return;
-        }
-        let has = content.contains("fn ")
-            && (content.contains("tool") || content.contains("Tool") || content.contains("schema"));
-        if !has && content.len() > 50 {
-            violations.push(Self::mk(
-                file,
-                0,
-                "AES025",
-                Severity::MEDIUM,
-                "AES025 MCP_SCHEMA: MCP file missing tool/schema.",
-            ));
-        }
-    }
 }

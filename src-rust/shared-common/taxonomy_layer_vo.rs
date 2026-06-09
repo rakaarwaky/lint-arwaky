@@ -23,8 +23,7 @@ impl std::fmt::Display for FileContentVO {
     }
 }
 
-impl Eq for FileContentVO {
-}
+impl Eq for FileContentVO {}
 
 impl std::hash::Hash for FileContentVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -37,8 +36,6 @@ impl PartialEq for FileContentVO {
         self.value == other.value
     }
 }
-
-
 
 impl From<&str> for FileContentVO {
     fn from(s: &str) -> Self {
@@ -85,7 +82,7 @@ impl<'de> serde::Deserialize<'de> for FileContentVO {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -101,17 +98,11 @@ impl<'de> serde::Deserialize<'de> for FileContentVO {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct Identity {
     pub(crate) value: String,
 }
 
-impl Default for Identity {
-    fn default() -> Self {
-        Self {
-            value: String::new(),
-        }
-    }
-}
 
 impl Identity {
     pub fn value(&self) -> &str {
@@ -130,8 +121,7 @@ impl std::fmt::Display for Identity {
     }
 }
 
-impl Eq for Identity {
-}
+impl Eq for Identity {}
 
 impl std::hash::Hash for Identity {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -144,8 +134,6 @@ impl PartialEq for Identity {
         self.value == other.value
     }
 }
-
-
 
 impl From<&str> for Identity {
     fn from(s: &str) -> Self {
@@ -192,7 +180,7 @@ impl<'de> serde::Deserialize<'de> for Identity {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -208,17 +196,11 @@ impl<'de> serde::Deserialize<'de> for Identity {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct LayerNameVO {
     pub(crate) value: String,
 }
 
-impl Default for LayerNameVO {
-    fn default() -> Self {
-        Self {
-            value: String::new(),
-        }
-    }
-}
 
 impl LayerNameVO {
     pub fn value(&self) -> &str {
@@ -237,8 +219,7 @@ impl std::fmt::Display for LayerNameVO {
     }
 }
 
-impl Eq for LayerNameVO {
-}
+impl Eq for LayerNameVO {}
 
 impl std::hash::Hash for LayerNameVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -251,8 +232,6 @@ impl PartialEq for LayerNameVO {
         self.value == other.value
     }
 }
-
-
 
 impl From<&str> for LayerNameVO {
     fn from(s: &str) -> Self {
@@ -299,7 +278,7 @@ impl<'de> serde::Deserialize<'de> for LayerNameVO {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -336,8 +315,7 @@ impl std::fmt::Display for LineContentVO {
     }
 }
 
-impl Eq for LineContentVO {
-}
+impl Eq for LineContentVO {}
 
 impl std::hash::Hash for LineContentVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -350,8 +328,6 @@ impl PartialEq for LineContentVO {
         self.value == other.value
     }
 }
-
-
 
 impl From<&str> for LineContentVO {
     fn from(s: &str) -> Self {
@@ -398,7 +374,7 @@ impl<'de> serde::Deserialize<'de> for LineContentVO {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;

@@ -34,16 +34,14 @@ impl McpHealthCheckSurface {
             return format!("SYSTEM CRITICAL: {:?}", result.get("error"));
         }
 
-        let report = vec![
-            "=== AUTO-LINTER SYSTEM HEALTH ===".to_string(),
+        let report = ["=== AUTO-LINTER SYSTEM HEALTH ===".to_string(),
             "Status  : HEALTHY".to_string(),
             "Uptime  : 0s".to_string(),
             "Platform: linux (Python 3.12)".to_string(),
             "--- Components ---".to_string(),
             "Ruff      : OK".to_string(),
             "Mypy      : OK".to_string(),
-            "Jobs      : 0/0 jobs active".to_string(),
-        ];
+            "Jobs      : 0/0 jobs active".to_string()];
         report.join("\n")
     }
 }

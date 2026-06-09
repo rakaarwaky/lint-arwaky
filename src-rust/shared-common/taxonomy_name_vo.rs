@@ -2,20 +2,14 @@ use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
 /// adapter_name_vo — Adapter and tool identifier value objects.
-
+///
 /// Adapter/tool identifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct AdapterName {
     pub(crate) value: String,
 }
 
-impl Default for AdapterName {
-    fn default() -> Self {
-        AdapterName {
-            value: String::new(),
-        }
-    }
-}
 
 impl AdapterName {
     pub fn value(&self) -> &str {

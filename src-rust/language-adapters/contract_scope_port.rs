@@ -1,10 +1,10 @@
 // javascript_scope_port — Port for JS/TS scope detection.
-use /* UNKNOWN: LineContentList */ crate::shared_common::taxonomy_common_vo::LineContentList;
-use crate::shared_common::taxonomy_layer_vo::LineContentVO;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_lint_vo::ScopeBounds;
-use crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
 use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
+use crate::shared_common::taxonomy_common_vo::LineContentList;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_layer_vo::LineContentVO;
+use crate::shared_common::taxonomy_lint_vo::ScopeBounds;
 use async_trait::async_trait;
 
 #[async_trait]

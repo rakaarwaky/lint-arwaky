@@ -1,16 +1,21 @@
-/// http_request_client — Sync HTTP provider implementation (runs blocking inside async).
-use crate::http_client::contract_provider_port::IHttpProviderPort;
-use crate::shared_common::taxonomy_source_vo::ContentString;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::shared_common::taxonomy_duration_vo::Timeout;
 use crate::cli_transport::taxonomy_client_error::TransportError;
 use crate::cli_transport::taxonomy_protocol_vo::TransportProtocol;
 use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;
+use crate::http_client::contract_provider_port::IHttpProviderPort;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_duration_vo::Timeout;
+use crate::shared_common::taxonomy_source_vo::ContentString;
 use std::collections::HashMap;
 use std::time::Duration;
 
 pub struct SyncHttpProvider {}
+
+impl Default for SyncHttpProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl SyncHttpProvider {
     pub fn new() -> Self {

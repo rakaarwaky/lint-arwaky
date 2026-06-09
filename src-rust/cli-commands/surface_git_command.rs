@@ -1,8 +1,16 @@
+use std::process::ExitCode;
 use std::sync::Arc;
 
+use crate::cli_commands::taxonomy_entry_vo::lint_path;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 pub struct GitCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
+}
+
+impl Default for GitCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl GitCommandsSurface {
@@ -49,4 +57,77 @@ pub fn register_git_commands(container: Arc<dyn ServiceContainerAggregate>) -> G
     let mut surface = GitCommandsSurface::new();
     surface.register_all(container, None);
     surface
+}
+
+pub fn handle_git_diff(base: String) -> ExitCode {
+    println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
+    let output = std::process::Command::new("git")
+        .args(["diff", "--name-only", &base])
+        .output();
+    match output {
+        Ok(o) if o.status.success() => {
+            let s = String::from_utf8_lossy(&o.stdout);
+            let files: Vec<&str> = s
+                .lines()
+                .filter(|l| {
+                    l.ends_with(".rs")
+                        || l.ends_with(".py")
+                        || l.ends_with(".ts")
+                        || l.ends_with(".js")
+                })
+                .collect();
+            println!("Base: {} (changed files)", base);
+            println!("Files changed: {}", files.len());
+            println!();
+            let mut total_violations = 0;
+            for f in &files {
+                let results = lint_path(f);
+                let fv = results.len();
+                total_violations += fv;
+                if fv > 0 {
+                    println!("  {}  -> {} violation(s)", f, fv);
+                    for r in results.iter().take(3) {
+                        println!(
+                            "    {}:{} [{}] {}",
+                            r.file.value(),
+                            r.line.value(),
+                            format!("{:?}", r.severity).to_uppercase(),
+                            r.message.value()
+                        );
+                    }
+                } else {
+                    println!("  {}  -> clean", f);
+                }
+            }
+            println!();
+            println!(
+                "{} violations across {} changed files",
+                total_violations,
+                files.len()
+            );
+        }
+        _ => eprintln!("warn: not a git repo or `git diff` failed"),
+    }
+    ExitCode::SUCCESS
+}
+
+pub fn handle_install_hook() -> ExitCode {
+    let hook = std::path::PathBuf::from(".githooks/pre-commit");
+    if let Some(parent) = hook.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    let _ = std::fs::write(&hook, "#!/bin/sh\nlint-arwaky check . || exit 1\n");
+    println!("Installed hook at {}", hook.display());
+    ExitCode::SUCCESS
+}
+
+pub fn handle_uninstall_hook() -> ExitCode {
+    let hook = std::path::PathBuf::from(".githooks/pre-commit");
+    if hook.exists() {
+        let _ = std::fs::remove_file(&hook);
+        println!("Removed hook");
+    } else {
+        println!("No hook installed");
+    }
+    ExitCode::SUCCESS
 }

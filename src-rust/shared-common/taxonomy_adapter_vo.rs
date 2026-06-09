@@ -8,6 +8,12 @@ pub struct AdapterMetadataList {
     pub values: Vec<AdapterMetadata>,
 }
 
+impl Default for AdapterMetadataList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AdapterMetadataList {
     pub fn new() -> Self {
         Self { values: Vec::new() }
@@ -36,6 +42,12 @@ pub struct AdapterNameList {
     pub values: Vec<AdapterName>,
 }
 
+impl Default for AdapterNameList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AdapterNameList {
     pub fn new() -> Self {
         Self { values: Vec::new() }
@@ -62,6 +74,12 @@ impl std::ops::Deref for AdapterNameList {
 pub struct AdapterClassMap {
     #[serde(default)]
     pub values: std::collections::HashMap<String, String>,
+}
+
+impl Default for AdapterClassMap {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AdapterClassMap {

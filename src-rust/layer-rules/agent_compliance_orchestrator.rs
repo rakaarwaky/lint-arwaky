@@ -9,26 +9,29 @@ use std::sync::OnceLock;
 
 use async_trait::async_trait;
 
-use crate::di_containers::contract_service_aggregate::{
-    ArchCoordinatorAggregate, DirectoryWatchAggregate, IArchCompliancePort,
-    IArchComplianceProtocol, IJobRegistryPort, InfrastructureContainerAggregate,
-    OrchestratorContainerAggregate, WatchCommandsAggregate,
-    WatchExecutionOrchestratorAggregate,
-};
-use crate::pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
-use crate::shared_common::taxonomy_common_vo::BooleanVO;
-use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use /* UNKNOWN: LayerMapVO */ crate::shared_common::taxonomy_definition_vo::LayerMapVO;
-use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: Score */ crate::shared_common::taxonomy_common_vo::Score;
+use crate::di_containers::contract_infra_aggregate::InfrastructureContainerAggregate;
+use crate::di_containers::contract_orchestrator_aggregate::OrchestratorContainerAggregate;
+use crate::file_watch::contract_commands_aggregate::WatchCommandsAggregate;
+use crate::file_watch::contract_orchestrator_aggregate::WatchExecutionOrchestratorAggregate;
+use crate::file_watch::contract_watch_aggregate::DirectoryWatchAggregate;
+use crate::layer_rules::contract_compliance_port::IArchCompliancePort;
+use crate::layer_rules::contract_compliance_protocol::IArchComplianceProtocol;
+use crate::layer_rules::contract_coordinator_aggregate::ArchCoordinatorAggregate;
+use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::file_watch::taxonomy_result_vo::WatchResult;
-use /* UNKNOWN: LAYER_GLOBAL */ crate::shared_common::taxonomy_names_constant::LAYER_GLOBAL;
+use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
+use crate::shared_common::taxonomy_common_vo::BooleanVO;
+use crate::shared_common::taxonomy_common_vo::Score;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_definition_vo::LayerMapVO;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_names_constant::LAYER_GLOBAL;
+use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MIXIN CONTAINERS — DI initialization stubs (wired via DependencyInjectionContainer)
@@ -79,6 +82,12 @@ impl WatchCommandsAggregate for WatchCommandsOrchestrator {
     }
 }
 
+impl Default for WatchCommandsOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WatchCommandsOrchestrator {
     pub fn new() -> Self {
         Self {
@@ -86,7 +95,6 @@ impl WatchCommandsOrchestrator {
         }
     }
 }
-
 
 pub struct WatchExecutionOrchestrator {}
 
@@ -97,6 +105,12 @@ impl WatchExecutionOrchestratorAggregate for WatchExecutionOrchestrator {
 
     fn job_registry(&self) -> &dyn IJobRegistryPort {
         WATCH_JOB_REGISTRY.get_or_init(MemoryJobRegistryAdapter::new)
+    }
+}
+
+impl Default for WatchExecutionOrchestrator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -135,6 +149,12 @@ pub struct ArchitectureOrchestrator {}
 impl IArchComplianceProtocol for ArchitectureOrchestrator {
     fn execute(&self, _path: &FilePath) -> LintResultList {
         LintResultList::new(vec![])
+    }
+}
+
+impl Default for ArchitectureOrchestrator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -228,9 +248,6 @@ impl ArchitectureOrchestrator {
         mut def: LayerDefinition,
         rule: &ArchitectureRule,
     ) -> LayerDefinition {
-        if rule.word_count.value != 0 {
-            def.word_count = rule.word_count.clone();
-        }
         if rule.suffix_policy.value != "strict" {
             def.suffix_policy = rule.suffix_policy.clone();
         }
@@ -242,9 +259,6 @@ impl ArchitectureOrchestrator {
         }
         if rule.no_primitives != BooleanVO::new(false) {
             def.no_primitives = rule.no_primitives.clone();
-        }
-        if !rule.barrel_completeness.value {
-            def.barrel_completeness = rule.barrel_completeness.clone();
         }
         if !rule.allowed_import.values.is_empty() {
             def.allowed_import = rule.allowed_import.clone();

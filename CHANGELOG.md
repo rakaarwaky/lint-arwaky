@@ -1,12 +1,18 @@
 # Changelog
 
-## 1.11.0 (2026-06-09) — Vertical Slicing Refactoring
+## 1.11.0 (2026-06-09) — AES Renumbering + Barrel Removal
 
 ### Changed
+- **AES renumbering (v2.0)**: All 27 active codes reorganized into 4 groups (Layer & Import AES001–AES006, Naming & Structure AES010–AES016, File & Content AES020–AES024, Role Violations AES030–AES038). Old-to-new mapping documented in `RULES_AES.md`.
 - **Vertical slicing restructuring**: Replaced 6 layer directories (`taxonomy/`, `contract/`, `capabilities/`, `infrastructure/`, `agent/`, `surfaces/`) with 26 feature/domain folders under `src-rust/`.
 - **File naming convention**: Changed from `[domain]_[concept]_[suffix].rs` to `[layer]_[concept]_[suffix].rs`. Layer is now a file prefix, not a directory.
 - **All 258 source files moved and renamed** — zero architectural changes, zero new features. Pure structural refactoring.
 - **Build verified**: 0 errors, 0 warnings.
+
+### Removed
+- **Barrel re-export rules (AES007/AES012/AES013)**: Removed. Layer violations are detected by filename prefix, not barrel structure.
+- **MCP Schema rule (AES025)**: Removed as unnecessary.
+- **All `pub use` from non-barrel files**: Cleaned up. Direct imports used instead.
 
 ## 1.10.2 (2026-06-07) — 31 AES Rules Complete
 

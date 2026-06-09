@@ -1,10 +1,12 @@
 pub mod agent_project_orchestrator;
-pub use agent_project_orchestrator::{MultiProjectOrchestrator};
+pub use agent_project_orchestrator::MultiProjectOrchestrator;
 pub mod contract_governance_protocol;
-pub use contract_governance_protocol::{IArchRuleEngineProtocol,IConfigRulesProtocol,IMetricAnalyzerProtocol};
+pub use contract_governance_protocol::{
+    IArchRuleEngineProtocol, IConfigRulesProtocol, IMetricAnalyzerProtocol,
+};
 pub mod contract_multi_aggregate;
-pub use contract_multi_aggregate::{MultiProjectAggregate};
+pub use contract_multi_aggregate::MultiProjectAggregate;
 pub mod contract_orchestrator_aggregate;
-pub use contract_orchestrator_aggregate::{MultiProjectOrchestratorAggregate};
+pub use contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 pub mod taxonomy_summary_vo;
-pub use taxonomy_summary_vo::{AggregatedResults,ProjectResult};
+pub use taxonomy_summary_vo::{AggregatedResults, ProjectResult};

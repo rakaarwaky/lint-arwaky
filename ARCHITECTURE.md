@@ -2,10 +2,6 @@
 
 The **Agentic Engineering System (AES)** is a strictly layered, highly decoupled, and AI-native architectural pattern. It is designed to achieve maximum modularity, absolute testability, and extreme maintainability by enforcing rigid structural boundaries. Under the AES paradigm, technical details are isolated, domain models are protected, and dependencies are strictly inverted via abstract contracts. Furthermore, AES is specifically optimized for **Agentic workflows**, ensuring that AI agents and LLMs can easily navigate, understand, and modify the codebase without hallucinating architectural violations.
 
-The codebase uses **6 architectural layers** as file prefixes, organized into **26 feature folders** (vertical slicing).
-
----
-
 ## Core Pillars and Philosophy
 
 ### 1. Strict Layered Boundary Enforcement
@@ -24,12 +20,12 @@ Unlike traditional three-tier architectures, **Capabilities** and **Infrastructu
 
 Higher-level orchestrating layers  never import concrete implementations. Instead, they interact with implementations exclusively through interfaces declared in the Contract layer using Dependency Injection (e.g., Surfaces call `ServiceContainerAggregate`, not concrete Orchestrators).
 
-### 4. The 3-Word Naming Philosophy (Layer Prefix + Vertical Slicing)
+### 4. The 3-Structure Naming Philosophy (Layer Prefix + Vertical Slicing+ Role Suffix)
 
-AES enforces a **3-Word File Naming Convention**: `[layer]_[concept]_[suffix]`.
+AES enforces a **Word File Naming Convention**: `[layer]_[concept]_[suffix]` or `[layer]_[concept1]_[concept2]_[suffix]`
 
 1. **Layer (prefix)**: The architectural layer (e.g., `contract_`, `capabilities_`, `taxonomy_`).
-2. **Concept (middle)**: A single word defining the core concept (e.g., `compliance`, `import`, `rule`).
+2. **Concept (middle)**: A single/multiple word defining the core concept (e.g., `compliance`, `import_rule`).
 3. **Role (suffix)**: Defines the architectural role (e.g., `_port`, `_protocol`, `_checker`).
 
 *Example:* `contract_compliance_port.rs` = layer=contract, concept=compliance, suffix=port.
@@ -93,10 +89,10 @@ Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[
 
 ```
 src-rust/
-  layer-rules/        — Prefix rules: layer detection (by filename prefix), import validation (AES001/AES002), naming convention (AES003), cycle detection (AES020), hierarchy (AES018/AES019), internal checks (AES012/AES013), self-lint (AES014), compliance coordination. NOT role/suffix or quality logic.
-  role-rules/         — Suffix/role behavior rules: agent role violations (AES021), surface role violations (AES022), taxonomy role (AES006/AES033), contract role (AES026), mandatory inheritance (AES027). Each suffix type has a dedicated checker with its own protocol + aggregate.
-  orphan-detector/    — Orphan code detection (AES017). Protocol defined in `contract_orphan_protocol.rs` within this folder.
-  primitive-checker/  — Primitive obsession detection (AES006) — shared utility for scanning raw types.
+  layer-rules/        — Prefix rules: layer detection (by filename prefix), import validation (AES001/AES002), naming convention (AES010), cycle detection (AES012), hierarchy (AES033/AES034), self-lint (AES022), compliance coordination. NOT role/suffix or quality logic.
+  role-rules/         — Suffix/role behavior rules: agent role violations (AES032), surface role violations (AES031), taxonomy role (AES016/AES015), contract role (AES013), mandatory inheritance (AES014). Each suffix type has a dedicated checker with its own protocol + aggregate.
+  orphan-detector/    — Orphan code detection (AES030). Protocol defined in `contract_orphan_protocol.rs` within this folder.
+  primitive-checker/  — Primitive obsession detection (AES016) — shared utility for scanning raw types.
   cli-commands/       — CLI command surfaces
   cli-transport/      — CLI execution transport
   config-system/      — Config loading & parsing
@@ -109,7 +105,7 @@ src-rust/
   project-setup/      — Project init, doctor, mcp-config
   plugin-system/      — Plugin discovery & management
   output-report/      — Output formatting & report generation
-  code-analysis/      — Quality algorithms: unused imports (AES015), class/line checking (AES009, AES004/AES005), type detection (AES006 protocol), fix processor (AES030/AES031/AES032), symbol renamer. Wires into coordinator pipeline.
+  code-analysis/      — Quality algorithms: unused imports (AES023), class/line checking (AES011, AES020/AES021), type detection (AES016 protocol), fix processor (AES036/AES037/AES038), symbol renamer. Wires into coordinator pipeline.
   mcp-server/         — MCP server
   source-parsing/     — Source code parsing
   lifecycle-state/    — Agent lifecycle management
@@ -130,11 +126,11 @@ src-rust/
 - **Allowed Imports**: Other `taxonomy_` files only. Outer imports trigger **AES001**.
 - **Description**: Pure domain models, value objects, and business entities.
 - **Components**:
-  - **Value Object (`_vo`)**: Immutable data containers. Primitive types forbidden (**AES006**). _Ex: `taxonomy_rule_vo.rs`_
+  - **Value Object (`_vo`)**: Immutable data containers. Primitive types forbidden (**AES016**). _Ex: `taxonomy_rule_vo.rs`_
   - **Entity (`_entity`)**: Stateful domain concepts with unique IDs. _Ex: `taxonomy_governance_entity.rs`_
   - **Event (`_event`)**: Immutable domain fact snapshots. _Ex: `taxonomy_applied_event.rs`_
   - **Error (`_error`)**: Domain-level exceptions. _Ex: `taxonomy_system_error.rs`_
-  - **Constant (`_constant`)**: Compile-time literals only (**AES033**). _Ex: `taxonomy_names_constant.rs`_
+  - **Constant (`_constant`)**: Compile-time literals only (**AES015**). _Ex: `taxonomy_names_constant.rs`_
 
 #### 2. Contract (`contract_` prefix)
 
@@ -166,7 +162,7 @@ src-rust/
 - **Prefix**: `agent_`
 - **Allowed Suffixes**: `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`, `_mixin`, `_state`
 - **Allowed Imports**: Depends on role:
-  - `orchestrator`/`coordinator`: `taxonomy_` + `contract_` only (AES021). Must NOT import capabilities/infrastructure directly.
+  - `orchestrator`/`coordinator`: `taxonomy_` + `contract_` only (AES032). Must NOT import capabilities/infrastructure directly.
   - `container`/`registry`/`mixin`: `taxonomy_` + `contract_` + `capabilities_` + `infrastructure_` (wiring assembly).
   - `manager`/`state`: `taxonomy_` + `contract_` only (leaf support modules).
 - **Description**: Orchestration, DI wiring, pipeline execution.
@@ -176,7 +172,7 @@ src-rust/
 - **Prefix**: `surface_`
 - **Allowed Suffixes**: `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_action`, `_screen`
 - **Allowed Imports**: Depends on role:
-  - Smart surfaces (`command`/`controller`/`page`/`entry`): `taxonomy_` + `contract_aggregate_` only (AES023). Must NOT import capabilities/infrastructure/agent directly — use `ServiceContainerAggregate`.
-  - Utility surfaces (`hook`/`store`/`action`/`screen`): `taxonomy_` only + passive surfaces. Must NOT import smart surfaces (AES018).
-  - Passive surfaces (`component`/`view`/`layout`): `taxonomy_` only (AES019). No logic or orchestration.
+  - Smart surfaces (`command`/`controller`/`page`/`entry`): `taxonomy_` + `contract_aggregate_` only (AES001). Must NOT import capabilities/infrastructure/agent directly — use `ServiceContainerAggregate`.
+  - Utility surfaces (`hook`/`store`/`action`/`screen`): `taxonomy_` only + passive surfaces. Must NOT import smart surfaces (AES033).
+  - Passive surfaces (`component`/`view`/`layout`): `taxonomy_` only (AES034). No logic or orchestration.
 - **Description**: CLI and MCP server entry points.

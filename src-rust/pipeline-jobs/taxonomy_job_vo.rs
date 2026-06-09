@@ -63,6 +63,12 @@ pub struct LintStatusActionArgs {
     pub(crate) value: HashMap<String, serde_json::Value>,
 }
 
+impl Default for LintStatusActionArgs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LintStatusActionArgs {
     pub fn new() -> Self {
         Self {
@@ -89,6 +95,12 @@ pub struct ResponseData {
     pub returncode: i64,
     #[serde(default)]
     pub metadata: HashMap<String, serde_json::Value>,
+}
+
+impl Default for ResponseData {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ResponseData {

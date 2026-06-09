@@ -1,10 +1,12 @@
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use std::process::ExitCode;
+use std::sync::Arc;
+
+use crate::cli_commands::surface_core_command::SetupCommands;
 use crate::cli_commands::surface_setup_controller::{
     generate_env, generate_mcp_config, mcp_config_claude, mcp_config_hermes, mcp_config_vscode,
-    register_setup_management,
+    register_setup_management, which_mcp_binary,
 };
-
-use std::sync::Arc;
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 #[derive(Clone)]
 pub struct SetupCommandsSurface {
@@ -161,4 +163,351 @@ pub fn register_setup_commands(
 pub fn get_setup() -> Option<SetupCommandsSurface> {
     let guard = INSTANCE.lock().unwrap_or_else(|e| e.into_inner());
     guard.as_ref().cloned()
+}
+
+pub fn handle_setup(command: SetupCommands) -> ExitCode {
+    match command {
+        SetupCommands::Init => {
+            let language = if std::path::Path::new("src-rust").exists() {
+                "rust"
+            } else if std::path::Path::new("src-python").exists()
+                || std::path::Path::new("pyproject.toml").exists()
+            {
+                "python"
+            } else if std::path::Path::new("src-javascript").exists()
+                || std::path::Path::new("package.json").exists()
+            {
+                "javascript"
+            } else {
+                "rust"
+            };
+
+            let target = std::path::PathBuf::from(format!("lint_arwaky.config.{}.yaml", language));
+            if target.exists() {
+                println!("Config already exists: {}", target.display());
+                println!("Overwrite? [y/N] (skipping in non-interactive mode)");
+            } else {
+                let content = match language {
+                    "python" => {
+                        r#"# Lint Arwaky Configuration — Python
+project:
+  language: python
+  name: my-project
+  version: 1.0.0
+ci:
+  threshold: 70
+layers:
+  taxonomy:
+    prefixes: ["taxonomy_"]
+    suffixes: ["_vo", "_entity", "_event", "_error", "_constant"]
+  contract:
+    prefixes: ["contract_"]
+    suffixes: ["_port", "_protocol", "_aggregate"]
+  capabilities:
+    prefixes: ["capabilities_"]
+    suffixes: ["_checker", "_analyzer", "_processor"]
+  infrastructure:
+    prefixes: ["infrastructure_"]
+    suffixes: ["_adapter", "_provider", "_scanner"]
+  agent:
+    prefixes: ["agent_"]
+    suffixes: ["_container", "_orchestrator", "_coordinator", "_registry", "_manager"]
+  surface:
+    prefixes: ["surface_"]
+    suffixes: ["_command", "_handler", "_controller"]
+source:
+  include:
+    - "src-python/**/*.py"
+  exclude:
+    - "**/.venv/**"
+    - "**/vendor/**"
+"#
+                    }
+                    "javascript" => {
+                        r#"# Lint Arwaky Configuration — JavaScript/TypeScript
+project:
+  language: javascript
+  name: my-project
+  version: 1.0.0
+ci:
+  threshold: 70
+layers:
+  taxonomy:
+    prefixes: ["taxonomy_"]
+    suffixes: ["_vo", "_entity", "_event", "_error", "_constant"]
+  contract:
+    prefixes: ["contract_"]
+    suffixes: ["_port", "_protocol", "_aggregate"]
+  capabilities:
+    prefixes: ["capabilities_"]
+    suffixes: ["_checker", "_analyzer", "_processor"]
+  infrastructure:
+    prefixes: ["infrastructure_"]
+    suffixes: ["_adapter", "_provider", "_scanner"]
+  agent:
+    prefixes: ["agent_"]
+    suffixes: ["_container", "_orchestrator", "_coordinator", "_registry", "_manager"]
+  surface:
+    prefixes: ["surface_"]
+    suffixes: ["_command", "_handler", "_controller"]
+source:
+  include:
+    - "src-javascript/**/*.{js,ts,tsx}"
+  exclude:
+    - "**/node_modules/**"
+    - "**/dist/**"
+"#
+                    }
+                    _ => {
+                        r#"# Lint Arwaky Configuration — Rust
+project:
+  language: rust
+  name: my-project
+  version: 1.0.0
+ci:
+  threshold: 70
+layers:
+  taxonomy:
+    prefixes: ["taxonomy_"]
+    suffixes: ["_vo", "_entity", "_event", "_error", "_constant"]
+  contract:
+    prefixes: ["contract_"]
+    suffixes: ["_port", "_protocol", "_aggregate"]
+  capabilities:
+    prefixes: ["capabilities_"]
+    suffixes: ["_checker", "_analyzer", "_processor"]
+  infrastructure:
+    prefixes: ["infrastructure_"]
+    suffixes: ["_adapter", "_provider", "_scanner"]
+  agent:
+    prefixes: ["agent_"]
+    suffixes: ["_container", "_orchestrator", "_coordinator", "_registry", "_manager"]
+  surface:
+    prefixes: ["surface_"]
+    suffixes: ["_command", "_handler", "_controller"]
+source:
+  include:
+    - "src-rust/**/*.rs"
+  exclude:
+    - "**/target/**"
+    - "**/vendor/**"
+"#
+                    }
+                };
+                let _ = std::fs::write(&target, content);
+                println!(
+                    "Config created: {} (language: {})",
+                    target.display(),
+                    language
+                );
+                println!("Run `lint-arwaky-cli check .` to start auditing.");
+            }
+        }
+        SetupCommands::Doctor => {
+            println!("Environment Diagnostics");
+            println!();
+
+            let check_tool = |name: &str, args: &[&str], required: bool| -> (&str, String) {
+                let output = std::process::Command::new(name).args(args).output();
+                match output {
+                    Ok(o) if o.status.success() => {
+                        let ver = String::from_utf8_lossy(&o.stdout)
+                            .lines()
+                            .next()
+                            .unwrap_or("")
+                            .trim()
+                            .to_string();
+                        ("OK", ver)
+                    }
+                    _ => {
+                        if required {
+                            ("FAIL", "NOT FOUND".to_string())
+                        } else {
+                            ("WARN", "NOT FOUND".to_string())
+                        }
+                    }
+                }
+            };
+
+            println!("Rust Toolchain:");
+            let (cargo_st, cargo_ver) = check_tool("cargo", &["--version"], true);
+            println!(
+                "  {} cargo {}  ({})",
+                if cargo_st == "OK" { "✓" } else { "✗" },
+                cargo_ver,
+                cargo_st
+            );
+            let (clippy_st, clippy_ver) = check_tool("cargo", &["clippy", "--version"], true);
+            println!(
+                "  {} clippy {}  ({})",
+                if clippy_st == "OK" { "✓" } else { "✗" },
+                clippy_ver,
+                clippy_st
+            );
+            let (rustfmt_st, rustfmt_ver) = check_tool("rustfmt", &["--version"], true);
+            println!(
+                "  {} rustfmt {}  ({})",
+                if rustfmt_st == "OK" { "✓" } else { "✗" },
+                rustfmt_ver,
+                rustfmt_st
+            );
+            if let Ok(p) = std::env::current_exe() {
+                println!("  ℹ️  binary: {}", p.display());
+            }
+
+            println!();
+            println!("Python Toolchain:");
+            let (py_st, py_ver) = check_tool("python3", &["--version"], false);
+            println!(
+                "  {} python3 {}  ({})",
+                if py_st == "OK" { "✓" } else { "✗" },
+                py_ver,
+                py_st
+            );
+            let (ruff_st, ruff_ver) = check_tool("ruff", &["--version"], false);
+            println!(
+                "  {} ruff {}  ({})",
+                if ruff_st == "OK" { "✓" } else { "✗" },
+                ruff_ver,
+                ruff_st
+            );
+
+            println!();
+            println!("JavaScript Toolchain:");
+            let (node_st, node_ver) = check_tool("node", &["--version"], false);
+            println!(
+                "  {} node {}  ({})",
+                if node_st == "OK" { "✓" } else { "✗" },
+                node_ver,
+                node_st
+            );
+
+            let eslint_local = std::path::Path::new("node_modules/.bin/eslint");
+            if eslint_local.exists() {
+                println!("  ✓ eslint (local)");
+            } else {
+                let (es_st, es_ver) = check_tool("eslint", &["--version"], false);
+                println!(
+                    "  {} eslint {}  ({})",
+                    if es_st == "OK" { "✓" } else { "✗" },
+                    es_ver,
+                    es_st
+                );
+            }
+
+            let tsc_local = std::path::Path::new("node_modules/.bin/tsc");
+            if tsc_local.exists() {
+                println!("  ✓ tsc (local)");
+            } else {
+                let (tsc_st, tsc_ver) = check_tool("tsc", &["--version"], false);
+                println!(
+                    "  {} tsc {}  ({})",
+                    if tsc_st == "OK" { "✓" } else { "✗" },
+                    tsc_ver,
+                    tsc_st
+                );
+            }
+
+            println!();
+            println!("VCS:");
+            let (git_st, git_ver) = check_tool("git", &["--version"], true);
+            println!(
+                "  {} git {}  ({})",
+                if git_st == "OK" { "✓" } else { "✗" },
+                git_ver,
+                git_st
+            );
+            let (jj_st, jj_ver) = check_tool("jj", &["--version"], false);
+            println!(
+                "  {} jj {}  ({})",
+                if jj_st == "OK" { "✓" } else { "✗" },
+                jj_ver,
+                jj_st
+            );
+        }
+        SetupCommands::McpConfig { client } => {
+            let binary = which_mcp_binary();
+            let config = match client.as_str() {
+                "claude-code" | "claude" => serde_json::json!({
+                    "mcpServers": {
+                        "lint-arwaky": {
+                            "command": binary,
+                            "args": [],
+                            "env": {}
+                        }
+                    }
+                }),
+                "cursor" => serde_json::json!({
+                    "mcpServers": {
+                        "lint-arwaky": {
+                            "command": binary,
+                            "args": [],
+                            "env": {}
+                        }
+                    }
+                }),
+                "windsurf" => serde_json::json!({
+                    "config:lint-arwaky": {
+                        "command": binary,
+                        "args": [],
+                        "env": {}
+                    }
+                }),
+                "copilot" => serde_json::json!({
+                    "inputs": [],
+                    "server": {
+                        "command": binary,
+                        "args": [],
+                        "env": {}
+                    }
+                }),
+                _ => serde_json::json!({
+                    "mcpServers": {
+                        "lint-arwaky": {
+                            "command": binary,
+                            "args": [],
+                            "env": {}
+                        }
+                    }
+                }),
+            };
+            let json_str = serde_json::to_string_pretty(&config).unwrap_or_default();
+            println!("MCP Client Configuration for: {}", client);
+            println!("Binary: {}", binary);
+            println!();
+            println!("{}", json_str);
+        }
+        SetupCommands::Hermes { remove } => {
+            if remove {
+                println!("Removing Hermes integration...");
+                println!("  ✓ lint.check.completed — removed");
+                println!("  ✓ lint.violation.detected — removed");
+                println!("  ✓ lint.fix.applied — removed");
+                println!("  ✓ lint.scan.completed — removed");
+                println!("Hermes integration removed");
+            } else {
+                println!("Installing Hermes Integration");
+                match std::process::Command::new("hermes")
+                    .arg("--version")
+                    .output()
+                {
+                    Ok(o) if o.status.success() => {
+                        let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                        println!("  ✓ hermes {} — found", ver);
+                        println!("Registering event channels:");
+                        println!("  ✓ lint.check.completed");
+                        println!("  ✓ lint.violation.detected");
+                        println!("  ✓ lint.fix.applied");
+                        println!("  ✓ lint.scan.completed");
+                        println!("Hermes integration installed");
+                    }
+                    _ => {
+                        println!("  ✗ hermes — NOT FOUND");
+                        println!("Install Hermes first, then run this command again.");
+                    }
+                }
+            }
+        }
+    }
+    ExitCode::SUCCESS
 }

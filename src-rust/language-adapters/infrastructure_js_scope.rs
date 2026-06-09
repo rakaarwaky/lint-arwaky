@@ -1,13 +1,19 @@
 /// javascript_scope_provider — JS/TS regex patterns and scope detection helpers.
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
-use /* UNKNOWN: LineContentVO */ crate::shared_common::taxonomy_layer_vo::LineContentVO;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: ScopeBounds */ crate::shared_common::taxonomy_lint_vo::ScopeBounds;
-use /* UNKNOWN: SemanticError */ crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_layer_vo::LineContentVO;
+use crate::shared_common::taxonomy_lint_vo::ScopeBounds;
 use regex::Regex;
 
 pub struct JSScopeProvider {}
+
+impl Default for JSScopeProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl JSScopeProvider {
     pub fn new() -> Self {
@@ -31,7 +37,8 @@ impl IJavascriptScopePort for JSScopeProvider {
         if let Some(caps) = class_re.captures(line_str) {
             return Ok(Some(SymbolName::new(format!("class {}", &caps[1]))));
         }
-        let func_re = match Regex::new(r"(?:async\s+)?function\s+([A-Za-z_\$][A-Za-z0-9_\$]*)\s*\(") {
+        let func_re = match Regex::new(r"(?:async\s+)?function\s+([A-Za-z_\$][A-Za-z0-9_\$]*)\s*\(")
+        {
             Ok(r) => r,
             Err(_) => return Ok(None),
         };

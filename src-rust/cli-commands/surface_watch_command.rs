@@ -1,6 +1,8 @@
 /// Watch CLI command — file watcher with auto-lint on changes.
+use std::process::ExitCode;
 use std::sync::Arc;
 
+use crate::cli_commands::taxonomy_entry_vo::{compute_score, lint_path, resolve_target};
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 pub struct WatchdogBridge {}
 
@@ -43,4 +45,20 @@ pub fn register_watch_command(
     let mut surface = WatchCommandsSurface::new(Some(container.clone()));
     surface.register_all(container);
     surface
+}
+
+pub fn handle_watch(path: Option<String>) -> ExitCode {
+    let root = resolve_target(path);
+    println!("Lint Arwaky v{} (Watch Mode)", env!("CARGO_PKG_VERSION"));
+    println!("Target: {}", root);
+    println!("Polling every 2s. Press Ctrl+C to stop.");
+    loop {
+        std::thread::sleep(std::time::Duration::from_secs(2));
+        let results = lint_path(&root);
+        println!(
+            "[{} violations, score {}]",
+            results.len(),
+            compute_score(&results)
+        );
+    }
 }

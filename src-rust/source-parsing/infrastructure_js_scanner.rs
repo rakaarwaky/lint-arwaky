@@ -3,26 +3,26 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::sync::LazyLock;
 
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
-use crate::shared_common::taxonomy_common_vo::BooleanVO;
+use crate::code_analysis::taxonomy_source_vo::ImportInfo;
+use crate::code_analysis::taxonomy_source_vo::ImportInfoList;
+use crate::code_analysis::taxonomy_source_vo::PrimitiveViolation;
+use crate::code_analysis::taxonomy_source_vo::PrimitiveViolationList;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::PrimitiveTypeList;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::shared_common::taxonomy_common_error::Cause;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::Count;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::PatternList;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: ImportInfo */ crate::code_analysis::taxonomy_source_vo::ImportInfo;
-use /* UNKNOWN: ImportInfoList */ crate::code_analysis::taxonomy_source_vo::ImportInfoList;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: MetadataVO */ crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
-use /* UNKNOWN: PrimitiveTypeList */ crate::naming_rules::taxonomy_symbols_vo::PrimitiveTypeList;
-use /* UNKNOWN: PrimitiveViolation */ crate::code_analysis::taxonomy_source_vo::PrimitiveViolation;
-use /* UNKNOWN: PrimitiveViolationList */ crate::code_analysis::taxonomy_source_vo::PrimitiveViolationList;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
+use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::source_parsing::taxonomy_parser_error::SourceParserError;
-use /* UNKNOWN: SuccessStatus */ crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 static IMPORT_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^import\s+(.+?)\s+from\s+'([^']+)'").ok());
@@ -31,6 +31,8 @@ static IMPORT_DOUBLE_REGEX: LazyLock<Option<Regex>> =
 static REQUIRE_REGEX: LazyLock<Option<Regex>> = LazyLock::new(|| {
     Regex::new(r#"^(?:const|let|var)\s+(\w+)\s*=\s*require\((?:'([^']+)'|"([^"]+)")\)"#).ok()
 });
+static DYNAMIC_IMPORT_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r#"\bimport\(['"]([^'"]+)['"]\)"#).ok());
 static CLASS_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^class\s+(\w+)(?:\s+extends\s+(\w+))?").ok());
 static FN_REGEX: LazyLock<Option<Regex>> =
@@ -60,6 +62,12 @@ struct ParsedData {
 }
 
 pub struct ASTJSParserAdapter {}
+
+impl Default for ASTJSParserAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ASTJSParserAdapter {
     pub fn new() -> Self {
@@ -224,7 +232,10 @@ impl ASTJSParserAdapter {
                 raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
                 module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
                 import_found = true;
-            } else if let Some(imp_cap) = IMPORT_DOUBLE_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
+            } else if let Some(imp_cap) = IMPORT_DOUBLE_REGEX
+                .as_ref()
+                .and_then(|r| r.captures(stripped))
+            {
                 raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
                 module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
                 import_found = true;
@@ -269,7 +280,8 @@ impl ASTJSParserAdapter {
                         name: None,
                     });
                 }
-            } else if let Some(req_cap) = REQUIRE_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
+            } else if let Some(req_cap) = REQUIRE_REGEX.as_ref().and_then(|r| r.captures(stripped))
+            {
                 let alias = req_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
                 let mod_path_raw = req_cap
                     .get(2)
@@ -288,6 +300,22 @@ impl ASTJSParserAdapter {
                     module: mod_path,
                     name: None,
                 });
+            } else if let Some(dyn_cap) = DYNAMIC_IMPORT_REGEX
+                .as_ref()
+                .and_then(|r| r.captures(stripped))
+            {
+                let mod_path = dyn_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
+                let mod_path_clean = mod_path
+                    .replace('/', ".")
+                    .trim_start_matches('.')
+                    .to_string();
+                if !mod_path_clean.is_empty() {
+                    data.imports_list.push(ImportInfo {
+                        line: LineNumber::new(idx),
+                        module: mod_path_clean,
+                        name: None,
+                    });
+                }
             }
 
             // Export detection
@@ -346,7 +374,9 @@ impl ASTJSParserAdapter {
                 }));
             }
 
-            let cf_matches = CF_REGEX.as_ref().map_or(0, |r| r.find_iter(stripped).count()) as i64;
+            let cf_matches = CF_REGEX
+                .as_ref()
+                .map_or(0, |r| r.find_iter(stripped).count()) as i64;
             data.control_flow_count += cf_matches;
 
             if let Some(word_re) = WORD_REGEX.as_ref() {
@@ -667,7 +697,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
             .value
             .replace('\\', "/")
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or("")
             .to_string();
         let mut stem = basename.clone();
@@ -685,7 +715,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
             .value
             .replace('\\', "/")
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or("")
             .to_string();
         BooleanVO::new(

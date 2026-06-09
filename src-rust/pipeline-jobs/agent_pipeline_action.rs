@@ -2,9 +2,9 @@
 use crate::pipeline_jobs::contract_dispatcher_aggregate::PipelineActionDispatcherAggregate;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionArgs;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use /* UNKNOWN: SuccessStatus */ crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use std::collections::HashMap;
 
 pub struct PipelineActionOrchestrator {}
@@ -68,6 +68,12 @@ impl PipelineActionDispatcherAggregate for PipelineActionOrchestrator {
             "cancel",
         ];
         SuccessStatus::new(known_actions.contains(&action.value()))
+    }
+}
+
+impl Default for PipelineActionOrchestrator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

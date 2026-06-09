@@ -21,6 +21,12 @@ pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
 
 pub struct ArchitectureLintOrchestrator {}
 
+impl Default for ArchitectureLintOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchitectureLintOrchestrator {
     pub fn new() -> Self {
         let _: Option<&dyn ServiceContainerAggregate> = None;
@@ -79,6 +85,12 @@ impl IArchLintProtocol for ArchitectureLintOrchestrator {
 
 pub struct ArchLintPipelineOrchestrator {
     inner: ArchitectureLintOrchestrator,
+}
+
+impl Default for ArchLintPipelineOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ArchLintPipelineOrchestrator {

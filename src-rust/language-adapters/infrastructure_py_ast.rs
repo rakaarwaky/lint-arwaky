@@ -1,18 +1,18 @@
 /// python_ast_tracer — AST-based tracer for Python code analysis.
 use crate::naming_rules::contract_variant_port::INamingVariantPort;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::CallChainList;
+use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::semantic_analysis::contract_tracer_port::ISemanticTracerPort;
-use /* UNKNOWN: CallChainList */ crate::naming_rules::taxonomy_symbols_vo::CallChainList;
+use crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::Count;
-use /* UNKNOWN: DataFlowList */ crate::shared_common::taxonomy_common_vo::DataFlowList;
+use crate::shared_common::taxonomy_common_vo::DataFlowList;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::ResponseDataList;
+use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use /* UNKNOWN: ResponseDataList */ crate::shared_common::taxonomy_common_vo::ResponseDataList;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use /* UNKNOWN: SemanticError */ crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use /* UNKNOWN: SymbolNameList */ crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
 
 use async_trait::async_trait;
 

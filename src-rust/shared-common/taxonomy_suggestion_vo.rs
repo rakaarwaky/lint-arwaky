@@ -68,7 +68,7 @@ impl<'de> serde::Deserialize<'de> for ClassPath {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -84,17 +84,11 @@ impl<'de> serde::Deserialize<'de> for ClassPath {
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct DescriptionVO {
     pub(crate) value: String,
 }
 
-impl Default for DescriptionVO {
-    fn default() -> Self {
-        Self {
-            value: String::new(),
-        }
-    }
-}
 
 impl DescriptionVO {
     pub fn new(value: impl Into<String>) -> Self {
@@ -158,7 +152,7 @@ impl<'de> serde::Deserialize<'de> for DescriptionVO {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -240,7 +234,7 @@ impl<'de> serde::Deserialize<'de> for LogOutput {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -261,7 +255,7 @@ pub struct MetadataVO {
 
 impl MetadataVO {
     pub fn new(value: std::collections::HashMap<String, serde_json::Value>) -> Self {
-        Self { value: value }
+        Self { value }
     }
     pub fn value(&self) -> &std::collections::HashMap<String, serde_json::Value> {
         &self.value
@@ -336,7 +330,7 @@ impl<'de> serde::Deserialize<'de> for StdError {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -418,7 +412,7 @@ impl<'de> serde::Deserialize<'de> for StdOutput {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -500,7 +494,7 @@ impl<'de> serde::Deserialize<'de> for Suggestion {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;

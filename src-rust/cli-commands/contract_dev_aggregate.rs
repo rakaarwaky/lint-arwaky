@@ -1,7 +1,7 @@
-use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::output_report::taxonomy_score_vo::FileFormat;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_layer_vo::Identity;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 #[async_trait]

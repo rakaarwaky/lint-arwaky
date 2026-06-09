@@ -6,8 +6,8 @@ use std::path::Path;
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 
 pub struct ArchComplianceAnalyzer {
     pub config: ArchitectureConfig,
@@ -57,12 +57,6 @@ impl ArchComplianceAnalyzer {
                         }
                         if rule.max_lines.value > 0 {
                             ldef.max_lines = rule.max_lines.clone();
-                        }
-                        if rule.barrel_completeness.value {
-                            ldef.barrel_completeness = rule.barrel_completeness.clone();
-                        }
-                        if rule.forbid_internal_all.value {
-                            ldef.forbid_internal_all = rule.forbid_internal_all.clone();
                         }
                         if rule.mandatory_class_definition.value {
                             ldef.mandatory_class_definition =
@@ -165,7 +159,7 @@ impl ArchComplianceAnalyzer {
 
         let mut sorted_layers: Vec<(&LayerNameVO, &LayerDefinition)> =
             self.config.layers.iter().collect();
-        sorted_layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
+        sorted_layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 
         for (name, def) in &sorted_layers {
             if name.value.contains('(') {
@@ -221,14 +215,18 @@ impl ArchComplianceAnalyzer {
     ///   2. Prefix-based match: segment starts with layer prefix (e.g. "taxonomy_definition_vo").
     ///   3. Path-based match: module-path-as-filesystem-path contains the layer path.
     pub fn detect_module_layer(&self, module: &str) -> Option<String> {
-        let meaningful_parts: Vec<&str> = module.split('.').filter(|p| !p.is_empty()).collect();
+        let meaningful_parts: Vec<&str> = if module.contains("::") {
+            module.split("::").filter(|p| !p.is_empty()).collect()
+        } else {
+            module.split('.').filter(|p| !p.is_empty()).collect()
+        };
 
         if meaningful_parts.is_empty() {
             return None;
         }
 
         // 1. Direct match with layer names (ignoring specialisation suffix).
-        for (name, _) in &self.config.layers {
+        for name in self.config.layers.keys() {
             let base_name = name.value.split('(').next().unwrap_or(&name.value);
             if meaningful_parts.contains(&base_name) {
                 return Some(self.refine_module_layer(base_name, &meaningful_parts));
@@ -316,7 +314,7 @@ impl ArchComplianceAnalyzer {
         let norm_path_def = path_def.trim_end_matches('/');
 
         let parent_dir = match Path::new(rel).parent().and_then(|p| p.to_str()) {
-            Some(p) if p.is_empty() => ".",
+            Some("") => ".",
             Some(p) => p.trim_end_matches('/'),
             None => ".",
         };

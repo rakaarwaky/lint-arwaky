@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-/* UNKNOWN: MetadataVO */ use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
+/* UNKNOWN: MetadataVO */
+use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ActionArgs {
@@ -9,7 +10,7 @@ pub struct ActionArgs {
 
 impl ActionArgs {
     pub fn new(value: MetadataVO) -> Self {
-        Self { value: value }
+        Self { value }
     }
     pub fn value(&self) -> &MetadataVO {
         &self.value
@@ -51,8 +52,7 @@ impl PartialEq for ActionName {
     }
 }
 
-impl Eq for ActionName {
-}
+impl Eq for ActionName {}
 
 impl From<&str> for ActionName {
     fn from(s: &str) -> Self {
@@ -99,7 +99,7 @@ impl<'de> serde::Deserialize<'de> for ActionName {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -148,7 +148,6 @@ impl PartialEq for JobId {
     }
 }
 
-
 impl From<&str> for JobId {
     fn from(s: &str) -> Self {
         Self {
@@ -194,7 +193,7 @@ impl<'de> serde::Deserialize<'de> for JobId {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;

@@ -1,18 +1,24 @@
 /// naming_variant_provider — Python naming variant generator.
 use crate::naming_rules::contract_variant_port::INamingVariantPort;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::naming_rules::taxonomy_provider_error::NamingError;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use /* UNKNOWN: SymbolNameList */ crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
 static RE_WORDS: Lazy<Result<Regex, NamingError>> = Lazy::new(|| {
-    Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
+    Regex::new(r"[A-Z]{2,}|[A-Z][a-z0-9]*|[a-z0-9]+")
         .map_err(|e| NamingError::new(ErrorMessage::new(format!("Invalid regex pattern: {}", e))))
 });
 
 pub struct PythonNamingVariantProvider {}
+
+impl Default for PythonNamingVariantProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl PythonNamingVariantProvider {
     pub fn new() -> Self {

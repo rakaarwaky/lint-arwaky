@@ -3,9 +3,9 @@
 //! Defines the inbound interface for generating environment
 //! files and MCP server configurations for various editors.
 
+use crate::pipeline_jobs::taxonomy_job_vo::EnvContentVO;
+use crate::pipeline_jobs::taxonomy_job_vo::McpConfigVO;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use /* UNKNOWN: EnvContentVO */ crate::pipeline_jobs::taxonomy_job_vo::EnvContentVO;
-use /* UNKNOWN: McpConfigVO */ crate::pipeline_jobs::taxonomy_job_vo::McpConfigVO;
 
 pub trait ISetupManagementProtocol: Send + Sync {
     fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO;

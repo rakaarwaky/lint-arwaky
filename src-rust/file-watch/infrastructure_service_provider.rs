@@ -4,15 +4,21 @@ use std::sync::Mutex;
 use std::time::SystemTime;
 
 use crate::file_watch::contract_provider_port::IWatchProviderPort;
-use crate::shared_common::taxonomy_common_vo::BooleanVO;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::file_watch::taxonomy_service_error::WatchServiceError;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::BooleanVO;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct WatchServiceProvider {
     running: bool,
     watch_path: Option<FilePath>,
     snapshots: Mutex<HashMap<String, SystemTime>>,
+}
+
+impl Default for WatchServiceProvider {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl WatchServiceProvider {
@@ -44,7 +50,10 @@ impl WatchServiceProvider {
     pub fn stop_sync(&mut self) -> Result<(), WatchServiceError> {
         self.running = false;
         self.watch_path = None;
-        self.snapshots.lock().unwrap_or_else(|e| e.into_inner()).clear();
+        self.snapshots
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
         Ok(())
     }
 

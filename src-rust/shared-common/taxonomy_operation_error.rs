@@ -1,7 +1,8 @@
+use crate::shared_common::taxonomy_adapter_error::AdapterError;
+use crate::shared_common::taxonomy_adapter_error::ScanError;
 /// linter_operation_error — Unified error type for linter adapter operations.
-/* UNKNOWN: ErrorMessage */ use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use /* UNKNOWN: lint_adapter_error::AdapterError */ crate::shared_common::taxonomy_adapter_error::AdapterError;
-use /* UNKNOWN: lint_adapter_error::ScanError */ crate::shared_common::taxonomy_adapter_error::ScanError;
+/* UNKNOWN: ErrorMessage */
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, thiserror::Error)]

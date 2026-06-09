@@ -45,18 +45,14 @@ impl IPathNormalizationPort for PathNormalizationProvider {
 
             if !phantom_root.is_empty() && path_str.starts_with(&phantom_root) {
                 let suffix = &path_str[phantom_root.len()..];
-                let suffix = if suffix.starts_with('/') {
-                    &suffix[1..]
-                } else {
-                    suffix
-                };
+                let suffix = suffix.strip_prefix('/').unwrap_or(suffix);
                 path_str = format!("{}/{}", actual_root, suffix);
             }
         }
 
         // 3. Handle src/ and src-* pathing only if it's NOT explicitly relative or absolute
-        if path_str.starts_with("src/") || path_str.starts_with("src-") {
-            if !Path::new(&path_str).exists() {
+        if (path_str.starts_with("src/") || path_str.starts_with("src-"))
+            && !Path::new(&path_str).exists() {
                 if let Ok(project_root) = env::var("PROJECT_ROOT") {
                     let candidate = Path::new(&project_root).join(&path_str);
                     if candidate.exists() {
@@ -66,7 +62,6 @@ impl IPathNormalizationPort for PathNormalizationProvider {
                     }
                 }
             }
-        }
 
         FilePath { value: path_str }
     }

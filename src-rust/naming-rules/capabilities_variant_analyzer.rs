@@ -1,8 +1,8 @@
 // naming_variant_analyzer — Capability for generating naming convention variants.
 // Implements INamingVariantProtocol (pure logic, no infrastructure dependency).
 
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use /* UNKNOWN: SymbolNameList */ crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
 use std::collections::HashSet;
 
 /// Business logic for transforming symbol names into various naming conventions.
@@ -15,6 +15,12 @@ pub struct NamingVariantDict {
     pub camel_case: String,
     pub screaming_snake: String,
     pub kebab_case: String,
+}
+
+impl Default for NamingVariantAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl NamingVariantAnalyzer {

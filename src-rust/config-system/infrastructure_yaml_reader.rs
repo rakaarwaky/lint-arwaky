@@ -1,6 +1,6 @@
 use crate::config_system::contract_reader_port::IConfigReaderPort;
-use crate::source_parsing::contract_normalization_port::IPathNormalizationPort;
 use crate::config_system::taxonomy_source_vo::ConfigSource;
+use crate::source_parsing::contract_normalization_port::IPathNormalizationPort;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 use std::sync::Arc;

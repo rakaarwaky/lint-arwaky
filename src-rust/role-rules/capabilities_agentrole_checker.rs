@@ -13,17 +13,21 @@ use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes021_must_implement_contract, aes024_any_type,
-    AES021_COORDINATES_MULTIPLE, AES021_HIGH_LEVEL_POLICY, AES021_LAZY_EAGER_INIT,
-    AES021_MUST_IMPLEMENT_CONTRACT, AES021_NO_DOMAIN_LOGIC, AES021_STATELESS_EXECUTION,
+    aes032_must_implement_contract, aes035_any_type, AES032_COORDINATES_MULTIPLE,
+    AES032_HIGH_LEVEL_POLICY, AES032_LAZY_EAGER_INIT, AES032_MUST_IMPLEMENT_CONTRACT,
+    AES032_NO_DOMAIN_LOGIC, AES032_STATELESS_EXECUTION,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
-fn make_adapter(name: &str) -> Option<AdapterName> {
-    AdapterName::new(name).ok()
-}
+
 
 pub struct AgentRoleChecker {}
+impl Default for AgentRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AgentRoleChecker {
     pub fn new() -> Self {
         Self {}
@@ -64,10 +68,10 @@ impl AgentRoleChecker {
         self._check_must_implement_contract(
             f,
             &contract_name,
-            AES021_MUST_IMPLEMENT_CONTRACT,
+            AES032_MUST_IMPLEMENT_CONTRACT,
             analyzer,
             results,
-            "AES021",
+            "AES032",
         );
     }
 
@@ -92,7 +96,7 @@ impl AgentRoleChecker {
             let line_vo = LineNumber::new(line_val);
             let method_name = self._find_method_name_for_line(
                 &serde_json::Value::Object(serde_json::Map::from_iter(
-                    metadata_methods.value.clone().into_iter(),
+                    metadata_methods.value.clone(),
                 )),
                 line_val,
             );
@@ -102,9 +106,9 @@ impl AgentRoleChecker {
                         file: f.clone(),
                         line: line_vo,
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::raw("AES021"),
-                        message: LintMessage::new(AES021_STATELESS_EXECUTION),
-                        source: make_adapter("architecture"),
+                        code: ErrorCode::raw("AES032"),
+                        message: LintMessage::new(AES032_STATELESS_EXECUTION),
+                        source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
@@ -133,13 +137,12 @@ impl AgentRoleChecker {
                     file: f.clone(),
                     line: imp.line.clone(),
                     column: ColumnNumber::new(0),
-                    code: ErrorCode::raw("AES021"),
-                    message: LintMessage::new(AES021_HIGH_LEVEL_POLICY),
-                    source: make_adapter("architecture"),
+                    code: ErrorCode::raw("AES032"),
+                    message: LintMessage::new(AES032_HIGH_LEVEL_POLICY),
+                    source: Some(AdapterName::raw("architecture")),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
-                    related_locations:
-                        crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                    related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
                 });
             }
         }
@@ -153,7 +156,7 @@ impl AgentRoleChecker {
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) {
         let metadata = analyzer.parser().get_class_methods(f);
-        for (_, class_methods) in &metadata.value {
+        for class_methods in metadata.value.values() {
             let init_method = self._find_init_method(class_methods);
             if let Some(ref init_m) = init_method {
                 if self._count_orchestrator_args(init_m) < 2 {
@@ -162,9 +165,9 @@ impl AgentRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::raw("AES021"),
-                        message: LintMessage::new(AES021_COORDINATES_MULTIPLE),
-                        source: make_adapter("architecture"),
+                        code: ErrorCode::raw("AES032"),
+                        message: LintMessage::new(AES032_COORDINATES_MULTIPLE),
+                        source: Some(AdapterName::raw("architecture")),
                         severity: Severity::MEDIUM,
                         enclosing_scope: None,
                         related_locations:
@@ -226,12 +229,11 @@ impl AgentRoleChecker {
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
-                message: LintMessage::new(AES021_NO_DOMAIN_LOGIC),
-                source: make_adapter("architecture"),
+                message: LintMessage::new(AES032_NO_DOMAIN_LOGIC),
+                source: Some(AdapterName::raw("architecture")),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
-                related_locations:
-                    crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
             });
         }
     }
@@ -244,7 +246,7 @@ impl AgentRoleChecker {
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) {
         let metadata = analyzer.parser().get_class_methods(f);
-        for (_, class_methods) in &metadata.value {
+        for class_methods in metadata.value.values() {
             let init_method = self._find_init_method(class_methods);
             if init_method.is_some() {
                 let control_flow_count = analyzer.parser().get_control_flow_count(f);
@@ -258,9 +260,9 @@ impl AgentRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::raw("AES021"),
-                        message: LintMessage::new(AES021_LAZY_EAGER_INIT),
-                        source: make_adapter("architecture"),
+                        code: ErrorCode::raw("AES032"),
+                        message: LintMessage::new(AES032_LAZY_EAGER_INIT),
+                        source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
@@ -281,24 +283,23 @@ impl AgentRoleChecker {
         code: &str,
     ) {
         let bases_map = analyzer.parser().get_class_bases_map(f);
-        for (_, bases) in &bases_map.value {
-            let has_contract = bases.as_array().map_or(false, |arr| {
+        for bases in bases_map.value.values() {
+            let has_contract = bases.as_array().is_some_and(|arr| {
                 arr.iter()
                     .any(|b| b.to_string().contains(&contract_name.value))
             });
             if !has_contract {
-                let message = aes021_must_implement_contract(&contract_name.value);
+                let message = aes032_must_implement_contract(&contract_name.value);
                 results.push(LintResult {
                     file: f.clone(),
                     line: LineNumber::new(0),
                     column: ColumnNumber::new(0),
                     code: ErrorCode::raw(code),
                     message: LintMessage::new(message),
-                    source: make_adapter("architecture"),
+                    source: Some(AdapterName::raw("architecture")),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
-                    related_locations:
-                        crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                    related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
                 });
             }
         }
@@ -331,7 +332,7 @@ impl AgentRoleChecker {
             }
         }
 
-        best_method.map(|s| SymbolName::new(s))
+        best_method.map(SymbolName::new)
     }
 
     fn _check_forbid_any_type(
@@ -358,9 +359,9 @@ impl AgentRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_num),
                         column: ColumnNumber::new(col),
-                        code: ErrorCode::raw("AES024"),
-                        message: LintMessage::new(aes024_any_type(line)),
-                        source: make_adapter("architecture"),
+                        code: ErrorCode::raw("AES035"),
+                        message: LintMessage::new(aes035_any_type(line)),
+                        source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:

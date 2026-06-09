@@ -1,7 +1,7 @@
-use crate::shared_common::taxonomy_common_vo::DataFlowList;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::shared_common::taxonomy_common_vo::DataFlowList;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub trait IDataFlowProtocol: Send + Sync {
     fn find_flow(

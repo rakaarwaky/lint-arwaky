@@ -1,5 +1,5 @@
+use crate::shared_common::taxonomy_common_vo::Timestamp;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
-use /* UNKNOWN: Timestamp */ crate::shared_common::taxonomy_common_vo::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

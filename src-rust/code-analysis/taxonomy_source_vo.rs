@@ -1,5 +1,5 @@
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -43,6 +43,12 @@ pub struct ImportInfoList {
     pub values: Vec<ImportInfo>,
 }
 
+impl Default for ImportInfoList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ImportInfoList {
     pub fn new() -> Self {
         Self { values: Vec::new() }
@@ -62,6 +68,12 @@ impl ImportInfoList {
 pub struct PrimitiveViolationList {
     #[serde(default)]
     pub values: Vec<PrimitiveViolation>,
+}
+
+impl Default for PrimitiveViolationList {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PrimitiveViolationList {

@@ -1,7 +1,7 @@
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
 
 pub trait PipelineOutputAggregate: Send + Sync {
     fn success(&self) -> &SuccessStatus;

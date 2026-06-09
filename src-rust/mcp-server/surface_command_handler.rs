@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 /// COMMAND_CATALOG — mirrors the Python dict exactly.
 pub struct CommandEntry {
@@ -32,6 +32,12 @@ pub fn list_commands_func(domain: Option<&str>) -> HashMap<String, HashMap<Strin
 
 pub struct McpCommandCatalogSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
+}
+
+impl Default for McpCommandCatalogSurface {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl McpCommandCatalogSurface {

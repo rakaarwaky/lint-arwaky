@@ -30,7 +30,7 @@ pub struct AgentStatusVO {
 
 impl AgentStatusVO {
     pub fn new(value: AgentStatus) -> Self {
-        Self { value: value }
+        Self { value }
     }
     pub fn value(&self) -> &AgentStatus {
         &self.value

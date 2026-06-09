@@ -1,7 +1,7 @@
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
 use async_trait::async_trait;
 
 #[async_trait]

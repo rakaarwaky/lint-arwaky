@@ -1,20 +1,22 @@
 /// javascript_linter_adapter — ESLint, Prettier, and TSC adapters for JS/TS linting.
-use crate::di_containers::contract_service_aggregate::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
-use /* UNKNOWN: AdapterError */ crate::shared_common::taxonomy_adapter_error::AdapterError;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use crate::source_parsing::contract_normalization_port::IPathNormalizationPort;
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: LinterOperationError */ crate::shared_common::taxonomy_operation_error::LinterOperationError;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
-use /* UNKNOWN: ScanError */ crate::shared_common::taxonomy_adapter_error::ScanError;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_adapter_error::AdapterError;
+use crate::shared_common::taxonomy_adapter_error::ScanError;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_operation_error::LinterOperationError;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
 use serde_json::Value;
 use std::path::Path;
@@ -131,7 +133,9 @@ impl ILinterAdapterPort for PrettierAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(60.0)),
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                    60.0,
+                )),
             )
             .await
         {
@@ -185,7 +189,9 @@ impl ILinterAdapterPort for PrettierAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd,
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(60.0)),
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                    60.0,
+                )),
             )
             .await
         {
@@ -258,7 +264,9 @@ impl ILinterAdapterPort for TSCAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(60.0)),
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                    60.0,
+                )),
             )
             .await
         {
@@ -381,7 +389,9 @@ impl ILinterAdapterPort for ESLintAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(60.0)),
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                    60.0,
+                )),
             )
             .await
         {
@@ -472,7 +482,9 @@ impl ILinterAdapterPort for ESLintAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd,
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(60.0)),
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                    60.0,
+                )),
             )
             .await
         {

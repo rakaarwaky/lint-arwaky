@@ -1,7 +1,16 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    aes037_capability_routing, AES001_SURFACE_DEPENDENCY,
+};
 
 pub struct ArchLayerChecker {}
+
+impl Default for ArchLayerChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ArchLayerChecker {
     pub fn new() -> Self {
@@ -18,7 +27,7 @@ impl ArchLayerChecker {
         if layer != "surfaces" && !layer.starts_with("surfaces(") {
             return;
         }
-        for line in content.lines() {
+        for (i, line) in content.lines().enumerate() {
             let t = line.trim();
             if t.starts_with("use ")
                 && (t.contains("::capabilities::")
@@ -27,10 +36,10 @@ impl ArchLayerChecker {
             {
                 violations.push(LintResult::new_arch(
                     file,
-                    0,
-                    "AES023",
-                    Severity::HIGH,
-                    "AES023 SURFACE_DEPENDENCY: Surface imports from forbidden layer.",
+                    i + 1,
+                    "AES001",
+                    Severity::CRITICAL,
+                    AES001_SURFACE_DEPENDENCY,
                 ));
                 break;
             }
@@ -52,7 +61,12 @@ impl ArchLayerChecker {
             .filter_map(|l| {
                 let t = l.trim();
                 if t.starts_with("pub struct ") || t.starts_with("struct ") {
-                    Some(t.split_whitespace().nth(1).unwrap_or("").trim_end_matches(';'))
+                    Some(
+                        t.split_whitespace()
+                            .nth(1)
+                            .unwrap_or("")
+                            .trim_end_matches(';'),
+                    )
                 } else {
                     None
                 }
@@ -66,9 +80,9 @@ impl ArchLayerChecker {
                 violations.push(LintResult::new_arch(
                     file,
                     0,
-                    "AES030",
+                    "AES037",
                     Severity::MEDIUM,
-                    &format!("AES030 CAPABILITY_ROUTING: Struct '{}' no trait impl.", s),
+                    &aes037_capability_routing(s),
                 ));
             }
         }

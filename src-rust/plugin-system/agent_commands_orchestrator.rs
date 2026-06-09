@@ -22,6 +22,12 @@ impl PluginCommandsAggregate for PluginCommandsOrchestrator {
     }
 }
 
+impl Default for PluginCommandsOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PluginCommandsOrchestrator {
     pub fn new() -> Self {
         Self {}
