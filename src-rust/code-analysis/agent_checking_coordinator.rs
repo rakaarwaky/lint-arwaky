@@ -30,10 +30,10 @@ use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes023_unused_import, aes024_dead_inheritance, aes014_mandatory_inheritance,
+    aes023_unused_import, aes024_dead_inheritance, aes034_mandatory_inheritance,
     AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
-    AES012_CIRCULAR_IMPORT, AES031_SURFACE_ROLE_VIOLATION,
-    AES036_SINGLE_BOTTLENECK, AES038_MISSING_VO,
+    AES012_CIRCULAR_IMPORT, AES036_SURFACE_ROLE_VIOLATION,
+    AES033_SINGLE_BOTTLENECK, AES033_MISSING_VO,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -548,9 +548,9 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES032",
+                "AES035",
                 Severity::HIGH,
-                "AES032 AGENT_ROLE: Agent file exceeds 300 lines.",
+                "AES035 AGENT_ROLE: Agent file exceeds 300 lines.",
             ));
         }
     }
@@ -568,9 +568,9 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES031",
+                "AES036",
                 Severity::HIGH,
-                AES031_SURFACE_ROLE_VIOLATION,
+                AES036_SURFACE_ROLE_VIOLATION,
             ));
         }
     }
@@ -606,9 +606,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     0,
-                    "AES014",
+                    "AES034",
                     Severity::HIGH,
-                    &aes014_mandatory_inheritance(t),
+                    &aes034_mandatory_inheritance(t),
                 ));
             }
         }
@@ -626,21 +626,21 @@ impl LintCheckingCoordinator {
         let fc = content.matches("fn ").count();
         let ic = content.matches("impl ").count();
         if fc > 30 {
-            violations.push(Self::mk(
-                file,
-                0,
-                "AES036",
-                Severity::MEDIUM,
-                &format!("{} Found {} functions.", AES036_SINGLE_BOTTLENECK, fc),
-            ));
-        }
-        if ic > 5 {
-            violations.push(Self::mk(
-                file,
-                0,
-                "AES036",
-                Severity::MEDIUM,
-                &format!("{} Found {} impl blocks.", AES036_SINGLE_BOTTLENECK, ic),
+                violations.push(Self::mk(
+                    file,
+                    0,
+                    "AES033",
+                    Severity::MEDIUM,
+                    &format!("{} Found {} functions.", AES033_SINGLE_BOTTLENECK, fc),
+                ));
+            }
+            if ic > 5 {
+                violations.push(Self::mk(
+                    file,
+                    0,
+                    "AES033",
+                    Severity::MEDIUM,
+                    &format!("{} Found {} impl blocks.", AES033_SINGLE_BOTTLENECK, ic),
             ));
         }
     }
@@ -659,12 +659,12 @@ impl LintCheckingCoordinator {
                     || rhs.parse::<i64>().is_ok()
                     || rhs.parse::<f64>().is_ok()
                 {
-                    violations.push(Self::mk(
-                        file,
-                        i + 1,
-                        "AES038",
-                        Severity::MEDIUM,
-                        AES038_MISSING_VO,
+                violations.push(Self::mk(
+                    file,
+                    i + 1,
+                    "AES033",
+                    Severity::MEDIUM,
+                    AES033_MISSING_VO,
                     ));
                 }
             }

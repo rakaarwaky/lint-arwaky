@@ -20,7 +20,7 @@ use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes033_hierarchy_violation, aes034_passive_viotation_details,
+    aes036_hierarchy_violation, aes036_passive_violation_details,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use once_cell::sync::Lazy;
@@ -79,12 +79,12 @@ impl SurfaceHierarchyChecker {
 
             // AES018: check if file is wired in barrel
             if !is_wired(f) {
-                let desc = aes033_hierarchy_violation(&f.to_string());
+                let desc = aes036_hierarchy_violation(&f.to_string());
                 results.push(LintResult {
                     file: f.clone(),
                     line: LineNumber::new(1),
                     column: ColumnNumber::new(1),
-                    code: ErrorCode::raw("AES033"),
+                    code: ErrorCode::raw("AES036"),
                     message: LintMessage::new(desc),
                     source: Some(AdapterName::raw("surface_hierarchy")),
                     severity: Severity::HIGH,
@@ -371,8 +371,8 @@ impl SurfaceHierarchyChecker {
             file: f.clone(),
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),
-            code: ErrorCode::raw("AES034"),
-            message: LintMessage::new(aes034_passive_viotation_details(&f.to_string(), &detail)),
+            code: ErrorCode::raw("AES036"),
+            message: LintMessage::new(aes036_passive_violation_details(&f.to_string(), &detail)),
             source: Some(AdapterName::raw("surface_hierarchy")),
             severity: Severity::HIGH,
             enclosing_scope: None,

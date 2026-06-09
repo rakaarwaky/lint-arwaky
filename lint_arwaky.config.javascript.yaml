@@ -132,23 +132,35 @@ architecture:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
 
-    AES013:
+    AES031:
+      enabled: true
+      scope: ["taxonomy(constant)", "contract", "taxonomy(entity,error,event)"]
+
+    AES032:
       enabled: true
       scope: ["contract(aggregate)"]
       exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
 
-    AES014:
+    AES033:
+      enabled: true
+      scope: ["capabilities"]
+      max_functions: 30
+      max_impl: 5
+
+    AES034:
       enabled: true
       scope: ["infrastructure", "capabilities", "agent"]
       exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
 
-    AES015:
+    AES035:
       enabled: true
-      scope: ["taxonomy(constant)"]
+      scope: ["agent(container|registry|mixin)", "agent(orchestrator|coordinator)", "agent(manager|state)"]
+      max_lines: 300
 
-    AES016:
+    AES036:
       enabled: true
-      scope: ["contract", "taxonomy(entity,error,event)"]
+      scope: ["surfaces(command|controller|page|entry)", "surfaces(hook|store|action|screen|router)", "surfaces(component|view|layout)"]
+      max_functions: 15
 
     AES020:
       enabled: true
@@ -181,39 +193,3 @@ architecture:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
       entry_points: ["index.ts", "index.js", "index.tsx", "index.jsx"]
-
-    AES031:
-      enabled: true
-      scope: ["surfaces(command|controller|page|entry)", "surfaces(hook|store|action|screen|router)", "surfaces(component|view|layout)"]
-      max_functions: 15
-
-    AES032:
-      enabled: true
-      scope: ["agent(container|registry|mixin)", "agent(orchestrator|coordinator)", "agent(manager|state)"]
-      max_lines: 300
-
-    AES033:
-      enabled: true
-      scope: ["surfaces(hook|store|action|screen|router)"]
-
-    AES034:
-      enabled: true
-      scope: ["surfaces(component|view|layout)"]
-
-    AES035:
-      enabled: true
-      scope: ["agent(orchestrator|coordinator)"]
-
-    AES036:
-      enabled: true
-      scope: ["capabilities"]
-      max_functions: 30
-      max_impl: 5
-
-    AES037:
-      enabled: true
-      scope: ["capabilities"]
-
-    AES038:
-      enabled: true
-      scope: ["capabilities", "infrastructure"]

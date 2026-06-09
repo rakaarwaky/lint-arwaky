@@ -16,7 +16,7 @@ use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::shared_common::taxonomy_violationrs_constant::aes014_mandatory_inheritance;
+use crate::shared_common::taxonomy_violationrs_constant::aes034_mandatory_inheritance;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
@@ -46,7 +46,7 @@ impl MandatoryInheritanceChecker {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(0),
             column: ColumnNumber::new(0),
-            code: ErrorCode::raw("AES014"),
+            code: ErrorCode::raw("AES034"),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),
             severity: Severity::CRITICAL,
@@ -192,7 +192,7 @@ impl MandatoryInheritanceChecker {
 
             if !inherited {
                 let imported_list = contract_imports.join(", ");
-                let msg = aes014_mandatory_inheritance(&imported_list);
+                let msg = aes034_mandatory_inheritance(&imported_list);
                 violations.push(Self::make_result(file, &msg));
             }
         }

@@ -1,7 +1,7 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violationrs_constant::aes013_forbidden_inheritance;
+use crate::shared_common::taxonomy_violationrs_constant::aes032_forbidden_inheritance;
 
 pub struct ContractRoleChecker {}
 
@@ -72,11 +72,11 @@ impl ContractRoleChecker {
         }
         for trait_name in &forbidden_traits {
             if content.contains(&format!("impl {} for ", trait_name)) {
-                let msg = aes013_forbidden_inheritance(trait_name);
+                let msg = aes032_forbidden_inheritance(trait_name);
                 violations.push(LintResult::new_arch(
                     file,
                     0,
-                    "AES013",
+                    "AES032",
                     Severity::HIGH,
                     &msg,
                 ));

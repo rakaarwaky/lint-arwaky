@@ -9,7 +9,7 @@ pub const AES021_FILE_TOO_SHORT_MSG: &str =
     "AES021 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\n\
     WHY? Excessively small files clutter the project structure.\n\
     FIX: Expand the component or merge this logic into a related module";
-pub const AES016_PRIMITIVE_USAGE: &str = "AES016 PRIMITIVE_USAGE: Direct primitive in taxonomy.";
+pub const AES031_PRIMITIVE_USAGE: &str = "AES031 PRIMITIVE_USAGE: Direct primitive in taxonomy.";
 pub const AES011_MANDATORY_CLASS_DEFINITION: &str =
     "AES011 MANDATORY_CLASS_DEFINITION: File is missing a struct, enum, or trait definition.\n\
     WHY? Encapsulation in structs/traits is required for proper modularization and contract adherence.\n\
@@ -18,19 +18,19 @@ pub const AES011_SUFFIX_FORBIDDEN: &str =
     "AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.\n\
     WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
     FIX: Rename the file to use an allowed suffix or move it to the correct layer.";
-pub const AES032_STATELESS_EXECUTION: &str =
+pub const AES035_STATELESS_EXECUTION: &str =
     "Non-stateless behavior detected: state assignment found outside __init__.";
-pub const AES032_HIGH_LEVEL_POLICY: &str =
+pub const AES035_HIGH_LEVEL_POLICY: &str =
     "Low-level implementation details found (infrastructure import).";
-pub const AES032_COORDINATES_MULTIPLE: &str = "Coordinator must manage multiple orchestrators.";
-pub const AES032_NO_DOMAIN_LOGIC: &str = "Complex domain logic detected in a passive layer/role.";
-pub const AES032_LAZY_EAGER_INIT: &str = "Complex initialization logic found in Container.";
-pub const AES032_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceContainerAggregate.";
+pub const AES035_COORDINATES_MULTIPLE: &str = "Coordinator must manage multiple orchestrators.";
+pub const AES035_NO_DOMAIN_LOGIC: &str = "Complex domain logic detected in a passive layer/role.";
+pub const AES035_LAZY_EAGER_INIT: &str = "Complex initialization logic found in Container.";
+pub const AES035_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceContainerAggregate.";
 pub const AES035_ANY_TYPE: &str = "Any type annotation found in agent orchestrator layer.";
-pub const AES013_FORBIDDEN_INHERITANCE: &str =
-    "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
-pub const AES015_CONSTANT_PURITY: &str =
-    "AES015 CONSTANT_PURITY: _constant file contains non-constant declaration.";
+pub const AES032_FORBIDDEN_INHERITANCE: &str =
+    "AES032 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
+pub const AES031_CONSTANT_PURITY: &str =
+    "AES031 CONSTANT_PURITY: _constant file contains non-constant declaration.";
 
 pub fn aes010_naming_convention(_expected_word_count: i32) -> String {
     String::from(
@@ -63,9 +63,9 @@ pub fn aes011_suffix_mismatch(allowed_list: &str) -> String {
     )
 }
 
-pub fn aes016_primitive_usage(primitive: &str) -> String {
+pub fn aes031_primitive_usage(primitive: &str) -> String {
     format!(
-        "AES016 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy.",
+        "AES031 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy.",
         primitive
     )
 }
@@ -74,16 +74,16 @@ pub fn aes023_unused_import(name: &str) -> String {
     format!("AES023 UNUSED_IMPORT: '{}' imported but never used.", name)
 }
 
-pub fn aes013_forbidden_inheritance(trait_name: &str) -> String {
+pub fn aes032_forbidden_inheritance(trait_name: &str) -> String {
     format!(
-        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
+        "AES032 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
         trait_name
     )
 }
 
-pub fn aes032_must_implement_contract(contract_name: &str) -> String {
+pub fn aes035_must_implement_contract(contract_name: &str) -> String {
     format!(
-        "AES032 AGENT_ROLE: Class must implement '{}'.",
+        "AES035 AGENT_ROLE: Class must implement '{}'.",
         contract_name
     )
 }
@@ -104,23 +104,23 @@ pub const AES023_FIX_UNUSED_IMPORT: &str = "AES023 UNUSED_IMPORT: Fixing unused 
 pub const AES024_DEAD_INHERITANCE: &str =
     "AES024 DEAD_INHERITANCE: Empty struct or trait detected.";
 pub const AES030_ORPHAN_CODE: &str = "AES030 ORPHAN_CODE: File has no imports, not an entry point.";
-pub const AES033_HIERARCHY_VIOLATION: &str =
-    "AES033 SURFACE_HIERARCHY_VIOLATION: Surface file is not imported from the layer barrel.";
-pub const AES034_PASSIVE_VIOLATION: &str =
-    "AES034 PASSIVE_SURFACE_VIOLATION: Surface file contains active domain logic.";
+pub const AES036_HIERARCHY_VIOLATION: &str =
+    "AES036 SURFACE_HIERARCHY_VIOLATION: Surface file is not imported from the layer barrel.";
+pub const AES036_PASSIVE_VIOLATION: &str =
+    "AES036 PASSIVE_SURFACE_VIOLATION: Surface file contains active domain logic.";
 pub const AES012_CIRCULAR_IMPORT: &str = "AES012 CIRCULAR_IMPORT: Circular dependencies detected.";
-pub const AES031_SURFACE_ROLE_VIOLATION: &str =
-    "AES031 SURFACE_ROLE: Surface file exceeds role mandate.";
+pub const AES036_SURFACE_ROLE_VIOLATION: &str =
+    "AES036 SURFACE_ROLE: Surface file exceeds role mandate.";
 pub const AES001_SURFACE_DEPENDENCY: &str =
     "AES001 SURFACE_DEPENDENCY: Surface imports from forbidden layer.";
-pub const AES014_MANDATORY_INHERITANCE: &str =
-    "AES014 MANDATORY_INHERITANCE: File imports contracts but no class implements them.";
-pub const AES037_CAPABILITY_ROUTING: &str =
-    "AES037 CAPABILITY_ROUTING: Capability method not found in dispatch.";
-pub const AES036_SINGLE_BOTTLENECK: &str =
-    "AES036 SINGLE_BOTTLENECK: All dispatch routes go to a single capability.";
-pub const AES038_MISSING_VO: &str =
-    "AES038 MISSING_VO: Capability method call missing required VO parameter.";
+pub const AES034_MANDATORY_INHERITANCE: &str =
+    "AES034 MANDATORY_INHERITANCE: File imports contracts but no class implements them.";
+pub const AES033_CAPABILITY_ROUTING: &str =
+    "AES033 CAPABILITY_ROUTING: Capability method not found in dispatch.";
+pub const AES033_SINGLE_BOTTLENECK: &str =
+    "AES033 SINGLE_BOTTLENECK: All dispatch routes go to a single capability.";
+pub const AES033_MISSING_VO: &str =
+    "AES033 MISSING_VO: Capability method call missing required VO parameter.";
 
 pub fn aes022_bypass_comment(line: &str) -> String {
     format!(
@@ -137,11 +137,11 @@ pub fn aes024_dead_inheritance(type_name: &str) -> String {
 pub fn aes030_orphan_code(file: &str) -> String {
     format!("AES030 ORPHAN_CODE: File '{}' is unreachable/unused.", file)
 }
-pub fn aes033_hierarchy_violation(file: &str) -> String {
-    format!("AES033 SURFACE_HIERARCHY_VIOLATION: Surface file '{}' is not imported from the layer barrel.\nWHY? All surface files must be reachable through the barrel.\nFIX: Add to __init__.py or mod.rs.", file)
+pub fn aes036_hierarchy_violation(file: &str) -> String {
+    format!("AES036 SURFACE_HIERARCHY_VIOLATION: Surface file '{}' is not imported from the layer barrel.\nWHY? All surface files must be reachable through the barrel.\nFIX: Add to __init__.py or mod.rs.", file)
 }
-pub fn aes034_passive_viotation_details(file: &str, details: &str) -> String {
-    format!("AES034 PASSIVE_SURFACE_VIOLATION: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
+pub fn aes036_passive_violation_details(file: &str, details: &str) -> String {
+    format!("AES036 PASSIVE_SURFACE_VIOLATION: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
 }
 pub fn aes012_circular_import(source: &str, target: &str) -> String {
     format!(
@@ -149,24 +149,24 @@ pub fn aes012_circular_import(source: &str, target: &str) -> String {
         source, target
     )
 }
-pub fn aes014_mandatory_inheritance(contracts: &str) -> String {
-    format!("AES014 MANDATORY_INHERITANCE: File imports contracts ({}) but no class inherits from them.\nWHY? Layers that import contracts must provide an implementation.\nFIX: Add impl TraitName for YourStruct.", contracts)
+pub fn aes034_mandatory_inheritance(contracts: &str) -> String {
+    format!("AES034 MANDATORY_INHERITANCE: File imports contracts ({}) but no class inherits from them.\nWHY? Layers that import contracts must provide an implementation.\nFIX: Add impl TraitName for YourStruct.", contracts)
 }
-pub fn aes037_capability_routing(struct_name: &str) -> String {
+pub fn aes033_capability_routing(struct_name: &str) -> String {
     format!(
-        "AES037 CAPABILITY_ROUTING: Struct '{}' has no trait impl.",
+        "AES033 CAPABILITY_ROUTING: Struct '{}' has no trait impl.",
         struct_name
     )
 }
-pub fn aes036_single_bottleneck(target: &str) -> String {
+pub fn aes033_single_bottleneck(target: &str) -> String {
     format!(
-        "AES036 SINGLE_BOTTLENECK: All dispatch routes go to '{}'.",
+        "AES033 SINGLE_BOTTLENECK: All dispatch routes go to '{}'.",
         target
     )
 }
-pub fn aes038_missing_vo(method: &str) -> String {
+pub fn aes033_missing_vo(method: &str) -> String {
     format!(
-        "AES038 MISSING_VO: Capability method '{}' missing required VO parameter.",
+        "AES033 MISSING_VO: Capability method '{}' missing required VO parameter.",
         method
     )
 }

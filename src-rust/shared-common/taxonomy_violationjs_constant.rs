@@ -9,7 +9,7 @@ pub const AES021_FILE_TOO_SHORT_MSG: &str =
     "AES021 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\n\
     WHY? Excessively small files clutter the project structure.\n\
     FIX: Expand the component or merge this logic into a related module";
-pub const AES016_PRIMITIVE_USAGE: &str = "AES016 PRIMITIVE_USAGE: Direct primitive in taxonomy.";
+pub const AES031_PRIMITIVE_USAGE: &str = "AES031 PRIMITIVE_USAGE: Direct primitive in taxonomy.";
 pub const AES011_MANDATORY_CLASS_DEFINITION: &str =
     "AES011 MANDATORY_CLASS_DEFINITION: File is missing a class, interface, or type definition.\n\
     WHY? Encapsulation in classes/interfaces is required for proper modularization and contract adherence.\n\
@@ -18,25 +18,25 @@ pub const AES011_SUFFIX_FORBIDDEN: &str =
     "AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.\n\
     WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
     FIX: Rename the file to use an allowed suffix or move it to the correct layer.";
-pub const AES032_STATELESS_EXECUTION: &str =
+pub const AES035_STATELESS_EXECUTION: &str =
     "Non-stateless behavior detected: state assignment found outside constructor.";
-pub const AES032_HIGH_LEVEL_POLICY: &str =
+pub const AES035_HIGH_LEVEL_POLICY: &str =
     "Low-level implementation details found (infrastructure import).";
-pub const AES032_COORDINATES_MULTIPLE: &str = "Coordinator must manage multiple orchestrators.";
-pub const AES032_NO_DOMAIN_LOGIC: &str = "Complex domain logic detected in a passive layer/role.";
-pub const AES032_LAZY_EAGER_INIT: &str = "Complex initialization logic found in Container.";
-pub const AES032_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceContainerAggregate.";
+pub const AES035_COORDINATES_MULTIPLE: &str = "Coordinator must manage multiple orchestrators.";
+pub const AES035_NO_DOMAIN_LOGIC: &str = "Complex domain logic detected in a passive layer/role.";
+pub const AES035_LAZY_EAGER_INIT: &str = "Complex initialization logic found in Container.";
+pub const AES035_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceContainerAggregate.";
 pub const AES035_ANY_TYPE: &str = "Any type annotation found in agent orchestrator layer.";
-pub const AES013_FORBIDDEN_INHERITANCE: &str =
-    "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
-pub const AES015_CONSTANT_PURITY: &str =
-    "AES015 CONSTANT_PURITY: _constant file contains non-constant declaration.";
+pub const AES032_FORBIDDEN_INHERITANCE: &str =
+    "AES032 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
+pub const AES031_CONSTANT_PURITY: &str =
+    "AES031 CONSTANT_PURITY: _constant file contains non-constant declaration.";
 
-pub fn aes010_naming_convention(expected_word_count: i32) -> String {
-    format!(
-        "AES003 NAMING_CONVENTION: Filename does not follow the {}-word underscore-separated pattern.\n\
-        WHY? Strict three-word names ensure architectural consistency.\n\
-        FIX: Rename the file to exactly {} words separated by underscores.", expected_word_count, expected_word_count
+pub fn aes010_naming_convention(_expected_word_count: i32) -> String {
+    String::from(
+        "AES010 NAMING_CONVENTION: Filename must follow [layer]_[concept(s)]_[suffix] pattern.\n\
+        WHY? Prefix identifies layer, suffix identifies role, concept describes feature.\n\
+        FIX: Rename to at least prefix_suffix (e.g., infrastructure_user_checker.ts)."
     )
 }
 
@@ -63,9 +63,9 @@ pub fn aes011_suffix_mismatch(allowed_list: &str) -> String {
     )
 }
 
-pub fn aes016_primitive_usage(primitive: &str) -> String {
+pub fn aes031_primitive_usage(primitive: &str) -> String {
     format!(
-        "AES016 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy.",
+        "AES031 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy.",
         primitive
     )
 }
@@ -74,14 +74,14 @@ pub fn aes023_unused_import(name: &str) -> String {
     format!("AES023 UNUSED_IMPORT: '{}' imported but never used.", name)
 }
 
-pub fn aes013_forbidden_inheritance(trait_name: &str) -> String {
+pub fn aes032_forbidden_inheritance(trait_name: &str) -> String {
     format!(
-        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
+        "AES032 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
         trait_name
     )
 }
 
-pub fn aes032_must_implement_contract(contract_name: &str) -> String {
+pub fn aes035_must_implement_contract(contract_name: &str) -> String {
     format!("Class must implement {}.", contract_name)
 }
 

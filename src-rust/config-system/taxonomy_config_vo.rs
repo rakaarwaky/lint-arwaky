@@ -51,7 +51,7 @@ impl Default for ArchitectureConfig {
             layers: HashMap::new(),
             rules: Vec::new(),
             governance_rules: LegacyLayerRuleList::new(vec![]),
-            naming: NamingConfig::new(Count::new(3)),
+            naming: NamingConfig::new(Count::new(2)),
             ignored_paths: FilePathList { values: vec![] },
             mandatory_class_definition: BooleanVO::new(false),
         }

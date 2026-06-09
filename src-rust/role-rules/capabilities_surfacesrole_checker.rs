@@ -14,7 +14,7 @@ use crate::shared_common::taxonomy_names_vo::{
     core_layer_names, layer_agent, layer_contract, layer_surfaces, layer_taxonomy,
 };
 use crate::shared_common::taxonomy_violationrs_constant::{
-    AES032_NO_DOMAIN_LOGIC, AES001_SURFACE_DEPENDENCY,
+    AES035_NO_DOMAIN_LOGIC, AES001_SURFACE_DEPENDENCY,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -72,7 +72,7 @@ impl SurfaceRoleChecker {
             };
 
             if definition.no_domain_logic.value {
-                self._check_no_domain_logic(f, &definition, analyzer, results, "AES031");
+                self._check_no_domain_logic(f, &definition, analyzer, results, "AES036");
             }
 
             self._check_forbidden_mandatory_imports(f, &definition, analyzer, results);
@@ -182,7 +182,7 @@ impl SurfaceRoleChecker {
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
-                message: LintMessage::new(AES032_NO_DOMAIN_LOGIC),
+                message: LintMessage::new(AES035_NO_DOMAIN_LOGIC),
                 source: make_adapter("architecture"),
                 severity: Severity::HIGH,
                 enclosing_scope: None,

@@ -259,7 +259,7 @@ impl ArchOrphanAnalyzer {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),
-            code: ErrorCode::raw("AES037"),
+            code: ErrorCode::raw("AES033"),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),
             severity: sev,
