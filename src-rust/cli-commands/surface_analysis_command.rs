@@ -152,7 +152,13 @@ impl AnalysisCommandsSurface {
     }
 }
 
-// End of AnalysisCommandsSurface
+pub fn register_analysis_commands(
+    container: Arc<dyn ServiceContainerAggregate>,
+) -> AnalysisCommandsSurface {
+    let mut surface = AnalysisCommandsSurface::new(Some(container.clone()));
+    surface.register_all(container);
+    surface
+}
 
 pub fn handle_complexity(path: Option<String>) -> ExitCode {
     let root = resolve_target(path);

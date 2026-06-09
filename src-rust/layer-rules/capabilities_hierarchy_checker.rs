@@ -148,7 +148,7 @@ impl SurfaceHierarchyChecker {
 
         let mut current_impl: Option<(String, usize)> = None;
         let mut methods: Vec<(String, usize, Option<usize>)> = Vec::new();
-        let mut impl_indent: usize = 0usize;
+        let mut impl_indent: usize = 0;
 
         for (i, raw_line) in lines.iter().enumerate() {
             let trimmed = raw_line.trim();
@@ -345,7 +345,7 @@ impl SurfaceHierarchyChecker {
     ) {
         for (method_name, start, end) in pub_methods {
             let end_line = end.unwrap_or(lines.len());
-            let mut max_depth: usize = 0usize;
+            let mut max_depth: usize = 0;
 
             for i in *start..end_line {
                 if i >= lines.len() {

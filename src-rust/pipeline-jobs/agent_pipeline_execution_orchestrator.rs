@@ -15,7 +15,7 @@ use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::ResponseDataList;
 use crate::shared_common::taxonomy_duration_vo::Duration;
 
-struct SimpleJobRegistry {}
+struct SimpleJobRegistry;
 #[async_trait::async_trait]
 impl IJobRegistryPort for SimpleJobRegistry {
     async fn create_job(&self, _action: ActionName) -> Result<JobId, JobError> {
@@ -48,7 +48,7 @@ pub struct PipelineExecutionOrchestrator {}
 
 impl PipelineExecutionOrchestratorAggregate for PipelineExecutionOrchestrator {
     fn job_registry(&self) -> &dyn IJobRegistryPort {
-        REGISTRY.get_or_init(|| SimpleJobRegistry {})
+        REGISTRY.get_or_init(|| SimpleJobRegistry)
     }
 }
 

@@ -1,18 +1,38 @@
-//! Architecture compliance orchestration — layer-map resolution, compliance coordination.
+//! Architecture compliance orchestration — layer-map resolution, compliance coordination,
+//! watch mode, and DI mixin stubs.
 //!
 //! Naming: `arch` = bounded context (architecture governance), not layer name.
+//! Also hosts watch orchestrators and mixin container stubs consolidated for cohesion.
 
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
 use async_trait::async_trait;
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::di_containers::contract_infra_aggregate::InfrastructureContainerAggregate;
+use crate::di_containers::contract_orchestrator_aggregate::OrchestratorContainerAggregate;
+use crate::file_watch::contract_commands_aggregate::WatchCommandsAggregate;
+use crate::file_watch::contract_orchestrator_aggregate::WatchExecutionOrchestratorAggregate;
+use crate::file_watch::contract_watch_aggregate::DirectoryWatchAggregate;
+use crate::file_watch::taxonomy_result_vo::WatchResult;
 use crate::layer_rules::contract_compliance_port::IArchCompliancePort;
 use crate::layer_rules::contract_compliance_protocol::IArchComplianceProtocol;
 use crate::layer_rules::contract_coordinator_aggregate::ArchCoordinatorAggregate;
 use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
+use crate::pipeline_jobs::taxonomy_action_vo::JobId;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use crate::pipeline_jobs::taxonomy_registry_error::JobError;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::Count;
+use crate::shared_common::taxonomy_common_vo::ResponseDataList;
+use crate::shared_common::taxonomy_duration_vo::Duration;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
+use crate::shared_common::taxonomy_common_vo::Score;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_definition_vo::LayerMapVO;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
@@ -20,6 +40,140 @@ use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
 use crate::shared_common::taxonomy_names_constant::LAYER_GLOBAL;
 use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MIXIN CONTAINERS — DI initialization stubs (wired via DependencyInjectionContainer)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+pub struct InfrastructureMixinContainer {}
+
+impl InfrastructureMixinContainer {
+    pub fn init_infrastructure(&self) {}
+}
+
+impl InfrastructureContainerAggregate for InfrastructureMixinContainer {
+    fn _init_infrastructure(&mut self) {}
+
+    fn root_path(&self) -> Option<&FilePath> {
+        None
+    }
+}
+
+pub struct OrchestratorMixinContainer {}
+
+impl OrchestratorContainerAggregate for OrchestratorMixinContainer {
+    fn _init_orchestrators(&mut self) {}
+}
+
+impl OrchestratorMixinContainer {
+    pub fn init_orchestrators(&self) {}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WATCH ORCHESTRATORS — CLI watch command + file-change execution
+// ═══════════════════════════════════════════════════════════════════════════════
+
+struct SimpleJobRegistry;
+#[async_trait::async_trait]
+impl IJobRegistryPort for SimpleJobRegistry {
+    async fn create_job(&self, _action: ActionName) -> Result<JobId, JobError> {
+        Ok(JobId::new("stub"))
+    }
+    async fn complete_job(&self, _job_id: &JobId, _result: &ResponseData) {}
+    async fn fail_job(&self, _job_id: &JobId, _error: &ErrorMessage) {}
+    async fn list_jobs(&self) -> ResponseDataList {
+        ResponseDataList { values: vec![] }
+    }
+    async fn get_job(&self, _job_id: &JobId) -> Option<JobId> {
+        None
+    }
+    async fn cancel_job(&self, _job_id: &JobId) -> SuccessStatus {
+        SuccessStatus::new(true)
+    }
+    async fn run_with_retry(
+        &self,
+        _operation: ActionName,
+        _max_retries: Count,
+        _base_delay: Duration,
+    ) -> ResponseData {
+        ResponseData::default()
+    }
+}
+
+static WATCH_JOB_REGISTRY: OnceLock<SimpleJobRegistry> = OnceLock::new();
+
+pub struct WatchCommandsOrchestrator {
+    execution: WatchExecutionOrchestrator,
+}
+
+#[async_trait]
+impl WatchCommandsAggregate for WatchCommandsOrchestrator {
+    fn root_path(&self) -> Option<&FilePath> {
+        None
+    }
+
+    async fn watch(&self, path: &FilePath) {
+        self.execution.process_event(path);
+    }
+}
+
+impl Default for WatchCommandsOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl WatchCommandsOrchestrator {
+    pub fn new() -> Self {
+        Self {
+            execution: WatchExecutionOrchestrator::new(),
+        }
+    }
+}
+
+pub struct WatchExecutionOrchestrator {}
+
+impl WatchExecutionOrchestratorAggregate for WatchExecutionOrchestrator {
+    fn root_path(&self) -> Option<&FilePath> {
+        None
+    }
+
+    fn job_registry(&self) -> &dyn IJobRegistryPort {
+        WATCH_JOB_REGISTRY.get_or_init(|| SimpleJobRegistry)
+    }
+}
+
+impl Default for WatchExecutionOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl WatchExecutionOrchestrator {
+    pub fn new() -> Self {
+        Self {}
+    }
+
+    pub fn is_available(&self) -> bool {
+        true
+    }
+
+    pub async fn execute(&self, _request: &DirectoryWatchAggregate) -> WatchResult {
+        WatchResult {
+            file: FilePath::new(".".to_string()).unwrap_or_default(),
+            score: Score::new(100.0),
+            is_passing: ComplianceStatus::new(true),
+        }
+    }
+
+    pub fn process_event(&self, file_path: &FilePath) -> HashMap<String, serde_json::Value> {
+        let mut result = HashMap::new();
+        result.insert("file".to_string(), serde_json::json!(file_path.value));
+        result.insert("score".to_string(), serde_json::json!(0.0));
+        result.insert("is_passing".to_string(), serde_json::json!(false));
+        result
+    }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ARCHITECTURE COMPLIANCE — config resolution + multi-orchestrator coordination

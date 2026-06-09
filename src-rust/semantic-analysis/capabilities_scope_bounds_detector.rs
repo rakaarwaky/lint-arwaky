@@ -34,7 +34,7 @@ impl ScopeBoundaryAnalyzer {
         }
 
         // Simple brace-based scope detection
-        let mut depth: i32 = 0i32;
+        let mut depth: i32 = 0;
         let mut scope_start: Option<usize> = None;
 
         for (i, l) in lines.iter().enumerate() {

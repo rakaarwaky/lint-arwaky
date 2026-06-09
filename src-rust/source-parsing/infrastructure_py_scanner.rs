@@ -386,7 +386,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
             let lines: Vec<&str> = content.lines().collect();
             let mut in_class = false;
             let mut class_name = String::new();
-            let mut class_indent = 0usize;
+            let mut class_indent = 0;
             for line in &lines {
                 let stripped = line.trim();
                 if stripped.is_empty() || stripped.starts_with('#') {

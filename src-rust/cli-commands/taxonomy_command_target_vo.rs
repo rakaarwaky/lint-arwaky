@@ -11,20 +11,7 @@ pub fn normalize_project_root(path: &str) -> String {
     if p.join("src-rust").exists() {
         return path.to_string();
     }
-    // When cwd is "." (relative), canonicalize to resolve the actual directory name.
-    // This handles running `check .` from inside `src-rust/` when no parent has `src-rust/`.
-    if path.trim_end_matches('/') == "." || path.trim_end_matches('/') == "./" {
-        if let Ok(canon) = p.canonicalize() {
-            if let Some(name) = canon.file_name().and_then(|n| n.to_str()) {
-                if name == "src-rust" || name == "src-python" || name == "src-javascript" {
-                    if let Some(parent) = canon.parent() {
-                        return parent.to_string_lossy().to_string();
-                    }
-                }
-            }
-        }
-    }
-    if p.file_name().map(|n| n == "src-rust" || n == "src-python" || n == "src-javascript").unwrap_or(false) {
+    if p.file_name().map(|n| n == "src-rust").unwrap_or(false) {
         let parent = p.parent().unwrap_or(std::path::Path::new("."));
         let parent_str = parent.to_string_lossy();
         return if parent_str.is_empty() {

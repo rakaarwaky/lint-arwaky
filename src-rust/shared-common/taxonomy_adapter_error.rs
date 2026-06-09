@@ -5,7 +5,6 @@ use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_error::ExitCode;
 use crate::shared_common::taxonomy_common_error::FieldName;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_source_vo::ContentString;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +15,7 @@ pub struct AdapterError {
     #[serde(default)]
     pub error_code: Option<ErrorCode>,
     #[serde(default)]
-    pub command: Option<ContentString>,
+    pub command: Option<String>,
     #[serde(default)]
     pub stderr: Option<ErrorMessage>,
     #[serde(default)]
@@ -98,7 +97,7 @@ pub struct ValidationError {
     #[serde(default)]
     pub constraint: Option<Constraint>,
     #[serde(default)]
-    pub value: Option<ContentString>,
+    pub value: Option<String>,
 }
 
 impl ValidationError {
