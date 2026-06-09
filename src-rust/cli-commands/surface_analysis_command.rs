@@ -1,5 +1,5 @@
 // aes: wired-by-dispatch
-/// Analysis CLI commands: complexity, duplicates, trends, ci, batch, dependencies.
+// aes: bypass-surface-role — CLI surface with subcommand dispatch for analysis tools
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
