@@ -2,16 +2,12 @@
 
 use std::path::Path;
 
+use crate::code_analysis::capabilities_checker_helpers::mk_result;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_violationrs_constant::{
     aes014_mandatory_inheritance, aes024_dead_inheritance,
 };
-
-/// Create a LintResult — shared by all inline checkers.
-fn mk_result(file: &str, line: usize, code: &str, sev: Severity, msg: &str) -> LintResult {
-    LintResult::new_arch(file, line, code, sev, msg)
-}
 
 /// Check for dead inheritance (empty struct/impl blocks).
 pub fn check_dead_inheritance(file: &str, content: &str, violations: &mut Vec<LintResult>) {

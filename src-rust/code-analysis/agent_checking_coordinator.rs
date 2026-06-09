@@ -5,6 +5,17 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
+use crate::code_analysis::capabilities_bypass_inspector::{
+    check_agent_any_bypass, check_bypass_comments,
+};
+use crate::code_analysis::capabilities_checker_helpers::mk_result;
+use crate::code_analysis::capabilities_inheritance_inspector::{
+    check_dead_inheritance, check_mandatory_inheritance,
+};
+use crate::code_analysis::capabilities_layer_inspector::{
+    check_agent_role, check_missing_vo, check_single_bottleneck, check_surface_role,
+};
+use crate::code_analysis::capabilities_unused_import_inspector::check_unused_imports;
 use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
@@ -63,11 +74,11 @@ impl LintCheckingCoordinator {
             let c = std::fs::read_to_string(file).unwrap_or_default();
 
             // Layer-independent checks (run on ALL files)
-            self.checker.check_bypass_comments(file, &c, &mut violations);
-            self.checker.check_unused_imports(file, &c, &mut violations);
-            self.checker.check_dead_inheritance(file, &c, &mut violations);
-            self.checker.check_agent_any_bypass(file, &c, &mut violations);
-            self.checker.check_mandatory_inheritance(file, &c, &mut violations);
+            check_bypass_comments(file, &c, &mut violations);
+            check_unused_imports(file, &c, &mut violations);
+            check_dead_inheritance(file, &c, &mut violations);
+            check_agent_any_bypass(file, &c, &mut violations);
+            check_mandatory_inheritance(file, &c, &mut violations);
 
             for line in c.lines() {
                 let t = line.trim();
@@ -114,10 +125,10 @@ impl LintCheckingCoordinator {
             }
 
             // Layer-dependent inline checks (prefix-based, FRD v1.1)
-            self.checker.check_agent_role(file, &c, &layer, &mut violations);
-            self.checker.check_surface_role(file, &c, &layer, &mut violations);
-            self.checker.check_single_bottleneck(file, &c, &layer, &mut violations);
-            self.checker.check_missing_vo(file, &c, &layer, &mut violations);
+            check_agent_role(file, &c, &layer, &mut violations);
+            check_surface_role(file, &c, &layer, &mut violations);
+            check_single_bottleneck(file, &c, &layer, &mut violations);
+            check_missing_vo(file, &c, &layer, &mut violations);
 
             // Layer-rule checks (delegated to layer-rules/)
             self.checker
@@ -169,7 +180,7 @@ impl LintCheckingCoordinator {
             .map(|(s, t)| (s.clone(), t.clone()))
             .collect();
         if self.checker.detect_cycle_edges(&ce) {
-            rl.push(LintResult::new_arch(
+            rl.push(mk_result(
                 "",
                 0,
                 "AES012",
@@ -229,7 +240,7 @@ impl LintCheckingCoordinator {
                     }
                 }
                 if !wired {
-                    rl.push(LintResult::new_arch(
+                    rl.push(mk_result(
                         fp,
                         0,
                         "AES030",
@@ -244,7 +255,7 @@ impl LintCheckingCoordinator {
             if prefix == "surface" {
                 let imps = ctx.import_graph.mapping.get(fp);
                 if imps.map(std::vec::Vec::is_empty).unwrap_or(true) {
-                    rl.push(LintResult::new_arch(
+                    rl.push(mk_result(
                         fp,
                         0,
                         "AES030",
