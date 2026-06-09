@@ -1,7 +1,7 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes033_capability_routing, AES001_SURFACE_DEPENDENCY,
+    aes037_capability_routing, AES001_SURFACE_DEPENDENCY,
 };
 
 pub struct ArchLayerChecker {}
@@ -60,13 +60,13 @@ impl ArchLayerChecker {
             .lines()
             .filter_map(|l| {
                 let t = l.trim();
-                if t.starts_with("pub struct ") || t.starts_with("struct ") {
-                    Some(
-                        t.split_whitespace()
-                            .nth(1)
-                            .unwrap_or("")
-                            .trim_end_matches(';'),
-                    )
+                let words: Vec<&str> = t.split_whitespace().collect();
+                if (t.starts_with("pub struct ") || t.starts_with("struct "))
+                    && words.len() >= 2
+                {
+                    // Find the word "struct" and take the NEXT word as the name
+                    let struct_idx = words.iter().position(|w| *w == "struct").unwrap_or(0);
+                    Some(words.get(struct_idx + 1).unwrap_or(&"").trim_end_matches(';'))
                 } else {
                     None
                 }
@@ -75,14 +75,18 @@ impl ArchLayerChecker {
             .collect();
         for s in &structs {
             let hi = content.contains(&format!("impl I{}", s))
-                || content.contains(&format!(" for {} ", s));
+                || content.contains(&format!("for {} ", s))
+                || content.contains(&format!("for {}{{", s))
+                || content.contains(&format!("for {} {{", s))
+                || content.contains(&format!("impl {} ", s))
+                || content.contains(&format!("impl {}{{", s));
             if !hi && structs.len() <= 3 {
                 violations.push(LintResult::new_arch(
                     file,
                     0,
-                    "AES033",
+                    "AES037",
                     Severity::MEDIUM,
-                    &aes033_capability_routing(s),
+                    &aes037_capability_routing(s),
                 ));
             }
         }

@@ -4,10 +4,7 @@ use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use std::process::ExitCode;
 
 use crate::cli_commands::taxonomy_command_target_vo::{has_critical, lint_path, resolve_target};
-use crate::di_containers::agent_injection_container::DependencyInjectionContainer;
-use crate::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
 use crate::output_report::taxonomy_result_vo::LintResultList;
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 
 pub struct CheckCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -108,11 +105,8 @@ pub fn handle_check(path: Option<String>, _git_diff: bool) -> ExitCode {
     run_lint_and_report(&root)
 }
 
-pub fn handle_scan(path: Option<String>) -> ExitCode {
+pub fn handle_scan(path: Option<String>, container: Arc<dyn ServiceContainerAggregate>) -> ExitCode {
     let root = resolve_target(path);
-    let container = Arc::new(DependencyInjectionContainer::new(
-        DirectoryPath::new(&root).unwrap_or_default(),
-    ));
     let surface = register_check_commands(container);
     surface.scan(&root);
     ExitCode::SUCCESS
@@ -120,9 +114,11 @@ pub fn handle_scan(path: Option<String>) -> ExitCode {
 
 fn run_lint_and_report(root: &str) -> ExitCode {
     let results = lint_path(root);
-    let formatter = ReportFormatterProcessor::new();
-    let report = formatter.format_text(&results, root);
-    println!("{}", report);
+    println!("=== AES Compliance Report for {} ===", root);
+    for r in &results {
+        println!("[{}] {}:{}:{} {} - {}", r.severity, r.file, r.line, r.column, r.code, r.message);
+    }
+    println!("Total violations: {}", results.len());
     if has_critical(&results) {
         ExitCode::from(1)
     } else {

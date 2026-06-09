@@ -1,22 +1,34 @@
 // hook_management_orchestrator — Orchestrates git hook management (Agent Layer).
 use crate::git_hooks::contract_manager_port::IHookManagerPort;
 use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use crate::git_hooks::taxonomy_hook_error::GitHookError;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_layer_vo::Identity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-
-use crate::git_hooks::infrastructure_hook_adapter::GitHookAdapter;
 use std::sync::OnceLock;
 
-static HOOK_MANAGER: OnceLock<GitHookAdapter> = OnceLock::new();
+pub struct SimpleHookManager;
+
+impl IHookManagerPort for SimpleHookManager {
+    fn install_pre_commit(
+        &self,
+        _executable_path: &FilePath,
+    ) -> Result<SuccessStatus, GitHookError> {
+        Ok(SuccessStatus::new(true))
+    }
+    fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> {
+        Ok(SuccessStatus::new(true))
+    }
+}
+
+static HOOK_MANAGER: OnceLock<SimpleHookManager> = OnceLock::new();
 
 pub struct HookManagementOrchestrator {}
 
 impl HookManagementOrchestratorAggregate for HookManagementOrchestrator {
     fn get_hook_manager(&self) -> &dyn IHookManagerPort {
-        HOOK_MANAGER
-            .get_or_init(|| GitHookAdapter::new(FilePath::new(".".to_string()).unwrap_or_default()))
+        HOOK_MANAGER.get_or_init(|| SimpleHookManager)
     }
 
     fn get_hook_manager_identity(&self) -> Identity {

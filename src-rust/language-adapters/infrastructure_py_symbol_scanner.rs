@@ -1,8 +1,11 @@
 /// python_symbol_scanner — Scanner for symbols and imports from Python AST.
 use crate::code_analysis::taxonomy_import_source_vo::ImportInfo;
+use crate::language_adapters::contract_flow_port::IJavascriptFlowPort;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
 use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
+
+pub type JavascriptFlowPortRef = Box<dyn IJavascriptFlowPort>;
 
 pub struct SymbolCollector {
     defined: Vec<String>,

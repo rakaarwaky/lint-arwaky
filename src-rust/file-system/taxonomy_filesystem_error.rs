@@ -11,9 +11,9 @@ pub struct FileSystemError {
     pub message: ErrorMessage,
     pub operation: ActionName,
     #[serde(default)]
-    pub error_code: Option<ErrorCode>,
+    pub error_code: ErrorCode,
     #[serde(default)]
-    pub cause: Option<Cause>,
+    pub cause: Cause,
 }
 
 impl FileSystemError {
@@ -22,19 +22,22 @@ impl FileSystemError {
             path,
             message,
             operation,
-            error_code: None,
-            cause: None,
+            error_code: ErrorCode::default(),
+            cause: Cause::default(),
         }
     }
 }
 
 impl std::fmt::Display for FileSystemError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let code = self
-            .error_code
-            .as_ref()
-            .map(|c| format!(" [{}]", c))
-            .unwrap_or_default();
+        let code = {
+            let c: &str = &self.error_code;
+            if c.is_empty() {
+                String::new()
+            } else {
+                format!(" [{}]", c)
+            }
+        };
         write!(
             f,
             "FS Error during {} on {}{}: {}",

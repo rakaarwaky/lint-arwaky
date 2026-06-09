@@ -9,12 +9,9 @@ use serde::{Deserialize, Serialize};
 pub struct ConfigError {
     pub key: ConfigKey,
     pub message: ErrorMessage,
-    #[serde(default)]
-    pub expected: Option<ExpectedValue>,
-    #[serde(default)]
-    pub actual: Option<ActualValue>,
-    #[serde(default)]
-    pub config_file: Option<FilePath>,
+    pub expected: ExpectedValue,
+    pub actual: ActualValue,
+    pub config_file: FilePath,
 }
 
 impl ConfigError {
@@ -22,20 +19,21 @@ impl ConfigError {
         Self {
             key,
             message,
-            expected: None,
-            actual: None,
-            config_file: None,
+            expected: ExpectedValue::default(),
+            actual: ActualValue::default(),
+            config_file: FilePath::default(),
         }
     }
 }
 
 impl std::fmt::Display for ConfigError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let file_info = self
-            .config_file
-            .as_ref()
-            .map(|p| format!(" in {}", p))
-            .unwrap_or_default();
+        let file_str = self.config_file.to_string();
+        let file_info = if file_str.is_empty() {
+            String::new()
+        } else {
+            format!(" in {}", file_str)
+        };
         write!(
             f,
             "Config error on '{}'{}: {}",

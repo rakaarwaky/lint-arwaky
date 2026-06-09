@@ -82,7 +82,7 @@ pub(crate) fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
         // Add default path for layers that don't have one
         if let Some(layers_obj) = json.get_mut("layers") {
             if let Some(obj) = layers_obj.as_object_mut() {
-                for (name, layer) in obj.iter_mut() {
+                for (_, layer) in obj.iter_mut() {
                     if let Some(layer_obj) = layer.as_object_mut() {
                         if !layer_obj.contains_key("path") {
                             layer_obj.insert("path".to_string(), serde_json::json!("."));

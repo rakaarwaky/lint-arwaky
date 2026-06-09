@@ -111,7 +111,7 @@ impl<'de> serde::Deserialize<'de> for ActionName {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Default)]
 #[serde(transparent)]
 pub struct JobId {
     pub(crate) value: String,

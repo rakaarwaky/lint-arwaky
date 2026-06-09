@@ -29,9 +29,9 @@ pub fn aes011_suffix_mismatch(allowed_list: &str) -> String {
     )
 }
 
-pub fn aes031_primitive_usage(primitive: &str) -> String {
+pub fn aes016_primitive_usage(primitive: &str) -> String {
     format!(
-        "AES031 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy.",
+        "AES016 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy.",
         primitive
     )
 }
@@ -40,16 +40,16 @@ pub fn aes023_unused_import(name: &str) -> String {
     format!("AES023 UNUSED_IMPORT: '{}' imported but never used.", name)
 }
 
-pub fn aes032_forbidden_inheritance(trait_name: &str) -> String {
+pub fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     format!(
-        "AES032 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
+        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
         trait_name
     )
 }
 
-pub fn aes035_must_implement_contract(contract_name: &str) -> String {
+pub fn aes032_must_implement_contract(contract_name: &str) -> String {
     format!(
-        "AES035 AGENT_ROLE: Class must implement '{}'.",
+        "AES032 AGENT_ROLE: Class must implement '{}'.",
         contract_name
     )
 }
@@ -79,12 +79,12 @@ pub fn aes030_orphan_code(file: &str) -> String {
     format!("AES030 ORPHAN_CODE: File '{}' is unreachable/unused.", file)
 }
 
-pub fn aes036_hierarchy_violation(file: &str) -> String {
-    format!("AES036 SURFACE_HIERARCHY_VIOLATION: Surface file '{}' is not imported from the layer barrel.\nWHY? All surface files must be reachable through the barrel.\nFIX: Add to __init__.py or mod.rs.", file)
+pub fn aes033_hierarchy_violation(file: &str) -> String {
+    format!("AES033 SURFACE_HIERARCHY_VIOLATION: Surface file '{}' is not imported from the layer barrel.\nWHY? All surface files must be reachable through the barrel.\nFIX: Add to __init__.py or mod.rs.", file)
 }
 
-pub fn aes036_passive_violation_details(file: &str, details: &str) -> String {
-    format!("AES036 PASSIVE_SURFACE_VIOLATION: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
+pub fn aes034_passive_violation_details(file: &str, details: &str) -> String {
+    format!("AES034 PASSIVE_SURFACE_VIOLATION: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
 }
 
 pub fn aes012_circular_import(source: &str, target: &str) -> String {
@@ -94,27 +94,27 @@ pub fn aes012_circular_import(source: &str, target: &str) -> String {
     )
 }
 
-pub fn aes034_mandatory_inheritance(contracts: &str) -> String {
-    format!("AES034 MANDATORY_INHERITANCE: File imports contracts ({}) but no class inherits from them.\nWHY? Layers that import contracts must provide an implementation.\nFIX: Add impl TraitName for YourStruct.", contracts)
+pub fn aes014_mandatory_inheritance(contracts: &str) -> String {
+    format!("AES014 MANDATORY_INHERITANCE: File imports contracts ({}) but no class inherits from them.\nWHY? Layers that import contracts must provide an implementation.\nFIX: Add impl TraitName for YourStruct.", contracts)
 }
 
-pub fn aes033_capability_routing(struct_name: &str) -> String {
+pub fn aes037_capability_routing(struct_name: &str) -> String {
     format!(
-        "AES033 CAPABILITY_ROUTING: Struct '{}' has no trait impl.",
+        "AES037 CAPABILITY_ROUTING: Struct '{}' has no trait impl.",
         struct_name
     )
 }
 
-pub fn aes033_single_bottleneck(target: &str) -> String {
+pub fn aes036_single_bottleneck(target: &str) -> String {
     format!(
-        "AES033 SINGLE_BOTTLENECK: All dispatch routes go to '{}'.",
+        "AES036 SINGLE_BOTTLENECK: All dispatch routes go to '{}'.",
         target
     )
 }
 
-pub fn aes033_missing_vo(method: &str) -> String {
+pub fn aes038_missing_vo(method: &str) -> String {
     format!(
-        "AES033 MISSING_VO: Capability method '{}' missing required VO parameter.",
+        "AES038 MISSING_VO: Capability method '{}' missing required VO parameter.",
         method
     )
 }

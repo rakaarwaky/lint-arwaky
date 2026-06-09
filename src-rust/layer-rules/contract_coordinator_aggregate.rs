@@ -1,7 +1,10 @@
+use crate::layer_rules::contract_compliance_port::IArchCompliancePort;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
+
+pub type CoordCompliancePort = Box<dyn IArchCompliancePort>;
 
 #[async_trait]
 pub trait ArchCoordinatorAggregate: Send + Sync {

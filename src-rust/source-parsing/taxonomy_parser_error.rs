@@ -10,10 +10,8 @@ use serde::{Deserialize, Serialize};
 pub struct SourceParserError {
     pub path: FilePath,
     pub message: ErrorMessage,
-    #[serde(default)]
-    pub error_code: Option<ErrorCode>,
-    #[serde(default)]
-    pub cause: Option<Cause>,
+    pub error_code: ErrorCode,
+    pub cause: Cause,
 }
 
 impl SourceParserError {
@@ -21,19 +19,20 @@ impl SourceParserError {
         Self {
             path,
             message,
-            error_code: None,
-            cause: None,
+            error_code: ErrorCode::default(),
+            cause: Cause::default(),
         }
     }
 }
 
 impl std::fmt::Display for SourceParserError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let code = self
-            .error_code
-            .as_ref()
-            .map(|c| format!(" [{}]", c))
-            .unwrap_or_default();
+        let code_str = self.error_code.to_string();
+        let code = if code_str.is_empty() {
+            String::new()
+        } else {
+            format!(" [{}]", code_str)
+        };
         write!(f, "Parser Error on {}{}: {}", self.path, code, self.message)
     }
 }
@@ -42,28 +41,30 @@ impl std::fmt::Display for SourceParserError {
 pub struct SyntaxErrorVO {
     #[serde(flatten)]
     pub base: SourceParserError,
-    #[serde(default)]
-    pub line: Option<LineNumber>,
-    #[serde(default)]
-    pub column: Option<ColumnNumber>,
+    pub line: LineNumber,
+    pub column: ColumnNumber,
 }
 
 impl SyntaxErrorVO {
     pub fn new(path: FilePath, message: ErrorMessage) -> Self {
         Self {
             base: SourceParserError::new(path, message),
-            line: None,
-            column: None,
+            line: LineNumber::default(),
+            column: ColumnNumber::default(),
         }
     }
 }
 
 impl std::fmt::Display for SyntaxErrorVO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let pos = match (&self.line, &self.column) {
-            (Some(l), Some(c)) => format!(" at {}:{}", l, c),
-            (Some(l), None) => format!(" at {}", l),
-            _ => String::new(),
+        let line_str = self.line.to_string();
+        let col_str = self.column.to_string();
+        let pos = if !line_str.is_empty() && !col_str.is_empty() {
+            format!(" at {}:{}", line_str, col_str)
+        } else if !line_str.is_empty() {
+            format!(" at {}", line_str)
+        } else {
+            String::new()
         };
         write!(
             f,

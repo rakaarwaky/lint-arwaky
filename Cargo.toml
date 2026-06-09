@@ -9,11 +9,11 @@ path = "src-rust/lib.rs"
 
 [[bin]]
 name = "lint-arwaky-cli"
-path = "src-rust/cli_main_entry.rs"
+path = "src-rust/cli_main_action.rs"
 
 [[bin]]
 name = "lint-arwaky-mcp"
-path = "src-rust/mcp_main_entry.rs"
+path = "src-rust/mcp_main_action.rs"
 
 [features]
 default = ["check_surfaces"]

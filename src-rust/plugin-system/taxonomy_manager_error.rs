@@ -7,29 +7,28 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct PluginError {
     pub message: ErrorMessage,
-    #[serde(default)]
-    pub error_code: Option<ErrorCode>,
-    #[serde(default)]
-    pub cause: Option<Cause>,
+    pub error_code: ErrorCode,
+    pub cause: Cause,
 }
 
 impl PluginError {
     pub fn new(message: ErrorMessage) -> Self {
         Self {
             message,
-            error_code: None,
-            cause: None,
+            error_code: ErrorCode::default(),
+            cause: Cause::default(),
         }
     }
 }
 
 impl std::fmt::Display for PluginError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let code = self
-            .error_code
-            .as_ref()
-            .map(|c| format!(" [{}]", c))
-            .unwrap_or_default();
+        let code_str = self.error_code.to_string();
+        let code = if code_str.is_empty() {
+            String::new()
+        } else {
+            format!(" [{}]", code_str)
+        };
         write!(f, "Plugin Error{}: {}", code, self.message)
     }
 }
@@ -58,26 +57,26 @@ impl std::fmt::Display for DiscoveryError {
 pub struct RegistrationError {
     #[serde(flatten)]
     pub base: PluginError,
-    #[serde(default)]
-    pub adapter_name: Option<AdapterName>,
+    pub adapter_name: AdapterName,
 }
 
 impl RegistrationError {
     pub fn new(message: ErrorMessage) -> Self {
         Self {
             base: PluginError::new(message),
-            adapter_name: None,
+            adapter_name: AdapterName::default(),
         }
     }
 }
 
 impl std::fmt::Display for RegistrationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let target = self
-            .adapter_name
-            .as_ref()
-            .map(|a| format!(" for '{}'", a))
-            .unwrap_or_default();
+        let name_str = self.adapter_name.to_string();
+        let target = if name_str.is_empty() {
+            String::new()
+        } else {
+            format!(" for '{}'", name_str)
+        };
         write!(f, "Registration Error{}: {}", target, self.base.message)
     }
 }

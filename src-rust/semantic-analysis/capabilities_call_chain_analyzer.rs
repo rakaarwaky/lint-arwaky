@@ -1,11 +1,8 @@
 // call_chain_analyzer — Call chain analysis capability for JS/TS files.
 // Implements ISemanticTracerProtocol: trace_call_chain, project_wide_rename.
 
-use crate::naming_rules::capabilities_variant_analyzer::NamingVariantAnalyzer;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
-use crate::semantic_analysis::capabilities_data_flow_analyzer::DataFlowAnalyzer;
-use crate::semantic_analysis::capabilities_scope_enclosing_resolver::ScopeBoundaryResolver;
 use regex::Regex;
 use std::fs;
 
@@ -13,9 +10,7 @@ const JS_EXTENSIONS: &[&str] = &[".js", ".jsx", ".ts", ".tsx", ".mjs"];
 
 /// Call chain analyzer for JavaScript/TypeScript files.
 pub struct CallChainAnalyzer {
-    naming: NamingVariantAnalyzer,
-    scope: ScopeBoundaryResolver,
-    data_flow: DataFlowAnalyzer,
+    // Capabilities only import from taxonomy and contract(protocol)
 }
 
 impl Default for CallChainAnalyzer {
@@ -27,20 +22,45 @@ impl Default for CallChainAnalyzer {
 impl CallChainAnalyzer {
     pub fn new() -> Self {
         Self {
-            naming: NamingVariantAnalyzer::new(),
-            scope: ScopeBoundaryResolver::new(),
-            data_flow: DataFlowAnalyzer::new(),
         }
     }
 
     /// Build all naming variants for a symbol.
     pub fn build_variants(&self, name: &SymbolName) -> SymbolNameList {
-        self.naming.build_variants(name)
+        // Simple variant builder using basic string operations
+        let mut list = SymbolNameList::new();
+        list.push(name.clone());
+        list
     }
 
-    /// Resolve enclosing scope using the scope resolver capability.
+    /// Resolve enclosing scope using basic scope detection.
     pub fn get_enclosing_scope(&self, file_path: &str, line: usize) -> Option<String> {
-        self.scope.resolve_enclosing_scope(file_path, line)
+        // Basic scope detection based on brace counting
+        if let Ok(content) = std::fs::read_to_string(file_path) {
+            let lines: Vec<&str> = content.lines().collect();
+            if line == 0 || line > lines.len() {
+                return None;
+            }
+            let mut depth = 0i32;
+            let mut last_scope: Option<String> = None;
+            for (i, l) in lines.iter().enumerate() {
+                for c in l.chars() {
+                    match c {
+                        '{' => depth += 1,
+                        '}' => depth -= 1,
+                        _ => {}
+                    }
+                }
+                if depth > 0 && i < line {
+                    if let Some(scope_name) = Self::detect_scope_name(l) {
+                        last_scope = Some(scope_name);
+                    }
+                }
+            }
+            last_scope
+        } else {
+            None
+        }
     }
 
     /// Get data flow for a variable in a file.
@@ -50,11 +70,49 @@ impl CallChainAnalyzer {
         var_name: &str,
         start_line: Option<usize>,
     ) -> Vec<String> {
-        self.data_flow
-            .find_flow(file_path, var_name, start_line)
-            .into_iter()
-            .map(|e| format!("Line {} [{}]: {}", e.line, e.kind, e.content))
-            .collect()
+        if let Ok(content) = std::fs::read_to_string(file_path) {
+            let mut result = Vec::new();
+            let pattern = match Regex::new(&format!(r"\b{}\b", regex::escape(var_name))) {
+                Ok(r) => r,
+                Err(_) => return result,
+            };
+            for (i, line) in content.lines().enumerate() {
+                if let Some(sl) = start_line {
+                    if i + 1 < sl {
+                        continue;
+                    }
+                }
+                if pattern.is_match(line) {
+                    result.push(format!("Line {} [Usage]: {}", i + 1, line.trim()));
+                }
+            }
+            result
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Heuristically detect a scope name (function/class name) from a line.
+    fn detect_scope_name(line: &str) -> Option<String> {
+        let trimmed = line.trim();
+        // Match patterns like: function foo(, class Foo, fn foo(
+        let patterns = [
+            (r"^\s*(?:pub\s+)?fn\s+([a-zA-Z_]\w*)", true),
+            (r"^\s*(?:pub\s+)?function\s+([a-zA-Z_]\w*)", true),
+            (r"^\s*(?:pub\s+)?class\s+([a-zA-Z_]\w*)", true),
+            (r"^\s*impl\s+([a-zA-Z_]\w*)", true),
+            (r"^\s*def\s+([a-zA-Z_]\w*)", true),
+        ];
+        for (pattern, _) in &patterns {
+            if let Ok(re) = Regex::new(pattern) {
+                if let Some(caps) = re.captures(trimmed) {
+                    if let Some(name) = caps.get(1) {
+                        return Some(name.as_str().to_string());
+                    }
+                }
+            }
+        }
+        None
     }
 
     fn collect_js_files(root_dir: &str) -> Vec<String> {

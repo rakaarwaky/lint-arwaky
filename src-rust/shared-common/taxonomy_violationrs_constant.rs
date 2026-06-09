@@ -9,7 +9,7 @@ pub const AES021_FILE_TOO_SHORT_MSG: &str =
     "AES021 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\n\
     WHY? Excessively small files clutter the project structure.\n\
     FIX: Expand the component or merge this logic into a related module";
-pub const AES031_PRIMITIVE_USAGE: &str = "AES031 PRIMITIVE_USAGE: Direct primitive in taxonomy.";
+pub const AES016_PRIMITIVE_USAGE: &str = "AES016 PRIMITIVE_USAGE: Direct primitive in taxonomy.";
 pub const AES011_MANDATORY_CLASS_DEFINITION: &str =
     "AES011 MANDATORY_CLASS_DEFINITION: File is missing a struct, enum, or trait definition.\n\
     WHY? Encapsulation in structs/traits is required for proper modularization and contract adherence.\n\
@@ -27,10 +27,13 @@ pub const AES035_NO_DOMAIN_LOGIC: &str = "Complex domain logic detected in a pas
 pub const AES035_LAZY_EAGER_INIT: &str = "Complex initialization logic found in Container.";
 pub const AES035_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceContainerAggregate.";
 pub const AES035_ANY_TYPE: &str = "Any type annotation found in agent orchestrator layer.";
-pub const AES032_FORBIDDEN_INHERITANCE: &str =
-    "AES032 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
-pub const AES031_CONSTANT_PURITY: &str =
-    "AES031 CONSTANT_PURITY: _constant file contains non-constant declaration.";
+pub const AES013_FORBIDDEN_INHERITANCE: &str =
+    "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
+pub const AES015_CONSTANT_PURITY: &str =
+    "AES015 CONSTANT_PURITY: _constant file contains non-constant declaration.";
+
+/// Alias for cross-language consistency — AES015 and AES031 refer to the same check.
+pub const AES031_CONSTANT_PURITY: &str = AES015_CONSTANT_PURITY;
 
 pub use crate::shared_common::taxonomy_violationrs_vo::*;
 
@@ -43,20 +46,20 @@ pub const AES023_FIX_UNUSED_IMPORT: &str = "AES023 UNUSED_IMPORT: Fixing unused 
 pub const AES024_DEAD_INHERITANCE: &str =
     "AES024 DEAD_INHERITANCE: Empty struct or trait detected.";
 pub const AES030_ORPHAN_CODE: &str = "AES030 ORPHAN_CODE: File has no imports, not an entry point.";
-pub const AES036_HIERARCHY_VIOLATION: &str =
-    "AES036 SURFACE_HIERARCHY_VIOLATION: Surface file is not imported from the layer barrel.";
-pub const AES036_PASSIVE_VIOLATION: &str =
-    "AES036 PASSIVE_SURFACE_VIOLATION: Surface file contains active domain logic.";
+pub const AES033_HIERARCHY_VIOLATION: &str =
+    "AES033 SURFACE_HIERARCHY_VIOLATION: Surface file is not imported from the layer barrel.";
+pub const AES034_PASSIVE_VIOLATION: &str =
+    "AES034 PASSIVE_SURFACE_VIOLATION: Surface file contains active domain logic.";
 pub const AES012_CIRCULAR_IMPORT: &str = "AES012 CIRCULAR_IMPORT: Circular dependencies detected.";
-pub const AES036_SURFACE_ROLE_VIOLATION: &str =
-    "AES036 SURFACE_ROLE: Surface file exceeds role mandate.";
+pub const AES031_SURFACE_ROLE_VIOLATION: &str =
+    "AES031 SURFACE_ROLE: Surface file exceeds role mandate.";
 pub const AES001_SURFACE_DEPENDENCY: &str =
     "AES001 SURFACE_DEPENDENCY: Surface imports from forbidden layer.";
-pub const AES034_MANDATORY_INHERITANCE: &str =
-    "AES034 MANDATORY_INHERITANCE: File imports contracts but no class implements them.";
-pub const AES033_CAPABILITY_ROUTING: &str =
-    "AES033 CAPABILITY_ROUTING: Capability method not found in dispatch.";
-pub const AES033_SINGLE_BOTTLENECK: &str =
-    "AES033 SINGLE_BOTTLENECK: All dispatch routes go to a single capability.";
-pub const AES033_MISSING_VO: &str =
-    "AES033 MISSING_VO: Capability method call missing required VO parameter.";
+pub const AES014_MANDATORY_INHERITANCE: &str =
+    "AES014 MANDATORY_INHERITANCE: File imports contracts but no class implements them.";
+pub const AES037_CAPABILITY_ROUTING: &str =
+    "AES037 CAPABILITY_ROUTING: Capability method not found in dispatch.";
+pub const AES036_SINGLE_BOTTLENECK: &str =
+    "AES036 SINGLE_BOTTLENECK: All dispatch routes go to a single capability.";
+pub const AES038_MISSING_VO: &str =
+    "AES038 MISSING_VO: Capability method call missing required VO parameter.";

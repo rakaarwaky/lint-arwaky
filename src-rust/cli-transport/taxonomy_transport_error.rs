@@ -7,10 +7,8 @@ use serde::{Deserialize, Serialize};
 pub struct TransportError {
     pub protocol: TransportProtocol,
     pub message: ErrorMessage,
-    #[serde(default)]
-    pub endpoint: Option<TransportEndpoint>,
-    #[serde(default)]
-    pub underlying_error: Option<ErrorMessage>,
+    pub endpoint: TransportEndpoint,
+    pub underlying_error: ErrorMessage,
 }
 
 impl TransportError {
@@ -18,19 +16,20 @@ impl TransportError {
         Self {
             protocol,
             message,
-            endpoint: None,
-            underlying_error: None,
+            endpoint: TransportEndpoint::default(),
+            underlying_error: ErrorMessage::default(),
         }
     }
 }
 
 impl std::fmt::Display for TransportError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let ep = self
-            .endpoint
-            .as_ref()
-            .map(|e| format!(" {}", e))
-            .unwrap_or_default();
+        let ep_str = self.endpoint.to_string();
+        let ep = if ep_str.is_empty() {
+            String::new()
+        } else {
+            format!(" {}", ep_str)
+        };
         write!(f, "[{}]{} {}", self.protocol, ep, self.message)
     }
 }

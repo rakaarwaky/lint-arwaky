@@ -31,7 +31,7 @@ pub fn aes011_suffix_mismatch(allowed_list: &str) -> String {
 
 pub fn aes031_primitive_usage(primitive: &str) -> String {
     format!(
-        "AES031 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy.",
+        "AES016 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy.",
         primitive
     )
 }
@@ -42,7 +42,7 @@ pub fn aes023_unused_import(name: &str) -> String {
 
 pub fn aes032_forbidden_inheritance(trait_name: &str) -> String {
     format!(
-        "AES032 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
+        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
         trait_name
     )
 }

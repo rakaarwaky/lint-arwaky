@@ -6,38 +6,37 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub struct JobError {
-    #[serde(default)]
-    pub job_id: Option<JobId>,
+    pub job_id: JobId,
     pub message: ErrorMessage,
-    #[serde(default)]
-    pub error_code: Option<ErrorCode>,
-    #[serde(default)]
-    pub cause: Option<Cause>,
+    pub error_code: ErrorCode,
+    pub cause: Cause,
 }
 
 impl JobError {
     pub fn new(message: ErrorMessage) -> Self {
         Self {
-            job_id: None,
+            job_id: JobId::default(),
             message,
-            error_code: None,
-            cause: None,
+            error_code: ErrorCode::default(),
+            cause: Cause::default(),
         }
     }
 }
 
 impl std::fmt::Display for JobError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let target = self
-            .job_id
-            .as_ref()
-            .map(|j| format!(" for job {}", j))
-            .unwrap_or_default();
-        let code = self
-            .error_code
-            .as_ref()
-            .map(|c| format!(" [{}]", c))
-            .unwrap_or_default();
+        let job_str = self.job_id.to_string();
+        let target = if job_str.is_empty() {
+            String::new()
+        } else {
+            format!(" for job {}", job_str)
+        };
+        let code_str = self.error_code.to_string();
+        let code = if code_str.is_empty() {
+            String::new()
+        } else {
+            format!(" [{}]", code_str)
+        };
         write!(f, "Job Error{}{}: {}", target, code, self.message)
     }
 }

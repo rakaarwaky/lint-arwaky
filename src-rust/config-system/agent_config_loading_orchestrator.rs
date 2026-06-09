@@ -5,9 +5,12 @@ use crate::config_system::taxonomy_config_vo::default_config_for_language;
 use crate::config_system::taxonomy_config_vo::parse_config_yaml;
 use crate::config_system::taxonomy_source_vo::ConfigResult;
 use crate::config_system::taxonomy_source_vo::ConfigSource;
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 use std::sync::Arc;
+
+pub type ServiceContainerAggregateRef = Box<dyn ServiceContainerAggregate>;
 
 pub struct ConfigLoadingOrchestrator {
     language_detector: Arc<dyn ILanguageDetectorPort>,
