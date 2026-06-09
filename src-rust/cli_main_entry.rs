@@ -1,15 +1,16 @@
 use std::env;
 use std::process::ExitCode;
+use std::sync::Arc;
 
 use clap::Parser;
 use lint_arwaky::cli_commands::surface_analysis_command;
+use lint_arwaky::cli_commands::surface_bootstrap_command;
 use lint_arwaky::cli_commands::surface_check_command;
 use lint_arwaky::cli_commands::surface_config_command;
 use lint_arwaky::cli_commands::surface_core_command::{Cli, Commands};
 use lint_arwaky::cli_commands::surface_dev_command;
 use lint_arwaky::cli_commands::surface_fix_command;
 use lint_arwaky::cli_commands::surface_git_command;
-use lint_arwaky::cli_commands::surface_bootstrap_command;
 use lint_arwaky::cli_commands::surface_maintenance_command;
 use lint_arwaky::cli_commands::surface_map_command;
 use lint_arwaky::cli_commands::surface_multi_command;
@@ -18,10 +19,14 @@ use lint_arwaky::cli_commands::surface_report_command;
 use lint_arwaky::cli_commands::surface_setup_command;
 use lint_arwaky::cli_commands::surface_watch_command;
 use lint_arwaky::cli_commands::taxonomy_command_target_vo;
+use lint_arwaky::code_analysis::agent_checking_coordinator::init_global_checker;
+use lint_arwaky::config_system::taxonomy_config_vo::default_aes_config;
+use lint_arwaky::di_containers::agent_checker_container::CheckerContainer;
 
 pub struct CliMainEntry {}
 
 fn main() -> ExitCode {
+    init_global_checker(Arc::new(CheckerContainer::new(default_aes_config())));
     let raw_args: Vec<String> = env::args().collect();
     if raw_args.len() <= 1 {
         return run_default_check(".");

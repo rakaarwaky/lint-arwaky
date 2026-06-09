@@ -177,6 +177,11 @@ impl ArchComplianceAnalyzer {
             }
         }
 
+        // If no layer matches and file is at project root (no subdirectory), classify as "root"
+        if Path::new(&rel).parent().map(|p| p.to_string_lossy() == "").unwrap_or(false) {
+            return Some("root".to_string());
+        }
+
         None
     }
 
@@ -325,8 +330,8 @@ impl ArchComplianceAnalyzer {
         }
 
         // Case 2: Running analysis from inside the layer directory
-        // (rel is "foo.py", parent is ".", layer path is "" or ".")
-        if parent_dir == "." && (norm_path_def.is_empty() || norm_path_def == ".") {
+        // (rel is "foo.py", parent is ".", layer path has an actual value)
+        if parent_dir == "." && !norm_path_def.is_empty() && norm_path_def != "." {
             return true;
         }
 

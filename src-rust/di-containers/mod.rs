@@ -1,3 +1,5 @@
+pub mod agent_checker_container;
+pub use agent_checker_container::CheckerContainer;
 pub mod agent_container_registry;
 pub use agent_container_registry::ProjectContainerRegistry;
 pub mod agent_injection_container;

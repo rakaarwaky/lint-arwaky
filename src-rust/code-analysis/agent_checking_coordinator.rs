@@ -1,27 +1,15 @@
 // lint_checking_coordinator — Agent-layer orchestration of ALL AES checkers.
 // This is the CORRECT architectural location for wiring checkers (Agent layer).
 
+use std::sync::Arc;
 use std::path::Path;
+use std::sync::OnceLock;
 
-use crate::code_analysis::capabilities_class_checker::ArchClassChecker;
-use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
-use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-
-use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
-use crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges;
-use crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge;
-use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
-use crate::layer_rules::capabilities_import_checker::ArchImportRuleChecker;
-use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
-use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
-use crate::orphan_detector::capabilities_orphan_analyzer::OrphanGraphResolver;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
-use crate::role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
@@ -36,7 +24,16 @@ use crate::shared_common::taxonomy_violationrs_constant::{
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
-pub struct LintCheckingCoordinator {}
+static GLOBAL_CHECKER: OnceLock<Arc<dyn ICheckerAggregate>> = OnceLock::new();
+
+/// Initialize the global checker container. Must be called before using LintCheckingCoordinator.
+pub fn init_global_checker(checker: Arc<dyn ICheckerAggregate>) {
+    GLOBAL_CHECKER.set(checker).ok();
+}
+
+pub struct LintCheckingCoordinator {
+    checker: Arc<dyn ICheckerAggregate>,
+}
 
 impl Default for LintCheckingCoordinator {
     fn default() -> Self {
@@ -46,7 +43,9 @@ impl Default for LintCheckingCoordinator {
 
 impl LintCheckingCoordinator {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            checker: GLOBAL_CHECKER.get().expect("init_global_checker must be called before LintCheckingCoordinator::new()").clone(),
+        }
     }
 
     pub fn run_all_checks(
@@ -58,15 +57,7 @@ impl LintCheckingCoordinator {
         if !config.enabled.value {
             return Vec::new();
         }
-        let analyzer = ArchComplianceAnalyzer::new(config.clone());
         let mut violations: Vec<LintResult> = Vec::new();
-        let import_checker = ArchImportRuleChecker::new();
-        let line_checker = ArchLineChecker::new();
-        let class_checker = ArchClassChecker::new();
-        let taxonomy_checker = TaxonomyRoleChecker::new();
-        let contract_checker = ContractRoleChecker::new();
-        let naming_checker = ArchNamingChecker::new();
-        let layer_checker = ArchLayerChecker::new();
         let mut file_paths: Vec<FilePath> = Vec::new();
         let mut import_edges: Vec<(String, String)> = Vec::new();
 
@@ -119,11 +110,11 @@ impl LintCheckingCoordinator {
             if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
                 continue;
             }
-            let layer = match analyzer.detect_layer(file, root_dir) {
+            let layer = match self.checker.detect_layer(file, root_dir) {
                 Some(l) => l,
                 None => continue,
             };
-            let def = match analyzer.get_layer_def(&layer) {
+            let def = match self.checker.get_layer_def(&layer) {
                 Some(d) => d,
                 None => continue,
             };
@@ -138,31 +129,32 @@ impl LintCheckingCoordinator {
             Self::check_missing_vo(file, &c, &layer, &mut violations);
 
             // Layer-rule checks (delegated to layer-rules/)
-            layer_checker.check_surface_imports(file, &c, &layer, &mut violations);
-            layer_checker.check_capability_routing(file, &c, &layer, &mut violations);
-            import_checker.check_mandatory_imports(file, def, &mut violations);
-            import_checker.check_forbidden_imports(file, &layer, def, &mut violations);
-            import_checker.check_legacy_import_rules(file, &layer, config, &mut violations);
-            line_checker.check_line_counts(file, Some(def), &mut violations);
-
-            taxonomy_checker.check_entity(file, &c, &mut violations);
-            taxonomy_checker.check_error(file, &c, &mut violations);
-            taxonomy_checker.check_event(file, &c, &mut violations);
-            taxonomy_checker.check_constant(file, &mut violations);
-            contract_checker.check_aggregate(file, &c, def, &mut violations);
-            class_checker.check_mandatory_class_definition(file, Some(def), &mut violations);
-            naming_checker.check_file_naming(
-                file,
-                filename,
-                &Some(layer.clone()),
-                Some(def),
+            self.checker.check_surface_imports(file, &c, &layer, &mut violations);
+            self.checker.check_capability_routing(file, &c, &layer, &mut violations);
+            self.checker.check_mandatory_imports(file, &def, &mut violations);
+            self.checker.check_forbidden_imports(file, &layer, &def, &mut violations);
+            self.checker.check_scope_forbidden_imports(file, config, &mut violations);
+            self.checker.check_legacy_import_rules(file, &layer, config, &mut violations);
+            self.checker.check_line_counts(file, Some(&def), &mut violations);
+ 
+                         self.checker.check_entity(file, &c, &mut violations);
+                         self.checker.check_error(file, &c, &mut violations);
+                         self.checker.check_event(file, &c, &mut violations);
+                         self.checker.check_constant(file, &mut violations);
+                         self.checker.check_aggregate(file, &c, &def, &mut violations);
+                         self.checker.check_mandatory_class_definition(file, Some(&def), &mut violations);
+                         self.checker.check_file_naming(
+                             file,
+                             filename,
+                             &Some(layer.clone()),
+                             Some(&def),
                 config,
                 &mut violations,
             );
-            naming_checker.check_domain_suffixes(
+            self.checker.check_domain_suffixes(
                 file,
                 filename,
-                Some(def),
+                Some(&def),
                 &Some(layer.clone()),
                 &mut violations,
             );
@@ -170,12 +162,12 @@ impl LintCheckingCoordinator {
 
         let mut rl = LintResultList::new(violations);
         let root_fp = FilePath::new(root_dir.to_string()).unwrap_or_default();
-        SurfaceHierarchyChecker::new().check_surface_hierarchy(&file_paths, &root_fp, &mut rl);
-        let ce: Vec<DependencyEdge> = import_edges
+        self.checker.check_surface_hierarchy(&file_paths, &root_fp, &mut rl);
+        let ce: Vec<(String, String)> = import_edges
             .iter()
-            .map(|(s, t)| DependencyEdge::new(s.clone(), t.clone()))
+            .map(|(s, t)| (s.clone(), t.clone()))
             .collect();
-        if !detect_cycle_edges(&ce).is_empty() {
+        if self.checker.detect_cycle_edges(&ce) {
             rl.push(Self::mk(
                 "",
                 0,
@@ -185,9 +177,8 @@ impl LintCheckingCoordinator {
             ));
         }
         // Inline orphan check: prefix/suffix based per-layer logic with barrel resolution
-        let orphan = OrphanGraphResolver::new();
-        let ctx = orphan.build_graph_context(files, root_dir);
-        let eps = orphan.identify_entry_points(files);
+        let ctx = self.checker.build_orphan_graph_context(files, root_dir);
+        let eps = self.checker.identify_orphan_entry_points(files);
 
         for fp in files {
             if eps.contains(fp) || fp.ends_with("mod.rs") || fp.ends_with("__init__.py")
@@ -619,15 +610,32 @@ impl LintCheckingCoordinator {
                 }
             }
         }
-        for t in &imported {
-            if !content.contains(&format!("impl {} for ", t)) {
-                violations.push(Self::mk(
-                    file,
-                    0,
-                    "AES034",
-                    Severity::HIGH,
-                    &aes034_mandatory_inheritance(t),
-                ));
+        // If file implements at least one contract, skip — other imports are dependencies
+        let has_impl = imported.iter().any(|t| content.contains(&format!("impl {} for ", t)));
+        if !has_impl {
+            // Check if all imported contracts are used as dependencies (Arc<dyn, Box<dyn, &dyn)
+            let all_are_deps: bool = imported.iter().all(|t| {
+                content.contains(&format!("Arc<dyn {}>", t))
+                    || content.contains(&format!("Box<dyn {}>", t))
+                    || content.contains(&format!("&dyn {}", t))
+                    || content.contains(&format!("&dyn mut {}", t))
+            });
+            if !all_are_deps {
+                for t in &imported {
+                    if !content.contains(&format!("Arc<dyn {}>", t))
+                        && !content.contains(&format!("Box<dyn {}>", t))
+                        && !content.contains(&format!("&dyn {}", t))
+                        && !content.contains(&format!("&dyn mut {}", t))
+                    {
+                        violations.push(Self::mk(
+                            file,
+                            0,
+                            "AES034",
+                            Severity::HIGH,
+                            &aes034_mandatory_inheritance(t),
+                        ));
+                    }
+                }
             }
         }
     }

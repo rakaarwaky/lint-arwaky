@@ -79,6 +79,26 @@ pub(crate) fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
             }
         }
         remove_nulls(&mut json);
+        // Add default path for layers that don't have one
+        if let Some(layers_obj) = json.get_mut("layers") {
+            if let Some(obj) = layers_obj.as_object_mut() {
+                for (name, layer) in obj.iter_mut() {
+                    if let Some(layer_obj) = layer.as_object_mut() {
+                        if !layer_obj.contains_key("path") {
+                            layer_obj.insert("path".to_string(), serde_json::json!("."));
+                        }
+                    }
+                }
+            }
+        }
+        // Convert governance_rules and ignored_paths from array to {values: [...]} format
+        // because the Rust struct expects objects with a "values" field
+        for key in &["governance_rules", "ignored_paths"] {
+            if let Some(arr) = json.get(*key).and_then(|v| v.as_array()) {
+                let wrapped = serde_json::json!({"values": arr});
+                json[*key] = wrapped;
+            }
+        }
         if let Some(layers_obj) = json.get_mut("layers") {
             if let Some(obj) = layers_obj.as_object_mut() {
                 let mut suffix_updates: Vec<(

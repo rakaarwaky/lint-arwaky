@@ -22,6 +22,8 @@ pub use capabilities_class_checker::ArchClassChecker;
 pub mod capabilities_line_checker;
 pub use capabilities_line_checker::ArchLineChecker;
 
+pub mod contract_checker_aggregate;
+pub use contract_checker_aggregate::ICheckerAggregate;
 pub mod contract_adapter_port;
 pub use contract_adapter_port::ILinterAdapterPort;
 pub mod contract_analysis_protocol;

@@ -112,7 +112,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("tsc".to_string(), tsc);
 
         let clippy = Arc::new(
-            crate::language_adapters::infrastructure_rs_linter_adapter::RustLinterAdapter::new(
+            crate::language_adapters::infrastructure_rs_clippy_adapter::RustLinterAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,

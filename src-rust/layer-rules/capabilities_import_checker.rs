@@ -319,10 +319,17 @@ impl ArchImportRuleChecker {
 
         for (line_num, line) in &import_lines {
             if let Some(module) = Self::extract_module_from_line(line) {
+                let segments: Vec<&str> = module.split("::").collect();
                 for forbidden in &definition.forbidden.values {
                     let (layer, suffixes) = Self::resolve_scope(forbidden);
                     let is_forbidden = if suffixes.is_empty() {
-                        module.contains(forbidden.as_str()) || module.contains(layer)
+                        // Prefix-based per-segment check instead of naive substring
+                        segments.iter().any(|seg| {
+                            let cleaned = seg.trim_end_matches(';').trim();
+                            Self::extract_layer_from_import(cleaned)
+                                .map(|l| l == layer)
+                                .unwrap_or(false)
+                        })
                     } else {
                         Self::import_matches_scope(line, layer, &suffixes)
                     };
@@ -439,4 +446,71 @@ impl ArchImportRuleChecker {
         None
     }
 
+    /// Check forbidden imports from per-scope ArchitectureRule conditions (AES001).
+    /// Enforces scope-specific forbidden import rules from config (e.g. agent(orchestrator|coordinator) → forbid infrastructure, capabilities).
+    pub fn check_scope_forbidden_imports(
+        &self,
+        file: &str,
+        config: &ArchitectureConfig,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let basename = Self::get_basename(file);
+        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+            return;
+        }
+        // Extract suffix from filename: agent_checking_coordinator.rs → "coordinator"
+        let stem = basename.rsplit('.').next_back().unwrap_or(&basename);
+        let suffix = stem.rsplit('_').next().unwrap_or("");
+
+        let import_lines = Self::read_import_lines(file);
+        if import_lines.is_empty() {
+            return;
+        }
+
+        // Iterate over all ArchitectureRule conditions (AES001 per-scope rules)
+        for rule in &config.rules {
+            let (rule_layer, rule_suffixes) = Self::resolve_scope(&rule.scope.value);
+            // Check if file's layer matches rule's layer
+            let layer_match = stem.starts_with(&format!("{}_", rule_layer));
+            if !layer_match {
+                continue;
+            }
+            // Check if file's suffix matches rule's suffix restriction (if any)
+            if !rule_suffixes.is_empty() && !rule_suffixes.contains(&suffix) {
+                continue;
+            }
+            // This rule applies — check each import against forbidden list
+            for (line_num, line) in &import_lines {
+                if let Some(module) = Self::extract_module_from_line(line) {
+                    // Parse module path into segments (e.g. "crate::code_analysis::capabilities_class_checker::ArchClassChecker")
+                    let segments: Vec<&str> = module.split("::").collect();
+                    for forbidden in &rule.forbidden.values {
+                        let (forbidden_layer, forbidden_suffixes) = Self::resolve_scope(forbidden);
+                        let is_forbidden = if forbidden_suffixes.is_empty() {
+                            // Check each path segment with prefix matching (not naive substring)
+                            let layer_match = segments.iter().any(|seg| {
+                                let cleaned = seg.trim_end_matches(';').trim();
+                                Self::extract_layer_from_import(cleaned)
+                                    .map(|l| l == forbidden_layer)
+                                    .unwrap_or(false)
+                            });
+                            // Also check if module contains forbidden as raw string (for special cases)
+                            layer_match
+                        } else {
+                            Self::import_matches_scope(line, forbidden_layer, &forbidden_suffixes)
+                        };
+                        if is_forbidden {
+                            violations.push(LintResult::new_arch(
+                                file,
+                                *line_num,
+                                "AES001",
+                                Severity::CRITICAL,
+                                &aes001_forbidden_import(rule_layer, &module),
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
