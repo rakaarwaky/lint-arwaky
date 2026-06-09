@@ -82,11 +82,11 @@ impl ASTRustParserAdapter {
         let mut func_defs = Vec::new();
         let mut class_methods: HashMap<String, Vec<String>> = HashMap::new();
         let mut assignments = Vec::new();
-        let mut control_flow_count = 0i64;
+        let mut control_flow_count = 0;
 
         let lines: Vec<&str> = content.lines().collect();
         let mut current_impl: Option<String> = None;
-        let mut brace_count = 0i32;
+        let mut brace_count = 0;
 
         for (idx_zero, line) in lines.iter().enumerate() {
             let idx = (idx_zero + 1) as i64;

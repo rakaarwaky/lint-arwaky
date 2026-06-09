@@ -39,17 +39,8 @@ use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 
 /// Extracted method args VO (inlined from deleted dispatch_parser_types module).
-#[derive(Default)]
 pub struct MethodArgsVO {
     pub value: Option<String>,
-}
-
-impl std::fmt::Debug for MethodArgsVO {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MethodArgsVO")
-            .field("value", &self.value)
-            .finish()
-    }
 }
 
 /// Default parser implementation (inlined from deleted dispatch_routing_parser module).

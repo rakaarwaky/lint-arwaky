@@ -438,7 +438,7 @@ impl SemanticScopeAnalyzer {
             Err(_) => return Count::new(0),
         };
 
-        let mut modified_count: i64 = 0i64;
+        let mut modified_count: i64 = 0;
 
         if let Ok(py_files) = collect_py_files(&root_dir.value) {
             for filepath in &py_files {

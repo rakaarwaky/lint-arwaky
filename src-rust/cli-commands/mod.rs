@@ -15,7 +15,7 @@ pub use contract_report_aggregate::ReportCommandsAggregate;
 pub mod contract_routing_protocol;
 pub use contract_routing_protocol::{IDispatchRoutingParserProtocol, IDispatchRoutingProtocol};
 pub mod surface_analysis_command;
-pub use surface_analysis_command::AnalysisCommandsSurface;
+pub use surface_analysis_command::{register_analysis_commands, AnalysisCommandsSurface};
 pub mod surface_check_command;
 pub use surface_check_command::{register_check_commands, CheckCommandsSurface};
 pub mod surface_core_command;

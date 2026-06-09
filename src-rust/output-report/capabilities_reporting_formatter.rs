@@ -228,8 +228,8 @@ impl ReportFormatterProcessor {
         let mut xml_lines: Vec<String> = Vec::new();
         xml_lines.push(r#"<?xml version="1.0" encoding="UTF-8"?>"#.to_string());
 
-        let mut total_tests: i64 = 0i64;
-        let mut total_failures: i64 = 0i64;
+        let mut total_tests: i64 = 0;
+        let mut total_failures: i64 = 0;
         let mut testsuites: Vec<String> = Vec::new();
 
         if let Some(obj) = report_data.as_object() {

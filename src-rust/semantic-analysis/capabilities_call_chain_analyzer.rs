@@ -183,7 +183,7 @@ impl CallChainAnalyzer {
         };
 
         let js_files = Self::collect_js_files(root_dir);
-        let mut modified_count = 0usize;
+        let mut modified_count = 0;
 
         for filepath in &js_files {
             let Ok(source) = fs::read_to_string(filepath) else {

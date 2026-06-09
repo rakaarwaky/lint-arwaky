@@ -21,7 +21,7 @@ impl ScopeBoundaryResolver {
 
         // Walk backward from `line` looking for function/class declaration
         let func_re = regex::Regex::new(r"(?:function|class|def|fn)\s+(\w+)").ok()?;
-        let mut depth: i32 = 0i32;
+        let mut depth: i32 = 0;
         for i in (0..=line.min(lines.len().saturating_sub(1))).rev() {
             let l = lines[i];
             for ch in l.chars().rev() {

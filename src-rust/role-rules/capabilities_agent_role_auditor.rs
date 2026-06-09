@@ -309,7 +309,7 @@ impl AgentRoleChecker {
         line: i64,
     ) -> Option<SymbolName> {
         let mut best_method: Option<String> = None;
-        let mut best_line: i64 = -1i64;
+        let mut best_line: i64 = -1;
 
         if let Some(obj) = all_methods.as_object() {
             for (_, methods) in obj {
