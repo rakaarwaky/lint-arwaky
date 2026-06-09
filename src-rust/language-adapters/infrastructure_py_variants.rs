@@ -8,11 +8,17 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 static RE_WORDS: Lazy<Result<Regex, NamingError>> = Lazy::new(|| {
-    Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+")
+    Regex::new(r"[A-Z]{2,}|[A-Z][a-z0-9]*|[a-z0-9]+")
         .map_err(|e| NamingError::new(ErrorMessage::new(format!("Invalid regex pattern: {}", e))))
 });
 
 pub struct PythonNamingVariantProvider {}
+
+impl Default for PythonNamingVariantProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl PythonNamingVariantProvider {
     pub fn new() -> Self {

@@ -254,7 +254,7 @@ pub fn handle_dependencies(path: Option<String>) -> ExitCode {
                 transitive_count
             );
             println!();
-            println!("{:<25} {:<12} {}", "Package", "Version", "Type");
+            println!("{:<25} {:<12} Type", "Package", "Version");
             for (name, version, dep_type) in packages.iter().take(30) {
                 println!("{:<25} {:<12} {}", name, version, dep_type);
             }

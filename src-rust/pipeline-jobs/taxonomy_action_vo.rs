@@ -10,7 +10,7 @@ pub struct ActionArgs {
 
 impl ActionArgs {
     pub fn new(value: MetadataVO) -> Self {
-        Self { value: value }
+        Self { value }
     }
     pub fn value(&self) -> &MetadataVO {
         &self.value
@@ -99,7 +99,7 @@ impl<'de> serde::Deserialize<'de> for ActionName {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -193,7 +193,7 @@ impl<'de> serde::Deserialize<'de> for JobId {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;

@@ -8,6 +8,12 @@ pub struct MultiCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
+impl Default for MultiCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MultiCommandsSurface {
     pub fn new() -> Self {
         Self { container: None }

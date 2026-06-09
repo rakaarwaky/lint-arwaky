@@ -10,6 +10,12 @@ use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct ScopeBoundaryAnalyzer {}
 
+impl Default for ScopeBoundaryAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ScopeBoundaryAnalyzer {
     pub fn new() -> Self {
         Self {}
@@ -57,7 +63,7 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
         if line.starts_with("function ") {
             let name = line
                 .trim_start_matches("function ")
-                .split(|c: char| c == '(' || c == ' ')
+                .split(['(', ' '])
                 .next()
                 .unwrap_or("");
             if !name.is_empty() {
@@ -67,7 +73,7 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
         if line.starts_with("class ") {
             let name = line
                 .trim_start_matches("class ")
-                .split(|c: char| c == '(' || c == ' ' || c == '{')
+                .split(['(', ' ', '{'])
                 .next()
                 .unwrap_or("");
             if !name.is_empty() {
@@ -129,7 +135,7 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
             let trimmed = l.trim();
             if let Some(name) = trimmed.strip_prefix("function ") {
                 let name = name
-                    .split(|c: char| c == '(' || c == ' ')
+                    .split(['(', ' '])
                     .next()
                     .unwrap_or("");
                 if !name.is_empty() {
@@ -137,7 +143,7 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
                 }
             } else if let Some(name) = trimmed.strip_prefix("class ") {
                 let name = name
-                    .split(|c: char| c == '(' || c == ' ' || c == '{')
+                    .split(['(', ' ', '{'])
                     .next()
                     .unwrap_or("");
                 if !name.is_empty() {
@@ -166,6 +172,6 @@ impl IScopeBoundaryProtocol for ScopeBoundaryAnalyzer {
                 }
             }
         }
-        current_scope.map(|s| SymbolName::new(s))
+        current_scope.map(SymbolName::new)
     }
 }

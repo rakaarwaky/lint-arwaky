@@ -33,6 +33,12 @@ use std::collections::HashMap;
 /// Build graph context and identify entry points for orphan analysis.
 pub struct OrphanGraphResolver {}
 
+impl Default for OrphanGraphResolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OrphanGraphResolver {
     pub fn new() -> Self {
         Self {}
@@ -45,17 +51,19 @@ impl OrphanGraphResolver {
         let mut inheritance_map: HashMap<String, Vec<String>> = HashMap::new();
         let file_definitions: HashMap<String, Vec<String>> = HashMap::new();
 
+        let import_re = regex::Regex::new(r"(?:from|import)\s+([\w\.]+)");
+        let inh_re = regex::Regex::new(r"class\s+\w+\(([^)]+)\)");
         for f in files {
             import_graph.entry(f.clone()).or_default();
             if let Ok(content) = std::fs::read_to_string(f) {
-                if let Some(import_re) = regex::Regex::new(r"(?:from|import)\s+([\w\.]+)").ok() {
+                if let Ok(ref import_re) = import_re {
                     for cap in import_re.captures_iter(&content) {
                         let dep = cap[1].to_string();
                         import_graph.entry(f.clone()).or_default().push(dep.clone());
                         inbound_links.entry(dep).or_default().push(f.clone());
                     }
                 }
-                if let Some(inh_re) = regex::Regex::new(r"class\s+\w+\(([^)]+)\)").ok() {
+                if let Ok(ref inh_re) = inh_re {
                     for cap in inh_re.captures_iter(&content) {
                         for base in cap[1].split(',') {
                             inheritance_map
@@ -86,6 +94,12 @@ impl OrphanGraphResolver {
 
 /// Evaluate orphan indicators per layer type.
 pub struct OrphanIndicatorEvaluator {}
+
+impl Default for OrphanIndicatorEvaluator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl OrphanIndicatorEvaluator {
     pub fn new() -> Self {
@@ -137,7 +151,7 @@ impl OrphanIndicatorEvaluator {
     pub fn is_surface_orphan(
         &self,
         f: &str,
-        alive: &Vec<String>,
+        alive: &[String],
         _def: &LayerDefinition,
     ) -> OrphanIndicatorResult {
         let orphan = !alive.contains(&f.to_string());
@@ -147,7 +161,7 @@ impl OrphanIndicatorEvaluator {
     pub fn is_generic_orphan(
         &self,
         f: &str,
-        alive: &Vec<String>,
+        alive: &[String],
         inbound: &InboundLinkMap,
     ) -> OrphanIndicatorResult {
         let orphan = !alive.contains(&f.to_string()) && !inbound.mapping.contains_key(f);
@@ -167,6 +181,12 @@ use crate::shared_common::taxonomy_names_constant::{
 pub struct ArchOrphanAnalyzer {
     resolver: OrphanGraphResolver,
     evaluator: OrphanIndicatorEvaluator,
+}
+
+impl Default for ArchOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ArchOrphanAnalyzer {
@@ -290,7 +310,7 @@ impl ArchOrphanAnalyzer {
 
         // Sort by path-length descending
         let mut sorted_layers: Vec<(&LayerNameVO, &LayerDefinition)> = layer_map.iter().collect();
-        sorted_layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
+        sorted_layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 
         for (name, def) in &sorted_layers {
             if name.value.contains('(') {
@@ -298,7 +318,7 @@ impl ArchOrphanAnalyzer {
             }
 
             if rel.starts_with(&def.path.value)
-                || rel.starts_with(&def.path.value.split('/').last().unwrap_or(""))
+                || rel.starts_with(def.path.value.split('/').next_back().unwrap_or(""))
             {
                 return Some(LayerNameVO::new(&name.value));
             }
@@ -313,7 +333,7 @@ impl ArchOrphanAnalyzer {
         root_dir: &str,
         definition: &LayerDefinition,
         context: &GraphAnalysisContext,
-        alive_files_set: &Vec<String>,
+        alive_files_set: &[String],
         layer_vo: &LayerNameVO,
     ) -> crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult {
         // Skip barrel files
@@ -412,7 +432,7 @@ impl ArchOrphanAnalyzer {
                         // Check for module stem in imports
                         if content.contains(&format!("import {}", stem))
                             || content.contains(&format!("from {} ", stem))
-                            || content.contains(&stem)
+                            || content.contains(stem)
                             || content.contains(&format!("use {};", stem.replace(".", "::")))
                             || content.contains(&format!("use crate::{}", stem))
                         {

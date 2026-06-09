@@ -74,40 +74,43 @@ static JSON_SCHEMA_TYPE_VALUES: Lazy<std::collections::HashSet<&'static str>> = 
 });
 
 // Regex: captures a function definition line
-static FUNC_DEF_RE: Lazy<Regex> =
-    Lazy::new(
-        || match Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)") {
-            Ok(re) => re,
-            Err(_) => match Regex::new(r"^$") {
-                Ok(re) => re,
-                Err(_) => loop {},
-            },
-        },
-    );
+static FUNC_DEF_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)")
+        .unwrap_or_else(|_| Regex::new(r"^$").unwrap_or_else(|_| {
+            loop {
+                std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
+            }
+        }))
+});
 
 // Regex: captures decorator lines
-static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| match Regex::new(r"^\s*@(.+)$") {
-    Ok(re) => re,
-    Err(_) => match Regex::new(r"^$") {
-        Ok(re) => re,
-        Err(_) => loop {},
-    },
+static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^\s*@(.+)$").unwrap_or_else(|_| Regex::new(r"^$").unwrap_or_else(|_| {
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
+        }
+    }))
 });
 
 // Regex: triple-quoted docstring
-static DOCSTRING_RE: Lazy<Regex> =
-    Lazy::new(
-        || match Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#) {
-            Ok(re) => re,
-            Err(_) => match Regex::new(r"^$") {
-                Ok(re) => re,
-                Err(_) => loop {},
-            },
-        },
-    );
+static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#).unwrap_or_else(|_| {
+        Regex::new(r"^$").unwrap_or_else(|_| {
+            loop {
+                std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
+            }
+        })
+    })
+});
 
 /// AES025 — Validate MCP tool input/output schemas.
 pub struct McpSchemaChecker {}
+
+impl Default for McpSchemaChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl McpSchemaChecker {
     pub fn new() -> Self {
@@ -230,8 +233,8 @@ impl McpSchemaChecker {
             if DOCSTRING_RE.is_match(trimmed) {
                 // Check length >= 10 chars
                 let stripped = trimmed
-                    .trim_start_matches(|c| c == '"' || c == '\'')
-                    .trim_end_matches(|c| c == '"' || c == '\'')
+                    .trim_start_matches(['"', '\''])
+                    .trim_end_matches(['"', '\''])
                     .trim();
                 if stripped.len() >= 10 {
                     found_docstring = true;

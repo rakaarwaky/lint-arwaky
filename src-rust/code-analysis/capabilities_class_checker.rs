@@ -9,6 +9,12 @@ use crate::shared_common::taxonomy_violationrs_constant::AES009_MANDATORY_CLASS_
 
 pub struct ArchClassChecker {}
 
+impl Default for ArchClassChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchClassChecker {
     pub fn new() -> Self {
         Self {}

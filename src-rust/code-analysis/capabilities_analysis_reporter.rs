@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use std::sync::Arc;
 
 pub struct AnalysisReporter {
+    #[allow(dead_code)]
     container: Option<Arc<dyn ServiceContainerAggregate>>,
     history_path: String,
 }
@@ -60,10 +61,7 @@ impl IAnalysisProtocol for AnalysisReporter {
         let current_score = crate::output_report::taxonomy_score_constant::compute_score(
             &report
                 .results
-                .values
-                .iter()
-                .map(|r| r.clone())
-                .collect::<Vec<_>>(),
+                .values.to_vec(),
         );
 
         // Read history file (configurable via self.history_path)

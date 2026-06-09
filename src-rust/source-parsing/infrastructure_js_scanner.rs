@@ -63,6 +63,12 @@ struct ParsedData {
 
 pub struct ASTJSParserAdapter {}
 
+impl Default for ASTJSParserAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ASTJSParserAdapter {
     pub fn new() -> Self {
         Self {}
@@ -691,7 +697,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
             .value
             .replace('\\', "/")
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or("")
             .to_string();
         let mut stem = basename.clone();
@@ -709,7 +715,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
             .value
             .replace('\\', "/")
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or("")
             .to_string();
         BooleanVO::new(

@@ -37,7 +37,6 @@ impl CargoAuditAdapter {
             Ok(c) => c,
             Err(_) => return path.clone(),
         };
-        let current = current;
         for _ in 0..10 {
             if current.join("Cargo.toml").exists()
                 || current.join("lint_arwaky.config.yaml").exists()

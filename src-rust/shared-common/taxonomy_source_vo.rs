@@ -84,7 +84,7 @@ impl<'de> serde::Deserialize<'de> for ContentString {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;

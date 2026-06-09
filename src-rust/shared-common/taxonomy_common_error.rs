@@ -68,7 +68,7 @@ impl<'de> serde::Deserialize<'de> for Cause {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -150,7 +150,7 @@ impl<'de> serde::Deserialize<'de> for Constraint {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -166,6 +166,7 @@ impl<'de> serde::Deserialize<'de> for Constraint {
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct ErrorMessage {
     pub(crate) value: String,
 }
@@ -181,13 +182,6 @@ impl ErrorMessage {
     }
 }
 
-impl Default for ErrorMessage {
-    fn default() -> Self {
-        ErrorMessage {
-            value: String::new(),
-        }
-    }
-}
 
 impl std::fmt::Display for ErrorMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -240,7 +234,7 @@ impl<'de> serde::Deserialize<'de> for ErrorMessage {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -262,7 +256,7 @@ pub struct ExitCode {
 
 impl ExitCode {
     pub fn new(value: i64) -> Self {
-        Self { value: value }
+        Self { value }
     }
     pub fn value(&self) -> i64 {
         self.value
@@ -310,7 +304,7 @@ impl<'de> serde::Deserialize<'de> for ExitCode {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<i64>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -392,7 +386,7 @@ impl<'de> serde::Deserialize<'de> for FieldName {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -474,7 +468,7 @@ impl<'de> serde::Deserialize<'de> for ModuleName {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -556,7 +550,7 @@ impl<'de> serde::Deserialize<'de> for PrimitiveTypeName {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;

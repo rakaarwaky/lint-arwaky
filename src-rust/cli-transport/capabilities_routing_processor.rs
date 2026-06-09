@@ -46,6 +46,12 @@ pub struct MethodArgsVO {
 /// Default parser implementation (inlined from deleted dispatch_routing_parser module).
 pub struct DispatchRoutingParser {}
 
+impl Default for DispatchRoutingParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DispatchRoutingParser {
     pub fn new() -> Self {
         Self {}
@@ -112,6 +118,12 @@ static CAPABILITY_REF_PATTERN: Lazy<Option<Regex>> = Lazy::new(|| {
 
 pub struct DispatchRoutingChecker {
     pub parser: Box<dyn IDispatchRoutingParserProtocol>,
+}
+
+impl Default for DispatchRoutingChecker {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DispatchRoutingChecker {

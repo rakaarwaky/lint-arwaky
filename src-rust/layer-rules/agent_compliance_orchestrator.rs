@@ -78,6 +78,12 @@ impl WatchCommandsAggregate for WatchCommandsOrchestrator {
     }
 }
 
+impl Default for WatchCommandsOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WatchCommandsOrchestrator {
     pub fn new() -> Self {
         Self {
@@ -95,6 +101,12 @@ impl WatchExecutionOrchestratorAggregate for WatchExecutionOrchestrator {
 
     fn job_registry(&self) -> &dyn IJobRegistryPort {
         WATCH_JOB_REGISTRY.get_or_init(MemoryJobRegistryAdapter::new)
+    }
+}
+
+impl Default for WatchExecutionOrchestrator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -133,6 +145,12 @@ pub struct ArchitectureOrchestrator {}
 impl IArchComplianceProtocol for ArchitectureOrchestrator {
     fn execute(&self, _path: &FilePath) -> LintResultList {
         LintResultList::new(vec![])
+    }
+}
+
+impl Default for ArchitectureOrchestrator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

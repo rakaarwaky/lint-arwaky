@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Default)]
 pub enum Severity {
     #[serde(rename = "info")]
+    #[default]
     INFO,
     #[serde(rename = "low")]
     LOW,
@@ -26,11 +28,6 @@ impl std::fmt::Display for Severity {
     }
 }
 
-impl Default for Severity {
-    fn default() -> Self {
-        Severity::INFO
-    }
-}
 
 impl Severity {
     pub fn score_impact(&self) -> f64 {

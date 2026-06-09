@@ -9,6 +9,12 @@ pub struct ReportCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
+impl Default for ReportCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReportCommandsSurface {
     pub fn new() -> Self {
         Self { container: None }

@@ -81,6 +81,7 @@ pub trait IArchImportProcessorProtocol: Send + Sync {
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
+    #[allow(clippy::too_many_arguments)]
     async fn validate_imports_present(
         &self,
         analyzer: &dyn IAnalyzer,
@@ -96,6 +97,7 @@ pub trait IArchImportProcessorProtocol: Send + Sync {
 
 #[async_trait]
 pub trait INamingRuleProtocol: IArchRuleProtocol + Send + Sync {
+    #[allow(clippy::too_many_arguments)]
     async fn check_file_naming(
         &self,
         files: &FilePathList,

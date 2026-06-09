@@ -18,6 +18,12 @@ pub struct CallChainAnalyzer {
     data_flow: DataFlowAnalyzer,
 }
 
+impl Default for CallChainAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CallChainAnalyzer {
     pub fn new() -> Self {
         Self {
@@ -139,11 +145,10 @@ impl CallChainAnalyzer {
                 })
                 .to_string();
 
-            if new_source != source {
-                if fs::write(filepath, &new_source).is_ok() {
+            if new_source != source
+                && fs::write(filepath, &new_source).is_ok() {
                     modified_count += 1;
                 }
-            }
         }
 
         modified_count

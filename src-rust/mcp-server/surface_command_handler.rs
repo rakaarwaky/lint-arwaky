@@ -34,6 +34,12 @@ pub struct McpCommandCatalogSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
+impl Default for McpCommandCatalogSurface {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl McpCommandCatalogSurface {
     pub fn new() -> Self {
         Self { container: None }

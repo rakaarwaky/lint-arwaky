@@ -30,6 +30,12 @@ fn make_adapter(name: &str) -> Option<AdapterName> {
 
 pub struct ArchImportProcessor {}
 
+impl Default for ArchImportProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchImportProcessor {
     pub fn new() -> Self {
         Self {}
@@ -142,15 +148,11 @@ impl ArchImportProcessor {
         }
         if pattern.contains('(') && layer_name.contains('(') {
             let p_base = pattern.split('(').next().unwrap_or(pattern);
-            let p_subs_raw = pattern
-                .splitn(2, '(')
-                .nth(1)
+            let p_subs_raw = pattern.split_once('(').map(|x| x.1)
                 .unwrap_or("")
                 .trim_end_matches(')');
             let l_base = layer_name.split('(').next().unwrap_or(layer_name);
-            let l_sub_raw = layer_name
-                .splitn(2, '(')
-                .nth(1)
+            let l_sub_raw = layer_name.split_once('(').map(|x| x.1)
                 .unwrap_or("")
                 .trim_end_matches(')');
             if p_base != l_base {
@@ -193,6 +195,7 @@ impl ArchImportProcessor {
         });
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn validate_imports_present(
         &self,
         analyzer: &dyn IAnalyzer,
@@ -367,7 +370,7 @@ impl ArchImportProcessor {
                 all_bases.contains(*a)
                     || imported_aliases
                         .get(*a)
-                        .map_or(false, |v| all_bases.contains(v))
+                        .is_some_and(|v| all_bases.contains(v))
                     || all_bases.iter().any(|b| b.starts_with(&format!("{}.", a)))
             })
             .cloned()
@@ -385,6 +388,7 @@ impl ArchImportProcessor {
         used_as_base
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn _check_contract_layer(
         &self,
         _analyzer: &dyn IAnalyzer,
@@ -477,7 +481,7 @@ impl ArchImportProcessor {
             let detected = analyzer.detect_module_layer(&module);
             let layer_match = detected
                 .as_ref()
-                .map_or(false, |l| self._is_layer_match(l, req_layer));
+                .is_some_and(|l| self._is_layer_match(l, req_layer));
             let segment_match = fullname.split('.').any(|s| s == req_layer);
             if (layer_match || segment_match) && real_usages.contains(alias) {
                 return true;

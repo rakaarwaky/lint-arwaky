@@ -11,6 +11,12 @@ use std::time::Duration;
 
 pub struct SyncHttpProvider {}
 
+impl Default for SyncHttpProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SyncHttpProvider {
     pub fn new() -> Self {
         Self {}

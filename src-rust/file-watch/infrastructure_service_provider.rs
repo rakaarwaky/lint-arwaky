@@ -15,6 +15,12 @@ pub struct WatchServiceProvider {
     snapshots: Mutex<HashMap<String, SystemTime>>,
 }
 
+impl Default for WatchServiceProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WatchServiceProvider {
     pub fn new() -> Self {
         Self {

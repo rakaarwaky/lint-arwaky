@@ -19,13 +19,19 @@ use std::path::{Path, PathBuf};
 
 pub struct JSCallAdapter {}
 
+impl Default for JSCallAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JSCallAdapter {
     pub fn new() -> Self {
         Self {}
     }
 
     fn get_variant_dict_raw(name: &str) -> std::collections::HashMap<String, String> {
-        let word_re = match Regex::new(r"[A-Za-z][a-z0-9]*|[A-Z]+(?=[A-Z][a-z0-9]|\b)|[0-9]+") {
+        let word_re = match Regex::new(r"[A-Z]{2,}|[A-Z][a-z0-9]*|[a-z0-9]+") {
             Ok(r) => r,
             Err(_) => {
                 let mut m = std::collections::HashMap::new();
@@ -257,11 +263,10 @@ impl ISemanticTracerPort for JSCallAdapter {
                         }
                     });
 
-                    if new_source != source {
-                        if fs::write(&filepath, new_source.as_ref()).is_ok() {
+                    if new_source != source
+                        && fs::write(&filepath, new_source.as_ref()).is_ok() {
                             modified_count += 1;
                         }
-                    }
                 }
             }
         }

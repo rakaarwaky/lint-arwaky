@@ -20,6 +20,12 @@ use regex::Regex;
 
 pub struct ArchNamingChecker {}
 
+impl Default for ArchNamingChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchNamingChecker {
     pub fn new() -> Self {
         Self {}
@@ -85,11 +91,7 @@ impl ArchNamingChecker {
     }
 
     fn get_suffix(stem: &str) -> Option<String> {
-        if let Some(pos) = stem.rfind('_') {
-            Some(stem[pos + 1..].to_string())
-        } else {
-            None
-        }
+        stem.rfind('_').map(|pos| stem[pos + 1..].to_string())
     }
 
     /// Check file naming conventions (underscore word count) per layer definition.

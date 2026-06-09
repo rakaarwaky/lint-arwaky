@@ -39,6 +39,12 @@ use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct LintCheckingCoordinator {}
 
+impl Default for LintCheckingCoordinator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LintCheckingCoordinator {
     pub fn new() -> Self {
         Self {}
@@ -610,15 +616,10 @@ impl LintCheckingCoordinator {
             let t = line.trim();
             if t.starts_with("let ") && t.contains(" = ") {
                 let rhs = t.split(" = ").nth(1).unwrap_or("").trim_end_matches(';');
-                if rhs.starts_with('"') && rhs.ends_with('"') && !rhs.contains("::") {
-                    violations.push(Self::mk(
-                        file,
-                        i + 1,
-                        "AES032",
-                        Severity::MEDIUM,
-                        AES032_MISSING_VO,
-                    ));
-                } else if rhs.parse::<i64>().is_ok() || rhs.parse::<f64>().is_ok() {
+                if (rhs.starts_with('"') && rhs.ends_with('"') && !rhs.contains("::"))
+                    || rhs.parse::<i64>().is_ok()
+                    || rhs.parse::<f64>().is_ok()
+                {
                     violations.push(Self::mk(
                         file,
                         i + 1,

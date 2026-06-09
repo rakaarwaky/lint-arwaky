@@ -11,6 +11,12 @@ use std::fs;
 
 pub struct ArchInternalChecker {}
 
+impl Default for ArchInternalChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchInternalChecker {
     pub fn new() -> Self {
         Self {}

@@ -17,6 +17,12 @@ pub struct NamingVariantDict {
     pub kebab_case: String,
 }
 
+impl Default for NamingVariantAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NamingVariantAnalyzer {
     pub fn new() -> Self {
         Self {}

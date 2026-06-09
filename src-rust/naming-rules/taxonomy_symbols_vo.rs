@@ -8,6 +8,12 @@ pub struct SymbolNameList {
     pub values: Vec<SymbolName>,
 }
 
+impl Default for SymbolNameList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SymbolNameList {
     pub fn new() -> Self {
         Self { values: Vec::new() }
@@ -32,6 +38,12 @@ pub struct ImportNameList {
     pub values: Vec<SymbolName>,
 }
 
+impl Default for ImportNameList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ImportNameList {
     pub fn new() -> Self {
         Self { values: Vec::new() }
@@ -48,6 +60,12 @@ impl ImportNameList {
 pub struct PrimitiveTypeList {
     #[serde(default)]
     pub values: Vec<SymbolName>,
+}
+
+impl Default for PrimitiveTypeList {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PrimitiveTypeList {
@@ -69,6 +87,12 @@ impl PrimitiveTypeList {
 pub struct CallChainList {
     #[serde(default)]
     pub values: Vec<SymbolName>,
+}
+
+impl Default for CallChainList {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CallChainList {

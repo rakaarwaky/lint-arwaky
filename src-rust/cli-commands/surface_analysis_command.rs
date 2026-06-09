@@ -220,7 +220,7 @@ pub fn handle_complexity(path: Option<String>) -> ExitCode {
         }
     });
 
-    functions.sort_by(|a, b| b.2.cmp(&a.2));
+    functions.sort_by_key(|b| std::cmp::Reverse(b.2));
 
     println!(
         "{:<30} {:<30} {:>7} {:>6}",

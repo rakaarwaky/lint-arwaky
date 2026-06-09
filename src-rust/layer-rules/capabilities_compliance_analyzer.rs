@@ -165,7 +165,7 @@ impl ArchComplianceAnalyzer {
 
         let mut sorted_layers: Vec<(&LayerNameVO, &LayerDefinition)> =
             self.config.layers.iter().collect();
-        sorted_layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
+        sorted_layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 
         for (name, def) in &sorted_layers {
             if name.value.contains('(') {
@@ -232,7 +232,7 @@ impl ArchComplianceAnalyzer {
         }
 
         // 1. Direct match with layer names (ignoring specialisation suffix).
-        for (name, _) in &self.config.layers {
+        for name in self.config.layers.keys() {
             let base_name = name.value.split('(').next().unwrap_or(&name.value);
             if meaningful_parts.contains(&base_name) {
                 return Some(self.refine_module_layer(base_name, &meaningful_parts));
@@ -320,7 +320,7 @@ impl ArchComplianceAnalyzer {
         let norm_path_def = path_def.trim_end_matches('/');
 
         let parent_dir = match Path::new(rel).parent().and_then(|p| p.to_str()) {
-            Some(p) if p.is_empty() => ".",
+            Some("") => ".",
             Some(p) => p.trim_end_matches('/'),
             None => ".",
         };

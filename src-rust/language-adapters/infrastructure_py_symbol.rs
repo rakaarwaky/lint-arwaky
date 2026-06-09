@@ -13,6 +13,12 @@ pub struct SymbolCollector {
     imports_list: Vec<ImportInfo>,
 }
 
+impl Default for SymbolCollector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SymbolCollector {
     pub fn new() -> Self {
         Self {

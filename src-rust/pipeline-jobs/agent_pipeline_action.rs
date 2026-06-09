@@ -71,6 +71,12 @@ impl PipelineActionDispatcherAggregate for PipelineActionOrchestrator {
     }
 }
 
+impl Default for PipelineActionOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PipelineActionOrchestrator {
     pub fn new() -> Self {
         Self {}

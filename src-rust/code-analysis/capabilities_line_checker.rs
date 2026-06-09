@@ -11,6 +11,12 @@ use crate::shared_common::taxonomy_violationrs_constant::{
 
 pub struct ArchLineChecker {}
 
+impl Default for ArchLineChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchLineChecker {
     pub fn new() -> Self {
         Self {}

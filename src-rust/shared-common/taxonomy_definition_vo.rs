@@ -85,6 +85,7 @@ pub struct LayerDefinition {
 }
 
 impl LayerDefinition {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         path: DirectoryPath,
         suffix_policy: SuffixPolicyVO,

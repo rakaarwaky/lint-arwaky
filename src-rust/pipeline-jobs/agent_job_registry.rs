@@ -15,6 +15,12 @@ pub struct PipelineJobRegistry {
     adapter: MemoryJobRegistryAdapter,
 }
 
+impl Default for PipelineJobRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PipelineJobRegistry {
     pub fn new() -> Self {
         Self {

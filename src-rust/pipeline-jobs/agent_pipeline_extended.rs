@@ -58,6 +58,12 @@ impl PipelineExtendedOrchestratorAggregate for PipelineExtendedOrchestrator {
     }
 }
 
+impl Default for PipelineExtendedOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PipelineExtendedOrchestrator {
     pub fn new() -> Self {
         Self {}

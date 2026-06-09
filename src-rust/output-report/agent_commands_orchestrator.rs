@@ -23,6 +23,12 @@ impl ReportCommandsAggregate for ReportCommandsOrchestrator {
     }
 }
 
+impl Default for ReportCommandsOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReportCommandsOrchestrator {
     pub fn new() -> Self {
         Self {}

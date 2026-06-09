@@ -75,7 +75,7 @@ impl MandatoryInheritanceChecker {
             &LayerNameVO,
             &crate::shared_common::taxonomy_definition_vo::LayerDefinition,
         )> = self.config.layers.iter().collect();
-        layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
+        layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 
         for (name, def) in layers {
             if rel.starts_with(&def.path.value) {
@@ -88,10 +88,10 @@ impl MandatoryInheritanceChecker {
     fn is_contract_import(name: &str, module: &str) -> bool {
         let contract_suffixes = ["_port", "_protocol", "_aggregate"];
         let has_suffix = contract_suffixes.iter().any(|s| name.ends_with(s));
-        let is_interface = name.starts_with('I') && name.len() > 1;
-        let from_contract = module.contains("contract");
+        let _is_interface = name.starts_with('I') && name.len() > 1;
+        let _from_contract = module.contains("contract");
 
-        (has_suffix || (is_interface && has_suffix)) || (from_contract && has_suffix)
+        has_suffix
     }
 
     fn extract_contract_imports(content: &str) -> Vec<String> {
@@ -111,7 +111,7 @@ impl MandatoryInheritanceChecker {
                 let names = names_str
                     .trim_matches(|c| c == '(' || c == ')')
                     .split(',')
-                    .map(|s| s.trim().split_whitespace().next().unwrap_or("").to_string())
+                    .map(|s| s.split_whitespace().next().unwrap_or("").to_string())
                     .filter(|s| !s.is_empty());
 
                 for name in names {
@@ -153,7 +153,7 @@ impl MandatoryInheritanceChecker {
         violations: &mut Vec<LintResult>,
     ) {
         for file in files {
-            let basename = file.split('/').last().unwrap_or("");
+            let basename = file.split('/').next_back().unwrap_or("");
 
             // Skip barrel files
             if basename == "__init__.py" || basename == "mod.rs" {

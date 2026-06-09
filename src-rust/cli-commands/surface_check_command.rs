@@ -13,6 +13,12 @@ pub struct CheckCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
+impl Default for CheckCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CheckCommandsSurface {
     pub fn new() -> Self {
         Self { container: None }

@@ -26,6 +26,12 @@ pub struct DataFlowAnalyzer {
     scope: ScopeBoundaryAnalyzer,
 }
 
+impl Default for DataFlowAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DataFlowAnalyzer {
     pub fn new() -> Self {
         Self {

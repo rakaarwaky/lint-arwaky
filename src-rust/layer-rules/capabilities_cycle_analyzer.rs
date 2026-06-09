@@ -126,7 +126,7 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
 
     unique_cycles
         .into_iter()
-        .map(|s| SymbolName::new(s))
+        .map(SymbolName::new)
         .collect()
 }
 
@@ -193,7 +193,7 @@ impl DependencyCycleAnalyzer {
             &LayerNameVO,
             &crate::shared_common::taxonomy_definition_vo::LayerDefinition,
         )> = self.config.layers.iter().collect();
-        layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
+        layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 
         for (name, def) in layers {
             let layer_path = def.path.value.as_str();
@@ -207,7 +207,7 @@ impl DependencyCycleAnalyzer {
     fn detect_module_layer(&self, module: &str) -> Option<String> {
         let parts: Vec<&str> = module.split('.').collect();
         for part in &parts {
-            for (name, _def) in &self.config.layers {
+            for name in self.config.layers.keys() {
                 if *part == name.value.as_str() {
                     return Some(name.value.clone());
                 }

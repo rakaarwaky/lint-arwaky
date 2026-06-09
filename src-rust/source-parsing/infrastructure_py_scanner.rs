@@ -40,6 +40,9 @@ static TYPE_ANNOT_RE: LazyLock<Option<Regex>> =
 static RETURN_TYPE_RE: LazyLock<Option<Regex>> = LazyLock::new(|| {
     Regex::new(r"->\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b").ok()
 });
+static ATTR_ANNOT_RE: LazyLock<Option<Regex>> = LazyLock::new(|| {
+    Regex::new(r"\b([a-zA-Z_]\w*)\s*:\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b").ok()
+});
 
 static PY_KEYWORDS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
     [
@@ -128,6 +131,12 @@ struct ParsedData {
 
 pub struct ASTPythonParserAdapter {}
 
+impl Default for ASTPythonParserAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ASTPythonParserAdapter {
     pub fn new() -> Self {
         Self {}
@@ -170,7 +179,7 @@ impl ASTPythonParserAdapter {
             // 1. Imports
             if let Some(imp_cap) = IMPORT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let module = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
-                let alias = module.split('.').last().unwrap_or(&module).to_string();
+                let alias = module.split('.').next_back().unwrap_or(&module).to_string();
                 data.imported_aliases.insert(alias.clone(), module.clone());
                 data.imports_list.push(ImportInfo {
                     line: LineNumber::new((idx_zero + 1) as i64),
@@ -392,11 +401,9 @@ impl ISourceParserPort for ASTPythonParserAdapter {
                 if in_class {
                     let indent = line.len() - stripped.len();
                     if indent <= class_indent && !stripped.starts_with('#') && !stripped.is_empty()
-                    {
-                        if stripped.starts_with("def ") || stripped.starts_with("class ") {
+                        && (stripped.starts_with("def ") || stripped.starts_with("class ")) {
                             break;
                         }
-                    }
                     if indent > class_indent
                         && stripped.contains('=')
                         && !stripped.starts_with("def ")
@@ -485,13 +492,8 @@ impl ISourceParserPort for ASTPythonParserAdapter {
             }
 
             // Check class attribute annotations: x: int = 5
-            // simple pattern: word: type = or word: type  (on its own line or after comment)
-            let Ok(attr_re) = Regex::new(
-                r"\b([a-zA-Z_]\w*)\s*:\s*(int|str|float|bool|list|dict|tuple|set|bytes|None)\b",
-            ) else {
-                continue;
-            };
-            for cap in attr_re.captures_iter(stripped) {
+            if let Some(ref attr_re) = *ATTR_ANNOT_RE {
+                for cap in attr_re.captures_iter(stripped) {
                 let prim = cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string();
                 if prim_set.contains(&prim) {
                     violations.push(PrimitiveViolation {
@@ -502,6 +504,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
                         type_name: prim,
                     });
                 }
+            }
             }
         }
 

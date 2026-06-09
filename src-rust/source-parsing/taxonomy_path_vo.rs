@@ -2,20 +2,14 @@ use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
 /// file_path_vo — File and directory path value objects.
-
+///
 /// File path identifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct FilePath {
     pub(crate) value: String,
 }
 
-impl Default for FilePath {
-    fn default() -> Self {
-        FilePath {
-            value: String::new(),
-        }
-    }
-}
 
 impl FilePath {
     pub fn value(&self) -> &str {
@@ -61,7 +55,7 @@ impl FilePath {
         if special_files.contains(&self.value.as_ref()) || self.value.starts_with('.') {
             return "".to_string();
         }
-        match self.value.rsplitn(2, '.').next() {
+        match self.value.rsplit('.').next() {
             Some(ext) => ext.to_string(),
             None => "".to_string(),
         }
@@ -121,17 +115,11 @@ impl Hash for FilePath {
 
 /// Directory path identifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Default)]
 pub struct DirectoryPath {
     pub(crate) value: String,
 }
 
-impl Default for DirectoryPath {
-    fn default() -> Self {
-        DirectoryPath {
-            value: String::new(),
-        }
-    }
-}
 
 impl DirectoryPath {
     pub fn value(&self) -> &str {

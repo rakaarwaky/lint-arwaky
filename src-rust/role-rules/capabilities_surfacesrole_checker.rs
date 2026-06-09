@@ -23,6 +23,12 @@ fn make_adapter(name: &str) -> Option<AdapterName> {
 }
 
 pub struct SurfaceRoleChecker {}
+impl Default for SurfaceRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SurfaceRoleChecker {
     pub fn new() -> Self {
         Self {}

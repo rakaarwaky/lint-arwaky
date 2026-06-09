@@ -51,6 +51,12 @@ const MAX_IF_DEPTH: usize = 3;
 /// AES018 + AES019 — surface barrel wiring and passivity checks.
 pub struct SurfaceHierarchyChecker;
 
+impl Default for SurfaceHierarchyChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SurfaceHierarchyChecker {
     pub fn new() -> Self {
         Self
@@ -163,8 +169,8 @@ impl SurfaceHierarchyChecker {
                     // Scan for end of this method body (next fn at same or less indent)
                     let _m_indent = raw_line.len() - raw_line.trim_start().len();
                     let mut end_line = lines.len();
-                    for k in (i + 1)..lines.len() {
-                        let next = lines[k].trim();
+                    for (k, line) in lines.iter().enumerate().skip(i + 1) {
+                        let next = line.trim();
                         if next.starts_with("fn ") || next.starts_with("impl ") {
                             end_line = k;
                             break;
@@ -253,8 +259,7 @@ impl SurfaceHierarchyChecker {
                         let method_name = mcap.get(1).map(|m| m.as_str()).unwrap_or("");
                         if !method_name.starts_with('_') {
                             let mut end_line = lines.len();
-                            for k in (j + 1)..lines.len() {
-                                let next = lines[k];
+                            for (k, next) in lines.iter().enumerate().skip(j + 1) {
                                 if !next.trim().is_empty() {
                                     let n_indent = next.len() - next.trim_start().len();
                                     if n_indent <= m_indent {
@@ -335,7 +340,7 @@ impl SurfaceHierarchyChecker {
                 let trimmed = line.trim();
 
                 // Count nesting by indentation increase relative to method body
-                if IF_RE.as_ref().map_or(false, |re| re.is_match(trimmed)) {
+                if IF_RE.as_ref().is_some_and(|re| re.is_match(trimmed)) {
                     let indent = line.len() - line.trim_start().len();
                     // Simple heuristic: count leading whitespace / 4 as depth
                     let depth = indent / 4;
@@ -405,7 +410,7 @@ fn stem(f: &FilePath) -> String {
 /// Get the directory portion of the file path.
 fn directory(f: &FilePath) -> String {
     let path_str = f.to_string();
-    let pos = path_str.rfind('/').map(|i| i).unwrap_or(0);
+    let pos = path_str.rfind('/').unwrap_or(0);
     if pos == 0 {
         if path_str.starts_with('/') {
             "/".to_string()

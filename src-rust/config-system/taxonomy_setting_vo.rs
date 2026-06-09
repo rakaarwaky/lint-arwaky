@@ -290,6 +290,7 @@ fn default_project_name() -> DescriptionVO {
 }
 
 impl ProjectConfig {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         project_name: DescriptionVO,
         thresholds: Thresholds,

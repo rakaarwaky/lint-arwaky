@@ -14,6 +14,12 @@ static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[
 /// Business logic for identifying imports that are not utilized in the code.
 pub struct UnusedImportRuleChecker {}
 
+impl Default for UnusedImportRuleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UnusedImportRuleChecker {
     pub fn new() -> Self {
         Self {}
@@ -132,7 +138,7 @@ impl IUnusedProtocol for UnusedImportRuleChecker {
     fn find_unused_imports(&self, path: &FilePath) -> Vec<SymbolName> {
         self.find_unused_imports(path.value())
             .into_iter()
-            .map(|s| SymbolName::new(s))
+            .map(SymbolName::new)
             .collect()
     }
 }

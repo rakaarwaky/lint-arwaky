@@ -8,6 +8,12 @@ use std::path::Path;
 
 pub struct TaxonomyRoleChecker {}
 
+impl Default for TaxonomyRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TaxonomyRoleChecker {
     pub fn new() -> Self {
         Self {}

@@ -13,6 +13,12 @@ use std::path::Path;
 
 pub struct ArchImportRuleChecker {}
 
+impl Default for ArchImportRuleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchImportRuleChecker {
     pub fn new() -> Self {
         Self {}
@@ -356,7 +362,7 @@ impl ArchImportRuleChecker {
                     if is_forbidden {
                         violations.push(LintResult::new_arch(
                             file,
-                            *line_num as usize,
+                            *line_num,
                             "AES001",
                             Severity::CRITICAL,
                             &aes001_forbidden_import(layer_name, &module),
@@ -408,7 +414,7 @@ impl ArchImportRuleChecker {
                             );
                             violations.push(LintResult::new_arch(
                                 file,
-                                *line_num as usize,
+                                *line_num,
                                 "AES023",
                                 Severity::CRITICAL,
                                 &msg,
@@ -438,7 +444,7 @@ impl ArchImportRuleChecker {
                 if *part == name.value.as_str() {
                     return Some(name.value.clone());
                 }
-                let path_last = def.path.value.split('/').last().unwrap_or("");
+                let path_last = def.path.value.split('/').next_back().unwrap_or("");
                 if *part == path_last {
                     return Some(name.value.clone());
                 }
@@ -511,7 +517,7 @@ impl ArchImportRuleChecker {
     ) -> bool {
         let mut rest: &str = line.trim().trim_end_matches(';');
         if let Some(pos) = rest.rfind("::") {
-            rest = &rest[pos + 2..].trim();
+            rest = rest[pos + 2..].trim();
             let types_str = rest
                 .strip_prefix('{')
                 .unwrap_or(rest)

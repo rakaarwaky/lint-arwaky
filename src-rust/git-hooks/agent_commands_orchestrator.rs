@@ -36,6 +36,12 @@ impl GitCommandsAggregate for GitCommandsOrchestrator {
     }
 }
 
+impl Default for GitCommandsOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GitCommandsOrchestrator {
     pub fn new() -> Self {
         let git = std::process::Command::new("which")

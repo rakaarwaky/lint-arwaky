@@ -25,6 +25,12 @@ impl OutputClientAggregate for OutputClientOrchestrator {
     }
 }
 
+impl Default for OutputClientOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OutputClientOrchestrator {
     pub fn new() -> Self {
         Self {}

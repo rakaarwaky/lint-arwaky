@@ -20,6 +20,12 @@ impl PipelineExecutionOrchestratorAggregate for PipelineExecutionOrchestrator {
     }
 }
 
+impl Default for PipelineExecutionOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PipelineExecutionOrchestrator {
     pub fn new() -> Self {
         Self {}

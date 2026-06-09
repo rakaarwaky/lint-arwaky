@@ -10,6 +10,12 @@ pub struct PluginCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
+impl Default for PluginCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PluginCommandsSurface {
     pub fn new() -> Self {
         Self { container: None }

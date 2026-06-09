@@ -5,6 +5,12 @@ use async_trait::async_trait;
 
 pub struct LanguageDetectorProvider {}
 
+impl Default for LanguageDetectorProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LanguageDetectorProvider {
     pub fn new() -> Self {
         Self {}

@@ -5,6 +5,12 @@ use crate::shared_common::taxonomy_violationrs_constant::aes026_forbidden_inheri
 
 pub struct ContractRoleChecker {}
 
+impl Default for ContractRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ContractRoleChecker {
     pub fn new() -> Self {
         Self {}
@@ -41,13 +47,12 @@ impl ContractRoleChecker {
                 if !layer_match {
                     continue;
                 }
-                if !suffixes.is_empty() {
-                    if !suffixes.iter().any(|s| {
+                if !suffixes.is_empty()
+                    && !suffixes.iter().any(|s| {
                         lower.contains(&format!("_{}", s)) || lower.contains(&format!("::{}", s))
                     }) {
                         continue;
                     }
-                }
                 if let Some(name) = t.split("::").last() {
                     let tn = name
                         .trim_end_matches(';')

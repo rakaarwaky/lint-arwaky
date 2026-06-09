@@ -6,6 +6,12 @@ use crate::shared_common::taxonomy_violationrs_constant::{
 
 pub struct ArchLayerChecker {}
 
+impl Default for ArchLayerChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArchLayerChecker {
     pub fn new() -> Self {
         Self {}

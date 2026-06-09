@@ -2,6 +2,7 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct ComplianceStatus {
     pub(crate) value: bool,
 }
@@ -11,15 +12,10 @@ impl ComplianceStatus {
         self.value
     }
     pub fn new(value: bool) -> Self {
-        Self { value: value }
+        Self { value }
     }
 }
 
-impl Default for ComplianceStatus {
-    fn default() -> Self {
-        ComplianceStatus { value: false }
-    }
-}
 
 impl std::fmt::Display for ComplianceStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -56,7 +52,7 @@ impl<'de> serde::Deserialize<'de> for ComplianceStatus {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<bool>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;
@@ -72,6 +68,7 @@ impl<'de> serde::Deserialize<'de> for ComplianceStatus {
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct LintMessage {
     pub(crate) value: String,
 }
@@ -87,13 +84,6 @@ impl LintMessage {
     }
 }
 
-impl Default for LintMessage {
-    fn default() -> Self {
-        LintMessage {
-            value: String::new(),
-        }
-    }
-}
 
 impl std::fmt::Display for LintMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -146,7 +136,7 @@ impl<'de> serde::Deserialize<'de> for LintMessage {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;

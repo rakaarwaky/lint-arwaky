@@ -53,6 +53,12 @@ static TYPE_DECL_REGEX: LazyLock<Option<Regex>> =
 
 pub struct ASTRustParserAdapter {}
 
+impl Default for ASTRustParserAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ASTRustParserAdapter {
     pub fn new() -> Self {
         Self {}
@@ -175,7 +181,7 @@ impl ASTRustParserAdapter {
 
                     for item in &expanded {
                         let dotted = item.replace("::", ".");
-                        let alias = dotted.split('.').last().unwrap_or(&dotted).to_string();
+                        let alias = dotted.split('.').next_back().unwrap_or(&dotted).to_string();
                         if alias != "*" {
                             imported_aliases.insert(alias, dotted.clone());
                             imports_list.push(ImportInfo {
@@ -224,7 +230,7 @@ impl ASTRustParserAdapter {
                 if let Some(ref cimpl) = current_impl {
                     class_methods
                         .entry(cimpl.clone())
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push(name);
                 } else {
                     let col_pos = line.find(&name).unwrap_or(0) as i64;
@@ -461,7 +467,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
 
             if TYPE_DECL_REGEX
                 .as_ref()
-                .map_or(false, |r| r.is_match(stripped))
+                .is_some_and(|r| r.is_match(stripped))
             {
                 for prim in &prim_keywords {
                     let Ok(prim_regex) = Regex::new(&format!(r"\b{}\b", prim)) else {
@@ -602,13 +608,13 @@ impl ISourceParserPort for ASTRustParserAdapter {
 
     fn get_stem(&self, path: &FilePath) -> SymbolName {
         let path_str = path.value.replace('\\', "/");
-        let basename = path_str.split('/').last().unwrap_or(&path.value);
+        let basename = path_str.split('/').next_back().unwrap_or(&path.value);
         SymbolName::new(basename.replace(".rs", ""))
     }
 
     fn is_entry_point(&self, path: &FilePath) -> BooleanVO {
         let path_str = path.value.replace('\\', "/");
-        let basename = path_str.split('/').last().unwrap_or(&path.value);
+        let basename = path_str.split('/').next_back().unwrap_or(&path.value);
         BooleanVO::new(basename == "main.rs" || basename == "lib.rs" || basename == "mod.rs")
     }
 

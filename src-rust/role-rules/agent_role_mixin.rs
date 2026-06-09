@@ -15,6 +15,12 @@ pub struct RoleAggregateImpl {
     agent: AgentRoleChecker,
 }
 
+impl Default for RoleAggregateImpl {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RoleAggregateImpl {
     pub fn new() -> Self {
         Self {

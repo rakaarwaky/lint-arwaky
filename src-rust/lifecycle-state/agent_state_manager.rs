@@ -11,6 +11,12 @@ pub struct LifecycleStateManager {
     container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
+impl Default for LifecycleStateManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LifecycleStateManager {
     pub fn new() -> Self {
         Self { container: None }

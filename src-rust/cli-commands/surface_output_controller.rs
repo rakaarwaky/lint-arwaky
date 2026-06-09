@@ -11,6 +11,12 @@ pub struct OutputControllerSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
+impl Default for OutputControllerSurface {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OutputControllerSurface {
     pub fn new() -> Self {
         Self { container: None }
@@ -21,7 +27,7 @@ impl OutputControllerSurface {
             .map(|d| FilePath {
                 value: d.to_string(),
             })
-            .or_else(|| self.container.as_ref().and_then(|_c| None::<FilePath>))
+            .or_else(|| self.container.as_ref().and(None::<FilePath>))
     }
 
     pub fn write_output(&self, output: &str, command: &str, fmt: Option<&str>) -> Option<FilePath> {
@@ -163,7 +169,7 @@ pub fn print_junit(results: &[LintResult]) {
         let safe = r.message.value().replace('"', "&quot;");
         xml.push_str(&format!(
             "  <testcase classname=\"{}\" name=\"{}\">\n",
-            r.code.to_string(),
+            r.code,
             safe
         ));
         match r.severity {

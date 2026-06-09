@@ -2,6 +2,7 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(transparent)]
+#[derive(Default)]
 pub struct ConfigKey {
     pub(crate) value: String,
 }
@@ -68,13 +69,6 @@ impl From<String> for ConfigKey {
     }
 }
 
-impl Default for ConfigKey {
-    fn default() -> Self {
-        ConfigKey {
-            value: String::new(),
-        }
-    }
-}
 
 impl<'de> serde::Deserialize<'de> for ConfigKey {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -107,7 +101,7 @@ impl<'de> serde::Deserialize<'de> for ConfigKey {
             {
                 let mut value = None;
                 while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" || k == "value" {
+                    if k == "value" {
                         value = Some(map.next_value::<String>()?);
                     } else {
                         let _: serde::de::IgnoredAny = map.next_value()?;

@@ -20,6 +20,12 @@ use std::path::Path;
 
 pub struct NamingRuleChecker {}
 
+impl Default for NamingRuleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NamingRuleChecker {
     pub fn new() -> Self {
         Self {}

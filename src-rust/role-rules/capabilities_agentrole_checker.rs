@@ -25,6 +25,12 @@ fn make_adapter(name: &str) -> Option<AdapterName> {
 }
 
 pub struct AgentRoleChecker {}
+impl Default for AgentRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AgentRoleChecker {
     pub fn new() -> Self {
         Self {}
@@ -93,7 +99,7 @@ impl AgentRoleChecker {
             let line_vo = LineNumber::new(line_val);
             let method_name = self._find_method_name_for_line(
                 &serde_json::Value::Object(serde_json::Map::from_iter(
-                    metadata_methods.value.clone().into_iter(),
+                    metadata_methods.value.clone(),
                 )),
                 line_val,
             );
@@ -153,7 +159,7 @@ impl AgentRoleChecker {
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) {
         let metadata = analyzer.parser().get_class_methods(f);
-        for (_, class_methods) in &metadata.value {
+        for class_methods in metadata.value.values() {
             let init_method = self._find_init_method(class_methods);
             if let Some(ref init_m) = init_method {
                 if self._count_orchestrator_args(init_m) < 2 {
@@ -243,7 +249,7 @@ impl AgentRoleChecker {
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) {
         let metadata = analyzer.parser().get_class_methods(f);
-        for (_, class_methods) in &metadata.value {
+        for class_methods in metadata.value.values() {
             let init_method = self._find_init_method(class_methods);
             if init_method.is_some() {
                 let control_flow_count = analyzer.parser().get_control_flow_count(f);
@@ -280,8 +286,8 @@ impl AgentRoleChecker {
         code: &str,
     ) {
         let bases_map = analyzer.parser().get_class_bases_map(f);
-        for (_, bases) in &bases_map.value {
-            let has_contract = bases.as_array().map_or(false, |arr| {
+        for bases in bases_map.value.values() {
+            let has_contract = bases.as_array().is_some_and(|arr| {
                 arr.iter()
                     .any(|b| b.to_string().contains(&contract_name.value))
             });
@@ -329,7 +335,7 @@ impl AgentRoleChecker {
             }
         }
 
-        best_method.map(|s| SymbolName::new(s))
+        best_method.map(SymbolName::new)
     }
 
     fn _check_forbid_any_type(

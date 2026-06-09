@@ -43,6 +43,12 @@ pub struct ImportInfoList {
     pub values: Vec<ImportInfo>,
 }
 
+impl Default for ImportInfoList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ImportInfoList {
     pub fn new() -> Self {
         Self { values: Vec::new() }
@@ -62,6 +68,12 @@ impl ImportInfoList {
 pub struct PrimitiveViolationList {
     #[serde(default)]
     pub values: Vec<PrimitiveViolation>,
+}
+
+impl Default for PrimitiveViolationList {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PrimitiveViolationList {

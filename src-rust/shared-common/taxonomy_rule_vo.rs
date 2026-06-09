@@ -97,6 +97,7 @@ pub struct MandatoryImportRuleVO {
 }
 
 impl ArchitectureRule {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         name: DescriptionVO,
         description: DescriptionVO,

@@ -26,6 +26,7 @@ pub struct LintResult {
 }
 
 impl LintResult {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         file: FilePath,
         line: LineNumber,

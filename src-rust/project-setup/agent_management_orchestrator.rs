@@ -64,6 +64,12 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
     }
 }
 
+impl Default for SetupManagementOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SetupManagementOrchestrator {
     pub fn new() -> Self {
         Self {}

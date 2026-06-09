@@ -245,13 +245,7 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
 
         FixResult {
             output: DescriptionVO::new(output),
-            error: if self.dry_run {
-                None
-            } else if fixed_count == 0 && total_fixable == 0 {
-                None
-            } else {
-                None
-            },
+            error: None,
         }
     }
 }

@@ -9,6 +9,12 @@ use regex::Regex;
 
 pub struct JSScopeProvider {}
 
+impl Default for JSScopeProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JSScopeProvider {
     pub fn new() -> Self {
         Self {}

@@ -12,6 +12,12 @@ use std::collections::BTreeMap;
 /// Business logic for transforming ArchitectureGovernanceEntitys into standard formats.
 pub struct ReportFormatterProcessor {}
 
+impl Default for ReportFormatterProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReportFormatterProcessor {
     pub fn new() -> Self {
         Self {}

@@ -10,6 +10,12 @@ use regex::Regex;
 
 pub struct JSFlowAdapter {}
 
+impl Default for JSFlowAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JSFlowAdapter {
     pub fn new() -> Self {
         Self {}

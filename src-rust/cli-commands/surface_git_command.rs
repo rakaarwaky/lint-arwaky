@@ -7,6 +7,12 @@ pub struct GitCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
 
+impl Default for GitCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GitCommandsSurface {
     pub fn new() -> Self {
         Self { container: None }
