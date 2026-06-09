@@ -17,9 +17,9 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes023_unused_import, aes024_dead_inheritance, aes034_mandatory_inheritance,
+    aes023_unused_import, aes024_dead_inheritance, aes014_mandatory_inheritance,
     AES012_CIRCULAR_IMPORT, AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
-    AES033_MISSING_VO, AES033_SINGLE_BOTTLENECK, AES036_SURFACE_ROLE_VIOLATION,
+    AES038_MISSING_VO, AES036_SINGLE_BOTTLENECK, AES031_SURFACE_ROLE_VIOLATION,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -41,12 +41,11 @@ impl Default for LintCheckingCoordinator {
 }
 
 impl LintCheckingCoordinator {
+    /// Create a new coordinator. Panics if init_global_checker has not been called.
     pub fn new() -> Self {
         Self {
-            checker: GLOBAL_CHECKER
-                .get()
-                .expect("init_global_checker must be called before LintCheckingCoordinator::new()")
-                .clone(),
+            checker: GLOBAL_CHECKER.get().cloned()
+                .unwrap_or_else(|| unreachable!("init_global_checker must be called before LintCheckingCoordinator::new()")),
         }
     }
 
@@ -556,9 +555,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES035",
+                    "AES001",
                     Severity::HIGH,
-                    "AES035 AGENT_ANY_BYPASS: Wildcard import in agent layer.",
+                    "AES001 FORBIDDEN_IMPORT: Wildcard import in agent layer.",
                 ));
             }
         }
@@ -572,9 +571,9 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES035",
+                "AES032",
                 Severity::HIGH,
-                "AES035 AGENT_ROLE: Agent file exceeds 300 lines.",
+                "AES032 AGENT_ROLE: Agent file exceeds 300 lines.",
             ));
         }
     }
@@ -592,9 +591,9 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES036",
+                "AES031",
                 Severity::HIGH,
-                AES036_SURFACE_ROLE_VIOLATION,
+                AES031_SURFACE_ROLE_VIOLATION,
             ));
         }
     }
@@ -698,9 +697,9 @@ impl LintCheckingCoordinator {
                         violations.push(Self::mk(
                             file,
                             0,
-                            "AES034",
+                            "AES014",
                             Severity::HIGH,
-                            &aes034_mandatory_inheritance(t),
+                            &aes014_mandatory_inheritance(t),
                         ));
                     }
                 }
@@ -723,18 +722,18 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES033",
+                "AES036",
                 Severity::MEDIUM,
-                &format!("{} Found {} functions.", AES033_SINGLE_BOTTLENECK, fc),
+                &format!("{} Found {} functions.", AES036_SINGLE_BOTTLENECK, fc),
             ));
         }
         if ic > 5 {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES033",
+                "AES036",
                 Severity::MEDIUM,
-                &format!("{} Found {} impl blocks.", AES033_SINGLE_BOTTLENECK, ic),
+                &format!("{} Found {} impl blocks.", AES036_SINGLE_BOTTLENECK, ic),
             ));
         }
     }
@@ -756,9 +755,9 @@ impl LintCheckingCoordinator {
                     violations.push(Self::mk(
                         file,
                         i + 1,
-                        "AES033",
+                        "AES038",
                         Severity::MEDIUM,
-                        AES033_MISSING_VO,
+                        AES038_MISSING_VO,
                     ));
                 }
             }

@@ -189,12 +189,12 @@ impl ArchNamingChecker {
                     ));
                 } else {
                     let msg = format!(
-                        "AES001 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
+                        "AES011 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
                         WHY? Strict suffixes ensure every component has a clear role.\n\
                         FIX: Add one of the required suffixes: {}.",
                         allowed_list
                     );
-                    violations.push(Self::make_result(file, "AES001", &msg, Severity::HIGH));
+                    violations.push(Self::make_result(file, "AES011", &msg, Severity::HIGH));
                 }
             }
         }

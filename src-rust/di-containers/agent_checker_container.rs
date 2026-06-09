@@ -3,8 +3,6 @@
 //! agent(orchestrator|coordinator) uses this through the contract trait.
 
 use std::collections::HashSet;
-use std::sync::Arc;
-
 use crate::code_analysis::capabilities_class_checker::ArchClassChecker;
 use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
 use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;

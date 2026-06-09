@@ -29,7 +29,7 @@ impl IConfigParserPort for ConfigParserProvider {
                 return Err(ConfigError {
                     key: ConfigKey::new("yaml.parse"),
                     message: ErrorMessage::new(format!("Failed to read config: {}", e)),
-                    config_file: Some(path.clone()),
+                    config_file: path.clone(),
                     ..Default::default()
                 });
             }
@@ -40,7 +40,7 @@ impl IConfigParserPort for ConfigParserProvider {
                 return Err(ConfigError {
                     key: ConfigKey::new("yaml.parse"),
                     message: ErrorMessage::new(format!("Failed to parse YAML: {}", e)),
-                    config_file: Some(path.clone()),
+                    config_file: path.clone(),
                     ..Default::default()
                 });
             }
@@ -48,14 +48,14 @@ impl IConfigParserPort for ConfigParserProvider {
         let json_value = serde_json::to_value(&raw).map_err(|e| ConfigError {
             key: ConfigKey::new("yaml.convert"),
             message: ErrorMessage::new(format!("Failed to convert YAML to JSON: {}", e)),
-            config_file: Some(path.clone()),
+            config_file: path.clone(),
             ..Default::default()
         })?;
         let config: ProjectConfig =
             serde_json::from_value(json_value).map_err(|e| ConfigError {
                 key: ConfigKey::new("yaml.parse"),
                 message: ErrorMessage::new(format!("Failed to deserialize config: {}", e)),
-                config_file: Some(path.clone()),
+                config_file: path.clone(),
                 ..Default::default()
             })?;
         Ok(config)
@@ -69,7 +69,7 @@ impl IConfigParserPort for ConfigParserProvider {
                 return Some(Err(ConfigError {
                     key: ConfigKey::new("tool.lint_arwaky"),
                     message: ErrorMessage::new(format!("Failed to read TOML: {}", e)),
-                    config_file: Some(path.clone()),
+                    config_file: path.clone(),
                     ..Default::default()
                 }));
             }
@@ -80,7 +80,7 @@ impl IConfigParserPort for ConfigParserProvider {
                 return Some(Err(ConfigError {
                     key: ConfigKey::new("tool.lint_arwaky"),
                     message: ErrorMessage::new(format!("Failed to parse TOML: {}", e)),
-                    config_file: Some(path.clone()),
+                    config_file: path.clone(),
                     ..Default::default()
                 }));
             }
@@ -95,7 +95,7 @@ impl IConfigParserPort for ConfigParserProvider {
                             "Failed to convert TOML to JSON: {}",
                             e
                         )),
-                        config_file: Some(path.clone()),
+                        config_file: path.clone(),
                         ..Default::default()
                     }));
                 }

@@ -81,7 +81,7 @@ impl SurfaceRoleChecker {
                     || basename.ends_with("_page")
                     || basename.ends_with("_entry");
                 if !is_smart {
-                    self._check_no_domain_logic(f, &definition, analyzer, results, "AES036");
+                    self._check_no_domain_logic(f, &definition, analyzer, results, "AES031");
                 }
             }
 

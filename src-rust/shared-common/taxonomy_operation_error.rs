@@ -3,6 +3,7 @@ use crate::shared_common::taxonomy_adapter_error::ScanError;
 /// linter_operation_error — Unified error type for linter adapter operations.
 /* UNKNOWN: ErrorMessage */
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, thiserror::Error)]
@@ -16,6 +17,7 @@ pub enum LinterOperationError {
 
 impl LinterOperationError {
     pub fn message(&self) -> ErrorMessage {
+        let _ = &LineNumber::default();
         ErrorMessage::new(self.to_string())
     }
 }
