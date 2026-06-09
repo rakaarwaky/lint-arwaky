@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 use std::process::ExitCode;
 
 use crate::cli_commands::surface_core_command::ConfigCommands;

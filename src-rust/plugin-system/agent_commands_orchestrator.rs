@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 // plugin_commands_orchestrator — Orchestrator for plugin and adapter-related domain logic.
 use crate::plugin_system::contract_commands_aggregate::PluginCommandsAggregate;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

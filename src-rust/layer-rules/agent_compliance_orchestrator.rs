@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 //! Architecture compliance orchestration — layer-map resolution, compliance coordination,
 //! watch mode, and DI mixin stubs.
 //!

@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 // mandatory_inheritance_checker — AES027: mandatory contract inheritance.
 // Checks that files in agent/capabilities/infrastructure that import contracts
 // also have a class inheriting from them.

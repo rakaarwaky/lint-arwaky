@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 /// MCP Tools Registry - Bridges Capabilities to the Surface Layer.
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 

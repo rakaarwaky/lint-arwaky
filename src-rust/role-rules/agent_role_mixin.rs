@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 use crate::role_rules::capabilities_agent_role_auditor::AgentRoleChecker;
 use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;

@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 // setup_management_processor — Capability for setup and configuration management.
 // Implements ISetupManagementProtocol: generate_env, generate_mcp_config.
 

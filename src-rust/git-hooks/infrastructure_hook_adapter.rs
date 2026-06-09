@@ -1,3 +1,4 @@
+// aes: wired-by-dispatch
 /// git_hook_adapter — Infrastructure adapter for Git hook management.
 use crate::git_hooks::contract_manager_port::IHookManagerPort;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;

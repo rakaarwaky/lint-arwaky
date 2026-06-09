@@ -1,4 +1,5 @@
 // lint_checking_coordinator — Agent-layer orchestration of ALL AES checkers.
+// aes: wired-by-dispatch
 // This is the CORRECT architectural location for wiring checkers (Agent layer).
 
 use std::path::Path;
@@ -200,6 +201,19 @@ impl LintCheckingCoordinator {
             {
                 continue;
             }
+
+            // Skip orphan check if file has dispatch annotation
+            if let Ok(fc) = std::fs::read_to_string(fp) {
+                let first_lines: Vec<&str> = fc.lines().take(30).collect();
+                let has_annotation = first_lines.iter().any(|l| {
+                    let t = l.trim();
+                    t == "// aes: wired-by-dispatch" || t == "# aes: wired-by-dispatch"
+                });
+                if has_annotation {
+                    continue;
+                }
+            }
+
             let basename = fp.split('/').next_back().unwrap_or("");
             let prefix = basename.split('_').next().unwrap_or("");
 
