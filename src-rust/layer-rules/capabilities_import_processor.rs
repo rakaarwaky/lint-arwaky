@@ -28,6 +28,16 @@ pub struct ImportCheckerContext<'a> {
     pub class_bases: &'a std::collections::HashMap<String, Vec<String>>,
 }
 
+impl<'a> std::fmt::Debug for ImportCheckerContext<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ImportCheckerContext")
+            .field("imported_aliases", &self.imported_aliases.len())
+            .field("real_usages", &self.real_usages.len())
+            .field("class_bases", &self.class_bases.len())
+            .finish()
+    }
+}
+
 pub struct ArchImportProcessor {}
 
 impl Default for ArchImportProcessor {

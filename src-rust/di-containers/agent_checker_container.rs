@@ -20,6 +20,10 @@ use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use crate::code_analysis::agent_bypass_inspector::{check_agent_any_bypass, check_bypass_comments};
+use crate::code_analysis::agent_inheritance_inspector::{check_dead_inheritance, check_mandatory_inheritance};
+use crate::code_analysis::agent_layer_inspector::{check_agent_role, check_missing_vo, check_single_bottleneck, check_surface_role};
+use crate::code_analysis::agent_unused_import_inspector::check_unused_imports;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -226,5 +230,33 @@ impl ICheckerAggregate for CheckerContainer {
             })
             .collect();
         !crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges(&deps).is_empty()
+    }
+
+    fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        check_bypass_comments(file, content, violations);
+    }
+    fn check_unused_imports(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        check_unused_imports(file, content, violations);
+    }
+    fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        check_dead_inheritance(file, content, violations);
+    }
+    fn check_mandatory_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        check_mandatory_inheritance(file, content, violations);
+    }
+    fn check_agent_any_bypass(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        check_agent_any_bypass(file, content, violations);
+    }
+    fn check_agent_role(&self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+        check_agent_role(file, content, layer, violations);
+    }
+    fn check_surface_role(&self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+        check_surface_role(file, content, layer, violations);
+    }
+    fn check_single_bottleneck(&self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+        check_single_bottleneck(file, content, layer, violations);
+    }
+    fn check_missing_vo(&self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+        check_missing_vo(file, content, layer, violations);
     }
 }

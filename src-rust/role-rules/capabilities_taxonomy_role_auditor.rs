@@ -87,6 +87,19 @@ impl TaxonomyRoleChecker {
             if t.contains("pub(crate) value:") || t.trim_start().starts_with("pub value:") {
                 continue;
             }
+            // Skip From<Primitive> impls, fn from(primitive), and fn new(value: Primitive)
+            // (standard for value object constructors)
+            if t.starts_with("impl From<") || t.starts_with("fn from(") || t.starts_with("fn new(") || t.starts_with("pub fn new(") {
+                continue;
+            }
+            // Skip serde visitor method signatures (visit_str, visit_string, visit_i64, etc.)
+            if t.starts_with("fn visit_") || t.starts_with("fn expecting(") {
+                continue;
+            }
+            // Skip struct field annotations: #[serde(default)], #[derive(...)], etc.
+            if t.starts_with("#[") || t.starts_with("//") || t.starts_with("/*") {
+                continue;
+            }
             if !(t.ends_with(',') || t.ends_with('}') || t.ends_with(')') || t.contains("-> ")) {
                 continue;
             }

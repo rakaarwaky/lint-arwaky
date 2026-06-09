@@ -20,6 +20,16 @@ pub struct DataFlowEntry {
     pub content: String,
 }
 
+impl std::fmt::Debug for DataFlowEntry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DataFlowEntry")
+            .field("line", &self.line)
+            .field("kind", &self.kind)
+            .field("content", &self.content)
+            .finish()
+    }
+}
+
 /// Business logic for tracking variable lifecycle in JS/TS files.
 pub struct DataFlowAnalyzer {
 }

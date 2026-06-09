@@ -87,7 +87,7 @@ impl ASTJSParserAdapter {
 
         let mut in_comment = false;
         let mut current_class: Option<String> = None;
-        let mut brace_count = 0;
+        let mut brace_count = 0i32;
 
         let js_keywords: HashSet<&str> = [
             "break",
@@ -225,19 +225,19 @@ impl ASTJSParserAdapter {
             }
 
             let mut import_found = false;
-            let mut raw_imports = "";
-            let mut module_path = "";
+            let mut raw_imports = String::new();
+            let mut module_path = String::new();
 
             if let Some(imp_cap) = IMPORT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
-                raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
-                module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
+                raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim().to_string();
+                module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim().to_string();
                 import_found = true;
             } else if let Some(imp_cap) = IMPORT_DOUBLE_REGEX
                 .as_ref()
                 .and_then(|r| r.captures(stripped))
             {
-                raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
-                module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
+                raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim().to_string();
+                module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim().to_string();
                 import_found = true;
             }
 
@@ -442,7 +442,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
             let lines: Vec<&str> = content.lines().collect();
             let mut in_class = false;
             let mut class_name = String::new();
-            let mut brace_count = 0;
+            let mut brace_count = 0i32;
             for line in &lines {
                 let stripped = line.trim();
                 if stripped.starts_with("//") || stripped.starts_with("/*") {

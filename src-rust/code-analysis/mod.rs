@@ -42,3 +42,14 @@ pub use taxonomy_analysis_vo::{
     InheritanceMap, ModuleToFileMap, OrphanIndicatorResult, ReachabilityResult,
 };
 pub mod taxonomy_import_source_vo;
+pub mod agent_checker_helpers;
+pub mod agent_bypass_inspector;
+pub use agent_bypass_inspector::{check_agent_any_bypass, check_bypass_comments};
+pub mod agent_inheritance_inspector;
+pub use agent_inheritance_inspector::{check_dead_inheritance, check_mandatory_inheritance};
+pub mod agent_unused_import_inspector;
+pub use agent_unused_import_inspector::check_unused_imports;
+pub mod agent_layer_inspector;
+pub use agent_layer_inspector::{
+    check_agent_role, check_missing_vo, check_single_bottleneck, check_surface_role,
+};
