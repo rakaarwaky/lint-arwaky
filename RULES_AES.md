@@ -6,35 +6,33 @@ Rules enforced by the `lint-arwaky` architecture checker on layer boundaries and
 
 ---
 
-## Group 1: Layer & Import Boundary (AES001–AES006)
+## Group 1: Layer & Import Boundary (AES001–AES002)
 
 Enforces strict import direction between architectural layers. Layer is identified by **filename prefix** (`taxonomy_`, `contract_`, etc.), not directory path.
 
-| Code | Name | Severity | Message |
-|------|------|----------|---------|
-| AES001 | Import Layer Violation | CRITICAL | Layer '{layer}' cannot import from '{target}'. WHY? Cross-layer leakage breaks architectural decoupling. FIX: Use ports/protocols from the contract layer. |
-| AES002 | Mandatory Import Missing | HIGH | Layer '{layer}' must import from {layers}. WHY? Mandatory dependencies ensure contract enforcement. FIX: Import required taxonomy or contract modules. |
-| AES003 | Surface Dependency | CRITICAL | Surface imports from forbidden layer (capabilities/infrastructure/agent directly). WHY? Surfaces must use ServiceContainerAggregate only. FIX: Replace direct imports with calls through the DI container. |
-| AES004 | Root Import | HIGH | File uses forbidden root import pattern. WHY? Root-layer patterns bypass architecture layering. FIX: Import from the correct feature module. |
-| AES005 | Layer Suffix Mismatch | HIGH | File suffix does not match allowed patterns for this layer. WHY? Suffixes define architectural role. FIX: Use one of the allowed suffixes for this layer. |
-| AES006 | Contract Suffix Mismatch | HIGH | Contract file missing _port, _protocol, or _aggregate suffix. WHY? Contracts must clearly communicate their role. FIX: Rename with correct architectural suffix. |
+### AES001 — Import Layer Violation (CRITICAL)
 
-### Import Matrix (AES001, AES002)
+Satu rule dengan **13 sub-conditions** — message dinamis tergantung layer, target, dan suffix.
 
-| Scope (by suffix) | Mandatory Imports | Forbidden Imports |
-|---|---|---|
-| `taxonomy_` + `_vo` | None | agent_/infrastructure_/surface_/contract_/capabilities_/root |
-| `taxonomy_` + `_entity`/`_error`/`_event` | taxonomy_ + _vo | agent_/infrastructure_/surface_/contract_/capabilities_/root |
-| `contract_` + `_port`/`_protocol` | taxonomy_ | agent_/infrastructure_/surface_/capabilities_/contract_aggregate_/root |
-| `contract_` + `_aggregate` | taxonomy_, contract_ | agent_/infrastructure_/surface_/capabilities_/root |
-| `capabilities_` | taxonomy_, contract_protocol_ | infrastructure_/surface_/agent_/capabilities_/root |
-| `infrastructure_` | taxonomy_, contract_port_ | surface_/capabilities_/agent_/infrastructure_/root |
-| `agent_` + `_container`/`_registry`/`_mixin` | taxonomy_, contract_ | surface_/root |
-| `agent_` + `_orchestrator`/`_coordinator` | taxonomy_, contract_aggregate_ | surface_/agent_/root |
-| `agent_` + `_state`/`_manager` | taxonomy_, contract_aggregate_ | agent_/infrastructure_/capabilities_/surface_/root |
-| `surface_` + `_command`/`_controller`/`_page`/`_entry` | taxonomy_, contract_aggregate_ | agent_/infrastructure_/capabilities_/contract_port_/contract_protocol_/root |
-| `surface_` + `_hook`/`_store`/`_action`/`_screen`/`_router` | taxonomy_ | agent_/infrastructure_/capabilities_/contract_port_/contract_protocol_/smart surfaces_/root |
-| `surface_` + `_component`/`_view`/`_layout` | taxonomy_ | agent_/contract_/infrastructure_/capabilities_/all surface_/root |
+| # | Scope (prefix + suffix) | Forbidden Imports | Mandatory Imports |
+|---|---|---|---|
+| 1 | `taxonomy_` + `_vo` | agent_, infrastructure_, surface_, contract_, capabilities_, root | None |
+| 2 | `taxonomy_` + `_entity`/`_error`/`_event` | agent_, infrastructure_, surface_, contract_, capabilities_, root | taxonomy_ + _vo |
+| 3 | `taxonomy_` + `_constant` | agent_, infrastructure_, surface_, contract_, capabilities_, root | None |
+| 4 | `contract_` + `_port`/`_protocol` | agent_, infrastructure_, surface_, capabilities_, contract_aggregate_, root | taxonomy_ |
+| 5 | `contract_` + `_aggregate` | agent_, infrastructure_, surface_, capabilities_, root | taxonomy_, contract_ |
+| 6 | `capabilities_` | infrastructure_, surface_, agent_, capabilities_, root | taxonomy_, contract_protocol_ |
+| 7 | `infrastructure_` | surface_, capabilities_, agent_, infrastructure_, root | taxonomy_, contract_port_ |
+| 8 | `agent_` + `_container`/`_registry`/`_mixin` | surface_, root | taxonomy_, contract_ |
+| 9 | `agent_` + `_orchestrator`/`_coordinator` | surface_, agent_, root | taxonomy_, contract_aggregate_ |
+| 10 | `agent_` + `_state`/`_manager` | agent_, infrastructure_, capabilities_, surface_, root | taxonomy_, contract_aggregate_ |
+| 11 | `surface_` + `_command`/`_controller`/`_page`/`_entry` | agent_, infrastructure_, capabilities_, contract_port_, contract_protocol_, root | taxonomy_, contract_aggregate_ |
+| 12 | `surface_` + `_hook`/`_store`/`_action`/`_screen`/`_router` | agent_, infrastructure_, capabilities_, contract_port_, contract_protocol_, smart surfaces_, root | taxonomy_ |
+| 13 | `surface_` + `_component`/`_view`/`_layout` | agent_, contract_, infrastructure_, capabilities_, all surface_, root | taxonomy_ |
+
+### AES002 — Mandatory Import Missing (HIGH)
+
+File does not import required layers. Message: *"Layer '{layer}' must import from {layers}. WHY? Mandatory dependencies ensure contract enforcement. FIX: Import required taxonomy or contract modules."*
 
 ---
 
@@ -52,7 +50,7 @@ Enforces file naming conventions, structural definitions, and type safety across
 | AES015 | Constant Purity | HIGH | _constant file contains non-constant declarations. WHY? _constant files must contain ONLY pub const/pub static. FIX: Move non-const decl to _vo/_entity/capability module. |
 | AES016 | Primitive Usage | HIGH | Raw primitive types in domain entity/error/event/contract interface. WHY? Core domain integrity requires Value Objects. FIX: Replace raw types with _vo components. |
 
-### Suffix Policy (AES005, AES010)
+### Suffix Policy (AES010, AES011)
 
 | Layer | Allowed Suffixes | Forbidden Suffixes |
 |---|---|---|
@@ -132,16 +130,16 @@ Suffix-specific behavioral mandates. A single code covers multiple roles with **
 
 | Old Code | New Code | Name | Notes |
 |----------|----------|------|-------|
-| AES001 | AES001 | Import Layer Violation | |
+| AES001 | AES001 | Import Layer Violation | Merged with AES010/011/023 |
 | AES002 | AES002 | Mandatory Import Missing | |
 | AES003 | AES010 | Naming Convention | |
 | AES004 | AES020 | File Size Limit | |
 | AES005 | AES021 | File Minimum Size | |
 | AES006 | AES016 | Primitive Usage | |
-| AES008 | AES006 | Contract Suffix Mismatch | |
-| AES009 | AES011 | Mandatory Definition | |
-| AES010 | AES004 | Root Import | |
-| AES011 | AES005 | Layer Suffix Mismatch | |
+| AES008 | AES011 | Contract/Mandatory Def | Merged with AES009 |
+| AES009 | AES011 | Mandatory Definition | Merged with AES008 |
+| AES010 | AES001 | Root Import | Sub-condition of AES001 |
+| AES011 | AES011 | Suffix Policy | Part of naming checks |
 | AES014 | AES022 | Bypass Comment | |
 | AES015 | AES023 | Unused Import | |
 | AES016 | AES024 | Dead Inheritance | |
@@ -151,7 +149,7 @@ Suffix-specific behavioral mandates. A single code covers multiple roles with **
 | AES020 | AES012 | Circular Dependency | |
 | AES021 | AES032 | Agent Role | |
 | AES022 | AES031 | Surface Role | |
-| AES023 | AES003 | Surface Dependency | |
+| AES023 | AES001 | Surface Dependency | Sub-condition of AES001 |
 | AES024 | AES035 | Agent Any Bypass | |
 | AES026 | AES013 | Forbidden Inheritance | |
 | AES027 | AES014 | Mandatory Inheritance | |
