@@ -84,7 +84,7 @@ architecture:
         forbid_any_type: false
 
       - name: "Naming Convention"
-        word_count: 3
+        naming_convention: true
         exceptions: ["__init__.py", "__main__.py"]
 
       - name: "forbidden bypass / cheating"

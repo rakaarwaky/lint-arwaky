@@ -342,7 +342,7 @@ Subcommands are defined in `src-rust/surfaces/cli_core_command.rs` and dispatche
 - Pure-Rust implementation (no embedded Python or Node.js runtime)
 - No database required (file-based history only for trends)
 - Static binary release via `cargo build --release`
-- Platform: Linux, macOS, Windows (MSVC and GNU)
+- Platform: Linux
 
 ---
 
@@ -369,20 +369,3 @@ Subcommands are defined in `src-rust/surfaces/cli_core_command.rs` and dispatche
 | tracing-subscriber | 0.3               | Log filtering             |
 
 ---
-
-## 12. Sign-off & Implementation Status
-
-**Sign-off Date**: 7 Juni 2026
-**Status**: ✅ SIGNED OFF — All functional requirements implemented and verified
-
-| Milestone                          | Status      | Notes                                                              |
-| ---------------------------------- | ----------- | ------------------------------------------------------------------ |
-| AES Rules Engine (31 codes)        | ✅ Complete | All 31 AES codes implemented (AES001–AES033, AES028/029 reserved) |
-| Rust Self-Lint (`check .`)       | ✅ Verified | Detects 153 violations across 15 AES codes on own codebase         |
-| Rust Test Project (`scan`)       | ✅ Verified | Detects 34 violations across 14 AES codes                          |
-| Python Test Project (`scan`)     | ✅ Verified | Detects 238 violations across 9 tools (ruff/mypy/bandit)           |
-| JavaScript Test Project (`scan`) | ✅ Verified | Detects 323 violations across 12 tools (eslint/prettier/tsc)       |
-| Unique AES Codes Detected          | ✅ 30/31    | AES001–AES033 minus AES028/029 (reserved), AES031 pending         |
-| CLI (20+ subcommands)              | ✅ Complete | check, scan, fix, report, ci, watch, git-diff, setup, clean, etc.  |
-| MCP Server (5 tools)               | ✅ Complete | JSON-RPC 2.0 over stdin/stdout via mcp-sdk-rs                      |
-| Zero Bypass Tolerance              | ✅ Complete | `noqa`, `type: ignore`, `#[allow(...)]` all flagged          |

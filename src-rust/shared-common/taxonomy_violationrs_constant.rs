@@ -40,11 +40,11 @@ pub const AES026_FORBIDDEN_INHERITANCE: &str =
 pub const AES033_CONSTANT_PURITY: &str =
     "AES033 CONSTANT_PURITY: _constant file contains non-constant declaration.";
 
-pub fn aes003_naming_convention(expected_word_count: i32) -> String {
-    format!(
-        "AES003 NAMING_CONVENTION: Filename does not follow the {}-word underscore-separated pattern.\n\
-        WHY? Strict three-word names ensure architectural consistency.\n\
-        FIX: Rename the file to exactly {} words separated by underscores.", expected_word_count, expected_word_count
+pub fn aes003_naming_convention(_expected_word_count: i32) -> String {
+    String::from(
+        "AES003 NAMING_CONVENTION: Filename must follow prefix_concept_suffix pattern.\n\
+        WHY? Prefix identifies layer, suffix identifies role, concept describes feature.\n\
+        FIX: Rename to at least prefix_suffix (e.g., capabilities_user_checker.rs)."
     )
 }
 

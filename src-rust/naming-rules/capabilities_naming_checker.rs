@@ -101,7 +101,7 @@ impl ArchNamingChecker {
         filename: &str,
         _layer_name: &Option<String>,
         definition: Option<&LayerDefinition>,
-        config: &ArchitectureConfig,
+        _config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
         if Self::is_barrel_file(filename) || Self::is_entry_point(filename) {
@@ -114,25 +114,16 @@ impl ArchNamingChecker {
             }
         }
 
-        let expected_word_count = if let Some(def) = definition {
-            if def.word_count.value > 0 {
-                def.word_count.value as i32
-            } else {
-                config.naming.word_count.value as i32
-            }
-        } else {
-            config.naming.word_count.value as i32
-        };
-
         let stem = filename.split('.').next().unwrap_or("");
-        let naming_regex = format!(r"^[a-z0-9]+(_[a-z0-9]+){{{}}}$", expected_word_count - 1);
+        // Unlimited words: at least `prefix_suffix` (2 words), any concept words in between
+        let naming_regex = r"^[a-z0-9]+(_[a-z0-9]+)+$";
 
-        if let Ok(re) = Regex::new(&naming_regex) {
+        if let Ok(re) = Regex::new(naming_regex) {
             if !re.is_match(stem) {
                 violations.push(Self::make_result(
                     file,
                     "AES003",
-                    &aes003_naming_convention(expected_word_count),
+                    &aes003_naming_convention(0),
                     Severity::HIGH,
                 ));
             }

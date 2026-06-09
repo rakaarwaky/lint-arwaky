@@ -17,7 +17,7 @@ pub struct ArchitectureRule {
     pub description: DescriptionVO,
     pub rule_type: ErrorCode,
     pub scope: LayerNameVO,
-    pub word_count: Count,
+    pub naming_convention: BooleanVO,
     pub exceptions: PatternList,
     pub allowed_import: PatternList,
     pub forbidden_import: PatternList,

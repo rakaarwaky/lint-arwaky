@@ -244,9 +244,6 @@ impl ArchitectureOrchestrator {
         mut def: LayerDefinition,
         rule: &ArchitectureRule,
     ) -> LayerDefinition {
-        if rule.word_count.value != 0 {
-            def.word_count = rule.word_count.clone();
-        }
         if rule.suffix_policy.value != "strict" {
             def.suffix_policy = rule.suffix_policy.clone();
         }

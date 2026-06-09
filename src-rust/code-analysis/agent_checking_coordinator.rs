@@ -8,7 +8,7 @@ use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
 use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+
 use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
 use crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges;
 use crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge;
@@ -18,6 +18,7 @@ use crate::layer_rules::capabilities_internal_checker::ArchInternalChecker;
 use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::capabilities_orphan_analyzer::OrphanGraphResolver;
+use crate::source_parsing::infrastructure_barrel_provider::BarrelImportResolver;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
@@ -31,7 +32,7 @@ use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
     aes015_unused_import, aes016_dead_inheritance, aes027_mandatory_inheritance,
-    AES014_BYPASS_COMMENT, AES014_PANIC, AES014_UNWRAP_EXPECT, AES017_ORPHAN_CODE,
+    AES014_BYPASS_COMMENT, AES014_PANIC, AES014_UNWRAP_EXPECT,
     AES020_CIRCULAR_IMPORT, AES022_SURFACE_ROLE_VIOLATION, AES025_MCP_SCHEMA,
     AES031_SINGLE_BOTTLENECK, AES032_MISSING_VO,
 };
@@ -59,7 +60,6 @@ impl LintCheckingCoordinator {
         if !config.enabled.value {
             return Vec::new();
         }
-        let _container_ref: Option<&dyn ServiceContainerAggregate> = None;
         let analyzer = ArchComplianceAnalyzer::new(config.clone());
         let mut violations: Vec<LintResult> = Vec::new();
         let import_checker = ArchImportRuleChecker::new();
@@ -200,24 +200,78 @@ impl LintCheckingCoordinator {
                 AES020_CIRCULAR_IMPORT,
             ));
         }
+        // Inline orphan check: prefix/suffix based per-layer logic with barrel resolution
         let orphan = OrphanGraphResolver::new();
         let ctx = orphan.build_graph_context(files, root_dir);
         let eps = orphan.identify_entry_points(files);
-        for (fp, imps) in &ctx.import_graph.mapping {
-            if imps.is_empty()
-                && !eps.contains(fp)
-                && !fp.ends_with("mod.rs")
-                && !fp.ends_with("__init__.py")
-                && !fp.ends_with("/index.ts")
-                && !fp.ends_with("/index.js")
+        let barrel_map = BarrelImportResolver::build_barrel_map(files);
+
+        for fp in files {
+            if eps.contains(fp) || fp.ends_with("mod.rs") || fp.ends_with("__init__.py")
+                || fp.ends_with("/index.ts") || fp.ends_with("/index.js")
             {
-                rl.push(Self::mk(
-                    fp,
-                    0,
-                    "AES017",
-                    Severity::HIGH,
-                    AES017_ORPHAN_CODE,
-                ));
+                continue;
+            }
+            let basename = fp.split('/').next_back().unwrap_or("");
+            let prefix = basename.split('_').next().unwrap_or("");
+
+            // Taxonomy: barrel-aware contract import check
+            if prefix == "taxonomy" {
+                let imported = BarrelImportResolver::is_imported_by_contract(fp, &barrel_map, files);
+                if !imported {
+                    let stem = basename.replace(".rs", "").replace(".py", "");
+                    rl.push(Self::mk(fp, 0, "AES017", Severity::LOW, &format!("Taxonomy '{}' not imported by contract.", stem)));
+                }
+                continue;
+            }
+
+            // Contract: suffix-based with barrel resolution
+            if prefix == "contract" {
+                let suffix = basename.rsplit('_').next().unwrap_or("").replace(".rs", "");
+                let target_prefix = match suffix.as_str() {
+                    "port" => "infrastructure",
+                    "protocol" => "capabilities",
+                    "aggregate" => "agent",
+                    _ => { continue; }
+                };
+                let trait_name = basename.strip_prefix("contract_").unwrap_or(basename).replace(".rs", "");
+                let mut has_impl = false;
+                for cf in files {
+                    let cb = cf.split('/').next_back().unwrap_or("");
+                    if !cb.starts_with(target_prefix) { continue; }
+                    let resolved = BarrelImportResolver::resolve_imports_for_file(cf, &barrel_map, files);
+                    if resolved.iter().any(|r| r.contains(&trait_name)) { has_impl = true; break; }
+                    if let Ok(c) = std::fs::read_to_string(cf) {
+                        if c.contains(&format!("impl {} for", trait_name)) { has_impl = true; break; }
+                    }
+                }
+                if !has_impl { rl.push(Self::mk(fp, 0, "AES017", Severity::HIGH, &format!("Contract {} '{}' not implemented.", suffix, trait_name))); }
+                continue;
+            }
+
+            // Infra/Cap/Agent: check wiring in container files
+            if prefix == "infrastructure" || prefix == "capabilities" || prefix == "agent" {
+                let stem = basename.replace(".rs", "").replace(".py", "");
+                let mut wired = false;
+                for cf in files {
+                    let cb = cf.split('/').next_back().unwrap_or("");
+                    let csuffix = cb.rsplit('_').next().unwrap_or("").replace(".rs", "");
+                    if csuffix != "container" && csuffix != "aggregate" && csuffix != "registry" { continue; }
+                    if let Ok(c) = std::fs::read_to_string(cf) {
+                        if c.contains(&stem) || c.contains(&format!("mod {}", stem)) { wired = true; break; }
+                    }
+                }
+                if !wired { rl.push(Self::mk(fp, 0, "AES017", Severity::HIGH, &format!("{} '{}' not wired.", prefix, stem))); }
+                continue;
+            }
+
+            // Surface: reachability check
+            if prefix == "surface" {
+                let imps = ctx.import_graph.mapping.get(fp);
+                if imps.map(std::vec::Vec::is_empty).unwrap_or(true) {
+                    rl.push(Self::mk(fp, 0, "AES017", Severity::MEDIUM, "Surface unreachable."));
+                }
+                continue;
             }
         }
         // Wire role orchestrator for agent and surface role checks

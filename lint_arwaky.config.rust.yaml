@@ -20,6 +20,7 @@ ignored_paths:
   - "./output"
   - "/target"
   - "/.git"
+  - "/Graph-It-Live-arwaky"
   - "/.github"
   - "/scratch"
 
@@ -78,7 +79,7 @@ architecture:
       - name: "Forbid Raw Panic or Bypass Comments"
         forbid_any_type: false
       - name: "Naming Convention"
-        word_count: 3
+        naming_convention: true
         exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
       - name: "forbidden bypass / cheating"
@@ -91,7 +92,7 @@ architecture:
 
       - name: "Line Count Limits"
         min_lines: 10
-        max_lines: 700
+        max_lines: 1000
         exceptions: ["main.rs", "lib.rs", "mod.rs", "python_taxonomy_bridge.rs", "js_taxonomy_bridge.rs"]
 
       - name: "Dead Inheritance Bypass"

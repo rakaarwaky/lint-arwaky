@@ -84,7 +84,7 @@ architecture:
         forbid_any_type: false
 
       - name: "Naming Convention"
-        word_count: 3
+        naming_convention: true
         exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
 
       - name: "forbidden bypass / cheating"

@@ -1,5 +1,3 @@
-pub mod capabilities_convention_checker;
-pub use capabilities_convention_checker::NamingRuleChecker;
 pub mod capabilities_naming_checker;
 pub use capabilities_naming_checker::ArchNamingChecker;
 pub mod capabilities_variant_analyzer;

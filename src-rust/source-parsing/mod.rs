@@ -22,3 +22,5 @@ pub mod taxonomy_path_vo;
 pub use taxonomy_path_vo::{DirectoryPath, FilePath};
 pub mod taxonomy_paths_vo;
 pub use taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
+pub mod infrastructure_barrel_provider;
+pub use infrastructure_barrel_provider::BarrelImportResolver;
