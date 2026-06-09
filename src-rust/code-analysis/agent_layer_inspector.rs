@@ -6,10 +6,7 @@ use crate::shared_common::taxonomy_violationrs_constant::{
     AES031_SURFACE_ROLE_VIOLATION, AES036_SINGLE_BOTTLENECK, AES038_MISSING_VO,
 };
 
-/// Create a LintResult — shared by all inline checkers.
-fn mk_result(file: &str, line: usize, code: &str, sev: Severity, msg: &str) -> LintResult {
-    LintResult::new_arch(file, line, code, sev, msg)
-}
+use crate::code_analysis::agent_checker_helpers::mk_result;
 
 /// Check that agent files don't exceed 300 lines (AES032).
 pub fn check_agent_role(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {

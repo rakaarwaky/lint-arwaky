@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use crate::code_analysis::capabilities_checker_helpers::mk_result;
+use crate::code_analysis::agent_checker_helpers::mk_result;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_violationrs_constant::{

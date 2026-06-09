@@ -4,10 +4,7 @@ use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_violationrs_constant::aes023_unused_import;
 
-/// Create a LintResult — shared by all inline checkers.
-fn mk_result(file: &str, line: usize, code: &str, sev: Severity, msg: &str) -> LintResult {
-    LintResult::new_arch(file, line, code, sev, msg)
-}
+use crate::code_analysis::agent_checker_helpers::mk_result;
 
 /// Check for imported names that are never referenced in the file body.
 /// Handles `use` (Rust), `import` (JS/TS), and `from ... import` (Python).

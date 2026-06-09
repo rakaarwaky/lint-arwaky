@@ -124,4 +124,15 @@ pub trait ICheckerAggregate: Send + Sync {
 
     // Cycle detection
     fn detect_cycle_edges(&self, edges: &[(String, String)]) -> bool;
+
+    // Inline inspector checks (moved from capabilities inspectors for AES001 compliance)
+    fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
+    fn check_unused_imports(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
+    fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
+    fn check_mandatory_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
+    fn check_agent_any_bypass(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
+    fn check_agent_role(&self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>);
+    fn check_surface_role(&self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>);
+    fn check_single_bottleneck(&self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>);
+    fn check_missing_vo(&self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>);
 }
