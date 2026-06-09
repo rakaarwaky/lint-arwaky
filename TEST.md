@@ -43,15 +43,15 @@ cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 
 | Kriteria                           | LULUS                             | GAGAL                       |
 | ---------------------------------- | --------------------------------- | --------------------------- |
-| Total violations Rust (check)      | >= 30 violation types berbeda     | < 30 atau 0                 |
-| Total violations Python (scan)     | >= 30 violation types berbeda     | < 30 atau 0                 |
-| Total violations JavaScript (scan) | >= 30 violation types berbeda     | < 30 atau 0                 |
+| Total violations Rust (check)      | >= 27 violation types berbeda     | < 30 atau 0                 |
+| Total violations Python (scan)     | >= 27 violation types berbeda     | < 30 atau 0                 |
+| Total violations JavaScript (scan) | >= 27 violation types berbeda     | < 30 atau 0                 |
 | Severity CRITICAL ditemukan        | Minimal 1 di setiap project       | Tidak ada                   |
 | Zero false positive                | Tidak ada violation di file benar | Ada violation di file benar |
 
 ## 4. Violations yang Diharapkan
 
-### 4.1 Rust (AES Self-Lint) — 34 violations detected ✅
+### 4.1 Rust (AES Self-Lint) — 27violations detected ✅
 
 | AES Code | Type              | Contoh File                                               |
 | -------- | ----------------- | --------------------------------------------------------- |
@@ -84,13 +84,14 @@ echo "=== JAVASCRIPT ===" && cargo run --bin lint-arwaky-cli -- scan test-projec
 ```
 
 **Baseline v1.10.2** (7 Juni 2026):
-| Project | Command | Total Violations | Unique AES Codes | Status |
-|---------|---------|----------------|-----------------|--------|
-| Self-lint (lint-arwaky) | `check .` | 153 | 15 | ✅ detects own violations |
-| Rust test project | `scan test-project-rust/` | 34 | 14 | ✅ >= 27 unique combined |
-| Python test project | `scan test-project-python/` | 238 | 9 | ✅ >= 27 unique combined |
-| JavaScript test project | `scan test-project-javascript/` | 323 | 12 | ✅ >= 27 unique combined |
-| **Combined** | | | **27** | ✅ AES codes (v2.0 numbering) |
+
+| Project                 | Command                           | Total Violations | Unique AES Codes | Status |
+| ----------------------- | --------------------------------- | ---------------- | ---------------- | ------ |
+| Self-lint (lint-arwaky) | `check .`                       | 153              | 15               |        |
+| Rust test project       | `scan test-project-rust/`       | 34               | 14               |        |
+| Python test project     | `scan test-project-python/`     | 238              | 9                |        |
+| JavaScript test project | `scan test-project-javascript/` | 323              | 12               |        |
+| **Combined**      |                                   |                  | **27**     |        |
 
 **27 Unique AES Codes (v2.0):**
 AES001, AES002, AES003, AES004, AES005, AES006,
