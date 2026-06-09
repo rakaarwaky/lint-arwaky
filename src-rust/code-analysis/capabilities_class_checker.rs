@@ -3,6 +3,7 @@ use std::path::Path;
 
 use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_violation_constant::AES009_MANDATORY_CLASS_DEFINITION;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 
@@ -46,14 +47,7 @@ impl IMandatoryClassProtocol for ArchClassChecker {
         } else { false };
 
         if !has_class {
-            let msg = if !def.mandatory_class_definition_violation_message.value.is_empty() {
-                def.mandatory_class_definition_violation_message.value.clone()
-            } else {
-                "AES009 MANDATORY_CLASS_DEFINITION: File is missing a class definition.\n\
-                WHY? Encapsulation in classes is required for proper dependency injection.\n\
-                FIX: Move standalone functions into a class that implements its corresponding domain contract.".to_string()
-            };
-            violations.push(LintResult::new_arch(file, 0, "AES009", Severity::HIGH, &msg));
+            violations.push(LintResult::new_arch(file, 0, "AES009", Severity::HIGH, AES009_MANDATORY_CLASS_DEFINITION));
         }
     }
 }

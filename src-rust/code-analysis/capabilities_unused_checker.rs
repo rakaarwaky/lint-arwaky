@@ -1,7 +1,7 @@
 // unused_import_checker — Capability for detecting unused imports.
 // Implements IUnusedImportProtocol: find_unused_imports.
 
-use crate::layer_rules::contract_unused_protocol::IUnusedProtocol;
+use crate::code_analysis::contract_unused_protocol::IUnusedProtocol;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 use once_cell::sync::Lazy;

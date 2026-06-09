@@ -1,5 +1,13 @@
 pub mod capabilities_analysis_reporter;
 pub use capabilities_analysis_reporter::{AnalysisReporter};
+pub mod capabilities_renamer_processor;
+pub use capabilities_renamer_processor::{SymbolRenamerProcessor};
+pub mod capabilities_unused_checker;
+pub use capabilities_unused_checker::{UnusedImportRuleChecker};
+pub mod contract_type_protocol;
+pub use contract_type_protocol::{IDomainTypeProtocol};
+pub mod contract_unused_protocol;
+pub use contract_unused_protocol::{IUnusedProtocol};
 pub mod agent_checking_coordinator;
 pub use agent_checking_coordinator::{LintCheckingCoordinator};
 

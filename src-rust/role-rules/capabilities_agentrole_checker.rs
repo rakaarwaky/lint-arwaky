@@ -12,6 +12,11 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::layer_infrastructure;
+use crate::shared_common::taxonomy_violation_constant::{
+    aes021_must_implement_contract, aes024_any_type,
+    AES021_COORDINATES_MULTIPLE, AES021_HIGH_LEVEL_POLICY, AES021_LAZY_EAGER_INIT,
+    AES021_MUST_IMPLEMENT_CONTRACT, AES021_NO_DOMAIN_LOGIC, AES021_STATELESS_EXECUTION,
+};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 fn make_adapter(name: &str) -> Option<AdapterName> {
@@ -51,19 +56,15 @@ impl AgentRoleChecker {
     fn _check_must_implement_contract_lazy(
         &self,
         f: &FilePath,
-        definition: &LayerDefinition,
+        _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) {
         let contract_name = SymbolName::new("ServiceContainerAggregate");
-        let violation_msg = definition
-            .must_implement_service_container_aggregate_violation_message
-            .value
-            .clone();
         self._check_must_implement_contract(
             f,
             &contract_name,
-            &violation_msg,
+            AES021_MUST_IMPLEMENT_CONTRACT,
             analyzer,
             results,
             "AES021",
@@ -73,7 +74,7 @@ impl AgentRoleChecker {
     fn _check_stateless_execution(
         &self,
         f: &FilePath,
-        definition: &LayerDefinition,
+        _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) {
@@ -97,22 +98,12 @@ impl AgentRoleChecker {
             );
             if let Some(ref name) = method_name {
                 if name.value != "__init__" {
-                    let msg = definition
-                        .stateless_execution_violation_message
-                        .value
-                        .clone();
-                    let message = if msg.is_empty() {
-                        "Non-stateless behavior detected: state assignment found outside __init__."
-                            .to_string()
-                    } else {
-                        msg
-                    };
                     results.push(LintResult {
                         file: f.clone(),
                         line: line_vo,
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES021"),
-                        message: LintMessage::new(message),
+                        message: LintMessage::new(AES021_STATELESS_EXECUTION),
                         source: make_adapter("architecture"),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
@@ -127,7 +118,7 @@ impl AgentRoleChecker {
     fn _check_high_level_policy_only(
         &self,
         f: &FilePath,
-        definition: &LayerDefinition,
+        _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) {
@@ -138,21 +129,12 @@ impl AgentRoleChecker {
 
         for imp in imports.values {
             if imp.module.contains(&layer_infrastructure().value) {
-                let msg = definition
-                    .high_level_policy_only_violation_message
-                    .value
-                    .clone();
-                let message = if msg.is_empty() {
-                    "Low-level implementation details found (infrastructure import).".to_string()
-                } else {
-                    msg
-                };
                 results.push(LintResult {
                     file: f.clone(),
                     line: imp.line.clone(),
                     column: ColumnNumber::new(0),
                     code: ErrorCode::raw("AES021"),
-                    message: LintMessage::new(message),
+                    message: LintMessage::new(AES021_HIGH_LEVEL_POLICY),
                     source: make_adapter("architecture"),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
@@ -166,7 +148,7 @@ impl AgentRoleChecker {
     fn _check_coordinates_multiple_orchestrators(
         &self,
         f: &FilePath,
-        definition: &LayerDefinition,
+        _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) {
@@ -176,21 +158,12 @@ impl AgentRoleChecker {
             if let Some(ref init_m) = init_method {
                 if self._count_orchestrator_args(init_m) < 2 {
                     let line_val = init_m.get("line").and_then(|v| v.as_i64()).unwrap_or(0);
-                    let msg = definition
-                        .coordinates_multiple_orchestrators_violation_message
-                        .value
-                        .clone();
-                    let message = if msg.is_empty() {
-                        "Coordinator must manage multiple orchestrators.".to_string()
-                    } else {
-                        msg
-                    };
                     results.push(LintResult {
                         file: f.clone(),
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES021"),
-                        message: LintMessage::new(message),
+                        message: LintMessage::new(AES021_COORDINATES_MULTIPLE),
                         source: make_adapter("architecture"),
                         severity: Severity::MEDIUM,
                         enclosing_scope: None,
@@ -241,36 +214,19 @@ impl AgentRoleChecker {
     fn _check_no_domain_logic(
         &self,
         f: &FilePath,
-        definition: &LayerDefinition,
+        _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
         code: &str,
     ) {
         let control_flow_count = analyzer.parser().get_control_flow_count(f);
         if control_flow_count.value > 3 {
-            let default_msg =
-                "Complex domain logic detected in a passive layer/role.".to_string();
-            let violation_msg = if !definition
-                .no_domain_logic_violation_message
-                .value
-                .is_empty()
-            {
-                definition.no_domain_logic_violation_message.value.clone()
-            } else if !definition
-                .no_decision_logic_violation_message
-                .value
-                .is_empty()
-            {
-                definition.no_decision_logic_violation_message.value.clone()
-            } else {
-                default_msg
-            };
             results.push(LintResult {
                 file: f.clone(),
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
-                message: LintMessage::new(violation_msg),
+                message: LintMessage::new(AES021_NO_DOMAIN_LOGIC),
                 source: make_adapter("architecture"),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
@@ -283,7 +239,7 @@ impl AgentRoleChecker {
     fn _check_lazy_eager_init_only(
         &self,
         f: &FilePath,
-        definition: &LayerDefinition,
+        _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     ) {
@@ -298,21 +254,12 @@ impl AgentRoleChecker {
                         .and_then(|m| m.get("line"))
                         .and_then(|v| v.as_i64())
                         .unwrap_or(0);
-                    let msg = definition
-                        .lazy_eager_initialization_only_violation_message
-                        .value
-                        .clone();
-                    let message = if msg.is_empty() {
-                        "Complex initialization logic found in Container.".to_string()
-                    } else {
-                        msg
-                    };
                     results.push(LintResult {
                         file: f.clone(),
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES021"),
-                        message: LintMessage::new(message),
+                        message: LintMessage::new(AES021_LAZY_EAGER_INIT),
                         source: make_adapter("architecture"),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
@@ -328,7 +275,7 @@ impl AgentRoleChecker {
         &self,
         f: &FilePath,
         contract_name: &SymbolName,
-        violation_msg: &str,
+        _violation_msg: &str,
         analyzer: &dyn IAnalyzer,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
         code: &str,
@@ -340,12 +287,7 @@ impl AgentRoleChecker {
                     .any(|b| b.to_string().contains(&contract_name.value))
             });
             if !has_contract {
-                let default_msg = format!("Class must implement {}.", contract_name.value);
-                let message = if violation_msg.is_empty() {
-                    default_msg
-                } else {
-                    violation_msg.to_string()
-                };
+                let message = aes021_must_implement_contract(&contract_name.value);
                 results.push(LintResult {
                     file: f.clone(),
                     line: LineNumber::new(0),
@@ -417,10 +359,7 @@ impl AgentRoleChecker {
                         line: LineNumber::new(line_num),
                         column: ColumnNumber::new(col),
                         code: ErrorCode::raw("AES024"),
-                        message: LintMessage::new(format!(
-                            "`Any` type annotation found in agent orchestrator layer: '{}'.",
-                            line.trim()
-                        )),
+                        message: LintMessage::new(aes024_any_type(line)),
                         source: make_adapter("architecture"),
                         severity: Severity::HIGH,
                         enclosing_scope: None,

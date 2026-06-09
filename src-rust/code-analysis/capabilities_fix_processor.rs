@@ -1,4 +1,4 @@
-use crate::layer_rules::capabilities_renamer_processor::SymbolRenamerProcessor;
+use crate::code_analysis::capabilities_renamer_processor::SymbolRenamerProcessor;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::shared_common::taxonomy_applied_event::FixApplied;

@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::Count;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
@@ -20,9 +19,7 @@ pub struct ArchitectureConfig {
     pub governance_rules: LegacyLayerRuleList,
     pub naming: NamingConfig,
     pub ignored_paths: FilePathList,
-    pub mandatory_import_violation_message: ErrorMessage,
     pub mandatory_class_definition: BooleanVO,
-    pub mandatory_class_definition_violation_message: ErrorMessage,
 }
 
 impl ArchitectureConfig {
@@ -33,9 +30,7 @@ impl ArchitectureConfig {
         governance_rules: LegacyLayerRuleList,
         naming: NamingConfig,
         ignored_paths: FilePathList,
-        mandatory_import_violation_message: ErrorMessage,
         mandatory_class_definition: BooleanVO,
-        mandatory_class_definition_violation_message: ErrorMessage,
     ) -> Self {
         Self {
             enabled,
@@ -44,9 +39,7 @@ impl ArchitectureConfig {
             governance_rules,
             naming,
             ignored_paths,
-            mandatory_import_violation_message,
             mandatory_class_definition,
-            mandatory_class_definition_violation_message,
         }
     }
 }
@@ -58,11 +51,9 @@ impl Default for ArchitectureConfig {
             layers: HashMap::new(),
             rules: Vec::new(),
             governance_rules: LegacyLayerRuleList::new(vec![]),
-            naming: NamingConfig::new(Count::new(3), ErrorMessage::new(String::new())),
+            naming: NamingConfig::new(Count::new(3)),
             ignored_paths: FilePathList { values: vec![] },
-            mandatory_import_violation_message: ErrorMessage::new(String::new()),
             mandatory_class_definition: BooleanVO::new(false),
-            mandatory_class_definition_violation_message: ErrorMessage::new(String::new()),
         }
     }
 }

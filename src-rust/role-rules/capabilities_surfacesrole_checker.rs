@@ -13,6 +13,7 @@ use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::{
     core_layer_names, layer_agent, layer_contract, layer_surfaces, layer_taxonomy,
 };
+use crate::shared_common::taxonomy_violation_constant::AES021_NO_DOMAIN_LOGIC;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 fn make_adapter(name: &str) -> Option<AdapterName> {
@@ -161,36 +162,19 @@ impl SurfaceRoleChecker {
     fn _check_no_domain_logic(
         &self,
         f: &FilePath,
-        definition: &LayerDefinition,
+        _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
         code: &str,
     ) {
         let control_flow_count = analyzer.parser().get_control_flow_count(f);
         if control_flow_count.value > 3 {
-            let default_msg =
-                "Complex domain logic detected in a passive layer/role.".to_string();
-            let violation_msg = if !definition
-                .no_domain_logic_violation_message
-                .value
-                .is_empty()
-            {
-                definition.no_domain_logic_violation_message.value.clone()
-            } else if !definition
-                .no_decision_logic_violation_message
-                .value
-                .is_empty()
-            {
-                definition.no_decision_logic_violation_message.value.clone()
-            } else {
-                default_msg
-            };
             results.push(LintResult {
                 file: f.clone(),
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
-                message: LintMessage::new(violation_msg),
+                message: LintMessage::new(AES021_NO_DOMAIN_LOGIC),
                 source: make_adapter("architecture"),
                 severity: Severity::HIGH,
                 enclosing_scope: None,

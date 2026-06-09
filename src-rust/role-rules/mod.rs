@@ -8,6 +8,8 @@ pub mod capabilities_surfacesrole_checker;
 pub use capabilities_surfacesrole_checker::SurfaceRoleChecker;
 pub mod capabilities_taxonomyrole_checker;
 pub use capabilities_taxonomyrole_checker::TaxonomyRoleChecker;
+pub mod capabilities_inheritance_checker;
+pub use capabilities_inheritance_checker::{MandatoryInheritanceChecker};
 pub mod contract_agentrole_protocol;
 pub use contract_agentrole_protocol::IAgentRoleChecker;
 pub mod contract_contractrole_protocol;

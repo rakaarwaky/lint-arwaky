@@ -3,6 +3,7 @@ use std::path::Path;
 
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_violation_constant::{AES004_FILE_TOO_LARGE_MSG, AES005_FILE_TOO_SHORT_MSG};
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 
@@ -37,27 +38,13 @@ impl ILineCheckerProtocol for ArchLineChecker {
         };
 
         if def.min_lines.value > 0 && count < def.min_lines.value {
-            let msg = if !def.min_lines_violation_message.value.is_empty() {
-                def.min_lines_violation_message.value.clone()
-            } else {
-                format!("AES005 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\n\
-                    WHY? Excessively small files clutter the project structure.\n\
-                    FIX: Expand the component or merge this logic into a related module (min: {}).",
-                    def.min_lines.value)
-            };
-            violations.push(LintResult::new_arch(file, 0, "AES005", Severity::HIGH, &msg));
+            violations.push(LintResult::new_arch(file, 0, "AES005", Severity::HIGH,
+                &format!("{} (min: {}).", AES005_FILE_TOO_SHORT_MSG, def.min_lines.value)));
         }
 
         if def.max_lines.value > 0 && count > def.max_lines.value {
-            let msg = if !def.max_lines_violation_message.value.is_empty() {
-                def.max_lines_violation_message.value.clone()
-            } else {
-                format!("AES004 FILE_TOO_LARGE: File exceeds the maximum allowed line count.\n\
-                    WHY? Large files violate the Single Responsibility Principle.\n\
-                    FIX: Split the module into smaller, more focused files (max: {}).",
-                    def.max_lines.value)
-            };
-            violations.push(LintResult::new_arch(file, 0, "AES004", Severity::HIGH, &msg));
+            violations.push(LintResult::new_arch(file, 0, "AES004", Severity::HIGH,
+                &format!("{} (max: {}).", AES004_FILE_TOO_LARGE_MSG, def.max_lines.value)));
         }
     }
 }

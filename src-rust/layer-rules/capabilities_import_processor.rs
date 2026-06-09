@@ -10,9 +10,10 @@ use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchImportProcessor
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_violation_constant::AES001_FORBIDDEN_IMPORT;
+use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
 use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
 use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
@@ -96,23 +97,8 @@ impl ArchImportProcessor {
                 .iter()
                 .any(|p| self._is_layer_match(&target_layer, p));
             if !is_same && !allowed {
-                let msg = if !definition
-                    .forbidden_import_violation_message
-                    .value
-                    .is_empty()
-                {
-                    definition.forbidden_import_violation_message.value.clone()
-                } else {
-                    "Forbidden layer import detected.".to_string()
-                };
-                self._add_forbidden_violation(
-                    results,
-                    file_path,
-                    imp,
-                    file_layer,
-                    &target_layer,
-                    &msg,
-                );
+                let msg = AES001_FORBIDDEN_IMPORT;
+                self._add_forbidden_violation(results, file_path, imp, file_layer, &target_layer, msg);
                 return;
             }
         }
@@ -123,16 +109,7 @@ impl ArchImportProcessor {
             .iter()
             .any(|p| self._is_layer_match(&target_layer, p))
         {
-            let msg = if !definition
-                .forbidden_import_violation_message
-                .value
-                .is_empty()
-            {
-                definition.forbidden_import_violation_message.value.clone()
-            } else {
-                "Forbidden layer import detected.".to_string()
-            };
-            self._add_forbidden_violation(results, file_path, imp, file_layer, &target_layer, &msg);
+            self._add_forbidden_violation(results, file_path, imp, file_layer, &target_layer, AES001_FORBIDDEN_IMPORT);
         }
     }
 

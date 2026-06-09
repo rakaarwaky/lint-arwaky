@@ -1,8 +1,8 @@
 // arch_orphan_analyzer — Multi-indicator orphan code detection logic.
 // Implements IArchOrphanProtocol: check_orphans.
 
-use crate::layer_rules::contract_orphan_protocol::IOrphanGraphProtocol;
-use crate::layer_rules::contract_orphan_protocol::IOrphanIndicatorProtocol;
+use crate::orphan_detector::contract_orphan_protocol::IOrphanGraphProtocol;
+use crate::orphan_detector::contract_orphan_protocol::IOrphanIndicatorProtocol;
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;

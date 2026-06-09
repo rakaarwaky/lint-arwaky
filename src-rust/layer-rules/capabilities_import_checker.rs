@@ -3,6 +3,7 @@
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_violation_constant::{aes001_forbidden_import, aes002_mandatory_import};
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use std::fs;
@@ -244,19 +245,7 @@ impl ArchImportRuleChecker {
             }
 
             if !is_present {
-                let msg = if !definition
-                    .mandatory_import_violation_message
-                    .value
-                    .is_empty()
-                {
-                    definition.mandatory_import_violation_message.value.clone()
-                } else {
-                    format!(
-                        "AES002 MANDATORY_IMPORT: Missing required import: '{}'.",
-                        required
-                    )
-                };
-                violations.push(LintResult::new_arch(file, 0, "AES002", Severity::HIGH, &msg));
+                violations.push(LintResult::new_arch(file, 0, "AES002", Severity::HIGH, &aes002_mandatory_import(required)));
             }
         }
     }
@@ -300,24 +289,12 @@ impl ArchImportRuleChecker {
                         }
                     };
                     if is_forbidden {
-                        let msg = if !definition
-                            .forbidden_import_violation_message
-                            .value
-                            .is_empty()
-                        {
-                            definition.forbidden_import_violation_message.value.clone()
-                        } else {
-                            format!(
-                                "AES001 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden module '{}'.",
-                                layer_name, module
-                            )
-                        };
                         violations.push(LintResult::new_arch(
                             file,
                             *line_num as usize,
                             "AES001",
                             Severity::CRITICAL,
-                            &msg,
+                            &aes001_forbidden_import(layer_name, &module),
                         ));
                     }
                 }

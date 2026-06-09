@@ -2,6 +2,7 @@
 // Implements IInternalCheckerProtocol: barrel completeness, forbid_internal_all, no_primitives.
 
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_violation_constant::{AES012_BARREL_COMPLETENESS, AES013_INTERNAL_ALL_FORBIDDEN};
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use std::fs;
@@ -40,7 +41,7 @@ impl ArchInternalChecker {
     pub fn check_barrel_completeness(
         &self,
         file: &str,
-        filename: &str,
+        _filename: &str,
         definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
@@ -48,19 +49,7 @@ impl ArchInternalChecker {
             return;
         }
         if !Self::file_has_all_export(file) {
-            let msg = if !definition
-                .barrel_completeness_violation_message
-                .value
-                .is_empty()
-            {
-                definition
-                    .barrel_completeness_violation_message
-                    .value
-                    .clone()
-            } else {
-                format!("{} missing export declarations. Barrel files must re-export all public items via pub use/__all__/export *.", filename)
-            };
-            violations.push(LintResult::new_arch(file, 0, "AES012", Severity::MEDIUM, &msg));
+            violations.push(LintResult::new_arch(file, 0, "AES012", Severity::MEDIUM, AES012_BARREL_COMPLETENESS));
         }
     }
 
@@ -85,19 +74,7 @@ impl ArchInternalChecker {
             return;
         }
         if Self::file_has_all_export(file) {
-            let msg = if !definition
-                .forbid_internal_all_violation_message
-                .value
-                .is_empty()
-            {
-                definition
-                    .forbid_internal_all_violation_message
-                    .value
-                    .clone()
-            } else {
-                "__all__ is forbidden in non-barrel files.".to_string()
-            };
-            violations.push(LintResult::new_arch(file, 0, "AES013", Severity::MEDIUM, &msg));
+            violations.push(LintResult::new_arch(file, 0, "AES013", Severity::MEDIUM, AES013_INTERNAL_ALL_FORBIDDEN));
         }
     }
 

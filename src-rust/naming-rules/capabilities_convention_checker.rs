@@ -11,6 +11,7 @@ use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNam
 use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
 use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;
+use crate::shared_common::taxonomy_violation_constant::aes003_naming_convention;
 use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
 use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::output_report::taxonomy_severity_vo::Severity;
@@ -136,29 +137,7 @@ impl NamingRuleChecker {
             let actual_words = stem.split('_').count() as i32;
 
             if actual_words != expected {
-                let msg = if let Some(ref name) = layer_name {
-                    let key = LayerNameVO::new(name);
-                    config
-                        .layers
-                        .get(&key)
-                        .filter(|def| !def.word_count_violation_message.value.is_empty())
-                        .map(|def| def.word_count_violation_message.value.clone())
-                        .unwrap_or_else(|| {
-                            format!(
-                                "AES003 NAMING_CONVENTION: File '{}' has {} words, expected {}.\n\
-                            WHY? Strict naming ensures architectural consistency.\n\
-                            FIX: Rename to exactly {} words separated by underscores.",
-                                basename, actual_words, expected, expected
-                            )
-                        })
-                } else {
-                    format!(
-                        "AES003 NAMING_CONVENTION: File '{}' has {} words, expected {}.\n\
-                        WHY? Strict naming ensures architectural consistency.\n\
-                        FIX: Rename to exactly {} words separated by underscores.",
-                        basename, actual_words, expected, expected
-                    )
-                };
+                let msg = aes003_naming_convention(expected);
                 results.push(Self::make_lint_result(
                     file,
                     1,

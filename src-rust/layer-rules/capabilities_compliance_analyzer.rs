@@ -54,34 +54,22 @@ impl ArchComplianceAnalyzer {
                         }
                         if rule.min_lines.value > 0 {
                             ldef.min_lines = rule.min_lines.clone();
-                            ldef.min_lines_violation_message =
-                                rule.min_lines_violation_message.clone();
                         }
                         if rule.max_lines.value > 0 {
                             ldef.max_lines = rule.max_lines.clone();
-                            ldef.max_lines_violation_message =
-                                rule.max_lines_violation_message.clone();
                         }
                         if rule.barrel_completeness.value {
                             ldef.barrel_completeness = rule.barrel_completeness.clone();
-                            ldef.barrel_completeness_violation_message =
-                                rule.barrel_completeness_violation_message.clone();
                         }
                         if rule.forbid_internal_all.value {
                             ldef.forbid_internal_all = rule.forbid_internal_all.clone();
-                            ldef.forbid_internal_all_violation_message =
-                                rule.forbid_internal_all_violation_message.clone();
                         }
                         if rule.mandatory_class_definition.value {
                             ldef.mandatory_class_definition =
                                 rule.mandatory_class_definition.clone();
-                            ldef.mandatory_class_definition_violation_message =
-                                rule.mandatory_class_definition_violation_message.clone();
                         }
                         if !rule.forbidden_inheritance.values.is_empty() {
                             ldef.forbidden_inheritance = rule.forbidden_inheritance.clone();
-                            ldef.forbidden_inheritance_violation_message =
-                                rule.forbidden_inheritance_violation_message.clone();
                         }
                     }
                 }
@@ -146,8 +134,6 @@ impl ArchComplianceAnalyzer {
                                 if !r.forbidden_inheritance.values.is_empty() {
                                     spec_def.forbidden_inheritance =
                                         r.forbidden_inheritance.clone();
-                                    spec_def.forbidden_inheritance_violation_message =
-                                        r.forbidden_inheritance_violation_message.clone();
                                 }
                             }
                         }

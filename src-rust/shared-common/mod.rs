@@ -35,6 +35,8 @@ pub mod taxonomy_fix_vo;
 pub use taxonomy_fix_vo::{FixResult};
 pub mod taxonomy_started_event;
 pub use taxonomy_started_event::{ScanStarted};
+pub mod taxonomy_violation_constant;
+pub use taxonomy_violation_constant::*;
 pub mod taxonomy_definition_vo;
 pub use taxonomy_definition_vo::{LayerDefinition,LayerMapVO,NamingConfig};
 pub mod taxonomy_governance_entity;

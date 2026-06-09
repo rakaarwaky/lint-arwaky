@@ -7,6 +7,7 @@ use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_violation_constant::{aes003_naming_convention, aes011_suffix_mismatch, AES011_SUFFIX_FORBIDDEN};
 use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
 use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;
@@ -120,26 +121,7 @@ impl ArchNamingChecker {
 
         if let Ok(re) = Regex::new(&naming_regex) {
             if !re.is_match(stem) {
-                let msg = if let Some(def) = definition {
-                    if !def.word_count_violation_message.value.is_empty() {
-                        def.word_count_violation_message.value.clone()
-                    } else if !config.naming.word_count_violation_message.value.is_empty() {
-                        config.naming.word_count_violation_message.value.clone()
-                    } else {
-                        format!(
-                            "AES003 NAMING_CONVENTION: Filename does not follow the {}-word underscore-separated pattern.\n\
-                            WHY? Strict three-word names ensure architectural consistency.\n\
-                            FIX: Rename the file to exactly {} words separated by underscores.",
-                            expected_word_count, expected_word_count
-                        )
-                    }
-                } else {
-                    format!(
-                        "AES003 NAMING_CONVENTION: Filename does not follow the {}-word pattern.",
-                        expected_word_count
-                    )
-                };
-                violations.push(Self::make_result(file, "AES003", &msg, Severity::HIGH));
+                violations.push(Self::make_result(file, "AES003", &aes003_naming_convention(expected_word_count), Severity::HIGH));
             }
         }
     }
@@ -176,14 +158,7 @@ impl ArchNamingChecker {
         // AES011: Forbidden suffix check
         if let Some(ref suf) = suffix {
             if def.forbidden_suffix.values.contains(suf) {
-                let msg = if !def.suffix_violation_message.value.is_empty() {
-                    def.suffix_violation_message.value.clone()
-                } else {
-                    "AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.\n\
-                    WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
-                    FIX: Rename the file to use an allowed suffix or move it to the correct layer.".to_string()
-                };
-                violations.push(Self::make_result(file, "AES011", &msg, Severity::HIGH));
+                violations.push(Self::make_result(file, "AES011", AES011_SUFFIX_FORBIDDEN, Severity::HIGH));
                 return;
             }
         }
@@ -196,16 +171,7 @@ impl ArchNamingChecker {
                 .unwrap_or(false);
             if !valid {
                 let allowed_list = def.allowed_suffix.values.join(", ");
-                let msg = if !def.suffix_violation_message.value.is_empty() {
-                    def.suffix_violation_message.value.clone()
-                } else {
-                    format!(
-                        "AES011 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
-                        WHY? Strict suffixes ensure every component has a clear role.\n\
-                        FIX: Add one of the required suffixes: {}.",
-                        allowed_list
-                    )
-                };
+                let msg = aes011_suffix_mismatch(&allowed_list);
                 let code = if _layer_name.as_ref().map(|l| l.as_str()) == Some("contract") {
                     "AES008"
                 } else {
