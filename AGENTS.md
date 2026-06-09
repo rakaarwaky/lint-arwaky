@@ -44,7 +44,7 @@ src-rust/
   layer-rules/       — Import, compliance, cycle, self-lint rules
   role-rules/        — Unused, inheritance, bypass rules
   orphan-detector/   — Orphan code detection
-  primitive-checker/ — Primitive obsession (AES006)
+  primitive-checker/ — Primitive obsession (AES016)
   cli-commands/      — CLI command surfaces
   cli-transport/     — CLI execution transport
   config-system/     — Config loading & parsing
@@ -70,16 +70,16 @@ src-rust/
 ```
 
 Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
-Surfaces must NOT import infrastructure/capabilities directly — they go through `ServiceContainerAggregate` trait (AES023).
+Surfaces must NOT import infrastructure/capabilities directly — they go through `ServiceContainerAggregate` trait (AES001 sub-condition).
 
 AES rules enforced: 27 codes across 4 groups (Layer & Import, Naming & Structure, File & Content, Role Violations). See `RULES_AES.md` for the complete catalog with old-to-new mapping.
 
 ## Key conventions
 
-- Filenames: exactly `[layer]_[concept]_[suffix].rs` (AES003)
-- Every logic file must define a struct implementing a contract trait (AES009, AES027)
-- `#[allow(...)]`, `unwrap()`, `panic!` are forbidden (AES014)
-- `_constant` files may only contain `pub const` / `pub static` (AES033)
+- Filenames: `[layer]_[concept(s)]_[suffix].rs` — flexible word count (AES010)
+- Every logic file must define a struct implementing a contract trait (AES011, AES014)
+- `#[allow(...)]`, `unwrap()`, `panic!` are forbidden (AES022)
+- `_constant` files may only contain `pub const` / `pub static` (AES015)
 - No bypass: `noqa`, `type: ignore` flagged
 - Score: starts at 100, deducts per finding. Any CRITICAL = fail regardless.
 
@@ -92,6 +92,117 @@ cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 ```
 
 Each contains intentional violations. See `docs/TEST.md` for pass/fail criteria.
+
+## Graph-It-Live — Dependency Graph Monitoring
+
+Graph-It-Live is integrated via MCP (`graph-it serve`) untuk visualisasi dan analisis dependency graph secara real-time. Gunakan untuk memonitor arsitektur sampai production ready.
+
+### Tool MCP yang tersedia
+
+| Tool | Fungsi | Contoh Use Case |
+|------|--------|-----------------|
+| `path-in <file>` | Cari semua file yang import file tertentu | Cek siapa saja yang import suatu contract port |
+| `trace <sym>` | Trace execution flow: `path/file.rs#FunctionName` | Lacak alur dari surface sampai infrastructure |
+| `explain <file>` | Analisis intra-file call hierarchy | Pahami struktur internal suatu file |
+| `path <file>` | Crawl dependency graph dari entry file | Graph seluruh project dari entry point |
+| `cycles <file>` | Deteksi circular dependencies | Pastikan tidak ada cycle antar layer |
+| `scan` | Re-index workspace setelah perubahan | Update index setelah pull/merge |
+
+### Production Readiness Checklist (pakai Graph-It-Live)
+
+**Setiap sebelum merge ke `develop`:**
+
+```bash
+# 1. Self-lint — pastikan 0 CRITICAL
+cargo run --bin lint-arwaky-cli -- check .
+
+# 2. Circular dependency check — random sample dari tiap layer
+#    Panggil tool cycles untuk file di tiap layer:
+#    - cycles source-parsing/contract_parser_port.rs
+#    - cycles naming-rules/contract_provider_port.rs
+#    - cycles di-containers/contract_service_aggregate.rs
+
+# 3. Verify layer boundary — pastikan surface tidak import infra langsung
+#    Panggil tool path-in untuk file infrastructure:
+#    - path-in language-adapters/infrastructure_js_naming.rs
+#    Harusnya di-import hanya oleh agent/di-container files
+
+# 4. Orphan check — cari file yang tidak di-import siapa pun
+#    Panggil tool path-in untuk file yang mencurigakan:
+#    - path-in orphan-detector/capabilities_orphan_analyzer.rs
+#    Pastikan setiap file punya minimal 1 incoming reference
+
+# 5. Build + test
+cargo build --release
+cargo test --workspace
+cargo clippy --all-targets -- -D warnings
+
+# 6. Scan test projects — pastikan violation count tidak turun drastis
+cargo run --bin lint-arwaky-cli -- scan test-project-rust/
+cargo run --bin lint-arwaky-cli -- scan test-project-python/
+cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
+```
+
+### Workflow Harian
+
+1. **Sebelum coding**: `scan` untuk refresh index
+2. **Saat coding**: `path-in <file>` untuk cek impact sebelum refactor
+3. **Sebelum commit**: `cycles <file>` untuk cek circular deps
+4. **Sebelum PR**: jalankan production readiness checklist di atas
+
+### Contoh Resolusi Masalah via Graph-It-Live
+
+| Problem | Graph-It-Live Command | What to check |
+|---------|----------------------|---------------|
+| Surface import violation | `path-in surfaces/...` | Pastikan surface hanya import taxonomy + contract_aggregate_ |
+| Missing inheritance | `trace capabilities/...#IAnalyzer` | Lacak siapa yang implement IAnalyzer protocol |
+| Dead code | `path-in suspicious_file.rs` | Jika 0 incoming references, file tidak dipakai |
+| Circular dependency | `cycles <file>` | Identifikasi cycle, extract shared logic ke lower layer |
+| Layer boundary leak | `path-in infrastructure/...` | Pastikan hanya di-import oleh agent + container |
+
+## Project Files & Directories
+
+### Configuration & Rules
+| File | Purpose |
+|------|--------|
+| `Cargo.toml` | Rust project manifest — dependencies, bin targets |
+| `lint_arwaky.config.rust.yaml` | AES rules config for Rust |
+| `lint_arwaky.config.python.yaml` | AES rules config for Python |
+| `lint_arwaky.config.javascript.yaml` | AES rules config for JavaScript/TypeScript |
+
+### Documentation
+| File | Purpose |
+|------|--------|
+| `RULES_AES.md` | Complete 27 AES rules catalog (v2.0) |
+| `RULES_RUFF.md` | Python Ruff rule mapping |
+| `RULES_MYPY.md` | Python MyPy rule mapping |
+| `RULES_BANDIT.md` | Python Bandit rule mapping |
+| `RULES_RADON.md` | Python Radon complexity rules |
+| `ARCHITECTURE.md` | AES architecture specification (6 layer) |
+| `PRD.md` | Product Requirements Document |
+| `CHANGELOG.md` | Release history |
+| `CONTRIBUTING.md` | Contribution guide |
+| `DEPLOY.md` | Deployment guide |
+| `SKILL.md` | MCP skill documentation for AI agents |
+| `TEST.md` | Test project pass/fail criteria |
+| `LICENSE` | MIT License |
+
+### Scripts
+| File | Purpose |
+|------|--------|
+| `install.local.sh` | Local install script |
+| `install.remote.sh` | Remote/CI install script |
+| `scripts/install_graphit_live.sh` | Build + install Graph-It-Live extension |
+
+### Project Directories
+| Directory | Purpose |
+|-----------|--------|
+| `src-rust/` | Source code — 26 feature folders, 6 layers |
+| `test-project-rust/` | Test project with intentional violations (Rust) |
+| `test-project-python/` | Test project with intentional violations (Python) |
+| `test-project-javascript/` | Test project with intentional violations (JS/TS) |
+| `Graph-It-Live-arwaky/` | Graph-It-Live fork — dependency graph visualization |
+| `scripts/` | Build, install, and utility scripts |
 
 ## VCS: jj (Jujutsu) — always use instead of git
 
