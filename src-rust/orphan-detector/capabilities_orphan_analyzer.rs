@@ -1,8 +1,8 @@
 // arch_orphan_analyzer — Multi-indicator orphan code detection logic.
 // Implements IArchOrphanProtocol: check_orphans.
 
-use crate::layer_rules::contract_orphan_protocol::IOrphanGraphProtocol;
-use crate::layer_rules::contract_orphan_protocol::IOrphanIndicatorProtocol;
+use crate::orphan_detector::contract_orphan_protocol::IOrphanGraphProtocol;
+use crate::orphan_detector::contract_orphan_protocol::IOrphanIndicatorProtocol;
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
@@ -15,7 +15,7 @@ use /* UNKNOWN: GraphAnalysisContext */ crate::code_analysis::taxonomy_analysis_
 use /* UNKNOWN: ImportGraph */ crate::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use /* UNKNOWN: InboundLinkMap */ crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use /* UNKNOWN: InheritanceMap */ crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
 use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
@@ -159,7 +159,7 @@ impl OrphanIndicatorEvaluator {
     }
 }
 
-use crate::layer_rules::taxonomy_names_constant::{
+use crate::shared_common::taxonomy_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_SURFACES,
     LAYER_TAXONOMY,
 };

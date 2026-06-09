@@ -111,7 +111,60 @@ AES022 HIGH - src-rust/cli-commands/surface_dashboard_view.rs
 
 ## 8. Empirical Findings (Code Audit)
 
-N/A — Pending review after vertical slicing refactoring.
+### 8.1 Current Implementation
+
+| Component | Location | Lines | Status |
+|-----------|----------|-------|--------|
+| `check_surface_hierarchy()` | `layer-rules/capabilities_hierarchy_checker.rs:50` | 321 lines | Active — called at coordinator line 166 |
+| AES018 barrel wiring | `lines 64-85` | 21 lines | CRITICAL severity (documented as HIGH) |
+| AES019 passive check | `lines 87-268` | 181 lines | CRITICAL severity (documented as HIGH) |
+| Helper functions (`is_in_surfaces`, `is_init`, `is_wired`, `stem`, `directory`) | `lines 273-330` | 57 lines | Shared utilities |
+| Unit tests | `lines 332-371` | 39 lines | 4 tests — helper functions only |
+| Test fixture | `test-project-rust/src-rust/surfaces/complex_busy_handler.py` | 26 lines | Python class with 12 public methods (>10 threshold) |
+
+The implementation handles two sub-rules:
+- **AES018**: Checks that every non-init file in `surfaces/` directory is imported/wired in the barrel (`__init__.py`, `mod.rs`, etc.)
+- **AES019**: Checks that surface classes are passive — ≤10 public methods, ≤80 lines/method body, ≤3 if-nesting depth
+
+Both emit `CRITICAL` severity (differs from FRD which documents HIGH).
+
+### 8.2 Bugs Found
+
+| # | Bug | Location | Impact | Fix |
+|---|-----|----------|--------|-----|
+| B1 | **Path-based detection instead of prefix-based** | `is_in_surfaces()` line 274-276 | Uses `f.to_string().contains("/surfaces/")` to identify surface files. After the vertical slicing refactoring, files are organized by **filename prefix** (`surface_*`), not directory. Any `surface_`-prefixed file not physically in a `/surfaces/` directory is silently skipped. | Change to check filename prefix `surface_` or `__surface` per the prefix-based architecture spec. |
+| B2 | **Python-only method detection** | Lines 27-28 (`PY_METHOD_RE`), 31 (`PY_CLASS_RE`), 105-151 | The AES019 checker only detects Python `class` and `def` keywords. Rust files with `impl SurfaceHandler for ...` blocks and their methods are completely invisible to the passivity check. Since the project is primarily Rust, this is a critical blind spot. | Add Rust-aware detection for `impl` blocks, `fn` methods, and trait implementations. |
+| B3 | **Severity mismatch — CRITICAL vs HIGH** | Lines 81, 264 | Both AES018 and AES019 use `Severity::CRITICAL`, but the FRD documents them as HIGH. CRITICAL severity causes automatic build failure regardless of score. | Downgrade to `Severity::HIGH` to match the FRD specification, unless CRITICAL is intentional — in which case update the FRD. |
+| B4 | **No AES018 test fixture** | `test-project-rust/` | AES018 (barrel wiring check) has no test fixture. A file not imported in its barrel would test this path, but none exists. | Add a surface file not wired in its barrel to the test project. |
+| B5 | **AES018/AES019 not tested** | Unit tests (lines 332-371) | Only helper functions (`is_in_surfaces`, `is_init`, `stem`, `directory`) are unit-tested. The core AES018 and AES019 detection logic has zero unit test coverage. | Add integration tests for `check_surface_hierarchy()` with known violating files. |
+| B6 | **Hardcoded thresholds** | Lines 40-42 | `MAX_PUBLIC_METHODS = 10`, `MAX_FUNCTION_BODY_LINES = 80`, `MAX_IF_DEPTH = 3` are hardcoded constants. The FRD (section 9) flags this as needing YAML config migration, but no progress has been made. | Move thresholds to `lint_arwaky.config.rust.yaml` under a `surface_hierarchy:` section. |
+
+### 8.3 What Needs to Be Added
+
+1. **Prefix-based surface detection** — replace `is_in_surfaces()` path check with filename prefix `surface_` check.
+2. **Rust method/class detection** — add regex or AST-based parsing for Rust `impl` blocks, `fn` methods, and trait definitions.
+3. **Configurable thresholds** — move `MAX_PUBLIC_METHODS`, `MAX_FUNCTION_BODY_LINES`, `MAX_IF_DEPTH` to YAML config.
+4. **Unit tests for AES018 and AES019** — tempdir-based tests with known-good and known-bad surface files.
+5. **AES018 barrel wiring fixture** — add a surface file that is deliberately not wired in its barrel.
+6. **Integration test assertion** — wire `test-project-rust/src-rust/surfaces/complex_busy_handler.py` into the test runner and assert AES019 is emitted.
+
+### 8.4 What to Keep
+
+1. **Comprehensive heuristics** — method count, body-line length, if-nesting depth are three good proxy metrics for passivity that catch real violations.
+2. **Multi-language barrel detection** — `is_wired()` already checks for Python (`import`, `from .`), Rust (`mod`, `use`), and JS/TS (string reference) barrel patterns. This is robust.
+3. **Existing unit tests** — 4 tests for helper functions (`is_in_surfaces`, `is_init`, `stem`, `directory`) provide basic coverage.
+4. **Test fixture clarity** — `complex_busy_handler.py` with 12 public methods (2 over the threshold) is a well-documented test case.
+5. **CLI integration** — called from the central coordinator, ensuring blanket coverage of all scanned files.
+
+### 8.5 Empirical Evidence from Test Projects
+
+| Project | File | Expected | Actual (current) | Notes |
+|---------|------|----------|------------------|-------|
+| `test-project-rust` | `surfaces/complex_busy_handler.py` | AES019 CRITICAL | ✅ Likely flagged | 12 public methods > 10 threshold. But path-based `is_in_surfaces()` check must pass first. |
+| `self-lint` | `cli-commands/surface_check_command.rs` | AES019 check (if Rust had support) | ❌ **Skipped** (B2) | Rust `impl` block with methods — Python-only regex misses this entirely. |
+| `self-lint` | Any `surface_`-prefixed file outside `/surfaces/` directory | AES018/AES019 check | ❌ **Skipped** (B1) | Prefix-based files not in `/surfaces/` path are invisible to the checker. |
+| `test-project-rust` | (hypothetical) un-wired surface file | AES018 CRITICAL | ❌ **No test exists** (B4) | No fixture exercises the barrel wiring path. |
+| `self-lint` | `surfaces/` directory files (if any) | AES018 barrel wiring | ✅ `is_wired()` works | Barrel detection handles Rust `mod` and `use` syntax. |
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

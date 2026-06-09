@@ -151,7 +151,72 @@ AES007 - src-rust/cli-commands/surface_command_handler.rs:5 - Barrel import styl
 
 ## 8. Empirical Findings (Code Audit)
 
-N/A — Pending review after vertical slicing refactoring.
+### 8.1 Current Implementation
+
+| Component | Location | Lines | Status |
+|-----------|----------|-------|--------|
+| LintCheckingCoordinator | `code-analysis/agent_checking_coordinator.rs` | 767 | **FULLY IMPLEMENTED** — 16 inline checker methods |
+| CLI check command | `cli-commands/surface_check_command.rs` | 89 | **FULLY IMPLEMENTED** — CLI dispatch |
+| CLI scan command | `cli-commands/surface_core_command.rs` | — | **FULLY IMPLEMENTED** |
+| CLI CI command | `cli-commands/surface_dev_command.rs` | — | **FULLY IMPLEMENTED** |
+| CLI report command | `cli-commands/surface_report_command.rs` | — | **FULLY IMPLEMENTED** |
+| Main entry | `cli-commands/surface_main_handler.rs` | — | **FULLY IMPLEMENTED** |
+| Pipeline execution | `pipeline-jobs/agent_pipeline_execution.rs` | — | **FULLY IMPLEMENTED** |
+| Score computation | `shared-common/taxonomy_score_vo.rs`, `output-report/taxonomy_score_constant.rs` | — | **FULLY IMPLEMENTED** |
+| Reporting formatter | `output-report/capabilities_reporting_formatter.rs` | — | **FULLY IMPLEMENTED** |
+
+Inline checker methods in `agent_checking_coordinator.rs`:
+- `check_bypass_comments()` (line 221) — AES014 bypass detection
+- `check_unused_imports()` (line 288) — AES015 unused imports
+- `check_contract_barrel()` (line 398) — AES007 contract barrel
+- `check_dead_inheritance()` (line 416) — AES016 dead inheritance
+- `check_agent_any_bypass()` (line 473) — AES024 wildcard imports
+- `check_forbidden_inheritance()` (line 492) — AES026 inheritance rules
+- `check_agent_role()` (line 578) — AES021 agent line count
+- `check_surface_role()` (line 593) — AES022 surface fn count
+- `check_surface_imports()` (line 608) — AES023 surface imports
+- `check_mandatory_inheritance()` (line 631) — AES027 mandatory impl
+- `check_capability_routing()` (line 660) — AES025 capability routing
+- `check_single_bottleneck()` (line 696) — AES030 bottleneck
+- `check_missing_vo()` (line 722) — AES031 missing VO
+- `check_mcp_schema()` (line 751) — AES033 MCP schema
+
+### 8.2 Bugs Found
+
+1. **Path-based detection in inline checkers** (`agent_checking_coordinator.rs:578,593,608`)
+   - `check_agent_role()`, `check_surface_role()`, `check_surface_imports()` use path guards (`file.contains("/agent/")`) instead of prefix-based
+   - With 26 feature folders, these no longer match correctly
+   - **Impact**: AES021/AES022/AES023 false negatives for files in vertical feature folders
+
+2. **Inline checkers bypass full checker implementations**
+   - Sophisticated checkers exist in `layer-rules/` (e.g., `ArchImportRuleChecker`, `SurfaceHierarchyChecker`)
+   - But the coordinator also has inline versions that duplicate logic
+   - **Impact**: Double maintenance, inconsistent behavior
+
+3. **Score computation is heuristic**
+   - Score starts at 100, deducts fixed points per severity
+   - Does NOT consider violation density or file complexity
+   - **Impact**: Two codebases with same violation count get same score despite different sizes
+
+### 8.3 What Needs to Be Added
+
+- **Consolidate checkers**: Move all logic from inline methods to proper checker implementations in `layer-rules/`
+- **Fix path guards**: Replace `file.contains("/agent/")` with prefix-based or layer-name matching
+- **Score weighting**: Consider file count, total lines, or complexity in score computation
+
+### 8.4 What to Keep
+
+- **CLI command structure** ✅ — clean `check`, `scan`, `ci`, `report` split
+- **Format support** ✅ — text, JSON, SARIF, JUnit
+- **Score + auto-fail** ✅ — CRITICAL auto-fail correctly implemented
+- **Pipeline execution** ✅ — async dispatch with progress reporting
+
+### 8.5 Empirical Evidence from Test Projects
+
+- `lint-arwaky-cli check .` runs successfully against own codebase
+- `lint-arwaky-cli scan test-project-rust/` detects intentional violations
+- Score computation produces consistent results for known inputs
+- Pending Review: All acceptance criteria after prefix-based refactoring
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

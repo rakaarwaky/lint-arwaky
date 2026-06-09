@@ -30,7 +30,7 @@ AES enforces a **3-Word File Naming Convention**: `[layer]_[concept]_[suffix]`.
 
 1. **Layer (prefix)**: The architectural layer (e.g., `contract_`, `capabilities_`, `taxonomy_`).
 2. **Concept (middle)**: A single word defining the core concept (e.g., `compliance`, `import`, `rule`).
-3. **Suffix**: Defines the architectural role (e.g., `_port`, `_protocol`, `_checker`).
+3. **Role (suffix)**: Defines the architectural role (e.g., `_port`, `_protocol`, `_checker`).
 
 *Example:* `contract_compliance_port.rs` = layer=contract, concept=compliance, suffix=port.
 
@@ -80,45 +80,45 @@ graph TD
 
 Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[suffix].rs`. All six layers coexist in each feature folder, distinguished by their prefix.
 
-| Layer (prefix) | Allowed suffixes | Feature folders |
-| -------------- | ---------------- | --------------- |
-| `taxonomy_`    | `_vo`, `_entity`, `_event`, `_error`, `_constant` | `shared-common/`, `layer-rules/`, `config-system/`, etc. |
-| `contract_`    | `_port`, `_protocol`, `_aggregate` | `layer-rules/`, `config-system/`, `di-containers/`, `pipeline-jobs/`, etc. |
-| `capabilities_` | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions` | `layer-rules/`, `semantic-analysis/`, `naming-rules/`, `code-analysis/`, etc. |
-| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_store`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `language-adapters/`, `source-parsing/`, `config-system/`, `file-system/`, `http-client/`, etc. |
-| `agent_`       | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`, `_mixin`, `_dispatcher`, `_handler`, `_result`, `_state` | `pipeline-jobs/`, `code-analysis/`, `di-containers/`, `lifecycle-state/`, etc. |
-| `surface_`     | `_command`, `_handler`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_provider` | `cli-commands/`, `mcp-server/` |
+| Layer (prefix)      | Allowed suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Feature folders                                                                                           |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `shared-common/`, `layer-rules/`, `config-system/`, etc.                                            |
+| `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `layer-rules/`, `config-system/`, `di-containers/`, `pipeline-jobs/`, etc.                        |
+| `capabilities_`   | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions`                                                                                                                                                  | `layer-rules/`, `semantic-analysis/`, `naming-rules/`, `code-analysis/`, etc.                     |
+| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `language-adapters/`, `source-parsing/`, `config-system/`, `file-system/`, `http-client/`, etc. |
+| `agent_`          | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`, `_mixin`, `_state`                                                                                                                                                                                                                                                                                                                                                                                                                                        | `role-rules/`, `pipeline-jobs/`, `code-analysis/`, `di-containers/`, `lifecycle-state/`, etc.   |
+| `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                                                                      | `cli-commands/`, `mcp-server/`                                                                        |
 
 ### Feature Folders (26 vertical slices)
 
 ```
 src-rust/
-  layer-rules/       — Import, compliance, cycle, self-lint rules
-  role-rules/        — Unused, inheritance, bypass rules
-  orphan-detector/   — Orphan code detection
-  primitive-checker/ — Primitive obsession (AES006)
-  cli-commands/      — CLI command surfaces
-  cli-transport/     — CLI execution transport
-  config-system/     — Config loading & parsing
-  pipeline-jobs/     — Jobs, dispatcher, execution
-  naming-rules/      — Naming convention & variants
-  semantic-analysis/ — Data flow, scope, tracer
-  file-watch/        — File watching
-  git-hooks/         — Git hooks management
-  multi-project/     — Multi-project governance
-  project-setup/     — Project init, doctor, mcp-config
-  plugin-system/     — Plugin discovery & management
-  output-report/     — Output formatting & report generation
-  code-analysis/     — Code analysis (linting, data flow)
-  mcp-server/        — MCP server
-  source-parsing/    — Source code parsing
-  lifecycle-state/   — Agent lifecycle management
-  language-adapters/ — Python, JS, Rust adapters
-  di-containers/     — DI container aggregates
-  file-system/       — File system abstraction
-  http-client/       — HTTP client
-  metrics-service/   — Metrics provider
-  shared-common/     — Shared value objects & errors
+  layer-rules/        — Prefix rules: layer detection (by filename prefix), import validation (AES001/AES002), naming convention (AES003), cycle detection (AES020), hierarchy (AES018/AES019), internal checks (AES012/AES013), self-lint (AES014), compliance coordination. NOT role/suffix or quality logic.
+  role-rules/         — Suffix/role behavior rules: agent role violations (AES021), surface role violations (AES022), taxonomy role (AES006/AES033), contract role (AES026), mandatory inheritance (AES027). Each suffix type has a dedicated checker with its own protocol + aggregate.
+  orphan-detector/    — Orphan code detection (AES017). Protocol defined in `contract_orphan_protocol.rs` within this folder.
+  primitive-checker/  — Primitive obsession detection (AES006) — shared utility for scanning raw types.
+  cli-commands/       — CLI command surfaces
+  cli-transport/      — CLI execution transport
+  config-system/      — Config loading & parsing
+  pipeline-jobs/      — Jobs, dispatcher, execution
+  naming-rules/       — Naming convention & variants
+  semantic-analysis/  — Data flow, scope, tracer
+  file-watch/         — File watching
+  git-hooks/          — Git hooks management
+  multi-project/      — Multi-project governance
+  project-setup/      — Project init, doctor, mcp-config
+  plugin-system/      — Plugin discovery & management
+  output-report/      — Output formatting & report generation
+  code-analysis/      — Quality algorithms: unused imports (AES015), class/line checking (AES009, AES004/AES005), type detection (AES006 protocol), fix processor (AES030/AES031/AES032), symbol renamer. Wires into coordinator pipeline.
+  mcp-server/         — MCP server
+  source-parsing/     — Source code parsing
+  lifecycle-state/    — Agent lifecycle management
+  language-adapters/  — Python, JS, Rust adapters
+  di-containers/      — DI container aggregates
+  file-system/        — File system abstraction
+  http-client/        — HTTP client
+  metrics-service/    — Metrics provider
+  shared-common/      — Shared value objects (VOs), entities, events, errors, constants, role definitions. All `taxonomy_*` files live here.
 ```
 
 ### Layer Specifications
@@ -164,13 +164,19 @@ src-rust/
 #### 5. Agent (`agent_` prefix)
 
 - **Prefix**: `agent_`
-- **Allowed Suffixes**: `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`
-- **Allowed Imports**: `taxonomy_`, `contract_`, `capabilities_`, `infrastructure_` files.
+- **Allowed Suffixes**: `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`, `_mixin`, `_state`
+- **Allowed Imports**: Depends on role:
+  - `orchestrator`/`coordinator`: `taxonomy_` + `contract_` only (AES021). Must NOT import capabilities/infrastructure directly.
+  - `container`/`registry`/`mixin`: `taxonomy_` + `contract_` + `capabilities_` + `infrastructure_` (wiring assembly).
+  - `manager`/`state`: `taxonomy_` + `contract_` only (leaf support modules).
 - **Description**: Orchestration, DI wiring, pipeline execution.
 
 #### 6. Surfaces (`surface_` prefix)
 
 - **Prefix**: `surface_`
-- **Allowed Suffixes**: `_command`, `_handler`, `_controller`
-- **Allowed Imports**: `taxonomy_` and `contract_` only. Capabilities/infrastructure/agent forbidden (must use `ServiceContainerAggregate`).
+- **Allowed Suffixes**: `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_action`, `_screen`
+- **Allowed Imports**: Depends on role:
+  - Smart surfaces (`command`/`controller`/`page`/`entry`): `taxonomy_` + `contract_aggregate_` only (AES023). Must NOT import capabilities/infrastructure/agent directly — use `ServiceContainerAggregate`.
+  - Utility surfaces (`hook`/`store`/`action`/`screen`): `taxonomy_` only + passive surfaces. Must NOT import smart surfaces (AES018).
+  - Passive surfaces (`component`/`view`/`layout`): `taxonomy_` only (AES019). No logic or orchestration.
 - **Description**: CLI and MCP server entry points.

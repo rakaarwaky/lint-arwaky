@@ -1,16 +1,9 @@
 // arch_internal_checker — Internal architectural rule checks (barrels, primitives).
 // Implements IInternalCheckerProtocol: barrel completeness, forbid_internal_all, no_primitives.
 
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_violationrs_constant::{AES012_BARREL_COMPLETENESS, AES013_INTERNAL_ALL_FORBIDDEN};
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use std::fs;
 
@@ -19,26 +12,6 @@ pub struct ArchInternalChecker {}
 impl ArchInternalChecker {
     pub fn new() -> Self {
         Self {}
-    }
-
-    fn make_result(file: &str, code: &str, msg: &str, sev: Severity) -> LintResult {
-        LintResult {
-            file: FilePath::new(file.to_string()).unwrap_or_default(),
-            line: LineNumber::new(0),
-            column: ColumnNumber::new(0),
-            code: ErrorCode::raw(code),
-            message: LintMessage::new(msg),
-            source: Some(AdapterName::raw("architecture")),
-            severity: sev,
-            enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                file: None,
-                start_line: None,
-                end_line: None,
-            }),
-            related_locations: LocationList::new(),
-        }
     }
 
     fn file_has_all_export(file: &str) -> bool {
@@ -68,7 +41,7 @@ impl ArchInternalChecker {
     pub fn check_barrel_completeness(
         &self,
         file: &str,
-        filename: &str,
+        _filename: &str,
         definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
@@ -76,19 +49,7 @@ impl ArchInternalChecker {
             return;
         }
         if !Self::file_has_all_export(file) {
-            let msg = if !definition
-                .barrel_completeness_violation_message
-                .value
-                .is_empty()
-            {
-                definition
-                    .barrel_completeness_violation_message
-                    .value
-                    .clone()
-            } else {
-                format!("{} missing export declarations. Barrel files must re-export all public items via pub use/__all__/export *.", filename)
-            };
-            violations.push(Self::make_result(file, "AES012", &msg, Severity::MEDIUM));
+            violations.push(LintResult::new_arch(file, 0, "AES012", Severity::MEDIUM, AES012_BARREL_COMPLETENESS));
         }
     }
 
@@ -113,19 +74,7 @@ impl ArchInternalChecker {
             return;
         }
         if Self::file_has_all_export(file) {
-            let msg = if !definition
-                .forbid_internal_all_violation_message
-                .value
-                .is_empty()
-            {
-                definition
-                    .forbid_internal_all_violation_message
-                    .value
-                    .clone()
-            } else {
-                "__all__ is forbidden in non-barrel files.".to_string()
-            };
-            violations.push(Self::make_result(file, "AES013", &msg, Severity::MEDIUM));
+            violations.push(LintResult::new_arch(file, 0, "AES013", Severity::MEDIUM, AES013_INTERNAL_ALL_FORBIDDEN));
         }
     }
 

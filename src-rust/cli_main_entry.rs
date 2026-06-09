@@ -7,7 +7,7 @@ use std::sync::Arc;
 pub struct CliMainEntry {}
 
 use clap::Parser;
-use lint_arwaky::code_analysis::capabilities_lint_processor::format_report;
+use lint_arwaky::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
 use lint_arwaky::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use lint_arwaky::cli_commands::surface_core_command::{Cli, Commands, ConfigCommands, SetupCommands};
 use lint_arwaky::cli_commands::surface_fix_command::register_fix_commands;
@@ -96,7 +96,8 @@ fn handle_report(path: Option<String>, output_format: String) -> ExitCode {
         "sarif" => print_sarif(&results, &root),
         "junit" => print_junit(&results),
         _ => {
-            let report = format_report(&results, &root);
+            let formatter = ReportFormatterProcessor::new();
+            let report = formatter.format_text(&results, &root);
             println!("{}", report);
         }
     }
@@ -517,7 +518,8 @@ fn run_default_check(project_root: &str) -> ExitCode {
     println!("Scanning: {}", project_root);
     println!();
     let results = lint_path(project_root);
-    let report = format_report(&results, project_root);
+    let formatter = ReportFormatterProcessor::new();
+    let report = formatter.format_text(&results, project_root);
     println!("{}", report);
     if has_critical(&results) {
         ExitCode::from(1)
@@ -579,7 +581,8 @@ fn walk_rs_files(dir: &std::path::Path, cb: &mut impl FnMut(std::path::PathBuf))
 
 fn run_lint_and_report(root: &str) -> ExitCode {
     let results = lint_path(root);
-    let report = format_report(&results, root);
+    let formatter = ReportFormatterProcessor::new();
+    let report = formatter.format_text(&results, root);
     println!("{}", report);
     if has_critical(&results) {
         ExitCode::from(1)

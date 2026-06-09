@@ -1,5 +1,8 @@
 /// config_discovery_provider — Provider for discovering configuration files in the filesystem.
 use crate::config_system::contract_discovery_port::IConfigDiscoveryPort;
+use crate::config_system::taxonomy_config_vo::default_aes_config;
+use crate::config_system::taxonomy_config_vo::parse_config_yaml;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::config_system::taxonomy_provider_error::ConfigError;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
@@ -43,6 +46,30 @@ impl ConfigDiscoveryProvider {
         }
         None
     }
+
+    pub fn load_architecture_config(project_root: Option<&Path>, src_dir: &Path) -> ArchitectureConfig {
+        let search_start = project_root.unwrap_or_else(|| src_dir.parent().unwrap_or(src_dir));
+        const CONFIG_NAMES: &[&str] = &["lint_arwaky.config.rust.yaml", "lint_arwaky.config.yaml"];
+        let mut dir = search_start;
+        loop {
+            for name in CONFIG_NAMES {
+                let candidate = dir.join(name);
+                if candidate.is_file() {
+                    if let Ok(content) = std::fs::read_to_string(&candidate) {
+                        let cfg = parse_config_yaml(&content);
+                        if !cfg.layers.is_empty() {
+                            return cfg;
+                        }
+                    }
+                }
+            }
+            match dir.parent() {
+                Some(p) if p != dir => dir = p,
+                _ => break,
+            }
+        }
+        default_aes_config()
+    }
 }
 
 impl IConfigDiscoveryPort for ConfigDiscoveryProvider {
@@ -74,8 +101,9 @@ impl IConfigDiscoveryPort for ConfigDiscoveryProvider {
             &base,
             &[
                 "lint_arwaky.config.jinja",
-                "lint_arwaky.config.yaml",
+                "lint_arwaky.config.rust.yaml",
                 "lint_arwaky.config.python.yaml",
+                "lint_arwaky.config.yaml",
             ],
         )
         .map(Ok)

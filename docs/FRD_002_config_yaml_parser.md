@@ -138,7 +138,57 @@ No direct UI. Feedback via:
 
 ## 8. Empirical Findings (Code Audit)
 
-N/A — Pending review after vertical slicing refactoring.
+### 8.1 Current Implementation
+
+| Component | Location | Lines | Status |
+|-----------|----------|-------|--------|
+| Language detector | `config-system/infrastructure_detector_provider.rs` | ~40 | **FULLY IMPLEMENTED** — 4-tier detection (source dir, manifest, extensions, fallback) |
+| Config YAML reader | `config-system/infrastructure_yaml_reader.rs` | 60 | **FULLY IMPLEMENTED** — reads from project root + parent fallback |
+| Config parser | `config-system/infrastructure_parser_provider.rs` | 87 | **FULLY IMPLEMENTED** — YAML + TOML + JSON deserialization |
+| Loading orchestrator | `config-system/agent_loading_orchestrator.rs` | 82 | **PARTIALLY IMPLEMENTED** — see bug below |
+| Rules validator | `config-system/capabilities_rules_validator.rs` | 70 | **FULLY IMPLEMENTED** — validates rule config YAML |
+| Config value objects | `config-system/taxonomy_config_vo.rs` | — | **FULLY IMPLEMENTED** |
+| Language detection VO | `project-setup/taxonomy_language_vo.rs` | — | **FULLY IMPLEMENTED** |
+| Contract ports | `config-system/contract_reader_port.rs`, `config-system/contract_parser_port.rs`, `config-system/contract_detector_port.rs` | ~15 each | **STUBS** — trait definitions only, minimal method signatures |
+
+### 8.2 Bugs Found
+
+1. **CRITICAL: Parsed config thrown away** (`agent_loading_orchestrator.rs:55-57`)
+   ```rust
+   Ok(_project_config) => {     // parsed successfully but underscore = unused
+       let config = default_config_for_language(language);  // hardcoded default wins
+       ConfigResult::new(config, source, Vec::new())
+   }
+   ```
+   - The project's YAML config is read from disk, parsed successfully into `_project_config`
+   - Then immediately discarded — the function returns `default_config_for_language()` instead
+   - **Impact**: ALL project-specific architecture rule overrides are completely non-functional at runtime
+   - **Fix**: Change `Ok(_project_config)` to `Ok(project_config)` and return `ConfigResult::new(project_config, ...)`
+
+2. **`serde_json::from_value(serde_json::to_value(&raw).unwrap_or_default())` fragile conversion** (`infrastructure_parser_provider.rs`)
+   - Uses double conversion: YAML → serde_yaml::Value → JSON Value → ProjectConfig
+   - `unwrap_or_default()` silently swallows deserialization errors → returns empty ProjectConfig
+   - **Impact**: Malformed YAML fields are silently ignored instead of reported
+
+### 8.3 What Needs to Be Added
+
+- **Wire parsed config**: Fix the `_project_config` discard bug (section 8.2 item 1)
+- **Error reporting**: Replace `unwrap_or_default()` with proper error propagation in parser
+- **Unit tests**: No unit tests for `ConfigYamlReader`, `ConfigParserProvider`, or `LanguageDetectorProvider`
+- **JS/TS config**: No `infrastructure_javascript_reader.rs` equivalent — JS config handled by generic reader
+
+### 8.4 What to Keep
+
+- **Multi-format parsing** ✅ — YAML + TOML + JSON via serde ecosystem
+- **Language detection priority** ✅ — 4 tiers (100/90/70/50 confidence)
+- **Parent directory fallback** ✅ — searches project root → parent
+- **Graceful fallback on missing config** ✅ — logs warning, returns embedded defaults
+
+### 8.5 Empirical Evidence from Test Projects
+
+- AC-001 through AC-005 all need re-verification due to the config-discard bug
+- Config files exist in test projects (`lint_arwaky.config.rust.yaml`) but their contents are never honored at runtime
+- Pending Review: All acceptance criteria
 
 ## 9. Dependencies & Risks
 | Dependency | Description | Risk | Mitigation |

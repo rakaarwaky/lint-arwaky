@@ -1,17 +1,10 @@
 // arch_import_checker — Import-related architectural checks.
 // Implements IArchImportProtocol: check_mandatory_imports, check_forbidden_imports, check_legacy_import_rules.
 
-use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_violationrs_constant::{aes001_forbidden_import, aes002_mandatory_import};
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use std::fs;
 use std::path::Path;
@@ -95,27 +88,6 @@ impl ArchImportRuleChecker {
                 })
             })
         })
-    }
-
-    fn make_result(file: &str, line: i64, code: &str, msg: &str, sev: Severity) -> LintResult {
-        LintResult {
-            file: FilePath::new(file.to_string())
-                .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default()),
-            line: LineNumber::new(line),
-            column: ColumnNumber::new(0),
-            code: ErrorCode::raw(code),
-            message: LintMessage::new(msg),
-            source: Some(AdapterName::raw("architecture")),
-            severity: sev,
-            enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                file: None,
-                start_line: None,
-                end_line: None,
-            }),
-            related_locations: LocationList::new(),
-        }
     }
 
     fn get_basename(file: &str) -> String {
@@ -273,19 +245,7 @@ impl ArchImportRuleChecker {
             }
 
             if !is_present {
-                let msg = if !definition
-                    .mandatory_import_violation_message
-                    .value
-                    .is_empty()
-                {
-                    definition.mandatory_import_violation_message.value.clone()
-                } else {
-                    format!(
-                        "AES002 MANDATORY_IMPORT: Missing required import: '{}'.",
-                        required
-                    )
-                };
-                violations.push(Self::make_result(file, 0, "AES002", &msg, Severity::HIGH));
+                violations.push(LintResult::new_arch(file, 0, "AES002", Severity::HIGH, &aes002_mandatory_import(required)));
             }
         }
     }
@@ -329,24 +289,12 @@ impl ArchImportRuleChecker {
                         }
                     };
                     if is_forbidden {
-                        let msg = if !definition
-                            .forbidden_import_violation_message
-                            .value
-                            .is_empty()
-                        {
-                            definition.forbidden_import_violation_message.value.clone()
-                        } else {
-                            format!(
-                                "AES001 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden module '{}'.",
-                                layer_name, module
-                            )
-                        };
-                        violations.push(Self::make_result(
+                        violations.push(LintResult::new_arch(
                             file,
-                            *line_num as i64,
+                            *line_num as usize,
                             "AES001",
-                            &msg,
                             Severity::CRITICAL,
+                            &aes001_forbidden_import(layer_name, &module),
                         ));
                     }
                 }
@@ -393,12 +341,12 @@ impl ArchImportRuleChecker {
                                 "[AES Layer Violation] {}. File in '{}' imports from '{}' via '{}'.",
                                 desc, file_layer, target, module
                             );
-                            violations.push(Self::make_result(
+                            violations.push(LintResult::new_arch(
                                 file,
-                                *line_num as i64,
+                                *line_num as usize,
                                 "AES001",
-                                &msg,
                                 Severity::CRITICAL,
+                                &msg,
                             ));
                             break;
                         }
@@ -409,13 +357,45 @@ impl ArchImportRuleChecker {
     }
 
     fn detect_module_layer(&self, module: &str, config: &ArchitectureConfig) -> Option<String> {
-        let parts: Vec<&str> = module.split('.').collect();
+        // Try Rust-style :: separator first, then Python-style .
+        let parts: Vec<&str> = if module.contains("::") {
+            module.split("::").collect()
+        } else {
+            module.split('.').collect()
+        };
         for part in &parts {
+            // Prefix-based matching (FRD v1.1)
+            if let Some(layer) = Self::extract_layer_from_import(part) {
+                return Some(layer);
+            }
+            // Legacy path-based matching
             for (name, def) in &config.layers {
-                let path_last = def.path.value.split('/').last().unwrap_or("");
-                if *part == name.value.as_str() || *part == path_last {
+                if *part == name.value.as_str() {
                     return Some(name.value.clone());
                 }
+                let path_last = def.path.value.split('/').last().unwrap_or("");
+                if *part == path_last {
+                    return Some(name.value.clone());
+                }
+            }
+        }
+        None
+    }
+
+    /// Extract layer name from an import segment using filename prefix.
+    /// e.g. "capabilities_import_checker" → Some("capabilities")
+    fn extract_layer_from_import(segment: &str) -> Option<String> {
+        const PREFIX_MAP: &[(&str, &str)] = &[
+            ("taxonomy_", "taxonomy"),
+            ("contract_", "contract"),
+            ("capabilities_", "capabilities"),
+            ("infrastructure_", "infrastructure"),
+            ("agent_", "agent"),
+            ("surface_", "surfaces"),
+        ];
+        for (prefix, layer) in PREFIX_MAP {
+            if segment.starts_with(prefix) {
+                return Some(layer.to_string());
             }
         }
         None

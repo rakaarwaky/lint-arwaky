@@ -5,9 +5,9 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::taxonomy_rule_vo::ArchitectureRule;
-use crate::layer_rules::taxonomy_definition_vo::LayerDefinition;
-use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 
 pub struct ArchComplianceAnalyzer {
     pub config: ArchitectureConfig,
@@ -54,34 +54,22 @@ impl ArchComplianceAnalyzer {
                         }
                         if rule.min_lines.value > 0 {
                             ldef.min_lines = rule.min_lines.clone();
-                            ldef.min_lines_violation_message =
-                                rule.min_lines_violation_message.clone();
                         }
                         if rule.max_lines.value > 0 {
                             ldef.max_lines = rule.max_lines.clone();
-                            ldef.max_lines_violation_message =
-                                rule.max_lines_violation_message.clone();
                         }
                         if rule.barrel_completeness.value {
                             ldef.barrel_completeness = rule.barrel_completeness.clone();
-                            ldef.barrel_completeness_violation_message =
-                                rule.barrel_completeness_violation_message.clone();
                         }
                         if rule.forbid_internal_all.value {
                             ldef.forbid_internal_all = rule.forbid_internal_all.clone();
-                            ldef.forbid_internal_all_violation_message =
-                                rule.forbid_internal_all_violation_message.clone();
                         }
                         if rule.mandatory_class_definition.value {
                             ldef.mandatory_class_definition =
                                 rule.mandatory_class_definition.clone();
-                            ldef.mandatory_class_definition_violation_message =
-                                rule.mandatory_class_definition_violation_message.clone();
                         }
                         if !rule.forbidden_inheritance.values.is_empty() {
                             ldef.forbidden_inheritance = rule.forbidden_inheritance.clone();
-                            ldef.forbidden_inheritance_violation_message =
-                                rule.forbidden_inheritance_violation_message.clone();
                         }
                     }
                 }
@@ -146,8 +134,6 @@ impl ArchComplianceAnalyzer {
                                 if !r.forbidden_inheritance.values.is_empty() {
                                     spec_def.forbidden_inheritance =
                                         r.forbidden_inheritance.clone();
-                                    spec_def.forbidden_inheritance_violation_message =
-                                        r.forbidden_inheritance_violation_message.clone();
                                 }
                             }
                         }
@@ -161,16 +147,27 @@ impl ArchComplianceAnalyzer {
         Self { config }
     }
 
+    /// Detect layer from filename — prioritize prefix-based detection (FRD v1.1),
+    /// fallback ke path-based untuk root layer files.
     pub fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String> {
+        let filename = Path::new(file_path)
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("");
+
+        // PREFIX-BASED DETECTION (FRD v1.1)
+        if let Some(layer) = Self::extract_layer_from_prefix(filename) {
+            return Some(self.resolve_specialized_layer(&layer, file_path));
+        }
+
+        // FALLBACK: Path-based detection untuk root entry files (cli_main_entry, mcp_main_entry)
         let rel = Self::get_relative_path(file_path, root_dir);
 
-        // Sort by path-length descending so longer (more specific) paths win.
         let mut sorted_layers: Vec<(&LayerNameVO, &LayerDefinition)> =
             self.config.layers.iter().collect();
         sorted_layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
 
         for (name, def) in &sorted_layers {
-            // Skip already-specialised entries like "capabilities(command)"
             if name.value.contains('(') {
                 continue;
             }
@@ -189,11 +186,40 @@ impl ArchComplianceAnalyzer {
         None
     }
 
+    /// Extract layer name dari filename prefix.
+    /// e.g. "capabilities_import_checker.rs" → Some("capabilities")
+    ///      "surface_command_handler.rs" → Some("surfaces")
+    ///      "cli_main_entry.rs" → None (root)
+    fn extract_layer_from_prefix(filename: &str) -> Option<String> {
+        let stem = Path::new(filename)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("");
+
+        const PREFIX_MAP: &[(&str, &str)] = &[
+            ("taxonomy_", "taxonomy"),
+            ("contract_", "contract"),
+            ("capabilities_", "capabilities"),
+            ("infrastructure_", "infrastructure"),
+            ("agent_", "agent"),
+            ("surface_", "surfaces"),
+        ];
+
+        for (prefix, layer) in PREFIX_MAP {
+            if stem.starts_with(prefix) {
+                return Some(layer.to_string());
+            }
+        }
+
+        None
+    }
+
     /// Determine which layer a dotted module path belongs to.
     ///
-    /// Two strategies (Python parity):
+    /// Three strategies (prefix-based first per FRD v1.1):
     ///   1. Direct segment match against layer names.
-    ///   2. Path-based match: module-path-as-filesystem-path contains the layer path.
+    ///   2. Prefix-based match: segment starts with layer prefix (e.g. "taxonomy_definition_vo").
+    ///   3. Path-based match: module-path-as-filesystem-path contains the layer path.
     pub fn detect_module_layer(&self, module: &str) -> Option<String> {
         let meaningful_parts: Vec<&str> = module.split('.').filter(|p| !p.is_empty()).collect();
 
@@ -209,7 +235,14 @@ impl ArchComplianceAnalyzer {
             }
         }
 
-        // 2. Match with definition paths (e.g. "src/capabilities" → "capabilities").
+        // 2. Prefix-based match: segment starts with layer prefix (e.g. "taxonomy_definition_vo").
+        for part in &meaningful_parts {
+            if let Some(layer) = Self::extract_layer_from_prefix(part) {
+                return Some(self.refine_module_layer(&layer, &meaningful_parts));
+            }
+        }
+
+        // 3. Match with definition paths (e.g. "src/capabilities" → "capabilities").
         let module_as_path = module.replace('.', "/");
         for (name, def) in &self.config.layers {
             let def_path = def.path.value.trim_matches('/');

@@ -157,7 +157,7 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
 
     fn get_fix_orchestrator(&self, dry_run: bool) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
         Some(Arc::new(
-            crate::code_analysis::agent_fix_orchestrator::LintFixOrchestrator::with_dry_run(
+            crate::code_analysis::capabilities_fix_processor::LintFixProcessor::with_dry_run(
                 dry_run,
                 self.architecture_linter.clone(),
             ),
