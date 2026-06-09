@@ -4,13 +4,31 @@
 use std::collections::HashMap;
 
 /// Generated .env file content.
+#[derive(Default)]
 pub struct EnvContent {
     pub value: String,
 }
 
+impl std::fmt::Debug for EnvContent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EnvContent")
+            .field("value", &self.value)
+            .finish()
+    }
+}
+
 /// Generic JSON-like configuration value object.
+#[derive(Default)]
 pub struct McpConfig {
     pub value: HashMap<String, serde_json::Value>,
+}
+
+impl std::fmt::Debug for McpConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("McpConfig")
+            .field("value", &self.value)
+            .finish()
+    }
 }
 
 /// Business logic for generating setup and configuration artifacts.

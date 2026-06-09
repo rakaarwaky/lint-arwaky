@@ -116,7 +116,7 @@ impl ArchImportRuleChecker {
         };
         let mut result: Vec<(usize, String)> = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
-        let mut i = 0;
+        let mut i = 0usize;
         while i < lines.len() {
             let trimmed = lines[i].trim();
             if trimmed.starts_with("import ")
@@ -173,7 +173,7 @@ impl ArchImportRuleChecker {
     fn parse_import_lines(content: &str) -> Vec<(usize, String)> {
         let mut result: Vec<(usize, String)> = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
-        let mut i = 0;
+        let mut i = 0usize;
         while i < lines.len() {
             let trimmed = lines[i].trim();
             if trimmed.starts_with("import ")
