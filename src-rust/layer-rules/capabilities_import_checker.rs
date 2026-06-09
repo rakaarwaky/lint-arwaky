@@ -382,7 +382,7 @@ impl ArchImportRuleChecker {
                             violations.push(LintResult::new_arch(
                                 file,
                                 *line_num,
-                                "AES023",
+                                "AES001",
                                 Severity::CRITICAL,
                                 &msg,
                             ));

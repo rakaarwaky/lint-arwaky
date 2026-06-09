@@ -33,7 +33,7 @@ use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    AES030_CAPABILITY_ROUTING, AES031_SINGLE_BOTTLENECK, AES032_MISSING_VO,
+    AES037_CAPABILITY_ROUTING, AES036_SINGLE_BOTTLENECK, AES038_MISSING_VO,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
@@ -273,10 +273,10 @@ impl DispatchRoutingChecker {
                         results,
                         &ref_.file,
                         &ref_.line,
-                        "AES030",
+                        "AES037",
                         &format!(
                             "{} Method '{}' not found on class '{}'. Defined methods: {}.",
-                            AES030_CAPABILITY_ROUTING,
+                            AES037_CAPABILITY_ROUTING,
                             ref_.method_name.value,
                             ref_.class_name.value,
                             found_methods
@@ -288,10 +288,10 @@ impl DispatchRoutingChecker {
                     results,
                     &ref_.file,
                     &ref_.line,
-                    "AES030",
+                    "AES037",
                     &format!(
                         "{} Class '{}' not found in any scanned file.",
-                        AES030_CAPABILITY_ROUTING, ref_.class_name.value
+                        AES037_CAPABILITY_ROUTING, ref_.class_name.value
                     ),
                 );
             }
@@ -375,10 +375,10 @@ impl DispatchRoutingChecker {
                 results,
                 &item.file,
                 &item.line,
-                "AES031",
+                "AES036",
                 &format!(
                     "{} Action '{}' routes to '{}' but {} other capability classes exist ({}).",
-                    AES031_SINGLE_BOTTLENECK,
+                    AES036_SINGLE_BOTTLENECK,
                     item.method.value,
                     class_name.value,
                     other_classes.len(),
@@ -436,10 +436,10 @@ impl DispatchRoutingChecker {
                         results,
                         file_path,
                         &LineNumber::new(line_no),
-                        "AES032",
+                        "AES038",
                         &format!(
                             "{} Capability call 'self.some_executor.{}()' missing required VO parameter.",
-                            AES032_MISSING_VO, method_name
+                            AES038_MISSING_VO, method_name
                         ),
                     );
                 }

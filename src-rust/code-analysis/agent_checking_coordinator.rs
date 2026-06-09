@@ -30,10 +30,10 @@ use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes015_unused_import, aes016_dead_inheritance, aes027_mandatory_inheritance,
-    AES014_BYPASS_COMMENT, AES014_PANIC, AES014_UNWRAP_EXPECT,
-    AES020_CIRCULAR_IMPORT, AES022_SURFACE_ROLE_VIOLATION, AES025_MCP_SCHEMA,
-    AES031_SINGLE_BOTTLENECK, AES032_MISSING_VO,
+    aes023_unused_import, aes024_dead_inheritance, aes014_mandatory_inheritance,
+    AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
+    AES012_CIRCULAR_IMPORT, AES031_SURFACE_ROLE_VIOLATION,
+    AES036_SINGLE_BOTTLENECK, AES038_MISSING_VO,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -86,7 +86,6 @@ impl LintCheckingCoordinator {
             Self::check_unused_imports(file, &c, &mut violations);
             Self::check_dead_inheritance(file, &c, &mut violations);
             Self::check_agent_any_bypass(file, &c, &mut violations);
-            Self::check_mcp_schema(file, &c, &mut violations);
             Self::check_mandatory_inheritance(file, &c, &mut violations);
 
             for line in c.lines() {
@@ -181,9 +180,9 @@ impl LintCheckingCoordinator {
             rl.push(Self::mk(
                 "",
                 0,
-                "AES020",
+                "AES012",
                 Severity::CRITICAL,
-                AES020_CIRCULAR_IMPORT,
+                AES012_CIRCULAR_IMPORT,
             ));
         }
         // Inline orphan check: prefix/suffix based per-layer logic with barrel resolution
@@ -206,7 +205,7 @@ impl LintCheckingCoordinator {
                 let imported = BarrelImportResolver::is_imported_by_contract(fp, &barrel_map, files);
                 if !imported {
                     let stem = basename.replace(".rs", "").replace(".py", "");
-                    rl.push(Self::mk(fp, 0, "AES017", Severity::LOW, &format!("Taxonomy '{}' not imported by contract.", stem)));
+                    rl.push(Self::mk(fp, 0,                     "AES030", Severity::LOW, &format!("Taxonomy '{}' not imported by contract.", stem)));
                 }
                 continue;
             }
@@ -231,7 +230,7 @@ impl LintCheckingCoordinator {
                         if c.contains(&format!("impl {} for", trait_name)) { has_impl = true; break; }
                     }
                 }
-                if !has_impl { rl.push(Self::mk(fp, 0, "AES017", Severity::HIGH, &format!("Contract {} '{}' not implemented.", suffix, trait_name))); }
+                if !has_impl { rl.push(Self::mk(fp, 0,                     "AES030", Severity::HIGH, &format!("Contract {} '{}' not implemented.", suffix, trait_name))); }
                 continue;
             }
 
@@ -247,7 +246,7 @@ impl LintCheckingCoordinator {
                         if c.contains(&stem) || c.contains(&format!("mod {}", stem)) { wired = true; break; }
                     }
                 }
-                if !wired { rl.push(Self::mk(fp, 0, "AES017", Severity::HIGH, &format!("{} '{}' not wired.", prefix, stem))); }
+                if !wired { rl.push(Self::mk(fp, 0,                     "AES030", Severity::HIGH, &format!("{} '{}' not wired.", prefix, stem))); }
                 continue;
             }
 
@@ -255,7 +254,7 @@ impl LintCheckingCoordinator {
             if prefix == "surface" {
                 let imps = ctx.import_graph.mapping.get(fp);
                 if imps.map(std::vec::Vec::is_empty).unwrap_or(true) {
-                    rl.push(Self::mk(fp, 0, "AES017", Severity::MEDIUM, "Surface unreachable."));
+                    rl.push(Self::mk(fp, 0,                     "AES030", Severity::MEDIUM, "Surface unreachable."));
                 }
                 continue;
             }
@@ -284,7 +283,7 @@ impl LintCheckingCoordinator {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // INLINE CHECKER METHODS (AES007, 014, 015, 016, 021, 022, 024, 025)
+    // INLINE CHECKER METHODS
     // ─────────────────────────────────────────────────────────────────────────
 
     fn check_bypass_comments(file: &str, content: &str, violations: &mut Vec<LintResult>) {
@@ -313,9 +312,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES014",
+                    "AES022",
                     Severity::CRITICAL,
-                    AES014_BYPASS_COMMENT,
+                    AES022_BYPASS_COMMENT,
                 ));
                 continue;
             }
@@ -324,9 +323,9 @@ impl LintCheckingCoordinator {
                     violations.push(Self::mk(
                         file,
                         i + 1,
-                        "AES014",
+                        "AES022",
                         Severity::CRITICAL,
-                        AES014_BYPASS_COMMENT,
+                        AES022_BYPASS_COMMENT,
                     ));
                     break;
                 }
@@ -335,9 +334,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES014",
+                    "AES022",
                     Severity::CRITICAL,
-                    AES014_UNWRAP_EXPECT,
+                    AES022_UNWRAP_EXPECT,
                 ));
                 continue;
             }
@@ -345,9 +344,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES014",
+                    "AES022",
                     Severity::CRITICAL,
-                    AES014_PANIC,
+                    AES022_PANIC,
                 ));
                 continue;
             }
@@ -453,9 +452,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES015",
+                    "AES023",
                     Severity::MEDIUM,
-                    &aes015_unused_import(name),
+                    &aes023_unused_import(name),
                 ));
             }
         }
@@ -470,9 +469,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES016",
+                    "AES024",
                     Severity::MEDIUM,
-                    &aes016_dead_inheritance("unit struct"),
+                    &aes024_dead_inheritance("unit struct"),
                 ));
                 i += 1;
                 continue;
@@ -489,10 +488,10 @@ impl LintCheckingCoordinator {
                         violations.push(Self::mk(
                             file,
                             i + 1,
-                            "AES016",
-                            Severity::MEDIUM,
-                            &aes016_dead_inheritance("impl block"),
-                        ));
+"AES024",
+                    Severity::MEDIUM,
+                    &aes024_dead_inheritance("impl block"),
+                ));
                     } else {
                         let mut k = j;
                         while k < lines.len() && !impl_str.contains('{') {
@@ -506,9 +505,9 @@ impl LintCheckingCoordinator {
                             violations.push(Self::mk(
                                 file,
                                 i + 1,
-                                "AES016",
+                                "AES024",
                                 Severity::MEDIUM,
-                                &aes016_dead_inheritance("impl block (multi-line)"),
+                                &aes024_dead_inheritance("impl block (multi-line)"),
                             ));
                         }
                     }
@@ -533,9 +532,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES024",
+                    "AES035",
                     Severity::HIGH,
-                    "AES024 AGENT_ANY_BYPASS: Wildcard import in agent layer.",
+                    "AES035 AGENT_ANY_BYPASS: Wildcard import in agent layer.",
                 ));
             }
         }
@@ -549,9 +548,9 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES021",
+                "AES032",
                 Severity::HIGH,
-                "AES021 AGENT_ROLE: Agent file exceeds 300 lines.",
+                "AES032 AGENT_ROLE: Agent file exceeds 300 lines.",
             ));
         }
     }
@@ -569,9 +568,9 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES022",
+                "AES031",
                 Severity::HIGH,
-                AES022_SURFACE_ROLE_VIOLATION,
+                AES031_SURFACE_ROLE_VIOLATION,
             ));
         }
     }
@@ -607,9 +606,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     0,
-                    "AES027",
+                    "AES014",
                     Severity::HIGH,
-                    &aes027_mandatory_inheritance(t),
+                    &aes014_mandatory_inheritance(t),
                 ));
             }
         }
@@ -630,18 +629,18 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES031",
+                "AES036",
                 Severity::MEDIUM,
-                &format!("{} Found {} functions.", AES031_SINGLE_BOTTLENECK, fc),
+                &format!("{} Found {} functions.", AES036_SINGLE_BOTTLENECK, fc),
             ));
         }
         if ic > 5 {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES031",
+                "AES036",
                 Severity::MEDIUM,
-                &format!("{} Found {} impl blocks.", AES031_SINGLE_BOTTLENECK, ic),
+                &format!("{} Found {} impl blocks.", AES036_SINGLE_BOTTLENECK, ic),
             ));
         }
     }
@@ -663,29 +662,13 @@ impl LintCheckingCoordinator {
                     violations.push(Self::mk(
                         file,
                         i + 1,
-                        "AES032",
+                        "AES038",
                         Severity::MEDIUM,
-                        AES032_MISSING_VO,
+                        AES038_MISSING_VO,
                     ));
                 }
             }
         }
     }
 
-    fn check_mcp_schema(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if !file.contains("mcp_") && !file.contains("_schema") {
-            return;
-        }
-        let has = content.contains("fn ")
-            && (content.contains("tool") || content.contains("Tool") || content.contains("schema"));
-        if !has && content.len() > 50 {
-            violations.push(Self::mk(
-                file,
-                0,
-                "AES025",
-                Severity::MEDIUM,
-                AES025_MCP_SCHEMA,
-            ));
-        }
-    }
 }

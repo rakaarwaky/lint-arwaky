@@ -92,50 +92,50 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 | ID     | Requirement                                                                     | Dependency |
 | ------ | ------------------------------------------------------------------------------- | ---------- |
-| FR-025 | **File size limit checker** (AES004) — max line threshold                | FR-003     |
-| FR-026 | **File minimum size checker** (AES005) — min line threshold              | FR-003     |
-| FR-027 | **Primitive usage checker** (AES006) — no raw primitives in domain types | FR-003     |
+| FR-025 | **File size limit checker** (AES020) — max line threshold                | FR-003     |
+| FR-026 | **File minimum size checker** (AES021) — min line threshold              | FR-003     |
+| FR-027 | **Primitive usage checker** (AES016) — no raw primitives in domain types | FR-003     |
 
 ### 5.5 Code Quality & Bypass Detection
 
 | ID     | Requirement                                                                             | Dependency |
 | ------ | --------------------------------------------------------------------------------------- | ---------- |
-| FR-030 | **Bypass comment violation detector** (AES014) — no #[allow, unwrap, panic, noqa | FR-003     |
-| FR-031 | **Unused mandatory import detector** (AES015) — unused imports flagged           | FR-003     |
-| FR-032 | **Dead inheritance bypass detector** (AES016) — empty struct/trait               | FR-003     |
-| FR-033 | **Orphan code detector** (AES017) — unreachable components                       | FR-003     |
+| FR-030 | **Bypass comment violation detector** (AES022) — no #[allow, unwrap, panic, noqa | FR-003     |
+| FR-031 | **Unused mandatory import detector** (AES023) — unused imports flagged           | FR-003     |
+| FR-032 | **Dead inheritance bypass detector** (AES024) — empty struct/trait               | FR-003     |
+| FR-033 | **Orphan code detector** (AES030) — unreachable components                       | FR-003     |
 
 ### 5.6 Surface & Agent Rules
 
 | ID     | Requirement                                                                              | Dependency |
 | ------ | ---------------------------------------------------------------------------------------- | ---------- |
-| FR-035 | **Surface hierarchy violation detector** (AES018) — utility imports smart surface | FR-001     |
-| FR-036 | **Passive surface violation detector** (AES019) — passive imports taxonomy only   | FR-001     |
-| FR-037 | **Agent role violation detector** (AES021) — behavioral mandates per agent role   | FR-001     |
-| FR-038 | **Agent any-bypass detector** (AES024) — no `any` type in orchestrators         | FR-003     |
+| FR-035 | **Surface hierarchy violation detector** (AES033) — utility imports smart surface | FR-001     |
+| FR-036 | **Passive surface violation detector** (AES034) — passive imports taxonomy only   | FR-001     |
+| FR-037 | **Agent role violation detector** (AES032) — behavioral mandates per agent role   | FR-001     |
+| FR-038 | **Agent any-bypass detector** (AES035) — no `any` type in orchestrators         | FR-003     |
 
 ### 5.7 Contract & Aggregate Rules
 
 | ID     | Requirement                                                                              | Dependency |
 | ------ | ---------------------------------------------------------------------------------------- | ---------- |
 | FR-040 | **MCP schema checker** (AES025) — MCP tools need docstrings + JSON Schema         | FR-003     |
-| FR-041 | **Forbidden inheritance detector** (AES026) — aggregate not inherit port/protocol | FR-003     |
-| FR-042 | **Mandatory inheritance checker** (AES027) — every file implements a contract     | FR-003     |
+| FR-041 | **Forbidden inheritance detector** (AES013) — aggregate not inherit port/protocol | FR-003     |
+| FR-042 | **Mandatory inheritance checker** (AES014) — every file implements a contract     | FR-003     |
 
 ### 5.8 Capability Dispatch & Constants
 
 | ID     | Requirement                                                                          | Dependency |
 | ------ | ------------------------------------------------------------------------------------ | ---------- |
-| FR-045 | **Capability method existence checker** (AES030) — dispatch method exists     | FR-003     |
-| FR-046 | **Single capability bottleneck detector** (AES031) — balance dispatch routes  | FR-003     |
-| FR-047 | **Missing VO construction detector** (AES032) — capability needs typed VOs    | FR-003     |
-| FR-048 | **Constant purity checker** (AES033) — _constant files: only pub const/static | FR-003     |
+| FR-045 | **Capability method existence checker** (AES037) — dispatch method exists     | FR-003     |
+| FR-046 | **Single capability bottleneck detector** (AES036) — balance dispatch routes  | FR-003     |
+| FR-047 | **Missing VO construction detector** (AES038) — capability needs typed VOs    | FR-003     |
+| FR-048 | **Constant purity checker** (AES015) — _constant files: only pub const/static | FR-003     |
 
 ### 5.9 Project-Wide Analysis
 
 | ID     | Requirement                                                                      | Dependency |
 | ------ | -------------------------------------------------------------------------------- | ---------- |
-| FR-050 | **Circular dependency cycle analyzer** (AES020) — detect circular imports | FR-003     |
+| FR-050 | **Circular dependency cycle analyzer** (AES012) — detect circular imports | FR-003     |
 
 ### 5.10 CLI Interface
 
@@ -265,7 +265,7 @@ contract       -> taxonomy
 taxonomy       -> taxonomy
 ```
 
-Surfaces must NOT import from `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through the `ServiceContainerAggregate` trait in the contract layer (AES023, AES022). The DI container is created in `cli_main_entry.rs` (root layer, not a surface) and passed to surfaces. This enforces strict dependency inversion per ARCHITECTURE.md.
+Surfaces must NOT import from `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through the `ServiceContainerAggregate` trait in the contract layer (AES001 sub-condition surface_direct). The DI container is created in `cli_main_entry.rs` (root layer, not a surface) and passed to surfaces. This enforces strict dependency inversion per ARCHITECTURE.md.
 
 ### 7.3 MCP Server Architecture
 
@@ -294,7 +294,7 @@ Severity levels and their point penalty per finding:
 
 Total score starts at 100.0 and is deducted per finding. If any CRITICAL finding exists, the run fails regardless of score.
 
-**AES006 Primitive Policy**: Value Object enforcement is **granular per layer**:
+**AES016 Primitive Policy**: Value Object enforcement is **granular per layer**:
 
 - `contract` and `taxonomy(entity|error|event)` → `no_primitives: true` (strict)
 - `infrastructure`, `capabilities`, `surfaces` → `no_primitives: false` (adapter layers may use primitives as supporting types)

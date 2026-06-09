@@ -13,9 +13,9 @@ use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes021_must_implement_contract, aes024_any_type, AES021_COORDINATES_MULTIPLE,
-    AES021_HIGH_LEVEL_POLICY, AES021_LAZY_EAGER_INIT, AES021_MUST_IMPLEMENT_CONTRACT,
-    AES021_NO_DOMAIN_LOGIC, AES021_STATELESS_EXECUTION,
+    aes032_must_implement_contract, aes035_any_type, AES032_COORDINATES_MULTIPLE,
+    AES032_HIGH_LEVEL_POLICY, AES032_LAZY_EAGER_INIT, AES032_MUST_IMPLEMENT_CONTRACT,
+    AES032_NO_DOMAIN_LOGIC, AES032_STATELESS_EXECUTION,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -68,10 +68,10 @@ impl AgentRoleChecker {
         self._check_must_implement_contract(
             f,
             &contract_name,
-            AES021_MUST_IMPLEMENT_CONTRACT,
+            AES032_MUST_IMPLEMENT_CONTRACT,
             analyzer,
             results,
-            "AES021",
+            "AES032",
         );
     }
 
@@ -106,8 +106,8 @@ impl AgentRoleChecker {
                         file: f.clone(),
                         line: line_vo,
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::raw("AES021"),
-                        message: LintMessage::new(AES021_STATELESS_EXECUTION),
+                        code: ErrorCode::raw("AES032"),
+                        message: LintMessage::new(AES032_STATELESS_EXECUTION),
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
@@ -137,8 +137,8 @@ impl AgentRoleChecker {
                     file: f.clone(),
                     line: imp.line.clone(),
                     column: ColumnNumber::new(0),
-                    code: ErrorCode::raw("AES021"),
-                    message: LintMessage::new(AES021_HIGH_LEVEL_POLICY),
+                    code: ErrorCode::raw("AES032"),
+                    message: LintMessage::new(AES032_HIGH_LEVEL_POLICY),
                     source: Some(AdapterName::raw("architecture")),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
@@ -165,8 +165,8 @@ impl AgentRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::raw("AES021"),
-                        message: LintMessage::new(AES021_COORDINATES_MULTIPLE),
+                        code: ErrorCode::raw("AES032"),
+                        message: LintMessage::new(AES032_COORDINATES_MULTIPLE),
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::MEDIUM,
                         enclosing_scope: None,
@@ -229,7 +229,7 @@ impl AgentRoleChecker {
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
-                message: LintMessage::new(AES021_NO_DOMAIN_LOGIC),
+                message: LintMessage::new(AES032_NO_DOMAIN_LOGIC),
                 source: Some(AdapterName::raw("architecture")),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
@@ -260,8 +260,8 @@ impl AgentRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
-                        code: ErrorCode::raw("AES021"),
-                        message: LintMessage::new(AES021_LAZY_EAGER_INIT),
+                        code: ErrorCode::raw("AES032"),
+                        message: LintMessage::new(AES032_LAZY_EAGER_INIT),
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
@@ -289,7 +289,7 @@ impl AgentRoleChecker {
                     .any(|b| b.to_string().contains(&contract_name.value))
             });
             if !has_contract {
-                let message = aes021_must_implement_contract(&contract_name.value);
+                let message = aes032_must_implement_contract(&contract_name.value);
                 results.push(LintResult {
                     file: f.clone(),
                     line: LineNumber::new(0),
@@ -359,8 +359,8 @@ impl AgentRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_num),
                         column: ColumnNumber::new(col),
-                        code: ErrorCode::raw("AES024"),
-                        message: LintMessage::new(aes024_any_type(line)),
+                        code: ErrorCode::raw("AES035"),
+                        message: LintMessage::new(aes035_any_type(line)),
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,

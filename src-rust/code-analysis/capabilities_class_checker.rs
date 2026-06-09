@@ -5,7 +5,7 @@ use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violationrs_constant::AES009_MANDATORY_CLASS_DEFINITION;
+use crate::shared_common::taxonomy_violationrs_constant::AES011_MANDATORY_CLASS_DEFINITION;
 
 pub struct ArchClassChecker {}
 
@@ -80,9 +80,9 @@ impl IMandatoryClassProtocol for ArchClassChecker {
             violations.push(LintResult::new_arch(
                 file,
                 0,
-                "AES009",
+                "AES011",
                 Severity::HIGH,
-                AES009_MANDATORY_CLASS_DEFINITION,
+                AES011_MANDATORY_CLASS_DEFINITION,
             ));
         }
     }

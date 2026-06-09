@@ -13,7 +13,7 @@ use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes003_naming_convention, AES008_SUFFIX_MISMATCH, AES011_SUFFIX_FORBIDDEN,
+    aes010_naming_convention, AES011_SUFFIX_MISMATCH, AES011_SUFFIX_FORBIDDEN,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
@@ -122,8 +122,8 @@ impl ArchNamingChecker {
             if !re.is_match(stem) {
                 violations.push(Self::make_result(
                     file,
-                    "AES003",
-                    &aes003_naming_convention(0),
+                    "AES010",
+                    &aes010_naming_convention(0),
                     Severity::HIGH,
                 ));
             }
@@ -172,7 +172,7 @@ impl ArchNamingChecker {
             }
         }
 
-        // AES010: Strict suffix policy check
+        // AES001: Strict suffix policy check
         if def.suffix_policy.value == "strict" {
             let valid = suffix
                 .as_ref()
@@ -183,18 +183,18 @@ impl ArchNamingChecker {
                 if _layer_name.as_ref().map(|l| l.as_str()) == Some("contract") {
                     violations.push(Self::make_result(
                         file,
-                        "AES008",
-                        AES008_SUFFIX_MISMATCH,
+                        "AES011",
+                        AES011_SUFFIX_MISMATCH,
                         Severity::HIGH,
                     ));
                 } else {
                     let msg = format!(
-                        "AES010 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
+                        "AES001 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
                         WHY? Strict suffixes ensure every component has a clear role.\n\
                         FIX: Add one of the required suffixes: {}.",
                         allowed_list
                     );
-                    violations.push(Self::make_result(file, "AES010", &msg, Severity::HIGH));
+                    violations.push(Self::make_result(file, "AES001", &msg, Severity::HIGH));
                 }
             }
         }

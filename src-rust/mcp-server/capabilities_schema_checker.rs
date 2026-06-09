@@ -1,9 +1,4 @@
-// mcp_tool_schema_checker — AES025 for MCP tools JSON Schema compliance.
-//
-// AES025 MCP_TOOL_SCHEMA_VIOLATION:
-// MCP tools must declare valid JSON Schema for their input parameters.
-// Detects: missing schema, empty schema, invalid JSON Schema syntax,
-// missing descriptions, missing required fields array when properties exist.
+// mcp_tool_schema_checker — MCP tools JSON Schema compliance validation.
 
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
@@ -103,7 +98,7 @@ static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
     })
 });
 
-/// AES025 — Validate MCP tool input/output schemas.
+/// Validate MCP tool input/output schemas.
 pub struct McpSchemaChecker {}
 
 impl Default for McpSchemaChecker {
@@ -252,9 +247,9 @@ impl McpSchemaChecker {
                 file: f.clone(),
                 line: LineNumber::new((func_line_idx as i64) + 1),
                 column: ColumnNumber::new(1),
-                code: ErrorCode::raw("AES025"),
+                code: ErrorCode::raw("MCP001"),
                 message: LintMessage::new(format!(
-                    "AES025 MCP_TOOL_SCHEMA_VIOLATION: MCP tool '{}' is missing a descriptive docstring.\n\
+                    "MCP001 MCP_TOOL_SCHEMA_VIOLATION: MCP tool '{}' is missing a descriptive docstring.\n\
                      WHY? The docstring becomes the tool description in tools/list response — models use it for routing.\n\
                      FIX: Add a docstring describing what this tool does, its inputs, and expected output.",
                     func_name
@@ -298,9 +293,9 @@ impl McpSchemaChecker {
                     file: f.clone(),
                     line: LineNumber::new((func_line_idx as i64) + 1),
                     column: ColumnNumber::new(1),
-                    code: ErrorCode::raw("AES025"),
+                    code: ErrorCode::raw("MCP001"),
                     message: LintMessage::new(format!(
-                        "AES025 MCP_TOOL_SCHEMA_VIOLATION: MCP tool '{}' parameter '{}' lacks a type annotation.\n\
+                        "MCP001 MCP_TOOL_SCHEMA_VIOLATION: MCP tool '{}' parameter '{}' lacks a type annotation.\n\
                          WHY? Untyped parameters cannot be mapped to JSON Schema in the tools/list schema — models won't know the input format.\n\
                          FIX: Add a type annotation (e.g., str, int, FilePath, or a Pydantic model).",
                         func_name, param_name
@@ -381,7 +376,7 @@ impl McpSchemaChecker {
         }
 
         if !violations.is_empty() {
-            self._report_aes025(func_name, violations, f, results, line_number);
+            self._report_mcp_violation(func_name, violations, f, results, line_number);
         }
     }
 
@@ -452,8 +447,8 @@ impl McpSchemaChecker {
         }
     }
 
-    /// Append a single AES025 result to the results list.
-    fn _report_aes025(
+    /// Append a single MCP schema violation result to the results list.
+    fn _report_mcp_violation(
         &self,
         func_name: &str,
         violations: Vec<String>,
@@ -471,9 +466,9 @@ impl McpSchemaChecker {
             file: f.clone(),
             line: LineNumber::new(line),
             column: ColumnNumber::new(1),
-            code: ErrorCode::new("AES025").unwrap_or_else(|_| ErrorCode::raw("AES025")),
+            code: ErrorCode::new("MCP001").unwrap_or_else(|_| ErrorCode::raw("MCP001")),
             message: LintMessage::new(format!(
-                "AES025 MCP_TOOL_SCHEMA_VIOLATION: MCP tool '{}' has an invalid JSON Schema:\n{}\n\
+                "MCP001 MCP_TOOL_SCHEMA_VIOLATION: MCP tool '{}' has an invalid JSON Schema:\n{}\n\
                  WHY? MCP tools must declare valid JSON Schema so LLM clients can validate input before tool calls.\n\
                  FIX: Use a Pydantic BaseModel for tool parameters or provide a valid dict with 'type' and 'properties' keys.",
                 func_name, detail

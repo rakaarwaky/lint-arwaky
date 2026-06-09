@@ -42,7 +42,7 @@ Enforces file naming conventions, structural definitions, and type safety across
 
 | Code | Name | Severity | Message |
 |------|------|----------|---------|
-| AES010 | Naming Convention | MEDIUM | Filename does not follow [layer]_[concept]_[suffix].rs pattern. WHY? Layer prefix identifies the architectural layer, suffix defines role. FIX: Rename to at least prefix_suffix. Exceptions: main.rs, lib.rs, mod.rs. |
+| AES010 | Naming Convention | MEDIUM | Filename does not follow [layer]_[concept(s)]_[suffix] pattern. WHY? Layer prefix identifies the architectural layer, suffix defines role. FIX: Must start with layer prefix (taxonomy_/contract_/etc.) and end with allowed suffix. Exceptions: main.rs, lib.rs, mod.rs. |
 | AES011 | Mandatory Definition | HIGH | File is missing a struct, enum, or trait definition. WHY? Encapsulation in structs/traits is required. FIX: Group functions into a struct. |
 | AES012 | Circular Dependency | CRITICAL | Circular dependency detected between layers ({source} -> {target}). WHY? Circular deps break the bottom-up layering. FIX: Extract shared logic into a lower layer. |
 | AES013 | Forbidden Inheritance | CRITICAL | Contract Aggregate inherits from Port or Protocol. WHY? Aggregate is a composition contract, not an implementation. FIX: Use composition (fields) instead of inheritance. |

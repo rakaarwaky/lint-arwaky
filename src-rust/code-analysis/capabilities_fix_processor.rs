@@ -133,7 +133,7 @@ impl LintFixProcessor {
         &self,
         results: &[crate::output_report::taxonomy_result_vo::LintResult],
     ) -> Vec<String> {
-        let fixable_codes = ["AES003", "AES014", "AES015"];
+        let fixable_codes = ["AES010", "AES022", "AES023"];
         let mut manual: Vec<String> = Vec::new();
         for r in results {
             let code_str = r.code.to_string();
@@ -154,15 +154,15 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
 
         let naming_violations: Vec<_> = results
             .iter()
-            .filter(|r| r.code.to_string().contains("AES003"))
+            .filter(|r| r.code.to_string().contains("AES010"))
             .collect();
         let bypass_violations: Vec<_> = results
             .iter()
-            .filter(|r| r.code.to_string().contains("AES014"))
+            .filter(|r| r.code.to_string().contains("AES022"))
             .collect();
         let unused_import_violations: Vec<_> = results
             .iter()
-            .filter(|r| r.code.to_string().contains("AES015"))
+            .filter(|r| r.code.to_string().contains("AES023"))
             .collect();
 
         let mut fixed_count = 0usize;
@@ -189,7 +189,7 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
                 if old_name != new_name {
                     let count = renamer.rename_symbol(&path.value, old_name, &new_name);
                     fixed_count += count;
-                    self.emit_fix_event(&violation.file, "AES003", count);
+                    self.emit_fix_event(&violation.file, "AES010", count);
                 }
             }
         }
@@ -199,7 +199,7 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
             let fixed = self.fix_bypass_comments(&violation.file.value, line);
             if fixed {
                 fixed_count += 1;
-                self.emit_fix_event(&violation.file, "AES014", 1);
+                    self.emit_fix_event(&violation.file, "AES022", 1);
             } else {
                 total_fixable -= 1;
             }
@@ -210,7 +210,7 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
             let fixed = self.fix_unused_import(&violation.file.value, line);
             if fixed {
                 fixed_count += 1;
-                self.emit_fix_event(&violation.file, "AES015", 1);
+                self.emit_fix_event(&violation.file, "AES023", 1);
             } else {
                 total_fixable -= 1;
             }
@@ -220,7 +220,7 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
 
         let output = if self.dry_run {
             format!(
-                "Dry-run: would fix {} violations ({} AES003 naming, {} AES014 bypass, {} AES015 unused import)\nManual violations remaining:\n{}",
+                "Dry-run: would fix {} violations ({} AES010 naming, {} AES022 bypass, {} AES023 unused import)\nManual violations remaining:\n{}",
                 total_fixable,
                 naming_violations.len(),
                 bypass_violations.len(),

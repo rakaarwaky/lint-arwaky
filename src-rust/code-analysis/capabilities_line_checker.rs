@@ -6,7 +6,7 @@ use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    AES004_FILE_TOO_LARGE_MSG, AES005_FILE_TOO_SHORT_MSG,
+    AES020_FILE_TOO_LARGE_MSG, AES021_FILE_TOO_SHORT_MSG,
 };
 
 pub struct ArchLineChecker {}
@@ -58,11 +58,11 @@ impl ILineCheckerProtocol for ArchLineChecker {
             violations.push(LintResult::new_arch(
                 file,
                 0,
-                "AES005",
+                "AES021",
                 Severity::HIGH,
                 &format!(
                     "{} (min: {}).",
-                    AES005_FILE_TOO_SHORT_MSG, def.min_lines.value
+                    AES021_FILE_TOO_SHORT_MSG, def.min_lines.value
                 ),
             ));
         }
@@ -71,11 +71,11 @@ impl ILineCheckerProtocol for ArchLineChecker {
             violations.push(LintResult::new_arch(
                 file,
                 0,
-                "AES004",
+                "AES020",
                 Severity::HIGH,
                 &format!(
                     "{} (max: {}).",
-                    AES004_FILE_TOO_LARGE_MSG, def.max_lines.value
+                    AES020_FILE_TOO_LARGE_MSG, def.max_lines.value
                 ),
             ));
         }

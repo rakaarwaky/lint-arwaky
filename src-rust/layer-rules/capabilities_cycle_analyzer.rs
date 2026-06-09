@@ -13,7 +13,7 @@ use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::shared_common::taxonomy_violationrs_constant::aes020_circular_import;
+use crate::shared_common::taxonomy_violationrs_constant::aes012_circular_import;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -146,7 +146,7 @@ impl DependencyCycleAnalyzer {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(1),
             column: ColumnNumber::new(0),
-            code: ErrorCode::raw("AES020"),
+            code: ErrorCode::raw("AES012"),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),
             severity: Severity::CRITICAL,
@@ -261,7 +261,7 @@ impl DependencyCycleAnalyzer {
                     .get(source)
                     .cloned()
                     .unwrap_or_else(|| source.to_string());
-                let msg = aes020_circular_import(source, target);
+                let msg = aes012_circular_import(source, target);
                 Self::make_result(&file, &msg)
             })
             .collect()

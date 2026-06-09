@@ -43,297 +43,177 @@ architecture:
     capabilities:
       suffix:
         - flexible:
-            [
-              "analyzer", "checker", "processor", "evaluator", "resolver", 
-              "validator", "formatter", "executor", "transformer", 
-              "calculator", "builder", "compiler", "aggregator", "classifier", 
-              "extractor", "reporter", "mapper", "filter", "collector", 
-              "comparator", "scorer", "inspector", "reviewer", "assessor", "actions"
-            ]
+            ["analyzer", "checker", "processor", "evaluator", "resolver",
+             "validator", "formatter", "executor", "transformer",
+             "calculator", "builder", "compiler", "aggregator", "classifier",
+             "extractor", "reporter", "mapper", "filter", "collector",
+             "comparator", "scorer", "inspector", "reviewer", "assessor", "actions"]
         - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     infrastructure:
       suffix:
         - flexible:
-            [
-              "adapter", "provider", "scanner", "client", "constants", "schemas", 
-              "lifespan", "wrapper", "tracer", "tracker", "variants", "detector", 
-              "patterns", "util", "system", "repository", "cache", "loader", 
-              "writer", "reader", "driver", "connector", "gateway", "serializer", 
-              "encoder", "decoder", "fetcher", "watcher", "indexer", "dispatcher", 
-              "recorder", "proxy", "publisher", "subscriber", "listener", "poller", "streamer"
-            ]
+            ["adapter", "provider", "scanner", "client", "constants", "schemas",
+             "lifespan", "wrapper", "tracer", "tracker", "variants", "detector",
+             "patterns", "util", "system", "repository", "cache", "loader",
+             "writer", "reader", "driver", "connector", "gateway", "serializer",
+             "encoder", "decoder", "fetcher", "watcher", "indexer", "dispatcher",
+             "recorder", "proxy", "publisher", "subscriber", "listener", "poller", "streamer"]
         - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
     surfaces:
       suffix:
-        - strict: 
-            [
-              "command", "controller", "page", "view", "component", 
-              "router", "layout", "entry", "hook", "store", "action", "screen"
-            ]
+        - strict:
+            ["command", "controller", "page", "view", "component",
+             "router", "layout", "entry", "hook", "store", "action", "screen"]
     agent:
       suffix:
         - strict:
-            [
-              "container", "manager", "orchestrator", "registry", "coordinator",
-              "mixin", "state"
-            ]
+            ["container", "manager", "orchestrator", "registry", "coordinator",
+             "mixin", "state"]
 
   rules:
-    global:
-      - name: "Forbid Raw Panic or Bypass Comments"
-        forbid_any_type: false
+    AES001:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      exceptions: ["__init__.py", "__main__.py"]
+      conditions:
+        - scope: "taxonomy(vo)"
+          forbidden: ["agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
+        - scope: "taxonomy(entity,error,event)"
+          forbidden: ["agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
+          mandatory: ["taxonomy(vo|constant)"]
+        - scope: "taxonomy(constant)"
+          forbidden: ["agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
+        - scope: "contract(port|protocol)"
+          forbidden: ["agent", "infrastructure", "surfaces", "capabilities", "contract(aggregate)", "root"]
+          mandatory: ["taxonomy"]
+        - scope: "contract(aggregate)"
+          forbidden: ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+          mandatory: ["taxonomy", "contract(port|protocol|aggregate)"]
+        - scope: "capabilities"
+          forbidden: ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          mandatory: ["taxonomy", "contract(protocol)"]
+        - scope: "infrastructure"
+          forbidden: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          mandatory: ["taxonomy", "contract(port)"]
+        - scope: "agent(container|registry|mixin)"
+          forbidden: ["surfaces", "root"]
+          mandatory: ["taxonomy", "contract"]
+        - scope: "agent(orchestrator|coordinator)"
+          forbidden: ["surfaces", "agent(orchestrator|coordinator|manager|handler|result|state)", "agent(container|registry|mixin)", "root"]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+        - scope: "agent(manager|state)"
+          forbidden: ["agent", "infrastructure", "capabilities", "surfaces", "root"]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+        - scope: "surfaces(command|controller|page|entry)"
+          forbidden: ["agent", "infrastructure", "capabilities", "contract(port)", "contract(protocol)", "root"]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+        - scope: "surfaces(hook|store|action|screen|router)"
+          forbidden: ["agent", "infrastructure", "capabilities", "contract(port)", "contract(protocol)", "surfaces(command|controller|page|entry)", "root"]
+        - scope: "surfaces(component|view|layout)"
+          forbidden: ["agent", "contract", "infrastructure", "capabilities", "surfaces(command|controller|page|entry|hook|store|action|screen|router)", "root"]
+          mandatory: ["taxonomy"]
 
-      - name: "Naming Convention"
-        naming_convention: true
-        exceptions: ["__init__.py", "__main__.py"]
+    AES002:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      exceptions: ["__init__.py", "__main__.py"]
 
-      - name: "forbidden bypass / cheating"
-        forbidden_bypass:
-          [
-            "# noqa", "# type: ignore", "# fmt: off", "# ruff: noqa",
-            "# pylint: disable", "Any", "except:", "pass"
-          ]
-        exceptions: []
+    AES010:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces", "root"]
+      exceptions: ["__init__.py", "__main__.py"]
 
-      - name: "Mandatory Class or Protocol Definition"
-        mandatory_class_definition: true
-        exceptions: ["__init__.py", "__main__.py"]
+    AES011:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces", "root"]
+      exceptions: ["__init__.py", "__main__.py"]
 
-      - name: "Line Count Limits"
-        min_lines: 10
-        exceptions: ["__init__.py", "__main__.py"]
-        max_lines: 700
-        exceptions: ["__init__.py", "__main__.py"]
+    AES012:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
 
-      - name: "Dead Inheritance Bypass"
-        dead_inheritance_bypass: true
-        exceptions: ["__init__.py", "__main__.py"]
+    AES013:
+      enabled: true
+      scope: ["contract(aggregate)"]
+      exceptions: ["__init__.py", "__main__.py"]
 
-      - name: "Unused Mandatory Imports"
-        check_unused_mandatory_imports: true
+    AES014:
+      enabled: true
+      scope: ["infrastructure", "capabilities", "agent"]
+      exceptions: ["__init__.py", "__main__.py"]
 
-    internal:
-      - name: "Root_Standards"
-        scope: "root"
-        mandatory_class_definition: false
-        barrel_completeness: false
+    AES015:
+      enabled: true
+      scope: ["taxonomy(constant)"]
 
-      - name: "Taxonomy_Standards"
-        scope: "taxonomy"
-        barrel_completeness: true
-        forbid_internal_all: true
+    AES016:
+      enabled: true
+      scope: ["contract", "taxonomy(entity,error,event)"]
 
-      - name: "Taxonomy_VO_Integrity"
-        scope: "taxonomy(vo)"
-        no_primitives: false
+    AES020:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      max_lines: 700
+      exceptions: ["__init__.py", "__main__.py"]
 
-      - name: "Taxonomy_Entity_Integrity"
-        scope: "taxonomy(entity)"
-        no_primitives: true
-        exceptions: ["__init__.py", "__main__.py"]
+    AES021:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      min_lines: 10
+      exceptions: ["__init__.py", "__main__.py"]
 
-      - name: "Taxonomy_Error_Integrity"
-        scope: "taxonomy(error)"
-        no_primitives: true
+    AES022:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      patterns: ["# noqa", "# type: ignore", "# fmt: off", "# ruff: noqa", "# pylint: disable", "Any", "except:", "pass"]
+      exceptions: []
 
-      - name: "Taxonomy_Event_Integrity"
-        scope: "taxonomy(event)"
-        no_primitives: true
+    AES023:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
 
-      - name: "Taxonomy_Constant_Purity"
-        scope: "taxonomy(constant)"
-        forbid_non_constants: true
+    AES024:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      exceptions: ["__init__.py", "__main__.py"]
 
-      - name: "Contract_Standards"
-        scope: "contract"
-        no_primitives: true
-        barrel_completeness: true
-        forbid_internal_all: true
+    AES030:
+      enabled: true
+      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      entry_points: ["main.py", "__init__.py", "__main__.py"]
 
-      - name: "Capabilities_Standards"
-        scope: "capabilities"
-        no_primitives: false
-        barrel_completeness: true
-        forbid_internal_all: true
-        check_method_existence: true
-        check_vo_parameter_usage: true
-        check_dispatch_distribution: true
+    AES031:
+      enabled: true
+      scope: ["surfaces(command|controller|page|entry)", "surfaces(hook|store|action|screen|router)", "surfaces(component|view|layout)"]
+      max_functions: 15
 
-      - name: "Infrastructure_Standards"
-        scope: "infrastructure"
-        no_primitives: false
-        barrel_completeness: true
-        forbid_internal_all: true
+    AES032:
+      enabled: true
+      scope: ["agent(container|registry|mixin)", "agent(orchestrator|coordinator)", "agent(manager|state)"]
+      max_lines: 300
 
-      - name: "Surfaces_Standards"
-        scope: "surfaces"
-        no_primitives: false
-        barrel_completeness: true
-        forbid_internal_all: true
-        exceptions: ["__init__.py", "__main__.py"]
+    AES033:
+      enabled: true
+      scope: ["surfaces(hook|store|action|screen|router)"]
 
-      - name: "Agent_Standards"
-        scope: "agent"
-        no_primitives: false
-        barrel_completeness: true
-        forbid_internal_all: true
-        exceptions: ["__init__.py", "__main__.py"]
+    AES034:
+      enabled: true
+      scope: ["surfaces(component|view|layout)"]
 
-      - name: "Agent_Container_Wiring_Mandate"
-        scope: "agent(container)"
-        no_domain_logic: true
-        must_implement_service_container_aggregate: true
-        lazy_eager_initialization_only: true
+    AES035:
+      enabled: true
+      scope: ["agent(orchestrator|coordinator)"]
 
-      - name: "Agent_Orchestrator_Stateless_Mandate"
-        scope: "agent(orchestrator)"
-        stateless_execution: true
-        single_execution_goal: true
-        forbid_any_type: true
+    AES036:
+      enabled: true
+      scope: ["capabilities"]
+      max_functions: 30
+      max_impl: 5
 
-      - name: "Agent_Coordinator_Strategic_Mandate"
-        scope: "agent(coordinator)"
-        high_level_policy_only: true
-        coordinates_multiple_orchestrators: false
+    AES037:
+      enabled: true
+      scope: ["capabilities"]
 
-      - name: "Agent_Registry_Inventory_Mandate"
-        scope: "agent(registry)"
-        crud_only: true
-        no_decision_logic: true
-        thread_async_safe: true
-
-      - name: "Agent_Manager_Lifecycle_Mandate"
-        scope: "agent(manager)"
-        no_domain_data_storage: true
-        owns_system_health_transitions: true
-        lifecycle_tracking_only: true
-
-    external:
-      - name: "Taxonomy_Relations"
-        scope: "taxonomy"
-        check_orphan: true
-
-      - name: "Taxonomy_Vo_Relations"
-        scope: "taxonomy(vo)"
-        allowed_import: ["taxonomy"]
-        mandatory_import: null
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import:
-          ["taxonomy(entity,error,event)", "agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
-
-      - name: "Taxonomy_Entity_Error_Event_Relations"
-        scope: "taxonomy(entity, error, event)"
-        allowed_import: ["taxonomy"]
-        mandatory_import: ["taxonomy(vo)"]
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import: ["agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
-
-      - name: "Contract_Relations"
-        scope: "contract"
-        check_orphan: true
-        exceptions: ["__init__.py", "__main__.py"]
-
-      - name: "Contract_Port_Protocol_Relations"
-        scope: "contract(port, protocol)"
-        allowed_import: ["taxonomy"]
-        mandatory_import: ["taxonomy"]
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import: ["agent", "infrastructure", "surfaces", "capabilities", "contract(aggregate)", "root"]
-
-      - name: "Contract_Aggregate_Relations"
-        scope: "contract(aggregate)"
-        allowed_import: ["taxonomy", "contract"]
-        mandatory_import: ["taxonomy", "contract(port|protocol|aggregate)"]
-        forbidden_inheritance: ["contract(port|protocol)"]
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import: ["agent", "infrastructure", "surfaces", "capabilities", "root"]
-
-      - name: "Capabilities_Relations"
-        scope: "capabilities"
-        check_orphan: false
-        allowed_import: ["taxonomy", "contract"]
-        mandatory_import: ["taxonomy", "contract(protocol)"]
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import: ["infrastructure", "surfaces", "agent", "capabilities", "root"]
-
-      - name: "Infrastructure_Relations"
-        scope: "infrastructure"
-        check_orphan: false
-        mandatory_import: ["taxonomy", "contract(port)"]
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
-        allowed_import: ["taxonomy", "contract"]
-
-      - name: "Root_Relations"
-        scope: "root"
-        allowed_import: ["agent", "taxonomy", "contract", "infrastructure", "capabilities", "surfaces"]
-
-      - name: "Agent_Governance_Relations"
-        scope: "agent(container|registry|mixin)"
-        check_orphan: true
-        allowed_import: [
-          "agent(orchestrator|coordinator|dispatcher)",
-          "agent(manager|handler|result|state)",
-          "agent(mixin)",
-          "taxonomy",
-          "contract",
-          "infrastructure",
-          "capabilities"
-        ]
-        mandatory_import: ["taxonomy", "contract"]
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import: ["surfaces", "root"]
-
-      - name: "Agent_Orchestration_Relations"
-        scope: "agent(orchestrator|coordinator|dispatcher)"
-        check_orphan: true
-        allowed_import: ["taxonomy", "contract"]
-        mandatory_import: ["taxonomy", "contract(aggregate)"]
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import: [
-          "surfaces",
-          "agent(orchestrator|coordinator|dispatcher|manager|handler|result|state)",
-          "agent(container|registry|mixin)",
-          "root"
-        ]
-
-      - name: "Agent_Support_Relations"
-        scope: "agent(manager|handler|result|state)"
-        allowed_import: ["taxonomy", "contract(aggregate)"]
-        mandatory_import: ["taxonomy"]
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import: ["agent", "infrastructure", "capabilities", "surfaces", "root"]
-
-      - name: "Smart_Surface_Relations"
-        scope: "surfaces(page|command|handler|controller)"
-        allowed_import: ["taxonomy", "contract(aggregate)", "surfaces"]
-        mandatory_import: ["taxonomy", "contract(aggregate)"]
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import: ["agent", "infrastructure", "capabilities", "contract(port)", "contract(protocol)", "root"]
-
-      - name: "Utility_Surface_Relations"
-        scope: "surfaces(hook|store|provider|router)"
-        allowed_import: ["taxonomy", "contract(aggregate)", "surfaces(passive)"]
-        forbidden_import: [
-          "agent",
-          "infrastructure",
-          "capabilities",
-          "contract(port)",
-          "contract(protocol)",
-          "surfaces(page|command|handler|controller|entry)",
-          "root"
-        ]
-
-      - name: "Passive_Surface_Relations"
-        scope: "surfaces(component|layout|view)"
-        allowed_import: ["taxonomy"]
-        mandatory_import: ["taxonomy"]
-        exceptions: ["__init__.py", "__main__.py"]
-        forbidden_import: [
-          "agent",
-          "contract",
-          "infrastructure",
-          "capabilities",
-          "surfaces(page|command|handler|controller|entry|hook|store|provider|router)",
-          "root"
-        ]
+    AES038:
+      enabled: true
+      scope: ["capabilities", "infrastructure"]

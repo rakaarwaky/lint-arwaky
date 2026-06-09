@@ -138,11 +138,36 @@ pub(crate) fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
         if let Some(rules_obj) = json.get_mut("rules") {
             if let Some(obj) = rules_obj.as_object_mut() {
                 let mut flat = serde_json::Value::Array(Vec::new());
-                for (_, v) in obj.iter() {
-                    if let Some(arr) = v.as_array() {
-                        for item in arr {
+                for (code, rule_val) in obj.iter() {
+                    if let Some(rule_obj) = rule_val.as_object() {
+                        let mut base = rule_obj.clone();
+                        base.insert("name".to_string(), serde_json::json!(code));
+                        // Convert scope array to single string (first element)
+                        if let Some(scope_arr) = base.get("scope").and_then(|s| s.as_array()) {
+                            if let Some(first) = scope_arr.first().and_then(|v| v.as_str()) {
+                                base.insert("scope".to_string(), serde_json::json!(first));
+                            }
+                        }
+                        if let Some(conditions) = base.remove("conditions") {
+                            if let Some(conds) = conditions.as_array() {
+                                if !conds.is_empty() {
+                                    for cond in conds {
+                                        if let Some(cond_obj) = cond.as_object() {
+                                            let mut entry = base.clone();
+                                            for (k, v) in cond_obj {
+                                                entry.insert(k.clone(), v.clone());
+                                            }
+                                            // Remove top-level scope array leftovers if condition has its own scope
+                                            if let Some(arr) = flat.as_array_mut() {
+                                                arr.push(serde_json::Value::Object(entry));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
                             if let Some(arr) = flat.as_array_mut() {
-                                arr.push(item.clone());
+                                arr.push(serde_json::Value::Object(base));
                             }
                         }
                     }
