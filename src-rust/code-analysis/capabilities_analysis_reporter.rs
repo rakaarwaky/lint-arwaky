@@ -1,5 +1,6 @@
 // analysis_execution_orchestrator — Implementation of the analysis orchestration domain contract.
 use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
@@ -31,6 +32,11 @@ impl AnalysisReporter {
 
 #[async_trait]
 impl IAnalysisProtocol for AnalysisReporter {
+    fn container(&self) -> &dyn ServiceContainerAggregate {
+        static DEFAULT: crate::di_containers::contract_service_aggregate::DefaultServiceContainer =
+            crate::di_containers::contract_service_aggregate::DefaultServiceContainer {};
+        &DEFAULT
+    }
 
     async fn run(&self, _path: &FilePath) -> ArchitectureGovernanceEntity {
         ArchitectureGovernanceEntity::default()

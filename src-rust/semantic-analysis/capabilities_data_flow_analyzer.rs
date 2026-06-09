@@ -7,6 +7,7 @@ use std::fs;
 use regex::Regex;
 
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::semantic_analysis::capabilities_scope_bounds_detector::ScopeBoundaryAnalyzer;
 use crate::semantic_analysis::contract_data_flow_protocol::IDataFlowProtocol;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;
@@ -22,6 +23,7 @@ pub struct DataFlowEntry {
 
 /// Business logic for tracking variable lifecycle in JS/TS files.
 pub struct DataFlowAnalyzer {
+    scope: ScopeBoundaryAnalyzer,
 }
 
 impl Default for DataFlowAnalyzer {
@@ -33,6 +35,7 @@ impl Default for DataFlowAnalyzer {
 impl DataFlowAnalyzer {
     pub fn new() -> Self {
         Self {
+            scope: ScopeBoundaryAnalyzer::new(),
         }
     }
 
@@ -47,36 +50,9 @@ impl DataFlowAnalyzer {
             return vec![];
         };
 
-        // Determine scope bounds — basic brace counting if start_line provided
+        // Determine scope bounds
         let (scope_start, scope_end) = if let Some(line) = start_line {
-            let lines: Vec<&str> = content.lines().collect();
-            if line > 0 && line <= lines.len() {
-                let mut depth = 0i32;
-                let mut found = false;
-                let mut start = None;
-                let mut end = None;
-                for (i, l) in lines.iter().enumerate() {
-                    let line_no = i + 1;
-                    for c in l.chars() {
-                        match c {
-                            '{' => depth += 1,
-                            '}' => depth -= 1,
-                            _ => {}
-                        }
-                    }
-                    if line_no == line {
-                        found = true;
-                        start = if depth > 0 { Some(line_no) } else { None };
-                    }
-                    if found && depth == 0 && start.is_some() {
-                        end = Some(line_no);
-                        break;
-                    }
-                }
-                (start, end)
-            } else {
-                (None, None)
-            }
+            self.scope.find_scope_bounds(&content, Some(line))
         } else {
             (None, None)
         };

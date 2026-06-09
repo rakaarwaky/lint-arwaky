@@ -21,15 +21,7 @@ use crate::layer_rules::contract_compliance_protocol::IArchComplianceProtocol;
 use crate::layer_rules::contract_coordinator_aggregate::ArchCoordinatorAggregate;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
-use crate::pipeline_jobs::taxonomy_action_vo::JobId;
-use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use crate::pipeline_jobs::taxonomy_registry_error::JobError;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_common_vo::ResponseDataList;
-use crate::shared_common::taxonomy_duration_vo::Duration;
+use crate::pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::Score;
@@ -73,34 +65,7 @@ impl OrchestratorMixinContainer {
 // WATCH ORCHESTRATORS — CLI watch command + file-change execution
 // ═══════════════════════════════════════════════════════════════════════════════
 
-struct SimpleJobRegistry;
-#[async_trait::async_trait]
-impl IJobRegistryPort for SimpleJobRegistry {
-    async fn create_job(&self, _action: ActionName) -> Result<JobId, JobError> {
-        Ok(JobId::new("stub"))
-    }
-    async fn complete_job(&self, _job_id: &JobId, _result: &ResponseData) {}
-    async fn fail_job(&self, _job_id: &JobId, _error: &ErrorMessage) {}
-    async fn list_jobs(&self) -> ResponseDataList {
-        ResponseDataList { values: vec![] }
-    }
-    async fn get_job(&self, _job_id: &JobId) -> Option<JobId> {
-        None
-    }
-    async fn cancel_job(&self, _job_id: &JobId) -> SuccessStatus {
-        SuccessStatus::new(true)
-    }
-    async fn run_with_retry(
-        &self,
-        _operation: ActionName,
-        _max_retries: Count,
-        _base_delay: Duration,
-    ) -> ResponseData {
-        ResponseData::default()
-    }
-}
-
-static WATCH_JOB_REGISTRY: OnceLock<SimpleJobRegistry> = OnceLock::new();
+static WATCH_JOB_REGISTRY: OnceLock<MemoryJobRegistryAdapter> = OnceLock::new();
 
 pub struct WatchCommandsOrchestrator {
     execution: WatchExecutionOrchestrator,
@@ -139,7 +104,7 @@ impl WatchExecutionOrchestratorAggregate for WatchExecutionOrchestrator {
     }
 
     fn job_registry(&self) -> &dyn IJobRegistryPort {
-        WATCH_JOB_REGISTRY.get_or_init(|| SimpleJobRegistry)
+        WATCH_JOB_REGISTRY.get_or_init(MemoryJobRegistryAdapter::new)
     }
 }
 

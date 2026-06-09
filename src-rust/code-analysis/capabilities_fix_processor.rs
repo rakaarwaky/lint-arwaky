@@ -1,3 +1,4 @@
+use crate::code_analysis::capabilities_renamer_processor::SymbolRenamerProcessor;
 use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
@@ -168,7 +169,7 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
         let mut total_fixable =
             naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
 
-        let renamer = SimpleSymbolRenamer {};
+        let renamer = SymbolRenamerProcessor {};
         for violation in &naming_violations {
             let msg = violation.message.value();
             if let Some(old_name) = msg
@@ -246,29 +247,5 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
             output: DescriptionVO::new(output),
             error: None,
         }
-    }
-}
-
-/// Simple in-place symbol renamer — replaces old_name with new_name in a single file.
-struct SimpleSymbolRenamer {}
-
-impl SimpleSymbolRenamer {
-    fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> usize {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() || !path.is_file() {
-            return 0;
-        }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return 0,
-        };
-        if !content.contains(old_name) {
-            return 0;
-        }
-        let new_content = content.replace(old_name, new_name);
-        if new_content != content && std::fs::write(path, &new_content).is_ok() {
-                return 1;
-        }
-        0
     }
 }
