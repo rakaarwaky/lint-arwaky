@@ -1,8 +1,8 @@
 /// python_symbol_scanner — Scanner for symbols and imports from Python AST.
-use /* UNKNOWN: ImportInfo */ crate::code_analysis::taxonomy_source_vo::ImportInfo;
-use /* UNKNOWN: MetadataVO */ crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use /* UNKNOWN: SymbolNameList */ crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::code_analysis::taxonomy_source_vo::ImportInfo;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::SymbolNameList;
+use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
 
 pub struct SymbolCollector {
     defined: Vec<String>,

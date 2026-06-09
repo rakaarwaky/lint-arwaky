@@ -5,16 +5,16 @@
 // Detects: missing schema, empty schema, invalid JSON Schema syntax,
 // missing descriptions, missing required fields array when properties exist.
 
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -58,7 +58,10 @@ static TOOL_DECORATOR_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
         r"server\.add_tool\b",
         r"register_tool\b",
     ];
-    raw_patterns.iter().filter_map(|p| Regex::new(p).ok()).collect()
+    raw_patterns
+        .iter()
+        .filter_map(|p| Regex::new(p).ok())
+        .collect()
 });
 
 static JSON_SCHEMA_TYPE_VALUES: Lazy<std::collections::HashSet<&'static str>> = Lazy::new(|| {
@@ -71,37 +74,37 @@ static JSON_SCHEMA_TYPE_VALUES: Lazy<std::collections::HashSet<&'static str>> = 
 });
 
 // Regex: captures a function definition line
-static FUNC_DEF_RE: Lazy<Regex> = Lazy::new(|| {
-    match Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)") {
-        Ok(re) => re,
-        Err(_) => match Regex::new(r"^$") {
+static FUNC_DEF_RE: Lazy<Regex> =
+    Lazy::new(
+        || match Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)") {
             Ok(re) => re,
-            Err(_) => loop {},
+            Err(_) => match Regex::new(r"^$") {
+                Ok(re) => re,
+                Err(_) => loop {},
+            },
         },
-    }
-});
+    );
 
 // Regex: captures decorator lines
-static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| {
-    match Regex::new(r"^\s*@(.+)$") {
+static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| match Regex::new(r"^\s*@(.+)$") {
+    Ok(re) => re,
+    Err(_) => match Regex::new(r"^$") {
         Ok(re) => re,
-        Err(_) => match Regex::new(r"^$") {
-            Ok(re) => re,
-            Err(_) => loop {},
-        },
-    }
+        Err(_) => loop {},
+    },
 });
 
 // Regex: triple-quoted docstring
-static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
-    match Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#) {
-        Ok(re) => re,
-        Err(_) => match Regex::new(r"^$") {
+static DOCSTRING_RE: Lazy<Regex> =
+    Lazy::new(
+        || match Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#) {
             Ok(re) => re,
-            Err(_) => loop {},
+            Err(_) => match Regex::new(r"^$") {
+                Ok(re) => re,
+                Err(_) => loop {},
+            },
         },
-    }
-});
+    );
 
 /// AES025 — Validate MCP tool input/output schemas.
 pub struct McpSchemaChecker {}

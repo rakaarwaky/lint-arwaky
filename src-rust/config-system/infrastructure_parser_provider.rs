@@ -1,9 +1,9 @@
 use crate::config_system::contract_parser_port::IConfigParserPort;
-use crate::config_system::taxonomy_provider_error::ConfigError;
 use crate::config_system::taxonomy_identifier_vo::ConfigKey;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::config_system::taxonomy_provider_error::ConfigError;
 use crate::config_system::taxonomy_setting_vo::ProjectConfig;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
 
 pub struct ConfigParserProvider {}
@@ -45,9 +45,19 @@ impl IConfigParserPort for ConfigParserProvider {
                 });
             }
         };
+        let json_value = serde_json::to_value(&raw).map_err(|e| ConfigError {
+            key: ConfigKey::new("yaml.convert"),
+            message: ErrorMessage::new(format!("Failed to convert YAML to JSON: {}", e)),
+            config_file: Some(path.clone()),
+            ..Default::default()
+        })?;
         let config: ProjectConfig =
-            serde_json::from_value(serde_json::to_value(&raw).unwrap_or_default())
-                .unwrap_or_else(|_| ProjectConfig::defaults());
+            serde_json::from_value(json_value).map_err(|e| ConfigError {
+                key: ConfigKey::new("yaml.parse"),
+                message: ErrorMessage::new(format!("Failed to deserialize config: {}", e)),
+                config_file: Some(path.clone()),
+                ..Default::default()
+            })?;
         Ok(config)
     }
 
@@ -76,9 +86,22 @@ impl IConfigParserPort for ConfigParserProvider {
             }
         };
         if let Some(tool_section) = toml_value.get("tool").and_then(|t| t.get("lint_arwaky")) {
+            let json_value = match serde_json::to_value(tool_section) {
+                Ok(v) => v,
+                Err(e) => {
+                    return Some(Err(ConfigError {
+                        key: ConfigKey::new("toml.convert"),
+                        message: ErrorMessage::new(format!(
+                            "Failed to convert TOML to JSON: {}",
+                            e
+                        )),
+                        config_file: Some(path.clone()),
+                        ..Default::default()
+                    }));
+                }
+            };
             let config: ProjectConfig =
-                serde_json::from_value(serde_json::to_value(tool_section).unwrap_or_default())
-                    .unwrap_or_else(|_| ProjectConfig::defaults());
+                serde_json::from_value(json_value).unwrap_or_else(|_| ProjectConfig::defaults());
             Some(Ok(config))
         } else {
             None

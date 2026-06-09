@@ -1,4 +1,4 @@
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 use crate::naming_rules::taxonomy_symbols_constant::CORE_PRIMITIVE_TYPES;
 use serde::{Deserialize, Serialize};
 

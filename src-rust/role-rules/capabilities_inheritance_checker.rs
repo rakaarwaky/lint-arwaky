@@ -2,22 +2,23 @@
 // Checks that files in agent/capabilities/infrastructure that import contracts
 // also have a class inheriting from them.
 
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::contract_inheritance_protocol::IArchInheritanceProtocol;
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::output_report::taxonomy_result_vo::LintResult;
+use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_lint_vo::ScopeRef;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_violationrs_constant::aes027_mandatory_inheritance;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use crate::output_report::taxonomy_severity_vo::Severity;
 use async_trait::async_trait;
 use regex::Regex;
 use std::fs;
@@ -50,8 +51,12 @@ impl MandatoryInheritanceChecker {
             source: Some(AdapterName::raw("architecture")),
             severity: Severity::CRITICAL,
             enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
+                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
+                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
                 file: None,
                 start_line: None,
                 end_line: None,
@@ -66,8 +71,10 @@ impl MandatoryInheritanceChecker {
             .unwrap_or(file)
             .trim_start_matches('/');
 
-        let mut layers: Vec<(&LayerNameVO, &crate::shared_common::taxonomy_definition_vo::LayerDefinition)> =
-            self.config.layers.iter().collect();
+        let mut layers: Vec<(
+            &LayerNameVO,
+            &crate::shared_common::taxonomy_definition_vo::LayerDefinition,
+        )> = self.config.layers.iter().collect();
         layers.sort_by(|a, b| b.1.path.value.len().cmp(&a.1.path.value.len()));
 
         for (name, def) in layers {
@@ -185,12 +192,7 @@ impl MandatoryInheritanceChecker {
 
             if !inherited {
                 let imported_list = contract_imports.join(", ");
-                let msg = format!(
-                    "AES027 MANDATORY_INHERITANCE_VIOLATION: File imports contracts ({}) but no class inherits from any of them. \
-                    Layer '{}' must implement its contract via inheritance. \
-                    FIX: Make at least one class in this file inherit from one of the imported contracts.",
-                    imported_list, layer
-                );
+                let msg = aes027_mandatory_inheritance(&imported_list);
                 violations.push(Self::make_result(file, &msg));
             }
         }

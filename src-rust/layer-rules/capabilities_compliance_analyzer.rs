@@ -6,8 +6,8 @@ use std::path::Path;
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 
 pub struct ArchComplianceAnalyzer {
     pub config: ArchitectureConfig,
@@ -221,7 +221,11 @@ impl ArchComplianceAnalyzer {
     ///   2. Prefix-based match: segment starts with layer prefix (e.g. "taxonomy_definition_vo").
     ///   3. Path-based match: module-path-as-filesystem-path contains the layer path.
     pub fn detect_module_layer(&self, module: &str) -> Option<String> {
-        let meaningful_parts: Vec<&str> = module.split('.').filter(|p| !p.is_empty()).collect();
+        let meaningful_parts: Vec<&str> = if module.contains("::") {
+            module.split("::").filter(|p| !p.is_empty()).collect()
+        } else {
+            module.split('.').filter(|p| !p.is_empty()).collect()
+        };
 
         if meaningful_parts.is_empty() {
             return None;

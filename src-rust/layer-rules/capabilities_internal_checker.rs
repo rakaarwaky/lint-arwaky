@@ -1,10 +1,12 @@
 // arch_internal_checker — Internal architectural rule checks (barrels, primitives).
 // Implements IInternalCheckerProtocol: barrel completeness, forbid_internal_all, no_primitives.
 
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violationrs_constant::{AES012_BARREL_COMPLETENESS, AES013_INTERNAL_ALL_FORBIDDEN};
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    AES012_BARREL_COMPLETENESS, AES013_INTERNAL_ALL_FORBIDDEN,
+};
 use std::fs;
 
 pub struct ArchInternalChecker {}
@@ -49,7 +51,13 @@ impl ArchInternalChecker {
             return;
         }
         if !Self::file_has_all_export(file) {
-            violations.push(LintResult::new_arch(file, 0, "AES012", Severity::MEDIUM, AES012_BARREL_COMPLETENESS));
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES012",
+                Severity::MEDIUM,
+                AES012_BARREL_COMPLETENESS,
+            ));
         }
     }
 
@@ -74,7 +82,13 @@ impl ArchInternalChecker {
             return;
         }
         if Self::file_has_all_export(file) {
-            violations.push(LintResult::new_arch(file, 0, "AES013", Severity::MEDIUM, AES013_INTERNAL_ALL_FORBIDDEN));
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES013",
+                Severity::MEDIUM,
+                AES013_INTERNAL_ALL_FORBIDDEN,
+            ));
         }
     }
 

@@ -1,13 +1,13 @@
+use crate::pipeline_jobs::taxonomy_job_vo::AdapterMetadata;
 /// plugin_system_provider — Entry point discovery and loading for custom adapters.
 use crate::plugin_system::contract_manager_port::IPluginManagerPort;
-use /* UNKNOWN: AdapterClassMap */ crate::shared_common::taxonomy_adapter_vo::AdapterClassMap;
-use crate::pipeline_jobs::taxonomy_job_vo::AdapterMetadata;
-use /* UNKNOWN: AdapterMetadataList */ crate::shared_common::taxonomy_adapter_vo::AdapterMetadataList;
+use crate::plugin_system::taxonomy_group_vo::PluginGroup;
+use crate::plugin_system::taxonomy_manager_error::PluginError;
+use crate::shared_common::taxonomy_adapter_vo::AdapterClassMap;
+use crate::shared_common::taxonomy_adapter_vo::AdapterMetadataList;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_source_vo::ContentString;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use /* UNKNOWN: PluginError */ crate::plugin_system::taxonomy_manager_error::PluginError;
-use crate::plugin_system::taxonomy_group_vo::PluginGroup;
 use std::collections::HashMap;
 use std::sync::Mutex;
 

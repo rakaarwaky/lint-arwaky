@@ -1,10 +1,10 @@
 //! Agent lifecycle management.
-use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::lifecycle_state::taxonomy_status_vo::AgentStatusVO;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
-use /* UNKNOWN: Duration */ crate::shared_common::taxonomy_duration_vo::Duration;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::shared_common::taxonomy_duration_vo::Duration;
 use std::sync::Arc;
 
 pub struct LifecycleStateManager {
@@ -27,7 +27,10 @@ impl AgentLifecycleAggregate for LifecycleStateManager {
         self.container.clone().unwrap_or_else(|| {
             struct StubBootstrapContainer {}
             impl ServiceContainerAggregate for StubBootstrapContainer {
-                fn file_system(&self) -> Arc<dyn crate::file_system::contract_system_port::IFileSystemPort> {
+                fn file_system(
+                    &self,
+                ) -> Arc<dyn crate::file_system::contract_system_port::IFileSystemPort>
+                {
                     todo!("StubBootstrapContainer: file_system not available")
                 }
             }

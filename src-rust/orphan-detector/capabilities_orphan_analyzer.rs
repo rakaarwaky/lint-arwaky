@@ -1,32 +1,32 @@
 // arch_orphan_analyzer — Multi-indicator orphan code detection logic.
 // Implements IArchOrphanProtocol: check_orphans.
 
+use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
+use crate::code_analysis::taxonomy_analysis_vo::FilePathSet;
+use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
+use crate::code_analysis::taxonomy_analysis_vo::ImportGraph;
+use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
+use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
+use crate::code_analysis::taxonomy_analysis_vo::ModuleToFileMap;
+use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::orphan_detector::contract_orphan_protocol::IOrphanGraphProtocol;
 use crate::orphan_detector::contract_orphan_protocol::IOrphanIndicatorProtocol;
-use crate::layer_rules::contract_rule_protocol::IAnalyzer;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::output_report::taxonomy_result_vo::LintResult;
+use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_common_error::ModuleName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use /* UNKNOWN: FileDefinitionMap */ crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_lint_vo::ScopeRef;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use /* UNKNOWN: FilePathSet */ crate::code_analysis::taxonomy_analysis_vo::FilePathSet;
-use /* UNKNOWN: GraphAnalysisContext */ crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-use /* UNKNOWN: ImportGraph */ crate::code_analysis::taxonomy_analysis_vo::ImportGraph;
-use /* UNKNOWN: InboundLinkMap */ crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use /* UNKNOWN: InheritanceMap */ crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
-use /* UNKNOWN: ModuleName */ crate::shared_common::taxonomy_common_error::ModuleName;
-use /* UNKNOWN: ModuleToFileMap */ crate::code_analysis::taxonomy_analysis_vo::ModuleToFileMap;
-use /* UNKNOWN: OrphanIndicatorResult */ crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use /* UNKNOWN: ReachabilityResult */ crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use crate::output_report::taxonomy_severity_vo::Severity;
 use async_trait::async_trait;
 use std::collections::HashMap;
 
@@ -244,8 +244,12 @@ impl ArchOrphanAnalyzer {
             source: Some(AdapterName::raw("architecture")),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(String::new()),
+                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
+                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    String::new(),
+                ),
                 file: None,
                 start_line: None,
                 end_line: None,

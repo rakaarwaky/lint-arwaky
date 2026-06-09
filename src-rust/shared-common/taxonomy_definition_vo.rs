@@ -2,11 +2,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::Count;
+use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_rule_vo::MandatoryImportRuleVO;
+use crate::shared_common::taxonomy_suffix_vo::SuffixPolicyVO;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use /* UNKNOWN: MandatoryImportRuleVO */ crate::shared_common::taxonomy_rule_vo::MandatoryImportRuleVO;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
-use /* UNKNOWN: SuffixPolicyVO */ crate::shared_common::taxonomy_suffix_vo::SuffixPolicyVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LayerDefinition {
@@ -82,7 +82,6 @@ pub struct LayerDefinition {
     pub lifecycle_tracking_only: BooleanVO,
     #[serde(default)]
     pub forbid_any_type: BooleanVO,
-
 }
 
 impl LayerDefinition {

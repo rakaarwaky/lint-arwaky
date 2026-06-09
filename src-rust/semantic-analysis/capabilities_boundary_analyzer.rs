@@ -1,12 +1,12 @@
 /// scope_boundary_analyzer — Scope boundary detection for JS/TS files.
 /// Used by data_flow_analyzer to determine enclosing scope bounds.
 use crate::layer_rules::contract_compliance_protocol::IScopeBoundaryProtocol;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_layer_vo::LineContentVO;
+use crate::shared_common::taxonomy_lint_vo::ScopeBounds;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineContentVO */ crate::shared_common::taxonomy_layer_vo::LineContentVO;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: ScopeBounds */ crate::shared_common::taxonomy_lint_vo::ScopeBounds;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 
 pub struct ScopeBoundaryAnalyzer {}
 

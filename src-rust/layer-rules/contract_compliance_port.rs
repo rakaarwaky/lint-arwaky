@@ -3,9 +3,9 @@
 //! Defines the interface for scanning source trees for architecture
 //! violations and applying automated fixes.
 
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
 use async_trait::async_trait;
 
 #[async_trait]

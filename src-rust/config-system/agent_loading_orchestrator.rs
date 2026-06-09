@@ -1,12 +1,12 @@
+use crate::config_system::contract_detector_port::ILanguageDetectorPort;
 use crate::config_system::contract_orchestration_protocol::IConfigOrchestrationProtocol;
 use crate::config_system::contract_parser_port::IConfigParserPort;
 use crate::config_system::contract_reader_port::IConfigReaderPort;
-use crate::config_system::contract_detector_port::ILanguageDetectorPort;
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::config_system::taxonomy_config_vo::default_config_for_language;
 use crate::config_system::taxonomy_config_vo::parse_config_yaml;
 use crate::config_system::taxonomy_source_vo::ConfigResult;
 use crate::config_system::taxonomy_source_vo::ConfigSource;
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 use std::sync::Arc;
@@ -14,6 +14,7 @@ use std::sync::Arc;
 pub struct ConfigLoadingOrchestrator {
     language_detector: Arc<dyn ILanguageDetectorPort>,
     config_reader: Arc<dyn IConfigReaderPort>,
+    #[allow(dead_code)]
     config_parser: Arc<dyn IConfigParserPort>,
 }
 

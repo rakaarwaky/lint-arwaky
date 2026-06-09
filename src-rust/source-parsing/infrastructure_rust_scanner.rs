@@ -3,32 +3,31 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::sync::LazyLock;
 
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
-use crate::shared_common::taxonomy_common_vo::BooleanVO;
+use crate::code_analysis::taxonomy_source_vo::ImportInfo;
+use crate::code_analysis::taxonomy_source_vo::ImportInfoList;
+use crate::code_analysis::taxonomy_source_vo::PrimitiveViolation;
+use crate::code_analysis::taxonomy_source_vo::PrimitiveViolationList;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::PrimitiveTypeList;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::shared_common::taxonomy_common_error::Cause;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::Count;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::PatternList;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: ImportInfo */ crate::code_analysis::taxonomy_source_vo::ImportInfo;
-use /* UNKNOWN: ImportInfoList */ crate::code_analysis::taxonomy_source_vo::ImportInfoList;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: MetadataVO */ crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
-use /* UNKNOWN: PrimitiveTypeList */ crate::naming_rules::taxonomy_symbols_vo::PrimitiveTypeList;
-use /* UNKNOWN: PrimitiveViolation */ crate::code_analysis::taxonomy_source_vo::PrimitiveViolation;
-use /* UNKNOWN: PrimitiveViolationList */ crate::code_analysis::taxonomy_source_vo::PrimitiveViolationList;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
+use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::source_parsing::taxonomy_parser_error::SourceParserError;
-use /* UNKNOWN: SuccessStatus */ crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 static USE_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^(?:pub\s+)?use\s+([^;]+);").ok());
 static STRUCT_REGEX: LazyLock<Option<Regex>> = LazyLock::new(|| {
-    Regex::new(r"^(?:pub\s+)?(?:pub\s*\([^)]*\)\s+)?(?:struct|enum|trait)\s+([a-zA-Z0-9_]+)")
-        .ok()
+    Regex::new(r"^(?:pub\s+)?(?:pub\s*\([^)]*\)\s+)?(?:struct|enum|trait)\s+([a-zA-Z0-9_]+)").ok()
 });
 static FN_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^(?:pub\s+)?(?:async\s+)?fn\s+([a-zA-Z0-9_]+)").ok());
@@ -124,39 +123,67 @@ impl ASTRustParserAdapter {
                 current_impl = None;
             }
 
-            // 1. Imports
-            if let Some(use_cap) = USE_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
-                let raw_path = use_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
-                let mut clean_path = raw_path;
-                for prefix in &["crate::", "self::", "super::"] {
-                    if clean_path.starts_with(prefix) {
-                        clean_path = &clean_path[prefix.len()..];
+            // 1. Imports — handle single-line and multi-line use statements
+            if stripped.starts_with("use ") || stripped.starts_with("pub use ") {
+                let mut full_use = stripped.to_string();
+                // Multi-line: keep reading subsequent lines until `;` is found
+                if full_use.contains('{') && !full_use.contains(';') {
+                    let mut j = idx_zero + 1;
+                    while j < lines.len() {
+                        let cont = lines[j].trim();
+                        full_use.push(' ');
+                        full_use.push_str(cont);
+                        if cont.contains(';') {
+                            break;
+                        }
+                        j += 1;
                     }
                 }
+                if let Some(use_cap) = USE_REGEX.as_ref().and_then(|r| r.captures(&full_use)) {
+                    let raw_path = use_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
+                    let expanded = if raw_path.contains("::{") {
+                        // Split on ::{ to get prefix group and braced sub-items
+                        if let Some(brace_pos) = raw_path.find("::{") {
+                            let mut prefix = &raw_path[..brace_pos];
+                            // Strip crate::/self::/super:: from prefix only
+                            for p in &["crate::", "self::", "super::"] {
+                                if prefix.starts_with(p) {
+                                    prefix = &prefix[p.len()..];
+                                    break;
+                                }
+                            }
+                            let rest = &raw_path[brace_pos + 3..];
+                            let inner = rest.trim_start_matches('{').trim_end_matches('}').trim();
+                            inner
+                                .split(',')
+                                .map(|s| format!("{}::{}", prefix, s.trim()))
+                                .filter(|p| !p.is_empty())
+                                .collect::<Vec<String>>()
+                        } else {
+                            vec![raw_path.to_string()]
+                        }
+                    } else {
+                        let mut clean_path = raw_path;
+                        for prefix in &["crate::", "self::", "super::"] {
+                            if clean_path.starts_with(prefix) {
+                                clean_path = &clean_path[prefix.len()..];
+                                break;
+                            }
+                        }
+                        vec![clean_path.to_string()]
+                    };
 
-                let expanded = if clean_path.contains("::{") {
-                    let parts: Vec<&str> = clean_path.split("::{").collect();
-                    let prefix = parts[0];
-                    let sub_parts: Vec<&str> = parts[1].trim_end_matches('}').split(',').collect();
-                    sub_parts
-                        .iter()
-                        .map(|p| format!("{}::{}", prefix, p.trim()))
-                        .filter(|p| !p.is_empty())
-                        .collect::<Vec<String>>()
-                } else {
-                    vec![clean_path.to_string()]
-                };
-
-                for item in expanded {
-                    let dotted = item.replace("::", ".");
-                    let alias = dotted.split('.').last().unwrap_or(&dotted).to_string();
-                    if alias != "*" {
-                        imported_aliases.insert(alias, dotted.clone());
-                        imports_list.push(ImportInfo {
-                            line: LineNumber::new(idx),
-                            module: dotted,
-                            name: None,
-                        });
+                    for item in &expanded {
+                        let dotted = item.replace("::", ".");
+                        let alias = dotted.split('.').last().unwrap_or(&dotted).to_string();
+                        if alias != "*" {
+                            imported_aliases.insert(alias, dotted.clone());
+                            imports_list.push(ImportInfo {
+                                line: LineNumber::new(idx),
+                                module: dotted,
+                                name: None,
+                            });
+                        }
                     }
                 }
             }
@@ -224,7 +251,10 @@ impl ASTRustParserAdapter {
             }
 
             // 5. Control Flow
-            control_flow_count += CF_REGEX.as_ref().map_or(0, |r| r.find_iter(stripped).count()) as i64;
+            control_flow_count += CF_REGEX
+                .as_ref()
+                .map_or(0, |r| r.find_iter(stripped).count())
+                as i64;
 
             // 6. Used symbols
             if let Some(word_re) = WORD_REGEX.as_ref() {
@@ -235,16 +265,16 @@ impl ASTRustParserAdapter {
 
             // 7. Exported symbols (pub items)
             if stripped.starts_with("pub ") {
-                    if let Some(cap) = PUB_STRUCT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
+                if let Some(cap) = PUB_STRUCT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                     exported.insert(cap.get(2).map(|m| m.as_str()).unwrap_or("").to_string());
                 }
-                    if let Some(cap) = PUB_MOD_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
+                if let Some(cap) = PUB_MOD_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                     exported.insert(cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string());
                 }
-                    if let Some(cap) = PUB_USE_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
+                if let Some(cap) = PUB_USE_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                     exported.insert(cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string());
                 }
-                    if let Some(cap) = PUB_USE_GROUP.as_ref().and_then(|r| r.captures(stripped)) {
+                if let Some(cap) = PUB_USE_GROUP.as_ref().and_then(|r| r.captures(stripped)) {
                     for name in cap.get(1).map(|m| m.as_str()).unwrap_or("").split(',') {
                         let clean = name.trim();
                         if !clean.is_empty() {
@@ -429,9 +459,14 @@ impl ISourceParserPort for ASTRustParserAdapter {
                 continue;
             }
 
-            if TYPE_DECL_REGEX.as_ref().map_or(false, |r| r.is_match(stripped)) {
+            if TYPE_DECL_REGEX
+                .as_ref()
+                .map_or(false, |r| r.is_match(stripped))
+            {
                 for prim in &prim_keywords {
-                    let Ok(prim_regex) = Regex::new(&format!(r"\b{}\b", prim)) else { continue };
+                    let Ok(prim_regex) = Regex::new(&format!(r"\b{}\b", prim)) else {
+                        continue;
+                    };
                     if let Some(m) = prim_regex.find(stripped) {
                         let col = (line.find(m.as_str()).unwrap_or(0) + 1) as i64;
                         violations.push(PrimitiveViolation {

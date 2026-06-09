@@ -13,12 +13,13 @@ use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes021_must_implement_contract, aes024_any_type,
-    AES021_COORDINATES_MULTIPLE, AES021_HIGH_LEVEL_POLICY, AES021_LAZY_EAGER_INIT,
-    AES021_MUST_IMPLEMENT_CONTRACT, AES021_NO_DOMAIN_LOGIC, AES021_STATELESS_EXECUTION,
+    aes021_must_implement_contract, aes024_any_type, AES021_COORDINATES_MULTIPLE,
+    AES021_HIGH_LEVEL_POLICY, AES021_LAZY_EAGER_INIT, AES021_MUST_IMPLEMENT_CONTRACT,
+    AES021_NO_DOMAIN_LOGIC, AES021_STATELESS_EXECUTION,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
+#[allow(dead_code)]
 fn make_adapter(name: &str) -> Option<AdapterName> {
     AdapterName::new(name).ok()
 }
@@ -138,8 +139,7 @@ impl AgentRoleChecker {
                     source: make_adapter("architecture"),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
-                    related_locations:
-                        crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                    related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
                 });
             }
         }
@@ -230,8 +230,7 @@ impl AgentRoleChecker {
                 source: make_adapter("architecture"),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
-                related_locations:
-                    crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
             });
         }
     }
@@ -297,8 +296,7 @@ impl AgentRoleChecker {
                     source: make_adapter("architecture"),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
-                    related_locations:
-                        crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                    related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
                 });
             }
         }

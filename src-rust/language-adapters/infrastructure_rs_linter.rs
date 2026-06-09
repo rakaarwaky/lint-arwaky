@@ -1,22 +1,24 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::di_containers::contract_service_aggregate::{ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort};
-use /* UNKNOWN: AdapterError */ crate::shared_common::taxonomy_adapter_error::AdapterError;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::di_containers::contract_service_aggregate::{
+    ICommandExecutorPort, ILinterAdapterPort, IPathNormalizationPort,
+};
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: LinterOperationError */ crate::shared_common::taxonomy_operation_error::LinterOperationError;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_adapter_error::AdapterError;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_operation_error::LinterOperationError;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 use serde_json::Value;
 use tracing::debug;
@@ -100,7 +102,9 @@ impl ILinterAdapterPort for RustLinterAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir.clone(),
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(180.0)),
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                    180.0,
+                )),
             )
             .await
             .map_err(|e| {
@@ -213,7 +217,9 @@ impl ILinterAdapterPort for RustLinterAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir,
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(180.0)),
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                    180.0,
+                )),
             )
             .await;
         Ok(ComplianceStatus::new(true))

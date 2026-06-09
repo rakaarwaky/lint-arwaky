@@ -1,9 +1,9 @@
 // config_rules_validator — Capability for validating project configuration rules.
 // Implements IConfigRulesProtocol: is_adapter_enabled, validate_thresholds.
 
-use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::config_system::taxonomy_setting_vo::AdapterStatus;
 use crate::config_system::taxonomy_setting_vo::ProjectConfig;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
 
 /// Result of a validation operation.
 pub struct ValidationResult {

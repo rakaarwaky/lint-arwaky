@@ -1,9 +1,9 @@
+use crate::cli_transport::taxonomy_client_error::TransportError;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
 /// mcp_server_port — Port interface for MCP server lifecycle and tool management.
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
-use /* UNKNOWN: TransportError */ crate::cli_transport::taxonomy_client_error::TransportError;
 use std::future::Future;
 use std::pin::Pin;
 

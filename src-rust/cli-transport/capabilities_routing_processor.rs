@@ -12,28 +12,31 @@ use regex::Regex;
 use crate::cli_commands::contract_routing_protocol::{
     IDispatchRoutingParserProtocol, IDispatchRoutingProtocol,
 };
+use crate::di_containers::taxonomy_routing_vo::CapabilityReference;
+use crate::di_containers::taxonomy_routing_vo::CapabilityReferenceList;
+use crate::di_containers::taxonomy_routing_vo::CapabilityRoutingContext;
+use crate::di_containers::taxonomy_routing_vo::ClassDefinitionMap;
+use crate::di_containers::taxonomy_routing_vo::ClassFileMap;
+use crate::di_containers::taxonomy_routing_vo::ClassNameVO;
+use crate::di_containers::taxonomy_routing_vo::ClassUsageItem;
+use crate::di_containers::taxonomy_routing_vo::ClassUsageItemList;
+use crate::di_containers::taxonomy_routing_vo::ClassUsageMap;
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use /* UNKNOWN: CapabilityReference */ crate::di_containers::taxonomy_routing_vo::CapabilityReference;
-use /* UNKNOWN: CapabilityReferenceList */ crate::di_containers::taxonomy_routing_vo::CapabilityReferenceList;
-use /* UNKNOWN: CapabilityRoutingContext */ crate::di_containers::taxonomy_routing_vo::CapabilityRoutingContext;
-use /* UNKNOWN: ClassDefinitionMap */ crate::di_containers::taxonomy_routing_vo::ClassDefinitionMap;
-use /* UNKNOWN: ClassFileMap */ crate::di_containers::taxonomy_routing_vo::ClassFileMap;
-use /* UNKNOWN: ClassNameVO */ crate::di_containers::taxonomy_routing_vo::ClassNameVO;
-use /* UNKNOWN: ClassUsageItem */ crate::di_containers::taxonomy_routing_vo::ClassUsageItem;
-use /* UNKNOWN: ClassUsageItemList */ crate::di_containers::taxonomy_routing_vo::ClassUsageItemList;
-use /* UNKNOWN: ClassUsageMap */ crate::di_containers::taxonomy_routing_vo::ClassUsageMap;
+use crate::output_report::taxonomy_result_vo::LintResult;
+use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    AES030_CAPABILITY_ROUTING, AES031_SINGLE_BOTTLENECK, AES032_MISSING_VO,
+};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use crate::output_report::taxonomy_severity_vo::Severity;
 
 /// Extracted method args VO (inlined from deleted dispatch_parser_types module).
 pub struct MethodArgsVO {
@@ -58,24 +61,39 @@ impl IDispatchRoutingParserProtocol for DispatchRoutingParser {
         ContentString::new(re.replace_all(&text.value, "").to_string())
     }
 
-    fn extract_class_methods(&self, text: &ContentString) -> crate::di_containers::taxonomy_routing_vo::ClassDefinitionMap {
+    fn extract_class_methods(
+        &self,
+        text: &ContentString,
+    ) -> crate::di_containers::taxonomy_routing_vo::ClassDefinitionMap {
         use std::collections::HashMap;
-        let mut defs: HashMap<ClassNameVO, crate::di_containers::taxonomy_routing_vo::ClassMethodsVO> = HashMap::new();
+        let mut defs: HashMap<
+            ClassNameVO,
+            crate::di_containers::taxonomy_routing_vo::ClassMethodsVO,
+        > = HashMap::new();
         let class_re = match regex::Regex::new(r"class\s+(\w+)") {
             Ok(r) => r,
-            Err(_) => return crate::di_containers::taxonomy_routing_vo::ClassDefinitionMap { definitions: HashMap::new() },
+            Err(_) => {
+                return crate::di_containers::taxonomy_routing_vo::ClassDefinitionMap {
+                    definitions: HashMap::new(),
+                }
+            }
         };
         let method_re = match regex::Regex::new(r"def\s+(\w+)\s*\(") {
             Ok(r) => r,
-            Err(_) => return crate::di_containers::taxonomy_routing_vo::ClassDefinitionMap { definitions: HashMap::new() },
+            Err(_) => {
+                return crate::di_containers::taxonomy_routing_vo::ClassDefinitionMap {
+                    definitions: HashMap::new(),
+                }
+            }
         };
         let mut current_class: Option<ClassNameVO> = None;
         for line in text.value.lines() {
             if let Some(c) = class_re.captures(line) {
                 let cls_name = ClassNameVO::new(c[1].to_string());
                 current_class = Some(cls_name.clone());
-                defs.entry(cls_name)
-                    .or_insert_with(|| crate::di_containers::taxonomy_routing_vo::ClassMethodsVO { methods: vec![] });
+                defs.entry(cls_name).or_insert_with(|| {
+                    crate::di_containers::taxonomy_routing_vo::ClassMethodsVO { methods: vec![] }
+                });
             } else if let Some(m) = method_re.captures(line) {
                 if let Some(ref cls) = current_class {
                     if let Some(entry) = defs.get_mut(cls) {
@@ -245,8 +263,11 @@ impl DispatchRoutingChecker {
                         &ref_.line,
                         "AES030",
                         &format!(
-                            "Method '{}' not found on class '{}'. Defined methods: {}. Check for naming mismatch between catalog and capability.",
-                            ref_.method_name.value, ref_.class_name.value, found_methods
+                            "{} Method '{}' not found on class '{}'. Defined methods: {}.",
+                            AES030_CAPABILITY_ROUTING,
+                            ref_.method_name.value,
+                            ref_.class_name.value,
+                            found_methods
                         ),
                     );
                 }
@@ -257,8 +278,8 @@ impl DispatchRoutingChecker {
                     &ref_.line,
                     "AES030",
                     &format!(
-                        "Capability class '{}' not found in any scanned file. Referenced from COMMAND_CATALOG but no class definition exists.",
-                        ref_.class_name.value
+                        "{} Class '{}' not found in any scanned file.",
+                        AES030_CAPABILITY_ROUTING, ref_.class_name.value
                     ),
                 );
             }
@@ -344,8 +365,12 @@ impl DispatchRoutingChecker {
                 &item.line,
                 "AES031",
                 &format!(
-                    "Action '{}' routes to '{}' but {} other capability classes exist ({}). Actions should be distributed to the correct capability.",
-                    item.method.value, class_name.value, other_classes.len(), other_str
+                    "{} Action '{}' routes to '{}' but {} other capability classes exist ({}).",
+                    AES031_SINGLE_BOTTLENECK,
+                    item.method.value,
+                    class_name.value,
+                    other_classes.len(),
+                    other_str
                 ),
             );
         }
@@ -401,8 +426,8 @@ impl DispatchRoutingChecker {
                         &LineNumber::new(line_no),
                         "AES032",
                         &format!(
-                            "Capability call 'self.some_executor.{}()' missing required request/data VO parameter. Capability methods expect a typed Value Object argument.",
-                            method_name
+                            "{} Capability call 'self.some_executor.{}()' missing required VO parameter.",
+                            AES032_MISSING_VO, method_name
                         ),
                     );
                 }

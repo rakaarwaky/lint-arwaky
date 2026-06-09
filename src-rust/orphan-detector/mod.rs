@@ -1,4 +1,8 @@
 pub mod capabilities_orphan_analyzer;
-pub use capabilities_orphan_analyzer::{ArchOrphanAnalyzer,OrphanGraphResolver,OrphanIndicatorEvaluator};
+pub use capabilities_orphan_analyzer::{
+    ArchOrphanAnalyzer, OrphanGraphResolver, OrphanIndicatorEvaluator,
+};
 pub mod contract_orphan_protocol;
-pub use contract_orphan_protocol::{IArchOrphanProtocol,IOrphanGraphProtocol,IOrphanIndicatorProtocol};
+pub use contract_orphan_protocol::{
+    IArchOrphanProtocol, IOrphanGraphProtocol, IOrphanIndicatorProtocol,
+};

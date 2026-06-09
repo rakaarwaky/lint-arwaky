@@ -7,20 +7,22 @@ use regex::Regex;
 use std::path::Path;
 
 use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchImportProcessorProtocol};
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violationrs_constant::AES001_FORBIDDEN_IMPORT;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use /* UNKNOWN: LayerNameVO */ crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    AES001_FORBIDDEN_IMPORT, AES007_CONTRACT_BARREL,
+};
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 fn make_adapter(name: &str) -> Option<AdapterName> {
     AdapterName::new(name).ok()
@@ -98,7 +100,14 @@ impl ArchImportProcessor {
                 .any(|p| self._is_layer_match(&target_layer, p));
             if !is_same && !allowed {
                 let msg = AES001_FORBIDDEN_IMPORT;
-                self._add_forbidden_violation(results, file_path, imp, file_layer, &target_layer, msg);
+                self._add_forbidden_violation(
+                    results,
+                    file_path,
+                    imp,
+                    file_layer,
+                    &target_layer,
+                    msg,
+                );
                 return;
             }
         }
@@ -109,7 +118,14 @@ impl ArchImportProcessor {
             .iter()
             .any(|p| self._is_layer_match(&target_layer, p))
         {
-            self._add_forbidden_violation(results, file_path, imp, file_layer, &target_layer, AES001_FORBIDDEN_IMPORT);
+            self._add_forbidden_violation(
+                results,
+                file_path,
+                imp,
+                file_layer,
+                &target_layer,
+                AES001_FORBIDDEN_IMPORT,
+            );
         }
     }
 
@@ -298,7 +314,7 @@ impl ArchImportProcessor {
 
         results.push(LintResult {
             file: file_path.clone(),
-            line: LineNumber::new(0),
+            line: LineNumber::new(1),
             column: ColumnNumber::new(0),
             code: ErrorCode::raw("AES002"),
             message: LintMessage::new(message),
@@ -396,10 +412,12 @@ impl ArchImportProcessor {
             return false;
         }
 
-        static CAPTURE_RE: Lazy<Option<Regex>> =
-            Lazy::new(|| Regex::new(r"contract\((.+)\)").ok());
+        static CAPTURE_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"contract\((.+)\)").ok());
 
-        if let Some(caps) = CAPTURE_RE.as_ref().and_then(|re| re.captures(req_layer_str)) {
+        if let Some(caps) = CAPTURE_RE
+            .as_ref()
+            .and_then(|re| re.captures(req_layer_str))
+        {
             let _pattern = caps.get(1).map(|m| m.as_str()).unwrap_or("");
         }
 
@@ -416,7 +434,11 @@ impl ArchImportProcessor {
     ) -> Vec<String> {
         let mut aliases = Vec::new();
         for (alias, fullname) in imported_aliases {
-            let parts: Vec<&str> = fullname.split('.').collect();
+            let parts: Vec<&str> = if fullname.contains("::") {
+                fullname.split("::").collect()
+            } else {
+                fullname.split('.').collect()
+            };
             if !parts.contains(&"contract") {
                 continue;
             }
@@ -428,10 +450,10 @@ impl ArchImportProcessor {
             } else if real_usages.contains(alias) {
                 results.push(LintResult {
                     file: file_path.clone(),
-                    line: LineNumber::new(0),
+                    line: LineNumber::new(1),
                     column: ColumnNumber::new(0),
                     code: ErrorCode::raw("AES007"),
-                    message: LintMessage::new("Contract import must be from barrel."),
+                    message: LintMessage::new(AES007_CONTRACT_BARREL),
                     source: make_adapter("architecture"),
                     severity: Severity::MEDIUM,
                     enclosing_scope: None,

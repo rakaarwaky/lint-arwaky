@@ -4,8 +4,9 @@
 //! configuration formats into structured project configuration.
 
 use crate::config_system::taxonomy_provider_error::ConfigError;
+/* UNKNOWN: ProjectConfig */
+use crate::config_system::taxonomy_setting_vo::ProjectConfig;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-/* UNKNOWN: ProjectConfig */ use crate::config_system::taxonomy_setting_vo::ProjectConfig;
 
 pub trait IConfigParserPort: Send + Sync {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError>;

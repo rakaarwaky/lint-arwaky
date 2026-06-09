@@ -1,6 +1,6 @@
 use crate::git_hooks::contract_result_aggregate::GitDiffResultAggregate;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 #[async_trait]

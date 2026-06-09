@@ -1,6 +1,6 @@
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 /* UNKNOWN: PatternList */ use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Default)]
 pub struct DirectoryWatchAggregate {

@@ -1,11 +1,11 @@
 //! javascript_scope_tracer — Enclosing scope detection for JS/TS files.
 
 use crate::language_adapters::contract_scope_port::IJsTracerPort;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: ScopeRef */ crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use /* UNKNOWN: SemanticError */ crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
 use regex::Regex;
 
 pub struct JSScopeTracer {}
@@ -51,10 +51,11 @@ impl IJsTracerPort for JSScopeTracer {
             Ok(r) => r,
             Err(_) => return Ok(None),
         };
-        let method_re = match Regex::new(r"^\s+(?:async\s+)?([A-Za-z_$][A-Za-z0-9_$]*)\s*\([^)]*\)\s*\{") {
-            Ok(r) => r,
-            Err(_) => return Ok(None),
-        };
+        let method_re =
+            match Regex::new(r"^\s+(?:async\s+)?([A-Za-z_$][A-Za-z0-9_$]*)\s*\([^)]*\)\s*\{") {
+                Ok(r) => r,
+                Err(_) => return Ok(None),
+            };
 
         let mut scope_stack: Vec<(String, usize)> = Vec::new();
         let mut brace_depth: i32 = 0;
@@ -104,7 +105,9 @@ impl IJsTracerPort for JSScopeTracer {
 
         if let Some((name, start_line)) = scope_stack.last() {
             Ok(Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(name.clone()),
+                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                    name.clone(),
+                ),
                 kind: if name.starts_with("class") {
                     crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new("class")
                 } else {

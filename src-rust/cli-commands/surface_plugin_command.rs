@@ -1,5 +1,11 @@
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use std::collections::BTreeMap;
+use std::process::ExitCode;
 use std::sync::Arc;
+
+use crate::di_containers::agent_injection_container::DependencyInjectionContainer;
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 pub struct PluginCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }
@@ -38,4 +44,42 @@ pub fn register_plugin_commands(
     let mut surface = PluginCommandsSurface::new();
     surface.register_all(container);
     surface
+}
+
+pub fn handle_adapters() -> ExitCode {
+    let container = Arc::new(DependencyInjectionContainer::new(
+        DirectoryPath::new(".").unwrap_or_default(),
+    ));
+    let adapter_names = [
+        ("clippy", "Rust", "lint, fix"),
+        ("ruff", "Python", "lint, fix"),
+        ("mypy", "Python", "lint"),
+        ("bandit", "Python", "lint"),
+        ("eslint", "JavaScript", "lint, fix"),
+        ("prettier", "JavaScript", "format"),
+        ("tsc", "TypeScript", "lint"),
+        ("complexity", "Python", "lint"),
+        ("dependency", "Python", "lint"),
+    ];
+
+    println!("Available External Adapters");
+    println!();
+    let mut by_lang: BTreeMap<&str, Vec<(&str, &str)>> = BTreeMap::new();
+    for (name, lang, caps) in &adapter_names {
+        by_lang.entry(lang).or_default().push((name, caps));
+    }
+    for (lang, adapters) in &by_lang {
+        println!("{}:", lang);
+        for (name, caps) in adapters {
+            let an = AdapterName::new(name.to_string()).unwrap_or_default();
+            let status = if container.linter_adapter(&an).is_some() {
+                "Ready"
+            } else {
+                "Not found"
+            };
+            println!("  {:12}  {}  {}", name, status, caps);
+        }
+        println!();
+    }
+    ExitCode::SUCCESS
 }

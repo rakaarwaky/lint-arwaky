@@ -48,5 +48,4 @@ impl ContainerRegistryAggregate for ProjectContainerRegistry {
 }
 
 struct StubContainer {}
-impl ServiceContainerAggregate for StubContainer {
-}
+impl ServiceContainerAggregate for StubContainer {}

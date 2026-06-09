@@ -58,8 +58,7 @@ impl PartialEq for SymbolName {
     }
 }
 
-impl Eq for SymbolName {
-}
+impl Eq for SymbolName {}
 
 impl From<&str> for SymbolName {
     fn from(s: &str) -> Self {

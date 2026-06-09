@@ -52,8 +52,7 @@ impl PartialEq for ConfigKey {
     }
 }
 
-impl Eq for ConfigKey {
-}
+impl Eq for ConfigKey {}
 
 impl From<&str> for ConfigKey {
     fn from(s: &str) -> Self {

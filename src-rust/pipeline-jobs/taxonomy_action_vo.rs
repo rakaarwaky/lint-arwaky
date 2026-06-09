@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-/* UNKNOWN: MetadataVO */ use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
+/* UNKNOWN: MetadataVO */
+use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ActionArgs {
@@ -51,8 +52,7 @@ impl PartialEq for ActionName {
     }
 }
 
-impl Eq for ActionName {
-}
+impl Eq for ActionName {}
 
 impl From<&str> for ActionName {
     fn from(s: &str) -> Self {
@@ -147,7 +147,6 @@ impl PartialEq for JobId {
         self.value == other.value
     }
 }
-
 
 impl From<&str> for JobId {
     fn from(s: &str) -> Self {

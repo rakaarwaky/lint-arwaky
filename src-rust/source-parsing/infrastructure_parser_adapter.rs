@@ -4,19 +4,19 @@
 //! the three language-specific adapters and routes calls based on file extension.
 //! Uses DI via Box<dyn ISourceParserPort> to avoid sibling infrastructure imports (AES001).
 
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
+use crate::code_analysis::taxonomy_source_vo::ImportInfoList;
+use crate::code_analysis::taxonomy_source_vo::PrimitiveViolationList;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::naming_rules::taxonomy_symbols_vo::PrimitiveTypeList;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::Count;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: ImportInfoList */ crate::code_analysis::taxonomy_source_vo::ImportInfoList;
-use /* UNKNOWN: MetadataVO */ crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
-use /* UNKNOWN: PatternList */ crate::shared_common::taxonomy_common_vo::PatternList;
-use /* UNKNOWN: PrimitiveTypeList */ crate::naming_rules::taxonomy_symbols_vo::PrimitiveTypeList;
-use /* UNKNOWN: PrimitiveViolationList */ crate::code_analysis::taxonomy_source_vo::PrimitiveViolationList;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
+use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::source_parsing::taxonomy_parser_error::SourceParserError;
-use /* UNKNOWN: SuccessStatus */ crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 /// Composite source parser that delegates to language-specific adapters via DI.
 ///

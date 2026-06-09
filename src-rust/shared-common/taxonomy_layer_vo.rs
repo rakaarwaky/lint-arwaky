@@ -23,8 +23,7 @@ impl std::fmt::Display for FileContentVO {
     }
 }
 
-impl Eq for FileContentVO {
-}
+impl Eq for FileContentVO {}
 
 impl std::hash::Hash for FileContentVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -37,8 +36,6 @@ impl PartialEq for FileContentVO {
         self.value == other.value
     }
 }
-
-
 
 impl From<&str> for FileContentVO {
     fn from(s: &str) -> Self {
@@ -130,8 +127,7 @@ impl std::fmt::Display for Identity {
     }
 }
 
-impl Eq for Identity {
-}
+impl Eq for Identity {}
 
 impl std::hash::Hash for Identity {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -144,8 +140,6 @@ impl PartialEq for Identity {
         self.value == other.value
     }
 }
-
-
 
 impl From<&str> for Identity {
     fn from(s: &str) -> Self {
@@ -237,8 +231,7 @@ impl std::fmt::Display for LayerNameVO {
     }
 }
 
-impl Eq for LayerNameVO {
-}
+impl Eq for LayerNameVO {}
 
 impl std::hash::Hash for LayerNameVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -251,8 +244,6 @@ impl PartialEq for LayerNameVO {
         self.value == other.value
     }
 }
-
-
 
 impl From<&str> for LayerNameVO {
     fn from(s: &str) -> Self {
@@ -336,8 +327,7 @@ impl std::fmt::Display for LineContentVO {
     }
 }
 
-impl Eq for LineContentVO {
-}
+impl Eq for LineContentVO {}
 
 impl std::hash::Hash for LineContentVO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -350,8 +340,6 @@ impl PartialEq for LineContentVO {
         self.value == other.value
     }
 }
-
-
 
 impl From<&str> for LineContentVO {
     fn from(s: &str) -> Self {

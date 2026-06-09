@@ -1,11 +1,11 @@
 // report_formatter_processor — Capability for formatting reports (SARIF, JUnit).
 // Implements ILintReportingProtocol: format, get_formatted_payload, to_sarif, to_junit.
-use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use /* UNKNOWN: LogOutput */ crate::shared_common::taxonomy_suggestion_vo::LogOutput;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use crate::shared_common::taxonomy_suggestion_vo::LogOutput;
 use serde_json::json;
 use std::collections::BTreeMap;
 
@@ -95,8 +95,15 @@ impl ReportFormatterProcessor {
                 _ => medium.push(r),
             }
         }
-        for (sev, items) in [("CRITICAL", &critical), ("HIGH", &high), ("MEDIUM", &medium), ("LOW", &low)] {
-            if items.is_empty() { continue; }
+        for (sev, items) in [
+            ("CRITICAL", &critical),
+            ("HIGH", &high),
+            ("MEDIUM", &medium),
+            ("LOW", &low),
+        ] {
+            if items.is_empty() {
+                continue;
+            }
             lines.push(format!("  [{}] {} violations", sev, items.len()));
             lines.push("-".repeat(60));
             for r in items.iter() {
@@ -115,7 +122,10 @@ impl ReportFormatterProcessor {
         }
         lines.push("=".repeat(60));
         lines.push(format!("  Total AES Violations: {}", total));
-        lines.push(format!("  Total Category AES Violations: {}", per_code.len()));
+        lines.push(format!(
+            "  Total Category AES Violations: {}",
+            per_code.len()
+        ));
         if !per_code.is_empty() {
             lines.push("-".repeat(60));
             for (code, count) in &per_code {

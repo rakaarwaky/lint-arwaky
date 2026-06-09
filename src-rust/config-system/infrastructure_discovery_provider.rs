@@ -47,7 +47,10 @@ impl ConfigDiscoveryProvider {
         None
     }
 
-    pub fn load_architecture_config(project_root: Option<&Path>, src_dir: &Path) -> ArchitectureConfig {
+    pub fn load_architecture_config(
+        project_root: Option<&Path>,
+        src_dir: &Path,
+    ) -> ArchitectureConfig {
         let search_start = project_root.unwrap_or_else(|| src_dir.parent().unwrap_or(src_dir));
         const CONFIG_NAMES: &[&str] = &["lint_arwaky.config.rust.yaml", "lint_arwaky.config.yaml"];
         let mut dir = search_start;

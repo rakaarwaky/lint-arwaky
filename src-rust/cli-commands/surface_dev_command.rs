@@ -1,4 +1,10 @@
+use std::process::ExitCode;
+
+use crate::cli_commands::taxonomy_entry_vo::{
+    compute_score, has_critical, lint_path, resolve_target,
+};
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use crate::output_report::taxonomy_severity_vo::Severity;
 
 pub struct DevCommandsSurface {
     pub container: Option<Box<dyn ServiceContainerAggregate>>,
@@ -145,4 +151,64 @@ pub fn register_dev_commands(
     let mut surface = DevCommandsSurface::new(Some(Box::new(container.clone())));
     surface.register_all(Box::new(container));
     surface
+}
+
+pub fn handle_ci(path: Option<String>, threshold: u32) -> ExitCode {
+    let root = resolve_target(path);
+    let results = lint_path(&root);
+    let score = compute_score(&results);
+    let effective_threshold = if threshold == 80 { 70 } else { threshold };
+
+    let has_crit = has_critical(&results);
+    let below_threshold = (score as u32) < effective_threshold;
+
+    println!("Architecture Compliance CI");
+    println!("Score: {:.1} / 100", score);
+    println!("Threshold: {}", effective_threshold);
+    println!();
+
+    let mut reasons: Vec<String> = Vec::new();
+    if has_crit {
+        reasons.push("CRITICAL violation(s) detected — auto-fail triggered".to_string());
+    }
+    if below_threshold {
+        reasons.push(format!(
+            "Score below threshold ({:.1} < {})",
+            score, effective_threshold
+        ));
+    }
+
+    let critical_count = results
+        .iter()
+        .filter(|r| r.severity == Severity::CRITICAL)
+        .count();
+    let high_count = results
+        .iter()
+        .filter(|r| r.severity == Severity::HIGH)
+        .count();
+    let medium_count = results
+        .iter()
+        .filter(|r| r.severity == Severity::MEDIUM)
+        .count();
+    let low_count = results
+        .iter()
+        .filter(|r| r.severity == Severity::LOW)
+        .count();
+
+    println!(
+        "CRITICAL: {} | HIGH: {} | MEDIUM: {} | LOW: {}",
+        critical_count, high_count, medium_count, low_count
+    );
+    println!();
+
+    if reasons.is_empty() {
+        println!("Result: PASS (exit code 0)");
+        ExitCode::SUCCESS
+    } else {
+        for r in &reasons {
+            println!("  {}", r);
+        }
+        println!("Result: FAIL (exit code 1)");
+        ExitCode::from(1)
+    }
 }

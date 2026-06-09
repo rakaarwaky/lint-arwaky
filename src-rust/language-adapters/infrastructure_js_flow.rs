@@ -1,11 +1,11 @@
 /// javascript_flow_tracer — Variable flow tracking for JS/TS files.
 use crate::language_adapters::contract_flow_port::IJavascriptFlowPort;
-use /* UNKNOWN: DataFlowList */ crate::shared_common::taxonomy_common_vo::DataFlowList;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
+use crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::DataFlowList;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: SemanticError */ crate::semantic_analysis::taxonomy_tracer_error::SemanticError;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 use regex::Regex;
 
 pub struct JSFlowAdapter {}
@@ -37,7 +37,11 @@ impl IJavascriptFlowPort for JSFlowAdapter {
         let lines: Vec<&str> = content.lines().collect();
         let word_pattern = match Regex::new(&format!(r"\b{}", regex::escape(var_str))) {
             Ok(r) => r,
-            Err(_) => return Err(SemanticError::new(ErrorMessage::new("regex compilation failed"))),
+            Err(_) => {
+                return Err(SemanticError::new(ErrorMessage::new(
+                    "regex compilation failed",
+                )))
+            }
         };
         let mut flows: Vec<ErrorMessage> = Vec::new();
         for (i, line) in lines.iter().enumerate() {

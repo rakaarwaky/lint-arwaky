@@ -3,33 +3,39 @@
 
 use std::path::Path;
 
-use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
-use crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges;
-use crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge;
-use crate::layer_rules::capabilities_import_checker::ArchImportRuleChecker;
-use crate::layer_rules::capabilities_internal_checker::ArchInternalChecker;
-use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::code_analysis::capabilities_class_checker::ArchClassChecker;
 use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
 use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use crate::role_rules::capabilities_taxonomyrole_checker::TaxonomyRoleChecker;
-use crate::role_rules::capabilities_contractrole_checker::ContractRoleChecker;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
+use crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges;
+use crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge;
+use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
+use crate::layer_rules::capabilities_import_checker::ArchImportRuleChecker;
+use crate::layer_rules::capabilities_internal_checker::ArchInternalChecker;
+use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::capabilities_orphan_analyzer::OrphanGraphResolver;
-use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::shared_common::taxonomy_name_vo::AdapterName;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
-use /* UNKNOWN: LintMessage */ crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::output_report::taxonomy_result_vo::LintResult;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
-use /* UNKNOWN: LocationList */ crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::role_rules::capabilities_contractrole_checker::ContractRoleChecker;
+use crate::role_rules::capabilities_taxonomyrole_checker::TaxonomyRoleChecker;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::AdapterName;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    aes015_unused_import, aes016_dead_inheritance, aes027_mandatory_inheritance,
+    AES014_BYPASS_COMMENT, AES014_PANIC, AES014_UNWRAP_EXPECT, AES017_ORPHAN_CODE,
+    AES020_CIRCULAR_IMPORT, AES022_SURFACE_ROLE_VIOLATION, AES025_MCP_SCHEMA,
+    AES031_SINGLE_BOTTLENECK, AES032_MISSING_VO,
+};
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct LintCheckingCoordinator {}
 
@@ -74,7 +80,6 @@ impl LintCheckingCoordinator {
             // Layer-independent checks (run on ALL files)
             Self::check_bypass_comments(file, &c, &mut violations);
             Self::check_unused_imports(file, &c, &mut violations);
-            Self::check_contract_barrel(file, &c, &mut violations);
             Self::check_dead_inheritance(file, &c, &mut violations);
             Self::check_agent_any_bypass(file, &c, &mut violations);
             Self::check_mcp_schema(file, &c, &mut violations);
@@ -148,7 +153,7 @@ impl LintCheckingCoordinator {
             import_checker.check_forbidden_imports(file, &layer, def, &mut violations);
             import_checker.check_legacy_import_rules(file, &layer, config, &mut violations);
             line_checker.check_line_counts(file, Some(def), &mut violations);
-            
+
             taxonomy_checker.check_entity(file, &c, &mut violations);
             taxonomy_checker.check_error(file, &c, &mut violations);
             taxonomy_checker.check_event(file, &c, &mut violations);
@@ -186,7 +191,7 @@ impl LintCheckingCoordinator {
                 0,
                 "AES020",
                 Severity::CRITICAL,
-                "AES020 CIRCULAR_IMPORT: Circular dependencies detected.",
+                AES020_CIRCULAR_IMPORT,
             ));
         }
         let orphan = OrphanGraphResolver::new();
@@ -205,10 +210,16 @@ impl LintCheckingCoordinator {
                     0,
                     "AES017",
                     Severity::HIGH,
-                    "AES017 ORPHAN_CODE: File has no imports, not an entry point.",
+                    AES017_ORPHAN_CODE,
                 ));
             }
         }
+        // Wire role orchestrator for agent and surface role checks
+        let role_orch = crate::role_rules::agent_role_orchestrator::RoleOrchestrator::new(
+            Box::new(crate::role_rules::agent_role_mixin::RoleAggregateImpl::new()),
+        );
+        role_orch.run_all_role_checks(files, &mut rl.values);
+
         rl.values
     }
 
@@ -258,7 +269,7 @@ impl LintCheckingCoordinator {
                     i + 1,
                     "AES014",
                     Severity::CRITICAL,
-                    "AES014 BYPASS_COMMENT: Bypass comment detected.",
+                    AES014_BYPASS_COMMENT,
                 ));
                 continue;
             }
@@ -269,7 +280,7 @@ impl LintCheckingCoordinator {
                         i + 1,
                         "AES014",
                         Severity::CRITICAL,
-                        "AES014 BYPASS_COMMENT: Bypass comment detected.",
+                        AES014_BYPASS_COMMENT,
                     ));
                     break;
                 }
@@ -280,7 +291,7 @@ impl LintCheckingCoordinator {
                     i + 1,
                     "AES014",
                     Severity::CRITICAL,
-                    "AES014 BYPASS_COMMENT: unwrap/expect call detected.",
+                    AES014_UNWRAP_EXPECT,
                 ));
                 continue;
             }
@@ -290,7 +301,7 @@ impl LintCheckingCoordinator {
                     i + 1,
                     "AES014",
                     Severity::CRITICAL,
-                    "AES014 BYPASS_COMMENT: panic call detected.",
+                    AES014_PANIC,
                 ));
                 continue;
             }
@@ -398,28 +409,7 @@ impl LintCheckingCoordinator {
                     i + 1,
                     "AES015",
                     Severity::MEDIUM,
-                    &format!(
-                        "AES015 UNUSED_IMPORT: '{}' imported but never used.",
-                        name
-                    ),
-                ));
-            }
-        }
-    }
-
-    fn check_contract_barrel(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        for (i, line) in content.lines().enumerate() {
-            let t = line.trim();
-            if !t.starts_with("use crate::di_containers::contract_service_aggregate::") {
-                continue;
-            }
-            if t.split("::").count() > 4 {
-                violations.push(Self::mk(
-                    file,
-                    i + 1,
-                    "AES007",
-                    Severity::MEDIUM,
-                    "AES007 CONTRACT_BARREL: Must use barrel import (crate::contract::TypeName).",
+                    &aes015_unused_import(name),
                 ));
             }
         }
@@ -436,7 +426,7 @@ impl LintCheckingCoordinator {
                     i + 1,
                     "AES016",
                     Severity::MEDIUM,
-                    "AES016 DEAD_INHERITANCE: Unit struct — possibly dead inheritance.",
+                    &aes016_dead_inheritance("unit struct"),
                 ));
                 i += 1;
                 continue;
@@ -455,7 +445,7 @@ impl LintCheckingCoordinator {
                             i + 1,
                             "AES016",
                             Severity::MEDIUM,
-                            "AES016 DEAD_INHERITANCE: Empty impl block.",
+                            &aes016_dead_inheritance("impl block"),
                         ));
                     } else {
                         let mut k = j;
@@ -472,7 +462,7 @@ impl LintCheckingCoordinator {
                                 i + 1,
                                 "AES016",
                                 Severity::MEDIUM,
-                                "AES016 DEAD_INHERITANCE: Empty impl block (multi-line).",
+                                &aes016_dead_inheritance("impl block (multi-line)"),
                             ));
                         }
                     }
@@ -483,7 +473,11 @@ impl LintCheckingCoordinator {
     }
 
     fn check_agent_any_bypass(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if !file.contains("/agent/") {
+        let filename = Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        if !filename.starts_with("agent_") {
             return;
         }
         for (i, line) in content.lines().enumerate() {
@@ -511,12 +505,17 @@ impl LintCheckingCoordinator {
                 0,
                 "AES021",
                 Severity::HIGH,
-                "AES021 AGENT_ROLE: Agent file >300 lines.",
+                "AES021 AGENT_ROLE: Agent file exceeds 300 lines.",
             ));
         }
     }
 
-    fn check_surface_role(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+    fn check_surface_role(
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
         if layer != "surfaces" && !layer.starts_with("surfaces(") {
             return;
         }
@@ -526,16 +525,29 @@ impl LintCheckingCoordinator {
                 0,
                 "AES022",
                 Severity::HIGH,
-                "AES022 SURFACE_ROLE: Surface file >10 functions.",
+                AES022_SURFACE_ROLE_VIOLATION,
             ));
         }
     }
 
     fn check_mandatory_inheritance(file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let filename = Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        let contract_suffix = if filename.starts_with("infrastructure_") {
+            "_port"
+        } else if filename.starts_with("capabilities_") {
+            "_protocol"
+        } else if filename.starts_with("agent_") {
+            "_aggregate"
+        } else {
+            return;
+        };
         let mut imported: Vec<String> = Vec::new();
         for line in content.lines() {
             let t = line.trim();
-            if t.starts_with("use ") && t.contains("_protocol::") {
+            if t.starts_with("use ") && t.contains(contract_suffix) {
                 if let Some(name) = t.split("::").last() {
                     let c = name.trim_end_matches(';').trim();
                     if c.starts_with('I') || c.ends_with("Protocol") || c.ends_with("Port") {
@@ -551,16 +563,18 @@ impl LintCheckingCoordinator {
                     0,
                     "AES027",
                     Severity::HIGH,
-                    &format!(
-                        "AES027 MANDATORY_INHERITANCE: Trait '{}' not implemented.",
-                        t
-                    ),
+                    &aes027_mandatory_inheritance(t),
                 ));
             }
         }
     }
 
-    fn check_single_bottleneck(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+    fn check_single_bottleneck(
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
         if layer != "capabilities" && !layer.starts_with("capabilities(") {
             return;
         }
@@ -572,7 +586,7 @@ impl LintCheckingCoordinator {
                 0,
                 "AES031",
                 Severity::MEDIUM,
-                &format!("AES031 SINGLE_BOTTLENECK: {} functions.", fc),
+                &format!("{} Found {} functions.", AES031_SINGLE_BOTTLENECK, fc),
             ));
         }
         if ic > 5 {
@@ -581,7 +595,7 @@ impl LintCheckingCoordinator {
                 0,
                 "AES031",
                 Severity::MEDIUM,
-                &format!("AES031 SINGLE_BOTTLENECK: {} impl blocks.", ic),
+                &format!("{} Found {} impl blocks.", AES031_SINGLE_BOTTLENECK, ic),
             ));
         }
     }
@@ -602,7 +616,7 @@ impl LintCheckingCoordinator {
                         i + 1,
                         "AES032",
                         Severity::MEDIUM,
-                        "AES032 MISSING_VO: Direct string literal.",
+                        AES032_MISSING_VO,
                     ));
                 } else if rhs.parse::<i64>().is_ok() || rhs.parse::<f64>().is_ok() {
                     violations.push(Self::mk(
@@ -610,7 +624,7 @@ impl LintCheckingCoordinator {
                         i + 1,
                         "AES032",
                         Severity::MEDIUM,
-                        "AES032 MISSING_VO: Direct numeric literal.",
+                        AES032_MISSING_VO,
                     ));
                 }
             }
@@ -629,7 +643,7 @@ impl LintCheckingCoordinator {
                 0,
                 "AES025",
                 Severity::MEDIUM,
-                "AES025 MCP_SCHEMA: MCP file missing tool/schema.",
+                AES025_MCP_SCHEMA,
             ));
         }
     }

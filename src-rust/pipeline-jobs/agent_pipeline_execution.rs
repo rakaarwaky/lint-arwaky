@@ -1,13 +1,13 @@
 // pipeline_execution_orchestrator — Agent pipeline: receive→think→act→respond orchestrator.
-use crate::pipeline_jobs::contract_orchestrator_aggregate::PipelineExecutionOrchestratorAggregate;
-use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::pipeline_jobs::contract_input_aggregate::PipelineInputAggregate;
+use crate::pipeline_jobs::contract_orchestrator_aggregate::PipelineExecutionOrchestratorAggregate;
 use crate::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
+use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
-use /* UNKNOWN: ErrorMessage */ crate::shared_common::taxonomy_common_error::ErrorMessage;
-use /* UNKNOWN: JobId */ crate::pipeline_jobs::taxonomy_action_vo::JobId;
-use /* UNKNOWN: ResponseData */ crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use /* UNKNOWN: SuccessStatus */ crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use crate::pipeline_jobs::taxonomy_action_vo::JobId;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use std::sync::OnceLock;
 
 static REGISTRY: OnceLock<MemoryJobRegistryAdapter> = OnceLock::new();

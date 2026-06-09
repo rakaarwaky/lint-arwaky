@@ -2,10 +2,12 @@
 // Implements IArchImportProtocol: check_mandatory_imports, check_forbidden_imports, check_legacy_import_rules.
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violationrs_constant::{aes001_forbidden_import, aes002_mandatory_import};
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    aes001_forbidden_import, aes002_mandatory_import,
+};
 use std::fs;
 use std::path::Path;
 
@@ -45,9 +47,11 @@ impl ArchImportRuleChecker {
     /// Check if an import line satisfies the given scope requirement.
     /// e.g. scope "contract(protocol)" matches "use crate::di_containers::contract_service_aggregate::some_protocol::X"
     fn import_matches_scope(import_line: &str, layer: &str, suffixes: &[&str]) -> bool {
-        let lower = import_line.to_lowercase();
-        let layer_match =
-            lower.contains(&format!("{}::", layer)) || lower.contains(&format!("::{}::", layer));
+        let segments: Vec<&str> = import_line.split("::").collect();
+        let layer_lower = layer.to_lowercase();
+        let layer_match = segments
+            .iter()
+            .any(|s| s.trim().to_lowercase() == layer_lower);
         if !layer_match {
             return false;
         }
@@ -55,13 +59,7 @@ impl ArchImportRuleChecker {
             return true;
         }
         suffixes.iter().any(|s| {
-            // Snake_case: "service_container_aggregate" contains "_aggregate"
-            if lower.contains(&format!("_{}", s)) || lower.contains(&format!("::{}", s)) {
-                return true;
-            }
-            // PascalCase / barrel import: "ServiceContainerAggregate" ends with "Aggregate" (case-insensitive)
-            // Split by :: and check each identifier segment using original case for PascalCase detection
-            import_line.split("::").any(|seg| {
+            segments.iter().any(|seg| {
                 let cleaned = seg
                     .trim_end_matches(';')
                     .trim()
@@ -71,8 +69,12 @@ impl ArchImportRuleChecker {
                 cleaned.split(',').any(|t| {
                     let name = t.trim();
                     let name_lower = name.to_lowercase();
+                    // Snake_case: segment ends with _suffix
+                    if name_lower.ends_with(&format!("_{}", s)) {
+                        return true;
+                    }
                     if let Some(rest) = name_lower.strip_suffix(s) {
-                        // Exact match or snake_case (preceded by _)
+                        // Exact match (e.g. suffix "aggregate" for "ServiceContainerAggregate")
                         if rest.is_empty() || rest.ends_with('_') {
                             return true;
                         }
@@ -157,6 +159,60 @@ impl ArchImportRuleChecker {
         result
     }
 
+    /// Parse import lines from a string content (avoids double file read).
+    fn parse_import_lines(content: &str) -> Vec<(usize, String)> {
+        let mut result: Vec<(usize, String)> = Vec::new();
+        let lines: Vec<&str> = content.lines().collect();
+        let mut i = 0;
+        while i < lines.len() {
+            let trimmed = lines[i].trim();
+            if trimmed.starts_with("import ")
+                || trimmed.starts_with("from ")
+                || trimmed.starts_with("extern crate ")
+            {
+                result.push((i + 1, lines[i].to_string()));
+                i += 1;
+                continue;
+            }
+            if trimmed.starts_with("use ") {
+                let mut combined = lines[i].to_string();
+                if combined.contains('{') && !combined.contains('}') {
+                    let start = i;
+                    i += 1;
+                    while i < lines.len() {
+                        let part = lines[i].trim().to_string();
+                        combined.push_str(&format!(" {}", part));
+                        if part.contains('}') || combined.ends_with(';') {
+                            break;
+                        }
+                        i += 1;
+                    }
+                    combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
+                    result.push((start + 1, combined));
+                } else if !combined.ends_with(';') {
+                    while i + 1 < lines.len() {
+                        let next = lines[i + 1].trim();
+                        if next.starts_with("use ") || next.is_empty() {
+                            break;
+                        }
+                        combined.push_str(&format!(" {}", next));
+                        if next.ends_with(';') {
+                            i += 1;
+                            break;
+                        }
+                        i += 1;
+                    }
+                    combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
+                    result.push((i + 1, combined));
+                } else {
+                    result.push((i + 1, combined));
+                }
+            }
+            i += 1;
+        }
+        result
+    }
+
     fn extract_module_from_line(line: &str) -> Option<String> {
         let trimmed = line.trim();
         // Python: `from x import y` or `import x`
@@ -200,15 +256,15 @@ impl ArchImportRuleChecker {
             return;
         }
 
-        let import_lines = Self::read_import_lines(file);
         let Ok(content) = fs::read_to_string(file) else {
             return;
         };
+        let import_lines = Self::parse_import_lines(&content);
 
         for required in &definition.mandatory_import.values {
             let (layer, suffixes) = Self::resolve_scope(required);
             let is_present = if suffixes.is_empty() {
-                content.contains(layer) || import_lines.iter().any(|(_, l)| l.contains(layer))
+                import_lines.iter().any(|(_, l)| l.contains(layer))
             } else {
                 // Check import lines AND verify via barrel (mod.rs/__init__.py) that
                 // the imported type actually originates from a file with the required suffix.
@@ -235,9 +291,12 @@ impl ArchImportRuleChecker {
             // types/identifiers from this layer (not even inline qualifiers).
             // Prevents forcing unused imports just to satisfy AES002.
             let genuinely_unreferenced = if suffixes.is_empty() {
-                !content.contains(layer) && !import_lines.iter().any(|(_, l)| l.contains(layer))
+                !import_lines.iter().any(|(_, l)| l.contains(layer))
             } else {
-                !content.contains(layer) && !suffixes.iter().any(|s| content.contains(s))
+                !import_lines.iter().any(|(_, l)| l.contains(layer))
+                    && !suffixes
+                        .iter()
+                        .any(|s| import_lines.iter().any(|(_, l)| l.contains(s)))
             };
 
             if genuinely_unreferenced {
@@ -245,7 +304,13 @@ impl ArchImportRuleChecker {
             }
 
             if !is_present {
-                violations.push(LintResult::new_arch(file, 0, "AES002", Severity::HIGH, &aes002_mandatory_import(required)));
+                violations.push(LintResult::new_arch(
+                    file,
+                    0,
+                    "AES002",
+                    Severity::HIGH,
+                    &aes002_mandatory_import(required),
+                ));
             }
         }
     }
@@ -344,7 +409,7 @@ impl ArchImportRuleChecker {
                             violations.push(LintResult::new_arch(
                                 file,
                                 *line_num as usize,
-                                "AES001",
+                                "AES023",
                                 Severity::CRITICAL,
                                 &msg,
                             ));

@@ -35,7 +35,8 @@ impl AppConfig {
                     .map(|d| d.to_string_lossy().to_string())
                     .unwrap_or_else(|_| ".".to_string())
             });
-        let proj = project.unwrap_or_else(crate::config_system::taxonomy_setting_vo::ProjectConfig::default);
+        let proj = project
+            .unwrap_or_else(crate::config_system::taxonomy_setting_vo::ProjectConfig::default);
 
         Self {
             phantom_root: DirectoryPath::new(p_root).unwrap_or_default(),
@@ -49,7 +50,10 @@ impl AppConfig {
     }
 
     /// Get status for a named adapter.
-    pub fn adapter_status(&self, name: &str) -> crate::config_system::taxonomy_setting_vo::AdapterStatus {
+    pub fn adapter_status(
+        &self,
+        name: &str,
+    ) -> crate::config_system::taxonomy_setting_vo::AdapterStatus {
         for entry in &self.project.adapters {
             if entry.name.value == name {
                 return entry.status;

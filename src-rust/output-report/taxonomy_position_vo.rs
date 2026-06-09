@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use /* UNKNOWN: LineNumber */ crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Position {

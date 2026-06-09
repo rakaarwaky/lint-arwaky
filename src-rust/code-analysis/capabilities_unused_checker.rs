@@ -2,15 +2,14 @@
 // Implements IUnusedImportProtocol: find_unused_imports.
 
 use crate::code_analysis::contract_unused_protocol::IUnusedProtocol;
+use crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use /* UNKNOWN: SymbolName */ crate::naming_rules::taxonomy_symbol_vo::SymbolName;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
-static ALL_RE: Lazy<Option<Regex>> =
-    Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
+static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
 
 /// Business logic for identifying imports that are not utilized in the code.
 pub struct UnusedImportRuleChecker {}

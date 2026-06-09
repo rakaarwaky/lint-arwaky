@@ -2,9 +2,9 @@
 
 use std::path::PathBuf;
 
+use crate::mcp_server::taxonomy_server_constant::AUTO_LINT_VERSION;
+use crate::mcp_server::taxonomy_server_constant::MCP_SERVER_VERSION;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use /* UNKNOWN: AUTO_LINT_VERSION */ crate::mcp_server::taxonomy_server_constant::AUTO_LINT_VERSION;
-use /* UNKNOWN: MCP_SERVER_VERSION */ crate::mcp_server::taxonomy_server_constant::MCP_SERVER_VERSION;
 use tracing::info;
 
 /// Context object yielded by the lifespan manager.

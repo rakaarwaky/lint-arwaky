@@ -1,7 +1,13 @@
 use std::sync::Arc;
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use std::process::ExitCode;
+
+use crate::cli_commands::taxonomy_entry_vo::{has_critical, lint_path, resolve_target};
+use crate::di_containers::agent_injection_container::DependencyInjectionContainer;
+use crate::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
 use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 
 pub struct CheckCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -46,13 +52,16 @@ impl CheckCommandsSurface {
                 return;
             }
         };
-        let path_obj = crate::source_parsing::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_else(|_| {
-            crate::source_parsing::taxonomy_path_vo::FilePath::new(".".to_string()).unwrap_or_default()
-        });
+        let path_obj = crate::source_parsing::taxonomy_path_vo::FilePath::new(path.to_string())
+            .unwrap_or_else(|_| {
+                crate::source_parsing::taxonomy_path_vo::FilePath::new(".".to_string())
+                    .unwrap_or_default()
+            });
 
         for name in &adapter_names {
             let adapter_name =
-                crate::shared_common::taxonomy_name_vo::AdapterName::new(name.to_string()).unwrap_or_default();
+                crate::shared_common::taxonomy_name_vo::AdapterName::new(name.to_string())
+                    .unwrap_or_default();
             if let Some(adapter) = container.linter_adapter(&adapter_name) {
                 match rt.block_on(adapter.scan(&path_obj)) {
                     Ok(results) => {
@@ -86,4 +95,31 @@ pub fn register_check_commands(
     let mut surface = CheckCommandsSurface::new();
     surface.register_all(container);
     surface
+}
+
+pub fn handle_check(path: Option<String>, _git_diff: bool) -> ExitCode {
+    let root = resolve_target(path);
+    run_lint_and_report(&root)
+}
+
+pub fn handle_scan(path: Option<String>) -> ExitCode {
+    let root = resolve_target(path);
+    let container = Arc::new(DependencyInjectionContainer::new(
+        DirectoryPath::new(&root).unwrap_or_default(),
+    ));
+    let surface = register_check_commands(container);
+    surface.scan(&root);
+    ExitCode::SUCCESS
+}
+
+fn run_lint_and_report(root: &str) -> ExitCode {
+    let results = lint_path(root);
+    let formatter = ReportFormatterProcessor::new();
+    let report = formatter.format_text(&results, root);
+    println!("{}", report);
+    if has_critical(&results) {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
 }

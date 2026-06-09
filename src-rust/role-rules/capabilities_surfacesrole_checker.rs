@@ -13,7 +13,9 @@ use crate::shared_common::taxonomy_name_vo::AdapterName;
 use crate::shared_common::taxonomy_names_vo::{
     core_layer_names, layer_agent, layer_contract, layer_surfaces, layer_taxonomy,
 };
-use crate::shared_common::taxonomy_violationrs_constant::AES021_NO_DOMAIN_LOGIC;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    AES021_NO_DOMAIN_LOGIC, AES023_SURFACE_DEPENDENCY,
+};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 fn make_adapter(name: &str) -> Option<AdapterName> {
@@ -149,8 +151,8 @@ impl SurfaceRoleChecker {
             column: ColumnNumber::new(0),
             code: ErrorCode::raw("AES023"),
             message: LintMessage::new(format!(
-                "SURFACE DEPENDENCY VIOLATION: Surface layer is only allowed to import from 'contract' and 'taxonomy'. Found import from '{}'.",
-                target_layer.value
+                "{} Surface layer is only allowed to import from 'contract' and 'taxonomy'. Found import from '{}'.",
+                AES023_SURFACE_DEPENDENCY, target_layer.value
             )),
             source: make_adapter("architecture"),
             severity: Severity::HIGH,
@@ -178,8 +180,7 @@ impl SurfaceRoleChecker {
                 source: make_adapter("architecture"),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
-                related_locations:
-                    crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
             });
         }
     }

@@ -1,10 +1,10 @@
 // git_commands_orchestrator — Agent orchestrator for git-aware linting.
 use crate::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
 use crate::git_hooks::contract_result_aggregate::GitDiffResultAggregate;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use /* UNKNOWN: LintResultList */ crate::output_report::taxonomy_result_vo::LintResultList;
 use async_trait::async_trait;
 use std::collections::HashSet;
 

@@ -1,50 +1,66 @@
 pub mod agent_dev_orchestrator;
-pub use agent_dev_orchestrator::{DevCommandsOrchestrator};
+pub use agent_dev_orchestrator::DevCommandsOrchestrator;
 pub mod agent_maintenance_orchestrator;
-pub use agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator};
+pub use agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;
 pub mod contract_dev_aggregate;
-pub use contract_dev_aggregate::{DevCommandsAggregate};
+pub use contract_dev_aggregate::DevCommandsAggregate;
 pub mod contract_dispatch_aggregate;
-pub use contract_dispatch_aggregate::{command_catalog,DispatchCommandsAggregate};
+pub use contract_dispatch_aggregate::{command_catalog, DispatchCommandsAggregate};
 pub mod contract_executor_port;
-pub use contract_executor_port::{ICommandExecutorPort};
+pub use contract_executor_port::ICommandExecutorPort;
 pub mod contract_maintenance_aggregate;
-pub use contract_maintenance_aggregate::{MaintenanceCommandsAggregate};
+pub use contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 pub mod contract_report_aggregate;
-pub use contract_report_aggregate::{ReportCommandsAggregate};
+pub use contract_report_aggregate::ReportCommandsAggregate;
 pub mod contract_routing_protocol;
-pub use contract_routing_protocol::{IDispatchRoutingParserProtocol,IDispatchRoutingProtocol};
+pub use contract_routing_protocol::{IDispatchRoutingParserProtocol, IDispatchRoutingProtocol};
 pub mod surface_analysis_command;
-pub use surface_analysis_command::{AnalysisCommandsSurface,register_analysis_commands};
+pub use surface_analysis_command::{register_analysis_commands, AnalysisCommandsSurface};
 pub mod surface_check_command;
-pub use surface_check_command::{CheckCommandsSurface,register_check_commands};
+pub use surface_check_command::{register_check_commands, CheckCommandsSurface};
 pub mod surface_core_command;
-pub use surface_core_command::{Cli,Commands,ConfigCommands,CoreCommandsSurface,get_cli,get_surface,SetupCommands};
+pub use surface_core_command::{
+    get_cli, get_surface, Cli, Commands, ConfigCommands, CoreCommandsSurface, SetupCommands,
+};
 pub mod surface_dev_command;
-pub use surface_dev_command::{DevCommandsSurface,register_dev_commands};
+pub use surface_dev_command::{register_dev_commands, DevCommandsSurface};
 pub mod surface_fix_command;
-pub use surface_fix_command::{FixCommandsSurface,register_fix_commands};
+pub use surface_fix_command::{register_fix_commands, FixCommandsSurface};
 pub mod surface_git_command;
-pub use surface_git_command::{GitCommandsSurface,register_git_commands};
+pub use surface_git_command::{register_git_commands, GitCommandsSurface};
 pub mod surface_main_handler;
-pub use surface_main_handler::{MainHandlerSurface,run_cli_entry};
+pub use surface_main_handler::{run_cli_entry, MainHandlerSurface};
 pub mod surface_maintenance_command;
-pub use surface_maintenance_command::{MaintenanceCommandsSurface,register_maintenance_commands};
+pub use surface_maintenance_command::{register_maintenance_commands, MaintenanceCommandsSurface};
 pub mod surface_multi_command;
-pub use surface_multi_command::{MultiCommandsSurface,register_multi_commands};
+pub use surface_multi_command::{register_multi_commands, MultiCommandsSurface};
 pub mod surface_output_controller;
-pub use surface_output_controller::{get_output_dir,OutputControllerSurface,set_container,tee_stdout,write_output};
+pub use surface_output_controller::{
+    get_output_dir, set_container, tee_stdout, write_output, OutputControllerSurface,
+};
 pub mod surface_plugin_command;
-pub use surface_plugin_command::{PluginCommandsSurface,register_plugin_commands};
+pub use surface_plugin_command::{register_plugin_commands, PluginCommandsSurface};
 pub mod surface_report_command;
-pub use surface_report_command::{register_report_commands,ReportCommandsSurface};
+pub use surface_report_command::{register_report_commands, ReportCommandsSurface};
 pub mod surface_setup_command;
-pub use surface_setup_command::{get_setup,register_setup_commands,SetupCommandsSurface};
+pub use surface_setup_command::{get_setup, register_setup_commands, SetupCommandsSurface};
 pub mod surface_setup_controller;
-pub use surface_setup_controller::{generate_env,generate_mcp_config,mcp_config_claude,mcp_config_hermes,mcp_config_vscode,register_setup_management,SetupManagementSurface};
+pub use surface_setup_controller::{
+    generate_env, generate_mcp_config, mcp_config_claude, mcp_config_hermes, mcp_config_vscode,
+    register_setup_management, SetupManagementSurface,
+};
 pub mod surface_watch_command;
-pub use surface_watch_command::{register_watch_command,WatchCommandsSurface,WatchdogBridge};
+pub use surface_watch_command::{register_watch_command, WatchCommandsSurface, WatchdogBridge};
+pub mod surface_config_command;
+pub use surface_config_command::handle_config;
+pub mod surface_map_command;
+pub use surface_map_command::{handle_cancel, handle_diff, handle_export, handle_import, handle_suggest};
+pub mod taxonomy_entry_vo;
+pub use taxonomy_entry_vo::{
+    compute_score, count_loc, has_critical, lint_path, normalize_project_root, resolve_target,
+    walk_rs_files,
+};
 pub mod taxonomy_catalog_constant;
-pub use taxonomy_catalog_constant::{COMMAND_CATALOG};
+pub use taxonomy_catalog_constant::COMMAND_CATALOG;
 pub mod taxonomy_metadata_vo;
-pub use taxonomy_metadata_vo::{CommandMetadataVO};
+pub use taxonomy_metadata_vo::CommandMetadataVO;

@@ -1,5 +1,8 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_violationrs_constant::{
+    aes030_capability_routing, AES023_SURFACE_DEPENDENCY,
+};
 
 pub struct ArchLayerChecker {}
 
@@ -18,7 +21,7 @@ impl ArchLayerChecker {
         if layer != "surfaces" && !layer.starts_with("surfaces(") {
             return;
         }
-        for line in content.lines() {
+        for (i, line) in content.lines().enumerate() {
             let t = line.trim();
             if t.starts_with("use ")
                 && (t.contains("::capabilities::")
@@ -27,10 +30,10 @@ impl ArchLayerChecker {
             {
                 violations.push(LintResult::new_arch(
                     file,
-                    0,
+                    i + 1,
                     "AES023",
-                    Severity::HIGH,
-                    "AES023 SURFACE_DEPENDENCY: Surface imports from forbidden layer.",
+                    Severity::CRITICAL,
+                    AES023_SURFACE_DEPENDENCY,
                 ));
                 break;
             }
@@ -52,7 +55,12 @@ impl ArchLayerChecker {
             .filter_map(|l| {
                 let t = l.trim();
                 if t.starts_with("pub struct ") || t.starts_with("struct ") {
-                    Some(t.split_whitespace().nth(1).unwrap_or("").trim_end_matches(';'))
+                    Some(
+                        t.split_whitespace()
+                            .nth(1)
+                            .unwrap_or("")
+                            .trim_end_matches(';'),
+                    )
                 } else {
                     None
                 }
@@ -68,7 +76,7 @@ impl ArchLayerChecker {
                     0,
                     "AES030",
                     Severity::MEDIUM,
-                    &format!("AES030 CAPABILITY_ROUTING: Struct '{}' no trait impl.", s),
+                    &aes030_capability_routing(s),
                 ));
             }
         }
