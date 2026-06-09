@@ -17,6 +17,18 @@ pub struct NamingVariantDict {
     pub kebab_case: String,
 }
 
+impl std::fmt::Debug for NamingVariantDict {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("NamingVariantDict")
+            .field("snake_case", &self.snake_case)
+            .field("pascal_case", &self.pascal_case)
+            .field("camel_case", &self.camel_case)
+            .field("screaming_snake", &self.screaming_snake)
+            .field("kebab_case", &self.kebab_case)
+            .finish()
+    }
+}
+
 impl Default for NamingVariantAnalyzer {
     fn default() -> Self {
         Self::new()

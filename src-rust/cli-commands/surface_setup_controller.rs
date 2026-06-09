@@ -2,14 +2,9 @@ use std::sync::Arc;
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
+#[derive(Default)]
 pub struct SetupManagementSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
-}
-
-impl Default for SetupManagementSurface {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl SetupManagementSurface {

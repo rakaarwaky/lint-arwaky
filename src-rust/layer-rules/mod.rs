@@ -1,7 +1,10 @@
 pub mod agent_compliance_orchestrator;
-pub use agent_compliance_orchestrator::{
-    ArchComplianceCoordinator, ArchitectureOrchestrator, InfrastructureMixinContainer,
-    OrchestratorMixinContainer, WatchCommandsOrchestrator, WatchExecutionOrchestrator,
+pub use agent_compliance_orchestrator::{ArchComplianceCoordinator, ArchitectureOrchestrator};
+pub mod agent_mixin_containers;
+pub use agent_mixin_containers::{InfrastructureMixinContainer, OrchestratorMixinContainer};
+pub mod agent_watch_orchestrators;
+pub use agent_watch_orchestrators::{
+    WatchCommandsOrchestrator, WatchExecutionOrchestrator,
 };
 pub mod capabilities_compliance_analyzer;
 pub use capabilities_compliance_analyzer::ArchComplianceAnalyzer;

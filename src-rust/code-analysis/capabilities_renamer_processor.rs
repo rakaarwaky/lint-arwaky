@@ -71,7 +71,7 @@ impl SymbolRenamerProcessor {
         };
 
         let files = Self::collect_files(root_dir);
-        let mut modified_count = 0;
+        let mut modified_count = 0usize;
 
         for file_path in &files {
             let Ok(source) = fs::read_to_string(file_path) else {

@@ -58,7 +58,7 @@ impl IJsTracerPort for JSScopeTracer {
             };
 
         let mut scope_stack: Vec<(String, usize)> = Vec::new();
-        let mut brace_depth: i32 = 0;
+        let mut brace_depth: i32 = 0i32;
         let mut scope_depths: Vec<i32> = Vec::new();
 
         for (i, raw_line) in lines.iter().enumerate() {

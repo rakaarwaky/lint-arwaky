@@ -250,7 +250,7 @@ impl ISemanticTracerPort for JSCallAdapter {
         };
 
         let js_files = Self::find_js_files(root);
-        let mut modified_count = 0;
+        let mut modified_count = 0i64;
 
         for filepath in js_files {
             if let Ok(source) = fs::read_to_string(&filepath) {
