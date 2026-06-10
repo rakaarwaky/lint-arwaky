@@ -162,9 +162,21 @@ pub(crate) fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
                     if let Some(rule_obj) = rule_val.as_object() {
                         let mut base = rule_obj.clone();
                         base.insert("name".to_string(), serde_json::json!(code));
-                        // Convert scope array to single string (first element)
+                        // Expand scope array into multiple entries — one per scope element
+                        // Only applies to rules WITHOUT conditions (conditions have their own scopes)
                         if let Some(scope_arr) = base.get("scope").and_then(|s| s.as_array()) {
-                            if let Some(first) = scope_arr.first().and_then(|v| v.as_str()) {
+                            if !base.contains_key("conditions") && scope_arr.len() > 1 {
+                                for scope_val in scope_arr {
+                                    if let Some(s) = scope_val.as_str() {
+                                        let mut entry = base.clone();
+                                        entry.insert("scope".to_string(), serde_json::json!(s));
+                                        if let Some(arr) = flat.as_array_mut() {
+                                            arr.push(serde_json::Value::Object(entry));
+                                        }
+                                    }
+                                }
+                                continue; // Already pushed per-scope entries, skip single push below
+                            } else if let Some(first) = scope_arr.first().and_then(|v| v.as_str()) {
                                 base.insert("scope".to_string(), serde_json::json!(first));
                             }
                         }

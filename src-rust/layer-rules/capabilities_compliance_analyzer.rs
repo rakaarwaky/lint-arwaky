@@ -169,6 +169,39 @@ impl ArchComplianceAnalyzer {
             return Some("root".to_string());
         }
 
+        // DIRECTORY-BASED FALLBACK: If prefix detection failed, check the immediate
+        // parent directory name against known layer names. This supports test projects
+        // and codebases organized by directory (e.g., "taxonomy/foo.rs" → taxonomy layer)
+        // without requiring every file to carry the layer prefix.
+        let parent_dir = Path::new(&rel)
+            .parent()
+            .and_then(|p| p.to_str())
+            .unwrap_or("");
+        if !parent_dir.is_empty() && parent_dir != "." {
+            let dir_name = parent_dir.split('/').next_back().unwrap_or(parent_dir);
+            const DIR_MAP: &[(&str, &str)] = &[
+                ("taxonomy", "taxonomy"),
+                ("contract", "contract"),
+                ("capabilities", "capabilities"),
+                ("infrastructure", "infrastructure"),
+                ("agent", "agent"),
+                ("surfaces", "surfaces"),
+                ("surface", "surfaces"),
+                // Feature-based (vertical slicing) directory names
+                ("shared_common", "taxonomy"),
+                ("layer_rules", "contract"),
+                ("code_analysis", "capabilities"),
+                ("language_adapters", "infrastructure"),
+                ("di_containers", "agent"),
+                ("cli_commands", "surfaces"),
+            ];
+            for (dir, layer) in DIR_MAP {
+                if *dir == dir_name {
+                    return Some(self.resolve_specialized_layer(layer, file_path));
+                }
+            }
+        }
+
         let mut sorted_layers: Vec<(&LayerNameVO, &LayerDefinition)> =
             self.config.layers.iter().collect();
         sorted_layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));

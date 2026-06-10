@@ -359,7 +359,7 @@ impl AgentRoleChecker {
                         file: f.clone(),
                         line: LineNumber::new(line_num),
                         column: ColumnNumber::new(col),
-                        code: ErrorCode::raw("AES032"),
+                        code: ErrorCode::raw("AES035"),
                         message: LintMessage::new(aes035_any_type(line)),
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,

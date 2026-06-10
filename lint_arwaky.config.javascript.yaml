@@ -221,3 +221,24 @@ architecture:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
       entry_points: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+
+    AES013:
+      enabled: true
+      scope: ["contract"]
+      forbidden_inheritance: ["contract(port)", "contract(protocol)"]
+      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+
+    AES016:
+      enabled: true
+      scope: ["taxonomy"]
+      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+
+    AES037:
+      enabled: true
+      scope: ["capabilities"]
+      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+
+    AES038:
+      enabled: true
+      scope: ["capabilities", "infrastructure"]
+      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]

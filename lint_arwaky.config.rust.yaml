@@ -97,6 +97,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(port|protocol|aggregate)"]
           forbidden: ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+          forbidden_inheritance: ["contract(port)", "contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
@@ -218,3 +219,24 @@ architecture:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
       entry_points: ["main.rs", "lib.rs", "mod.rs", "__init__.py", "index.ts", "index.js"]
+
+    AES013:
+      enabled: true
+      scope: ["contract"]
+      forbidden_inheritance: ["contract(port)", "contract(protocol)"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+
+    AES016:
+      enabled: true
+      scope: ["taxonomy"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+
+    AES037:
+      enabled: true
+      scope: ["capabilities"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+
+    AES038:
+      enabled: true
+      scope: ["capabilities", "infrastructure"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]

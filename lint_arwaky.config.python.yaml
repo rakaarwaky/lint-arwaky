@@ -221,3 +221,24 @@ architecture:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
       entry_points: ["main.py", "__init__.py", "__main__.py"]
+
+    AES013:
+      enabled: true
+      scope: ["contract"]
+      forbidden_inheritance: ["contract(port)", "contract(protocol)"]
+      exceptions: ["__init__.py", "__main__.py"]
+
+    AES016:
+      enabled: true
+      scope: ["taxonomy"]
+      exceptions: ["__init__.py", "__main__.py"]
+
+    AES037:
+      enabled: true
+      scope: ["capabilities"]
+      exceptions: ["__init__.py", "__main__.py"]
+
+    AES038:
+      enabled: true
+      scope: ["capabilities", "infrastructure"]
+      exceptions: ["__init__.py", "__main__.py"]

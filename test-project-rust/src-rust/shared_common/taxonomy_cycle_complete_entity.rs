@@ -1,5 +1,5 @@
 // AES020: part of circular import cycle
-use crate::taxonomy::cycle_starter_entity::CycleStarterEntity;
+use crate::shared_common::taxonomy_cycle_starter_entity::CycleStarterEntity;
 
 pub struct CycleCompleteEntity;
 

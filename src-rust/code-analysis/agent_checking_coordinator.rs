@@ -80,8 +80,6 @@ impl LintCheckingCoordinator {
             Self::check_bypass_comments(file, &c, &mut violations);
             Self::check_unused_imports(file, &c, &mut violations);
             Self::check_dead_inheritance(file, &c, &mut violations);
-            Self::check_agent_any_bypass(file, &c, &mut violations);
-            Self::check_mandatory_inheritance(file, &c, &mut violations);
 
             for line in c.lines() {
                 let t = line.trim();
@@ -132,6 +130,8 @@ impl LintCheckingCoordinator {
             Self::check_surface_role(file, &c, &layer, &mut violations);
             Self::check_single_bottleneck(file, &c, &layer, &mut violations);
             Self::check_missing_vo(file, &c, &layer, &mut violations);
+            Self::check_agent_any_bypass(file, &c, &layer, &mut violations);
+            Self::check_mandatory_inheritance(file, &c, &layer, &mut violations);
 
             // Layer-rule checks (delegated to layer-rules/)
             self.checker
@@ -566,24 +566,32 @@ impl LintCheckingCoordinator {
         }
     }
 
-    fn check_agent_any_bypass(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        let filename = Path::new(file)
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("");
-        if !filename.starts_with("agent_") {
+    fn check_agent_any_bypass(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+        // AES035: Detects `any` type annotations in agent layer files
+        if layer != "agent" && !layer.starts_with("agent(") {
+            return;
+        }
+        // Skip files with bypass annotation (e.g., the coordinator itself)
+        if content.lines().take(30).any(|l| l.contains("aes: bypass-agent-role")) {
             return;
         }
         for (i, line) in content.lines().enumerate() {
-            let wc1 = format!("{}*{}", ":", ":");
-            let wc2 = format!("{}* {}", "::", "}");
-            if line.trim().contains(&wc1) || line.trim().contains(&wc2) {
+            let t = line.trim();
+            // Match `: any`, `: Any`, `-> any`, `-> Any`, `Any<`, `any[`
+            if t.contains(": any")
+                || t.contains(": Any")
+                || t.contains("-> any")
+                || t.contains("-> Any")
+                || t.contains("Any<")
+                || t.contains("Any[")
+                || t.contains("any[")
+            {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES001",
+                    "AES035",
                     Severity::HIGH,
-                    "AES001 FORBIDDEN_IMPORT: Wildcard import in agent layer.",
+                    "AES035 AGENT_ANY_BYPASS: Any type annotation found in agent layer.",
                 ));
             }
         }
@@ -641,16 +649,17 @@ impl LintCheckingCoordinator {
         }
     }
 
-    fn check_mandatory_inheritance(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        let filename = Path::new(file)
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("");
-        let contract_suffix = if filename.starts_with("infrastructure_") {
+    fn check_mandatory_inheritance(
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let contract_suffix = if layer == "infrastructure" || layer.starts_with("infrastructure(") {
             "_port"
-        } else if filename.starts_with("capabilities_") {
+        } else if layer == "capabilities" || layer.starts_with("capabilities(") {
             "_protocol"
-        } else if filename.starts_with("agent_") {
+        } else if layer == "agent" || layer.starts_with("agent(") {
             "_aggregate"
         } else {
             return;
@@ -661,6 +670,10 @@ impl LintCheckingCoordinator {
         // MUST implement the contracts they import.
         // COORDINATOR suffixes (_orchestrator, _coordinator, _container, _registry, etc.)
         // may import contracts for calling purposes without implementing them.
+        let filename = Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
         let stem = filename.rsplit('.').next_back().unwrap_or(filename);
         let own_suffix = stem.rsplit('_').next().unwrap_or("");
         let implementer_suffixes = [

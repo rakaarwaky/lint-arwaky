@@ -13,4 +13,11 @@ impl ManyFunctionsHandler {
     pub fn fn09(&self) -> u32 { 9 }
     pub fn fn10(&self) -> u32 { 10 }
     pub fn fn11(&self) -> u32 { 11 }
+    pub fn fn12(&self) -> u32 { 12 }
+    pub fn fn13(&self) -> u32 { 13 }
+    pub fn fn14(&self) -> u32 { 14 }
+    pub fn fn15(&self) -> u32 { 15 }
+    pub fn fn16(&self) -> u32 { 16 }
+    pub fn fn17(&self) -> u32 { 17 }
+    pub fn fn18(&self) -> u32 { 18 }
 }

@@ -400,12 +400,22 @@ impl SurfaceHierarchyChecker {
 
 // --- helpers -----------------------------------------------------------------
 
-/// Check if the file is a surface file by filename prefix `surface_`.
+/// Check if the file is a surface file by filename prefix `surface_` or directory `surfaces/`.
 fn is_in_surfaces(f: &FilePath) -> bool {
     let path_str = f.to_string();
     let basename = path_str.rsplit('/').next().unwrap_or(&path_str);
     let stem = basename.split('.').next().unwrap_or(basename);
-    stem.starts_with("surface_")
+    // Check filename prefix (standard naming convention)
+    if stem.starts_with("surface_") {
+        return true;
+    }
+    // Check parent directory name (directory-based layout)
+    if let Some(parent) = path_str.rsplit('/').nth(1) {
+        if parent == "surfaces" || parent == "surface" || parent == "cli_commands" {
+            return true;
+        }
+    }
+    false
 }
 
 /// Check if the file is a barrel/init file.
