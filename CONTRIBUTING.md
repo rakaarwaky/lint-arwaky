@@ -120,7 +120,7 @@ To prevent architectural bypasses, every logic file **must** define a struct tha
 | **Surfaces** | `_command`, `_handler`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_provider` | `cli_check_command.rs` |
 | **Taxonomy** | `_vo`, `_entity`, `_event`, `_error`, `_constant` | `lint_score_vo.rs`, `lint_score_constant.rs` |
 
-**AES033 (constant purity)**: A `_constant` file may contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, `impl`, `mod`, or `pub use` in such a file triggers AES033.
+**AES0301 (constant purity)**: A `_constant` file may contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, `impl`, `mod`, or `pub use` in such a file triggers AES0301.
 
 ---
 
@@ -382,7 +382,7 @@ The project applies a **layer-granular** primitive enforcement strategy:
 | `contract` | `true` | All port/protocol/aggregate signatures must use taxonomy Value Objects |
 | `taxonomy(entity\|error\|event)` | `true` | All entity/error/event attributes must use Value Objects |
 | `taxonomy(vo)` | `false` | VO internals may use primitives as underlying storage |
-| `taxonomy(constant)` | `false` | Constants are primitives by definition; must contain ONLY constants (AES033) |
+| `taxonomy(constant)` | `false` | Constants are primitives by definition; must contain ONLY constants (AES0301) |
 | `infrastructure` | `false` | Adapters may use primitive types as supporting/local types |
 | `capabilities` | `false` | Capability implementations may use primitive types internally |
 | `surfaces` | `false` | Surface/CLI handlers may use primitive types for I/O parsing |

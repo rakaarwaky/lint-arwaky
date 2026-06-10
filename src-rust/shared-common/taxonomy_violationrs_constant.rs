@@ -18,22 +18,22 @@ pub const AES011_SUFFIX_FORBIDDEN: &str =
     "AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.\n\
     WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
     FIX: Rename the file to use an allowed suffix or move it to the correct layer.";
-pub const AES035_STATELESS_EXECUTION: &str =
+pub const AES0305_STATELESS_EXECUTION: &str =
     "Non-stateless behavior detected: state assignment found outside __init__.";
-pub const AES035_HIGH_LEVEL_POLICY: &str =
+pub const AES0305_HIGH_LEVEL_POLICY: &str =
     "Low-level implementation details found (infrastructure import).";
-pub const AES035_COORDINATES_MULTIPLE: &str = "Coordinator must manage multiple orchestrators.";
-pub const AES035_NO_DOMAIN_LOGIC: &str = "Complex domain logic detected in a passive layer/role.";
-pub const AES035_LAZY_EAGER_INIT: &str = "Complex initialization logic found in Container.";
-pub const AES035_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceContainerAggregate.";
-pub const AES035_ANY_TYPE: &str = "Any type annotation found in agent orchestrator layer.";
+pub const AES0305_COORDINATES_MULTIPLE: &str = "Coordinator must manage multiple orchestrators.";
+pub const AES0305_NO_DOMAIN_LOGIC: &str = "Complex domain logic detected in a passive layer/role.";
+pub const AES0305_LAZY_EAGER_INIT: &str = "Complex initialization logic found in Container.";
+pub const AES0305_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceContainerAggregate.";
+pub const AES0305_ANY_TYPE: &str = "Any type annotation found in agent orchestrator layer.";
 pub const AES013_FORBIDDEN_INHERITANCE: &str =
     "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
 pub const AES015_CONSTANT_PURITY: &str =
     "AES015 CONSTANT_PURITY: _constant file contains non-constant declaration.";
 
-/// Alias for cross-language consistency — AES015 and AES031 refer to the same check.
-pub const AES031_CONSTANT_PURITY: &str = AES015_CONSTANT_PURITY;
+/// Alias for cross-language consistency — AES015 and AES0301 refer to the same check.
+pub const AES0301_CONSTANT_PURITY: &str = AES015_CONSTANT_PURITY;
 
 pub use crate::shared_common::taxonomy_violationrs_vo::*;
 
@@ -46,20 +46,22 @@ pub const AES023_FIX_UNUSED_IMPORT: &str = "AES023 UNUSED_IMPORT: Fixing unused 
 pub const AES024_DEAD_INHERITANCE: &str =
     "AES024 DEAD_INHERITANCE: Empty struct or trait detected.";
 pub const AES030_ORPHAN_CODE: &str = "AES030 ORPHAN_CODE: File has no imports, not an entry point.";
-pub const AES033_HIERARCHY_VIOLATION: &str =
-    "AES033 SURFACE_HIERARCHY_VIOLATION: Surface file is not imported from the layer barrel.";
-pub const AES034_PASSIVE_VIOLATION: &str =
-    "AES034 PASSIVE_SURFACE_VIOLATION: Surface file contains active domain logic.";
+pub const AES0306_HIERARCHY_VIOLATION: &str =
+    "AES0306 SURFACE_ROLE: Surface file is not imported from the layer barrel.";
+pub const AES0306_PASSIVE_VIOLATION: &str =
+    "AES0306 SURFACE_ROLE: Surface file contains active domain logic.";
 pub const AES012_CIRCULAR_IMPORT: &str = "AES012 CIRCULAR_IMPORT: Circular dependencies detected.";
-pub const AES031_SURFACE_ROLE_VIOLATION: &str =
-    "AES031 SURFACE_ROLE: Surface file exceeds role mandate.";
+pub const AES0306_SURFACE_ROLE_VIOLATION: &str =
+    "AES0306 SURFACE_ROLE: Surface file exceeds role mandate.";
 pub const AES001_SURFACE_DEPENDENCY: &str =
     "AES001 SURFACE_DEPENDENCY: Surface imports from forbidden layer.";
 pub const AES014_MANDATORY_INHERITANCE: &str =
     "AES014 MANDATORY_INHERITANCE: File imports contracts but no class implements them.";
-pub const AES037_CAPABILITY_ROUTING: &str =
-    "AES037 CAPABILITY_ROUTING: Capability method not found in dispatch.";
-pub const AES036_SINGLE_BOTTLENECK: &str =
-    "AES036 SINGLE_BOTTLENECK: All dispatch routes go to a single capability.";
-pub const AES038_MISSING_VO: &str =
-    "AES038 MISSING_VO: Capability method call missing required VO parameter.";
+pub const AES0303_CAPABILITY_ROUTING: &str =
+    "AES0303 CAPABILITY_ROLE: Capability method not found in dispatch.";
+pub const AES0303_SINGLE_BOTTLENECK: &str =
+    "AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability.";
+pub const AES0303_MISSING_VO: &str =
+    "AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.";
+pub const AES0304_MISSING_VO: &str =
+    "AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.";

@@ -3,9 +3,9 @@
 //! Static table of every public top-level command exposed by the CLI and
 //! MCP server, paired with a short description and a usage example. The
 //! catalog is the single source of truth for `list_commands` and the
-//! dispatch routing checker (AES030).
+//! dispatch routing checker (AES0303).
 //!
-//! AES_RULES: Follows the `_constant` taxonomy role (AES033).
+//! AES_RULES: Follows the `_constant` taxonomy role (AES0301).
 
 pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
     (

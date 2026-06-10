@@ -29,9 +29,9 @@ pub fn aes011_suffix_mismatch(allowed_list: &str) -> String {
     )
 }
 
-pub fn aes031_primitive_usage(primitive: &str) -> String {
+pub fn aes0301_primitive_usage(primitive: &str) -> String {
     format!(
-        "AES016 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy.",
+        "AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy.",
         primitive
     )
 }
@@ -40,20 +40,23 @@ pub fn aes023_unused_import(name: &str) -> String {
     format!("AES023 UNUSED_IMPORT: '{}' imported but never used.", name)
 }
 
-pub fn aes032_forbidden_inheritance(trait_name: &str) -> String {
+pub fn aes0302_forbidden_inheritance(trait_name: &str) -> String {
     format!(
-        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
+        "AES0302 CONTRACT_ROLE: '{}' implemented from forbidden source.",
         trait_name
     )
 }
 
-pub fn aes035_must_implement_contract(contract_name: &str) -> String {
-    format!("Class must implement {}.", contract_name)
+pub fn aes0305_must_implement_contract(contract_name: &str) -> String {
+    format!(
+        "AES0305 AGENT_ROLE: Class must implement {}.",
+        contract_name
+    )
 }
 
-pub fn aes035_any_type(line: &str) -> String {
+pub fn aes0305_any_type(line: &str) -> String {
     format!(
-        "Any type annotation found in agent orchestrator layer: '{}'.",
+        "AES0305 AGENT_ROLE: Any type annotation found in agent orchestrator layer: '{}'.",
         line.trim()
     )
 }

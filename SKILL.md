@@ -11,7 +11,7 @@ Rust MCP server for autonomous multi-language linting and architectural governan
 ## Key Features
 
 - **Multi-Language**: Audits Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon-style metrics), and JavaScript/TypeScript (ESLint, Prettier, TSC) in a single command.
-- **Architecture Audit**: Enforces 31 Agentic Engineering System (AES) rules (codes AES001–AES033, with AES028 and AES029 reserved) — e.g., "Surfaces are prohibited from importing Infrastructure" (AES001, AES023).
+- **Architecture Audit**: Enforces 21 Agentic Engineering System (AES) rules (codes AES001–AES002, AES010–AES016, AES020–AES024, and AES030–AES0306) — e.g., "Surfaces are prohibited from importing Infrastructure" (AES001, AES023).
 - **Auto-Fix**: The `fix` subcommand applies safe style fixes without human intervention.
 - **Reporting**: Quality score = `100 - sum(penalty)` (no lower bound). Output formats: `text`, `json`, SARIF 2.1.0, JUnit XML.
 - **Self-Auditing**: The project scans itself under `lint-arwaky-cli check .` using the same rules it exposes to others.

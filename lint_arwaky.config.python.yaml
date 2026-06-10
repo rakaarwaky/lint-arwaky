@@ -160,35 +160,38 @@ architecture:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
 
-    AES031:
+    AES0301:
       enabled: true
-      scope: ["taxonomy(constant)", "contract", "taxonomy(entity,error,event)"]
+      scope: ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)"]
 
-    AES032:
+    AES0302:
       enabled: true
-      scope: ["contract(aggregate)"]
+      scope: ["contract(aggregate)", "contract(port|protocol)"]
       exceptions: ["__init__.py", "__main__.py"]
 
-    AES033:
+    AES0303:
       enabled: true
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
-
-    AES034:
-      enabled: true
-      scope: ["infrastructure", "capabilities", "agent"]
       exceptions: ["__init__.py", "__main__.py"]
 
-    AES035:
+    AES0304:
+      enabled: true
+      scope: ["infrastructure"]
+      exceptions: ["__init__.py", "__main__.py"]
+
+    AES0305:
       enabled: true
       scope: ["agent(container|registry|mixin)", "agent(orchestrator|coordinator)", "agent(manager|state)"]
       max_lines: 300
+      exceptions: ["__init__.py", "__main__.py"]
 
-    AES036:
+    AES0306:
       enabled: true
       scope: ["surfaces(command|controller|page|entry)", "surfaces(hook|store|action|screen|router)", "surfaces(component|view|layout)"]
       max_functions: 15
+      exceptions: ["__init__.py", "__main__.py"]
 
     AES020:
       enabled: true
@@ -231,14 +234,4 @@ architecture:
     AES016:
       enabled: true
       scope: ["taxonomy"]
-      exceptions: ["__init__.py", "__main__.py"]
-
-    AES037:
-      enabled: true
-      scope: ["capabilities"]
-      exceptions: ["__init__.py", "__main__.py"]
-
-    AES038:
-      enabled: true
-      scope: ["capabilities", "infrastructure"]
       exceptions: ["__init__.py", "__main__.py"]

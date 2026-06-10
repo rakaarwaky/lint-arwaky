@@ -4,9 +4,9 @@
 // aes: bypass-capability-routing
 //
 // Detects:
-//   AES030 — Capability method referenced in COMMAND_CATALOG doesn't exist on the class
-//   AES031 — Orchestrator routes ALL actions to a single capability when other options exist
-//   AES032 — Capability method called without required request VO parameter
+//   AES0303 — Capability method referenced in COMMAND_CATALOG doesn't exist on the class
+//   AES0303 — Orchestrator routes ALL actions to a single capability when other options exist
+//   AES0303 — Capability method called without required request VO parameter
 
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -35,7 +35,7 @@ use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    AES036_SINGLE_BOTTLENECK, AES037_CAPABILITY_ROUTING, AES038_MISSING_VO,
+    AES0303_CAPABILITY_ROUTING, AES0303_MISSING_VO, AES0303_SINGLE_BOTTLENECK,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
@@ -275,10 +275,10 @@ impl DispatchRoutingChecker {
                         results,
                         &ref_.file,
                         &ref_.line,
-                        "AES037",
+                        "AES0303",
                         &format!(
                             "{} Method '{}' not found on class '{}'. Defined methods: {}.",
-                            AES037_CAPABILITY_ROUTING,
+                            AES0303_CAPABILITY_ROUTING,
                             ref_.method_name.value,
                             ref_.class_name.value,
                             found_methods
@@ -290,10 +290,10 @@ impl DispatchRoutingChecker {
                     results,
                     &ref_.file,
                     &ref_.line,
-                    "AES037",
+                    "AES0303",
                     &format!(
                         "{} Class '{}' not found in any scanned file.",
-                        AES037_CAPABILITY_ROUTING, ref_.class_name.value
+                        AES0303_CAPABILITY_ROUTING, ref_.class_name.value
                     ),
                 );
             }
@@ -377,10 +377,10 @@ impl DispatchRoutingChecker {
                 results,
                 &item.file,
                 &item.line,
-                "AES036",
+                "AES0303",
                 &format!(
                     "{} Action '{}' routes to '{}' but {} other capability classes exist ({}).",
-                    AES036_SINGLE_BOTTLENECK,
+                    AES0303_SINGLE_BOTTLENECK,
                     item.method.value,
                     class_name.value,
                     other_classes.len(),
@@ -438,10 +438,10 @@ impl DispatchRoutingChecker {
                         results,
                         file_path,
                         &LineNumber::new(line_no),
-                        "AES038",
+                        "AES0303",
                         &format!(
                             "{} Capability call 'self.some_executor.{}()' missing required VO parameter.",
-                            AES038_MISSING_VO, method_name
+                            AES0303_MISSING_VO, method_name
                         ),
                     );
                 }

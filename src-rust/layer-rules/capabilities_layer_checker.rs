@@ -1,7 +1,7 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes037_capability_routing, AES001_SURFACE_DEPENDENCY,
+    aes0303_capability_routing, AES001_SURFACE_DEPENDENCY,
 };
 
 pub struct ArchLayerChecker {}
@@ -95,9 +95,9 @@ impl ArchLayerChecker {
                 violations.push(LintResult::new_arch(
                     file,
                     0,
-                    "AES037",
+                    "AES0303",
                     Severity::MEDIUM,
-                    &aes037_capability_routing(s),
+                    &aes0303_capability_routing(s),
                 ));
             }
         }

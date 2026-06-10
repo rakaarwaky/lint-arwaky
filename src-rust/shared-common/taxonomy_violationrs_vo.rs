@@ -47,16 +47,16 @@ pub fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     )
 }
 
-pub fn aes032_must_implement_contract(contract_name: &str) -> String {
+pub fn aes0305_must_implement_contract(contract_name: &str) -> String {
     format!(
-        "AES032 AGENT_ROLE: Class must implement '{}'.",
+        "AES0305 AGENT_ROLE: Class must implement '{}'.",
         contract_name
     )
 }
 
-pub fn aes035_any_type(line: &str) -> String {
+pub fn aes0305_any_type(line: &str) -> String {
     format!(
-        "AES035 AGENT_ANY_BYPASS: Any type annotation found in agent orchestrator layer: '{}'.",
+        "AES0305 AGENT_ROLE: Any type annotation found in agent orchestrator layer: '{}'.",
         line.trim()
     )
 }
@@ -79,12 +79,12 @@ pub fn aes030_orphan_code(file: &str) -> String {
     format!("AES030 ORPHAN_CODE: File '{}' is unreachable/unused.", file)
 }
 
-pub fn aes033_hierarchy_violation(file: &str) -> String {
-    format!("AES033 SURFACE_HIERARCHY_VIOLATION: Surface file '{}' is not imported from the layer barrel.\nWHY? All surface files must be reachable through the barrel.\nFIX: Add to __init__.py or mod.rs.", file)
+pub fn aes0306_hierarchy_violation(file: &str) -> String {
+    format!("AES0306 SURFACE_ROLE: Surface file '{}' is not imported from the layer barrel.\nWHY? All surface files must be reachable through the barrel.\nFIX: Add to __init__.py or mod.rs.", file)
 }
 
-pub fn aes034_passive_violation_details(file: &str, details: &str) -> String {
-    format!("AES034 PASSIVE_SURFACE_VIOLATION: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
+pub fn aes0306_passive_violation_details(file: &str, details: &str) -> String {
+    format!("AES0306 SURFACE_ROLE: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
 }
 
 pub fn aes012_circular_import(source: &str, target: &str) -> String {
@@ -98,23 +98,30 @@ pub fn aes014_mandatory_inheritance(contracts: &str) -> String {
     format!("AES014 MANDATORY_INHERITANCE: File imports contracts ({}) but no class inherits from them.\nWHY? Layers that import contracts must provide an implementation.\nFIX: Add impl TraitName for YourStruct.", contracts)
 }
 
-pub fn aes037_capability_routing(struct_name: &str) -> String {
+pub fn aes0303_capability_routing(struct_name: &str) -> String {
     format!(
-        "AES037 CAPABILITY_ROUTING: Struct '{}' has no trait impl.",
+        "AES0303 CAPABILITY_ROLE: Struct '{}' has no trait impl.",
         struct_name
     )
 }
 
-pub fn aes036_single_bottleneck(target: &str) -> String {
+pub fn aes0303_single_bottleneck(target: &str) -> String {
     format!(
-        "AES036 SINGLE_BOTTLENECK: All dispatch routes go to '{}'.",
+        "AES0303 CAPABILITY_ROLE: All dispatch routes go to '{}'.",
         target
     )
 }
 
-pub fn aes038_missing_vo(method: &str) -> String {
+pub fn aes0303_missing_vo(method: &str) -> String {
     format!(
-        "AES038 MISSING_VO: Capability method '{}' missing required VO parameter.",
+        "AES0303 CAPABILITY_ROLE: Capability method '{}' missing required VO parameter.",
+        method
+    )
+}
+
+pub fn aes0304_missing_vo(method: &str) -> String {
+    format!(
+        "AES0304 INFRASTRUCTURE_ROLE: Infrastructure method '{}' missing required VO parameter.",
         method
     )
 }

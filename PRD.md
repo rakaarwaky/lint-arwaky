@@ -78,7 +78,7 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 | FR-013 | **Root layer detection** (AES004) — forbidden root import patterns                                                                                                                                                                                                                                                | FR-001     |
 | FR-014 | **Layer suffix mismatch detector** (AES005) — file suffix must match layer                                                                                                                                                                                                                                                        | FR-001     |
 | FR-015 | **Contract suffix mismatch detector** (AES006) — contract needs _port/_protocol/_aggregate                                                                                                                                                                                                                                  | FR-001     |
-| FR-016 | **Surface layer rule checker** (AES031) — surface must not implement domain logic; Smart surfaces parse input and delegate via `ServiceContainerAggregate`; Passive surfaces (`_component`, `_layout`, `_view`) import taxonomy only (AES034) | FR-001     |
+| FR-016 | **Surface layer rule checker** (AES0306) — surface must not implement domain logic; Smart surfaces parse input and delegate via `ServiceContainerAggregate`; Passive surfaces (`_component`, `_layout`, `_view`) import taxonomy only (AES0306) | FR-001     |
 | FR-017 | **Surface direct import checker** (AES003) — no direct infra/cap imports                                                                                                                                                                                                                                        | FR-001     |
 
 ### 5.3 Naming & Structure Rules
@@ -109,10 +109,10 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 | ID     | Requirement                                                                              | Dependency |
 | ------ | ---------------------------------------------------------------------------------------- | ---------- |
-| FR-035 | **Surface hierarchy violation detector** (AES033) — utility imports smart surface | FR-001     |
-| FR-036 | **Passive surface violation detector** (AES034) — passive imports taxonomy only   | FR-001     |
-| FR-037 | **Agent role violation detector** (AES032) — behavioral mandates per agent role   | FR-001     |
-| FR-038 | **Agent any-bypass detector** (AES035) — no `any` type in orchestrators         | FR-003     |
+| FR-035 | **Surface hierarchy violation detector** (AES0306) — utility imports smart surface | FR-001     |
+| FR-036 | **Passive surface violation detector** (AES0306) — passive imports taxonomy only   | FR-001     |
+| FR-037 | **Agent role violation detector** (AES0305) — behavioral mandates per agent role   | FR-001     |
+| FR-038 | **Agent any-bypass detector** (AES0305) — no `any` type in orchestrators         | FR-003     |
 
 ### 5.7 Contract & Aggregate Rules
 
@@ -126,9 +126,9 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 | ID     | Requirement                                                                          | Dependency |
 | ------ | ------------------------------------------------------------------------------------ | ---------- |
-| FR-045 | **Capability method existence checker** (AES037) — dispatch method exists     | FR-003     |
-| FR-046 | **Single capability bottleneck detector** (AES036) — balance dispatch routes  | FR-003     |
-| FR-047 | **Missing VO construction detector** (AES038) — capability needs typed VOs    | FR-003     |
+| FR-045 | **Capability method existence checker** (AES0303) — dispatch method exists     | FR-003     |
+| FR-046 | **Single capability bottleneck detector** (AES0303) — balance dispatch routes  | FR-003     |
+| FR-047 | **Missing VO construction detector** (AES0303/AES0304) — capability/infra needs typed VOs | FR-003 |
 | FR-048 | **Constant purity checker** (AES015) — _constant files: only pub const/static | FR-003     |
 
 ### 5.9 Project-Wide Analysis
@@ -298,7 +298,7 @@ Total score starts at 100.0 and is deducted per finding. If any CRITICAL finding
 
 - `contract` and `taxonomy(entity|error|event)` → `no_primitives: true` (strict)
 - `infrastructure`, `capabilities`, `surfaces` → `no_primitives: false` (adapter layers may use primitives as supporting types)
-- `taxonomy(constant)` → raw primitives allowed by definition; must contain ONLY constant declarations (AES033)
+- `taxonomy(constant)` → raw primitives allowed by definition; must contain ONLY constant declarations (AES0301)
 
 **AES015 Constant Purity (v2.0)**: Taxonomy files ending in `_constant` must contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, or `impl` block in a `_constant` file is a violation.
 

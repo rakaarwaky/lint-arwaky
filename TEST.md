@@ -43,9 +43,9 @@ cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 
 | Kriteria                           | LULUS                             | GAGAL                       |
 | ---------------------------------- | --------------------------------- | --------------------------- |
-| Total violations Rust (check)      | >= 27 violation types berbeda     | < 30 atau 0                 |
-| Total violations Python (scan)     | >= 27 violation types berbeda     | < 30 atau 0                 |
-| Total violations JavaScript (scan) | >= 27 violation types berbeda     | < 30 atau 0                 |
+| Total violations Rust (check)      | >= 21 violation types berbeda     | < 21 atau 0                 |
+| Total violations Python (scan)     | >= 21 violation types berbeda     | < 21 atau 0                 |
+| Total violations JavaScript (scan) | >= 21 violation types berbeda     | < 21 atau 0                 |
 | Severity CRITICAL ditemukan        | Minimal 1 di setiap project       | Tidak ada                   |
 | Zero false positive                | Tidak ada violation di file benar | Ada violation di file benar |
 
@@ -91,10 +91,10 @@ echo "=== JAVASCRIPT ===" && cargo run --bin lint-arwaky-cli -- scan test-projec
 | Rust test project       | `scan test-project-rust/`       | 34               | 14               |        |
 | Python test project     | `scan test-project-python/`     | 238              | 9                |        |
 | JavaScript test project | `scan test-project-javascript/` | 323              | 12               |        |
-| **Combined**      |                                   |                  | **27**     |        |
+| **Combined**      |                                   |                  | **21**     |        |
 
-**27 Unique AES Codes (v2.0):**
-AES001, AES002, AES003, AES004, AES005, AES006,
+**21 Unique AES Codes (v2.0):**
+AES001, AES002,
 AES010, AES011, AES012, AES013, AES014, AES015, AES016,
 AES020, AES021, AES022, AES023, AES024,
-AES030, AES031, AES032, AES033, AES034, AES035, AES036, AES037, AES038
+AES030, AES0301, AES0302, AES0303, AES0304, AES0305, AES0306

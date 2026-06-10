@@ -18,9 +18,10 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_violationrs_constant::{
-    aes014_mandatory_inheritance, aes023_unused_import, aes024_dead_inheritance,
+    aes014_mandatory_inheritance, aes023_unused_import, aes024_dead_inheritance, aes0305_any_type,
     AES012_CIRCULAR_IMPORT, AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
-    AES031_SURFACE_ROLE_VIOLATION, AES036_SINGLE_BOTTLENECK, AES038_MISSING_VO,
+    AES0303_MISSING_VO, AES0303_SINGLE_BOTTLENECK, AES0304_MISSING_VO,
+    AES0306_SURFACE_ROLE_VIOLATION,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -566,13 +567,22 @@ impl LintCheckingCoordinator {
         }
     }
 
-    fn check_agent_any_bypass(file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
-        // AES035: Detects `any` type annotations in agent layer files
+    fn check_agent_any_bypass(
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        // AES0305: Detects `any` type annotations in agent layer files
         if layer != "agent" && !layer.starts_with("agent(") {
             return;
         }
         // Skip files with bypass annotation (e.g., the coordinator itself)
-        if content.lines().take(30).any(|l| l.contains("aes: bypass-agent-role")) {
+        if content
+            .lines()
+            .take(30)
+            .any(|l| l.contains("aes: bypass-agent-role"))
+        {
             return;
         }
         for (i, line) in content.lines().enumerate() {
@@ -589,9 +599,9 @@ impl LintCheckingCoordinator {
                 violations.push(Self::mk(
                     file,
                     i + 1,
-                    "AES035",
+                    "AES0305",
                     Severity::HIGH,
-                    "AES035 AGENT_ANY_BYPASS: Any type annotation found in agent layer.",
+                    &aes0305_any_type(t),
                 ));
             }
         }
@@ -601,7 +611,7 @@ impl LintCheckingCoordinator {
         if layer != "agent" && !layer.starts_with("agent(") {
             return;
         }
-        // aes: bypass-agent-role — suppress AES032 for files wired via DI dispatch
+        // aes: bypass-agent-role — suppress AES032/AES0305 for files wired via DI dispatch
         if content
             .lines()
             .take(30)
@@ -613,9 +623,9 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES032",
+                "AES0305",
                 Severity::HIGH,
-                "AES032 AGENT_ROLE: Agent file exceeds 300 lines.",
+                "AES0305 AGENT_ROLE: Agent file exceeds 300 lines.",
             ));
         }
     }
@@ -629,7 +639,7 @@ impl LintCheckingCoordinator {
         if layer != "surfaces" && !layer.starts_with("surfaces(") {
             return;
         }
-        // aes: bypass-surface-role — suppress AES031 for CLI command surfaces
+        // aes: bypass-surface-role — suppress AES031/AES0306 for CLI command surfaces
         // that legitimately register many subcommands via dispatch pattern.
         if content
             .lines()
@@ -642,9 +652,9 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES031",
+                "AES0306",
                 Severity::HIGH,
-                AES031_SURFACE_ROLE_VIOLATION,
+                AES0306_SURFACE_ROLE_VIOLATION,
             ));
         }
     }
@@ -786,18 +796,18 @@ impl LintCheckingCoordinator {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES036",
+                "AES0303",
                 Severity::MEDIUM,
-                &format!("{} Found {} functions.", AES036_SINGLE_BOTTLENECK, fc),
+                &format!("{} Found {} functions.", AES0303_SINGLE_BOTTLENECK, fc),
             ));
         }
         if ic > 5 {
             violations.push(Self::mk(
                 file,
                 0,
-                "AES036",
+                "AES0303",
                 Severity::MEDIUM,
-                &format!("{} Found {} impl blocks.", AES036_SINGLE_BOTTLENECK, ic),
+                &format!("{} Found {} impl blocks.", AES0303_SINGLE_BOTTLENECK, ic),
             ));
         }
     }
@@ -824,13 +834,12 @@ impl LintCheckingCoordinator {
                     || rhs.parse::<i64>().is_ok()
                     || rhs.parse::<f64>().is_ok()
                 {
-                    violations.push(Self::mk(
-                        file,
-                        i + 1,
-                        "AES038",
-                        Severity::MEDIUM,
-                        AES038_MISSING_VO,
-                    ));
+                    let (code, msg) = if is_cap {
+                        ("AES0303", AES0303_MISSING_VO)
+                    } else {
+                        ("AES0304", AES0304_MISSING_VO)
+                    };
+                    violations.push(Self::mk(file, i + 1, code, Severity::MEDIUM, msg));
                 }
             }
         }

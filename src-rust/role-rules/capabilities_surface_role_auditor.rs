@@ -15,7 +15,7 @@ use crate::shared_common::taxonomy_names_vo::{
     core_layer_names, layer_agent, layer_contract, layer_surfaces, layer_taxonomy,
 };
 use crate::shared_common::taxonomy_violationrs_constant::{
-    AES001_SURFACE_DEPENDENCY, AES035_NO_DOMAIN_LOGIC,
+    AES001_SURFACE_DEPENDENCY, AES0305_NO_DOMAIN_LOGIC,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -82,7 +82,7 @@ impl SurfaceRoleChecker {
                     || basename.ends_with("_page")
                     || basename.ends_with("_entry");
                 if !is_smart {
-                    self._check_no_domain_logic(f, &definition, analyzer, results, "AES031");
+                    self._check_no_domain_logic(f, &definition, analyzer, results, "AES0306");
                 }
             }
 
@@ -193,7 +193,7 @@ impl SurfaceRoleChecker {
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
-                message: LintMessage::new(AES035_NO_DOMAIN_LOGIC),
+                message: LintMessage::new(AES0305_NO_DOMAIN_LOGIC),
                 source: make_adapter("architecture"),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
