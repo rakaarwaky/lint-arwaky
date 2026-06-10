@@ -60,6 +60,17 @@ impl RoleOrchestrator {
                         checker.check_passive_surface(file, &content, violations);
                     }
                 }
+                "contract" => {
+                    let checker = self.aggregate.contract();
+                    checker.check_aggregate(file, &content, &Default::default(), violations);
+                }
+                "taxonomy" => {
+                    let checker = self.aggregate.taxonomy();
+                    checker.check_entity(file, &content, violations);
+                    checker.check_error(file, &content, violations);
+                    checker.check_event(file, &content, violations);
+                    checker.check_constant(file, violations);
+                }
                 _ => {}
             }
         }

@@ -73,17 +73,28 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     }
                 }
             }
-            // Python: empty class `class Foo: pass`
-            if (t.starts_with("class ") || t.starts_with("class\t"))
-                && (t.ends_with(": pass") || t.ends_with(":pass"))
-            {
-                violations.push(LintResult::new_arch(
-                    file,
-                    i + 1,
-                    "AES024",
-                    Severity::MEDIUM,
-                    &aes024_dead_inheritance("empty class (Python)"),
-                ));
+            // Python: empty class `class Foo: pass` (single line or multi-line)
+            if t.starts_with("class ") || t.starts_with("class\t") {
+                if t.ends_with(": pass") || t.ends_with(":pass") {
+                    violations.push(LintResult::new_arch(
+                        file,
+                        i + 1,
+                        "AES024",
+                        Severity::MEDIUM,
+                        &aes024_dead_inheritance("empty class (Python)"),
+                    ));
+                } else if t.ends_with(':') && i + 1 < lines.len() {
+                    let next = lines[i + 1].trim();
+                    if next == "pass" || next == "..." || next == "Ellipsis" {
+                        violations.push(LintResult::new_arch(
+                            file,
+                            i + 1,
+                            "AES024",
+                            Severity::MEDIUM,
+                            &aes024_dead_inheritance("empty class (Python)"),
+                        ));
+                    }
+                }
             }
             // JS/TS: empty class `class Foo {}` or `class Foo extends Bar {}`
             if t.starts_with("class ") && t.ends_with("{}") {

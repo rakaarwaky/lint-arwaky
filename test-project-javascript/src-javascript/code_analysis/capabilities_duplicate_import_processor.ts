@@ -1,9 +1,9 @@
-// PURPOSE: Test AES013 — duplicate import
-import { ClassA } from "./capabilities_circular_a_processor";
-import { ClassA } from "./capabilities_circular_a_processor";
+// AES013 — duplicate import test
+import { CircularA } from "./capabilities_circular_a_analyzer";
+import { CircularA } from "./capabilities_circular_a_analyzer";
 
-export class DuplicateImportClass {
-    process(): number {
-        return 42;
+export class DuplicateImportProcessor {
+    process(): string {
+        return new CircularA().analyze();
     }
 }

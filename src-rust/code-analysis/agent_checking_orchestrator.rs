@@ -74,11 +74,11 @@ impl LintCheckingOrchestrator {
 
             for line in c.lines() {
                 let t = line.trim();
+                // Rust: `use crate::module::item;`
                 if let Some(imp) = t.strip_prefix("use ") {
                     let target = imp.trim_end_matches(';').trim();
                     if !target.is_empty() {
                         import_edges.push((file.to_string(), target.to_string()));
-                        // Resolve crate:: imports to file paths for cycle detection
                         if target.starts_with("crate::") {
                             let path_part = target.trim_start_matches("crate::");
                             if let Some(first_break) = path_part.find("::") {
@@ -95,6 +95,49 @@ impl LintCheckingOrchestrator {
                                 );
                                 if std::path::Path::new(&candidate).exists() {
                                     import_edges.push((file.to_string(), candidate));
+                                }
+                            }
+                        }
+                    }
+                }
+                // Python: `from module import name` or `import module`
+                if t.starts_with("from ") && t.contains(" import ") {
+                    let module = t.strip_prefix("from ").unwrap_or("").split_whitespace().next().unwrap_or("");
+                    if !module.is_empty() {
+                        import_edges.push((file.to_string(), module.to_string()));
+                        // Resolve relative Python imports to file paths
+                        if module.starts_with('.') {
+                            let parent = std::path::Path::new(file).parent().unwrap_or(std::path::Path::new("."));
+                            let module_file = module.trim_start_matches('.').replace('.', "/");
+                            for ext in &[".py", "/__init__.py"] {
+                                let candidate = parent.join(format!("{}{}", module_file, ext));
+                                if candidate.exists() {
+                                    import_edges.push((file.to_string(), candidate.to_string_lossy().to_string()));
+                                }
+                            }
+                        }
+                    }
+                } else if t.starts_with("import ") && !t.contains(" from ") {
+                    let module = t.strip_prefix("import ").unwrap_or("").split_whitespace().next().unwrap_or("").trim_end_matches(';');
+                    if !module.is_empty() {
+                        import_edges.push((file.to_string(), module.to_string()));
+                    }
+                }
+                // JS/TS: `import { name } from "module"` or `import name from "module"`
+                if t.starts_with("import ") && t.contains(" from ") {
+                    if let Some(from_part) = t.split(" from ").last() {
+                        let module = from_part.trim().trim_matches('"').trim_matches('\'').trim_end_matches(';');
+                        if !module.is_empty() {
+                            import_edges.push((file.to_string(), module.to_string()));
+                            // Resolve relative JS imports to file paths
+                            if module.starts_with('.') {
+                                let parent = std::path::Path::new(file).parent().unwrap_or(std::path::Path::new("."));
+                                let module_path = module.trim_start_matches('.');
+                                for ext in &[".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.js"] {
+                                    let candidate = parent.join(format!("{}{}", module_path.trim_start_matches('/'), ext));
+                                    if candidate.exists() {
+                                        import_edges.push((file.to_string(), candidate.to_string_lossy().to_string()));
+                                    }
                                 }
                             }
                         }

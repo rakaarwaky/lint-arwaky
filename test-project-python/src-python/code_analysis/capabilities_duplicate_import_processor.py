@@ -1,9 +1,9 @@
-# PURPOSE: Test AES013 — duplicate import
-import os
-import os
-from typing import List
-from typing import List
+# AES013 — duplicate import test
+from typing import Any
+from typing import Any
+from typing import Optional
+from typing import Optional
 
-class DuplicateImportClass:
-    def process(self, items: List[str]) -> int:
-        return len(items)
+class DuplicateImportProcessor:
+    def process(self, data: Any) -> Optional[str]:
+        return str(data)

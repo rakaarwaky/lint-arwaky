@@ -116,7 +116,50 @@ pub fn check_contract_orphan(
         ));
     }
 
+    if suffix == "port" || suffix == "protocol" {
+        let mut called_by_orchestrator = false;
+        for cf in files {
+            let cb = cf.split('/').next_back().unwrap_or("");
+            if !cb.starts_with("agent_") {
+                continue;
+            }
+            if !cb.ends_with("_orchestrator.rs") && !cb.ends_with("_orchestrator.py") {
+                continue;
+            }
+            if let Ok(c) = std::fs::read_to_string(cf) {
+                if c.contains(&trait_name) {
+                    called_by_orchestrator = true;
+                    break;
+                }
+            }
+        }
+        if !called_by_orchestrator {
+            violations.push(crate::orphan_detector::mk_orphan_result(
+                fp,
+                &format!(
+                    "Contract {} '{}' not called by any orchestrator.",
+                    suffix, trait_name
+                ),
+                Severity::HIGH,
+            ));
+        }
+    }
+
     if suffix == "aggregate" {
+        let mut implemented_in_agent = false;
+        for cf in files {
+            let cb = cf.split('/').next_back().unwrap_or("");
+            if !cb.starts_with("agent_") {
+                continue;
+            }
+            if let Ok(c) = std::fs::read_to_string(cf) {
+                if c.contains(&trait_name) || c.contains(&basename) {
+                    implemented_in_agent = true;
+                    break;
+                }
+            }
+        }
+
         let mut called_by_surface = false;
         for cf in files {
             let cb = cf.split('/').next_back().unwrap_or("");
@@ -131,11 +174,12 @@ pub fn check_contract_orphan(
                 }
             }
         }
-        if !called_by_surface {
+
+        if !implemented_in_agent && !called_by_surface {
             violations.push(crate::orphan_detector::mk_orphan_result(
                 fp,
                 &format!(
-                    "Contract aggregate '{}' not called by any surface.",
+                    "Contract aggregate '{}' not implemented in agent and not called by any surface.",
                     trait_name
                 ),
                 Severity::HIGH,
