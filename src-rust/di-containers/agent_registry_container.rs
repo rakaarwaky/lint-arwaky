@@ -2,7 +2,7 @@
 
 use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::di_containers::contract_registry_aggregate::ContainerRegistryAggregate;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::file_system::contract_system_port::IFileSystemPort;

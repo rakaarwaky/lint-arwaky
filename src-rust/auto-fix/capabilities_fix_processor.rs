@@ -1,5 +1,5 @@
 // PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations via IArchLintProtocol, tracks fix results
-use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use crate::auto_fix::contract_fix_protocol::IFixProtocol;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::Count;
@@ -148,7 +148,7 @@ impl LintFixProcessor {
     }
 }
 
-impl LintFixOrchestratorAggregate for LintFixProcessor {
+impl IFixProtocol for LintFixProcessor {
     fn execute(&self, path: &FilePath) -> FixResult {
         let results = self.linter.run_self_lint(&path.value).values;
 

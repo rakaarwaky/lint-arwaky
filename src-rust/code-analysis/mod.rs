@@ -10,8 +10,6 @@ pub use contract_unused_protocol::IUnusedProtocol;
 pub mod agent_checking_orchestrator;
 pub use agent_checking_orchestrator::LintCheckingOrchestrator;
 
-pub mod capabilities_fix_processor;
-pub use capabilities_fix_processor::LintFixProcessor;
 pub mod agent_codebase_scan_orchestrator;
 pub use agent_codebase_scan_orchestrator::{
     detect_source_dir, CodebaseScanOrchestrator, CodebaseScanPipelineOrchestrator,

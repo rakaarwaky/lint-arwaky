@@ -1,4 +1,5 @@
 // PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES0301: taxonomy VO/entity/error/event/constant audits
+use crate::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 fn aes0301_primitive_usage(primitive: &str) -> String {
@@ -225,5 +226,42 @@ impl TaxonomyRoleChecker {
                 }
             }
         }
+    }
+}
+
+impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
+    fn check_vo(&self) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
+        self.check_vo()
+    }
+    fn check_entity(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_entity(file, content, violations);
+    }
+    fn check_error(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_error(file, content, violations);
+    }
+    fn check_event(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_event(file, content, violations);
+    }
+    fn check_constant(
+        &self,
+        file: &str,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_constant(file, violations);
     }
 }

@@ -2,7 +2,7 @@
 
 use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
@@ -219,12 +219,13 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
     }
 
     fn get_fix_orchestrator(&self, dry_run: bool) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
-        Some(Arc::new(
-            crate::code_analysis::capabilities_fix_processor::LintFixProcessor::with_dry_run(
-                dry_run,
-                self.architecture_linter.clone(),
-            ),
-        ))
+        let fix_protocol = crate::auto_fix::capabilities_fix_processor::LintFixProcessor::with_dry_run(
+            dry_run,
+            self.architecture_linter.clone(),
+        );
+        Some(Arc::new(crate::auto_fix::agent_fix_orchestrator::FixOrchestrator::new(
+            Arc::new(fix_protocol),
+        )))
     }
 
     fn get_report_formatter(&self) -> Option<Box<dyn IReportFormatterProtocol>> {

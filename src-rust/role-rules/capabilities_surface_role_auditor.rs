@@ -1,4 +1,5 @@
 // PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES0306: smart/utility/passive surface role checks
+use crate::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
@@ -520,5 +521,37 @@ mod tests {
         let f = FilePath::new("src/surfaces/handler.py")
             .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert!(!is_init(&f));
+    }
+}
+
+impl ISurfaceRoleChecker for SurfaceRoleChecker {
+    fn check_smart_surface(
+        &self,
+        _file: &str,
+        _content: &str,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_utility_surface(
+        &self,
+        _file: &str,
+        _content: &str,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_passive_surface(
+        &self,
+        _file: &str,
+        _content: &str,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_fn_count_limit(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_fn_count_limit(file, content, violations);
     }
 }

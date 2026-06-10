@@ -1,4 +1,5 @@
 // PURPOSE: ContractRoleChecker — IContractRoleChecker for AES0302: contract primitive type audits
+use crate::role_rules::contract_role_protocol::IContractRoleChecker;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
@@ -172,5 +173,31 @@ impl ContractRoleChecker {
         } else {
             (scope.trim(), vec![])
         }
+    }
+}
+
+impl IContractRoleChecker for ContractRoleChecker {
+    fn check_port(
+        &self,
+        file: &str,
+        content: &str,
+    ) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
+        self.check_port(file, content)
+    }
+    fn check_protocol(
+        &self,
+        file: &str,
+        content: &str,
+    ) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
+        self.check_protocol(file, content)
+    }
+    fn check_aggregate(
+        &self,
+        file: &str,
+        content: &str,
+        def: &crate::shared_common::taxonomy_definition_vo::LayerDefinition,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_aggregate(file, content, def, violations);
     }
 }

@@ -1,7 +1,7 @@
 // PURPOSE: ServiceContainerAggregate — top-level DI aggregate bundling all container aggregates
 use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
