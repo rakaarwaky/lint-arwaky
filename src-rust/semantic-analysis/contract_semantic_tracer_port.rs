@@ -1,8 +1,8 @@
 // PURPOSE: ISemanticTracerProvider — port trait for providing semantic trace operations
 
-use crate::naming_rules::taxonomy_name_vo::SymbolName;
-use crate::naming_rules::taxonomy_naming_list_vo::CallChainList;
-use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_naming_list_vo::CallChainList;
+use crate::shared_common::taxonomy_naming_list_vo::SymbolNameList;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::Count;

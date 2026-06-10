@@ -1,6 +1,6 @@
 // PURPOSE: SymbolNameList, PrimitiveTypeList — VOs for collections of symbol names and primitive types
-use crate::naming_rules::taxonomy_name_vo::SymbolName;
-use crate::naming_rules::taxonomy_naming_constant::CORE_PRIMITIVE_TYPES;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_naming_constant::CORE_PRIMITIVE_TYPES;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

@@ -1,4 +1,4 @@
-// PURPOSE: Module declarations and re-exports for role-rules (role auditors, inheritance checker, protocols, orchestrator)
+// PURPOSE: Module declarations and re-exports for role-rules (role auditors, protocols, orchestrator)
 pub mod agent_role_orchestrator;
 pub use agent_role_orchestrator::RoleOrchestrator;
 pub mod capabilities_agent_role_auditor;
@@ -9,8 +9,7 @@ pub mod capabilities_surface_role_auditor;
 pub use capabilities_surface_role_auditor::SurfaceRoleChecker;
 pub mod capabilities_taxonomy_role_auditor;
 pub use capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
-pub mod capabilities_inheritance_checker;
-pub use capabilities_inheritance_checker::MandatoryInheritanceChecker;
+
 pub mod contract_agent_role_protocol;
 pub use contract_agent_role_protocol::IAgentRoleChecker;
 pub mod contract_role_protocol;

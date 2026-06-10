@@ -1,7 +1,7 @@
 // PURPOSE: DependencyCycleAnalyzer — ICycleAnalysisProtocol for AES012: circular dependency detection
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;

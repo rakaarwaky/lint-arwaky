@@ -1,7 +1,7 @@
 // PURPOSE: CallChainAnalyzer — analyzes function call chains and call graph construction
 
-use crate::naming_rules::taxonomy_name_vo::SymbolName;
-use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_naming_list_vo::SymbolNameList;
 use regex::Regex;
 use std::fs;
 

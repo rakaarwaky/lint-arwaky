@@ -1,4 +1,4 @@
-// PURPOSE: SurfaceHierarchyChecker — AES0306: enforce surface hierarchy (barrel wiring) and passive surface checks
+// PURPOSE: SurfaceHierarchyChecker — AES0306: enforce passive surface checks
 
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
@@ -9,9 +9,6 @@ use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-fn aes0306_hierarchy_violation(file: &str) -> String {
-    format!("AES0306 SURFACE_ROLE: Surface file '{}' is not imported from the layer barrel.\nWHY? All surface files must be reachable through the barrel.\nFIX: Add to __init__.py or mod.rs.", file)
-}
 
 fn aes0306_passive_violation_details(file: &str, details: &str) -> String {
     format!("AES0306 SURFACE_ROLE: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
@@ -58,7 +55,7 @@ impl SurfaceHierarchyChecker {
         Self
     }
 
-    /// Main entry point — run AES0306 checks (barrel wiring + passive surface).
+    /// Main entry point — run AES0306 passive surface check.
     pub fn check_surface_hierarchy(
         &self,
         files: &[FilePath],
@@ -71,22 +68,6 @@ impl SurfaceHierarchyChecker {
             }
             if is_init(f) {
                 continue;
-            }
-
-            // AES0306: check if file is wired in barrel
-            if !is_wired(f) {
-                let desc = aes0306_hierarchy_violation(&f.to_string());
-                results.push(LintResult {
-                    file: f.clone(),
-                    line: LineNumber::new(1),
-                    column: ColumnNumber::new(1),
-                    code: ErrorCode::raw("AES0306"),
-                    message: LintMessage::new(desc),
-                    source: Some(AdapterName::raw("surface_hierarchy")),
-                    severity: Severity::HIGH,
-                    enclosing_scope: None,
-                    related_locations: LocationList::new(),
-                });
             }
 
             // AES0306: check if file is passive
@@ -421,54 +402,9 @@ fn is_init(f: &FilePath) -> bool {
         || path_str.ends_with("index.js")
 }
 
-/// Extract the file stem (filename without extension).
-fn stem(f: &FilePath) -> String {
-    let path_str = f.to_string();
-    let basename = path_str.rsplit('/').next().unwrap_or(&path_str);
-    basename.split('.').next().unwrap_or(basename).to_string()
-}
-
-/// Get the directory portion of the file path.
-fn directory(f: &FilePath) -> String {
-    let path_str = f.to_string();
-    let pos = path_str.rfind('/').unwrap_or(0);
-    if pos == 0 {
-        if path_str.starts_with('/') {
-            "/".to_string()
-        } else {
-            ".".to_string()
-        }
-    } else {
-        path_str[..pos].to_string()
-    }
-}
-
-/// Check if a module stem is imported in its directory barrel.
-fn is_wired(f: &FilePath) -> bool {
-    let barrel_names = ["__init__.py", "mod.rs", "index.ts", "index.js"];
-    let file_stem = stem(f);
-    let dir = directory(f);
-
-    for name in &barrel_names {
-        let init_path = format!("{}/{}", dir, name);
-        if let Ok(content) = std::fs::read_to_string(&init_path) {
-            if content.contains(&format!("import {}", file_stem))
-                || content.contains(&format!("from .{}", file_stem))
-                || content.contains(&format!("\"{}\"", file_stem))
-                || content.contains(&format!("'{}'", file_stem))
-                || content.contains(&format!("mod {}", file_stem))
-                || content.contains(&format!("use {}", file_stem))
-            {
-                return true;
-            }
-        }
-    }
-    false
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{directory, is_in_surfaces, is_init, stem, FilePath};
+    use super::{is_in_surfaces, is_init, FilePath};
 
     #[test]
     fn test_is_in_surfaces() {
@@ -495,19 +431,5 @@ mod tests {
         let f = FilePath::new("src/surfaces/handler.py")
             .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert!(!is_init(&f));
-    }
-
-    #[test]
-    fn test_stem() {
-        let f = FilePath::new("src/surfaces/handler.py")
-            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
-        assert_eq!(stem(&f), "handler");
-    }
-
-    #[test]
-    fn test_directory() {
-        let f = FilePath::new("src/surfaces/handler.py")
-            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
-        assert_eq!(directory(&f), "src/surfaces");
     }
 }

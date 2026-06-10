@@ -1,4 +1,16 @@
 // PURPOSE: Module declarations and re-exports for all shared-common VOs, errors, events, constants, entities
+pub mod taxonomy_name_vo;
+pub use taxonomy_name_vo::{NameVariants, SymbolName};
+pub mod taxonomy_naming_constant;
+pub use taxonomy_naming_constant::{
+    CORE_PRIMITIVE_TYPES, JS_PRIMITIVE_TYPES, PYTHON_PRIMITIVE_TYPES, RUST_PRIMITIVE_TYPES,
+};
+pub mod taxonomy_naming_error;
+pub use taxonomy_naming_error::NamingError;
+pub mod taxonomy_naming_list_vo;
+pub use taxonomy_naming_list_vo::{
+    primitive_type_list, CallChainList, ImportNameList, PrimitiveTypeList, SymbolNameList,
+};
 pub mod taxonomy_adapter_error;
 pub use taxonomy_adapter_error::{AdapterError, ScanError, ValidationError};
 pub mod taxonomy_adapter_vo;

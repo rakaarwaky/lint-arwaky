@@ -1,7 +1,7 @@
 // PURPOSE: ScopeBoundsDetector — IScopeBoundaryProtocol for JS scope boundary detection
 
 use crate::layer_rules::contract_compliance_protocol::IScopeBoundaryProtocol;
-use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_layer_vo::LineContentVO;
 use crate::shared_common::taxonomy_lint_vo::ScopeBounds;

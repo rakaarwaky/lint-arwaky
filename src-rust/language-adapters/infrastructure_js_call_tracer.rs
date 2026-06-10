@@ -1,7 +1,7 @@
 // PURPOSE: JSCallTracer — IFlowProviderPort implementation for JavaScript call chain tracing
-use crate::naming_rules::taxonomy_name_vo::SymbolName;
-use crate::naming_rules::taxonomy_naming_list_vo::CallChainList;
-use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_naming_list_vo::CallChainList;
+use crate::shared_common::taxonomy_naming_list_vo::SymbolNameList;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 /// javascript_call_tracer — Semantic analysis adapter for JavaScript/TypeScript files.
 use crate::semantic_analysis::contract_semantic_tracer_port::ISemanticTracerPort;

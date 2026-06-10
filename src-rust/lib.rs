@@ -29,8 +29,7 @@ pub mod mcp_server;
 pub mod metrics_service;
 #[path = "multi-project/mod.rs"]
 pub mod multi_project;
-#[path = "naming-rules/mod.rs"]
-pub mod naming_rules;
+
 #[path = "orphan-detector/mod.rs"]
 pub mod orphan_detector;
 #[path = "output-report/mod.rs"]

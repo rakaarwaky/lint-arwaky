@@ -62,7 +62,14 @@ impl RoleOrchestrator {
                 }
                 "contract" => {
                     let checker = self.aggregate.contract();
-                    checker.check_aggregate(file, &content, &Default::default(), violations);
+                    let mut contract_violations = Vec::new();
+                    if filename.contains("_port") {
+                        contract_violations.extend(checker.check_port(file, &content, files));
+                    } else if filename.contains("_protocol") {
+                        contract_violations.extend(checker.check_protocol(file, &content, files));
+                    }
+                    checker.check_aggregate(file, &content, &Default::default(), &mut contract_violations);
+                    violations.extend(contract_violations);
                 }
                 "taxonomy" => {
                     let checker = self.aggregate.taxonomy();

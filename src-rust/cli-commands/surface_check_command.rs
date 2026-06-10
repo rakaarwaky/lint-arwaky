@@ -29,6 +29,11 @@ impl CheckCommandsSurface {
     /// scan: Full multi-language lint on target project path.
     /// Uses all available linter adapters via tokio runtime.
     pub fn scan(&self, path: &str) {
+        self.scan_filtered(path, None);
+    }
+
+    /// scan_filtered: scan with optional AES rule code filter.
+    pub fn scan_filtered(&self, path: &str, filter: Option<&str>) {
         let container = match self.container.as_ref() {
             Some(c) => c.clone(),
             None => {
@@ -87,7 +92,12 @@ impl CheckCommandsSurface {
                 let aes_results = linter.run_self_lint(path);
                 all_results.extend(aes_results.values);
             }
-            let results_list = LintResultList::new(all_results);
+            let filtered_results: Vec<_> = if let Some(code) = filter {
+                all_results.into_iter().filter(|r| r.code.to_string().contains(code)).collect()
+            } else {
+                all_results
+            };
+            let results_list = LintResultList::new(filtered_results);
             println!("{}", linter.format_report(&results_list, path));
         }
     }
@@ -101,31 +111,37 @@ pub fn register_check_commands(
     surface
 }
 
-pub fn handle_check(path: Option<String>, _git_diff: bool) -> ExitCode {
+pub fn handle_check(path: Option<String>, _git_diff: bool, filter: Option<String>) -> ExitCode {
     let root = resolve_target(path);
-    run_lint_and_report(&root)
+    run_lint_and_report(&root, filter.as_deref())
 }
 
 pub fn handle_scan(
     path: Option<String>,
     container: Arc<dyn ServiceContainerAggregate>,
+    filter: Option<String>,
 ) -> ExitCode {
     let root = resolve_target(path);
     let surface = register_check_commands(container);
-    surface.scan(&root);
+    surface.scan_filtered(&root, filter.as_deref());
     ExitCode::SUCCESS
 }
 
-fn run_lint_and_report(root: &str) -> ExitCode {
+fn run_lint_and_report(root: &str, filter: Option<&str>) -> ExitCode {
     let results = lint_path(root);
     println!("=== AES Compliance Report for {} ===", root);
-    for r in &results {
+    let filtered: Vec<_> = if let Some(code) = filter {
+        results.iter().filter(|r| r.code.to_string().contains(code)).collect()
+    } else {
+        results.iter().collect()
+    };
+    for r in &filtered {
         println!(
             "[{}] {}:{}:{} {} - {}",
             r.severity, r.file, r.line, r.column, r.code, r.message
         );
     }
-    println!("Total violations: {}", results.len());
+    println!("Total violations: {}", filtered.len());
     if has_critical(&results) {
         ExitCode::from(1)
     } else {

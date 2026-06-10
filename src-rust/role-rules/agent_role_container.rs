@@ -70,11 +70,11 @@ impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
     }
 }
 impl IContractRoleChecker for ContractRoleChecker {
-    fn check_port(&self) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
-        self.check_port()
+    fn check_port(&self, file: &str, content: &str, all_files: &[String]) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
+        self.check_port(file, content, all_files)
     }
-    fn check_protocol(&self) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
-        self.check_protocol()
+    fn check_protocol(&self, file: &str, content: &str, all_files: &[String]) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
+        self.check_protocol(file, content, all_files)
     }
     fn check_aggregate(
         &self,

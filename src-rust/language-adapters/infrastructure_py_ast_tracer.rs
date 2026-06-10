@@ -1,9 +1,9 @@
 // PURPOSE: PyASTTracer — IFlowProviderPort implementation for Python AST-based call tracing
 
-use crate::naming_rules::contract_variant_port::INamingVariantPort;
-use crate::naming_rules::taxonomy_name_vo::SymbolName;
-use crate::naming_rules::taxonomy_naming_list_vo::CallChainList;
-use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
+use crate::language_adapters::contract_variant_port::INamingVariantPort;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_naming_list_vo::CallChainList;
+use crate::shared_common::taxonomy_naming_list_vo::SymbolNameList;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::semantic_analysis::contract_semantic_tracer_port::ISemanticTracerPort;
 use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;

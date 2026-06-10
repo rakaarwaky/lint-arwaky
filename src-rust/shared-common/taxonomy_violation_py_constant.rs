@@ -32,3 +32,7 @@ pub const AES0302_FORBIDDEN_INHERITANCE: &str =
     "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
 pub const AES0301_CONSTANT_PURITY: &str =
     "AES0301 CONSTANT_PURITY: _constant file contains non-constant declaration.";
+pub const AES0302_CONTRACT_PRIMITIVE: &str =
+    "AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.";
+pub const AES0307_ORCHESTRATOR_CALLER: &str =
+    "AES0307 ORCHESTRATOR_CALLER: Contract port/protocol not called by any orchestrator (agent_*_orchestrator). WHY? Orchestrator is the primary caller of contracts. FIX: Wire the contract into an orchestrator file.";

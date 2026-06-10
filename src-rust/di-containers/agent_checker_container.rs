@@ -23,7 +23,7 @@ use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
 use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
-use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
+use crate::layer_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
 use crate::orphan_detector::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
 use crate::orphan_detector::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;

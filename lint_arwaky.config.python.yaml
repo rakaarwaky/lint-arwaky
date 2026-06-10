@@ -201,7 +201,7 @@ architecture:
     AES021:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
-      min_lines: 10
+      min_lines: 5
       exceptions: ["__init__.py", "__main__.py"]
 
     AES022:

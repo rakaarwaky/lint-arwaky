@@ -1,7 +1,7 @@
 // PURPOSE: JSScopeProvider — provides JavaScript scope metadata for architecture analysis
 
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
-use crate::naming_rules::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_layer_vo::LineContentVO;

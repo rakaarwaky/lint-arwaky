@@ -20,6 +20,10 @@ pub struct Cli {
     #[arg(short, long, global = true)]
     pub output_dir: Option<String>,
 
+    /// Filter output by AES rule code (e.g. AES014, AES010, AES0305)
+    #[arg(long, global = true)]
+    pub filter: Option<String>,
+
     #[command(subcommand)]
     pub command: Commands,
 }

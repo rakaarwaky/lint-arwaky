@@ -1,4 +1,8 @@
 // PURPOSE: Module declarations and re-exports for language-adapters (scanners, tracers, providers, linters)
+pub mod contract_naming_port;
+pub use contract_naming_port::INamingProviderPort;
+pub mod contract_variant_port;
+pub use contract_variant_port::INamingVariantPort;
 pub mod contract_flow_port;
 pub use contract_flow_port::IJavascriptFlowPort;
 pub mod contract_scope_port;

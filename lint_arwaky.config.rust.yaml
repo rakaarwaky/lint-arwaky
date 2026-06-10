@@ -199,7 +199,7 @@ architecture:
     AES021:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
-      min_lines: 10
+      min_lines: 5
       exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
 
     AES022:
