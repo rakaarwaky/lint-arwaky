@@ -382,5 +382,5 @@ impl ArchOrphanAnalyzer {
             Severity::MEDIUM,
         )
     }
-
+}
 
