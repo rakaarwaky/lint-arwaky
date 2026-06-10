@@ -11,12 +11,12 @@ pub const AES021_FILE_TOO_SHORT_MSG: &str =
     WHY? Excessively small files clutter the project structure.\n\
     FIX: Expand the component or merge this logic into a related module";
 
-pub const AES011_MANDATORY_CLASS_DEFINITION: &str =
-    "AES011 MANDATORY_CLASS_DEFINITION: File is missing a struct, enum, or trait definition.\n\
+pub const AES024_MANDATORY_CLASS_DEFINITION: &str =
+    "AES024 MANDATORY_DEFINITION: File is missing a struct, enum, or trait definition.\n\
     WHY? Encapsulation in structs/traits is required for proper modularization and contract adherence.\n\
     FIX: Group functions into a struct or implement a Trait that defines the module interface.";
-pub const AES011_SUFFIX_FORBIDDEN: &str =
-    "AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.\n\
+pub const AES012_SUFFIX_FORBIDDEN: &str =
+    "AES012 SUFFIX_FORBIDDEN: File uses a forbidden suffix for this layer.\n\
     WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
     FIX: Rename the file to use an allowed suffix or move it to the correct layer.";
 pub const AES0305_STATELESS_EXECUTION: &str =
@@ -33,8 +33,8 @@ pub const AES013_FORBIDDEN_INHERITANCE: &str =
 pub const AES0301_CONSTANT_PURITY: &str =
     "AES0301 TAXONOMY_ROLE: _constant file contains non-constant declaration.";
 
-pub const AES011_SUFFIX_MISMATCH: &str =
-    "AES011 SUFFIX_MISMATCH: Contract file missing _port, _protocol, or _aggregate suffix.";
+pub const AES012_SUFFIX_MISMATCH: &str =
+    "AES012 SUFFIX_MISMATCH: Contract file missing _port, _protocol, or _aggregate suffix.";
 pub const AES022_BYPASS_COMMENT: &str = "AES022 BYPASS_COMMENT: Bypass comment detected.";
 pub const AES022_UNWRAP_EXPECT: &str = "AES022 BYPASS_COMMENT: unwrap/expect call detected.";
 pub const AES022_PANIC: &str = "AES022 BYPASS_COMMENT: panic call detected.";

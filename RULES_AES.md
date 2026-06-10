@@ -44,7 +44,7 @@ Enforces file naming conventions, structural definitions, and type safety across
 | AES013 | Forbidden Inheritance | CRITICAL | Contract Aggregate inherits from Port or Protocol. WHY? Aggregate is a composition contract, not an implementation. FIX: Use composition (fields) instead of inheritance.                                                                                                   |
 | AES014 | Mandatory Inheritance | HIGH     | File imports contracts but no struct/class implements them. WHY? Contracts imported must be fulfilled. FIX: Add impl TraitName for YourStruct.                                                                                                                              |
 
-### Suffix Policy (AES010, AES011)
+### Suffix Policy AES010
 
 | Layer                    | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Forbidden Suffixes                                                                     |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
@@ -76,13 +76,13 @@ Enforces file naming conventions, structural definitions, and type safety across
 
 Enforces file-level quality standards and prohibits bypass mechanisms.
 
-| Code   | Name              | Severity | Message                                                                                                                                                                               |
-| ------ | ----------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AES020 | File Size Limit   | LOW      | File exceeds maximum allowed line count. WHY? Large files violate SRP. FIX: Split into smaller focused files.                                                                         |
-| AES021 | File Minimum Size | LOW      | File contains fewer than minimum required lines. WHY? Tiny files clutter structure. FIX: Merge into related module.                                                                   |
-| AES022 | Bypass Comment    | CRITICAL | Forbidden bypass detected (#[allow], unwrap(), panic!, noqa, type: ignore). WHY? Suppressions bypass type safety. FIX: Use proper error handling.                                     |
-| AES023 | Unused Import     | MEDIUM   | Symbol imported but never used in scope. WHY? Unused imports indicate architectural bypass attempt. FIX: Remove unused import or use the symbol.                                      |
-| AES024 | Dead Inheritance  | MEDIUM   | Empty class, struct, or trait detected. WHY? Empty classes/traits/structs bypass architectural enforcement. FIX: Implement trait methods, class methods, or define struct attributes. |
+| Code   | Name                | Severity | Message                                                                                                                                                                               |
+| ------ | ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AES020 | File Maximum Limit | LOW      | File exceeds maximum allowed line count. WHY? Large files violate SRP. FIX: Split into smaller focused files.                                                                         |
+| AES021 | File Minimum Limit | LOW      | File contains fewer than minimum required lines. WHY? Tiny files clutter structure. FIX: Merge into related module.                                                                   |
+| AES022 | Bypass Comment      | CRITICAL | Forbidden bypass detected (#[allow], unwrap(), panic!, noqa, type: ignore). WHY? Suppressions bypass type safety. FIX: Use proper error handling.                                     |
+| AES023 | Unused Import       | MEDIUM   | Symbol imported but never used in scope. WHY? Unused imports indicate architectural bypass attempt. FIX: Remove unused import or use the symbol.                                      |
+| AES024 | Dead Inheritance    | MEDIUM   | Empty class, struct, or trait detected. WHY? Empty classes/traits/structs bypass architectural enforcement. FIX: Implement trait methods, class methods, or define struct attributes. |
 
 ---
 

@@ -133,7 +133,7 @@ impl LintFixProcessor {
         &self,
         results: &[crate::output_report::taxonomy_result_vo::LintResult],
     ) -> Vec<String> {
-        let fixable_codes = ["AES010", "AES022", "AES023"];
+        let fixable_codes = ["AES011", "AES022", "AES023"];
         let mut manual: Vec<String> = Vec::new();
         for r in results {
             let code_str = r.code.to_string();
@@ -154,7 +154,7 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
 
         let naming_violations: Vec<_> = results
             .iter()
-            .filter(|r| r.code.to_string().contains("AES010"))
+            .filter(|r| r.code.to_string().contains("AES011"))
             .collect();
         let bypass_violations: Vec<_> = results
             .iter()
@@ -189,7 +189,7 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
                 if old_name != new_name {
                     let count = renamer.rename_symbol(&path.value, old_name, &new_name);
                     fixed_count += count;
-                    self.emit_fix_event(&violation.file, "AES010", count);
+                    self.emit_fix_event(&violation.file, "AES011", count);
                 }
             }
         }
@@ -220,7 +220,7 @@ impl LintFixOrchestratorAggregate for LintFixProcessor {
 
         let output = if self.dry_run {
             format!(
-                "Dry-run: would fix {} violations ({} AES010 naming, {} AES022 bypass, {} AES023 unused import)\nManual violations remaining:\n{}",
+                "Dry-run: would fix {} violations ({} AES011 naming, {} AES022 bypass, {} AES023 unused import)\nManual violations remaining:\n{}",
                 total_fixable,
                 naming_violations.len(),
                 bypass_violations.len(),

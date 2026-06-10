@@ -1,4 +1,4 @@
-// PURPOSE: ArchNamingChecker — INamingCheckerProtocol for AES010 (naming convention) and AES011 (suffix definition)
+// PURPOSE: ArchNamingChecker — INamingCheckerProtocol for AES011 (naming convention) and AES012 (suffix/prefix rules)
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
@@ -11,16 +11,16 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-fn aes010_naming_convention(_expected_word_count: i32) -> String {
+fn aes011_naming_convention(_expected_word_count: i32) -> String {
     String::from(
-        "AES010 NAMING_CONVENTION: Filename must follow prefix_concept_suffix pattern.\n\
+        "AES011 NAMING_CONVENTION: Filename must follow prefix_concept_suffix pattern.\n\
         WHY? Prefix identifies layer, suffix identifies role, concept describes feature.\n\
         FIX: Rename to at least prefix_suffix (e.g., capabilities_user_checker.rs).",
     )
 }
 
 use crate::shared_common::taxonomy_violation_rs_constant::{
-    AES011_SUFFIX_FORBIDDEN, AES011_SUFFIX_MISMATCH,
+    AES012_SUFFIX_FORBIDDEN, AES012_SUFFIX_MISMATCH,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
@@ -101,7 +101,7 @@ impl ArchNamingChecker {
         stem.rfind('_').map(|pos| stem[pos + 1..].to_string())
     }
 
-    /// Check file naming conventions (underscore word count) per layer definition.
+    /// Check file naming conventions (AES011: pattern validation — lowercase, underscore, min 2 words).
     pub fn check_file_naming(
         &self,
         file: &str,
@@ -129,15 +129,15 @@ impl ArchNamingChecker {
             if !re.is_match(stem) {
                 violations.push(Self::make_result(
                     file,
-                    "AES010",
-                    &aes010_naming_convention(0),
+                    "AES011",
+                    &aes011_naming_convention(0),
                     Severity::HIGH,
                 ));
             }
         }
     }
 
-    /// Check domain suffix rules per layer (AES011: mandatory suffix definition).
+    /// Check domain suffix rules per layer (AES012: suffix/prefix rules).
     pub fn check_domain_suffixes(
         &self,
         file: &str,
@@ -166,20 +166,20 @@ impl ArchNamingChecker {
 
         let suffix = Self::get_suffix(&stem);
 
-        // AES011: Forbidden suffix check
+        // AES012: Forbidden suffix check
         if let Some(ref suf) = suffix {
             if def.forbidden_suffix.values.contains(suf) {
                 violations.push(Self::make_result(
                     file,
-                    "AES011",
-                    AES011_SUFFIX_FORBIDDEN,
+                    "AES012",
+                    AES012_SUFFIX_FORBIDDEN,
                     Severity::HIGH,
                 ));
                 return;
             }
         }
 
-        // AES001: Strict suffix policy check
+        // AES012: Strict suffix policy check
         if def.suffix_policy.value == "strict" {
             let valid = suffix
                 .as_ref()
@@ -190,18 +190,18 @@ impl ArchNamingChecker {
                 if _layer_name.as_ref().map(|l| l.as_str()) == Some("contract") {
                     violations.push(Self::make_result(
                         file,
-                        "AES011",
-                        AES011_SUFFIX_MISMATCH,
+                        "AES012",
+                        AES012_SUFFIX_MISMATCH,
                         Severity::HIGH,
                     ));
                 } else {
                     let msg = format!(
-                        "AES011 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
-                        WHY? Strict suffixes ensure every component has a clear role.\n\
+                        "AES012 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
+                        WHY? Suffix/prefix rules require specific suffix per layer.\n\
                         FIX: Add one of the required suffixes: {}.",
                         allowed_list
                     );
-                    violations.push(Self::make_result(file, "AES011", &msg, Severity::HIGH));
+                    violations.push(Self::make_result(file, "AES012", &msg, Severity::HIGH));
                 }
             }
         }

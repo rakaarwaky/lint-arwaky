@@ -19,7 +19,7 @@ pub mod capabilities_import_utils;
 pub mod contract_compliance_port;
 pub mod contract_compliance_protocol;
 pub use contract_compliance_protocol::IScopeBoundaryProtocol;
-pub mod contract_rules_orchestrator;
+pub mod contract_rules_aggregate;
 pub mod contract_cycle_protocol;
 
 pub mod contract_lint_protocol;

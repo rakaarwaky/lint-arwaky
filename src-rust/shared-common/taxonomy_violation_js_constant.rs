@@ -11,12 +11,12 @@ pub const AES021_FILE_TOO_SHORT_MSG: &str =
     WHY? Excessively small files clutter the project structure.\n\
     FIX: Expand the component or merge this logic into a related module";
 pub const AES0301_PRIMITIVE_USAGE: &str = "AES0301 PRIMITIVE_USAGE: Direct primitive in taxonomy.";
-pub const AES011_MANDATORY_CLASS_DEFINITION: &str =
-    "AES011 MANDATORY_CLASS_DEFINITION: File is missing a class, interface, or type definition.\n\
+pub const AES024_MANDATORY_CLASS_DEFINITION: &str =
+    "AES024 MANDATORY_DEFINITION: File is missing a class, interface, or type definition.\n\
     WHY? Encapsulation in classes/interfaces is required for proper modularization and contract adherence.\n\
     FIX: Group functions into a class or implement an interface that defines the module boundary.";
-pub const AES011_SUFFIX_FORBIDDEN: &str =
-    "AES011 SUFFIX_MISMATCH: File uses a forbidden suffix for this layer.\n\
+pub const AES012_SUFFIX_FORBIDDEN: &str =
+    "AES012 SUFFIX_FORBIDDEN: File uses a forbidden suffix for this layer.\n\
     WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
     FIX: Rename the file to use an allowed suffix or move it to the correct layer.";
 pub const AES0305_STATELESS_EXECUTION: &str =

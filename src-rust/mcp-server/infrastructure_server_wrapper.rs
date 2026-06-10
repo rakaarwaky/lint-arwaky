@@ -1,7 +1,6 @@
 // PURPOSE: ServerWrapper — IMcpServerPort implementation wrapping the MCP server lifecycle
 use crate::cli_transport::taxonomy_transport_error::TransportError;
-/// mcp_server_wrapper — Infrastructure adapter providing MCP spec compliance.
-use crate::mcp_server::contract_server_port::IMcpServerPort;
+use crate::mcp_server::IMcpServerPort;
 use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 

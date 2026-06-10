@@ -3,7 +3,6 @@ pub mod capabilities_schema_checker;
 pub use capabilities_schema_checker::McpSchemaChecker;
 pub mod contract_server_port;
 pub use contract_server_port::{IMcpServerPort, ToolHandler};
-pub mod infrastructure_server_constants;
 pub mod infrastructure_server_lifespan;
 pub use infrastructure_server_lifespan::WrapperContext;
 pub mod infrastructure_server_schemas;

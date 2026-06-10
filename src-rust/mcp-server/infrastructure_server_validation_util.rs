@@ -2,7 +2,6 @@
 use crate::mcp_server::taxonomy_server_constant::MAX_PATH_DEPTH;
 use crate::mcp_server::taxonomy_server_constant::MAX_PATH_LENGTH;
 use crate::mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;
-/// mcp_server_validator — Input validation for MCP tools.
 use crate::shared_common::taxonomy_adapter_error::ValidationError;
 use crate::shared_common::taxonomy_common_error::Constraint;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

@@ -1,7 +1,7 @@
 // PURPOSE: AES violation message builder functions for JavaScript/TypeScript analysis
-pub fn aes010_naming_convention(_expected_word_count: i32) -> String {
+pub fn aes011_naming_convention(_expected_word_count: i32) -> String {
     String::from(
-        "AES010 NAMING_CONVENTION: Filename must follow [layer]_[concept(s)]_[suffix] pattern.\n\
+        "AES011 NAMING_CONVENTION: Filename must follow [layer]_[concept(s)]_[suffix] pattern.\n\
         WHY? Prefix identifies layer, suffix identifies role, concept describes feature.\n\
         FIX: Rename to at least prefix_suffix (e.g., infrastructure_user_checker.ts).",
     )
@@ -21,10 +21,10 @@ pub fn aes002_mandatory_import(required: &str) -> String {
     )
 }
 
-pub fn aes011_suffix_mismatch(allowed_list: &str) -> String {
+pub fn aes012_suffix_mismatch(allowed_list: &str) -> String {
     format!(
-        "AES011 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
-        WHY? Strict suffixes ensure every component has a clear role.\n\
+        "AES012 SUFFIX_MISMATCH: File is missing a required strict suffix for this layer.\n\
+        WHY? Suffix/prefix rules require specific suffix per layer.\n\
         FIX: Add one of the required suffixes: {}.",
         allowed_list
     )

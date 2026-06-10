@@ -14,7 +14,7 @@ use crate::file_watch::contract_watch_aggregate::DirectoryWatchAggregate;
 use crate::file_watch::taxonomy_result_vo::WatchResult;
 use crate::layer_rules::contract_compliance_port::IArchCompliancePort;
 use crate::layer_rules::contract_compliance_protocol::IArchComplianceProtocol;
-use crate::layer_rules::contract_rules_orchestrator::ArchRulesOrchestratorAggregate;
+use crate::layer_rules::contract_rules_aggregate::ArchRulesOrchestratorAggregate;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
