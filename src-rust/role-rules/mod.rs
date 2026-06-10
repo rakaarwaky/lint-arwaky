@@ -5,6 +5,8 @@ pub mod capabilities_agent_role_auditor;
 pub use capabilities_agent_role_auditor::AgentRoleChecker;
 pub mod capabilities_contract_role_auditor;
 pub use capabilities_contract_role_auditor::ContractRoleChecker;
+pub mod capabilities_capabilities_role_auditor;
+pub use capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 pub mod capabilities_surface_role_auditor;
 pub use capabilities_surface_role_auditor::SurfaceRoleChecker;
 pub mod capabilities_taxonomy_role_auditor;

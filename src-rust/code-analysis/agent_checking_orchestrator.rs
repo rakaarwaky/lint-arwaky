@@ -147,9 +147,16 @@ impl LintCheckingOrchestrator {
             if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
                 continue;
             }
+            eprintln!("[DEBUG ORCH] Processing file: {} filename: {}", file, filename);
             let layer = match self.checker.detect_layer(file, root_dir) {
-                Some(l) => l,
-                None => continue,
+                Some(l) => {
+                    eprintln!("[DEBUG ORCH] Detected layer: {} for file: {}", l, file);
+                    l
+                },
+                None => {
+                    eprintln!("[DEBUG ORCH] No layer detected for file: {}", file);
+                    continue;
+                },
             };
             let def = match self.checker.get_layer_def(&layer) {
                 Some(d) => d,
@@ -176,6 +183,8 @@ impl LintCheckingOrchestrator {
                 .check_forbidden_imports(file, &layer, &def, &mut violations);
             self.checker
                 .check_scope_forbidden_imports(file, config, &mut violations);
+            self.checker
+                .check_scope_mandatory_imports(file, config, &mut violations);
             self.checker
                 .check_legacy_import_rules(file, &layer, config, &mut violations);
             self.checker

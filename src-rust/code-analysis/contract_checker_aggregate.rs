@@ -34,6 +34,12 @@ pub trait ICheckerAggregate: Send + Sync {
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     );
+    fn check_scope_mandatory_imports(
+        &self,
+        file: &str,
+        config: &ArchitectureConfig,
+        violations: &mut Vec<LintResult>,
+    );
     fn check_legacy_import_rules(
         &self,
         file: &str,

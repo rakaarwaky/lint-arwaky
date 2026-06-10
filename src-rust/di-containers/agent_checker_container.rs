@@ -18,11 +18,11 @@ use crate::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInh
 use crate::code_analysis::contract_missing_vo_protocol::IMissingVoProtocol;
 use crate::code_analysis::contract_single_bottleneck_protocol::ISingleBottleneckProtocol;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
+use crate::layer_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use crate::role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
-use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
+use crate::role_rules::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use crate::layer_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
 use crate::orphan_detector::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
@@ -41,7 +41,7 @@ use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct CheckerContainer {
-    analyzer: ArchComplianceAnalyzer,
+    analyzer: LayerDetectionAnalyzer,
     import_forbidden_checker: ArchImportForbiddenChecker,
     import_mandatory_checker: ArchImportMandatoryChecker,
     line_checker: ArchLineChecker,
@@ -55,7 +55,7 @@ pub struct CheckerContainer {
     taxonomy_checker: TaxonomyRoleChecker,
     contract_checker: ContractRoleChecker,
     naming_checker: ArchNamingChecker,
-    layer_checker: ArchLayerChecker,
+    capabilities_role_checker: CapabilitiesRoleChecker,
     orphan_analyzer: Arc<dyn IOrphanAggregate>,
 }
 
@@ -70,7 +70,7 @@ impl CheckerContainer {
             Arc::new(SurfacesOrphanAnalyzer::new()),
         ));
         Self {
-            analyzer: ArchComplianceAnalyzer::new(config),
+            analyzer: LayerDetectionAnalyzer::new(config),
             import_forbidden_checker: ArchImportForbiddenChecker::new(),
             import_mandatory_checker: ArchImportMandatoryChecker::new(),
             line_checker: ArchLineChecker::new(),
@@ -84,7 +84,7 @@ impl CheckerContainer {
             taxonomy_checker: TaxonomyRoleChecker::new(),
             contract_checker: ContractRoleChecker::new(),
             naming_checker: ArchNamingChecker::new(),
-            layer_checker: ArchLayerChecker::new(),
+            capabilities_role_checker: CapabilitiesRoleChecker::new(),
             orphan_analyzer,
         }
     }
@@ -130,6 +130,17 @@ impl ICheckerAggregate for CheckerContainer {
             .check_scope_forbidden_imports(file, config, violations);
     }
 
+    fn check_scope_mandatory_imports(
+        &self,
+        file: &str,
+        config: &crate::config_system::taxonomy_config_vo::ArchitectureConfig,
+        violations: &mut Vec<LintResult>,
+    ) {
+        eprintln!("[DEBUG CONTAINER] check_scope_mandatory_imports called for file: {}", file);
+        self.import_mandatory_checker
+            .check_scope_mandatory_imports(file, config, violations);
+    }
+
     fn check_legacy_import_rules(
         &self,
         file: &str,
@@ -157,7 +168,7 @@ impl ICheckerAggregate for CheckerContainer {
         layer: &str,
         violations: &mut Vec<LintResult>,
     ) {
-        self.layer_checker
+        self.capabilities_role_checker
             .check_capability_routing(file, content, layer, violations);
     }
 

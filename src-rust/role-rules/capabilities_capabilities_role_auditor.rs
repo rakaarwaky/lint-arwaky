@@ -1,6 +1,7 @@
-// PURPOSE: ArchLayerChecker — AES0303: detect capability routing bottlenecks (single bottleneck, missing dispatch)
+// PURPOSE: CapabilitiesRoleChecker — AES0303: detect capability routing bottlenecks (single bottleneck, missing dispatch)
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+
 fn aes0303_capability_routing(struct_name: &str) -> String {
     format!(
         "AES0303 CAPABILITY_ROLE: Struct '{}' has no trait impl.",
@@ -8,17 +9,15 @@ fn aes0303_capability_routing(struct_name: &str) -> String {
     )
 }
 
-// No more imports from taxonomy_violation_rs_constant
+pub struct CapabilitiesRoleChecker {}
 
-pub struct ArchLayerChecker {}
-
-impl Default for ArchLayerChecker {
+impl Default for CapabilitiesRoleChecker {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl ArchLayerChecker {
+impl CapabilitiesRoleChecker {
     pub fn new() -> Self {
         Self {}
     }
@@ -39,7 +38,6 @@ impl ArchLayerChecker {
                 let t = l.trim();
                 let words: Vec<&str> = t.split_whitespace().collect();
                 if (t.starts_with("pub struct ") || t.starts_with("struct ")) && words.len() >= 2 {
-                    // Find the word "struct" and take the NEXT word as the name
                     let struct_idx = words.iter().position(|w| *w == "struct").unwrap_or(0);
                     Some(
                         words

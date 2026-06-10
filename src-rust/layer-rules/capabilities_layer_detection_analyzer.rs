@@ -1,4 +1,4 @@
-// PURPOSE: ArchComplianceAnalyzer — layer detection via filename prefix (FRD v1.1), directory fallback, and path matching
+// PURPOSE: LayerDetectionAnalyzer — layer detection via filename prefix (FRD v1.1), directory fallback, and path matching
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -8,11 +8,11 @@ use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 
-pub struct ArchComplianceAnalyzer {
+pub struct LayerDetectionAnalyzer {
     pub config: ArchitectureConfig,
 }
 
-impl ArchComplianceAnalyzer {
+impl LayerDetectionAnalyzer {
     pub fn new(mut config: ArchitectureConfig) -> Self {
         // Group rules by layer name — both base name and full scope
         let mut rules_by_layer: HashMap<String, Vec<&ArchitectureRule>> = HashMap::new();

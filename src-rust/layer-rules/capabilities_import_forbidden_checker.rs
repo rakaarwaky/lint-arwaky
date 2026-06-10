@@ -1,9 +1,6 @@
 // PURPOSE: ArchImportForbiddenChecker — AES001: enforce forbidden import rules via definition, scope, and legacy governance
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::capabilities_import_utils::{
-    extract_layer_from_import, extract_module_from_line, get_basename, import_matches_scope,
-    read_import_lines, resolve_scope,
-};
+use crate::layer_rules::contract_import_parser_port::ImportParser;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
@@ -51,21 +48,21 @@ impl ArchImportForbiddenChecker {
             ]
         };
 
-        let import_lines = read_import_lines(file);
+        let import_lines = ImportParser::read_import_lines(file);
         for (line_num, line) in &import_lines {
-            if let Some(module) = extract_module_from_line(line) {
+            if let Some(module) = ImportParser::extract_module_from_line(line) {
                 let segments: Vec<&str> = module.split("::").collect();
                 for forbidden in &forbidden_list {
-                    let (layer, suffixes) = resolve_scope(forbidden);
+                    let (layer, suffixes) = ImportParser::resolve_scope(forbidden);
                     let is_forbidden = if suffixes.is_empty() {
                         segments.iter().any(|seg| {
                             let cleaned = seg.trim_end_matches(';').trim();
-                            extract_layer_from_import(cleaned)
+                            ImportParser::extract_layer_from_import(cleaned)
                                 .map(|l| l == layer)
                                 .unwrap_or(false)
                         })
                     } else {
-                        import_matches_scope(line, layer, &suffixes)
+                        ImportParser::import_matches_scope(line, layer, &suffixes)
                     };
                     if is_forbidden {
                         violations.push(LintResult::new_arch(
@@ -87,20 +84,20 @@ impl ArchImportForbiddenChecker {
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        let basename = get_basename(file);
+        let basename = ImportParser::get_basename(file);
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
         let stem = basename.rsplit('.').next_back().unwrap_or(&basename);
         let suffix = stem.rsplit('_').next().unwrap_or("");
 
-        let import_lines = read_import_lines(file);
+        let import_lines = ImportParser::read_import_lines(file);
         if import_lines.is_empty() {
             return;
         }
 
         for rule in &config.rules {
-            let (rule_layer, rule_suffixes) = resolve_scope(&rule.scope.value);
+            let (rule_layer, rule_suffixes) = ImportParser::resolve_scope(&rule.scope.value);
             let layer_match = stem.starts_with(&format!("{}_", rule_layer));
             if !layer_match {
                 continue;
@@ -109,19 +106,19 @@ impl ArchImportForbiddenChecker {
                 continue;
             }
             for (line_num, line) in &import_lines {
-                if let Some(module) = extract_module_from_line(line) {
+                if let Some(module) = ImportParser::extract_module_from_line(line) {
                     let segments: Vec<&str> = module.split("::").collect();
                     for forbidden in &rule.forbidden.values {
-                        let (forbidden_layer, forbidden_suffixes) = resolve_scope(forbidden);
+                        let (forbidden_layer, forbidden_suffixes) = ImportParser::resolve_scope(forbidden);
                         let is_forbidden = if forbidden_suffixes.is_empty() {
                             segments.iter().any(|seg| {
                                 let cleaned = seg.trim_end_matches(';').trim();
-                                extract_layer_from_import(cleaned)
+                                ImportParser::extract_layer_from_import(cleaned)
                                     .map(|l| l == forbidden_layer)
                                     .unwrap_or(false)
                             })
                         } else {
-                            import_matches_scope(line, forbidden_layer, &forbidden_suffixes)
+                            ImportParser::import_matches_scope(line, forbidden_layer, &forbidden_suffixes)
                         };
                         if is_forbidden {
                             violations.push(LintResult::new_arch(
@@ -152,9 +149,9 @@ impl ArchImportForbiddenChecker {
             return;
         }
 
-        let import_lines = read_import_lines(file);
+        let import_lines = ImportParser::read_import_lines(file);
         for (line_num, line) in &import_lines {
-            if let Some(module) = extract_module_from_line(line) {
+            if let Some(module) = ImportParser::extract_module_from_line(line) {
                 let target_layer = self.detect_module_layer(&module, config);
                 if let Some(target) = target_layer {
                     for rule in config.governance_rules.iter() {
@@ -192,7 +189,7 @@ impl ArchImportForbiddenChecker {
             module.split('.').collect()
         };
         for part in &parts {
-            if let Some(layer) = extract_layer_from_import(part) {
+            if let Some(layer) = ImportParser::extract_layer_from_import(part) {
                 return Some(layer);
             }
             for (name, def) in &config.layers {
