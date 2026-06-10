@@ -64,3 +64,5 @@ pub use capabilities_project_target_resolver::{
     compute_score, count_loc, has_critical, lint_path, normalize_project_root, resolve_target,
     walk_rs_files, ProjectTargetResolver,
 };
+pub mod capabilities_code_metric_analyzer;
+pub use capabilities_code_metric_analyzer::CodeMetricAnalyzer;

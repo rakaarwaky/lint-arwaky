@@ -10,4 +10,5 @@ pub trait ISetupManagementProtocol: Send + Sync {
     fn mcp_config_claude(&self) -> McpConfigVO;
     fn mcp_config_hermes(&self) -> McpConfigVO;
     fn mcp_config_vscode(&self) -> McpConfigVO;
+    fn which_mcp_binary(&self) -> String;
 }

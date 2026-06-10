@@ -4,7 +4,6 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use clap::Parser;
-use lint_arwaky::cli_commands::surface_analysis_command;
 use lint_arwaky::cli_commands::surface_bootstrap_command;
 use lint_arwaky::cli_commands::surface_check_command;
 use lint_arwaky::cli_commands::surface_config_command;
@@ -70,9 +69,18 @@ fn main() -> ExitCode {
         Commands::GitDiff { base } => surface_git_command::handle_git_diff(base),
         Commands::MultiProject { paths } => surface_multi_command::handle_multi_project(paths),
         Commands::Security { path } => surface_maintenance_command::handle_security(path),
-        Commands::Complexity { path } => surface_analysis_command::handle_complexity(path),
-        Commands::Duplicates { path } => surface_analysis_command::handle_duplicates(path),
-        Commands::Trends { path } => surface_analysis_command::handle_trends(path),
+        Commands::Complexity { path } => {
+            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new();
+            analyzer.handle_complexity(path)
+        }
+        Commands::Duplicates { path } => {
+            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new();
+            analyzer.handle_duplicates(path)
+        }
+        Commands::Trends { path } => {
+            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new();
+            analyzer.handle_trends(path)
+        }
         Commands::Dependencies { path } => surface_maintenance_command::handle_dependencies(path),
         Commands::Setup { command } => surface_setup_command::handle_setup(command),
         Commands::Cancel { job_id } => surface_map_command::handle_cancel(job_id),

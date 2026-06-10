@@ -3,10 +3,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::cli_commands::surface_core_command::SetupCommands;
-use crate::cli_commands::surface_setup_controller::{
-    generate_env, generate_mcp_config, mcp_config_claude, mcp_config_hermes, mcp_config_vscode,
-    register_setup_management, which_mcp_binary,
-};
+use crate::project_setup::capabilities_setup_processor::SetupManagementProcessor;
+use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 #[derive(Clone)]
@@ -16,11 +14,7 @@ pub struct SetupCommandsSurface {
 
 impl SetupCommandsSurface {
     pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
-        let s = Self { container };
-        if let Some(ref c) = s.container {
-            register_setup_management(c.clone());
-        }
-        s
+        Self { container }
     }
 
     pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
@@ -57,7 +51,9 @@ impl SetupCommandsSurface {
         if env_path.exists() {
             println!("  .env already exists — skipping");
         } else {
-            let env_content = generate_env(&home);
+            let processor = SetupManagementProcessor::new();
+            let home_vo = crate::source_parsing::taxonomy_path_vo::DirectoryPath::new(home.to_string()).unwrap_or_default();
+            let env_content = processor.generate_env(&home_vo).value;
             if let Err(e) = std::fs::write(env_path, &env_content) {
                 println!("  Error creating .env: {e}");
             } else {
@@ -67,7 +63,9 @@ impl SetupCommandsSurface {
 
         // 4. Generate MCP config snippets
         println!("\n[4/4] MCP server configuration:");
-        let mcp_json = generate_mcp_config();
+        let processor = SetupManagementProcessor::new();
+        let mcp_config_vo = processor.generate_mcp_config();
+        let mcp_json = serde_json::to_string_pretty(&mcp_config_vo.value()).unwrap_or_default();
         println!("\n  For Claude Desktop / VS Code (mcp.json):");
         println!("  {}", "-".repeat(45));
         for line in mcp_json.lines() {
@@ -96,10 +94,11 @@ impl SetupCommandsSurface {
     }
 
     pub fn mcp_config(&self, client: &str) {
+        let processor = SetupManagementProcessor::new();
         let configs = [
-            ("claude", mcp_config_claude()),
-            ("hermes", mcp_config_hermes()),
-            ("vscode", mcp_config_vscode()),
+            ("claude", serde_json::to_string_pretty(processor.mcp_config_claude().value()).unwrap_or_default()),
+            ("hermes", serde_json::to_string_pretty(processor.mcp_config_hermes().value()).unwrap_or_default()),
+            ("vscode", serde_json::to_string_pretty(processor.mcp_config_vscode().value()).unwrap_or_default()),
         ];
         for (name, config_json) in &configs {
             if client != "all" && client != *name {
@@ -427,7 +426,8 @@ source:
             );
         }
         SetupCommands::McpConfig { client } => {
-            let binary = which_mcp_binary();
+            let processor = SetupManagementProcessor::new();
+            let binary = processor.which_mcp_binary();
             let config = match client.as_str() {
                 "claude-code" | "claude" => serde_json::json!({
                     "mcpServers": {

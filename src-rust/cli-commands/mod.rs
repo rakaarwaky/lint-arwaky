@@ -43,11 +43,7 @@ pub mod surface_report_command;
 pub use surface_report_command::{register_report_commands, ReportCommandsSurface};
 pub mod surface_setup_command;
 pub use surface_setup_command::{get_setup, register_setup_commands, SetupCommandsSurface};
-pub mod surface_setup_controller;
-pub use surface_setup_controller::{
-    generate_env, generate_mcp_config, mcp_config_claude, mcp_config_hermes, mcp_config_vscode,
-    register_setup_management, SetupManagementSurface,
-};
+
 pub mod surface_watch_command;
 pub use surface_watch_command::{register_watch_command, WatchCommandsSurface, WatchdogBridge};
 pub mod surface_config_command;
