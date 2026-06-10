@@ -59,19 +59,6 @@ impl ArchImportMandatoryChecker {
                     .any(|(_, l)| import_matches_scope(l, layer, &suffixes))
             };
 
-            let genuinely_unreferenced = if suffixes.is_empty() {
-                !import_lines.iter().any(|(_, l)| l.contains(layer))
-            } else {
-                !import_lines.iter().any(|(_, l)| l.contains(layer))
-                    && !suffixes
-                        .iter()
-                        .any(|s| import_lines.iter().any(|(_, l)| l.contains(s)))
-            };
-
-            if genuinely_unreferenced {
-                continue;
-            }
-
             if !is_present {
                 violations.push(LintResult::new_arch(
                     file,
