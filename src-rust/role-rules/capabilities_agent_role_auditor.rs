@@ -420,17 +420,6 @@ impl AgentRoleChecker {
     }
 }
 
-impl crate::role_rules::contract_agent_role_protocol::IAgentRoleChecker for AgentRoleChecker {
-    fn check_container(&self, _file: &str, _content: &str, _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {}
-    fn check_orchestrator(&self, _file: &str, _content: &str, _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {}
-    fn check_lifecycle(&self, _file: &str, _content: &str, _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {}
-    fn check_file_size_limit(&self, file: &str, content: &str, max_lines: usize, violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {
-        self.check_file_size_limit(file, content, max_lines, violations);
-    }
-    fn check_any_type_annotation(&self, file: &str, content: &str, violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {
-        self.check_any_type_annotation(file, content, violations);
-    }
-}
 
 impl IAgentRoleChecker for AgentRoleChecker {
     fn check_container(

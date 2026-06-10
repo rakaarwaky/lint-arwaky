@@ -1,22 +1,21 @@
 // PURPOSE: ArchImportMandatoryChecker — AES002: enforce mandatory import rules per layer definition and scope rules
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::contract_import_parser_port::ImportParser;
+use crate::layer_rules::contract_import_parser_port::IImportParserPort;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use crate::shared_common::{Identity, FileContentVO};
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+use std::sync::Arc;
 
-pub struct ArchImportMandatoryChecker {}
-
-impl Default for ArchImportMandatoryChecker {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct ArchImportMandatoryChecker {
+    parser: Arc<dyn IImportParserPort>,
 }
 
 impl ArchImportMandatoryChecker {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
+        Self { parser }
     }
 
     /// Check mandatory imports from layer definition (legacy path).
@@ -30,30 +29,35 @@ impl ArchImportMandatoryChecker {
             return;
         }
 
-        let basename = ImportParser::get_basename(file);
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let basename_identity = self.parser.get_basename(&file_path);
+        let basename = basename_identity.value();
         if basename == "__init__.py" {
             return;
         }
-        if definition.exceptions.values.contains(&basename) {
+        if definition.exceptions.values.contains(&basename.to_string()) {
             return;
         }
 
         let Ok(content) = std::fs::read_to_string(file) else {
             return;
         };
-        let import_lines = ImportParser::parse_import_lines(&content);
+        let file_content = FileContentVO::new(content);
+        let import_lines = self.parser.parse_import_lines(&file_content);
 
-        let stem = basename.rsplit('.').next_back().unwrap_or(&basename);
+        let stem = basename.rsplit('.').next_back().unwrap_or(basename);
         let source_layer = stem.split('_').next().unwrap_or("unknown");
 
         for required in &definition.mandatory.values {
-            let (layer, suffixes) = ImportParser::resolve_scope(required);
+            let required_identity = Identity::new(required);
+            let (layer, suffixes) = self.parser.resolve_scope(&required_identity);
+            let layer_str = layer.value();
             let is_present = if suffixes.is_empty() {
-                import_lines.iter().any(|(_, l)| l.contains(layer))
+                import_lines.iter().any(|(_, l)| l.value().contains(layer_str))
             } else {
                 import_lines
                     .iter()
-                    .any(|(_, l)| ImportParser::import_matches_scope(l, layer, &suffixes))
+                    .any(|(_, l)| self.parser.import_matches_scope(l, &layer, &suffixes))
             };
 
             if !is_present {
@@ -79,40 +83,49 @@ impl ArchImportMandatoryChecker {
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        let basename = ImportParser::get_basename(file);
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let basename_identity = self.parser.get_basename(&file_path);
+        let basename = basename_identity.value();
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
-        let stem = basename.rsplit('.').next_back().unwrap_or(&basename);
+        let stem = basename.rsplit('.').next_back().unwrap_or(basename);
         let suffix = stem.rsplit('_').next().unwrap_or("");
 
-        let import_lines = ImportParser::read_import_lines(file);
+        let import_lines = self.parser.read_import_lines(&file_path);
 
         for rule in &config.rules {
             if rule.mandatory.values.is_empty() {
                 continue;
             }
 
-            let (rule_layer, rule_suffixes) = ImportParser::resolve_scope(&rule.scope.value);
-            let layer_match = stem.starts_with(&format!("{}_", rule_layer));
+            let scope_identity = Identity::new(&rule.scope.value);
+            let (rule_layer, rule_suffixes) = self.parser.resolve_scope(&scope_identity);
+            let rule_layer_str = rule_layer.value();
+            let layer_match = stem.starts_with(&format!("{}_", rule_layer_str));
             if !layer_match {
                 continue;
             }
-            if !rule_suffixes.is_empty() && !rule_suffixes.contains(&suffix) {
-                continue;
+            if !rule_suffixes.is_empty() {
+                let suffix_match = rule_suffixes.iter().any(|s| s.value() == suffix);
+                if !suffix_match {
+                    continue;
+                }
             }
 
             for required in &rule.mandatory.values {
-                let (req_layer, req_suffixes) = ImportParser::resolve_scope(required);
+                let required_identity = Identity::new(required);
+                let (req_layer, req_suffixes) = self.parser.resolve_scope(&required_identity);
+                let req_layer_str = req_layer.value();
                 let is_present = if req_suffixes.is_empty() {
                     if import_lines.is_empty() {
                         false
                     } else {
-                        import_lines.iter().any(|(_, l)| l.contains(req_layer))
+                        import_lines.iter().any(|(_, l)| l.value().contains(req_layer_str))
                     }
                 } else {
                     import_lines.iter().any(|(_, l)| {
-                        ImportParser::import_matches_scope(l, req_layer, &req_suffixes)
+                        self.parser.import_matches_scope(l, &req_layer, &req_suffixes)
                     })
                 };
 
@@ -123,7 +136,7 @@ impl ArchImportMandatoryChecker {
                         "AES002",
                         Severity::HIGH,
                         AesViolation::MissingImport {
-                            source_layer: rule_layer.to_string(),
+                            source_layer: rule_layer_str.to_string(),
                             required: required.clone(),
                         },
                     ));

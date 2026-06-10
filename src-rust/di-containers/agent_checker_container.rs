@@ -51,6 +51,7 @@ pub struct CheckerContainer {
 
 impl CheckerContainer {
     pub fn new(config: ArchitectureConfig) -> Self {
+        let parser = Arc::new(crate::layer_rules::infrastructure_import_parser_adapter::ImportParserAdapter::new());
         let orphan_analyzer: Arc<dyn IOrphanAggregate> = Arc::new(ArchOrphanAnalyzer::new(
             Arc::new(TaxonomyOrphanAnalyzer::new()),
             Arc::new(ContractOrphanAnalyzer::new()),
@@ -61,8 +62,8 @@ impl CheckerContainer {
         ));
         Self {
             analyzer: LayerDetectionAnalyzer::new(config),
-            import_forbidden_checker: ArchImportForbiddenChecker::new(),
-            import_mandatory_checker: ArchImportMandatoryChecker::new(),
+            import_forbidden_checker: ArchImportForbiddenChecker::new(parser.clone()),
+            import_mandatory_checker: ArchImportMandatoryChecker::new(parser),
             line_checker: ArchLineChecker::new(),
             class_checker: ArchClassChecker::new(),
             bypass_checker: BypassChecker::new(),

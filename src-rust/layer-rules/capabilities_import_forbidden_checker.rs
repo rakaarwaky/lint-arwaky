@@ -1,22 +1,21 @@
 // PURPOSE: ArchImportForbiddenChecker — AES001: enforce forbidden import rules via definition, scope, and legacy governance
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::contract_import_parser_port::ImportParser;
+use crate::layer_rules::contract_import_parser_port::IImportParserPort;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use crate::shared_common::{Identity, LayerNameVO};
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+use std::sync::Arc;
 
-pub struct ArchImportForbiddenChecker {}
-
-impl Default for ArchImportForbiddenChecker {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct ArchImportForbiddenChecker {
+    parser: Arc<dyn IImportParserPort>,
 }
 
 impl ArchImportForbiddenChecker {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
+        Self { parser }
     }
 
     pub fn check_forbidden_imports(
@@ -43,36 +42,40 @@ impl ArchImportForbiddenChecker {
             ]
         };
 
-        let import_lines = ImportParser::read_import_lines(file);
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let import_lines = self.parser.read_import_lines(&file_path);
+        let layer_name_vo = LayerNameVO::new(layer_name);
         for (line_num, line) in &import_lines {
-            if let Some(module) = ImportParser::extract_module_from_line(line) {
-                let segments: Vec<&str> = module.split("::").collect();
+            if let Some(module) = self.parser.extract_module_from_line(line) {
+                let segments: Vec<&str> = module.value().split("::").collect();
                 for forbidden in &forbidden_list {
-                    let (layer, suffixes) = ImportParser::resolve_scope(forbidden);
+                    let forbidden_identity = Identity::new(forbidden);
+                    let (layer, suffixes) = self.parser.resolve_scope(&forbidden_identity);
                     let is_forbidden = if suffixes.is_empty() {
                         segments.iter().any(|seg| {
                             let cleaned = seg.trim_end_matches(';').trim();
-                            ImportParser::extract_layer_from_import(cleaned)
+                            let cleaned_identity = Identity::new(cleaned);
+                            self.parser.extract_layer_from_import(&cleaned_identity)
                                 .map(|l| l == layer)
                                 .unwrap_or(false)
                         })
                     } else {
-                        ImportParser::import_matches_scope(line, layer, &suffixes)
+                        self.parser.import_matches_scope(line, &layer, &suffixes)
                     };
                     if is_forbidden {
                         let allowed: Vec<String> = definition
                             .allowed
                             .values
                             .iter()
-                            .map(|s| ImportParser::resolve_scope(s).0.to_string())
+                            .map(|s| self.parser.resolve_scope(&Identity::new(s)).0.value().to_string())
                             .collect();
                         violations.push(LintResult::new_arch(
                             file,
-                            *line_num,
+                            line_num.value() as usize,
                             "AES001",
                             Severity::CRITICAL,
                             AesViolation::ForbiddenImport {
-                                source_layer: layer_name.to_string(),
+                                source_layer: layer_name_vo.value().to_string(),
                                 forbidden_layer: forbidden.clone(),
                                 allowed,
                             },
@@ -89,44 +92,53 @@ impl ArchImportForbiddenChecker {
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        let basename = ImportParser::get_basename(file);
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let basename_identity = self.parser.get_basename(&file_path);
+        let basename = basename_identity.value();
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
-        let stem = basename.rsplit('.').next_back().unwrap_or(&basename);
+        let stem = basename.rsplit('.').next_back().unwrap_or(basename);
         let suffix = stem.rsplit('_').next().unwrap_or("");
 
-        let import_lines = ImportParser::read_import_lines(file);
+        let import_lines = self.parser.read_import_lines(&file_path);
         if import_lines.is_empty() {
             return;
         }
 
         for rule in &config.rules {
-            let (rule_layer, rule_suffixes) = ImportParser::resolve_scope(&rule.scope.value);
-            let layer_match = stem.starts_with(&format!("{}_", rule_layer));
+            let scope_identity = Identity::new(&rule.scope.value);
+            let (rule_layer, rule_suffixes) = self.parser.resolve_scope(&scope_identity);
+            let rule_layer_str = rule_layer.value();
+            let layer_match = stem.starts_with(&format!("{}_", rule_layer_str));
             if !layer_match {
                 continue;
             }
-            if !rule_suffixes.is_empty() && !rule_suffixes.contains(&suffix) {
-                continue;
+            if !rule_suffixes.is_empty() {
+                let suffix_match = rule_suffixes.iter().any(|s| s.value() == suffix);
+                if !suffix_match {
+                    continue;
+                }
             }
             for (line_num, line) in &import_lines {
-                if let Some(module) = ImportParser::extract_module_from_line(line) {
-                    let segments: Vec<&str> = module.split("::").collect();
+                if let Some(module) = self.parser.extract_module_from_line(line) {
+                    let segments: Vec<&str> = module.value().split("::").collect();
                     for forbidden in &rule.forbidden.values {
+                        let forbidden_identity = Identity::new(forbidden);
                         let (forbidden_layer, forbidden_suffixes) =
-                            ImportParser::resolve_scope(forbidden);
+                            self.parser.resolve_scope(&forbidden_identity);
                         let is_forbidden = if forbidden_suffixes.is_empty() {
                             segments.iter().any(|seg| {
                                 let cleaned = seg.trim_end_matches(';').trim();
-                                ImportParser::extract_layer_from_import(cleaned)
+                                let cleaned_identity = Identity::new(cleaned);
+                                self.parser.extract_layer_from_import(&cleaned_identity)
                                     .map(|l| l == forbidden_layer)
                                     .unwrap_or(false)
                             })
                         } else {
-                            ImportParser::import_matches_scope(
+                            self.parser.import_matches_scope(
                                 line,
-                                forbidden_layer,
+                                &forbidden_layer,
                                 &forbidden_suffixes,
                             )
                         };
@@ -135,15 +147,15 @@ impl ArchImportForbiddenChecker {
                                 .allowed
                                 .values
                                 .iter()
-                                .map(|s| ImportParser::resolve_scope(s).0.to_string())
+                                .map(|s| self.parser.resolve_scope(&Identity::new(s)).0.value().to_string())
                                 .collect();
                             violations.push(LintResult::new_arch(
                                 file,
-                                *line_num,
+                                line_num.value() as usize,
                                 "AES001",
                                 Severity::CRITICAL,
                                 AesViolation::ForbiddenImport {
-                                    source_layer: rule_layer.to_string(),
+                                    source_layer: rule_layer_str.to_string(),
                                     forbidden_layer: forbidden.clone(),
                                     allowed,
                                 },
@@ -169,10 +181,11 @@ impl ArchImportForbiddenChecker {
             return;
         }
 
-        let import_lines = ImportParser::read_import_lines(file);
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let import_lines = self.parser.read_import_lines(&file_path);
         for (line_num, line) in &import_lines {
-            if let Some(module) = ImportParser::extract_module_from_line(line) {
-                let target_layer = self.detect_module_layer(&module, config);
+            if let Some(module) = self.parser.extract_module_from_line(line) {
+                let target_layer = self.detect_module_layer(module.value(), config);
                 if let Some(target) = target_layer {
                     for rule in config.governance_rules.iter() {
                         let source_matches = rule.source_layer.value == file_layer;
@@ -182,13 +195,14 @@ impl ArchImportForbiddenChecker {
                                 .rules
                                 .iter()
                                 .filter(|r| {
-                                    ImportParser::resolve_scope(&r.scope.value).0 == file_layer
+                                    let scope_identity = Identity::new(&r.scope.value);
+                                    self.parser.resolve_scope(&scope_identity).0.value() == file_layer
                                 })
                                 .flat_map(|r| r.allowed.values.clone())
                                 .collect();
                             violations.push(LintResult::new_arch(
                                 file,
-                                *line_num,
+                                line_num.value() as usize,
                                 "AES001",
                                 Severity::CRITICAL,
                                 AesViolation::ForbiddenImport {
@@ -212,8 +226,9 @@ impl ArchImportForbiddenChecker {
             module.split('.').collect()
         };
         for part in &parts {
-            if let Some(layer) = ImportParser::extract_layer_from_import(part) {
-                return Some(layer);
+            let part_identity = Identity::new(*part);
+            if let Some(layer) = self.parser.extract_layer_from_import(&part_identity) {
+                return Some(layer.value().to_string());
             }
             for (name, def) in &config.layers {
                 if *part == name.value.as_str() {
