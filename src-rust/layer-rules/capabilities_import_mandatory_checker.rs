@@ -1,6 +1,8 @@
-// PURPOSE: ArchImportMandatoryChecker — AES002: enforce mandatory import rules per layer definition
+// PURPOSE: ArchImportMandatoryChecker — AES002: enforce mandatory import rules per layer definition and scope rules
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::capabilities_import_utils::{
-    get_basename, import_matches_scope, parse_import_lines, resolve_scope,
+    extract_layer_from_import, extract_module_from_line, get_basename, import_matches_scope,
+    parse_import_lines, read_import_lines, resolve_scope,
 };
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
@@ -11,7 +13,6 @@ fn aes002_mandatory_import(required: &str) -> String {
         required
     )
 }
-use std::fs;
 
 pub struct ArchImportMandatoryChecker {}
 
@@ -26,6 +27,7 @@ impl ArchImportMandatoryChecker {
         Self {}
     }
 
+    /// Check mandatory imports from layer definition (legacy path).
     pub fn check_mandatory_imports(
         &self,
         file: &str,
@@ -44,7 +46,7 @@ impl ArchImportMandatoryChecker {
             return;
         }
 
-        let Ok(content) = fs::read_to_string(file) else {
+        let Ok(content) = std::fs::read_to_string(file) else {
             return;
         };
         let import_lines = parse_import_lines(&content);
@@ -67,6 +69,65 @@ impl ArchImportMandatoryChecker {
                     Severity::HIGH,
                     &aes002_mandatory_import(required),
                 ));
+            }
+        }
+    }
+
+    /// Check mandatory imports from config rules (AES001 conditions per scope).
+    /// This is the primary path — reads mandatory from rules.AES001.conditions.
+    pub fn check_scope_mandatory_imports(
+        &self,
+        file: &str,
+        config: &ArchitectureConfig,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let basename = get_basename(file);
+        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+            return;
+        }
+        let stem = basename.rsplit('.').next_back().unwrap_or(&basename);
+        let suffix = stem.rsplit('_').next().unwrap_or("");
+
+        let import_lines = read_import_lines(file);
+
+        for rule in &config.rules {
+            // Only check rules that have mandatory imports defined
+            if rule.mandatory.values.is_empty() {
+                continue;
+            }
+
+            let (rule_layer, rule_suffixes) = resolve_scope(&rule.scope.value);
+            let layer_match = stem.starts_with(&format!("{}_", rule_layer));
+            if !layer_match {
+                continue;
+            }
+            if !rule_suffixes.is_empty() && !rule_suffixes.contains(&suffix) {
+                continue;
+            }
+
+            for required in &rule.mandatory.values {
+                let (req_layer, req_suffixes) = resolve_scope(required);
+                let is_present = if req_suffixes.is_empty() {
+                    if import_lines.is_empty() {
+                        false
+                    } else {
+                        import_lines.iter().any(|(_, l)| l.contains(req_layer))
+                    }
+                } else {
+                    import_lines
+                        .iter()
+                        .any(|(_, l)| import_matches_scope(l, req_layer, &req_suffixes))
+                };
+
+                if !is_present {
+                    violations.push(LintResult::new_arch(
+                        file,
+                        0,
+                        "AES002",
+                        Severity::HIGH,
+                        &aes002_mandatory_import(required),
+                    ));
+                }
             }
         }
     }

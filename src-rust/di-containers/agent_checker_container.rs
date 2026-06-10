@@ -19,7 +19,7 @@ use crate::code_analysis::contract_missing_vo_protocol::IMissingVoProtocol;
 use crate::code_analysis::contract_single_bottleneck_protocol::ISingleBottleneckProtocol;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
-use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
+use crate::role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
@@ -292,7 +292,7 @@ impl ICheckerAggregate for CheckerContainer {
         root_dir: &FilePath,
         violations: &mut LintResultList,
     ) {
-        SurfaceHierarchyChecker::new().check_surface_hierarchy(files, root_dir, violations);
+        SurfaceRoleChecker::new().check_surface_hierarchy(files, root_dir, violations);
     }
 
     fn orphan_aggregate(
