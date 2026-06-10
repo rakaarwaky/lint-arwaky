@@ -1,7 +1,0 @@
-// PURPOSE: InfrastructureContainerAggregate — DI aggregate wiring for infrastructure provider implementations
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-
-pub trait InfrastructureContainerAggregate: Send + Sync {
-    fn root_path(&self) -> Option<&FilePath>;
-    fn _init_infrastructure(&mut self);
-}

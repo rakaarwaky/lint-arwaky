@@ -1,8 +1,4 @@
 // PURPOSE: Module declarations and re-exports for file-watch (aggregates, provider, VOs, errors)
-pub mod contract_commands_aggregate;
-pub use contract_commands_aggregate::WatchCommandsAggregate;
-pub mod contract_orchestrator_aggregate;
-pub use contract_orchestrator_aggregate::WatchExecutionOrchestratorAggregate;
 pub mod contract_provider_port;
 pub use contract_provider_port::IWatchProviderPort;
 pub mod contract_watch_aggregate;

@@ -5,8 +5,6 @@ pub mod capabilities_renamer_processor;
 pub use capabilities_renamer_processor::SymbolRenamerProcessor;
 pub mod capabilities_unused_checker;
 pub use capabilities_unused_checker::UnusedImportRuleChecker;
-pub mod contract_type_protocol;
-pub use contract_type_protocol::IDomainTypeProtocol;
 pub mod contract_unused_protocol;
 pub use contract_unused_protocol::IUnusedProtocol;
 pub mod agent_checking_orchestrator;
@@ -43,8 +41,6 @@ pub mod contract_analysis_protocol;
 pub use contract_analysis_protocol::IAnalysisProtocol;
 pub mod contract_class_protocol;
 pub use contract_class_protocol::IMandatoryClassProtocol;
-pub mod contract_fix_aggregate;
-pub use contract_fix_aggregate::LintFixOrchestratorAggregate;
 pub mod contract_line_protocol;
 pub use contract_line_protocol::ILineCheckerProtocol;
 pub mod contract_bypass_checker_protocol;
@@ -59,8 +55,6 @@ pub mod contract_single_bottleneck_protocol;
 pub use contract_single_bottleneck_protocol::ISingleBottleneckProtocol;
 pub mod contract_missing_vo_protocol;
 pub use contract_missing_vo_protocol::IMissingVoProtocol;
-pub mod contract_reporting_protocol;
-pub use contract_reporting_protocol::ILintReportingProtocol;
 pub mod taxonomy_analysis_vo;
 pub use taxonomy_analysis_vo::{
     FileDefinitionMap, FilePathSet, GraphAnalysisContext, ImportGraph, InboundLinkMap,

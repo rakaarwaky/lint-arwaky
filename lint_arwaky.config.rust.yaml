@@ -114,14 +114,14 @@ architecture:
           forbidden: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
 
         - scope: "agent(container)"
-          allowed: ["taxonomy", "contract", "infrastructure", "capabilities"]
+          allowed: ["taxonomy", "contract", "infrastructure", "capabilities", "agent"]
           mandatory: ["taxonomy", "contract"]
           forbidden: ["surfaces", "root"]
 
         - scope: "agent(orchestrator)"
-          allowed: ["taxonomy", "contract"]
+          allowed: ["taxonomy", "contract", "agent"]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["surfaces", "agent(lifecycle)", "agent(container)", "infrastructure", "capabilities", "root"]
+          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
 
         - scope: "agent(lifecycle)"
           allowed: ["taxonomy", "contract"]
