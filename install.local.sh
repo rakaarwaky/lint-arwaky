@@ -2,22 +2,27 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+DIST_DIR="$SCRIPT_DIR/dist"
 CARGO_BIN="$HOME/.cargo/bin"
+
+CLI_SRC="$DIST_DIR/lint-arwaky-cli"
+MCP_SRC="$DIST_DIR/lint-arwaky-mcp"
+
+if [ ! -f "$CLI_SRC" ]; then
+    echo "[error] $CLI_SRC not found. Run build.local.sh first."
+    exit 1
+fi
+if [ ! -f "$MCP_SRC" ]; then
+    echo "[error] $MCP_SRC not found. Run build.local.sh first."
+    exit 1
+fi
 
 mkdir -p "$CARGO_BIN"
 
-echo "Installing lint-arwaky binaries..."
-cd "$PROJECT_ROOT"
-
-if [ -f "$PROJECT_ROOT/target/release/lint-arwaky-cli" ]; then
-    cp "$PROJECT_ROOT/target/release/lint-arwaky-cli" "$CARGO_BIN/"
-    cp "$PROJECT_ROOT/target/release/lint-arwaky-mcp" "$CARGO_BIN/"
-else
-    cp "$PROJECT_ROOT/target/debug/lint-arwaky-cli" "$CARGO_BIN/"
-    cp "$PROJECT_ROOT/target/debug/lint-arwaky-mcp" "$CARGO_BIN/"
-fi
+echo "Installing from dist/..."
+cp "$CLI_SRC" "$CARGO_BIN/"
+cp "$MCP_SRC" "$CARGO_BIN/"
 
 chmod +x "$CARGO_BIN/lint-arwaky-cli" "$CARGO_BIN/lint-arwaky-mcp"
 
-echo "Installed lint-arwaky-cli and lint-arwaky-mcp to $CARGO_BIN"
+echo "Done: installed from dist/"

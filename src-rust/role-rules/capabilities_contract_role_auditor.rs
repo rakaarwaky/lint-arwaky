@@ -42,14 +42,24 @@ impl ContractRoleChecker {
         let mut forbidden_traits: Vec<String> = Vec::new();
         for line in content.lines() {
             let t = line.trim();
-            if !t.starts_with("use ") {
+            // Rust: `use crate::layer::TraitName;`
+            // Python: `from ..layer.module import TraitName`
+            // JS: `import { TraitName } from '../layer/module'`
+            let is_import = t.starts_with("use ")
+                || (t.starts_with("from ") && t.contains(" import "))
+                || (t.starts_with("import ") && t.contains(" from "));
+            if !is_import {
                 continue;
             }
             for pattern in &def.forbidden_inheritance.values {
                 let (layer, suffixes) = Self::resolve_scope(pattern);
                 let lower = t.to_lowercase();
                 let layer_match = lower.contains(&format!("{}::", layer))
-                    || lower.contains(&format!("::{}::", layer));
+                    || lower.contains(&format!("::{}::", layer))
+                    || lower.contains(&format!("{}.", layer))
+                    || lower.contains(&format!(".{}.", layer))
+                    || lower.contains(&format!("{}/", layer))
+                    || lower.contains(&format!("/{}/", layer));
                 if !layer_match {
                     continue;
                 }
@@ -78,7 +88,18 @@ impl ContractRoleChecker {
             }
         }
         for trait_name in &forbidden_traits {
-            if content.contains(&format!("impl {} for ", trait_name)) {
+            // Rust: `impl TraitName for StructName`
+            // Python: `class StructName(TraitName):` or `class StructName(TraitName, ...):`
+            // JS: `class StructName extends TraitName` or `class StructName implements TraitName`
+            let rust_pattern = format!("impl {} for ", trait_name);
+            let py_pattern = format!("({}", trait_name);
+            let js_extends = format!("extends {}", trait_name);
+            let js_implements = format!("implements {}", trait_name);
+            if content.contains(&rust_pattern)
+                || content.contains(&py_pattern)
+                || content.contains(&js_extends)
+                || content.contains(&js_implements)
+            {
                 let msg = aes013_forbidden_inheritance(trait_name);
                 violations.push(LintResult::new_arch(
                     file,
