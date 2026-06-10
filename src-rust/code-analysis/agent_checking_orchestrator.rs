@@ -9,7 +9,7 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violation_message_rs_error::AES015_CIRCULAR_IMPORT;
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 static GLOBAL_CHECKER: OnceLock<Arc<dyn ICheckerAggregate>> = OnceLock::new();
@@ -102,23 +102,39 @@ impl LintCheckingOrchestrator {
                 }
                 // Python: `from module import name` or `import module`
                 if t.starts_with("from ") && t.contains(" import ") {
-                    let module = t.strip_prefix("from ").unwrap_or("").split_whitespace().next().unwrap_or("");
+                    let module = t
+                        .strip_prefix("from ")
+                        .unwrap_or("")
+                        .split_whitespace()
+                        .next()
+                        .unwrap_or("");
                     if !module.is_empty() {
                         import_edges.push((file.to_string(), module.to_string()));
                         // Resolve relative Python imports to file paths
                         if module.starts_with('.') {
-                            let parent = std::path::Path::new(file).parent().unwrap_or(std::path::Path::new("."));
+                            let parent = std::path::Path::new(file)
+                                .parent()
+                                .unwrap_or(std::path::Path::new("."));
                             let module_file = module.trim_start_matches('.').replace('.', "/");
                             for ext in &[".py", "/__init__.py"] {
                                 let candidate = parent.join(format!("{}{}", module_file, ext));
                                 if candidate.exists() {
-                                    import_edges.push((file.to_string(), candidate.to_string_lossy().to_string()));
+                                    import_edges.push((
+                                        file.to_string(),
+                                        candidate.to_string_lossy().to_string(),
+                                    ));
                                 }
                             }
                         }
                     }
                 } else if t.starts_with("import ") && !t.contains(" from ") {
-                    let module = t.strip_prefix("import ").unwrap_or("").split_whitespace().next().unwrap_or("").trim_end_matches(';');
+                    let module = t
+                        .strip_prefix("import ")
+                        .unwrap_or("")
+                        .split_whitespace()
+                        .next()
+                        .unwrap_or("")
+                        .trim_end_matches(';');
                     if !module.is_empty() {
                         import_edges.push((file.to_string(), module.to_string()));
                     }
@@ -126,17 +142,31 @@ impl LintCheckingOrchestrator {
                 // JS/TS: `import { name } from "module"` or `import name from "module"`
                 if t.starts_with("import ") && t.contains(" from ") {
                     if let Some(from_part) = t.split(" from ").last() {
-                        let module = from_part.trim().trim_matches('"').trim_matches('\'').trim_end_matches(';');
+                        let module = from_part
+                            .trim()
+                            .trim_matches('"')
+                            .trim_matches('\'')
+                            .trim_end_matches(';');
                         if !module.is_empty() {
                             import_edges.push((file.to_string(), module.to_string()));
                             // Resolve relative JS imports to file paths
                             if module.starts_with('.') {
-                                let parent = std::path::Path::new(file).parent().unwrap_or(std::path::Path::new("."));
+                                let parent = std::path::Path::new(file)
+                                    .parent()
+                                    .unwrap_or(std::path::Path::new("."));
                                 let module_path = module.trim_start_matches('.');
-                                for ext in &[".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.js"] {
-                                    let candidate = parent.join(format!("{}{}", module_path.trim_start_matches('/'), ext));
+                                for ext in &[".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.js"]
+                                {
+                                    let candidate = parent.join(format!(
+                                        "{}{}",
+                                        module_path.trim_start_matches('/'),
+                                        ext
+                                    ));
                                     if candidate.exists() {
-                                        import_edges.push((file.to_string(), candidate.to_string_lossy().to_string()));
+                                        import_edges.push((
+                                            file.to_string(),
+                                            candidate.to_string_lossy().to_string(),
+                                        ));
                                     }
                                 }
                             }
@@ -146,11 +176,12 @@ impl LintCheckingOrchestrator {
             }
             if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
                 continue;
-            }            let layer = match self.checker.detect_layer(file, root_dir) {
-                Some(l) => {                    l
-                },
-                None => {                    continue;
-                },
+            }
+            let layer = match self.checker.detect_layer(file, root_dir) {
+                Some(l) => l,
+                None => {
+                    continue;
+                }
             };
             let def = match self.checker.get_layer_def(&layer) {
                 Some(d) => d,
@@ -166,7 +197,7 @@ impl LintCheckingOrchestrator {
             self.checker
                 .check_missing_vo(file, &c, &layer, &mut violations);
             self.checker
-                .check_mandatory_inheritance(file, &c, &layer, &mut violations);
+                .check_mandatory_inheritance(file, &c, &layer, config, &mut violations);
 
             // Layer-rule checks (delegated to layer-rules/)
             self.checker
@@ -223,7 +254,7 @@ impl LintCheckingOrchestrator {
                 0,
                 "AES012",
                 Severity::CRITICAL,
-                AES015_CIRCULAR_IMPORT,
+                AesViolation::CircularImport,
             ));
         }
         // Orphan check: delegated via IOrphanAggregate

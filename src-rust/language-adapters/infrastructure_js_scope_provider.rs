@@ -2,7 +2,7 @@
 
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
 use crate::shared_common::taxonomy_name_vo::SymbolName;
-use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;
+use crate::language_adapters::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_layer_vo::LineContentVO;
 use crate::shared_common::taxonomy_lint_vo::ScopeBounds;

@@ -1,7 +1,7 @@
 // PURPOSE: Module declarations and re-exports for layer-rules (all checkers, analyzers, protocols, orchestrators)
 pub mod capabilities_naming_checker;
 pub use capabilities_naming_checker::ArchNamingChecker;
-pub mod agent_compliance_orchestrator;
+
 pub mod capabilities_layer_detection_analyzer;
 pub use capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 pub mod capabilities_cycle_analyzer;
@@ -13,10 +13,9 @@ pub use capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 pub mod contract_import_parser_port;
 pub use contract_import_parser_port::ImportParser;
 
-pub mod contract_compliance_port;
+
 pub mod contract_compliance_protocol;
 pub use contract_compliance_protocol::IScopeBoundaryProtocol;
-pub mod contract_rules_aggregate;
 pub mod contract_cycle_protocol;
 
 pub mod contract_lint_protocol;

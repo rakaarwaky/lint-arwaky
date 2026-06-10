@@ -2,7 +2,7 @@
 use crate::code_analysis::contract_missing_vo_protocol::IMissingVoProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violation_message_rs_error::{AES0303_MISSING_VO, AES0304_MISSING_VO};
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct MissingVoChecker {}
 
@@ -42,9 +42,9 @@ impl IMissingVoProtocol for MissingVoChecker {
                     || rhs.parse::<f64>().is_ok()
                 {
                     let (code, msg) = if is_cap {
-                        ("AES0303", AES0303_MISSING_VO)
+                        ("AES0303", AesViolation::MissingVo)
                     } else {
-                        ("AES0304", AES0304_MISSING_VO)
+                        ("AES0304", AesViolation::InfrastructureMissingVo)
                     };
                     violations.push(LintResult::new_arch(file, i + 1, code, Severity::MEDIUM, msg));
                 }

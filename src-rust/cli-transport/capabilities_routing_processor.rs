@@ -26,9 +26,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::shared_common::taxonomy_violation_message_rs_error::{
-    AES0303_CAPABILITY_ROUTING, AES0303_MISSING_VO, AES0303_SINGLE_BOTTLENECK,
-};
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 
@@ -270,7 +268,7 @@ impl DispatchRoutingChecker {
                         "AES0303",
                         &format!(
                             "{} Method '{}' not found on class '{}'. Defined methods: {}.",
-                            AES0303_CAPABILITY_ROUTING,
+                            AesViolation::CapabilityRouting,
                             ref_.method_name.value,
                             ref_.class_name.value,
                             found_methods
@@ -285,7 +283,7 @@ impl DispatchRoutingChecker {
                     "AES0303",
                     &format!(
                         "{} Class '{}' not found in any scanned file.",
-                        AES0303_CAPABILITY_ROUTING, ref_.class_name.value
+                        AesViolation::CapabilityRouting, ref_.class_name.value
                     ),
                 );
             }
@@ -372,7 +370,7 @@ impl DispatchRoutingChecker {
                 "AES0303",
                 &format!(
                     "{} Action '{}' routes to '{}' but {} other capability classes exist ({}).",
-                    AES0303_SINGLE_BOTTLENECK,
+                    AesViolation::SingleBottleneck,
                     item.method.value,
                     class_name.value,
                     other_classes.len(),
@@ -433,7 +431,7 @@ impl DispatchRoutingChecker {
                         "AES0303",
                         &format!(
                             "{} Capability call 'self.some_executor.{}()' missing required VO parameter.",
-                            AES0303_MISSING_VO, method_name
+                            AesViolation::MissingVo, method_name
                         ),
                     );
                 }

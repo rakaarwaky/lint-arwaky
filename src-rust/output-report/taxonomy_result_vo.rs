@@ -28,7 +28,7 @@ pub struct LintResult {
 
 impl LintResult {
     /// Convenience constructor used by architecture checkers (make_result / mk pattern).
-    pub fn new_arch(file: &str, line: usize, code: &str, sev: Severity, msg: &str) -> Self {
+    pub fn new_arch(file: &str, line: usize, code: &str, sev: Severity, msg: impl Into<String>) -> Self {
         Self {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(line as i64),

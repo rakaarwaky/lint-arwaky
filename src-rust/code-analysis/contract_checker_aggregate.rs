@@ -120,12 +120,7 @@ pub trait ICheckerAggregate: Send + Sync {
     fn detect_cycle_edges(&self, edges: &[(String, String)]) -> bool;
 
     // Bypass check (AES022)
-    fn check_bypass_comments(
-        &self,
-        file: &str,
-        content: &str,
-        violations: &mut Vec<LintResult>,
-    );
+    fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
 
     // Missing VO check (AES0303/AES0304)
     fn check_missing_vo(
@@ -145,12 +140,7 @@ pub trait ICheckerAggregate: Send + Sync {
     );
 
     // Dead inheritance check (AES024)
-    fn check_dead_inheritance(
-        &self,
-        file: &str,
-        content: &str,
-        violations: &mut Vec<LintResult>,
-    );
+    fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
 
     // Single bottleneck check (AES0303)
     fn check_single_bottleneck(
@@ -167,6 +157,7 @@ pub trait ICheckerAggregate: Send + Sync {
         file: &str,
         content: &str,
         layer: &str,
+        config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     );
 }

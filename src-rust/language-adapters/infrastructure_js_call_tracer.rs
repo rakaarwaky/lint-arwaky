@@ -4,8 +4,8 @@ use crate::shared_common::taxonomy_naming_list_vo::CallChainList;
 use crate::shared_common::taxonomy_naming_list_vo::SymbolNameList;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 /// javascript_call_tracer — Semantic analysis adapter for JavaScript/TypeScript files.
-use crate::semantic_analysis::contract_semantic_tracer_port::ISemanticTracerPort;
-use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;
+use crate::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
+use crate::language_adapters::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;
 use crate::shared_common::taxonomy_common_vo::LineNumber;

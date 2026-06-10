@@ -8,7 +8,7 @@ fn aes0301_primitive_usage(primitive: &str) -> String {
     )
 }
 
-use crate::shared_common::taxonomy_violation_message_rs_error::AES0301_CONSTANT_PURITY;
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use std::fs;
 use std::path::Path;
 
@@ -220,7 +220,7 @@ impl TaxonomyRoleChecker {
                         i + 1,
                         "AES0301",
                         Severity::HIGH,
-                        AES0301_CONSTANT_PURITY,
+                        AesViolation::ConstantPurity,
                     ));
                 }
             }

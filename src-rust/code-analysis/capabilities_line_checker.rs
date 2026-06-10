@@ -6,9 +6,7 @@ use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_message_rs_error::{
-    AES020_FILE_TOO_LARGE_MSG, AES021_FILE_TOO_SHORT_MSG,
-};
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct ArchLineChecker {}
 
@@ -63,7 +61,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 Severity::HIGH,
                 &format!(
                     "{} (min: {}).",
-                    AES021_FILE_TOO_SHORT_MSG, def.min_lines.value
+                    AesViolation::FileTooShort, def.min_lines.value
                 ),
             ));
         }
@@ -76,7 +74,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 Severity::HIGH,
                 &format!(
                     "{} (max: {}).",
-                    AES020_FILE_TOO_LARGE_MSG, def.max_lines.value
+                    AesViolation::FileTooLarge, def.max_lines.value
                 ),
             ));
         }

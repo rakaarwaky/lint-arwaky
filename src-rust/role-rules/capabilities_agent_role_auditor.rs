@@ -27,10 +27,7 @@ pub fn aes0305_any_type(line: &str) -> String {
     )
 }
 
-use crate::shared_common::taxonomy_violation_message_rs_error::{
-    AES0305_COORDINATES_MULTIPLE, AES0305_HIGH_LEVEL_POLICY, AES0305_LAZY_EAGER_INIT,
-    AES0305_MUST_IMPLEMENT_CONTRACT, AES0305_NO_DOMAIN_LOGIC, AES0305_STATELESS_EXECUTION,
-};
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AgentRoleChecker {}
@@ -102,7 +99,7 @@ impl AgentRoleChecker {
         self._check_must_implement_contract(
             f,
             &contract_name,
-            AES0305_MUST_IMPLEMENT_CONTRACT,
+            AesViolation::MustImplementContract.to_string(),
             analyzer,
             results,
             "AES0305",
@@ -141,7 +138,7 @@ impl AgentRoleChecker {
                         line: line_vo,
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES0305"),
-                        message: LintMessage::new(AES0305_STATELESS_EXECUTION),
+                        message: LintMessage::new(AesViolation::StatelessExecution),
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
@@ -172,7 +169,7 @@ impl AgentRoleChecker {
                     line: imp.line.clone(),
                     column: ColumnNumber::new(0),
                     code: ErrorCode::raw("AES0305"),
-                    message: LintMessage::new(AES0305_HIGH_LEVEL_POLICY),
+                    message: LintMessage::new(AesViolation::HighLevelPolicy),
                     source: Some(AdapterName::raw("architecture")),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
@@ -200,7 +197,7 @@ impl AgentRoleChecker {
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES0305"),
-                        message: LintMessage::new(AES0305_COORDINATES_MULTIPLE),
+                        message: LintMessage::new(AesViolation::CoordinatesMultiple),
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::MEDIUM,
                         enclosing_scope: None,
@@ -263,7 +260,7 @@ impl AgentRoleChecker {
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
-                message: LintMessage::new(AES0305_NO_DOMAIN_LOGIC),
+                message: LintMessage::new(AesViolation::NoDomainLogic),
                 source: Some(AdapterName::raw("architecture")),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
@@ -295,7 +292,7 @@ impl AgentRoleChecker {
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES0305"),
-                        message: LintMessage::new(AES0305_LAZY_EAGER_INIT),
+                        message: LintMessage::new(AesViolation::LazyEagerInit),
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
@@ -311,7 +308,7 @@ impl AgentRoleChecker {
         &self,
         f: &FilePath,
         contract_name: &SymbolName,
-        _violation_msg: &str,
+        _violation_msg: impl Into<String>,
         analyzer: &dyn IAnalyzer,
         results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
         code: &str,

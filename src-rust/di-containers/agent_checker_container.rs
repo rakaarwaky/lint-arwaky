@@ -18,11 +18,9 @@ use crate::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInh
 use crate::code_analysis::contract_missing_vo_protocol::IMissingVoProtocol;
 use crate::code_analysis::contract_single_bottleneck_protocol::ISingleBottleneckProtocol;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
-use crate::role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
-use crate::role_rules::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
+use crate::layer_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use crate::layer_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
 use crate::orphan_detector::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
@@ -34,7 +32,9 @@ use crate::orphan_detector::capabilities_orphan_taxonomy_analyzer::TaxonomyOrpha
 use crate::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::role_rules::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
+use crate::role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
@@ -135,7 +135,8 @@ impl ICheckerAggregate for CheckerContainer {
         file: &str,
         config: &crate::config_system::taxonomy_config_vo::ArchitectureConfig,
         violations: &mut Vec<LintResult>,
-    ) {        self.import_mandatory_checker
+    ) {
+        self.import_mandatory_checker
             .check_scope_mandatory_imports(file, config, violations);
     }
 
@@ -232,12 +233,7 @@ impl ICheckerAggregate for CheckerContainer {
             .check_aggregate(file, content, def, violations);
     }
 
-    fn check_bypass_comments(
-        &self,
-        file: &str,
-        content: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         self.bypass_checker
             .check_bypass_comments(file, content, violations);
     }
@@ -263,12 +259,7 @@ impl ICheckerAggregate for CheckerContainer {
             .check_unused_imports(file, content, violations);
     }
 
-    fn check_dead_inheritance(
-        &self,
-        file: &str,
-        content: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         self.dead_inheritance_checker
             .check_dead_inheritance(file, content, violations);
     }
@@ -289,10 +280,11 @@ impl ICheckerAggregate for CheckerContainer {
         file: &str,
         content: &str,
         layer: &str,
+        config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
         self.mandatory_inheritance_checker
-            .check_mandatory_inheritance(file, content, layer, violations);
+            .check_mandatory_inheritance(file, content, layer, config, violations);
     }
 
     fn check_surface_hierarchy(

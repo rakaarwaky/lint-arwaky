@@ -2,9 +2,9 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_message_rs_error::{AES0302_CONTRACT_PRIMITIVE, AES0307_ORCHESTRATOR_CALLER};
-use crate::shared_common::taxonomy_violation_message_py_error::AES0302_CONTRACT_PRIMITIVE as PY_AES0302;
-use crate::shared_common::taxonomy_violation_message_js_error::{AES0302_CONTRACT_PRIMITIVE as JS_AES0302};
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use crate::shared_common::taxonomy_violation_message_py_error::AesViolationPy;
+use crate::shared_common::taxonomy_violation_message_js_error::AesViolationJs;
 
 fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     format!(
@@ -132,11 +132,11 @@ impl ContractRoleChecker {
         let has_primitive = primitive_keywords.iter().any(|kw| lower.contains(kw));
         if has_primitive {
             let msg = if is_rs {
-                AES0302_CONTRACT_PRIMITIVE
+                AesViolation::ContractPrimitive.to_string()
             } else if is_py {
-                PY_AES0302
+                AesViolationPy::ContractPrimitive.to_string()
             } else {
-                JS_AES0302
+                AesViolationJs::ContractPrimitive.to_string()
             };
             violations.push(LintResult::new_arch(file, 0, "AES0302", Severity::HIGH, msg));
         }
@@ -167,9 +167,9 @@ impl ContractRoleChecker {
         if !called {
             let is_py = file.ends_with(".py");
             let msg = if is_py {
-                "AES0307 ORCHESTRATOR_CALLER: Contract port/protocol not called by any orchestrator (agent_*_orchestrator)."
+                "AES0307 ORCHESTRATOR_CALLER: Contract port/protocol not called by any orchestrator (agent_*_orchestrator).".to_string()
             } else {
-                AES0307_ORCHESTRATOR_CALLER
+                AesViolation::OrchestratorCaller.to_string()
             };
             violations.push(LintResult::new_arch(file, 0, "AES0307", Severity::HIGH, msg));
         }

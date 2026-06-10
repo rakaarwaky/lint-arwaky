@@ -2,7 +2,7 @@
 use crate::code_analysis::contract_single_bottleneck_protocol::ISingleBottleneckProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violation_message_rs_error::AES0303_SINGLE_BOTTLENECK;
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct SingleBottleneckChecker {}
 
@@ -41,7 +41,7 @@ impl ISingleBottleneckProtocol for SingleBottleneckChecker {
                 0,
                 "AES0303",
                 Severity::MEDIUM,
-                &format!("{} Found {} functions.", AES0303_SINGLE_BOTTLENECK, fc),
+                &format!("{} Found {} functions.", AesViolation::SingleBottleneck, fc),
             ));
         }
         if ic > 5 {
@@ -50,7 +50,7 @@ impl ISingleBottleneckProtocol for SingleBottleneckChecker {
                 0,
                 "AES0303",
                 Severity::MEDIUM,
-                &format!("{} Found {} impl/class blocks.", AES0303_SINGLE_BOTTLENECK, ic),
+                &format!("{} Found {} impl/class blocks.", AesViolation::SingleBottleneck, ic),
             ));
         }
     }

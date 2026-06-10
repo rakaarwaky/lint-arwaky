@@ -2,9 +2,7 @@
 use crate::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violation_message_rs_error::{
-    AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
-};
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct BypassChecker {}
 
@@ -49,7 +47,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                     i + 1,
                     "AES022",
                     Severity::CRITICAL,
-                    AES022_BYPASS_COMMENT,
+                    AesViolation::BypassComment,
                 ));
                 continue;
             }
@@ -60,7 +58,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                         i + 1,
                         "AES022",
                         Severity::CRITICAL,
-                        AES022_BYPASS_COMMENT,
+                        AesViolation::BypassComment,
                     ));
                     break;
                 }
@@ -71,7 +69,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                     i + 1,
                     "AES022",
                     Severity::CRITICAL,
-                    AES022_UNWRAP_EXPECT,
+                    AesViolation::UnwrapExpect,
                 ));
                 continue;
             }
@@ -81,7 +79,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                     i + 1,
                     "AES022",
                     Severity::CRITICAL,
-                    AES022_PANIC,
+                    AesViolation::Panic,
                 ));
                 continue;
             }

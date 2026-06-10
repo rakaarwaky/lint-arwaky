@@ -42,8 +42,6 @@ pub mod plugin_system;
 pub mod project_setup;
 #[path = "role-rules/mod.rs"]
 pub mod role_rules;
-#[path = "semantic-analysis/mod.rs"]
-pub mod semantic_analysis;
 #[path = "shared-common/mod.rs"]
 pub mod shared_common;
 #[path = "source-parsing/mod.rs"]

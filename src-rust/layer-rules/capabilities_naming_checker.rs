@@ -19,9 +19,7 @@ fn aes011_naming_convention(_expected_word_count: i32) -> String {
     )
 }
 
-use crate::shared_common::taxonomy_violation_message_rs_error::{
-    AES012_SUFFIX_FORBIDDEN, AES012_SUFFIX_MISMATCH,
-};
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
 
@@ -38,7 +36,7 @@ impl ArchNamingChecker {
         Self {}
     }
 
-    fn make_result(file: &str, code: &str, msg: &str, sev: Severity) -> LintResult {
+    fn make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
         LintResult {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(1),
@@ -172,7 +170,7 @@ impl ArchNamingChecker {
                 violations.push(Self::make_result(
                     file,
                     "AES012",
-                    AES012_SUFFIX_FORBIDDEN,
+                    AesViolation::SuffixForbidden.to_string(),
                     Severity::HIGH,
                 ));
                 return;
@@ -191,7 +189,7 @@ impl ArchNamingChecker {
                     violations.push(Self::make_result(
                         file,
                         "AES012",
-                        AES012_SUFFIX_MISMATCH,
+                        AesViolation::SuffixMismatch.to_string(),
                         Severity::HIGH,
                     ));
                 } else {

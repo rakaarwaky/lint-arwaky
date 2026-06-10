@@ -1,7 +1,9 @@
 // PURPOSE: MandatoryInheritanceChecker — IMandatoryInheritanceProtocol for AES014: enforce contract implementation
 use crate::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use std::path::Path;
 
 pub struct MandatoryInheritanceChecker {}
@@ -24,17 +26,34 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
         file: &str,
         content: &str,
         layer: &str,
+        config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        let contract_suffix = if layer == "infrastructure" || layer.starts_with("infrastructure(") {
-            "_port"
-        } else if layer == "capabilities" || layer.starts_with("capabilities(") {
-            "_protocol"
-        } else if layer == "agent" || layer.starts_with("agent(") {
-            "_aggregate"
-        } else {
+        // Get contract layer's allowed suffixes from config
+        let contract_suffixes: Vec<String> = config
+            .layers
+            .get(&LayerNameVO::new("contract"))
+            .map(|d| {
+                d.allowed_suffix
+                    .values()
+                    .iter()
+                    .map(|s| format!("_{}", s))
+                    .collect()
+            })
+            .unwrap_or_default();
+        if contract_suffixes.is_empty() {
             return;
+        }
+
+        // Get current layer's allowed suffixes (implementer suffixes) from config
+        let layer_def = match config.layers.get(&LayerNameVO::new(layer)) {
+            Some(def) => def,
+            None => return,
         };
+        let implementer_suffixes = layer_def.allowed_suffix.values();
+        if implementer_suffixes.is_empty() {
+            return;
+        }
 
         let filename = Path::new(file)
             .file_name()
@@ -42,45 +61,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
             .unwrap_or("");
         let stem = filename.rsplit('.').next_back().unwrap_or(filename);
         let own_suffix = stem.rsplit('_').next().unwrap_or("");
-        let implementer_suffixes = [
-            "adapter",
-            "provider",
-            "scanner",
-            "client",
-            "gateway",
-            "repository",
-            "connector",
-            "cache",
-            "loader",
-            "writer",
-            "reader",
-            "driver",
-            "analyzer",
-            "checker",
-            "processor",
-            "evaluator",
-            "resolver",
-            "validator",
-            "formatter",
-            "executor",
-            "transformer",
-            "builder",
-            "compiler",
-            "aggregator",
-            "classifier",
-            "extractor",
-            "reporter",
-            "mapper",
-            "filter",
-            "collector",
-            "comparator",
-            "scorer",
-            "inspector",
-            "reviewer",
-            "assessor",
-            "actions",
-        ];
-        let is_implementer = implementer_suffixes.contains(&own_suffix);
+        let is_implementer = implementer_suffixes.iter().any(|s| s == own_suffix);
         if !is_implementer {
             return;
         }
@@ -90,7 +71,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
         // Rust: `use ...::ContractName;`
         for line in content.lines() {
             let t = line.trim();
-            if t.starts_with("use ") && t.contains(contract_suffix) {
+            if t.starts_with("use ") && contract_suffixes.iter().any(|s| t.contains(s.as_str())) {
                 if let Some(name) = t.split("::").last() {
                     let c = name.trim_end_matches(';').trim();
                     if c.starts_with('I') || c.ends_with("Protocol") || c.ends_with("Port") {
@@ -99,7 +80,10 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                 }
             }
             // Python: `from ...contract_suffix import ContractName` or `from ... import ContractName`
-            if t.starts_with("from ") && t.contains(contract_suffix) && t.contains("import ") {
+            if t.starts_with("from ")
+                && contract_suffixes.iter().any(|s| t.contains(s.as_str()))
+                && t.contains("import ")
+            {
                 if let Some(import_part) = t.split("import ").nth(1) {
                     for name in import_part.split(',') {
                         let c = name.trim().split(" as ").next().unwrap_or("").trim();
@@ -114,7 +98,10 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                 }
             }
             // JS/TS: `import { ContractName } from '...contract_suffix...'` or `import ContractName from '...'`
-            if t.starts_with("import ") && t.contains("from") && t.contains(contract_suffix) {
+            if t.starts_with("import ")
+                && t.contains("from")
+                && contract_suffixes.iter().any(|s| t.contains(s.as_str()))
+            {
                 // Named imports: `import { Foo, Bar } from '...'`
                 if let Some(brace_start) = t.find('{') {
                     if let Some(brace_end) = t.find('}') {
@@ -292,9 +279,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                         }
                         body_lines.push(next_line.trim());
                     }
-                    if body_lines.is_empty()
-                        || (body_lines.len() == 1 && body_lines[0] == "pass")
-                    {
+                    if body_lines.is_empty() || (body_lines.len() == 1 && body_lines[0] == "pass") {
                         violations.push(LintResult::new_arch(
                             file,
                             idx + 1,
