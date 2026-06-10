@@ -48,17 +48,17 @@ architecture:
              "calculator", "builder", "compiler", "aggregator", "classifier",
              "extractor", "reporter", "mapper", "filter", "collector",
              "comparator", "scorer", "inspector", "reviewer", "assessor", "auditor", "actions"]
-        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
+        - forbidden: ["vo", "entity", "error", "event", "constant","constants", "port", "protocol", "aggregate"]
     infrastructure:
       suffix:
         - flexible:
-            ["adapter", "provider", "scanner", "client", "constants", "schemas",
+            ["adapter", "provider", "scanner", "client", "schemas",
              "lifespan", "wrapper", "tracer", "tracker", "variants", "detector",
              "patterns", "util", "system", "repository", "cache", "loader",
              "writer", "reader", "driver", "connector", "gateway", "serializer",
              "encoder", "decoder", "fetcher", "watcher", "indexer", "dispatcher",
              "recorder", "proxy", "publisher", "subscriber", "listener", "poller", "streamer"]
-        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
+        - forbidden: ["vo", "entity", "error", "event","constant","constants", "port", "protocol", "aggregate", ]
     surfaces:
       suffix:
         - strict:
