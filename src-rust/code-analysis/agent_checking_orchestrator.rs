@@ -265,7 +265,13 @@ impl LintCheckingOrchestrator {
         let role_orch = crate::role_rules::agent_role_orchestrator::RoleOrchestrator::new(
             Box::new(crate::role_rules::agent_role_container::RoleAggregateImpl::new()),
         );
-        role_orch.run_all_role_checks(files, &mut rl.values);
+        let max_lines = config
+            .rules
+            .iter()
+            .find(|r| r.name.value == "AES0305")
+            .map(|r| r.max_lines.value() as usize)
+            .unwrap_or(1000);
+        role_orch.run_all_role_checks(files, max_lines, &mut rl.values);
 
         rl.values
     }

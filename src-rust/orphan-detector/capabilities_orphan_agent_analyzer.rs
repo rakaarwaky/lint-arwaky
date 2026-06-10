@@ -19,11 +19,7 @@ impl AgentOrphanAnalyzer {
 }
 
 impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
-    fn is_agent_orphan(
-        &self,
-        f: &FilePath,
-        root_dir: &FilePath,
-    ) -> OrphanIndicatorResult {
+    fn is_agent_orphan(&self, f: &FilePath, root_dir: &FilePath) -> OrphanIndicatorResult {
         is_agent_orphan(f, root_dir)
     }
 }

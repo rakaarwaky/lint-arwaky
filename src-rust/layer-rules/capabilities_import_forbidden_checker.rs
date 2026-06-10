@@ -4,12 +4,7 @@ use crate::layer_rules::contract_import_parser_port::ImportParser;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-fn aes001_forbidden_import(layer_name: &str, module: &str) -> String {
-    format!(
-        "AES001 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden module '{}'.",
-        layer_name, module
-    )
-}
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct ArchImportForbiddenChecker {}
 
@@ -65,12 +60,22 @@ impl ArchImportForbiddenChecker {
                         ImportParser::import_matches_scope(line, layer, &suffixes)
                     };
                     if is_forbidden {
+                        let allowed: Vec<String> = definition
+                            .allowed
+                            .values
+                            .iter()
+                            .map(|s| ImportParser::resolve_scope(s).0.to_string())
+                            .collect();
                         violations.push(LintResult::new_arch(
                             file,
                             *line_num,
                             "AES001",
                             Severity::CRITICAL,
-                            &aes001_forbidden_import(layer_name, &module),
+                            AesViolation::ForbiddenImport {
+                                source_layer: layer_name.to_string(),
+                                forbidden_layer: forbidden.clone(),
+                                allowed,
+                            },
                         ));
                     }
                 }
@@ -109,7 +114,8 @@ impl ArchImportForbiddenChecker {
                 if let Some(module) = ImportParser::extract_module_from_line(line) {
                     let segments: Vec<&str> = module.split("::").collect();
                     for forbidden in &rule.forbidden.values {
-                        let (forbidden_layer, forbidden_suffixes) = ImportParser::resolve_scope(forbidden);
+                        let (forbidden_layer, forbidden_suffixes) =
+                            ImportParser::resolve_scope(forbidden);
                         let is_forbidden = if forbidden_suffixes.is_empty() {
                             segments.iter().any(|seg| {
                                 let cleaned = seg.trim_end_matches(';').trim();
@@ -118,15 +124,29 @@ impl ArchImportForbiddenChecker {
                                     .unwrap_or(false)
                             })
                         } else {
-                            ImportParser::import_matches_scope(line, forbidden_layer, &forbidden_suffixes)
+                            ImportParser::import_matches_scope(
+                                line,
+                                forbidden_layer,
+                                &forbidden_suffixes,
+                            )
                         };
                         if is_forbidden {
+                            let allowed: Vec<String> = rule
+                                .allowed
+                                .values
+                                .iter()
+                                .map(|s| ImportParser::resolve_scope(s).0.to_string())
+                                .collect();
                             violations.push(LintResult::new_arch(
                                 file,
                                 *line_num,
                                 "AES001",
                                 Severity::CRITICAL,
-                                &aes001_forbidden_import(rule_layer, &module),
+                                AesViolation::ForbiddenImport {
+                                    source_layer: rule_layer.to_string(),
+                                    forbidden_layer: forbidden.clone(),
+                                    allowed,
+                                },
                             ));
                         }
                     }
@@ -158,21 +178,24 @@ impl ArchImportForbiddenChecker {
                         let source_matches = rule.source_layer.value == file_layer;
                         let target_matches = rule.forbidden_target.value == target;
                         if source_matches && target_matches {
-                            let desc = if !rule.description.value.is_empty() {
-                                rule.description.value.clone()
-                            } else {
-                                "Forbidden layer import detected.".to_string()
-                            };
-                            let msg = format!(
-                                "[AES Layer Violation] {}. File in '{}' imports from '{}' via '{}'.",
-                                desc, file_layer, target, module
-                            );
+                            let allowed: Vec<String> = config
+                                .rules
+                                .iter()
+                                .filter(|r| {
+                                    ImportParser::resolve_scope(&r.scope.value).0 == file_layer
+                                })
+                                .flat_map(|r| r.allowed.values.clone())
+                                .collect();
                             violations.push(LintResult::new_arch(
                                 file,
                                 *line_num,
                                 "AES001",
                                 Severity::CRITICAL,
-                                &msg,
+                                AesViolation::ForbiddenImport {
+                                    source_layer: file_layer.to_string(),
+                                    forbidden_layer: target.clone(),
+                                    allowed,
+                                },
                             ));
                             break;
                         }

@@ -28,71 +28,51 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         root_dir: &FilePath,
         file_definitions: &FileDefinitionMap,
         inheritance_map: &InheritanceMap,
+        all_files: &[String],
     ) -> OrphanIndicatorResult {
-        is_contract_orphan(f, root_dir, file_definitions, inheritance_map)
+        is_contract_orphan(f, root_dir, file_definitions, inheritance_map, all_files)
     }
 }
 
 pub fn is_contract_orphan(
-    _f: &FilePath,
+    f: &FilePath,
     _root_dir: &FilePath,
     _file_definitions: &FileDefinitionMap,
     _inheritance_map: &InheritanceMap,
+    all_files: &[String],
 ) -> OrphanIndicatorResult {
-    OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
-}
-
-pub fn check_contract_orphan(
-    fp: &str,
-    basename: &str,
-    files: &[String],
-    violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
-) {
+    let fp = f.value();
+    let basename = fp.split('/').next_back().unwrap_or("");
     let suffix = basename
         .rsplit('_')
         .next()
         .unwrap_or("")
         .replace(".rs", "")
-        .replace(".py", "");
+        .replace(".py", "")
+        .replace(".ts", "")
+        .replace(".js", "");
+
+    let content = match std::fs::read_to_string(fp) {
+        Ok(c) => c,
+        Err(_) => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
+    };
+
+    let trait_name = extract_contract_trait_name(&content);
+    let trait_name = match trait_name {
+        Some(t) => t,
+        None => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
+    };
+
+    // Check 1: contract not implemented by expected layer
     let target_prefix = match suffix.as_str() {
         "port" => "infrastructure",
         "protocol" => "capabilities",
         "aggregate" => "agent",
-        _ => return,
+        _ => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
     };
-
-    // Read contract file to extract the trait/class name
-    let trait_name = if let Ok(content) = std::fs::read_to_string(fp) {
-        let re_rust = Regex::new(r"pub\s+trait\s+([A-Za-z0-9_]+)").unwrap();
-        let re_py = Regex::new(r"class\s+([A-Za-z0-9_]+)").unwrap();
-        if let Some(caps) = re_rust.captures(&content) {
-            Some(caps[1].to_string())
-        } else {
-            re_py.captures(&content).map(|caps| caps[1].to_string())
-        }
-    } else {
-        None
-    };
-
-    let trait_name = trait_name.unwrap_or_else(|| {
-        let stem = basename
-            .strip_prefix("contract_")
-            .unwrap_or(basename)
-            .replace(".rs", "")
-            .replace(".py", "");
-        stem.split('_')
-            .filter(|s| !s.is_empty())
-            .map(|s| {
-                let mut c = s.chars();
-                c.next()
-                    .map(|f| f.to_uppercase().to_string() + c.as_str())
-                    .unwrap_or_default()
-            })
-            .collect::<String>()
-    });
 
     let mut has_impl = false;
-    for cf in files {
+    for cf in all_files {
         let cb = cf.split('/').next_back().unwrap_or("");
         if !cb.starts_with(target_prefix) {
             continue;
@@ -100,7 +80,8 @@ pub fn check_contract_orphan(
         if let Ok(c) = std::fs::read_to_string(cf) {
             if c.contains(&format!("impl {} for", trait_name))
                 || c.contains(&format!("class {}(", trait_name))
-                || c.contains(&format!("class {}", trait_name))
+                || c.contains(&format!("class {} ", trait_name))
+                || c.contains(&format!("class {}:", trait_name))
             {
                 has_impl = true;
                 break;
@@ -109,21 +90,26 @@ pub fn check_contract_orphan(
     }
 
     if !has_impl {
-        violations.push(crate::orphan_detector::mk_orphan_result(
-            fp,
-            &format!("Contract {} '{}' not implemented.", suffix, trait_name),
+        return OrphanIndicatorResult::new(
+            true,
+            format!("Contract {} '{}' not implemented.", suffix, trait_name),
             Severity::HIGH,
-        ));
+        );
     }
 
+    // Check 2: port/protocol not called by any orchestrator
     if suffix == "port" || suffix == "protocol" {
         let mut called_by_orchestrator = false;
-        for cf in files {
+        for cf in all_files {
             let cb = cf.split('/').next_back().unwrap_or("");
             if !cb.starts_with("agent_") {
                 continue;
             }
-            if !cb.ends_with("_orchestrator.rs") && !cb.ends_with("_orchestrator.py") {
+            if !cb.ends_with("_orchestrator.rs")
+                && !cb.ends_with("_orchestrator.py")
+                && !cb.ends_with("_orchestrator.ts")
+                && !cb.ends_with("_orchestrator.js")
+            {
                 continue;
             }
             if let Ok(c) = std::fs::read_to_string(cf) {
@@ -134,56 +120,34 @@ pub fn check_contract_orphan(
             }
         }
         if !called_by_orchestrator {
-            violations.push(crate::orphan_detector::mk_orphan_result(
-                fp,
-                &format!(
+            return OrphanIndicatorResult::new(
+                true,
+                format!(
                     "Contract {} '{}' not called by any orchestrator.",
                     suffix, trait_name
                 ),
                 Severity::HIGH,
-            ));
+            );
         }
     }
 
-    if suffix == "aggregate" {
-        let mut implemented_in_agent = false;
-        for cf in files {
-            let cb = cf.split('/').next_back().unwrap_or("");
-            if !cb.starts_with("agent_") {
-                continue;
-            }
-            if let Ok(c) = std::fs::read_to_string(cf) {
-                if c.contains(&trait_name) || c.contains(&basename) {
-                    implemented_in_agent = true;
-                    break;
-                }
-            }
-        }
+    OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+}
 
-        let mut called_by_surface = false;
-        for cf in files {
-            let cb = cf.split('/').next_back().unwrap_or("");
-            if !cb.starts_with("surface_") {
-                continue;
-            }
-            if let Ok(c) = std::fs::read_to_string(cf) {
-                let stem = basename.replace(".rs", "").replace(".py", "");
-                if c.contains(&trait_name) || c.contains(&stem) {
-                    called_by_surface = true;
-                    break;
-                }
-            }
-        }
+fn extract_contract_trait_name(content: &str) -> Option<String> {
+    let re_rust = Regex::new(r"pub\s+trait\s+([A-Za-z0-9_]+)").ok()?;
+    let re_py = Regex::new(r"class\s+([A-Za-z0-9_]+)").ok()?;
+    let re_ts_interface = Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok()?;
+    let re_interface = Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok()?;
 
-        if !implemented_in_agent && !called_by_surface {
-            violations.push(crate::orphan_detector::mk_orphan_result(
-                fp,
-                &format!(
-                    "Contract aggregate '{}' not implemented in agent and not called by any surface.",
-                    trait_name
-                ),
-                Severity::HIGH,
-            ));
-        }
+    if let Some(caps) = re_rust.captures(content) {
+        return Some(caps[1].to_string());
     }
+    if let Some(caps) = re_ts_interface.captures(content) {
+        return Some(caps[1].to_string());
+    }
+    if let Some(caps) = re_interface.captures(content) {
+        return Some(caps[1].to_string());
+    }
+    re_py.captures(content).map(|caps| caps[1].to_string())
 }

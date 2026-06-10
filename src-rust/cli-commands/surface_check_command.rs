@@ -93,7 +93,10 @@ impl CheckCommandsSurface {
                 all_results.extend(aes_results.values);
             }
             let filtered_results: Vec<_> = if let Some(code) = filter {
-                all_results.into_iter().filter(|r| r.code.to_string().contains(code)).collect()
+                all_results
+                    .into_iter()
+                    .filter(|r| r.code.to_string().contains(code))
+                    .collect()
             } else {
                 all_results
             };
@@ -131,7 +134,10 @@ fn run_lint_and_report(root: &str, filter: Option<&str>) -> ExitCode {
     let results = lint_path(root);
     println!("=== AES Compliance Report for {} ===", root);
     let filtered: Vec<_> = if let Some(code) = filter {
-        results.iter().filter(|r| r.code.to_string().contains(code)).collect()
+        results
+            .iter()
+            .filter(|r| r.code.to_string().contains(code))
+            .collect()
     } else {
         results.iter().collect()
     };

@@ -1,10 +1,10 @@
-// PURPOSE: ContractRoleChecker — IContractRoleChecker for AES0302/AES0307: contract port/protocol/aggregate role audits
+// PURPOSE: ContractRoleChecker — IContractRoleChecker for AES0302: contract primitive type audits
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
-use crate::shared_common::taxonomy_violation_message_py_error::AesViolationPy;
 use crate::shared_common::taxonomy_violation_message_js_error::AesViolationJs;
+use crate::shared_common::taxonomy_violation_message_py_error::AesViolationPy;
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 
 fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     format!(
@@ -26,17 +26,15 @@ impl ContractRoleChecker {
         Self {}
     }
 
-    pub fn check_port(&self, file: &str, content: &str, files: &[String]) -> Vec<LintResult> {
+    pub fn check_port(&self, file: &str, content: &str) -> Vec<LintResult> {
         let mut violations = Vec::new();
         self.check_contract_primitive(file, content, &mut violations);
-        self.check_orchestrator_caller(file, content, files, &mut violations);
         violations
     }
 
-    pub fn check_protocol(&self, file: &str, content: &str, files: &[String]) -> Vec<LintResult> {
+    pub fn check_protocol(&self, file: &str, content: &str) -> Vec<LintResult> {
         let mut violations = Vec::new();
         self.check_contract_primitive(file, content, &mut violations);
-        self.check_orchestrator_caller(file, content, files, &mut violations);
         violations
     }
 
@@ -117,7 +115,12 @@ impl ContractRoleChecker {
         }
     }
 
-    fn check_contract_primitive(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    fn check_contract_primitive(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
         let lower = content.to_lowercase();
         let is_rs = file.ends_with(".rs");
         let is_py = file.ends_with(".py");
@@ -126,8 +129,8 @@ impl ContractRoleChecker {
             return;
         }
         let primitive_keywords = [
-            "String", "i32", "i64", "u32", "u64", "f32", "f64", "bool", "char",
-            "int", "float", "str", "bool",
+            "String", "i32", "i64", "u32", "u64", "f32", "f64", "bool", "char", "int", "float",
+            "str", "bool",
         ];
         let has_primitive = primitive_keywords.iter().any(|kw| lower.contains(kw));
         if has_primitive {
@@ -138,63 +141,14 @@ impl ContractRoleChecker {
             } else {
                 AesViolationJs::ContractPrimitive.to_string()
             };
-            violations.push(LintResult::new_arch(file, 0, "AES0302", Severity::HIGH, msg));
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES0302",
+                Severity::HIGH,
+                msg,
+            ));
         }
-    }
-
-    fn check_orchestrator_caller(&self, file: &str, content: &str, all_files: &[String], violations: &mut Vec<LintResult>) {
-        let trait_name = Self::extract_trait_name(content);
-        let trait_name = match trait_name {
-            Some(t) => t,
-            None => return,
-        };
-        let mut called = false;
-        for cf in all_files {
-            let cb = cf.split('/').next_back().unwrap_or("");
-            if !cb.starts_with("agent_") {
-                continue;
-            }
-            if !cb.ends_with("_orchestrator.rs") && !cb.ends_with("_orchestrator.py") {
-                continue;
-            }
-            if let Ok(c) = std::fs::read_to_string(cf) {
-                if c.contains(&trait_name) {
-                    called = true;
-                    break;
-                }
-            }
-        }
-        if !called {
-            let is_py = file.ends_with(".py");
-            let msg = if is_py {
-                "AES0307 ORCHESTRATOR_CALLER: Contract port/protocol not called by any orchestrator (agent_*_orchestrator).".to_string()
-            } else {
-                AesViolation::OrchestratorCaller.to_string()
-            };
-            violations.push(LintResult::new_arch(file, 0, "AES0307", Severity::HIGH, msg));
-        }
-    }
-
-    fn extract_trait_name(content: &str) -> Option<String> {
-        for line in content.lines() {
-            let t = line.trim();
-            if t.starts_with("pub trait ") {
-                return t.trim_start_matches("pub trait ").split_whitespace().next().map(|s| s.trim_end_matches(':').trim_end_matches('{').to_string());
-            }
-            if t.starts_with("trait ") {
-                return t.trim_start_matches("trait ").split_whitespace().next().map(|s| s.trim_end_matches(':').trim_end_matches('{').to_string());
-            }
-            if t.starts_with("class ") {
-                return t.trim_start_matches("class ").split_whitespace().next().map(|s| s.trim_end_matches('(').trim_end_matches(':').trim_end_matches('{').to_string());
-            }
-            if t.starts_with("export interface ") {
-                return t.trim_start_matches("export interface ").split_whitespace().next().map(|s| s.trim_end_matches('{').trim_end_matches(',').trim().to_string());
-            }
-            if t.starts_with("interface ") {
-                return t.trim_start_matches("interface ").split_whitespace().next().map(|s| s.trim_end_matches('{').trim_end_matches(',').trim().to_string());
-            }
-        }
-        None
     }
 
     fn resolve_scope(scope: &str) -> (&str, Vec<&str>) {
@@ -202,9 +156,17 @@ impl ContractRoleChecker {
             let layer = scope[..paren].trim();
             let inner = scope[paren + 1..].trim_end_matches(')').trim();
             let suffixes: Vec<&str> = if inner.contains('|') {
-                inner.split('|').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+                inner
+                    .split('|')
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                    .collect()
             } else {
-                inner.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+                inner
+                    .split(',')
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                    .collect()
             };
             (layer, suffixes)
         } else {

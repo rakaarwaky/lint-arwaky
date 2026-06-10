@@ -24,6 +24,7 @@ pub trait IContractOrphanProtocol: Send + Sync {
         root_dir: &FilePath,
         file_definitions: &FileDefinitionMap,
         inheritance_map: &InheritanceMap,
+        all_files: &[String],
     ) -> OrphanIndicatorResult;
 }
 
@@ -46,11 +47,7 @@ pub trait IInfrastructureOrphanProtocol: Send + Sync {
 }
 
 pub trait IAgentOrphanProtocol: Send + Sync {
-    fn is_agent_orphan(
-        &self,
-        f: &FilePath,
-        root_dir: &FilePath,
-    ) -> OrphanIndicatorResult;
+    fn is_agent_orphan(&self, f: &FilePath, root_dir: &FilePath) -> OrphanIndicatorResult;
 }
 
 pub trait ISurfacesOrphanProtocol: Send + Sync {

@@ -61,7 +61,8 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 Severity::HIGH,
                 &format!(
                     "{} (min: {}).",
-                    AesViolation::FileTooShort, def.min_lines.value
+                    AesViolation::FileTooShort,
+                    def.min_lines.value
                 ),
             ));
         }
@@ -74,7 +75,8 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 Severity::HIGH,
                 &format!(
                     "{} (max: {}).",
-                    AesViolation::FileTooLarge, def.max_lines.value
+                    AesViolation::FileTooLarge,
+                    def.max_lines.value
                 ),
             ));
         }

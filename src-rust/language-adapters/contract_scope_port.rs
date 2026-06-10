@@ -1,11 +1,11 @@
 // PURPOSE: ILanguageScopePort — port trait for language-specific scope analysis
 
-use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::language_adapters::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::LineContentList;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_layer_vo::LineContentVO;
 use crate::shared_common::taxonomy_lint_vo::ScopeBounds;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 use async_trait::async_trait;
 
 #[async_trait]

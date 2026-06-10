@@ -65,7 +65,12 @@ impl SurfaceRoleChecker {
         vec![]
     }
 
-    pub fn check_fn_count_limit(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    pub fn check_fn_count_limit(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
         if content.matches("fn ").count() > 15 {
             violations.push(LintResult::new_arch(
                 file,

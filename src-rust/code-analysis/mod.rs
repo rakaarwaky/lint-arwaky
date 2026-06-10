@@ -66,8 +66,8 @@ pub use taxonomy_analysis_vo::{
     FileDefinitionMap, FilePathSet, GraphAnalysisContext, ImportGraph, InboundLinkMap,
     InheritanceMap, ModuleToFileMap, OrphanIndicatorResult, ReachabilityResult,
 };
-pub mod taxonomy_import_source_vo;
 pub mod capabilities_project_target_resolver;
+pub mod taxonomy_import_source_vo;
 pub use capabilities_project_target_resolver::{
     compute_score, count_loc, has_critical, lint_path, normalize_project_root, resolve_target,
     walk_rs_files, ProjectTargetResolver,

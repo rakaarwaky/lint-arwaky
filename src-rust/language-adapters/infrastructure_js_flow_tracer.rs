@@ -1,11 +1,11 @@
 // PURPOSE: JSFlowProvider — IFlowProviderPort implementation for JavaScript data flow tracing
 
 use crate::language_adapters::contract_flow_port::IJavascriptFlowPort;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::language_adapters::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
 

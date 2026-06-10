@@ -1,9 +1,9 @@
 // PURPOSE: IFlowProviderPort — port trait for data flow analysis across languages
 
-use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::language_adapters::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 

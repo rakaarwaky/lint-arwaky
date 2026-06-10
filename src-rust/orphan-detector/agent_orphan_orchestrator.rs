@@ -230,13 +230,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             }
 
             let layer_vo = LayerNameVO::new(&layer_str);
-            let res = self._evaluate_layer(
-                f,
-                &definition,
-                &context,
-                &alive_files_set,
-                &layer_vo,
-            );
+            let res =
+                self._evaluate_layer(f, &definition, &context, &alive_files_set, &layer_vo, files);
 
             if res.is_orphan {
                 results.push(self._make_result(f, &res.reason, res.severity));
@@ -299,6 +294,7 @@ impl ArchOrphanAnalyzer {
         context: &GraphAnalysisContext,
         alive_files_set: &[String],
         layer_vo: &LayerNameVO,
+        all_files: &[String],
     ) -> crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult {
         if f.ends_with("__init__.py") {
             return crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
@@ -328,6 +324,7 @@ impl ArchOrphanAnalyzer {
                 &root,
                 &context.file_definitions,
                 &context.inheritance_map,
+                all_files,
             );
         }
 
@@ -383,4 +380,3 @@ impl ArchOrphanAnalyzer {
         )
     }
 }
-

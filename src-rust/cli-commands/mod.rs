@@ -13,8 +13,6 @@ pub mod contract_maintenance_aggregate;
 pub use contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 pub mod contract_report_aggregate;
 pub use contract_report_aggregate::ReportCommandsAggregate;
-pub mod contract_routing_protocol;
-pub use contract_routing_protocol::{IDispatchRoutingParserProtocol, IDispatchRoutingProtocol};
 pub mod surface_analysis_command;
 pub use surface_analysis_command::{register_analysis_commands, AnalysisCommandsSurface};
 pub mod surface_check_command;

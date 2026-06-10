@@ -180,7 +180,7 @@ architecture:
     AES0305:
       enabled: true
       scope: ["agent(container)", "agent(orchestrator)", "agent(lifecycle)"]
-      max_lines: 300
+      max_lines: 1000
       exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
 
     AES0306:

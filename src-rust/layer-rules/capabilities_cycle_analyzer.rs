@@ -1,7 +1,6 @@
 // PURPOSE: DependencyCycleAnalyzer — ICycleAnalysisProtocol for AES015: circular dependency detection
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
@@ -12,6 +11,7 @@ use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 fn aes012_circular_import(source: &str, target: &str) -> String {
     format!(
         "AES015 CIRCULAR_IMPORT: Circular dependency detected: '{}' -> '{}'.",

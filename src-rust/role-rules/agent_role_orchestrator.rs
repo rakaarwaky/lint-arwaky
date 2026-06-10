@@ -13,7 +13,12 @@ impl RoleOrchestrator {
         Self { aggregate }
     }
 
-    pub fn run_all_role_checks(&self, files: &[String], violations: &mut Vec<LintResult>) {
+    pub fn run_all_role_checks(
+        &self,
+        files: &[String],
+        max_lines: usize,
+        violations: &mut Vec<LintResult>,
+    ) {
         for file in files {
             let content = std::fs::read_to_string(file).unwrap_or_default();
             let filename = Path::new(file)
@@ -27,7 +32,7 @@ impl RoleOrchestrator {
                 "agent" => {
                     let checker = self.aggregate.agent();
                     // All agent files get these checks
-                    checker.check_file_size_limit(file, &content, violations);
+                    checker.check_file_size_limit(file, &content, max_lines, violations);
                     checker.check_any_type_annotation(file, &content, violations);
                     // Suffix-specific checks
                     if filename.contains("_container") {
@@ -64,11 +69,16 @@ impl RoleOrchestrator {
                     let checker = self.aggregate.contract();
                     let mut contract_violations = Vec::new();
                     if filename.contains("_port") {
-                        contract_violations.extend(checker.check_port(file, &content, files));
+                        contract_violations.extend(checker.check_port(file, &content));
                     } else if filename.contains("_protocol") {
-                        contract_violations.extend(checker.check_protocol(file, &content, files));
+                        contract_violations.extend(checker.check_protocol(file, &content));
                     }
-                    checker.check_aggregate(file, &content, &Default::default(), &mut contract_violations);
+                    checker.check_aggregate(
+                        file,
+                        &content,
+                        &Default::default(),
+                        &mut contract_violations,
+                    );
                     violations.extend(contract_violations);
                 }
                 "taxonomy" => {

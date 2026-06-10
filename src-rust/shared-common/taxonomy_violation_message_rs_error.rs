@@ -2,12 +2,51 @@
 use std::fmt;
 
 pub enum AesViolation {
-    ForbiddenImport,
-    MissingImport(String),
+    // AES001 — Import rules
+    ForbiddenImport {
+        source_layer: String,
+        forbidden_layer: String,
+        allowed: Vec<String>,
+    },
+    // AES002 — Mandatory import
+    MissingImport {
+        source_layer: String,
+        required: String,
+    },
+    // AES012 — Suffix rules
+    SuffixForbidden,
+    SuffixMismatch,
+    // AES013 — Forbidden inheritance
+    ForbiddenInheritance,
+    // AES014 — Mandatory inheritance
+    MandatoryInheritance,
+    // AES015 — Circular import
+    CircularImport,
+    // AES020 — File size
     FileTooLarge,
     FileTooShort,
+    // AES022 — Bypass comments
+    BypassComment,
+    UnwrapExpect,
+    Panic,
+    // AES023 — Unused imports
+    FixUnusedImport,
+    // AES024 — Class/struct definition & dead inheritance
     MandatoryClassDefinition,
-    SuffixForbidden,
+    DeadInheritance,
+    // AES030 — Orphan code
+    OrphanCode,
+    // AES0301 — Taxonomy role
+    ConstantPurity,
+    // AES0302 — Contract primitive
+    ContractPrimitive,
+    // AES0303 — Capability role
+    CapabilityRouting,
+    SingleBottleneck,
+    MissingVo,
+    // AES0304 — Infrastructure role
+    InfrastructureMissingVo,
+    // AES0305 — Agent role
     StatelessExecution,
     HighLevelPolicy,
     CoordinatesMultiple,
@@ -15,36 +54,46 @@ pub enum AesViolation {
     LazyEagerInit,
     MustImplementContract,
     AnyType,
-    ForbiddenInheritance,
-    ConstantPurity,
-    SuffixMismatch,
-    BypassComment,
-    UnwrapExpect,
-    Panic,
-    FixUnusedImport,
-    DeadInheritance,
-    OrphanCode,
+    // AES0306 — Surface role
     HierarchyViolation,
     PassiveViolation,
-    CircularImport,
     SurfaceRoleViolation,
-    SurfaceDependency,
-    MandatoryInheritance,
-    CapabilityRouting,
-    SingleBottleneck,
-    MissingVo,
-    InfrastructureMissingVo,
-    ContractPrimitive,
-    OrchestratorCaller,
 }
 
 impl fmt::Display for AesViolation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::ForbiddenImport =>
-                write!(f, "AES001 FORBIDDEN_IMPORT: Layer is importing from a forbidden module."),
-            Self::MissingImport(required) =>
-                write!(f, "AES002 MANDATORY_IMPORT: Missing required import: '{}'.", required),
+            // AES001
+            Self::ForbiddenImport { source_layer, forbidden_layer, allowed } => {
+                let allowed_str = if allowed.is_empty() { "none".to_string() } else { allowed.join(", ") };
+                write!(f, "AES001 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
+                    WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
+                    FIX: Remove the import or refactor to use one of the allowed layers: [{}].",
+                    source_layer, forbidden_layer, source_layer, forbidden_layer, allowed_str)
+            }
+            // AES002
+            Self::MissingImport { source_layer, required } =>
+                write!(f, "AES002 MANDATORY_IMPORT: Layer '{}' is missing required import '{}'.\n\
+                    WHY? Layer '{}' must import '{}' to satisfy architectural contract requirements.\n\
+                    FIX: Add the required import statement for '{}' in this file.",
+                    source_layer, required, source_layer, required, required),
+            // AES012
+            Self::SuffixForbidden =>
+                write!(f, "AES012 SUFFIX_FORBIDDEN: File uses a forbidden suffix for this layer.\n\
+                    WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
+                    FIX: Rename the file to use an allowed suffix or move it to the correct layer."),
+            Self::SuffixMismatch =>
+                write!(f, "AES012 SUFFIX_MISMATCH: Contract file missing _port, _protocol, or _aggregate suffix."),
+            // AES013
+            Self::ForbiddenInheritance =>
+                write!(f, "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source."),
+            // AES014
+            Self::MandatoryInheritance =>
+                write!(f, "AES014 MANDATORY_INHERITANCE: File imports contracts but no class implements them."),
+            // AES015
+            Self::CircularImport =>
+                write!(f, "AES015 CIRCULAR_IMPORT: Circular dependencies detected."),
+            // AES020
             Self::FileTooLarge =>
                 write!(f, "AES020 FILE_TOO_LARGE: File exceeds the maximum allowed line count.\n\
                     WHY? Large files violate the Single Responsibility Principle.\n\
@@ -53,14 +102,43 @@ impl fmt::Display for AesViolation {
                 write!(f, "AES021 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\n\
                     WHY? Excessively small files clutter the project structure.\n\
                     FIX: Expand the component or merge this logic into a related module"),
+            // AES022
+            Self::BypassComment =>
+                write!(f, "AES022 BYPASS_COMMENT: Bypass comment detected."),
+            Self::UnwrapExpect =>
+                write!(f, "AES022 BYPASS_COMMENT: unwrap/expect call detected."),
+            Self::Panic =>
+                write!(f, "AES022 BYPASS_COMMENT: panic call detected."),
+            // AES023
+            Self::FixUnusedImport =>
+                write!(f, "AES023 UNUSED_IMPORT: Fixing unused import."),
+            // AES024
             Self::MandatoryClassDefinition =>
                 write!(f, "AES024 MANDATORY_DEFINITION: File is missing a struct, enum, or trait definition.\n\
                     WHY? Encapsulation in structs/traits is required for proper modularization and contract adherence.\n\
                     FIX: Group functions into a struct or implement a Trait that defines the module interface."),
-            Self::SuffixForbidden =>
-                write!(f, "AES012 SUFFIX_FORBIDDEN: File uses a forbidden suffix for this layer.\n\
-                    WHY? Forbidden suffixes prevent technical concepts from leaking into domain layers.\n\
-                    FIX: Rename the file to use an allowed suffix or move it to the correct layer."),
+            Self::DeadInheritance =>
+                write!(f, "AES024 DEAD_INHERITANCE: Empty struct or trait detected."),
+            // AES030
+            Self::OrphanCode =>
+                write!(f, "AES030 ORPHAN_CODE: File has no imports, not an entry point."),
+            // AES0301
+            Self::ConstantPurity =>
+                write!(f, "AES0301 TAXONOMY_ROLE: _constant file contains non-constant declaration."),
+            // AES0302
+            Self::ContractPrimitive =>
+                write!(f, "AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer."),
+            // AES0303
+            Self::CapabilityRouting =>
+                write!(f, "AES0303 CAPABILITY_ROLE: Capability method not found in dispatch."),
+            Self::SingleBottleneck =>
+                write!(f, "AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability."),
+            Self::MissingVo =>
+                write!(f, "AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter."),
+            // AES0304
+            Self::InfrastructureMissingVo =>
+                write!(f, "AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter."),
+            // AES0305
             Self::StatelessExecution =>
                 write!(f, "Non-stateless behavior detected: state assignment found outside __init__."),
             Self::HighLevelPolicy =>
@@ -75,48 +153,13 @@ impl fmt::Display for AesViolation {
                 write!(f, "Class must implement ServiceContainerAggregate."),
             Self::AnyType =>
                 write!(f, "Any type annotation found in agent orchestrator layer."),
-            Self::ForbiddenInheritance =>
-                write!(f, "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source."),
-            Self::ConstantPurity =>
-                write!(f, "AES0301 TAXONOMY_ROLE: _constant file contains non-constant declaration."),
-            Self::SuffixMismatch =>
-                write!(f, "AES012 SUFFIX_MISMATCH: Contract file missing _port, _protocol, or _aggregate suffix."),
-            Self::BypassComment =>
-                write!(f, "AES022 BYPASS_COMMENT: Bypass comment detected."),
-            Self::UnwrapExpect =>
-                write!(f, "AES022 BYPASS_COMMENT: unwrap/expect call detected."),
-            Self::Panic =>
-                write!(f, "AES022 BYPASS_COMMENT: panic call detected."),
-            Self::FixUnusedImport =>
-                write!(f, "AES023 UNUSED_IMPORT: Fixing unused import."),
-            Self::DeadInheritance =>
-                write!(f, "AES024 DEAD_INHERITANCE: Empty struct or trait detected."),
-            Self::OrphanCode =>
-                write!(f, "AES030 ORPHAN_CODE: File has no imports, not an entry point."),
+            // AES0306
             Self::HierarchyViolation =>
                 write!(f, "AES0306 SURFACE_ROLE: Surface file is not imported from the layer barrel."),
             Self::PassiveViolation =>
                 write!(f, "AES0306 SURFACE_ROLE: Surface file contains active domain logic."),
-            Self::CircularImport =>
-                write!(f, "AES015 CIRCULAR_IMPORT: Circular dependencies detected."),
             Self::SurfaceRoleViolation =>
                 write!(f, "AES0306 SURFACE_ROLE: Surface file exceeds role mandate."),
-            Self::SurfaceDependency =>
-                write!(f, "AES001 SURFACE_DEPENDENCY: Surface imports from forbidden layer."),
-            Self::MandatoryInheritance =>
-                write!(f, "AES014 MANDATORY_INHERITANCE: File imports contracts but no class implements them."),
-            Self::CapabilityRouting =>
-                write!(f, "AES0303 CAPABILITY_ROLE: Capability method not found in dispatch."),
-            Self::SingleBottleneck =>
-                write!(f, "AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability."),
-            Self::MissingVo =>
-                write!(f, "AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter."),
-            Self::InfrastructureMissingVo =>
-                write!(f, "AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter."),
-            Self::ContractPrimitive =>
-                write!(f, "AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer."),
-            Self::OrchestratorCaller =>
-                write!(f, "AES0307 ORCHESTRATOR_CALLER: Contract port/protocol not called by any orchestrator (agent_*_orchestrator). WHY? Orchestrator is the primary caller of contracts. FIX: Wire the contract into an orchestrator file."),
         }
     }
 }

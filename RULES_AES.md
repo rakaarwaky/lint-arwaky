@@ -1,14 +1,40 @@
-# AES (Agentic Engineering System) Rules — v2.0
+# AES (Agentic Engineering System) Rules — v3.0
 
 ---
 
-## Group 1: Layer & Import Boundary (AES001–AES002)
+## Summary
 
-Enforces strict import direction between architectural layers. Layer is identified by **filename prefix** (`taxonomy_`, `contract_`, etc.), not directory path.
+| Code    | Name                   | Severity | Group              | Description                                                                                   |
+| ------- | ---------------------- | -------- | ------------------ | --------------------------------------------------------------------------------------------- |
+| AES001  | Import Layer Violation | CRITICAL | Layer & Import     | Cross-layer imports must comply with allowed/mandatory/forbidden rules.                       |
+| AES002  | Mandatory Import       | HIGH     | Layer & Import     | File is missing required imports defined by config.                                           |
+| AES011  | Naming Convention      | HIGH     | Naming & Structure | Filename must follow `prefix_concept_suffix` pattern — lowercase, underscore, min 2 words. |
+| AES012  | Suffix/Prefix Rules    | HIGH     | Naming & Structure | Suffix must match layer definition — allowed, forbidden, mandatory strict.                   |
+| AES013  | Forbidden Inheritance  | CRITICAL | Naming & Structure | Contract Aggregate must not inherit/implement from Port/Protocol.                             |
+| AES014  | Mandatory Inheritance  | HIGH     | Naming & Structure | File that imports a contract must implement it.                                               |
+| AES015  | Circular Import        | CRITICAL | Naming & Structure | Circular dependency detected between layers.                                                  |
+| AES020  | File Maximum Limit     | LOW      | File & Content     | File exceeds maximum allowed line count.                                                      |
+| AES021  | File Minimum Limit     | LOW      | File & Content     | File is below minimum required line count.                                                    |
+| AES022  | Bypass Comment         | CRITICAL | File & Content     | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`).         |
+| AES023  | Unused Import          | MEDIUM   | File & Content     | Symbol is imported but never used.                                                            |
+| AES024  | Mandatory Definition   | HIGH     | File & Content     | File must have at least one struct/enum/trait, and definitions must not be empty.             |
+| AES030  | Orphan Code            | MEDIUM   | Role Violations    | File is not imported by anyone and is not an entry point.                                     |
+| AES0301 | Taxonomy Role          | HIGH     | Role Violations    | Constant purity violation or primitive usage in domain models.                                |
+| AES0302 | Contract Role          | HIGH     | Role Violations    | Contract trait/method must use taxonomy VO/constant types, not primitives.                    |
+| AES0303 | Capability Role        | MEDIUM   | Role Violations    | Capability method must have single responsibility; checks missing VO parameters.              |
+| AES0304 | Infrastructure Role    | MEDIUM   | Role Violations    | Infrastructure method must use required request VO parameter.                                 |
+| AES0305 | Agent Role             | HIGH     | Role Violations    | Agent file >300 lines, non-stateless, low-level imports, or `any` type.                     |
+| AES0306 | Surface Role           | HIGH     | Role Violations    | Surface file >15 functions, contains domain logic, or violates hierarchy.                     |
 
-### AES001 — Import Layer Violation (CRITICAL)
+---
 
-Satu rule dengan **13 sub-conditions** — masing-masing punya `allowed`, `mandatory`, `forbidden`.
+## Group 1: Layer & Import Boundary
+
+### AES001 — Import Layer Violation
+
+**Severity:** CRITICAL
+
+A single rule with **13 sub-conditions** — each has `allowed`, `mandatory`, and `forbidden` fields. Layers are identified by **filename prefix** (`taxonomy_`, `contract_`, etc.), not directory path.
 
 | #  | Scope                                         | Allowed Imports                                  | Mandatory Imports                             | Forbidden Imports                                                                                 |
 | -- | --------------------------------------------- | ------------------------------------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -26,43 +52,67 @@ Satu rule dengan **13 sub-conditions** — masing-masing punya `allowed`, `manda
 | 12 | `surfaces(hook\|store\|action\|screen\|router)` | taxonomy                                         | None                                          | agent_, infrastructure_, capabilities_, contract(port), contract(protocol), smart surfaces_, root |
 | 13 | `surfaces(component\|view\|layout)`           | taxonomy                                         | taxonomy                                      | agent_, contract_, infrastructure_, capabilities_, all surface_, root                             |
 
-### AES002 — Mandatory Import Missing (HIGH)
+## Group 2: Naming & Structure
 
-File does not import required layers. Message: *"Layer '{layer}' must import from {layers}. WHY? Mandatory dependencies ensure contract enforcement. FIX: Import required taxonomy or contract modules."*
+### AES011 — Naming Convention
+
+**Severity:** HIGH
+
+Filename must follow pattern:`prefix_concept_suffix` or  `prefix_concept1_concept2_suffix `
+
+- All **lowercase**
+- Separator: **underscore** (`_`)
+- Minimum **2 words** (prefix + suffix)
+- Maximum : Unlimited
+- Examples: `capabilities_user_checker.rs`, `infrastructure_db_adapter.py`
+
+**Exceptions:** `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`, barrel/entry files.
 
 ---
 
-## Group 2: Naming & Structure (AES010–AES014)
+### AES012 — Suffix/Prefix Rules
 
-Enforces file naming conventions, structural definitions, and type safety across layers.
+**Severity:** HIGH
 
-| Code   | Name                  | Severity | Message                                                                                                                                                                                                                                                                     |
-| ------ | --------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AES010 | Naming Convention     | MEDIUM   | Filename does not follow [layer]_[concept(s)]_[suffix] pattern. WHY? Layer prefix identifies the architectural layer, suffix defines role. FIX: Must start with layer prefix (taxonomy_/contract_/etc.) and end with allowed suffix. Exceptions: main.rs, lib.rs, mod.rs. |
-| AES011 | Mandatory Definition  | HIGH     | File is missing a struct, enum, or trait definition. WHY? Encapsulation in structs/traits is required. FIX: Group functions into a struct.                                                                                                                                  |
-| AES012 | Circular Dependency   | CRITICAL | Circular dependency detected between layers ({source} -> {target}). WHY? Circular deps break the bottom-up layering. FIX: Extract shared logic into a lower layer.                                                                                                          |
-| AES013 | Forbidden Inheritance | CRITICAL | Contract Aggregate inherits from Port or Protocol. WHY? Aggregate is a composition contract, not an implementation. FIX: Use composition (fields) instead of inheritance.                                                                                                   |
-| AES014 | Mandatory Inheritance | HIGH     | File imports contracts but no struct/class implements them. WHY? Contracts imported must be fulfilled. FIX: Add impl TraitName for YourStruct.                                                                                                                              |
+Suffix must match the layer definition. Three sub-checks:
 
-### Suffix Policy AES010
+1. **Forbidden suffix** — suffix must not be in the `forbidden_suffix` list
+2. **Strict suffix policy** — suffix must be in the `allowed_suffix` list
+3. **Flexible suffix policy** — suffix can be anything except `forbidden` ones
 
-| Layer                    | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Forbidden Suffixes                                                                     |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `root`                 | `_entry`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | N/A                                                                                    |
-| `taxonomy (VO)`        | `_vo`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | N/A                                                                                    |
-| `taxonomy (Entity)`    | `_entity`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | N/A                                                                                    |
-| `taxonomy (Error)`     | `_error`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | N/A                                                                                    |
-| `taxonomy (Event)`     | `_event`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | N/A                                                                                    |
-| `taxonomy (Constant)`  | `_constant`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | N/A                                                                                    |
-| `contract (Port)`      | `_port`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | N/A                                                                                    |
-| `contract (Protocol)`  | `_protocol`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | N/A                                                                                    |
-| `contract (Aggregate)` | `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | N/A                                                                                    |
-| `capabilities`         | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions`                                                                                                                                                  | `_vo`, `_entity`, `_error`, `_event`, `_port`, `_protocol`, `_aggregate` |
-| `infrastructure`       | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `_vo`, `_entity`, `_error`, `_event`, `_port`, `_protocol`, `_aggregate` |
-| `surfaces`             | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                                                                      | N/A                                                                                    |
-| `agent`                | `_container`, `_orchestrator`, `_lifecycle`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | N/A                                                                                    |
+| Checker               | Method                      | Path                                           |
+| --------------------- | --------------------------- | ---------------------------------------------- |
+| `ArchNamingChecker` | `check_domain_suffixes()` | `layer-rules/capabilities_naming_checker.rs` |
 
-### Mandatory Inheritance (AES014)
+#### Suffix Policy per Layer
+
+| Layer              | Policy   | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Forbidden Suffixes                                                                     |
+| ------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `root`           | strict   | `_entry`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | N/A                                                                                    |
+| `taxonomy`       | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | N/A                                                                                    |
+| `contract`       | strict   | `_port`, `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | N/A                                                                                    |
+| `capabilities`   | flexible | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions`                                                                                                                                                  | `_vo`, `_entity`, `_error`, `_event`, `_port`, `_protocol`, `_aggregate` |
+| `infrastructure` | flexible | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `_vo`, `_entity`, `_error`, `_event`, `_port`, `_protocol`, `_aggregate` |
+| `surfaces`       | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                                                                      | N/A                                                                                    |
+| `agent`          | strict   | `_container`, `_orchestrator`, `_lifecycle`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | N/A                                                                                    |
+
+---
+
+### AES013 — Forbidden Inheritance
+
+**Severity:** CRITICAL
+
+Contract Aggregate must not inherit from Port or Protocol. Aggregate is a composition contract, not an implementation.
+
+**FIX:** Use composition (fields) instead of inheritance.
+
+---
+
+### AES014 — Mandatory Inheritance
+
+**Severity:** HIGH
+
+File that imports a contract **must implement** it as an implementor.
 
 | Prefix              | Must Implement           |
 | ------------------- | ------------------------ |
@@ -70,59 +120,161 @@ Enforces file naming conventions, structural definitions, and type safety across
 | `capabilities_`   | `_protocol` contracts  |
 | `agent_`          | `_aggregate` contracts |
 
----
+Caller patterns (`Box<dyn ITrait>`, `Arc<dyn ITrait>`, parameter type injection) are considered **OK** — not a violation.
 
-## Group 3: File & Content Quality (AES020–AES024)
-
-Enforces file-level quality standards and prohibits bypass mechanisms.
-
-| Code   | Name                | Severity | Message                                                                                                                                                                               |
-| ------ | ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AES020 | File Maximum Limit | LOW      | File exceeds maximum allowed line count. WHY? Large files violate SRP. FIX: Split into smaller focused files.                                                                         |
-| AES021 | File Minimum Limit | LOW      | File contains fewer than minimum required lines. WHY? Tiny files clutter structure. FIX: Merge into related module.                                                                   |
-| AES022 | Bypass Comment      | CRITICAL | Forbidden bypass detected (#[allow], unwrap(), panic!, noqa, type: ignore). WHY? Suppressions bypass type safety. FIX: Use proper error handling.                                     |
-| AES023 | Unused Import       | MEDIUM   | Symbol imported but never used in scope. WHY? Unused imports indicate architectural bypass attempt. FIX: Remove unused import or use the symbol.                                      |
-| AES024 | Dead Inheritance    | MEDIUM   | Empty class, struct, or trait detected. WHY? Empty classes/traits/structs bypass architectural enforcement. FIX: Implement trait methods, class methods, or define struct attributes. |
+| Checker                         | Method                            | Path                                                            |
+| ------------------------------- | --------------------------------- | --------------------------------------------------------------- |
+| `MandatoryInheritanceChecker` | `check_mandatory_inheritance()` | `code-analysis/capabilities_mandatory_inheritance_checker.rs` |
 
 ---
 
-## Group 4: Role Violations (AES030–AES0306)
+### AES015 — Circular Import
 
-Suffix-specific behavioral mandates. A single code covers multiple roles with **conditional messages** depending on which suffix is violated.
+**Severity:** CRITICAL
 
-| Code    | Name                | Severity | Role(s)                                                     | Condition / Message                                                                                                                                                                       |
-| ------- | ------------------- | -------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AES030  | Orphan Code         | MEDIUM   | All prefixes                                                | File is unreachable/unused — not imported by any consumer and not an entry point.                                                                                                        |
-| AES0301 | Taxonomy Role       | HIGH     | `_constant` / `_vo` / `_entity`                       | Constant purity violations or primitive usage in domain models.                                                                                                                           |
-| AES0302 | Contract Role       | HIGH     | `_port` / `_protocol` / `_aggregate`                  | Contract trait/method use taxonomy vo or constant types. WHY? Contracts enforce VO usage. FIX: Replace primitives with VO/constant types.                                                 |
-| AES0303 | Capability Role     | MEDIUM   | `capabilities_` suffix                                    | Capability method single capability, or missing VO parameter.                                                                                                                             |
-| AES0304 | Infrastructure Role | MEDIUM   | `infrastructure_` suffix                                  | Infrastructure method called without required request VO parameter.                                                                                                                       |
-| AES0305 | Agent Role          | HIGH     | `_container` / `_orchestrator` / `_lifecycle`         | Agent file too large (>300 lines), non-stateless execution, low-level policy imports, or `any` type annotations.                                                                        |
-| AES0306 | Surface Role        | HIGH     | `_command` / `_controller` / `_view` / `_component` | Surface file exceeds 15 functions, contains active domain logic, or violates surface hierarchy ,imports forbidden layers).                                                                |
-| AES0307 | Orchestrator Caller | HIGH     | `_port` / `_protocol`                                   | Contract port/protocol not called by any orchestrator (`agent_*_orchestrator`). WHY? Orchestrator is the primary caller of contracts. FIX: Wire the contract into an orchestrator file. |
+Circular dependency detected between layers. Layer dependencies must be unidirectional (bottom-up).
 
-### Role Mandates Detail
+**FIX:** Extract shared logic into a lower layer.
 
-| Role            | Suffix                                                   | Layer          | Mandate                                                                                                                                                                                                                   |
-| --------------- | -------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Container       | `_container`                                           | agent          | Structural DI wiring + registry + mixin. Implement ServiceContainerAggregate or compose traits. No domain logic.                                                                                                          |
-| Orchestrator    | `_orchestrator`                                        | agent          | Stateless conductor. Imports taxonomy+contract only. Coordinates capabilities/infra via contracts.                                                                                                                        |
-| Lifecycle       | `_lifecycle`                                           | agent          | Lifecycle tracking + state container. May be stateful. No domain logic. No direct infra/cap imports.                                                                                                                      |
-| Smart surface   | `_command`/`_controller`/`_page`/`_entry`        | surface        | <15 fn. No domain logic. Delegates via ServiceContainerAggregate.                                                                                                                                                         |
-| Utility surface | `_hook`/`_store`/`_action`/`_screen`/`_router` | surface        | Stateless. No domain logic. No Smart surface imports.                                                                                                                                                                     |
-| Passive surface | `_component`/`_view`/`_layout`                     | surface        | Taxonomy imports only. No logic or orchestration.                                                                                                                                                                         |
-| Capability      | All `capabilities_` suffixes                           | capabilities   | Single execution goal. One file, one responsibility.                                                                                                                                                                      |
-| Adapter         | `_adapter`                                             | infrastructure | Concrete implementation of a contract port. Interacts with external tools/libraries.                                                                                                                                      |
-| Scanner         | `_scanner`                                             | infrastructure | Interfaces with raw system APIs, file system, or AST structure parsers.                                                                                                                                                   |
-| Provider        | `_provider`                                            | infrastructure | Delivers configurations, constants, or technical resources.                                                                                                                                                               |
-| Client          | `_client`                                              | infrastructure | Manages external integrations, protocols, or network/standard I/O.                                                                                                                                                        |
-| Port            | `_port`                                                | contract       | Interface for infrastructure adapters. Defines technical boundaries. No inheritance across subtypes. Must use taxonomy VO/constant types in signatures. Must be called by orchestrator. Must be implemented by consumers. |
-| Protocol        | `_protocol`                                            | contract       | Interface for capability use-cases. Defines logical boundaries. No inheritance across subtypes. Must use taxonomy VO/constant types in signatures. Must be called by orchestrator. Must be implemented by consumers.      |
-| Aggregate       | `_aggregate`                                           | contract       | Facade contract for service containers, aggregates, or orchestrators. No inheritance across subtypes. Must be implemented in agent_* AND called by surface_* files.                                                       |
-| Value Object    | `_vo`                                                  | taxonomy       | Primitive attributes allowed, no business logic except formatting or self-contained validation. Used as type wrappers.                                                                                                    |
-| Entity          | `_entity`                                              | taxonomy       | Strict Value Object usage (no primitives). Represents unique domain elements with identity.                                                                                                                               |
-| Error           | `_error`                                               | taxonomy       | Strict Value Object usage (no primitives). Represents domain exceptions.                                                                                                                                                  |
-| Event           | `_event`                                               | taxonomy       | Strict Value Object usage (no primitives). Represents domain state changes.                                                                                                                                               |
-| Constant        | `_constant`                                            | taxonomy       | Constant purity. Contains only Constant                                                                                                                                                                                   |
+| Checker                     | Method                   | Path                                           |
+| --------------------------- | ------------------------ | ---------------------------------------------- |
+| `DependencyCycleAnalyzer` | `detect_cycle_edges()` | `layer-rules/capabilities_cycle_analyzer.rs` |
 
 ---
+
+## Group 3: File & Content Quality
+
+### AES020 — File Maximum Limit
+
+**Severity:** LOW
+
+File exceeds maximum allowed line count (default: 1000).
+
+**FIX:** Split into smaller files.
+
+---
+
+### AES021 — File Minimum Limit
+
+**Severity:** LOW
+
+File is below minimum required line count (default: 5).
+
+**FIX:** Merge into a related module.
+
+---
+
+### AES022 — Bypass Comment
+
+**Severity:** CRITICAL
+
+Forbidden bypass patterns detected:
+
+- `#[allow(...)]`
+- `unwrap()` / `expect()`
+- `panic!`
+- `noqa`
+- `type: ignore`
+- `eslint-disable`
+
+**FIX:** Use proper error handling.
+
+---
+
+### AES023 — Unused Import
+
+**Severity:** MEDIUM
+
+Symbol is imported but never used in scope.
+
+**FIX:** Remove the unused import or use the symbol.
+
+---
+
+### AES024 — Mandatory Definition
+
+**Severity:** HIGH
+
+File must have at least one struct/enum/trait/class definition, and definitions must not be empty.
+
+Two sub-checks:
+
+1. **Missing definition** — file has no struct/enum/trait at all
+2. **Empty definition** — `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}`
+
+| Checker                    | Method                                 | Path                                                       |
+| -------------------------- | -------------------------------------- | ---------------------------------------------------------- |
+| `ArchClassChecker`       | `check_mandatory_class_definition()` | `code-analysis/capabilities_class_checker.rs`            |
+| `DeadInheritanceChecker` | `check_dead_inheritance()`           | `code-analysis/capabilities_dead_inheritance_checker.rs` |
+
+**Exceptions:** `__init__.py`, `mod.rs`, `lib.rs`, `*_constant.rs`, `*_constant.py`.
+
+---
+
+## Group 4: Role Violations
+
+### AES030 — Orphan Code
+
+**Severity:** MEDIUM
+
+File is not imported by anyone and is not an entry point.
+
+---
+
+### AES0301 — Taxonomy Role
+
+**Severity:** HIGH
+
+Constant purity violation or primitive usage in domain models (`_constant`, `_vo`, `_entity`).
+
+---
+
+### AES0302 — Contract Role
+
+**Severity:** HIGH
+
+Contract trait/method must use taxonomy VO/constant types, not primitive types.
+
+**FIX:** Replace primitives with VO/constant from the taxonomy layer.
+
+---
+
+### AES0303 — Capability Role
+
+**Severity:** MEDIUM
+
+Capability method must have single responsibility. Also checks for missing VO parameters.
+
+---
+
+### AES0304 — Infrastructure Role
+
+**Severity:** MEDIUM
+
+Infrastructure method must use the required request VO parameter.
+
+---
+
+### AES0305 — Agent Role
+
+**Severity:** HIGH
+
+Checks:
+
+- File > 300 lines
+- Non-stateless execution (state assignment outside `__init__`)
+- Low-level infrastructure imports
+- `any` type annotations
+- Single execution goal
+
+---
+
+### AES0306 — Surface Role
+
+**Severity:** HIGH
+
+Checks:
+
+- File > 15 functions
+- Active domain logic in passive surface
+- Surface hierarchy violation

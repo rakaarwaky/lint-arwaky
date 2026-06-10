@@ -15,8 +15,6 @@ pub mod file_system;
 pub mod file_watch;
 #[path = "git-hooks/mod.rs"]
 pub mod git_hooks;
-#[path = "http-client/mod.rs"]
-pub mod http_client;
 #[path = "language-adapters/mod.rs"]
 pub mod language_adapters;
 #[path = "layer-rules/mod.rs"]

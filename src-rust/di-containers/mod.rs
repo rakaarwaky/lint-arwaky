@@ -17,8 +17,3 @@ pub mod contract_registry_aggregate;
 pub use contract_registry_aggregate::ContainerRegistryAggregate;
 pub mod contract_service_aggregate;
 pub use contract_service_aggregate::{DefaultServiceContainer, ServiceContainerAggregate};
-pub mod taxonomy_routing_vo;
-pub use taxonomy_routing_vo::{
-    CapabilityReference, CapabilityReferenceList, CapabilityRoutingContext, ClassDefinitionMap,
-    ClassFileMap, ClassMethodsVO, ClassNameVO, ClassUsageItem, ClassUsageItemList, ClassUsageMap,
-};

@@ -4,13 +4,7 @@ use crate::layer_rules::contract_import_parser_port::ImportParser;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-
-fn aes002_mandatory_import(required: &str) -> String {
-    format!(
-        "AES002 MANDATORY_IMPORT: Missing required import: '{}'.",
-        required
-    )
-}
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct ArchImportMandatoryChecker {}
 
@@ -49,6 +43,9 @@ impl ArchImportMandatoryChecker {
         };
         let import_lines = ImportParser::parse_import_lines(&content);
 
+        let stem = basename.rsplit('.').next_back().unwrap_or(&basename);
+        let source_layer = stem.split('_').next().unwrap_or("unknown");
+
         for required in &definition.mandatory.values {
             let (layer, suffixes) = ImportParser::resolve_scope(required);
             let is_present = if suffixes.is_empty() {
@@ -65,7 +62,10 @@ impl ArchImportMandatoryChecker {
                     0,
                     "AES002",
                     Severity::HIGH,
-                    &aes002_mandatory_import(required),
+                    AesViolation::MissingImport {
+                        source_layer: source_layer.to_string(),
+                        required: required.clone(),
+                    },
                 ));
             }
         }
@@ -111,9 +111,9 @@ impl ArchImportMandatoryChecker {
                         import_lines.iter().any(|(_, l)| l.contains(req_layer))
                     }
                 } else {
-                    import_lines
-                        .iter()
-                        .any(|(_, l)| ImportParser::import_matches_scope(l, req_layer, &req_suffixes))
+                    import_lines.iter().any(|(_, l)| {
+                        ImportParser::import_matches_scope(l, req_layer, &req_suffixes)
+                    })
                 };
 
                 if !is_present {
@@ -122,7 +122,10 @@ impl ArchImportMandatoryChecker {
                         0,
                         "AES002",
                         Severity::HIGH,
-                        &aes002_mandatory_import(required),
+                        AesViolation::MissingImport {
+                            source_layer: rule_layer.to_string(),
+                            required: required.clone(),
+                        },
                     ));
                 }
             }

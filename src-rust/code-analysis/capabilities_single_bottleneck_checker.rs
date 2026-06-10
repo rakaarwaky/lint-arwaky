@@ -50,7 +50,11 @@ impl ISingleBottleneckProtocol for SingleBottleneckChecker {
                 0,
                 "AES0303",
                 Severity::MEDIUM,
-                &format!("{} Found {} impl/class blocks.", AesViolation::SingleBottleneck, ic),
+                &format!(
+                    "{} Found {} impl/class blocks.",
+                    AesViolation::SingleBottleneck,
+                    ic
+                ),
             ));
         }
     }

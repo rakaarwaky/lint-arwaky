@@ -19,7 +19,13 @@ impl MissingVoChecker {
 }
 
 impl IMissingVoProtocol for MissingVoChecker {
-    fn check_missing_vo(&self, file: &str, content: &str, layer: &str, violations: &mut Vec<LintResult>) {
+    fn check_missing_vo(
+        &self,
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
         let is_cap = layer == "capabilities" || layer.starts_with("capabilities(");
         let is_infra = layer == "infrastructure" || layer.starts_with("infrastructure(");
         if !is_cap && !is_infra {
@@ -33,9 +39,26 @@ impl IMissingVoProtocol for MissingVoChecker {
             let is_assignment = t.starts_with("let ")
                 || t.starts_with("const ")
                 || t.starts_with("var ")
-                || (t.contains(" = ") && !t.starts_with("//") && !t.starts_with("#") && !t.starts_with("if") && !t.starts_with("else") && !t.starts_with("return") && !t.starts_with("import") && !t.starts_with("from") && !t.starts_with("def ") && !t.starts_with("class ") && !t.starts_with("fn ") && !t.starts_with("pub ") && !t.starts_with("self."));
+                || (t.contains(" = ")
+                    && !t.starts_with("//")
+                    && !t.starts_with("#")
+                    && !t.starts_with("if")
+                    && !t.starts_with("else")
+                    && !t.starts_with("return")
+                    && !t.starts_with("import")
+                    && !t.starts_with("from")
+                    && !t.starts_with("def ")
+                    && !t.starts_with("class ")
+                    && !t.starts_with("fn ")
+                    && !t.starts_with("pub ")
+                    && !t.starts_with("self."));
             if is_assignment && t.contains(" = ") {
-                let rhs = t.split(" = ").nth(1).unwrap_or("").trim_end_matches(';').trim_end_matches(',');
+                let rhs = t
+                    .split(" = ")
+                    .nth(1)
+                    .unwrap_or("")
+                    .trim_end_matches(';')
+                    .trim_end_matches(',');
                 if (rhs.starts_with('"') && rhs.ends_with('"') && !rhs.contains("::"))
                     || (rhs.starts_with('\'') && rhs.ends_with('\'') && rhs.len() <= 3)
                     || rhs.parse::<i64>().is_ok()
@@ -46,7 +69,13 @@ impl IMissingVoProtocol for MissingVoChecker {
                     } else {
                         ("AES0304", AesViolation::InfrastructureMissingVo)
                     };
-                    violations.push(LintResult::new_arch(file, i + 1, code, Severity::MEDIUM, msg));
+                    violations.push(LintResult::new_arch(
+                        file,
+                        i + 1,
+                        code,
+                        Severity::MEDIUM,
+                        msg,
+                    ));
                 }
             }
         }

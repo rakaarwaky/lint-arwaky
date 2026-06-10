@@ -3,7 +3,6 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
@@ -13,6 +12,7 @@ use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 pub fn aes0305_must_implement_contract(contract_name: &str) -> String {
     format!(
         "AES0305 AGENT_ROLE: Class must implement '{}'.",
@@ -52,19 +52,33 @@ impl AgentRoleChecker {
         vec![]
     }
 
-    pub fn check_file_size_limit(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        if content.lines().count() > 300 {
+    pub fn check_file_size_limit(
+        &self,
+        file: &str,
+        content: &str,
+        max_lines: usize,
+        violations: &mut Vec<LintResult>,
+    ) {
+        if content.lines().count() > max_lines {
             violations.push(LintResult::new_arch(
                 file,
                 0,
                 "AES0305",
                 Severity::HIGH,
-                "AES0305 AGENT_ROLE: Agent file exceeds 300 lines.",
+                &format!(
+                    "AES0305 AGENT_ROLE: Agent file exceeds {} lines.",
+                    max_lines
+                ),
             ));
         }
     }
 
-    pub fn check_any_type_annotation(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    pub fn check_any_type_annotation(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
             if t.contains(": any")
