@@ -1,7 +1,7 @@
-pub mod agent_job_registry;
-pub use agent_job_registry::PipelineJobRegistry;
-pub mod agent_pipeline_manager;
-pub use agent_pipeline_manager::PipelineActionOrchestrator;
+pub mod agent_job_container;
+pub use agent_job_container::PipelineJobRegistry;
+pub mod agent_pipeline_orchestrator;
+pub use agent_pipeline_orchestrator::PipelineActionOrchestrator;
 pub mod agent_pipeline_execution_orchestrator;
 pub use agent_pipeline_execution_orchestrator::PipelineExecutionOrchestrator;
 pub mod agent_pipeline_extended_orchestrator;

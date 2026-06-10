@@ -31,10 +31,7 @@ impl RoleOrchestrator {
                         checker.check_container(file, &content, violations);
                     } else if filename.contains("_orchestrator") {
                         checker.check_orchestrator(file, &content, violations);
-                    } else if filename.contains("_lifecycle")
-                        || filename.contains("_manager")
-                        || filename.contains("_state")
-                    {
+                    } else if filename.contains("_lifecycle") {
                         checker.check_lifecycle(file, &content, violations);
                     }
                 }

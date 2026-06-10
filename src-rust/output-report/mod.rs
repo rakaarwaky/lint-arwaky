@@ -1,5 +1,5 @@
-pub mod agent_output_manager;
-pub use agent_output_manager::OutputClientOrchestrator;
+pub mod agent_output_orchestrator;
+pub use agent_output_orchestrator::OutputClientOrchestrator;
 pub mod agent_commands_orchestrator;
 pub use agent_commands_orchestrator::ReportCommandsOrchestrator;
 pub mod capabilities_reporting_formatter;

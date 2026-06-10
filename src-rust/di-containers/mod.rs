@@ -1,7 +1,7 @@
 pub mod agent_checker_container;
 pub use agent_checker_container::CheckerContainer;
-pub mod agent_container_registry;
-pub use agent_container_registry::ProjectContainerRegistry;
+pub mod agent_registry_container;
+pub use agent_registry_container::ProjectContainerRegistry;
 pub mod agent_injection_container;
 pub use agent_injection_container::{Container, DependencyInjectionContainer};
 pub mod contract_adapter_aggregate;

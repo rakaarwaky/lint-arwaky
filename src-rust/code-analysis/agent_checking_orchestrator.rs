@@ -287,7 +287,7 @@ impl LintCheckingOrchestrator {
         }
         // Wire role orchestrator for agent and surface role checks
         let role_orch = crate::role_rules::agent_role_orchestrator::RoleOrchestrator::new(
-            Box::new(crate::role_rules::agent_role_mixin::RoleAggregateImpl::new()),
+            Box::new(crate::role_rules::agent_role_container::RoleAggregateImpl::new()),
         );
         role_orch.run_all_role_checks(files, &mut rl.values);
 
