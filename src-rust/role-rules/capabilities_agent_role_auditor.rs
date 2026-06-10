@@ -13,7 +13,7 @@ use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_names_vo::layer_infrastructure;
+use crate::shared_common::taxonomy_layer_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_violationrs_constant::{
     aes0305_any_type, aes0305_must_implement_contract, AES0305_COORDINATES_MULTIPLE,
     AES0305_HIGH_LEVEL_POLICY, AES0305_LAZY_EAGER_INIT, AES0305_MUST_IMPLEMENT_CONTRACT,
