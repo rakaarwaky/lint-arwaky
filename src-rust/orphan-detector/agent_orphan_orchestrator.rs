@@ -44,21 +44,126 @@ impl OrphanGraphResolver {
         Self {}
     }
 
-    pub fn build_graph_context(&self, files: &[String], _root_dir: &str) -> GraphAnalysisContext {
+    pub fn build_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         use std::collections::HashMap;
         let mut import_graph: HashMap<String, Vec<String>> = HashMap::new();
         let mut inbound_links: HashMap<String, Vec<String>> = HashMap::new();
         let mut inheritance_map: HashMap<String, Vec<String>> = HashMap::new();
         let file_definitions: HashMap<String, Vec<String>> = HashMap::new();
 
-        let import_re = regex::Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.]*)");
+        // Build a lookup: module_name -> file_path for crate:: resolution
+        let mut module_to_file: HashMap<String, String> = HashMap::new();
+        for f in files {
+            let basename = f.split('/').next_back().unwrap_or("");
+            let stem = basename
+                .replace(".rs", "")
+                .replace(".py", "")
+                .replace(".ts", "")
+                .replace(".js", "");
+            // Map module stem to file path
+            module_to_file.insert(stem.clone(), f.clone());
+            // Also map with underscores replaced (for mod.rs references)
+            if let Some(parent) = f.rsplit('/').nth(1) {
+                let module_path = format!("{}/{}", parent, stem);
+                module_to_file.insert(module_path, f.clone());
+            }
+        }
+
+        // Also handle pub mod declarations with #[path] attributes (lib.rs pattern)
+        let pub_mod_re = regex::Regex::new(r#"#\[path\s*=\s*"([^"]+)"\]\s*(?:pub\s+)?mod\s+([a-zA-Z_]+)"#).ok();
+        for f in files {
+            if let Ok(content) = std::fs::read_to_string(f) {
+                if let Some(ref re) = pub_mod_re {
+                    for cap in re.captures_iter(&content) {
+                        let mod_path = cap[1].to_string();
+                        let mod_name = cap[2].to_string();
+                        // Resolve: lib.rs has #[path = "layer-rules/mod.rs"] pub mod layer_rules
+                        // → find files in layer-rules/ directory
+                        let base_dir = if f.ends_with("lib.rs") || f.ends_with("main.rs") {
+                            std::path::Path::new(f).parent().unwrap_or(std::path::Path::new(".")).to_string_lossy().to_string()
+                        } else {
+                            std::path::Path::new(f).parent().unwrap_or(std::path::Path::new(".")).to_string_lossy().to_string()
+                        };
+                        let resolved_dir = format!("{}/{}", base_dir, mod_path.replace("/mod.rs", "").replace("mod.rs", "."));
+                        // Find all .rs files in that directory
+                        if let Ok(entries) = std::fs::read_dir(&resolved_dir) {
+                            for entry in entries.flatten() {
+                                let path = entry.path();
+                                if path.is_file() {
+                                    if let Some(ext) = path.extension() {
+                                        if ext == "rs" || ext == "py" {
+                                            if let Some(path_str) = path.to_str() {
+                                                let resolved = path_str.to_string();
+                                                if resolved != *f {
+                                                    import_graph.entry(f.clone()).or_default().push(resolved.clone());
+                                                    inbound_links.entry(resolved).or_default().push(f.clone());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        let import_re = regex::Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*)");
         let inh_re = regex::Regex::new(r"class\s+\w+\(([^)]+)\)");
         for f in files {
             import_graph.entry(f.clone()).or_default();
             if let Ok(content) = std::fs::read_to_string(f) {
                 if let Ok(ref import_re) = import_re {
                     for cap in import_re.captures_iter(&content) {
-                        let mut dep = cap[1].to_string();
+                        let full_import = cap[1].to_string();
+
+                        // Handle crate:: and lint_arwaky:: imports (lint_arwaky = crate in main.rs)
+                        let normalized = if full_import.starts_with("lint_arwaky::") {
+                            format!("crate::{}", &full_import["lint_arwaky::".len()..])
+                        } else {
+                            full_import.clone()
+                        };
+                        let full_import = &normalized;
+                        if full_import.starts_with("crate::") {
+                            let path_part = &full_import["crate::".len()..];
+                            // Extract module segments: layer_rules::capabilities_naming_checker::ArchNamingChecker
+                            // → try to find file matching layer_rules/capabilities_naming_checker
+                            let segments: Vec<&str> = path_part.split("::").collect();
+                            if segments.len() >= 2 {
+                                // crate::layer_rules::capabilities_naming_checker::ArchNamingChecker
+                                // → segments[1] = "capabilities_naming_checker" → lookup
+                                let module_name = segments[1];
+                                if let Some(resolved) = module_to_file.get(module_name) {
+                                    if resolved != f {
+                                        import_graph.entry(f.clone()).or_default().push(resolved.clone());
+                                        inbound_links.entry(resolved.clone()).or_default().push(f.clone());
+                                        continue;
+                                    }
+                                }
+                            }
+                            continue;
+                        }
+
+                        // Handle super:: imports
+                        if full_import.starts_with("super::") {
+                            // Resolve relative to parent module
+                            let path_part = &full_import["super::".len()..];
+                            let segments: Vec<&str> = path_part.split("::").collect();
+                            if !segments.is_empty() {
+                                let module_name = segments[0];
+                                if let Some(resolved) = module_to_file.get(module_name) {
+                                    if resolved != f {
+                                        import_graph.entry(f.clone()).or_default().push(resolved.clone());
+                                        inbound_links.entry(resolved.clone()).or_default().push(f.clone());
+                                    }
+                                }
+                            }
+                            continue;
+                        }
+
+                        // Skip external crates
+                        let mut dep = full_import.clone();
                         if let Some(dot) = dep.find('.') {
                             dep = dep[..dot].to_string();
                         }
@@ -109,6 +214,8 @@ impl OrphanGraphResolver {
                         ) {
                             continue;
                         }
+
+                        // Python/JS relative imports
                         import_graph.entry(f.clone()).or_default().push(dep.clone());
                         inbound_links.entry(dep).or_default().push(f.clone());
                     }
@@ -345,7 +452,7 @@ impl ArchOrphanAnalyzer {
         }
 
         if layer_str.contains(LAYER_AGENT) {
-            return self.agent_analyzer.is_agent_orphan(&fp, &root);
+            return self.agent_analyzer.is_agent_orphan(&fp, &root, all_files);
         }
 
         if layer_str.contains(LAYER_SURFACES) {

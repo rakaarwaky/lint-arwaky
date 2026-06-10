@@ -226,7 +226,7 @@ File is not imported by anyone and is not an entry point. Detection is **per-lay
 | `capabilities_` | `CapabilitiesOrphanAnalyzer` | Not wired in any `_container` AND unreachable in import graph. | HIGH |
 | `infrastructure_` | `InfrastructureOrphanAnalyzer` | Not wired in any `_container` AND unreachable in import graph. | HIGH |
 | `agent_` | `AgentOrphanAnalyzer` | Agent implements a contract `_aggregate`, but that aggregate is not called by any `surface_*` file. All agent suffixes (`_container`, `_orchestrator`, `_lifecycle`) use the same check. | HIGH |
-| `surfaces_`       | `SurfacesOrphanAnalyzer`       | Surface file is unreachable (no inbound imports in import graph).                                                                                                                                               | MEDIUM   |
+| `surfaces_` | `SurfacesOrphanAnalyzer` | Orphan detection per category: **Smart** (`_command`/`_controller`/`_page`/`_entry`) must be imported by entry or router. **Utility** (`_hook`/`_store`/`_action`/`_screen`/`_router`) must be imported by smart surface. **Passive** (`_component`/`_view`/`_layout`) must be imported by smart or utility surface. | MEDIUM |
 
 | Checker                          | Path                                                               |
 | -------------------------------- | ------------------------------------------------------------------ |

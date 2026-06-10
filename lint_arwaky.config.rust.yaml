@@ -31,12 +31,15 @@ architecture:
       suffix:
         - strict: ["hook", "store", "action", "screen"]
     taxonomy:
+      check_orphan: true
       suffix:
         - strict: ["vo", "entity", "error", "event", "constant"]
     contract:
+      check_orphan: true
       suffix:
         - strict: ["port", "protocol", "aggregate"]
     capabilities:
+      check_orphan: true
       suffix:
         - flexible:
             ["analyzer", "checker", "processor", "evaluator", "resolver",
@@ -46,6 +49,7 @@ architecture:
              "comparator", "scorer", "inspector", "reviewer", "assessor", "auditor", "actions"]
         - forbidden: ["vo", "entity", "error", "event","constant","constants", "port", "protocol", "aggregate"]
     infrastructure:
+      check_orphan: true
       suffix:
         - flexible:
             ["adapter", "provider", "scanner", "client", "schemas",
@@ -56,11 +60,13 @@ architecture:
              "recorder", "proxy", "publisher", "subscriber", "listener", "poller", "streamer"]
         - forbidden: ["vo", "entity", "error", "event","constant","constants", "port", "protocol", "aggregate",]
     surfaces:
+      check_orphan: true
       suffix:
         - strict:
             ["command", "controller", "page", "view", "component",
              "router", "layout", "hook", "store", "action", "screen"]
     agent:
+      check_orphan: true
       suffix:
         - strict:
             ["container", "orchestrator", "lifecycle"]
