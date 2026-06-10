@@ -66,11 +66,11 @@ impl ArchImportForbiddenChecker {
                         self.parser.import_matches_scope(line, &layer, &suffixes)
                     };
                     if is_forbidden {
-                        let allowed: Vec<String> = definition
+                        let allowed: Vec<LayerNameVO> = definition
                             .allowed
                             .values
                             .iter()
-                            .map(|s| self.parser.resolve_scope(&Identity::new(s)).0.value().to_string())
+                            .map(|s| LayerNameVO::new(self.parser.resolve_scope(&Identity::new(s)).0.value().to_string()))
                             .collect();
                         violations.push(LintResult::new_arch(
                             file,
@@ -78,8 +78,8 @@ impl ArchImportForbiddenChecker {
                             "AES001",
                             Severity::CRITICAL,
                             AesViolation::ForbiddenImport {
-                                source_layer: layer_name_vo.value().to_string(),
-                                forbidden_layer: forbidden.clone(),
+                                source_layer: layer_name_vo.clone(),
+                                forbidden_layer: LayerNameVO::new(forbidden.clone()),
                                 allowed,
                             },
                         ));
@@ -146,11 +146,11 @@ impl ArchImportForbiddenChecker {
                             )
                         };
                         if is_forbidden {
-                            let allowed: Vec<String> = rule
+                            let allowed: Vec<LayerNameVO> = rule
                                 .allowed
                                 .values
                                 .iter()
-                                .map(|s| self.parser.resolve_scope(&Identity::new(s)).0.value().to_string())
+                                .map(|s| LayerNameVO::new(self.parser.resolve_scope(&Identity::new(s)).0.value().to_string()))
                                 .collect();
                             violations.push(LintResult::new_arch(
                                 file,
@@ -158,8 +158,8 @@ impl ArchImportForbiddenChecker {
                                 "AES001",
                                 Severity::CRITICAL,
                                 AesViolation::ForbiddenImport {
-                                    source_layer: rule_layer_str.to_string(),
-                                    forbidden_layer: forbidden.clone(),
+                                    source_layer: rule_layer.clone(),
+                                    forbidden_layer: LayerNameVO::new(forbidden.clone()),
                                     allowed,
                                 },
                             ));
@@ -194,14 +194,16 @@ impl ArchImportForbiddenChecker {
                         let source_matches = rule.source_layer.value == file_layer;
                         let target_matches = rule.forbidden_target.value == target;
                         if source_matches && target_matches {
-                            let allowed: Vec<String> = config
+                            let allowed: Vec<LayerNameVO> = config
                                 .rules
                                 .iter()
                                 .filter(|r| {
                                     let scope_identity = Identity::new(&r.scope.value);
                                     self.parser.resolve_scope(&scope_identity).0.value() == file_layer
                                 })
-                                .flat_map(|r| r.allowed.values.clone())
+                                .flat_map(|r| {
+                                    r.allowed.values.iter().map(|s| LayerNameVO::new(s.clone()))
+                                })
                                 .collect();
                             violations.push(LintResult::new_arch(
                                 file,
@@ -209,8 +211,8 @@ impl ArchImportForbiddenChecker {
                                 "AES001",
                                 Severity::CRITICAL,
                                 AesViolation::ForbiddenImport {
-                                    source_layer: file_layer.to_string(),
-                                    forbidden_layer: target.clone(),
+                                    source_layer: LayerNameVO::new(file_layer.to_string()),
+                                    forbidden_layer: LayerNameVO::new(target.clone()),
                                     allowed,
                                 },
                             ));

@@ -1,13 +1,13 @@
-// PURPOSE: Aggregate: Command catalog registry — maps ActionName to CommandMetadataVO for all CLI commands
+// PURPOSE: CommandCatalogVO — maps ActionName to CommandMetadataVO for all CLI commands
 use crate::cli_commands::taxonomy_metadata_vo::CommandMetadataVO;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::shared_common::taxonomy_suggestion_vo::Suggestion;
 use std::collections::HashMap;
 
-pub struct DispatchCommandsAggregate {}
+pub struct CommandCatalogVO {}
 
-impl DispatchCommandsAggregate {
+impl CommandCatalogVO {
     pub fn command_catalog() -> HashMap<ActionName, CommandMetadataVO> {
         let mut catalog = HashMap::new();
         catalog.insert(
@@ -219,5 +219,5 @@ impl DispatchCommandsAggregate {
 
 // Forward-compat free function wrapper for backward compatibility
 pub fn command_catalog() -> HashMap<ActionName, CommandMetadataVO> {
-    DispatchCommandsAggregate::command_catalog()
+    CommandCatalogVO::command_catalog()
 }

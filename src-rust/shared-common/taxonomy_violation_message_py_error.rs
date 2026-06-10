@@ -1,13 +1,15 @@
 // PURPOSE: AesViolationPy — AES violation messages for Python analysis (enum with Display)
 use std::fmt;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 
 pub enum AesViolationPy {
     // AES001 — Import rules
     ForbiddenImport,
     // AES002 — Mandatory import
     MissingImport {
-        source_layer: String,
-        required: String,
+        source_layer: LayerNameVO,
+        required: SymbolName,
     },
     // AES012 — Suffix rules
     SuffixForbidden,
@@ -24,7 +26,7 @@ pub enum AesViolationPy {
     ContractPrimitive,
     // AES0303 — Capability role
     CapabilityRouting {
-        struct_name: String,
+        struct_name: SymbolName,
     },
     // AES0305 — Agent role
     StatelessExecution,

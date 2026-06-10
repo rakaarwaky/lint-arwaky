@@ -1,7 +1,7 @@
 // PURPOSE: CommandsOrchestrator — orchestrates git hook operations (install, uninstall, run, update)
 
 use crate::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
-use crate::git_hooks::contract_result_aggregate::GitDiffResultAggregate;
+use crate::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
@@ -21,11 +21,11 @@ impl GitCommandsAggregate for GitCommandsOrchestrator {
         LintResultList::new(Vec::new())
     }
 
-    async fn get_diff(&self, path: &FilePath) -> GitDiffResultAggregate {
+    async fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
         let default_branch = self.get_default_branch(path);
         let changed_files = self.collect_changed_files(path, &default_branch);
         let filtered = changed_files.clone();
-        GitDiffResultAggregate {
+        GitDiffResultVO {
             added: FilePathList::new(Vec::new()),
             modified: filtered.clone(),
             deleted: FilePathList::new(Vec::new()),

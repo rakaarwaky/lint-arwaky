@@ -1,6 +1,6 @@
 // PURPOSE: ExtendedPipelineAggregate — aggregate trait for extended pipeline initialization
-use crate::file_watch::contract_watch_aggregate::DirectoryWatchAggregate;
-use crate::multi_project::contract_project_aggregate::MultiProjectAggregate;
+use crate::file_watch::taxonomy_watch_vo::DirectoryWatchVO;
+use crate::multi_project::taxonomy_multi_project_vo::MultiProjectVO;
 use crate::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
@@ -11,12 +11,12 @@ pub trait PipelineExtendedOrchestratorAggregate: Send + Sync {
     fn root_path(&self) -> Option<&FilePath>;
     async fn execute_multi_project(
         &self,
-        request: MultiProjectAggregate,
+        request: MultiProjectVO,
         use_retry: Option<BooleanVO>,
         config_path: Option<&FilePath>,
     ) -> Box<dyn PipelineOutputAggregate>;
     async fn execute_watch(
         &self,
-        request: DirectoryWatchAggregate,
+        request: DirectoryWatchVO,
     ) -> Box<dyn PipelineOutputAggregate>;
 }

@@ -1,7 +1,7 @@
 // PURPOSE: PipelineExtendedOrchestrator — initializes extended pipeline with all sub-orchestrators
 
-use crate::file_watch::contract_watch_aggregate::DirectoryWatchAggregate;
-use crate::multi_project::contract_project_aggregate::MultiProjectAggregate;
+use crate::file_watch::taxonomy_watch_vo::DirectoryWatchVO;
+use crate::multi_project::taxonomy_multi_project_vo::MultiProjectVO;
 use crate::pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
 use crate::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;
@@ -24,7 +24,7 @@ impl PipelineExtendedOrchestratorAggregate for PipelineExtendedOrchestrator {
 
     async fn execute_multi_project(
         &self,
-        _request: MultiProjectAggregate,
+        _request: MultiProjectVO,
         _use_retry: Option<BooleanVO>,
         _config_path: Option<&FilePath>,
     ) -> Box<dyn PipelineOutputAggregate> {
@@ -47,7 +47,7 @@ impl PipelineExtendedOrchestratorAggregate for PipelineExtendedOrchestrator {
 
     async fn execute_watch(
         &self,
-        _request: DirectoryWatchAggregate,
+        _request: DirectoryWatchVO,
     ) -> Box<dyn PipelineOutputAggregate> {
         let job_id = JobId::new("watch-job");
         Box::new(ExtendedPipelineOutput {

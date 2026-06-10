@@ -3,6 +3,7 @@ use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 
 pub struct CapabilitiesRoleChecker {}
 
@@ -60,7 +61,7 @@ impl CapabilitiesRoleChecker {
                     "AES0303",
                     Severity::MEDIUM,
                     AesViolation::CapabilityRouting {
-                        struct_name: s.to_string(),
+                        struct_name: SymbolName::new(*s),
                     },
                 ));
             }

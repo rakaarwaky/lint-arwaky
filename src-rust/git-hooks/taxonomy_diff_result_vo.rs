@@ -1,4 +1,4 @@
-// PURPOSE: DiffVO — value object for git diff representation
+// PURPOSE: GitDiffResultVO — value object representing git diff results
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::Count;

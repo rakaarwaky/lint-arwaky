@@ -5,7 +5,7 @@ use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
-use crate::shared_common::{Identity, FileContentVO};
+use crate::shared_common::{Identity, FileContentVO, LayerNameVO, SymbolName};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol, IArchRuleProtocol};
@@ -70,8 +70,8 @@ impl ArchImportMandatoryChecker {
                     "AES002",
                     Severity::HIGH,
                     AesViolation::MissingImport {
-                        source_layer: source_layer.to_string(),
-                        required: required.clone(),
+                        source_layer: LayerNameVO::new(source_layer.to_string()),
+                        required: SymbolName::new(required.clone()),
                     },
                 ));
             }
@@ -139,8 +139,8 @@ impl ArchImportMandatoryChecker {
                         "AES002",
                         Severity::HIGH,
                         AesViolation::MissingImport {
-                            source_layer: rule_layer_str.to_string(),
-                            required: required.clone(),
+                            source_layer: rule_layer.clone(),
+                            required: SymbolName::new(required.clone()),
                         },
                     ));
                 }
