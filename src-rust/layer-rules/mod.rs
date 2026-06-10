@@ -13,9 +13,6 @@ pub use capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 pub mod contract_import_parser_port;
 pub use contract_import_parser_port::ImportParser;
 
-
-pub mod contract_compliance_protocol;
-pub use contract_compliance_protocol::IScopeBoundaryProtocol;
 pub mod contract_cycle_protocol;
 
 pub mod contract_lint_protocol;
