@@ -10,7 +10,6 @@ pub const AES021_FILE_TOO_SHORT_MSG: &str =
     "AES021 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\n\
     WHY? Excessively small files clutter the project structure.\n\
     FIX: Expand the component or merge this logic into a related module";
-pub const AES0301_PRIMITIVE_USAGE: &str = "AES0301 PRIMITIVE_USAGE: Direct primitive in taxonomy.";
 pub const AES024_MANDATORY_CLASS_DEFINITION: &str =
     "AES024 MANDATORY_DEFINITION: File is missing a class, dataclass, or Protocol definition.\n\
     WHY? Encapsulation in classes/Protocols is required for proper modularization and contract adherence.\n\

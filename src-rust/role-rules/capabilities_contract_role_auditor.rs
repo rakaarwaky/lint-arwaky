@@ -2,9 +2,9 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_rs_constant::{AES0302_CONTRACT_PRIMITIVE, AES0307_ORCHESTRATOR_CALLER};
-use crate::shared_common::taxonomy_violation_py_constant::AES0302_CONTRACT_PRIMITIVE as PY_AES0302;
-use crate::shared_common::taxonomy_violation_js_constant::{AES0302_CONTRACT_PRIMITIVE as JS_AES0302};
+use crate::shared_common::taxonomy_violation_message_rs_error::{AES0302_CONTRACT_PRIMITIVE, AES0307_ORCHESTRATOR_CALLER};
+use crate::shared_common::taxonomy_violation_message_py_error::AES0302_CONTRACT_PRIMITIVE as PY_AES0302;
+use crate::shared_common::taxonomy_violation_message_js_error::{AES0302_CONTRACT_PRIMITIVE as JS_AES0302};
 
 fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     format!(

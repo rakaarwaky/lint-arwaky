@@ -9,7 +9,7 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violation_rs_constant::AES012_CIRCULAR_IMPORT;
+use crate::shared_common::taxonomy_violation_message_rs_error::AES015_CIRCULAR_IMPORT;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 static GLOBAL_CHECKER: OnceLock<Arc<dyn ICheckerAggregate>> = OnceLock::new();
@@ -146,16 +146,10 @@ impl LintCheckingOrchestrator {
             }
             if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
                 continue;
-            }
-            eprintln!("[DEBUG ORCH] Processing file: {} filename: {}", file, filename);
-            let layer = match self.checker.detect_layer(file, root_dir) {
-                Some(l) => {
-                    eprintln!("[DEBUG ORCH] Detected layer: {} for file: {}", l, file);
-                    l
+            }            let layer = match self.checker.detect_layer(file, root_dir) {
+                Some(l) => {                    l
                 },
-                None => {
-                    eprintln!("[DEBUG ORCH] No layer detected for file: {}", file);
-                    continue;
+                None => {                    continue;
                 },
             };
             let def = match self.checker.get_layer_def(&layer) {
@@ -229,7 +223,7 @@ impl LintCheckingOrchestrator {
                 0,
                 "AES012",
                 Severity::CRITICAL,
-                AES012_CIRCULAR_IMPORT,
+                AES015_CIRCULAR_IMPORT,
             ));
         }
         // Orphan check: delegated via IOrphanAggregate

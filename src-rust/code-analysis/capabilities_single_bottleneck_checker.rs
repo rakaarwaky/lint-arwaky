@@ -2,7 +2,7 @@
 use crate::code_analysis::contract_single_bottleneck_protocol::ISingleBottleneckProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violation_rs_constant::AES0303_SINGLE_BOTTLENECK;
+use crate::shared_common::taxonomy_violation_message_rs_error::AES0303_SINGLE_BOTTLENECK;
 
 pub struct SingleBottleneckChecker {}
 

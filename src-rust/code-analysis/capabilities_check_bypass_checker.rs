@@ -2,7 +2,7 @@
 use crate::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violation_rs_constant::{
+use crate::shared_common::taxonomy_violation_message_rs_error::{
     AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
 };
 

@@ -19,7 +19,7 @@ fn aes011_naming_convention(_expected_word_count: i32) -> String {
     )
 }
 
-use crate::shared_common::taxonomy_violation_rs_constant::{
+use crate::shared_common::taxonomy_violation_message_rs_error::{
     AES012_SUFFIX_FORBIDDEN, AES012_SUFFIX_MISMATCH,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;

@@ -6,7 +6,7 @@ use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_rs_constant::AES024_MANDATORY_CLASS_DEFINITION;
+use crate::shared_common::taxonomy_violation_message_rs_error::AES024_MANDATORY_CLASS_DEFINITION;
 
 pub struct ArchClassChecker {}
 

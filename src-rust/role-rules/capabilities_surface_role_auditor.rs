@@ -10,7 +10,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_names_vo::layer_surfaces;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_violation_rs_constant::AES0305_NO_DOMAIN_LOGIC;
+use crate::shared_common::taxonomy_violation_message_rs_error::AES0305_NO_DOMAIN_LOGIC;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -72,7 +72,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES0306",
                 Severity::HIGH,
-                crate::shared_common::taxonomy_violation_rs_constant::AES0306_SURFACE_ROLE_VIOLATION,
+                crate::shared_common::taxonomy_violation_message_rs_error::AES0306_SURFACE_ROLE_VIOLATION,
             ));
         }
     }

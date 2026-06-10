@@ -135,9 +135,7 @@ impl ICheckerAggregate for CheckerContainer {
         file: &str,
         config: &crate::config_system::taxonomy_config_vo::ArchitectureConfig,
         violations: &mut Vec<LintResult>,
-    ) {
-        eprintln!("[DEBUG CONTAINER] check_scope_mandatory_imports called for file: {}", file);
-        self.import_mandatory_checker
+    ) {        self.import_mandatory_checker
             .check_scope_mandatory_imports(file, config, violations);
     }
 

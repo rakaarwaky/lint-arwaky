@@ -27,7 +27,7 @@ pub fn aes0305_any_type(line: &str) -> String {
     )
 }
 
-use crate::shared_common::taxonomy_violation_rs_constant::{
+use crate::shared_common::taxonomy_violation_message_rs_error::{
     AES0305_COORDINATES_MULTIPLE, AES0305_HIGH_LEVEL_POLICY, AES0305_LAZY_EAGER_INIT,
     AES0305_MUST_IMPLEMENT_CONTRACT, AES0305_NO_DOMAIN_LOGIC, AES0305_STATELESS_EXECUTION,
 };

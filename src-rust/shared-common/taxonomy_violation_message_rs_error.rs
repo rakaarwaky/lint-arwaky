@@ -1,7 +1,7 @@
 // PURPOSE: AES violation message constants for Rust analysis
 pub const AES001_FORBIDDEN_IMPORT: &str =
     "AES001 FORBIDDEN_IMPORT: Layer is importing from a forbidden module.";
-pub const AES002_MANDATORY_IMPORT: &str = "AES002 MANDATORY_IMPORT: Missing required import.";
+pub const AES002_MANDATORY_IMPORT: &str = "AES002 MANDATORY_IMPORT: Missing required import: '{}'.";
 pub const AES020_FILE_TOO_LARGE_MSG: &str =
     "AES020 FILE_TOO_LARGE: File exceeds the maximum allowed line count.\n\
     WHY? Large files violate the Single Responsibility Principle.\n\
@@ -46,7 +46,7 @@ pub const AES0306_HIERARCHY_VIOLATION: &str =
     "AES0306 SURFACE_ROLE: Surface file is not imported from the layer barrel.";
 pub const AES0306_PASSIVE_VIOLATION: &str =
     "AES0306 SURFACE_ROLE: Surface file contains active domain logic.";
-pub const AES012_CIRCULAR_IMPORT: &str = "AES012 CIRCULAR_IMPORT: Circular dependencies detected.";
+pub const AES015_CIRCULAR_IMPORT: &str = "AES015 CIRCULAR_IMPORT: Circular dependencies detected.";
 pub const AES0306_SURFACE_ROLE_VIOLATION: &str =
     "AES0306 SURFACE_ROLE: Surface file exceeds role mandate.";
 pub const AES001_SURFACE_DEPENDENCY: &str =

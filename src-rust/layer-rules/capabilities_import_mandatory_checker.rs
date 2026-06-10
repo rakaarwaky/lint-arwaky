@@ -4,6 +4,7 @@ use crate::layer_rules::contract_import_parser_port::ImportParser;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+
 fn aes002_mandatory_import(required: &str) -> String {
     format!(
         "AES002 MANDATORY_IMPORT: Missing required import: '{}'.",
@@ -78,7 +79,6 @@ impl ArchImportMandatoryChecker {
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        eprintln!("[DEBUG AES002] ENTERED check_scope_mandatory_imports for file: {}", file);
         let basename = ImportParser::get_basename(file);
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
@@ -88,16 +88,7 @@ impl ArchImportMandatoryChecker {
 
         let import_lines = ImportParser::read_import_lines(file);
 
-        // Debug: print rules with mandatory imports
         for rule in &config.rules {
-            if !rule.mandatory.values.is_empty() {
-                eprintln!("[DEBUG AES002] Rule: {} - Scope: {} - Mandatory: {:?}", 
-                    rule.name.value, rule.scope.value, rule.mandatory.values);
-            }
-        }
-
-        for rule in &config.rules {
-            // Only check rules that have mandatory imports defined
             if rule.mandatory.values.is_empty() {
                 continue;
             }
@@ -105,14 +96,12 @@ impl ArchImportMandatoryChecker {
             let (rule_layer, rule_suffixes) = ImportParser::resolve_scope(&rule.scope.value);
             let layer_match = stem.starts_with(&format!("{}_", rule_layer));
             if !layer_match {
-                eprintln!("[DEBUG AES002] File {} - stem {} doesn't match rule_layer {}", file, stem, rule_layer);
                 continue;
             }
             if !rule_suffixes.is_empty() && !rule_suffixes.contains(&suffix) {
                 continue;
             }
 
-            eprintln!("[DEBUG AES002] Checking file {} against rule {}", file, rule.name.value);
             for required in &rule.mandatory.values {
                 let (req_layer, req_suffixes) = ImportParser::resolve_scope(required);
                 let is_present = if req_suffixes.is_empty() {
@@ -127,7 +116,6 @@ impl ArchImportMandatoryChecker {
                         .any(|(_, l)| ImportParser::import_matches_scope(l, req_layer, &req_suffixes))
                 };
 
-                eprintln!("[DEBUG AES002] Required: {} - is_present: {}", required, is_present);
                 if !is_present {
                     violations.push(LintResult::new_arch(
                         file,

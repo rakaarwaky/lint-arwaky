@@ -152,7 +152,7 @@ architecture:
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces", "root"]
       exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_action.rs", "mcp_main_action.rs"]
 
-    AES012:
+    AES015:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
 

@@ -26,7 +26,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::shared_common::taxonomy_violation_rs_constant::{
+use crate::shared_common::taxonomy_violation_message_rs_error::{
     AES0303_CAPABILITY_ROUTING, AES0303_MISSING_VO, AES0303_SINGLE_BOTTLENECK,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
