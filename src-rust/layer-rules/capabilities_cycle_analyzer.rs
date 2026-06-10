@@ -1,13 +1,17 @@
 // PURPOSE: DependencyCycleAnalyzer — ICycleAnalysisProtocol for AES015: circular dependency detection
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::output_report::taxonomy_result_vo::LintResult;
+use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::layer_rules::contract_cycle_protocol::ICycleAnalysisProtocol;
+use crate::layer_rules::contract_rule_protocol::IAnalyzer;
+use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use async_trait::async_trait;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
@@ -263,5 +267,20 @@ impl DependencyCycleAnalyzer {
                 Self::make_result(&file, &msg)
             })
             .collect()
+    }
+}
+
+#[async_trait]
+impl ICycleAnalysisProtocol for DependencyCycleAnalyzer {
+    async fn check_cycles(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
+        let cycle_violations = self.scan(&file_strs, &root_dir.to_string());
+        results.values.extend(cycle_violations);
     }
 }

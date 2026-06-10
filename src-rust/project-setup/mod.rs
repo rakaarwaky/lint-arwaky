@@ -2,7 +2,7 @@
 pub mod agent_setup_orchestrator;
 pub use agent_setup_orchestrator::SetupManagementOrchestrator;
 pub mod capabilities_setup_processor;
-pub use capabilities_setup_processor::{EnvContent, McpConfig, SetupManagementProcessor};
+pub use capabilities_setup_processor::SetupManagementProcessor;
 pub mod contract_setup_aggregate;
 pub use contract_setup_aggregate::SetupManagementAggregate;
 pub mod contract_setup_protocol;

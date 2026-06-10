@@ -22,5 +22,7 @@ pub mod contract_role_aggregate;
 pub use contract_role_aggregate::IRoleAggregate;
 pub mod contract_surface_role_protocol;
 pub use contract_surface_role_protocol::ISurfaceRoleChecker;
+pub mod contract_capabilities_role_protocol;
+pub use contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 pub mod agent_role_container;
 pub use agent_role_container::RoleAggregateImpl;

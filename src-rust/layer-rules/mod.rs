@@ -6,8 +6,6 @@ pub mod capabilities_layer_detection_analyzer;
 pub use capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 pub mod capabilities_cycle_analyzer;
 pub use capabilities_cycle_analyzer::{detect_cycle_edges, DependencyEdge};
-pub mod capabilities_arch_lint_impl;
-pub use capabilities_arch_lint_impl::ArchLintProtocolImpl;
 pub mod capabilities_import_forbidden_checker;
 pub use capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 pub mod capabilities_import_mandatory_checker;

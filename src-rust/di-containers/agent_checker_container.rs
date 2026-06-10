@@ -14,6 +14,9 @@ use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbidd
 use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use crate::layer_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use crate::layer_rules::capabilities_naming_checker::ArchNamingChecker;
+use crate::layer_rules::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
+use crate::layer_rules::contract_cycle_protocol::ICycleAnalysisProtocol;
+use crate::layer_rules::contract_rule_protocol::{IArchImportProtocol, INamingCheckerProtocol, IAnalyzer};
 use crate::orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
 use crate::orphan_detector::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
 use crate::orphan_detector::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
@@ -26,6 +29,7 @@ use crate::role_rules::capabilities_capabilities_role_auditor::CapabilitiesRoleC
 use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use crate::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use std::sync::Arc;
 
@@ -44,6 +48,7 @@ pub struct CheckerContainer {
     taxonomy_checker: TaxonomyRoleChecker,
     contract_checker: ContractRoleChecker,
     naming_checker: ArchNamingChecker,
+    cycle_analyzer: DependencyCycleAnalyzer,
     capabilities_role_checker: CapabilitiesRoleChecker,
     surface_checker: SurfaceRoleChecker,
     orphan_analyzer: Arc<dyn IOrphanAggregate>,
@@ -51,6 +56,22 @@ pub struct CheckerContainer {
 
 impl CheckerContainer {
     pub fn new(config: ArchitectureConfig) -> Self {
+        let fs = Arc::new(
+            crate::file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
+        );
+        let source_parser = Arc::new(
+            crate::source_parsing::infrastructure_parser_adapter::SourceParserOrchestrator::new(
+                Box::new(
+                    crate::source_parsing::infrastructure_py_scanner::ASTPythonParserAdapter::new(),
+                ),
+                Box::new(
+                    crate::source_parsing::infrastructure_rust_scanner::ASTRustParserAdapter::new(),
+                ),
+                Box::new(
+                    crate::source_parsing::infrastructure_js_scanner::ASTJSParserAdapter::new(),
+                ),
+            ),
+        );
         let parser = Arc::new(crate::layer_rules::infrastructure_import_parser_adapter::ImportParserAdapter::new());
         let orphan_analyzer: Arc<dyn IOrphanAggregate> = Arc::new(ArchOrphanAnalyzer::new(
             Arc::new(TaxonomyOrphanAnalyzer::new()),
@@ -61,7 +82,7 @@ impl CheckerContainer {
             Arc::new(SurfacesOrphanAnalyzer::new()),
         ));
         Self {
-            analyzer: LayerDetectionAnalyzer::new(config),
+            analyzer: LayerDetectionAnalyzer::new(config.clone(), fs, source_parser),
             import_forbidden_checker: ArchImportForbiddenChecker::new(parser.clone()),
             import_mandatory_checker: ArchImportMandatoryChecker::new(parser),
             line_checker: ArchLineChecker::new(),
@@ -75,6 +96,7 @@ impl CheckerContainer {
             taxonomy_checker: TaxonomyRoleChecker::new(),
             contract_checker: ContractRoleChecker::new(),
             naming_checker: ArchNamingChecker::new(),
+            cycle_analyzer: DependencyCycleAnalyzer::new(config),
             capabilities_role_checker: CapabilitiesRoleChecker::new(),
             surface_checker: SurfaceRoleChecker::new(),
             orphan_analyzer,
@@ -83,20 +105,24 @@ impl CheckerContainer {
 
     // --- Getters only: no logic, no method calls to protocols ---
 
-    pub fn analyzer(&self) -> &LayerDetectionAnalyzer {
+    pub fn analyzer(&self) -> &dyn IAnalyzer {
         &self.analyzer
     }
 
-    pub fn naming_checker(&self) -> &ArchNamingChecker {
+    pub fn naming_checker(&self) -> &dyn INamingCheckerProtocol {
         &self.naming_checker
     }
 
-    pub fn import_mandatory_checker(&self) -> &ArchImportMandatoryChecker {
+    pub fn import_mandatory_checker(&self) -> &dyn IArchImportProtocol {
         &self.import_mandatory_checker
     }
 
-    pub fn import_forbidden_checker(&self) -> &ArchImportForbiddenChecker {
+    pub fn import_forbidden_checker(&self) -> &dyn IArchImportProtocol {
         &self.import_forbidden_checker
+    }
+
+    pub fn cycle_analyzer(&self) -> &dyn ICycleAnalysisProtocol {
+        &self.cycle_analyzer
     }
 
     pub fn line_checker(&self) -> &ArchLineChecker {
@@ -139,7 +165,7 @@ impl CheckerContainer {
         &self.contract_checker
     }
 
-    pub fn capabilities_role_checker(&self) -> &CapabilitiesRoleChecker {
+    pub fn capabilities_role_checker(&self) -> &dyn ICapabilitiesRoleChecker {
         &self.capabilities_role_checker
     }
 

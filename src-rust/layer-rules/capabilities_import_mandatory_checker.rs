@@ -1,12 +1,15 @@
 // PURPOSE: ArchImportMandatoryChecker — AES002: enforce mandatory import rules per layer definition and scope rules
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::contract_import_parser_port::IImportParserPort;
-use crate::output_report::taxonomy_result_vo::LintResult;
+use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::shared_common::{Identity, FileContentVO};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol, IArchRuleProtocol};
+use async_trait::async_trait;
 use std::sync::Arc;
 
 pub struct ArchImportMandatoryChecker {
@@ -144,4 +147,47 @@ impl ArchImportMandatoryChecker {
             }
         }
     }
+}
+
+impl IArchRuleProtocol for ArchImportMandatoryChecker {
+    fn rule_name(&self) -> Identity {
+        Identity::new("AES002")
+    }
+}
+
+#[async_trait]
+impl IArchImportProtocol for ArchImportMandatoryChecker {
+    async fn check_mandatory_imports(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        for f in &files.values {
+            let f_str = f.to_string();
+            if let Some(layer) = analyzer.detect_layer(f, root_dir) {
+                if let Some(def) = analyzer.layer_map().values.get(&layer) {
+                    self.check_mandatory_imports(&f_str, def, &mut results.values);
+                }
+            }
+            self.check_scope_mandatory_imports(&f_str, analyzer.config(), &mut results.values);
+        }
+    }
+
+    async fn check_forbidden_imports(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        _files: &FilePathList,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {}
+
+    async fn check_legacy_import_rules(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        _files: &FilePathList,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {}
 }

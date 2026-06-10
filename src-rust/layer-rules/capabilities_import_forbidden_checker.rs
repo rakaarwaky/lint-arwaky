@@ -1,12 +1,15 @@
 // PURPOSE: ArchImportForbiddenChecker — AES001: enforce forbidden import rules via definition, scope, and legacy governance
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::contract_import_parser_port::IImportParserPort;
-use crate::output_report::taxonomy_result_vo::LintResult;
+use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::shared_common::{Identity, LayerNameVO};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol, IArchRuleProtocol};
+use async_trait::async_trait;
 use std::sync::Arc;
 
 pub struct ArchImportForbiddenChecker {
@@ -241,5 +244,57 @@ impl ArchImportForbiddenChecker {
             }
         }
         None
+    }
+}
+
+impl IArchRuleProtocol for ArchImportForbiddenChecker {
+    fn rule_name(&self) -> Identity {
+        Identity::new("AES001")
+    }
+}
+
+#[async_trait]
+impl IArchImportProtocol for ArchImportForbiddenChecker {
+    async fn check_mandatory_imports(
+        &self,
+        _analyzer: &dyn IAnalyzer,
+        _files: &FilePathList,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {}
+
+    async fn check_forbidden_imports(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        for f in &files.values {
+            let f_str = f.to_string();
+            if let Some(layer) = analyzer.detect_layer(f, root_dir) {
+                let layer_str = layer.value();
+                if let Some(def) = analyzer.layer_map().values.get(&layer) {
+                    self.check_forbidden_imports(&f_str, layer_str, def, &mut results.values);
+                }
+            }
+            self.check_scope_forbidden_imports(&f_str, analyzer.config(), &mut results.values);
+        }
+    }
+
+    async fn check_legacy_import_rules(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        for f in &files.values {
+            let f_str = f.to_string();
+            if let Some(layer) = analyzer.detect_layer(f, root_dir) {
+                let layer_str = layer.value();
+                self.check_legacy_import_rules(&f_str, layer_str, analyzer.config(), &mut results.values);
+            }
+        }
     }
 }

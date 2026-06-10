@@ -17,11 +17,10 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::di_containers::agent_checker_container::CheckerContainer;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
-use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::role_rules::agent_role_container::RoleAggregateImpl;
 use crate::role_rules::agent_role_orchestrator::RoleOrchestrator;
-use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 
 static GLOBAL_CONTAINER: OnceLock<Arc<CheckerContainer>> = OnceLock::new();
 
@@ -52,7 +51,7 @@ impl LintCheckingOrchestrator {
         }
     }
 
-    pub fn run_all_checks(
+    pub async fn run_all_checks(
         &self,
         config: &ArchitectureConfig,
         files: &[String],
@@ -226,21 +225,6 @@ impl LintCheckingOrchestrator {
                 .capabilities_role_checker()
                 .check_capability_routing(file, &c, &layer, &mut violations);
             self.container
-                .import_mandatory_checker()
-                .check_mandatory_imports(file, &def, &mut violations);
-            self.container
-                .import_forbidden_checker()
-                .check_forbidden_imports(file, &layer, &def, &mut violations);
-            self.container
-                .import_forbidden_checker()
-                .check_scope_forbidden_imports(file, config, &mut violations);
-            self.container
-                .import_mandatory_checker()
-                .check_scope_mandatory_imports(file, config, &mut violations);
-            self.container
-                .import_forbidden_checker()
-                .check_legacy_import_rules(file, &layer, config, &mut violations);
-            self.container
                 .line_checker()
                 .check_line_counts(file, Some(&def), &mut violations);
 
@@ -263,58 +247,50 @@ impl LintCheckingOrchestrator {
             self.container
                 .class_checker()
                 .check_mandatory_class_definition(file, Some(&def), &mut violations);
-
-            // Naming checks — call protocols directly
-            self.container.naming_checker().check_file_naming(
-                file,
-                filename,
-                &Some(layer.clone()),
-                Some(&def),
-                config,
-                &mut violations,
-            );
-            self.container.naming_checker().check_domain_suffixes(
-                file,
-                filename,
-                Some(&def),
-                &Some(layer.clone()),
-                &mut violations,
-            );
         }
 
         let mut rl = LintResultList::new(violations);
         let root_fp = FilePath::new(root_dir.to_string()).unwrap_or_default();
+        let file_paths_vo: Vec<FilePath> = files
+            .iter()
+            .map(|f| FilePath::new(f.to_string()).unwrap_or_default())
+            .collect();
+        let files_list_vo = FilePathList::new(file_paths_vo.clone());
+
+        // Naming checks
+        self.container
+            .naming_checker()
+            .check_file_naming(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
+            .await;
+        self.container
+            .naming_checker()
+            .check_domain_suffixes(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
+            .await;
+
+        // Import checks
+        self.container
+            .import_mandatory_checker()
+            .check_mandatory_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
+            .await;
+        self.container
+            .import_forbidden_checker()
+            .check_forbidden_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
+            .await;
+        self.container
+            .import_forbidden_checker()
+            .check_legacy_import_rules(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
+            .await;
+
+        // Cycle detection
+        self.container
+            .cycle_analyzer()
+            .check_cycles(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
+            .await;
 
         // Surface hierarchy check — call protocol directly
         self.container
             .surface_checker()
-            .check_surface_hierarchy(&file_paths, &root_fp, &mut rl);
-
-        // Cycle detection — inline via capabilities function
-        let ce: Vec<(String, String)> = import_edges
-            .iter()
-            .map(|(s, t)| (s.clone(), t.clone()))
-            .collect();
-        let cycle_deps: Vec<_> = ce
-            .iter()
-            .map(|(s, t)| {
-                crate::layer_rules::capabilities_cycle_analyzer::DependencyEdge::new(
-                    s.clone(),
-                    t.clone(),
-                )
-            })
-            .collect();
-        if !crate::layer_rules::capabilities_cycle_analyzer::detect_cycle_edges(&cycle_deps)
-            .is_empty()
-        {
-            rl.push(LintResult::new_arch(
-                "",
-                0,
-                "AES012",
-                Severity::CRITICAL,
-                AesViolation::CircularImport,
-            ));
-        }
+            .check_surface_hierarchy(&file_paths_vo, &root_fp, &mut rl);
 
         // Orphan check: delegated via IOrphanAggregate (uses ILayerDetectionAggregate)
         let orphan_agg = self.container.orphan_aggregate();

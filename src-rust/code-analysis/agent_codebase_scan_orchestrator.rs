@@ -54,7 +54,10 @@ impl CodebaseScanOrchestrator {
         let files_str: Vec<String> = files.iter().map(|f| f.value.clone()).collect();
         let orchestrator =
             crate::code_analysis::agent_checking_orchestrator::LintCheckingOrchestrator::new();
-        orchestrator.run_all_checks(&config, &files_str, &root_dir)
+        let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
+        rt.block_on(async {
+            orchestrator.run_all_checks(&config, &files_str, &root_dir).await
+        })
     }
 
     pub fn format_report(&self, results: &[LintResult], project_root: &str) -> String {

@@ -4,16 +4,28 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
+use crate::file_system::contract_system_port::IFileSystemPort;
+use crate::source_parsing::contract_parser_port::ISourceParserPort;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::layer_rules::contract_rule_protocol::IAnalyzer;
+use std::sync::Arc;
 
 pub struct LayerDetectionAnalyzer {
     pub config: ArchitectureConfig,
+    pub layer_map: LayerMapVO,
+    pub fs: Arc<dyn IFileSystemPort>,
+    pub parser: Arc<dyn ISourceParserPort>,
 }
 
 impl LayerDetectionAnalyzer {
-    pub fn new(mut config: ArchitectureConfig) -> Self {
+    pub fn new(
+        mut config: ArchitectureConfig,
+        fs: Arc<dyn IFileSystemPort>,
+        parser: Arc<dyn ISourceParserPort>,
+    ) -> Self {
         // Group rules by layer name — both base name and full scope
         let mut rules_by_layer: HashMap<String, Vec<&ArchitectureRule>> = HashMap::new();
         for rule in &config.rules {
@@ -137,7 +149,13 @@ impl LayerDetectionAnalyzer {
         }
 
         config.layers = new_layers;
-        Self { config }
+        let layer_map = LayerMapVO::new(config.layers.clone());
+        Self {
+            config,
+            layer_map,
+            fs,
+            parser,
+        }
     }
 
     /// Detect layer from filename — prioritize prefix-based detection (FRD v1.1),
@@ -414,5 +432,28 @@ impl LayerDetectionAnalyzer {
         } else {
             normalized_file
         }
+    }
+}
+
+impl IAnalyzer for LayerDetectionAnalyzer {
+    fn config(&self) -> &ArchitectureConfig {
+        &self.config
+    }
+    fn layer_map(&self) -> &LayerMapVO {
+        &self.layer_map
+    }
+    fn fs(&self) -> &dyn IFileSystemPort {
+        &*self.fs
+    }
+    fn parser(&self) -> &dyn ISourceParserPort {
+        &*self.parser
+    }
+    fn detect_layer(&self, f: &FilePath, root_dir: &FilePath) -> Option<LayerNameVO> {
+        self.detect_layer(&f.value, &root_dir.value)
+            .map(|s| LayerNameVO::new(s.as_str()))
+    }
+    fn detect_module_layer(&self, module_path: &FilePath) -> Option<LayerNameVO> {
+        self.detect_module_layer(&module_path.value)
+            .map(|s| LayerNameVO::new(s.as_str()))
     }
 }

@@ -1,29 +1,8 @@
-// PURPOSE: ConfigRulesValidator — validates architecture rules against project configuration thresholds
-
 use crate::config_system::taxonomy_setting_vo::AdapterStatus;
 use crate::config_system::taxonomy_setting_vo::ProjectConfig;
+use crate::config_system::taxonomy_validation_vo::ValidationResult;
+use crate::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-
-/// Result of a validation operation.
-pub struct ValidationResult {
-    pub is_valid: bool,
-    pub reason: Option<String>,
-}
-
-impl ValidationResult {
-    pub fn ok() -> Self {
-        Self {
-            is_valid: true,
-            reason: None,
-        }
-    }
-    pub fn fail(reason: &str) -> Self {
-        Self {
-            is_valid: false,
-            reason: Some(reason.to_string()),
-        }
-    }
-}
 
 /// Business logic for interpreting and validating project configuration.
 pub struct ConfigRulesValidator {
@@ -34,9 +13,11 @@ impl ConfigRulesValidator {
     pub fn new(config: ProjectConfig) -> Self {
         Self { config }
     }
+}
 
+impl IConfigValidatorProtocol for ConfigRulesValidator {
     /// Determines if a specific adapter should run based on configuration rules.
-    pub fn is_adapter_enabled(&self, adapter_name: &AdapterName) -> bool {
+    fn is_adapter_enabled(&self, adapter_name: &AdapterName) -> bool {
         for adapter in &self.config.adapters {
             if adapter.name == *adapter_name {
                 return adapter.status == AdapterStatus::Enabled;
@@ -47,7 +28,7 @@ impl ConfigRulesValidator {
     }
 
     /// Validates that scoring thresholds are sane.
-    pub fn validate_thresholds(&self) -> ValidationResult {
+    fn validate_thresholds(&self) -> ValidationResult {
         let t = &self.config.thresholds;
 
         // Score must be 0-100

@@ -1,13 +1,15 @@
 // PURPOSE: AesViolationJs — AES violation messages for JavaScript/TypeScript analysis (enum with Display)
 use std::fmt;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 
 pub enum AesViolationJs {
     // AES001 — Import rules
     ForbiddenImport,
     // AES002 — Mandatory import
     MissingImport {
-        source_layer: String,
-        required: String,
+        source_layer: LayerNameVO,
+        required: SymbolName,
     },
     // AES012 — Suffix rules
     SuffixForbidden,
@@ -23,6 +25,10 @@ pub enum AesViolationJs {
     ConstantPurity,
     // AES0302 — Contract primitive
     ContractPrimitive,
+    // AES0303 — Capability role
+    CapabilityRouting {
+        struct_name: SymbolName,
+    },
     // AES0305 — Agent role
     StatelessExecution,
     HighLevelPolicy,
@@ -75,6 +81,9 @@ impl fmt::Display for AesViolationJs {
             // AES0302
             Self::ContractPrimitive =>
                 write!(f, "AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer."),
+            // AES0303
+            Self::CapabilityRouting { struct_name } =>
+                write!(f, "AES0303 CAPABILITY_ROLE: Struct '{}' has no trait impl.", struct_name),
             // AES0305
             Self::StatelessExecution =>
                 write!(f, "Non-stateless behavior detected: state assignment found outside constructor."),

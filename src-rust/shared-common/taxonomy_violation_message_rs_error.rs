@@ -1,17 +1,19 @@
 // PURPOSE: AesViolation — AES violation messages for Rust analysis (enum with Display)
 use std::fmt;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 
 pub enum AesViolation {
     // AES001 — Import rules
     ForbiddenImport {
-        source_layer: String,
-        forbidden_layer: String,
-        allowed: Vec<String>,
+        source_layer: LayerNameVO,
+        forbidden_layer: LayerNameVO,
+        allowed: Vec<LayerNameVO>,
     },
     // AES002 — Mandatory import
     MissingImport {
-        source_layer: String,
-        required: String,
+        source_layer: LayerNameVO,
+        required: SymbolName,
     },
     // AES012 — Suffix rules
     SuffixForbidden,
@@ -41,7 +43,9 @@ pub enum AesViolation {
     // AES0302 — Contract primitive
     ContractPrimitive,
     // AES0303 — Capability role
-    CapabilityRouting,
+    CapabilityRouting {
+        struct_name: SymbolName,
+    },
     SingleBottleneck,
     MissingVo,
     // AES0304 — Infrastructure role
@@ -65,7 +69,15 @@ impl fmt::Display for AesViolation {
         match self {
             // AES001
             Self::ForbiddenImport { source_layer, forbidden_layer, allowed } => {
-                let allowed_str = if allowed.is_empty() { "none".to_string() } else { allowed.join(", ") };
+                let allowed_str = if allowed.is_empty() {
+                    "none".to_string()
+                } else {
+                    allowed
+                        .iter()
+                        .map(|v| v.value().to_string())
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                };
                 write!(f, "AES001 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
                     WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
                     FIX: Remove the import or refactor to use one of the allowed layers: [{}].",
@@ -129,8 +141,8 @@ impl fmt::Display for AesViolation {
             Self::ContractPrimitive =>
                 write!(f, "AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer."),
             // AES0303
-            Self::CapabilityRouting =>
-                write!(f, "AES0303 CAPABILITY_ROLE: Capability method not found in dispatch."),
+            Self::CapabilityRouting { struct_name } =>
+                write!(f, "AES0303 CAPABILITY_ROLE: Struct '{}' has no trait impl.", struct_name),
             Self::SingleBottleneck =>
                 write!(f, "AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability."),
             Self::MissingVo =>

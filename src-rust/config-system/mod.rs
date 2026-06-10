@@ -2,7 +2,11 @@
 pub mod agent_config_loading_orchestrator;
 pub use agent_config_loading_orchestrator::ConfigLoadingOrchestrator;
 pub mod capabilities_rules_validator;
-pub use capabilities_rules_validator::{ConfigRulesValidator, ValidationResult};
+pub use capabilities_rules_validator::ConfigRulesValidator;
+pub mod taxonomy_validation_vo;
+pub use taxonomy_validation_vo::ValidationResult;
+pub mod contract_validator_protocol;
+pub use contract_validator_protocol::IConfigValidatorProtocol;
 pub mod contract_detector_port;
 pub use contract_detector_port::ILanguageDetectorPort;
 pub mod contract_discovery_port;

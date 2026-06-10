@@ -167,3 +167,12 @@ pub struct McpConfigVO {
     #[serde(default)]
     pub(crate) value: HashMap<String, serde_json::Value>,
 }
+
+impl McpConfigVO {
+    pub fn new(value: HashMap<String, serde_json::Value>) -> Self {
+        Self { value }
+    }
+    pub fn value(&self) -> &HashMap<String, serde_json::Value> {
+        &self.value
+    }
+}

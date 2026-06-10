@@ -1,13 +1,8 @@
 // PURPOSE: CapabilitiesRoleChecker — AES0303: detect capability routing bottlenecks (single bottleneck, missing dispatch)
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-
-fn aes0303_capability_routing(struct_name: &str) -> String {
-    format!(
-        "AES0303 CAPABILITY_ROLE: Struct '{}' has no trait impl.",
-        struct_name
-    )
-}
+use crate::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct CapabilitiesRoleChecker {}
 
@@ -64,9 +59,23 @@ impl CapabilitiesRoleChecker {
                     0,
                     "AES0303",
                     Severity::MEDIUM,
-                    &aes0303_capability_routing(s),
+                    AesViolation::CapabilityRouting {
+                        struct_name: s.to_string(),
+                    },
                 ));
             }
         }
+    }
+}
+
+impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
+    fn check_capability_routing(
+        &self,
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        self.check_capability_routing(file, content, layer, violations);
     }
 }
