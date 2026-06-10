@@ -1,4 +1,4 @@
-// PURPOSE: ArchNamingChecker — INamingCheckerProtocol for AES010: naming convention and suffix validation
+// PURPOSE: ArchNamingChecker — INamingCheckerProtocol for AES010 (naming convention) and AES011 (suffix definition)
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
@@ -137,7 +137,7 @@ impl ArchNamingChecker {
         }
     }
 
-    /// Check domain suffix rules per layer (AES010/AES011).
+    /// Check domain suffix rules per layer (AES011: mandatory suffix definition).
     pub fn check_domain_suffixes(
         &self,
         file: &str,
