@@ -22,7 +22,7 @@ pub const AES0305_STATELESS_EXECUTION: &str =
     "Non-stateless behavior detected: state assignment found outside __init__.";
 pub const AES0305_HIGH_LEVEL_POLICY: &str =
     "Low-level implementation details found (infrastructure import).";
-pub const AES0305_COORDINATES_MULTIPLE: &str = "Coordinator must manage multiple orchestrators.";
+pub const AES0305_COORDINATES_MULTIPLE: &str = "Orchestrator must manage multiple subsystems.";
 pub const AES0305_NO_DOMAIN_LOGIC: &str = "Complex domain logic detected in a passive layer/role.";
 pub const AES0305_LAZY_EAGER_INIT: &str = "Complex initialization logic found in Container.";
 pub const AES0305_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceContainerAggregate.";
@@ -32,4 +32,4 @@ pub const AES0302_FORBIDDEN_INHERITANCE: &str =
 pub const AES0301_CONSTANT_PURITY: &str =
     "AES015 CONSTANT_PURITY: _constant file contains non-constant declaration.";
 
-pub use crate::shared_common::taxonomy_violationpy_vo::*;
+pub use crate::shared_common::taxonomy_violation_py_vo::*;

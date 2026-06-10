@@ -13,7 +13,7 @@ use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_violationrs_constant::aes012_circular_import;
+use crate::shared_common::taxonomy_violation_rs_constant::aes012_circular_import;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::{HashMap, HashSet};
 use std::fs;

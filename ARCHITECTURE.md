@@ -82,7 +82,7 @@ Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[
 | `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `layer-rules/`, `config-system/`, `di-containers/`, `pipeline-jobs/`, etc.                        |
 | `capabilities_`   | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions`                                                                                                                                                  | `layer-rules/`, `semantic-analysis/`, `naming-rules/`, `code-analysis/`, etc.                     |
 | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `language-adapters/`, `source-parsing/`, `config-system/`, `file-system/`, `http-client/`, etc. |
-| `agent_`          | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`, `_mixin`, `_state`                                                                                                                                                                                                                                                                                                                                                                                                                                        | `role-rules/`, `pipeline-jobs/`, `code-analysis/`, `di-containers/`, `lifecycle-state/`, etc.   |
+| `agent_`          | `_container`, `_orchestrator`, `_lifecycle`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `role-rules/`, `pipeline-jobs/`, `code-analysis/`, `di-containers/`, `lifecycle-state/`, etc.   |
 | `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                                                                      | `cli-commands/`, `mcp-server/`                                                                        |
 
 ### Feature Folders (26 vertical slices)
@@ -105,7 +105,7 @@ src-rust/
   project-setup/      — Project init, doctor, mcp-config
   plugin-system/      — Plugin discovery & management
   output-report/      — Output formatting & report generation
-  code-analysis/      — Quality algorithms: unused imports (AES023), class/line checking (AES011, AES020/AES021), type detection (AES016 protocol), fix processor (AES0303/AES0304), symbol renamer. Wires into coordinator pipeline.
+  code-analysis/      — Quality algorithms: unused imports (AES023), class/line checking (AES011, AES020/AES021), type detection (AES016 protocol), fix processor (AES0303/AES0304), symbol renamer. Wires into orchestrator pipeline.
   mcp-server/         — MCP server
   source-parsing/     — Source code parsing
   lifecycle-state/    — Agent lifecycle management
@@ -130,7 +130,7 @@ src-rust/
   - **Entity (`_entity`)**: Stateful domain concepts with unique IDs. _Ex: `taxonomy_governance_entity.rs`_
   - **Event (`_event`)**: Immutable domain fact snapshots. _Ex: `taxonomy_applied_event.rs`_
   - **Error (`_error`)**: Domain-level exceptions. _Ex: `taxonomy_system_error.rs`_
-  - **Constant (`_constant`)**: Compile-time literals only (**AES015**). _Ex: `taxonomy_names_constant.rs`_
+  - **Constant (`_constant`)**: Compile-time literals only (**AES015**). _Ex: `taxonomy_layer_names_constant.rs`_
 
 #### 2. Contract (`contract_` prefix)
 
@@ -159,13 +159,13 @@ src-rust/
 
 #### 5. Agent (`agent_` prefix)
 
-- **Prefix**: `agent_`
-- **Allowed Suffixes**: `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager`, `_mixin`, `_state`
-- **Allowed Imports**: Depends on role:
-  - `orchestrator`/`coordinator`: `taxonomy_` + `contract_` only (AES0305). Must NOT import capabilities/infrastructure directly.
-  - `container`/`registry`/`mixin`: `taxonomy_` + `contract_` + `capabilities_` + `infrastructure_` (wiring assembly).
-  - `manager`/`state`: `taxonomy_` + `contract_` only (leaf support modules).
-- **Description**: Orchestration, DI wiring, pipeline execution.
+|- **Prefix**: `agent_`
+|- **Allowed Suffixes**: `_container`, `_orchestrator`, `_lifecycle`
+|- **Allowed Imports**: Depends on role:
+|  - `orchestrator`: `taxonomy_` + `contract_` only (AES0305). Must NOT import capabilities/infrastructure directly.
+|  - `container`: `taxonomy_` + `contract_` + `capabilities_` + `infrastructure_` (wiring assembly, registry, mixin).
+|  - `lifecycle`: `taxonomy_` + `contract_` only (state tracking, lifecycle management).
+|- **Description**: Orchestration, DI wiring, pipeline execution, lifecycle tracking.
 
 #### 6. Surfaces (`surface_` prefix)
 

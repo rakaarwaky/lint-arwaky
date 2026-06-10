@@ -1,4 +1,4 @@
-pub use crate::shared_common::taxonomy_violationjs_vo::*;
+pub use crate::shared_common::taxonomy_violation_js_vo::*;
 
 pub const AES001_FORBIDDEN_IMPORT: &str =
     "AES001 FORBIDDEN_IMPORT: Layer is importing from a forbidden module.";
@@ -24,7 +24,7 @@ pub const AES0305_STATELESS_EXECUTION: &str =
     "Non-stateless behavior detected: state assignment found outside constructor.";
 pub const AES0305_HIGH_LEVEL_POLICY: &str =
     "Low-level implementation details found (infrastructure import).";
-pub const AES0305_COORDINATES_MULTIPLE: &str = "Coordinator must manage multiple orchestrators.";
+pub const AES0305_COORDINATES_MULTIPLE: &str = "Orchestrator must manage multiple subsystems.";
 pub const AES0305_NO_DOMAIN_LOGIC: &str = "Complex domain logic detected in a passive layer/role.";
 pub const AES0305_LAZY_EAGER_INIT: &str = "Complex initialization logic found in Container.";
 pub const AES0305_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceContainerAggregate.";

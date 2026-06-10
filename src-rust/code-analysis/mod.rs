@@ -8,8 +8,8 @@ pub mod contract_type_protocol;
 pub use contract_type_protocol::IDomainTypeProtocol;
 pub mod contract_unused_protocol;
 pub use contract_unused_protocol::IUnusedProtocol;
-pub mod agent_checking_coordinator;
-pub use agent_checking_coordinator::LintCheckingCoordinator;
+pub mod agent_checking_orchestrator;
+pub use agent_checking_orchestrator::LintCheckingOrchestrator;
 
 pub mod capabilities_fix_processor;
 pub use capabilities_fix_processor::LintFixProcessor;

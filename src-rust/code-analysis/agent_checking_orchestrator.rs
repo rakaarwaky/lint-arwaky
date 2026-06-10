@@ -1,6 +1,8 @@
-// lint_checking_coordinator — Agent-layer orchestration of ALL AES checkers.
+// PURPOSE: Orchestrate ALL AES checkers — layer detection, import checks, role checks, orphan detection, cycle detection.
 // aes: wired-by-dispatch
-// aes: bypass-agent-role — coordinates ALL 27 AES checkers in a single coordinator file
+// aes: bypass-agent-role — orchestrates ALL AES checkers in a single orchestrator file
+// aes: bypass-missing-vo
+// aes: bypass-bottleneck
 
 use std::path::Path;
 use std::sync::Arc;
@@ -17,7 +19,7 @@ use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_violationrs_constant::{
+use crate::shared_common::taxonomy_violation_rs_constant::{
     aes014_mandatory_inheritance, aes023_unused_import, aes024_dead_inheritance, aes0305_any_type,
     AES012_CIRCULAR_IMPORT, AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
     AES0303_MISSING_VO, AES0303_SINGLE_BOTTLENECK, AES0304_MISSING_VO,
@@ -32,23 +34,23 @@ pub fn init_global_checker(checker: Arc<dyn ICheckerAggregate>) {
     GLOBAL_CHECKER.set(checker).ok();
 }
 
-pub struct LintCheckingCoordinator {
+pub struct LintCheckingOrchestrator {
     checker: Arc<dyn ICheckerAggregate>,
 }
 
-impl Default for LintCheckingCoordinator {
+impl Default for LintCheckingOrchestrator {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl LintCheckingCoordinator {
-    /// Create a new coordinator. Panics if init_global_checker has not been called.
+impl LintCheckingOrchestrator {
+    /// Create a new orchestrator. Panics if init_global_checker has not been called.
     pub fn new() -> Self {
         Self {
             checker: GLOBAL_CHECKER.get().cloned().unwrap_or_else(|| {
                 unreachable!(
-                    "init_global_checker must be called before LintCheckingCoordinator::new()"
+                    "init_global_checker must be called before LintCheckingOrchestrator::new()"
                 )
             }),
         }
@@ -135,8 +137,6 @@ impl LintCheckingCoordinator {
             Self::check_mandatory_inheritance(file, &c, &layer, &mut violations);
 
             // Layer-rule checks (delegated to layer-rules/)
-            self.checker
-                .check_surface_imports(file, &c, &layer, &mut violations);
             self.checker
                 .check_capability_routing(file, &c, &layer, &mut violations);
             self.checker

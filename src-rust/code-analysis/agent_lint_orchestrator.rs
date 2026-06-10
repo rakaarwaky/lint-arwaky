@@ -50,10 +50,10 @@ impl ArchitectureLintOrchestrator {
             return Vec::new();
         }
         let root_dir = src_dir.to_string_lossy().to_string();
-        let coordinator =
-            crate::code_analysis::agent_checking_coordinator::LintCheckingCoordinator::new();
         let files_str: Vec<String> = files.iter().map(|f| f.value.clone()).collect();
-        coordinator.run_all_checks(&config, &files_str, &root_dir)
+        let orchestrator =
+            crate::code_analysis::agent_checking_orchestrator::LintCheckingOrchestrator::new();
+        orchestrator.run_all_checks(&config, &files_str, &root_dir)
     }
 
     pub fn format_report(&self, results: &[LintResult], project_root: &str) -> String {

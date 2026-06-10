@@ -1,16 +1,6 @@
 // aes: bypass-missing-vo
 // aes: bypass-bottleneck
-// surface_hierarchy_checker — AES018/AES019 for surface hierarchy enforcement.
-//
-// AES018 SURFACE_HIERARCHY_VIOLATION:
-// A file that is NOT an __init__.py barrel in the surfaces layer is not
-// imported from the layer __init__.py — meaning it is unreachable from the
-// surface entry point.
-//
-// AES019 PASSIVE_SURFACE_VIOLATION:
-// A surface file contains complex domain logic (many public methods, deep
-// control flow) instead of acting as a thin pass-through to the agent layer.
-// Surfaces must be declarative/passive — I/O parsing + delegation only.
+// PURPOSE: AES0306 — Enforce surface hierarchy (barrel wiring) and passive surface checks.
 
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
@@ -21,7 +11,7 @@ use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_violationrs_constant::{
+use crate::shared_common::taxonomy_violation_rs_constant::{
     aes0306_hierarchy_violation, aes0306_passive_violation_details,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
@@ -50,7 +40,7 @@ const MAX_PUBLIC_METHODS: usize = 10;
 const MAX_FUNCTION_BODY_LINES: i64 = 80;
 const MAX_IF_DEPTH: usize = 3;
 
-/// AES018 + AES019 — surface barrel wiring and passivity checks.
+/// AES0306 — surface barrel wiring and passivity checks.
 pub struct SurfaceHierarchyChecker;
 
 impl Default for SurfaceHierarchyChecker {
@@ -64,7 +54,7 @@ impl SurfaceHierarchyChecker {
         Self
     }
 
-    /// Main entry point — run AES018 (barrel wiring) and AES019 (passive surface).
+    /// Main entry point — run AES0306 checks (barrel wiring + passive surface).
     pub fn check_surface_hierarchy(
         &self,
         files: &[FilePath],

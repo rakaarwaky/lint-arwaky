@@ -140,7 +140,7 @@ Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[
 | `contract_`    | `_port`, `_protocol`, `_aggregate` |
 | `capabilities_` | `_analyzer`, `_checker`, `_processor`, etc. |
 | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc. |
-| `agent_`       | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager` |
+| `agent_`       | `_container`, `_orchestrator`, `_lifecycle` |
 | `surface_`     | `_command`, `_handler`, `_controller` |
 
 ### Feature folders (vertical slicing)

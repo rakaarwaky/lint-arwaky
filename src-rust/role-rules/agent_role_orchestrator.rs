@@ -1,3 +1,5 @@
+// PURPOSE: Route files to the correct role checker based on filename prefix (taxonomy/contract/agent/surface).
+// Dispatches to ITaxonomyRoleChecker/IContractRoleChecker for actual enforcement.
 // aes: wired-by-dispatch
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::role_rules::contract_role_aggregate::IRoleAggregate;
@@ -29,16 +31,11 @@ impl RoleOrchestrator {
                         checker.check_container(file, &content, violations);
                     } else if filename.contains("_orchestrator") {
                         checker.check_orchestrator(file, &content, violations);
-                    } else if filename.contains("_coordinator") {
-                        checker.check_coordinator(file, &content, violations);
-                    } else if filename.contains("_registry") {
-                        checker.check_registry(file, &content, violations);
-                    } else if filename.contains("_manager") {
-                        checker.check_manager(file, &content, violations);
-                    } else if filename.contains("_mixin") {
-                        checker.check_mixin(file, &content, violations);
-                    } else if filename.contains("_state") {
-                        checker.check_state(file, &content, violations);
+                    } else if filename.contains("_lifecycle")
+                        || filename.contains("_manager")
+                        || filename.contains("_state")
+                    {
+                        checker.check_lifecycle(file, &content, violations);
                     }
                 }
                 "surfaces" | "surface" => {

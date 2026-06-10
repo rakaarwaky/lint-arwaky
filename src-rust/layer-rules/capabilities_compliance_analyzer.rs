@@ -1,4 +1,4 @@
-// arch_compliance_analyzer — Layer detection and config resolution.
+// PURPOSE: Layer detection — Map files to AES layers via filename prefix (FRD v1.1), directory fallback, or path matching.
 // Provides detect_layer/detect_module_layer for identifying which AES layer a file belongs to.
 
 use std::collections::HashMap;

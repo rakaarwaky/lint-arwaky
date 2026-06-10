@@ -34,7 +34,7 @@ The codebase uses **6 architectural layers** as file prefixes, organized into **
 | `contract_`    | `_port`, `_protocol`, `_aggregate` |
 | `capabilities_` | `_checker`, `_analyzer`, `_processor`, etc. |
 | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc. |
-| `agent_`       | `_container`, `_orchestrator`, `_coordinator`, `_registry`, `_manager` |
+| `agent_`       | `_container`, `_orchestrator`, `_lifecycle` |
 | `surface_`     | `_command`, `_handler`, `_controller` |
 
 ### Feature folders

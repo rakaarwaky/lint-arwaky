@@ -12,9 +12,9 @@ use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_layer_names_vo::layer_infrastructure;
-use crate::shared_common::taxonomy_violationrs_constant::{
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_violation_rs_constant::{
     aes0305_any_type, aes0305_must_implement_contract, AES0305_COORDINATES_MULTIPLE,
     AES0305_HIGH_LEVEL_POLICY, AES0305_LAZY_EAGER_INIT, AES0305_MUST_IMPLEMENT_CONTRACT,
     AES0305_NO_DOMAIN_LOGIC, AES0305_STATELESS_EXECUTION,
@@ -39,19 +39,7 @@ impl AgentRoleChecker {
     pub fn check_orchestrator(&self) -> Vec<LintResult> {
         vec![]
     }
-    pub fn check_coordinator(&self) -> Vec<LintResult> {
-        vec![]
-    }
-    pub fn check_registry(&self) -> Vec<LintResult> {
-        vec![]
-    }
-    pub fn check_manager(&self) -> Vec<LintResult> {
-        vec![]
-    }
-    pub fn check_mixin(&self) -> Vec<LintResult> {
-        vec![]
-    }
-    pub fn check_state(&self) -> Vec<LintResult> {
+    pub fn check_lifecycle(&self) -> Vec<LintResult> {
         vec![]
     }
 

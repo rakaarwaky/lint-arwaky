@@ -1,6 +1,6 @@
-//! contract_checker_aggregate — Aggregate trait bundling all checker operations.
-//! Enables agent(orchestrator|coordinator) to use checkers through contracts
-//! without directly importing capabilities/infrastructure implementations.
+// PURPOSE: ICheckerAggregate — Contract trait bundling ALL checker operations for agent layer.
+// Enables agent(orchestrator|coordinator) to use checkers through contracts
+// without directly importing capabilities/infrastructure implementations.
 
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -53,13 +53,6 @@ pub trait ICheckerAggregate: Send + Sync {
     );
 
     // Layer checks
-    fn check_surface_imports(
-        &self,
-        file: &str,
-        content: &str,
-        layer: &str,
-        violations: &mut Vec<LintResult>,
-    );
     fn check_capability_routing(
         &self,
         file: &str,

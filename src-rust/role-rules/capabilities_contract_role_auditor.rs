@@ -1,7 +1,7 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violationrs_constant::aes013_forbidden_inheritance;
+use crate::shared_common::taxonomy_violation_rs_constant::aes013_forbidden_inheritance;
 
 pub struct ContractRoleChecker {}
 

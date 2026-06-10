@@ -1,7 +1,7 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violationrs_constant::{
-    aes016_primitive_usage, AES015_CONSTANT_PURITY,
+use crate::shared_common::taxonomy_violation_rs_constant::{
+    aes0301_primitive_usage, AES0301_CONSTANT_PURITY,
 };
 use std::fs;
 use std::path::Path;
@@ -121,9 +121,9 @@ impl TaxonomyRoleChecker {
                             violations.push(LintResult::new_arch(
                                 file,
                                 i + 1,
-                                "AES016",
+                                "AES0301",
                                 Severity::HIGH,
-                                &aes016_primitive_usage(p),
+                                &aes0301_primitive_usage(p),
                             ));
                             break;
                         }
@@ -135,9 +135,9 @@ impl TaxonomyRoleChecker {
                     violations.push(LintResult::new_arch(
                         file,
                         i + 1,
-                        "AES016",
+                        "AES0301",
                         Severity::HIGH,
-                        &aes016_primitive_usage(p),
+                        &aes0301_primitive_usage(p),
                     ));
                     break;
                 }
@@ -212,9 +212,9 @@ impl TaxonomyRoleChecker {
                     violations.push(LintResult::new_arch(
                         file,
                         i + 1,
-                        "AES015",
+                        "AES0301",
                         Severity::HIGH,
-                        AES015_CONSTANT_PURITY,
+                        AES0301_CONSTANT_PURITY,
                     ));
                 }
             }

@@ -1,7 +1,8 @@
+// PURPOSE: AES0303 — Detect capability routing bottlenecks (single bottleneck, missing dispatch).
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violationrs_constant::{
-    aes0303_capability_routing, AES001_SURFACE_DEPENDENCY,
+use crate::shared_common::taxonomy_violation_rs_constant::{
+    aes0303_capability_routing,
 };
 
 pub struct ArchLayerChecker {}
@@ -15,35 +16,6 @@ impl Default for ArchLayerChecker {
 impl ArchLayerChecker {
     pub fn new() -> Self {
         Self {}
-    }
-
-    pub fn check_surface_imports(
-        &self,
-        file: &str,
-        content: &str,
-        layer: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
-        if layer != "surfaces" && !layer.starts_with("surfaces(") {
-            return;
-        }
-        for (i, line) in content.lines().enumerate() {
-            let t = line.trim();
-            if t.starts_with("use ")
-                && (t.contains("::capabilities::")
-                    || t.contains("::infrastructure::")
-                    || t.contains("::agent::"))
-            {
-                violations.push(LintResult::new_arch(
-                    file,
-                    i + 1,
-                    "AES001",
-                    Severity::CRITICAL,
-                    AES001_SURFACE_DEPENDENCY,
-                ));
-                break;
-            }
-        }
     }
 
     pub fn check_capability_routing(

@@ -67,8 +67,7 @@ architecture:
     agent:
       suffix:
         - strict:
-            ["container", "manager", "orchestrator", "registry", "coordinator",
-             "mixin", "state"]
+            ["container", "orchestrator", "lifecycle"]
 
   rules:
     AES001:
@@ -111,17 +110,17 @@ architecture:
           mandatory: ["taxonomy", "contract(port)"]
           forbidden: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
 
-        - scope: "agent(container|registry|mixin)"
+        - scope: "agent(container)"
           allowed: ["taxonomy", "contract", "infrastructure", "capabilities"]
           mandatory: ["taxonomy", "contract"]
           forbidden: ["surfaces", "root"]
 
-        - scope: "agent(orchestrator|coordinator)"
+        - scope: "agent(orchestrator)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["surfaces", "agent(orchestrator|coordinator|manager|handler|result|state)", "agent(container|registry|mixin)", "infrastructure", "capabilities", "root"]
+          forbidden: ["surfaces", "agent(lifecycle)", "agent(container)", "infrastructure", "capabilities", "root"]
 
-        - scope: "agent(manager|state)"
+        - scope: "agent(lifecycle)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(aggregate)"]
           forbidden: ["agent", "infrastructure", "capabilities", "surfaces", "root"]
@@ -183,7 +182,7 @@ architecture:
 
     AES0305:
       enabled: true
-      scope: ["agent(container|registry|mixin)", "agent(orchestrator|coordinator)", "agent(manager|state)"]
+      scope: ["agent(container)", "agent(orchestrator)", "agent(lifecycle)"]
       max_lines: 300
       exceptions: ["__init__.py", "__main__.py"]
 

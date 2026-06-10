@@ -19,7 +19,7 @@ use lint_arwaky::cli_commands::surface_report_command;
 use lint_arwaky::cli_commands::surface_setup_command;
 use lint_arwaky::cli_commands::surface_watch_command;
 use lint_arwaky::cli_commands::taxonomy_command_target_vo;
-use lint_arwaky::code_analysis::agent_checking_coordinator::init_global_checker;
+use lint_arwaky::code_analysis::agent_checking_orchestrator::init_global_checker;
 use lint_arwaky::config_system::taxonomy_config_vo::default_aes_config;
 use lint_arwaky::di_containers::agent_checker_container::CheckerContainer;
 use lint_arwaky::di_containers::agent_injection_container::DependencyInjectionContainer;

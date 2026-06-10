@@ -21,7 +21,7 @@ use crate::file_watch::contract_watch_aggregate::DirectoryWatchAggregate;
 use crate::file_watch::taxonomy_result_vo::WatchResult;
 use crate::layer_rules::contract_compliance_port::IArchCompliancePort;
 use crate::layer_rules::contract_compliance_protocol::IArchComplianceProtocol;
-use crate::layer_rules::contract_coordinator_aggregate::ArchCoordinatorAggregate;
+use crate::layer_rules::contract_rules_orchestrator::ArchRulesOrchestratorAggregate;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
@@ -38,9 +38,9 @@ use crate::shared_common::taxonomy_common_vo::Score;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_definition_vo::LayerMapVO;
 use crate::shared_common::taxonomy_duration_vo::Duration;
+use crate::shared_common::taxonomy_layer_names_constant::LAYER_GLOBAL;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
-use crate::shared_common::taxonomy_layer_names_constant::LAYER_GLOBAL;
 use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -324,11 +324,11 @@ impl ArchitectureOrchestrator {
     }
 }
 
-pub struct ArchComplianceCoordinator {
+pub struct ArchComplianceOrchestrator {
     orchestrators: Vec<Box<dyn IArchComplianceProtocol + Send + Sync>>,
 }
 
-impl ArchComplianceCoordinator {
+impl ArchComplianceOrchestrator {
     pub fn new(
         compliance_orchestrator: Box<dyn IArchComplianceProtocol + Send + Sync>,
         additional_orchestrators: Option<Vec<Box<dyn IArchComplianceProtocol + Send + Sync>>>,
@@ -346,9 +346,9 @@ impl ArchComplianceCoordinator {
 }
 
 #[async_trait]
-impl ArchCoordinatorAggregate for ArchComplianceCoordinator {
+impl ArchRulesOrchestratorAggregate for ArchComplianceOrchestrator {
     async fn check_compliance(&self, path: &FilePath) -> ComplianceStatus {
-        let result = ArchCoordinatorAggregate::scan(self, path).await;
+        let result = ArchRulesOrchestratorAggregate::scan(self, path).await;
         ComplianceStatus::new(result.values.is_empty())
     }
 
@@ -367,13 +367,13 @@ impl ArchCoordinatorAggregate for ArchComplianceCoordinator {
 }
 
 #[async_trait]
-impl IArchCompliancePort for ArchComplianceCoordinator {
+impl IArchCompliancePort for ArchComplianceOrchestrator {
     async fn scan(&self, path: &FilePath) -> LintResultList {
-        (self as &dyn ArchCoordinatorAggregate).scan(path).await
+        (self as &dyn ArchRulesOrchestratorAggregate).scan(path).await
     }
 
     async fn apply_fix(&self, path: &FilePath) -> ComplianceStatus {
-        (self as &dyn ArchCoordinatorAggregate)
+        (self as &dyn ArchRulesOrchestratorAggregate)
             .apply_fix(path)
             .await
     }

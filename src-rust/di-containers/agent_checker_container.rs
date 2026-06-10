@@ -11,7 +11,8 @@ use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
 use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
-use crate::layer_rules::capabilities_import_checker::ArchImportRuleChecker;
+use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
+use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::capabilities_orphan_analyzer::OrphanGraphResolver;
@@ -25,7 +26,8 @@ use std::collections::HashSet;
 
 pub struct CheckerContainer {
     analyzer: ArchComplianceAnalyzer,
-    import_checker: ArchImportRuleChecker,
+    import_forbidden_checker: ArchImportForbiddenChecker,
+    import_mandatory_checker: ArchImportMandatoryChecker,
     line_checker: ArchLineChecker,
     class_checker: ArchClassChecker,
     taxonomy_checker: TaxonomyRoleChecker,
@@ -39,7 +41,8 @@ impl CheckerContainer {
     pub fn new(config: ArchitectureConfig) -> Self {
         Self {
             analyzer: ArchComplianceAnalyzer::new(config),
-            import_checker: ArchImportRuleChecker::new(),
+            import_forbidden_checker: ArchImportForbiddenChecker::new(),
+            import_mandatory_checker: ArchImportMandatoryChecker::new(),
             line_checker: ArchLineChecker::new(),
             class_checker: ArchClassChecker::new(),
             taxonomy_checker: TaxonomyRoleChecker::new(),
@@ -66,7 +69,7 @@ impl ICheckerAggregate for CheckerContainer {
         def: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
-        self.import_checker
+        self.import_mandatory_checker
             .check_mandatory_imports(file, def, violations);
     }
 
@@ -77,7 +80,7 @@ impl ICheckerAggregate for CheckerContainer {
         def: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
-        self.import_checker
+        self.import_forbidden_checker
             .check_forbidden_imports(file, layer, def, violations);
     }
 
@@ -87,7 +90,7 @@ impl ICheckerAggregate for CheckerContainer {
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        self.import_checker
+        self.import_forbidden_checker
             .check_scope_forbidden_imports(file, config, violations);
     }
 
@@ -98,7 +101,7 @@ impl ICheckerAggregate for CheckerContainer {
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        self.import_checker
+        self.import_forbidden_checker
             .check_legacy_import_rules(file, file_layer, config, violations);
     }
 
@@ -109,17 +112,6 @@ impl ICheckerAggregate for CheckerContainer {
         violations: &mut Vec<LintResult>,
     ) {
         self.line_checker.check_line_counts(file, def, violations);
-    }
-
-    fn check_surface_imports(
-        &self,
-        file: &str,
-        content: &str,
-        layer: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
-        self.layer_checker
-            .check_surface_imports(file, content, layer, violations);
     }
 
     fn check_capability_routing(

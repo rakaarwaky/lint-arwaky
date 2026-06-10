@@ -12,7 +12,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_violationrs_constant::{
+use crate::shared_common::taxonomy_violation_rs_constant::{
     aes010_naming_convention, AES011_SUFFIX_FORBIDDEN, AES011_SUFFIX_MISMATCH,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;

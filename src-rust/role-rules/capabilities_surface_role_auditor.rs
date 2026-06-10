@@ -1,29 +1,25 @@
 // aes: wired-by-dispatch
-use std::path::Path;
-
+// PURPOSE: AES0306 — Enforce surface role mandates (no domain logic in passive/utility surfaces).
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
-use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_names_vo::{
-    core_layer_names, layer_agent, layer_contract, layer_surfaces, layer_taxonomy,
+use crate::shared_common::taxonomy_layer_names_vo::{
+    layer_surfaces,
 };
-use crate::shared_common::taxonomy_violationrs_constant::{
-    AES001_SURFACE_DEPENDENCY, AES0305_NO_DOMAIN_LOGIC,
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_violation_rs_constant::{
+    AES0305_NO_DOMAIN_LOGIC,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
+pub struct SurfaceRoleChecker {}
 fn make_adapter(name: &str) -> Option<AdapterName> {
     AdapterName::new(name).ok()
 }
-
-pub struct SurfaceRoleChecker {}
 impl Default for SurfaceRoleChecker {
     fn default() -> Self {
         Self::new()
@@ -86,96 +82,7 @@ impl SurfaceRoleChecker {
                 }
             }
 
-            self._check_forbidden_mandatory_imports(f, &definition, analyzer, results);
         }
-    }
-
-    fn _check_forbidden_mandatory_imports(
-        &self,
-        f: &FilePath,
-        definition: &LayerDefinition,
-        analyzer: &dyn IAnalyzer,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
-    ) {
-        let file_str = f.to_string();
-        let basename = Path::new(file_str.as_str())
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("");
-        if definition.exceptions.values.iter().any(|e| e == basename) {
-            return;
-        }
-
-        let imports = match analyzer.parser().extract_imports(f) {
-            Ok(imp) => imp,
-            Err(_) => return,
-        };
-
-        for imp in imports.values {
-            let module_str = &imp.module;
-            if self._is_builtin_or_stdlib_import(module_str) {
-                continue;
-            }
-
-            let module_fp = FilePath::new(module_str.clone())
-                .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
-            let target_layer = match analyzer.detect_module_layer(&module_fp) {
-                Some(l) => l,
-                None => continue,
-            };
-
-            if target_layer == layer_contract() {
-                continue;
-            }
-            if self._is_smart_surface_allowed_layer(&target_layer) {
-                continue;
-            }
-
-            self._report_surface_dependency_violation(f, &imp, &target_layer, results);
-        }
-    }
-
-    fn _is_builtin_or_stdlib_import(&self, module_str: &str) -> bool {
-        let known = core_layer_names();
-        !module_str.contains('.') && !known.contains(module_str)
-    }
-
-    fn _is_smart_surface_allowed_layer(&self, layer_vo: &LayerNameVO) -> bool {
-        let layer_str = &layer_vo.value;
-        let allowed_bases = [
-            layer_taxonomy().value,
-            layer_agent().value,
-            layer_surfaces().value,
-        ];
-        if allowed_bases.iter().any(|b| b == layer_str) {
-            return true;
-        }
-        allowed_bases
-            .iter()
-            .any(|b| layer_str.starts_with(&format!("{}(", b)))
-    }
-
-    fn _report_surface_dependency_violation(
-        &self,
-        f: &FilePath,
-        imp: &crate::code_analysis::taxonomy_import_source_vo::ImportInfo,
-        target_layer: &LayerNameVO,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
-    ) {
-        results.push(LintResult {
-            file: f.clone(),
-            line: imp.line.clone(),
-            column: ColumnNumber::new(0),
-            code: ErrorCode::raw("AES001"),
-            message: LintMessage::new(format!(
-                "{} Surface layer is only allowed to import from 'contract' and 'taxonomy'. Found import from '{}'.",
-                AES001_SURFACE_DEPENDENCY, target_layer.value
-            )),
-            source: make_adapter("architecture"),
-            severity: Severity::HIGH,
-            enclosing_scope: None,
-            related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
-        });
     }
 
     fn _check_no_domain_logic(

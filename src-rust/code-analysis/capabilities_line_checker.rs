@@ -5,7 +5,7 @@ use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violationrs_constant::{
+use crate::shared_common::taxonomy_violation_rs_constant::{
     AES020_FILE_TOO_LARGE_MSG, AES021_FILE_TOO_SHORT_MSG,
 };
 
