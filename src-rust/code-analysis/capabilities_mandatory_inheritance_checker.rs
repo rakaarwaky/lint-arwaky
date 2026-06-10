@@ -1,9 +1,10 @@
-// PURPOSE: MandatoryInheritanceChecker — IMandatoryInheritanceProtocol for AES014: enforce contract implementation
+// PURPOSE: MandatoryInheritanceChecker — IMandatoryInheritanceProtocol for AES014: enforce contract implementation (bidirectional)
 use crate::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use regex::Regex;
 use std::path::Path;
 
 pub struct MandatoryInheritanceChecker {}
@@ -21,6 +22,7 @@ impl MandatoryInheritanceChecker {
 }
 
 impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
+    /// One-way: file that imports contract must implement it.
     fn check_mandatory_inheritance(
         &self,
         file: &str,
@@ -79,7 +81,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                     }
                 }
             }
-            // Python: `from ...contract_suffix import ContractName` or `from ... import ContractName`
+            // Python
             if t.starts_with("from ")
                 && contract_suffixes.iter().any(|s| t.contains(s.as_str()))
                 && t.contains("import ")
@@ -97,12 +99,11 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                     }
                 }
             }
-            // JS/TS: `import { ContractName } from '...contract_suffix...'` or `import ContractName from '...'`
+            // JS/TS
             if t.starts_with("import ")
                 && t.contains("from")
                 && contract_suffixes.iter().any(|s| t.contains(s.as_str()))
             {
-                // Named imports: `import { Foo, Bar } from '...'`
                 if let Some(brace_start) = t.find('{') {
                     if let Some(brace_end) = t.find('}') {
                         let names_part = &t[brace_start + 1..brace_end];
@@ -118,7 +119,6 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                         }
                     }
                 }
-                // Default import: `import ContractName from '...'`
                 if !t.contains('{') {
                     let after_import = t.trim_start_matches("import ").trim();
                     if let Some(space_pos) = after_import.find(' ') {
@@ -138,22 +138,13 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
         let has_impl = imported
             .iter()
             .any(|t| content.contains(&format!("impl {} for ", t)));
-        // Python: `class Y(ContractName):` with non-empty body
         let has_python_impl = imported.iter().any(|t| {
             let pattern = format!("({})", t);
             content.lines().any(|line| {
                 let lt = line.trim();
-                if lt.starts_with("class ") && lt.contains(&pattern) && lt.ends_with(':') {
-                    // Check next non-empty line is not just `pass`
-                    // We do a simple heuristic: if the class line itself ends with `: pass` skip,
-                    // but here we check if there's a real implementation block
-                    true
-                } else {
-                    false
-                }
+                lt.starts_with("class ") && lt.contains(&pattern) && lt.ends_with(':')
             })
         });
-        // JS/TS: `class Y extends ContractName {` with non-empty body
         let has_js_impl = imported.iter().any(|t| {
             let pattern = format!("extends {} ", t);
             content.lines().any(|line| {
@@ -162,90 +153,21 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
             })
         });
 
-        // For Python, filter out empty classes (class Y(X): pass)
-        let has_real_python_impl = if has_python_impl {
-            imported.iter().any(|t| {
-                let pattern = format!("({})", t);
-                let lines: Vec<&str> = content.lines().collect();
-                for (idx, line) in lines.iter().enumerate() {
-                    let lt = line.trim();
-                    if lt.starts_with("class ") && lt.contains(&pattern) && lt.ends_with(':') {
-                        // Check if body is only `pass`
-                        let class_indent = line.len() - line.trim_start().len();
-                        let mut body_lines: Vec<&str> = Vec::new();
-                        for next_line in lines.iter().skip(idx + 1) {
-                            if next_line.trim().is_empty() {
-                                continue;
-                            }
-                            let next_indent = next_line.len() - next_line.trim_start().len();
-                            if next_indent <= class_indent {
-                                break;
-                            }
-                            body_lines.push(next_line.trim());
-                        }
-                        if body_lines.is_empty()
-                            || (body_lines.len() == 1 && body_lines[0] == "pass")
-                        {
-                            continue; // empty class, not a real impl
-                        }
-                        return true;
-                    }
-                }
-                false
-            })
-        } else {
-            false
-        };
-
-        // For JS, filter out empty classes (class Y extends X {})
-        let has_real_js_impl = if has_js_impl {
-            imported.iter().any(|t| {
-                let pattern = format!("extends {} ", t);
-                content.lines().any(|line| {
-                    let lt = line.trim();
-                    if lt.starts_with("class ") && lt.contains(&pattern) && lt.contains('{') {
-                        // Check if body is empty: `class Y extends X {}`
-                        if let Some(brace_pos) = lt.find('{') {
-                            let after_brace = lt[brace_pos + 1..].trim();
-                            if after_brace == "}" {
-                                return false; // empty class
-                            }
-                        }
-                        true
-                    } else {
-                        false
-                    }
-                })
-            })
-        } else {
-            false
-        };
-
-        if !has_impl && !has_real_python_impl && !has_real_js_impl {
+        if !has_impl && !has_python_impl && !has_js_impl {
             let all_are_deps: bool = imported.iter().all(|t| {
-                // Rust dyn
                 content.contains(&format!("Arc<dyn {}>", t))
                     || content.contains(&format!("Box<dyn {}>", t))
                     || content.contains(&format!("&dyn {}", t))
-                    || content.contains(&format!("&dyn mut {}", t))
-                    // Python: injected as parameter type hint or stored as attribute
                     || content.contains(&format!(": {}", t))
                     || content.contains(&format!(": Optional[{}]", t))
-                    // JS/TS: typed parameters or properties
-                    || content.contains(&format!(": {}", t))
-                    || content.contains(&format!(": {} |", t))
-                    || content.contains(&format!("| {}", t))
             });
             if !all_are_deps {
                 for t in &imported {
                     if !content.contains(&format!("Arc<dyn {}>", t))
                         && !content.contains(&format!("Box<dyn {}>", t))
                         && !content.contains(&format!("&dyn {}", t))
-                        && !content.contains(&format!("&dyn mut {}", t))
                         && !content.contains(&format!(": {}", t))
                         && !content.contains(&format!(": Optional[{}]", t))
-                        && !content.contains(&format!(": {} |", t))
-                        && !content.contains(&format!("| {}", t))
                     {
                         violations.push(LintResult::new_arch(
                             file,
@@ -259,57 +181,132 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
             }
         }
 
-        // Also flag empty inheritance bodies: Python `class Y(X): pass` and JS `class Y extends X {}`
+        // Flag empty inheritance bodies
         for t in &imported {
             let pattern_py = format!("({})", t);
             let lines: Vec<&str> = content.lines().collect();
             for (idx, line) in lines.iter().enumerate() {
                 let lt = line.trim();
-                // Python empty inheritance
                 if lt.starts_with("class ") && lt.contains(&pattern_py) && lt.ends_with(':') {
                     let class_indent = line.len() - line.trim_start().len();
                     let mut body_lines: Vec<&str> = Vec::new();
                     for next_line in lines.iter().skip(idx + 1) {
-                        if next_line.trim().is_empty() {
-                            continue;
-                        }
+                        if next_line.trim().is_empty() { continue; }
                         let next_indent = next_line.len() - next_line.trim_start().len();
-                        if next_indent <= class_indent {
-                            break;
-                        }
+                        if next_indent <= class_indent { break; }
                         body_lines.push(next_line.trim());
                     }
                     if body_lines.is_empty() || (body_lines.len() == 1 && body_lines[0] == "pass") {
-                        violations.push(LintResult::new_arch(
-                            file,
-                            idx + 1,
-                            "AES014",
-                            Severity::HIGH,
-                            &aes014_mandatory_inheritance(t),
-                        ));
+                        violations.push(LintResult::new_arch(file, idx + 1, "AES014", Severity::HIGH, &aes014_mandatory_inheritance(t)));
                     }
                 }
-                // JS/TS empty inheritance
                 let pattern_js = format!("extends {} ", t);
                 if lt.starts_with("class ") && lt.contains(&pattern_js) && lt.contains('{') {
                     if let Some(brace_pos) = lt.find('{') {
                         let after_brace = lt[brace_pos + 1..].trim();
                         if after_brace == "}" {
-                            violations.push(LintResult::new_arch(
-                                file,
-                                idx + 1,
-                                "AES014",
-                                Severity::HIGH,
-                                &aes014_mandatory_inheritance(t),
-                            ));
+                            violations.push(LintResult::new_arch(file, idx + 1, "AES014", Severity::HIGH, &aes014_mandatory_inheritance(t)));
                         }
                     }
                 }
             }
         }
     }
+
+    /// Bidirectional: contract file must be implemented by expected layer.
+    fn check_contract_implementation(
+        &self,
+        file: &str,
+        content: &str,
+        all_files: &[String],
+        violations: &mut Vec<LintResult>,
+    ) {
+        let filename = Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        let stem = filename.rsplit('.').next_back().unwrap_or(filename);
+        let suffix = stem.rsplit('_').next().unwrap_or("");
+
+        let target_prefix = match suffix {
+            "port" => "infrastructure",
+            "protocol" => "capabilities",
+            "aggregate" => "agent",
+            _ => return,
+        };
+
+        let trait_name = match extract_trait_name(content) {
+            Some(t) => t,
+            None => return,
+        };
+
+        let mut has_impl = false;
+        for cf in all_files {
+            let cb = cf.split('/').next_back().unwrap_or("");
+            if !cb.starts_with(target_prefix) {
+                continue;
+            }
+            if let Ok(c) = std::fs::read_to_string(cf) {
+                if c.contains(&format!("impl {} for", trait_name)) {
+                    has_impl = true;
+                    break;
+                }
+                if c.contains(&format!("({})", trait_name)) {
+                    has_impl = true;
+                    break;
+                }
+                if c.contains(&format!("extends {} ", trait_name))
+                    || c.contains(&format!("implements {} ", trait_name))
+                {
+                    has_impl = true;
+                    break;
+                }
+            }
+        }
+
+        if !has_impl {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES014",
+                Severity::HIGH,
+                &aes014_bidirectional(&trait_name, suffix, target_prefix),
+            ));
+        }
+    }
+}
+
+fn extract_trait_name(content: &str) -> Option<String> {
+    // Rust: pub trait ITraitName (must start with I or uppercase, not a keyword)
+    let re_rust = Regex::new(r"(?:pub\s+)?trait\s+([A-Z][A-Za-z0-9_]+)").ok()?;
+    for cap in re_rust.captures_iter(content) {
+        let name = cap[1].to_string();
+        // Skip Rust keywords
+        if name == "For" || name == "And" || name == "Or" || name == "Self" {
+            continue;
+        }
+        return Some(name);
+    }
+    // Python: class ITraitName
+    let re_py = Regex::new(r"class\s+([A-Z][A-Za-z0-9_]+)").ok()?;
+    if let Some(caps) = re_py.captures(content) {
+        return Some(caps[1].to_string());
+    }
+    // JS/TS: export interface ITraitName
+    let re_ts = Regex::new(r"(?:export\s+)?interface\s+([A-Z][A-Za-z0-9_]+)").ok()?;
+    if let Some(caps) = re_ts.captures(content) {
+        return Some(caps[1].to_string());
+    }
+    None
 }
 
 fn aes014_mandatory_inheritance(contracts: &str) -> String {
     format!("AES014 MANDATORY_INHERITANCE: File imports contracts ({}) but no class inherits from them.\nWHY? Layers that import contracts must provide an implementation.\nFIX: Add impl TraitName for YourStruct.", contracts)
+}
+
+fn aes014_bidirectional(trait_name: &str, contract_suffix: &str, expected_layer: &str) -> String {
+    format!(
+        "AES014 MANDATORY_INHERITANCE: Contract {} '{}' must be implemented by {}_* layer.\n        WHY? Contracts define interfaces that must be fulfilled by the expected layer.\n        FIX: Create a {}_* file that implements '{}'.",
+        contract_suffix, trait_name, expected_layer, expected_layer, trait_name
+    )
 }

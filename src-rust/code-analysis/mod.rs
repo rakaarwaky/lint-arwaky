@@ -35,8 +35,8 @@ pub use capabilities_single_bottleneck_checker::SingleBottleneckChecker;
 pub mod capabilities_missing_vo_checker;
 pub use capabilities_missing_vo_checker::MissingVoChecker;
 
-pub mod contract_checker_aggregate;
-pub use contract_checker_aggregate::ICheckerAggregate;
+pub mod contract_layer_detection_aggregate;
+pub use contract_layer_detection_aggregate::ILayerDetectionAggregate;
 pub mod contract_adapter_port;
 pub use contract_adapter_port::ILinterAdapterPort;
 pub mod contract_analysis_protocol;

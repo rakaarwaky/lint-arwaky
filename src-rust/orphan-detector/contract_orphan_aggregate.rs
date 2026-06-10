@@ -1,5 +1,5 @@
 // PURPOSE: IOrphanAggregate — aggregate trait bundling all orphan detection protocols
-use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
+use crate::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use std::collections::HashSet;
@@ -9,7 +9,7 @@ pub trait IOrphanAggregate: Send + Sync {
     fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String>;
     fn check_orphans(
         &self,
-        checker: &dyn ICheckerAggregate,
+        layer_detector: &dyn ILayerDetectionAggregate,
         files: &[String],
         root_dir: &str,
     ) -> Vec<LintResult>;

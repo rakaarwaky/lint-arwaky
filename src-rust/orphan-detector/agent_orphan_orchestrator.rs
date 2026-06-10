@@ -1,5 +1,5 @@
 // PURPOSE: IOrphanAggregate — aggregate trait implementing all orphan detection protocols
-use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
+use crate::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use crate::code_analysis::taxonomy_analysis_vo::ImportGraph;
@@ -300,7 +300,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     /// Check orphans for all files in the given list via the checker aggregate for layer detection.
     fn check_orphans(
         &self,
-        checker: &dyn ICheckerAggregate,
+        layer_detector: &dyn ILayerDetectionAggregate,
         files: &[String],
         root_dir: &str,
     ) -> Vec<LintResult> {
@@ -318,12 +318,12 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         // Evaluate each file
         for f in files {
             let file_fp = FilePath::new(f.clone()).unwrap_or_default();
-            let layer_str = match checker.detect_layer(f, root_dir) {
+            let layer_str = match layer_detector.detect_layer(f, root_dir) {
                 Some(l) => l,
                 None => continue,
             };
 
-            let definition = match checker.get_layer_def(&layer_str) {
+            let definition = match layer_detector.get_layer_def(&layer_str) {
                 Some(d) => d,
                 None => continue,
             };

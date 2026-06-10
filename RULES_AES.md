@@ -18,13 +18,13 @@
 | AES022  | Bypass Comment         | CRITICAL | File & Content     | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`).         |
 | AES023  | Unused Import          | MEDIUM   | File & Content     | Symbol is imported but never used.                                                            |
 | AES024  | Mandatory Definition   | HIGH     | File & Content     | File must have at least one struct/enum/trait, and definitions must not be empty.             |
-| AES030  | Orphan Code            | MEDIUM   | Role Violations    | File is not imported by anyone and is not an entry point.                                     |
+| AES030  | Orphan Code            | LOW      | Role Violations    | File is not imported by anyone and is not an entry point.                                     |
 | AES0301 | Taxonomy Role          | HIGH     | Role Violations    | Constant purity violation or primitive usage in domain models.                                |
-| AES0302 | Contract Role          | HIGH     | Role Violations    | Contract trait/method must use taxonomy VO/constant types, not primitives.                    |
+| AES0302 | Contract Role          | MEDIUM   | Role Violations    | Contract trait/method must use taxonomy VO/constant types, not primitives.                    |
 | AES0303 | Capability Role        | MEDIUM   | Role Violations    | Capability method must have single responsibility; checks missing VO parameters.              |
 | AES0304 | Infrastructure Role    | MEDIUM   | Role Violations    | Infrastructure method must use required request VO parameter.                                 |
-| AES0305 | Agent Role             | HIGH     | Role Violations    | Agent file >300 lines, non-stateless, low-level imports, or `any` type.                     |
-| AES0306 | Surface Role           | HIGH     | Role Violations    | Surface file >15 functions, contains domain logic, or violates hierarchy.                     |
+| AES0305 | Agent Role             | MEDIUM   | Role Violations    | non-stateless, low-level imports, or `any` type.                                            |
+| AES0306 | Surface Role           | MEDIUM   | Role Violations    | Surface file >15 functions, contains domain logic, or violates hierarchy.                     |
 
 ---
 
@@ -219,24 +219,14 @@ Two sub-checks:
 
 File is not imported by anyone and is not an entry point. Detection is **per-layer** with different strategies:
 
-| Layer               | Analyzer                         | Detection Logic                                                                                                                                                                                                 | Severity |
-| ------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `taxonomy_`       | `TaxonomyOrphanAnalyzer`       | No inbound imports from any contract file.                                                                                                                                                                      | LOW      |
-| `contract_` | `ContractOrphanAnalyzer` | (1) Trait not implemented by expected layer (`_port` → `infrastructure_`, `_protocol` → `capabilities_`, `_aggregate` → `agent_`). (2) Port/protocol not called by any `agent_*_orchestrator`. (3) Aggregate not called by any `surface_*`. | HIGH |
-| `capabilities_` | `CapabilitiesOrphanAnalyzer` | Not wired in any `_container` AND unreachable in import graph. | HIGH |
-| `infrastructure_` | `InfrastructureOrphanAnalyzer` | Not wired in any `_container` AND unreachable in import graph. | HIGH |
-| `agent_` | `AgentOrphanAnalyzer` | Agent implements a contract `_aggregate`, but that aggregate is not called by any `surface_*` file. All agent suffixes (`_container`, `_orchestrator`, `_lifecycle`) use the same check. | HIGH |
-| `surfaces_` | `SurfacesOrphanAnalyzer` | Orphan detection per category: **Smart** (`_command`/`_controller`/`_page`/`_entry`) must be imported by entry or router. **Utility** (`_hook`/`_store`/`_action`/`_screen`/`_router`) must be imported by smart surface. **Passive** (`_component`/`_view`/`_layout`) must be imported by smart or utility surface. | MEDIUM |
-
-| Checker                          | Path                                                               |
-| -------------------------------- | ------------------------------------------------------------------ |
-| `ArchOrphanAnalyzer`          | `orphan-detector/agent_orphan_orchestrator.rs`                   |
-| `TaxonomyOrphanAnalyzer`       | `orphan-detector/capabilities_orphan_taxonomy_analyzer.rs`       |
-| `ContractOrphanAnalyzer`       | `orphan-detector/capabilities_orphan_contract_analyzer.rs`       |
-| `CapabilitiesOrphanAnalyzer`   | `orphan-detector/capabilities_orphan_capabilities_analyzer.rs`   |
-| `InfrastructureOrphanAnalyzer` | `orphan-detector/capabilities_orphan_infrastructure_analyzer.rs` |
-| `AgentOrphanAnalyzer`          | `orphan-detector/capabilities_orphan_agent_analyzer.rs`          |
-| `SurfacesOrphanAnalyzer`       | `orphan-detector/capabilities_orphan_surfaces_analyzer.rs`       |
+| Layer               | Detection Logic                                                                                                                                                                                                                                                                                                                                               | Severity |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `taxonomy_`       | No inbound imports from any contract file.                                                                                                                                                                                                                                                                                                                    | LOW      |
+| `contract_`       | (1) Trait not implemented by expected layer (`_port` → `infrastructure_`, `_protocol` → `capabilities_`, `_aggregate` → `agent_`). (2) Port/protocol not called by any `agent_*_orchestrator`. (3) Aggregate not called by any `surface_*`.                                                                                                | HIGH     |
+| `capabilities_`   | Not wired in any `_container` AND unreachable in import graph.                                                                                                                                                                                                                                                                                              | HIGH     |
+| `infrastructure_` | Not wired in any `_container` AND unreachable in import graph.                                                                                                                                                                                                                                                                                              | HIGH     |
+| `agent_`          | Agent implements a contract `_aggregate`, but that aggregate is not called by any `surface_*` file. All agent suffixes (`_container`, `_orchestrator`, `_lifecycle`) use the same check.                                                                                                                                                            | HIGH     |
+| `surfaces_`       | Orphan detection per category:**Smart** (`_command`/`_controller`/`_page`/`_entry`) must be imported by entry or router. **Utility** (`_hook`/`_store`/`_action`/`_screen`/`_router`) must be imported by smart surface. **Passive** (`_component`/`_view`/`_layout`) must be imported by smart or utility surface. | MEDIUM   |
 
 ---
 
@@ -280,7 +270,6 @@ Infrastructure method must use the required request VO parameter.
 
 Checks:
 
-- File > 300 lines
 - Non-stateless execution (state assignment outside `__init__`)
 - Low-level infrastructure imports
 - `any` type annotations
@@ -296,4 +285,3 @@ Checks:
 
 - File > 15 functions
 - Active domain logic in passive surface
-- Surface hierarchy violation
