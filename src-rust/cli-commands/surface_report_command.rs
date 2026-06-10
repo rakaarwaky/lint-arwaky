@@ -3,7 +3,7 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};
-use crate::cli_commands::taxonomy_command_target_vo::{has_critical, lint_path, resolve_target};
+use crate::code_analysis::{has_critical, lint_path, resolve_target};
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 pub struct ReportCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,

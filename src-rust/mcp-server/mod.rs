@@ -1,4 +1,4 @@
-// PURPOSE: Module: mcp-server module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for mcp-server (controllers, actions, schemas, constants)
 pub mod capabilities_schema_checker;
 pub use capabilities_schema_checker::McpSchemaChecker;
 pub mod contract_server_port;

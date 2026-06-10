@@ -1,4 +1,4 @@
-// PURPOSE: Module: semantic-analysis module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for semantic-analysis (analyzers, detectors, resolvers, protocols)
 pub mod capabilities_scope_bounds_detector;
 pub use capabilities_scope_bounds_detector::ScopeBoundaryAnalyzer;
 pub mod capabilities_scope_enclosing_resolver;

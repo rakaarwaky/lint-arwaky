@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Contract trait for Orphan Detector bundle
+// PURPOSE: IOrphanAggregate — aggregate trait bundling all orphan detection protocols
 use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
 use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use crate::output_report::taxonomy_result_vo::LintResult;

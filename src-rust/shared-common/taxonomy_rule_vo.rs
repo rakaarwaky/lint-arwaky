@@ -1,4 +1,4 @@
-// PURPOSE: VO: Rule value object
+// PURPOSE: ArchitectureRule, CustomMessageVO, LegacyLayerRule, MandatoryImportRuleVO — VOs for AES rule definitions
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

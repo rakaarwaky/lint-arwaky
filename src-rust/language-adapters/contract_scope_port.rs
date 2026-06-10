@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Scope
+// PURPOSE: ILanguageScopePort — port trait for language-specific scope analysis
 
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;

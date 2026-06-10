@@ -1,4 +1,4 @@
-// PURPOSE: VO: Paths value object
+// PURPOSE: FilePathList, DirectoryPath, SourceDir — VOs for file/directory path collections
 use serde::{Deserialize, Serialize};
 
 use crate::source_parsing::taxonomy_path_vo::FilePath;

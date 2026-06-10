@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Orchestrator aggregation/wiring
+// PURPOSE: HookOrchestratorAggregate — aggregate trait for hook orchestration
 use crate::git_hooks::contract_manager_port::IHookManagerPort;
 use crate::shared_common::taxonomy_layer_vo::Identity;
 

@@ -1,4 +1,4 @@
-// PURPOSE: Container: DI container for Job
+// PURPOSE: JobContainer — IJobRegistryPort implementation using HashMap-based job registry
 
 use crate::pipeline_jobs::contract_registry_aggregate::JobRegistryAggregate;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;

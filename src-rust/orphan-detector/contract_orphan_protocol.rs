@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Orphan Layer-Specific Indicators
+// PURPOSE: ITaxonomyOrphanProtocol + layer-specific orphan indicator protocols (agent, contract, capabilities, infra, surfaces)
 use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;

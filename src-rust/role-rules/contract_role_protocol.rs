@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Role
+// PURPOSE: IContractRoleChecker — port trait for AES0302: contract role audits (port, protocol, aggregate checks)
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 

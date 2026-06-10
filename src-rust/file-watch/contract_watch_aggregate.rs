@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Watch aggregation/wiring
+// PURPOSE: DirectoryWatchAggregate — aggregate trait for directory watch operations
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 /* UNKNOWN: PatternList */ use crate::shared_common::taxonomy_common_vo::PatternList;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

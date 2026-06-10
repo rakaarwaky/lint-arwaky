@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Lifecycle aggregation/wiring
+// PURPOSE: LifecycleAggregate — aggregate trait for agent lifecycle management
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatusVO;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;

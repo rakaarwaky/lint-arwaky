@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Semantic Tracer
+// PURPOSE: ISemanticTracerProvider — port trait for providing semantic trace operations
 
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::CallChainList;

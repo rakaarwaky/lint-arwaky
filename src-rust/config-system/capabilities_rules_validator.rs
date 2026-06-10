@@ -1,4 +1,4 @@
-// PURPOSE: Validator: Rules validation
+// PURPOSE: ConfigRulesValidator — validates architecture rules against project configuration thresholds
 
 use crate::config_system::taxonomy_setting_vo::AdapterStatus;
 use crate::config_system::taxonomy_setting_vo::ProjectConfig;

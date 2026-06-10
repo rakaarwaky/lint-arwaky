@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Registry aggregation/wiring
+// PURPOSE: RegistryContainerAggregate — DI aggregate trait for job registry port wiring
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 

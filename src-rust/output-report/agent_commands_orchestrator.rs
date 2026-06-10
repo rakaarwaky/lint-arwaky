@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Orchestrates Commands
+// PURPOSE: CommandOrchestrator — orchestrates output formatting commands (plain, json, junit, sarif)
 
 use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use crate::output_report::taxonomy_score_vo::FileFormat;

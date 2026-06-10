@@ -1,4 +1,4 @@
-// PURPOSE: Lifespan: Server lifecycle
+// PURPOSE: ServerLifespan — manages MCP server lifecycle (app, lifespan context, shutdown)
 
 use std::path::PathBuf;
 

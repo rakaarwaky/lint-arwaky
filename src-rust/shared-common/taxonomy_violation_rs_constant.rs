@@ -1,4 +1,4 @@
-// PURPOSE: Constants: Violation Rs constants
+// PURPOSE: AES violation message constants for Rust analysis
 pub const AES001_FORBIDDEN_IMPORT: &str =
     "AES001 FORBIDDEN_IMPORT: Layer is importing from a forbidden module.";
 pub const AES002_MANDATORY_IMPORT: &str = "AES002 MANDATORY_IMPORT: Missing required import.";

@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Orchestration
+// PURPOSE: IConfigOrchestrationProtocol — protocol for orchestrating configuration loading across languages
 
 use crate::config_system::taxonomy_source_vo::ConfigResult;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

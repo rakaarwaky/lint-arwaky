@@ -1,4 +1,4 @@
-// PURPOSE: VO: Config value object
+// PURPOSE: ArchitectureConfig, LayerDefinition, ConfigRule — configuration value objects for AES rules definition
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::BooleanVO;

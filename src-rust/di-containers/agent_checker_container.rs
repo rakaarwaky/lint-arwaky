@@ -1,10 +1,22 @@
-// PURPOSE: Container: DI container for Checker
+// PURPOSE: CheckerContainerAggregate — ICheckerAggregate DI wiring for all checker implementations
 
+use crate::code_analysis::capabilities_check_bypass_checker::BypassChecker;
 use crate::code_analysis::capabilities_class_checker::ArchClassChecker;
+use crate::code_analysis::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
+use crate::code_analysis::capabilities_inline_unused_checker::InlineUnusedChecker;
 use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
+use crate::code_analysis::capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
+use crate::code_analysis::capabilities_missing_vo_checker::MissingVoChecker;
+use crate::code_analysis::capabilities_single_bottleneck_checker::SingleBottleneckChecker;
+use crate::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
 use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
+use crate::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
+use crate::code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use crate::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
+use crate::code_analysis::contract_missing_vo_protocol::IMissingVoProtocol;
+use crate::code_analysis::contract_single_bottleneck_protocol::ISingleBottleneckProtocol;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
 use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
@@ -34,6 +46,12 @@ pub struct CheckerContainer {
     import_mandatory_checker: ArchImportMandatoryChecker,
     line_checker: ArchLineChecker,
     class_checker: ArchClassChecker,
+    bypass_checker: BypassChecker,
+    missing_vo_checker: MissingVoChecker,
+    inline_unused_checker: InlineUnusedChecker,
+    dead_inheritance_checker: DeadInheritanceChecker,
+    single_bottleneck_checker: SingleBottleneckChecker,
+    mandatory_inheritance_checker: MandatoryInheritanceChecker,
     taxonomy_checker: TaxonomyRoleChecker,
     contract_checker: ContractRoleChecker,
     naming_checker: ArchNamingChecker,
@@ -57,6 +75,12 @@ impl CheckerContainer {
             import_mandatory_checker: ArchImportMandatoryChecker::new(),
             line_checker: ArchLineChecker::new(),
             class_checker: ArchClassChecker::new(),
+            bypass_checker: BypassChecker::new(),
+            missing_vo_checker: MissingVoChecker::new(),
+            inline_unused_checker: InlineUnusedChecker::new(),
+            dead_inheritance_checker: DeadInheritanceChecker::new(),
+            single_bottleneck_checker: SingleBottleneckChecker::new(),
+            mandatory_inheritance_checker: MandatoryInheritanceChecker::new(),
             taxonomy_checker: TaxonomyRoleChecker::new(),
             contract_checker: ContractRoleChecker::new(),
             naming_checker: ArchNamingChecker::new(),
@@ -197,6 +221,69 @@ impl ICheckerAggregate for CheckerContainer {
     ) {
         self.contract_checker
             .check_aggregate(file, content, def, violations);
+    }
+
+    fn check_bypass_comments(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        self.bypass_checker
+            .check_bypass_comments(file, content, violations);
+    }
+
+    fn check_missing_vo(
+        &self,
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        self.missing_vo_checker
+            .check_missing_vo(file, content, layer, violations);
+    }
+
+    fn check_inline_unused_imports(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        self.inline_unused_checker
+            .check_unused_imports(file, content, violations);
+    }
+
+    fn check_dead_inheritance(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        self.dead_inheritance_checker
+            .check_dead_inheritance(file, content, violations);
+    }
+
+    fn check_single_bottleneck(
+        &self,
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        self.single_bottleneck_checker
+            .check_single_bottleneck(file, content, layer, violations);
+    }
+
+    fn check_mandatory_inheritance(
+        &self,
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        self.mandatory_inheritance_checker
+            .check_mandatory_inheritance(file, content, layer, violations);
     }
 
     fn check_surface_hierarchy(

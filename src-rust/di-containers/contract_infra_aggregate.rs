@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Infra aggregation/wiring
+// PURPOSE: InfrastructureContainerAggregate — DI aggregate wiring for infrastructure provider implementations
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub trait InfrastructureContainerAggregate: Send + Sync {

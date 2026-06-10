@@ -1,4 +1,4 @@
-// PURPOSE: Provider: Rs Metrics provider implementation
+// PURPOSE: RsMetricsProvider — INamingProviderPort implementation for Rust naming variant analysis
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
 use crate::metrics_service::taxonomy_metrics_error::MetricsError;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

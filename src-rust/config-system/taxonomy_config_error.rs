@@ -1,4 +1,4 @@
-// PURPOSE: Error: Config error types
+// PURPOSE: ConfigError, ConfigErrorKind — structured error types for configuration loading failures
 use crate::config_system::taxonomy_identifier_vo::ConfigKey;
 use crate::config_system::taxonomy_setting_vo::ActualValue;
 use crate::config_system::taxonomy_setting_vo::ExpectedValue;

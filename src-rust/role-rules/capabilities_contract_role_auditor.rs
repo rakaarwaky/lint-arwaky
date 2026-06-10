@@ -1,4 +1,4 @@
-// PURPOSE: Module: Capabilities Contract Role Auditor
+// PURPOSE: ContractRoleChecker — IContractRoleChecker for AES0302: contract port/protocol/aggregate role audits
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;

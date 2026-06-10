@@ -1,4 +1,4 @@
-// PURPOSE: Checker: Inheritance rule enforcement
+// PURPOSE: MandatoryInheritanceChecker — IArchInheritanceProtocol for AES014: mandatory contract inheritance checks
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::contract_inheritance_protocol::IArchInheritanceProtocol;
@@ -31,7 +31,7 @@ const LAYER_CONTRACT_SUFFIX: &[(&str, &str)] = &[
 ];
 
 /// Check that files in agent/capabilities/infrastructure that import contracts
-/// also have a class inheriting from them (AES027).
+/// also have a class inheriting from them (AES014).
 pub struct MandatoryInheritanceChecker {
     config: ArchitectureConfig,
 }

@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Orchestrator aggregation/wiring
+// PURPOSE: WatchExecutionOrchestratorAggregate — aggregate trait for watch execution orchestration
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 

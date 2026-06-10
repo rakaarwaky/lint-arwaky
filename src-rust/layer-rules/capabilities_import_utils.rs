@@ -1,4 +1,4 @@
-// PURPOSE: Shared import parsing utilities for AES001 + AES002 checkers.
+// PURPOSE: Shared import parsing utilities for AES001 + AES002 checkers (layer extraction, scope resolution, line parsing)
 use std::fs;
 use std::path::Path;
 

@@ -1,4 +1,4 @@
-// PURPOSE: VO: Severity value object
+// PURPOSE: Severity — value object for violation severity levels (critical, high, medium, low)
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]

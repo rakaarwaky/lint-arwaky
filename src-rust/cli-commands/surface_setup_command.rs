@@ -212,7 +212,7 @@ layers:
     suffixes: ["_adapter", "_provider", "_scanner"]
   agent:
     prefixes: ["agent_"]
-    suffixes: ["_container", "_orchestrator", "_coordinator", "_registry", "_manager"]
+    suffixes: ["_container", "_orchestrator", "_lifecycle"]
   surface:
     prefixes: ["surface_"]
     suffixes: ["_command", "_handler", "_controller"]
@@ -247,7 +247,7 @@ layers:
     suffixes: ["_adapter", "_provider", "_scanner"]
   agent:
     prefixes: ["agent_"]
-    suffixes: ["_container", "_orchestrator", "_coordinator", "_registry", "_manager"]
+    suffixes: ["_container", "_orchestrator", "_lifecycle"]
   surface:
     prefixes: ["surface_"]
     suffixes: ["_command", "_handler", "_controller"]
@@ -282,7 +282,7 @@ layers:
     suffixes: ["_adapter", "_provider", "_scanner"]
   agent:
     prefixes: ["agent_"]
-    suffixes: ["_container", "_orchestrator", "_coordinator", "_registry", "_manager"]
+    suffixes: ["_container", "_orchestrator", "_lifecycle"]
   surface:
     prefixes: ["surface_"]
     suffixes: ["_command", "_handler", "_controller"]

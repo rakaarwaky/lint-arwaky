@@ -1,4 +1,4 @@
-// PURPOSE: Controller: Health surface controller
+// PURPOSE: HealthController — MCP surface for server health check endpoint
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use std::collections::HashMap;
 use std::sync::Arc;

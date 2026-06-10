@@ -1,4 +1,4 @@
-// PURPOSE: VO: Message value object
+// PURPOSE: ComplianceStatus, LintMessage — VOs for compliance status and violation messages
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

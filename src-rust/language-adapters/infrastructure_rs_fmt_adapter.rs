@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Rs Fmt adapter implementation
+// PURPOSE: RsFmtAdapter — ILinterAdapterPort implementation for rustfmt integration
 use std::path::Path;
 use std::sync::Arc;
 

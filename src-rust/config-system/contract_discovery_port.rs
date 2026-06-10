@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Discovery
+// PURPOSE: IDiscoveryPort — port trait for discovering config files in project directory
 use crate::config_system::taxonomy_config_error::ConfigError;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

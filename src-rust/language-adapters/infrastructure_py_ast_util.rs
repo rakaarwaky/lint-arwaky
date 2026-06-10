@@ -1,4 +1,4 @@
-// PURPOSE: Module: Infrastructure Py Ast Util
+// PURPOSE: PyASTUtil — utility functions for Python AST parsing and node traversal
 
 pub struct PythonAstUtils {}
 

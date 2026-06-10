@@ -1,4 +1,4 @@
-// PURPOSE: Module: output-report module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for output-report (orchestrators, formatters, VOs, constants)
 pub mod agent_output_orchestrator;
 pub use agent_output_orchestrator::OutputClientOrchestrator;
 pub mod agent_commands_orchestrator;

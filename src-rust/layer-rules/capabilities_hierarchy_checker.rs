@@ -1,4 +1,4 @@
-// PURPOSE: AES0306 — Enforce surface hierarchy (barrel wiring) and passive surface checks.
+// PURPOSE: SurfaceHierarchyChecker — AES0306: enforce surface hierarchy (barrel wiring) and passive surface checks
 
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
@@ -73,7 +73,7 @@ impl SurfaceHierarchyChecker {
                 continue;
             }
 
-            // AES018: check if file is wired in barrel
+            // AES0306: check if file is wired in barrel
             if !is_wired(f) {
                 let desc = aes0306_hierarchy_violation(&f.to_string());
                 results.push(LintResult {
@@ -89,7 +89,7 @@ impl SurfaceHierarchyChecker {
                 });
             }
 
-            // AES019: check if file is passive
+            // AES0306: check if file is passive
             self._check_passive(f, results);
         }
     }
@@ -291,9 +291,9 @@ impl SurfaceHierarchyChecker {
         }
     }
 
-    // -- AES019 sub-checks ---------------------------------------------------
+    // -- AES0306 sub-checks ---------------------------------------------------
 
-    /// AES019: too many public methods in a surface class.
+    /// AES0306: too many public methods in a surface class.
     fn _check_methods_too_public(
         &self,
         class_name: &str,
@@ -310,7 +310,7 @@ impl SurfaceHierarchyChecker {
         }
     }
 
-    /// AES019: method body exceeds line limit.
+    /// AES0306: method body exceeds line limit.
     fn _check_method_lengths(
         &self,
         class_name: &str,
@@ -331,7 +331,7 @@ impl SurfaceHierarchyChecker {
         }
     }
 
-    /// AES019: method control-flow nesting exceeds limit.
+    /// AES0306: method control-flow nesting exceeds limit.
     fn _check_method_nesting(
         &self,
         class_name: &str,
@@ -370,7 +370,7 @@ impl SurfaceHierarchyChecker {
         }
     }
 
-    /// Append a single AES019 result to the results list.
+    /// Append a single AES0306 result to the results list.
     fn _report_aes019(&self, f: &FilePath, violations: Vec<String>, results: &mut LintResultList) {
         let detail: String = violations
             .iter()

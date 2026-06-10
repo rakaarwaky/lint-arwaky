@@ -1,4 +1,4 @@
-// PURPOSE: Analyzer: Data Flow analysis logic
+// PURPOSE: DataFlowAnalyzer — IDomainTypeProtocol for primitive type detection in taxonomy files (AES0301)
 
 use std::collections::HashSet;
 use std::fs;

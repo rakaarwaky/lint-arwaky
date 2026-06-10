@@ -1,4 +1,4 @@
-// PURPOSE: VO: Position value object
+// PURPOSE: Position — value object for source code position tracking (file, line, column)
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;

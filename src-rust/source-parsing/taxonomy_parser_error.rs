@@ -1,4 +1,4 @@
-// PURPOSE: Error: Parser error types
+// PURPOSE: ParserError — structured error type for source code parsing failures
 use crate::shared_common::taxonomy_common_error::Cause;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;

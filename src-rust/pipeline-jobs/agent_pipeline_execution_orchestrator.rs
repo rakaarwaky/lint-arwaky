@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Orchestrates Pipeline Execution
+// PURPOSE: PipelineExecutionOrchestrator — orchestrates sequential pipeline execution with retry and cancellation
 
 use crate::pipeline_jobs::contract_input_aggregate::PipelineInputAggregate;
 use crate::pipeline_jobs::contract_orchestrator_aggregate::PipelineExecutionOrchestratorAggregate;

@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Manager
+// PURPOSE: IPluginManagerPort — port trait for plugin lifecycle management
 /* UNKNOWN: AdapterClassMap */
 use crate::plugin_system::taxonomy_group_vo::PluginGroup;
 /* UNKNOWN: PluginError */ use crate::plugin_system::taxonomy_manager_error::PluginError;

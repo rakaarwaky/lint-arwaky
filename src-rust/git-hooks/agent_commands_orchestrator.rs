@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Orchestrates Commands
+// PURPOSE: CommandsOrchestrator — orchestrates git hook operations (install, uninstall, run, update)
 
 use crate::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
 use crate::git_hooks::contract_result_aggregate::GitDiffResultAggregate;

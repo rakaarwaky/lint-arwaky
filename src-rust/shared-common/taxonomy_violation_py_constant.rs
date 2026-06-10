@@ -1,4 +1,4 @@
-// PURPOSE: Constants: Violation Py constants
+// PURPOSE: AES violation message constants for Python analysis
 pub const AES001_FORBIDDEN_IMPORT: &str =
     "AES001 FORBIDDEN_IMPORT: Layer is importing from a forbidden module.";
 pub const AES002_MANDATORY_IMPORT: &str = "AES002 MANDATORY_IMPORT: Missing required import.";
@@ -31,4 +31,4 @@ pub const AES0305_ANY_TYPE: &str = "Any type annotation found in agent orchestra
 pub const AES0302_FORBIDDEN_INHERITANCE: &str =
     "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
 pub const AES0301_CONSTANT_PURITY: &str =
-    "AES015 CONSTANT_PURITY: _constant file contains non-constant declaration.";
+    "AES0301 CONSTANT_PURITY: _constant file contains non-constant declaration.";

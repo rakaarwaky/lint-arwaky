@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Flow
+// PURPOSE: IFlowProviderPort — port trait for data flow analysis across languages
 
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;

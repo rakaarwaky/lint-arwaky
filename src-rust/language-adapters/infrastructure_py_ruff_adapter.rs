@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Py Ruff adapter implementation
+// PURPOSE: PyRuffAdapter — ILinterAdapterPort implementation for Ruff linter integration
 
 use async_trait::async_trait;
 use serde_json::Value;

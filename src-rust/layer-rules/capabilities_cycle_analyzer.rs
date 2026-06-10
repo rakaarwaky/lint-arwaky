@@ -1,4 +1,4 @@
-// PURPOSE: Analyzer: Cycle analysis logic
+// PURPOSE: DependencyCycleAnalyzer — ICycleAnalysisProtocol for AES012: circular dependency detection
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

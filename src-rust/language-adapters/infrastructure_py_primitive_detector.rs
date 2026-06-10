@@ -1,4 +1,4 @@
-// PURPOSE: Detector: Py Primitive detection
+// PURPOSE: PyPrimitiveDetector — IDomainTypeProtocol implementation for Python primitive detection
 
 pub struct PythonPrimitiveChecker {}
 

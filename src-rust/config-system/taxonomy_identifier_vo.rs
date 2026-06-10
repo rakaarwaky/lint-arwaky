@@ -1,4 +1,4 @@
-// PURPOSE: VO: Identifier value object
+// PURPOSE: ConfigIdentifier — value object for named configuration identifiers
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, Eq)]

@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Parser
+// PURPOSE: ISourceParserPort — port trait for language-specific source code parsing (imports, definitions)
 use crate::code_analysis::taxonomy_import_source_vo::ImportInfoList;
 use crate::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

@@ -1,4 +1,4 @@
-// PURPOSE: VO: Setting value object
+// PURPOSE: SettingsConfigVO — value object for application-wide settings configuration
 
 use serde::{Deserialize, Serialize};
 

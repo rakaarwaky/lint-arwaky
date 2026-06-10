@@ -1,4 +1,4 @@
-// PURPOSE: Module: Capabilities Scope Enclosing Resolver
+// PURPOSE: ScopeEnclosingResolver — resolves enclosing scope context for code analysis
 
 pub struct ScopeBoundaryResolver {}
 

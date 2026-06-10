@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Registry
+// PURPOSE: IJobRegistryPort — port trait for job lifecycle management (create, complete, list, cancel)
 
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;

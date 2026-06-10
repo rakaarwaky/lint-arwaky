@@ -1,4 +1,4 @@
-// PURPOSE: Analyzer: Call Chain analysis logic
+// PURPOSE: CallChainAnalyzer — analyzes function call chains and call graph construction
 
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;

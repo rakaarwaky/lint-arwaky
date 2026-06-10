@@ -1,4 +1,4 @@
-// PURPOSE: VO: Doctor value object
+// PURPOSE: DoctorResultVO, DoctorCheck — VOs for project health diagnostics results
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Orchestrates Pipeline
+// PURPOSE: PipelineOrchestrator — orchestrates main pipeline: analysis, output, and report generation
 
 use crate::pipeline_jobs::contract_dispatcher_aggregate::PipelineActionDispatcherAggregate;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionArgs;

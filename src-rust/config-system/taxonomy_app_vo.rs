@@ -1,4 +1,4 @@
-// PURPOSE: VO: App value object
+// PURPOSE: AppConfigVO, AppName, AppVersion — value objects for application configuration metadata
 use std::env;
 
 use crate::shared_common::taxonomy_adapter_vo::AdapterNameList;

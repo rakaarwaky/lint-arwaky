@@ -1,4 +1,4 @@
-// PURPOSE: Analyzer: Contract orphan detection logic
+// PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
 use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;

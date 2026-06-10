@@ -1,4 +1,4 @@
-// PURPOSE: AES002 — Enforce mandatory imports: file must import from required layers.
+// PURPOSE: ArchImportMandatoryChecker — AES002: enforce mandatory import rules per layer definition
 use crate::layer_rules::capabilities_import_utils::{
     get_basename, import_matches_scope, parse_import_lines, resolve_scope,
 };

@@ -1,4 +1,4 @@
-// PURPOSE: Formatter: Reporting output formatting
+// PURPOSE: LintReportingFormatter — ILintReportingProtocol implementation for all output formats
 
 use crate::output_report::contract_output_aggregate::IReportFormatterProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;

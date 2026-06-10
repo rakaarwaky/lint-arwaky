@@ -1,4 +1,4 @@
-// PURPOSE: Module: Capabilities Taxonomy Role Auditor
+// PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES0301: taxonomy VO/entity/error/event/constant audits
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 fn aes0301_primitive_usage(primitive: &str) -> String {

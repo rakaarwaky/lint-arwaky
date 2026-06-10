@@ -1,4 +1,4 @@
-// PURPOSE: Assemble concrete checker implementations into IRoleAggregate for taxonomy/contract role checks.
+// PURPOSE: RoleContainer — assembles concrete role checkers into IRoleAggregate implementation
 use crate::role_rules::capabilities_agent_role_auditor::AgentRoleChecker;
 use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
@@ -109,6 +109,14 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
         _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
+    fn check_fn_count_limit(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_fn_count_limit(file, content, violations);
+    }
 }
 
 impl IAgentRoleChecker for AgentRoleChecker {
@@ -132,6 +140,22 @@ impl IAgentRoleChecker for AgentRoleChecker {
         _content: &str,
         _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
+    }
+    fn check_file_size_limit(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_file_size_limit(file, content, violations);
+    }
+    fn check_any_type_annotation(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_any_type_annotation(file, content, violations);
     }
 }
 

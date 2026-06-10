@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Orchestrates Pipeline Extended
+// PURPOSE: PipelineExtendedOrchestrator — initializes extended pipeline with all sub-orchestrators
 
 use crate::file_watch::contract_watch_aggregate::DirectoryWatchAggregate;
 use crate::multi_project::contract_project_aggregate::MultiProjectAggregate;

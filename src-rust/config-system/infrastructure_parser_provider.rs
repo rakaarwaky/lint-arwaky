@@ -1,4 +1,4 @@
-// PURPOSE: Provider: Parser provider implementation
+// PURPOSE: ConfigParserProvider — IConfigParserPort implementation for YAML and TOML config parsing
 use crate::config_system::contract_parser_port::IConfigParserPort;
 use crate::config_system::taxonomy_config_error::ConfigError;
 use crate::config_system::taxonomy_identifier_vo::ConfigKey;

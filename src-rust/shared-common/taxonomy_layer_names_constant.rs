@@ -1,4 +1,4 @@
-// PURPOSE: Constants: Layer Names constants
+// PURPOSE: LAYER_AGENT, LAYER_CAPABILITIES, etc. — constant definitions for AES layer names
 
 pub const LAYER_AGENT: &str = "agent";
 pub const LAYER_CAPABILITIES: &str = "capabilities";

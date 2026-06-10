@@ -1,4 +1,4 @@
-// PURPOSE: Provider: Discovery provider implementation
+// PURPOSE: ConfigDiscoveryProvider — IDiscoveryPort implementation for finding config files in filesystem
 
 use crate::config_system::contract_discovery_port::IConfigDiscoveryPort;
 use crate::config_system::taxonomy_config_error::ConfigError;

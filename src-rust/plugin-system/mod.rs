@@ -1,4 +1,4 @@
-// PURPOSE: Module: plugin-system module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for plugin-system (orchestrator, aggregate, provider, VOs, errors)
 pub mod agent_commands_orchestrator;
 pub use agent_commands_orchestrator::PluginCommandsOrchestrator;
 pub mod contract_commands_aggregate;

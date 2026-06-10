@@ -1,4 +1,4 @@
-// PURPOSE: Error: Registry error types
+// PURPOSE: JobError, JobErrorKind — structured error types for job registry operations
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;
 use crate::shared_common::taxonomy_common_error::Cause;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

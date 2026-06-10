@@ -1,4 +1,4 @@
-// PURPOSE: ICheckerAggregate — Contract trait bundling ALL checker operations for agent layer.
+// PURPOSE: ICheckerAggregate — contract trait bundling ALL checker operations (import, naming, class, line, routing, hierarchy)
 
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -112,4 +112,55 @@ pub trait ICheckerAggregate: Send + Sync {
 
     // Cycle detection
     fn detect_cycle_edges(&self, edges: &[(String, String)]) -> bool;
+
+    // Bypass check (AES022)
+    fn check_bypass_comments(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    );
+
+    // Missing VO check (AES0303/AES0304)
+    fn check_missing_vo(
+        &self,
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    );
+
+    // Inline unused imports check (AES023) — cross-language (Rust/Python/JS)
+    fn check_inline_unused_imports(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    );
+
+    // Dead inheritance check (AES024)
+    fn check_dead_inheritance(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    );
+
+    // Single bottleneck check (AES0303)
+    fn check_single_bottleneck(
+        &self,
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    );
+
+    // Mandatory inheritance check (AES014)
+    fn check_mandatory_inheritance(
+        &self,
+        file: &str,
+        content: &str,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    );
 }

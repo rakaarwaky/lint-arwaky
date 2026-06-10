@@ -1,4 +1,4 @@
-// PURPOSE: Error: Service error types
+// PURPOSE: WatchServiceError — structured error type for file watch service failures
 use crate::shared_common::taxonomy_common_error::Cause;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;

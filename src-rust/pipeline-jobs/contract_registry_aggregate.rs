@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Registry aggregation/wiring
+// PURPOSE: RegistryAggregate — aggregate trait for job registry operations (create, complete, fail, list)
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;

@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Orchestrates Project
+// PURPOSE: ProjectOrchestrator — orchestrates multi-project governance operations
 use crate::multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use crate::multi_project::taxonomy_summary_vo::AggregatedResults;
 use crate::multi_project::taxonomy_summary_vo::ProjectResult;

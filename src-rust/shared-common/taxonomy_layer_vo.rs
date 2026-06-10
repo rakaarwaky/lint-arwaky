@@ -1,4 +1,4 @@
-// PURPOSE: VO: Layer value object
+// PURPOSE: FileContentVO, Identity, LayerNameVO, LineContentVO — VOs for layer identity and file content
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, Eq)]

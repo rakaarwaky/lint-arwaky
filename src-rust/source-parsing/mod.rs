@@ -1,4 +1,4 @@
-// PURPOSE: Module: source-parsing module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for source-parsing (scanners, parsers, collectors, providers, VOs)
 pub mod contract_path_normalization_port;
 pub use contract_path_normalization_port::IPathNormalizationPort;
 pub mod contract_parser_port;

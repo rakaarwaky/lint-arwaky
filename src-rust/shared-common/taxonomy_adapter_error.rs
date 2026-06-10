@@ -1,4 +1,4 @@
-// PURPOSE: Error: Adapter error types
+// PURPOSE: AdapterError, ScanError, ValidationError — structured error types for adapter operations
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_error::Cause;
 use crate::shared_common::taxonomy_common_error::Constraint;

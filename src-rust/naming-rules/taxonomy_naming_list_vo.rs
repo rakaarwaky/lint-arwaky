@@ -1,4 +1,4 @@
-// PURPOSE: VO: Naming List value object
+// PURPOSE: SymbolNameList, PrimitiveTypeList — VOs for collections of symbol names and primitive types
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_constant::CORE_PRIMITIVE_TYPES;
 use serde::{Deserialize, Serialize};

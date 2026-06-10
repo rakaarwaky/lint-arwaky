@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Project aggregation/wiring
+// PURPOSE: ProjectAggregate — aggregate trait for project-level operations (summary, compare)
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;

@@ -1,4 +1,4 @@
-// PURPOSE: Module: git-hooks module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for git-hooks (orchestrators, adapters, VOs, errors, events)
 pub mod agent_commands_orchestrator;
 pub use agent_commands_orchestrator::GitCommandsOrchestrator;
 pub mod agent_management_orchestrator;

@@ -1,4 +1,4 @@
-// PURPOSE: Error: Common error types
+// PURPOSE: Cause, Constraint, ErrorMessage, ExitCode, FieldName, ModuleName, PrimitiveTypeName — common error value objects
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

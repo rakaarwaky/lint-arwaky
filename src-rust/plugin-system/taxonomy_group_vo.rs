@@ -1,4 +1,4 @@
-// PURPOSE: VO: Group value object
+// PURPOSE: PluginGroupVO — value object for plugin group organization and categorization
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]

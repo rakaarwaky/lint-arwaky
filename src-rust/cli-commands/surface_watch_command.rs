@@ -3,7 +3,7 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use crate::cli_commands::taxonomy_command_target_vo::{compute_score, lint_path, resolve_target};
+use crate::code_analysis::{compute_score, lint_path, resolve_target};
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 pub struct WatchdogBridge {}
 

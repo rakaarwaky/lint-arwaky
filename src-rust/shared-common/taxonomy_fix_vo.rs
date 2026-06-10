@@ -1,4 +1,4 @@
-// PURPOSE: VO: Fix value object
+// PURPOSE: FixResult — value object capturing fix application outcome
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

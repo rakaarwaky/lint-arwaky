@@ -1,4 +1,4 @@
-// PURPOSE: Action: Main action handler
+// PURPOSE: main entry point for lint-arwaky-mcp — initializes MCP server with stdio transport
 use serde_json::{json, Value};
 use std::sync::Arc;
 

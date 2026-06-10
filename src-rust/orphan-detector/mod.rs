@@ -1,4 +1,4 @@
-// PURPOSE: Module: orphan-detector module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for orphan-detector (orchestrator, analyzers, protocols, aggregate)
 
 pub mod agent_orphan_orchestrator;
 pub mod capabilities_orphan_agent_analyzer;

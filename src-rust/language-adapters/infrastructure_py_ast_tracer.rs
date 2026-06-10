@@ -1,4 +1,4 @@
-// PURPOSE: Tracer: Py Ast tracing
+// PURPOSE: PyASTTracer — IFlowProviderPort implementation for Python AST-based call tracing
 
 use crate::naming_rules::contract_variant_port::INamingVariantPort;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

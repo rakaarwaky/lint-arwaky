@@ -1,4 +1,4 @@
-// PURPOSE: VO: Result value object
+// PURPOSE: LintResult, LintResultList, FilePathSet — value objects for lint violation results
 use serde::{Deserialize, Serialize};
 
 use crate::output_report::taxonomy_position_vo::Position;

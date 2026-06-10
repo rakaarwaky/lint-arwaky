@@ -1,4 +1,4 @@
-// PURPOSE: VO: Action value object
+// PURPOSE: ActionName, JobId, ResponseData — value objects for pipeline job actions and responses
 use serde::{Deserialize, Serialize};
 
 /* UNKNOWN: MetadataVO */

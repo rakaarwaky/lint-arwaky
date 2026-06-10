@@ -1,4 +1,4 @@
-// PURPOSE: Module: Infrastructure Py Variants
+// PURPOSE: PyVariants — Python naming variant builder (snake_case, PascalCase, SCREAMING_SNAKE)
 
 use crate::naming_rules::contract_variant_port::INamingVariantPort;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

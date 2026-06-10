@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Orchestrates Management
+// PURPOSE: ManagementOrchestrator — orchestrates git hook management (format patch, commit gen, PR review)
 
 use crate::git_hooks::contract_manager_port::IHookManagerPort;
 use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;

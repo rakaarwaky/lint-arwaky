@@ -1,7 +1,7 @@
 // PURPOSE: DevCommandsSurface — CLI surface for developer operations (diff, suggest, ignore, config, export, init, hooks)
 use std::process::ExitCode;
 
-use crate::cli_commands::taxonomy_command_target_vo::{
+use crate::code_analysis::{
     compute_score, has_critical, lint_path, resolve_target,
 };
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;

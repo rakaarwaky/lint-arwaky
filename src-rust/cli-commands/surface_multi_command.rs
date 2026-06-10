@@ -2,7 +2,7 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use crate::cli_commands::taxonomy_command_target_vo::{compute_score, count_loc, lint_path};
+use crate::code_analysis::{compute_score, count_loc, lint_path};
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::output_report::taxonomy_severity_vo::Severity;
 pub struct MultiCommandsSurface {

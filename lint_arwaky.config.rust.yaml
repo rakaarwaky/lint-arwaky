@@ -123,7 +123,7 @@ architecture:
           mandatory: ["taxonomy", "contract(aggregate)"]
           forbidden: ["agent", "infrastructure", "capabilities", "surfaces", "root"]
 
-        - scope: "surfaces(command|controller|page|entry)"
+        - scope: "surfaces(command|controller|page|)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(aggregate)"]
           forbidden: ["agent", "infrastructure", "capabilities", "contract(port)", "contract(protocol)", "root"]

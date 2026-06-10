@@ -1,4 +1,4 @@
-// PURPOSE: Analyzer: Semantic Scope analysis logic
+// PURPOSE: SemanticScopeAnalyzer — IScopeBoundaryProtocol implementation for JS scope analysis
 
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;

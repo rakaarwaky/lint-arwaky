@@ -1,4 +1,4 @@
-// PURPOSE: Provider: Watch provider implementation
+// PURPOSE: WatchProvider — IWatchProviderPort implementation using notify crate
 
 use std::collections::HashMap;
 use std::sync::Mutex;

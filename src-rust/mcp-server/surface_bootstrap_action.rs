@@ -1,4 +1,4 @@
-// PURPOSE: Action: Bootstrap action handler
+// PURPOSE: handle_bootstrap — MCP surface for server initialization and capability listing
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;

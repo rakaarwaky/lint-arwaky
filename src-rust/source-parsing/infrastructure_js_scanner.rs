@@ -1,4 +1,4 @@
-// PURPOSE: Scanner: Js source scanning
+// PURPOSE: JSScanner — ISourceParserPort for JavaScript/TypeScript import extraction
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs;

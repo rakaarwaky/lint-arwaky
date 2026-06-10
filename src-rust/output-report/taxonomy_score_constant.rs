@@ -1,4 +1,4 @@
-// PURPOSE: Constants: Score constants
+// PURPOSE: SCORE_START, PER_VIOLATION_DEDUCTION — score calculation constants
 
 pub const FORMAT_TEXT: &str = "text";
 pub const FORMAT_JSON: &str = "json";

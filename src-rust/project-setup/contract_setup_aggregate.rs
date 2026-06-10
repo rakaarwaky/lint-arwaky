@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Setup aggregation/wiring
+// PURPOSE: SetupAggregate — aggregate trait for project setup orchestration
 use crate::cli_transport::taxonomy_protocol_vo::TransportProtocol;
 use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;
 use crate::pipeline_jobs::taxonomy_job_vo::EnvContentVO;

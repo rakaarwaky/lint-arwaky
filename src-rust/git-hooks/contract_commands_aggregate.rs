@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Commands aggregation/wiring
+// PURPOSE: HookCommandsAggregate — aggregate trait for git hook command execution
 use crate::git_hooks::contract_result_aggregate::GitDiffResultAggregate;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Py Quality adapter implementation
+// PURPOSE: PyQualityAdapter — ILinterAdapterPort implementation for Python quality tool integration
 
 use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;

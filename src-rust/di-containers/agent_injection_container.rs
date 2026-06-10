@@ -1,4 +1,4 @@
-// PURPOSE: Container: DI container for Injection
+// PURPOSE: InjectionContainer — DI container wiring capabilities and protocols via arc_swap references
 
 use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;

@@ -1,4 +1,4 @@
-// PURPOSE: Event: Fix Applied domain event
+// PURPOSE: FixApplied — domain event published when a lint fix is applied
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::Timestamp;

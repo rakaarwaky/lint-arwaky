@@ -1,4 +1,4 @@
-// PURPOSE: VO: Suffix value object
+// PURPOSE: SuffixPolicyVO, SuffixVO — VOs for layer suffix policy definitions
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]

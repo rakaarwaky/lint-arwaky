@@ -1,4 +1,4 @@
-// PURPOSE: Processor: Setup processing logic
+// PURPOSE: SetupProcessor — processes project setup steps (env, gitignore, config, hooks)
 
 use std::collections::HashMap;
 

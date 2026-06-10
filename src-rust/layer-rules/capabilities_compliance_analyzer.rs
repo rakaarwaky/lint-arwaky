@@ -1,4 +1,4 @@
-// PURPOSE: Layer detection — Map files to AES layers via filename prefix (FRD v1.1), directory fallback, or path matching.
+// PURPOSE: ArchComplianceAnalyzer — layer detection via filename prefix (FRD v1.1), directory fallback, and path matching
 
 use std::collections::HashMap;
 use std::path::Path;

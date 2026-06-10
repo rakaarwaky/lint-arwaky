@@ -1,4 +1,4 @@
-// PURPOSE: Provider: Js Scope provider implementation
+// PURPOSE: JSScopeProvider — provides JavaScript scope metadata for architecture analysis
 
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

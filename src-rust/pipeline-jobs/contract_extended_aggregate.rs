@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Extended aggregation/wiring
+// PURPOSE: ExtendedPipelineAggregate — aggregate trait for extended pipeline initialization
 use crate::file_watch::contract_watch_aggregate::DirectoryWatchAggregate;
 use crate::multi_project::contract_project_aggregate::MultiProjectAggregate;
 use crate::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;

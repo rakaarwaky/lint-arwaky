@@ -1,4 +1,4 @@
-// PURPOSE: Controller: Command surface controller
+// PURPOSE: CommandController — MCP surface for executing lint-arwaky commands via server
 
 use std::collections::HashMap;
 use std::path::Path;

@@ -1,4 +1,4 @@
-// PURPOSE: Analyzer: Taxonomy orphan detection logic
+// PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection
 use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::orphan_detector::contract_orphan_protocol::ITaxonomyOrphanProtocol;

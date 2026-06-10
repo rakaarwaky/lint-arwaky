@@ -1,4 +1,4 @@
-// PURPOSE: Module: Infrastructure Server Constants
+// PURPOSE: SERVER_NAME, SERVER_VERSION, PROTOCOL_VERSION — MCP server metadata constants
 pub const AUTO_LINT_VERSION: &str = "1.0";
 pub const MCP_SERVER_VERSION: &str = "1.0";
 pub const MAX_PATH_LENGTH: usize = 4096;

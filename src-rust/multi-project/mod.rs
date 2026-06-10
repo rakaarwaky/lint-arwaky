@@ -1,4 +1,4 @@
-// PURPOSE: Module: multi-project module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for multi-project (orchestrator, aggregates, protocol, VOs)
 pub mod agent_project_orchestrator;
 pub use agent_project_orchestrator::MultiProjectOrchestrator;
 pub mod contract_rule_engine_protocol;

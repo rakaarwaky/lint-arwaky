@@ -1,4 +1,4 @@
-// PURPOSE: Event: Scan Completed domain event
+// PURPOSE: ScanCompleted — domain event published when a project scan completes
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::Score;

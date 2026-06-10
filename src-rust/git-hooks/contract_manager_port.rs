@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Manager
+// PURPOSE: IHookManagerPort — port trait for hook script management (install, uninstall)
 
 use crate::git_hooks::taxonomy_hook_error::GitHookError;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;

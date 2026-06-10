@@ -1,4 +1,4 @@
-// PURPOSE: VO: Path value object
+// PURPOSE: FilePath, DirectoryPath — value objects for validated file and directory paths
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 

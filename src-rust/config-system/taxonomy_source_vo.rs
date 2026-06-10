@@ -1,4 +1,4 @@
-// PURPOSE: VO: Source value object
+// PURPOSE: ConfigSourceVO, ConfigFormat — value objects for config source origin and file format
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use serde::{Deserialize, Serialize};
 

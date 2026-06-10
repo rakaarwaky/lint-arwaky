@@ -1,4 +1,4 @@
-// PURPOSE: Analyzer: Capabilities orphan detection logic
+// PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use crate::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;

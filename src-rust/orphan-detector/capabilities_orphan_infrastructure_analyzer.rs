@@ -1,4 +1,4 @@
-// PURPOSE: Analyzer: Infrastructure orphan detection logic
+// PURPOSE: InfrastructureOrphanAnalyzer — IInfrastructureOrphanProtocol for orphan infrastructure detection
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use crate::orphan_detector::contract_orphan_protocol::IInfrastructureOrphanProtocol;

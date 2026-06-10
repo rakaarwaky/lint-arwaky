@@ -1,4 +1,4 @@
-// PURPOSE: VO: Routing value object
+// PURPOSE: CapabilityReference, ClassDefinitionMap, ClassUsageMap — VOs for dispatch routing analysis
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::LineNumber;

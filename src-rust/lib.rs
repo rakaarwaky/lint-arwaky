@@ -1,5 +1,5 @@
 #[path = "cli-commands/mod.rs"]
-// PURPOSE: Library: Root library module
+// PURPOSE: Library root — exports public API modules for CLI and MCP targets
 pub mod cli_commands;
 #[path = "cli-transport/mod.rs"]
 pub mod cli_transport;

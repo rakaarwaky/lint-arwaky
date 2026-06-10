@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Http Provider
+// PURPOSE: IHttpProviderPort — port trait for HTTP client operations
 use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;
 use crate::cli_transport::taxonomy_transport_error::TransportError;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;

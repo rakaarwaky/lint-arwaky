@@ -1,4 +1,4 @@
-// PURPOSE: Controller: Client surface controller
+// PURPOSE: ClientController — MCP surface for client connection management
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use std::sync::Arc;
 

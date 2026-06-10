@@ -1,4 +1,4 @@
-// PURPOSE: Analyzer: Surfaces orphan detection logic
+// PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use crate::orphan_detector::contract_orphan_protocol::ISurfacesOrphanProtocol;

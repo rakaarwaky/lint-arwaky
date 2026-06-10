@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Js Scope adapter implementation
+// PURPOSE: JSScopeAdapter — ILanguageScopePort implementation for JavaScript scope resolution
 
 use crate::language_adapters::contract_scope_port::IJsTracerPort;
 use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;

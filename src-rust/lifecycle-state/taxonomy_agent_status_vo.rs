@@ -1,4 +1,4 @@
-// PURPOSE: VO: Agent Status value object
+// PURPOSE: AgentStatus — value object for agent lifecycle state representation
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]

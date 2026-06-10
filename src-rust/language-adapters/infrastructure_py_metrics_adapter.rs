@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Py Metrics adapter implementation
+// PURPOSE: PyMetricsAdapter — ILinterAdapterPort implementation for code metrics (Radon) integration
 
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
 use crate::metrics_service::taxonomy_metrics_error::MetricsError;

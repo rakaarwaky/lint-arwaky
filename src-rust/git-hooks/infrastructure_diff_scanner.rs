@@ -1,4 +1,4 @@
-// PURPOSE: Scanner: Diff source scanning
+// PURPOSE: DiffScanner — scans git diff output for architecture violation analysis
 use crate::file_system::taxonomy_filesystem_error::FileSystemError;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

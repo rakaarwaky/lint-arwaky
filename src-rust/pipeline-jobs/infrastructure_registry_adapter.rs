@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Registry adapter implementation
+// PURPOSE: JobRegistryAdapter — IJobRegistryPort implementation using in-memory HashMap and background notifier
 
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;

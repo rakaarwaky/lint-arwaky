@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Commands aggregation/wiring
+// PURPOSE: WatchCommandsAggregate — aggregate trait for watch command execution
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 

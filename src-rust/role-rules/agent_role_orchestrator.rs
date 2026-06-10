@@ -1,4 +1,4 @@
-// PURPOSE: Route files to the correct role checker based on filename prefix (taxonomy/contract/agent/surface).
+// PURPOSE: RoleOrchestrator — dispatches files to correct role checker based on filename prefix
 
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::role_rules::contract_role_aggregate::IRoleAggregate;
@@ -26,6 +26,10 @@ impl RoleOrchestrator {
             match prefix {
                 "agent" => {
                     let checker = self.aggregate.agent();
+                    // All agent files get these checks
+                    checker.check_file_size_limit(file, &content, violations);
+                    checker.check_any_type_annotation(file, &content, violations);
+                    // Suffix-specific checks
                     if filename.contains("_container") {
                         checker.check_container(file, &content, violations);
                     } else if filename.contains("_orchestrator") {
@@ -36,6 +40,9 @@ impl RoleOrchestrator {
                 }
                 "surfaces" | "surface" => {
                     let checker = self.aggregate.surface();
+                    // All surface files get this check
+                    checker.check_fn_count_limit(file, &content, violations);
+                    // Type-specific checks
                     let is_smart = filename.contains("_command")
                         || filename.contains("_controller")
                         || filename.contains("_page")

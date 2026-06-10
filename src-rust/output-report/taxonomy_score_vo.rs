@@ -1,4 +1,4 @@
-// PURPOSE: VO: Score value object
+// PURPOSE: Score, FileFormat, ScoreMap — value objects for compliance scoring and file format enums
 use serde::Serialize;
 
 use crate::output_report::taxonomy_result_vo::LintResult;

@@ -1,4 +1,4 @@
-// PURPOSE: VO: Job value object
+// PURPOSE: PipelineJob, ResponseData, SuccessStatus — value objects for pipeline job lifecycle tracking
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

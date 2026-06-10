@@ -1,4 +1,4 @@
-// PURPOSE: Command: Tools CLI/surface command
+// PURPOSE: handle_tools — MCP surface for listing available tools/capabilities
 
 use serde_json::{json, Value};
 

@@ -1,4 +1,4 @@
-// PURPOSE: AES0306 — Enforce surface role mandates (no domain logic in passive/utility surfaces).
+// PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES0306: smart/utility/passive surface role checks
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
@@ -33,6 +33,18 @@ impl SurfaceRoleChecker {
     }
     pub fn check_passive(&self) -> Vec<LintResult> {
         vec![]
+    }
+
+    pub fn check_fn_count_limit(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        if content.matches("fn ").count() > 15 {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES0306",
+                Severity::HIGH,
+                crate::shared_common::taxonomy_violation_rs_constant::AES0306_SURFACE_ROLE_VIOLATION,
+            ));
+        }
     }
 
     // ---- moved from capabilities_role_checker.rs ----

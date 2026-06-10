@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Rs Clippy adapter implementation
+// PURPOSE: RsClippyAdapter — ILinterAdapterPort implementation for Clippy linting integration
 use std::path::Path;
 use std::sync::Arc;
 

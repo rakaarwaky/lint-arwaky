@@ -1,4 +1,4 @@
-// PURPOSE: Command: Execute CLI/surface command
+// PURPOSE: handle_execute — MCP surface for executing operations and returning results
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 

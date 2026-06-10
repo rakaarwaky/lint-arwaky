@@ -1,4 +1,4 @@
-// PURPOSE: VO: Duration value object
+// PURPOSE: Duration, Timeout — value objects for duration and timeout tracking
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

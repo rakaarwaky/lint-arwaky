@@ -1,4 +1,4 @@
-// PURPOSE: Module: project-setup module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for project-setup (orchestrator, processor, aggregates, VOs)
 pub mod agent_setup_orchestrator;
 pub use agent_setup_orchestrator::SetupManagementOrchestrator;
 pub mod capabilities_setup_processor;

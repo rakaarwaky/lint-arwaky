@@ -4,7 +4,7 @@ use std::sync::Arc;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use std::process::ExitCode;
 
-use crate::cli_commands::taxonomy_command_target_vo::{has_critical, lint_path, resolve_target};
+use crate::code_analysis::{has_critical, lint_path, resolve_target};
 use crate::output_report::taxonomy_result_vo::LintResultList;
 
 pub struct CheckCommandsSurface {

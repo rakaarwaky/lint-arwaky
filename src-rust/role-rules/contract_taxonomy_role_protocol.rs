@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Taxonomy Role
+// PURPOSE: ITaxonomyRoleChecker — port trait for AES0301: taxonomy role audits (VO, entity, error, event, constant)
 use crate::output_report::taxonomy_result_vo::LintResult;
 
 pub trait ITaxonomyRoleChecker: Send + Sync {

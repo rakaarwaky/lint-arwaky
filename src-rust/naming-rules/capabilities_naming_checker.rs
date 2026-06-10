@@ -1,4 +1,4 @@
-// PURPOSE: Checker: Naming rule enforcement
+// PURPOSE: ArchNamingChecker — INamingCheckerProtocol for AES010: naming convention and suffix validation
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;

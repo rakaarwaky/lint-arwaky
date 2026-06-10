@@ -1,4 +1,4 @@
-// PURPOSE: Provider: Detector provider implementation
+// PURPOSE: LanguageDetectorProvider — ILanguageDetectorPort implementation using file extension heuristic
 use crate::config_system::contract_detector_port::ILanguageDetectorPort;
 use crate::project_setup::taxonomy_language_vo::LanguageSource;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

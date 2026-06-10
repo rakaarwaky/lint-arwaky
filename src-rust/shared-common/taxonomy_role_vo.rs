@@ -1,4 +1,4 @@
-// PURPOSE: VO: Role value object
+// PURPOSE: LayerSuffixConfig, SuffixRuleVO — VOs for role suffix policy configuration
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;

@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Metrics
+// PURPOSE: IMetricsProviderPort — port trait for collecting and reporting metrics data
 
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

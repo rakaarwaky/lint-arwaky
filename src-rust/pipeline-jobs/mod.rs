@@ -1,4 +1,4 @@
-// PURPOSE: Module: pipeline-jobs module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for pipeline-jobs (orchestrators, aggregates, adapters, VOs, errors)
 pub mod agent_job_container;
 pub use agent_job_container::PipelineJobRegistry;
 pub mod agent_pipeline_orchestrator;

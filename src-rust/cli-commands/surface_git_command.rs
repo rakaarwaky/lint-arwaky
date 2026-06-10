@@ -2,7 +2,7 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use crate::cli_commands::taxonomy_command_target_vo::lint_path;
+use crate::code_analysis::lint_path;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 pub struct GitCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,

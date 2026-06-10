@@ -1,4 +1,4 @@
-// PURPOSE: Scanner: Rust source scanning
+// PURPOSE: RustScanner — ISourceParserPort for Rust use/mod import extraction
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs;

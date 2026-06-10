@@ -1,4 +1,4 @@
-// PURPOSE: Entity: Governance domain entity
+// PURPOSE: ArchitectureGovernanceEntity — domain entity for architecture governance (scores, issues, dates)
 use serde::{Deserialize, Serialize};
 
 use crate::output_report::taxonomy_result_vo::LintResult;

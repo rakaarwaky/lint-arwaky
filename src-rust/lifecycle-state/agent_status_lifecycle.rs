@@ -1,4 +1,4 @@
-// PURPOSE: Module: Agent Status Lifecycle
+// PURPOSE: AgentStatusLifecycle — manages agent lifecycle states (starting, ready, scanning, stopping)
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;

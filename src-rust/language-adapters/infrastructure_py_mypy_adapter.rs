@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Py Mypy adapter implementation
+// PURPOSE: PyMypyAdapter — ILinterAdapterPort implementation for MyPy type checker integration
 
 use async_trait::async_trait;
 use regex::Regex;

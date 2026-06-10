@@ -1,4 +1,4 @@
-// PURPOSE: Client: Http client implementation
+// PURPOSE: HttpClientProvider — IHttpProviderPort implementation using reqwest HTTP client
 use crate::cli_transport::taxonomy_protocol_vo::TransportProtocol;
 use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;
 use crate::cli_transport::taxonomy_transport_error::TransportError;

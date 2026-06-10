@@ -1,4 +1,4 @@
-// PURPOSE: Detector: Scope Bounds detection
+// PURPOSE: ScopeBoundsDetector — IScopeBoundaryProtocol for JS scope boundary detection
 
 use crate::layer_rules::contract_compliance_protocol::IScopeBoundaryProtocol;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

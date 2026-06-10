@@ -1,4 +1,4 @@
-// PURPOSE: Event: Installed domain event
+// PURPOSE: HookInstalled — domain event published when a git hook is installed
 use crate::shared_common::taxonomy_common_vo::Timestamp;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};

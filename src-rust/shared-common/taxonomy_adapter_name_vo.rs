@@ -1,4 +1,4 @@
-// PURPOSE: VO: Adapter Name value object
+// PURPOSE: AdapterName — validated newtype for adapter/linter name strings
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 

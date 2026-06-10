@@ -1,4 +1,4 @@
-// PURPOSE: Module: Infrastructure Server Validation Util
+// PURPOSE: ValidationUtil — helper functions for validating JSON-RPC request parameters
 use crate::mcp_server::taxonomy_server_constant::MAX_PATH_DEPTH;
 use crate::mcp_server::taxonomy_server_constant::MAX_PATH_LENGTH;
 use crate::mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;

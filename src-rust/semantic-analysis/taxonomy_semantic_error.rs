@@ -1,4 +1,4 @@
-// PURPOSE: Error: Semantic error types
+// PURPOSE: SemanticError — structured error type for semantic analysis failures
 use crate::shared_common::taxonomy_common_error::Cause;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;

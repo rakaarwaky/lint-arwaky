@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Py Bandit adapter implementation
+// PURPOSE: PyBanditAdapter — ILinterAdapterPort implementation for Bandit security scanner integration
 
 use async_trait::async_trait;
 use serde_json::Value;

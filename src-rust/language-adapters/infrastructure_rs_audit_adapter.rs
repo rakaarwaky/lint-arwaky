@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Rs Audit adapter implementation
+// PURPOSE: RsAuditAdapter — ILinterAdapterPort implementation for cargo-audit security scanning
 use std::path::Path;
 use std::sync::Arc;
 

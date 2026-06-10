@@ -1,4 +1,4 @@
-// PURPOSE: Tracer: Js Flow tracing
+// PURPOSE: JSFlowProvider — IFlowProviderPort implementation for JavaScript data flow tracing
 
 use crate::language_adapters::contract_flow_port::IJavascriptFlowPort;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

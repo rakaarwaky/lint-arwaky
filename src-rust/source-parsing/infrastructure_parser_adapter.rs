@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Parser adapter implementation
+// PURPOSE: ParserAdapter — routes file extensions to the correct language-specific scanner
 
 use crate::code_analysis::taxonomy_import_source_vo::ImportInfoList;
 use crate::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;

@@ -1,4 +1,4 @@
-// PURPOSE: Analyzer: Agent orphan detection logic
+// PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
 use crate::output_report::taxonomy_severity_vo::Severity;

@@ -1,4 +1,4 @@
-// PURPOSE: Provider: Barrel provider implementation
+// PURPOSE: BarrelProvider — detects barrel/index files (_init_.py, mod.rs, index.ts)
 use std::collections::HashMap;
 
 /// Centralized barrel import resolver and barrel utility functions.

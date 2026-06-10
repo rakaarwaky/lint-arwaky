@@ -1,4 +1,4 @@
-// PURPOSE: Collector: File file collection
+// PURPOSE: FileCollector — collects source files recursively with directory exclusion support
 use std::fs;
 use std::path::Path;
 

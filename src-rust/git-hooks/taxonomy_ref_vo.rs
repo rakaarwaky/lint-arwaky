@@ -1,4 +1,4 @@
-// PURPOSE: VO: Ref value object
+// PURPOSE: GitRefVO — value object for git reference (branch, tag)
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]

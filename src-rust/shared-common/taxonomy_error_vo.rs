@@ -1,4 +1,4 @@
-// PURPOSE: VO: Error value object
+// PURPOSE: ErrorCode — value object for AES error code identification
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 

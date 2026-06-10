@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Setup
+// PURPOSE: ISetupProtocol — protocol trait for project setup step definitions
 
 use crate::pipeline_jobs::taxonomy_job_vo::EnvContentVO;
 use crate::pipeline_jobs::taxonomy_job_vo::McpConfigVO;

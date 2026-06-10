@@ -1,4 +1,4 @@
-// PURPOSE: VO: Language value object
+// PURPOSE: LanguageConfigVO — value object for programming language configuration
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

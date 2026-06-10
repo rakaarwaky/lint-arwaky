@@ -1,4 +1,4 @@
-// PURPOSE: Controller: Server surface controller
+// PURPOSE: ServerController — MCP surface for server lifecycle management
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::mcp_server::surface_tools_controller::register_tools;

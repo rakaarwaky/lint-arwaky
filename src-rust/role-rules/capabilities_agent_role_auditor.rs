@@ -1,4 +1,4 @@
-// PURPOSE: Module: Capabilities Agent Role Auditor
+// PURPOSE: AgentRoleChecker — IAgentRoleChecker for AES0305: agent container/orchestrator/lifecycle role audits
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -53,6 +53,40 @@ impl AgentRoleChecker {
     }
     pub fn check_lifecycle(&self) -> Vec<LintResult> {
         vec![]
+    }
+
+    pub fn check_file_size_limit(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        if content.lines().count() > 300 {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES0305",
+                Severity::HIGH,
+                "AES0305 AGENT_ROLE: Agent file exceeds 300 lines.",
+            ));
+        }
+    }
+
+    pub fn check_any_type_annotation(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        for (i, line) in content.lines().enumerate() {
+            let t = line.trim();
+            if t.contains(": any")
+                || t.contains(": Any")
+                || t.contains("-> any")
+                || t.contains("-> Any")
+                || t.contains("Any<")
+                || t.contains("Any[")
+                || t.contains("any[")
+            {
+                violations.push(LintResult::new_arch(
+                    file,
+                    i + 1,
+                    "AES0305",
+                    Severity::HIGH,
+                    &aes0305_any_type(t),
+                ));
+            }
+        }
     }
 
     // ---- moved from capabilities_role_checker.rs ----

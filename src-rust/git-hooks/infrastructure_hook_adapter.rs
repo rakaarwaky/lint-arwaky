@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Hook adapter implementation
+// PURPOSE: HookAdapter — IHookManagerPort implementation for installing/uninstalling git hook scripts
 
 use crate::git_hooks::contract_manager_port::IHookManagerPort;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;

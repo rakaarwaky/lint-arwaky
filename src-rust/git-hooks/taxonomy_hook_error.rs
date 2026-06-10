@@ -1,4 +1,4 @@
-// PURPOSE: Error: Hook error types
+// PURPOSE: HookError — structured error type for git hook operation failures
 use crate::shared_common::taxonomy_common_error::Cause;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;

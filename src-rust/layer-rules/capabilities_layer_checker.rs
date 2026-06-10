@@ -1,4 +1,4 @@
-// PURPOSE: AES0303 — Detect capability routing bottlenecks (single bottleneck, missing dispatch).
+// PURPOSE: ArchLayerChecker — AES0303: detect capability routing bottlenecks (single bottleneck, missing dispatch)
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 fn aes0303_capability_routing(struct_name: &str) -> String {
@@ -31,14 +31,6 @@ impl ArchLayerChecker {
         violations: &mut Vec<LintResult>,
     ) {
         if layer != "capabilities" && !layer.starts_with("capabilities(") {
-            return;
-        }
-        // Skip if file has bypass-capability-routing annotation
-        let first_lines: Vec<&str> = content.lines().take(30).collect();
-        if first_lines
-            .iter()
-            .any(|l| l.trim() == "// aes: bypass-capability-routing")
-        {
             return;
         }
         let structs: Vec<&str> = content

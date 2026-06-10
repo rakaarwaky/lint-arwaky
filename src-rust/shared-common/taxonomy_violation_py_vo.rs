@@ -1,4 +1,4 @@
-// PURPOSE: VO: Violation Py value object
+// PURPOSE: AES violation message builder functions for Python analysis
 pub fn aes010_naming_convention(_expected_word_count: i32) -> String {
     String::from(
         "AES010 NAMING_CONVENTION: Filename must follow [layer]_[concept(s)]_[suffix] pattern.\n\

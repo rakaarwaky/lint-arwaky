@@ -1,4 +1,4 @@
-// PURPOSE: Scanner: Py source scanning
+// PURPOSE: PyScanner — ISourceParserPort for Python import extraction
 
 use regex::Regex;
 use std::collections::{HashMap, HashSet};

@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Scanner Provider
+// PURPOSE: IScannerProviderPort — port trait for providing language-specific source scanners
 
 use crate::file_system::taxonomy_filesystem_error::FileSystemError;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;

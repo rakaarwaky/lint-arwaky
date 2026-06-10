@@ -1,4 +1,4 @@
-// PURPOSE: Adapter: Filesystem adapter implementation
+// PURPOSE: FileSystemAdapter — IFileSystemPort implementation using std::fs and glob crate
 
 use async_trait::async_trait;
 use std::fs;

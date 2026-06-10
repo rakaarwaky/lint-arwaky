@@ -1,4 +1,4 @@
-// PURPOSE: Error: Manager error types
+// PURPOSE: PluginManagerError — structured error type for plugin management failures
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_error::Cause;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

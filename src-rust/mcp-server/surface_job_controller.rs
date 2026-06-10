@@ -1,4 +1,4 @@
-// PURPOSE: Controller: Job surface controller
+// PURPOSE: JobController — MCP surface for job lifecycle management endpoints
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;
 use serde_json::json;

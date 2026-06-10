@@ -1,4 +1,4 @@
-// PURPOSE: Checker: Schema rule enforcement
+// PURPOSE: SchemaChecker — validates JSON-RPC method schemas against server capabilities
 
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;

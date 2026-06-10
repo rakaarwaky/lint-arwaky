@@ -1,4 +1,4 @@
-// PURPOSE: Constants: Server constants
+// PURPOSE: ServerConstant — constant definitions for MCP server configuration
 
 pub const MCP_SERVER_VERSION: &str = "1.0.0";
 pub const AUTO_LINT_VERSION: &str = env!("CARGO_PKG_VERSION");

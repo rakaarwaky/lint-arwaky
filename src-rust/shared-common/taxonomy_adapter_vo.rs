@@ -1,4 +1,4 @@
-// PURPOSE: VO: Adapter value object
+// PURPOSE: AdapterClassMap, AdapterMetadataList, AdapterNameList — VOs for adapter registration metadata
 use crate::pipeline_jobs::taxonomy_job_vo::AdapterMetadata;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use serde::{Deserialize, Serialize};

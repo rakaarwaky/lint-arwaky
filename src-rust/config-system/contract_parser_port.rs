@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Parser
+// PURPOSE: IConfigParserPort + ITomlConfigParserPort — port traits for parsing YAML and TOML config formats
 
 use crate::config_system::taxonomy_config_error::ConfigError;
 /* UNKNOWN: ProjectConfig */

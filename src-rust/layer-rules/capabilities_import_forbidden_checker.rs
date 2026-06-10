@@ -1,4 +1,4 @@
-// PURPOSE: AES001 — Enforce forbidden import rules: definition-level, scope-specific, and legacy governance.
+// PURPOSE: ArchImportForbiddenChecker — AES001: enforce forbidden import rules via definition, scope, and legacy governance
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::capabilities_import_utils::{
     extract_layer_from_import, extract_module_from_line, get_basename, import_matches_scope,

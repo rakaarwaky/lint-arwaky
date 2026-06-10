@@ -1,4 +1,4 @@
-// PURPOSE: VO: Common value object
+// PURPOSE: BooleanVO, ColumnNumber, Count, DataFlowList, LineContentList, LineNumber, PatternList, Score, Timestamp — common VOs
 use serde::{Deserialize, Serialize};
 
 use crate::output_report::taxonomy_severity_vo::Severity;

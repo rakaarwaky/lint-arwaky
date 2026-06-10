@@ -1,4 +1,4 @@
-// PURPOSE: Action: Main action handler
+// PURPOSE: main entry point for lint-arwaky-cli — parses args, initializes DI, dispatches commands
 use std::env;
 use std::process::ExitCode;
 use std::sync::Arc;

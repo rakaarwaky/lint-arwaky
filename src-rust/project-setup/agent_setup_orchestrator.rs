@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Orchestrates Setup
+// PURPOSE: SetupOrchestrator — orchestrates project initialization and setup operations
 
 use crate::cli_transport::taxonomy_protocol_vo::TransportProtocol;
 use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;

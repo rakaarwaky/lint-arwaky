@@ -1,4 +1,4 @@
-// PURPOSE: VO: Definition value object
+// PURPOSE: LayerDefinition, LayerMapVO, NamingConfig — VOs for AES layer definitions and naming policies
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::BooleanVO;

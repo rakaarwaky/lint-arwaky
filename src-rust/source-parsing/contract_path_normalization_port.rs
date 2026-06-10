@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Path Normalization
+// PURPOSE: IPathNormalizationPort — port trait for file path normalization across platforms
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub trait IPathNormalizationPort: Send + Sync {

@@ -1,4 +1,4 @@
-// PURPOSE: VO: Summary value object
+// PURPOSE: ProjectSummaryVO — value object for multi-project governance summary data
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

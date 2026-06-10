@@ -1,4 +1,4 @@
-// PURPOSE: Controller: Tools surface controller
+// PURPOSE: ToolsController — MCP surface for tool listing and execution
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 

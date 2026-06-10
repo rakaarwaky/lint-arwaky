@@ -1,4 +1,4 @@
-// PURPOSE: Provider: Js Naming provider implementation
+// PURPOSE: JSNamingProvider — INamingProviderPort implementation for JavaScript naming conventions
 
 use crate::naming_rules::contract_naming_port::INamingProviderPort;
 use crate::naming_rules::taxonomy_name_vo::NameVariants;

@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Agent orchestrator for orphan code detection
+// PURPOSE: IOrphanAggregate — aggregate trait implementing all orphan detection protocols
 use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
 use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
@@ -308,14 +308,6 @@ impl ArchOrphanAnalyzer {
             );
         }
 
-        if self._check_dispatch_annotation(f) {
-            return crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
-                false,
-                String::new(),
-                Severity::HIGH,
-            );
-        }
-
         let _ = definition;
         let layer_str = layer_vo.value.to_lowercase();
         let fp = FilePath::new(f.to_string()).unwrap_or_default();
@@ -391,15 +383,4 @@ impl ArchOrphanAnalyzer {
         )
     }
 
-    fn _check_dispatch_annotation(&self, file_path: &str) -> bool {
-        if let Ok(content) = std::fs::read_to_string(file_path) {
-            for line in content.lines().take(30) {
-                let trimmed = line.trim();
-                if trimmed == "// aes: wired-by-dispatch" || trimmed == "# aes: wired-by-dispatch" {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-}
+

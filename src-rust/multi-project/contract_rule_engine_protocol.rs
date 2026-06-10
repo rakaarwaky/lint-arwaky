@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Rule Engine
+// PURPOSE: IRuleEngineProtocol — protocol trait for cross-project rule enforcement
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;

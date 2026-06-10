@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Orchestrator aggregation/wiring
+// PURPOSE: MultiProjectOrchestratorAggregate — aggregate trait for multi-project orchestration
 use crate::multi_project::taxonomy_summary_vo::AggregatedResults;
 use crate::multi_project::taxonomy_summary_vo::ProjectResult;
 use crate::shared_common::taxonomy_common_vo::Count;

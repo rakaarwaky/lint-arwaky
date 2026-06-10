@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: Output aggregation/wiring
+// PURPOSE: OutputAggregate — aggregate trait for pipeline output generation (report, format)
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
