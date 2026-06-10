@@ -1,9 +1,14 @@
 // PURPOSE: AES0303 — Detect capability routing bottlenecks (single bottleneck, missing dispatch).
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violation_rs_constant::{
-    aes0303_capability_routing,
-};
+fn aes0303_capability_routing(struct_name: &str) -> String {
+    format!(
+        "AES0303 CAPABILITY_ROLE: Struct '{}' has no trait impl.",
+        struct_name
+    )
+}
+
+// No more imports from taxonomy_violation_rs_constant
 
 pub struct ArchLayerChecker {}
 

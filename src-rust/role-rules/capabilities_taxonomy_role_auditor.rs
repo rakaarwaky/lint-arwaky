@@ -1,7 +1,14 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+fn aes0301_primitive_usage(primitive: &str) -> String {
+    format!(
+        "AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy.",
+        primitive
+    )
+}
+
 use crate::shared_common::taxonomy_violation_rs_constant::{
-    aes0301_primitive_usage, AES0301_CONSTANT_PURITY,
+    AES0301_CONSTANT_PURITY,
 };
 use std::fs;
 use std::path::Path;

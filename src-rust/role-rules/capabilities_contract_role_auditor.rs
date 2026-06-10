@@ -1,7 +1,12 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_rs_constant::aes013_forbidden_inheritance;
+fn aes013_forbidden_inheritance(trait_name: &str) -> String {
+    format!(
+        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
+        trait_name
+    )
+}
 
 pub struct ContractRoleChecker {}
 

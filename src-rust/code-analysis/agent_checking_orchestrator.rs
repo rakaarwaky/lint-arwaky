@@ -20,7 +20,6 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_violation_rs_constant::{
-    aes014_mandatory_inheritance, aes023_unused_import, aes024_dead_inheritance, aes0305_any_type,
     AES012_CIRCULAR_IMPORT, AES022_BYPASS_COMMENT, AES022_PANIC, AES022_UNWRAP_EXPECT,
     AES0303_MISSING_VO, AES0303_SINGLE_BOTTLENECK, AES0304_MISSING_VO,
     AES0306_SURFACE_ROLE_VIOLATION,
@@ -844,4 +843,30 @@ impl LintCheckingOrchestrator {
             }
         }
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// MESSAGE BUILDER FUNCTIONS (moved from taxonomy_violation_rs_vo.rs)
+// ─────────────────────────────────────────────────────────────────────────
+
+fn aes023_unused_import(name: &str) -> String {
+    format!("AES023 UNUSED_IMPORT: '{}' imported but never used.", name)
+}
+
+fn aes024_dead_inheritance(type_name: &str) -> String {
+    format!(
+        "AES024 DEAD_INHERITANCE: Empty struct/trait '{}' detected.",
+        type_name
+    )
+}
+
+fn aes014_mandatory_inheritance(contracts: &str) -> String {
+    format!("AES014 MANDATORY_INHERITANCE: File imports contracts ({}) but no class inherits from them.\nWHY? Layers that import contracts must provide an implementation.\nFIX: Add impl TraitName for YourStruct.", contracts)
+}
+
+fn aes0305_any_type(line: &str) -> String {
+    format!(
+        "AES0305 AGENT_ROLE: Any type annotation found in agent orchestrator layer: '{}'.",
+        line.trim()
+    )
 }

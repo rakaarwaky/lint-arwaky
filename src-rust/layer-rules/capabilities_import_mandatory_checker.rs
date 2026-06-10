@@ -5,7 +5,12 @@ use crate::layer_rules::capabilities_import_utils::{
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_rs_constant::aes002_mandatory_import;
+fn aes002_mandatory_import(required: &str) -> String {
+    format!(
+        "AES002 MANDATORY_IMPORT: Missing required import: '{}'.",
+        required
+    )
+}
 use std::fs;
 
 pub struct ArchImportMandatoryChecker {}

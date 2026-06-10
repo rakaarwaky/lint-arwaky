@@ -31,5 +31,3 @@ pub const AES0302_FORBIDDEN_INHERITANCE: &str =
     "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
 pub const AES0301_CONSTANT_PURITY: &str =
     "AES015 CONSTANT_PURITY: _constant file contains non-constant declaration.";
-
-pub use crate::shared_common::taxonomy_violation_py_vo::*;

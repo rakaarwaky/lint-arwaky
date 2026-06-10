@@ -32,8 +32,6 @@ pub const AES013_FORBIDDEN_INHERITANCE: &str =
 pub const AES0301_CONSTANT_PURITY: &str =
     "AES0301 TAXONOMY_ROLE: _constant file contains non-constant declaration.";
 
-pub use crate::shared_common::taxonomy_violation_rs_vo::*;
-
 pub const AES011_SUFFIX_MISMATCH: &str =
     "AES011 SUFFIX_MISMATCH: Contract file missing _port, _protocol, or _aggregate suffix.";
 pub const AES022_BYPASS_COMMENT: &str = "AES022 BYPASS_COMMENT: Bypass comment detected.";

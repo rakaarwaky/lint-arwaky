@@ -11,9 +11,15 @@ use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_violation_rs_constant::{
-    aes0306_hierarchy_violation, aes0306_passive_violation_details,
-};
+fn aes0306_hierarchy_violation(file: &str) -> String {
+    format!("AES0306 SURFACE_ROLE: Surface file '{}' is not imported from the layer barrel.\nWHY? All surface files must be reachable through the barrel.\nFIX: Add to __init__.py or mod.rs.", file)
+}
+
+fn aes0306_passive_violation_details(file: &str, details: &str) -> String {
+    format!("AES0306 SURFACE_ROLE: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
+}
+
+// No more imports from taxonomy_violation_rs_constant
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use once_cell::sync::Lazy;
 use regex::Regex;

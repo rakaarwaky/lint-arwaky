@@ -7,7 +7,12 @@ use crate::layer_rules::capabilities_import_utils::{
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_rs_constant::aes001_forbidden_import;
+fn aes001_forbidden_import(layer_name: &str, module: &str) -> String {
+    format!(
+        "AES001 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden module '{}'.",
+        layer_name, module
+    )
+}
 
 pub struct ArchImportForbiddenChecker {}
 

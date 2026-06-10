@@ -12,8 +12,16 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
+fn aes010_naming_convention(_expected_word_count: i32) -> String {
+    String::from(
+        "AES010 NAMING_CONVENTION: Filename must follow prefix_concept_suffix pattern.\n\
+        WHY? Prefix identifies layer, suffix identifies role, concept describes feature.\n\
+        FIX: Rename to at least prefix_suffix (e.g., capabilities_user_checker.rs).",
+    )
+}
+
 use crate::shared_common::taxonomy_violation_rs_constant::{
-    aes010_naming_convention, AES011_SUFFIX_FORBIDDEN, AES011_SUFFIX_MISMATCH,
+    AES011_SUFFIX_FORBIDDEN, AES011_SUFFIX_MISMATCH,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;

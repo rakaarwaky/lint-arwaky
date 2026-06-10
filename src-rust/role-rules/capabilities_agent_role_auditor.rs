@@ -14,10 +14,23 @@ use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
+fn aes0305_must_implement_contract(contract_name: &str) -> String {
+    format!(
+        "AES0305 AGENT_ROLE: Class must implement '{}'.",
+        contract_name
+    )
+}
+
+fn aes0305_any_type(line: &str) -> String {
+    format!(
+        "AES0305 AGENT_ROLE: Any type annotation found in agent orchestrator layer: '{}'.",
+        line.trim()
+    )
+}
+
 use crate::shared_common::taxonomy_violation_rs_constant::{
-    aes0305_any_type, aes0305_must_implement_contract, AES0305_COORDINATES_MULTIPLE,
-    AES0305_HIGH_LEVEL_POLICY, AES0305_LAZY_EAGER_INIT, AES0305_MUST_IMPLEMENT_CONTRACT,
-    AES0305_NO_DOMAIN_LOGIC, AES0305_STATELESS_EXECUTION,
+    AES0305_COORDINATES_MULTIPLE, AES0305_HIGH_LEVEL_POLICY, AES0305_LAZY_EAGER_INIT,
+    AES0305_MUST_IMPLEMENT_CONTRACT, AES0305_NO_DOMAIN_LOGIC, AES0305_STATELESS_EXECUTION,
 };
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
