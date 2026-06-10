@@ -9,7 +9,7 @@ pub const AES021_FILE_TOO_SHORT_MSG: &str =
     "AES021 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\n\
     WHY? Excessively small files clutter the project structure.\n\
     FIX: Expand the component or merge this logic into a related module";
-pub const AES016_PRIMITIVE_USAGE: &str = "AES016 PRIMITIVE_USAGE: Direct primitive in taxonomy.";
+
 pub const AES011_MANDATORY_CLASS_DEFINITION: &str =
     "AES011 MANDATORY_CLASS_DEFINITION: File is missing a struct, enum, or trait definition.\n\
     WHY? Encapsulation in structs/traits is required for proper modularization and contract adherence.\n\
@@ -29,13 +29,10 @@ pub const AES0305_MUST_IMPLEMENT_CONTRACT: &str = "Class must implement ServiceC
 pub const AES0305_ANY_TYPE: &str = "Any type annotation found in agent orchestrator layer.";
 pub const AES013_FORBIDDEN_INHERITANCE: &str =
     "AES013 FORBIDDEN_INHERITANCE: implemented from forbidden source.";
-pub const AES015_CONSTANT_PURITY: &str =
-    "AES015 CONSTANT_PURITY: _constant file contains non-constant declaration.";
+pub const AES0301_CONSTANT_PURITY: &str =
+    "AES0301 TAXONOMY_ROLE: _constant file contains non-constant declaration.";
 
-/// Alias for cross-language consistency — AES015 and AES0301 refer to the same check.
-pub const AES0301_CONSTANT_PURITY: &str = AES015_CONSTANT_PURITY;
-
-pub use crate::shared_common::taxonomy_violationrs_vo::*;
+pub use crate::shared_common::taxonomy_violation_rs_vo::*;
 
 pub const AES011_SUFFIX_MISMATCH: &str =
     "AES011 SUFFIX_MISMATCH: Contract file missing _port, _protocol, or _aggregate suffix.";

@@ -228,8 +228,3 @@ architecture:
       scope: ["contract"]
       forbidden_inheritance: ["contract(port)", "contract(protocol)"]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
-
-    AES016:
-      enabled: true
-      scope: ["taxonomy"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]

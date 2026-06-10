@@ -29,9 +29,9 @@ pub fn aes011_suffix_mismatch(allowed_list: &str) -> String {
     )
 }
 
-pub fn aes016_primitive_usage(primitive: &str) -> String {
+pub fn aes0301_primitive_usage(primitive: &str) -> String {
     format!(
-        "AES016 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy.",
+        "AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy.",
         primitive
     )
 }

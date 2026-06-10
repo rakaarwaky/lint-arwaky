@@ -230,8 +230,3 @@ architecture:
       scope: ["contract"]
       forbidden_inheritance: ["contract(port)", "contract(protocol)"]
       exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
-
-    AES016:
-      enabled: true
-      scope: ["taxonomy"]
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]

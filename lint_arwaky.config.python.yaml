@@ -230,8 +230,3 @@ architecture:
       scope: ["contract"]
       forbidden_inheritance: ["contract(port)", "contract(protocol)"]
       exceptions: ["__init__.py", "__main__.py"]
-
-    AES016:
-      enabled: true
-      scope: ["taxonomy"]
-      exceptions: ["__init__.py", "__main__.py"]

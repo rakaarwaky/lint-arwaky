@@ -42,24 +42,24 @@ pub mod taxonomy_fix_vo;
 pub use taxonomy_fix_vo::FixResult;
 pub mod taxonomy_scan_started_event;
 pub use taxonomy_scan_started_event::ScanStarted;
-pub mod taxonomy_violationrs_constant;
-pub use taxonomy_violationrs_constant::*;
+pub mod taxonomy_violation_rs_constant;
+pub use taxonomy_violation_rs_constant::*;
 pub mod taxonomy_definition_vo;
-pub mod taxonomy_violationjs_constant;
-pub mod taxonomy_violationjs_vo;
-pub mod taxonomy_violationpy_constant;
-pub mod taxonomy_violationpy_vo;
-pub mod taxonomy_violationrs_vo;
+pub mod taxonomy_violation_js_constant;
+pub mod taxonomy_violation_js_vo;
+pub mod taxonomy_violation_py_constant;
+pub mod taxonomy_violation_py_vo;
+pub mod taxonomy_violation_rs_vo;
 pub use taxonomy_definition_vo::{LayerDefinition, LayerMapVO, NamingConfig};
 pub mod taxonomy_governance_entity;
 pub use taxonomy_governance_entity::ArchitectureGovernanceEntity;
-pub mod taxonomy_names_constant;
-pub use taxonomy_names_constant::{
+pub mod taxonomy_layer_names_constant;
+pub use taxonomy_layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_GLOBAL, LAYER_INFRASTRUCTURE,
     LAYER_ROOT, LAYER_SURFACES, LAYER_TAXONOMY,
 };
-pub mod taxonomy_names_vo;
-pub use taxonomy_names_vo::LayerNames;
+pub mod taxonomy_layer_names_vo;
+pub use taxonomy_layer_names_vo::LayerNames;
 pub mod taxonomy_suffix_vo;
 pub use taxonomy_suffix_vo::{SuffixPolicyVO, SuffixVO};
 pub mod taxonomy_suggestion_vo;
