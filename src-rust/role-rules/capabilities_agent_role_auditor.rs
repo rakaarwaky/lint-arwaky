@@ -13,14 +13,14 @@ use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-fn aes0305_must_implement_contract(contract_name: &str) -> String {
+pub fn aes0305_must_implement_contract(contract_name: &str) -> String {
     format!(
         "AES0305 AGENT_ROLE: Class must implement '{}'.",
         contract_name
     )
 }
 
-fn aes0305_any_type(line: &str) -> String {
+pub fn aes0305_any_type(line: &str) -> String {
     format!(
         "AES0305 AGENT_ROLE: Any type annotation found in agent orchestrator layer: '{}'.",
         line.trim()

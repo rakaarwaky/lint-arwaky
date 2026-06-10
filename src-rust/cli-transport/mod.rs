@@ -1,4 +1,4 @@
-// PURPOSE: Module: cli-transport module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for CLI transport layer
 pub mod capabilities_routing_processor;
 pub use capabilities_routing_processor::{
     DispatchRoutingChecker, DispatchRoutingParser, MethodArgsVO,

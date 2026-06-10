@@ -1,4 +1,4 @@
-// PURPOSE: Command: Watch CLI/surface command
+// PURPOSE: WatchCommandsSurface — CLI surface for file watching with auto-lint on changes
 
 use std::process::ExitCode;
 use std::sync::Arc;

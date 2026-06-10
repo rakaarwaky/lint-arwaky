@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Adapter
+// PURPOSE: ILinterAdapterPort — port trait for linter adapter implementations (Ruff, Mypy, Clippy, etc.)
 
 use async_trait::async_trait;
 

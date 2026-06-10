@@ -13,7 +13,7 @@ use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbidd
 use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
-use crate::orphan_detector::capabilities_orphan_analyzer::OrphanGraphResolver;
+use crate::orphan_detector::OrphanGraphResolver;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;

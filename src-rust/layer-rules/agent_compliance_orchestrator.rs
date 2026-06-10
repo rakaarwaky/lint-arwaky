@@ -360,7 +360,9 @@ impl ArchRulesOrchestratorAggregate for ArchComplianceOrchestrator {
 #[async_trait]
 impl IArchCompliancePort for ArchComplianceOrchestrator {
     async fn scan(&self, path: &FilePath) -> LintResultList {
-        (self as &dyn ArchRulesOrchestratorAggregate).scan(path).await
+        (self as &dyn ArchRulesOrchestratorAggregate)
+            .scan(path)
+            .await
     }
 
     async fn apply_fix(&self, path: &FilePath) -> ComplianceStatus {

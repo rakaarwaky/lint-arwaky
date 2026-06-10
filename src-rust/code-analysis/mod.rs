@@ -1,4 +1,4 @@
-// PURPOSE: Module: code-analysis module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for code-analysis (checkers, reporters, protocols, fixers, renamers, analyzers)
 pub mod capabilities_analysis_reporter;
 pub use capabilities_analysis_reporter::AnalysisReporter;
 pub mod capabilities_renamer_processor;
@@ -14,9 +14,9 @@ pub use agent_checking_orchestrator::LintCheckingOrchestrator;
 
 pub mod capabilities_fix_processor;
 pub use capabilities_fix_processor::LintFixProcessor;
-pub mod agent_lint_orchestrator;
-pub use agent_lint_orchestrator::{
-    detect_source_dir, ArchLintPipelineOrchestrator, ArchitectureLintOrchestrator,
+pub mod agent_codebase_scan_orchestrator;
+pub use agent_codebase_scan_orchestrator::{
+    detect_source_dir, CodebaseScanOrchestrator, CodebaseScanPipelineOrchestrator,
 };
 pub mod capabilities_class_checker;
 pub use capabilities_class_checker::ArchClassChecker;

@@ -1,4 +1,4 @@
-// PURPOSE: Command: Map CLI/surface command
+// PURPOSE: handle_cancel, handle_diff, handle_import — standalone functions for diff/map/import operations
 use std::process::ExitCode;
 
 use crate::cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};

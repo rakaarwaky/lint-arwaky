@@ -1,9 +1,7 @@
-// PURPOSE: Processor: Renamer processing logic
-
+// PURPOSE: SymbolRenamerProcessor — renames symbols/filenames across the entire codebase with regex matching
 use regex::Regex;
 use std::fs;
 
-/// Business logic for renaming symbols across the entire codebase.
 pub struct SymbolRenamerProcessor {}
 
 impl Default for SymbolRenamerProcessor {

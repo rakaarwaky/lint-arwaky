@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Orchestrates Lint
+// PURPOSE: detect_source_dir + collect_source_files — entry point for codebase scan orchestration, discovers source dirs and scans all files for AES compliance
 use std::path::Path;
 
 use crate::config_system::taxonomy_config_vo::default_aes_config;
@@ -18,15 +18,15 @@ pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
     project_root.join("src-rust")
 }
 
-pub struct ArchitectureLintOrchestrator {}
+pub struct CodebaseScanOrchestrator {}
 
-impl Default for ArchitectureLintOrchestrator {
+impl Default for CodebaseScanOrchestrator {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl ArchitectureLintOrchestrator {
+impl CodebaseScanOrchestrator {
     pub fn new() -> Self {
         let _: Option<&dyn ServiceContainerAggregate> = None;
         Self {}
@@ -75,7 +75,7 @@ impl ArchitectureLintOrchestrator {
     }
 }
 
-impl IArchLintProtocol for ArchitectureLintOrchestrator {
+impl IArchLintProtocol for CodebaseScanOrchestrator {
     fn run_self_lint(&self, project_root: &str) -> LintResultList {
         LintResultList::new(self.run_self_lint(project_root))
     }
@@ -89,20 +89,20 @@ impl IArchLintProtocol for ArchitectureLintOrchestrator {
     }
 }
 
-pub struct ArchLintPipelineOrchestrator {
-    inner: ArchitectureLintOrchestrator,
+pub struct CodebaseScanPipelineOrchestrator {
+    inner: CodebaseScanOrchestrator,
 }
 
-impl Default for ArchLintPipelineOrchestrator {
+impl Default for CodebaseScanPipelineOrchestrator {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl ArchLintPipelineOrchestrator {
+impl CodebaseScanPipelineOrchestrator {
     pub fn new() -> Self {
         Self {
-            inner: ArchitectureLintOrchestrator::new(),
+            inner: CodebaseScanOrchestrator::new(),
         }
     }
 

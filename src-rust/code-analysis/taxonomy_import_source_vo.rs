@@ -1,4 +1,4 @@
-// PURPOSE: VO: Import Source value object
+// PURPOSE: ImportInfo, PrimitiveViolation, PrimitiveViolationList — value objects for import analysis and primitive type detection
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use serde::{Deserialize, Serialize};

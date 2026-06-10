@@ -1,4 +1,4 @@
-// PURPOSE: Command: Multi CLI/surface command
+// PURPOSE: MultiCommandsSurface — CLI surface for multi-project governance and batch linting
 use std::process::ExitCode;
 use std::sync::Arc;
 

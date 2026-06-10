@@ -1,4 +1,4 @@
-// PURPOSE: Controller: Setup surface controller
+// PURPOSE: SetupManagementSurface — controller for generating env files and MCP client configs
 use std::sync::Arc;
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;

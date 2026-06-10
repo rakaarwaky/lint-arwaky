@@ -58,7 +58,7 @@ impl DependencyInjectionContainer {
             ),
         );
         let arch_linter: Arc<dyn IArchLintProtocol> = Arc::new(
-            crate::code_analysis::agent_lint_orchestrator::ArchitectureLintOrchestrator::new(),
+            crate::code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new(),
         );
 
         let mut linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();

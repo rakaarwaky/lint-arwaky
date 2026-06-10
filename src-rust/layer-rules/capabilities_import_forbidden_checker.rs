@@ -17,11 +17,15 @@ fn aes001_forbidden_import(layer_name: &str, module: &str) -> String {
 pub struct ArchImportForbiddenChecker {}
 
 impl Default for ArchImportForbiddenChecker {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ArchImportForbiddenChecker {
-    pub fn new() -> Self { Self {} }
+    pub fn new() -> Self {
+        Self {}
+    }
 
     pub fn check_forbidden_imports(
         &self,
@@ -39,8 +43,11 @@ impl ArchImportForbiddenChecker {
             definition.forbidden.values.clone()
         } else {
             vec![
-                "agent".to_string(), "infrastructure".to_string(), "capabilities".to_string(),
-                "contract(port)".to_string(), "contract(protocol)".to_string(),
+                "agent".to_string(),
+                "infrastructure".to_string(),
+                "capabilities".to_string(),
+                "contract(port)".to_string(),
+                "contract(protocol)".to_string(),
             ]
         };
 
@@ -53,14 +60,19 @@ impl ArchImportForbiddenChecker {
                     let is_forbidden = if suffixes.is_empty() {
                         segments.iter().any(|seg| {
                             let cleaned = seg.trim_end_matches(';').trim();
-                            extract_layer_from_import(cleaned).map(|l| l == layer).unwrap_or(false)
+                            extract_layer_from_import(cleaned)
+                                .map(|l| l == layer)
+                                .unwrap_or(false)
                         })
                     } else {
                         import_matches_scope(line, layer, &suffixes)
                     };
                     if is_forbidden {
                         violations.push(LintResult::new_arch(
-                            file, *line_num, "AES001", Severity::CRITICAL,
+                            file,
+                            *line_num,
+                            "AES001",
+                            Severity::CRITICAL,
                             &aes001_forbidden_import(layer_name, &module),
                         ));
                     }
@@ -76,18 +88,26 @@ impl ArchImportForbiddenChecker {
         violations: &mut Vec<LintResult>,
     ) {
         let basename = get_basename(file);
-        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" { return; }
+        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+            return;
+        }
         let stem = basename.rsplit('.').next_back().unwrap_or(&basename);
         let suffix = stem.rsplit('_').next().unwrap_or("");
 
         let import_lines = read_import_lines(file);
-        if import_lines.is_empty() { return; }
+        if import_lines.is_empty() {
+            return;
+        }
 
         for rule in &config.rules {
             let (rule_layer, rule_suffixes) = resolve_scope(&rule.scope.value);
             let layer_match = stem.starts_with(&format!("{}_", rule_layer));
-            if !layer_match { continue; }
-            if !rule_suffixes.is_empty() && !rule_suffixes.contains(&suffix) { continue; }
+            if !layer_match {
+                continue;
+            }
+            if !rule_suffixes.is_empty() && !rule_suffixes.contains(&suffix) {
+                continue;
+            }
             for (line_num, line) in &import_lines {
                 if let Some(module) = extract_module_from_line(line) {
                     let segments: Vec<&str> = module.split("::").collect();
@@ -96,14 +116,19 @@ impl ArchImportForbiddenChecker {
                         let is_forbidden = if forbidden_suffixes.is_empty() {
                             segments.iter().any(|seg| {
                                 let cleaned = seg.trim_end_matches(';').trim();
-                                extract_layer_from_import(cleaned).map(|l| l == forbidden_layer).unwrap_or(false)
+                                extract_layer_from_import(cleaned)
+                                    .map(|l| l == forbidden_layer)
+                                    .unwrap_or(false)
                             })
                         } else {
                             import_matches_scope(line, forbidden_layer, &forbidden_suffixes)
                         };
                         if is_forbidden {
                             violations.push(LintResult::new_arch(
-                                file, *line_num, "AES001", Severity::CRITICAL,
+                                file,
+                                *line_num,
+                                "AES001",
+                                Severity::CRITICAL,
                                 &aes001_forbidden_import(rule_layer, &module),
                             ));
                         }
@@ -120,8 +145,12 @@ impl ArchImportForbiddenChecker {
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        if config.governance_rules.is_empty() { return; }
-        if file_layer == "agent" { return; }
+        if config.governance_rules.is_empty() {
+            return;
+        }
+        if file_layer == "agent" {
+            return;
+        }
 
         let import_lines = read_import_lines(file);
         for (line_num, line) in &import_lines {
@@ -142,7 +171,11 @@ impl ArchImportForbiddenChecker {
                                 desc, file_layer, target, module
                             );
                             violations.push(LintResult::new_arch(
-                                file, *line_num, "AES001", Severity::CRITICAL, &msg,
+                                file,
+                                *line_num,
+                                "AES001",
+                                Severity::CRITICAL,
+                                &msg,
                             ));
                             break;
                         }

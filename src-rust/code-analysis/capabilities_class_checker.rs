@@ -1,4 +1,4 @@
-// PURPOSE: Checker: Class rule enforcement
+// PURPOSE: ArchClassChecker — IMandatoryClassProtocol for AES011: enforce struct/enum/trait definitions per file
 use std::fs;
 use std::path::Path;
 

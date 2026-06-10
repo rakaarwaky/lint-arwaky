@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Line
+// PURPOSE: ILineCheckerProtocol — port trait for AES020/AES021: check file line count limits
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 

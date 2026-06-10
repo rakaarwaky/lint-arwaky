@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Import
+// PURPOSE: ValidateImportsParams + check_import_compliance — parameter structures and validation logic for import checking (AES001/AES002)
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

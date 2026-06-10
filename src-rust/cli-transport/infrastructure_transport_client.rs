@@ -1,4 +1,4 @@
-// PURPOSE: Client: Transport client implementation
+// PURPOSE: StdioClient — ICommandExecutorPort implementation via tokio process for executing shell commands
 
 use async_trait::async_trait;
 use std::collections::HashMap;

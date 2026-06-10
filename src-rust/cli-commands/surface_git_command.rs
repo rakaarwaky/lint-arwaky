@@ -1,4 +1,4 @@
-// PURPOSE: Command: Git CLI/surface command
+// PURPOSE: GitCommandsSurface — CLI surface for git integration (format patch, commit messages, PR review)
 use std::process::ExitCode;
 use std::sync::Arc;
 

@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Class
+// PURPOSE: IMandatoryClassProtocol — port trait for AES011: check that each file has a struct/enum/trait definition
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 

@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Rule
+// PURPOSE: IAnalyzer trait — core analyzer interface providing config, layer map, filesystem, and parser access for all checks
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::output_report::taxonomy_result_vo::LintResultList;

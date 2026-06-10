@@ -1,4 +1,4 @@
-// PURPOSE: Checker: Line rule enforcement
+// PURPOSE: ArchLineChecker — ILineCheckerProtocol for AES020 (file too large) and AES021 (file too short)
 use std::fs;
 use std::path::Path;
 

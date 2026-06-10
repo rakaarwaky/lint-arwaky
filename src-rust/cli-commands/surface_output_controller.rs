@@ -1,6 +1,5 @@
-// PURPOSE: Controller: Output surface controller
+// PURPOSE: OutputControllerSurface — CLI output management (tee, write output files, JSON/JUnit/SARIF formatting)
 use std::sync::Arc;
-/// CLI output management utilities.
 use std::sync::Mutex;
 
 use crate::output_report::taxonomy_result_vo::LintResult;

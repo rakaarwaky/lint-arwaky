@@ -1,4 +1,4 @@
-// PURPOSE: Checker: Unused rule enforcement
+// PURPOSE: UnusedImportRuleChecker — IUnusedProtocol for AES023: detect imports that are never used in the code
 
 use crate::code_analysis::contract_unused_protocol::IUnusedProtocol;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

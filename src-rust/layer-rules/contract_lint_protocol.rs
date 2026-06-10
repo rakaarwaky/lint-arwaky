@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Lint
+// PURPOSE: IArchLintProtocol — port trait for self-linting the linter's own codebase and formatting reports
 
 use crate::output_report::taxonomy_result_vo::LintResultList;
 

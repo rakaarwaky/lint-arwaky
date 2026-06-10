@@ -88,15 +88,51 @@ impl IContractRoleChecker for ContractRoleChecker {
 }
 
 impl ISurfaceRoleChecker for SurfaceRoleChecker {
-    fn check_smart_surface(&self, _file: &str, _content: &str, _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {}
-    fn check_utility_surface(&self, _file: &str, _content: &str, _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {}
-    fn check_passive_surface(&self, _file: &str, _content: &str, _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {}
+    fn check_smart_surface(
+        &self,
+        _file: &str,
+        _content: &str,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_utility_surface(
+        &self,
+        _file: &str,
+        _content: &str,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_passive_surface(
+        &self,
+        _file: &str,
+        _content: &str,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
 }
 
 impl IAgentRoleChecker for AgentRoleChecker {
-    fn check_container(&self, _file: &str, _content: &str, _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {}
-    fn check_orchestrator(&self, _file: &str, _content: &str, _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {}
-    fn check_lifecycle(&self, _file: &str, _content: &str, _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>) {}
+    fn check_container(
+        &self,
+        _file: &str,
+        _content: &str,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_orchestrator(
+        &self,
+        _file: &str,
+        _content: &str,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_lifecycle(
+        &self,
+        _file: &str,
+        _content: &str,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
 }
 
 impl IRoleAggregate for RoleAggregateImpl {

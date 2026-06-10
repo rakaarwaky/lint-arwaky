@@ -1,4 +1,4 @@
-// PURPOSE: Command: Fix CLI/surface command
+// PURPOSE: FixCommandsSurface — CLI surface for auto-fix operations via ServiceContainerAggregate
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -43,7 +43,7 @@ impl FixCommandsSurface {
             }
 
             let orchestrator =
-                crate::code_analysis::agent_lint_orchestrator::ArchitectureLintOrchestrator::new();
+                crate::code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new();
             let results = orchestrator.run_self_lint(&project_path);
             println!("Found {} violations before fix", results.len());
 

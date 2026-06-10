@@ -1,4 +1,4 @@
-// PURPOSE: VO: Analysis value object
+// PURPOSE: FileDefinitionMap, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap — analysis value objects for code structure
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};

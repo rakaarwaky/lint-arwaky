@@ -1,4 +1,4 @@
-// PURPOSE: Reporter: Analysis reporting
+// PURPOSE: AnalysisReporter — IAnalysisProtocol implementation for tracking analysis history and trend data
 
 use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
 use crate::output_report::taxonomy_result_vo::LintResultList;

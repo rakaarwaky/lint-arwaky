@@ -1,4 +1,4 @@
-// PURPOSE: Command: Plugin CLI/surface command
+// PURPOSE: PluginCommandsSurface — CLI surface for listing and managing enabled adapters/plugins
 use std::collections::BTreeMap;
 use std::process::ExitCode;
 use std::sync::Arc;

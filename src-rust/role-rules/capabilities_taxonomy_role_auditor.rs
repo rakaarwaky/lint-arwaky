@@ -8,9 +8,7 @@ fn aes0301_primitive_usage(primitive: &str) -> String {
     )
 }
 
-use crate::shared_common::taxonomy_violation_rs_constant::{
-    AES0301_CONSTANT_PURITY,
-};
+use crate::shared_common::taxonomy_violation_rs_constant::AES0301_CONSTANT_PURITY;
 use std::fs;
 use std::path::Path;
 

@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Reporting
+// PURPOSE: ILintReportingProtocol — port trait for generating lint reports (plain, JSON, JUnit, SARIF)
 
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;

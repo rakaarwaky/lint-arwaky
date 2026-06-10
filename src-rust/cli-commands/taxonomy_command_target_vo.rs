@@ -28,7 +28,7 @@ pub fn lint_path(path: &str) -> Vec<LintResult> {
     let root = FilePath::new(normalize_project_root(path))
         .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
     let orchestrator =
-        crate::code_analysis::agent_lint_orchestrator::ArchitectureLintOrchestrator::new();
+        crate::code_analysis::agent_compliance_orchestrator::ArchitectureComplianceOrchestrator::new();
     orchestrator.run_self_lint(&root)
 }
 

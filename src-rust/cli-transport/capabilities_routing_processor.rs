@@ -1,10 +1,4 @@
-// PURPOSE: Processor: Routing processing logic
-
-//
-// Detects:
-//   AES0303 — Capability method referenced in COMMAND_CATALOG doesn't exist on the class
-//   AES0303 — Orchestrator routes ALL actions to a single capability when other options exist
-//   AES0303 — Capability method called without required request VO parameter
+// PURPOSE: DispatchRoutingChecker + DispatchRoutingParser — AES0303 capability routing checks (method existence, bottleneck, missing VO)
 
 use once_cell::sync::Lazy;
 use regex::Regex;

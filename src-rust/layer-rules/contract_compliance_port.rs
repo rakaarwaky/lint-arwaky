@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Compliance
+// PURPOSE: IArchCompliancePort — port trait for scanning source trees and applying compliance auto-fixes
 
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;

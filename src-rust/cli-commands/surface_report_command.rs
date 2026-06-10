@@ -1,4 +1,4 @@
-// PURPOSE: Command: Report CLI/surface command
+// PURPOSE: ReportCommandsSurface — CLI surface for generating quality reports (plain, json, junit, sarif)
 use std::process::ExitCode;
 use std::sync::Arc;
 

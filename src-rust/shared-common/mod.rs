@@ -47,11 +47,11 @@ pub mod taxonomy_violation_rs_constant;
 pub use taxonomy_violation_rs_constant::*;
 pub mod taxonomy_definition_vo;
 pub use taxonomy_definition_vo::{LayerDefinition, LayerMapVO, NamingConfig};
+pub mod taxonomy_governance_entity;
 pub mod taxonomy_violation_js_constant;
 pub mod taxonomy_violation_js_vo;
 pub mod taxonomy_violation_py_constant;
 pub mod taxonomy_violation_py_vo;
-pub mod taxonomy_governance_entity;
 pub use taxonomy_governance_entity::ArchitectureGovernanceEntity;
 pub mod taxonomy_layer_names_constant;
 pub use taxonomy_layer_names_constant::{

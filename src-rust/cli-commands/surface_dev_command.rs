@@ -1,4 +1,4 @@
-// PURPOSE: Command: Dev CLI/surface command
+// PURPOSE: DevCommandsSurface — CLI surface for developer operations (diff, suggest, ignore, config, export, init, hooks)
 use std::process::ExitCode;
 
 use crate::cli_commands::taxonomy_command_target_vo::{

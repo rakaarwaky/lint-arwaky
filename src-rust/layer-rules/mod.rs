@@ -38,6 +38,6 @@ pub mod contract_orchestrator_aggregate;
 pub use contract_orchestrator_aggregate::ArchitectureOrchestratorAggregate;
 pub mod contract_rule_protocol;
 pub use contract_rule_protocol::{
-    IAnalyzer, IArchRuleProtocol, IArchStructureProtocol,
-    IInternalCheckerProtocol, IMetricCheckerProtocol, INamingCheckerProtocol, INamingRuleProtocol,
+    IAnalyzer, IArchRuleProtocol, IArchStructureProtocol, IInternalCheckerProtocol,
+    IMetricCheckerProtocol, INamingCheckerProtocol, INamingRuleProtocol,
 };

@@ -1,4 +1,4 @@
-// PURPOSE: Command: Setup CLI/surface command
+// PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, env, mcp config, doctor)
 use std::process::ExitCode;
 use std::sync::Arc;
 
