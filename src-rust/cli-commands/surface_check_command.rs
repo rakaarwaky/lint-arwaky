@@ -6,6 +6,8 @@ use std::process::ExitCode;
 
 use crate::code_analysis::{has_critical, lint_path, resolve_target};
 use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct CheckCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
@@ -61,16 +63,11 @@ impl CheckCommandsSurface {
                 return;
             }
         };
-        let path_obj = crate::source_parsing::taxonomy_path_vo::FilePath::new(path.to_string())
-            .unwrap_or_else(|_| {
-                crate::source_parsing::taxonomy_path_vo::FilePath::new(".".to_string())
-                    .unwrap_or_default()
-            });
+        let path_obj = FilePath::new(path.to_string())
+            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
 
         for name in &adapter_names {
-            let adapter_name =
-                crate::shared_common::taxonomy_adapter_name_vo::AdapterName::new(name.to_string())
-                    .unwrap_or_default();
+            let adapter_name = AdapterName::new(name.to_string()).unwrap_or_default();
             if let Some(adapter) = container.linter_adapter(&adapter_name) {
                 match rt.block_on(adapter.scan(&path_obj)) {
                     Ok(results) => {

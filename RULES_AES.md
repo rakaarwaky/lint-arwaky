@@ -215,9 +215,28 @@ Two sub-checks:
 
 ### AES030 — Orphan Code
 
-**Severity:** MEDIUM
+**Severity:** MEDIUM (taxonomy, surfaces), HIGH (contract, capabilities, infrastructure, agent)
 
-File is not imported by anyone and is not an entry point.
+File is not imported by anyone and is not an entry point. Detection is **per-layer** with different strategies:
+
+| Layer               | Analyzer                         | Detection Logic                                                                                                                                                                                                 | Severity |
+| ------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `taxonomy_`       | `TaxonomyOrphanAnalyzer`       | No inbound imports from any contract file.                                                                                                                                                                      | LOW      |
+| `contract_` | `ContractOrphanAnalyzer` | (1) Trait not implemented by expected layer (`_port` → `infrastructure_`, `_protocol` → `capabilities_`, `_aggregate` → `agent_`). (2) Port/protocol not called by any `agent_*_orchestrator`. (3) Aggregate not called by any `surface_*`. | HIGH |
+| `capabilities_` | `CapabilitiesOrphanAnalyzer` | Not wired in any `_container` AND unreachable in import graph. | HIGH |
+| `infrastructure_` | `InfrastructureOrphanAnalyzer` | Not wired in any `_container` AND unreachable in import graph. | HIGH |
+| `agent_` | `AgentOrphanAnalyzer` | Agent implements a contract `_aggregate`, but that aggregate is not called by any `surface_*` file. All agent suffixes (`_container`, `_orchestrator`, `_lifecycle`) use the same check. | HIGH |
+| `surfaces_`       | `SurfacesOrphanAnalyzer`       | Surface file is unreachable (no inbound imports in import graph).                                                                                                                                               | MEDIUM   |
+
+| Checker                          | Path                                                               |
+| -------------------------------- | ------------------------------------------------------------------ |
+| `ArchOrphanAnalyzer`          | `orphan-detector/agent_orphan_orchestrator.rs`                   |
+| `TaxonomyOrphanAnalyzer`       | `orphan-detector/capabilities_orphan_taxonomy_analyzer.rs`       |
+| `ContractOrphanAnalyzer`       | `orphan-detector/capabilities_orphan_contract_analyzer.rs`       |
+| `CapabilitiesOrphanAnalyzer`   | `orphan-detector/capabilities_orphan_capabilities_analyzer.rs`   |
+| `InfrastructureOrphanAnalyzer` | `orphan-detector/capabilities_orphan_infrastructure_analyzer.rs` |
+| `AgentOrphanAnalyzer`          | `orphan-detector/capabilities_orphan_agent_analyzer.rs`          |
+| `SurfacesOrphanAnalyzer`       | `orphan-detector/capabilities_orphan_surfaces_analyzer.rs`       |
 
 ---
 

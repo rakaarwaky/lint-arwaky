@@ -11,6 +11,7 @@ use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_names_vo::layer_infrastructure;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::SymbolName;
 pub fn aes0305_must_implement_contract(contract_name: &str) -> String {
@@ -187,7 +188,7 @@ impl AgentRoleChecker {
                     source: Some(AdapterName::raw("architecture")),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
-                    related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                    related_locations: LocationList::new(),
                 });
             }
         }
@@ -278,7 +279,7 @@ impl AgentRoleChecker {
                 source: Some(AdapterName::raw("architecture")),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
-                related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                related_locations: LocationList::new(),
             });
         }
     }
@@ -344,7 +345,7 @@ impl AgentRoleChecker {
                     source: Some(AdapterName::raw("architecture")),
                     severity: Severity::HIGH,
                     enclosing_scope: None,
-                    related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                    related_locations: LocationList::new(),
                 });
             }
         }

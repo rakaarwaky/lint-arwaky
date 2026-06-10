@@ -1,8 +1,10 @@
 // PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
+// Agent is orphan if the contract aggregate it implements is NOT called by any surface.
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use regex::Regex;
 
 pub struct AgentOrphanAnalyzer {}
 
@@ -31,89 +33,114 @@ pub fn is_agent_orphan(_f: &FilePath, _root_dir: &FilePath) -> OrphanIndicatorRe
 pub fn is_agent_orphan_raw_wired(is_wired: bool) -> OrphanIndicatorResult {
     OrphanIndicatorResult::new(
         !is_wired,
-        "Orchestrator not wired in DI container.".into(),
+        "Agent orphan: contract aggregate not called by any surface.".into(),
         Severity::HIGH,
     )
 }
 
-pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicatorResult {
-    let basename = f.basename();
-    let stem = basename.replace(".rs", "").replace(".py", "");
-    let pascal_stem: String = stem
-        .split('_')
-        .filter(|s| !s.is_empty())
-        .map(|s| {
-            let mut c = s.chars();
-            c.next()
-                .map(|f| f.to_uppercase().to_string() + c.as_str())
-                .unwrap_or_default()
-        })
-        .collect();
-    let mut is_wired = false;
-    for cf in all_files {
-        let cb = cf.split('/').next_back().unwrap_or("");
-        let csuffix = cb
-            .rsplit('_')
-            .next()
-            .unwrap_or("")
-            .replace(".rs", "")
-            .replace(".py", "");
-        if csuffix != "container" && csuffix != "aggregate" && csuffix != "registry" {
-            continue;
-        }
-        if let Ok(c) = std::fs::read_to_string(cf) {
-            if c.contains(&stem) || c.contains(&format!("mod {}", stem)) || c.contains(&pascal_stem)
-            {
-                is_wired = true;
-                break;
+/// Extract aggregate trait names from agent file content.
+/// Looks for: impl IAggregateTrait for Struct, Box<dyn IAggregateTrait>, Arc<dyn IAggregateTrait>
+fn extract_aggregate_traits(content: &str) -> Vec<String> {
+    let mut traits = Vec::new();
+
+    // Rust: impl ITrait for Struct
+    let re_impl = Regex::new(r"impl\s+([A-Za-z0-9_]+)\s+for\s+").ok();
+    if let Some(re) = re_impl {
+        for cap in re.captures_iter(content) {
+            let name = cap[1].to_string();
+            if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                traits.push(name);
             }
         }
     }
-    is_agent_orphan_raw_wired(is_wired)
+
+    // Rust: Box<dyn ITrait> or Arc<dyn ITrait>
+    let re_dyn = Regex::new(r"(?:Box|Arc)<dyn\s+([A-Za-z0-9_]+)>").ok();
+    if let Some(re) = re_dyn {
+        for cap in re.captures_iter(content) {
+            let name = cap[1].to_string();
+            if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                traits.push(name);
+            }
+        }
+    }
+
+    // Python: class Struct(ITrait):
+    let re_py = Regex::new(r"class\s+\w+\(([^)]+)\)").ok();
+    if let Some(re) = re_py {
+        for cap in re.captures_iter(content) {
+            for part in cap[1].split(',') {
+                let name = part.trim().to_string();
+                if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                    traits.push(name);
+                }
+            }
+        }
+    }
+
+    traits.sort();
+    traits.dedup();
+    traits
+}
+
+pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicatorResult {
+    let fp = f.value();
+    let content = match std::fs::read_to_string(fp) {
+        Ok(c) => c,
+        Err(_) => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
+    };
+
+    // Step 1: Find aggregate traits this agent implements
+    let aggregate_traits = extract_aggregate_traits(&content);
+    if aggregate_traits.is_empty() {
+        return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+    }
+
+    // Step 2: Check if any of these aggregates are called by a surface file
+    for agg_name in &aggregate_traits {
+        let mut called_by_surface = false;
+        for cf in all_files {
+            let cb = cf.split('/').next_back().unwrap_or("");
+            if !cb.starts_with("surface_") {
+                continue;
+            }
+            if let Ok(c) = std::fs::read_to_string(cf) {
+                if c.contains(agg_name) {
+                    called_by_surface = true;
+                    break;
+                }
+            }
+        }
+        if !called_by_surface {
+            return OrphanIndicatorResult::new(
+                true,
+                format!(
+                    "Agent orphan: aggregate '{}' not called by any surface.",
+                    agg_name
+                ),
+                Severity::HIGH,
+            );
+        }
+    }
+
+    OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
 }
 
 pub fn check_agent_orphan(
     fp: &str,
-    basename: &str,
+    _basename: &str,
     files: &[String],
     violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
 ) {
-    let stem = basename.replace(".rs", "").replace(".py", "");
-    let pascal_stem: String = stem
-        .split('_')
-        .filter(|s| !s.is_empty())
-        .map(|s| {
-            let mut c = s.chars();
-            c.next()
-                .map(|f| f.to_uppercase().to_string() + c.as_str())
-                .unwrap_or_default()
-        })
-        .collect();
-    let mut wired = false;
-    for cf in files {
-        let cb = cf.split('/').next_back().unwrap_or("");
-        let csuffix = cb
-            .rsplit('_')
-            .next()
-            .unwrap_or("")
-            .replace(".rs", "")
-            .replace(".py", "");
-        if csuffix != "container" && csuffix != "aggregate" && csuffix != "registry" {
-            continue;
-        }
-        if let Ok(c) = std::fs::read_to_string(cf) {
-            if c.contains(&stem) || c.contains(&format!("mod {}", stem)) || c.contains(&pascal_stem)
-            {
-                wired = true;
-                break;
-            }
-        }
-    }
-    if !wired {
+    let result = is_agent_orphan_raw(
+        &FilePath::new(fp.to_string()).unwrap_or_default(),
+        files,
+    );
+    if result.is_orphan {
         violations.push(crate::orphan_detector::mk_orphan_result(
             fp,
-            &format!("agent '{}' not wired in container.", stem),
-            Severity::HIGH,
+            &result.reason,
+            result.severity,
         ));
     }
 }

@@ -19,6 +19,7 @@ use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -253,12 +254,8 @@ impl ArchOrphanAnalyzer {
             source: Some(AdapterName::raw("architecture")),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
-                    String::new(),
-                ),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
-                    String::new(),
-                ),
+                name: DescriptionVO::new(String::new()),
+                kind: DescriptionVO::new(String::new()),
                 file: None,
                 start_line: None,
                 end_line: None,

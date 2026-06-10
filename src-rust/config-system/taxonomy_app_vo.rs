@@ -1,6 +1,7 @@
 // PURPOSE: AppConfigVO, AppName, AppVersion — value objects for application configuration metadata
 use std::env;
 
+use crate::config_system::taxonomy_setting_vo::{AdapterStatus, ProjectConfig, Thresholds};
 use crate::shared_common::taxonomy_adapter_vo::AdapterNameList;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
@@ -11,7 +12,7 @@ use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 #[derive(Debug, Clone)]
 pub struct AppConfig {
     phantom_root: DirectoryPath,
-    project: crate::config_system::taxonomy_setting_vo::ProjectConfig,
+    project: ProjectConfig,
 }
 
 impl AppConfig {
@@ -24,7 +25,7 @@ impl AppConfig {
     pub fn create(
         phantom_root: Option<String>,
         project_root: Option<String>,
-        project: Option<crate::config_system::taxonomy_setting_vo::ProjectConfig>,
+        project: Option<ProjectConfig>,
     ) -> Self {
         let p_root = phantom_root
             .or_else(|| env::var("PHANTOM_ROOT").ok())
@@ -45,27 +46,24 @@ impl AppConfig {
     }
 
     /// Get the thresholds from the project configuration.
-    pub fn thresholds(&self) -> &crate::config_system::taxonomy_setting_vo::Thresholds {
+    pub fn thresholds(&self) -> &Thresholds {
         &self.project.thresholds
     }
 
     /// Get status for a named adapter.
-    pub fn adapter_status(
-        &self,
-        name: &str,
-    ) -> crate::config_system::taxonomy_setting_vo::AdapterStatus {
+    pub fn adapter_status(&self, name: &str) -> AdapterStatus {
         for entry in &self.project.adapters {
             if entry.name.value == name {
                 return entry.status;
             }
         }
-        crate::config_system::taxonomy_setting_vo::AdapterStatus::NotInstalled
+        AdapterStatus::NotInstalled
     }
 
     /// Check if an adapter is enabled.
     pub fn is_adapter_enabled(&self, name: &str) -> BooleanVO {
         let status = self.adapter_status(name);
-        BooleanVO::new(status == crate::config_system::taxonomy_setting_vo::AdapterStatus::Enabled)
+        BooleanVO::new(status == AdapterStatus::Enabled)
     }
 
     /// Names of enabled adapters.
@@ -94,6 +92,7 @@ impl std::fmt::Display for AppConfig {
 #[cfg(test)]
 mod tests {
     use super::AppConfig;
+    use super::ProjectConfig;
     use std::env;
 
     #[test]
@@ -101,7 +100,7 @@ mod tests {
         let config = AppConfig::create(
             Some("/phantom".to_string()),
             Some("/project".to_string()),
-            Some(crate::config_system::taxonomy_setting_vo::ProjectConfig::default()),
+            Some(ProjectConfig::default()),
         );
         assert_eq!(config.phantom_root.to_string(), "/phantom");
     }

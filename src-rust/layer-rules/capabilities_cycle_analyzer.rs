@@ -12,6 +12,7 @@ use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 fn aes012_circular_import(source: &str, target: &str) -> String {
     format!(
         "AES015 CIRCULAR_IMPORT: Circular dependency detected: '{}' -> '{}'.",
@@ -152,12 +153,8 @@ impl DependencyCycleAnalyzer {
             source: Some(AdapterName::raw("architecture")),
             severity: Severity::CRITICAL,
             enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
-                    String::new(),
-                ),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
-                    String::new(),
-                ),
+                name: DescriptionVO::new(String::new()),
+                kind: DescriptionVO::new(String::new()),
                 file: None,
                 start_line: None,
                 end_line: None,

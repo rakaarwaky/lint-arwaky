@@ -131,6 +131,33 @@ pub fn is_contract_orphan(
         }
     }
 
+    // Check 3: aggregate not called by any surface
+    if suffix == "aggregate" {
+        let mut called_by_surface = false;
+        for cf in all_files {
+            let cb = cf.split('/').next_back().unwrap_or("");
+            if !cb.starts_with("surface_") {
+                continue;
+            }
+            if let Ok(c) = std::fs::read_to_string(cf) {
+                if c.contains(&trait_name) {
+                    called_by_surface = true;
+                    break;
+                }
+            }
+        }
+        if !called_by_surface {
+            return OrphanIndicatorResult::new(
+                true,
+                format!(
+                    "Contract aggregate '{}' not called by any surface.",
+                    trait_name
+                ),
+                Severity::HIGH,
+            );
+        }
+    }
+
     OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
 }
 

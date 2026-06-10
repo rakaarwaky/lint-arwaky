@@ -66,7 +66,7 @@ pub fn check_infrastructure_orphan(
             .unwrap_or("")
             .replace(".rs", "")
             .replace(".py", "");
-        if csuffix != "container" && csuffix != "aggregate" && csuffix != "registry" {
+        if csuffix != "container" {
             continue;
         }
         if let Ok(c) = std::fs::read_to_string(cf) {

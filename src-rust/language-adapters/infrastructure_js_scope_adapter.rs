@@ -5,6 +5,7 @@ use crate::language_adapters::taxonomy_semantic_error::SemanticError;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
+use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
 
@@ -105,11 +106,11 @@ impl IJsTracerPort for JSScopeTracer {
 
         if let Some((name, start_line)) = scope_stack.last() {
             Ok(Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
+                name: DescriptionVO::new(
                     name.clone(),
                 ),
                 kind: if name.starts_with("class") {
-                    crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new("class")
+                    DescriptionVO::new("class")
                 } else {
                     crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new("function")
                 },

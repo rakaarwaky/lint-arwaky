@@ -9,6 +9,8 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::role_rules::agent_role_container::RoleAggregateImpl;
+use crate::role_rules::agent_role_orchestrator::RoleOrchestrator;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -262,9 +264,7 @@ impl LintCheckingOrchestrator {
         let mut orphan_results = orphan_agg.check_orphans(self.checker.as_ref(), files, root_dir);
         rl.values.append(&mut orphan_results);
         // Wire role orchestrator for agent and surface role checks
-        let role_orch = crate::role_rules::agent_role_orchestrator::RoleOrchestrator::new(
-            Box::new(crate::role_rules::agent_role_container::RoleAggregateImpl::new()),
-        );
+        let role_orch = RoleOrchestrator::new(Box::new(RoleAggregateImpl::new()));
         let max_lines = config
             .rules
             .iter()

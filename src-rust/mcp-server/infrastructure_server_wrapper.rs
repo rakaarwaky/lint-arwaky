@@ -2,6 +2,7 @@
 use crate::cli_transport::taxonomy_transport_error::TransportError;
 use crate::mcp_server::IMcpServerPort;
 use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::mcp_server::contract_server_port::ToolHandler;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 
 pub struct McpServerWrapper {
@@ -24,7 +25,7 @@ impl IMcpServerPort for McpServerWrapper {
         &self,
         _name: SymbolName,
         _description: DescriptionVO,
-        _handler: crate::mcp_server::contract_server_port::ToolHandler,
+        _handler: ToolHandler,
     ) {
     }
 

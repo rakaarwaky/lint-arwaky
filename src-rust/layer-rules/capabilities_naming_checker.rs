@@ -11,6 +11,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 fn aes011_naming_convention(_expected_word_count: i32) -> String {
     String::from(
         "AES011 NAMING_CONVENTION: Filename must follow prefix_concept_suffix pattern.\n\
@@ -46,12 +47,8 @@ impl ArchNamingChecker {
             source: Some(AdapterName::raw("architecture")),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
-                name: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
-                    String::new(),
-                ),
-                kind: crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
-                    String::new(),
-                ),
+                name: DescriptionVO::new(String::new()),
+                kind: DescriptionVO::new(String::new()),
                 file: None,
                 start_line: None,
                 end_line: None,

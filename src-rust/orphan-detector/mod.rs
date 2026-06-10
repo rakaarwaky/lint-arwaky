@@ -23,24 +23,24 @@ pub use contract_orphan_protocol::{
 };
 
 // Shared helper to build a lint result
+use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
-pub fn mk_orphan_result(
-    file: &str,
-    msg: &str,
-    sev: Severity,
-) -> crate::output_report::taxonomy_result_vo::LintResult {
-    crate::output_report::taxonomy_result_vo::LintResult {
-        file: crate::source_parsing::taxonomy_path_vo::FilePath::new(file.to_string())
-            .unwrap_or_default(),
-        line: crate::shared_common::taxonomy_common_vo::LineNumber::new(0),
-        column: crate::shared_common::taxonomy_common_vo::ColumnNumber::new(0),
-        code: crate::shared_common::taxonomy_error_vo::ErrorCode::raw("AES030"),
-        message: crate::shared_common::taxonomy_message_vo::LintMessage::new(msg),
-        source: Some(
-            crate::shared_common::taxonomy_adapter_name_vo::AdapterName::raw("architecture"),
-        ),
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
+use crate::shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_lint_vo::LocationList;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+pub fn mk_orphan_result(file: &str, msg: &str, sev: Severity) -> LintResult {
+    LintResult {
+        file: FilePath::new(file.to_string()).unwrap_or_default(),
+        line: LineNumber::new(0),
+        column: ColumnNumber::new(0),
+        code: ErrorCode::raw("AES030"),
+        message: LintMessage::new(msg),
+        source: Some(AdapterName::raw("architecture")),
         severity: sev,
         enclosing_scope: None,
-        related_locations: crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+        related_locations: LocationList::new(),
     }
 }
