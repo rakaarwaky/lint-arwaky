@@ -3,8 +3,6 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::cli_commands::surface_core_command::SetupCommands;
-use crate::project_setup::capabilities_setup_processor::SetupManagementProcessor;
-use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 #[derive(Clone)]
@@ -51,9 +49,9 @@ impl SetupCommandsSurface {
         if env_path.exists() {
             println!("  .env already exists — skipping");
         } else {
-            let processor = SetupManagementProcessor::new();
+            let processor = crate::project_setup::capabilities_setup_processor::SetupManagementProcessor::new();
             let home_vo = crate::source_parsing::taxonomy_path_vo::DirectoryPath::new(home.to_string()).unwrap_or_default();
-            let env_content = processor.generate_env(&home_vo).value;
+            let env_content = <crate::project_setup::capabilities_setup_processor::SetupManagementProcessor as crate::project_setup::contract_setup_protocol::ISetupManagementProtocol>::generate_env(&processor, &home_vo).value;
             if let Err(e) = std::fs::write(env_path, &env_content) {
                 println!("  Error creating .env: {e}");
             } else {
@@ -63,8 +61,8 @@ impl SetupCommandsSurface {
 
         // 4. Generate MCP config snippets
         println!("\n[4/4] MCP server configuration:");
-        let processor = SetupManagementProcessor::new();
-        let mcp_config_vo = processor.generate_mcp_config();
+        let processor = crate::project_setup::capabilities_setup_processor::SetupManagementProcessor::new();
+        let mcp_config_vo = <crate::project_setup::capabilities_setup_processor::SetupManagementProcessor as crate::project_setup::contract_setup_protocol::ISetupManagementProtocol>::generate_mcp_config(&processor);
         let mcp_json = serde_json::to_string_pretty(&mcp_config_vo.value()).unwrap_or_default();
         println!("\n  For Claude Desktop / VS Code (mcp.json):");
         println!("  {}", "-".repeat(45));
@@ -94,11 +92,11 @@ impl SetupCommandsSurface {
     }
 
     pub fn mcp_config(&self, client: &str) {
-        let processor = SetupManagementProcessor::new();
+        let processor = crate::project_setup::capabilities_setup_processor::SetupManagementProcessor::new();
         let configs = [
-            ("claude", serde_json::to_string_pretty(processor.mcp_config_claude().value()).unwrap_or_default()),
-            ("hermes", serde_json::to_string_pretty(processor.mcp_config_hermes().value()).unwrap_or_default()),
-            ("vscode", serde_json::to_string_pretty(processor.mcp_config_vscode().value()).unwrap_or_default()),
+            ("claude", serde_json::to_string_pretty(<crate::project_setup::capabilities_setup_processor::SetupManagementProcessor as crate::project_setup::contract_setup_protocol::ISetupManagementProtocol>::mcp_config_claude(&processor).value()).unwrap_or_default()),
+            ("hermes", serde_json::to_string_pretty(<crate::project_setup::capabilities_setup_processor::SetupManagementProcessor as crate::project_setup::contract_setup_protocol::ISetupManagementProtocol>::mcp_config_hermes(&processor).value()).unwrap_or_default()),
+            ("vscode", serde_json::to_string_pretty(<crate::project_setup::capabilities_setup_processor::SetupManagementProcessor as crate::project_setup::contract_setup_protocol::ISetupManagementProtocol>::mcp_config_vscode(&processor).value()).unwrap_or_default()),
         ];
         for (name, config_json) in &configs {
             if client != "all" && client != *name {
@@ -426,8 +424,8 @@ source:
             );
         }
         SetupCommands::McpConfig { client } => {
-            let processor = SetupManagementProcessor::new();
-            let binary = processor.which_mcp_binary();
+            let processor = crate::project_setup::capabilities_setup_processor::SetupManagementProcessor::new();
+            let binary = <crate::project_setup::capabilities_setup_processor::SetupManagementProcessor as crate::project_setup::contract_setup_protocol::ISetupManagementProtocol>::which_mcp_binary(&processor);
             let config = match client.as_str() {
                 "claude-code" | "claude" => serde_json::json!({
                     "mcpServers": {

@@ -1,9 +1,5 @@
 // PURPOSE: CodeMetricAnalyzer — capabilities implementation for complexity, duplication, and quality trends analysis
 use std::process::ExitCode;
-use crate::code_analysis::capabilities_project_target_resolver::compute_score;
-use crate::code_analysis::capabilities_project_target_resolver::lint_path;
-use crate::code_analysis::capabilities_project_target_resolver::resolve_target;
-use crate::code_analysis::capabilities_project_target_resolver::walk_rs_files;
 use crate::output_report::taxonomy_severity_vo::Severity;
 
 pub struct CodeMetricAnalyzer {}
@@ -20,14 +16,14 @@ impl CodeMetricAnalyzer {
     }
 
     pub fn handle_complexity(&self, path: Option<String>) -> ExitCode {
-        let root = resolve_target(path);
+        let root = crate::code_analysis::capabilities_project_target_resolver::resolve_target(path);
         println!("Cyclomatic Complexity Analysis — {}", root);
         println!();
 
         let src = std::path::Path::new(&root).join("src-rust");
         let mut functions: Vec<(std::path::PathBuf, String, usize, usize)> = Vec::new();
 
-        walk_rs_files(&src, &mut |p| {
+        crate::code_analysis::capabilities_project_target_resolver::walk_rs_files(&src, &mut |p| {
             if let Ok(c) = std::fs::read_to_string(&p) {
                 let lines: Vec<&str> = c.lines().collect();
                 let mut i = 0;
@@ -127,7 +123,7 @@ impl CodeMetricAnalyzer {
     }
 
     pub fn handle_duplicates(&self, path: Option<String>) -> ExitCode {
-        let root = resolve_target(path);
+        let root = crate::code_analysis::capabilities_project_target_resolver::resolve_target(path);
         println!("Code Duplication Detection — {}", root);
         println!();
 
@@ -136,7 +132,7 @@ impl CodeMetricAnalyzer {
         let mut blocks: std::collections::HashMap<String, Vec<(std::path::PathBuf, usize)>> =
             std::collections::HashMap::new();
 
-        walk_rs_files(&src, &mut |p| {
+        crate::code_analysis::capabilities_project_target_resolver::walk_rs_files(&src, &mut |p| {
             if let Ok(c) = std::fs::read_to_string(&p) {
                 let lines: Vec<&str> = c.lines().collect();
                 for w in lines.windows(min_lines) {
@@ -160,7 +156,7 @@ impl CodeMetricAnalyzer {
 
         let total_duplicated_lines = duplicates.len() * min_lines;
         let mut total_loc = 0usize;
-        walk_rs_files(&src, &mut |p| {
+        crate::code_analysis::capabilities_project_target_resolver::walk_rs_files(&src, &mut |p| {
             if let Ok(c) = std::fs::read_to_string(&p) {
                 total_loc += c.lines().count();
             }
@@ -199,9 +195,9 @@ impl CodeMetricAnalyzer {
     }
 
     pub fn handle_trends(&self, path: Option<String>) -> ExitCode {
-        let root = resolve_target(path);
-        let results = lint_path(&root);
-        let score = compute_score(&results);
+        let root = crate::code_analysis::capabilities_project_target_resolver::resolve_target(path);
+        let results = crate::code_analysis::capabilities_project_target_resolver::lint_path(&root);
+        let score = crate::code_analysis::capabilities_project_target_resolver::compute_score(&results);
         let violations_count = results.len();
         let critical_count = results
             .iter()
