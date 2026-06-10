@@ -7,16 +7,19 @@ pub mod capabilities_orphan_contract_analyzer;
 pub mod capabilities_orphan_infrastructure_analyzer;
 pub mod capabilities_orphan_surfaces_analyzer;
 pub mod capabilities_orphan_taxonomy_analyzer;
+pub mod contract_orphan_aggregate;
 pub mod contract_orphan_protocol;
 
-// Re-export public components from the agent orchestrator (the coordinator)
-pub use agent_orphan_orchestrator::{check_all_orphans, ArchOrphanAnalyzer, OrphanGraphResolver};
+// Re-export aggregate contract
+pub use contract_orphan_aggregate::IOrphanAggregate;
+
+// Re-export orchestrator components
+pub use agent_orphan_orchestrator::{ArchOrphanAnalyzer, OrphanGraphResolver};
 
 // Re-export protocols
 pub use contract_orphan_protocol::{
-    IAgentOrphanProtocol, ICapabilitiesOrphanProtocol,
-    IContractOrphanProtocol, IInfrastructureOrphanProtocol,
-    ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
+    IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
+    IInfrastructureOrphanProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
 };
 
 // Shared helper to build a lint result

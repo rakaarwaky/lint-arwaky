@@ -1,4 +1,4 @@
-// PURPOSE: VO: Name value object
+// PURPOSE: NameVariants, SymbolName — value objects for symbol naming and naming convention variants
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

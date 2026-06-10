@@ -105,13 +105,10 @@ pub trait ICheckerAggregate: Send + Sync {
         violations: &mut crate::output_report::taxonomy_result_vo::LintResultList,
     );
 
-    // Orphan detection
-    fn build_orphan_graph_context(
+    // Orphan detection (via aggregate)
+    fn orphan_aggregate(
         &self,
-        files: &[String],
-        root_dir: &str,
-    ) -> crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-    fn identify_orphan_entry_points(&self, files: &[String]) -> std::collections::HashSet<String>;
+    ) -> std::sync::Arc<dyn crate::orphan_detector::contract_orphan_aggregate::IOrphanAggregate>;
 
     // Cycle detection
     fn detect_cycle_edges(&self, edges: &[(String, String)]) -> bool;

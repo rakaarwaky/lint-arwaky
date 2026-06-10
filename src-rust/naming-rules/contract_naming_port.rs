@@ -1,4 +1,4 @@
-// PURPOSE: Port: Interface for Naming
+// PURPOSE: INamingProviderPort — port trait for retrieving naming convention variants for a symbol
 
 use crate::naming_rules::taxonomy_name_vo::NameVariants;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

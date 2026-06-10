@@ -1,8 +1,4 @@
-// PURPOSE: Analyzer: Variant analysis logic
-
-use crate::naming_rules::taxonomy_name_vo::SymbolName;
-use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
-use std::collections::HashSet;
+// PURPOSE: NamingVariantAnalyzer — transforms symbol names between naming conventions (snake_case, camelCase, PascalCase, etc.)
 
 /// Business logic for transforming symbol names into various naming conventions.
 pub struct NamingVariantAnalyzer {}

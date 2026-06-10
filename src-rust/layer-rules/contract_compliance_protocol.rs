@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Compliance
+// PURPOSE: IArchComplianceProtocol + IScopeBoundaryProtocol — port traits for compliance checking and JS scope detection
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_common_vo::LineNumber;

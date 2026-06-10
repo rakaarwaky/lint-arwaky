@@ -58,8 +58,8 @@ pub mod surface_map_command;
 pub use surface_map_command::{
     handle_cancel, handle_diff, handle_export, handle_import, handle_suggest,
 };
-pub mod taxonomy_command_target_vo;
-pub use taxonomy_command_target_vo::{
+// backend logic moved to code-analysis/capabilities_project_target_resolver.rs
+pub use crate::code_analysis::{
     compute_score, count_loc, has_critical, lint_path, normalize_project_root, resolve_target,
     walk_rs_files,
 };

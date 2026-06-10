@@ -19,7 +19,7 @@ use lint_arwaky::cli_commands::surface_plugin_command;
 use lint_arwaky::cli_commands::surface_report_command;
 use lint_arwaky::cli_commands::surface_setup_command;
 use lint_arwaky::cli_commands::surface_watch_command;
-use lint_arwaky::cli_commands::taxonomy_command_target_vo;
+use lint_arwaky::code_analysis::{has_critical, lint_path};
 use lint_arwaky::code_analysis::agent_checking_orchestrator::init_global_checker;
 use lint_arwaky::config_system::taxonomy_config_vo::default_aes_config;
 use lint_arwaky::di_containers::agent_checker_container::CheckerContainer;
@@ -83,14 +83,14 @@ fn main() -> ExitCode {
 
 fn run_default_check(project_root: &str) -> ExitCode {
     use lint_arwaky::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
-    let results = taxonomy_command_target_vo::lint_path(project_root);
+    let results = lint_path(project_root);
     let formatter = ReportFormatterProcessor::new();
     let report = formatter.format_text(&results, project_root);
     println!("Lint Arwaky v{} (AES Self-Lint)", env!("CARGO_PKG_VERSION"));
     println!("Scanning: {}", project_root);
     println!();
     println!("{}", report);
-    if taxonomy_command_target_vo::has_critical(&results) {
+    if has_critical(&results) {
         ExitCode::from(1)
     } else {
         ExitCode::SUCCESS

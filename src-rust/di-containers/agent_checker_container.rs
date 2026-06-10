@@ -5,7 +5,6 @@ use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
 use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
 use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::capabilities_compliance_analyzer::ArchComplianceAnalyzer;
 use crate::layer_rules::capabilities_hierarchy_checker::SurfaceHierarchyChecker;
@@ -13,14 +12,21 @@ use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbidd
 use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use crate::layer_rules::capabilities_layer_checker::ArchLayerChecker;
 use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
-use crate::orphan_detector::OrphanGraphResolver;
+use crate::orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
+use crate::orphan_detector::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
+use crate::orphan_detector::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
+use crate::orphan_detector::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
+use crate::orphan_detector::capabilities_orphan_infrastructure_analyzer::InfrastructureOrphanAnalyzer;
+use crate::orphan_detector::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer;
+use crate::orphan_detector::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
+use crate::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use std::collections::HashSet;
+use std::sync::Arc;
 
 pub struct CheckerContainer {
     analyzer: ArchComplianceAnalyzer,
@@ -32,11 +38,19 @@ pub struct CheckerContainer {
     contract_checker: ContractRoleChecker,
     naming_checker: ArchNamingChecker,
     layer_checker: ArchLayerChecker,
-    orphan_resolver: OrphanGraphResolver,
+    orphan_analyzer: Arc<dyn IOrphanAggregate>,
 }
 
 impl CheckerContainer {
     pub fn new(config: ArchitectureConfig) -> Self {
+        let orphan_analyzer: Arc<dyn IOrphanAggregate> = Arc::new(ArchOrphanAnalyzer::new(
+            Arc::new(TaxonomyOrphanAnalyzer::new()),
+            Arc::new(ContractOrphanAnalyzer::new()),
+            Arc::new(CapabilitiesOrphanAnalyzer::new()),
+            Arc::new(InfrastructureOrphanAnalyzer::new()),
+            Arc::new(AgentOrphanAnalyzer::new()),
+            Arc::new(SurfacesOrphanAnalyzer::new()),
+        ));
         Self {
             analyzer: ArchComplianceAnalyzer::new(config),
             import_forbidden_checker: ArchImportForbiddenChecker::new(),
@@ -47,7 +61,7 @@ impl CheckerContainer {
             contract_checker: ContractRoleChecker::new(),
             naming_checker: ArchNamingChecker::new(),
             layer_checker: ArchLayerChecker::new(),
-            orphan_resolver: OrphanGraphResolver::new(),
+            orphan_analyzer,
         }
     }
 }
@@ -85,7 +99,7 @@ impl ICheckerAggregate for CheckerContainer {
     fn check_scope_forbidden_imports(
         &self,
         file: &str,
-        config: &ArchitectureConfig,
+        config: &crate::config_system::taxonomy_config_vo::ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
         self.import_forbidden_checker
@@ -96,7 +110,7 @@ impl ICheckerAggregate for CheckerContainer {
         &self,
         file: &str,
         file_layer: &str,
-        config: &ArchitectureConfig,
+        config: &crate::config_system::taxonomy_config_vo::ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
         self.import_forbidden_checker
@@ -138,7 +152,7 @@ impl ICheckerAggregate for CheckerContainer {
         filename: &str,
         layer: &Option<String>,
         def: Option<&LayerDefinition>,
-        config: &ArchitectureConfig,
+        config: &crate::config_system::taxonomy_config_vo::ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
         self.naming_checker
@@ -194,15 +208,10 @@ impl ICheckerAggregate for CheckerContainer {
         SurfaceHierarchyChecker::new().check_surface_hierarchy(files, root_dir, violations);
     }
 
-    fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
-        self.orphan_resolver.build_graph_context(files, root_dir)
-    }
-
-    fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String> {
-        self.orphan_resolver
-            .identify_entry_points(files)
-            .into_iter()
-            .collect()
+    fn orphan_aggregate(
+        &self,
+    ) -> Arc<dyn crate::orphan_detector::contract_orphan_aggregate::IOrphanAggregate> {
+        self.orphan_analyzer.clone()
     }
 
     fn detect_cycle_edges(&self, edges: &[(String, String)]) -> bool {

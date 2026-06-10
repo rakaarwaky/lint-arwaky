@@ -1,4 +1,5 @@
 // PURPOSE: Orchestrator: Agent orchestrator for orphan code detection
+use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
 use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use crate::code_analysis::taxonomy_analysis_vo::ImportGraph;
@@ -6,7 +7,7 @@ use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use crate::layer_rules::contract_rule_protocol::IAnalyzer;
+use crate::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
@@ -19,6 +20,7 @@ use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 // Only contract layer imports for indicators!
@@ -173,16 +175,29 @@ impl ArchOrphanAnalyzer {
             surfaces_analyzer,
         }
     }
+}
 
-    /// Check orphans for all files in the given list.
-    pub fn check_orphans(
+impl IOrphanAggregate for ArchOrphanAnalyzer {
+    fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
+        self.resolver.build_graph_context(files, root_dir)
+    }
+
+    fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String> {
+        self.resolver
+            .identify_entry_points(files)
+            .into_iter()
+            .collect()
+    }
+
+    /// Check orphans for all files in the given list via the checker aggregate for layer detection.
+    fn check_orphans(
         &self,
-        analyzer: &dyn IAnalyzer,
+        checker: &dyn ICheckerAggregate,
         files: &[String],
         root_dir: &str,
     ) -> Vec<LintResult> {
         let mut results: Vec<LintResult> = Vec::new();
-        let root_fp = FilePath::new(root_dir).unwrap_or_default();
+        let _root_fp = FilePath::new(root_dir).unwrap_or_default();
 
         // Build comprehensive context
         let context: GraphAnalysisContext = self.resolver.build_graph_context(files, root_dir);
@@ -195,12 +210,12 @@ impl ArchOrphanAnalyzer {
         // Evaluate each file
         for f in files {
             let file_fp = FilePath::new(f.clone()).unwrap_or_default();
-            let layer_vo = match analyzer.detect_layer(&file_fp, &root_fp) {
+            let layer_str = match checker.detect_layer(f, root_dir) {
                 Some(l) => l,
                 None => continue,
             };
 
-            let definition = match analyzer.layer_map().values.get(&layer_vo) {
+            let definition = match checker.get_layer_def(&layer_str) {
                 Some(d) => d,
                 None => continue,
             };
@@ -214,14 +229,13 @@ impl ArchOrphanAnalyzer {
                 continue;
             }
 
+            let layer_vo = LayerNameVO::new(&layer_str);
             let res = self._evaluate_layer(
-                analyzer,
                 f,
-                definition,
+                &definition,
                 &context,
                 &alive_files_set,
                 &layer_vo,
-                files,
             );
 
             if res.is_orphan {
@@ -231,7 +245,9 @@ impl ArchOrphanAnalyzer {
 
         results
     }
+}
 
+impl ArchOrphanAnalyzer {
     fn _make_result(&self, file: &str, msg: &str, sev: Severity) -> LintResult {
         LintResult {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
@@ -278,13 +294,11 @@ impl ArchOrphanAnalyzer {
 
     fn _evaluate_layer(
         &self,
-        analyzer: &dyn IAnalyzer,
         f: &str,
         definition: &LayerDefinition,
         context: &GraphAnalysisContext,
         alive_files_set: &[String],
         layer_vo: &LayerNameVO,
-        _all_files: &[String],
     ) -> crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult {
         if f.ends_with("__init__.py") {
             return crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
@@ -302,25 +316,22 @@ impl ArchOrphanAnalyzer {
             );
         }
 
+        let _ = definition;
         let layer_str = layer_vo.value.to_lowercase();
+        let fp = FilePath::new(f.to_string()).unwrap_or_default();
+        let root = FilePath::new(String::new()).unwrap_or_default();
 
         if layer_str.contains(LAYER_TAXONOMY) {
-            let fp = FilePath::new(f.to_string()).unwrap_or_default();
-            let root = FilePath::new("".to_string()).unwrap_or_default();
             return self.taxonomy_analyzer.is_taxonomy_orphan(
-                analyzer,
                 &fp,
                 &root,
-                Some(definition),
+                None,
                 &context.inbound_links,
             );
         }
 
         if layer_str.contains(LAYER_CONTRACT) {
-            let fp = FilePath::new(f.to_string()).unwrap_or_default();
-            let root = FilePath::new("".to_string()).unwrap_or_default();
             return self.contract_analyzer.is_contract_orphan(
-                analyzer,
                 &fp,
                 &root,
                 &context.file_definitions,
@@ -328,60 +339,35 @@ impl ArchOrphanAnalyzer {
             );
         }
 
-        if layer_str.contains(LAYER_INFRASTRUCTURE) {
-            let fp = FilePath::new(f.to_string()).unwrap_or_default();
-            let root = FilePath::new("".to_string()).unwrap_or_default();
-            let alive_set = ReachabilityResult::new(
-                alive_files_set
-                    .iter()
-                    .filter_map(|s| FilePath::new(s.clone()).ok())
-                    .collect(),
-            );
-            return self
-                .infrastructure_analyzer
-                .is_infrastructure_orphan(analyzer, &fp, &root, &alive_set);
-        }
-
-        if layer_str.contains(LAYER_CAPABILITIES) {
-            let fp = FilePath::new(f.to_string()).unwrap_or_default();
-            let root = FilePath::new("".to_string()).unwrap_or_default();
-            let alive_set = ReachabilityResult::new(
-                alive_files_set
-                    .iter()
-                    .filter_map(|s| FilePath::new(s.clone()).ok())
-                    .collect(),
-            );
-            return self
-                .capabilities_analyzer
-                .is_capabilities_orphan(analyzer, &fp, &root, &alive_set);
-        }
-
-        if layer_str.contains(LAYER_AGENT) {
-            let fp = FilePath::new(f.to_string()).unwrap_or_default();
-            let root = FilePath::new("".to_string()).unwrap_or_default();
-            return self.agent_analyzer.is_agent_orphan(analyzer, &fp, &root);
-        }
-
-        if layer_str.contains(LAYER_SURFACES) {
-            let fp = FilePath::new(f.to_string()).unwrap_or_default();
-            let alive_set = ReachabilityResult::new(
-                alive_files_set
-                    .iter()
-                    .filter_map(|s| FilePath::new(s.clone()).ok())
-                    .collect(),
-            );
-            return self
-                .surfaces_analyzer
-                .is_surface_orphan(&fp, &alive_set, Some(definition));
-        }
-
-        let fp = FilePath::new(f.to_string()).unwrap_or_default();
         let alive_set = ReachabilityResult::new(
             alive_files_set
                 .iter()
                 .filter_map(|s| FilePath::new(s.clone()).ok())
                 .collect(),
         );
+
+        if layer_str.contains(LAYER_INFRASTRUCTURE) {
+            return self
+                .infrastructure_analyzer
+                .is_infrastructure_orphan(&fp, &root, &alive_set);
+        }
+
+        if layer_str.contains(LAYER_CAPABILITIES) {
+            return self
+                .capabilities_analyzer
+                .is_capabilities_orphan(&fp, &root, &alive_set);
+        }
+
+        if layer_str.contains(LAYER_AGENT) {
+            return self.agent_analyzer.is_agent_orphan(&fp, &root);
+        }
+
+        if layer_str.contains(LAYER_SURFACES) {
+            return self
+                .surfaces_analyzer
+                .is_surface_orphan(&fp, &alive_set, None);
+        }
+
         self._is_generic_orphan_helper(&fp, &alive_set, &context.inbound_links)
     }
 
@@ -415,87 +401,5 @@ impl ArchOrphanAnalyzer {
             }
         }
         false
-    }
-}
-
-pub fn check_all_orphans(
-    files: &[String],
-    _root_dir: &str,
-    eps: &std::collections::HashSet<String>,
-    ctx: &crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext,
-    violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
-) {
-    for fp in files {
-        if eps.contains(fp)
-            || fp.ends_with("mod.rs")
-            || fp.ends_with("__init__.py")
-            || fp.ends_with("/index.ts")
-            || fp.ends_with("/index.js")
-        {
-            continue;
-        }
-
-        // Skip orphan check if file has dispatch annotation
-        if let Ok(fc) = std::fs::read_to_string(fp) {
-            let first_lines: Vec<&str> = fc.lines().take(30).collect();
-            let has_annotation = first_lines.iter().any(|l| {
-                let t = l.trim();
-                t == "// aes: wired-by-dispatch" || t == "# aes: wired-by-dispatch"
-            });
-            if has_annotation {
-                continue;
-            }
-        }
-
-        let basename = fp.split('/').next_back().unwrap_or("");
-        let prefix = basename.split('_').next().unwrap_or("");
-
-        if prefix == "taxonomy" {
-            crate::orphan_detector::capabilities_orphan_taxonomy_analyzer::check_taxonomy_orphan(
-                fp, basename, files, violations,
-            );
-            continue;
-        }
-
-        if prefix == "contract" {
-            crate::orphan_detector::capabilities_orphan_contract_analyzer::check_contract_orphan(
-                fp, basename, files, violations,
-            );
-            continue;
-        }
-
-        if prefix == "capabilities" {
-            crate::orphan_detector::capabilities_orphan_capabilities_analyzer::check_capabilities_orphan(
-                fp,
-                basename,
-                files,
-                violations,
-            );
-            continue;
-        }
-
-        if prefix == "infrastructure" {
-            crate::orphan_detector::capabilities_orphan_infrastructure_analyzer::check_infrastructure_orphan(
-                fp,
-                basename,
-                files,
-                violations,
-            );
-            continue;
-        }
-
-        if prefix == "agent" {
-            crate::orphan_detector::capabilities_orphan_agent_analyzer::check_agent_orphan(
-                fp, basename, files, violations,
-            );
-            continue;
-        }
-
-        if prefix == "surface" {
-            crate::orphan_detector::capabilities_orphan_surfaces_analyzer::check_surfaces_orphan(
-                fp, ctx, violations,
-            );
-            continue;
-        }
     }
 }

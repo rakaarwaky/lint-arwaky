@@ -1,4 +1,4 @@
-// PURPOSE: Orchestrator: Orchestrates Compliance
+// PURPOSE: ArchComplianceOrchestrator — compliance orchestration with DI mixins, layer resolution, watch commands, and job registry
 
 use std::collections::HashMap;
 use std::sync::OnceLock;

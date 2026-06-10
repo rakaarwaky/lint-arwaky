@@ -1,4 +1,4 @@
-// PURPOSE: Module: naming-rules module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for naming-rules (naming checker, variant analyzer, name VOs, ports, protocols)
 pub mod capabilities_naming_checker;
 pub use capabilities_naming_checker::ArchNamingChecker;
 pub mod capabilities_variant_analyzer;

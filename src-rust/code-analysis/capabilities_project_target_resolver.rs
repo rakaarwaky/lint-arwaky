@@ -1,7 +1,21 @@
-// PURPOSE: resolve_target, lint_path, walk_rs_files — utility functions for path resolution and lint orchestration
+// PURPOSE: capabilities_project_target_resolver — resolves project target paths, triggers codebase scans, evaluates compliance results, and counts LOC
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+
+pub struct ProjectTargetResolver {}
+
+impl ProjectTargetResolver {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for ProjectTargetResolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub fn resolve_target(path: Option<String>) -> String {
     normalize_project_root(&path.unwrap_or_else(|| ".".to_string()))
@@ -28,7 +42,7 @@ pub fn lint_path(path: &str) -> Vec<LintResult> {
     let root = FilePath::new(normalize_project_root(path))
         .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
     let orchestrator =
-        crate::code_analysis::agent_compliance_orchestrator::ArchitectureComplianceOrchestrator::new();
+        crate::code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new();
     orchestrator.run_self_lint(&root)
 }
 

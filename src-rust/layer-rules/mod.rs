@@ -1,4 +1,4 @@
-// PURPOSE: Module: layer-rules module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for layer-rules (checkers, analyzers, protocols, orchestrators)
 pub mod agent_compliance_orchestrator;
 pub use agent_compliance_orchestrator::{
     ArchComplianceOrchestrator, ArchitectureOrchestrator, InfrastructureMixinContainer,

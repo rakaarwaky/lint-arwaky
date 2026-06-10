@@ -1,4 +1,4 @@
-// PURPOSE: Protocol: Contract trait for Variant
+// PURPOSE: INamingVariantProtocol — protocol trait for building naming variants (snake, camel, pascal, kebab)
 
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;

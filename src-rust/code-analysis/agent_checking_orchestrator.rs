@@ -187,10 +187,10 @@ impl LintCheckingOrchestrator {
                 AES012_CIRCULAR_IMPORT,
             ));
         }
-        // Inline orphan check: prefix/suffix based per-layer logic with barrel resolution
-        let ctx = self.checker.build_orphan_graph_context(files, root_dir);
-        let eps = self.checker.identify_orphan_entry_points(files);
-        crate::orphan_detector::check_all_orphans(files, root_dir, &eps, &ctx, &mut rl.values);
+        // Orphan check: delegated via IOrphanAggregate
+        let orphan_agg = self.checker.orphan_aggregate();
+        let mut orphan_results = orphan_agg.check_orphans(self.checker.as_ref(), files, root_dir);
+        rl.values.append(&mut orphan_results);
         // Wire role orchestrator for agent and surface role checks
         let role_orch = crate::role_rules::agent_role_orchestrator::RoleOrchestrator::new(
             Box::new(crate::role_rules::agent_role_container::RoleAggregateImpl::new()),
