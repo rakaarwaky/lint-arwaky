@@ -1,7 +1,5 @@
-// aes: wired-by-dispatch
-// aes: bypass-missing-vo
-/// scope_boundary_analyzer — Scope boundary detection for JS/TS files.
-/// Used by data_flow_analyzer to determine enclosing scope bounds.
+// PURPOSE: Detector: Scope Bounds detection
+
 use crate::layer_rules::contract_compliance_protocol::IScopeBoundaryProtocol;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::shared_common::taxonomy_common_vo::LineNumber;

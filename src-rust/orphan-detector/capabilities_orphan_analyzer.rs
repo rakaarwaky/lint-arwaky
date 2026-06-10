@@ -1,6 +1,4 @@
-// aes: bypass-bottleneck
-// arch_orphan_analyzer — Multi-indicator orphan code detection logic.
-// Implements IArchOrphanProtocol: check_orphans.
+// PURPOSE: Analyzer: Orphan analysis logic
 
 use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use crate::code_analysis::taxonomy_analysis_vo::FilePathSet;

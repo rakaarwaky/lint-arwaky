@@ -1,4 +1,3 @@
-// aes: wired-by-dispatch
 // PURPOSE: AES0306 — Enforce surface role mandates (no domain logic in passive/utility surfaces).
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_severity_vo::Severity;

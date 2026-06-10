@@ -1,3 +1,4 @@
+// PURPOSE: VO: Suggestion value object
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

@@ -1,4 +1,5 @@
-/// python_mypy_adapter — MyPy adapter for Python type checking.
+// PURPOSE: Adapter: Py Mypy adapter implementation
+
 use async_trait::async_trait;
 use regex::Regex;
 use std::sync::Arc;

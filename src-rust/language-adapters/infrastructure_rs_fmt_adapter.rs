@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Adapter: Rs Fmt adapter implementation
 use std::path::Path;
 use std::sync::Arc;
 

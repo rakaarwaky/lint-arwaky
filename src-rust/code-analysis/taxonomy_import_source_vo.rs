@@ -1,3 +1,4 @@
+// PURPOSE: VO: Import Source value object
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use serde::{Deserialize, Serialize};

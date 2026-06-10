@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-/// python_ast_tracer — AST-based tracer for Python code analysis.
+// PURPOSE: Tracer: Py Ast tracing
+
 use crate::naming_rules::contract_variant_port::INamingVariantPort;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::CallChainList;

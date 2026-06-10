@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-//! Agent lifecycle management.
+// PURPOSE: Module: Agent Status Lifecycle
+
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatusVO;

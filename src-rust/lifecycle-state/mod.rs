@@ -1,3 +1,4 @@
+// PURPOSE: Module: lifecycle-state module declarations and re-exports
 pub mod agent_status_lifecycle;
 pub use agent_status_lifecycle::{get_lifecycle_state_manager, LifecycleStateManager};
 pub mod contract_lifecycle_aggregate;

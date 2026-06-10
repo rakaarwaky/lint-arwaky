@@ -1,3 +1,4 @@
+// PURPOSE: Module: Capabilities Taxonomy Role Auditor
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 fn aes0301_primitive_usage(primitive: &str) -> String {

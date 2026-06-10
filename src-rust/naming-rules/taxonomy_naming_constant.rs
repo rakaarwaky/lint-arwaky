@@ -1,13 +1,5 @@
-//! Constants for core primitive type names.
-//!
-//! Defines the set of built-in primitive types (str, int, float)
-//! used for naming convention analysis and type detection.
-//!
-//! These are the types that trigger AES006 violations when found
-//! in domain-level value objects and entities. Extend this list
-//! when adding support for additional primitive types.
+// PURPOSE: Constants: Naming constants
 
-// Rust primitives
 pub const RUST_PRIMITIVE_TYPES: &[&str] = &[
     "String", "i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128",
     "usize", "f32", "f64", "bool", "char", "Vec<", "HashMap<", "Option<", "Result<", "Box<",

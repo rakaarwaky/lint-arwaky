@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Command: CLI surface for bootstrap — initializes tracing/subscriber logging
 use std::process::ExitCode;
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;

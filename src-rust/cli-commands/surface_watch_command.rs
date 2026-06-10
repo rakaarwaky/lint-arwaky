@@ -1,4 +1,5 @@
-/// Watch CLI command — file watcher with auto-lint on changes.
+// PURPOSE: Command: Watch CLI/surface command
+
 use std::process::ExitCode;
 use std::sync::Arc;
 

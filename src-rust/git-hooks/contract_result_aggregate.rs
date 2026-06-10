@@ -1,3 +1,4 @@
+// PURPOSE: Aggregate: Result aggregation/wiring
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 /* UNKNOWN: RenamedFile */ use crate::source_parsing::taxonomy_paths_vo::RenamedFile;

@@ -1,3 +1,4 @@
+// PURPOSE: Error: Config error types
 use crate::config_system::taxonomy_identifier_vo::ConfigKey;
 use crate::config_system::taxonomy_setting_vo::ActualValue;
 use crate::config_system::taxonomy_setting_vo::ExpectedValue;

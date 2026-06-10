@@ -1,3 +1,4 @@
+// PURPOSE: VO: Source value object
 use serde::{Deserialize, Serialize};
 
 use crate::source_parsing::taxonomy_path_vo::FilePath;

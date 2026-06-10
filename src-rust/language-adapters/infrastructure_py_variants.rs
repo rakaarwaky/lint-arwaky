@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-/// naming_variant_provider — Python naming variant generator.
+// PURPOSE: Module: Infrastructure Py Variants
+
 use crate::naming_rules::contract_variant_port::INamingVariantPort;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_error::NamingError;

@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-// analysis_execution_orchestrator — Implementation of the analysis orchestration domain contract.
+// PURPOSE: Reporter: Analysis reporting
+
 use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;

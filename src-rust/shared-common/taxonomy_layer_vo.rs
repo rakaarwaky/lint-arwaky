@@ -1,3 +1,4 @@
+// PURPOSE: VO: Layer value object
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, Eq)]

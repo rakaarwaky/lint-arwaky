@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Command: CLI surface for check — runs lint_path and resolves violations for a target path
 use std::sync::Arc;
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;

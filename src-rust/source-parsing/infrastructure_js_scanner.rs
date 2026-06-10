@@ -1,4 +1,4 @@
-// aes: bypass-missing-vo
+// PURPOSE: Scanner: Js source scanning
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs;

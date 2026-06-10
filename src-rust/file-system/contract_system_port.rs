@@ -1,4 +1,5 @@
-// file_system_port — Abstract port for file system operations (Contract Layer).
+// PURPOSE: Port: Interface for System
+
 use async_trait::async_trait;
 
 use crate::file_system::taxonomy_filesystem_error::FileSystemError;

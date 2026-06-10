@@ -1,3 +1,4 @@
+// PURPOSE: VO: Metadata value object
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::shared_common::taxonomy_suggestion_vo::Suggestion;
 use serde::{Deserialize, Serialize};

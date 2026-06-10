@@ -1,7 +1,5 @@
-// dispatch_routing_checker — Static analysis for MCP/server dispatch routing.
-// aes: wired-by-dispatch
-// aes: bypass-bottleneck
-// aes: bypass-capability-routing
+// PURPOSE: Processor: Routing processing logic
+
 //
 // Detects:
 //   AES0303 — Capability method referenced in COMMAND_CATALOG doesn't exist on the class

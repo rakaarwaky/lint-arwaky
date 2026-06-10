@@ -1,4 +1,4 @@
-//! python_ruff_adapter — Ruff linter adapter for Python files.
+// PURPOSE: Adapter: Py Ruff adapter implementation
 
 use async_trait::async_trait;
 use serde_json::Value;

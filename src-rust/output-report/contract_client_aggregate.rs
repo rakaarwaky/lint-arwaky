@@ -1,3 +1,4 @@
+// PURPOSE: Aggregate: Client aggregation/wiring
 use crate::code_analysis::contract_checker_aggregate::ICheckerAggregate;
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::shared_common::taxonomy_layer_vo::Identity;

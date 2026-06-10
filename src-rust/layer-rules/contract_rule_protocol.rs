@@ -1,3 +1,4 @@
+// PURPOSE: Protocol: Contract trait for Rule
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::output_report::taxonomy_result_vo::LintResultList;

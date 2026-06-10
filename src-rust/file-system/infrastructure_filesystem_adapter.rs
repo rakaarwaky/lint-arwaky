@@ -1,4 +1,4 @@
-//! os_fs_scanner — Implementation of IFileSystemPort using standard std::fs.
+// PURPOSE: Adapter: Filesystem adapter implementation
 
 use async_trait::async_trait;
 use std::fs;

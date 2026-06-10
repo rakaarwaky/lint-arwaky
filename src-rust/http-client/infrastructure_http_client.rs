@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Client: Http client implementation
 use crate::cli_transport::taxonomy_protocol_vo::TransportProtocol;
 use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;
 use crate::cli_transport::taxonomy_transport_error::TransportError;

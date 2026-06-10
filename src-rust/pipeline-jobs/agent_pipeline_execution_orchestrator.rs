@@ -1,6 +1,5 @@
-// aes: wired-by-dispatch
-// aes: bypass-dead-inheritance — SimpleJobRegistry is a stub impl for IJobRegistryPort
-// pipeline_execution_orchestrator — Agent pipeline: receive→think→act→respond orchestrator.
+// PURPOSE: Orchestrator: Orchestrates Pipeline Execution
+
 use crate::pipeline_jobs::contract_input_aggregate::PipelineInputAggregate;
 use crate::pipeline_jobs::contract_orchestrator_aggregate::PipelineExecutionOrchestratorAggregate;
 use crate::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;

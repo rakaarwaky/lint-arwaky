@@ -1,7 +1,4 @@
-//! Protocol for project setup and configuration generation.
-//!
-//! Defines the inbound interface for generating environment
-//! files and MCP server configurations for various editors.
+// PURPOSE: Protocol: Contract trait for Setup
 
 use crate::pipeline_jobs::taxonomy_job_vo::EnvContentVO;
 use crate::pipeline_jobs::taxonomy_job_vo::McpConfigVO;

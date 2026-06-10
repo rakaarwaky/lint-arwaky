@@ -1,3 +1,4 @@
+// PURPOSE: Port: Interface for Http Provider
 use crate::cli_transport::taxonomy_protocol_vo::TransportUrlVO;
 use crate::cli_transport::taxonomy_transport_error::TransportError;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;

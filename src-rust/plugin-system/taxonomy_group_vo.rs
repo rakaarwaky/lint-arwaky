@@ -1,3 +1,4 @@
+// PURPOSE: VO: Group value object
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]

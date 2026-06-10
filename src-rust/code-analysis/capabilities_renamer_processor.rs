@@ -1,7 +1,4 @@
-// aes: wired-by-dispatch
-// aes: bypass-missing-vo
-// symbol_renamer_processor — Capability for project-wide symbol renaming.
-// Implements ISymbolRenamerProtocol: rename_symbol across the codebase.
+// PURPOSE: Processor: Renamer processing logic
 
 use regex::Regex;
 use std::fs;

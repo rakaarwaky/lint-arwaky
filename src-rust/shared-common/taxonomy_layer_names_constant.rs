@@ -1,4 +1,4 @@
-//! Layer name constants for the taxonomy structure.
+// PURPOSE: Constants: Layer Names constants
 
 pub const LAYER_AGENT: &str = "agent";
 pub const LAYER_CAPABILITIES: &str = "capabilities";

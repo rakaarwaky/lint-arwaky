@@ -1,6 +1,5 @@
 // PURPOSE: Route files to the correct role checker based on filename prefix (taxonomy/contract/agent/surface).
-// Dispatches to ITaxonomyRoleChecker/IContractRoleChecker for actual enforcement.
-// aes: wired-by-dispatch
+
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::role_rules::contract_role_aggregate::IRoleAggregate;
 use std::path::Path;

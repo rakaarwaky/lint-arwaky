@@ -1,7 +1,4 @@
-// aes: wired-by-dispatch
-// mandatory_inheritance_checker — AES027: mandatory contract inheritance.
-// Checks that files in agent/capabilities/infrastructure that import contracts
-// also have a class inheriting from them.
+// PURPOSE: Checker: Inheritance rule enforcement
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::contract_inheritance_protocol::IArchInheritanceProtocol;

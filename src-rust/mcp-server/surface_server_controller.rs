@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-/// MCP Server Handler - Server startup only
+// PURPOSE: Controller: Server surface controller
+
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::mcp_server::surface_tools_controller::register_tools;
 

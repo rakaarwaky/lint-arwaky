@@ -1,3 +1,4 @@
+// PURPOSE: Module: code-analysis module declarations and re-exports
 pub mod capabilities_analysis_reporter;
 pub use capabilities_analysis_reporter::AnalysisReporter;
 pub mod capabilities_renamer_processor;

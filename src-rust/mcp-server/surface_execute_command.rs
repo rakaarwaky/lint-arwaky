@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-/// MCP Tool: execute_command - Universal CLI executor.
+// PURPOSE: Command: Execute CLI/surface command
+
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 /// Surface for MCP execute command handling.

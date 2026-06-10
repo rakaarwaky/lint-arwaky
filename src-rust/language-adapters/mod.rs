@@ -1,3 +1,4 @@
+// PURPOSE: Module: language-adapters module declarations and re-exports
 pub mod contract_flow_port;
 pub use contract_flow_port::IJavascriptFlowPort;
 pub mod contract_scope_port;

@@ -1,7 +1,4 @@
-//! Port trait for managing Git hooks.
-//!
-//! Defines the outbound interface for installing and uninstalling
-//! pre-commit hooks that run lint checks before commits.
+// PURPOSE: Port: Interface for Manager
 
 use crate::git_hooks::taxonomy_hook_error::GitHookError;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;

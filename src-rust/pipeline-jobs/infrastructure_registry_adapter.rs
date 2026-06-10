@@ -1,4 +1,5 @@
-/// memory_registry_adapter — In-memory job tracking implementation.
+// PURPOSE: Adapter: Registry adapter implementation
+
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;

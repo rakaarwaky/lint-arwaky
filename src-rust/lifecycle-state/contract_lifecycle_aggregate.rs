@@ -1,3 +1,4 @@
+// PURPOSE: Aggregate: Lifecycle aggregation/wiring
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatusVO;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;

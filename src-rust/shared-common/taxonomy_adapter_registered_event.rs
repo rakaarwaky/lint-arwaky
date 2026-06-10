@@ -1,3 +1,4 @@
+// PURPOSE: Event: Adapter Registered domain event
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::Timestamp;
 use serde::{Deserialize, Serialize};

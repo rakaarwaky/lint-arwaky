@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-/// config_discovery_provider — Provider for discovering configuration files in the filesystem.
+// PURPOSE: Provider: Discovery provider implementation
+
 use crate::config_system::contract_discovery_port::IConfigDiscoveryPort;
 use crate::config_system::taxonomy_config_error::ConfigError;
 use crate::config_system::taxonomy_config_vo::default_aes_config;

@@ -1,3 +1,4 @@
+// PURPOSE: VO: Analysis value object
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};

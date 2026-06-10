@@ -1,3 +1,4 @@
+// PURPOSE: VO: Common value object
 use serde::{Deserialize, Serialize};
 
 use crate::output_report::taxonomy_severity_vo::Severity;

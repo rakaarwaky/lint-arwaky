@@ -1,3 +1,4 @@
+// PURPOSE: VO: Lint value object
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;

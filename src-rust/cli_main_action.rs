@@ -1,3 +1,4 @@
+// PURPOSE: Action: Main action handler
 use std::env;
 use std::process::ExitCode;
 use std::sync::Arc;

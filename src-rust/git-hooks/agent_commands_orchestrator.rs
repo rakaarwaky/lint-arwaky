@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-// git_commands_orchestrator — Agent orchestrator for git-aware linting.
+// PURPOSE: Orchestrator: Orchestrates Commands
+
 use crate::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
 use crate::git_hooks::contract_result_aggregate::GitDiffResultAggregate;
 use crate::output_report::taxonomy_result_vo::LintResultList;

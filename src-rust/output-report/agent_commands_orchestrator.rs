@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-// report_commands_orchestrator — Orchestrator for report and security CLI commands logic.
+// PURPOSE: Orchestrator: Orchestrates Commands
+
 use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;

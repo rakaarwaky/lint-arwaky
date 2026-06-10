@@ -1,3 +1,4 @@
+// PURPOSE: Module: shared-common module declarations and re-exports
 pub mod taxonomy_adapter_error;
 pub use taxonomy_adapter_error::{AdapterError, ScanError, ValidationError};
 pub mod taxonomy_adapter_vo;

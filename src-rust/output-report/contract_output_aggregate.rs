@@ -1,3 +1,4 @@
+// PURPOSE: Aggregate: Output aggregation/wiring
 use crate::output_report::contract_client_aggregate::OutputClientAggregate as BaseOutputClientAggregate;
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::shared_common::taxonomy_layer_vo::Identity;

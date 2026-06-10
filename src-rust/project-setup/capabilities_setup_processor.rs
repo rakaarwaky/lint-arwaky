@@ -1,7 +1,4 @@
-// aes: wired-by-dispatch
-// aes: bypass-capability-routing
-// setup_management_processor — Capability for setup and configuration management.
-// Implements ISetupManagementProtocol: generate_env, generate_mcp_config.
+// PURPOSE: Processor: Setup processing logic
 
 use std::collections::HashMap;
 

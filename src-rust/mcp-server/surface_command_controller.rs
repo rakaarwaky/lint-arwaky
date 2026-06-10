@@ -1,4 +1,5 @@
-/// MCP Tools: list_commands and read_skill_context.
+// PURPOSE: Controller: Command surface controller
+
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;

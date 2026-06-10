@@ -1,3 +1,4 @@
+// PURPOSE: Error: Adapter error types
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_error::Cause;
 use crate::shared_common::taxonomy_common_error::Constraint;

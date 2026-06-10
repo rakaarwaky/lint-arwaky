@@ -1,8 +1,4 @@
 // PURPOSE: Orchestrate ALL AES checkers — layer detection, import checks, role checks, orphan detection, cycle detection.
-// aes: wired-by-dispatch
-// aes: bypass-agent-role — orchestrates ALL AES checkers in a single orchestrator file
-// aes: bypass-missing-vo
-// aes: bypass-bottleneck
 
 use std::path::Path;
 use std::sync::Arc;
@@ -501,7 +497,6 @@ impl LintCheckingOrchestrator {
     }
 
     fn check_dead_inheritance(file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // aes: bypass-dead-inheritance — suppress AES024 for stub impls that must implement
         // a trait with empty structs (e.g. SimpleJobRegistry for IJobRegistryPort)
         if content
             .lines()
@@ -610,7 +605,6 @@ impl LintCheckingOrchestrator {
         if layer != "agent" && !layer.starts_with("agent(") {
             return;
         }
-        // aes: bypass-agent-role — suppress AES032/AES0305 for files wired via DI dispatch
         if content
             .lines()
             .take(30)
@@ -638,7 +632,6 @@ impl LintCheckingOrchestrator {
         if layer != "surfaces" && !layer.starts_with("surfaces(") {
             return;
         }
-        // aes: bypass-surface-role — suppress AES031/AES0306 for CLI command surfaces
         // that legitimately register many subcommands via dispatch pattern.
         if content
             .lines()

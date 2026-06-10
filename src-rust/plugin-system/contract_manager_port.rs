@@ -1,3 +1,4 @@
+// PURPOSE: Port: Interface for Manager
 /* UNKNOWN: AdapterClassMap */
 use crate::plugin_system::taxonomy_group_vo::PluginGroup;
 /* UNKNOWN: PluginError */ use crate::plugin_system::taxonomy_manager_error::PluginError;

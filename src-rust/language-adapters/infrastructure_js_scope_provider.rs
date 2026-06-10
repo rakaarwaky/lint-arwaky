@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-/// javascript_scope_provider — JS/TS regex patterns and scope detection helpers.
+// PURPOSE: Provider: Js Scope provider implementation
+
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;

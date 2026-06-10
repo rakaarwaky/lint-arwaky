@@ -1,7 +1,4 @@
-//! Protocol for naming variant generation (capabilities side).
-//!
-//! Defines the inbound interface for computing naming variants
-//! used by capability layer implementations.
+// PURPOSE: Protocol: Contract trait for Variant
 
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;

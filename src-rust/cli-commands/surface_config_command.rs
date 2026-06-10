@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Command: Config CLI/surface command
 use std::process::ExitCode;
 
 use crate::cli_commands::surface_core_command::ConfigCommands;

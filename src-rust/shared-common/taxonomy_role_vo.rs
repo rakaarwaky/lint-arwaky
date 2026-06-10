@@ -1,3 +1,4 @@
+// PURPOSE: VO: Role value object
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;

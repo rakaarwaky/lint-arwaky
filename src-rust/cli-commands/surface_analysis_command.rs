@@ -1,5 +1,4 @@
-// aes: wired-by-dispatch
-// aes: bypass-surface-role — CLI surface with subcommand dispatch for analysis tools
+// PURPOSE: Command: Analysis CLI/surface command
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;

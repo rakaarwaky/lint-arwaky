@@ -1,5 +1,4 @@
-// aes: wired-by-dispatch
-// Placeholder for generated Python primitive checker utilities.
+// PURPOSE: Detector: Py Primitive detection
 
 pub struct PythonPrimitiveChecker {}
 

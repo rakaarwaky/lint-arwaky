@@ -1,3 +1,4 @@
+// PURPOSE: Error: Common error types
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

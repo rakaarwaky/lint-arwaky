@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-/// watch_service_provider — Poll-based file system watching for auto-lint on save.
+// PURPOSE: Provider: Watch provider implementation
+
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::SystemTime;

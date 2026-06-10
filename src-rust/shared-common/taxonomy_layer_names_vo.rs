@@ -1,3 +1,4 @@
+// PURPOSE: VO: Layer Names value object
 use crate::shared_common::taxonomy_layer_names_constant::LAYER_AGENT;
 use crate::shared_common::taxonomy_layer_names_constant::LAYER_CAPABILITIES;
 use crate::shared_common::taxonomy_layer_names_constant::LAYER_CONTRACT;

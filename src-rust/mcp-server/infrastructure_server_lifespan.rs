@@ -1,5 +1,4 @@
-// aes: wired-by-dispatch
-//! mcp_server_lifespan — MCP server startup/shutdown lifecycle management.
+// PURPOSE: Lifespan: Server lifecycle
 
 use std::path::PathBuf;
 

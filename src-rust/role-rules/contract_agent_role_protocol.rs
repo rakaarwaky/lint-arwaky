@@ -1,3 +1,4 @@
+// PURPOSE: Protocol: Contract trait for Agent Role
 use crate::output_report::taxonomy_result_vo::LintResult;
 
 pub trait IAgentRoleChecker: Send + Sync {

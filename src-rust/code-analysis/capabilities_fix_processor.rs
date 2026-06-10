@@ -1,3 +1,4 @@
+// PURPOSE: Processor: Fix processing logic
 use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;

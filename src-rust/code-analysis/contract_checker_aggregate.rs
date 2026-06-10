@@ -1,6 +1,4 @@
 // PURPOSE: ICheckerAggregate — Contract trait bundling ALL checker operations for agent layer.
-// Enables agent(orchestrator|coordinator) to use checkers through contracts
-// without directly importing capabilities/infrastructure implementations.
 
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;

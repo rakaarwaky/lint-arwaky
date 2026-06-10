@@ -1,4 +1,5 @@
-/// javascript_linter_adapter — ESLint, Prettier, and TSC adapters for JS/TS linting.
+// PURPOSE: Adapter: Js Linter adapter implementation
+
 use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use crate::output_report::taxonomy_result_vo::LintResult;

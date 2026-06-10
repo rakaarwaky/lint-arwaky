@@ -1,4 +1,4 @@
-// aes: bypass-missing-vo
+// PURPOSE: Scanner: Rust source scanning
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs;

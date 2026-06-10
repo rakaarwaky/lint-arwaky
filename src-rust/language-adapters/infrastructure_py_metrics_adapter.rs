@@ -1,4 +1,5 @@
-/// python_metrics_adapter — Thin adapters for Python metrics (Radon, file sizes, trends).
+// PURPOSE: Adapter: Py Metrics adapter implementation
+
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
 use crate::metrics_service::taxonomy_metrics_error::MetricsError;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

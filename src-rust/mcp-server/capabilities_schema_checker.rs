@@ -1,5 +1,4 @@
-// aes: wired-by-dispatch
-// mcp_tool_schema_checker — MCP tools JSON Schema compliance validation.
+// PURPOSE: Checker: Schema rule enforcement
 
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;

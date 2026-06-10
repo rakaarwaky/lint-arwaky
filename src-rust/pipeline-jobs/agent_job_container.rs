@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-//! Job registry aggregation for pipeline jobs.
+// PURPOSE: Container: DI container for Job
+
 use crate::pipeline_jobs::contract_registry_aggregate::JobRegistryAggregate;
 use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;

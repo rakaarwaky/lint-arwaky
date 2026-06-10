@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-// output_client_orchestrator — Implementation of output management logic.
+// PURPOSE: Orchestrator: Orchestrates Output
+
 use crate::output_report::contract_client_aggregate::OutputClientAggregate;
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::shared_common::taxonomy_layer_vo::Identity;

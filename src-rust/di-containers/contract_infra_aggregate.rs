@@ -1,3 +1,4 @@
+// PURPOSE: Aggregate: Infra aggregation/wiring
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub trait InfrastructureContainerAggregate: Send + Sync {

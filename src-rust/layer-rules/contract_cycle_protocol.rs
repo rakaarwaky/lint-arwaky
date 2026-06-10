@@ -1,3 +1,4 @@
+// PURPOSE: Protocol: Contract trait for Cycle
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

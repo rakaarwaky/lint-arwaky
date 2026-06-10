@@ -1,3 +1,4 @@
+// PURPOSE: Aggregate: Orchestrator aggregation/wiring
 use crate::git_hooks::contract_manager_port::IHookManagerPort;
 use crate::shared_common::taxonomy_layer_vo::Identity;
 

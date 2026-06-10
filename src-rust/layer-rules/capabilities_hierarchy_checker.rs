@@ -1,5 +1,3 @@
-// aes: bypass-missing-vo
-// aes: bypass-bottleneck
 // PURPOSE: AES0306 — Enforce surface hierarchy (barrel wiring) and passive surface checks.
 
 use crate::output_report::taxonomy_result_vo::LintResult;

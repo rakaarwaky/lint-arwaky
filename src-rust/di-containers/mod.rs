@@ -1,3 +1,4 @@
+// PURPOSE: Module: di-containers module declarations and re-exports
 pub mod agent_checker_container;
 pub use agent_checker_container::CheckerContainer;
 pub mod agent_registry_container;

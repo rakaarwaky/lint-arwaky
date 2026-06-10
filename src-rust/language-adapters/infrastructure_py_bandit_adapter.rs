@@ -1,4 +1,5 @@
-/// python_bandit_adapter — Bandit adapter for Python security scanning.
+// PURPOSE: Adapter: Py Bandit adapter implementation
+
 use async_trait::async_trait;
 use serde_json::Value;
 use std::sync::Arc;

@@ -1,3 +1,4 @@
+// PURPOSE: Command: Setup CLI/surface command
 use std::process::ExitCode;
 use std::sync::Arc;
 

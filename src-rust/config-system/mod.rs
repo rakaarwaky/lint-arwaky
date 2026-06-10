@@ -1,3 +1,4 @@
+// PURPOSE: Module: config-system module declarations and re-exports
 pub mod agent_config_loading_orchestrator;
 pub use agent_config_loading_orchestrator::ConfigLoadingOrchestrator;
 pub mod capabilities_rules_validator;

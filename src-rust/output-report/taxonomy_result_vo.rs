@@ -1,3 +1,4 @@
+// PURPOSE: VO: Result value object
 use serde::{Deserialize, Serialize};
 
 use crate::output_report::taxonomy_position_vo::Position;

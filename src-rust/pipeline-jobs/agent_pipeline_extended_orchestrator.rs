@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-// pipeline_extended_orchestrator — Orchestration for multi-project and watch modes (Agent Layer).
+// PURPOSE: Orchestrator: Orchestrates Pipeline Extended
+
 use crate::file_watch::contract_watch_aggregate::DirectoryWatchAggregate;
 use crate::multi_project::contract_project_aggregate::MultiProjectAggregate;
 use crate::pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;

@@ -1,4 +1,4 @@
-//! config_setting_vo — Value objects for configuration domain.
+// PURPOSE: VO: Setting value object
 
 use serde::{Deserialize, Serialize};
 

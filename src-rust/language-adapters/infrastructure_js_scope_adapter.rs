@@ -1,6 +1,4 @@
-// aes: wired-by-dispatch
-// aes: bypass-missing-vo
-//! javascript_scope_tracer — Enclosing scope detection for JS/TS files.
+// PURPOSE: Adapter: Js Scope adapter implementation
 
 use crate::language_adapters::contract_scope_port::IJsTracerPort;
 use crate::semantic_analysis::taxonomy_semantic_error::SemanticError;

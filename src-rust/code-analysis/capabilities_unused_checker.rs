@@ -1,6 +1,4 @@
-// aes: wired-by-dispatch
-// unused_import_checker — Capability for detecting unused imports.
-// Implements IUnusedImportProtocol: find_unused_imports.
+// PURPOSE: Checker: Unused rule enforcement
 
 use crate::code_analysis::contract_unused_protocol::IUnusedProtocol;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

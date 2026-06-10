@@ -1,7 +1,4 @@
-// aes: wired-by-dispatch
-// aes: bypass-capability-routing
-// naming_variant_analyzer — Capability for generating naming convention variants.
-// Implements INamingVariantProtocol (pure logic, no infrastructure dependency).
+// PURPOSE: Analyzer: Variant analysis logic
 
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;

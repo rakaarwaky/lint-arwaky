@@ -1,7 +1,4 @@
-//! Protocol for detecting unused code in the project.
-//!
-//! Provides the interface for finding unused imports within
-//! source files to help eliminate dead code.
+// PURPOSE: Protocol: Contract trait for Unused
 
 /* UNKNOWN: SymbolName */
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

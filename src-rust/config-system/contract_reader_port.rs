@@ -1,7 +1,4 @@
-//! Port trait for reading configuration from external sources.
-//!
-//! Defines the outbound interface for reading configuration files
-//! and listing available configuration sources for a project.
+// PURPOSE: Port: Interface for Reader
 
 use crate::config_system::taxonomy_source_vo::ConfigSource;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

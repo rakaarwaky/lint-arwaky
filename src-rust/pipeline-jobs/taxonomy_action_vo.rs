@@ -1,3 +1,4 @@
+// PURPOSE: VO: Action value object
 use serde::{Deserialize, Serialize};
 
 /* UNKNOWN: MetadataVO */

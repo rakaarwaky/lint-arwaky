@@ -1,4 +1,4 @@
-//! stdio_transport_client — Direct subprocess execution transport.
+// PURPOSE: Client: Transport client implementation
 
 use async_trait::async_trait;
 use std::collections::HashMap;

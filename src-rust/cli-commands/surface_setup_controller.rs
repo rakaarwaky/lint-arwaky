@@ -1,5 +1,4 @@
-// aes: wired-by-dispatch
-// aes: bypass-surface-role — setup surface controller registering MCP config commands
+// PURPOSE: Controller: Setup surface controller
 use std::sync::Arc;
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;

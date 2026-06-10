@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Collector: File file collection
 use std::fs;
 use std::path::Path;
 

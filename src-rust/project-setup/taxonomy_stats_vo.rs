@@ -1,3 +1,4 @@
+// PURPOSE: VO: Stats value object
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::Score;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

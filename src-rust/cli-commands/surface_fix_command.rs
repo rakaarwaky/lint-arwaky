@@ -1,3 +1,4 @@
+// PURPOSE: Command: Fix CLI/surface command
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;

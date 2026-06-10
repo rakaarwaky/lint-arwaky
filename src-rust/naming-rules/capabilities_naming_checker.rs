@@ -1,5 +1,4 @@
-// arch_naming_checker — Architectural naming convention checks.
-// Implements INamingCheckerProtocol: check_file_naming and check_domain_suffixes.
+// PURPOSE: Checker: Naming rule enforcement
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;

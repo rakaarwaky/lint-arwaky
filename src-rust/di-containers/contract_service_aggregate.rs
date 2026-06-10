@@ -1,3 +1,4 @@
+// PURPOSE: Aggregate: Service aggregation/wiring
 use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use crate::code_analysis::contract_fix_aggregate::LintFixOrchestratorAggregate;

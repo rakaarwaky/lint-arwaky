@@ -1,3 +1,4 @@
+// PURPOSE: VO: Rule value object
 use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

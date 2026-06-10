@@ -1,3 +1,4 @@
+// PURPOSE: Command: Dev CLI/surface command
 use std::process::ExitCode;
 
 use crate::cli_commands::taxonomy_command_target_vo::{

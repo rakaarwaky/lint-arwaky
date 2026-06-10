@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Command: Plugin CLI/surface command
 use std::collections::BTreeMap;
 use std::process::ExitCode;
 use std::sync::Arc;

@@ -1,5 +1,4 @@
-// aes: wired-by-dispatch
-// aes: bypass-missing-vo
+// PURPOSE: Module: Capabilities Agent Role Auditor
 use once_cell::sync::Lazy;
 use regex::Regex;
 

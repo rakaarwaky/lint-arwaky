@@ -1,3 +1,4 @@
+// PURPOSE: VO: Score value object
 use serde::Serialize;
 
 use crate::output_report::taxonomy_result_vo::LintResult;

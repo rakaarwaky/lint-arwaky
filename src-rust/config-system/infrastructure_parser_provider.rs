@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Provider: Parser provider implementation
 use crate::config_system::contract_parser_port::IConfigParserPort;
 use crate::config_system::taxonomy_config_error::ConfigError;
 use crate::config_system::taxonomy_identifier_vo::ConfigKey;

@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-/// MCP Tools Registry - Bridges Capabilities to the Surface Layer.
+// PURPOSE: Controller: Tools surface controller
+
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 /// Handler for registering MCP tools.

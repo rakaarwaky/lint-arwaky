@@ -1,3 +1,4 @@
+// PURPOSE: Event: Removed domain event
 use crate::shared_common::taxonomy_common_vo::Timestamp;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};

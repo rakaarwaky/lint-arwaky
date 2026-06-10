@@ -1,3 +1,4 @@
+// PURPOSE: VO: Suffix value object
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]

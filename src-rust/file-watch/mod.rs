@@ -1,3 +1,4 @@
+// PURPOSE: Module: file-watch module declarations and re-exports
 pub mod contract_commands_aggregate;
 pub use contract_commands_aggregate::WatchCommandsAggregate;
 pub mod contract_orchestrator_aggregate;

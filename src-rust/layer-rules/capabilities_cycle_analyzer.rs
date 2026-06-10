@@ -1,5 +1,4 @@
-// dependency_cycle_analyzer — Detects circular imports and dependency cycles.
-// Implements ICycleAnalysisProtocol: scan files for circular import violations.
+// PURPOSE: Analyzer: Cycle analysis logic
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

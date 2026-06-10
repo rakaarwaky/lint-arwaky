@@ -1,3 +1,4 @@
+// PURPOSE: Protocol: Contract trait for Type
 use crate::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
 use crate::naming_rules::taxonomy_naming_list_vo::PrimitiveTypeList;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

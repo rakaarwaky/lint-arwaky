@@ -1,3 +1,4 @@
+// PURPOSE: VO: Result value object
 use crate::shared_common::taxonomy_common_vo::Score;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

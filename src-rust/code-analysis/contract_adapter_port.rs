@@ -1,4 +1,5 @@
-// linter_adapter_port — Abstract port for linter adapter operations (Contract Layer).
+// PURPOSE: Port: Interface for Adapter
+
 use async_trait::async_trait;
 
 use crate::output_report::taxonomy_result_vo::LintResultList;

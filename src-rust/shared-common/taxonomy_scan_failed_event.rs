@@ -1,3 +1,4 @@
+// PURPOSE: Event: Scan Failed domain event
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::Timestamp;

@@ -1,3 +1,4 @@
+// PURPOSE: Protocol: IDispatchRoutingProtocol + IDispatchRoutingParserProtocol — traits for capability routing dispatch checks
 use crate::di_containers::taxonomy_routing_vo::ClassDefinitionMap;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_source_vo::ContentString;

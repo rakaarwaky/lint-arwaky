@@ -1,3 +1,4 @@
+// PURPOSE: VO: Source value object
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use serde::{Deserialize, Serialize};
 

@@ -1,3 +1,4 @@
+// PURPOSE: Protocol: Contract trait for Orphan
 use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use crate::code_analysis::taxonomy_analysis_vo::ImportGraph;

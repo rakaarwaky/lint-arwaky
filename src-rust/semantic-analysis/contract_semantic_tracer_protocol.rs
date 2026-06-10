@@ -1,3 +1,4 @@
+// PURPOSE: Protocol: Contract trait for Semantic Tracer
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;

@@ -1,4 +1,5 @@
-/// Core CLI commands: full surface aligned with SKILL.md.
+// PURPOSE: Command: Core CLI/surface command
+
 use clap::{Parser, Subcommand};
 
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;

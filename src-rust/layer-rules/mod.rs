@@ -1,3 +1,4 @@
+// PURPOSE: Module: layer-rules module declarations and re-exports
 pub mod agent_compliance_orchestrator;
 pub use agent_compliance_orchestrator::{
     ArchComplianceOrchestrator, ArchitectureOrchestrator, InfrastructureMixinContainer,

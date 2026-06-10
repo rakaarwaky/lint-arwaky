@@ -1,3 +1,4 @@
+// PURPOSE: Protocol: Contract trait for Class
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 

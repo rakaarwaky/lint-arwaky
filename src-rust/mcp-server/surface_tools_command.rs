@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-/// MCP Tools Commands - All 5 MCP tool implementations
+// PURPOSE: Command: Tools CLI/surface command
+
 use serde_json::{json, Value};
 
 /// Surface for MCP tools command implementations.

@@ -1,3 +1,4 @@
+// PURPOSE: VO: Duration value object
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

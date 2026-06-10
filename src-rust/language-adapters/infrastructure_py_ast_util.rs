@@ -1,5 +1,4 @@
-// aes: wired-by-dispatch
-// Placeholder for generated Python AST utilities.
+// PURPOSE: Module: Infrastructure Py Ast Util
 
 pub struct PythonAstUtils {}
 

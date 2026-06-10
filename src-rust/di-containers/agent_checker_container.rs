@@ -1,6 +1,4 @@
-//! agent_checker_container — Agent(container) implementation of ICheckerAggregate.
-//! WIRES concrete capabilities implementations; allowed to import capabilities/infrastructure.
-//! agent(orchestrator|coordinator) uses this through the contract trait.
+// PURPOSE: Container: DI container for Checker
 
 use crate::code_analysis::capabilities_class_checker::ArchClassChecker;
 use crate::code_analysis::capabilities_line_checker::ArchLineChecker;

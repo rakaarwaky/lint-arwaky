@@ -1,7 +1,4 @@
-//! Port trait for parsing configuration files.
-//!
-//! Provides outbound interfaces for parsing YAML and TOML
-//! configuration formats into structured project configuration.
+// PURPOSE: Port: Interface for Parser
 
 use crate::config_system::taxonomy_config_error::ConfigError;
 /* UNKNOWN: ProjectConfig */

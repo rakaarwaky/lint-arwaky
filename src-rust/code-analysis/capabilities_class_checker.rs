@@ -1,3 +1,4 @@
+// PURPOSE: Checker: Class rule enforcement
 use std::fs;
 use std::path::Path;
 

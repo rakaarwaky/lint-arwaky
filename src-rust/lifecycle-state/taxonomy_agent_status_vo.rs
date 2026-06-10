@@ -1,3 +1,4 @@
+// PURPOSE: VO: Agent Status value object
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]

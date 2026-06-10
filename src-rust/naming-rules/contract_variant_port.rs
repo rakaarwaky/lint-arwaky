@@ -1,7 +1,4 @@
-//! Port trait for naming variant generation (infrastructure side).
-//!
-//! Provides the outbound interface for computing naming variants
-//! used by infrastructure implementations.
+// PURPOSE: Port: Interface for Variant
 
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::naming_rules::taxonomy_naming_list_vo::SymbolNameList;

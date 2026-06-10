@@ -1,8 +1,4 @@
-//! source_parser_adapter — Orchestrator that delegates to language-specific parsers.
-//!
-//! Instead of duplicating 2000+ lines of scanner code, this module composes
-//! the three language-specific adapters and routes calls based on file extension.
-//! Uses DI via Box<dyn ISourceParserPort> to avoid sibling infrastructure imports (AES001).
+// PURPOSE: Adapter: Parser adapter implementation
 
 use crate::code_analysis::taxonomy_import_source_vo::ImportInfoList;
 use crate::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;

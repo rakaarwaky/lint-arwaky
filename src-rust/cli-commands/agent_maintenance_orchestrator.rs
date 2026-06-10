@@ -1,6 +1,5 @@
-// aes: wired-by-dispatch
-// PURPOSE: Orchestrator: Orchestrates Maintenance
-// maintenance_commands_orchestrator — Orchestrator for maintenance-related domain logic.
+// PURPOSE: Orchestrator: Implements MaintenanceCommandsAggregate — stats, doctor, gc, rename, project maintenance
+
 use crate::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;
 use crate::project_setup::taxonomy_doctor_vo::DoctorResultVO;
@@ -15,11 +14,11 @@ use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-17|
+
 pub struct MaintenanceCommandsOrchestrator {}
-19|
+
 use async_trait::async_trait;
-21|
+
 #[async_trait]
 impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
     async fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
@@ -40,7 +39,7 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         } else {
             0.0
         };
-42|
+
         MaintenanceStatsVO {
             project_path: project_path.clone(),
             total_files: Count::new(py_count),
@@ -49,7 +48,7 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
             python_files: Count::new(py_count),
         }
     }
-51|
+
     async fn clean(&self) {
         let cwd = std::env::current_dir().ok();
         if let Some(cwd) = cwd {
@@ -67,7 +66,7 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
             }
         }
     }
-69|
+
     async fn update(&self) {
         let adapters = ["ruff", "mypy", "bandit", "radon"];
         for adapter in &adapters {
@@ -76,19 +75,19 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
                 .output();
         }
     }
-78|
+
     async fn doctor(&self) -> DoctorResultVO {
         let mut issues: Vec<ErrorMessage> = Vec::new();
         let mut adapter_statuses: HashMap<AdapterName, String> = HashMap::new();
-82|
+
         let py_ver = DescriptionVO::new("3.12");
-84|
+
         let is_installed = std::process::Command::new("pip")
             .args(["show", "lint-arwaky"])
             .output()
             .map(|o| o.status.success())
             .unwrap_or(false);
-90|
+
         let mut config_found_paths = Vec::new();
         for cfg in &[
             ".lint_arwaky.json",
@@ -105,7 +104,7 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         if config_found.is_empty() {
             issues.push(ErrorMessage::new("No configuration file found"));
         }
-107|
+
         for adapter in &["ruff", "mypy", "bandit", "radon"] {
             let found = std::process::Command::new("which")
                 .arg(adapter)
@@ -129,9 +128,9 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
                 }
             }
         }
-131|
+
         let healthy = ComplianceStatus::new(issues.is_empty());
-133|
+
         DoctorResultVO {
             python_version: py_ver,
             is_installed: ComplianceStatus::new(is_installed),
@@ -141,10 +140,10 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
             healthy,
         }
     }
-143|
+
     async fn cancel(&self, _job_id: JobId) {}
 }
-146|
+
 fn walk_dir(dir: &Path, py_files: &mut Vec<PathBuf>) {
     if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
@@ -160,7 +159,7 @@ fn walk_dir(dir: &Path, py_files: &mut Vec<PathBuf>) {
         }
     }
 }
-162|
+
 fn find_cache_dirs(dir: &Path, cache_names: &[&str], found_dirs: &mut Vec<PathBuf>) {
     if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
@@ -176,16 +175,15 @@ fn find_cache_dirs(dir: &Path, cache_names: &[&str], found_dirs: &mut Vec<PathBu
         }
     }
 }
-178|
+
 impl Default for MaintenanceCommandsOrchestrator {
     fn default() -> Self {
         Self::new()
     }
 }
-184|
+
 impl MaintenanceCommandsOrchestrator {
     pub fn new() -> Self {
         Self {}
     }
 }
-190|

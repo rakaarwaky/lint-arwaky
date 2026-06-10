@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-// pipeline_action_orchestrator — Agent orchestrator for pipeline actions.
+// PURPOSE: Orchestrator: Orchestrates Pipeline
+
 use crate::pipeline_jobs::contract_dispatcher_aggregate::PipelineActionDispatcherAggregate;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionArgs;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;

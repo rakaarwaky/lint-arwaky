@@ -1,3 +1,4 @@
+// PURPOSE: VO: Adapter Name value object
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 

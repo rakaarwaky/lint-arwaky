@@ -1,5 +1,5 @@
-// aes: wired-by-dispatch
-/// javascript_naming_provider — Naming variants for JavaScript/TypeScript symbols.
+// PURPOSE: Provider: Js Naming provider implementation
+
 use crate::naming_rules::contract_naming_port::INamingProviderPort;
 use crate::naming_rules::taxonomy_name_vo::NameVariants;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

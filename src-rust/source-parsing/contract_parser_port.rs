@@ -1,3 +1,4 @@
+// PURPOSE: Port: Interface for Parser
 use crate::code_analysis::taxonomy_import_source_vo::ImportInfoList;
 use crate::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
 use crate::naming_rules::taxonomy_name_vo::SymbolName;

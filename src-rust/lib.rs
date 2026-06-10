@@ -1,4 +1,5 @@
 #[path = "cli-commands/mod.rs"]
+// PURPOSE: Library: Root library module
 pub mod cli_commands;
 #[path = "cli-transport/mod.rs"]
 pub mod cli_transport;

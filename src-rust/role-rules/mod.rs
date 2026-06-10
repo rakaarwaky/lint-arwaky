@@ -1,3 +1,4 @@
+// PURPOSE: Module: role-rules module declarations and re-exports
 pub mod agent_role_orchestrator;
 pub use agent_role_orchestrator::RoleOrchestrator;
 pub mod capabilities_agent_role_auditor;

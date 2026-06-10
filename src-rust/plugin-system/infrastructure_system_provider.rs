@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Provider: System provider implementation
 use crate::pipeline_jobs::taxonomy_job_vo::AdapterMetadata;
 /// plugin_system_provider — Entry point discovery and loading for custom adapters.
 use crate::plugin_system::contract_manager_port::IPluginManagerPort;

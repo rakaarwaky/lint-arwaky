@@ -1,3 +1,4 @@
+// PURPOSE: Protocol: Contract trait for Data Flow
 use crate::naming_rules::taxonomy_name_vo::SymbolName;
 use crate::shared_common::taxonomy_common_vo::DataFlowList;
 use crate::shared_common::taxonomy_common_vo::LineNumber;

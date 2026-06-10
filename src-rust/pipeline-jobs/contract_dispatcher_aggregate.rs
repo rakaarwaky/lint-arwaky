@@ -1,3 +1,4 @@
+// PURPOSE: Aggregate: Dispatcher aggregation/wiring
 use crate::pipeline_jobs::taxonomy_action_vo::ActionArgs;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;

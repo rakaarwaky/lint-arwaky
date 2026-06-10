@@ -1,3 +1,4 @@
+// PURPOSE: VO: Doctor value object
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

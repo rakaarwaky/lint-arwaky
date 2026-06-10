@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Provider: Barrel provider implementation
 use std::collections::HashMap;
 
 /// Centralized barrel import resolver and barrel utility functions.

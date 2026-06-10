@@ -1,3 +1,4 @@
+// PURPOSE: Module: Capabilities Contract Role Auditor
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;

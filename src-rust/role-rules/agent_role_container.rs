@@ -1,4 +1,3 @@
-// aes: wired-by-dispatch
 // PURPOSE: Assemble concrete checker implementations into IRoleAggregate for taxonomy/contract role checks.
 use crate::role_rules::capabilities_agent_role_auditor::AgentRoleChecker;
 use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;

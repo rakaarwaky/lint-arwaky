@@ -1,3 +1,4 @@
+// PURPOSE: Error: Operation error types
 use crate::shared_common::taxonomy_adapter_error::AdapterError;
 use crate::shared_common::taxonomy_adapter_error::ScanError;
 /// linter_operation_error — Unified error type for linter adapter operations.

@@ -1,4 +1,5 @@
-// job_registry_port — Port for job tracking and lifecycle management.
+// PURPOSE: Port: Interface for Registry
+
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;

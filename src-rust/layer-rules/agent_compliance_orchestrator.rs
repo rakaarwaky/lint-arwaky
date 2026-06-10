@@ -1,11 +1,4 @@
-// aes: wired-by-dispatch
-// aes: bypass-agent-role — orchestrator container aggregate with DI stubs + layer resolution
-// aes: bypass-dead-inheritance — SimpleJobRegistry is a stub impl for IJobRegistryPort
-//! Architecture compliance orchestration — layer-map resolution, compliance coordination,
-//! watch mode, and DI mixin stubs.
-//!
-//! Naming: `arch` = bounded context (architecture governance), not layer name.
-//! Also hosts watch orchestrators and mixin container stubs consolidated for cohesion.
+// PURPOSE: Orchestrator: Orchestrates Compliance
 
 use std::collections::HashMap;
 use std::sync::OnceLock;
@@ -43,8 +36,6 @@ use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
 use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-
-// aes: bypass-agent-role — orchestrator container aggregate with DI stubs + layer resolution
 
 pub struct InfrastructureMixinContainer {}
 

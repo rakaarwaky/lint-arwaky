@@ -1,3 +1,4 @@
+// PURPOSE: Entity: Governance domain entity
 use serde::{Deserialize, Serialize};
 
 use crate::output_report::taxonomy_result_vo::LintResult;

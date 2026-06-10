@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Controller: Client surface controller
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use std::sync::Arc;
 

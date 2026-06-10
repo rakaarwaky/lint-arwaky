@@ -1,7 +1,4 @@
-//! Protocol for orchestrating configuration loading.
-//!
-//! Defines how configuration is discovered and loaded for a
-//! project, including language-specific config resolution.
+// PURPOSE: Protocol: Contract trait for Orchestration
 
 use crate::config_system::taxonomy_source_vo::ConfigResult;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

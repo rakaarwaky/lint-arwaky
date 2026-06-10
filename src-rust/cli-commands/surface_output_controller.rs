@@ -1,4 +1,4 @@
-// aes: wired-by-dispatch
+// PURPOSE: Controller: Output surface controller
 use std::sync::Arc;
 /// CLI output management utilities.
 use std::sync::Mutex;

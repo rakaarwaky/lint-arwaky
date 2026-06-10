@@ -1,7 +1,4 @@
-//! Port trait for collecting and persisting metrics.
-//!
-//! Defines the outbound interface for gathering code metrics
-//! (such as line counts) and storing historical metric data.
+// PURPOSE: Port: Interface for Metrics
 
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

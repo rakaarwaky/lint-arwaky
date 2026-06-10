@@ -1,3 +1,4 @@
+// PURPOSE: Aggregate: Input aggregation/wiring
 use crate::pipeline_jobs::taxonomy_action_vo::ActionArgs;
 use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

@@ -1,7 +1,4 @@
-//! Protocol for self-linting the linter's own codebase.
-//!
-//! Defines the inbound interface for running architectural audits
-//! against the lint-arwaky project itself and formatting reports.
+// PURPOSE: Protocol: Contract trait for Lint
 
 use crate::output_report::taxonomy_result_vo::LintResultList;
 

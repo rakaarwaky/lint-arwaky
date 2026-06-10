@@ -1,3 +1,4 @@
+// PURPOSE: Protocol: Contract trait for Surface Role
 use crate::output_report::taxonomy_result_vo::LintResult;
 
 pub trait ISurfaceRoleChecker: Send + Sync {

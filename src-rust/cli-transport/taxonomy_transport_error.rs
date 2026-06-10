@@ -1,3 +1,4 @@
+// PURPOSE: Error: Transport error types
 use crate::cli_transport::taxonomy_protocol_vo::TransportEndpoint;
 use crate::cli_transport::taxonomy_protocol_vo::TransportProtocol;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;

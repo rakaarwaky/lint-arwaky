@@ -1,3 +1,4 @@
+// PURPOSE: VO: App value object
 use std::env;
 
 use crate::shared_common::taxonomy_adapter_vo::AdapterNameList;

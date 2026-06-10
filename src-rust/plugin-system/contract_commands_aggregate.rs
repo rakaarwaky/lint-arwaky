@@ -1,3 +1,4 @@
+// PURPOSE: Aggregate: Commands aggregation/wiring
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 

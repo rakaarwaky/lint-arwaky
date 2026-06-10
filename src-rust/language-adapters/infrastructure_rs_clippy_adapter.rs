@@ -1,3 +1,4 @@
+// PURPOSE: Adapter: Rs Clippy adapter implementation
 use std::path::Path;
 use std::sync::Arc;
 

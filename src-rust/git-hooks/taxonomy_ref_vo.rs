@@ -1,3 +1,4 @@
+// PURPOSE: VO: Ref value object
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]

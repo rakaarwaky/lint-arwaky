@@ -1,6 +1,4 @@
-// aes: wired-by-dispatch
-// config_rules_validator — Capability for validating project configuration rules.
-// Implements IConfigRulesProtocol: is_adapter_enabled, validate_thresholds.
+// PURPOSE: Validator: Rules validation
 
 use crate::config_system::taxonomy_setting_vo::AdapterStatus;
 use crate::config_system::taxonomy_setting_vo::ProjectConfig;

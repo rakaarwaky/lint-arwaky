@@ -1,7 +1,4 @@
-//! Port trait for architecture compliance checking.
-//!
-//! Defines the interface for scanning source trees for architecture
-//! violations and applying automated fixes.
+// PURPOSE: Port: Interface for Compliance
 
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;

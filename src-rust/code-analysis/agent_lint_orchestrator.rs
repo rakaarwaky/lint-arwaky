@@ -1,3 +1,4 @@
+// PURPOSE: Orchestrator: Orchestrates Lint
 use std::path::Path;
 
 use crate::config_system::taxonomy_config_vo::default_aes_config;

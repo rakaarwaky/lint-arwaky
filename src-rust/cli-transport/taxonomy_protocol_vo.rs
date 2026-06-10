@@ -1,3 +1,4 @@
+// PURPOSE: VO: Protocol value object
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
