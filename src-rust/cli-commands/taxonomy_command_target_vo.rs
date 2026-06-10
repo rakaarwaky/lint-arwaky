@@ -1,4 +1,4 @@
-// PURPOSE: VO: Command Target value object
+// PURPOSE: resolve_target, lint_path, walk_rs_files — utility functions for path resolution and lint orchestration
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

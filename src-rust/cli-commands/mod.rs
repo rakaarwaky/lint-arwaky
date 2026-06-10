@@ -1,4 +1,4 @@
-// PURPOSE: Module: cli-commands module declarations and re-exports
+// PURPOSE: Module declarations and re-exports for all CLI command surfaces and aggregates
 pub mod agent_dev_orchestrator;
 pub use agent_dev_orchestrator::DevCommandsOrchestrator;
 pub mod agent_maintenance_orchestrator;

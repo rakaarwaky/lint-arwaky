@@ -1,4 +1,4 @@
-// PURPOSE: Command: Core CLI/surface command
+// PURPOSE: Cli + Commands enums — clap-based CLI definition with all subcommands (check, scan, fix, dev, config, report, setup, etc.)
 
 use clap::{Parser, Subcommand};
 

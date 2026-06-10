@@ -1,4 +1,4 @@
-// PURPOSE: Constants: Catalog constants
+// PURPOSE: COMMAND_CATALOG — static table of every public CLI/MCP command with description and usage example
 
 pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
     (

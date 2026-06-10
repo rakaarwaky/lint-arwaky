@@ -1,4 +1,4 @@
-// PURPOSE: Command: Config CLI/surface command
+// PURPOSE: handle_config — CLI surface for displaying current lint-arwaky configuration from YAML files
 use std::process::ExitCode;
 
 use crate::cli_commands::surface_core_command::ConfigCommands;

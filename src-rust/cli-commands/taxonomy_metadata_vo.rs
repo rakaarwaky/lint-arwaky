@@ -1,4 +1,4 @@
-// PURPOSE: VO: Metadata value object
+// PURPOSE: CommandMetadataVO — value object wrapping description + usage example for each CLI command
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::shared_common::taxonomy_suggestion_vo::Suggestion;
 use serde::{Deserialize, Serialize};
