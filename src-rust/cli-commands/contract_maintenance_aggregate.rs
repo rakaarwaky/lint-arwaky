@@ -2,7 +2,7 @@
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;
 use crate::project_setup::taxonomy_doctor_vo::DoctorResultVO;
 use crate::project_setup::taxonomy_stats_vo::MaintenanceStatsVO;
-use crate::cli_commands::contract_executor_port::ICommandExecutorPort as _;
+pub use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 

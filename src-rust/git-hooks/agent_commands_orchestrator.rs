@@ -6,6 +6,7 @@ use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::source_parsing::taxonomy_paths_vo::RenamedFileList;
 use async_trait::async_trait;
 use std::collections::HashSet;
 
@@ -29,7 +30,7 @@ impl GitCommandsAggregate for GitCommandsOrchestrator {
             added: FilePathList::new(Vec::new()),
             modified: filtered.clone(),
             deleted: FilePathList::new(Vec::new()),
-            renamed: Vec::new(),
+            renamed: RenamedFileList::new(vec![]),
             lintable_files: changed_files.clone(),
             all_files: changed_files,
             total_changed: Count::new(filtered.values.len() as i64),

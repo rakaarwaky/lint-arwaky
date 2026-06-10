@@ -19,6 +19,8 @@ pub mod contract_cycle_protocol;
 
 pub mod contract_lint_protocol;
 pub use contract_lint_protocol::IArchLintProtocol;
+pub mod capabilities_arch_self_lint_checker;
+pub use capabilities_arch_self_lint_checker::ArchSelfLintChecker;
 
 pub mod contract_rule_protocol;
 pub use contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};

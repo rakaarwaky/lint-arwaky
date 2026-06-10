@@ -1,6 +1,8 @@
 // PURPOSE: Module declarations and re-exports for config-system (orchestrator, validators, providers, VOs, ports)
 pub mod agent_config_loading_orchestrator;
 pub use agent_config_loading_orchestrator::ConfigLoadingOrchestrator;
+pub mod capabilities_config_orchestrator;
+pub use capabilities_config_orchestrator::ConfigOrchestrator;
 pub mod capabilities_rules_validator;
 pub use capabilities_rules_validator::ConfigRulesValidator;
 pub mod taxonomy_validation_vo;
