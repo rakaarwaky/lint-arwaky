@@ -46,57 +46,119 @@ src-rust/
 
 ### Principle
 
-- **Container = wiring only** (no trait impl, no logic)
-- **Container location = root** (`src-rust/` directly, sejajar main entry files)
-- **Container naming = `{feature}_container.rs`** (ends with `_container`, classified under `root` layer)
-- **Main entry compose containers** (no aggregator file, direct composition)
-- **Agent Layer Specialization** (hanya `_orchestrator` yang diperbolehkan di layer `agent`)
-- **Explicit Feature Runner Traits (Opsi B - Recommended)** (menghindari generic polymorphic `ILintRunner` yang merusak type safety untuk feature dengan input/output spesifik seperti `security` atau `fix`)
+- **Single crate** — tidak ada multi-workspace, satu Cargo.toml
+- **Feature-based folders** — setiap feature punya folder sendiri
+- **Container inside feature folder** — `{feature}/_container.rs`
+- **Consistent structure** — setiap feature punya pola folder yang sama
+- **Main entry compose containers** — direct composition, no aggregator file
+- **No God Trait** — hapus `ServiceContainerAggregate`, pakai typed orchestrators
 
 ### New File Structure
 
+**Pattern per feature folder** (contoh: `auto-fix/`):
+
 ```
-src-rust/
+crates/
+├── auto-fix/                          ← feature folder
+│   ├── auto_fix_container.rs          ← container (wiring only)
+│   └── src/
+│       ├── mod.rs
+│       ├── contract_fix_aggregate.rs  ← contract/aggregate
+│       ├── contract_fix_protocol.rs   ← protocol traits
+│       ├── capabilities_fix_processor.rs  ← capabilities
+│       ├── agent_fix_orchestrator.rs  ← orchestrator (agent)
+│       ├── taxonomy_fix_applied_event.rs  ← taxonomy (VO/event)
+│       └── taxonomy_fix_vo.rs         ← taxonomy (VO)
 │
-├── cli_main_entry.rs              ← compose: ImportContainer + NamingContainer + ...
-├── mcp_main_entry.rs              ← compose: ImportContainer + McpContainer + ...
-├── tui_main_entry.rs              ← compose: ImportContainer + NamingContainer + ...
+├── import-rules/
+│   ├── import_container.rs
+│   └── src/
+│       ├── mod.rs
+│       ├── contract_import_aggregate.rs
+│       ├── contract_import_protocol.rs
+│       ├── capabilities_import_mandatory.rs
+│       ├── capabilities_import_forbidden.rs
+│       ├── capabilities_import_intent.rs
+│       ├── infrastructure_import_parser.rs
+│       ├── agent_import_orchestrator.rs
+│       └── taxonomy_rule_vo.rs
 │
-├── import_container.rs            ← wiring import-rules feature [NEW - root layer]
-├── naming_container.rs            ← wiring naming-rules feature [NEW - root layer]
-├── role_container.rs              ← wiring role-rules feature [NEW - root layer]
-├── analysis_container.rs          ← wiring code-analysis feature [NEW - root layer]
-├── mcp_container.rs               ← wiring mcp-server feature [NEW - root layer]
-├── git_container.rs               ← wiring git-hooks feature [NEW - root layer]
-├── pipeline_container.rs          ← wiring pipeline-jobs feature [NEW - root layer]
-├── config_container.rs            ← wiring config-system feature [NEW - root layer]
-├── file_container.rs              ← wiring file-system feature [NEW - root layer]
-├── plugin_container.rs            ← wiring plugin-system feature [NEW - root layer]
-├── orphan_container.rs            ← wiring orphan-detector feature [NEW - root layer]
-├── auto_fix_container.rs          ← wiring auto-fix feature [NEW - root layer]
+├── naming-rules/
+│   ├── naming_container.rs
+│   └── src/
+│       └── ...
 │
-├── import-rules/                  ← feature folder
-│   └── contract_import_runner_aggregate.rs   ← Inbound port/runner aggregate for import
-├── naming-rules/                  ← feature folder
-│   └── contract_naming_runner_aggregate.rs   ← Inbound port/runner aggregate for naming
-├── code-analysis/                 ← feature folder
-│   └── contract_fix_runner_aggregate.rs      ← Inbound port/runner aggregate for auto-fix
+├── role-rules/
+│   ├── role_container.rs
+│   └── src/
+│       └── ...
 │
-└── shared-common/
+├── cli/
+│   └── main.rs                       ← entry point
+│
+├── mcp/
+│   └── main.rs                       ← entry point
+│
+└── tui/
+    └── main.rs                       ← entry point
 ```
 
 ### Key Changes
 
-| Aspect                       | Before                                   | After                        |
-| ---------------------------- | ---------------------------------------- | ---------------------------- |
-| **Container location**       | `di-containers/` folder                  | Root (`src-rust/`)           |
-| **Container naming**         | `agent_injection_container.rs`           | `{feature}_container.rs`     |
-| **Container layer**          | `agent` layer                            | `root` layer                 |
-| **Container trait**          | Implements `ServiceContainerAggregate`   | **No trait impl**            |
-| **Container purpose**        | Wire + logic + trait impl                | **Wire only**                |
-| **Contract**                 | `ServiceContainerAggregate` (God trait)  | Feature runner aggregates    |
-| **Composition**              | Single God Container                     | Main entry composes directly |
-| **Surface call**             | `container.get_xxx()`                    | `runners.run_audit()`        |
+| Aspect | Before | After |
+|--------|--------|-------|
+| **Structure** | Flat files di `src-rust/` | Feature folders dalam `crates/` |
+| **Container** | `di-containers/` (God folder) | `{feature}/{feature}_container.rs` |
+| **Container location** | `di-containers/agent_injection_container.rs` | `crates/{feature}/{feature}_container.rs` |
+| **Container trait** | Implements `ServiceContainerAggregate` | **No trait impl** |
+| **Container purpose** | Wire + logic + trait impl | **Wire only** |
+| **Source files** | Flat di `src-rust/{feature}/` | `crates/{feature}/src/` |
+| **Contract** | `ServiceContainerAggregate` (God trait) | Typed orchestrators per feature |
+| **Composition** | Single God Container | Main entry composes directly |
+| **Surface call** | `container.get_xxx()` | `orchestrator.run_audit()` |
+
+### Taxonomy Categories
+
+Taxonomy layer punya 7 kategori suffix files:
+
+| Suffix | Category | Aturan | Contoh |
+|--------|----------|--------|--------|
+| `_vo` | Value Object | Strict — harus wrap primitive, tidak boleh ada logic | `taxonomy_line_number_vo.rs` |
+| `_entity` | Entity | Strict — represent domain entity | `taxonomy_user_entity.rs` |
+| `_error` | Error type | Strict — custom error enum/struct | `taxonomy_lint_error.rs` |
+| `_event` | Event | Strict — domain events | `taxonomy_fix_applied_event.rs` |
+| `_constant` | Constant | Strict — hanya `pub const` / `pub static` | `taxonomy_layer_names_constant.rs` |
+| `_util` | **Utility** | **Relaxed** — boleh punya logic, boleh dipakai oleh layer manapun | `taxonomy_path_util.rs` |
+| `_helper` | **Helper** | **Relaxed** — boleh punya logic, boleh dipakai oleh layer manapun | `taxonomy_format_helper.rs` |
+
+**Perbedaan Utama:**
+
+| Aspek | Strict (vo/entity/error/event/constant) | Relaxed (util/helper) |
+|-------|----------------------------------------|----------------------|
+| **Logic** | Tidak boleh ada logic (hanya data) | Boleh ada logic |
+| **Import** | Hanya boleh di-import oleh layer bawah | Boleh di-import oleh layer manapun |
+| **Contract trait** | Wajib implement jika di-capabilities | Tidak wajib implement contract trait |
+| **Usage** | Pure data representation | Shared utilities untuk multiple layers |
+
+**Contoh `taxonomy_path_util.rs`:**
+```rust
+// Boleh punya logic — relaxed rules
+pub fn normalize_path(path: &str) -> String {
+    path.replace("\\", "/")
+}
+
+pub fn is_source_file(path: &str) -> bool {
+    path.ends_with(".rs") || path.ends_with(".py") || path.ends_with(".ts")
+}
+```
+
+**Contoh `taxonomy_format_helper.rs`:**
+```rust
+// Boleh dipakai oleh capabilities DAN infrastructure
+pub fn format_violation(code: &str, message: &str) -> String {
+    format!("[{}] {}", code, message)
+}
+```
 
 ---
 
@@ -104,36 +166,38 @@ src-rust/
 
 ### 3.1 Feature Container (wiring only)
 
-Setiap feature memiliki 1 container file di root (`src-rust/`).
+Setiap feature punya 1 container file di dalam folder-nya: `{feature}/_container.rs`.
 
 ```rust
-// import_container.rs — wiring import-rules feature
+// import-rules/_container.rs — wiring import-rules feature
 use std::sync::Arc;
-use crate::contract::{IArchImportProtocol, ImportIntentProtocol, IImportParserPort, IImportRunnerAggregate};
-use crate::import_rules::{ImportMandatoryChecker, ImportForbiddenChecker, ImportIntentChecker, ImportParserAdapter, ImportOrchestrator};
+use crate::import_rules::src::_protocol::{IArchImportProtocol, IImportParserPort};
 
 pub struct ImportContainer {
     mandatory: Arc<dyn IArchImportProtocol>,
     forbidden: Arc<dyn IArchImportProtocol>,
-    intent: Arc<dyn ImportIntentProtocol>,
 }
 
 impl ImportContainer {
     pub fn new() -> Self {
-        let parser: Arc<dyn IImportParserPort> = Arc::new(ImportParserAdapter::new());
+        let parser: Arc<dyn IImportParserPort> = Arc::new(
+            crate::import_rules::src::infrastructure_import_parser::ImportParserAdapter::new(),
+        );
         Self {
-            mandatory: Arc::new(ImportMandatoryChecker::new(parser.clone())),
-            forbidden: Arc::new(ImportForbiddenChecker::new(parser.clone())),
-            intent: Arc::new(ImportIntentChecker::new(parser)),
+            mandatory: Arc::new(
+                crate::import_rules::src::capabilities_import_mandatory::ImportMandatoryChecker::new(parser.clone()),
+            ),
+            forbidden: Arc::new(
+                crate::import_rules::src::capabilities_import_forbidden::ImportForbiddenChecker::new(parser),
+            ),
         }
     }
 
-    pub fn orchestrator(&self) -> Arc<dyn IImportRunnerAggregate> {
-        Arc::new(ImportOrchestrator::new(
+    pub fn orchestrator(&self) -> ImportOrchestrator {
+        ImportOrchestrator::new(
             self.mandatory.clone(),
             self.forbidden.clone(),
-            self.intent.clone(),
-        ))
+        )
     }
 }
 ```

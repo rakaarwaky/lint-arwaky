@@ -33,7 +33,9 @@ architecture:
     taxonomy:
       check_orphan: true
       suffix:
-        - strict: ["vo", "entity", "error", "event", "constant"]
+        # strict: vo, entity, error, event, constant = pure data, no logic
+        # relaxed: util, helper = boleh punya logic, boleh dipakai layer manapun
+        - strict: ["vo", "entity", "error", "event", "constant", "util", "helper"] 
     contract:
       check_orphan: true
       suffix:
@@ -258,7 +260,7 @@ architecture:
 
         - scope: "surfaces(command|controller|page|)"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy"]
+          mandatory: null
           forbidden:
             [
               "agent",
@@ -285,7 +287,7 @@ architecture:
 
         - scope: "surfaces(component|view|layout)"
           allowed: ["taxonomy"]
-          mandatory: ["taxonomy"]
+          mandatory: null
           forbidden:
             [
               "agent",

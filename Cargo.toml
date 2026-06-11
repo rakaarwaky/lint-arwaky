@@ -10,19 +10,19 @@ readme = "README.md"
 
 [lib]
 name = "lint_arwaky"
-path = "src-rust/lib.rs"
+path = "crates/lib.rs"
 
 [[bin]]
 name = "lint-arwaky-cli"
-path = "src-rust/cli_main_entry.rs"
+path = "crates/cli_main_entry.rs"
 
 [[bin]]
 name = "lint-arwaky-mcp"
-path = "src-rust/mcp_main_entry.rs"
+path = "crates/mcp_main_entry.rs"
 
 [[bin]]
 name = "lint-arwaky-tui"
-path = "src-rust/tui_main_entry.rs"
+path = "crates/tui_main_entry.rs"
 
 [features]
 default = ["check_surfaces"]

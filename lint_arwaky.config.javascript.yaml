@@ -36,7 +36,7 @@ architecture:
         - strict: ["entry","container"]
     taxonomy:
       suffix:
-        - strict: ["vo", "entity", "error", "event", "constant"]
+        - strict: ["vo", "entity", "error", "event", "constant", "util", "helper"]
     contract:
       suffix:
         - strict: ["port", "protocol", "aggregate"]
