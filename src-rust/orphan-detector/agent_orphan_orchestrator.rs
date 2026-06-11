@@ -80,19 +80,11 @@ impl OrphanGraphResolver {
                         let _mod_name = cap[2].to_string();
                         // Resolve: lib.rs has #[path = "layer-rules/mod.rs"] pub mod layer_rules
                         // → find files in layer-rules/ directory
-                        let base_dir = if f.ends_with("lib.rs") || f.ends_with("main.rs") {
-                            std::path::Path::new(f)
-                                .parent()
-                                .unwrap_or(std::path::Path::new("."))
-                                .to_string_lossy()
-                                .to_string()
-                        } else {
-                            std::path::Path::new(f)
-                                .parent()
-                                .unwrap_or(std::path::Path::new("."))
-                                .to_string_lossy()
-                                .to_string()
-                        };
+                        let base_dir = std::path::Path::new(f)
+                            .parent()
+                            .unwrap_or(std::path::Path::new("."))
+                            .to_string_lossy()
+                            .to_string();
                         let resolved_dir = format!(
                             "{}/{}",
                             base_dir,
@@ -138,14 +130,14 @@ impl OrphanGraphResolver {
                         let full_import = cap[1].to_string();
 
                         // Handle crate:: and lint_arwaky:: imports (lint_arwaky = crate in main.rs)
-                        let normalized = if full_import.starts_with("lint_arwaky::") {
-                            format!("crate::{}", &full_import["lint_arwaky::".len()..])
-                        } else {
-                            full_import.clone()
-                        };
+                        let normalized =
+                            if let Some(stripped) = full_import.strip_prefix("lint_arwaky::") {
+                                format!("crate::{}", stripped)
+                            } else {
+                                full_import.clone()
+                            };
                         let full_import = &normalized;
-                        if full_import.starts_with("crate::") {
-                            let path_part = &full_import["crate::".len()..];
+                        if let Some(path_part) = full_import.strip_prefix("crate::") {
                             // Extract module segments: layer_rules::capabilities_naming_checker::ArchNamingChecker
                             // → try to find file matching layer_rules/capabilities_naming_checker
                             let segments: Vec<&str> = path_part.split("::").collect();
@@ -171,9 +163,8 @@ impl OrphanGraphResolver {
                         }
 
                         // Handle super:: imports
-                        if full_import.starts_with("super::") {
+                        if let Some(path_part) = full_import.strip_prefix("super::") {
                             // Resolve relative to parent module
-                            let path_part = &full_import["super::".len()..];
                             let segments: Vec<&str> = path_part.split("::").collect();
                             if !segments.is_empty() {
                                 let module_name = segments[0];

@@ -3,7 +3,7 @@
 import { IDeadProtocol } from "./dead_protocol_aggregate";
 
 export class ForbiddenSourceAggregate implements IDeadProtocol {
-    aggregate(): string {
-        return 'forbidden';
-    }
+  aggregate(): string {
+    return "forbidden";
+  }
 }

@@ -5,7 +5,7 @@ class EmptyProtocol {}
 class AnotherEmpty extends EmptyProtocol {}
 
 class RealClass {
-    doSomething(): boolean {
-        return true;
-    }
+  doSomething(): boolean {
+    return true;
+  }
 }

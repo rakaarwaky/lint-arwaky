@@ -4,13 +4,13 @@
 
 ## Why Contribute
 
-| Aspect | Benefit |
-| --- | --- |
-| **Real-world impact** | Your code powers the same rule engine that audits this project |
-| **Skill development** | Practice Rust, async/tokio, MCP, and 6-layer architecture |
-| **Open-source experience** | Build portfolio with a self-auditing codebase |
-| **Community** | Join a project where every PR is checked by the rules it adds |
-| **Learning opportunity** | Study a codebase that passes its own architecture linter |
+| Aspect                     | Benefit                                                        |
+| -------------------------- | -------------------------------------------------------------- |
+| **Real-world impact**      | Your code powers the same rule engine that audits this project |
+| **Skill development**      | Practice Rust, async/tokio, MCP, and 6-layer architecture      |
+| **Open-source experience** | Build portfolio with a self-auditing codebase                  |
+| **Community**              | Join a project where every PR is checked by the rules it adds  |
+| **Learning opportunity**   | Study a codebase that passes its own architecture linter       |
 
 ---
 
@@ -112,13 +112,13 @@ The Surface → Agent edge is indirect: surfaces hold `Arc<dyn ServiceContainerA
 
 To prevent architectural bypasses, every logic file **must** define a struct that implements the appropriate contract (AES027):
 
-| Layer | Allowed Suffixes | Trait / Example File |
-| --- | --- | --- |
-| **Agent** | `_container`, `_orchestrator`, `_lifecycle` | `analysis_execution_orchestrator.rs` |
-| **Capabilities** | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions` | `architecture_compliance_analyzer.rs` |
-| **Infrastructure** | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_store`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `python_ruff_adapter.rs` |
-| **Surfaces** | `_command`, `_handler`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_provider` | `cli_check_command.rs` |
-| **Taxonomy** | `_vo`, `_entity`, `_event`, `_error`, `_constant` | `lint_score_vo.rs`, `lint_score_constant.rs` |
+| Layer              | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Trait / Example File                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| **Agent**          | `_container`, `_orchestrator`, `_lifecycle`                                                                                                                                                                                                                                                                                                                                                                                                                                     | `analysis_execution_orchestrator.rs`         |
+| **Capabilities**   | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions`                                                                                                                        | `architecture_compliance_analyzer.rs`        |
+| **Infrastructure** | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_store`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `python_ruff_adapter.rs`                     |
+| **Surfaces**       | `_command`, `_handler`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_provider`                                                                                                                                                                                                                                                                                                                                           | `cli_check_command.rs`                       |
+| **Taxonomy**       | `_vo`, `_entity`, `_event`, `_error`, `_constant`                                                                                                                                                                                                                                                                                                                                                                                                                               | `lint_score_vo.rs`, `lint_score_constant.rs` |
 
 **AES0301 (constant purity)**: A `_constant` file may contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, `impl`, `mod`, or `pub use` in such a file triggers AES0301.
 
@@ -207,15 +207,15 @@ cargo test --lib
 
 CLI surface modules live in `src-rust/surfaces/` and follow the `cli_<group>_command.rs` pattern:
 
-| Module | Purpose |
-| --- | --- |
-| `cli_core_command.rs` | `check`, `scan`, `fix`, `report`, `ci`, `version`, `adapters`, `config` |
-| `cli_analysis_command.rs` | `complexity`, `duplicates`, `trends`, `dependencies` |
-| `cli_dev_command.rs` | `diff`, `suggest`, `import`, `export` |
-| `cli_setup_command.rs` | `setup init/doctor/mcp-config/hermes` |
-| `cli_watch_command.rs` | `watch` |
-| `cli_maintenance_command.rs` | `install-hook`, `uninstall-hook`, `clean`, `update` |
-| `core_git_command.rs` | `git-diff`, `multi-project` |
+| Module                       | Purpose                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------- |
+| `cli_core_command.rs`        | `check`, `scan`, `fix`, `report`, `ci`, `version`, `adapters`, `config` |
+| `cli_analysis_command.rs`    | `complexity`, `duplicates`, `trends`, `dependencies`                    |
+| `cli_dev_command.rs`         | `diff`, `suggest`, `import`, `export`                                   |
+| `cli_setup_command.rs`       | `setup init/doctor/mcp-config/hermes`                                   |
+| `cli_watch_command.rs`       | `watch`                                                                 |
+| `cli_maintenance_command.rs` | `install-hook`, `uninstall-hook`, `clean`, `update`                     |
+| `core_git_command.rs`        | `git-diff`, `multi-project`                                             |
 
 ### 2. Add the subcommand
 
@@ -377,15 +377,15 @@ cargo clippy --all-targets -- -D warnings
 
 The project applies a **layer-granular** primitive enforcement strategy:
 
-| Layer | `no_primitives` | Policy |
-| --- | --- | --- |
-| `contract` | `true` | All port/protocol/aggregate signatures must use taxonomy Value Objects |
-| `taxonomy(entity\|error\|event)` | `true` | All entity/error/event attributes must use Value Objects |
-| `taxonomy(vo)` | `false` | VO internals may use primitives as underlying storage |
-| `taxonomy(constant)` | `false` | Constants are primitives by definition; must contain ONLY constants (AES0301) |
-| `infrastructure` | `false` | Adapters may use primitive types as supporting/local types |
-| `capabilities` | `false` | Capability implementations may use primitive types internally |
-| `surfaces` | `false` | Surface/CLI handlers may use primitive types for I/O parsing |
+| Layer                            | `no_primitives` | Policy                                                                        |
+| -------------------------------- | --------------- | ----------------------------------------------------------------------------- |
+| `contract`                       | `true`          | All port/protocol/aggregate signatures must use taxonomy Value Objects        |
+| `taxonomy(entity\|error\|event)` | `true`          | All entity/error/event attributes must use Value Objects                      |
+| `taxonomy(vo)`                   | `false`         | VO internals may use primitives as underlying storage                         |
+| `taxonomy(constant)`             | `false`         | Constants are primitives by definition; must contain ONLY constants (AES0301) |
+| `infrastructure`                 | `false`         | Adapters may use primitive types as supporting/local types                    |
+| `capabilities`                   | `false`         | Capability implementations may use primitive types internally                 |
+| `surfaces`                       | `false`         | Surface/CLI handlers may use primitive types for I/O parsing                  |
 
 **Rationale**: Strict Value Objects in implementation/adapter layers create unnecessary boxing overhead and conflict with third-party APIs (`clap`, `tokio`, `mcp-sdk-rs`). Domain contracts and taxonomy definitions remain strictly typed to prevent boundary leakage.
 
@@ -404,18 +404,23 @@ The project applies a **layer-granular** primitive enforcement strategy:
 
 ```markdown
 ## What
+
 Brief description of what this PR does.
 
 ## Why
+
 Why is this change needed?
 
 ## How
+
 How does it work? Any design decisions?
 
 ## Testing
+
 How was it tested? What test cases were added?
 
 ## Checklist
+
 - [ ] `cargo test --workspace` passes
 - [ ] `cargo run --bin lint-arwaky-cli -- check .` reports 0 CRITICAL findings
 - [ ] `cargo fmt --all` clean

@@ -1,6 +1,7 @@
 ---
 version: 1.11.0
 ---
+
 # Lint Arwaky Skill
 
 > **GUIDE FOR AI AGENTS.**
@@ -77,6 +78,8 @@ Check linter adapter liveness and system state. Reports which of the 9 adapters 
 
 - `lint-arwaky-cli setup init`: Create a default `lint_arwaky.config.yaml`.
 - `lint-arwaky-cli setup doctor`: Diagnose environment health and `cargo` toolchain.
+- `lint-arwaky-cli setup install`: Install all linter adapter dependencies (ruff, mypy, bandit, eslint, prettier, tsc).
+- `lint-arwaky-cli setup install --sudo`: Same as above but uses `sudo npm install -g` for JS tools (will prompt for password).
 - `lint-arwaky-cli setup mcp-config --client <claude|vscode|hermes|all>`: Print MCP configuration.
 - `lint-arwaky-cli setup hermes [--remove]`: Add or remove the `[mcp.lint-arwaky]` section in Hermes.
 - `lint-arwaky-cli adapters`: List active linter adapters.

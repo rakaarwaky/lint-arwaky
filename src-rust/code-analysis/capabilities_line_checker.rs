@@ -59,7 +59,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 0,
                 "AES021",
                 Severity::HIGH,
-                &format!(
+                format!(
                     "{} (min: {}).",
                     AesViolation::FileTooShort { reason: None },
                     def.min_lines.value
@@ -73,7 +73,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 0,
                 "AES020",
                 Severity::HIGH,
-                &format!(
+                format!(
                     "{} (max: {}).",
                     AesViolation::FileTooLarge { reason: None },
                     def.max_lines.value

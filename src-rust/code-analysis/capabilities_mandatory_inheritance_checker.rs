@@ -174,7 +174,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                             0,
                             "AES014",
                             Severity::HIGH,
-                            &aes014_mandatory_inheritance(t),
+                            aes014_mandatory_inheritance(t),
                         ));
                     }
                 }
@@ -206,7 +206,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                             idx + 1,
                             "AES014",
                             Severity::HIGH,
-                            &aes014_mandatory_inheritance(t),
+                            aes014_mandatory_inheritance(t),
                         ));
                     }
                 }
@@ -220,7 +220,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                                 idx + 1,
                                 "AES014",
                                 Severity::HIGH,
-                                &aes014_mandatory_inheritance(t),
+                                aes014_mandatory_inheritance(t),
                             ));
                         }
                     }
@@ -286,7 +286,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                 0,
                 "AES014",
                 Severity::HIGH,
-                &aes014_bidirectional(&trait_name, suffix, target_prefix),
+                aes014_bidirectional(&trait_name, suffix, target_prefix),
             ));
         }
     }

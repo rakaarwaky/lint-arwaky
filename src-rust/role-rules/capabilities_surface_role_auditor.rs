@@ -560,6 +560,34 @@ fn is_init(f: &FilePath) -> bool {
         || path_str.ends_with("index.js")
 }
 
+impl ISurfaceRoleChecker for SurfaceRoleChecker {
+    fn check_smart_surface(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_utility_surface(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_passive_surface(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_fn_count_limit(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_fn_count_limit(source, violations);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{is_in_surfaces, is_init, FilePath};
@@ -588,33 +616,5 @@ mod tests {
         let f = FilePath::new("src/surfaces/handler.py")
             .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
         assert!(!is_init(&f));
-    }
-}
-
-impl ISurfaceRoleChecker for SurfaceRoleChecker {
-    fn check_smart_surface(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_utility_surface(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_passive_surface(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_fn_count_limit(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_fn_count_limit(source, violations);
     }
 }

@@ -7,6 +7,6 @@ const bad: any = "violation";
 const another: any = 123;
 
 function checkSomething(): string {
-    // eslint-disable
-    return bad;
+  // eslint-disable
+  return bad;
 }

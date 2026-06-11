@@ -28,14 +28,14 @@ cargo clippy --all-targets -- -D warnings
 
 The codebase uses **6 architectural layers** as file prefixes, organized into **26 feature folders** (vertical slicing):
 
-| Layer (prefix) | Allowed suffixes |
-| -------------- | ---------------- |
-| `taxonomy_`    | `_vo`, `_entity`, `_event`, `_error`, `_constant` |
-| `contract_`    | `_port`, `_protocol`, `_aggregate` |
-| `capabilities_` | `_checker`, `_analyzer`, `_processor`, etc. |
-| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc. |
-| `agent_`       | `_container`, `_orchestrator`, `_lifecycle` |
-| `surface_`     | `_command`, `_handler`, `_controller` |
+| Layer (prefix)    | Allowed suffixes                                  |
+| ----------------- | ------------------------------------------------- |
+| `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant` |
+| `contract_`       | `_port`, `_protocol`, `_aggregate`                |
+| `capabilities_`   | `_checker`, `_analyzer`, `_processor`, etc.       |
+| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.         |
+| `agent_`          | `_container`, `_orchestrator`, `_lifecycle`       |
+| `surface_`        | `_command`, `_handler`, `_controller`             |
 
 ### Feature folders
 
@@ -99,14 +99,14 @@ Graph-It-Live is integrated via MCP (`graph-it serve`) untuk visualisasi dan ana
 
 ### Tool MCP yang tersedia
 
-| Tool | Fungsi | Contoh Use Case |
-|------|--------|-----------------|
-| `path-in <file>` | Cari semua file yang import file tertentu | Cek siapa saja yang import suatu contract port |
-| `trace <sym>` | Trace execution flow: `path/file.rs#FunctionName` | Lacak alur dari surface sampai infrastructure |
-| `explain <file>` | Analisis intra-file call hierarchy | Pahami struktur internal suatu file |
-| `path <file>` | Crawl dependency graph dari entry file | Graph seluruh project dari entry point |
-| `cycles <file>` | Deteksi circular dependencies | Pastikan tidak ada cycle antar layer |
-| `scan` | Re-index workspace setelah perubahan | Update index setelah pull/merge |
+| Tool             | Fungsi                                            | Contoh Use Case                                |
+| ---------------- | ------------------------------------------------- | ---------------------------------------------- |
+| `path-in <file>` | Cari semua file yang import file tertentu         | Cek siapa saja yang import suatu contract port |
+| `trace <sym>`    | Trace execution flow: `path/file.rs#FunctionName` | Lacak alur dari surface sampai infrastructure  |
+| `explain <file>` | Analisis intra-file call hierarchy                | Pahami struktur internal suatu file            |
+| `path <file>`    | Crawl dependency graph dari entry file            | Graph seluruh project dari entry point         |
+| `cycles <file>`  | Deteksi circular dependencies                     | Pastikan tidak ada cycle antar layer           |
+| `scan`           | Re-index workspace setelah perubahan              | Update index setelah pull/merge                |
 
 ### Production Readiness Checklist (pakai Graph-It-Live)
 
@@ -152,57 +152,61 @@ cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 
 ### Contoh Resolusi Masalah via Graph-It-Live
 
-| Problem | Graph-It-Live Command | What to check |
-|---------|----------------------|---------------|
-| Surface import violation | `path-in surfaces/...` | Pastikan surface hanya import taxonomy + contract_aggregate_ |
-| Missing inheritance | `trace capabilities/...#IAnalyzer` | Lacak siapa yang implement IAnalyzer protocol |
-| Dead code | `path-in suspicious_file.rs` | Jika 0 incoming references, file tidak dipakai |
-| Circular dependency | `cycles <file>` | Identifikasi cycle, extract shared logic ke lower layer |
-| Layer boundary leak | `path-in infrastructure/...` | Pastikan hanya di-import oleh agent + container |
+| Problem                  | Graph-It-Live Command              | What to check                                                |
+| ------------------------ | ---------------------------------- | ------------------------------------------------------------ |
+| Surface import violation | `path-in surfaces/...`             | Pastikan surface hanya import taxonomy + contract*aggregate* |
+| Missing inheritance      | `trace capabilities/...#IAnalyzer` | Lacak siapa yang implement IAnalyzer protocol                |
+| Dead code                | `path-in suspicious_file.rs`       | Jika 0 incoming references, file tidak dipakai               |
+| Circular dependency      | `cycles <file>`                    | Identifikasi cycle, extract shared logic ke lower layer      |
+| Layer boundary leak      | `path-in infrastructure/...`       | Pastikan hanya di-import oleh agent + container              |
 
 ## Project Files & Directories
 
 ### Configuration & Rules
-| File | Purpose |
-|------|--------|
-| `Cargo.toml` | Rust project manifest — dependencies, bin targets |
-| `lint_arwaky.config.rust.yaml` | AES rules config for Rust |
-| `lint_arwaky.config.python.yaml` | AES rules config for Python |
-| `lint_arwaky.config.javascript.yaml` | AES rules config for JavaScript/TypeScript |
+
+| File                                 | Purpose                                           |
+| ------------------------------------ | ------------------------------------------------- |
+| `Cargo.toml`                         | Rust project manifest — dependencies, bin targets |
+| `lint_arwaky.config.rust.yaml`       | AES rules config for Rust                         |
+| `lint_arwaky.config.python.yaml`     | AES rules config for Python                       |
+| `lint_arwaky.config.javascript.yaml` | AES rules config for JavaScript/TypeScript        |
 
 ### Documentation
-| File | Purpose |
-|------|--------|
-| `RULES_AES.md` | Complete 27 AES rules catalog (v2.0) |
-| `RULES_RUFF.md` | Python Ruff rule mapping |
-| `RULES_MYPY.md` | Python MyPy rule mapping |
-| `RULES_BANDIT.md` | Python Bandit rule mapping |
-| `RULES_RADON.md` | Python Radon complexity rules |
+
+| File              | Purpose                                  |
+| ----------------- | ---------------------------------------- |
+| `RULES_AES.md`    | Complete 27 AES rules catalog (v2.0)     |
+| `RULES_RUFF.md`   | Python Ruff rule mapping                 |
+| `RULES_MYPY.md`   | Python MyPy rule mapping                 |
+| `RULES_BANDIT.md` | Python Bandit rule mapping               |
+| `RULES_RADON.md`  | Python Radon complexity rules            |
 | `ARCHITECTURE.md` | AES architecture specification (6 layer) |
-| `PRD.md` | Product Requirements Document |
-| `CHANGELOG.md` | Release history |
-| `CONTRIBUTING.md` | Contribution guide |
-| `DEPLOY.md` | Deployment guide |
-| `SKILL.md` | MCP skill documentation for AI agents |
-| `TEST.md` | Test project pass/fail criteria |
-| `LICENSE` | MIT License |
+| `PRD.md`          | Product Requirements Document            |
+| `CHANGELOG.md`    | Release history                          |
+| `CONTRIBUTING.md` | Contribution guide                       |
+| `DEPLOY.md`       | Deployment guide                         |
+| `SKILL.md`        | MCP skill documentation for AI agents    |
+| `TEST.md`         | Test project pass/fail criteria          |
+| `LICENSE`         | MIT License                              |
 
 ### Scripts
-| File | Purpose |
-|------|--------|
-| `install.local.sh` | Local install script |
-| `install.remote.sh` | Remote/CI install script |
+
+| File                              | Purpose                                 |
+| --------------------------------- | --------------------------------------- |
+| `install.local.sh`                | Local install script                    |
+| `install.remote.sh`               | Remote/CI install script                |
 | `scripts/install_graphit_live.sh` | Build + install Graph-It-Live extension |
 
 ### Project Directories
-| Directory | Purpose |
-|-----------|--------|
-| `src-rust/` | Source code — 26 feature folders, 6 layers |
-| `test-project-rust/` | Test project with intentional violations (Rust) |
-| `test-project-python/` | Test project with intentional violations (Python) |
-| `test-project-javascript/` | Test project with intentional violations (JS/TS) |
-| `Graph-It-Live-arwaky/` | Graph-It-Live fork — dependency graph visualization |
-| `scripts/` | Build, install, and utility scripts |
+
+| Directory                  | Purpose                                             |
+| -------------------------- | --------------------------------------------------- |
+| `src-rust/`                | Source code — 26 feature folders, 6 layers          |
+| `test-project-rust/`       | Test project with intentional violations (Rust)     |
+| `test-project-python/`     | Test project with intentional violations (Python)   |
+| `test-project-javascript/` | Test project with intentional violations (JS/TS)    |
+| `Graph-It-Live-arwaky/`    | Graph-It-Live fork — dependency graph visualization |
+| `scripts/`                 | Build, install, and utility scripts                 |
 
 ## VCS: jj (Jujutsu) — always use instead of git
 
@@ -225,11 +229,13 @@ jj git fetch         # fetch from remote
 ## Branch management (CRITICAL — must follow)
 
 Allowed branch naming:
+
 - `main`
 - `develop`
 - `features/<name>` (plural `features/`, NOT `feature/`)
 
 When merging a PR to develop:
+
 - Use `gh pr merge <num> --squash` ONLY
 - **NEVER use `--delete-branch`** — feature branches must NOT be deleted after merge
 - Branches that were accidentally deleted must be restored immediately via:

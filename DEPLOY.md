@@ -6,12 +6,12 @@
 
 ## Prerequisites
 
-| Requirement | Minimum | Recommended |
-| --- | --- | --- |
-| Rust toolchain | 1.70 (edition 2021) | 1.78+ (stable) |
-| RAM | 256 MB | 1 GB+ (for large codebases) |
-| Disk | 50 MB (release binaries) | - |
-| OS | Linux, macOS, Windows (MSVC / GNU) | Linux x86_64 |
+| Requirement    | Minimum                            | Recommended                 |
+| -------------- | ---------------------------------- | --------------------------- |
+| Rust toolchain | 1.70 (edition 2021)                | 1.78+ (stable)              |
+| RAM            | 256 MB                             | 1 GB+ (for large codebases) |
+| Disk           | 50 MB (release binaries)           | -                           |
+| OS             | Linux, macOS, Windows (MSVC / GNU) | Linux x86_64                |
 
 No external services required. The MCP server speaks JSON-RPC 2.0 over stdin/stdout and has no network dependencies.
 

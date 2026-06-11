@@ -30,7 +30,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     i + 1,
                     "AES024",
                     Severity::MEDIUM,
-                    &aes024_dead_inheritance("unit struct"),
+                    aes024_dead_inheritance("unit struct"),
                 ));
                 i += 1;
                 continue;
@@ -50,7 +50,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                             i + 1,
                             "AES024",
                             Severity::MEDIUM,
-                            &aes024_dead_inheritance("impl block"),
+                            aes024_dead_inheritance("impl block"),
                         ));
                     } else {
                         let mut k = j;
@@ -67,7 +67,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                                 i + 1,
                                 "AES024",
                                 Severity::MEDIUM,
-                                &aes024_dead_inheritance("impl block (multi-line)"),
+                                aes024_dead_inheritance("impl block (multi-line)"),
                             ));
                         }
                     }
@@ -81,7 +81,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                         i + 1,
                         "AES024",
                         Severity::MEDIUM,
-                        &aes024_dead_inheritance("empty class (Python)"),
+                        aes024_dead_inheritance("empty class (Python)"),
                     ));
                 } else if t.ends_with(':') && i + 1 < lines.len() {
                     let next = lines[i + 1].trim();
@@ -91,7 +91,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                             i + 1,
                             "AES024",
                             Severity::MEDIUM,
-                            &aes024_dead_inheritance("empty class (Python)"),
+                            aes024_dead_inheritance("empty class (Python)"),
                         ));
                     }
                 }
@@ -103,7 +103,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     i + 1,
                     "AES024",
                     Severity::MEDIUM,
-                    &aes024_dead_inheritance("empty class (JS/TS)"),
+                    aes024_dead_inheritance("empty class (JS/TS)"),
                 ));
             }
             i += 1;

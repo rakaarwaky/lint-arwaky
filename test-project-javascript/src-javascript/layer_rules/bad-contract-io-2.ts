@@ -12,9 +12,9 @@ const anotherWrongType: boolean = 12345;
 debugger;
 
 export class BadHollowClass extends NonExistentService {
-    public execute(): any {
-        // eslint-disable
-        const x: any = violatingAnyVar;
-        return x;
-    }
+  public execute(): any {
+    // eslint-disable
+    const x: any = violatingAnyVar;
+    return x;
+  }
 }

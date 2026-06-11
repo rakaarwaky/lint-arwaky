@@ -69,7 +69,7 @@ impl AgentRoleChecker {
                 0,
                 "AES0305",
                 Severity::HIGH,
-                &format!(
+                format!(
                     "AES0305 AGENT_ROLE: Agent file exceeds {} lines.",
                     max_lines
                 ),
@@ -99,7 +99,7 @@ impl AgentRoleChecker {
                     i + 1,
                     "AES0305",
                     Severity::HIGH,
-                    &aes0305_any_type(t),
+                    aes0305_any_type(t),
                 ));
             }
         }
@@ -157,7 +157,9 @@ impl AgentRoleChecker {
                         line: line_vo,
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES0305"),
-                        message: LintMessage::new(AesViolation::StatelessExecution { reason: None }),
+                        message: LintMessage::new(AesViolation::StatelessExecution {
+                            reason: None,
+                        }),
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
@@ -216,7 +218,9 @@ impl AgentRoleChecker {
                         line: LineNumber::new(line_val),
                         column: ColumnNumber::new(0),
                         code: ErrorCode::raw("AES0305"),
-                        message: LintMessage::new(AesViolation::CoordinatesMultiple { reason: None }),
+                        message: LintMessage::new(AesViolation::CoordinatesMultiple {
+                            reason: None,
+                        }),
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::MEDIUM,
                         enclosing_scope: None,

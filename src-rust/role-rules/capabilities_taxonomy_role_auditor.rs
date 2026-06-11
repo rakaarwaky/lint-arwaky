@@ -132,7 +132,7 @@ impl TaxonomyRoleChecker {
                                 i + 1,
                                 "AES0301",
                                 Severity::HIGH,
-                                &aes0301_primitive_usage(p),
+                                aes0301_primitive_usage(p),
                             ));
                             break;
                         }
@@ -146,7 +146,7 @@ impl TaxonomyRoleChecker {
                         i + 1,
                         "AES0301",
                         Severity::HIGH,
-                        &aes0301_primitive_usage(p),
+                        aes0301_primitive_usage(p),
                     ));
                     break;
                 }

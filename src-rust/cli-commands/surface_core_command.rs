@@ -197,6 +197,12 @@ pub enum SetupCommands {
     Init,
     /// Diagnose environment
     Doctor,
+    /// Install all linter adapter dependencies (ruff, mypy, bandit, eslint, prettier, tsc)
+    Install {
+        /// Use sudo for npm global install (will prompt for password)
+        #[arg(long)]
+        sudo: bool,
+    },
     /// Print MCP server config for clients
     McpConfig {
         /// Client type (claude, hermes, vscode, all)

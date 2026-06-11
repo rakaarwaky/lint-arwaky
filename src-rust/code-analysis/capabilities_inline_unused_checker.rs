@@ -130,7 +130,7 @@ impl IInlineUnusedProtocol for InlineUnusedChecker {
                     i + 1,
                     "AES023",
                     Severity::MEDIUM,
-                    &aes023_unused_import(name),
+                    aes023_unused_import(name),
                 ));
             }
         }

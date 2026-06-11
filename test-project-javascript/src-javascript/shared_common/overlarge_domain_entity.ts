@@ -510,10 +510,10 @@
 // line 510 - padding content for AES004 file too large violation
 
 export class OverlargeDomainEntity {
-    id: number;
-    name: string;
-    constructor(id: number, name: string) {
-        this.id = id;
-        this.name = name;
-    }
+  id: number;
+  name: string;
+  constructor(id: number, name: string) {
+    this.id = id;
+    this.name = name;
+  }
 }

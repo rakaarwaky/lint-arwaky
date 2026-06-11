@@ -2,7 +2,7 @@
 import { CircularA } from "./capabilities_circular_a_analyzer";
 
 export class CircularB {
-    check(): string {
-        return new CircularA().analyze();
-    }
+  check(): string {
+    return new CircularA().analyze();
+  }
 }

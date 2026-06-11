@@ -39,11 +39,12 @@ impl SetupCommandsSurface {
 
         // 2. Check linters
         println!("\n[2/4] Checking linters...");
-        for name in &["ruff", "mypy", "eslint", "prettier"] {
+        for name in &["ruff", "mypy", "bandit", "eslint", "prettier", "tsc"] {
             if std::process::Command::new("which")
                 .arg(name)
                 .output()
-                .is_ok()
+                .map(|o| o.status.success())
+                .unwrap_or(false)
             {
                 println!("  {name}: found");
             } else {
@@ -382,6 +383,20 @@ source:
                 ruff_ver,
                 ruff_st
             );
+            let (mypy_st, mypy_ver) = check_tool("mypy", &["--version"], false);
+            println!(
+                "  {} mypy {}  ({})",
+                if mypy_st == "OK" { "✓" } else { "✗" },
+                mypy_ver,
+                mypy_st
+            );
+            let (bandit_st, bandit_ver) = check_tool("bandit", &["--version"], false);
+            println!(
+                "  {} bandit {}  ({})",
+                if bandit_st == "OK" { "✓" } else { "✗" },
+                bandit_ver,
+                bandit_st
+            );
 
             println!();
             println!("JavaScript Toolchain:");
@@ -403,6 +418,19 @@ source:
                     if es_st == "OK" { "✓" } else { "✗" },
                     es_ver,
                     es_st
+                );
+            }
+
+            let prettier_local = std::path::Path::new("node_modules/.bin/prettier");
+            if prettier_local.exists() {
+                println!("  ✓ prettier (local)");
+            } else {
+                let (pr_st, pr_ver) = check_tool("prettier", &["--version"], false);
+                println!(
+                    "  {} prettier {}  ({})",
+                    if pr_st == "OK" { "✓" } else { "✗" },
+                    pr_ver,
+                    pr_st
                 );
             }
 
@@ -435,6 +463,52 @@ source:
                 jj_ver,
                 jj_st
             );
+        }
+        SetupCommands::Install { sudo } => {
+            println!("Lint Arwaky — Install Adapter Dependencies");
+            println!("{}", "=".repeat(50));
+
+            // ── Python adapters ───────────────────────────────────────────
+            println!("\n[1/2] Installing Python adapters (ruff, mypy, bandit)...");
+            println!("  Running: pip install --user ruff mypy bandit");
+            let py_status = std::process::Command::new("pip")
+                .args(["install", "--user", "ruff", "mypy", "bandit"])
+                .status();
+            match py_status {
+                Ok(s) if s.success() => println!("  ✓ Python adapters installed"),
+                Ok(s) => println!("  ✗ pip exited with code: {}", s.code().unwrap_or(-1)),
+                Err(e) => println!("  ✗ Failed to run pip: {e}"),
+            }
+
+            // ── JavaScript adapters ───────────────────────────────────────
+            println!("\n[2/2] Installing JavaScript adapters (eslint, prettier, typescript)...");
+            let (npm_cmd, npm_args): (&str, Vec<&str>) = if sudo {
+                println!("  Running: sudo npm install -g eslint prettier typescript");
+                println!("  ⚠  sudo diperlukan — masukkan password jika diminta:");
+                (
+                    "sudo",
+                    vec!["npm", "install", "-g", "eslint", "prettier", "typescript"],
+                )
+            } else {
+                println!("  Running: npm install -g eslint prettier typescript");
+                println!("  Tip: jika gagal karena permission, jalankan dengan --sudo");
+                (
+                    "npm",
+                    vec!["install", "-g", "eslint", "prettier", "typescript"],
+                )
+            };
+            let js_status = std::process::Command::new(npm_cmd)
+                .args(&npm_args)
+                .status();
+            match js_status {
+                Ok(s) if s.success() => println!("  ✓ JavaScript adapters installed"),
+                Ok(s) => println!("  ✗ npm exited with code: {}", s.code().unwrap_or(-1)),
+                Err(e) => println!("  ✗ Failed to run npm: {e}"),
+            }
+
+            // ── Summary ───────────────────────────────────────────────────
+            println!("\n{}", "=".repeat(50));
+            println!("Done! Run `lint-arwaky-cli setup doctor` to verify.");
         }
         SetupCommands::McpConfig { client } => {
             let processor =

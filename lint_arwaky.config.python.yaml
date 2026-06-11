@@ -43,72 +43,201 @@ architecture:
     capabilities:
       suffix:
         - flexible:
-            ["analyzer", "checker", "processor", "evaluator", "resolver",
-             "validator", "formatter", "executor", "transformer",
-             "calculator", "builder", "compiler", "aggregator", "classifier",
-             "extractor", "reporter", "mapper", "filter", "collector",
-             "comparator", "scorer", "inspector", "reviewer", "assessor", "auditor", "actions"]
-        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
+            [
+              "analyzer",
+              "checker",
+              "processor",
+              "evaluator",
+              "resolver",
+              "validator",
+              "formatter",
+              "executor",
+              "transformer",
+              "calculator",
+              "builder",
+              "compiler",
+              "aggregator",
+              "classifier",
+              "extractor",
+              "reporter",
+              "mapper",
+              "filter",
+              "collector",
+              "comparator",
+              "scorer",
+              "inspector",
+              "reviewer",
+              "assessor",
+              "auditor",
+              "actions",
+            ]
+        - forbidden:
+            [
+              "vo",
+              "entity",
+              "error",
+              "event",
+              "port",
+              "protocol",
+              "aggregate",
+              "io",
+            ]
     infrastructure:
       suffix:
         - flexible:
-            ["adapter", "provider", "scanner", "client", "constants", "schemas",
-             "lifespan", "wrapper", "tracer", "tracker", "variants", "detector",
-             "patterns", "util", "system", "repository", "cache", "loader",
-             "writer", "reader", "driver", "connector", "gateway", "serializer",
-             "encoder", "decoder", "fetcher", "watcher", "indexer", "dispatcher",
-             "recorder", "proxy", "publisher", "subscriber", "listener", "poller", "streamer"]
-        - forbidden: ["vo", "entity", "error", "event", "port", "protocol", "aggregate", "io"]
+            [
+              "adapter",
+              "provider",
+              "scanner",
+              "client",
+              "constants",
+              "schemas",
+              "lifespan",
+              "wrapper",
+              "tracer",
+              "tracker",
+              "variants",
+              "detector",
+              "patterns",
+              "util",
+              "system",
+              "repository",
+              "cache",
+              "loader",
+              "writer",
+              "reader",
+              "driver",
+              "connector",
+              "gateway",
+              "serializer",
+              "encoder",
+              "decoder",
+              "fetcher",
+              "watcher",
+              "indexer",
+              "dispatcher",
+              "recorder",
+              "proxy",
+              "publisher",
+              "subscriber",
+              "listener",
+              "poller",
+              "streamer",
+            ]
+        - forbidden:
+            [
+              "vo",
+              "entity",
+              "error",
+              "event",
+              "port",
+              "protocol",
+              "aggregate",
+              "io",
+            ]
     surfaces:
       suffix:
         - strict:
-            ["command", "controller", "page", "view", "component",
-             "router", "layout", "hook", "store", "action", "screen"]
+            [
+              "command",
+              "controller",
+              "page",
+              "view",
+              "component",
+              "router",
+              "layout",
+              "hook",
+              "store",
+              "action",
+              "screen",
+            ]
     agent:
       suffix:
-        - strict:
-            ["container", "orchestrator", "lifecycle"]
+        - strict: ["container", "orchestrator", "lifecycle"]
 
   rules:
     AES001:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
           mandatory: null
-          forbidden: ["agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
 
         - scope: "taxonomy(entity,error,event)"
           allowed: ["taxonomy"]
           mandatory: ["taxonomy(vo|constant)"]
-          forbidden: ["agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
 
         - scope: "taxonomy(constant)"
           allowed: ["taxonomy"]
           mandatory: null
-          forbidden: ["agent", "infrastructure", "surfaces", "contract", "capabilities", "root"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
 
         - scope: "contract(port|protocol)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
-          forbidden: ["agent", "infrastructure", "surfaces", "capabilities", "contract(aggregate)", "root"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "capabilities",
+              "contract(aggregate)",
+              "root",
+            ]
 
         - scope: "contract(aggregate)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(port|protocol|aggregate)"]
-          forbidden: ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+          forbidden:
+            ["agent", "infrastructure", "surfaces", "capabilities", "root"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(protocol)"]
-          forbidden: ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          forbidden:
+            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(port)"]
-          forbidden: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          forbidden:
+            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
 
         - scope: "agent(container)"
           allowed: ["taxonomy", "contract", "infrastructure", "capabilities"]
@@ -118,50 +247,119 @@ architecture:
         - scope: "agent(orchestrator)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["surfaces", "agent(lifecycle)", "agent(container)", "infrastructure", "capabilities", "root"]
+          forbidden:
+            [
+              "surfaces",
+              "agent(lifecycle)",
+              "agent(container)",
+              "infrastructure",
+              "capabilities",
+              "root",
+            ]
 
         - scope: "agent(lifecycle)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["agent", "infrastructure", "capabilities", "surfaces", "root"]
+          forbidden:
+            ["agent", "infrastructure", "capabilities", "surfaces", "root"]
 
         - scope: "surfaces(command|controller|page|entry)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["agent", "infrastructure", "capabilities", "contract(port)", "contract(protocol)", "root"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "capabilities",
+              "contract(port)",
+              "contract(protocol)",
+              "root",
+            ]
 
         - scope: "surfaces(hook|store|action|screen|router)"
           allowed: ["taxonomy"]
           mandatory: null
-          forbidden: ["agent", "infrastructure", "capabilities", "contract(port)", "contract(protocol)", "surfaces(command|controller|page|entry)", "root"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "capabilities",
+              "contract(port)",
+              "contract(protocol)",
+              "surfaces(command|controller|page|entry)",
+              "root",
+            ]
 
         - scope: "surfaces(component|view|layout)"
           allowed: ["taxonomy"]
           mandatory: ["taxonomy"]
-          forbidden: ["agent", "contract", "infrastructure", "capabilities", "surfaces(command|controller|page|entry|hook|store|action|screen|router)", "root"]
+          forbidden:
+            [
+              "agent",
+              "contract",
+              "infrastructure",
+              "capabilities",
+              "surfaces(command|controller|page|entry|hook|store|action|screen|router)",
+              "root",
+            ]
 
     AES002:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
       exceptions: ["__init__.py", "__main__.py"]
 
     AES010:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces", "root"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
       exceptions: ["__init__.py", "__main__.py"]
 
     AES011:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces", "root"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
       exceptions: ["__init__.py", "__main__.py"]
 
     AES012:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
 
     AES0301:
       enabled: true
-      scope: ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)"]
+      scope:
+        ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)"]
 
     AES0302:
       enabled: true
@@ -183,40 +381,103 @@ architecture:
 
     AES0306:
       enabled: true
-      scope: ["surfaces(command|controller|page|entry)", "surfaces(hook|store|action|screen|router)", "surfaces(component|view|layout)"]
+      scope:
+        [
+          "surfaces(command|controller|page|entry)",
+          "surfaces(hook|store|action|screen|router)",
+          "surfaces(component|view|layout)",
+        ]
       max_functions: 15
       exceptions: ["__init__.py", "__main__.py"]
 
     AES020:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
       max_lines: 700
       exceptions: ["__init__.py", "__main__.py"]
 
     AES021:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
       min_lines: 5
       exceptions: ["__init__.py", "__main__.py"]
 
     AES022:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
-      patterns: ["# noqa", "# type: ignore", "# fmt: off", "# ruff: noqa", "# pylint: disable", "Any", "except:", "pass"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      patterns:
+        [
+          "# noqa",
+          "# type: ignore",
+          "# fmt: off",
+          "# ruff: noqa",
+          "# pylint: disable",
+          "Any",
+          "except:",
+          "pass",
+        ]
       exceptions: []
 
     AES023:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
 
     AES024:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
       exceptions: ["__init__.py", "__main__.py"]
 
     AES030:
       enabled: true
-      scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
       entry_points: ["main.py", "__init__.py", "__main__.py"]
 
     AES013:

@@ -129,7 +129,7 @@ impl ArchNamingChecker {
                 violations.push(Self::make_result(
                     file,
                     "AES011",
-                    &aes011_naming_convention(0),
+                    aes011_naming_convention(0),
                     Severity::HIGH,
                 ));
             }

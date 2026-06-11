@@ -2,8 +2,8 @@
 import { ClassB } from "./capabilities_circular_b_processor";
 
 export class ClassA {
-    b: ClassB;
-    constructor() {
-        this.b = new ClassB();
-    }
+  b: ClassB;
+  constructor() {
+    this.b = new ClassB();
+  }
 }
