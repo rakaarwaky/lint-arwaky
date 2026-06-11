@@ -232,7 +232,7 @@ impl fmt::Display for AesViolationJs {
                     .as_ref()
                     .map(|r| r.to_string())
                     .unwrap_or(default_why);
-                write!(f, "AES0302 CONTRACT_PRIMITIVE: Contract trait or method signature uses primitive types instead of taxonomy VO or constant.\n\
+                write!(f, "AES0302 CONTRACT_PRIMITIVE: Contract interface or method signature uses primitive types instead of taxonomy VO or constant.\n\
                     WHY? {}\n\
                     FIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.", why)
             }
@@ -241,12 +241,12 @@ impl fmt::Display for AesViolationJs {
                 struct_name,
                 reason,
             } => {
-                let default_why = "Capability classes/interfaces must implement their corresponding protocol traits to ensure clean interface boundaries.".to_string();
+                let default_why = "Capability classes/interfaces must implement their corresponding protocol interfaces to ensure clean interface boundaries.".to_string();
                 let why = reason
                     .as_ref()
                     .map(|r| r.to_string())
                     .unwrap_or(default_why);
-                write!(f, "AES0303 CAPABILITY_ROLE: Struct/class '{}' has no interface/protocol implementation.\n\
+                write!(f, "AES0303 CAPABILITY_ROLE: Class '{}' has no interface/protocol implementation.\n\
                     WHY? {}\n\
                     FIX: Implement the capability protocol interface for '{}'.", struct_name, why, struct_name)
             }
@@ -304,14 +304,14 @@ impl fmt::Display for AesViolationJs {
                     FIX: Move the initialization/conditional logic out of the constructor or container setup.", why)
             }
             Self::MustImplementContract { reason } => {
-                let default_why = "Agent containers must implement the 'ServiceContainerAggregate' trait to satisfy dependency injection protocols.".to_string();
+                let default_why = "Agent containers must implement the 'ServiceContainerAggregate' interface to satisfy dependency injection protocols.".to_string();
                 let why = reason
                     .as_ref()
                     .map(|r| r.to_string())
                     .unwrap_or(default_why);
                 write!(f, "AES0305 AGENT_ROLE: Class is missing required contract implementation.\n\
                     WHY? {}\n\
-                    FIX: Add the 'ServiceContainerAggregate' implementation for the container struct.", why)
+                    FIX: Add the 'ServiceContainerAggregate' implementation for the container class.", why)
             }
             Self::AnyType { reason } => {
                 let default_why = "Using 'any' type annotations bypasses type safety and violates agent-level domain-driven design.".to_string();

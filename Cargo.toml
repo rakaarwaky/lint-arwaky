@@ -1,6 +1,6 @@
 [package]
 name = "lint_arwaky"
-version = "1.10.4"
+version = "1.10.6"
 edition = "2021"
 
 [lib]
