@@ -1,13 +1,13 @@
 // PURPOSE: AdapterError, ScanError, ValidationError — structured error types for adapter operations
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_common_error::Cause;
-use crate::common::taxonomy_common_error::Constraint;
-use crate::common::taxonomy_common_error::ErrorMessage;
-use crate::common::taxonomy_common_error::ExitCode;
-use crate::common::taxonomy_common_error::FieldName;
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_source_vo::ContentString;
-use crate::common::taxonomy_path_vo::FilePath;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
+use crate::shared_common::taxonomy_common_error::Cause;
+use crate::shared_common::taxonomy_common_error::Constraint;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_error::ExitCode;
+use crate::shared_common::taxonomy_common_error::FieldName;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::config_system::taxonomy_source_vo::ContentString;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]

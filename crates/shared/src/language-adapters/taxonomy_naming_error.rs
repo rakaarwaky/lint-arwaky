@@ -1,7 +1,7 @@
 // PURPOSE: NamingError — structured error type for naming convention violations
-use crate::common::taxonomy_common_error::Cause;
-use crate::common::taxonomy_common_error::ErrorMessage;
-use crate::common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_common_error::Cause;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]

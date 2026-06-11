@@ -1,5 +1,4 @@
 // language-adapters — taxonomy and contract types
-pub mod mod;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_naming_error;
 pub mod taxonomy_naming_list_vo;

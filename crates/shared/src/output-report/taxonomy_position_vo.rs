@@ -1,8 +1,8 @@
 // PURPOSE: Position — value object for source code position tracking (file, line, column)
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_common_vo::ColumnNumber;
-use crate::common::taxonomy_common_vo::LineNumber;
+use crate::shared_common::taxonomy_common_vo::ColumnNumber;
+use crate::shared_common::taxonomy_common_vo::LineNumber;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Position {

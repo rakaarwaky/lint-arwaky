@@ -1,7 +1,7 @@
 // PURPOSE: Score, FileFormat, ScoreMap — value objects for compliance scoring and file format enums
 use serde::Serialize;
 
-use crate::common::taxonomy_result_vo::LintResult;
+use crate::output_report::taxonomy_result_vo::LintResult;
 
 pub fn compute_score(results: &[LintResult]) -> f64 {
     let penalty: f64 = results.iter().map(|r| r.severity.score_impact()).sum();

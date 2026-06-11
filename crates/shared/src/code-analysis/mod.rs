@@ -1,5 +1,19 @@
 // code-analysis — taxonomy and contract types
-pub mod mod;
+pub mod contract_adapter_port;
+pub mod contract_analysis_protocol;
+pub mod contract_bypass_checker_protocol;
+pub mod contract_class_protocol;
+pub mod contract_code_metric_analyzer_protocol;
+pub mod contract_cycle_protocol;
+pub mod contract_dead_inheritance_protocol;
+pub mod contract_fix_runner_aggregate;
+pub mod contract_inline_unused_protocol;
+pub mod contract_layer_detection_aggregate;
+pub mod contract_line_protocol;
+pub mod contract_lint_protocol;
+pub mod contract_mandatory_inheritance_protocol;
+pub mod contract_target_resolver_protocol;
+pub mod contract_unused_protocol;
 pub mod taxonomy_analysis_vo;
 pub mod taxonomy_governance_entity;
 pub mod taxonomy_import_source_vo;

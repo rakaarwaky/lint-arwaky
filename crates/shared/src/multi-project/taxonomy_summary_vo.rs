@@ -1,12 +1,12 @@
 // PURPOSE: ProjectSummaryVO — value object for multi-project governance summary data
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_common_error::ErrorMessage;
-use crate::common::taxonomy_common_vo::Count;
-use crate::common::taxonomy_common_vo::PatternList;
-use crate::common::taxonomy_common_vo::Score;
-use crate::common::taxonomy_message_vo::ComplianceStatus;
-use crate::common::taxonomy_path_vo::FilePath;
+use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::shared_common::taxonomy_common_vo::Count;
+use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::shared_common::taxonomy_common_vo::Score;
+use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AggregatedResults {
