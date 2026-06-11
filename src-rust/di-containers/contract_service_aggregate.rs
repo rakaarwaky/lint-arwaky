@@ -40,26 +40,17 @@ use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use std::sync::Arc;
 
 pub trait ServiceContainerAggregate: Send + Sync {
-    fn file_system(&self) -> Arc<dyn IFileSystemPort> {
-        panic!("file_system not implemented in this container")
+    fn file_system(&self) -> Option<Arc<dyn IFileSystemPort>> {
+        None
     }
-    fn command_executor(&self) -> Arc<dyn ICommandExecutorPort> {
-        panic!("command_executor not implemented in this container")
+    fn command_executor(&self) -> Option<Arc<dyn ICommandExecutorPort>> {
+        None
     }
-    fn path_normalization(&self) -> Arc<dyn IPathNormalizationPort> {
-        panic!("path_normalization not implemented in this container")
+    fn path_normalization(&self) -> Option<Arc<dyn IPathNormalizationPort>> {
+        None
     }
-    fn source_parser(&self) -> Arc<dyn ISourceParserPort> {
-        panic!("source_parser not implemented in this container")
-    }
-    fn command_executor(&self) -> Arc<dyn ICommandExecutorPort> {
-        panic!("command_executor not implemented in this container")
-    }
-    fn path_normalization(&self) -> Arc<dyn IPathNormalizationPort> {
-        panic!("path_normalization not implemented in this container")
-    }
-    fn source_parser(&self) -> Arc<dyn ISourceParserPort> {
-        panic!("source_parser not implemented in this container")
+    fn source_parser(&self) -> Option<Arc<dyn ISourceParserPort>> {
+        None
     }
     fn linter_adapter(&self, _name: &AdapterName) -> Option<Arc<dyn ILinterAdapterPort>> {
         None
@@ -83,85 +74,91 @@ pub trait ServiceContainerAggregate: Send + Sync {
         None
     }
     // AES030 orphan detection getters
-    fn get_maintenance_aggregate(&self) -> Arc<dyn MaintenanceCommandsAggregate> {
-        panic!("get_maintenance_aggregate not implemented in this container")
+    fn get_maintenance_aggregate(&self) -> Option<Arc<dyn MaintenanceCommandsAggregate>> {
+        None
     }
-    fn get_analysis_protocol(&self) -> Arc<dyn IAnalysisProtocol> {
-        panic!("get_analysis_protocol not implemented in this container")
+    fn get_analysis_protocol(&self) -> Option<Arc<dyn IAnalysisProtocol>> {
+        None
     }
-    fn get_code_metric_protocol(&self) -> Arc<dyn ICodeMetricAnalyzerProtocol> {
-        panic!("get_code_metric_protocol not implemented in this container")
+    fn get_code_metric_protocol(&self) -> Option<Arc<dyn ICodeMetricAnalyzerProtocol>> {
+        None
     }
-    fn get_target_resolver_protocol(&self) -> Arc<dyn ITargetResolverProtocol> {
-        panic!("get_target_resolver_protocol not implemented in this container")
+    fn get_target_resolver_protocol(&self) -> Option<Arc<dyn ITargetResolverProtocol>> {
+        None
     }
-    fn get_unused_protocol(&self) -> Arc<dyn IUnusedProtocol> {
-        panic!("get_unused_protocol not implemented in this container")
+    fn get_unused_protocol(&self) -> Option<Arc<dyn IUnusedProtocol>> {
+        None
     }
-    fn get_config_discovery_port(&self) -> Arc<dyn IConfigDiscoveryPort> {
-        panic!("get_config_discovery_port not implemented in this container")
+    fn get_config_discovery_port(&self) -> Option<Arc<dyn IConfigDiscoveryPort>> {
+        None
     }
-    fn get_config_orchestration_aggregate(&self) -> Arc<dyn IConfigOrchestrationAggregate> {
-        panic!("get_config_orchestration_aggregate not implemented in this container")
+    fn get_config_orchestration_aggregate(
+        &self,
+    ) -> Option<Arc<dyn IConfigOrchestrationAggregate>> {
+        None
     }
-    fn get_config_parser_port(&self) -> Arc<dyn IConfigParserPort> {
-        panic!("get_config_parser_port not implemented in this container")
+    fn get_config_parser_port(&self) -> Option<Arc<dyn IConfigParserPort>> {
+        None
     }
-    fn get_config_validator_protocol(&self) -> Arc<dyn IConfigValidatorProtocol> {
-        panic!("get_config_validator_protocol not implemented in this container")
+    fn get_config_validator_protocol(&self) -> Option<Arc<dyn IConfigValidatorProtocol>> {
+        None
     }
-    fn get_watch_provider_port(&self) -> Arc<dyn IWatchProviderPort> {
-        panic!("get_watch_provider_port not implemented in this container")
+    fn get_watch_provider_port(&self) -> Option<Arc<dyn IWatchProviderPort>> {
+        None
     }
-    fn get_git_commands_aggregate(&self) -> Arc<dyn GitCommandsAggregate> {
-        panic!("get_git_commands_aggregate not implemented in this container")
+    fn get_git_commands_aggregate(&self) -> Option<Arc<dyn GitCommandsAggregate>> {
+        None
     }
-    fn get_git_orchestrator_aggregate(&self) -> Arc<dyn HookManagementOrchestratorAggregate> {
-        panic!("get_git_orchestrator_aggregate not implemented in this container")
+    fn get_git_orchestrator_aggregate(
+        &self,
+    ) -> Option<Arc<dyn HookManagementOrchestratorAggregate>> {
+        None
     }
-    fn get_import_parser_port(&self) -> Arc<dyn IImportParserPort> {
-        panic!("get_import_parser_port not implemented in this container")
+    fn get_import_parser_port(&self) -> Option<Arc<dyn IImportParserPort>> {
+        None
     }
-    fn get_javascript_flow_port(&self) -> Arc<dyn IJavascriptFlowPort> {
-        panic!("get_javascript_flow_port not implemented in this container")
+    fn get_javascript_flow_port(&self) -> Option<Arc<dyn IJavascriptFlowPort>> {
+        None
     }
-    fn get_naming_provider_port(&self) -> Arc<dyn INamingProviderPort> {
-        panic!("get_naming_provider_port not implemented in this container")
+    fn get_naming_provider_port(&self) -> Option<Arc<dyn INamingProviderPort>> {
+        None
     }
-    fn get_javascript_scope_port(&self) -> Arc<dyn IJavascriptScopePort> {
-        panic!("get_javascript_scope_port not implemented in this container")
+    fn get_javascript_scope_port(&self) -> Option<Arc<dyn IJavascriptScopePort>> {
+        None
     }
-    fn get_semantic_tracer_port(&self) -> Arc<dyn ISemanticTracerPort> {
-        panic!("get_semantic_tracer_port not implemented in this container")
+    fn get_semantic_tracer_port(&self) -> Option<Arc<dyn ISemanticTracerPort>> {
+        None
     }
-    fn get_naming_variant_port(&self) -> Arc<dyn INamingVariantPort> {
-        panic!("get_naming_variant_port not implemented in this container")
+    fn get_naming_variant_port(&self) -> Option<Arc<dyn INamingVariantPort>> {
+        None
     }
-    fn get_agent_lifecycle_aggregate(&self) -> Arc<dyn AgentLifecycleAggregate> {
-        panic!("get_agent_lifecycle_aggregate not implemented in this container")
+    fn get_agent_lifecycle_aggregate(&self) -> Option<Arc<dyn AgentLifecycleAggregate>> {
+        None
     }
-    fn get_mcp_server_port(&self) -> Arc<dyn IMcpServerPort> {
-        panic!("get_mcp_server_port not implemented in this container")
+    fn get_mcp_server_port(&self) -> Option<Arc<dyn IMcpServerPort>> {
+        None
     }
-    fn get_multi_project_aggregate(&self) -> Arc<dyn MultiProjectOrchestratorAggregate> {
-        panic!("get_multi_project_aggregate not implemented in this container")
+    fn get_multi_project_aggregate(&self) -> Option<Arc<dyn MultiProjectOrchestratorAggregate>> {
+        None
     }
-    fn get_pipeline_extended_aggregate(&self) -> Arc<dyn PipelineExtendedOrchestratorAggregate> {
-        panic!("get_pipeline_extended_aggregate not implemented in this container")
+    fn get_pipeline_extended_aggregate(
+        &self,
+    ) -> Option<Arc<dyn PipelineExtendedOrchestratorAggregate>> {
+        None
     }
-    fn get_pipeline_output_aggregate(&self) -> Arc<dyn PipelineOutputAggregate> {
-        panic!("get_pipeline_output_aggregate not implemented in this container")
+    fn get_pipeline_output_aggregate(&self) -> Option<Arc<dyn PipelineOutputAggregate>> {
+        None
     }
-    fn get_plugin_manager_port(&self) -> Arc<dyn IPluginManagerPort> {
-        panic!("get_plugin_manager_port not implemented in this container")
+    fn get_plugin_manager_port(&self) -> Option<Arc<dyn IPluginManagerPort>> {
+        None
     }
-    fn get_setup_management_aggregate(&self) -> Arc<dyn SetupManagementAggregate> {
-        panic!("get_setup_management_aggregate not implemented in this container")
+    fn get_setup_management_aggregate(&self) -> Option<Arc<dyn SetupManagementAggregate>> {
+        None
     }
-    fn get_setup_management_protocol(&self) -> Arc<dyn ISetupManagementProtocol> {
-        panic!("get_setup_management_protocol not implemented in this container")
+    fn get_setup_management_protocol(&self) -> Option<Arc<dyn ISetupManagementProtocol>> {
+        None
     }
-    fn get_scanner_provider_port(&self) -> Arc<dyn IScannerProviderPort> {
-        panic!("get_scanner_provider_port not implemented in this container")
+    fn get_scanner_provider_port(&self) -> Option<Arc<dyn IScannerProviderPort>> {
+        None
     }
 }

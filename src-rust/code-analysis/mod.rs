@@ -61,38 +61,34 @@ pub use capabilities_code_metric_analyzer::CodeMetricAnalyzer;
 
 use crate::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
+use once_cell::sync::Lazy;
+
+static RESOLVER: Lazy<ProjectTargetResolver> = Lazy::new(ProjectTargetResolver::new);
 
 pub fn resolve_target(path: Option<String>) -> String {
-    let resolver = ProjectTargetResolver::new();
-    resolver.resolve_target(path)
+    RESOLVER.resolve_target(path)
 }
 
 pub fn walk_rs_files(dir: &std::path::Path, cb: &mut dyn FnMut(std::path::PathBuf)) {
-    let resolver = ProjectTargetResolver::new();
-    resolver.walk_rs_files(dir, cb);
+    RESOLVER.walk_rs_files(dir, cb);
 }
 
 pub fn lint_path(path: &str) -> Vec<LintResult> {
-    let resolver = ProjectTargetResolver::new();
-    resolver.lint_path(path)
+    RESOLVER.lint_path(path)
 }
 
 pub fn compute_score(results: &[LintResult]) -> f64 {
-    let resolver = ProjectTargetResolver::new();
-    resolver.compute_score(results)
+    RESOLVER.compute_score(results)
 }
 
 pub fn count_loc(path: &str) -> usize {
-    let resolver = ProjectTargetResolver::new();
-    resolver.count_loc(path)
+    RESOLVER.count_loc(path)
 }
 
 pub fn has_critical(results: &[LintResult]) -> bool {
-    let resolver = ProjectTargetResolver::new();
-    resolver.has_critical(results)
+    RESOLVER.has_critical(results)
 }
 
 pub fn normalize_project_root(path: &str) -> String {
-    let resolver = ProjectTargetResolver::new();
-    resolver.normalize_project_root(path)
+    RESOLVER.normalize_project_root(path)
 }

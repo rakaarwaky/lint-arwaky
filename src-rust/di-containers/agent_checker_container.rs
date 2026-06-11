@@ -11,6 +11,7 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
 use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
+use crate::layer_rules::capabilities_import_intent_checker::ImportIntentChecker;
 use crate::layer_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use crate::layer_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::layer_rules::contract_cycle_protocol::ICycleAnalysisProtocol;
@@ -37,6 +38,7 @@ pub struct CheckerContainer {
     analyzer: LayerDetectionAnalyzer,
     import_forbidden_checker: ArchImportForbiddenChecker,
     import_mandatory_checker: ArchImportMandatoryChecker,
+    import_intent_checker: ImportIntentChecker,
     line_checker: ArchLineChecker,
     class_checker: ArchClassChecker,
     bypass_checker: BypassChecker,
@@ -84,7 +86,8 @@ impl CheckerContainer {
         Self {
             analyzer: LayerDetectionAnalyzer::new(config.clone(), fs, source_parser),
             import_forbidden_checker: ArchImportForbiddenChecker::new(parser.clone()),
-            import_mandatory_checker: ArchImportMandatoryChecker::new(parser),
+            import_mandatory_checker: ArchImportMandatoryChecker::new(parser.clone()),
+            import_intent_checker: ImportIntentChecker::new(parser.clone()),
             line_checker: ArchLineChecker::new(),
             class_checker: ArchClassChecker::new(),
             bypass_checker: BypassChecker::new(),
@@ -113,6 +116,10 @@ impl CheckerContainer {
 
     pub fn import_mandatory_checker(&self) -> &dyn IArchImportProtocol {
         &self.import_mandatory_checker
+    }
+
+    pub fn import_intent_checker(&self) -> &dyn IArchImportProtocol {
+        &self.import_intent_checker
     }
 
     pub fn import_forbidden_checker(&self) -> &dyn IArchImportProtocol {

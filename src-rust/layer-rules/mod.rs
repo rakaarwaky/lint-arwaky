@@ -10,6 +10,8 @@ pub mod capabilities_import_forbidden_checker;
 pub use capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 pub mod capabilities_import_mandatory_checker;
 pub use capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
+pub mod capabilities_import_intent_checker;
+pub use capabilities_import_intent_checker::ImportIntentChecker;
 pub mod contract_import_parser_port;
 pub use contract_import_parser_port::IImportParserPort;
 pub mod infrastructure_import_parser_adapter;

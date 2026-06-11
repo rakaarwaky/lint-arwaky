@@ -46,8 +46,7 @@ impl ITargetResolverProtocol for ProjectTargetResolver {
     }
 
     fn compute_score(&self, results: &[LintResult]) -> f64 {
-        let penalty: f64 = results.iter().map(|r| r.severity.score_impact()).sum();
-        (100.0 - penalty).max(0.0)
+        crate::output_report::taxonomy_score_vo::compute_score(results)
     }
 }
 

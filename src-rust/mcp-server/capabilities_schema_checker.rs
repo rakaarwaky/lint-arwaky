@@ -89,18 +89,6 @@ static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
         .expect("DOCSTRING_RE regex compile failed")
 });
 
-// Regex: captures decorator lines
-static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\s*@(.+)$")
-        .expect("DECORATOR_RE regex compile failed")
-});
-
-// Regex: triple-quoted docstring
-static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#)
-        .expect("DOCSTRING_RE regex compile failed")
-});
-
 /// Validate MCP tool input/output schemas.
 pub struct McpSchemaChecker {}
 
@@ -396,52 +384,6 @@ impl McpSchemaChecker {
         }
     }
 
-    /// Ensure each property in the schema has a description.
-    fn _check_property_descriptions(
-        &self,
-        schema_line: &str,
-        keys: &[String],
-        violations: &mut Vec<String>,
-    ) {
-        if !keys.iter().any(|k| k == "properties") {
-            return;
-        }
-        let props_start = schema_line
-            .find("\"properties\"")
-            .or_else(|| schema_line.find("'properties'"));
-        if let Some(start) = props_start {
-            let snippet = &schema_line[start..];
-            for cap in PROPERTY_RE.captures_iter(snippet) {
-                if let Some(prop_name) = cap.get(1) {
-                    let prop_dict = cap.get(0).map(|m| m.as_str()).unwrap_or("");
-                    if !prop_dict.contains("description") {
-                        violations.push(format!(
-                            "Property '{}' missing description in schema",
-                            prop_name.as_str()
-                        ));
-                    }
-                }
-            }
-        }
-    }
-
-    /// Validate that 'type' values are valid JSON Schema types.
-    fn _check_type_values(
-        &self,
-        schema_line: &str,
-        _keys: &[String],
-        violations: &mut Vec<String>,
-    ) {
-        if let Some(type_val) = extract_schema_type_value(schema_line) {
-            if !JSON_SCHEMA_TYPE_VALUES.contains(type_val.as_str()) {
-                violations.push(format!(
-                    "Schema type='{}' is not a valid JSON Schema type",
-                    type_val
-                ));
-            }
-        }
-    }
-
     /// Append a single MCP schema violation result to the results list.
     fn _report_mcp_violation(
         &self,
@@ -476,9 +418,6 @@ impl McpSchemaChecker {
     }
 }
 
-static PROPERTY_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#""(\w+)"\s*:\s*\{[^}]*\}"#).expect("PROPERTY_RE compile failed")
-});
 static SCHEMA_TYPE_DQ_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#""type"\s*:\s*"([^"]+)""#).expect("SCHEMA_TYPE_DQ_RE compile failed")
 });

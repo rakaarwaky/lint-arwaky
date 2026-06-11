@@ -366,20 +366,20 @@ impl DependencyInjectionContainer {
 }
 
 impl ServiceContainerAggregate for DependencyInjectionContainer {
-    fn file_system(&self) -> Arc<dyn IFileSystemPort> {
-        self.file_system.clone()
+    fn file_system(&self) -> Option<Arc<dyn IFileSystemPort>> {
+        Some(self.file_system.clone())
     }
 
-    fn command_executor(&self) -> Arc<dyn ICommandExecutorPort> {
-        self.command_executor.clone()
+    fn command_executor(&self) -> Option<Arc<dyn ICommandExecutorPort>> {
+        Some(self.command_executor.clone())
     }
 
-    fn path_normalization(&self) -> Arc<dyn IPathNormalizationPort> {
-        self.path_normalization.clone()
+    fn path_normalization(&self) -> Option<Arc<dyn IPathNormalizationPort>> {
+        Some(self.path_normalization.clone())
     }
 
-    fn source_parser(&self) -> Arc<dyn ISourceParserPort> {
-        self.source_parser.clone()
+    fn source_parser(&self) -> Option<Arc<dyn ISourceParserPort>> {
+        Some(self.source_parser.clone())
     }
 
     fn linter_adapter(&self, name: &AdapterName) -> Option<Arc<dyn ILinterAdapterPort>> {
@@ -421,86 +421,92 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
         ))
     }
 
-    // AES030 orphan detection getters - these expose contract types for orphan detector to find them
-    fn get_maintenance_aggregate(&self) -> Arc<dyn MaintenanceCommandsAggregate> {
-        self.maintenance_aggregate.clone()
+    // AES030 orphan detection getters
+    fn get_maintenance_aggregate(&self) -> Option<Arc<dyn MaintenanceCommandsAggregate>> {
+        Some(self.maintenance_aggregate.clone())
     }
-    fn get_analysis_protocol(&self) -> Arc<dyn IAnalysisProtocol> {
-        self.analysis_protocol.clone()
+    fn get_analysis_protocol(&self) -> Option<Arc<dyn IAnalysisProtocol>> {
+        Some(self.analysis_protocol.clone())
     }
-    fn get_code_metric_protocol(&self) -> Arc<dyn ICodeMetricAnalyzerProtocol> {
-        self.code_metric_protocol.clone()
+    fn get_code_metric_protocol(&self) -> Option<Arc<dyn ICodeMetricAnalyzerProtocol>> {
+        Some(self.code_metric_protocol.clone())
     }
-    fn get_target_resolver_protocol(&self) -> Arc<dyn ITargetResolverProtocol> {
-        self.target_resolver_protocol.clone()
+    fn get_target_resolver_protocol(&self) -> Option<Arc<dyn ITargetResolverProtocol>> {
+        Some(self.target_resolver_protocol.clone())
     }
-    fn get_unused_protocol(&self) -> Arc<dyn IUnusedProtocol> {
-        self.unused_protocol.clone()
+    fn get_unused_protocol(&self) -> Option<Arc<dyn IUnusedProtocol>> {
+        Some(self.unused_protocol.clone())
     }
-    fn get_config_discovery_port(&self) -> Arc<dyn IConfigDiscoveryPort> {
-        self.config_discovery_port.clone()
+    fn get_config_discovery_port(&self) -> Option<Arc<dyn IConfigDiscoveryPort>> {
+        Some(self.config_discovery_port.clone())
     }
-    fn get_config_orchestration_aggregate(&self) -> Arc<dyn IConfigOrchestrationAggregate> {
-        self.config_orchestration_aggregate.clone()
+    fn get_config_orchestration_aggregate(
+        &self,
+    ) -> Option<Arc<dyn IConfigOrchestrationAggregate>> {
+        Some(self.config_orchestration_aggregate.clone())
     }
-    fn get_config_parser_port(&self) -> Arc<dyn IConfigParserPort> {
-        self.config_parser_port.clone()
+    fn get_config_parser_port(&self) -> Option<Arc<dyn IConfigParserPort>> {
+        Some(self.config_parser_port.clone())
     }
-    fn get_config_validator_protocol(&self) -> Arc<dyn IConfigValidatorProtocol> {
-        self.config_validator_protocol.clone()
+    fn get_config_validator_protocol(&self) -> Option<Arc<dyn IConfigValidatorProtocol>> {
+        Some(self.config_validator_protocol.clone())
     }
-    fn get_watch_provider_port(&self) -> Arc<dyn IWatchProviderPort> {
-        self.watch_provider_port.clone()
+    fn get_watch_provider_port(&self) -> Option<Arc<dyn IWatchProviderPort>> {
+        Some(self.watch_provider_port.clone())
     }
-    fn get_git_commands_aggregate(&self) -> Arc<dyn GitCommandsAggregate> {
-        self.git_commands_aggregate.clone()
+    fn get_git_commands_aggregate(&self) -> Option<Arc<dyn GitCommandsAggregate>> {
+        Some(self.git_commands_aggregate.clone())
     }
-    fn get_git_orchestrator_aggregate(&self) -> Arc<dyn HookManagementOrchestratorAggregate> {
-        self.git_orchestrator_aggregate.clone()
+    fn get_git_orchestrator_aggregate(
+        &self,
+    ) -> Option<Arc<dyn HookManagementOrchestratorAggregate>> {
+        Some(self.git_orchestrator_aggregate.clone())
     }
-    fn get_import_parser_port(&self) -> Arc<dyn IImportParserPort> {
-        self.import_parser_port.clone()
+    fn get_import_parser_port(&self) -> Option<Arc<dyn IImportParserPort>> {
+        Some(self.import_parser_port.clone())
     }
-    fn get_javascript_flow_port(&self) -> Arc<dyn IJavascriptFlowPort> {
-        self.javascript_flow_port.clone()
+    fn get_javascript_flow_port(&self) -> Option<Arc<dyn IJavascriptFlowPort>> {
+        Some(self.javascript_flow_port.clone())
     }
-    fn get_naming_provider_port(&self) -> Arc<dyn INamingProviderPort> {
-        self.naming_provider_port.clone()
+    fn get_naming_provider_port(&self) -> Option<Arc<dyn INamingProviderPort>> {
+        Some(self.naming_provider_port.clone())
     }
-    fn get_javascript_scope_port(&self) -> Arc<dyn IJavascriptScopePort> {
-        self.javascript_scope_port.clone()
+    fn get_javascript_scope_port(&self) -> Option<Arc<dyn IJavascriptScopePort>> {
+        Some(self.javascript_scope_port.clone())
     }
-    fn get_semantic_tracer_port(&self) -> Arc<dyn ISemanticTracerPort> {
-        self.semantic_tracer_port.clone()
+    fn get_semantic_tracer_port(&self) -> Option<Arc<dyn ISemanticTracerPort>> {
+        Some(self.semantic_tracer_port.clone())
     }
-    fn get_naming_variant_port(&self) -> Arc<dyn INamingVariantPort> {
-        self.naming_variant_port.clone()
+    fn get_naming_variant_port(&self) -> Option<Arc<dyn INamingVariantPort>> {
+        Some(self.naming_variant_port.clone())
     }
-    fn get_agent_lifecycle_aggregate(&self) -> Arc<dyn AgentLifecycleAggregate> {
-        self.agent_lifecycle_aggregate.clone()
+    fn get_agent_lifecycle_aggregate(&self) -> Option<Arc<dyn AgentLifecycleAggregate>> {
+        Some(self.agent_lifecycle_aggregate.clone())
     }
-    fn get_mcp_server_port(&self) -> Arc<dyn IMcpServerPort> {
-        self.mcp_server_port.clone()
+    fn get_mcp_server_port(&self) -> Option<Arc<dyn IMcpServerPort>> {
+        Some(self.mcp_server_port.clone())
     }
-    fn get_multi_project_aggregate(&self) -> Arc<dyn MultiProjectOrchestratorAggregate> {
-        self.multi_project_aggregate.clone()
+    fn get_multi_project_aggregate(&self) -> Option<Arc<dyn MultiProjectOrchestratorAggregate>> {
+        Some(self.multi_project_aggregate.clone())
     }
-    fn get_pipeline_extended_aggregate(&self) -> Arc<dyn PipelineExtendedOrchestratorAggregate> {
-        self.pipeline_extended_aggregate.clone()
+    fn get_pipeline_extended_aggregate(
+        &self,
+    ) -> Option<Arc<dyn PipelineExtendedOrchestratorAggregate>> {
+        Some(self.pipeline_extended_aggregate.clone())
     }
-    fn get_pipeline_output_aggregate(&self) -> Arc<dyn PipelineOutputAggregate> {
-        self.pipeline_output_aggregate.clone()
+    fn get_pipeline_output_aggregate(&self) -> Option<Arc<dyn PipelineOutputAggregate>> {
+        Some(self.pipeline_output_aggregate.clone())
     }
-    fn get_plugin_manager_port(&self) -> Arc<dyn IPluginManagerPort> {
-        self.plugin_manager_port.clone()
+    fn get_plugin_manager_port(&self) -> Option<Arc<dyn IPluginManagerPort>> {
+        Some(self.plugin_manager_port.clone())
     }
-    fn get_setup_management_aggregate(&self) -> Arc<dyn SetupManagementAggregate> {
-        self.setup_management_aggregate.clone()
+    fn get_setup_management_aggregate(&self) -> Option<Arc<dyn SetupManagementAggregate>> {
+        Some(self.setup_management_aggregate.clone())
     }
-    fn get_setup_management_protocol(&self) -> Arc<dyn ISetupManagementProtocol> {
-        self.setup_management_protocol.clone()
+    fn get_setup_management_protocol(&self) -> Option<Arc<dyn ISetupManagementProtocol>> {
+        Some(self.setup_management_protocol.clone())
     }
-    fn get_scanner_provider_port(&self) -> Arc<dyn IScannerProviderPort> {
-        self.scanner_provider_port.clone()
+    fn get_scanner_provider_port(&self) -> Option<Arc<dyn IScannerProviderPort>> {
+        Some(self.scanner_provider_port.clone())
     }
 }

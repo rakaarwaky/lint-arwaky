@@ -39,6 +39,8 @@ impl IBypassCheckerProtocol for BypassChecker {
         let unwrap_pat = [".", "unwrap()"].concat();
         let expect_pat = [".", "expect("].concat();
         let panic_pat = ["panic", "!("].concat();
+        let todo_pat = ["todo", "!("].concat();
+        let unimpl_pat = ["unimplemented", "!("].concat();
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
             if t.starts_with("#[allow(") || t.starts_with("#[expect(") {
@@ -74,6 +76,26 @@ impl IBypassCheckerProtocol for BypassChecker {
                 continue;
             }
             if t.contains(&panic_pat) {
+                violations.push(LintResult::new_arch(
+                    file,
+                    i + 1,
+                    "AES022",
+                    Severity::CRITICAL,
+                    AesViolation::Panic { reason: None },
+                ));
+                continue;
+            }
+            if t.contains(&todo_pat) {
+                violations.push(LintResult::new_arch(
+                    file,
+                    i + 1,
+                    "AES022",
+                    Severity::CRITICAL,
+                    AesViolation::Panic { reason: None },
+                ));
+                continue;
+            }
+            if t.contains(&unimpl_pat) {
                 violations.push(LintResult::new_arch(
                     file,
                     i + 1,

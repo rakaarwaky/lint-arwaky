@@ -89,7 +89,7 @@ impl CheckCommandsSurface {
 
         for result in adapter_results {
             match result {
-                Ok((name, values)) => {
+                Ok((_name, values)) => {
                     all_results.extend(values);
                 }
                 Err((name, e)) => {

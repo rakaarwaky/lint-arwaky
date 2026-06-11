@@ -284,6 +284,10 @@ impl LintCheckingOrchestrator {
             .check_mandatory_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
             .await;
         self.container
+            .import_intent_checker()
+            .check_mandatory_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
+            .await;
+        self.container
             .import_forbidden_checker()
             .check_forbidden_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
             .await;
