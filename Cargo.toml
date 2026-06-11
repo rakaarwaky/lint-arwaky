@@ -2,6 +2,11 @@
 name = "lint_arwaky"
 version = "1.10.9"
 edition = "2021"
+description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+homepage = "https://github.com/rakaarwaky/lint-arwaky"
+readme = "README.md"
 
 [lib]
 name = "lint_arwaky"
