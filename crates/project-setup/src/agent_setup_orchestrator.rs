@@ -1,6 +1,6 @@
 // PURPOSE: SetupOrchestrator — orchestrates project initialization and setup operations
-use cli_transport::taxonomy_protocol_vo::TransportProtocol;
-use cli_transport::taxonomy_protocol_vo::TransportUrlVO;
+use cli_commands::taxonomy_protocol_vo::TransportProtocol;
+use cli_commands::taxonomy_protocol_vo::TransportUrlVO;
 use config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use pipeline_jobs::taxonomy_job_vo::EnvContentVO;
 use pipeline_jobs::taxonomy_job_vo::McpConfigVO;

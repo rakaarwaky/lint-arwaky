@@ -8,7 +8,6 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 auto_fix = { path = "../auto-fix" }
 cli_commands = { path = "../cli-commands" }
-cli_transport = { path = "../cli-transport" }
 code_analysis = { path = "../code-analysis" }
 config_system = { path = "../config-system" }
 file_system = { path = "../file-system" }

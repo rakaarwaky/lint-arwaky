@@ -7,7 +7,6 @@ edition = "2021"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 async-trait = "0.1.89"
-config_system = { path = "../config-system" }
 pipeline_jobs = { path = "../pipeline-jobs" }
 shared_common = { path = "../shared-common" }
 source_parsing = { path = "../source-parsing" }

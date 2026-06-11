@@ -12,12 +12,9 @@ console = "0.15"
 dialoguer = "0.11"
 futures = "0.3"
 auto_fix = { path = "../auto-fix" }
-cli_transport = { path = "../cli-transport" }
 code_analysis = { path = "../code-analysis" }
-di_containers = { path = "../di-containers" }
 output_report = { path = "../output-report" }
 pipeline_jobs = { path = "../pipeline-jobs" }
-plugin_system = { path = "../plugin-system" }
-project_setup = { path = "../project-setup" }
 shared_common = { path = "../shared-common" }
 source_parsing = { path = "../source-parsing" }
+tokio = { version = "1.52.3", features = ["full"] }

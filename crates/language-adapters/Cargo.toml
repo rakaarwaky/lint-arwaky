@@ -10,7 +10,6 @@ async-trait = "0.1.89"
 once_cell = "1.21.4"
 regex = "1.10"
 tracing = "0.1"
-cli_transport = { path = "../cli-transport" }
 code_analysis = { path = "../code-analysis" }
 metrics_service = { path = "../metrics-service" }
 output_report = { path = "../output-report" }

@@ -3,8 +3,8 @@
 use code_analysis::taxonomy_import_source_vo::ImportInfoList;
 use code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
 use language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
-use pipeline_jobs::taxonomy_job_vo::ResponseData;
-use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared_common::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared_common::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use shared_common::taxonomy_common_vo::BooleanVO;
 use shared_common::taxonomy_common_vo::Count;
 use shared_common::taxonomy_common_vo::PatternList;

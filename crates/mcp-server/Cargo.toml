@@ -10,9 +10,7 @@ once_cell = "1.21.4"
 regex = "1.10"
 tracing = "0.1"
 cli_commands = { path = "../cli-commands" }
-cli_transport = { path = "../cli-transport" }
 code_analysis = { path = "../code-analysis" }
-di_containers = { path = "../di-containers" }
 language_adapters = { path = "../language-adapters" }
 output_report = { path = "../output-report" }
 pipeline_jobs = { path = "../pipeline-jobs" }

@@ -1,5 +1,5 @@
 // PURPOSE: ServerWrapper — IMcpServerPort implementation wrapping the MCP server lifecycle
-use cli_transport::taxonomy_transport_error::TransportError;
+use cli_commands::taxonomy_transport_error::TransportError;
 use mcp_server::contract_server_port::ToolHandler;
 use mcp_server::IMcpServerPort;
 use shared_common::taxonomy_name_vo::SymbolName;

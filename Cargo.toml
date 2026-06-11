@@ -49,7 +49,6 @@ pipeline_jobs = { path = "crates/pipeline-jobs" }
 code_analysis = { path = "crates/code-analysis" }
 auto_fix = { path = "crates/auto-fix" }
 cli_commands = { path = "crates/cli-commands" }
-cli_transport = { path = "crates/cli-transport" }
 config_system = { path = "crates/config-system" }
 di_containers = { path = "crates/di-containers" }
 file_system = { path = "crates/file-system" }

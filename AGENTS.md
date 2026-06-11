@@ -18,18 +18,25 @@ cargo run --bin lint-arwaky-mcp
 # Run TUI launcher (interactive terminal UI)
 cargo run --bin lint-arwaky-tui
 
+# Per-crate build/check/test
+cargo build -p import_rules
+cargo check -p naming_rules
+cargo test -p code_analysis
+
 # Tests
 cargo test --workspace        # all
+cargo test -p import_rules    # single crate
 cargo test --lib <name_fragment>  # single test by name
 
 # Format & lint
 cargo fmt --all
 cargo clippy --all-targets -- -D warnings
+cargo clippy -p import_rules -- -D warnings  # per crate
 ```
 
-## Architecture (6-layer AES + Vertical Slicing)
+## Architecture (6-layer AES + Vertical Slicing + Multi-Crate Workspace)
 
-The codebase uses **6 architectural layers** as file prefixes, organized into **26 feature folders** (vertical slicing):
+The codebase uses **6 architectural layers** as file prefixes, organized into **26 feature crates** (vertical slicing) in a **Cargo workspace**:
 
 | Layer (prefix)    | Allowed suffixes                                  |
 | ----------------- | ------------------------------------------------- |
@@ -40,36 +47,55 @@ The codebase uses **6 architectural layers** as file prefixes, organized into **
 | `agent_`          | `_orchestrator`                                   |
 | `surface_`        | `_command`, `_handler`, `_controller`             |
 
-### Feature folders
+### Workspace Crates (feature folders → workspace members)
 
 ```
-src-rust/
-  layer-rules/       — Import, compliance, cycle, self-lint rules
-  role-rules/        — Unused, inheritance, bypass rules
-  orphan-detector/   — Orphan code detection
-  primitive-checker/ — Primitive obsession (AES016)
-  cli-commands/      — CLI command surfaces
-  cli-transport/     — CLI execution transport
-  config-system/     — Config loading & parsing
-  pipeline-jobs/     — Jobs, dispatcher, execution
-  naming-rules/      — Naming convention & variants
-  semantic-analysis/ — Data flow, scope, tracer
-  file-watch/        — File watching
-  git-hooks/         — Git hooks management
-  multi-project/     — Multi-project governance
-  project-setup/     — Project init, doctor, mcp-config
-  plugin-system/     — Plugin discovery & management
-  output-report/     — Output formatting & report generation
-  code-analysis/     — Code analysis (linting, data flow)
-  mcp-server/        — MCP server
-  source-parsing/    — Source code parsing
-  lifecycle-state/   — Agent lifecycle management
-  language-adapters/ — Python, JS, Rust adapters
-  di-containers/     — DI container aggregates
-  file-system/       — File system abstraction
-  http-client/       — HTTP client
-  metrics-service/   — Metrics provider
-  shared-common/     — Shared value objects & errors
+crates/
+  shared-common/        — Foundation: ALL taxonomy_* + contract_* (NO deps)
+  import-rules/         — Import compliance (AES001, AES002)
+  naming-rules/         — Naming convention (AES010, AES011)
+  role-rules/           — Role violations (AES0305, AES0306)
+  orphan-detector/      — Orphan code detection (AES030)
+  code-analysis/        — Quality: unused (AES023), class/line, auto-fix
+  auto-fix/             — Auto-fix processor (AES0303)
+  cli-commands/         — CLI surfaces (_command)
+  cli-transport/        — CLI execution transport
+  config-system/        — Config loading & parsing
+  pipeline-jobs/        — Jobs, dispatcher, execution
+  source-parsing/       — Source code parsing (scanners, parsers)
+  language-adapters/    — Python, JS, Rust linter adapters
+  file-system/          — File system abstraction
+  file-watch/           — File watching
+  git-hooks/            — Git hooks management
+  multi-project/        — Multi-project governance
+  project-setup/        — Project init, doctor, mcp-config
+  plugin-system/        — Plugin discovery & management
+  output-report/        — Output formatting & report generation
+  lifecycle-state/      — Agent lifecycle management
+  metrics-service/      — Metrics provider
+  di-containers/        — DI container aggregates (legacy)
+  composition_root.rs   — Root composition (new pattern)
+  cli_main_entry.rs     — CLI binary entry
+  mcp_main_entry.rs     — MCP binary entry
+  tui_main_entry.rs     — TUI binary entry
+```
+
+### Dependency Graph (enforced by Cargo workspace)
+
+```
+shared-common (taxonomy_*, contract_*)  ◄── foundation, NO deps
+       ▲
+       │
+import-rules, naming-rules, role-rules, code-analysis,
+auto-fix, orphan-detector, config-system, source-parsing,
+language-adapters, file-system, file-watch, git-hooks,
+multi-project, project-setup, plugin-system, output-report,
+lifecycle-state, metrics-service, pipeline-jobs, cli-transport
+       ▲                         (capabilities_*/infrastructure_* + agent_*)
+       │                         deps: shared-common ONLY
+cli-commands, mcp-server                              (surface_*)
+       ▲                         deps: feature crates + shared-common
+di-containers (legacy) / composition_root (new)
 ```
 
 Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
@@ -94,7 +120,7 @@ cargo run --bin lint-arwaky-cli -- scan test-project-python/
 cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 ```
 
-Each contains intentional violations. See `docs/TEST.md` for pass/fail criteria.
+Each contains intentional violations. See `TEST.md` for pass/fail criteria.
 
 ## Graph-It-Live — Dependency Graph Monitoring
 
@@ -121,18 +147,18 @@ cargo run --bin lint-arwaky-cli -- check .
 
 # 2. Circular dependency check — random sample dari tiap layer
 #    Panggil tool cycles untuk file di tiap layer:
-#    - cycles source-parsing/contract_parser_port.rs
-#    - cycles naming-rules/contract_provider_port.rs
-#    - cycles di-containers/contract_service_aggregate.rs
+#    - cycles crates/source-parsing/contract_parser_port.rs
+#    - cycles crates/naming-rules/contract_naming_runner_aggregate.rs
+#    - cycles crates/di-containers/contract_service_aggregate.rs
 
 # 3. Verify layer boundary — pastikan surface tidak import infra langsung
 #    Panggil tool path-in untuk file infrastructure:
-#    - path-in language-adapters/infrastructure_js_naming.rs
+#    - path-in crates/language-adapters/infrastructure_js_naming.rs
 #    Harusnya di-import hanya oleh root/di-container files
 
 # 4. Orphan check — cari file yang tidak di-import siapa pun
 #    Panggil tool path-in untuk file yang mencurigakan:
-#    - path-in orphan-detector/capabilities_orphan_analyzer.rs
+#    - path-in crates/orphan-detector/capabilities_orphan_analyzer.rs
 #    Pastikan setiap file punya minimal 1 incoming reference
 
 # 5. Build + test
@@ -169,7 +195,8 @@ cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 
 | File                                 | Purpose                                           |
 | ------------------------------------ | ------------------------------------------------- |
-| `Cargo.toml`                         | Rust project manifest — dependencies, bin targets |
+| `Cargo.toml` (root)                  | Workspace manifest — members, deps, bins          |
+| `crates/*/Cargo.toml`                | Per-crate manifests                               |
 | `lint_arwaky.config.rust.yaml`       | AES rules config for Rust                         |
 | `lint_arwaky.config.python.yaml`     | AES rules config for Python                       |
 | `lint_arwaky.config.javascript.yaml` | AES rules config for JavaScript/TypeScript        |
@@ -204,7 +231,7 @@ cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 
 | Directory                  | Purpose                                             |
 | -------------------------- | --------------------------------------------------- |
-| `src-rust/`                | Source code — 26 feature folders, 6 layers          |
+| `crates/`                  | Source code — 26 workspace crates, 6 layers         |
 | `test-project-rust/`       | Test project with intentional violations (Rust)     |
 | `test-project-python/`     | Test project with intentional violations (Python)   |
 | `test-project-javascript/` | Test project with intentional violations (JS/TS)    |

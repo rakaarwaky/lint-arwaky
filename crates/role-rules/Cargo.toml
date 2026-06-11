@@ -10,7 +10,6 @@ async-trait = "0.1.89"
 once_cell = "1.21.4"
 regex = "1.10"
 import_rules = { path = "../import-rules" }
-orphan_detector = { path = "../orphan-detector" }
 output_report = { path = "../output-report" }
 shared_common = { path = "../shared-common" }
 source_parsing = { path = "../source-parsing" }
