@@ -1,6 +1,6 @@
 // PURPOSE: Cause, Constraint, ErrorMessage, ExitCode, FieldName, ModuleName, PrimitiveTypeName — common error value objects
-pub use crate::shared_common::taxonomy_common_vo::ErrorMessage;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
+pub use crate::common::taxonomy_common_vo::ErrorMessage;
+use crate::common::taxonomy_common_vo::LineNumber;
 use serde::Serialize;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check

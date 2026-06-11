@@ -1,7 +1,7 @@
 // PURPOSE: AesViolationPy — AES violation messages for Python analysis (enum with Display)
-use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::common::taxonomy_layer_vo::LayerNameVO;
+use crate::common::taxonomy_message_vo::LintMessage;
+use crate::common::taxonomy_name_vo::SymbolName;
 use std::fmt;
 
 pub enum AesViolationPy {
