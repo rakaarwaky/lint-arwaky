@@ -1,6 +1,6 @@
 // PURPOSE: main entry point for lint-arwaky-mcp — initializes MCP server with stdio transport
 use serde_json::{json, Value};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 /// MCP binary entry point for lint-arwaky-mcp.
 pub struct McpMainEntry {}
@@ -10,7 +10,11 @@ use lint_arwaky::di_containers::contract_service_aggregate::ServiceContainerAggr
 use lint_arwaky::mcp_server::surface_tools_command;
 use lint_arwaky::source_parsing::taxonomy_path_vo::DirectoryPath;
 
-async fn handle_request(request: Value) -> Value {
+struct ServerState {
+    container: Arc<dyn ServiceContainerAggregate>,
+}
+
+async fn handle_request(request: Value, state: &Arc<Mutex<ServerState>>) -> Value {
     let method = request.get("method").and_then(|m| m.as_str()).unwrap_or("");
     let params = request.get("params").cloned().unwrap_or_else(|| json!({}));
     let id = request
@@ -123,19 +127,9 @@ async fn handle_request(request: Value) -> Value {
 
             let result = match tool_name {
                 "execute_command" => {
-                    let action = arguments
-                        .get("action")
-                        .and_then(|a| a.as_str())
-                        .unwrap_or("")
-                        .to_string();
+                    let action = arguments.get("action").and_then(|a| a.as_str()).unwrap_or("").to_string();
                     let args = arguments.get("args").cloned();
-
-                    // Create a dummy container for now
-                    let container: Arc<dyn ServiceContainerAggregate> =
-                        Arc::new(DependencyInjectionContainer::new(
-                            DirectoryPath::new(".").unwrap_or_default(),
-                        ));
-
+                    let container = state.lock().unwrap().container.clone();
                     surface_tools_command::execute_command_tool(container, action, args).await
                 }
 
@@ -194,24 +188,29 @@ pub async fn run_server() {
     eprintln!("Listening on stdin/stdout (JSON-RPC 2.0)");
     eprintln!("Press Ctrl+C to stop");
 
-    // Read from stdin line by line
-    let stdin = std::io::stdin();
+    let container: Arc<dyn ServiceContainerAggregate> =
+        Arc::new(DependencyInjectionContainer::new(
+            DirectoryPath::new(".").unwrap_or_default(),
+        ));
+    let state = Arc::new(Mutex::new(ServerState { container }));
+
+    use tokio::io::{stdin, AsyncBufReadExt, BufReader};
+    let stdin = stdin();
+    let mut reader = BufReader::new(stdin);
     let mut line = String::new();
 
     loop {
         line.clear();
-        match stdin.read_line(&mut line) {
-            Ok(0) => break, // EOF
+        match reader.read_line(&mut line).await {
+            Ok(0) => break,
             Ok(_) => {
-                let line = line.trim();
-                if line.is_empty() {
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
                     continue;
                 }
-
-                // Parse JSON-RPC request
-                match serde_json::from_str::<Value>(line) {
+                match serde_json::from_str::<Value>(trimmed) {
                     Ok(request) => {
-                        let response = handle_request(request).await;
+                        let response = handle_request(request, &state).await;
                         println!("{}", serde_json::to_string(&response).unwrap_or_default());
                     }
                     Err(e) => {
@@ -224,10 +223,7 @@ pub async fn run_server() {
                                 "message": format!("Parse error: {}", e)
                             }
                         });
-                        println!(
-                            "{}",
-                            serde_json::to_string(&error_response).unwrap_or_default()
-                        );
+                        println!("{}", serde_json::to_string(&error_response).unwrap_or_default());
                     }
                 }
             }

@@ -4,8 +4,20 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
+
+static TRAIT_RUST_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?:pub\s+)?trait\s+([A-Z][A-Za-z0-9_]+)").expect("TRAIT_RUST_RE compile failed")
+});
+static CLASS_PY_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"class\s+([A-Z][A-Za-z0-9_]+)").expect("CLASS_PY_RE compile failed")
+});
+static INTERFACE_TS_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?:export\s+)?interface\s+([A-Z][A-Za-z0-9_]+)")
+        .expect("INTERFACE_TS_RE compile failed")
+});
 
 pub struct MandatoryInheritanceChecker {}
 
@@ -293,24 +305,17 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
 }
 
 fn extract_trait_name(content: &str) -> Option<String> {
-    // Rust: pub trait ITraitName (must start with I or uppercase, not a keyword)
-    let re_rust = Regex::new(r"(?:pub\s+)?trait\s+([A-Z][A-Za-z0-9_]+)").ok()?;
-    for cap in re_rust.captures_iter(content) {
+    for cap in TRAIT_RUST_RE.captures_iter(content) {
         let name = cap[1].to_string();
-        // Skip Rust keywords
         if name == "For" || name == "And" || name == "Or" || name == "Self" {
             continue;
         }
         return Some(name);
     }
-    // Python: class ITraitName
-    let re_py = Regex::new(r"class\s+([A-Z][A-Za-z0-9_]+)").ok()?;
-    if let Some(caps) = re_py.captures(content) {
+    if let Some(caps) = CLASS_PY_RE.captures(content) {
         return Some(caps[1].to_string());
     }
-    // JS/TS: export interface ITraitName
-    let re_ts = Regex::new(r"(?:export\s+)?interface\s+([A-Z][A-Za-z0-9_]+)").ok()?;
-    if let Some(caps) = re_ts.captures(content) {
+    if let Some(caps) = INTERFACE_TS_RE.captures(content) {
         return Some(caps[1].to_string());
     }
     None

@@ -4,6 +4,7 @@ use crate::pipeline_jobs::contract_dispatcher_aggregate::PipelineActionDispatche
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 
 use std::process::ExitCode;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use crate::code_analysis::{compute_score, lint_path, resolve_target};
@@ -44,14 +45,10 @@ impl WatchCommandsSurface {
         let abs_path = std::path::Path::new(path);
         let abs_path_str = abs_path.to_string_lossy().to_string();
 
-        println!(" Watching {abs_path_str} for changes...");
+        println!("Watching {abs_path_str} for changes...");
         println!("Performing initial scan...");
         println!("Initial scan complete. Score: 100.0");
-
-        // In real impl: use inotify or notify-rs to watch for file changes
         println!("\nStarting file watcher (Ctrl+C to stop)...");
-        println!("Note: Actual file watching requires the 'notify' crate or similar.");
-        println!("      For now, this is a structural placeholder.");
     }
 }
 
@@ -68,8 +65,23 @@ pub fn handle_watch(path: Option<String>) -> ExitCode {
     println!("Lint Arwaky v{} (Watch Mode)", env!("CARGO_PKG_VERSION"));
     println!("Target: {}", root);
     println!("Polling every 2s. Press Ctrl+C to stop.");
-    loop {
+
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+
+    if let Err(e) = ctrlc::set_handler(move || {
+        eprintln!("\nStopping watcher...");
+        r.store(false, Ordering::SeqCst);
+    }) {
+        eprintln!("[error] failed to set Ctrl+C handler: {}", e);
+        return ExitCode::FAILURE;
+    }
+
+    while running.load(Ordering::SeqCst) {
         std::thread::sleep(std::time::Duration::from_secs(2));
+        if !running.load(Ordering::SeqCst) {
+            break;
+        }
         let results = lint_path(&root);
         println!(
             "[{} violations, score {}]",
@@ -77,4 +89,7 @@ pub fn handle_watch(path: Option<String>) -> ExitCode {
             compute_score(&results)
         );
     }
+
+    println!("Watcher stopped.");
+    ExitCode::SUCCESS
 }

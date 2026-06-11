@@ -74,31 +74,31 @@ static JSON_SCHEMA_TYPE_VALUES: Lazy<std::collections::HashSet<&'static str>> = 
     .collect()
 });
 
-// Regex: captures a function definition line
 static FUNC_DEF_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)").unwrap_or_else(|_| {
-        Regex::new(r"^$").unwrap_or_else(|_| loop {
-            std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
-        })
-    })
+    Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)")
+        .expect("FUNC_DEF_RE regex compile failed")
+});
+
+static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^\s*@(.+)$")
+        .expect("DECORATOR_RE regex compile failed")
+});
+
+static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#)
+        .expect("DOCSTRING_RE regex compile failed")
 });
 
 // Regex: captures decorator lines
 static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\s*@(.+)$").unwrap_or_else(|_| {
-        Regex::new(r"^$").unwrap_or_else(|_| loop {
-            std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
-        })
-    })
+    Regex::new(r"^\s*@(.+)$")
+        .expect("DECORATOR_RE regex compile failed")
 });
 
 // Regex: triple-quoted docstring
 static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#).unwrap_or_else(|_| {
-        Regex::new(r"^$").unwrap_or_else(|_| loop {
-            std::thread::sleep(std::time::Duration::from_secs(u64::MAX));
-        })
-    })
+    Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#)
+        .expect("DOCSTRING_RE regex compile failed")
 });
 
 /// Validate MCP tool input/output schemas.
@@ -406,20 +406,12 @@ impl McpSchemaChecker {
         if !keys.iter().any(|k| k == "properties") {
             return;
         }
-        // Simple heuristic: look for property names and check if they have descriptions
-        // In a dict literal like {"type": "object", "properties": {"name": {"type": "string", "description": "..."}}}
-        // We look for property sub-dicts without "description"
         let props_start = schema_line
             .find("\"properties\"")
             .or_else(|| schema_line.find("'properties'"));
         if let Some(start) = props_start {
             let snippet = &schema_line[start..];
-            // Count property entries that lack description
-            let re = match Regex::new(r#""(\w+)"\s*:\s*\{[^}]*\}"#) {
-                Ok(r) => r,
-                Err(_) => return,
-            };
-            for cap in re.captures_iter(snippet) {
+            for cap in PROPERTY_RE.captures_iter(snippet) {
                 if let Some(prop_name) = cap.get(1) {
                     let prop_dict = cap.get(0).map(|m| m.as_str()).unwrap_or("");
                     if !prop_dict.contains("description") {
@@ -484,6 +476,16 @@ impl McpSchemaChecker {
     }
 }
 
+static PROPERTY_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#""(\w+)"\s*:\s*\{[^}]*\}"#).expect("PROPERTY_RE compile failed")
+});
+static SCHEMA_TYPE_DQ_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#""type"\s*:\s*"([^"]+)""#).expect("SCHEMA_TYPE_DQ_RE compile failed")
+});
+static SCHEMA_TYPE_SQ_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"'type'\s*:\s*'([^']+)'"#).expect("SCHEMA_TYPE_SQ_RE compile failed")
+});
+
 /// Check if a parameter string has a type annotation (contains ':').
 fn param_annotated(param: &str) -> bool {
     param.contains(':')
@@ -491,18 +493,10 @@ fn param_annotated(param: &str) -> bool {
 
 /// Extract the value of a "type" key from a schema dict literal string.
 fn extract_schema_type_value(line: &str) -> Option<String> {
-    let re = match Regex::new(r#""type"\s*:\s*"([^"]+)""#) {
-        Ok(r) => r,
-        Err(_) => return None,
-    };
-    if let Some(cap) = re.captures(line) {
+    if let Some(cap) = SCHEMA_TYPE_DQ_RE.captures(line) {
         return cap.get(1).map(|m| m.as_str().to_string());
     }
-    let re = match Regex::new(r#"'type'\s*:\s*'([^']+)'"#) {
-        Ok(r) => r,
-        Err(_) => return None,
-    };
-    if let Some(cap) = re.captures(line) {
+    if let Some(cap) = SCHEMA_TYPE_SQ_RE.captures(line) {
         return cap.get(1).map(|m| m.as_str().to_string());
     }
     None

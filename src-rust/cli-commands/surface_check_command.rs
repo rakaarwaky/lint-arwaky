@@ -1,6 +1,7 @@
 // PURPOSE: Command: CLI surface for check — runs lint_path and resolves violations for a target path
 use std::sync::Arc;
 
+use futures::future;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use std::process::ExitCode;
 
@@ -66,16 +67,33 @@ impl CheckCommandsSurface {
         let path_obj = FilePath::new(path.to_string())
             .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
 
+        let mut adapter_futures = Vec::new();
         for name in &adapter_names {
-            let adapter_name = AdapterName::new(name.to_string()).unwrap_or_default();
+            let adapter_name = match AdapterName::new(name.to_string()) {
+                Ok(a) => a,
+                Err(_) => continue,
+            };
             if let Some(adapter) = container.linter_adapter(&adapter_name) {
-                match rt.block_on(adapter.scan(&path_obj)) {
-                    Ok(results) => {
-                        all_results.extend(results.values);
+                let path_clone = path_obj.clone();
+                let name_owned = name.to_string();
+                adapter_futures.push(async move {
+                    match adapter.scan(&path_clone).await {
+                        Ok(results) => Ok((name_owned, results.values)),
+                        Err(e) => Err((name_owned, format!("{:?}", e)))
                     }
-                    Err(e) => {
-                        eprintln!("[warn] {} adapter failed: {:?}", name, e);
-                    }
+                });
+            }
+        }
+
+        let adapter_results = rt.block_on(future::join_all(adapter_futures));
+
+        for result in adapter_results {
+            match result {
+                Ok((name, values)) => {
+                    all_results.extend(values);
+                }
+                Err((name, e)) => {
+                    eprintln!("[warn] {} adapter failed: {}", name, e);
                 }
             }
         }
