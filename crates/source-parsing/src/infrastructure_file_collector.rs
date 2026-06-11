@@ -2,11 +2,11 @@
 use std::fs;
 use std::path::Path;
 
-use file_system::taxonomy_filesystem_error::FileSystemError;
-use source_parsing::contract_scanner_provider_port::IScannerProviderPort;
-use source_parsing::taxonomy_path_vo::DirectoryPath;
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::taxonomy_paths_vo::FilePathList;
+use shared_common::file_system::taxonomy_filesystem_error::FileSystemError;
+use shared_common::shared_common::contract_scanner_provider_port::IScannerProviderPort;
+use shared_common::shared_common::taxonomy_path_vo::DirectoryPath;
+use shared_common::shared_common::taxonomy_path_vo::FilePath;
+use shared_common::shared_common::taxonomy_paths_vo::FilePathList;
 
 pub struct FileCollectorProvider {}
 
