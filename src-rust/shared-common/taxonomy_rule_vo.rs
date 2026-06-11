@@ -37,6 +37,7 @@ pub struct ArchitectureRule {
     pub mandatory_class_definition: BooleanVO,
     pub dead_inheritance_bypass: BooleanVO,
     pub check_orphan: BooleanVO,
+    #[serde(default, alias = "entry_points")]
     pub orphan_entry_points: PatternList,
     pub check_unused_mandatory_imports: BooleanVO,
     pub forbidden_inheritance: PatternList,

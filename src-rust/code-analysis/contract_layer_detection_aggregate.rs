@@ -14,4 +14,5 @@ fn _use_mandatory_imports() {
 pub trait ILayerDetectionAggregate: Send + Sync {
     fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String>;
     fn get_layer_def(&self, layer: &str) -> Option<LayerDefinition>;
+    fn get_orphan_entry_points(&self) -> Vec<String>;
 }

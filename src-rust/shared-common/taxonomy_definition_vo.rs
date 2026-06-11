@@ -45,7 +45,7 @@ pub struct LayerDefinition {
     pub dead_inheritance_bypass: BooleanVO,
     #[serde(default)]
     pub check_orphan: BooleanVO,
-    #[serde(default)]
+    #[serde(default, alias = "entry_points")]
     pub orphan_entry_points: PatternList,
     #[serde(default)]
     pub check_unused_mandatory_imports: BooleanVO,

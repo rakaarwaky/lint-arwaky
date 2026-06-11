@@ -262,15 +262,22 @@ impl OrphanGraphResolver {
         )
     }
 
-    pub fn identify_entry_points(&self, files: &[String]) -> Vec<String> {
+    pub fn identify_entry_points(&self, files: &[String], configured: &[String]) -> Vec<String> {
         files
             .iter()
             .filter(|f| {
-                f.contains("__main__")
-                    || f.ends_with("main.rs")
-                    || f.ends_with("lib.rs")
-                    || f.ends_with("cli_main_entry.rs")
-                    || f.ends_with("mcp_main_entry.rs")
+                if !configured.is_empty() {
+                    configured.iter().any(|pattern| {
+                        f.ends_with(pattern) || f.contains(pattern)
+                    })
+                } else {
+                    f.contains("__main__")
+                        || f.ends_with("main.rs")
+                        || f.ends_with("lib.rs")
+                        || f.ends_with("cli_main_entry.rs")
+                        || f.ends_with("mcp_main_entry.rs")
+                        || f.ends_with("tui_main_entry.rs")
+                }
             })
             .cloned()
             .collect()
@@ -320,7 +327,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 
     fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String> {
         self.resolver
-            .identify_entry_points(files)
+            .identify_entry_points(files, &[])
             .into_iter()
             .collect()
     }
@@ -339,7 +346,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let context: GraphAnalysisContext = self.resolver.build_graph_context(files, root_dir);
 
         // Trace reachability
-        let entry_points = self.resolver.identify_entry_points(files);
+        let configured = layer_detector.get_orphan_entry_points();
+        let entry_points = self.resolver.identify_entry_points(files, &configured);
         let alive_files_set: Vec<String> =
             self._trace_reachability(&entry_points, &context.import_graph);
 

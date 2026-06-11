@@ -176,4 +176,14 @@ impl ILayerDetectionAggregate for CheckerContainer {
     fn get_layer_def(&self, layer: &str) -> Option<LayerDefinition> {
         self.analyzer.get_layer_def(layer).cloned()
     }
+
+    fn get_orphan_entry_points(&self) -> Vec<String> {
+        self.analyzer
+            .config
+            .rules
+            .iter()
+            .find(|r| r.name.value == "AES030")
+            .map(|r| r.orphan_entry_points.values.clone())
+            .unwrap_or_default()
+    }
 }

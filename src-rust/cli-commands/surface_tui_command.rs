@@ -2,7 +2,8 @@
 use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use console::{style, Term};
-use dialoguer::{theme::ColorfulTheme, Input, Select};
+use dialoguer::theme::ColorfulTheme;
+use dialoguer::{Input, Select};
 use std::process::ExitCode;
 
 /// Satisfy AES002 mandatory imports
