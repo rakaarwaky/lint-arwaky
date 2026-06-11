@@ -1,7 +1,7 @@
 // PURPOSE: AesViolation — AES violation messages for Rust analysis (enum with Display)
-use crate::taxonomy_layer_vo::LayerNameVO;
-use crate::taxonomy_message_vo::LintMessage;
-use crate::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 use std::fmt;
 
 pub enum AesViolation {

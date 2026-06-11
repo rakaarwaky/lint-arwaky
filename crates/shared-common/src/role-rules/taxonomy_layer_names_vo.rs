@@ -1,12 +1,12 @@
 // PURPOSE: LayerNames — value object for layer name collection and lookup
-use crate::orphan_detector::taxonomy_layer_names_constant::LAYER_AGENT;
-use crate::orphan_detector::taxonomy_layer_names_constant::LAYER_CAPABILITIES;
-use crate::orphan_detector::taxonomy_layer_names_constant::LAYER_CONTRACT;
-use crate::orphan_detector::taxonomy_layer_names_constant::LAYER_GLOBAL;
-use crate::orphan_detector::taxonomy_layer_names_constant::LAYER_INFRASTRUCTURE;
-use crate::orphan_detector::taxonomy_layer_names_constant::LAYER_ROOT;
-use crate::orphan_detector::taxonomy_layer_names_constant::LAYER_SURFACES;
-use crate::orphan_detector::taxonomy_layer_names_constant::LAYER_TAXONOMY;
+use crate::role_rules::taxonomy_layer_names_constant::LAYER_AGENT;
+use crate::role_rules::taxonomy_layer_names_constant::LAYER_CAPABILITIES;
+use crate::role_rules::taxonomy_layer_names_constant::LAYER_CONTRACT;
+use crate::role_rules::taxonomy_layer_names_constant::LAYER_GLOBAL;
+use crate::role_rules::taxonomy_layer_names_constant::LAYER_INFRASTRUCTURE;
+use crate::role_rules::taxonomy_layer_names_constant::LAYER_ROOT;
+use crate::role_rules::taxonomy_layer_names_constant::LAYER_SURFACES;
+use crate::role_rules::taxonomy_layer_names_constant::LAYER_TAXONOMY;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 
 /// Value object holding the set of core layer names.
