@@ -1,5 +1,5 @@
 // PURPOSE: IFixProtocol — protocol trait for auto-fix operations (capabilities layer)
-use auto_fix::taxonomy_fix_vo::FixResult;
+use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 

@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_source_vo::ContentString;
+use crate::config_system::taxonomy_source_vo::ContentString;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::shared_common::taxonomy_path_vo::FilePath;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ScopeRef {

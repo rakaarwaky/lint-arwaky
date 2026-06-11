@@ -1,115 +1,26 @@
-// PURPOSE: ContentString, SourceContentVO — VOs for source code content representation
-use serde::{Deserialize, Serialize};
+// PURPOSE: Re-exports ContentString, SourceContentVO from shared-common + ConfigResult, ConfigSource for config-system
+pub use crate::shared_common::taxonomy_source_vo::ContentString;
+pub use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 
-use crate::shared_common::taxonomy_path_vo::FilePath;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
-#[derive(Debug, Clone, Serialize, Eq)]
-#[serde(transparent)]
-pub struct ContentString {
-    pub(crate) value: String,
-}
+/// Result type for config loading operations.
+pub type ConfigResult = Result<ArchitectureConfig, String>;
 
-impl ContentString {
-    pub fn value(&self) -> &str {
-        &self.value
-    }
-    pub fn new(value: impl Into<String>) -> Self {
-        Self {
-            value: value.into(),
-        }
-    }
-}
-
-impl std::fmt::Display for ContentString {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
-
-impl std::hash::Hash for ContentString {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.value.hash(state);
-    }
-}
-
-impl PartialEq for ContentString {
-    fn eq(&self, other: &Self) -> bool {
-        self.value == other.value
-    }
-}
-
-impl From<&str> for ContentString {
-    fn from(s: &str) -> Self {
-        Self {
-            value: s.to_string(),
-        }
-    }
-}
-
-impl From<String> for ContentString {
-    fn from(s: String) -> Self {
-        Self { value: s }
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for ContentString {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct ContentStringVisitor {}
-        impl<'de> serde::de::Visitor<'de> for ContentStringVisitor {
-            type Value = ContentString;
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("primitive or map with 'value' key")
-            }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(ContentString {
-                    value: v.to_string(),
-                })
-            }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(ContentString { value: v })
-            }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-            where
-                A: serde::de::MapAccess<'de>,
-            {
-                let mut value = None;
-                while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" {
-                        value = Some(map.next_value::<String>()?);
-                    } else {
-                        let _: serde::de::IgnoredAny = map.next_value()?;
-                    }
-                }
-                let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
-                Ok(ContentString { value: val })
-            }
-        }
-        deserializer.deserialize_any(ContentStringVisitor {})
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct SourceContentVO {
-    pub file_path: FilePath,
-    pub content: ContentString,
+/// Represents a configuration source with its language and path.
+pub struct ConfigSource {
+    pub config: ArchitectureConfig,
     pub language: String,
+    pub path: FilePath,
 }
 
-impl SourceContentVO {
-    pub fn new(file_path: FilePath, content: ContentString, language: impl Into<String>) -> Self {
+impl ConfigSource {
+    pub fn new(config: ArchitectureConfig, language: impl Into<String>, path: FilePath) -> Self {
         Self {
-            file_path,
-            content,
+            config,
             language: language.into(),
+            path,
         }
     }
 }

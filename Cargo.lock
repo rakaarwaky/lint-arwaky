@@ -3479,9 +3479,12 @@ dependencies = [
 name = "shared_common"
 version = "1.10.11"
 dependencies = [
+ "anyhow",
  "async-trait",
+ "chrono",
  "serde",
  "serde_json",
+ "serde_yaml",
  "thiserror 1.0.69",
 ]
 

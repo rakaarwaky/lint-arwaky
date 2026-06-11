@@ -46,5 +46,4 @@ pub mod role_rules;
 #[path = "source-parsing/mod.rs"]
 pub mod source_parsing;
 
-pub mod taxonomy_source_vo;
-pub use taxonomy_source_vo::{ContentString, SourceContentVO};
+pub use shared_common::taxonomy_source_vo::{ContentString, SourceContentVO};

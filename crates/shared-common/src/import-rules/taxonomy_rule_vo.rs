@@ -1,8 +1,8 @@
 // PURPOSE: ArchitectureRule, CustomMessageVO, LegacyLayerRule, MandatoryImportRuleVO — VOs for AES rule definitions
 use serde::{Deserialize, Serialize};
 
-use crate::shared_common::taxonomy_suffix_vo::SuffixPolicyVO;
-use crate::shared_common::taxonomy_suffix_vo::SuffixVO;
+use crate::naming_rules::taxonomy_suffix_vo::SuffixPolicyVO;
+use crate::naming_rules::taxonomy_suffix_vo::SuffixVO;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::Count;

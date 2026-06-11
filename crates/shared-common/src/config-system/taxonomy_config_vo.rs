@@ -217,13 +217,13 @@ pub(crate) fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
 /// All 3 config YAMLs are baked into the binary at compile time via `include_str!`.
 /// Runtime project-level config files override these defaults.
 pub fn default_aes_config() -> ArchitectureConfig {
-    parse_config_yaml(include_str!("../../../lint_arwaky.config.rust.yaml"))
+    parse_config_yaml(include_str!("../../../../lint_arwaky.config.rust.yaml"))
 }
 
 pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
     match language {
-        "python" => parse_config_yaml(include_str!("../../../lint_arwaky.config.python.yaml")),
-        "javascript" => parse_config_yaml(include_str!("../../../lint_arwaky.config.javascript.yaml")),
+        "python" => parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml")),
+        "javascript" => parse_config_yaml(include_str!("../../../../lint_arwaky.config.javascript.yaml")),
         _ => default_aes_config(),
     }
 }

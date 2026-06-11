@@ -14,7 +14,6 @@ pub mod contract_lint_protocol;
 pub mod contract_mandatory_inheritance_protocol;
 pub mod contract_target_resolver_protocol;
 pub mod contract_unused_protocol;
-pub mod mod;
 pub mod taxonomy_analysis_vo;
 pub mod taxonomy_governance_entity;
 pub mod taxonomy_import_source_vo;

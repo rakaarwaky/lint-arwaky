@@ -1,9 +1,9 @@
 // PURPOSE: BooleanVO, ColumnNumber, Count, DataFlowList, LineContentList, LineNumber, PatternList, Score, Timestamp — common VOs
 use serde::{Deserialize, Serialize};
 
-use crate::shared_common::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_action_vo::JobId;
-use crate::shared_common::taxonomy_job_vo::ResponseData;
+use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::pipeline_jobs::taxonomy_action_vo::JobId;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::shared_common::taxonomy_layer_vo::LineContentVO;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

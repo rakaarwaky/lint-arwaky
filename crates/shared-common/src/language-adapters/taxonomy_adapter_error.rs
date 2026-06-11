@@ -6,7 +6,7 @@ use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_error::ExitCode;
 use crate::shared_common::taxonomy_common_error::FieldName;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_source_vo::ContentString;
+use crate::config_system::taxonomy_source_vo::ContentString;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 

@@ -1,6 +1,6 @@
 // PURPOSE: ITaxonomyRoleChecker — port trait for AES0301: taxonomy role audits (VO, entity, error, event, constant)
 use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::shared_common::taxonomy_source_vo::SourceContentVO;
+use crate::config_system::taxonomy_source_vo::SourceContentVO;
 
 pub trait ITaxonomyRoleChecker: Send + Sync {
     fn check_vo(&self) -> Vec<LintResult>;
