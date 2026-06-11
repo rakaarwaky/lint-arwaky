@@ -41,6 +41,8 @@ pub mod surface_report_command;
 pub use surface_report_command::{register_report_commands, ReportCommandsSurface};
 pub mod surface_setup_command;
 pub use surface_setup_command::{get_setup, register_setup_commands, SetupCommandsSurface};
+pub mod surface_tui_command;
+pub use surface_tui_command::TuiCommandSurface;
 
 pub mod surface_watch_command;
 pub use surface_watch_command::{register_watch_command, WatchCommandsSurface, WatchdogBridge};

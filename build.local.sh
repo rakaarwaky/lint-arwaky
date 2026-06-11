@@ -16,14 +16,16 @@ cargo build --release
 echo "Copying binary only to dist/..."
 cp "$RELEASE_DIR/lint-arwaky-cli" "$DIST_DIR/"
 cp "$RELEASE_DIR/lint-arwaky-mcp" "$DIST_DIR/"
+cp "$RELEASE_DIR/lint-arwaky-tui" "$DIST_DIR/"
 
 echo "Installing to $CARGO_BIN..."
 cp "$DIST_DIR/lint-arwaky-cli" "$CARGO_BIN/"
 cp "$DIST_DIR/lint-arwaky-mcp" "$CARGO_BIN/"
+cp "$DIST_DIR/lint-arwaky-tui" "$CARGO_BIN/"
 
-chmod +x "$CARGO_BIN/lint-arwaky-cli" "$CARGO_BIN/lint-arwaky-mcp"
+chmod +x "$CARGO_BIN/lint-arwaky-cli" "$CARGO_BIN/lint-arwaky-mcp" "$CARGO_BIN/lint-arwaky-tui"
 
 echo "Done."
-echo "  dist/       → binary bersih (lint-arwaky-cli, lint-arwaky-mcp)"
+echo "  dist/       → binary bersih (lint-arwaky-cli, lint-arwaky-mcp, lint-arwaky-tui)"
 echo "  target/     → build cache, fingerprint, .d files (berguna untuk incremental build)"
 echo "  cargo/bin/  → installed binaries"

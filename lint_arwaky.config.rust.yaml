@@ -177,6 +177,7 @@ architecture:
           "mod.rs",
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
+          "tui_main_entry.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -325,6 +326,7 @@ architecture:
           "mod.rs",
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
+          "tui_main_entry.rs",
         ]
 
     AES011:
@@ -346,6 +348,7 @@ architecture:
           "mod.rs",
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
+          "tui_main_entry.rs",
         ]
 
     AES012:
@@ -367,6 +370,7 @@ architecture:
           "mod.rs",
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
+          "tui_main_entry.rs",
         ]
 
     AES015:
@@ -396,6 +400,7 @@ architecture:
           "mod.rs",
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
+          "tui_main_entry.rs",
         ]
 
     AES0305:
@@ -409,6 +414,7 @@ architecture:
           "mod.rs",
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
+          "tui_main_entry.rs",
         ]
 
     AES0306:
@@ -427,6 +433,7 @@ architecture:
           "mod.rs",
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
+          "tui_main_entry.rs",
         ]
 
     AES020:
@@ -469,6 +476,7 @@ architecture:
           "mod.rs",
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
+          "tui_main_entry.rs",
         ]
 
     AES022:
@@ -523,6 +531,7 @@ architecture:
           "mod.rs",
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
+          "tui_main_entry.rs",
         ]
 
     AES030:
@@ -540,6 +549,7 @@ architecture:
         [
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
+          "tui_main_entry.rs",
           "lib.rs",
           "mod.rs",
           "__init__.py",

@@ -15,6 +15,10 @@ path = "src-rust/cli_main_entry.rs"
 name = "lint-arwaky-mcp"
 path = "src-rust/mcp_main_entry.rs"
 
+[[bin]]
+name = "lint-arwaky-tui"
+path = "src-rust/tui_main_entry.rs"
+
 [features]
 default = ["check_surfaces"]
 watch = []
@@ -45,3 +49,5 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 rustsec = "0.33"
 dirs = "6.0"
+dialoguer = "0.11"
+console = "0.15"
