@@ -3,7 +3,7 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct PluginGroup {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl PluginGroup {

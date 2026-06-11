@@ -1,15 +1,15 @@
 // PURPOSE: JobRegistryAdapter — IJobRegistryPort implementation using in-memory HashMap and background notifier
 
-use crate::contract_registry_port::IJobRegistryPort;
-use crate::taxonomy_action_vo::ActionName;
-use crate::taxonomy_action_vo::JobId;
-use crate::taxonomy_job_vo::ResponseData;
-use crate::taxonomy_job_vo::SuccessStatus;
-use crate::taxonomy_registry_error::JobError;
-use shared::ErrorMessage;
-use shared::Count;
-use shared::shared::taxonomy_common_vo::ResponseDataList;
-use shared::Duration;
+use pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use pipeline_jobs::taxonomy_action_vo::ActionName;
+use pipeline_jobs::taxonomy_action_vo::JobId;
+use pipeline_jobs::taxonomy_job_vo::ResponseData;
+use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use pipeline_jobs::taxonomy_registry_error::JobError;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::ResponseDataList;
+use shared_common::taxonomy_duration_vo::Duration;
 use std::collections::HashMap;
 use tokio::sync::Mutex;
 
@@ -62,7 +62,7 @@ impl IJobRegistryPort for MemoryJobRegistryAdapter {
 
     async fn complete_job(&self, job_id: &JobId, result: &ResponseData) {
         let mut jobs = self.jobs.lock().await;
-        if let Some(record) = jobs.get_mut(job_id.value()) {
+        if let Some(record) = jobs.get_mut(&job_id.value) {
             record.status = "completed".to_string();
             record.result = Some(format!("{:?}", result));
             record.completed_at = Some(chrono::Utc::now().to_rfc3339());
@@ -71,9 +71,9 @@ impl IJobRegistryPort for MemoryJobRegistryAdapter {
 
     async fn fail_job(&self, job_id: &JobId, error: &ErrorMessage) {
         let mut jobs = self.jobs.lock().await;
-        if let Some(record) = jobs.get_mut(job_id.value()) {
+        if let Some(record) = jobs.get_mut(&job_id.value) {
             record.status = "failed".to_string();
-            record.error = Some(error.value().to_string());
+            record.error = Some(error.value.clone());
             record.completed_at = Some(chrono::Utc::now().to_rfc3339());
         }
     }
@@ -96,12 +96,12 @@ impl IJobRegistryPort for MemoryJobRegistryAdapter {
                 metadata: HashMap::new(),
             })
             .collect();
-        ResponseDataList::new(values)
+        ResponseDataList { values }
     }
 
     async fn get_job(&self, job_id: &JobId) -> Option<JobId> {
         let jobs = self.jobs.lock().await;
-        if jobs.contains_key(job_id.value()) {
+        if jobs.contains_key(&job_id.value) {
             Some(job_id.clone())
         } else {
             None
@@ -110,7 +110,7 @@ impl IJobRegistryPort for MemoryJobRegistryAdapter {
 
     async fn cancel_job(&self, job_id: &JobId) -> SuccessStatus {
         let mut jobs = self.jobs.lock().await;
-        if let Some(record) = jobs.get_mut(job_id.value()) {
+        if let Some(record) = jobs.get_mut(&job_id.value) {
             record.status = "cancelled".to_string();
             record.completed_at = Some(chrono::Utc::now().to_rfc3339());
             SuccessStatus::new(true)

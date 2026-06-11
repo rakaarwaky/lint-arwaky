@@ -1,5 +1,5 @@
 [package]
-name = "cli_commands"
+name = "cli_commands-arwaky"
 version = "1.10.11"
 edition = "2021"
 
@@ -11,10 +11,10 @@ clap = { version = "4.6.1", features = ["derive"] }
 console = "0.15"
 dialoguer = "0.11"
 futures = "0.3"
-auto_fix = { path = "../auto-fix" }
-code_analysis = { path = "../code-analysis" }
-output_report = { path = "../output-report" }
-pipeline_jobs = { path = "../pipeline-jobs" }
-shared = { path = "../shared" }
-source_parsing = { path = "../source-parsing" }
+auto_fix = { package = "auto_fix-arwaky", path = "../auto-fix" }
+code_analysis = { package = "code_analysis-arwaky", path = "../code-analysis" }
+output_report = { package = "output_report-arwaky", path = "../output-report" }
+pipeline_jobs = { package = "pipeline_jobs-arwaky", path = "../pipeline-jobs" }
+shared_common = { package = "shared_common-arwaky", path = "../shared-common" }
+source_parsing = { package = "source_parsing-arwaky", path = "../source-parsing" }
 tokio = { version = "1.52.3", features = ["full"] }

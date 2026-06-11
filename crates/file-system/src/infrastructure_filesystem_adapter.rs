@@ -4,11 +4,17 @@ use async_trait::async_trait;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use shared::contract_system_port::IFileSystemPort;
-use shared::taxonomy_filesystem_error::FileSystemError;
-use shared::taxonomy_action_vo::ActionName;
-use shared::taxonomy_job_vo::SuccessStatus;
-use shared::{ContentString, Count, ErrorMessage, FilePath, FilePathList, Identity, PatternList};
+use file_system::contract_system_port::IFileSystemPort;
+use file_system::taxonomy_filesystem_error::FileSystemError;
+use pipeline_jobs::taxonomy_action_vo::ActionName;
+use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_layer_vo::Identity;
+use shared_common::taxonomy_source_vo::ContentString;
+use source_parsing::taxonomy_path_vo::FilePath;
+use source_parsing::taxonomy_paths_vo::FilePathList;
 
 pub struct OSFileSystemAdapter {}
 
@@ -52,7 +58,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
         let root = Path::new(&path.value);
         let ignored = ignored_patterns
-            .map(|p| p.values().to_vec())
+            .map(|p| p.values.clone())
             .unwrap_or_default();
         let mut results = Vec::new();
         self.walk_recursive(root, &ignored, &mut results);
@@ -110,7 +116,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
         content: &ContentString,
         _mode: Option<&Identity>,
     ) -> Result<SuccessStatus, FileSystemError> {
-        match fs::write(&path.value, content.value()) {
+        match fs::write(&path.value, &content.value) {
             Ok(_) => Ok(SuccessStatus::new(true)),
             Err(e) => Err(FileSystemError::new(
                 path.clone(),
@@ -143,7 +149,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
     async fn path_join(&self, parts: &[Identity]) -> FilePath {
         let mut path = PathBuf::new();
         for part in parts {
-            path.push(part.value());
+            path.push(&part.value);
         }
         FilePath::new(path.to_string_lossy().to_string())
             .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default())

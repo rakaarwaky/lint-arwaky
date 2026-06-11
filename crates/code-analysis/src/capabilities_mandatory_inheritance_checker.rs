@@ -1,9 +1,9 @@
 // PURPOSE: MandatoryInheritanceChecker — IMandatoryInheritanceProtocol for AES014: enforce contract implementation (bidirectional)
-use crate::IMandatoryInheritanceProtocol;
-use shared::taxonomy_config_vo::ArchitectureConfig;
-use shared::taxonomy_result_vo::LintResult;
-use shared::taxonomy_severity_vo::Severity;
-use shared::LayerNameVO;
+use code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
+use config_system::taxonomy_config_vo::ArchitectureConfig;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;
@@ -33,6 +33,7 @@ impl MandatoryInheritanceChecker {
 }
 
 impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
+    /// One-way: file that imports contract must implement it.
     fn check_mandatory_inheritance(
         &self,
         file: &str,
@@ -41,6 +42,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
+        // Get contract layer's allowed suffixes from config
         let contract_suffixes: Vec<String> = config
             .layers
             .get(&LayerNameVO::new("contract"))
@@ -56,6 +58,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
             return;
         }
 
+        // Get current layer's allowed suffixes (implementer suffixes) from config
         let layer_def = match config.layers.get(&LayerNameVO::new(layer)) {
             Some(def) => def,
             None => return,
@@ -78,6 +81,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
 
         let mut imported: Vec<String> = Vec::new();
 
+        // Rust: `use ...::ContractName;`
         for line in content.lines() {
             let t = line.trim();
             if t.starts_with("use ") && contract_suffixes.iter().any(|s| t.contains(s.as_str())) {
@@ -88,6 +92,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                     }
                 }
             }
+            // Python
             if t.starts_with("from ")
                 && contract_suffixes.iter().any(|s| t.contains(s.as_str()))
                 && t.contains("import ")
@@ -105,6 +110,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                     }
                 }
             }
+            // JS/TS
             if t.starts_with("import ")
                 && t.contains("from")
                 && contract_suffixes.iter().any(|s| t.contains(s.as_str()))
@@ -186,6 +192,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
             }
         }
 
+        // Flag empty inheritance bodies
         for t in &imported {
             let pattern_py = format!("({})", t);
             let lines: Vec<&str> = content.lines().collect();
@@ -233,6 +240,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
         }
     }
 
+    /// Bidirectional: contract file must be implemented by expected layer.
     fn check_contract_implementation(
         &self,
         file: &str,

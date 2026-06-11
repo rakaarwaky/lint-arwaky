@@ -4,11 +4,11 @@ use mcp_server::contract_server_port::IMcpServerPort;
 use mcp_server::taxonomy_server_constant::MAX_PATH_DEPTH;
 use mcp_server::taxonomy_server_constant::MAX_PATH_LENGTH;
 use mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;
-use shared::taxonomy_common_error::Constraint;
-use shared::taxonomy_common_error::ErrorMessage;
-use shared::taxonomy_common_error::FieldName;
-use shared::taxonomy_common_vo::BooleanVO;
-use shared::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_common_error::Constraint;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_error::FieldName;
+use shared_common::taxonomy_common_vo::BooleanVO;
+use shared_common::taxonomy_common_vo::LineNumber;
 use std::path::Path;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check

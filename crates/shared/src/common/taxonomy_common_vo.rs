@@ -10,7 +10,7 @@ use crate::shared_common::taxonomy_layer_vo::LineContentVO;
 #[serde(transparent)]
 #[derive(Default)]
 pub struct BooleanVO {
-    pub(crate) value: bool,
+    pub value: bool,
 }
 
 impl BooleanVO {
@@ -75,7 +75,7 @@ impl<'de> serde::Deserialize<'de> for BooleanVO {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct ColumnNumber {
-    pub(crate) value: i64,
+    pub value: i64,
 }
 
 impl ColumnNumber {
@@ -146,7 +146,7 @@ impl<'de> serde::Deserialize<'de> for ColumnNumber {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct Count {
-    pub(crate) value: i64,
+    pub value: i64,
 }
 
 impl Count {
@@ -215,7 +215,7 @@ impl<'de> serde::Deserialize<'de> for Count {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct DataFlowList {
-    pub(crate) values: Vec<ErrorMessage>,
+    pub values: Vec<ErrorMessage>,
 }
 
 impl DataFlowList {
@@ -241,7 +241,7 @@ impl DataFlowList {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct JobIdList {
-    pub(crate) values: Vec<JobId>,
+    pub values: Vec<JobId>,
 }
 
 impl JobIdList {
@@ -267,7 +267,7 @@ impl JobIdList {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LineContentList {
-    pub(crate) values: Vec<LineContentVO>,
+    pub values: Vec<LineContentVO>,
 }
 
 impl LineContentList {
@@ -295,7 +295,7 @@ impl LineContentList {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct LineNumber {
-    pub(crate) value: i64,
+    pub value: i64,
 }
 
 impl LineNumber {
@@ -366,7 +366,7 @@ impl<'de> serde::Deserialize<'de> for LineNumber {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct PatternList {
-    pub(crate) values: Vec<String>,
+    pub values: Vec<String>,
 }
 
 impl PatternList {
@@ -397,7 +397,7 @@ impl PatternList {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ResponseDataList {
-    pub(crate) values: Vec<ResponseData>,
+    pub values: Vec<ResponseData>,
 }
 
 impl ResponseDataList {
@@ -424,7 +424,7 @@ impl ResponseDataList {
 #[derive(Debug, Clone, Default, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct Score {
-    pub(crate) value: f64,
+    pub value: f64,
 }
 
 impl Score {
@@ -500,7 +500,7 @@ impl<'de> serde::Deserialize<'de> for Score {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct Timestamp {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl Timestamp {
@@ -625,7 +625,7 @@ impl IntoPatternListValues for &Vec<String> {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct ErrorMessage {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl ErrorMessage {

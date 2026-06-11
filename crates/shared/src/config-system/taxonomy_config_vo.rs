@@ -59,7 +59,7 @@ impl Default for ArchitectureConfig {
     }
 }
 
-pub(crate) fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
+pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
     let raw: serde_yaml::Value = serde_yaml::from_str(yaml_str).unwrap_or_default();
     if let Some(arch_val) = raw.get("architecture") {
         let mut json = serde_json::to_value(arch_val).unwrap_or_default();

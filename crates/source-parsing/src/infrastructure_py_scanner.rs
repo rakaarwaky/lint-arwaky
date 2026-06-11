@@ -5,13 +5,24 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::sync::LazyLock;
 
-use shared::taxonomy_import_source_vo::{ImportInfo, ImportInfoList, PrimitiveViolation, PrimitiveViolationList};
-use shared::taxonomy_naming_list_vo::PrimitiveTypeList;
-use shared::taxonomy_job_vo::{ResponseData, SuccessStatus};
-use shared::{
-    ErrorMessage, BooleanVO, ColumnNumber, Count, LineNumber, PatternList,
-    SymbolName, MetadataVO, ISourceParserPort, SourceParserError, FilePath,
-};
+use code_analysis::taxonomy_import_source_vo::ImportInfo;
+use code_analysis::taxonomy_import_source_vo::ImportInfoList;
+use code_analysis::taxonomy_import_source_vo::PrimitiveViolation;
+use code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
+use language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
+use shared_common::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared_common::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_vo::BooleanVO;
+use shared_common::taxonomy_common_vo::ColumnNumber;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_suggestion_vo::MetadataVO;
+use source_parsing::contract_parser_port::ISourceParserPort;
+use source_parsing::taxonomy_parser_error::SourceParserError;
+use source_parsing::taxonomy_path_vo::FilePath;
 
 static IMPORT_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^import\s+(\w+(?:\.\w+)*)").ok());
@@ -133,7 +144,7 @@ impl ASTPythonParserAdapter {
     }
 
     fn read_and_parse(&self, path: &FilePath) -> Result<ParsedData, SourceParserError> {
-        let content = fs::read_to_string(&path.value()).map_err(|e| SourceParserError {
+        let content = fs::read_to_string(&path.value).map_err(|e| SourceParserError {
             path: path.clone(),
             message: ErrorMessage::new(format!("Failed to read file: {}", e)),
             ..Default::default()
@@ -144,7 +155,7 @@ impl ASTPythonParserAdapter {
         let mut current_class: Option<String> = None;
         let mut indent_stack: Vec<(usize, Option<String>)> = vec![(0, None)];
 
-        data.is_barrel = path.value().ends_with("__init__.py");
+        data.is_barrel = path.value.ends_with("__init__.py");
 
         for (idx_zero, line) in lines.iter().enumerate() {
             let stripped = line.trim();
@@ -372,7 +383,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
 
     fn get_class_attributes(&self, path: &FilePath) -> ResponseData {
         let mut attrs = HashMap::new();
-        if let Ok(content) = std::fs::read_to_string(&path.value()) {
+        if let Ok(content) = std::fs::read_to_string(&path.value) {
             let lines: Vec<&str> = content.lines().collect();
             let mut in_class = false;
             let mut class_name = String::new();
@@ -426,7 +437,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
         if !self.is_barrel_file(path).value() {
             return SuccessStatus::new(false);
         }
-        if let Ok(content) = fs::read_to_string(&path.value()) {
+        if let Ok(content) = fs::read_to_string(&path.value) {
             SuccessStatus::new(content.contains("__all__"))
         } else {
             SuccessStatus::new(false)
@@ -439,7 +450,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
         primitive_types: &PrimitiveTypeList,
     ) -> PrimitiveViolationList {
         let mut violations = Vec::new();
-        let content = match fs::read_to_string(&path.value()) {
+        let content = match fs::read_to_string(&path.value) {
             Ok(c) => c,
             Err(_) => return PrimitiveViolationList { values: violations },
         };
@@ -447,7 +458,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
         let prim_set: HashSet<String> = primitive_types
             .values
             .iter()
-            .map(|p| p.value().to_string())
+            .map(|p| p.value.clone())
             .collect();
 
         for (idx_zero, line) in content.lines().enumerate() {
@@ -558,10 +569,10 @@ impl ISourceParserPort for ASTPythonParserAdapter {
     }
 
     fn is_symbol_exported(&self, path: &FilePath, symbol: &SymbolName) -> SuccessStatus {
-        if let Ok(content) = fs::read_to_string(&path.value()) {
+        if let Ok(content) = fs::read_to_string(&path.value) {
             for line in content.lines() {
                 let stripped = line.trim();
-                if stripped.starts_with("__all__") && stripped.contains(symbol.value()) {
+                if stripped.starts_with("__all__") && stripped.contains(&symbol.value) {
                     return SuccessStatus::new(true);
                 }
             }
@@ -622,12 +633,11 @@ impl ISourceParserPort for ASTPythonParserAdapter {
     }
 
     fn is_barrel_file(&self, path: &FilePath) -> BooleanVO {
-        BooleanVO::new(path.value().ends_with("__init__.py"))
+        BooleanVO::new(path.value.ends_with("__init__.py"))
     }
 
     fn get_stem(&self, path: &FilePath) -> SymbolName {
-        let path_val = path.value();
-        let p = std::path::Path::new(&path_val);
+        let p = std::path::Path::new(&path.value);
         SymbolName::new(
             p.file_stem()
                 .and_then(|s| s.to_str())
@@ -637,7 +647,7 @@ impl ISourceParserPort for ASTPythonParserAdapter {
     }
 
     fn is_entry_point(&self, path: &FilePath) -> BooleanVO {
-        BooleanVO::new(path.value().ends_with("main.py") || path.value().ends_with("__main__.py"))
+        BooleanVO::new(path.value.ends_with("main.py") || path.value.ends_with("__main__.py"))
     }
 
     fn get_supported_extensions(&self) -> PatternList {

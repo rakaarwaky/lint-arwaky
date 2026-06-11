@@ -11,7 +11,7 @@ pub fn compute_score(results: &[LintResult]) -> f64 {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct FileFormat {
-    pub(crate) name: String,
+    pub name: String,
 }
 
 impl FileFormat {

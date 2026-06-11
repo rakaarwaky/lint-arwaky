@@ -1,13 +1,10 @@
-// PURPOSE: source-parsing — scanners, parsers, collectors, providers
-// Depends on: shared-common (taxonomy/contract types)
-
-pub use shared::IPathNormalizationPort;
-pub use shared::ISourceParserPort;
-pub use shared::IScannerProviderPort;
-pub use shared::{DirectoryPath, FilePath};
-pub use shared::{FilePathList, RenamedFile, RenamedFileList};
-pub use shared::SourceParserError;
-
+// PURPOSE: Module declarations and re-exports for source-parsing (scanners, parsers, collectors, providers, VOs)
+pub mod contract_path_normalization_port;
+pub use contract_path_normalization_port::IPathNormalizationPort;
+pub mod contract_parser_port;
+pub use contract_parser_port::ISourceParserPort;
+pub mod contract_scanner_provider_port;
+pub use contract_scanner_provider_port::IScannerProviderPort;
 pub mod infrastructure_file_collector;
 pub use infrastructure_file_collector::FileCollectorProvider;
 pub mod infrastructure_js_scanner;
@@ -20,6 +17,12 @@ pub mod infrastructure_py_scanner;
 pub use infrastructure_py_scanner::ASTPythonParserAdapter;
 pub mod infrastructure_rust_scanner;
 pub use infrastructure_rust_scanner::ASTRustParserAdapter;
+pub mod taxonomy_parser_error;
+pub use taxonomy_parser_error::{SourceParserError, SyntaxErrorVO};
+pub mod taxonomy_paths_vo;
+pub use taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
+pub mod taxonomy_path_vo;
+pub use taxonomy_path_vo::{DirectoryPath, FilePath};
 pub mod infrastructure_barrel_provider;
 pub use infrastructure_barrel_provider::BarrelImportResolver;
 pub mod source_parsing_container;

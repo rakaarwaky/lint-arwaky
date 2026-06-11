@@ -1,2 +1,1 @@
-pub use shared::FilePath;
-pub use shared::DirectoryPath;
+pub use shared_common::taxonomy_path_vo::*;

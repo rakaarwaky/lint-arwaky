@@ -7,7 +7,7 @@ use std::hash::{Hash, Hasher};
 /// Adapter/tool identifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct AdapterName {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl AdapterName {

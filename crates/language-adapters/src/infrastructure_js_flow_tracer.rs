@@ -2,10 +2,10 @@
 
 use language_adapters::contract_flow_port::IJavascriptFlowPort;
 use language_adapters::taxonomy_semantic_error::SemanticError;
-use shared::taxonomy_common_error::ErrorMessage;
-use shared::taxonomy_common_vo::DataFlowList;
-use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_vo::DataFlowList;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_name_vo::SymbolName;
 use source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
 

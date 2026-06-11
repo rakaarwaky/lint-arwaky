@@ -27,7 +27,7 @@ impl NameVariants {
 #[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 pub struct SymbolName {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl SymbolName {

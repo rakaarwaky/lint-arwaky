@@ -4,13 +4,26 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::sync::LazyLock;
 
-use shared::taxonomy_import_source_vo::{ImportInfo, ImportInfoList, PrimitiveViolation, PrimitiveViolationList};
-use shared::taxonomy_naming_list_vo::PrimitiveTypeList;
-use shared::taxonomy_job_vo::{ResponseData, SuccessStatus};
-use shared::{
-    Cause, ErrorMessage, BooleanVO, ColumnNumber, Count, LineNumber, PatternList,
-    ErrorCode, SymbolName, MetadataVO, ISourceParserPort, SourceParserError, FilePath,
-};
+use code_analysis::taxonomy_import_source_vo::ImportInfo;
+use code_analysis::taxonomy_import_source_vo::ImportInfoList;
+use code_analysis::taxonomy_import_source_vo::PrimitiveViolation;
+use code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
+use language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
+use shared_common::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared_common::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_common_error::Cause;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_vo::BooleanVO;
+use shared_common::taxonomy_common_vo::ColumnNumber;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_suggestion_vo::MetadataVO;
+use source_parsing::contract_parser_port::ISourceParserPort;
+use source_parsing::taxonomy_parser_error::SourceParserError;
+use source_parsing::taxonomy_path_vo::FilePath;
 
 static USE_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^(?:pub\s+)?use\s+([^;]+);").ok());
@@ -53,7 +66,7 @@ impl ASTRustParserAdapter {
     }
 
     fn read_and_parse(&self, path: &FilePath) -> Result<ParsedData, SourceParserError> {
-        let content = fs::read_to_string(&path.value()).map_err(|e| SourceParserError {
+        let content = fs::read_to_string(&path.value).map_err(|e| SourceParserError {
             path: path.clone(),
             message: ErrorMessage::new(format!("Failed to read file: {}", e)),
             error_code: ErrorCode::raw("FILE_READ_ERROR"),
@@ -359,7 +372,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
 
     fn get_class_attributes(&self, path: &FilePath) -> ResponseData {
         let mut attrs = HashMap::new();
-        if let Ok(content) = std::fs::read_to_string(&path.value()) {
+        if let Ok(content) = std::fs::read_to_string(&path.value) {
             let lines: Vec<&str> = content.lines().collect();
             let mut in_struct = false;
             let mut struct_name = String::new();
@@ -429,7 +442,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
         primitive_types: &PrimitiveTypeList,
     ) -> PrimitiveViolationList {
         let mut violations = Vec::new();
-        let content = match fs::read_to_string(&path.value()) {
+        let content = match fs::read_to_string(&path.value) {
             Ok(c) => c,
             Err(_) => return PrimitiveViolationList { values: Vec::new() },
         };
@@ -437,7 +450,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
         let prim_keywords: Vec<String> = primitive_types
             .values
             .iter()
-            .map(|s| s.value().to_string())
+            .map(|s| s.value.clone())
             .collect();
 
         for (idx_zero, line) in content.lines().enumerate() {
@@ -535,7 +548,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
     fn is_symbol_exported(&self, path: &FilePath, symbol: &SymbolName) -> SuccessStatus {
         if let Ok(data) = self.read_and_parse(path) {
             SuccessStatus {
-                value: data.exported.contains(&symbol.value().to_string()),
+                value: data.exported.contains(&symbol.value),
             }
         } else {
             SuccessStatus { value: false }
@@ -587,19 +600,19 @@ impl ISourceParserPort for ASTRustParserAdapter {
     }
 
     fn is_barrel_file(&self, path: &FilePath) -> BooleanVO {
-        let path_str = path.value().replace('\\', "/");
+        let path_str = path.value.replace('\\', "/");
         BooleanVO::new(path_str.ends_with("/mod.rs") || path_str.ends_with("/lib.rs"))
     }
 
     fn get_stem(&self, path: &FilePath) -> SymbolName {
-        let path_str = path.value().replace('\\', "/");
-        let basename = path_str.split('/').next_back().unwrap_or(&path.value());
+        let path_str = path.value.replace('\\', "/");
+        let basename = path_str.split('/').next_back().unwrap_or(&path.value);
         SymbolName::new(basename.replace(".rs", ""))
     }
 
     fn is_entry_point(&self, path: &FilePath) -> BooleanVO {
-        let path_str = path.value().replace('\\', "/");
-        let basename = path_str.split('/').next_back().unwrap_or(&path.value());
+        let path_str = path.value.replace('\\', "/");
+        let basename = path_str.split('/').next_back().unwrap_or(&path.value);
         BooleanVO::new(basename == "main.rs" || basename == "lib.rs" || basename == "mod.rs")
     }
 

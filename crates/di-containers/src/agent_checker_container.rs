@@ -31,7 +31,7 @@ use role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
 use role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
 use std::sync::Arc;
 
 pub struct CheckerContainer {

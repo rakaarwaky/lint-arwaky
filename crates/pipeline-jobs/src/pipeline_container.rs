@@ -1,8 +1,8 @@
 // PURPOSE: PipelineContainer — wiring for pipeline-jobs feature (root layer, wiring only)
 use std::sync::Arc;
-use crate::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
-use crate::contract_output_aggregate::PipelineOutputAggregate;
-use crate::contract_registry_port::IJobRegistryPort;
+use crate::pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
+use crate::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
+use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 
 pub struct PipelineContainer {
     extended_aggregate: Arc<dyn PipelineExtendedOrchestratorAggregate>,
@@ -13,13 +13,13 @@ impl PipelineContainer {
     pub fn new() -> Self {
         Self {
             extended_aggregate: Arc::new(
-                crate::agent_pipeline_extended_orchestrator::PipelineExtendedOrchestrator::new(),
+                crate::pipeline_jobs::agent_pipeline_extended_orchestrator::PipelineExtendedOrchestrator::new(),
             ),
             output_aggregate: Arc::new(
-                crate::agent_pipeline_extended_orchestrator::ExtendedPipelineOutput::new(
-                    crate::taxonomy_job_vo::SuccessStatus::new(true),
-                    crate::taxonomy_action_vo::JobId::new("default"),
-                    Some(crate::taxonomy_job_vo::ResponseData {
+                crate::pipeline_jobs::agent_pipeline_extended_orchestrator::ExtendedPipelineOutput::new(
+                    crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus::new(true),
+                    crate::pipeline_jobs::taxonomy_action_vo::JobId::new("default"),
+                    Some(crate::pipeline_jobs::taxonomy_job_vo::ResponseData {
                         value: None,
                         stdout: "default".to_string(),
                         stderr: String::new(),
@@ -44,7 +44,7 @@ impl PipelineContainer {
         use std::sync::OnceLock;
         static REGISTRY: OnceLock<Arc<dyn IJobRegistryPort>> = OnceLock::new();
         REGISTRY
-            .get_or_init(|| Arc::new(crate::infrastructure_registry_adapter::MemoryJobRegistryAdapter::new()))
+            .get_or_init(|| Arc::new(crate::pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter::new()))
             .clone()
     }
 }
@@ -53,3 +53,4 @@ impl Default for PipelineContainer {
         Self::new()
     }
 }
+

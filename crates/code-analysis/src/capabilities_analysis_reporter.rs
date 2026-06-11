@@ -2,16 +2,16 @@
 
 use async_trait::async_trait;
 
-use crate::IAnalysisProtocol;
-use crate::ArchitectureGovernanceEntity;
-use shared::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::taxonomy_score_vo::compute_score;
-use shared::taxonomy_severity_vo::Severity;
-use shared::AdapterName;
-use shared::{ColumnNumber, LineNumber, Score};
-use shared::ErrorCode;
-use shared::{ComplianceStatus, LintMessage};
-use shared::FilePath;
+use code_analysis::contract_analysis_protocol::IAnalysisProtocol;
+use code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use output_report::taxonomy_score_vo::compute_score;
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber, Score};
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
+use source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AnalysisReporter {
     history_path: String,
@@ -59,6 +59,7 @@ impl IAnalysisProtocol for AnalysisReporter {
         let report = self.run(path).await;
         let current_score = compute_score(&report.results.values.to_vec());
 
+        // Read history file (configurable via self.history_path)
         let history_path = std::path::Path::new(&path.value).join(&self.history_path);
         if history_path.exists() {
             if let Ok(content) = std::fs::read_to_string(&history_path) {

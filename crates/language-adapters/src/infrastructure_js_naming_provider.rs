@@ -2,9 +2,9 @@
 
 use language_adapters::contract_naming_port::INamingProviderPort;
 use language_adapters::taxonomy_naming_error::NamingError;
-use shared::taxonomy_common_error::ErrorMessage;
-use shared::taxonomy_name_vo::NameVariants;
-use shared::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_name_vo::NameVariants;
+use shared_common::taxonomy_name_vo::SymbolName;
 use once_cell::sync::Lazy;
 use regex::Regex;
 

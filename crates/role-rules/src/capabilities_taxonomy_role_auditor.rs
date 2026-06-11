@@ -1,11 +1,11 @@
 use output_report::taxonomy_result_vo::LintResult;
 use output_report::taxonomy_severity_vo::Severity;
 use role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
-use shared::taxonomy_name_vo::SymbolName;
-use shared::taxonomy_source_vo::SourceContentVO;
-use shared::taxonomy_violation_message_js_error::AesViolationJs;
-use shared::taxonomy_violation_message_py_error::AesViolationPy;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_source_vo::SourceContentVO;
+use shared_common::taxonomy_violation_message_js_error::AesViolationJs;
+use shared_common::taxonomy_violation_message_py_error::AesViolationPy;
+use shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use std::path::Path;
 
 fn has_suffix(file: &str, suffix: &str) -> bool {

@@ -1,6 +1,6 @@
 // PURPOSE: GitCommandsSurface — CLI surface for git integration (format patch, commit messages, PR review)
 use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use shared::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 use std::sync::Arc;
 

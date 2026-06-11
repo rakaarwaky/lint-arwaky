@@ -7,7 +7,7 @@ use std::hash::{Hash, Hasher};
 /// File path identifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct FilePath {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl FilePath {
@@ -115,7 +115,7 @@ impl Hash for FilePath {
 /// Directory path identifier.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Default)]
 pub struct DirectoryPath {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl DirectoryPath {

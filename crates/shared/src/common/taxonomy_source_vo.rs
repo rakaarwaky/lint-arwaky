@@ -6,7 +6,7 @@ use crate::source_parsing::taxonomy_path_vo::FilePath;
 #[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 pub struct ContentString {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl ContentString {

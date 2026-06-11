@@ -5,14 +5,14 @@ use output_report::taxonomy_result_vo::LintResultList;
 use output_report::taxonomy_severity_vo::Severity;
 use role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use role_rules::taxonomy_layer_names_vo::layer_surfaces;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
-use shared::taxonomy_definition_vo::LayerDefinition;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_source_vo::SourceContentVO;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_source_vo::SourceContentVO;
+use shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use source_parsing::taxonomy_path_vo::FilePath;
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -83,7 +83,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES0306",
                 Severity::HIGH,
-                shared::taxonomy_violation_message_rs_error::AesViolation::SurfaceRoleViolation { reason: None },
+                crate::shared_common::taxonomy_violation_message_rs_error::AesViolation::SurfaceRoleViolation { reason: None },
             ));
         }
     }

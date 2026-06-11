@@ -7,8 +7,8 @@ use tokio::process::Command;
 
 use cli_commands::contract_executor_port::ICommandExecutorPort;
 use pipeline_jobs::taxonomy_job_vo::ResponseData;
-use shared::taxonomy_common_vo::PatternList;
-use shared::taxonomy_duration_vo::Timeout;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_duration_vo::Timeout;
 use source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct StdioClient {

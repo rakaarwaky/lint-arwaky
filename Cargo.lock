@@ -133,15 +133,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
-name = "auto_fix"
+name = "auto_fix-arwaky"
 version = "1.10.11"
 dependencies = [
- "code_analysis",
- "output_report",
+ "code_analysis-arwaky",
+ "output_report-arwaky",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -355,22 +355,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
-name = "cli_commands"
+name = "cli_commands-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "auto_fix",
+ "auto_fix-arwaky",
  "clap",
- "code_analysis",
+ "code_analysis-arwaky",
  "console",
  "dialoguer",
  "futures",
- "output_report",
- "pipeline_jobs",
+ "output_report-arwaky",
+ "pipeline_jobs-arwaky",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
  "tokio",
 ]
 
@@ -393,18 +393,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "code_analysis"
+name = "code_analysis-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "chrono",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
- "tokio",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -441,16 +439,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cc14f565cf027a105f7a44ccf9e5b424348421a1d8952a8fc9d499d313107789"
 
 [[package]]
-name = "config_system"
+name = "config_system-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "import_rules",
- "pipeline_jobs",
+ "import_rules-arwaky",
+ "pipeline_jobs-arwaky",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -600,33 +598,33 @@ dependencies = [
 ]
 
 [[package]]
-name = "di_containers"
+name = "di_containers-arwaky"
 version = "1.10.11"
 dependencies = [
- "auto_fix",
- "cli_commands",
- "code_analysis",
- "config_system",
- "file_system",
- "file_watch",
- "git_hooks",
- "import_rules",
- "language_adapters",
- "lifecycle_state",
- "mcp_server",
- "metrics_service",
- "multi_project",
- "naming_rules",
- "orphan_detector",
- "output_report",
- "pipeline_jobs",
- "plugin_system",
- "project_setup",
- "role_rules",
+ "auto_fix-arwaky",
+ "cli_commands-arwaky",
+ "code_analysis-arwaky",
+ "config_system-arwaky",
+ "file_system-arwaky",
+ "file_watch-arwaky",
+ "git_hooks-arwaky",
+ "import_rules-arwaky",
+ "language_adapters-arwaky",
+ "lifecycle_state-arwaky",
+ "mcp_server-arwaky",
+ "metrics_service-arwaky",
+ "multi_project-arwaky",
+ "naming_rules-arwaky",
+ "orphan_detector-arwaky",
+ "output_report-arwaky",
+ "pipeline_jobs-arwaky",
+ "plugin_system-arwaky",
+ "project_setup-arwaky",
+ "role_rules-arwaky",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -756,25 +754,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f1f227452a390804cdb637b74a86990f2a7d7ba4b7d5693aac9b4dd6defd8d6"
 
 [[package]]
-name = "file_system"
+name = "file_system-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
-name = "file_watch"
+name = "file_watch-arwaky"
 version = "1.10.11"
 dependencies = [
- "async-trait",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -1000,16 +997,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "git_hooks"
+name = "git_hooks-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "output_report",
- "pipeline_jobs",
+ "output_report-arwaky",
+ "pipeline_jobs-arwaky",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -2124,16 +2121,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "import_rules"
+name = "import_rules-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "file_system",
- "output_report",
+ "file_system-arwaky",
+ "output_report-arwaky",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -2298,20 +2295,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "language_adapters"
+name = "language_adapters-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "code_analysis",
- "metrics_service",
+ "code_analysis-arwaky",
+ "metrics_service-arwaky",
  "once_cell",
- "output_report",
- "pipeline_jobs",
+ "output_report-arwaky",
+ "pipeline_jobs-arwaky",
  "regex",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
  "tracing",
 ]
 
@@ -2343,61 +2340,61 @@ dependencies = [
 ]
 
 [[package]]
-name = "lifecycle_state"
+name = "lifecycle_state-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "pipeline_jobs",
+ "pipeline_jobs-arwaky",
  "serde",
  "serde_json",
- "shared",
+ "shared_common-arwaky",
 ]
 
 [[package]]
-name = "lint_arwaky"
+name = "lint_arwaky-arwaky"
 version = "1.10.11"
 dependencies = [
  "anyhow",
  "async-trait",
- "auto_fix",
+ "auto_fix-arwaky",
  "chrono",
  "clap",
- "cli_commands",
- "code_analysis",
- "config_system",
+ "cli_commands-arwaky",
+ "code_analysis-arwaky",
+ "config_system-arwaky",
  "console",
  "ctrlc",
- "di_containers",
+ "di_containers-arwaky",
  "dialoguer",
  "dirs",
- "file_system",
- "file_watch",
+ "file_system-arwaky",
+ "file_watch-arwaky",
  "futures",
- "git_hooks",
- "import_rules",
- "language_adapters",
- "lifecycle_state",
+ "git_hooks-arwaky",
+ "import_rules-arwaky",
+ "language_adapters-arwaky",
+ "lifecycle_state-arwaky",
  "mcp-sdk-rs",
- "mcp_server",
- "metrics_service",
- "multi_project",
- "naming_rules",
+ "mcp_server-arwaky",
+ "metrics_service-arwaky",
+ "multi_project-arwaky",
+ "naming_rules-arwaky",
  "once_cell",
- "orphan_detector",
- "output_report",
- "pipeline_jobs",
- "plugin_system",
- "project_setup",
+ "orphan_detector-arwaky",
+ "output_report-arwaky",
+ "pipeline_jobs-arwaky",
+ "plugin_system-arwaky",
+ "project_setup-arwaky",
  "rand 0.10.1",
  "regex",
  "reqwest",
- "role_rules",
+ "role_rules-arwaky",
  "rustsec",
  "serde",
  "serde_json",
  "serde_yaml",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
  "thiserror 1.0.69",
  "tokio",
  "toml 1.1.2+spec-1.1.0",
@@ -2482,20 +2479,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "mcp_server"
+name = "mcp_server-arwaky"
 version = "1.10.11"
 dependencies = [
- "cli_commands",
- "code_analysis",
- "language_adapters",
+ "cli_commands-arwaky",
+ "code_analysis-arwaky",
+ "language_adapters-arwaky",
  "once_cell",
- "output_report",
- "pipeline_jobs",
+ "output_report-arwaky",
+ "pipeline_jobs-arwaky",
  "regex",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
  "tracing",
 ]
 
@@ -2515,14 +2512,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "metrics_service"
+name = "metrics_service-arwaky"
 version = "1.10.11"
 dependencies = [
- "async-trait",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -2553,28 +2549,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "multi_project"
+name = "multi_project-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
-name = "naming_rules"
+name = "naming_rules-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "import_rules",
- "output_report",
+ "import_rules-arwaky",
+ "output_report-arwaky",
  "regex",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -2713,29 +2709,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
-name = "orphan_detector"
+name = "orphan_detector-arwaky"
 version = "1.10.11"
 dependencies = [
- "code_analysis",
- "output_report",
+ "code_analysis-arwaky",
+ "output_report-arwaky",
  "regex",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
-name = "output_report"
+name = "output_report-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "code_analysis",
- "pipeline_jobs",
+ "code_analysis-arwaky",
+ "pipeline_jobs-arwaky",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -2774,17 +2770,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
-name = "pipeline_jobs"
+name = "pipeline_jobs-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "chrono",
- "multi_project",
- "rand 0.8.6",
+ "multi_project-arwaky",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
  "tokio",
 ]
 
@@ -2804,15 +2798,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "plugin_system"
+name = "plugin_system-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "pipeline_jobs",
+ "pipeline_jobs-arwaky",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -2883,16 +2877,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "project_setup"
+name = "project_setup-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "cli_commands",
- "pipeline_jobs",
+ "cli_commands-arwaky",
+ "pipeline_jobs-arwaky",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -3172,18 +3166,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "role_rules"
+name = "role_rules-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "import_rules",
+ "import_rules-arwaky",
  "once_cell",
- "output_report",
+ "output_report-arwaky",
  "regex",
  "serde",
  "serde_json",
- "shared",
- "source_parsing",
+ "shared_common-arwaky",
+ "source_parsing-arwaky",
 ]
 
 [[package]]
@@ -3482,7 +3476,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "shared"
+name = "shared-arwaky"
+version = "1.10.11"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "shared_common-arwaky"
 version = "1.10.11"
 dependencies = [
  "anyhow",
@@ -3571,13 +3578,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "source_parsing"
+name = "source_parsing-arwaky"
 version = "1.10.11"
 dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared",
+ "shared_common-arwaky",
 ]
 
 [[package]]

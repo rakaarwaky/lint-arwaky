@@ -26,7 +26,7 @@ impl std::fmt::Display for AgentStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AgentStatusVO {
-    pub(crate) value: AgentStatus,
+    pub value: AgentStatus,
 }
 
 impl AgentStatusVO {

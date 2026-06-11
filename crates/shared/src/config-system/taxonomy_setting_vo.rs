@@ -15,7 +15,7 @@ use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 #[serde(transparent)]
 #[derive(Default)]
 pub struct ActualValue {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl ActualValue {
@@ -98,7 +98,7 @@ impl<'de> serde::Deserialize<'de> for ActualValue {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct ExpectedValue {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl ExpectedValue {

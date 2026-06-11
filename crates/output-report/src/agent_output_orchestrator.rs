@@ -2,9 +2,9 @@
 use output_report::contract_client_aggregate::OutputClientAggregate;
 use output_report::contract_output_aggregate::IReportFormatterProtocol;
 use output_report::taxonomy_score_vo::FileFormat;
-use shared::taxonomy_layer_vo::Identity;
-use shared::taxonomy_source_vo::ContentString;
-use shared::taxonomy_suggestion_vo::LogOutput;
+use shared_common::taxonomy_layer_vo::Identity;
+use shared_common::taxonomy_source_vo::ContentString;
+use shared_common::taxonomy_suggestion_vo::LogOutput;
 use source_parsing::taxonomy_path_vo::FilePath;
 use std::io::{self, Write};
 

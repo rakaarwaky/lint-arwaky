@@ -1,11 +1,12 @@
-// PURPOSE: detect_source_dir + collect_source_files — entry point for codebase scan orchestration
+// PURPOSE: detect_source_dir + collect_source_files — entry point for codebase scan orchestration, discovers source dirs and scans all files for AES compliance
 use std::path::Path;
 
-use crate::IArchLintProtocol;
-use shared::taxonomy_config_vo::default_aes_config;
-use shared::taxonomy_result_vo::LintResult;
-use shared::taxonomy_result_vo::LintResultList;
-use shared::{DirectoryPath, FilePath};
+use code_analysis::contract_lint_protocol::IArchLintProtocol;
+use config_system::taxonomy_config_vo::default_aes_config;
+use di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_result_vo::LintResultList;
+use source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
     for name in &["src-rust", "src-python", "src-javascript", "src"] {
@@ -27,6 +28,7 @@ impl Default for CodebaseScanOrchestrator {
 
 impl CodebaseScanOrchestrator {
     pub fn new() -> Self {
+        let _: Option<&dyn ServiceContainerAggregate> = None;
         Self {}
     }
 
@@ -51,7 +53,7 @@ impl CodebaseScanOrchestrator {
         let root_dir = src_dir.to_string_lossy().to_string();
         let files_str: Vec<String> = files.iter().map(|f| f.value.clone()).collect();
         let orchestrator =
-            crate::agent_checking_orchestrator::LintCheckingOrchestrator::new();
+            crate::code_analysis::agent_checking_orchestrator::LintCheckingOrchestrator::new();
         let rt = match tokio::runtime::Runtime::new() {
             Ok(runtime) => runtime,
             Err(_) => return Vec::new(),
@@ -123,6 +125,7 @@ impl CodebaseScanPipelineOrchestrator {
     }
 }
 
+/// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree.
 fn collect_source_files(dir_path: &DirectoryPath) -> Vec<FilePath> {
     let mut files = Vec::new();
     if let Ok(entries) = std::fs::read_dir(&dir_path.value) {

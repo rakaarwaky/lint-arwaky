@@ -29,7 +29,7 @@ impl std::fmt::Display for JobStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SuccessStatus {
-    pub(crate) value: bool,
+    pub value: bool,
 }
 
 impl SuccessStatus {
@@ -61,7 +61,7 @@ impl std::ops::Deref for SuccessStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LintStatusActionArgs {
     #[serde(default)]
-    pub(crate) value: HashMap<String, serde_json::Value>,
+    pub value: HashMap<String, serde_json::Value>,
 }
 
 impl Default for LintStatusActionArgs {
@@ -87,7 +87,7 @@ impl LintStatusActionArgs {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ResponseData {
     #[serde(default)]
-    pub(crate) value: Option<serde_json::Value>,
+    pub value: Option<serde_json::Value>,
     #[serde(default)]
     pub stdout: String,
     #[serde(default)]
@@ -142,7 +142,7 @@ impl AdapterMetadata {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EnvContentVO {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl EnvContentVO {
@@ -165,7 +165,7 @@ impl std::fmt::Display for EnvContentVO {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct McpConfigVO {
     #[serde(default)]
-    pub(crate) value: HashMap<String, serde_json::Value>,
+    pub value: HashMap<String, serde_json::Value>,
 }
 
 impl McpConfigVO {

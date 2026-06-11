@@ -1,6 +1,6 @@
 // PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, env, mcp config, doctor)
 use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use shared::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 use std::sync::Arc;
 

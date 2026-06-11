@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/*"]
 
 [package]
-name = "lint_arwaky"
+name = "lint_arwaky-arwaky"
 version = "1.10.11"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
@@ -40,29 +40,29 @@ check_surfaces = ["check_agent"]
 
 [dependencies]
 # Workspace member crates
-shared = { path = "crates/shared" }
-source_parsing = { path = "crates/source-parsing" }
-naming_rules = { path = "crates/naming-rules" }
-import_rules = { path = "crates/import-rules" }
-output_report = { path = "crates/output-report" }
-pipeline_jobs = { path = "crates/pipeline-jobs" }
-code_analysis = { path = "crates/code-analysis" }
-auto_fix = { path = "crates/auto-fix" }
-cli_commands = { path = "crates/cli-commands" }
-config_system = { path = "crates/config-system" }
-di_containers = { path = "crates/di-containers" }
-file_system = { path = "crates/file-system" }
-file_watch = { path = "crates/file-watch" }
-git_hooks = { path = "crates/git-hooks" }
-language_adapters = { path = "crates/language-adapters" }
-lifecycle_state = { path = "crates/lifecycle-state" }
-mcp_server = { path = "crates/mcp-server" }
-metrics_service = { path = "crates/metrics-service" }
-multi_project = { path = "crates/multi-project" }
-orphan_detector = { path = "crates/orphan-detector" }
-plugin_system = { path = "crates/plugin-system" }
-project_setup = { path = "crates/project-setup" }
-role_rules = { path = "crates/role-rules" }
+shared_common = { package = "shared_common-arwaky", path = "crates/shared-common" }
+source_parsing = { package = "source_parsing-arwaky", path = "crates/source-parsing" }
+naming_rules = { package = "naming_rules-arwaky", path = "crates/naming-rules" }
+import_rules = { package = "import_rules-arwaky", path = "crates/import-rules" }
+output_report = { package = "output_report-arwaky", path = "crates/output-report" }
+pipeline_jobs = { package = "pipeline_jobs-arwaky", path = "crates/pipeline-jobs" }
+code_analysis = { package = "code_analysis-arwaky", path = "crates/code-analysis" }
+auto_fix = { package = "auto_fix-arwaky", path = "crates/auto-fix" }
+cli_commands = { package = "cli_commands-arwaky", path = "crates/cli-commands" }
+config_system = { package = "config_system-arwaky", path = "crates/config-system" }
+di_containers = { package = "di_containers-arwaky", path = "crates/di-containers" }
+file_system = { package = "file_system-arwaky", path = "crates/file-system" }
+file_watch = { package = "file_watch-arwaky", path = "crates/file-watch" }
+git_hooks = { package = "git_hooks-arwaky", path = "crates/git-hooks" }
+language_adapters = { package = "language_adapters-arwaky", path = "crates/language-adapters" }
+lifecycle_state = { package = "lifecycle_state-arwaky", path = "crates/lifecycle-state" }
+mcp_server = { package = "mcp_server-arwaky", path = "crates/mcp-server" }
+metrics_service = { package = "metrics_service-arwaky", path = "crates/metrics-service" }
+multi_project = { package = "multi_project-arwaky", path = "crates/multi-project" }
+orphan_detector = { package = "orphan_detector-arwaky", path = "crates/orphan-detector" }
+plugin_system = { package = "plugin_system-arwaky", path = "crates/plugin-system" }
+project_setup = { package = "project_setup-arwaky", path = "crates/project-setup" }
+role_rules = { package = "role_rules-arwaky", path = "crates/role-rules" }
 
 # External dependencies
 serde = { version = "1.0", features = ["derive"] }

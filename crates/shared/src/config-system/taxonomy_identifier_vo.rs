@@ -5,7 +5,7 @@ use serde::Serialize;
 #[serde(transparent)]
 #[derive(Default)]
 pub struct ConfigKey {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl ConfigKey {

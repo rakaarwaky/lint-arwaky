@@ -4,7 +4,7 @@ use serde::Serialize;
 #[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 pub struct FileContentVO {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl FileContentVO {
@@ -99,7 +99,7 @@ impl<'de> serde::Deserialize<'de> for FileContentVO {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct Identity {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl Identity {
@@ -194,7 +194,7 @@ impl<'de> serde::Deserialize<'de> for Identity {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct LayerNameVO {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl LayerNameVO {
@@ -288,7 +288,7 @@ impl<'de> serde::Deserialize<'de> for LayerNameVO {
 #[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 pub struct LineContentVO {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl LineContentVO {

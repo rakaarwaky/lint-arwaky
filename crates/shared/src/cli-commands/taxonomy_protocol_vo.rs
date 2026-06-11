@@ -91,7 +91,7 @@ impl TransportProtocol {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct TransportUrlVO {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl TransportUrlVO {

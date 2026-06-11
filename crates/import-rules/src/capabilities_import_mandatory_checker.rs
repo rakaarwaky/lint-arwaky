@@ -6,9 +6,9 @@ use import_rules::contract_rule_protocol::{
 };
 use output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use output_report::taxonomy_severity_vo::Severity;
-use shared::taxonomy_definition_vo::LayerDefinition;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
-use shared::{FileContentVO, Identity, LayerNameVO, SymbolName};
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use shared_common::{FileContentVO, Identity, LayerNameVO, SymbolName};
 use source_parsing::taxonomy_path_vo::FilePath;
 use source_parsing::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;

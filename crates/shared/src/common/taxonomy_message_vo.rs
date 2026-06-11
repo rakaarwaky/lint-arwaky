@@ -5,7 +5,7 @@ use serde::Serialize;
 #[serde(transparent)]
 #[derive(Default)]
 pub struct ComplianceStatus {
-    pub(crate) value: bool,
+    pub value: bool,
 }
 
 impl ComplianceStatus {
@@ -70,7 +70,7 @@ impl<'de> serde::Deserialize<'de> for ComplianceStatus {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct LintMessage {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl LintMessage {

@@ -3,8 +3,8 @@
 use language_adapters::contract_variant_port::INamingVariantPort;
 use language_adapters::taxonomy_naming_error::NamingError;
 use language_adapters::taxonomy_naming_list_vo::SymbolNameList;
-use shared::taxonomy_common_error::ErrorMessage;
-use shared::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_name_vo::SymbolName;
 use once_cell::sync::Lazy;
 use regex::Regex;
 

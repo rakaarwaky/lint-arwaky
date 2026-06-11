@@ -9,15 +9,15 @@ use language_adapters::taxonomy_adapter_error::AdapterError;
 use output_report::taxonomy_result_vo::LintResult;
 use output_report::taxonomy_result_vo::LintResultList;
 use output_report::taxonomy_severity_vo::Severity;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_error::ErrorMessage;
-use shared::taxonomy_common_vo::ColumnNumber;
-use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_common_vo::PatternList;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_message_vo::ComplianceStatus;
-use shared::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_vo::ColumnNumber;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
+use shared_common::taxonomy_message_vo::LintMessage;
 use source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
@@ -103,7 +103,7 @@ impl ILinterAdapterPort for RustLinterAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir.clone(),
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     180.0,
                 )),
             )
@@ -218,7 +218,7 @@ impl ILinterAdapterPort for RustLinterAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir,
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     180.0,
                 )),
             )

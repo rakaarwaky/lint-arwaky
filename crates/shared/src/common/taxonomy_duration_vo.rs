@@ -3,7 +3,7 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct Duration {
-    pub(crate) value: f64,
+    pub value: f64,
 }
 
 impl Duration {
@@ -71,7 +71,7 @@ impl<'de> serde::Deserialize<'de> for Duration {
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct Timeout {
-    pub(crate) value: f64,
+    pub value: f64,
 }
 
 impl Timeout {

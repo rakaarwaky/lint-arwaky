@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct ClassPath {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl ClassPath {
@@ -87,7 +87,7 @@ impl<'de> serde::Deserialize<'de> for ClassPath {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct DescriptionVO {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl DescriptionVO {
@@ -169,7 +169,7 @@ impl<'de> serde::Deserialize<'de> for DescriptionVO {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct LogOutput {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl LogOutput {
@@ -250,7 +250,7 @@ impl<'de> serde::Deserialize<'de> for LogOutput {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct MetadataVO {
-    pub(crate) value: std::collections::HashMap<String, serde_json::Value>,
+    pub value: std::collections::HashMap<String, serde_json::Value>,
 }
 
 impl MetadataVO {
@@ -265,7 +265,7 @@ impl MetadataVO {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct StdError {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl StdError {
@@ -347,7 +347,7 @@ impl<'de> serde::Deserialize<'de> for StdError {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct StdOutput {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl StdOutput {
@@ -429,7 +429,7 @@ impl<'de> serde::Deserialize<'de> for StdOutput {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct Suggestion {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl Suggestion {

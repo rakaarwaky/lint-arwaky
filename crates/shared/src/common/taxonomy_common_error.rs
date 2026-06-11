@@ -12,7 +12,7 @@ fn _use_mandatory_imports() {
 #[serde(transparent)]
 #[derive(Default)]
 pub struct Cause {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl Cause {
@@ -94,7 +94,7 @@ impl<'de> serde::Deserialize<'de> for Cause {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct Constraint {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl Constraint {
@@ -176,7 +176,7 @@ impl<'de> serde::Deserialize<'de> for Constraint {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct ExitCode {
-    pub(crate) value: i64,
+    pub value: i64,
 }
 
 impl ExitCode {
@@ -248,7 +248,7 @@ impl<'de> serde::Deserialize<'de> for ExitCode {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct FieldName {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl FieldName {
@@ -330,7 +330,7 @@ impl<'de> serde::Deserialize<'de> for FieldName {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct ModuleName {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl ModuleName {
@@ -412,7 +412,7 @@ impl<'de> serde::Deserialize<'de> for ModuleName {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
 pub struct PrimitiveTypeName {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl PrimitiveTypeName {

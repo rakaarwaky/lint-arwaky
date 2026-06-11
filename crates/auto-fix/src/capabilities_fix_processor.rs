@@ -5,10 +5,10 @@ use auto_fix::taxonomy_fix_vo::FixResult;
 use auto_fix::taxonomy_symbol_renamer_utility::SymbolRenamer;
 use code_analysis::contract_lint_protocol::IArchLintProtocol;
 use output_report::taxonomy_result_vo::LintResult;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::Count;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 

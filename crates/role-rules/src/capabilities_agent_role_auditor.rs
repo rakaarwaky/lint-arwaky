@@ -7,14 +7,14 @@ use import_rules::contract_rule_protocol::IAnalyzer;
 use output_report::taxonomy_result_vo::LintResult;
 use output_report::taxonomy_severity_vo::Severity;
 use role_rules::taxonomy_layer_names_vo::layer_infrastructure;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::ColumnNumber;
-use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_definition_vo::LayerDefinition;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::ColumnNumber;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_name_vo::SymbolName;
 pub fn aes0305_must_implement_contract(contract_name: &str) -> String {
     format!(
         "AES0305 AGENT_ROLE: Class must implement '{}'.",
@@ -29,8 +29,8 @@ pub fn aes0305_any_type(line: &str) -> String {
     )
 }
 
-use shared::taxonomy_source_vo::SourceContentVO;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared_common::taxonomy_source_vo::SourceContentVO;
+use shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AgentRoleChecker {}
@@ -164,7 +164,7 @@ impl AgentRoleChecker {
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
-                            shared::taxonomy_lint_vo::LocationList::new(),
+                            crate::shared_common::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }
@@ -225,7 +225,7 @@ impl AgentRoleChecker {
                         severity: Severity::MEDIUM,
                         enclosing_scope: None,
                         related_locations:
-                            shared::taxonomy_lint_vo::LocationList::new(),
+                            crate::shared_common::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }
@@ -320,7 +320,7 @@ impl AgentRoleChecker {
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
-                            shared::taxonomy_lint_vo::LocationList::new(),
+                            crate::shared_common::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }
@@ -419,7 +419,7 @@ impl AgentRoleChecker {
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
-                            shared::taxonomy_lint_vo::LocationList::new(),
+                            crate::shared_common::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }

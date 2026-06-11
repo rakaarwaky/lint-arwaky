@@ -6,7 +6,7 @@ use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ActionArgs {
-    pub(crate) value: MetadataVO,
+    pub value: MetadataVO,
 }
 
 impl ActionArgs {
@@ -21,7 +21,7 @@ impl ActionArgs {
 #[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]
 pub struct ActionName {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl ActionName {
@@ -115,7 +115,7 @@ impl<'de> serde::Deserialize<'de> for ActionName {
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(transparent)]
 pub struct JobId {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl JobId {

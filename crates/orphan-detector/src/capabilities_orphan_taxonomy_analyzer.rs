@@ -3,7 +3,7 @@ use code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use orphan_detector::contract_orphan_protocol::ITaxonomyOrphanProtocol;
 use output_report::taxonomy_severity_vo::Severity;
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
 use source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct TaxonomyOrphanAnalyzer {}

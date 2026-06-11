@@ -3,8 +3,8 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::IPathNormalizationPort;
-use crate::FilePath;
+use source_parsing::contract_path_normalization_port::IPathNormalizationPort;
+use source_parsing::taxonomy_path_vo::FilePath;
 
 /// Implementation of path normalization services for infrastructure.
 pub struct PathNormalizationProvider {}
@@ -15,7 +15,7 @@ impl IPathNormalizationPort for PathNormalizationProvider {
     /// Reads PHANTOM_ROOT and PROJECT_ROOT from environment.
     /// Defaults to current working directory for PROJECT_ROOT.
     fn normalize_path(&self, path: FilePath) -> FilePath {
-        let mut path_str = path.value().to_string();
+        let mut path_str = path.value.clone();
         if path_str.is_empty() {
             return path;
         }
@@ -78,9 +78,9 @@ impl IPathNormalizationPort for PathNormalizationProvider {
         path: FilePath,
         context_path: Option<FilePath>,
     ) -> FilePath {
-        let path_str = path.value().to_string();
-        let norm_path_vo = self.normalize_path(path.clone());
-        let norm_path = norm_path_vo.value().to_string();
+        let path_str = path.value.clone();
+        let norm_path_vo = self.normalize_path(path);
+        let norm_path = norm_path_vo.value.clone();
 
         if !norm_path.is_empty()
             && Path::new(&norm_path).is_absolute()
@@ -90,7 +90,7 @@ impl IPathNormalizationPort for PathNormalizationProvider {
         }
 
         if let Some(context) = context_path {
-            let ctx_str = context.value().to_string();
+            let ctx_str = context.value;
             let base_dir = if Path::new(&ctx_str).is_file() {
                 Path::new(&ctx_str)
                     .parent()

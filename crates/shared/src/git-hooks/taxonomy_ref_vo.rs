@@ -3,7 +3,7 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct GitRef {
-    pub(crate) value: String,
+    pub value: String,
 }
 
 impl GitRef {

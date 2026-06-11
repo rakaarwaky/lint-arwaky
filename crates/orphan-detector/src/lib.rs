@@ -30,11 +30,11 @@ pub use contract_orphan_protocol::{
 // Shared helper to build a lint result
 use output_report::taxonomy_result_vo::LintResult;
 use output_report::taxonomy_severity_vo::Severity;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_message_vo::LintMessage;
 use source_parsing::taxonomy_path_vo::FilePath;
 pub fn mk_orphan_result(file: &str, msg: &str, sev: Severity) -> LintResult {
     LintResult {

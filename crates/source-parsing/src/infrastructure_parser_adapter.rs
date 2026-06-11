@@ -1,12 +1,18 @@
 // PURPOSE: ParserAdapter — routes file extensions to the correct language-specific scanner
 
-use shared::taxonomy_import_source_vo::{ImportInfoList, PrimitiveViolationList};
-use shared::taxonomy_naming_list_vo::PrimitiveTypeList;
-use shared::taxonomy_job_vo::{ResponseData, SuccessStatus};
-use shared::{
-    BooleanVO, Count, PatternList, SymbolName, MetadataVO,
-    ISourceParserPort, SourceParserError, FilePath,
-};
+use code_analysis::taxonomy_import_source_vo::ImportInfoList;
+use code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
+use language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
+use shared_common::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared_common::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_common_vo::BooleanVO;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_suggestion_vo::MetadataVO;
+use source_parsing::contract_parser_port::ISourceParserPort;
+use source_parsing::taxonomy_parser_error::SourceParserError;
+use source_parsing::taxonomy_path_vo::FilePath;
 
 /// Composite source parser that delegates to language-specific adapters via DI.
 ///
@@ -37,7 +43,7 @@ impl SourceParserOrchestrator {
     }
 
     fn select_parser(&self, path: &FilePath) -> &dyn ISourceParserPort {
-        let p = &path.value();
+        let p = &path.value;
         if p.ends_with(".rs") {
             return &*self.rust_parser;
         }

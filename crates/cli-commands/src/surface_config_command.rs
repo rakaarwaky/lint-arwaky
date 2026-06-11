@@ -1,6 +1,6 @@
 // PURPOSE: handle_config — CLI surface for displaying current lint-arwaky configuration from YAML files
 use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use shared::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 
 use cli_commands::surface_core_command::ConfigCommands;

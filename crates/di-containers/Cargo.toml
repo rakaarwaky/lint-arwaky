@@ -1,30 +1,30 @@
 [package]
-name = "di_containers"
+name = "di_containers-arwaky"
 version = "1.10.11"
 edition = "2021"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-auto_fix = { path = "../auto-fix" }
-cli_commands = { path = "../cli-commands" }
-code_analysis = { path = "../code-analysis" }
-config_system = { path = "../config-system" }
-file_system = { path = "../file-system" }
-file_watch = { path = "../file-watch" }
-git_hooks = { path = "../git-hooks" }
-import_rules = { path = "../import-rules" }
-language_adapters = { path = "../language-adapters" }
-lifecycle_state = { path = "../lifecycle-state" }
-mcp_server = { path = "../mcp-server" }
-metrics_service = { path = "../metrics-service" }
-multi_project = { path = "../multi-project" }
-naming_rules = { path = "../naming-rules" }
-orphan_detector = { path = "../orphan-detector" }
-output_report = { path = "../output-report" }
-pipeline_jobs = { path = "../pipeline-jobs" }
-plugin_system = { path = "../plugin-system" }
-project_setup = { path = "../project-setup" }
-role_rules = { path = "../role-rules" }
-shared = { path = "../shared" }
-source_parsing = { path = "../source-parsing" }
+auto_fix = { package = "auto_fix-arwaky", path = "../auto-fix" }
+cli_commands = { package = "cli_commands-arwaky", path = "../cli-commands" }
+code_analysis = { package = "code_analysis-arwaky", path = "../code-analysis" }
+config_system = { package = "config_system-arwaky", path = "../config-system" }
+file_system = { package = "file_system-arwaky", path = "../file-system" }
+file_watch = { package = "file_watch-arwaky", path = "../file-watch" }
+git_hooks = { package = "git_hooks-arwaky", path = "../git-hooks" }
+import_rules = { package = "import_rules-arwaky", path = "../import-rules" }
+language_adapters = { package = "language_adapters-arwaky", path = "../language-adapters" }
+lifecycle_state = { package = "lifecycle_state-arwaky", path = "../lifecycle-state" }
+mcp_server = { package = "mcp_server-arwaky", path = "../mcp-server" }
+metrics_service = { package = "metrics_service-arwaky", path = "../metrics-service" }
+multi_project = { package = "multi_project-arwaky", path = "../multi-project" }
+naming_rules = { package = "naming_rules-arwaky", path = "../naming-rules" }
+orphan_detector = { package = "orphan_detector-arwaky", path = "../orphan-detector" }
+output_report = { package = "output_report-arwaky", path = "../output-report" }
+pipeline_jobs = { package = "pipeline_jobs-arwaky", path = "../pipeline-jobs" }
+plugin_system = { package = "plugin_system-arwaky", path = "../plugin-system" }
+project_setup = { package = "project_setup-arwaky", path = "../project-setup" }
+role_rules = { package = "role_rules-arwaky", path = "../role-rules" }
+shared_common = { package = "shared_common-arwaky", path = "../shared-common" }
+source_parsing = { package = "source_parsing-arwaky", path = "../source-parsing" }
