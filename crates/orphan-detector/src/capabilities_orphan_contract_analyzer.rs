@@ -1,10 +1,10 @@
 // PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
-use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
-use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use crate::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
+use code_analysis::taxonomy_analysis_vo::InheritanceMap;
+use code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
+use output_report::taxonomy_severity_vo::Severity;
+use source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
 
 pub struct ContractOrphanAnalyzer {}

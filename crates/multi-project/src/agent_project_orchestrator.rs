@@ -1,15 +1,15 @@
 // PURPOSE: ProjectOrchestrator — orchestrates multi-project governance operations
-use crate::multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
-use crate::multi_project::taxonomy_summary_vo::AggregatedResults;
-use crate::multi_project::taxonomy_summary_vo::ProjectResult;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_common_vo::PatternList;
-use crate::shared_common::taxonomy_common_vo::Score;
-use crate::shared_common::taxonomy_layer_vo::Identity;
-use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+use multi_project::taxonomy_summary_vo::AggregatedResults;
+use multi_project::taxonomy_summary_vo::ProjectResult;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_common_vo::Score;
+use shared_common::taxonomy_layer_vo::Identity;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
+use source_parsing::taxonomy_path_vo::FilePath;
+use source_parsing::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
 
 pub struct MultiProjectOrchestrator {}

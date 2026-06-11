@@ -1,9 +1,9 @@
 // PURPOSE: ImportOrchestrator — agent that orchestrates import rule checks
-use crate::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use crate::import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
-use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::FilePathList;
+use import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
+use output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use source_parsing::taxonomy_path_vo::FilePath;
+use source_parsing::FilePathList;
 use async_trait::async_trait;
 use std::path::Path;
 use std::sync::Arc;

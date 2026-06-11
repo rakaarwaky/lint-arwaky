@@ -1,9 +1,9 @@
 // PURPOSE: InfrastructureOrphanAnalyzer — IInfrastructureOrphanProtocol for orphan infrastructure detection
-use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use crate::orphan_detector::contract_orphan_protocol::IInfrastructureOrphanProtocol;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use orphan_detector::contract_orphan_protocol::IInfrastructureOrphanProtocol;
+use output_report::taxonomy_severity_vo::Severity;
+use source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct InfrastructureOrphanAnalyzer {}
 

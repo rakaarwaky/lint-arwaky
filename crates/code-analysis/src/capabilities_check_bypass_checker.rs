@@ -1,8 +1,8 @@
 // PURPOSE: BypassChecker — IBypassCheckerProtocol for AES022: detect #[allow], noqa, unwrap, panic
-use crate::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct BypassChecker {}
 

@@ -2,16 +2,16 @@
 
 use async_trait::async_trait;
 
-use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
-use crate::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
-use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use crate::output_report::taxonomy_score_vo::compute_score;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber, Score};
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use code_analysis::contract_analysis_protocol::IAnalysisProtocol;
+use code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use output_report::taxonomy_score_vo::compute_score;
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber, Score};
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
+use source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AnalysisReporter {
     history_path: String,

@@ -1,20 +1,20 @@
 // PURPOSE: PyQualityAdapter — ILinterAdapterPort implementation for Python quality tool integration
 
-use crate::cli_transport::contract_executor_port::ICommandExecutorPort;
-use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::output_report::taxonomy_result_vo::LintResultList;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
-use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use cli_transport::contract_executor_port::ICommandExecutorPort;
+use code_analysis::contract_adapter_port::ILinterAdapterPort;
+use code_analysis::taxonomy_operation_error::LinterOperationError;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_result_vo::LintResultList;
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::ColumnNumber;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
+use shared_common::taxonomy_message_vo::LintMessage;
+use source_parsing::contract_path_normalization_port::IPathNormalizationPort;
+use source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
 use std::sync::Arc;
 

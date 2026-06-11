@@ -1,8 +1,8 @@
 // PURPOSE: capabilities_project_target_resolver — resolves project target paths, triggers codebase scans, evaluates compliance results, and counts LOC
-use crate::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_severity_vo::Severity;
+use source_parsing::taxonomy_path_vo::FilePath;
 use std::path::{Path, PathBuf};
 
 pub struct ProjectTargetResolver {}

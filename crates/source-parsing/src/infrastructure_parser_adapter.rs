@@ -1,18 +1,18 @@
 // PURPOSE: ParserAdapter — routes file extensions to the correct language-specific scanner
 
-use crate::code_analysis::taxonomy_import_source_vo::ImportInfoList;
-use crate::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
-use crate::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
-use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use crate::shared_common::taxonomy_common_vo::BooleanVO;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_common_vo::PatternList;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
-use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
-use crate::source_parsing::taxonomy_parser_error::SourceParserError;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use code_analysis::taxonomy_import_source_vo::ImportInfoList;
+use code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
+use language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
+use pipeline_jobs::taxonomy_job_vo::ResponseData;
+use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_common_vo::BooleanVO;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_suggestion_vo::MetadataVO;
+use source_parsing::contract_parser_port::ISourceParserPort;
+use source_parsing::taxonomy_parser_error::SourceParserError;
+use source_parsing::taxonomy_path_vo::FilePath;
 
 /// Composite source parser that delegates to language-specific adapters via DI.
 ///

@@ -1,14 +1,14 @@
 // PURPOSE: Command: CLI surface for check — runs lint_path and resolves violations for a target path
 use std::sync::Arc;
 
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use futures::future;
 use std::process::ExitCode;
 
-use crate::code_analysis::{has_critical, lint_path, resolve_target};
-use crate::output_report::taxonomy_result_vo::LintResultList;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use code_analysis::{has_critical, lint_path, resolve_target};
+use output_report::taxonomy_result_vo::LintResultList;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct CheckCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,

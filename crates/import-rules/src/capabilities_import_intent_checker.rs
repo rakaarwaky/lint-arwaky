@@ -7,13 +7,13 @@
 //
 // Rule ini cek apakah import BENAR-BENAR digunakan sesuai intent.
 
-use crate::import_rules::contract_rule_protocol::IAnalyzer;
-use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
-use crate::shared_common::{Identity, LayerNameVO, SymbolName};
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use import_rules::contract_rule_protocol::IAnalyzer;
+use output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use shared_common::{Identity, LayerNameVO, SymbolName};
+use source_parsing::taxonomy_path_vo::FilePath;
+use source_parsing::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
 use std::sync::Arc;
 
@@ -100,8 +100,8 @@ impl ImportIntentChecker {
         if !has_real_usage {
             // Check if file actually imports taxonomy types
             let has_taxonomy_import = lines.iter().any(|l| {
-                l.contains("use crate::shared_common::taxonomy_")
-                    || l.contains("use crate::output_report::taxonomy_")
+                l.contains("use shared_common::taxonomy_")
+                    || l.contains("use output_report::taxonomy_")
             });
 
             if has_taxonomy_import {

@@ -1,18 +1,18 @@
 // PURPOSE: JSCallTracer — IFlowProviderPort implementation for JavaScript call chain tracing
 /// javascript_call_tracer — Semantic analysis adapter for JavaScript/TypeScript files.
-use crate::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
-use crate::language_adapters::taxonomy_naming_list_vo::CallChainList;
-use crate::language_adapters::taxonomy_naming_list_vo::SymbolNameList;
-use crate::language_adapters::taxonomy_semantic_error::SemanticError;
-use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_common_vo::DataFlowList;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_common_vo::ResponseDataList;
-use crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
+use language_adapters::taxonomy_naming_list_vo::CallChainList;
+use language_adapters::taxonomy_naming_list_vo::SymbolNameList;
+use language_adapters::taxonomy_semantic_error::SemanticError;
+use pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::DataFlowList;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_common_vo::ResponseDataList;
+use shared_common::taxonomy_lint_vo::ScopeRef;
+use shared_common::taxonomy_name_vo::SymbolName;
+use source_parsing::taxonomy_path_vo::DirectoryPath;
+use source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 use regex::Regex;
 use std::fs;

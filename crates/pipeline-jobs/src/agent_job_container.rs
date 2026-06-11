@@ -1,16 +1,16 @@
 // PURPOSE: JobContainer — IJobRegistryPort implementation using HashMap-based job registry
 
-use crate::pipeline_jobs::contract_registry_aggregate::JobRegistryAggregate;
-use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use crate::pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
-use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
-use crate::pipeline_jobs::taxonomy_action_vo::JobId;
-use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_common_vo::ResponseDataList;
-use crate::shared_common::taxonomy_duration_vo::Duration;
+use pipeline_jobs::contract_registry_aggregate::JobRegistryAggregate;
+use pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
+use pipeline_jobs::taxonomy_action_vo::ActionName;
+use pipeline_jobs::taxonomy_action_vo::JobId;
+use pipeline_jobs::taxonomy_job_vo::ResponseData;
+use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::ResponseDataList;
+use shared_common::taxonomy_duration_vo::Duration;
 use async_trait::async_trait;
 
 pub struct PipelineJobRegistry {

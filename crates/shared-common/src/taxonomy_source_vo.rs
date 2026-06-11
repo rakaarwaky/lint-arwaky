@@ -1,7 +1,7 @@
 // PURPOSE: ContentString, SourceContentVO — VOs for source code content representation
 use serde::{Deserialize, Serialize};
 
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Eq)]
 #[serde(transparent)]

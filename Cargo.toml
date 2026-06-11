@@ -1,3 +1,7 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
 [package]
 name = "lint_arwaky"
 version = "1.10.11"
@@ -35,6 +39,33 @@ check_agent = ["check_capabilities", "check_infrastructure"]
 check_surfaces = ["check_agent"]
 
 [dependencies]
+# Workspace member crates
+shared_common = { path = "crates/shared-common" }
+source_parsing = { path = "crates/source-parsing" }
+naming_rules = { path = "crates/naming-rules" }
+import_rules = { path = "crates/import-rules" }
+output_report = { path = "crates/output-report" }
+pipeline_jobs = { path = "crates/pipeline-jobs" }
+code_analysis = { path = "crates/code-analysis" }
+auto_fix = { path = "crates/auto-fix" }
+cli_commands = { path = "crates/cli-commands" }
+cli_transport = { path = "crates/cli-transport" }
+config_system = { path = "crates/config-system" }
+di_containers = { path = "crates/di-containers" }
+file_system = { path = "crates/file-system" }
+file_watch = { path = "crates/file-watch" }
+git_hooks = { path = "crates/git-hooks" }
+language_adapters = { path = "crates/language-adapters" }
+lifecycle_state = { path = "crates/lifecycle-state" }
+mcp_server = { path = "crates/mcp-server" }
+metrics_service = { path = "crates/metrics-service" }
+multi_project = { path = "crates/multi-project" }
+orphan_detector = { path = "crates/orphan-detector" }
+plugin_system = { path = "crates/plugin-system" }
+project_setup = { path = "crates/project-setup" }
+role_rules = { path = "crates/role-rules" }
+
+# External dependencies
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 regex = "1.10"

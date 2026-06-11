@@ -1,14 +1,15 @@
 // PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations via IArchLintProtocol, tracks fix results
-use crate::auto_fix::contract_fix_protocol::IFixProtocol;
-use crate::auto_fix::taxonomy_fix_applied_event::FixApplied;
-use crate::auto_fix::taxonomy_fix_vo::FixResult;
-use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use auto_fix::contract_fix_protocol::IFixProtocol;
+use auto_fix::taxonomy_fix_applied_event::FixApplied;
+use auto_fix::taxonomy_fix_vo::FixResult;
+use auto_fix::taxonomy_symbol_renamer_utility::SymbolRenamer;
+use code_analysis::contract_lint_protocol::IArchLintProtocol;
+use output_report::taxonomy_result_vo::LintResult;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct LintFixProcessor {
@@ -27,110 +28,8 @@ impl LintFixProcessor {
     pub fn with_dry_run(dry_run: bool, linter: Arc<dyn IArchLintProtocol>) -> Self {
         Self { dry_run, linter }
     }
-}
 
-impl IFixProtocol for LintFixProcessor {
-    fn execute(&self, path: &FilePath) -> FixResult {
-        let results = self.linter.run_self_lint(&path.value).values;
-
-        let naming_violations: Vec<_> = results
-            .iter()
-            .filter(|r| r.code.to_string().contains("AES011"))
-            .collect();
-        let bypass_violations: Vec<_> = results
-            .iter()
-            .filter(|r| r.code.to_string().contains("AES022"))
-            .collect();
-        let unused_import_violations: Vec<_> = results
-            .iter()
-            .filter(|r| r.code.to_string().contains("AES023"))
-            .collect();
-
-        let mut fixed_count = 0usize;
-        let mut total_fixable =
-            naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
-
-        let renamer = SimpleSymbolRenamer {};
-        for violation in &naming_violations {
-            let msg = violation.message.value();
-            if let Some(old_name) = msg
-                .split_whitespace()
-                .find(|w| w.contains('_') && w.len() > 3)
-            {
-                let new_name = if !old_name.contains('_') {
-                    format!("renamed_{}", old_name)
-                } else {
-                    let parts: Vec<&str> = old_name.split('_').collect();
-                    if parts.len() >= 3 {
-                        old_name.to_string()
-                    } else {
-                        format!("renamed_{}", old_name)
-                    }
-                };
-                if old_name != new_name {
-                    let count = renamer.rename_symbol(&path.value, old_name, &new_name);
-                    fixed_count += count;
-                    self.emit_fix_event(&violation.file, "AES011", count);
-                }
-            }
-        }
-
-        for violation in &bypass_violations {
-            let line = violation.line.value() as u32;
-            let fixed = self.fix_bypass_comments(&violation.file.value, line);
-            if fixed {
-                fixed_count += 1;
-                self.emit_fix_event(&violation.file, "AES022", 1);
-            } else {
-                total_fixable -= 1;
-            }
-        }
-
-        for violation in &unused_import_violations {
-            let line = violation.line.value() as u32;
-            let fixed = self.fix_unused_import(&violation.file.value, line);
-            if fixed {
-                fixed_count += 1;
-                self.emit_fix_event(&violation.file, "AES023", 1);
-            } else {
-                total_fixable -= 1;
-            }
-        }
-
-        let manual_steps = self.report_non_fixable(&results);
-
-        let output = if self.dry_run {
-            format!(
-                "Dry-run: would fix {} violations ({} AES011 naming, {} AES022 bypass, {} AES023 unused import)\nManual violations remaining:\n{}",
-                total_fixable,
-                naming_violations.len(),
-                bypass_violations.len(),
-                unused_import_violations.len(),
-                manual_steps.join("\n")
-            )
-        } else if fixed_count > 0 {
-            let after_results = self.linter.run_self_lint(&path.value).values;
-            let remaining = after_results.len();
-            format!(
-                "Fixed {} violations automatically ({} remaining)\nManual violations requiring attention:\n{}",
-                fixed_count,
-                remaining,
-                manual_steps.join("\n")
-            )
-        } else {
-            format!(
-                "No automatic fixes applied\nManual violations requiring attention:\n{}",
-                manual_steps.join("\n")
-            )
-        };
-
-        FixResult {
-            output: DescriptionVO::new(output),
-            error: None,
-        }
-    }
-
-    fn fix_bypass_comments(&self, file_path: &str, line: u32) -> bool {
+    fn fix_bypass_comments_impl(&self, file_path: &str, line: u32) -> bool {
         let path = std::path::Path::new(file_path);
         if !path.exists() {
             return false;
@@ -186,7 +85,7 @@ impl IFixProtocol for LintFixProcessor {
         std::fs::write(path, result).is_ok()
     }
 
-    fn fix_unused_import(&self, file_path: &str, line: u32) -> bool {
+    fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> bool {
         let path = std::path::Path::new(file_path);
         if !path.exists() {
             return false;
@@ -222,7 +121,7 @@ impl IFixProtocol for LintFixProcessor {
         std::fs::write(path, result).is_ok()
     }
 
-    fn emit_fix_event(&self, path: &FilePath, error_code: &str, changes: usize) {
+    fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {
         let event = FixApplied::new(
             path.clone(),
             AdapterName::raw("lint-fix-orchestrator"),
@@ -230,6 +129,120 @@ impl IFixProtocol for LintFixProcessor {
             Count::new(changes as i64),
         );
         let _ = event;
+    }
+}
+
+impl IFixProtocol for LintFixProcessor {
+    fn execute(&self, path: &FilePath) -> FixResult {
+        let results = self.linter.run_self_lint(&path.value).values;
+
+        let naming_violations: Vec<_> = results
+            .iter()
+            .filter(|r| r.code.to_string().contains("AES011"))
+            .collect();
+        let bypass_violations: Vec<_> = results
+            .iter()
+            .filter(|r| r.code.to_string().contains("AES022"))
+            .collect();
+        let unused_import_violations: Vec<_> = results
+            .iter()
+            .filter(|r| r.code.to_string().contains("AES023"))
+            .collect();
+
+        let mut fixed_count = 0usize;
+        let mut total_fixable =
+            naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
+
+        let renamer = SimpleSymbolRenamer {};
+        for violation in &naming_violations {
+            let msg = violation.message.value();
+            if let Some(old_name) = msg
+                .split_whitespace()
+                .find(|w| w.contains('_') && w.len() > 3)
+            {
+                let new_name = if !old_name.contains('_') {
+                    format!("renamed_{}", old_name)
+                } else {
+                    let parts: Vec<&str> = old_name.split('_').collect();
+                    if parts.len() >= 3 {
+                        old_name.to_string()
+                    } else {
+                        format!("renamed_{}", old_name)
+                    }
+                };
+                if old_name != new_name {
+                    let count = renamer.rename_symbol(&path.value, old_name, &new_name);
+                    fixed_count += count;
+                    self.emit_fix_event_impl(&violation.file, "AES011", count);
+                }
+            }
+        }
+
+        for violation in &bypass_violations {
+            let line = violation.line.value() as u32;
+            let fixed = self.fix_bypass_comments_impl(&violation.file.value, line);
+            if fixed {
+                fixed_count += 1;
+                self.emit_fix_event_impl(&violation.file, "AES022", 1);
+            } else {
+                total_fixable -= 1;
+            }
+        }
+
+        for violation in &unused_import_violations {
+            let line = violation.line.value() as u32;
+            let fixed = self.fix_unused_import_impl(&violation.file.value, line);
+            if fixed {
+                fixed_count += 1;
+                self.emit_fix_event_impl(&violation.file, "AES023", 1);
+            } else {
+                total_fixable -= 1;
+            }
+        }
+
+        let manual_steps = self.report_non_fixable(&results);
+
+        let output = if self.dry_run {
+            format!(
+                "Dry-run: would fix {} violations ({} AES011 naming, {} AES022 bypass, {} AES023 unused import)\nManual violations remaining:\n{}",
+                total_fixable,
+                naming_violations.len(),
+                bypass_violations.len(),
+                unused_import_violations.len(),
+                manual_steps.join("\n")
+            )
+        } else if fixed_count > 0 {
+            let after_results = self.linter.run_self_lint(&path.value).values;
+            let remaining = after_results.len();
+            format!(
+                "Fixed {} violations automatically ({} remaining)\nManual violations requiring attention:\n{}",
+                fixed_count,
+                remaining,
+                manual_steps.join("\n")
+            )
+        } else {
+            format!(
+                "No automatic fixes applied\nManual violations requiring attention:\n{}",
+                manual_steps.join("\n")
+            )
+        };
+
+        FixResult {
+            output: DescriptionVO::new(output),
+            error: None,
+        }
+    }
+
+    fn fix_bypass_comments(&self, file_path: &str, line: u32) -> bool {
+        self.fix_bypass_comments_impl(file_path, line)
+    }
+
+    fn fix_unused_import(&self, file_path: &str, line: u32) -> bool {
+        self.fix_unused_import_impl(file_path, line)
+    }
+
+    fn emit_fix_event(&self, path: &FilePath, error_code: &str, changes: usize) {
+        self.emit_fix_event_impl(path, error_code, changes)
     }
 
     fn report_non_fixable(&self, violations: &[LintResult]) -> Vec<String> {
@@ -258,6 +271,7 @@ impl IFixProtocol for LintFixProcessor {
     }
 }
 
+/// Simple in-place symbol renamer — replaces old_name with new_name in a single file.
 struct SimpleSymbolRenamer {}
 
 impl SimpleSymbolRenamer {

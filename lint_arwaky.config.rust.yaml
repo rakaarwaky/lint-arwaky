@@ -34,8 +34,8 @@ architecture:
       check_orphan: true
       suffix:
         # strict: vo, entity, error, event, constant = pure data, no logic
-        # relaxed: util, helper = boleh punya logic, boleh dipakai layer manapun
-        - strict: ["vo", "entity", "error", "event", "constant", "util", "helper"] 
+        # relaxed: utility, helper = boleh punya logic, boleh dipakai layer manapun
+        - strict: ["vo", "entity", "error", "event", "constant", "utility", "helper"] 
     contract:
       check_orphan: true
       suffix:

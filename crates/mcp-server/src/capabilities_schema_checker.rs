@@ -1,16 +1,16 @@
 // PURPOSE: SchemaChecker — validates JSON-RPC method schemas against server capabilities
 
-use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::output_report::taxonomy_result_vo::LintResultList;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_lint_vo::LocationList;
-use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use code_analysis::contract_analysis_protocol::IAnalysisProtocol;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_result_vo::LintResultList;
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::ColumnNumber;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_message_vo::LintMessage;
+use source_parsing::taxonomy_path_vo::FilePath;
 use once_cell::sync::Lazy;
 use regex::Regex;
 

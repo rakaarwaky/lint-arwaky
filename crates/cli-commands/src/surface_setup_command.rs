@@ -1,11 +1,11 @@
 // PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, env, mcp config, doctor)
-use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
+use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use shared_common::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use crate::cli_commands::surface_core_command::SetupCommands;
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use cli_commands::surface_core_command::SetupCommands;
+use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check
 fn _use_mandatory_imports() {

@@ -1,13 +1,13 @@
 // PURPOSE: ReportCommandsSurface — CLI surface for generating quality reports (plain, json, junit, sarif)
-use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use crate::output_report::contract_client_aggregate::OutputClientAggregate;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
+use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use output_report::contract_client_aggregate::OutputClientAggregate;
+use shared_common::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use crate::cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};
-use crate::code_analysis::{has_critical, lint_path, resolve_target};
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};
+use code_analysis::{has_critical, lint_path, resolve_target};
+use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 /// Satisfy AES030 orphan detection - surface references contract aggregates
 fn _use_contract_aggregates() {

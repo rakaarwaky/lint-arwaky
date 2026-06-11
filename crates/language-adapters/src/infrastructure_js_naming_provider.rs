@@ -1,10 +1,10 @@
 // PURPOSE: JSNamingProvider — INamingProviderPort implementation for JavaScript naming conventions
 
-use crate::language_adapters::contract_naming_port::INamingProviderPort;
-use crate::language_adapters::taxonomy_naming_error::NamingError;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_name_vo::NameVariants;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
+use language_adapters::contract_naming_port::INamingProviderPort;
+use language_adapters::taxonomy_naming_error::NamingError;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_name_vo::NameVariants;
+use shared_common::taxonomy_name_vo::SymbolName;
 use once_cell::sync::Lazy;
 use regex::Regex;
 

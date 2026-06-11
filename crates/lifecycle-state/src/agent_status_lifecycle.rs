@@ -1,10 +1,10 @@
 // PURPOSE: AgentStatusLifecycle — manages agent lifecycle states (starting, ready, scanning, stopping)
 
-use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
-use crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatusVO;
-use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::shared_common::taxonomy_common_vo::BooleanVO;
-use crate::shared_common::taxonomy_duration_vo::Duration;
+use lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
+use lifecycle_state::taxonomy_agent_status_vo::AgentStatusVO;
+use pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared_common::taxonomy_common_vo::BooleanVO;
+use shared_common::taxonomy_duration_vo::Duration;
 
 pub struct LifecycleStateManager {}
 

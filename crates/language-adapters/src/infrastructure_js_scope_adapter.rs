@@ -1,12 +1,12 @@
 // PURPOSE: JSScopeAdapter — ILanguageScopePort implementation for JavaScript scope resolution
 
-use crate::language_adapters::contract_scope_port::IJsTracerPort;
-use crate::language_adapters::taxonomy_semantic_error::SemanticError;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use language_adapters::contract_scope_port::IJsTracerPort;
+use language_adapters::taxonomy_semantic_error::SemanticError;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_lint_vo::ScopeRef;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
 
 pub struct JSScopeTracer {}

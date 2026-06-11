@@ -1,16 +1,16 @@
 // PURPOSE: ArchImportMandatoryChecker — AES002: enforce mandatory import rules per layer definition and scope rules
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::import_rules::contract_import_parser_port::IImportParserPort;
-use crate::import_rules::contract_rule_protocol::{
+use config_system::taxonomy_config_vo::ArchitectureConfig;
+use import_rules::contract_import_parser_port::IImportParserPort;
+use import_rules::contract_rule_protocol::{
     IAnalyzer, IArchImportProtocol, IArchRuleProtocol,
 };
-use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
-use crate::shared_common::{FileContentVO, Identity, LayerNameVO, SymbolName};
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use shared_common::{FileContentVO, Identity, LayerNameVO, SymbolName};
+use source_parsing::taxonomy_path_vo::FilePath;
+use source_parsing::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
 use std::sync::Arc;
 

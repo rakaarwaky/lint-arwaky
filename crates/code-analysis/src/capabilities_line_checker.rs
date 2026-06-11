@@ -2,11 +2,11 @@
 use std::fs;
 use std::path::Path;
 
-use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct ArchLineChecker {}
 

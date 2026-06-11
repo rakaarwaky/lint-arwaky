@@ -1,15 +1,15 @@
 // PURPOSE: JobRegistryAdapter — IJobRegistryPort implementation using in-memory HashMap and background notifier
 
-use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
-use crate::pipeline_jobs::taxonomy_action_vo::JobId;
-use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use crate::pipeline_jobs::taxonomy_registry_error::JobError;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_common_vo::ResponseDataList;
-use crate::shared_common::taxonomy_duration_vo::Duration;
+use pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use pipeline_jobs::taxonomy_action_vo::ActionName;
+use pipeline_jobs::taxonomy_action_vo::JobId;
+use pipeline_jobs::taxonomy_job_vo::ResponseData;
+use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use pipeline_jobs::taxonomy_registry_error::JobError;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::ResponseDataList;
+use shared_common::taxonomy_duration_vo::Duration;
 use std::collections::HashMap;
 use tokio::sync::Mutex;
 

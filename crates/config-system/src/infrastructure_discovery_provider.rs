@@ -1,12 +1,12 @@
 // PURPOSE: ConfigDiscoveryProvider — IDiscoveryPort implementation for finding config files in filesystem
 
-use crate::config_system::contract_discovery_port::IConfigDiscoveryPort;
-use crate::config_system::taxonomy_config_error::ConfigError;
-use crate::config_system::taxonomy_config_vo::default_aes_config;
-use crate::config_system::taxonomy_config_vo::parse_config_yaml;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use config_system::contract_discovery_port::IConfigDiscoveryPort;
+use config_system::taxonomy_config_error::ConfigError;
+use config_system::taxonomy_config_vo::default_aes_config;
+use config_system::taxonomy_config_vo::parse_config_yaml;
+use config_system::taxonomy_config_vo::ArchitectureConfig;
+use source_parsing::taxonomy_path_vo::DirectoryPath;
+use source_parsing::taxonomy_path_vo::FilePath;
 use std::env;
 use std::path::Path;
 

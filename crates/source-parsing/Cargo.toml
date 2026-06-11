@@ -1,0 +1,14 @@
+[package]
+name = "source_parsing"
+version = "1.10.11"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+regex = "1.10"
+code_analysis = { path = "../code-analysis" }
+file_system = { path = "../file-system" }
+language_adapters = { path = "../language-adapters" }
+pipeline_jobs = { path = "../pipeline-jobs" }
+shared_common = { path = "../shared-common" }

@@ -2,9 +2,9 @@
 
 use std::collections::HashMap;
 
-use crate::pipeline_jobs::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
-use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
+use pipeline_jobs::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
+use project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use source_parsing::taxonomy_path_vo::DirectoryPath;
 
 /// Business logic for generating setup and configuration artifacts.
 pub struct SetupManagementProcessor {}

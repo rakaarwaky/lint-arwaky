@@ -1,0 +1,31 @@
+[package]
+name = "di_containers"
+version = "1.10.11"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+auto_fix = { path = "../auto-fix" }
+cli_commands = { path = "../cli-commands" }
+cli_transport = { path = "../cli-transport" }
+code_analysis = { path = "../code-analysis" }
+config_system = { path = "../config-system" }
+file_system = { path = "../file-system" }
+file_watch = { path = "../file-watch" }
+git_hooks = { path = "../git-hooks" }
+import_rules = { path = "../import-rules" }
+language_adapters = { path = "../language-adapters" }
+lifecycle_state = { path = "../lifecycle-state" }
+mcp_server = { path = "../mcp-server" }
+metrics_service = { path = "../metrics-service" }
+multi_project = { path = "../multi-project" }
+naming_rules = { path = "../naming-rules" }
+orphan_detector = { path = "../orphan-detector" }
+output_report = { path = "../output-report" }
+pipeline_jobs = { path = "../pipeline-jobs" }
+plugin_system = { path = "../plugin-system" }
+project_setup = { path = "../project-setup" }
+role_rules = { path = "../role-rules" }
+shared_common = { path = "../shared-common" }
+source_parsing = { path = "../source-parsing" }

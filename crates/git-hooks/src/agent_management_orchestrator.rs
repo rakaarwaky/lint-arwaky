@@ -1,11 +1,11 @@
 // PURPOSE: ManagementOrchestrator — orchestrates git hook management (format patch, commit gen, PR review)
-use crate::git_hooks::contract_manager_port::IHookManagerPort;
-use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
-use crate::git_hooks::taxonomy_hook_error::GitHookError;
-use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_layer_vo::Identity;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use git_hooks::contract_manager_port::IHookManagerPort;
+use git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use git_hooks::taxonomy_hook_error::GitHookError;
+use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_layer_vo::Identity;
+use source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::OnceLock;
 
 /// Satisfy AES030 orphan detection - agent references contract ports/protocols

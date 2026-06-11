@@ -1,10 +1,10 @@
 // PURPOSE: PyVariants — Python naming variant builder (snake_case, PascalCase, SCREAMING_SNAKE)
 
-use crate::language_adapters::contract_variant_port::INamingVariantPort;
-use crate::language_adapters::taxonomy_naming_error::NamingError;
-use crate::language_adapters::taxonomy_naming_list_vo::SymbolNameList;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
+use language_adapters::contract_variant_port::INamingVariantPort;
+use language_adapters::taxonomy_naming_error::NamingError;
+use language_adapters::taxonomy_naming_list_vo::SymbolNameList;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_name_vo::SymbolName;
 use once_cell::sync::Lazy;
 use regex::Regex;
 

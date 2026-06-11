@@ -4,22 +4,22 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
-use crate::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use crate::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use crate::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use crate::code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
-use crate::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use crate::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::di_containers::agent_checker_container::CheckerContainer;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::output_report::taxonomy_result_vo::LintResultList;
-use crate::role_rules::agent_role_container::RoleAggregateImpl;
-use crate::role_rules::agent_role_orchestrator::RoleOrchestrator;
-use crate::shared_common::taxonomy_source_vo::{ContentString, SourceContentVO};
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
+use code_analysis::contract_class_protocol::IMandatoryClassProtocol;
+use code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
+use code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
+use code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
+use config_system::taxonomy_config_vo::ArchitectureConfig;
+use di_containers::agent_checker_container::CheckerContainer;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_result_vo::LintResultList;
+use role_rules::agent_role_container::RoleAggregateImpl;
+use role_rules::agent_role_orchestrator::RoleOrchestrator;
+use shared_common::taxonomy_source_vo::{ContentString, SourceContentVO};
+use source_parsing::taxonomy_path_vo::FilePath;
+use source_parsing::taxonomy_paths_vo::FilePathList;
 
 static GLOBAL_CONTAINER: OnceLock<Arc<CheckerContainer>> = OnceLock::new();
 

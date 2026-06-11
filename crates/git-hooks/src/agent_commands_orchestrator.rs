@@ -1,12 +1,12 @@
 // PURPOSE: CommandsOrchestrator — orchestrates git hook operations (install, uninstall, run, update)
 
-use crate::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
-use crate::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
-use crate::output_report::taxonomy_result_vo::LintResultList;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use crate::source_parsing::taxonomy_paths_vo::RenamedFileList;
+use git_hooks::contract_commands_aggregate::GitCommandsAggregate;
+use git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
+use output_report::taxonomy_result_vo::LintResultList;
+use shared_common::taxonomy_common_vo::Count;
+use source_parsing::taxonomy_path_vo::FilePath;
+use source_parsing::taxonomy_paths_vo::FilePathList;
+use source_parsing::taxonomy_paths_vo::RenamedFileList;
 use async_trait::async_trait;
 use std::collections::HashSet;
 

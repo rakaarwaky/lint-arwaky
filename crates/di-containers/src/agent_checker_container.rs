@@ -1,37 +1,37 @@
 // PURPOSE: CheckerContainer — DI wiring for all checker implementations (getters only, no orchestration)
 
-use crate::code_analysis::capabilities_check_bypass_checker::BypassChecker;
-use crate::code_analysis::capabilities_class_checker::ArchClassChecker;
-use crate::code_analysis::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
-use crate::code_analysis::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
-use crate::code_analysis::capabilities_inline_unused_checker::InlineUnusedChecker;
-use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
-use crate::code_analysis::capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
-use crate::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
-use crate::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::import_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
-use crate::import_rules::capabilities_import_intent_checker::ImportIntentChecker;
-use crate::import_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
-use crate::import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
-use crate::import_rules::contract_rule_protocol::{
+use code_analysis::capabilities_check_bypass_checker::BypassChecker;
+use code_analysis::capabilities_class_checker::ArchClassChecker;
+use code_analysis::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
+use code_analysis::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
+use code_analysis::capabilities_inline_unused_checker::InlineUnusedChecker;
+use code_analysis::capabilities_line_checker::ArchLineChecker;
+use code_analysis::capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
+use code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
+use code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use config_system::taxonomy_config_vo::ArchitectureConfig;
+use import_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
+use import_rules::capabilities_import_intent_checker::ImportIntentChecker;
+use import_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
+use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
+use import_rules::contract_rule_protocol::{
     IAnalyzer, IArchImportProtocol, INamingCheckerProtocol,
 };
-use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
-use crate::orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
-use crate::orphan_detector::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
-use crate::orphan_detector::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
-use crate::orphan_detector::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
-use crate::orphan_detector::capabilities_orphan_infrastructure_analyzer::InfrastructureOrphanAnalyzer;
-use crate::orphan_detector::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer;
-use crate::orphan_detector::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
-use crate::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use crate::role_rules::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
-use crate::role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
-use crate::role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
-use crate::role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
-use crate::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use naming_rules::capabilities_naming_checker::ArchNamingChecker;
+use orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
+use orphan_detector::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
+use orphan_detector::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
+use orphan_detector::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
+use orphan_detector::capabilities_orphan_infrastructure_analyzer::InfrastructureOrphanAnalyzer;
+use orphan_detector::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer;
+use orphan_detector::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
+use orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
+use role_rules::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
+use role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
+use role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
+use role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
 use std::sync::Arc;
 
 pub struct CheckerContainer {

@@ -1,14 +1,14 @@
 // PURPOSE: WatchCommandsSurface — CLI surface for file watching with auto-lint on changes
-use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use crate::pipeline_jobs::contract_dispatcher_aggregate::PipelineActionDispatcherAggregate;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
+use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use pipeline_jobs::contract_dispatcher_aggregate::PipelineActionDispatcherAggregate;
+use shared_common::taxonomy_common_vo::LineNumber;
 
 use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use crate::code_analysis::{compute_score, lint_path, resolve_target};
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use code_analysis::{compute_score, lint_path, resolve_target};
+use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 /// Satisfy AES030 orphan detection - surface references contract aggregates
 fn _use_contract_aggregates() {

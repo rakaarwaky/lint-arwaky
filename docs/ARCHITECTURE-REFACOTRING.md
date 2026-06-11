@@ -128,7 +128,7 @@ Taxonomy layer punya 7 kategori suffix files:
 | `_error` | Error type | Strict — custom error enum/struct | `taxonomy_lint_error.rs` |
 | `_event` | Event | Strict — domain events | `taxonomy_fix_applied_event.rs` |
 | `_constant` | Constant | Strict — hanya `pub const` / `pub static` | `taxonomy_layer_names_constant.rs` |
-| `_util` | **Utility** | **Relaxed** — boleh punya logic, boleh dipakai oleh layer manapun | `taxonomy_path_util.rs` |
+| `_utility` | **Utility** | **Relaxed** — boleh punya logic, boleh dipakai oleh layer manapun | `taxonomy_path_utility.rs` |
 | `_helper` | **Helper** | **Relaxed** — boleh punya logic, boleh dipakai oleh layer manapun | `taxonomy_format_helper.rs` |
 
 **Perbedaan Utama:**
@@ -140,7 +140,7 @@ Taxonomy layer punya 7 kategori suffix files:
 | **Contract trait** | Wajib implement jika di-capabilities | Tidak wajib implement contract trait |
 | **Usage** | Pure data representation | Shared utilities untuk multiple layers |
 
-**Contoh `taxonomy_path_util.rs`:**
+**Contoh `taxonomy_path_utility.rs`:**
 ```rust
 // Boleh punya logic — relaxed rules
 pub fn normalize_path(path: &str) -> String {
@@ -441,3 +441,60 @@ container → NO contract impl
 | Migration complexity        | Migrasi bertahap, container lama tetap aktif sampai Phase 5.     |
 | Breaking changes            | Menjaga kompatibilitas dengan membiarkan deprecated API sementara. |
 | Feature containers coupling | Tiap container bersifat independen, dilarang melakukan cross-import. |
+
+---
+
+## 10. Circular Dependencies (BLOCKER untuk Multi-Crate Workspace)
+
+### Temuan
+
+Ada **11 circular dependencies** yang menghalangi migrasi ke multi-crate workspace:
+
+| # | Cycle | Types yang cross-import |
+|---|-------|------------------------|
+| 1 | `shared-common` ↔ `import-rules` | `MandatoryImportRuleVO` |
+| 2 | `shared-common` ↔ `naming-rules` | `SuffixPolicyVO` |
+| 3 | `shared-common` ↔ `pipeline-jobs` | `JobId`, `ResponseData` |
+| 4 | `shared-common` ↔ `output-report` | `Severity` |
+| 5 | `source-parsing` ↔ `code-analysis` |双向 import |
+| 6 | `source-parsing` ↔ `language-adapters` |双向 import |
+| 7 | `source-parsing` ↔ `file-system` |双向 import |
+| 8 | `cli-commands` ↔ `cli-transport` |双向 import |
+| 9 | `config-system` ↔ `di-containers` |双向 import |
+| 10 | `code-analysis` ↔ `di-containers` |双向 import |
+| 11 | `naming-rules` ↔ `import-rules` |双向 import |
+
+### Solusi: Phase 0 — Break Circular Dependencies
+
+**Sebelum bisa multi-crate workspace, harus fix ini dulu:**
+
+1. **Pindahkan shared types ke `shared-common`**
+   - `Severity` dari `output-report`
+   - `JobId`, `ResponseData` dari `pipeline-jobs`
+   - `FilePath`, `DirectoryPath` dari `source-parsing`
+   - `MandatoryImportRuleVO` dari `import-rules`
+   - `SuffixPolicyVO` dari `naming-rules`
+
+2. **Buang `di-containers`** — ganti dengan per-feature containers
+   - `di-containers` import semua 23 features → ini yang bikin cycle
+   - Ganti dengan `{feature}_container.rs` yang hanya wire 1 feature
+
+3. **Break `source-parsing` ↔ `code-analysis` cycle**
+   - Pindahkan `FilePath` ke `shared-common`
+   - Buat `source-parsing` independent
+
+### Estimated Effort
+
+| Phase | Effort | Description |
+|-------|--------|-------------|
+| Phase 0 | 8-12 jam | Break circular dependencies |
+| Phase 1 | 4-6 jam | Create Cargo.toml per feature |
+| Phase 2 | 2-4 jam | Setup workspace root Cargo.toml |
+| Phase 3 | 4-6 jam | Update all imports |
+| **Total** | **18-28 jam** | |
+
+### Status
+
+**BLOCKED** — Circular dependencies harus di-fix dulu sebelum multi-crate workspace bisa jalan.
+
+**Saat ini:** Single crate dengan feature-based folders (sudah berjalan).

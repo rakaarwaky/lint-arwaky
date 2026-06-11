@@ -1,11 +1,11 @@
 // PURPOSE: JSScopeProvider — provides JavaScript scope metadata for architecture analysis
 
-use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
-use crate::language_adapters::taxonomy_semantic_error::SemanticError;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_layer_vo::LineContentVO;
-use crate::shared_common::taxonomy_lint_vo::ScopeBounds;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
+use language_adapters::contract_scope_port::IJavascriptScopePort;
+use language_adapters::taxonomy_semantic_error::SemanticError;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_layer_vo::LineContentVO;
+use shared_common::taxonomy_lint_vo::ScopeBounds;
+use shared_common::taxonomy_name_vo::SymbolName;
 use regex::Regex;
 
 pub struct JSScopeProvider {}

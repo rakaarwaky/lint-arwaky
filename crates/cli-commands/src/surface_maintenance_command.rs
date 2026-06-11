@@ -1,10 +1,10 @@
 // PURPOSE: MaintenanceCommandsSurface — CLI surface for maintenance (stats, clean, update, doctor, cancel)
-use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
+use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use shared_common::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 
-use crate::code_analysis::resolve_target;
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use code_analysis::resolve_target;
+use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check
 fn _use_mandatory_imports() {

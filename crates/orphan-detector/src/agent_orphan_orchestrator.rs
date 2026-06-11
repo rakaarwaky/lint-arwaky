@@ -1,31 +1,31 @@
 // PURPOSE: IOrphanAggregate — aggregate trait implementing all orphan detection protocols
-use crate::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
-use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-use crate::code_analysis::taxonomy_analysis_vo::ImportGraph;
-use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use crate::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use crate::shared_common::taxonomy_lint_vo::LocationList;
-use crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
+use code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
+use code_analysis::taxonomy_analysis_vo::ImportGraph;
+use code_analysis::taxonomy_analysis_vo::InboundLinkMap;
+use code_analysis::taxonomy_analysis_vo::InheritanceMap;
+use code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::ColumnNumber;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_lint_vo::ScopeRef;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashSet;
 use std::sync::Arc;
 
 // Only contract layer imports for indicators!
-use crate::orphan_detector::contract_orphan_protocol::{
+use orphan_detector::contract_orphan_protocol::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     IInfrastructureOrphanProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
 };
@@ -284,7 +284,7 @@ impl OrphanGraphResolver {
     }
 }
 
-use crate::orphan_detector::taxonomy_layer_names_constant::{
+use orphan_detector::taxonomy_layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_SURFACES,
     LAYER_TAXONOMY,
 };

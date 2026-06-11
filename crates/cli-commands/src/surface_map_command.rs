@@ -1,10 +1,10 @@
 // PURPOSE: handle_cancel, handle_diff, handle_import — standalone functions for diff/map/import operations
-use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
+use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use shared_common::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 
-use crate::cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};
-use crate::code_analysis::{compute_score, lint_path, resolve_target};
+use cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};
+use code_analysis::{compute_score, lint_path, resolve_target};
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check
 fn _use_mandatory_imports() {

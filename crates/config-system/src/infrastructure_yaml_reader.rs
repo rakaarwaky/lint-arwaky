@@ -1,8 +1,8 @@
 // PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk
-use crate::config_system::contract_reader_port::IConfigReaderPort;
-use crate::config_system::taxonomy_source_vo::ConfigSource;
-use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use config_system::contract_reader_port::IConfigReaderPort;
+use config_system::taxonomy_source_vo::ConfigSource;
+use source_parsing::contract_path_normalization_port::IPathNormalizationPort;
+use source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 use std::sync::Arc;
 

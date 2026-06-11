@@ -1,0 +1,15 @@
+[package]
+name = "naming_rules"
+version = "1.10.11"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+async-trait = "0.1.89"
+regex = "1.10"
+config_system = { path = "../config-system" }
+import_rules = { path = "../import-rules" }
+output_report = { path = "../output-report" }
+shared_common = { path = "../shared-common" }
+source_parsing = { path = "../source-parsing" }

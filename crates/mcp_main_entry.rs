@@ -1,6 +1,4 @@
-/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix
-/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix/src
-/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix/auto_fix_container.rs// PURPOSE: main entry point for lint-arwaky-mcp — initializes MCP server with stdio transport
+// PURPOSE: main entry point for lint-arwaky-mcp — initializes MCP server with stdio transport
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 

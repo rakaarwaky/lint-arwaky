@@ -2,11 +2,11 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_severity_vo::Severity;
+use source_parsing::taxonomy_path_vo::FilePath;
 
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 pub struct OutputControllerSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }

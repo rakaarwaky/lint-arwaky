@@ -1,9 +1,9 @@
 // PURPOSE: ServerWrapper — IMcpServerPort implementation wrapping the MCP server lifecycle
-use crate::cli_transport::taxonomy_transport_error::TransportError;
-use crate::mcp_server::contract_server_port::ToolHandler;
-use crate::mcp_server::IMcpServerPort;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
-use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use cli_transport::taxonomy_transport_error::TransportError;
+use mcp_server::contract_server_port::ToolHandler;
+use mcp_server::IMcpServerPort;
+use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
 
 pub struct McpServerWrapper {
     _project_root: String,

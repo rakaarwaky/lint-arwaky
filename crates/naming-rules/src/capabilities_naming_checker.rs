@@ -1,21 +1,21 @@
 // PURPOSE: ArchNamingChecker — INamingCheckerProtocol for AES011 (naming convention) and AES012 (suffix/prefix rules)
 
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
-use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use crate::shared_common::taxonomy_lint_vo::LocationList;
-use crate::shared_common::taxonomy_lint_vo::ScopeRef;
-use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use config_system::taxonomy_config_vo::ArchitectureConfig;
+use import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
+use output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use output_report::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::ColumnNumber;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_lint_vo::ScopeRef;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use source_parsing::taxonomy_path_vo::FilePath;
+use source_parsing::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
 fn aes011_naming_convention(_expected_word_count: i32) -> String {
     String::from(
@@ -25,7 +25,7 @@ fn aes011_naming_convention(_expected_word_count: i32) -> String {
     )
 }
 
-use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use regex::Regex;
 
 #[derive(Clone)]

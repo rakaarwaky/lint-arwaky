@@ -1,20 +1,20 @@
 // PURPOSE: AgentRoleChecker — IAgentRoleChecker for AES0305: agent container/orchestrator/lifecycle role audits
-use crate::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::import_rules::contract_rule_protocol::IAnalyzer;
-use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::output_report::taxonomy_severity_vo::Severity;
-use crate::role_rules::taxonomy_layer_names_vo::layer_infrastructure;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_lint_vo::LocationList;
-use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
+use import_rules::contract_rule_protocol::IAnalyzer;
+use output_report::taxonomy_result_vo::LintResult;
+use output_report::taxonomy_severity_vo::Severity;
+use role_rules::taxonomy_layer_names_vo::layer_infrastructure;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::ColumnNumber;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_name_vo::SymbolName;
 pub fn aes0305_must_implement_contract(contract_name: &str) -> String {
     format!(
         "AES0305 AGENT_ROLE: Class must implement '{}'.",
@@ -29,9 +29,9 @@ pub fn aes0305_any_type(line: &str) -> String {
     )
 }
 
-use crate::shared_common::taxonomy_source_vo::SourceContentVO;
-use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_source_vo::SourceContentVO;
+use shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AgentRoleChecker {}
 impl Default for AgentRoleChecker {

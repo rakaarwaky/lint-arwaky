@@ -2,9 +2,9 @@
 use std::sync::Arc;
 use std::collections::HashMap;
 
-use crate::import_container::ImportContainer;
-use crate::naming_container::NamingContainer;
-use crate::role_container::RoleContainer;
+use crate::import_rules::import_container::ImportContainer;
+use crate::naming_rules::naming_container::NamingContainer;
+use crate::role_rules::role_container::RoleContainer;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;

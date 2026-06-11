@@ -1,14 +1,14 @@
 // PURPOSE: SystemProvider — IPluginManagerPort implementation for plugin filesystem operations
-use crate::config_system::taxonomy_adapter_vo::AdapterClassMap;
-use crate::config_system::taxonomy_adapter_vo::AdapterMetadataList;
-use crate::pipeline_jobs::taxonomy_job_vo::AdapterMetadata;
+use config_system::taxonomy_adapter_vo::AdapterClassMap;
+use config_system::taxonomy_adapter_vo::AdapterMetadataList;
+use pipeline_jobs::taxonomy_job_vo::AdapterMetadata;
 /// plugin_system_provider — Entry point discovery and loading for custom adapters.
-use crate::plugin_system::contract_manager_port::IPluginManagerPort;
-use crate::plugin_system::taxonomy_group_vo::PluginGroup;
-use crate::plugin_system::taxonomy_manager_error::PluginError;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_source_vo::ContentString;
+use plugin_system::contract_manager_port::IPluginManagerPort;
+use plugin_system::taxonomy_group_vo::PluginGroup;
+use plugin_system::taxonomy_manager_error::PluginError;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_source_vo::ContentString;
 use std::collections::HashMap;
 use std::sync::Mutex;
 

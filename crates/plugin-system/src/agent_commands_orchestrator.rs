@@ -1,7 +1,7 @@
 // PURPOSE: CommandsOrchestrator — orchestrates plugin management commands (list, enable, disable, install)
 
-use crate::plugin_system::contract_commands_aggregate::PluginCommandsAggregate;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use plugin_system::contract_commands_aggregate::PluginCommandsAggregate;
+use source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashMap;
 
 use async_trait::async_trait;

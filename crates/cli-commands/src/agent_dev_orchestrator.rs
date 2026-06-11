@@ -1,12 +1,12 @@
 // PURPOSE: Orchestrator: Implements DevCommandsAggregate — diff, suggest, ignore, init, hook management
-use crate::cli_commands::contract_dev_aggregate::DevCommandsAggregate;
-use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use cli_commands::contract_dev_aggregate::DevCommandsAggregate;
+use cli_commands::contract_executor_port::ICommandExecutorPort;
 use std::collections::HashMap;
 
-use crate::output_report::taxonomy_score_vo::FileFormat;
-use crate::shared_common::taxonomy_common_vo::BooleanVO;
-use crate::shared_common::taxonomy_layer_vo::Identity;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use output_report::taxonomy_score_vo::FileFormat;
+use shared_common::taxonomy_common_vo::BooleanVO;
+use shared_common::taxonomy_layer_vo::Identity;
+use source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 /// Satisfy AES030 orphan detection - agent references contract ports/protocols

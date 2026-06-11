@@ -1,8 +1,8 @@
 // PURPOSE: handle_bootstrap — MCP surface for server initialization and capability listing
 
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::shared_common::taxonomy_common_vo::BooleanVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use shared_common::taxonomy_common_vo::BooleanVO;
+use source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct SyspathBootstrapHandler {}
