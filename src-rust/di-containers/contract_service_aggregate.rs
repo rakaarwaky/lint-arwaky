@@ -15,13 +15,13 @@ use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::file_watch::contract_provider_port::IWatchProviderPort;
 use crate::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
 use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
-use crate::layer_rules::contract_import_parser_port::IImportParserPort;
-use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::language_adapters::contract_flow_port::IJavascriptFlowPort;
 use crate::language_adapters::contract_naming_port::INamingProviderPort;
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
 use crate::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
 use crate::language_adapters::contract_variant_port::INamingVariantPort;
+use crate::layer_rules::contract_import_parser_port::IImportParserPort;
+use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::mcp_server::contract_server_port::IMcpServerPort;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
@@ -33,10 +33,10 @@ use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::plugin_system::contract_manager_port::IPluginManagerPort;
 use crate::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use std::sync::Arc;
 
 pub trait ServiceContainerAggregate: Send + Sync {
@@ -154,40 +154,5 @@ pub trait ServiceContainerAggregate: Send + Sync {
     }
     fn get_scanner_provider_port(&self) -> Arc<dyn IScannerProviderPort> {
         todo!()
-    }
-}
-
-pub struct DefaultServiceContainer {}
-
-impl ServiceContainerAggregate for DefaultServiceContainer {
-    fn file_system(&self) -> Arc<dyn IFileSystemPort> {
-        todo!()
-    }
-    fn command_executor(&self) -> Arc<dyn ICommandExecutorPort> {
-        todo!()
-    }
-    fn path_normalization(&self) -> Arc<dyn IPathNormalizationPort> {
-        todo!()
-    }
-    fn source_parser(&self) -> Arc<dyn ISourceParserPort> {
-        todo!()
-    }
-    fn linter_adapter(&self, _name: &AdapterName) -> Option<Arc<dyn ILinterAdapterPort>> {
-        None
-    }
-    fn get_architecture_linter(&self) -> Option<Arc<dyn IArchLintProtocol>> {
-        None
-    }
-    fn get_job_registry(&self) -> Option<Arc<dyn IJobRegistryPort>> {
-        None
-    }
-    fn metrics_provider(&self) -> Option<Arc<dyn IMetricsProviderPort>> {
-        None
-    }
-    fn get_fix_orchestrator(
-        &self,
-        _dry_run: bool,
-    ) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
-        None
     }
 }

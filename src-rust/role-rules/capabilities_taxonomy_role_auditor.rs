@@ -194,8 +194,7 @@ impl TaxonomyRoleChecker {
         let content = source.content.value();
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
-            if t.is_empty() || t.starts_with("//") || t.starts_with('#') || t.starts_with("#[")
-            {
+            if t.is_empty() || t.starts_with("//") || t.starts_with('#') || t.starts_with("#[") {
                 continue;
             }
             if t.starts_with("pub const ") || t.starts_with("pub static ") {

@@ -1,6 +1,6 @@
 // PURPOSE: ManagementOrchestrator — orchestrates git hook management (format patch, commit gen, PR review)
-use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
 use crate::git_hooks::contract_manager_port::IHookManagerPort;
+use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
 use crate::git_hooks::taxonomy_hook_error::GitHookError;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;

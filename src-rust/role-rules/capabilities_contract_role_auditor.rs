@@ -3,10 +3,10 @@ use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::role_rules::contract_role_protocol::IContractRoleChecker;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 use crate::shared_common::taxonomy_violation_message_js_error::AesViolationJs;
 use crate::shared_common::taxonomy_violation_message_py_error::AesViolationPy;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
-use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 
 fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     format!(
@@ -118,11 +118,7 @@ impl ContractRoleChecker {
         }
     }
 
-    fn check_contract_primitive(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_contract_primitive(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
         if !file.contains("test-project") && !file.contains("test_project") {

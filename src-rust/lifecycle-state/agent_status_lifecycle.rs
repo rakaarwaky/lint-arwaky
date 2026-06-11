@@ -1,16 +1,12 @@
 // PURPOSE: AgentStatusLifecycle — manages agent lifecycle states (starting, ready, scanning, stopping)
 
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatusVO;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_duration_vo::Duration;
-use std::sync::Arc;
 
-pub struct LifecycleStateManager {
-    container: Option<Arc<dyn ServiceContainerAggregate>>,
-}
+pub struct LifecycleStateManager {}
 
 impl Default for LifecycleStateManager {
     fn default() -> Self {
@@ -20,30 +16,13 @@ impl Default for LifecycleStateManager {
 
 impl LifecycleStateManager {
     pub fn new() -> Self {
-        Self { container: None }
-    }
-
-    pub fn register_container(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+        Self {}
     }
 }
 
 #[async_trait::async_trait]
 impl AgentLifecycleAggregate for LifecycleStateManager {
-    fn container(&self) -> Arc<dyn ServiceContainerAggregate> {
-        self.container.clone().unwrap_or_else(|| {
-            struct StubBootstrapContainer {}
-            impl ServiceContainerAggregate for StubBootstrapContainer {
-                fn file_system(
-                    &self,
-                ) -> Arc<dyn crate::file_system::contract_system_port::IFileSystemPort>
-                {
-                    todo!("StubBootstrapContainer: file_system not available")
-                }
-            }
-            Arc::new(StubBootstrapContainer {})
-        })
-    }
+
 
     fn status(&self) -> AgentStatusVO {
         AgentStatusVO::new(crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatus::INIT)

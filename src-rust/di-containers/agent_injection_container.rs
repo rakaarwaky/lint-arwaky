@@ -17,13 +17,13 @@ use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::file_watch::contract_provider_port::IWatchProviderPort;
 use crate::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
 use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
-use crate::layer_rules::contract_import_parser_port::IImportParserPort;
-use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::language_adapters::contract_flow_port::IJavascriptFlowPort;
 use crate::language_adapters::contract_naming_port::INamingProviderPort;
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
 use crate::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
 use crate::language_adapters::contract_variant_port::INamingVariantPort;
+use crate::layer_rules::contract_import_parser_port::IImportParserPort;
+use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
 use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::mcp_server::contract_server_port::IMcpServerPort;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
@@ -120,11 +120,11 @@ impl DependencyInjectionContainer {
         let maintenance_aggregate: Arc<dyn MaintenanceCommandsAggregate> = Arc::new(
             crate::cli_commands::agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator::new(),
         );
-        let analysis_protocol: Arc<dyn IAnalysisProtocol> = Arc::new(
-            crate::code_analysis::capabilities_analysis_reporter::AnalysisReporter::new(),
-        );
+        let analysis_protocol: Arc<dyn IAnalysisProtocol> =
+            Arc::new(crate::code_analysis::capabilities_analysis_reporter::AnalysisReporter::new());
         let target_resolver_protocol: Arc<dyn ITargetResolverProtocol> = Arc::new(
-            crate::code_analysis::capabilities_project_target_resolver::ProjectTargetResolver::new(),
+            crate::code_analysis::capabilities_project_target_resolver::ProjectTargetResolver::new(
+            ),
         );
         let code_metric_protocol: Arc<dyn ICodeMetricAnalyzerProtocol> = Arc::new(
             crate::code_analysis::capabilities_code_metric_analyzer::CodeMetricAnalyzer::new(
@@ -151,21 +151,18 @@ impl DependencyInjectionContainer {
                 crate::config_system::taxonomy_setting_vo::ProjectConfig::defaults(),
             ),
         );
-        let watch_provider_port: Arc<dyn IWatchProviderPort> = Arc::new(
-            crate::file_watch::infrastructure_watch_provider::WatchServiceProvider::new(),
-        );
-        let git_commands_aggregate: Arc<dyn GitCommandsAggregate> = Arc::new(
-            crate::git_hooks::agent_commands_orchestrator::GitCommandsOrchestrator::new(),
-        );
+        let watch_provider_port: Arc<dyn IWatchProviderPort> =
+            Arc::new(crate::file_watch::infrastructure_watch_provider::WatchServiceProvider::new());
+        let git_commands_aggregate: Arc<dyn GitCommandsAggregate> =
+            Arc::new(crate::git_hooks::agent_commands_orchestrator::GitCommandsOrchestrator::new());
         let git_orchestrator_aggregate: Arc<dyn HookManagementOrchestratorAggregate> = Arc::new(
             crate::git_hooks::agent_management_orchestrator::HookManagementOrchestrator::new(),
         );
         let import_parser_port: Arc<dyn IImportParserPort> = Arc::new(
             crate::layer_rules::infrastructure_import_parser_adapter::ImportParserAdapter::new(),
         );
-        let javascript_flow_port: Arc<dyn IJavascriptFlowPort> = Arc::new(
-            crate::language_adapters::infrastructure_js_flow_tracer::JSFlowAdapter::new(),
-        );
+        let javascript_flow_port: Arc<dyn IJavascriptFlowPort> =
+            Arc::new(crate::language_adapters::infrastructure_js_flow_tracer::JSFlowAdapter::new());
         let naming_provider_port: Arc<dyn INamingProviderPort> = Arc::new(
             crate::language_adapters::infrastructure_js_naming_provider::JavascriptNamingProvider::new(),
         );
@@ -173,18 +170,21 @@ impl DependencyInjectionContainer {
             crate::language_adapters::infrastructure_js_scope_provider::JSScopeProvider::new(),
         );
         let naming_variant_port: Arc<dyn INamingVariantPort> = Arc::new(
-            crate::language_adapters::infrastructure_py_variants::PythonNamingVariantProvider::new(),
+            crate::language_adapters::infrastructure_py_variants::PythonNamingVariantProvider::new(
+            ),
         );
         let semantic_tracer_port: Arc<dyn ISemanticTracerPort> = Arc::new(
             crate::language_adapters::infrastructure_py_ast_tracer::PythonTracer::new(
                 Box::new(crate::language_adapters::infrastructure_py_variants::PythonNamingVariantProvider::new()),
             ),
         );
-        let agent_lifecycle_aggregate: Arc<dyn AgentLifecycleAggregate> = Arc::new(
-            crate::lifecycle_state::agent_status_lifecycle::LifecycleStateManager::new(),
-        );
+        let agent_lifecycle_aggregate: Arc<dyn AgentLifecycleAggregate> =
+            Arc::new(crate::lifecycle_state::agent_status_lifecycle::LifecycleStateManager::new());
         let mcp_server_port: Arc<dyn IMcpServerPort> = Arc::new(
-            crate::mcp_server::infrastructure_server_wrapper::McpServerWrapper::new(".", "lint-arwaky"),
+            crate::mcp_server::infrastructure_server_wrapper::McpServerWrapper::new(
+                ".",
+                "lint-arwaky",
+            ),
         );
         let multi_project_aggregate: Arc<dyn MultiProjectOrchestratorAggregate> = Arc::new(
             crate::multi_project::agent_project_orchestrator::MultiProjectOrchestrator::new(),

@@ -1,17 +1,12 @@
 // PURPOSE: LifecycleAggregate — aggregate trait for agent lifecycle management
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatusVO;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_duration_vo::Duration;
 use async_trait::async_trait;
-use std::sync::Arc;
 
 #[async_trait]
 pub trait AgentLifecycleAggregate: Send + Sync {
-    /// The orchestration boundary.
-    fn container(&self) -> Arc<dyn ServiceContainerAggregate>;
-
     /// Current agent status.
     fn status(&self) -> AgentStatusVO;
 
@@ -33,3 +28,4 @@ pub trait AgentLifecycleAggregate: Send + Sync {
     /// State transition: degraded.
     fn mark_degraded(&self);
 }
+

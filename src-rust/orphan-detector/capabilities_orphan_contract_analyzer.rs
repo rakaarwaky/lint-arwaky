@@ -110,7 +110,7 @@ pub fn is_contract_orphan(
                     || cb.ends_with("_orchestrator.js"));
             // Check container files (DI wiring)
             let is_container = cb.ends_with("_container.rs");
-            
+
             if !is_orchestrator && !is_container {
                 continue;
             }
@@ -142,7 +142,7 @@ pub fn is_contract_orphan(
             let is_surface = cb.starts_with("surface_");
             // Check container files (DI wiring)
             let is_container = cb.ends_with("_container.rs");
-            
+
             if !is_surface && !is_container {
                 continue;
             }

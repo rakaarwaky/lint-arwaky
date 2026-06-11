@@ -1,6 +1,6 @@
 // PURPOSE: BarrelProvider — detects barrel/index files (_init_.py, mod.rs, index.ts)
-use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use std::collections::HashMap;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check

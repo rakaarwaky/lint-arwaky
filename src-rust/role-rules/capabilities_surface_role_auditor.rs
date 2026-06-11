@@ -4,7 +4,6 @@ use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
-use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
@@ -12,6 +11,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_names_vo::layer_surfaces;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
+use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use once_cell::sync::Lazy;
@@ -32,7 +32,8 @@ static PY_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^class\s+(\w
 static JS_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^export\s+class\s+(\w+)").ok());
 
 // Regex: detect JavaScript/TypeScript method definitions
-static JS_METHOD_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^\s*(?:public|private|protected)?\s*(?:async\s+)?(\w+)\s*\(").ok());
+static JS_METHOD_RE: Lazy<Option<Regex>> =
+    Lazy::new(|| Regex::new(r"^\s*(?:public|private|protected)?\s*(?:async\s+)?(\w+)\s*\(").ok());
 
 // Regex: detect if statements for nesting depth
 static IF_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^\s*if\s+").ok());
@@ -73,11 +74,7 @@ impl SurfaceRoleChecker {
         vec![]
     }
 
-    pub fn check_fn_count_limit(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<LintResult>,
-    ) {
+    pub fn check_fn_count_limit(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let content = source.content.value();
         let file = source.file_path.value();
         if content.matches("fn ").count() > 15 {
@@ -378,7 +375,12 @@ impl SurfaceRoleChecker {
     }
 
     /// JavaScript/TypeScript-specific passive check: detect classes and methods.
-    fn _check_javascript_passive(&self, _f: &FilePath, lines: &[&str], violations: &mut Vec<String>) {
+    fn _check_javascript_passive(
+        &self,
+        _f: &FilePath,
+        lines: &[&str],
+        violations: &mut Vec<String>,
+    ) {
         let class_re = match &*JS_CLASS_RE {
             Some(r) => r,
             None => return,

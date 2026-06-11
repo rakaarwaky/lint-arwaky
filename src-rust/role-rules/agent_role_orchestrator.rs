@@ -2,9 +2,9 @@
 
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::role_rules::contract_role_aggregate::IRoleAggregate;
-use std::path::Path;
-use crate::shared_common::taxonomy_source_vo::{SourceContentVO, ContentString};
+use crate::shared_common::taxonomy_source_vo::{ContentString, SourceContentVO};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use std::path::Path;
 
 pub struct RoleOrchestrator {
     aggregate: Box<dyn IRoleAggregate>,
@@ -36,7 +36,11 @@ impl RoleOrchestrator {
                 "rust"
             } else if file.ends_with(".py") {
                 "python"
-            } else if file.ends_with(".js") || file.ends_with(".ts") || file.ends_with(".jsx") || file.ends_with(".tsx") {
+            } else if file.ends_with(".js")
+                || file.ends_with(".ts")
+                || file.ends_with(".jsx")
+                || file.ends_with(".tsx")
+            {
                 "javascript"
             } else {
                 "unknown"

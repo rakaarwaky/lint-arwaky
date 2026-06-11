@@ -29,9 +29,9 @@ pub fn aes0305_any_type(line: &str) -> String {
     )
 }
 
+use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 
 pub struct AgentRoleChecker {}
 impl Default for AgentRoleChecker {

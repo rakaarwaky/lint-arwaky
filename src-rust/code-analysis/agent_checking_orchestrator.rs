@@ -17,9 +17,9 @@ use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::role_rules::agent_role_container::RoleAggregateImpl;
 use crate::role_rules::agent_role_orchestrator::RoleOrchestrator;
+use crate::shared_common::taxonomy_source_vo::{ContentString, SourceContentVO};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use crate::shared_common::taxonomy_source_vo::{SourceContentVO, ContentString};
 
 static GLOBAL_CONTAINER: OnceLock<Arc<CheckerContainer>> = OnceLock::new();
 
@@ -220,7 +220,11 @@ impl LintCheckingOrchestrator {
                 "rust"
             } else if file.ends_with(".py") {
                 "python"
-            } else if file.ends_with(".js") || file.ends_with(".ts") || file.ends_with(".jsx") || file.ends_with(".tsx") {
+            } else if file.ends_with(".js")
+                || file.ends_with(".ts")
+                || file.ends_with(".jsx")
+                || file.ends_with(".tsx")
+            {
                 "javascript"
             } else {
                 "unknown"

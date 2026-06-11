@@ -12,9 +12,5 @@ pub trait IAgentRoleChecker: Send + Sync {
         max_lines: usize,
         violations: &mut Vec<LintResult>,
     );
-    fn check_any_type_annotation(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<LintResult>,
-    );
+    fn check_any_type_annotation(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>);
 }
