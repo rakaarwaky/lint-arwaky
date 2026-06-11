@@ -3,7 +3,7 @@
 use cli_commands::contract_dev_aggregate::DevCommandsAggregate;
 use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use shared_common::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_common_vo::LineNumber;
 use serde_json::{json, Value};
 use std::sync::Arc;
 use std::sync::Mutex;

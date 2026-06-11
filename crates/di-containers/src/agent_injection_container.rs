@@ -39,8 +39,8 @@ use source_parsing::contract_parser_port::ISourceParserPort;
 use source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 
-use shared_common::taxonomy_adapter_name_vo::AdapterName;
-use shared_common::taxonomy_common_vo::Count;
+use shared::taxonomy_adapter_name_vo::AdapterName;
+use shared::taxonomy_common_vo::Count;
 use source_parsing::taxonomy_path_vo::DirectoryPath;
 use source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashMap;

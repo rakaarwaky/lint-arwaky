@@ -1,15 +1,8 @@
 // PURPOSE: ProjectOrchestrator — orchestrates multi-project governance operations
-use multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
-use multi_project::taxonomy_summary_vo::AggregatedResults;
-use multi_project::taxonomy_summary_vo::ProjectResult;
-use shared_common::taxonomy_common_error::ErrorMessage;
-use shared_common::taxonomy_common_vo::Count;
-use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_common_vo::Score;
-use shared_common::taxonomy_layer_vo::Identity;
-use shared_common::taxonomy_message_vo::ComplianceStatus;
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+use shared::taxonomy_summary_vo::{AggregatedResults, ProjectResult};
+use shared::{Count, ErrorMessage, FilePath, FilePathList, Identity, PatternList, Score};
+use shared::ComplianceStatus;
 use async_trait::async_trait;
 
 pub struct MultiProjectOrchestrator {}
@@ -111,10 +104,10 @@ impl MultiProjectOrchestrator {
 
     pub fn aggregate_results(&self, projects: Vec<ProjectResult>) -> AggregatedResults {
         let total = projects.len();
-        let passing = projects.iter().filter(|p| p.is_passing.value).count();
+        let passing = projects.iter().filter(|p| p.is_passing.value()).count();
         let scores: Vec<f64> = projects
             .iter()
-            .map(|p| p.score.value)
+            .map(|p| p.score.value())
             .filter(|s| *s > 0.0)
             .collect();
         let avg_score = if scores.is_empty() {

@@ -1,6 +1,6 @@
 // PURPOSE: handle_cancel, handle_diff, handle_import — standalone functions for diff/map/import operations
 use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use shared_common::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 
 use cli_commands::surface_output_controller::{print_json, print_junit, print_sarif};

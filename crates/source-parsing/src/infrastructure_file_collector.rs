@@ -2,11 +2,8 @@
 use std::fs;
 use std::path::Path;
 
-use shared_common::file_system::taxonomy_filesystem_error::FileSystemError;
-use shared_common::shared_common::contract_scanner_provider_port::IScannerProviderPort;
-use shared_common::shared_common::taxonomy_path_vo::DirectoryPath;
-use shared_common::shared_common::taxonomy_path_vo::FilePath;
-use shared_common::shared_common::taxonomy_paths_vo::FilePathList;
+use shared::taxonomy_filesystem_error::FileSystemError;
+use shared::{IScannerProviderPort, DirectoryPath, FilePath, FilePathList};
 
 pub struct FileCollectorProvider {}
 
@@ -24,7 +21,8 @@ impl FileCollectorProvider {
 
 impl IScannerProviderPort for FileCollectorProvider {
     fn scan_directory(&self, path: &DirectoryPath) -> Result<FilePathList, FileSystemError> {
-        let dir = Path::new(&path.value);
+        let path_val = path.value();
+        let dir = Path::new(&path_val);
         let mut files = Vec::new();
         if !dir.exists() || !dir.is_dir() {
             return Ok(FilePathList { values: files });

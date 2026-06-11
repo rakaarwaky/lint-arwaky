@@ -1,21 +1,20 @@
 // PURPOSE: DependencyCycleAnalyzer — ICycleAnalysisProtocol for AES015: circular dependency detection
 
-use code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
-use config_system::taxonomy_config_vo::ArchitectureConfig;
-use import_rules::contract_rule_protocol::IAnalyzer;
-use output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use output_report::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_adapter_name_vo::AdapterName;
-use shared_common::taxonomy_common_vo::ColumnNumber;
-use shared_common::taxonomy_common_vo::LineNumber;
-use shared_common::taxonomy_error_vo::ErrorCode;
-use shared_common::taxonomy_layer_vo::LayerNameVO;
-use shared_common::taxonomy_lint_vo::LocationList;
-use shared_common::taxonomy_lint_vo::ScopeRef;
-use shared_common::taxonomy_message_vo::LintMessage;
-use shared_common::taxonomy_name_vo::SymbolName;
-use shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::ICycleAnalysisProtocol;
+use shared::taxonomy_config_vo::ArchitectureConfig;
+use shared::contract_rule_protocol::IAnalyzer;
+use shared::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::taxonomy_severity_vo::Severity;
+use shared::AdapterName;
+use shared::{ColumnNumber, LineNumber};
+use shared::ErrorCode;
+use shared::LayerNameVO;
+use shared::LocationList;
+use shared::ScopeRef;
+use shared::LintMessage;
+use shared::SymbolName;
+use shared::DescriptionVO;
+use shared::FilePathList;
 use async_trait::async_trait;
 fn aes012_circular_import(source: &str, target: &str) -> String {
     format!(
@@ -23,11 +22,10 @@ fn aes012_circular_import(source: &str, target: &str) -> String {
         source, target
     )
 }
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::FilePath;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
-/// Represents a single edge in a dependency graph (normalized by layer prefix).
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct DependencyEdge {
     pub source: String,
@@ -43,9 +41,6 @@ impl DependencyEdge {
     }
 }
 
-/// Normalize a file path or module name to its layer prefix.
-/// Files in the same layer (e.g., capabilities_checker, capabilities_analyzer)
-/// are grouped under the common layer prefix.
 fn normalize_to_layer(name: &str) -> String {
     let layer_prefixes = [
         "taxonomy_",
@@ -55,7 +50,6 @@ fn normalize_to_layer(name: &str) -> String {
         "agent_",
         "surface_",
     ];
-    // Extract the last component (file name or module name)
     let base = name.rsplit('/').next().unwrap_or(name);
     for prefix in &layer_prefixes {
         if base.starts_with(prefix) {
@@ -65,7 +59,6 @@ fn normalize_to_layer(name: &str) -> String {
     name.to_string()
 }
 
-/// Detect cycles with deduplication. Each unique cycle is reported once.
 pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
     let mut graph: HashMap<String, HashSet<String>> = HashMap::new();
     for e in edges {
@@ -86,7 +79,6 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
         cycles: &mut Vec<Vec<String>>,
     ) {
         if path_stack.contains(&node.to_string()) {
-            // Found a cycle — extract the cycle path
             if let Some(pos) = path_stack.iter().position(|n| n == node) {
                 let cycle: Vec<String> = path_stack[pos..].to_vec();
                 cycles.push(cycle);
@@ -125,7 +117,6 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
             sorted_cycle.sort();
             let dedup_key = sorted_cycle.join("->");
             if reported.insert(dedup_key) {
-                // Report the first edge of the cycle
                 for i in 0..cycle.len() {
                     let next = cycle[(i + 1) % cycle.len()].clone();
                     unique_cycles.push(format!("{}->{}", cycle[i].clone(), next));
@@ -137,7 +128,6 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
     unique_cycles.into_iter().map(SymbolName::new).collect()
 }
 
-/// Detects circular imports and dependency cycles (Capability).
 pub struct DependencyCycleAnalyzer {
     config: ArchitectureConfig,
 }
@@ -188,13 +178,14 @@ impl DependencyCycleAnalyzer {
     }
 
     fn detect_file_layer(&self, file: &str, root_dir: &str) -> Option<String> {
+        use shared::LayerDefinition;
         let rel = file
             .strip_prefix(root_dir)
             .unwrap_or(file)
             .trim_start_matches('/');
         let mut layers: Vec<(
             &LayerNameVO,
-            &crate::shared_common::taxonomy_definition_vo::LayerDefinition,
+            &LayerDefinition,
         )> = self.config.layers.iter().collect();
         layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 

@@ -15,6 +15,6 @@ auto_fix = { path = "../auto-fix" }
 code_analysis = { path = "../code-analysis" }
 output_report = { path = "../output-report" }
 pipeline_jobs = { path = "../pipeline-jobs" }
-shared_common = { path = "../shared-common" }
+shared = { path = "../shared" }
 source_parsing = { path = "../source-parsing" }
 tokio = { version = "1.52.3", features = ["full"] }

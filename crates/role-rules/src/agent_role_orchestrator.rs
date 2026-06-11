@@ -2,7 +2,7 @@
 
 use output_report::taxonomy_result_vo::LintResult;
 use role_rules::contract_role_aggregate::IRoleAggregate;
-use shared_common::taxonomy_source_vo::{ContentString, SourceContentVO};
+use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 use source_parsing::taxonomy_path_vo::FilePath;
 use source_parsing::FilePathList;
 use async_trait::async_trait;

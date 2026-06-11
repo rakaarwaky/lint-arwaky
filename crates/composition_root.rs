@@ -41,7 +41,7 @@ use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use crate::plugin_system::contract_manager_port::IPluginManagerPort;
 use crate::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared::taxonomy_adapter_name_vo::AdapterName;
 use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use crate::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;

@@ -1,6 +1,6 @@
 // PURPOSE: Command: CLI surface for bootstrap — initializes tracing/subscriber logging
 use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use shared_common::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;

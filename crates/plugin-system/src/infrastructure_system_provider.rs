@@ -6,9 +6,9 @@ use pipeline_jobs::taxonomy_job_vo::AdapterMetadata;
 use plugin_system::contract_manager_port::IPluginManagerPort;
 use plugin_system::taxonomy_group_vo::PluginGroup;
 use plugin_system::taxonomy_manager_error::PluginError;
-use shared_common::taxonomy_adapter_name_vo::AdapterName;
-use shared_common::taxonomy_common_error::ErrorMessage;
-use shared_common::taxonomy_source_vo::ContentString;
+use shared::taxonomy_adapter_name_vo::AdapterName;
+use shared::taxonomy_common_error::ErrorMessage;
+use shared::taxonomy_source_vo::ContentString;
 use std::collections::HashMap;
 use std::sync::Mutex;
 

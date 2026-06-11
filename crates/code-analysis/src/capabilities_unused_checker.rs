@@ -1,8 +1,8 @@
 // PURPOSE: UnusedImportRuleChecker — IUnusedProtocol for AES023: detect imports that are never used in the code
 
-use code_analysis::contract_unused_protocol::IUnusedProtocol;
-use shared_common::taxonomy_name_vo::SymbolName;
-use source_parsing::taxonomy_path_vo::FilePath;
+use crate::IUnusedProtocol;
+use shared::SymbolName;
+use shared::FilePath;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
@@ -10,7 +10,6 @@ use std::fs;
 
 static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
 
-/// Business logic for identifying imports that are not utilized in the code.
 pub struct UnusedImportRuleChecker {}
 
 impl Default for UnusedImportRuleChecker {
@@ -30,7 +29,6 @@ impl UnusedImportRuleChecker {
         for line in content.lines() {
             let trimmed = line.trim();
 
-            // `from x import Y as Z` or `from x import Y`
             if let Some(rest) = trimmed.strip_prefix("from ") {
                 let parts: Vec<&str> = rest.splitn(2, " import ").collect();
                 if parts.len() == 2 {
@@ -50,7 +48,6 @@ impl UnusedImportRuleChecker {
                     }
                 }
             }
-            // `import X as Y` or `import X`
             else if let Some(rest) = trimmed.strip_prefix("import ") {
                 for name_part in rest.split(',') {
                     let name_part = name_part.trim();
@@ -89,7 +86,6 @@ impl UnusedImportRuleChecker {
     ) -> HashSet<String> {
         let mut used: HashSet<String> = HashSet::new();
 
-        // Strip import lines to avoid false positives
         let code_lines: String = content
             .lines()
             .filter(|l| {
@@ -100,7 +96,6 @@ impl UnusedImportRuleChecker {
             .join("\n");
 
         for alias in all_imports.keys() {
-            // Check if the alias is used as a word in the code
             let pattern = format!(r"\b{}\b", regex::escape(alias));
             if let Ok(re) = Regex::new(&pattern) {
                 if re.is_match(&code_lines) {
@@ -112,7 +107,6 @@ impl UnusedImportRuleChecker {
         used
     }
 
-    /// Find unused imports in a Python file.
     pub fn find_unused_imports(&self, file_path: &str) -> Vec<String> {
         let Ok(content) = fs::read_to_string(file_path) else {
             return vec![];
@@ -125,7 +119,6 @@ impl UnusedImportRuleChecker {
         imported_aliases
             .iter()
             .filter(|(alias, _fullname)| {
-                // Unused if: not in used_symbols AND not in __all__ exports
                 !used_symbols.contains(*alias) && !exported_symbols.contains(*alias)
             })
             .map(|(alias, _)| alias.clone())

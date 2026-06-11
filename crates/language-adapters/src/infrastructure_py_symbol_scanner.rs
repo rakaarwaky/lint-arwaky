@@ -3,8 +3,8 @@
 use code_analysis::taxonomy_import_source_vo::ImportInfo;
 use language_adapters::contract_flow_port::IJavascriptFlowPort;
 use language_adapters::taxonomy_naming_list_vo::SymbolNameList;
-use shared_common::taxonomy_name_vo::SymbolName;
-use shared_common::taxonomy_suggestion_vo::MetadataVO;
+use shared::taxonomy_name_vo::SymbolName;
+use shared::taxonomy_suggestion_vo::MetadataVO;
 
 pub type JavascriptFlowPortRef = Box<dyn IJavascriptFlowPort>;
 

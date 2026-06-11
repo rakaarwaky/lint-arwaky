@@ -1,6 +1,6 @@
 // PURPOSE: IImportParserPort — contract port trait for import parsing utilities (scope resolution, line parsing, layer extraction)
 
-use shared_common::{FileContentVO, Identity, LayerNameVO, LineContentVO, LineNumber};
+use shared::{FileContentVO, Identity, LayerNameVO, LineContentVO, LineNumber};
 use source_parsing::taxonomy_path_vo::FilePath;
 
 pub trait IImportParserPort: Send + Sync {

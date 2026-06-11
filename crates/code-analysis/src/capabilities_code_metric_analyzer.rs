@@ -1,7 +1,7 @@
 // PURPOSE: CodeMetricAnalyzer — capabilities implementation for complexity, duplication, and quality trends analysis
-use code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
-use output_report::taxonomy_severity_vo::Severity;
+use crate::ICodeMetricAnalyzerProtocol;
+use crate::ITargetResolverProtocol;
+use shared::taxonomy_severity_vo::Severity;
 use std::process::ExitCode;
 use std::sync::Arc;
 

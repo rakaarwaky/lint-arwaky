@@ -11,5 +11,5 @@ once_cell = "1.21.4"
 regex = "1.10"
 import_rules = { path = "../import-rules" }
 output_report = { path = "../output-report" }
-shared_common = { path = "../shared-common" }
+shared = { path = "../shared" }
 source_parsing = { path = "../source-parsing" }

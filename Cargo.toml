@@ -40,7 +40,7 @@ check_surfaces = ["check_agent"]
 
 [dependencies]
 # Workspace member crates
-shared_common = { path = "crates/shared-common" }
+shared = { path = "crates/shared" }
 source_parsing = { path = "crates/source-parsing" }
 naming_rules = { path = "crates/naming-rules" }
 import_rules = { path = "crates/import-rules" }

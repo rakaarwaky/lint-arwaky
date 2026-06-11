@@ -1,35 +1,36 @@
-// PURPOSE: LintCheckingOrchestrator — orchestrates ALL AES checkers by calling protocols directly via CheckerContainer
+// PURPOSE: LintCheckingOrchestrator — orchestrates ALL AES checkers by calling protocols directly via ICheckerContainer
 
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
-use code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
-use code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
-use config_system::taxonomy_config_vo::ArchitectureConfig;
-use di_containers::agent_checker_container::CheckerContainer;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_result_vo::LintResultList;
+use crate::IBypassCheckerProtocol;
+use crate::IMandatoryClassProtocol;
+use crate::IDeadInheritanceProtocol;
+use crate::IInlineUnusedProtocol;
+use crate::ILayerDetectionAggregate;
+use crate::ILineCheckerProtocol;
+use crate::IMandatoryInheritanceProtocol;
+use crate::ICheckerContainer;
+use crate::ILocalNamingCheckerProtocol;
+use crate::ILocalArchImportProtocol;
+use shared::taxonomy_config_vo::ArchitectureConfig;
+use shared::taxonomy_result_vo::LintResult;
+use shared::taxonomy_result_vo::LintResultList;
 use role_rules::agent_role_container::RoleAggregateImpl;
 use role_rules::agent_role_orchestrator::RoleOrchestrator;
-use shared_common::taxonomy_source_vo::{ContentString, SourceContentVO};
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::taxonomy_paths_vo::FilePathList;
+use shared::{ContentString, SourceContentVO};
+use shared::FilePath;
+use shared::FilePathList;
 
-static GLOBAL_CONTAINER: OnceLock<Arc<CheckerContainer>> = OnceLock::new();
+static GLOBAL_CONTAINER: OnceLock<Arc<dyn ICheckerContainer>> = OnceLock::new();
 
-/// Initialize the global checker container. Must be called before using LintCheckingOrchestrator.
-pub fn init_global_checker(container: Arc<CheckerContainer>) {
+pub fn init_global_checker(container: Arc<dyn ICheckerContainer>) {
     GLOBAL_CONTAINER.set(container).ok();
 }
 
 pub struct LintCheckingOrchestrator {
-    container: Arc<CheckerContainer>,
+    container: Arc<dyn ICheckerContainer>,
 }
 
 impl Default for LintCheckingOrchestrator {
@@ -39,7 +40,6 @@ impl Default for LintCheckingOrchestrator {
 }
 
 impl LintCheckingOrchestrator {
-    /// Create a new orchestrator. Panics if init_global_checker has not been called.
     pub fn new() -> Self {
         Self {
             container: GLOBAL_CONTAINER.get().cloned().unwrap_or_else(|| {
@@ -73,7 +73,6 @@ impl LintCheckingOrchestrator {
             }
             let c = std::fs::read_to_string(file).unwrap_or_default();
 
-            // Layer-independent checks (run on ALL files) — call protocols directly
             self.container
                 .bypass_checker()
                 .check_bypass_comments(file, &c, &mut violations);
@@ -86,7 +85,6 @@ impl LintCheckingOrchestrator {
 
             for line in c.lines() {
                 let t = line.trim();
-                // Rust: `use crate::module::item;`
                 if let Some(imp) = t.strip_prefix("use ") {
                     let target = imp.trim_end_matches(';').trim();
                     if !target.is_empty() {
@@ -112,7 +110,6 @@ impl LintCheckingOrchestrator {
                         }
                     }
                 }
-                // Python: `from module import name` or `import module`
                 if t.starts_with("from ") && t.contains(" import ") {
                     let module = t
                         .strip_prefix("from ")
@@ -122,7 +119,6 @@ impl LintCheckingOrchestrator {
                         .unwrap_or("");
                     if !module.is_empty() {
                         import_edges.push((file.to_string(), module.to_string()));
-                        // Resolve relative Python imports to file paths
                         if module.starts_with('.') {
                             let parent = std::path::Path::new(file)
                                 .parent()
@@ -151,7 +147,6 @@ impl LintCheckingOrchestrator {
                         import_edges.push((file.to_string(), module.to_string()));
                     }
                 }
-                // JS/TS: `import { name } from "module"` or `import name from "module"`
                 if t.starts_with("import ") && t.contains(" from ") {
                     if let Some(from_part) = t.split(" from ").last() {
                         let module = from_part
@@ -161,7 +156,6 @@ impl LintCheckingOrchestrator {
                             .trim_end_matches(';');
                         if !module.is_empty() {
                             import_edges.push((file.to_string(), module.to_string()));
-                            // Resolve relative JS imports to file paths
                             if module.starts_with('.') {
                                 let parent = std::path::Path::new(file)
                                     .parent()
@@ -190,7 +184,6 @@ impl LintCheckingOrchestrator {
                 continue;
             }
 
-            // Layer detection via container (ILayerDetectionAggregate)
             let layer = match self.container.detect_layer(file, root_dir) {
                 Some(l) => l,
                 None => {
@@ -205,11 +198,6 @@ impl LintCheckingOrchestrator {
                 continue;
             }
 
-            // Layer-dependent inline checks — call protocols directly
-            // check_mandatory_inheritance disabled per user request (primitif info cukup di contract)
-            // self.container
-            //     .mandatory_inheritance_checker()
-            //     .check_mandatory_inheritance(file, &c, &layer, config, &mut violations);
             self.container
                 .mandatory_inheritance_checker()
                 .check_contract_implementation(file, &c, files, &mut violations);
@@ -231,7 +219,6 @@ impl LintCheckingOrchestrator {
             };
             let source_vo = SourceContentVO::new(fp, content_vo, language);
 
-            // Layer-rule checks — call protocols directly
             self.container
                 .capabilities_role_checker()
                 .check_capability_routing(&source_vo, &layer, &mut violations);
@@ -239,7 +226,6 @@ impl LintCheckingOrchestrator {
                 .line_checker()
                 .check_line_counts(file, Some(&def), &mut violations);
 
-            // Taxonomy & contract role checks — call protocols directly
             self.container
                 .taxonomy_checker()
                 .check_entity(&source_vo, &mut violations);
@@ -268,7 +254,6 @@ impl LintCheckingOrchestrator {
             .collect();
         let files_list_vo = FilePathList::new(file_paths_vo.clone());
 
-        // Naming checks
         self.container
             .naming_checker()
             .check_file_naming(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
@@ -278,7 +263,6 @@ impl LintCheckingOrchestrator {
             .check_domain_suffixes(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
             .await;
 
-        // Import checks
         self.container
             .import_mandatory_checker()
             .check_mandatory_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
@@ -296,23 +280,19 @@ impl LintCheckingOrchestrator {
             .check_legacy_import_rules(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
             .await;
 
-        // Cycle detection
         self.container
             .cycle_analyzer()
             .check_cycles(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
             .await;
 
-        // Surface hierarchy check — call protocol directly
         self.container
             .surface_checker()
             .check_surface_hierarchy(&file_paths_vo, &root_fp, &mut rl);
 
-        // Orphan check (AES030) - enabled in config
         let orphan_agg = self.container.orphan_aggregate();
         let mut orphan_results = orphan_agg.check_orphans(self.container.as_ref(), files, root_dir);
         rl.values.append(&mut orphan_results);
 
-        // Wire role orchestrator for agent and surface role checks
         let role_orch = RoleOrchestrator::new(Arc::new(RoleAggregateImpl::new()));
         let max_lines = config
             .rules

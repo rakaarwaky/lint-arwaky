@@ -4,26 +4,13 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::sync::LazyLock;
 
-use shared_common::code_analysis::taxonomy_import_source_vo::ImportInfo;
-use shared_common::code_analysis::taxonomy_import_source_vo::ImportInfoList;
-use shared_common::code_analysis::taxonomy_import_source_vo::PrimitiveViolation;
-use shared_common::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
-use shared_common::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
-use shared_common::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use shared_common::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use shared_common::shared_common::taxonomy_common_error::Cause;
-use shared_common::shared_common::taxonomy_common_error::ErrorMessage;
-use shared_common::shared_common::taxonomy_common_vo::BooleanVO;
-use shared_common::shared_common::taxonomy_common_vo::ColumnNumber;
-use shared_common::shared_common::taxonomy_common_vo::Count;
-use shared_common::shared_common::taxonomy_common_vo::LineNumber;
-use shared_common::shared_common::taxonomy_common_vo::PatternList;
-use shared_common::shared_common::taxonomy_error_vo::ErrorCode;
-use shared_common::shared_common::taxonomy_name_vo::SymbolName;
-use shared_common::shared_common::taxonomy_suggestion_vo::MetadataVO;
-use shared_common::contract_parser_port::ISourceParserPort;
-use shared_common::source_parsing::taxonomy_parser_error::SourceParserError;
-use shared_common::shared_common::taxonomy_path_vo::FilePath;
+use shared::taxonomy_import_source_vo::{ImportInfo, ImportInfoList, PrimitiveViolation, PrimitiveViolationList};
+use shared::taxonomy_naming_list_vo::PrimitiveTypeList;
+use shared::taxonomy_job_vo::{ResponseData, SuccessStatus};
+use shared::{
+    Cause, ErrorMessage, BooleanVO, ColumnNumber, Count, LineNumber, PatternList,
+    ErrorCode, SymbolName, MetadataVO, ISourceParserPort, SourceParserError, FilePath,
+};
 
 static IMPORT_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^import\s+(.+?)\s+from\s+'([^']+)'").ok());
@@ -76,7 +63,7 @@ impl ASTJSParserAdapter {
     }
 
     fn read_and_parse(&self, path: &FilePath) -> Result<ParsedData, SourceParserError> {
-        let content = fs::read_to_string(&path.value).map_err(|e| SourceParserError {
+        let content = fs::read_to_string(&path.value()).map_err(|e| SourceParserError {
             path: path.clone(),
             message: ErrorMessage::new(format!("Failed to read file: {}", e)),
             error_code: ErrorCode::raw("FILE_READ_ERROR"),
@@ -439,7 +426,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
 
     fn get_class_attributes(&self, path: &FilePath) -> ResponseData {
         let mut attrs = HashMap::new();
-        if let Ok(content) = std::fs::read_to_string(&path.value) {
+        if let Ok(content) = std::fs::read_to_string(&path.value()) {
             let lines: Vec<&str> = content.lines().collect();
             let mut in_class = false;
             let mut class_name = String::new();
@@ -503,7 +490,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
     }
 
     fn has_all_export(&self, path: &FilePath) -> SuccessStatus {
-        let filename = path.value.replace('\\', "/");
+        let filename = path.value().replace('\\', "/");
         let is_barrel = filename.ends_with("/index.ts")
             || filename.ends_with("/index.js")
             || filename.ends_with("/index.tsx")
@@ -526,7 +513,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
         primitive_types: &PrimitiveTypeList,
     ) -> PrimitiveViolationList {
         let mut violations = Vec::new();
-        let content = match fs::read_to_string(&path.value) {
+        let content = match fs::read_to_string(&path.value()) {
             Ok(c) => c,
             Err(_) => return PrimitiveViolationList { values: violations },
         };
@@ -535,8 +522,8 @@ impl ISourceParserPort for ASTJSParserAdapter {
             .values
             .iter()
             .filter_map(|p| {
-                let pattern = format!(r"\b{}\b", p.value);
-                Regex::new(&pattern).ok().map(|re| (p.value.clone(), re))
+                let pattern = format!(r"\b{}\b", p.value());
+                Regex::new(&pattern).ok().map(|re| (p.value().to_string(), re))
             })
             .collect();
 
@@ -624,7 +611,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
     fn is_symbol_exported(&self, path: &FilePath, symbol: &SymbolName) -> SuccessStatus {
         if let Ok(data) = self.read_and_parse(path) {
             SuccessStatus {
-                value: data.exported.contains(&symbol.value),
+                value: data.exported.contains(symbol.value()),
             }
         } else {
             SuccessStatus { value: false }
@@ -684,7 +671,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
     }
 
     fn is_barrel_file(&self, path: &FilePath) -> BooleanVO {
-        let path_str = path.value.replace('\\', "/");
+        let path_str = path.value().replace('\\', "/");
         BooleanVO::new(
             path_str.ends_with("/index.ts")
                 || path_str.ends_with("/index.js")
@@ -695,7 +682,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
 
     fn get_stem(&self, path: &FilePath) -> SymbolName {
         let basename = path
-            .value
+            .value()
             .replace('\\', "/")
             .split('/')
             .next_back()
@@ -713,7 +700,7 @@ impl ISourceParserPort for ASTJSParserAdapter {
 
     fn is_entry_point(&self, path: &FilePath) -> BooleanVO {
         let basename = path
-            .value
+            .value()
             .replace('\\', "/")
             .split('/')
             .next_back()

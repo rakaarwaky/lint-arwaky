@@ -10,5 +10,5 @@ async-trait = "0.1.89"
 regex = "1.10"
 import_rules = { path = "../import-rules" }
 output_report = { path = "../output-report" }
-shared_common = { path = "../shared-common" }
+shared = { path = "../shared" }
 source_parsing = { path = "../source-parsing" }

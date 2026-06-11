@@ -140,7 +140,7 @@ dependencies = [
  "output_report",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -369,7 +369,7 @@ dependencies = [
  "pipeline_jobs",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
  "tokio",
 ]
@@ -397,12 +397,14 @@ name = "code_analysis"
 version = "1.10.11"
 dependencies = [
  "async-trait",
+ "chrono",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
+ "tokio",
 ]
 
 [[package]]
@@ -447,7 +449,7 @@ dependencies = [
  "pipeline_jobs",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -623,7 +625,7 @@ dependencies = [
  "role_rules",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -760,7 +762,7 @@ dependencies = [
  "async-trait",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -768,9 +770,10 @@ dependencies = [
 name = "file_watch"
 version = "1.10.11"
 dependencies = [
+ "async-trait",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -1005,7 +1008,7 @@ dependencies = [
  "pipeline_jobs",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -2129,7 +2132,7 @@ dependencies = [
  "output_report",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -2307,7 +2310,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
  "tracing",
 ]
@@ -2347,7 +2350,7 @@ dependencies = [
  "pipeline_jobs",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
 ]
 
 [[package]]
@@ -2393,7 +2396,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
- "shared_common",
+ "shared",
  "source_parsing",
  "thiserror 1.0.69",
  "tokio",
@@ -2491,7 +2494,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
  "tracing",
 ]
@@ -2515,9 +2518,10 @@ dependencies = [
 name = "metrics_service"
 version = "1.10.11"
 dependencies = [
+ "async-trait",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -2555,7 +2559,7 @@ dependencies = [
  "async-trait",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -2569,7 +2573,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -2717,7 +2721,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -2730,7 +2734,7 @@ dependencies = [
  "pipeline_jobs",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -2774,10 +2778,12 @@ name = "pipeline_jobs"
 version = "1.10.11"
 dependencies = [
  "async-trait",
+ "chrono",
  "multi_project",
+ "rand 0.8.6",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
  "tokio",
 ]
@@ -2805,7 +2811,7 @@ dependencies = [
  "pipeline_jobs",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -2885,7 +2891,7 @@ dependencies = [
  "pipeline_jobs",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -3176,7 +3182,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
  "source_parsing",
 ]
 
@@ -3476,7 +3482,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "shared_common"
+name = "shared"
 version = "1.10.11"
 dependencies = [
  "anyhow",
@@ -3571,7 +3577,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared_common",
+ "shared",
 ]
 
 [[package]]

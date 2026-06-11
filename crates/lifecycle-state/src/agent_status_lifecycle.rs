@@ -1,10 +1,10 @@
 // PURPOSE: AgentStatusLifecycle — manages agent lifecycle states (starting, ready, scanning, stopping)
 
-use lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
-use lifecycle_state::taxonomy_agent_status_vo::AgentStatusVO;
-use pipeline_jobs::taxonomy_job_vo::ResponseData;
-use shared_common::taxonomy_common_vo::BooleanVO;
-use shared_common::taxonomy_duration_vo::Duration;
+use crate::contract_lifecycle_aggregate::AgentLifecycleAggregate;
+use crate::taxonomy_agent_status_vo::{AgentStatus, AgentStatusVO};
+use shared::taxonomy_job_vo::ResponseData;
+use shared::BooleanVO;
+use shared::Duration;
 
 pub struct LifecycleStateManager {}
 
@@ -23,7 +23,7 @@ impl LifecycleStateManager {
 #[async_trait::async_trait]
 impl AgentLifecycleAggregate for LifecycleStateManager {
     fn status(&self) -> AgentStatusVO {
-        AgentStatusVO::new(crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatus::INIT)
+        AgentStatusVO::new(AgentStatus::INIT)
     }
 
     fn started(&self) -> BooleanVO {

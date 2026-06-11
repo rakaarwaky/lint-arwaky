@@ -4,7 +4,7 @@ use cli_commands::contract_dev_aggregate::DevCommandsAggregate;
 use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use mcp_server::surface_tools_controller::register_tools;
-use shared_common::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_common_vo::LineNumber;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check
 fn _use_mandatory_imports() {

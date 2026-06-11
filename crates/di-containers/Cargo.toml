@@ -26,5 +26,5 @@ pipeline_jobs = { path = "../pipeline-jobs" }
 plugin_system = { path = "../plugin-system" }
 project_setup = { path = "../project-setup" }
 role_rules = { path = "../role-rules" }
-shared_common = { path = "../shared-common" }
+shared = { path = "../shared" }
 source_parsing = { path = "../source-parsing" }

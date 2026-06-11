@@ -1,11 +1,12 @@
 // PURPOSE: source-parsing — scanners, parsers, collectors, providers
 // Depends on: shared-common (taxonomy/contract types)
 
-pub use shared_common::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-pub use shared_common::contract_parser_port::ISourceParserPort;
-pub use shared_common::contract_scanner_provider_port::IScannerProviderPort;
-pub use shared_common::taxonomy_path_vo::{DirectoryPath, FilePath};
-pub use shared_common::taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
+pub use shared::IPathNormalizationPort;
+pub use shared::ISourceParserPort;
+pub use shared::IScannerProviderPort;
+pub use shared::{DirectoryPath, FilePath};
+pub use shared::{FilePathList, RenamedFile, RenamedFileList};
+pub use shared::SourceParserError;
 
 pub mod infrastructure_file_collector;
 pub use infrastructure_file_collector::FileCollectorProvider;

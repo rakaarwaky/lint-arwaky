@@ -4,11 +4,11 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::SystemTime;
 
-use file_watch::contract_provider_port::IWatchProviderPort;
-use file_watch::taxonomy_service_error::WatchServiceError;
-use shared_common::taxonomy_common_error::ErrorMessage;
-use shared_common::taxonomy_common_vo::BooleanVO;
-use source_parsing::taxonomy_path_vo::FilePath;
+use crate::contract_provider_port::IWatchProviderPort;
+use crate::taxonomy_service_error::WatchServiceError;
+use shared::BooleanVO;
+use shared::ErrorMessage;
+use shared::FilePath;
 
 pub struct WatchServiceProvider {
     running: bool,

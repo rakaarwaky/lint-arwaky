@@ -1,7 +1,7 @@
 // PURPOSE: DeadInheritanceChecker — IDeadInheritanceProtocol for AES024: detect empty struct/trait impl blocks
-use code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_severity_vo::Severity;
+use crate::IDeadInheritanceProtocol;
+use shared::taxonomy_result_vo::LintResult;
+use shared::taxonomy_severity_vo::Severity;
 
 pub struct DeadInheritanceChecker {}
 
@@ -23,7 +23,6 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
         let mut i = 0;
         while i < lines.len() {
             let t = lines[i].trim();
-            // Rust: unit struct `struct Foo;`
             if t.starts_with("struct ") && t.ends_with(';') {
                 violations.push(LintResult::new_arch(
                     file,
@@ -35,7 +34,6 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                 i += 1;
                 continue;
             }
-            // Rust: empty impl block `impl X for Y {}`
             if t.starts_with("impl ") {
                 let mut impl_str = t.to_string();
                 let mut j = i;
@@ -73,7 +71,6 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     }
                 }
             }
-            // Python: empty class `class Foo: pass` (single line or multi-line)
             if t.starts_with("class ") || t.starts_with("class\t") {
                 if t.ends_with(": pass") || t.ends_with(":pass") {
                     violations.push(LintResult::new_arch(
@@ -96,7 +93,6 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     }
                 }
             }
-            // JS/TS: empty class `class Foo {}` or `class Foo extends Bar {}`
             if t.starts_with("class ") && t.ends_with("{}") {
                 violations.push(LintResult::new_arch(
                     file,

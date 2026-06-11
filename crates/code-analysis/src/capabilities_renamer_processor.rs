@@ -1,6 +1,6 @@
 // PURPOSE: SymbolRenamerProcessor — renames symbols/filenames across the entire codebase with regex matching
-use code_analysis::contract_analysis_protocol::IAnalysisProtocol;
-use shared_common::taxonomy_common_vo::LineNumber;
+use crate::IAnalysisProtocol;
+use shared::LineNumber;
 use regex::Regex;
 use std::fs;
 
@@ -35,7 +35,6 @@ impl SymbolRenamerProcessor {
                 let path = entry.path();
                 if path.is_dir() {
                     let sub = path.to_string_lossy().to_string();
-                    // Skip hidden dirs and common non-source dirs
                     let dirname = path.file_name().and_then(|f| f.to_str()).unwrap_or("");
                     if !dirname.starts_with('.')
                         && !matches!(dirname, "node_modules" | "target" | "__pycache__" | ".git")
@@ -49,11 +48,7 @@ impl SymbolRenamerProcessor {
         }
     }
 
-    /// Rename a symbol across all files in root_dir.
-    /// Ignores strings, comments, and template literals.
-    /// Returns count of modified files.
     pub fn rename_symbol(&self, root_dir: &str, old_name: &str, new_name: &str) -> usize {
-        // Pattern that skips strings and comments, captures word boundary matches
         let pattern = match Regex::new(&format!(
             r#"(?x)
             (
@@ -90,10 +85,8 @@ impl SymbolRenamerProcessor {
             let new_source = pattern
                 .replace_all(&source, |caps: &regex::Captures| {
                     if caps.get(1).is_some() {
-                        // Matched a string/comment — preserve as-is
                         caps[0].to_string()
                     } else {
-                        // Matched the symbol — replace it
                         new_name.to_string()
                     }
                 })

@@ -2,11 +2,11 @@
 use output_report::taxonomy_result_vo::LintResult;
 use output_report::taxonomy_severity_vo::Severity;
 use role_rules::contract_role_protocol::IContractRoleChecker;
-use shared_common::taxonomy_definition_vo::LayerDefinition;
-use shared_common::taxonomy_source_vo::SourceContentVO;
-use shared_common::taxonomy_violation_message_js_error::AesViolationJs;
-use shared_common::taxonomy_violation_message_py_error::AesViolationPy;
-use shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::taxonomy_source_vo::SourceContentVO;
+use shared::taxonomy_violation_message_js_error::AesViolationJs;
+use shared::taxonomy_violation_message_py_error::AesViolationPy;
+use shared::taxonomy_violation_message_rs_error::AesViolation;
 
 fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     format!(
@@ -194,7 +194,7 @@ impl IContractRoleChecker for ContractRoleChecker {
     fn check_aggregate(
         &self,
         source: &SourceContentVO,
-        def: &crate::shared_common::taxonomy_definition_vo::LayerDefinition,
+        def: &shared::taxonomy_definition_vo::LayerDefinition,
         violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_aggregate(source, def, violations);

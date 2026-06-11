@@ -1,8 +1,8 @@
 // PURPOSE: SourceParsingContainer — wiring for source-parsing feature (root layer, wiring only)
 use std::sync::Arc;
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
-use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
+use crate::ISourceParserPort;
+use crate::IPathNormalizationPort;
+use crate::IScannerProviderPort;
 
 pub struct SourceParsingContainer {
     source_parser: Arc<dyn ISourceParserPort>,
@@ -13,18 +13,18 @@ pub struct SourceParsingContainer {
 impl SourceParsingContainer {
     pub fn new() -> Self {
         let path_norm: Arc<dyn IPathNormalizationPort> = Arc::new(
-            crate::source_parsing::infrastructure_path_provider::PathNormalizationProvider {},
+            crate::infrastructure_path_provider::PathNormalizationProvider {},
         );
         let source_parser: Arc<dyn ISourceParserPort> = Arc::new(
-            crate::source_parsing::infrastructure_parser_adapter::SourceParserOrchestrator::new(
+            crate::infrastructure_parser_adapter::SourceParserOrchestrator::new(
                 Box::new(
-                    crate::source_parsing::infrastructure_py_scanner::ASTPythonParserAdapter::new(),
+                    crate::infrastructure_py_scanner::ASTPythonParserAdapter::new(),
                 ),
                 Box::new(
-                    crate::source_parsing::infrastructure_rust_scanner::ASTRustParserAdapter::new(),
+                    crate::infrastructure_rust_scanner::ASTRustParserAdapter::new(),
                 ),
                 Box::new(
-                    crate::source_parsing::infrastructure_js_scanner::ASTJSParserAdapter::new(),
+                    crate::infrastructure_js_scanner::ASTJSParserAdapter::new(),
                 ),
             ),
         );
@@ -32,7 +32,7 @@ impl SourceParsingContainer {
             source_parser,
             path_normalization: path_norm,
             scanner_provider: Arc::new(
-                crate::source_parsing::infrastructure_file_collector::FileCollectorProvider::new(),
+                crate::infrastructure_file_collector::FileCollectorProvider::new(),
             ),
         }
     }
@@ -54,4 +54,3 @@ impl Default for SourceParsingContainer {
         Self::new()
     }
 }
-

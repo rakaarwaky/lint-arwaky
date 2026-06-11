@@ -2,9 +2,9 @@
 use output_report::taxonomy_result_vo::LintResult;
 use output_report::taxonomy_severity_vo::Severity;
 use role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use shared_common::taxonomy_name_vo::SymbolName;
-use shared_common::taxonomy_source_vo::SourceContentVO;
-use shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use shared::taxonomy_name_vo::SymbolName;
+use shared::taxonomy_source_vo::SourceContentVO;
+use shared::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct CapabilitiesRoleChecker {}
 
