@@ -36,7 +36,9 @@ cargo clippy -p import_rules -- -D warnings  # per crate
 
 ## Architecture (6-layer AES + Vertical Slicing + Multi-Crate Workspace)
 
-The codebase uses **6 architectural layers** as file prefixes, organized into **26 feature crates** (vertical slicing) in a **Cargo workspace**:
+The codebase uses **7 architectural layers** as **file prefixes**, organized into **feature crates** (vertical slicing) in a **Cargo workspace**.
+
+**CRITICAL**: Layers are determined by **file prefix** (`taxonomy_`, `contract_`, `capabilities_`, `infrastructure_`, `agent_`, `surface_`, `root_`), NOT by folder location or crate name. Each feature crate contains files from multiple layers internally.
 
 | Layer (prefix)    | Allowed suffixes                                  |
 | ----------------- | ------------------------------------------------- |
@@ -46,20 +48,19 @@ The codebase uses **6 architectural layers** as file prefixes, organized into **
 | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.         |
 | `agent_`          | `_orchestrator`                                   |
 | `surface_`        | `_command`, `_handler`, `_controller`             |
+| `root_`           | `_container`, `_entry`                            |
 
 ### Workspace Crates (feature folders → workspace members)
 
 ```
 crates/
-  shared-common/        — Foundation: ALL taxonomy_* + contract_* (NO deps)
+  shared/               — Foundation: ALL taxonomy_* + contract_* (NO deps on feature crates)
   import-rules/         — Import compliance (AES001, AES002)
   naming-rules/         — Naming convention (AES010, AES011)
   role-rules/           — Role violations (AES0305, AES0306)
   orphan-detector/      — Orphan code detection (AES030)
   code-analysis/        — Quality: unused (AES023), class/line, auto-fix
   auto-fix/             — Auto-fix processor (AES0303)
-  cli-commands/         — CLI surfaces (_command)
-  cli-transport/        — CLI execution transport
   config-system/        — Config loading & parsing
   pipeline-jobs/        — Jobs, dispatcher, execution
   source-parsing/       — Source code parsing (scanners, parsers)
@@ -73,33 +74,36 @@ crates/
   output-report/        — Output formatting & report generation
   lifecycle-state/      — Agent lifecycle management
   metrics-service/      — Metrics provider
-  di-containers/        — DI container aggregates (legacy)
-  composition_root.rs   — Root composition (new pattern)
-  cli_main_entry.rs     — CLI binary entry
-  mcp_main_entry.rs     — MCP binary entry
-  tui_main_entry.rs     — TUI binary entry
+  cli-commands/         — CLI surfaces (_command) + transport
+  mcp-server/           — MCP server surfaces
+  composition_root.rs   — Root composition (root layer)
+  cli_main_entry.rs     — CLI binary entry (root_entry)
+  mcp_main_entry.rs     — MCP binary entry (root_entry)
+  tui_main_entry.rs     — TUI binary entry (root_entry)
 ```
+
+**Container Pattern**: Each feature crate owns its own `root_container.rs` at crate root. Containers wire `capabilities_*`, `infrastructure_*`, `agent_*` implementations behind `contract_*` traits. Agent layer contains ONLY orchestrators (`agent_*_orchestrator.rs`). Root layer contains containers and binary entries. **Folder structure ≠ layer assignment.**
 
 ### Dependency Graph (enforced by Cargo workspace)
 
 ```
-shared-common (taxonomy_*, contract_*)  ◄── foundation, NO deps
+shared (taxonomy_*, contract_*)     ◄── foundation, NO deps
        ▲
        │
 import-rules, naming-rules, role-rules, code-analysis,
 auto-fix, orphan-detector, config-system, source-parsing,
 language-adapters, file-system, file-watch, git-hooks,
 multi-project, project-setup, plugin-system, output-report,
-lifecycle-state, metrics-service, pipeline-jobs, cli-transport
+lifecycle-state, metrics-service, pipeline-jobs
        ▲                         (capabilities_*/infrastructure_* + agent_*)
-       │                         deps: shared-common ONLY
-cli-commands, mcp-server                              (surface_*)
-       ▲                         deps: feature crates + shared-common
-di-containers (legacy) / composition_root (new)
+       │                         deps: shared ONLY
+cli-commands, mcp-server          (surface_*)
+       ▲                         deps: all feature crates + shared
+composition_root (root_*)
 ```
 
 Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
-Surfaces must NOT import infrastructure/capabilities directly — they go through `ServiceContainerAggregate` trait (AES001 sub-condition).
+Surfaces must NOT import infrastructure/capabilities directly — they go through feature crate's `root_container` or `ServiceContainerAggregate` trait (AES001 sub-condition).
 
 AES rules enforced: 27 codes across 4 groups (Layer & Import, Naming & Structure, File & Content, Role Violations). See `RULES_AES.md` for the complete catalog with old-to-new mapping.
 

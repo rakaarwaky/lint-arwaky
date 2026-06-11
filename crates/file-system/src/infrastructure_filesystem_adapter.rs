@@ -4,10 +4,10 @@ use async_trait::async_trait;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use file_system::contract_system_port::IFileSystemPort;
-use file_system::taxonomy_filesystem_error::FileSystemError;
-use pipeline_jobs::taxonomy_action_vo::ActionName;
-use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::file_system::contract_system_port::IFileSystemPort;
+use shared::file_system::taxonomy_filesystem_error::FileSystemError;
+use shared::pipeline_jobs::taxonomy_action_vo::ActionName;
+use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::PatternList;

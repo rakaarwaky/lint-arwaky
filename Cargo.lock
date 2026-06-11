@@ -2364,7 +2364,6 @@ dependencies = [
  "config_system-lint-arwaky",
  "console",
  "ctrlc",
- "di_containers-lint-arwaky",
  "dialoguer",
  "dirs",
  "file_system-lint-arwaky",

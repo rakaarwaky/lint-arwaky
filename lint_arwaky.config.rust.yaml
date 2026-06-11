@@ -31,17 +31,12 @@ architecture:
       suffix:
         - strict: ["entry","container"]
     taxonomy:
-      check_orphan: true
       suffix:
-        # strict: vo, entity, error, event, constant = pure data, no logic
-        # relaxed: utility, helper = boleh punya logic, boleh dipakai layer manapun
         - strict: ["vo", "entity", "error", "event", "constant", "utility", "helper"] 
     contract:
-      check_orphan: true
       suffix:
         - strict: ["port", "protocol", "aggregate"]
     capabilities:
-      check_orphan: true
       suffix:
         - flexible:
             [
@@ -85,7 +80,6 @@ architecture:
               "aggregate",
             ]
     infrastructure:
-      check_orphan: true
       suffix:
         - flexible:
             [
@@ -139,7 +133,6 @@ architecture:
               "aggregate",
             ]
     surfaces:
-      check_orphan: true
       suffix:
         - strict:
             [
@@ -156,7 +149,6 @@ architecture:
               "screen",
             ]
     agent:
-      check_orphan: true
       suffix:
         - strict: ["orchestrator"]
 
