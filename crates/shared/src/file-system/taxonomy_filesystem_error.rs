@@ -1,8 +1,8 @@
 // PURPOSE: FileSystemError — structured error type for filesystem operation failures
-use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::common::taxonomy_common_error::Cause;
 use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_error_vo::ErrorCode;
+use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 

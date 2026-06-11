@@ -1,13 +1,13 @@
 // PURPOSE: ArchitectureConfig, LayerDefinition, ConfigRule — configuration value objects for AES rules definition
 use serde::{Deserialize, Serialize};
 
-use crate::import_rules::taxonomy_rule_vo::ArchitectureRule;
-use crate::import_rules::taxonomy_rule_vo::LegacyLayerRuleList;
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_definition_vo::NamingConfig;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
+use crate::import_rules::taxonomy_rule_vo::ArchitectureRule;
+use crate::import_rules::taxonomy_rule_vo::LegacyLayerRuleList;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::collections::HashMap;
 
@@ -223,7 +223,9 @@ pub fn default_aes_config() -> ArchitectureConfig {
 pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
     match language {
         "python" => parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml")),
-        "javascript" => parse_config_yaml(include_str!("../../../../lint_arwaky.config.javascript.yaml")),
+        "javascript" => parse_config_yaml(include_str!(
+            "../../../../lint_arwaky.config.javascript.yaml"
+        )),
         _ => default_aes_config(),
     }
 }

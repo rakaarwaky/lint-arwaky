@@ -1,10 +1,10 @@
 // PURPOSE: LinterOperationError — structured error type for linter operation failures (scan, fix, report)
-use crate::language_adapters::taxonomy_adapter_error::AdapterError;
-use crate::language_adapters::taxonomy_adapter_error::ScanError;
 /// linter_operation_error — Unified error type for linter adapter operations.
 /* UNKNOWN: ErrorMessage */
 use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_common_vo::LineNumber;
+use crate::language_adapters::taxonomy_adapter_error::AdapterError;
+use crate::language_adapters::taxonomy_adapter_error::ScanError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, thiserror::Error)]

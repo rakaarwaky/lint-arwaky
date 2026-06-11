@@ -1,6 +1,6 @@
 // PURPOSE: IAgentRoleChecker — port trait for AES0305: agent role audits (container, orchestrator, lifecycle, file size, any type)
-use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::config_system::taxonomy_source_vo::SourceContentVO;
+use crate::output_report::taxonomy_result_vo::LintResult;
 
 pub trait IAgentRoleChecker: Send + Sync {
     fn check_container(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>);

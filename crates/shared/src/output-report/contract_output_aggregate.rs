@@ -1,8 +1,8 @@
 // PURPOSE: OutputAggregate — aggregate trait for output orchestration (format, write, display)
-use crate::output_report::contract_client_aggregate::OutputClientAggregate as BaseOutputClientAggregate;
-use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::common::taxonomy_layer_vo::Identity;
 use crate::config_system::taxonomy_source_vo::ContentString;
+use crate::output_report::contract_client_aggregate::OutputClientAggregate as BaseOutputClientAggregate;
+use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub type OutputClientDyn = Box<dyn BaseOutputClientAggregate>;

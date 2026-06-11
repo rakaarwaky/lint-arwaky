@@ -1,6 +1,6 @@
 // PURPOSE: IWatchProviderPort — port trait for filesystem watch provider
-use crate::file_watch::taxonomy_service_error::WatchServiceError;
 use crate::common::taxonomy_common_vo::BooleanVO;
+use crate::file_watch::taxonomy_service_error::WatchServiceError;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[async_trait::async_trait]

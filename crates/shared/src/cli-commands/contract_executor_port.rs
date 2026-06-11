@@ -1,7 +1,7 @@
 // PURPOSE: Port: ICommandExecutorPort — trait for executing shell commands and capturing response
-use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_duration_vo::Timeout;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[async_trait::async_trait]

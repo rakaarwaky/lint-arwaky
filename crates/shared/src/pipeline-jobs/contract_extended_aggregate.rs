@@ -1,8 +1,8 @@
 // PURPOSE: ExtendedPipelineAggregate — aggregate trait for extended pipeline initialization
+use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::file_watch::taxonomy_watch_vo::DirectoryWatchVO;
 use crate::multi_project::taxonomy_multi_project_vo::MultiProjectVO;
 use crate::pipeline_jobs::contract_pipeline_output_aggregate::PipelineOutputAggregate;
-use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 

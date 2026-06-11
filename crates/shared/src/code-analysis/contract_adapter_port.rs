@@ -3,9 +3,9 @@
 use async_trait::async_trait;
 
 use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
-use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
+use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 /// Abstract interface for linter adapters.

@@ -1,7 +1,7 @@
 // PURPOSE: IConfigValidatorProtocol — protocol for project config and scoring threshold validation
 
-use crate::config_system::taxonomy_validation_vo::ValidationResult;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
+use crate::config_system::taxonomy_validation_vo::ValidationResult;
 
 pub trait IConfigValidatorProtocol: Send + Sync {
     /// Determines if a specific adapter should run based on configuration rules.

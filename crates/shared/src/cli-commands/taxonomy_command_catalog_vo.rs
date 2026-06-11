@@ -1,8 +1,8 @@
 // PURPOSE: CommandCatalogVO — maps ActionName to CommandMetadataVO for all CLI commands
 use crate::cli_commands::taxonomy_metadata_vo::CommandMetadataVO;
-use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::common::taxonomy_suggestion_vo::Suggestion;
+use crate::pipeline_jobs::taxonomy_action_vo::ActionName;
 use std::collections::HashMap;
 
 pub struct CommandCatalogVO {}

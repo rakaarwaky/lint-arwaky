@@ -1,8 +1,6 @@
 // PURPOSE: LintResult, LintResultList, FilePathSet — value objects for lint violation results
 use serde::{Deserialize, Serialize};
 
-use crate::output_report::taxonomy_position_vo::Position;
-use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::ColumnNumber;
 use crate::common::taxonomy_common_vo::LineNumber;
@@ -12,6 +10,8 @@ use crate::common::taxonomy_lint_vo::LocationList;
 use crate::common::taxonomy_lint_vo::ScopeRef;
 use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+use crate::output_report::taxonomy_position_vo::Position;
+use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
