@@ -1,4 +1,4 @@
-// shared-common — taxonomy and contract types
+// common — truly shared types used by multiple features
 pub mod taxonomy_adapter_name_vo;
 pub mod taxonomy_common_error;
 pub mod taxonomy_common_vo;

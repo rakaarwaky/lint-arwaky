@@ -1,10 +1,10 @@
 // PURPOSE: ParserError — structured error type for source code parsing failures
-use crate::shared_common::taxonomy_common_error::Cause;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_common_vo::ColumnNumber;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_common_error::Cause;
+use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_common_vo::ColumnNumber;
+use crate::common::taxonomy_common_vo::LineNumber;
+use crate::common::taxonomy_error_vo::ErrorCode;
+use crate::common::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]
