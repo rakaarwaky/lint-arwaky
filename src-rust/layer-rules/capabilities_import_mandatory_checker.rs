@@ -76,6 +76,7 @@ impl ArchImportMandatoryChecker {
                     AesViolation::MissingImport {
                         source_layer: LayerNameVO::new(source_layer.to_string()),
                         required: SymbolName::new(required.clone()),
+                        reason: None,
                     },
                 ));
             }
@@ -148,6 +149,7 @@ impl ArchImportMandatoryChecker {
                         AesViolation::MissingImport {
                             source_layer: rule_layer.clone(),
                             required: SymbolName::new(required.clone()),
+                            reason: None,
                         },
                     ));
                 }

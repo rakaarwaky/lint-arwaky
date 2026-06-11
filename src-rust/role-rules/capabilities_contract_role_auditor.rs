@@ -138,11 +138,11 @@ impl ContractRoleChecker {
         let has_primitive = primitive_keywords.iter().any(|kw| lower.contains(kw));
         if has_primitive {
             let msg = if is_rs {
-                AesViolation::ContractPrimitive.to_string()
+                AesViolation::ContractPrimitive { reason: None }.to_string()
             } else if is_py {
-                AesViolationPy::ContractPrimitive.to_string()
+                AesViolationPy::ContractPrimitive { reason: None }.to_string()
             } else {
-                AesViolationJs::ContractPrimitive.to_string()
+                AesViolationJs::ContractPrimitive { reason: None }.to_string()
             };
             violations.push(LintResult::new_arch(
                 file,

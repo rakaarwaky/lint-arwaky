@@ -47,7 +47,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                     i + 1,
                     "AES022",
                     Severity::CRITICAL,
-                    AesViolation::BypassComment,
+                    AesViolation::BypassComment { reason: None },
                 ));
                 continue;
             }
@@ -58,7 +58,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                         i + 1,
                         "AES022",
                         Severity::CRITICAL,
-                        AesViolation::BypassComment,
+                        AesViolation::BypassComment { reason: None },
                     ));
                     break;
                 }
@@ -69,7 +69,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                     i + 1,
                     "AES022",
                     Severity::CRITICAL,
-                    AesViolation::UnwrapExpect,
+                    AesViolation::UnwrapExpect { reason: None },
                 ));
                 continue;
             }
@@ -79,7 +79,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                     i + 1,
                     "AES022",
                     Severity::CRITICAL,
-                    AesViolation::Panic,
+                    AesViolation::Panic { reason: None },
                 ));
                 continue;
             }

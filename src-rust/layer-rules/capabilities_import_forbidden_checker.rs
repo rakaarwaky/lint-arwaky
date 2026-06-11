@@ -92,6 +92,7 @@ impl ArchImportForbiddenChecker {
                                 source_layer: layer_name_vo.clone(),
                                 forbidden_layer: LayerNameVO::new(forbidden.clone()),
                                 allowed,
+                                reason: None,
                             },
                         ));
                     }
@@ -181,6 +182,7 @@ impl ArchImportForbiddenChecker {
                                     source_layer: rule_layer.clone(),
                                     forbidden_layer: LayerNameVO::new(forbidden.clone()),
                                     allowed,
+                                    reason: None,
                                 },
                             ));
                         }
@@ -235,6 +237,7 @@ impl ArchImportForbiddenChecker {
                                     source_layer: LayerNameVO::new(file_layer.to_string()),
                                     forbidden_layer: LayerNameVO::new(target.clone()),
                                     allowed,
+                                    reason: None,
                                 },
                             ));
                             break;

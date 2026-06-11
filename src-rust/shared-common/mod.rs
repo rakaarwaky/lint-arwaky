@@ -17,11 +17,11 @@ pub mod taxonomy_adapter_vo;
 pub use taxonomy_adapter_vo::{AdapterClassMap, AdapterMetadataList, AdapterNameList};
 pub mod taxonomy_common_error;
 pub use taxonomy_common_error::{
-    Cause, Constraint, ErrorMessage, ExitCode, FieldName, ModuleName, PrimitiveTypeName,
+    Cause, Constraint, ExitCode, FieldName, ModuleName, PrimitiveTypeName,
 };
 pub mod taxonomy_common_vo;
 pub use taxonomy_common_vo::{
-    BooleanVO, ColumnNumber, Count, DataFlowList, IntoPatternListValues, JobIdList,
+    BooleanVO, ColumnNumber, Count, DataFlowList, ErrorMessage, IntoPatternListValues, JobIdList,
     LineContentList, LineNumber, PatternList, ResponseDataList, Score, Timestamp,
 };
 pub mod taxonomy_duration_vo;

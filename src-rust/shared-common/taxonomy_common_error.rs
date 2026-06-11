@@ -1,4 +1,5 @@
 // PURPOSE: Cause, Constraint, ErrorMessage, ExitCode, FieldName, ModuleName, PrimitiveTypeName — common error value objects
+pub use crate::shared_common::taxonomy_common_vo::ErrorMessage;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use serde::Serialize;
 
@@ -169,89 +170,6 @@ impl<'de> serde::Deserialize<'de> for Constraint {
             }
         }
         deserializer.deserialize_any(ConstraintVisitor {})
-    }
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(transparent)]
-#[derive(Default)]
-pub struct ErrorMessage {
-    pub(crate) value: String,
-}
-
-impl ErrorMessage {
-    pub fn new(value: impl Into<String>) -> Self {
-        Self {
-            value: value.into(),
-        }
-    }
-    pub fn value(&self) -> &str {
-        &self.value
-    }
-}
-
-impl std::fmt::Display for ErrorMessage {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
-
-impl From<&str> for ErrorMessage {
-    fn from(s: &str) -> Self {
-        Self {
-            value: s.to_string(),
-        }
-    }
-}
-
-impl From<String> for ErrorMessage {
-    fn from(s: String) -> Self {
-        Self { value: s }
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for ErrorMessage {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct ErrorMessageVisitor {}
-        impl<'de> serde::de::Visitor<'de> for ErrorMessageVisitor {
-            type Value = ErrorMessage;
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("primitive or map with 'value' key")
-            }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(ErrorMessage {
-                    value: v.to_string(),
-                })
-            }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(ErrorMessage { value: v })
-            }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-            where
-                A: serde::de::MapAccess<'de>,
-            {
-                let mut value = None;
-                while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" {
-                        value = Some(map.next_value::<String>()?);
-                    } else {
-                        let _: serde::de::IgnoredAny = map.next_value()?;
-                    }
-                }
-                let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
-                Ok(ErrorMessage { value: val })
-            }
-        }
-        deserializer.deserialize_any(ErrorMessageVisitor {})
     }
 }
 

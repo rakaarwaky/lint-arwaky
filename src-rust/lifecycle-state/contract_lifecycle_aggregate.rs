@@ -28,4 +28,3 @@ pub trait AgentLifecycleAggregate: Send + Sync {
     /// State transition: degraded.
     fn mark_degraded(&self);
 }
-

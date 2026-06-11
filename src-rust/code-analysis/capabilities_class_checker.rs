@@ -83,7 +83,7 @@ impl IMandatoryClassProtocol for ArchClassChecker {
                 0,
                 "AES024",
                 Severity::HIGH,
-                AesViolation::MandatoryClassDefinition,
+                AesViolation::MandatoryClassDefinition { reason: None },
             ));
         }
     }

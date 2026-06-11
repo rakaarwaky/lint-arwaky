@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::pipeline_jobs::taxonomy_action_vo::JobId;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_layer_vo::LineContentVO;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -619,5 +618,43 @@ impl IntoPatternListValues for Vec<&str> {
 impl IntoPatternListValues for &Vec<String> {
     fn into_pattern_list_values(self) -> Vec<String> {
         self.clone()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(transparent)]
+#[derive(Default)]
+pub struct ErrorMessage {
+    pub(crate) value: String,
+}
+
+impl ErrorMessage {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self {
+            value: value.into(),
+        }
+    }
+    pub fn value(&self) -> &str {
+        &self.value
+    }
+}
+
+impl std::fmt::Display for ErrorMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl From<&str> for ErrorMessage {
+    fn from(s: &str) -> Self {
+        Self {
+            value: s.to_string(),
+        }
+    }
+}
+
+impl From<String> for ErrorMessage {
+    fn from(s: String) -> Self {
+        Self { value: s }
     }
 }

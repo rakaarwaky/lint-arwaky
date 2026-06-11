@@ -83,7 +83,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES0306",
                 Severity::HIGH,
-                crate::shared_common::taxonomy_violation_message_rs_error::AesViolation::SurfaceRoleViolation,
+                crate::shared_common::taxonomy_violation_message_rs_error::AesViolation::SurfaceRoleViolation { reason: None },
             ));
         }
     }
@@ -147,7 +147,7 @@ impl SurfaceRoleChecker {
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
-                message: LintMessage::new(AesViolation::NoDomainLogic),
+                message: LintMessage::new(AesViolation::NoDomainLogic { reason: None }),
                 source: make_adapter("architecture"),
                 severity: Severity::HIGH,
                 enclosing_scope: None,

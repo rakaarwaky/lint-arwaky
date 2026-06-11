@@ -171,7 +171,7 @@ impl ArchNamingChecker {
                 violations.push(Self::make_result(
                     file,
                     "AES012",
-                    AesViolation::SuffixForbidden.to_string(),
+                    AesViolation::SuffixForbidden { reason: None }.to_string(),
                     Severity::HIGH,
                 ));
                 return;
@@ -190,7 +190,7 @@ impl ArchNamingChecker {
                     violations.push(Self::make_result(
                         file,
                         "AES012",
-                        AesViolation::SuffixMismatch.to_string(),
+                        AesViolation::SuffixMismatch { reason: None }.to_string(),
                         Severity::HIGH,
                     ));
                 } else {

@@ -22,8 +22,6 @@ impl LifecycleStateManager {
 
 #[async_trait::async_trait]
 impl AgentLifecycleAggregate for LifecycleStateManager {
-
-
     fn status(&self) -> AgentStatusVO {
         AgentStatusVO::new(crate::lifecycle_state::taxonomy_agent_status_vo::AgentStatus::INIT)
     }

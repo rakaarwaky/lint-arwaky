@@ -226,7 +226,7 @@ impl TaxonomyRoleChecker {
                     i + 1,
                     "AES0301",
                     Severity::HIGH,
-                    AesViolation::ConstantPurity,
+                    AesViolation::ConstantPurity { reason: None },
                 ));
             }
         }

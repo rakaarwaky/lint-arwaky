@@ -64,6 +64,7 @@ impl CapabilitiesRoleChecker {
                     Severity::MEDIUM,
                     AesViolation::CapabilityRouting {
                         struct_name: SymbolName::new(*s),
+                        reason: None,
                     },
                 ));
             }
