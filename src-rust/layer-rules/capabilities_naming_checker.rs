@@ -1,6 +1,7 @@
 // PURPOSE: ArchNamingChecker — INamingCheckerProtocol for AES011 (naming convention) and AES012 (suffix/prefix rules)
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::layer_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
 use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
@@ -8,14 +9,13 @@ use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use crate::layer_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
 use async_trait::async_trait;
 fn aes011_naming_convention(_expected_word_count: i32) -> String {
     String::from(
@@ -219,9 +219,23 @@ impl INamingCheckerProtocol for ArchNamingChecker {
         for f in &files.values {
             let f_str = f.to_string();
             let filename = f.rsplit('/').next().unwrap_or(&f_str);
-            let layer = analyzer.detect_layer(f, root_dir).map(|l| l.value().to_string());
-            let def = layer.as_ref().and_then(|l| analyzer.layer_map().values.get(&LayerNameVO::new(l.as_str())));
-            self.check_file_naming(&f_str, filename, &layer, def, analyzer.config(), &mut results.values);
+            let layer = analyzer
+                .detect_layer(f, root_dir)
+                .map(|l| l.value().to_string());
+            let def = layer.as_ref().and_then(|l| {
+                analyzer
+                    .layer_map()
+                    .values
+                    .get(&LayerNameVO::new(l.as_str()))
+            });
+            self.check_file_naming(
+                &f_str,
+                filename,
+                &layer,
+                def,
+                analyzer.config(),
+                &mut results.values,
+            );
         }
     }
 
@@ -235,8 +249,15 @@ impl INamingCheckerProtocol for ArchNamingChecker {
         for f in &files.values {
             let f_str = f.to_string();
             let filename = f.rsplit('/').next().unwrap_or(&f_str);
-            let layer = analyzer.detect_layer(f, root_dir).map(|l| l.value().to_string());
-            let def = layer.as_ref().and_then(|l| analyzer.layer_map().values.get(&LayerNameVO::new(l.as_str())));
+            let layer = analyzer
+                .detect_layer(f, root_dir)
+                .map(|l| l.value().to_string());
+            let def = layer.as_ref().and_then(|l| {
+                analyzer
+                    .layer_map()
+                    .values
+                    .get(&LayerNameVO::new(l.as_str()))
+            });
             self.check_domain_suffixes(&f_str, filename, def, &layer, &mut results.values);
         }
     }

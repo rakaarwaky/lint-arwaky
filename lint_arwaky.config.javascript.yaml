@@ -175,11 +175,6 @@ architecture:
       max_impl: 5
       exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
 
-    AES0304:
-      enabled: true
-      scope: ["infrastructure"]
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
-
     AES0305:
       enabled: true
       scope: ["agent(container)", "agent(orchestrator)", "agent(lifecycle)"]

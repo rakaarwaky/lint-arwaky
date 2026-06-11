@@ -1,6 +1,8 @@
 // PURPOSE: DependencyCycleAnalyzer — ICycleAnalysisProtocol for AES015: circular dependency detection
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::layer_rules::contract_cycle_protocol::ICycleAnalysisProtocol;
+use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
@@ -8,15 +10,13 @@ use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use crate::layer_rules::contract_cycle_protocol::ICycleAnalysisProtocol;
-use crate::layer_rules::contract_rule_protocol::IAnalyzer;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use async_trait::async_trait;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_lint_vo::ScopeRef;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use async_trait::async_trait;
 fn aes012_circular_import(source: &str, target: &str) -> String {
     format!(
         "AES015 CIRCULAR_IMPORT: Circular dependency detected: '{}' -> '{}'.",

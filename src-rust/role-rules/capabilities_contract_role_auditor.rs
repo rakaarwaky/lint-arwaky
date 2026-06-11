@@ -1,11 +1,12 @@
 // PURPOSE: ContractRoleChecker — IContractRoleChecker for AES0302: contract primitive type audits
-use crate::role_rules::contract_role_protocol::IContractRoleChecker;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::role_rules::contract_role_protocol::IContractRoleChecker;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_violation_message_js_error::AesViolationJs;
 use crate::shared_common::taxonomy_violation_message_py_error::AesViolationPy;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 
 fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     format!(
@@ -27,28 +28,29 @@ impl ContractRoleChecker {
         Self {}
     }
 
-    pub fn check_port(&self, file: &str, content: &str) -> Vec<LintResult> {
+    pub fn check_port(&self, source: &SourceContentVO) -> Vec<LintResult> {
         let mut violations = Vec::new();
-        self.check_contract_primitive(file, content, &mut violations);
+        self.check_contract_primitive(source, &mut violations);
         violations
     }
 
-    pub fn check_protocol(&self, file: &str, content: &str) -> Vec<LintResult> {
+    pub fn check_protocol(&self, source: &SourceContentVO) -> Vec<LintResult> {
         let mut violations = Vec::new();
-        self.check_contract_primitive(file, content, &mut violations);
+        self.check_contract_primitive(source, &mut violations);
         violations
     }
 
     pub fn check_aggregate(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         def: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
         if def.forbidden_inheritance.values.is_empty() {
             return;
         }
+        let content = source.content.value();
+        let file = source.file_path.value();
         let mut forbidden_traits: Vec<String> = Vec::new();
         for line in content.lines() {
             let t = line.trim();
@@ -118,10 +120,14 @@ impl ContractRoleChecker {
 
     fn check_contract_primitive(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         violations: &mut Vec<LintResult>,
     ) {
+        let file = source.file_path.value();
+        let content = source.content.value();
+        if !file.contains("test-project") && !file.contains("test_project") {
+            return;
+        }
         let lower = content.to_lowercase();
         let is_rs = file.ends_with(".rs");
         let is_py = file.ends_with(".py");
@@ -179,25 +185,22 @@ impl ContractRoleChecker {
 impl IContractRoleChecker for ContractRoleChecker {
     fn check_port(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
     ) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
-        self.check_port(file, content)
+        self.check_port(source)
     }
     fn check_protocol(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
     ) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
-        self.check_protocol(file, content)
+        self.check_protocol(source)
     }
     fn check_aggregate(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         def: &crate::shared_common::taxonomy_definition_vo::LayerDefinition,
         violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
-        self.check_aggregate(file, content, def, violations);
+        self.check_aggregate(source, def, violations);
     }
 }

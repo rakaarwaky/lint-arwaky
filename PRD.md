@@ -128,7 +128,7 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 | ------ | ------------------------------------------------------------------------------------ | ---------- |
 | FR-045 | **Capability method existence checker** (AES0303) — dispatch method exists     | FR-003     |
 | FR-046 | **Single capability bottleneck detector** (AES0303) — balance dispatch routes  | FR-003     |
-| FR-047 | **Missing VO construction detector** (AES0303/AES0304) — capability/infra needs typed VOs | FR-003 |
+| FR-047 | **Missing VO construction detector** (AES0303) — capability needs typed VOs | FR-003     |
 | FR-048 | **Constant purity checker** (AES015) — _constant files: only pub const/static | FR-003     |
 
 ### 5.9 Project-Wide Analysis

@@ -2,8 +2,9 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 
 pub struct CapabilitiesRoleChecker {}
 
@@ -20,14 +21,15 @@ impl CapabilitiesRoleChecker {
 
     pub fn check_capability_routing(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         layer: &str,
         violations: &mut Vec<LintResult>,
     ) {
         if layer != "capabilities" && !layer.starts_with("capabilities(") {
             return;
         }
+        let file = source.file_path.value();
+        let content = source.content.value();
         let structs: Vec<&str> = content
             .lines()
             .filter_map(|l| {
@@ -72,11 +74,10 @@ impl CapabilitiesRoleChecker {
 impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
     fn check_capability_routing(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         layer: &str,
         violations: &mut Vec<LintResult>,
     ) {
-        self.check_capability_routing(file, content, layer, violations);
+        self.check_capability_routing(source, layer, violations);
     }
 }

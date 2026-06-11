@@ -15,8 +15,5 @@ pub trait PipelineExtendedOrchestratorAggregate: Send + Sync {
         use_retry: Option<BooleanVO>,
         config_path: Option<&FilePath>,
     ) -> Box<dyn PipelineOutputAggregate>;
-    async fn execute_watch(
-        &self,
-        request: DirectoryWatchVO,
-    ) -> Box<dyn PipelineOutputAggregate>;
+    async fn execute_watch(&self, request: DirectoryWatchVO) -> Box<dyn PipelineOutputAggregate>;
 }

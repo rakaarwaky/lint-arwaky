@@ -191,13 +191,23 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                     let class_indent = line.len() - line.trim_start().len();
                     let mut body_lines: Vec<&str> = Vec::new();
                     for next_line in lines.iter().skip(idx + 1) {
-                        if next_line.trim().is_empty() { continue; }
+                        if next_line.trim().is_empty() {
+                            continue;
+                        }
                         let next_indent = next_line.len() - next_line.trim_start().len();
-                        if next_indent <= class_indent { break; }
+                        if next_indent <= class_indent {
+                            break;
+                        }
                         body_lines.push(next_line.trim());
                     }
                     if body_lines.is_empty() || (body_lines.len() == 1 && body_lines[0] == "pass") {
-                        violations.push(LintResult::new_arch(file, idx + 1, "AES014", Severity::HIGH, &aes014_mandatory_inheritance(t)));
+                        violations.push(LintResult::new_arch(
+                            file,
+                            idx + 1,
+                            "AES014",
+                            Severity::HIGH,
+                            &aes014_mandatory_inheritance(t),
+                        ));
                     }
                 }
                 let pattern_js = format!("extends {} ", t);
@@ -205,7 +215,13 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                     if let Some(brace_pos) = lt.find('{') {
                         let after_brace = lt[brace_pos + 1..].trim();
                         if after_brace == "}" {
-                            violations.push(LintResult::new_arch(file, idx + 1, "AES014", Severity::HIGH, &aes014_mandatory_inheritance(t)));
+                            violations.push(LintResult::new_arch(
+                                file,
+                                idx + 1,
+                                "AES014",
+                                Severity::HIGH,
+                                &aes014_mandatory_inheritance(t),
+                            ));
                         }
                     }
                 }

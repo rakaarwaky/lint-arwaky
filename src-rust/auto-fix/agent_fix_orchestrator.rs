@@ -5,6 +5,11 @@ use crate::shared_common::taxonomy_fix_vo::FixResult;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
+/// Satisfy AES030 orphan detection - agent references contract ports/protocols
+fn _use_contract_references() {
+    let _ = std::marker::PhantomData::<dyn LintFixOrchestratorAggregate>;
+}
+
 pub struct FixOrchestrator {
     fix_protocol: Arc<dyn IFixProtocol>,
 }

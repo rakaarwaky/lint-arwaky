@@ -3,6 +3,8 @@
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::role_rules::contract_role_aggregate::IRoleAggregate;
 use std::path::Path;
+use crate::shared_common::taxonomy_source_vo::{SourceContentVO, ContentString};
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct RoleOrchestrator {
     aggregate: Box<dyn IRoleAggregate>,
@@ -28,25 +30,38 @@ impl RoleOrchestrator {
 
             let prefix = filename.split('_').next().unwrap_or("");
 
+            let fp = FilePath::new(file.to_string()).unwrap_or_default();
+            let content_vo = ContentString::new(content);
+            let language = if file.ends_with(".rs") {
+                "rust"
+            } else if file.ends_with(".py") {
+                "python"
+            } else if file.ends_with(".js") || file.ends_with(".ts") || file.ends_with(".jsx") || file.ends_with(".tsx") {
+                "javascript"
+            } else {
+                "unknown"
+            };
+            let source_vo = SourceContentVO::new(fp, content_vo, language);
+
             match prefix {
                 "agent" => {
                     let checker = self.aggregate.agent();
                     // All agent files get these checks
-                    checker.check_file_size_limit(file, &content, max_lines, violations);
-                    checker.check_any_type_annotation(file, &content, violations);
+                    checker.check_file_size_limit(&source_vo, max_lines, violations);
+                    checker.check_any_type_annotation(&source_vo, violations);
                     // Suffix-specific checks
                     if filename.contains("_container") {
-                        checker.check_container(file, &content, violations);
+                        checker.check_container(&source_vo, violations);
                     } else if filename.contains("_orchestrator") {
-                        checker.check_orchestrator(file, &content, violations);
+                        checker.check_orchestrator(&source_vo, violations);
                     } else if filename.contains("_lifecycle") {
-                        checker.check_lifecycle(file, &content, violations);
+                        checker.check_lifecycle(&source_vo, violations);
                     }
                 }
                 "surfaces" | "surface" => {
                     let checker = self.aggregate.surface();
                     // All surface files get this check
-                    checker.check_fn_count_limit(file, &content, violations);
+                    checker.check_fn_count_limit(&source_vo, violations);
                     // Type-specific checks
                     let is_smart = filename.contains("_command")
                         || filename.contains("_controller")
@@ -58,24 +73,23 @@ impl RoleOrchestrator {
                         || filename.contains("_screen")
                         || filename.contains("_router");
                     if is_smart {
-                        checker.check_smart_surface(file, &content, violations);
+                        checker.check_smart_surface(&source_vo, violations);
                     } else if is_utility {
-                        checker.check_utility_surface(file, &content, violations);
+                        checker.check_utility_surface(&source_vo, violations);
                     } else {
-                        checker.check_passive_surface(file, &content, violations);
+                        checker.check_passive_surface(&source_vo, violations);
                     }
                 }
                 "contract" => {
                     let checker = self.aggregate.contract();
                     let mut contract_violations = Vec::new();
                     if filename.contains("_port") {
-                        contract_violations.extend(checker.check_port(file, &content));
+                        contract_violations.extend(checker.check_port(&source_vo));
                     } else if filename.contains("_protocol") {
-                        contract_violations.extend(checker.check_protocol(file, &content));
+                        contract_violations.extend(checker.check_protocol(&source_vo));
                     }
                     checker.check_aggregate(
-                        file,
-                        &content,
+                        &source_vo,
                         &Default::default(),
                         &mut contract_violations,
                     );
@@ -83,10 +97,10 @@ impl RoleOrchestrator {
                 }
                 "taxonomy" => {
                     let checker = self.aggregate.taxonomy();
-                    checker.check_entity(file, &content, violations);
-                    checker.check_error(file, &content, violations);
-                    checker.check_event(file, &content, violations);
-                    checker.check_constant(file, violations);
+                    checker.check_entity(&source_vo, violations);
+                    checker.check_error(&source_vo, violations);
+                    checker.check_event(&source_vo, violations);
+                    checker.check_constant(&source_vo, violations);
                 }
                 _ => {}
             }

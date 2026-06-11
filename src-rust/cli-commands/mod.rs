@@ -13,8 +13,6 @@ pub mod contract_maintenance_aggregate;
 pub use contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 pub mod contract_report_aggregate;
 pub use contract_report_aggregate::ReportCommandsAggregate;
-pub mod surface_analysis_command;
-pub use surface_analysis_command::{register_analysis_commands, AnalysisCommandsSurface};
 pub mod surface_check_command;
 pub use surface_check_command::{register_check_commands, CheckCommandsSurface};
 pub mod surface_core_command;

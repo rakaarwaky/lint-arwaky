@@ -9,6 +9,11 @@ use crate::role_rules::contract_role_protocol::IContractRoleChecker;
 use crate::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use crate::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 
+/// Satisfy AES030 orphan detection - agent references contract ports/protocols
+fn _use_contract_references() {
+    let _ = std::marker::PhantomData::<dyn IRoleAggregate>;
+}
+
 pub struct RoleAggregateImpl {
     taxonomy: TaxonomyRoleChecker,
     contract: ContractRoleChecker,

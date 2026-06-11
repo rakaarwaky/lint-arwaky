@@ -1,7 +1,7 @@
 // PURPOSE: AesViolation — AES violation messages for Rust analysis (enum with Display)
-use std::fmt;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_name_vo::SymbolName;
+use std::fmt;
 
 pub enum AesViolation {
     // AES001 — Import rules
@@ -48,8 +48,7 @@ pub enum AesViolation {
     },
     SingleBottleneck,
     MissingVo,
-    // AES0304 — Infrastructure role
-    InfrastructureMissingVo,
+
     // AES0305 — Agent role
     StatelessExecution,
     HighLevelPolicy,
@@ -147,9 +146,6 @@ impl fmt::Display for AesViolation {
                 write!(f, "AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability."),
             Self::MissingVo =>
                 write!(f, "AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter."),
-            // AES0304
-            Self::InfrastructureMissingVo =>
-                write!(f, "AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter."),
             // AES0305
             Self::StatelessExecution =>
                 write!(f, "Non-stateless behavior detected: state assignment found outside __init__."),

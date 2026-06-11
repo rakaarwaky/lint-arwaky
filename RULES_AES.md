@@ -6,25 +6,23 @@
 
 | Code    | Name                   | Severity | Group              | Description                                                                                   |
 | ------- | ---------------------- | -------- | ------------------ | --------------------------------------------------------------------------------------------- |
-| AES001  | Import Layer Violation | CRITICAL | Layer & Import     | Cross-layer imports must comply with allowed/mandatory/forbidden rules.                       |
-| AES002  | Mandatory Import       | HIGH     | Layer & Import     | File is missing required imports defined by config.                                           |
-| AES011  | Naming Convention      | HIGH     | Naming & Structure | Filename must follow `prefix_concept_suffix` pattern — lowercase, underscore, min 2 words. |
-| AES012  | Suffix/Prefix Rules    | HIGH     | Naming & Structure | Suffix must match layer definition — allowed, forbidden, mandatory strict.                   |
-| AES013  | Forbidden Inheritance  | CRITICAL | Naming & Structure | Contract Aggregate must not inherit/implement from Port/Protocol.                             |
-| AES014  | Mandatory Inheritance  | HIGH     | Naming & Structure | File that imports a contract must implement it.                                               |
-| AES015  | Circular Import        | CRITICAL | Naming & Structure | Circular dependency detected between layers.                                                  |
-| AES020  | File Maximum Limit     | LOW      | File & Content     | File exceeds maximum allowed line count.                                                      |
-| AES021  | File Minimum Limit     | LOW      | File & Content     | File is below minimum required line count.                                                    |
-| AES022  | Bypass Comment         | CRITICAL | File & Content     | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`).         |
-| AES023  | Unused Import          | MEDIUM   | File & Content     | Symbol is imported but never used.                                                            |
-| AES024  | Mandatory Definition   | HIGH     | File & Content     | File must have at least one struct/enum/trait, and definitions must not be empty.             |
-| AES030  | Orphan Code            | LOW      | Role Violations    | File is not imported by anyone and is not an entry point.                                     |
-| AES0301 | Taxonomy Role          | HIGH     | Role Violations    | Constant purity violation or primitive usage in domain models.                                |
-| AES0302 | Contract Role          | MEDIUM   | Role Violations    | Contract trait/method must use taxonomy VO/constant types, not primitives.                    |
-| AES0303 | Capability Role        | MEDIUM   | Role Violations    | Capability method must have single responsibility; checks missing VO parameters.              |
-| AES0304 | Infrastructure Role    | MEDIUM   | Role Violations    | Infrastructure method must use required request VO parameter.                                 |
-| AES0305 | Agent Role             | MEDIUM   | Role Violations    | non-stateless, low-level imports, or `any` type.                                            |
-| AES0306 | Surface Role           | MEDIUM   | Role Violations    | Surface file >15 functions, contains domain logic, or violates hierarchy.                     |
+|| AES001  | Import Layer Violation | CRITICAL | Layer & Import     | Cross-layer imports must comply with allowed/mandatory/forbidden rules.                       ||
+|| AES002  | Mandatory Import       | HIGH     | Layer & Import     | File is missing required imports defined by config.                                           ||
+|| AES011  | Naming Convention      | HIGH     | Naming & Structure | Filename must follow `prefix_concept_suffix` pattern — lowercase, underscore, min 2 words. ||
+|| AES012  | Suffix/Prefix Rules    | HIGH     | Naming & Structure | Suffix must match layer definition — allowed, forbidden, mandatory strict.                   ||
+|| AES013  | Forbidden Inheritance  | CRITICAL | Naming & Structure | Contract Aggregate must not inherit/implement from Port/Protocol.                             ||
+|| AES014  | Mandatory Inheritance  | HIGH     | Naming & Structure | File that imports a contract must implement it.                                               ||
+|| AES015  | Circular Import        | CRITICAL | Naming & Structure | Circular dependency detected between layers.                                                  ||
+|| AES020  | File Maximum Limit     | LOW      | File & Content     | File exceeds maximum allowed line count.                                                      ||
+|| AES021  | File Minimum Limit     | LOW      | File & Content     | File is below minimum required line count.                                                    ||
+|| AES022  | Bypass Comment         | CRITICAL | File & Content     | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`).         ||
+|| AES023  | Unused Import          | MEDIUM   | File & Content     | Symbol is imported but never used.                                                            ||
+|| AES024  | Mandatory Definition   | HIGH     | File & Content     | File must have at least one struct/enum/trait, and definitions must not be empty.             ||
+|| AES030  | Orphan Code            | LOW      | Role Violations    | File is not imported by anyone and is not an entry point.                                     ||
+|| AES0301 | Taxonomy Role          | HIGH     | Role Violations    | Constant purity violation or primitive usage in domain models.                                ||
+|| AES0302 | Contract Role          | MEDIUM   | Role Violations    | Contract trait/method must use taxonomy VO/constant types, not primitives.                    ||
+|| AES0305 | Agent Role             | MEDIUM   | Role Violations    | non-stateless, low-level imports, or `any` type.                                            ||
+|| AES0306 | Surface Role           | MEDIUM   | Role Violations    | Surface file >15 functions, contains domain logic, or violates hierarchy.                     ||
 
 ---
 
@@ -245,22 +243,6 @@ Constant purity violation or primitive usage in domain models (`_constant`, `_vo
 Contract trait/method must use taxonomy VO/constant types, not primitive types.
 
 **FIX:** Replace primitives with VO/constant from the taxonomy layer.
-
----
-
-### AES0303 — Capability Role
-
-**Severity:** MEDIUM
-
-Capability method must have single responsibility. Also checks for missing VO parameters.
-
----
-
-### AES0304 — Infrastructure Role
-
-**Severity:** MEDIUM
-
-Infrastructure method must use the required request VO parameter.
 
 ---
 

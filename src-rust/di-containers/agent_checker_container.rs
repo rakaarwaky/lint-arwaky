@@ -6,17 +6,17 @@ use crate::code_analysis::capabilities_dead_inheritance_checker::DeadInheritance
 use crate::code_analysis::capabilities_inline_unused_checker::InlineUnusedChecker;
 use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
 use crate::code_analysis::capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
-use crate::code_analysis::capabilities_missing_vo_checker::MissingVoChecker;
-use crate::code_analysis::capabilities_single_bottleneck_checker::SingleBottleneckChecker;
 use crate::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::layer_rules::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
 use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use crate::layer_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use crate::layer_rules::capabilities_naming_checker::ArchNamingChecker;
-use crate::layer_rules::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
 use crate::layer_rules::contract_cycle_protocol::ICycleAnalysisProtocol;
-use crate::layer_rules::contract_rule_protocol::{IArchImportProtocol, INamingCheckerProtocol, IAnalyzer};
+use crate::layer_rules::contract_rule_protocol::{
+    IAnalyzer, IArchImportProtocol, INamingCheckerProtocol,
+};
 use crate::orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
 use crate::orphan_detector::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
 use crate::orphan_detector::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
@@ -40,10 +40,8 @@ pub struct CheckerContainer {
     line_checker: ArchLineChecker,
     class_checker: ArchClassChecker,
     bypass_checker: BypassChecker,
-    missing_vo_checker: MissingVoChecker,
     inline_unused_checker: InlineUnusedChecker,
     dead_inheritance_checker: DeadInheritanceChecker,
-    single_bottleneck_checker: SingleBottleneckChecker,
     mandatory_inheritance_checker: MandatoryInheritanceChecker,
     taxonomy_checker: TaxonomyRoleChecker,
     contract_checker: ContractRoleChecker,
@@ -72,7 +70,9 @@ impl CheckerContainer {
                 ),
             ),
         );
-        let parser = Arc::new(crate::layer_rules::infrastructure_import_parser_adapter::ImportParserAdapter::new());
+        let parser = Arc::new(
+            crate::layer_rules::infrastructure_import_parser_adapter::ImportParserAdapter::new(),
+        );
         let orphan_analyzer: Arc<dyn IOrphanAggregate> = Arc::new(ArchOrphanAnalyzer::new(
             Arc::new(TaxonomyOrphanAnalyzer::new()),
             Arc::new(ContractOrphanAnalyzer::new()),
@@ -88,10 +88,8 @@ impl CheckerContainer {
             line_checker: ArchLineChecker::new(),
             class_checker: ArchClassChecker::new(),
             bypass_checker: BypassChecker::new(),
-            missing_vo_checker: MissingVoChecker::new(),
             inline_unused_checker: InlineUnusedChecker::new(),
             dead_inheritance_checker: DeadInheritanceChecker::new(),
-            single_bottleneck_checker: SingleBottleneckChecker::new(),
             mandatory_inheritance_checker: MandatoryInheritanceChecker::new(),
             taxonomy_checker: TaxonomyRoleChecker::new(),
             contract_checker: ContractRoleChecker::new(),
@@ -137,20 +135,12 @@ impl CheckerContainer {
         &self.bypass_checker
     }
 
-    pub fn missing_vo_checker(&self) -> &MissingVoChecker {
-        &self.missing_vo_checker
-    }
-
     pub fn inline_unused_checker(&self) -> &InlineUnusedChecker {
         &self.inline_unused_checker
     }
 
     pub fn dead_inheritance_checker(&self) -> &DeadInheritanceChecker {
         &self.dead_inheritance_checker
-    }
-
-    pub fn single_bottleneck_checker(&self) -> &SingleBottleneckChecker {
-        &self.single_bottleneck_checker
     }
 
     pub fn mandatory_inheritance_checker(&self) -> &MandatoryInheritanceChecker {

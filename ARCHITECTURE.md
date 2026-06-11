@@ -105,7 +105,7 @@ src-rust/
   project-setup/      — Project init, doctor, mcp-config
   plugin-system/      — Plugin discovery & management
   output-report/      — Output formatting & report generation
-  code-analysis/      — Quality algorithms: unused imports (AES023), class/line checking (AES011, AES020/AES021), type detection (AES016 protocol), fix processor (AES0303/AES0304), symbol renamer. Wires into orchestrator pipeline.
+  code-analysis/      — Quality algorithms: unused imports (AES023), class/line checking (AES011, AES020/AES021), type detection (AES016 protocol), fix processor (AES0303), symbol renamer. Wires into orchestrator pipeline.
   mcp-server/         — MCP server
   source-parsing/     — Source code parsing
   lifecycle-state/    — Agent lifecycle management

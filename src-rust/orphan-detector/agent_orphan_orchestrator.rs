@@ -44,7 +44,7 @@ impl OrphanGraphResolver {
         Self {}
     }
 
-    pub fn build_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
+    pub fn build_graph_context(&self, files: &[String], _root_dir: &str) -> GraphAnalysisContext {
         use std::collections::HashMap;
         let mut import_graph: HashMap<String, Vec<String>> = HashMap::new();
         let mut inbound_links: HashMap<String, Vec<String>> = HashMap::new();
@@ -70,21 +70,34 @@ impl OrphanGraphResolver {
         }
 
         // Also handle pub mod declarations with #[path] attributes (lib.rs pattern)
-        let pub_mod_re = regex::Regex::new(r#"#\[path\s*=\s*"([^"]+)"\]\s*(?:pub\s+)?mod\s+([a-zA-Z_]+)"#).ok();
+        let pub_mod_re =
+            regex::Regex::new(r#"#\[path\s*=\s*"([^"]+)"\]\s*(?:pub\s+)?mod\s+([a-zA-Z_]+)"#).ok();
         for f in files {
             if let Ok(content) = std::fs::read_to_string(f) {
                 if let Some(ref re) = pub_mod_re {
                     for cap in re.captures_iter(&content) {
                         let mod_path = cap[1].to_string();
-                        let mod_name = cap[2].to_string();
+                        let _mod_name = cap[2].to_string();
                         // Resolve: lib.rs has #[path = "layer-rules/mod.rs"] pub mod layer_rules
                         // → find files in layer-rules/ directory
                         let base_dir = if f.ends_with("lib.rs") || f.ends_with("main.rs") {
-                            std::path::Path::new(f).parent().unwrap_or(std::path::Path::new(".")).to_string_lossy().to_string()
+                            std::path::Path::new(f)
+                                .parent()
+                                .unwrap_or(std::path::Path::new("."))
+                                .to_string_lossy()
+                                .to_string()
                         } else {
-                            std::path::Path::new(f).parent().unwrap_or(std::path::Path::new(".")).to_string_lossy().to_string()
+                            std::path::Path::new(f)
+                                .parent()
+                                .unwrap_or(std::path::Path::new("."))
+                                .to_string_lossy()
+                                .to_string()
                         };
-                        let resolved_dir = format!("{}/{}", base_dir, mod_path.replace("/mod.rs", "").replace("mod.rs", "."));
+                        let resolved_dir = format!(
+                            "{}/{}",
+                            base_dir,
+                            mod_path.replace("/mod.rs", "").replace("mod.rs", ".")
+                        );
                         // Find all .rs files in that directory
                         if let Ok(entries) = std::fs::read_dir(&resolved_dir) {
                             for entry in entries.flatten() {
@@ -95,8 +108,14 @@ impl OrphanGraphResolver {
                                             if let Some(path_str) = path.to_str() {
                                                 let resolved = path_str.to_string();
                                                 if resolved != *f {
-                                                    import_graph.entry(f.clone()).or_default().push(resolved.clone());
-                                                    inbound_links.entry(resolved).or_default().push(f.clone());
+                                                    import_graph
+                                                        .entry(f.clone())
+                                                        .or_default()
+                                                        .push(resolved.clone());
+                                                    inbound_links
+                                                        .entry(resolved)
+                                                        .or_default()
+                                                        .push(f.clone());
                                                 }
                                             }
                                         }
@@ -136,8 +155,14 @@ impl OrphanGraphResolver {
                                 let module_name = segments[1];
                                 if let Some(resolved) = module_to_file.get(module_name) {
                                     if resolved != f {
-                                        import_graph.entry(f.clone()).or_default().push(resolved.clone());
-                                        inbound_links.entry(resolved.clone()).or_default().push(f.clone());
+                                        import_graph
+                                            .entry(f.clone())
+                                            .or_default()
+                                            .push(resolved.clone());
+                                        inbound_links
+                                            .entry(resolved.clone())
+                                            .or_default()
+                                            .push(f.clone());
                                         continue;
                                     }
                                 }
@@ -154,8 +179,14 @@ impl OrphanGraphResolver {
                                 let module_name = segments[0];
                                 if let Some(resolved) = module_to_file.get(module_name) {
                                     if resolved != f {
-                                        import_graph.entry(f.clone()).or_default().push(resolved.clone());
-                                        inbound_links.entry(resolved.clone()).or_default().push(f.clone());
+                                        import_graph
+                                            .entry(f.clone())
+                                            .or_default()
+                                            .push(resolved.clone());
+                                        inbound_links
+                                            .entry(resolved.clone())
+                                            .or_default()
+                                            .push(f.clone());
                                     }
                                 }
                             }
@@ -243,7 +274,13 @@ impl OrphanGraphResolver {
     pub fn identify_entry_points(&self, files: &[String]) -> Vec<String> {
         files
             .iter()
-            .filter(|f| f.contains("__main__") || f.ends_with("main.rs") || f.ends_with("lib.rs"))
+            .filter(|f| {
+                f.contains("__main__")
+                    || f.ends_with("main.rs")
+                    || f.ends_with("lib.rs")
+                    || f.ends_with("cli_main_entry.rs")
+                    || f.ends_with("mcp_main_entry.rs")
+            })
             .cloned()
             .collect()
     }

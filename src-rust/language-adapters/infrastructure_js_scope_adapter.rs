@@ -106,9 +106,7 @@ impl IJsTracerPort for JSScopeTracer {
 
         if let Some((name, start_line)) = scope_stack.last() {
             Ok(Some(ScopeRef {
-                name: DescriptionVO::new(
-                    name.clone(),
-                ),
+                name: DescriptionVO::new(name.clone()),
                 kind: if name.starts_with("class") {
                     DescriptionVO::new("class")
                 } else {

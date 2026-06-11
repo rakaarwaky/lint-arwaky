@@ -1,8 +1,8 @@
 // PURPOSE: ServerWrapper — IMcpServerPort implementation wrapping the MCP server lifecycle
 use crate::cli_transport::taxonomy_transport_error::TransportError;
+use crate::mcp_server::contract_server_port::ToolHandler;
 use crate::mcp_server::IMcpServerPort;
 use crate::shared_common::taxonomy_name_vo::SymbolName;
-use crate::mcp_server::contract_server_port::ToolHandler;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 
 pub struct McpServerWrapper {
@@ -21,12 +21,7 @@ impl McpServerWrapper {
 
 #[async_trait::async_trait]
 impl IMcpServerPort for McpServerWrapper {
-    fn register_tool(
-        &self,
-        _name: SymbolName,
-        _description: DescriptionVO,
-        _handler: ToolHandler,
-    ) {
+    fn register_tool(&self, _name: SymbolName, _description: DescriptionVO, _handler: ToolHandler) {
     }
 
     async fn run_server(&self) -> Result<(), TransportError> {

@@ -1,6 +1,6 @@
 // PURPOSE: ConfigLoadingOrchestrator — orchestrates config discovery, loading, parsing across languages
 use crate::config_system::contract_detector_port::ILanguageDetectorPort;
-use crate::config_system::contract_orchestration_protocol::IConfigOrchestrationProtocol;
+use crate::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use crate::config_system::contract_reader_port::IConfigReaderPort;
 use crate::config_system::taxonomy_config_vo::default_config_for_language;
 use crate::config_system::taxonomy_config_vo::parse_config_yaml;
@@ -31,7 +31,15 @@ impl ConfigLoadingOrchestrator {
 }
 
 #[async_trait]
-impl IConfigOrchestrationProtocol for ConfigLoadingOrchestrator {
+impl IConfigOrchestrationAggregate for ConfigLoadingOrchestrator {
+    fn language_detector(&self) -> Arc<dyn ILanguageDetectorPort> {
+        self.language_detector.clone()
+    }
+
+    fn config_reader(&self) -> Arc<dyn IConfigReaderPort> {
+        self.config_reader.clone()
+    }
+
     async fn load_project_config(&self, project_root: &FilePath) -> ConfigResult {
         let lang_source = self.language_detector.detect_language(project_root).await;
         self.load_config_for_language(project_root, &lang_source.language)

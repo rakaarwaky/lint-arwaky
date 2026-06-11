@@ -44,7 +44,7 @@ impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
         self.aggregate_results(results)
     }
 
-    fn load_config(config_path: Option<&FilePath>) -> FilePathList {
+    fn load_config(&self, config_path: Option<&FilePath>) -> FilePathList {
         let path_str = match config_path {
             Some(fp) => &fp.value,
             None => "",
@@ -74,7 +74,7 @@ impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
         FilePathList::new(Vec::new())
     }
 
-    fn find_projects(root: &FilePath, config_name: &Identity) -> FilePathList {
+    fn find_projects(&self, root: &FilePath, config_name: &Identity) -> FilePathList {
         let root_path = std::path::Path::new(&root.value);
         let mut projects = Vec::new();
         fn visit_dirs(dir: &std::path::Path, config_name: &str, projects: &mut Vec<FilePath>) {

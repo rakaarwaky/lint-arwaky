@@ -4,13 +4,13 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::file_system::contract_system_port::IFileSystemPort;
+use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
 use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
-use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use std::sync::Arc;
 
 pub struct LayerDetectionAnalyzer {

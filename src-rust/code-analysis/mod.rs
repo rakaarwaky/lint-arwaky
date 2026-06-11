@@ -26,10 +26,6 @@ pub mod capabilities_inline_unused_checker;
 pub use capabilities_inline_unused_checker::InlineUnusedChecker;
 pub mod capabilities_mandatory_inheritance_checker;
 pub use capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
-pub mod capabilities_single_bottleneck_checker;
-pub use capabilities_single_bottleneck_checker::SingleBottleneckChecker;
-pub mod capabilities_missing_vo_checker;
-pub use capabilities_missing_vo_checker::MissingVoChecker;
 
 pub mod contract_layer_detection_aggregate;
 pub use contract_layer_detection_aggregate::ILayerDetectionAggregate;
@@ -49,20 +45,54 @@ pub mod contract_inline_unused_protocol;
 pub use contract_inline_unused_protocol::IInlineUnusedProtocol;
 pub mod contract_mandatory_inheritance_protocol;
 pub use contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
-pub mod contract_single_bottleneck_protocol;
-pub use contract_single_bottleneck_protocol::ISingleBottleneckProtocol;
-pub mod contract_missing_vo_protocol;
-pub use contract_missing_vo_protocol::IMissingVoProtocol;
 pub mod taxonomy_analysis_vo;
 pub use taxonomy_analysis_vo::{
     FileDefinitionMap, FilePathSet, GraphAnalysisContext, ImportGraph, InboundLinkMap,
     InheritanceMap, ModuleToFileMap, OrphanIndicatorResult, ReachabilityResult,
 };
 pub mod capabilities_project_target_resolver;
+pub use capabilities_project_target_resolver::ProjectTargetResolver;
+pub mod contract_code_metric_analyzer_protocol;
+pub mod contract_target_resolver_protocol;
 pub mod taxonomy_import_source_vo;
-pub use capabilities_project_target_resolver::{
-    compute_score, count_loc, has_critical, lint_path, normalize_project_root, resolve_target,
-    walk_rs_files, ProjectTargetResolver,
-};
+
 pub mod capabilities_code_metric_analyzer;
 pub use capabilities_code_metric_analyzer::CodeMetricAnalyzer;
+
+use crate::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
+use crate::output_report::taxonomy_result_vo::LintResult;
+
+pub fn resolve_target(path: Option<String>) -> String {
+    let resolver = ProjectTargetResolver::new();
+    resolver.resolve_target(path)
+}
+
+pub fn walk_rs_files(dir: &std::path::Path, cb: &mut dyn FnMut(std::path::PathBuf)) {
+    let resolver = ProjectTargetResolver::new();
+    resolver.walk_rs_files(dir, cb);
+}
+
+pub fn lint_path(path: &str) -> Vec<LintResult> {
+    let resolver = ProjectTargetResolver::new();
+    resolver.lint_path(path)
+}
+
+pub fn compute_score(results: &[LintResult]) -> f64 {
+    let resolver = ProjectTargetResolver::new();
+    resolver.compute_score(results)
+}
+
+pub fn count_loc(path: &str) -> usize {
+    let resolver = ProjectTargetResolver::new();
+    resolver.count_loc(path)
+}
+
+pub fn has_critical(results: &[LintResult]) -> bool {
+    let resolver = ProjectTargetResolver::new();
+    resolver.has_critical(results)
+}
+
+pub fn normalize_project_root(path: &str) -> String {
+    let resolver = ProjectTargetResolver::new();
+    resolver.normalize_project_root(path)
+}

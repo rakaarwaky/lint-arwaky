@@ -1,7 +1,8 @@
 // PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES0301: taxonomy VO/entity/error/event/constant audits
-use crate::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 fn aes0301_primitive_usage(primitive: &str) -> String {
     format!(
         "AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy.",
@@ -10,7 +11,6 @@ fn aes0301_primitive_usage(primitive: &str) -> String {
 }
 
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
-use std::fs;
 use std::path::Path;
 
 pub struct TaxonomyRoleChecker {}
@@ -71,7 +71,9 @@ impl TaxonomyRoleChecker {
         "symbol",
     ];
 
-    fn scan_primitives(file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    fn scan_primitives(source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        let file = source.file_path.value();
+        let content = source.content.value();
         let primitives: &[&str] = if file.ends_with(".rs") {
             Self::RUST_PRIMITIVES
         } else if file.ends_with(".py") {
@@ -156,28 +158,32 @@ impl TaxonomyRoleChecker {
         vec![]
     }
 
-    pub fn check_entity(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    pub fn check_entity(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        let file = source.file_path.value();
         if !file.ends_with("_entity.rs") && !file.ends_with("_entity.py") {
             return;
         }
-        Self::scan_primitives(file, content, violations);
+        Self::scan_primitives(source, violations);
     }
 
-    pub fn check_error(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    pub fn check_error(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        let file = source.file_path.value();
         if !file.ends_with("_error.rs") && !file.ends_with("_error.py") {
             return;
         }
-        Self::scan_primitives(file, content, violations);
+        Self::scan_primitives(source, violations);
     }
 
-    pub fn check_event(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    pub fn check_event(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        let file = source.file_path.value();
         if !file.ends_with("_event.rs") && !file.ends_with("_event.py") {
             return;
         }
-        Self::scan_primitives(file, content, violations);
+        Self::scan_primitives(source, violations);
     }
 
-    pub fn check_constant(&self, file: &str, violations: &mut Vec<LintResult>) {
+    pub fn check_constant(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        let file = source.file_path.value();
         let basename = Path::new(file)
             .file_name()
             .and_then(|f| f.to_str())
@@ -185,45 +191,44 @@ impl TaxonomyRoleChecker {
         if !basename.ends_with("_constant.rs") && !basename.ends_with("_constant.py") {
             return;
         }
-        if let Ok(content) = fs::read_to_string(file) {
-            for (i, line) in content.lines().enumerate() {
-                let t = line.trim();
-                if t.is_empty() || t.starts_with("//") || t.starts_with('#') || t.starts_with("#[")
-                {
-                    continue;
-                }
-                if t.starts_with("pub const ") || t.starts_with("pub static ") {
-                    continue;
-                }
-                if t.starts_with("use ")
-                    || t.starts_with("pub use ")
-                    || t.starts_with("pub(crate) use ")
-                {
-                    continue;
-                }
-                if t.starts_with("pub struct ")
-                    || t.starts_with("struct ")
-                    || t.starts_with("pub enum ")
-                    || t.starts_with("enum ")
-                    || t.starts_with("pub fn ")
-                    || t.starts_with("fn ")
-                    || t.starts_with("impl ")
-                    || t.starts_with("pub mod ")
-                    || t.starts_with("mod ")
-                    || t.starts_with("pub trait ")
-                    || t.starts_with("trait ")
-                    || t.starts_with("class ")
-                    || t.starts_with("pub type ")
-                    || t.starts_with("type ")
-                {
-                    violations.push(LintResult::new_arch(
-                        file,
-                        i + 1,
-                        "AES0301",
-                        Severity::HIGH,
-                        AesViolation::ConstantPurity,
-                    ));
-                }
+        let content = source.content.value();
+        for (i, line) in content.lines().enumerate() {
+            let t = line.trim();
+            if t.is_empty() || t.starts_with("//") || t.starts_with('#') || t.starts_with("#[")
+            {
+                continue;
+            }
+            if t.starts_with("pub const ") || t.starts_with("pub static ") {
+                continue;
+            }
+            if t.starts_with("use ")
+                || t.starts_with("pub use ")
+                || t.starts_with("pub(crate) use ")
+            {
+                continue;
+            }
+            if t.starts_with("pub struct ")
+                || t.starts_with("struct ")
+                || t.starts_with("pub enum ")
+                || t.starts_with("enum ")
+                || t.starts_with("pub fn ")
+                || t.starts_with("fn ")
+                || t.starts_with("impl ")
+                || t.starts_with("pub mod ")
+                || t.starts_with("mod ")
+                || t.starts_with("pub trait ")
+                || t.starts_with("trait ")
+                || t.starts_with("class ")
+                || t.starts_with("pub type ")
+                || t.starts_with("type ")
+            {
+                violations.push(LintResult::new_arch(
+                    file,
+                    i + 1,
+                    "AES0301",
+                    Severity::HIGH,
+                    AesViolation::ConstantPurity,
+                ));
             }
         }
     }
@@ -235,33 +240,30 @@ impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
     }
     fn check_entity(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
-        self.check_entity(file, content, violations);
+        self.check_entity(source, violations);
     }
     fn check_error(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
-        self.check_error(file, content, violations);
+        self.check_error(source, violations);
     }
     fn check_event(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
-        self.check_event(file, content, violations);
+        self.check_event(source, violations);
     }
     fn check_constant(
         &self,
-        file: &str,
+        source: &SourceContentVO,
         violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
-        self.check_constant(file, violations);
+        self.check_constant(source, violations);
     }
 }

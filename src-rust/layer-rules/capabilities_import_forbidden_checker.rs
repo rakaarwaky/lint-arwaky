@@ -1,6 +1,9 @@
 // PURPOSE: ArchImportForbiddenChecker — AES001: enforce forbidden import rules via definition, scope, and legacy governance
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::contract_import_parser_port::IImportParserPort;
+use crate::layer_rules::contract_rule_protocol::{
+    IAnalyzer, IArchImportProtocol, IArchRuleProtocol,
+};
 use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
@@ -8,7 +11,6 @@ use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::shared_common::{Identity, LayerNameVO};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol, IArchRuleProtocol};
 use async_trait::async_trait;
 use std::sync::Arc;
 
@@ -58,7 +60,8 @@ impl ArchImportForbiddenChecker {
                         segments.iter().any(|seg| {
                             let cleaned = seg.trim_end_matches(';').trim();
                             let cleaned_identity = Identity::new(cleaned);
-                            self.parser.extract_layer_from_import(&cleaned_identity)
+                            self.parser
+                                .extract_layer_from_import(&cleaned_identity)
                                 .map(|l| l == layer)
                                 .unwrap_or(false)
                         })
@@ -70,7 +73,15 @@ impl ArchImportForbiddenChecker {
                             .allowed
                             .values
                             .iter()
-                            .map(|s| LayerNameVO::new(self.parser.resolve_scope(&Identity::new(s)).0.value().to_string()))
+                            .map(|s| {
+                                LayerNameVO::new(
+                                    self.parser
+                                        .resolve_scope(&Identity::new(s))
+                                        .0
+                                        .value()
+                                        .to_string(),
+                                )
+                            })
                             .collect();
                         violations.push(LintResult::new_arch(
                             file,
@@ -134,7 +145,8 @@ impl ArchImportForbiddenChecker {
                             segments.iter().any(|seg| {
                                 let cleaned = seg.trim_end_matches(';').trim();
                                 let cleaned_identity = Identity::new(cleaned);
-                                self.parser.extract_layer_from_import(&cleaned_identity)
+                                self.parser
+                                    .extract_layer_from_import(&cleaned_identity)
                                     .map(|l| l == forbidden_layer)
                                     .unwrap_or(false)
                             })
@@ -150,7 +162,15 @@ impl ArchImportForbiddenChecker {
                                 .allowed
                                 .values
                                 .iter()
-                                .map(|s| LayerNameVO::new(self.parser.resolve_scope(&Identity::new(s)).0.value().to_string()))
+                                .map(|s| {
+                                    LayerNameVO::new(
+                                        self.parser
+                                            .resolve_scope(&Identity::new(s))
+                                            .0
+                                            .value()
+                                            .to_string(),
+                                    )
+                                })
                                 .collect();
                             violations.push(LintResult::new_arch(
                                 file,
@@ -199,7 +219,8 @@ impl ArchImportForbiddenChecker {
                                 .iter()
                                 .filter(|r| {
                                     let scope_identity = Identity::new(&r.scope.value);
-                                    self.parser.resolve_scope(&scope_identity).0.value() == file_layer
+                                    self.parser.resolve_scope(&scope_identity).0.value()
+                                        == file_layer
                                 })
                                 .flat_map(|r| {
                                     r.allowed.values.iter().map(|s| LayerNameVO::new(s.clone()))
@@ -263,7 +284,8 @@ impl IArchImportProtocol for ArchImportForbiddenChecker {
         _files: &FilePathList,
         _root_dir: &FilePath,
         _results: &mut LintResultList,
-    ) {}
+    ) {
+    }
 
     async fn check_forbidden_imports(
         &self,
@@ -295,7 +317,12 @@ impl IArchImportProtocol for ArchImportForbiddenChecker {
             let f_str = f.to_string();
             if let Some(layer) = analyzer.detect_layer(f, root_dir) {
                 let layer_str = layer.value();
-                self.check_legacy_import_rules(&f_str, layer_str, analyzer.config(), &mut results.values);
+                self.check_legacy_import_rules(
+                    &f_str,
+                    layer_str,
+                    analyzer.config(),
+                    &mut results.values,
+                );
             }
         }
     }

@@ -1,5 +1,4 @@
 // PURPOSE: OutputClientAggregate — aggregate trait for output client (stdout, file, tee)
-pub use crate::output_report::contract_output_aggregate::IReportFormatterProtocol;
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::shared_common::taxonomy_layer_vo::Identity;
 use crate::shared_common::taxonomy_source_vo::ContentString;

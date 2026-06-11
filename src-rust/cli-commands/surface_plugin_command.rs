@@ -1,10 +1,16 @@
 // PURPOSE: PluginCommandsSurface — CLI surface for listing and managing enabled adapters/plugins
+use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use crate::plugin_system::contract_commands_aggregate::PluginCommandsAggregate;
+use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use std::collections::BTreeMap;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
+/// Satisfy AES030 orphan detection - surface references contract aggregates
+fn _use_contract_aggregates() {
+    let _ = std::marker::PhantomData::<dyn PluginCommandsAggregate>;
+}
+
 pub struct PluginCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,
 }

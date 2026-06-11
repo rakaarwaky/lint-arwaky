@@ -1,7 +1,7 @@
+use crate::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use crate::config_system::taxonomy_setting_vo::AdapterStatus;
 use crate::config_system::taxonomy_setting_vo::ProjectConfig;
 use crate::config_system::taxonomy_validation_vo::ValidationResult;
-use crate::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 
 /// Business logic for interpreting and validating project configuration.

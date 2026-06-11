@@ -70,15 +70,24 @@ fn main() -> ExitCode {
         Commands::MultiProject { paths } => surface_multi_command::handle_multi_project(paths),
         Commands::Security { path } => surface_maintenance_command::handle_security(path),
         Commands::Complexity { path } => {
-            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new();
+            let resolver =
+                std::sync::Arc::new(lint_arwaky::code_analysis::ProjectTargetResolver::new());
+            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new(resolver);
+            use lint_arwaky::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
             analyzer.handle_complexity(path)
         }
         Commands::Duplicates { path } => {
-            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new();
+            let resolver =
+                std::sync::Arc::new(lint_arwaky::code_analysis::ProjectTargetResolver::new());
+            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new(resolver);
+            use lint_arwaky::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
             analyzer.handle_duplicates(path)
         }
         Commands::Trends { path } => {
-            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new();
+            let resolver =
+                std::sync::Arc::new(lint_arwaky::code_analysis::ProjectTargetResolver::new());
+            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new(resolver);
+            use lint_arwaky::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
             analyzer.handle_trends(path)
         }
         Commands::Dependencies { path } => surface_maintenance_command::handle_dependencies(path),

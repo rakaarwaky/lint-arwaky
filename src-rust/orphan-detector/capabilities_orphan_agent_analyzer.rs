@@ -1,5 +1,5 @@
 // PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
-// Agent is orphan if the contract aggregate it implements is NOT called by any surface.
+// Agent is orphan if the contract aggregate it implements is NOT called by any surface or container.
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
 use crate::output_report::taxonomy_severity_vo::Severity;
@@ -21,7 +21,12 @@ impl AgentOrphanAnalyzer {
 }
 
 impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
-    fn is_agent_orphan(&self, f: &FilePath, _root_dir: &FilePath, all_files: &[String]) -> OrphanIndicatorResult {
+    fn is_agent_orphan(
+        &self,
+        f: &FilePath,
+        _root_dir: &FilePath,
+        all_files: &[String],
+    ) -> OrphanIndicatorResult {
         is_agent_orphan_raw(f, all_files)
     }
 }
@@ -33,7 +38,7 @@ pub fn is_agent_orphan(_f: &FilePath, _root_dir: &FilePath) -> OrphanIndicatorRe
 pub fn is_agent_orphan_raw_wired(is_wired: bool) -> OrphanIndicatorResult {
     OrphanIndicatorResult::new(
         !is_wired,
-        "Agent orphan: contract aggregate not called by any surface.".into(),
+        "Agent orphan: contract aggregate not called by any surface or container.".into(),
         Severity::HIGH,
     )
 }
@@ -44,7 +49,7 @@ fn extract_aggregate_traits(content: &str) -> Vec<String> {
     let mut traits = Vec::new();
 
     // Rust: impl ITrait for Struct
-    let re_impl = Regex::new(r"impl\s+([A-Za-z0-9_]+)\s+for\s+").ok();
+    let re_impl = Regex::new(r"impl\s+([A-Za-z0-9_]+)\s+for\s+\s*").ok();
     if let Some(re) = re_impl {
         for cap in re.captures_iter(content) {
             let name = cap[1].to_string();
@@ -96,26 +101,31 @@ pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicato
         return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
     }
 
-    // Step 2: Check if any of these aggregates are called by a surface file
+    // Step 2: Check if any of these aggregates are called by a surface file OR container
     for agg_name in &aggregate_traits {
-        let mut called_by_surface = false;
+        let mut called_by_surface_or_container = false;
         for cf in all_files {
             let cb = cf.split('/').next_back().unwrap_or("");
-            if !cb.starts_with("surface_") {
+            // Check surface files
+            let is_surface = cb.starts_with("surface_");
+            // Check container files (DI wiring)
+            let is_container = cb.ends_with("_container.rs");
+            
+            if !is_surface && !is_container {
                 continue;
             }
             if let Ok(c) = std::fs::read_to_string(cf) {
                 if c.contains(agg_name) {
-                    called_by_surface = true;
+                    called_by_surface_or_container = true;
                     break;
                 }
             }
         }
-        if !called_by_surface {
+        if !called_by_surface_or_container {
             return OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "Agent orphan: aggregate '{}' not called by any surface.",
+                    "Agent orphan: aggregate '{}' not called by any surface or container.",
                     agg_name
                 ),
                 Severity::HIGH,
@@ -132,10 +142,7 @@ pub fn check_agent_orphan(
     files: &[String],
     violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
 ) {
-    let result = is_agent_orphan_raw(
-        &FilePath::new(fp.to_string()).unwrap_or_default(),
-        files,
-    );
+    let result = is_agent_orphan_raw(&FilePath::new(fp.to_string()).unwrap_or_default(), files);
     if result.is_orphan {
         violations.push(crate::orphan_detector::mk_orphan_result(
             fp,

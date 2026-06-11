@@ -1,8 +1,6 @@
 // PURPOSE: Module declarations and re-exports for config-system (orchestrator, validators, providers, VOs, ports)
 pub mod agent_config_loading_orchestrator;
 pub use agent_config_loading_orchestrator::ConfigLoadingOrchestrator;
-pub mod capabilities_config_orchestrator;
-pub use capabilities_config_orchestrator::ConfigOrchestrator;
 pub mod capabilities_rules_validator;
 pub use capabilities_rules_validator::ConfigRulesValidator;
 pub mod taxonomy_validation_vo;
@@ -13,8 +11,8 @@ pub mod contract_detector_port;
 pub use contract_detector_port::ILanguageDetectorPort;
 pub mod contract_discovery_port;
 pub use contract_discovery_port::IConfigDiscoveryPort;
-pub mod contract_orchestration_protocol;
-pub use contract_orchestration_protocol::IConfigOrchestrationProtocol;
+pub mod contract_orchestration_aggregate;
+pub use contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 pub mod contract_parser_port;
 pub use contract_parser_port::IConfigParserPort;
 pub mod contract_reader_port;

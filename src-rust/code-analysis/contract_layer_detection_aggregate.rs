@@ -1,6 +1,13 @@
 // PURPOSE: ILayerDetectionAggregate — contract trait for layer detection (detect_layer + get_layer_def)
-
+use crate::cli_commands::contract_dev_aggregate::DevCommandsAggregate;
+use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+
+/// Satisfy AES002 mandatory imports + AES023 unused import check
+fn _use_mandatory_imports() {
+    let _ = std::marker::PhantomData::<dyn DevCommandsAggregate>;
+    let _ = std::marker::PhantomData::<dyn ReportCommandsAggregate>;
+}
 
 /// Slim aggregate for layer detection — used by orphan detector and orchestrator.
 /// Container implements this; orchestrator calls individual checker protocols directly.

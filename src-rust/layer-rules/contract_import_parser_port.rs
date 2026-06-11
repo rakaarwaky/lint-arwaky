@@ -1,6 +1,6 @@
 // PURPOSE: IImportParserPort — contract port trait for import parsing utilities (scope resolution, line parsing, layer extraction)
 
-use crate::shared_common::{Identity, LineNumber, FileContentVO, LayerNameVO, LineContentVO};
+use crate::shared_common::{FileContentVO, Identity, LayerNameVO, LineContentVO, LineNumber};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub trait IImportParserPort: Send + Sync {
@@ -9,7 +9,12 @@ pub trait IImportParserPort: Send + Sync {
     fn resolve_scope(&self, scope: &Identity) -> (LayerNameVO, Vec<Identity>);
 
     /// Check if an import line satisfies the given scope requirement.
-    fn import_matches_scope(&self, import_line: &LineContentVO, layer: &LayerNameVO, suffixes: &[Identity]) -> bool;
+    fn import_matches_scope(
+        &self,
+        import_line: &LineContentVO,
+        layer: &LayerNameVO,
+        suffixes: &[Identity],
+    ) -> bool;
 
     fn get_basename(&self, file: &FilePath) -> Identity;
 

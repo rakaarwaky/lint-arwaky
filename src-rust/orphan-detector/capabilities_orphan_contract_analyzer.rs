@@ -79,7 +79,7 @@ pub fn is_contract_orphan(
         }
         if let Ok(c) = std::fs::read_to_string(cf) {
             if c.contains(&format!("impl {} for", trait_name))
-                || c.contains(&format!("class {}(", trait_name))
+                || c.contains(&format!("class {}(\\(", trait_name))
                 || c.contains(&format!("class {} ", trait_name))
                 || c.contains(&format!("class {}:", trait_name))
             {
@@ -97,33 +97,35 @@ pub fn is_contract_orphan(
         );
     }
 
-    // Check 2: port/protocol not called by any orchestrator
+    // Check 2: port/protocol not called by any orchestrator OR container
     if suffix == "port" || suffix == "protocol" {
-        let mut called_by_orchestrator = false;
+        let mut called_by_orchestrator_or_container = false;
         for cf in all_files {
             let cb = cf.split('/').next_back().unwrap_or("");
-            if !cb.starts_with("agent_") {
-                continue;
-            }
-            if !cb.ends_with("_orchestrator.rs")
-                && !cb.ends_with("_orchestrator.py")
-                && !cb.ends_with("_orchestrator.ts")
-                && !cb.ends_with("_orchestrator.js")
-            {
+            // Check orchestrator files
+            let is_orchestrator = cb.starts_with("agent_")
+                && (cb.ends_with("_orchestrator.rs")
+                    || cb.ends_with("_orchestrator.py")
+                    || cb.ends_with("_orchestrator.ts")
+                    || cb.ends_with("_orchestrator.js"));
+            // Check container files (DI wiring)
+            let is_container = cb.ends_with("_container.rs");
+            
+            if !is_orchestrator && !is_container {
                 continue;
             }
             if let Ok(c) = std::fs::read_to_string(cf) {
                 if c.contains(&trait_name) {
-                    called_by_orchestrator = true;
+                    called_by_orchestrator_or_container = true;
                     break;
                 }
             }
         }
-        if !called_by_orchestrator {
+        if !called_by_orchestrator_or_container {
             return OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "Contract {} '{}' not called by any orchestrator.",
+                    "Contract {} '{}' not called by any orchestrator or container.",
                     suffix, trait_name
                 ),
                 Severity::HIGH,
@@ -131,26 +133,31 @@ pub fn is_contract_orphan(
         }
     }
 
-    // Check 3: aggregate not called by any surface
+    // Check 3: aggregate not called by any surface OR container
     if suffix == "aggregate" {
-        let mut called_by_surface = false;
+        let mut called_by_surface_or_container = false;
         for cf in all_files {
             let cb = cf.split('/').next_back().unwrap_or("");
-            if !cb.starts_with("surface_") {
+            // Check surface files
+            let is_surface = cb.starts_with("surface_");
+            // Check container files (DI wiring)
+            let is_container = cb.ends_with("_container.rs");
+            
+            if !is_surface && !is_container {
                 continue;
             }
             if let Ok(c) = std::fs::read_to_string(cf) {
                 if c.contains(&trait_name) {
-                    called_by_surface = true;
+                    called_by_surface_or_container = true;
                     break;
                 }
             }
         }
-        if !called_by_surface {
+        if !called_by_surface_or_container {
             return OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "Contract aggregate '{}' not called by any surface.",
+                    "Contract aggregate '{}' not called by any surface or container.",
                     trait_name
                 ),
                 Severity::HIGH,

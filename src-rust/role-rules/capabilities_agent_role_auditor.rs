@@ -31,6 +31,7 @@ pub fn aes0305_any_type(line: &str) -> String {
 
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 
 pub struct AgentRoleChecker {}
 impl Default for AgentRoleChecker {
@@ -56,11 +57,12 @@ impl AgentRoleChecker {
 
     pub fn check_file_size_limit(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         max_lines: usize,
         violations: &mut Vec<LintResult>,
     ) {
+        let content = source.content.value();
+        let file = source.file_path.value();
         if content.lines().count() > max_lines {
             violations.push(LintResult::new_arch(
                 file,
@@ -77,10 +79,11 @@ impl AgentRoleChecker {
 
     pub fn check_any_type_annotation(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         violations: &mut Vec<LintResult>,
     ) {
+        let content = source.content.value();
+        let file = source.file_path.value();
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
             if t.contains(": any")
@@ -420,44 +423,38 @@ impl AgentRoleChecker {
     }
 }
 
-
 impl IAgentRoleChecker for AgentRoleChecker {
     fn check_container(
         &self,
-        _file: &str,
-        _content: &str,
+        _source: &SourceContentVO,
         _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_orchestrator(
         &self,
-        _file: &str,
-        _content: &str,
+        _source: &SourceContentVO,
         _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_lifecycle(
         &self,
-        _file: &str,
-        _content: &str,
+        _source: &SourceContentVO,
         _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_file_size_limit(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         max_lines: usize,
         violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
-        self.check_file_size_limit(file, content, max_lines, violations);
+        self.check_file_size_limit(source, max_lines, violations);
     }
     fn check_any_type_annotation(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
-        self.check_any_type_annotation(file, content, violations);
+        self.check_any_type_annotation(source, violations);
     }
 }

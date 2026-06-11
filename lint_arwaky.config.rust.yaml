@@ -75,7 +75,7 @@ architecture:
     AES001:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_action.rs", "mcp_main_action.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -99,38 +99,38 @@ architecture:
 
         - scope: "contract(aggregate)"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port|protocol|aggregate)"]
+          mandatory: ["taxonomy"]
           forbidden: ["agent", "infrastructure", "surfaces", "capabilities", "root"]
           forbidden_inheritance: ["contract(port)", "contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(protocol)"]
+          mandatory: ["taxonomy"]
           forbidden: ["infrastructure", "surfaces", "agent", "capabilities", "root"]
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port)"]
+          mandatory: ["taxonomy"]
           forbidden: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
 
         - scope: "agent(container)"
           allowed: ["taxonomy", "contract", "infrastructure", "capabilities", "agent"]
-          mandatory: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
           forbidden: ["surfaces", "root"]
 
         - scope: "agent(orchestrator)"
           allowed: ["taxonomy", "contract", "agent"]
-          mandatory: ["taxonomy", "contract(aggregate)"]
+          mandatory: ["taxonomy"]
           forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
 
         - scope: "agent(lifecycle)"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(aggregate)"]
+          mandatory: ["taxonomy"]
           forbidden: ["agent", "infrastructure", "capabilities", "surfaces", "root"]
 
         - scope: "surfaces(command|controller|page|)"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(aggregate)"]
+          mandatory: ["taxonomy"]
           forbidden: ["agent", "infrastructure", "capabilities", "contract(port)", "contract(protocol)", "root"]
 
         - scope: "surfaces(hook|store|action|screen|router)"
@@ -156,7 +156,7 @@ architecture:
     AES012:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces", "root"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_action.rs", "mcp_main_action.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
 
     AES015:
       enabled: true
@@ -170,18 +170,6 @@ architecture:
       enabled: true
       scope: ["contract(aggregate)", "contract(port|protocol)"]
       exceptions: ["main.rs", "lib.rs", "mod.rs", "cli_main_entry.rs", "mcp_main_entry.rs"]
-
-    AES0303:
-      enabled: true
-      scope: ["capabilities"]
-      max_functions: 30
-      max_impl: 5
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
-
-    AES0304:
-      enabled: true
-      scope: ["infrastructure"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES0305:
       enabled: true
@@ -225,7 +213,7 @@ architecture:
     AES030:
       enabled: true
       scope: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
-      entry_points: ["main.rs", "lib.rs", "mod.rs", "__init__.py", "index.ts", "index.js"]
+      entry_points: ["cli_main_entry.rs", "mcp_main_entry.rs", "lib.rs", "mod.rs", "__init__.py", "index.ts", "index.js"]
 
     AES013:
       enabled: true

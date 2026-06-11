@@ -59,7 +59,9 @@ impl CodebaseScanOrchestrator {
             Err(_) => return Vec::new(),
         };
         rt.block_on(async {
-            orchestrator.run_all_checks(&config, &files_str, &root_dir).await
+            orchestrator
+                .run_all_checks(&config, &files_str, &root_dir)
+                .await
         })
     }
 

@@ -16,6 +16,6 @@ pub trait MultiProjectOrchestratorAggregate: Send + Sync {
         paths: &FilePathList,
         max_concurrency: Count,
     ) -> AggregatedResults;
-    fn load_config(config_path: Option<&FilePath>) -> FilePathList;
-    fn find_projects(root: &FilePath, config_name: &Identity) -> FilePathList;
+    fn load_config(&self, config_path: Option<&FilePath>) -> FilePathList;
+    fn find_projects(&self, root: &FilePath, config_name: &Identity) -> FilePathList;
 }

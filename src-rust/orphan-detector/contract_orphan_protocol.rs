@@ -47,7 +47,12 @@ pub trait IInfrastructureOrphanProtocol: Send + Sync {
 }
 
 pub trait IAgentOrphanProtocol: Send + Sync {
-    fn is_agent_orphan(&self, f: &FilePath, root_dir: &FilePath, all_files: &[String]) -> OrphanIndicatorResult;
+    fn is_agent_orphan(
+        &self,
+        f: &FilePath,
+        root_dir: &FilePath,
+        all_files: &[String],
+    ) -> OrphanIndicatorResult;
 }
 
 pub trait ISurfacesOrphanProtocol: Send + Sync {

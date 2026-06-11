@@ -1,29 +1,46 @@
 // PURPOSE: CodeMetricAnalyzer — capabilities implementation for complexity, duplication, and quality trends analysis
-use std::process::ExitCode;
+use crate::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use crate::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use std::process::ExitCode;
+use std::sync::Arc;
 
-pub struct CodeMetricAnalyzer {}
-
-impl Default for CodeMetricAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct CodeMetricAnalyzer {
+    resolver: Arc<dyn ITargetResolverProtocol>,
 }
 
 impl CodeMetricAnalyzer {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(resolver: Arc<dyn ITargetResolverProtocol>) -> Self {
+        Self { resolver }
     }
 
-    pub fn handle_complexity(&self, path: Option<String>) -> ExitCode {
-        let root = crate::code_analysis::capabilities_project_target_resolver::resolve_target(path);
+    fn grade_complexity(&self, c: usize) -> &'static str {
+        if c <= 5 {
+            "A"
+        } else if c <= 10 {
+            "B"
+        } else if c <= 20 {
+            "C"
+        } else if c <= 30 {
+            "D"
+        } else if c <= 40 {
+            "E"
+        } else {
+            "F"
+        }
+    }
+}
+
+impl ICodeMetricAnalyzerProtocol for CodeMetricAnalyzer {
+    fn handle_complexity(&self, path: Option<String>) -> ExitCode {
+        let root = self.resolver.resolve_target(path);
         println!("Cyclomatic Complexity Analysis — {}", root);
         println!();
 
         let src = std::path::Path::new(&root).join("src-rust");
         let mut functions: Vec<(std::path::PathBuf, String, usize, usize)> = Vec::new();
 
-        crate::code_analysis::capabilities_project_target_resolver::walk_rs_files(&src, &mut |p| {
+        self.resolver.walk_rs_files(&src, &mut |p| {
             if let Ok(c) = std::fs::read_to_string(&p) {
                 let lines: Vec<&str> = c.lines().collect();
                 let mut i = 0;
@@ -106,24 +123,8 @@ impl CodeMetricAnalyzer {
         ExitCode::SUCCESS
     }
 
-    fn grade_complexity(&self, c: usize) -> &'static str {
-        if c <= 5 {
-            "A"
-        } else if c <= 10 {
-            "B"
-        } else if c <= 20 {
-            "C"
-        } else if c <= 30 {
-            "D"
-        } else if c <= 40 {
-            "E"
-        } else {
-            "F"
-        }
-    }
-
-    pub fn handle_duplicates(&self, path: Option<String>) -> ExitCode {
-        let root = crate::code_analysis::capabilities_project_target_resolver::resolve_target(path);
+    fn handle_duplicates(&self, path: Option<String>) -> ExitCode {
+        let root = self.resolver.resolve_target(path);
         println!("Code Duplication Detection — {}", root);
         println!();
 
@@ -132,7 +133,7 @@ impl CodeMetricAnalyzer {
         let mut blocks: std::collections::HashMap<String, Vec<(std::path::PathBuf, usize)>> =
             std::collections::HashMap::new();
 
-        crate::code_analysis::capabilities_project_target_resolver::walk_rs_files(&src, &mut |p| {
+        self.resolver.walk_rs_files(&src, &mut |p| {
             if let Ok(c) = std::fs::read_to_string(&p) {
                 let lines: Vec<&str> = c.lines().collect();
                 for w in lines.windows(min_lines) {
@@ -156,7 +157,7 @@ impl CodeMetricAnalyzer {
 
         let total_duplicated_lines = duplicates.len() * min_lines;
         let mut total_loc = 0usize;
-        crate::code_analysis::capabilities_project_target_resolver::walk_rs_files(&src, &mut |p| {
+        self.resolver.walk_rs_files(&src, &mut |p| {
             if let Ok(c) = std::fs::read_to_string(&p) {
                 total_loc += c.lines().count();
             }
@@ -194,10 +195,10 @@ impl CodeMetricAnalyzer {
         ExitCode::SUCCESS
     }
 
-    pub fn handle_trends(&self, path: Option<String>) -> ExitCode {
-        let root = crate::code_analysis::capabilities_project_target_resolver::resolve_target(path);
-        let results = crate::code_analysis::capabilities_project_target_resolver::lint_path(&root);
-        let score = crate::code_analysis::capabilities_project_target_resolver::compute_score(&results);
+    fn handle_trends(&self, path: Option<String>) -> ExitCode {
+        let root = self.resolver.resolve_target(path);
+        let results = self.resolver.lint_path(&root);
+        let score = self.resolver.compute_score(&results);
         let violations_count = results.len();
         let critical_count = results
             .iter()

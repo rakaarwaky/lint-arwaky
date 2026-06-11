@@ -1,5 +1,4 @@
 // PURPOSE: ServerSchemas — JSON-RPC method schemas for all MCP endpoints
-
 /* UNKNOWN: MAX_STRING_LENGTH */
 use crate::mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;
 

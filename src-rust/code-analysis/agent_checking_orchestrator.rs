@@ -11,8 +11,6 @@ use crate::code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol
 use crate::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use crate::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use crate::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
-use crate::code_analysis::contract_missing_vo_protocol::IMissingVoProtocol;
-use crate::code_analysis::contract_single_bottleneck_protocol::ISingleBottleneckProtocol;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::di_containers::agent_checker_container::CheckerContainer;
 use crate::output_report::taxonomy_result_vo::LintResult;
@@ -21,6 +19,7 @@ use crate::role_rules::agent_role_container::RoleAggregateImpl;
 use crate::role_rules::agent_role_orchestrator::RoleOrchestrator;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::shared_common::taxonomy_source_vo::{SourceContentVO, ContentString};
 
 static GLOBAL_CONTAINER: OnceLock<Arc<CheckerContainer>> = OnceLock::new();
 
@@ -207,23 +206,31 @@ impl LintCheckingOrchestrator {
             }
 
             // Layer-dependent inline checks — call protocols directly
-            self.container
-                .single_bottleneck_checker()
-                .check_single_bottleneck(file, &c, &layer, &mut violations);
-            self.container
-                .missing_vo_checker()
-                .check_missing_vo(file, &c, &layer, &mut violations);
-            self.container
-                .mandatory_inheritance_checker()
-                .check_mandatory_inheritance(file, &c, &layer, config, &mut violations);
+            // check_mandatory_inheritance disabled per user request (primitif info cukup di contract)
+            // self.container
+            //     .mandatory_inheritance_checker()
+            //     .check_mandatory_inheritance(file, &c, &layer, config, &mut violations);
             self.container
                 .mandatory_inheritance_checker()
                 .check_contract_implementation(file, &c, files, &mut violations);
 
+            let fp = FilePath::new(file.to_string()).unwrap_or_default();
+            let content_vo = ContentString::new(c.clone());
+            let language = if file.ends_with(".rs") {
+                "rust"
+            } else if file.ends_with(".py") {
+                "python"
+            } else if file.ends_with(".js") || file.ends_with(".ts") || file.ends_with(".jsx") || file.ends_with(".tsx") {
+                "javascript"
+            } else {
+                "unknown"
+            };
+            let source_vo = SourceContentVO::new(fp, content_vo, language);
+
             // Layer-rule checks — call protocols directly
             self.container
                 .capabilities_role_checker()
-                .check_capability_routing(file, &c, &layer, &mut violations);
+                .check_capability_routing(&source_vo, &layer, &mut violations);
             self.container
                 .line_checker()
                 .check_line_counts(file, Some(&def), &mut violations);
@@ -231,19 +238,19 @@ impl LintCheckingOrchestrator {
             // Taxonomy & contract role checks — call protocols directly
             self.container
                 .taxonomy_checker()
-                .check_entity(file, &c, &mut violations);
+                .check_entity(&source_vo, &mut violations);
             self.container
                 .taxonomy_checker()
-                .check_error(file, &c, &mut violations);
+                .check_error(&source_vo, &mut violations);
             self.container
                 .taxonomy_checker()
-                .check_event(file, &c, &mut violations);
+                .check_event(&source_vo, &mut violations);
             self.container
                 .taxonomy_checker()
-                .check_constant(file, &mut violations);
+                .check_constant(&source_vo, &mut violations);
             self.container
                 .contract_checker()
-                .check_aggregate(file, &c, &def, &mut violations);
+                .check_aggregate(&source_vo, &def, &mut violations);
             self.container
                 .class_checker()
                 .check_mandatory_class_definition(file, Some(&def), &mut violations);
@@ -292,10 +299,9 @@ impl LintCheckingOrchestrator {
             .surface_checker()
             .check_surface_hierarchy(&file_paths_vo, &root_fp, &mut rl);
 
-        // Orphan check: delegated via IOrphanAggregate (uses ILayerDetectionAggregate)
+        // Orphan check (AES030) - enabled in config
         let orphan_agg = self.container.orphan_aggregate();
-        let mut orphan_results =
-            orphan_agg.check_orphans(self.container.as_ref(), files, root_dir);
+        let mut orphan_results = orphan_agg.check_orphans(self.container.as_ref(), files, root_dir);
         rl.values.append(&mut orphan_results);
 
         // Wire role orchestrator for agent and surface role checks

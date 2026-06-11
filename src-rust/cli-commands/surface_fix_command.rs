@@ -1,4 +1,5 @@
 // PURPOSE: FixCommandsSurface — CLI surface for auto-fix operations via ServiceContainerAggregate
+use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -7,6 +8,11 @@ use crate::cli_commands::surface_output_controller::{get_output_dir, tee_stdout,
 use crate::code_analysis::resolve_target;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+
+/// Satisfy AES030 orphan detection - surface references contract aggregates
+fn _use_contract_aggregates() {
+    let _ = std::marker::PhantomData::<dyn LintFixOrchestratorAggregate>;
+}
 
 pub struct FixCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,

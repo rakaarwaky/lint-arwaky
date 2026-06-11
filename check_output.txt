@@ -1,0 +1,373 @@
+warning: unused variable: `root_dir`
+  --> src-rust/orphan-detector/agent_orphan_orchestrator.rs:47:57
+   |
+47 | ...&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
+   |                             ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_root_dir`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `mod_name`
+  --> src-rust/orphan-detector/agent_orphan_orchestrator.rs:80:29
+   |
+80 |                         let mod_name = cap[2].to_string();
+   |                             ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mod_name`
+
+warning: `lint_arwaky` (lib) generated 2 warnings (run `cargo fix --lib -p lint_arwaky` to apply 2 suggestions)
+   Compiling lint_arwaky v1.10.2 (/home/raka/mcp-arwaky/lint-arwaky)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.83s
+     Running `target/debug/lint-arwaky-cli check .`
+=== AES Compliance Report for . ===
+[medium] ./src-rust/layer-rules/infrastructure_import_parser_adapter.rs:166:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/role-rules/capabilities_capabilities_role_auditor.rs:0:0 AES0303 - AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability. Found 6 impl/class blocks.
+[medium] ./src-rust/role-rules/capabilities_surface_role_auditor.rs:0:0 AES0303 - AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability. Found 31 functions.
+[medium] ./src-rust/role-rules/capabilities_surface_role_auditor.rs:0:0 AES0303 - AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability. Found 10 impl/class blocks.
+[medium] ./src-rust/role-rules/capabilities_surface_role_auditor.rs:19:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/role-rules/capabilities_surface_role_auditor.rs:20:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/role-rules/capabilities_surface_role_auditor.rs:21:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/role-rules/capabilities_surface_role_auditor.rs:226:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/role-rules/capabilities_surface_role_auditor.rs:420:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/role-rules/capabilities_agent_role_auditor.rs:361:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/orphan-detector/capabilities_orphan_contract_analyzer.rs:0:0 AES0303 - AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability. Found 10 impl/class blocks.
+[medium] ./src-rust/orphan-detector/capabilities_orphan_agent_analyzer.rs:0:0 AES0303 - AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability. Found 8 impl/class blocks.
+[medium] ./src-rust/output-report/capabilities_reporting_formatter.rs:231:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/output-report/capabilities_reporting_formatter.rs:232:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/code-analysis/capabilities_renamer_processor.rs:71:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/code-analysis/capabilities_dead_inheritance_checker.rs:0:0 AES0303 - AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability. Found 19 impl/class blocks.
+[medium] ./src-rust/code-analysis/capabilities_dead_inheritance_checker.rs:23:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/code-analysis/capabilities_class_checker.rs:0:0 AES0303 - AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability. Found 9 impl/class blocks.
+[medium] ./src-rust/code-analysis/capabilities_single_bottleneck_checker.rs:0:0 AES0303 - AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability. Found 7 impl/class blocks.
+[medium] ./src-rust/code-analysis/capabilities_mandatory_inheritance_checker.rs:0:0 AES0303 - AES0303 CAPABILITY_ROLE: All dispatch routes go to a single capability. Found 23 impl/class blocks.
+[medium] ./src-rust/code-analysis/capabilities_code_metric_analyzer.rs:46:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/code-analysis/capabilities_code_metric_analyzer.rs:132:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/code-analysis/capabilities_code_metric_analyzer.rs:258:0 AES0303 - AES0303 CAPABILITY_ROLE: Capability method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_rust_scanner.rs:86:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_rust_scanner.rs:90:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_rust_scanner.rs:124:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_rust_scanner.rs:129:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_py_scanner.rs:390:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_js_scanner.rs:91:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_js_scanner.rs:204:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_js_scanner.rs:210:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_js_scanner.rs:229:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_js_scanner.rs:230:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_js_scanner.rs:446:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/source-parsing/infrastructure_js_scanner.rs:455:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/language-adapters/infrastructure_js_call_tracer.rs:254:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[medium] ./src-rust/language-adapters/infrastructure_js_scope_adapter.rs:62:0 AES0304 - AES0304 INFRASTRUCTURE_ROLE: Infrastructure method call missing required VO parameter.
+[high] ./src-rust/cli-commands/surface_analysis_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/cli-commands/contract_maintenance_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/cli-commands/contract_maintenance_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/cli-commands/surface_bootstrap_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/cli-commands/surface_config_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/cli-commands/surface_config_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'contract(aggregate)'.
+WHY? Layer 'surface' must import 'contract(aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(aggregate)' in this file.
+[high] ./src-rust/cli-commands/surface_map_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/cli-commands/surface_map_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'contract(aggregate)'.
+WHY? Layer 'surface' must import 'contract(aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(aggregate)' in this file.
+[high] ./src-rust/cli-commands/surface_git_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/cli-commands/surface_maintenance_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/cli-commands/surface_report_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/cli-commands/surface_watch_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/cli-commands/surface_setup_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/cli-commands/surface_core_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/pipeline-jobs/contract_dispatcher_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/pipeline-jobs/contract_dispatcher_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/pipeline-jobs/contract_output_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/pipeline-jobs/contract_output_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/git-hooks/contract_commands_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/git-hooks/contract_commands_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/multi-project/contract_orchestrator_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/multi-project/contract_orchestrator_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/plugin-system/contract_commands_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/plugin-system/contract_commands_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/output-report/contract_client_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/output-report/contract_client_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/code-analysis/capabilities_renamer_processor.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'capabilities' is missing required import 'taxonomy'.
+WHY? Layer 'capabilities' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/code-analysis/capabilities_renamer_processor.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'capabilities' is missing required import 'contract(protocol)'.
+WHY? Layer 'capabilities' must import 'contract(protocol)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(protocol)' in this file.
+[high] ./src-rust/code-analysis/capabilities_renamer_processor.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'capabilities' is missing required import 'taxonomy'.
+WHY? Layer 'capabilities' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/code-analysis/capabilities_renamer_processor.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'capabilities' is missing required import 'contract(protocol)'.
+WHY? Layer 'capabilities' must import 'contract(protocol)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(protocol)' in this file.
+[high] ./src-rust/code-analysis/contract_layer_detection_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/code-analysis/contract_layer_detection_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/code-analysis/contract_code_metric_analyzer_protocol.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'taxonomy'.
+WHY? Layer 'contract' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/code-analysis/contract_code_metric_analyzer_protocol.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'taxonomy'.
+WHY? Layer 'contract' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/mcp-server/capabilities_schema_checker.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'capabilities' is missing required import 'contract(protocol)'.
+WHY? Layer 'capabilities' must import 'contract(protocol)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(protocol)' in this file.
+[high] ./src-rust/mcp-server/capabilities_schema_checker.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'capabilities' is missing required import 'contract(protocol)'.
+WHY? Layer 'capabilities' must import 'contract(protocol)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(protocol)' in this file.
+[high] ./src-rust/mcp-server/infrastructure_server_lifespan.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/mcp-server/infrastructure_server_lifespan.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/mcp-server/infrastructure_server_schemas.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/mcp-server/infrastructure_server_schemas.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/mcp-server/infrastructure_server_validation_util.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/mcp-server/infrastructure_server_validation_util.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/mcp-server/surface_client_controller.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/mcp-server/surface_execute_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/mcp-server/surface_health_controller.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/mcp-server/surface_server_controller.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/mcp-server/surface_tools_command.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/mcp-server/surface_tools_controller.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'surface' is missing required import 'taxonomy'.
+WHY? Layer 'surface' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/source-parsing/infrastructure_barrel_provider.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'taxonomy'.
+WHY? Layer 'infrastructure' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/source-parsing/infrastructure_barrel_provider.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/source-parsing/infrastructure_barrel_provider.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'taxonomy'.
+WHY? Layer 'infrastructure' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/source-parsing/infrastructure_barrel_provider.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/language-adapters/infrastructure_py_ast_util.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'taxonomy'.
+WHY? Layer 'infrastructure' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/language-adapters/infrastructure_py_ast_util.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/language-adapters/infrastructure_py_ast_util.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'taxonomy'.
+WHY? Layer 'infrastructure' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/language-adapters/infrastructure_py_ast_util.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/language-adapters/infrastructure_py_primitive_detector.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'taxonomy'.
+WHY? Layer 'infrastructure' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/language-adapters/infrastructure_py_primitive_detector.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/language-adapters/infrastructure_py_primitive_detector.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'taxonomy'.
+WHY? Layer 'infrastructure' must import 'taxonomy' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy' in this file.
+[high] ./src-rust/language-adapters/infrastructure_py_primitive_detector.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'contract(port)'.
+WHY? Layer 'infrastructure' must import 'contract(port)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port)' in this file.
+[high] ./src-rust/shared-common/taxonomy_common_error.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'taxonomy' is missing required import 'taxonomy(vo|constant)'.
+WHY? Layer 'taxonomy' must import 'taxonomy(vo|constant)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy(vo|constant)' in this file.
+[high] ./src-rust/shared-common/taxonomy_common_error.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'taxonomy' is missing required import 'taxonomy(vo|constant)'.
+WHY? Layer 'taxonomy' must import 'taxonomy(vo|constant)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'taxonomy(vo|constant)' in this file.
+[high] ./src-rust/auto-fix/contract_fix_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/auto-fix/contract_fix_aggregate.rs:0:0 AES002 - AES002 MANDATORY_IMPORT: Layer 'contract' is missing required import 'contract(port|protocol|aggregate)'.
+WHY? Layer 'contract' must import 'contract(port|protocol|aggregate)' to satisfy architectural contract requirements.
+FIX: Add the required import statement for 'contract(port|protocol|aggregate)' in this file.
+[high] ./src-rust/layer-rules/contract_rule_protocol.rs:1:1 AES030 - Contract protocol 'IAnalyzer' not called by any orchestrator.
+[high] ./src-rust/layer-rules/contract_import_parser_port.rs:1:1 AES030 - Contract port 'IImportParserPort' not called by any orchestrator.
+[high] ./src-rust/layer-rules/contract_cycle_protocol.rs:1:1 AES030 - Contract protocol 'ICycleAnalysisProtocol' not called by any orchestrator.
+[high] ./src-rust/role-rules/contract_role_aggregate.rs:1:1 AES030 - Contract aggregate 'IRoleAggregate' not called by any surface.
+[high] ./src-rust/role-rules/contract_taxonomy_role_protocol.rs:1:1 AES030 - Contract protocol 'ITaxonomyRoleChecker' not called by any orchestrator.
+[high] ./src-rust/role-rules/contract_surface_role_protocol.rs:1:1 AES030 - Contract protocol 'ISurfaceRoleChecker' not called by any orchestrator.
+[high] ./src-rust/role-rules/contract_agent_role_protocol.rs:1:1 AES030 - Contract protocol 'IAgentRoleChecker' not called by any orchestrator.
+[high] ./src-rust/role-rules/contract_role_protocol.rs:1:1 AES030 - Contract protocol 'IContractRoleChecker' not called by any orchestrator.
+[high] ./src-rust/role-rules/agent_role_container.rs:1:1 AES030 - Agent orphan: aggregate 'IRoleAggregate' not called by any surface.
+[high] ./src-rust/role-rules/agent_role_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'IRoleAggregate' not called by any surface.
+[high] ./src-rust/role-rules/contract_capabilities_role_protocol.rs:1:1 AES030 - Contract protocol 'ICapabilitiesRoleChecker' not called by any orchestrator.
+[high] ./src-rust/orphan-detector/contract_orphan_aggregate.rs:1:1 AES030 - Contract aggregate 'IOrphanAggregate' not called by any surface.
+[high] ./src-rust/orphan-detector/agent_orphan_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'IOrphanAggregate' not called by any surface.
+[high] ./src-rust/cli-commands/contract_report_aggregate.rs:1:1 AES030 - Contract aggregate 'ReportCommandsAggregate' not called by any surface.
+[medium] ./src-rust/cli-commands/surface_analysis_command.rs:1:1 AES030 - Surface is unreachable.
+[high] ./src-rust/cli-commands/agent_dev_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'DevCommandsAggregate' not called by any surface.
+[high] ./src-rust/cli-commands/agent_maintenance_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'MaintenanceCommandsAggregate' not called by any surface.
+[high] ./src-rust/cli-commands/contract_dev_aggregate.rs:1:1 AES030 - Contract aggregate 'DevCommandsAggregate' not called by any surface.
+[high] ./src-rust/cli-commands/contract_executor_port.rs:1:1 AES030 - Contract port 'ICommandExecutorPort' not called by any orchestrator.
+[high] ./src-rust/cli-commands/contract_maintenance_aggregate.rs:1:1 AES030 - Contract aggregate 'MaintenanceCommandsAggregate' not called by any surface.
+[medium] ./src-rust/cli-commands/surface_bootstrap_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_config_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_map_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_multi_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_git_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_dev_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_fix_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_maintenance_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_output_controller.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_plugin_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_report_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_watch_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_setup_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_core_command.rs:1:1 AES030 - Surface is unreachable.
+[medium] ./src-rust/cli-commands/surface_check_command.rs:1:1 AES030 - Surface is unreachable.
+[high] ./src-rust/config-system/contract_discovery_port.rs:1:1 AES030 - Contract port 'IConfigDiscoveryPort' not called by any orchestrator.
+[high] ./src-rust/config-system/contract_parser_port.rs:1:1 AES030 - Contract port 'IConfigParserPort' not called by any orchestrator.
+[high] ./src-rust/config-system/agent_config_loading_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'IConfigOrchestrationAggregate' not called by any surface.
+[high] ./src-rust/config-system/contract_validator_protocol.rs:1:1 AES030 - Contract protocol 'IConfigValidatorProtocol' not called by any orchestrator.
+[high] ./src-rust/config-system/contract_orchestration_aggregate.rs:1:1 AES030 - Contract aggregate 'IConfigOrchestrationAggregate' not called by any surface.
+[high] ./src-rust/pipeline-jobs/contract_extended_aggregate.rs:1:1 AES030 - Contract aggregate 'PipelineExtendedOrchestratorAggregate' not called by any surface.
+[high] ./src-rust/pipeline-jobs/contract_dispatcher_aggregate.rs:1:1 AES030 - Contract aggregate 'PipelineActionDispatcherAggregate' not called by any surface.
+[high] ./src-rust/pipeline-jobs/contract_output_aggregate.rs:1:1 AES030 - Contract aggregate 'PipelineOutputAggregate' not called by any surface.
+[high] ./src-rust/pipeline-jobs/contract_registry_aggregate.rs:1:1 AES030 - Contract aggregate 'JobRegistryAggregate' not called by any surface.
+[high] ./src-rust/pipeline-jobs/contract_registry_port.rs:1:1 AES030 - Contract port 'IJobRegistryPort' not called by any orchestrator.
+[high] ./src-rust/pipeline-jobs/agent_pipeline_extended_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'PipelineExtendedOrchestratorAggregate' not called by any surface.
+[high] ./src-rust/pipeline-jobs/agent_job_container.rs:1:1 AES030 - Agent orphan: aggregate 'JobRegistryAggregate' not called by any surface.
+[high] ./src-rust/pipeline-jobs/agent_pipeline_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'PipelineActionDispatcherAggregate' not called by any surface.
+[high] ./src-rust/file-watch/contract_provider_port.rs:1:1 AES030 - Contract port 'IWatchProviderPort' not called by any orchestrator.
+[high] ./src-rust/git-hooks/contract_orchestrator_aggregate.rs:1:1 AES030 - Contract aggregate 'HookManagementOrchestratorAggregate' not called by any surface.
+[high] ./src-rust/git-hooks/contract_commands_aggregate.rs:1:1 AES030 - Contract aggregate 'GitCommandsAggregate' not called by any surface.
+[high] ./src-rust/git-hooks/agent_commands_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'GitCommandsAggregate' not called by any surface.
+[high] ./src-rust/git-hooks/agent_management_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'HookManagementOrchestratorAggregate' not called by any surface.
+[high] ./src-rust/multi-project/contract_orchestrator_aggregate.rs:1:1 AES030 - Contract aggregate 'MultiProjectOrchestratorAggregate' not called by any surface.
+[high] ./src-rust/multi-project/agent_project_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'MultiProjectOrchestratorAggregate' not called by any surface.
+[high] ./src-rust/project-setup/contract_setup_protocol.rs:1:1 AES030 - Contract protocol 'ISetupManagementProtocol' not called by any orchestrator.
+[high] ./src-rust/project-setup/contract_setup_aggregate.rs:1:1 AES030 - Contract aggregate 'SetupManagementAggregate' not called by any surface.
+[high] ./src-rust/project-setup/agent_setup_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'SetupManagementAggregate' not called by any surface.
+[high] ./src-rust/plugin-system/contract_commands_aggregate.rs:1:1 AES030 - Contract aggregate 'PluginCommandsAggregate' not called by any surface.
+[high] ./src-rust/plugin-system/contract_manager_port.rs:1:1 AES030 - Contract port 'IPluginManagerPort' not called by any orchestrator.
+[high] ./src-rust/plugin-system/agent_commands_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'PluginCommandsAggregate' not called by any surface.
+[high] ./src-rust/output-report/contract_output_aggregate.rs:1:1 AES030 - Contract aggregate 'OutputClientAggregate' not called by any surface.
+[high] ./src-rust/output-report/agent_commands_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'ReportCommandsAggregate' not called by any surface.
+[high] ./src-rust/output-report/agent_output_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'OutputClientAggregate' not called by any surface.
+[high] ./src-rust/output-report/contract_client_aggregate.rs:1:1 AES030 - Contract aggregate 'OutputClientAggregate' not called by any surface.
+[high] ./src-rust/code-analysis/contract_analysis_protocol.rs:1:1 AES030 - Contract protocol 'IAnalysisProtocol' not called by any orchestrator.
+[high] ./src-rust/code-analysis/contract_adapter_port.rs:1:1 AES030 - Contract port 'ILinterAdapterPort' not called by any orchestrator.
+[high] ./src-rust/code-analysis/contract_unused_protocol.rs:1:1 AES030 - Contract protocol 'IUnusedProtocol' not called by any orchestrator.
+[high] ./src-rust/code-analysis/contract_layer_detection_aggregate.rs:1:1 AES030 - Contract aggregate 'ILayerDetectionAggregate' not called by any surface.
+[high] ./src-rust/code-analysis/contract_target_resolver_protocol.rs:1:1 AES030 - Contract protocol 'ITargetResolverProtocol' not called by any orchestrator.
+[high] ./src-rust/code-analysis/contract_code_metric_analyzer_protocol.rs:1:1 AES030 - Contract protocol 'ICodeMetricAnalyzerProtocol' not called by any orchestrator.
+[high] ./src-rust/mcp-server/contract_server_port.rs:1:1 AES030 - Contract port 'IMcpServerPort' not called by any orchestrator.
+[high] ./src-rust/source-parsing/contract_path_normalization_port.rs:1:1 AES030 - Contract port 'IPathNormalizationPort' not called by any orchestrator.
+[high] ./src-rust/source-parsing/contract_scanner_provider_port.rs:1:1 AES030 - Contract port 'IScannerProviderPort' not called by any orchestrator.
+[high] ./src-rust/source-parsing/contract_parser_port.rs:1:1 AES030 - Contract port 'ISourceParserPort' not called by any orchestrator.
+[high] ./src-rust/lifecycle-state/contract_lifecycle_aggregate.rs:1:1 AES030 - Contract aggregate 'AgentLifecycleAggregate' not called by any surface.
+[high] ./src-rust/lifecycle-state/agent_status_lifecycle.rs:1:1 AES030 - Agent orphan: aggregate 'AgentLifecycleAggregate' not called by any surface.
+[high] ./src-rust/language-adapters/contract_variant_port.rs:1:1 AES030 - Contract port 'INamingVariantPort' not called by any orchestrator.
+[high] ./src-rust/language-adapters/contract_naming_port.rs:1:1 AES030 - Contract port 'INamingProviderPort' not called by any orchestrator.
+[high] ./src-rust/language-adapters/contract_semantic_tracer_port.rs:1:1 AES030 - Contract port 'ISemanticTracerPort' not called by any orchestrator.
+[high] ./src-rust/language-adapters/contract_flow_port.rs:1:1 AES030 - Contract port 'IJavascriptFlowPort' not called by any orchestrator.
+[high] ./src-rust/language-adapters/contract_scope_port.rs:1:1 AES030 - Contract port 'IJavascriptScopePort' not called by any orchestrator.
+[high] ./src-rust/di-containers/contract_registry_aggregate.rs:1:1 AES030 - Contract aggregate 'ContainerRegistryAggregate' not called by any surface.
+[high] ./src-rust/di-containers/agent_checker_container.rs:1:1 AES030 - Agent orphan: aggregate 'ILayerDetectionAggregate' not called by any surface.
+[high] ./src-rust/di-containers/agent_injection_container.rs:1:1 AES030 - Agent orphan: aggregate 'LintFixOrchestratorAggregate' not called by any surface.
+[high] ./src-rust/di-containers/agent_registry_container.rs:1:1 AES030 - Agent orphan: aggregate 'ContainerRegistryAggregate' not called by any surface.
+[high] ./src-rust/file-system/contract_system_port.rs:1:1 AES030 - Contract port 'IFileSystemPort' not called by any orchestrator.
+[high] ./src-rust/metrics-service/contract_metrics_port.rs:1:1 AES030 - Contract port 'IMetricsProviderPort' not called by any orchestrator.
+[high] ./src-rust/auto-fix/contract_fix_aggregate.rs:1:1 AES030 - Contract aggregate 'LintFixOrchestratorAggregate' not called by any surface.
+[high] ./src-rust/auto-fix/agent_fix_orchestrator.rs:1:1 AES030 - Agent orphan: aggregate 'LintFixOrchestratorAggregate' not called by any surface.
+[high] ./src-rust/layer-rules/contract_lint_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/layer-rules/contract_rule_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/layer-rules/contract_import_parser_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/layer-rules/contract_cycle_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/role-rules/contract_taxonomy_role_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/role-rules/contract_surface_role_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/role-rules/contract_agent_role_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/role-rules/contract_role_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/role-rules/contract_capabilities_role_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/orphan-detector/contract_orphan_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/config-system/contract_reader_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/config-system/contract_validator_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/pipeline-jobs/contract_registry_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/file-watch/contract_provider_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/project-setup/contract_setup_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/plugin-system/contract_manager_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_class_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_line_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_adapter_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_bypass_checker_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_missing_vo_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_inline_unused_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_dead_inheritance_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_single_bottleneck_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_mandatory_inheritance_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_target_resolver_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/code-analysis/contract_code_metric_analyzer_protocol.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/mcp-server/contract_server_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/source-parsing/contract_path_normalization_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/source-parsing/contract_parser_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/language-adapters/contract_semantic_tracer_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/language-adapters/contract_scope_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/file-system/contract_system_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+[high] ./src-rust/metrics-service/contract_metrics_port.rs:0:0 AES0302 - AES0302 CONTRACT_PRIMITIVE: Contract trait/method signature uses primitive types instead of taxonomy VO or constant. WHY? Contracts must enforce VO boundaries. FIX: Replace primitives with VO/constant from taxonomy layer.
+Total violations: 225

@@ -1,3 +1,5 @@
+#[path = "auto-fix/mod.rs"]
+pub mod auto_fix;
 #[path = "cli-commands/mod.rs"]
 // PURPOSE: Library root — exports public API modules for CLI and MCP targets
 pub mod cli_commands;
@@ -5,8 +7,6 @@ pub mod cli_commands;
 pub mod cli_transport;
 #[path = "code-analysis/mod.rs"]
 pub mod code_analysis;
-#[path = "auto-fix/mod.rs"]
-pub mod auto_fix;
 #[path = "config-system/mod.rs"]
 pub mod config_system;
 #[path = "di-containers/mod.rs"]

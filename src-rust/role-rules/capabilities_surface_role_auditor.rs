@@ -1,9 +1,10 @@
 // PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES0306: smart/utility/passive surface role checks
-use crate::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use crate::layer_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
+use crate::shared_common::taxonomy_source_vo::SourceContentVO;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
@@ -26,6 +27,12 @@ static PY_METHOD_RE: Lazy<Option<Regex>> =
 
 // Regex: detect class definitions
 static PY_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^class\s+(\w+)").ok());
+
+// Regex: detect JavaScript/TypeScript class definitions
+static JS_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^export\s+class\s+(\w+)").ok());
+
+// Regex: detect JavaScript/TypeScript method definitions
+static JS_METHOD_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^\s*(?:public|private|protected)?\s*(?:async\s+)?(\w+)\s*\(").ok());
 
 // Regex: detect if statements for nesting depth
 static IF_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^\s*if\s+").ok());
@@ -68,10 +75,11 @@ impl SurfaceRoleChecker {
 
     pub fn check_fn_count_limit(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         violations: &mut Vec<LintResult>,
     ) {
+        let content = source.content.value();
+        let file = source.file_path.value();
         if content.matches("fn ").count() > 15 {
             violations.push(LintResult::new_arch(
                 file,
@@ -201,6 +209,8 @@ impl SurfaceRoleChecker {
 
         if is_rust {
             self._check_rust_passive(f, &lines, &mut violations);
+        } else if f.to_string().ends_with(".ts") || f.to_string().ends_with(".js") {
+            self._check_javascript_passive(f, &lines, &mut violations);
         } else {
             self._check_python_passive(f, &lines, &mut violations);
         }
@@ -367,6 +377,61 @@ impl SurfaceRoleChecker {
         }
     }
 
+    /// JavaScript/TypeScript-specific passive check: detect classes and methods.
+    fn _check_javascript_passive(&self, _f: &FilePath, lines: &[&str], violations: &mut Vec<String>) {
+        let class_re = match &*JS_CLASS_RE {
+            Some(r) => r,
+            None => return,
+        };
+        let method_re = match &*JS_METHOD_RE {
+            Some(r) => r,
+            None => return,
+        };
+
+        for (i, raw_line) in lines.iter().enumerate() {
+            let stripped = raw_line.trim();
+            if let Some(cap) = class_re.captures(stripped) {
+                let class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                let indent = raw_line.len() - raw_line.trim_start().len();
+
+                let mut pub_methods: Vec<(String, usize, Option<usize>)> = Vec::new();
+
+                for j in (i + 1)..lines.len() {
+                    let method_line = lines[j];
+                    if method_line.trim().is_empty() {
+                        continue;
+                    }
+                    let m_indent = method_line.len() - method_line.trim_start().len();
+
+                    if m_indent <= indent && !method_line.trim().is_empty() {
+                        break;
+                    }
+
+                    if let Some(mcap) = method_re.captures(method_line.trim()) {
+                        let method_name = mcap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        if !method_name.starts_with('_') {
+                            let mut end_line = lines.len();
+                            for (k, next) in lines.iter().enumerate().skip(j + 1) {
+                                if !next.trim().is_empty() {
+                                    let n_indent = next.len() - next.trim_start().len();
+                                    if n_indent <= m_indent {
+                                        end_line = k;
+                                        break;
+                                    }
+                                }
+                            }
+                            pub_methods.push((method_name.to_string(), j + 1, Some(end_line)));
+                        }
+                    }
+                }
+
+                self._check_methods_too_public(class_name, &pub_methods, violations);
+                self._check_method_lengths(class_name, lines, &pub_methods, violations);
+                self._check_method_nesting(class_name, lines, &pub_methods, violations);
+            }
+        }
+    }
+
     // -- AES0306 sub-checks ---------------------------------------------------
 
     /// AES0306: too many public methods in a surface class.
@@ -468,12 +533,12 @@ impl SurfaceRoleChecker {
 
 // --- helpers -----------------------------------------------------------------
 
-/// Check if the file is a surface file by filename prefix `surface_` or directory `surfaces/`.
+/// Check if the file is a surface file by filename prefix `surface_` or `surfaces_` or directory `surfaces/`.
 fn is_in_surfaces(f: &FilePath) -> bool {
     let path_str = f.to_string();
     let basename = path_str.rsplit('/').next().unwrap_or(&path_str);
     let stem = basename.split('.').next().unwrap_or(basename);
-    if stem.starts_with("surface_") {
+    if stem.starts_with("surface_") || stem.starts_with("surfaces_") {
         return true;
     }
     if let Some(parent) = path_str.rsplit('/').nth(1) {
@@ -527,31 +592,27 @@ mod tests {
 impl ISurfaceRoleChecker for SurfaceRoleChecker {
     fn check_smart_surface(
         &self,
-        _file: &str,
-        _content: &str,
+        _source: &SourceContentVO,
         _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_utility_surface(
         &self,
-        _file: &str,
-        _content: &str,
+        _source: &SourceContentVO,
         _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_passive_surface(
         &self,
-        _file: &str,
-        _content: &str,
+        _source: &SourceContentVO,
         _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_fn_count_limit(
         &self,
-        file: &str,
-        content: &str,
+        source: &SourceContentVO,
         violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
-        self.check_fn_count_limit(file, content, violations);
+        self.check_fn_count_limit(source, violations);
     }
 }

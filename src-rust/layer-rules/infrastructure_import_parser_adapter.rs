@@ -1,9 +1,9 @@
 // PURPOSE: ImportParserAdapter — infrastructure implementation of IImportParserPort using standard filesystem and string search utilities
 
-use std::fs;
 use crate::layer_rules::contract_import_parser_port::IImportParserPort;
-use crate::shared_common::{Identity, LineNumber, FileContentVO, LayerNameVO, LineContentVO};
+use crate::shared_common::{FileContentVO, Identity, LayerNameVO, LineContentVO, LineNumber};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use std::fs;
 
 pub struct ImportParserAdapter {}
 
@@ -49,7 +49,12 @@ impl IImportParserPort for ImportParserAdapter {
     }
 
     /// Check if an import line satisfies the given scope requirement.
-    fn import_matches_scope(&self, import_line: &LineContentVO, layer: &LayerNameVO, suffixes: &[Identity]) -> bool {
+    fn import_matches_scope(
+        &self,
+        import_line: &LineContentVO,
+        layer: &LayerNameVO,
+        suffixes: &[Identity],
+    ) -> bool {
         let import_line_str = import_line.value();
         let segments: Vec<&str> = import_line_str.split("::").collect();
         let layer_lower = layer.value().to_lowercase();
@@ -165,7 +170,10 @@ fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentVO)> 
             || trimmed.starts_with("from ")
             || trimmed.starts_with("extern crate ")
         {
-            result.push((LineNumber::new((i + 1) as i64), LineContentVO::new(lines[i].to_string())));
+            result.push((
+                LineNumber::new((i + 1) as i64),
+                LineContentVO::new(lines[i].to_string()),
+            ));
             i += 1;
             continue;
         }
@@ -183,7 +191,10 @@ fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentVO)> 
                     i += 1;
                 }
                 combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
-                result.push((LineNumber::new((start + 1) as i64), LineContentVO::new(combined)));
+                result.push((
+                    LineNumber::new((start + 1) as i64),
+                    LineContentVO::new(combined),
+                ));
             } else if !combined.ends_with(';') {
                 while i + 1 < lines.len() {
                     let next = lines[i + 1].trim();
@@ -198,9 +209,15 @@ fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentVO)> 
                     i += 1;
                 }
                 combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
-                result.push((LineNumber::new((i + 1) as i64), LineContentVO::new(combined)));
+                result.push((
+                    LineNumber::new((i + 1) as i64),
+                    LineContentVO::new(combined),
+                ));
             } else {
-                result.push((LineNumber::new((i + 1) as i64), LineContentVO::new(combined)));
+                result.push((
+                    LineNumber::new((i + 1) as i64),
+                    LineContentVO::new(combined),
+                ));
             }
         }
         i += 1;

@@ -1,14 +1,16 @@
 // PURPOSE: ArchImportMandatoryChecker — AES002: enforce mandatory import rules per layer definition and scope rules
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::layer_rules::contract_import_parser_port::IImportParserPort;
+use crate::layer_rules::contract_rule_protocol::{
+    IAnalyzer, IArchImportProtocol, IArchRuleProtocol,
+};
 use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
-use crate::shared_common::{Identity, FileContentVO, LayerNameVO, SymbolName};
+use crate::shared_common::{FileContentVO, Identity, LayerNameVO, SymbolName};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use crate::layer_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol, IArchRuleProtocol};
 use async_trait::async_trait;
 use std::sync::Arc;
 
@@ -56,7 +58,9 @@ impl ArchImportMandatoryChecker {
             let (layer, suffixes) = self.parser.resolve_scope(&required_identity);
             let layer_str = layer.value();
             let is_present = if suffixes.is_empty() {
-                import_lines.iter().any(|(_, l)| l.value().contains(layer_str))
+                import_lines
+                    .iter()
+                    .any(|(_, l)| l.value().contains(layer_str))
             } else {
                 import_lines
                     .iter()
@@ -124,11 +128,14 @@ impl ArchImportMandatoryChecker {
                     if import_lines.is_empty() {
                         false
                     } else {
-                        import_lines.iter().any(|(_, l)| l.value().contains(req_layer_str))
+                        import_lines
+                            .iter()
+                            .any(|(_, l)| l.value().contains(req_layer_str))
                     }
                 } else {
                     import_lines.iter().any(|(_, l)| {
-                        self.parser.import_matches_scope(l, &req_layer, &req_suffixes)
+                        self.parser
+                            .import_matches_scope(l, &req_layer, &req_suffixes)
                     })
                 };
 
@@ -181,7 +188,8 @@ impl IArchImportProtocol for ArchImportMandatoryChecker {
         _files: &FilePathList,
         _root_dir: &FilePath,
         _results: &mut LintResultList,
-    ) {}
+    ) {
+    }
 
     async fn check_legacy_import_rules(
         &self,
@@ -189,5 +197,6 @@ impl IArchImportProtocol for ArchImportMandatoryChecker {
         _files: &FilePathList,
         _root_dir: &FilePath,
         _results: &mut LintResultList,
-    ) {}
+    ) {
+    }
 }
