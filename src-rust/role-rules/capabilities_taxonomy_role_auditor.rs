@@ -1,17 +1,21 @@
-// PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES0301: taxonomy VO/entity/error/event/constant audits
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+use crate::shared_common::taxonomy_name_vo::SymbolName;
 use crate::shared_common::taxonomy_source_vo::SourceContentVO;
-fn aes0301_primitive_usage(primitive: &str) -> String {
-    format!(
-        "AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy.",
-        primitive
-    )
-}
-
+use crate::shared_common::taxonomy_violation_message_js_error::AesViolationJs;
+use crate::shared_common::taxonomy_violation_message_py_error::AesViolationPy;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
 use std::path::Path;
+
+fn has_suffix(file: &str, suffix: &str) -> bool {
+    let path = Path::new(file);
+    if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+        stem.ends_with(suffix)
+    } else {
+        false
+    }
+}
 
 pub struct TaxonomyRoleChecker {}
 
@@ -87,6 +91,13 @@ impl TaxonomyRoleChecker {
         } else {
             return;
         };
+        let is_rs = file.ends_with(".rs");
+        let is_py = file.ends_with(".py");
+        let is_js = file.ends_with(".ts")
+            || file.ends_with(".tsx")
+            || file.ends_with(".js")
+            || file.ends_with(".jsx");
+
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
             if !t.contains(':') {
@@ -102,7 +113,12 @@ impl TaxonomyRoleChecker {
             if t.starts_with("fn from(") || t.starts_with("fn visit_") {
                 continue;
             }
-            if !(t.ends_with(',') || t.ends_with('}') || t.ends_with(')') || t.contains("-> ")) {
+            if !(t.ends_with(',')
+                || t.ends_with(';')
+                || t.ends_with('}')
+                || t.ends_with(')')
+                || t.contains("-> "))
+            {
                 continue;
             }
             let after_colon = match t.split_once(':') {
@@ -111,6 +127,7 @@ impl TaxonomyRoleChecker {
             };
             let type_candidate = after_colon
                 .trim_end_matches(',')
+                .trim_end_matches(';')
                 .trim_end_matches(')')
                 .trim_end_matches('}')
                 .trim();
@@ -127,12 +144,35 @@ impl TaxonomyRoleChecker {
                             let prim_clean = prim.trim_end_matches('<');
                             inner_trimmed == prim_clean || inner_trimmed.starts_with(prim_clean)
                         }) {
+                            let primitive_clean = p.trim_end_matches('<');
+                            let msg = if is_rs {
+                                AesViolation::PrimitiveUsage {
+                                    primitive: SymbolName::new(primitive_clean),
+                                    reason: None,
+                                }
+                                .to_string()
+                            } else if is_py {
+                                AesViolationPy::PrimitiveUsage {
+                                    primitive: SymbolName::new(primitive_clean),
+                                    reason: None,
+                                }
+                                .to_string()
+                            } else if is_js {
+                                AesViolationJs::PrimitiveUsage {
+                                    primitive: SymbolName::new(primitive_clean),
+                                    reason: None,
+                                }
+                                .to_string()
+                            } else {
+                                format!("AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy entity, error, or event.", primitive_clean)
+                            };
+
                             violations.push(LintResult::new_arch(
                                 file,
                                 i + 1,
                                 "AES0301",
                                 Severity::HIGH,
-                                aes0301_primitive_usage(p),
+                                msg,
                             ));
                             break;
                         }
@@ -141,12 +181,35 @@ impl TaxonomyRoleChecker {
                 }
                 // Direct primitive types (String, i64, etc.)
                 if type_candidate.starts_with(p) || type_candidate == *p {
+                    let primitive_clean = p.trim_end_matches('<');
+                    let msg = if is_rs {
+                        AesViolation::PrimitiveUsage {
+                            primitive: SymbolName::new(primitive_clean),
+                            reason: None,
+                        }
+                        .to_string()
+                    } else if is_py {
+                        AesViolationPy::PrimitiveUsage {
+                            primitive: SymbolName::new(primitive_clean),
+                            reason: None,
+                        }
+                        .to_string()
+                    } else if is_js {
+                        AesViolationJs::PrimitiveUsage {
+                            primitive: SymbolName::new(primitive_clean),
+                            reason: None,
+                        }
+                        .to_string()
+                    } else {
+                        format!("AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy entity, error, or event.", primitive_clean)
+                    };
+
                     violations.push(LintResult::new_arch(
                         file,
                         i + 1,
                         "AES0301",
                         Severity::HIGH,
-                        aes0301_primitive_usage(p),
+                        msg,
                     ));
                     break;
                 }
@@ -159,24 +222,21 @@ impl TaxonomyRoleChecker {
     }
 
     pub fn check_entity(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        let file = source.file_path.value();
-        if !file.ends_with("_entity.rs") && !file.ends_with("_entity.py") {
+        if !has_suffix(source.file_path.value(), "_entity") {
             return;
         }
         Self::scan_primitives(source, violations);
     }
 
     pub fn check_error(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        let file = source.file_path.value();
-        if !file.ends_with("_error.rs") && !file.ends_with("_error.py") {
+        if !has_suffix(source.file_path.value(), "_error") {
             return;
         }
         Self::scan_primitives(source, violations);
     }
 
     pub fn check_event(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        let file = source.file_path.value();
-        if !file.ends_with("_event.rs") && !file.ends_with("_event.py") {
+        if !has_suffix(source.file_path.value(), "_event") {
             return;
         }
         Self::scan_primitives(source, violations);

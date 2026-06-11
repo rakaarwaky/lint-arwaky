@@ -267,9 +267,9 @@ impl OrphanGraphResolver {
             .iter()
             .filter(|f| {
                 if !configured.is_empty() {
-                    configured.iter().any(|pattern| {
-                        f.ends_with(pattern) || f.contains(pattern)
-                    })
+                    configured
+                        .iter()
+                        .any(|pattern| f.ends_with(pattern) || f.contains(pattern))
                 } else {
                     f.contains("__main__")
                         || f.ends_with("main.rs")

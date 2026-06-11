@@ -39,6 +39,7 @@ pub enum AesViolationJs {
     },
     // AES0301 — Taxonomy role
     PrimitiveUsage {
+        primitive: SymbolName,
         reason: Option<LintMessage>,
     },
     ConstantPurity {
@@ -203,15 +204,22 @@ impl fmt::Display for AesViolationJs {
                     FIX: Group functions into a class or implement an interface that defines the module boundary.", why)
             }
             // AES0301
-            Self::PrimitiveUsage { reason } => {
-                let default_why = "Direct primitive types must not be used within the taxonomy layer to avoid primitive obsession.".to_string();
+            Self::PrimitiveUsage { primitive, reason } => {
+                let default_why = format!(
+                    "Direct primitive types (like '{}') are forbidden in taxonomy entities, errors, and events to maintain strict value object boundaries and avoid primitive obsession.",
+                    primitive
+                );
                 let why = reason
                     .as_ref()
                     .map(|r| r.to_string())
                     .unwrap_or(default_why);
-                write!(f, "AES0301 PRIMITIVE_USAGE: Direct primitive usage in taxonomy.\n\
+                write!(
+                    f,
+                    "AES0301 PRIMITIVE_USAGE: Direct primitive '{}' in taxonomy entity, error, or event.\n\
                     WHY? {}\n\
-                    FIX: Define a specific Value Object (VO) or constant to wrap this primitive type.", why)
+                    FIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.",
+                    primitive, why
+                )
             }
             Self::ConstantPurity { reason } => {
                 let default_why =

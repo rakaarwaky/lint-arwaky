@@ -40,17 +40,23 @@ fn print_header(term: &Term) {
     let _ = term.clear_screen();
     println!(
         "{}",
-        style("╔══════════════════════════════════════════════╗").cyan().bold()
+        style("╔══════════════════════════════════════════════╗")
+            .cyan()
+            .bold()
     );
     println!(
         "{}  {}  {}",
         style("║").cyan().bold(),
-        style("🔍  Lint Arwaky TUI  — Code Quality Gateway").white().bold(),
+        style("🔍  Lint Arwaky TUI  — Code Quality Gateway")
+            .white()
+            .bold(),
         style("║").cyan().bold()
     );
     println!(
         "{}",
-        style("╚══════════════════════════════════════════════╝").cyan().bold()
+        style("╚══════════════════════════════════════════════╝")
+            .cyan()
+            .bold()
     );
     println!();
 }
@@ -73,20 +79,15 @@ fn run_cmd(args: &[&str]) {
     );
     let status = std::process::Command::new(&cli).args(args).status();
     match status {
-        Ok(s) if s.success() => println!(
-            "\n{} {}",
-            style("✓").green().bold(),
-            style("Done.").green()
-        ),
+        Ok(s) if s.success() => {
+            println!("\n{} {}", style("✓").green().bold(), style("Done.").green())
+        }
         Ok(s) => println!(
             "\n{} Exit code: {}",
             style("✗").red().bold(),
             s.code().unwrap_or(-1)
         ),
-        Err(e) => println!(
-            "\n{} Failed to run binary: {e}",
-            style("✗").red().bold()
-        ),
+        Err(e) => println!("\n{} Failed to run binary: {e}", style("✗").red().bold()),
     }
 }
 
@@ -106,28 +107,94 @@ struct MenuItem {
 }
 
 const MENU: &[MenuItem] = &[
-    MenuItem { label: "check  ·  AES self-lint audit",            description: "check" },
-    MenuItem { label: "scan   ·  Full multi-adapter scan",        description: "scan" },
-    MenuItem { label: "fix    ·  Apply safe automatic fixes",     description: "fix" },
-    MenuItem { label: "report ·  Generate quality report",        description: "report" },
-    MenuItem { label: "ci     ·  CI mode (exit 1 if score < N)",  description: "ci" },
-    MenuItem { label: "─────────────────────────────────────────────────────", description: "sep1" },
-    MenuItem { label: "security    ·  Vulnerability scan",        description: "security" },
-    MenuItem { label: "complexity  ·  Cyclomatic complexity",     description: "complexity" },
-    MenuItem { label: "duplicates  ·  Duplication detection",     description: "duplicates" },
-    MenuItem { label: "─────────────────────────────────────────────────────", description: "sep2" },
-    MenuItem { label: "setup doctor   ·  Diagnose environment",   description: "setup-doctor" },
-    MenuItem { label: "setup install  ·  Install all adapters",   description: "setup-install" },
-    MenuItem { label: "setup install --sudo  ·  (sudo npm)",      description: "setup-install-sudo" },
-    MenuItem { label: "─────────────────────────────────────────────────────", description: "sep3" },
-    MenuItem { label: "scan test-project-rust",                   description: "test-rust" },
-    MenuItem { label: "scan test-project-python",                 description: "test-python" },
-    MenuItem { label: "scan test-project-javascript",             description: "test-javascript" },
-    MenuItem { label: "─────────────────────────────────────────────────────", description: "sep4" },
-    MenuItem { label: "version",                                  description: "version" },
-    MenuItem { label: "adapters  ·  List active adapters",        description: "adapters" },
-    MenuItem { label: "─────────────────────────────────────────────────────", description: "sep5" },
-    MenuItem { label: "❌  Exit",                                  description: "exit" },
+    MenuItem {
+        label: "check  ·  AES self-lint audit",
+        description: "check",
+    },
+    MenuItem {
+        label: "scan   ·  Full multi-adapter scan",
+        description: "scan",
+    },
+    MenuItem {
+        label: "fix    ·  Apply safe automatic fixes",
+        description: "fix",
+    },
+    MenuItem {
+        label: "report ·  Generate quality report",
+        description: "report",
+    },
+    MenuItem {
+        label: "ci     ·  CI mode (exit 1 if score < N)",
+        description: "ci",
+    },
+    MenuItem {
+        label: "─────────────────────────────────────────────────────",
+        description: "sep1",
+    },
+    MenuItem {
+        label: "security    ·  Vulnerability scan",
+        description: "security",
+    },
+    MenuItem {
+        label: "complexity  ·  Cyclomatic complexity",
+        description: "complexity",
+    },
+    MenuItem {
+        label: "duplicates  ·  Duplication detection",
+        description: "duplicates",
+    },
+    MenuItem {
+        label: "─────────────────────────────────────────────────────",
+        description: "sep2",
+    },
+    MenuItem {
+        label: "setup doctor   ·  Diagnose environment",
+        description: "setup-doctor",
+    },
+    MenuItem {
+        label: "setup install  ·  Install all adapters",
+        description: "setup-install",
+    },
+    MenuItem {
+        label: "setup install --sudo  ·  (sudo npm)",
+        description: "setup-install-sudo",
+    },
+    MenuItem {
+        label: "─────────────────────────────────────────────────────",
+        description: "sep3",
+    },
+    MenuItem {
+        label: "scan test-project-rust",
+        description: "test-rust",
+    },
+    MenuItem {
+        label: "scan test-project-python",
+        description: "test-python",
+    },
+    MenuItem {
+        label: "scan test-project-javascript",
+        description: "test-javascript",
+    },
+    MenuItem {
+        label: "─────────────────────────────────────────────────────",
+        description: "sep4",
+    },
+    MenuItem {
+        label: "version",
+        description: "version",
+    },
+    MenuItem {
+        label: "adapters  ·  List active adapters",
+        description: "adapters",
+    },
+    MenuItem {
+        label: "─────────────────────────────────────────────────────",
+        description: "sep5",
+    },
+    MenuItem {
+        label: "❌  Exit",
+        description: "exit",
+    },
 ];
 
 fn is_separator(item: &MenuItem) -> bool {

@@ -41,6 +41,10 @@ pub enum AesViolationPy {
     ConstantPurity {
         reason: Option<LintMessage>,
     },
+    PrimitiveUsage {
+        primitive: SymbolName,
+        reason: Option<LintMessage>,
+    },
     // AES0302 — Contract primitive
     ContractPrimitive {
         reason: Option<LintMessage>,
@@ -211,6 +215,23 @@ impl fmt::Display for AesViolationPy {
                 write!(f, "AES0301 TAXONOMY_ROLE: Constant file contains non-constant declaration.\n\
                     WHY? {}\n\
                     FIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", why)
+            }
+            Self::PrimitiveUsage { primitive, reason } => {
+                let default_why = format!(
+                    "Direct primitive types (like '{}') are forbidden in taxonomy entities, errors, and events to maintain strict value object boundaries and avoid primitive obsession.",
+                    primitive
+                );
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
+                write!(
+                    f,
+                    "AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy entity, error, or event.\n\
+                    WHY? {}\n\
+                    FIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.",
+                    primitive, why
+                )
             }
             // AES0302
             Self::ContractPrimitive { reason } => {

@@ -497,9 +497,7 @@ source:
                     vec!["install", "-g", "eslint", "prettier", "typescript"],
                 )
             };
-            let js_status = std::process::Command::new(npm_cmd)
-                .args(&npm_args)
-                .status();
+            let js_status = std::process::Command::new(npm_cmd).args(&npm_args).status();
             match js_status {
                 Ok(s) if s.success() => println!("  ✓ JavaScript adapters installed"),
                 Ok(s) => println!("  ✗ npm exited with code: {}", s.code().unwrap_or(-1)),
