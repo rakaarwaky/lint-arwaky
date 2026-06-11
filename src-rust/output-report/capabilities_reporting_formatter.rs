@@ -6,7 +6,7 @@ use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_score_vo::FileFormat;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use crate::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::shared_common::taxonomy_suggestion_vo::LogOutput;
 use serde_json::json;
 use std::collections::BTreeMap;

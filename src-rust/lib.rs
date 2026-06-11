@@ -19,8 +19,11 @@ pub mod file_watch;
 pub mod git_hooks;
 #[path = "language-adapters/mod.rs"]
 pub mod language_adapters;
-#[path = "layer-rules/mod.rs"]
-pub mod layer_rules;
+#[path = "import-rules/mod.rs"]
+pub mod import_rules;
+#[path = "naming-rules/mod.rs"]
+pub mod naming_rules;
+
 #[path = "lifecycle-state/mod.rs"]
 pub mod lifecycle_state;
 #[path = "mcp-server/mod.rs"]

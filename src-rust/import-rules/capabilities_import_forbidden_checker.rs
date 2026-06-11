@@ -1,7 +1,7 @@
 // PURPOSE: ArchImportForbiddenChecker — AES001: enforce forbidden import rules via definition, scope, and legacy governance
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::contract_import_parser_port::IImportParserPort;
-use crate::layer_rules::contract_rule_protocol::{
+use crate::import_rules::contract_import_parser_port::IImportParserPort;
+use crate::import_rules::contract_rule_protocol::{
     IAnalyzer, IArchImportProtocol, IArchRuleProtocol,
 };
 use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};

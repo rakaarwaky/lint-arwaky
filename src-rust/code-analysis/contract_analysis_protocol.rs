@@ -1,5 +1,5 @@
 // PURPOSE: IAnalysisProtocol — port trait for analysis queries (complexity, duplicates, trends, dependencies)
-use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use crate::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 

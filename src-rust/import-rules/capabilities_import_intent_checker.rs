@@ -7,7 +7,7 @@
 //
 // Rule ini cek apakah import BENAR-BENAR digunakan sesuai intent.
 
-use crate::layer_rules::contract_rule_protocol::IAnalyzer;
+use crate::import_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_violation_message_rs_error::AesViolation;
@@ -20,7 +20,7 @@ use std::sync::Arc;
 pub struct ImportIntentChecker {}
 
 impl ImportIntentChecker {
-    pub fn new(_parser: Arc<dyn crate::layer_rules::contract_import_parser_port::IImportParserPort>) -> Self {
+    pub fn new(_parser: Arc<dyn crate::import_rules::contract_import_parser_port::IImportParserPort>) -> Self {
         Self {}
     }
 
@@ -105,10 +105,11 @@ impl ImportIntentChecker {
                     dummy_function_line,
                     "AES002X",
                     Severity::HIGH,
-                    AesViolation::MissingImport {
+                    AesViolation::ImportIntentViolation {
                         source_layer: LayerNameVO::new("surfaces".to_string()),
-                        required: SymbolName::new(
-                            "taxonomy import used only in dummy function, not in function signatures".to_string()
+                        import_type: SymbolName::new("taxonomy".to_string()),
+                        intent: SymbolName::new(
+                            "Use taxonomy Value Objects in function signatures instead of primitives".to_string()
                         ),
                         reason: None,
                     },
@@ -159,11 +160,12 @@ impl ImportIntentChecker {
                                 i + 1,
                                 "AES002X",
                                 Severity::HIGH,
-                                AesViolation::MissingImport {
+                                AesViolation::ImportIntentViolation {
                                     source_layer: LayerNameVO::new("surfaces".to_string()),
-                            required: SymbolName::new(format!(
-                                "aggregate '{}' imported but only used as PhantomData, not called", type_name
-                            )),
+                                    import_type: SymbolName::new(agg_type.to_string()),
+                                    intent: SymbolName::new(
+                                        "Call aggregate functions instead of using PhantomData".to_string()
+                                    ),
                                     reason: None,
                                 },
                             ));
@@ -205,10 +207,11 @@ impl ImportIntentChecker {
                         i + 1,
                         "AES002X",
                         Severity::MEDIUM,
-                        AesViolation::MissingImport {
+                        AesViolation::ImportIntentViolation {
                             source_layer: LayerNameVO::new("surfaces".to_string()),
-                            required: SymbolName::new(format!(
-                                "direct call to '{}' — should delegate through aggregate", pattern
+                            import_type: SymbolName::new(pattern.to_string()),
+                            intent: SymbolName::new(format!(
+                                "Delegate to aggregate instead of calling '{}' directly", pattern
                             )),
                             reason: None,
                         },
@@ -220,14 +223,14 @@ impl ImportIntentChecker {
 }
 
 #[async_trait]
-impl crate::layer_rules::contract_rule_protocol::IArchRuleProtocol for ImportIntentChecker {
+impl crate::import_rules::contract_rule_protocol::IArchRuleProtocol for ImportIntentChecker {
     fn rule_name(&self) -> Identity {
         Identity::new("AES002X")
     }
 }
 
 #[async_trait]
-impl crate::layer_rules::contract_rule_protocol::IArchImportProtocol for ImportIntentChecker {
+impl crate::import_rules::contract_rule_protocol::IArchImportProtocol for ImportIntentChecker {
     async fn check_mandatory_imports(
         &self,
         _analyzer: &dyn IAnalyzer,

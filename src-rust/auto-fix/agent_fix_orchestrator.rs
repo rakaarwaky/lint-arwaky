@@ -1,7 +1,7 @@
 // PURPOSE: FixOrchestrator — orchestrates auto-fix operations via IFixProtocol (agent layer)
 use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::auto_fix::contract_fix_protocol::IFixProtocol;
-use crate::shared_common::taxonomy_fix_vo::FixResult;
+use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 

@@ -1,4 +1,9 @@
 // PURPOSE: Module declarations and re-exports for orphan-detector (orchestrator, analyzers, protocols, aggregate)
+pub mod taxonomy_layer_names_constant;
+pub use taxonomy_layer_names_constant::{
+    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_GLOBAL, LAYER_INFRASTRUCTURE,
+    LAYER_ROOT, LAYER_SURFACES, LAYER_TAXONOMY,
+};
 
 pub mod agent_orphan_orchestrator;
 pub mod capabilities_orphan_agent_analyzer;

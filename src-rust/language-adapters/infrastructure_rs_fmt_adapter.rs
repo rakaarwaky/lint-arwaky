@@ -2,7 +2,7 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use crate::cli_transport::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
@@ -17,7 +17,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_operation_error::LinterOperationError;
+use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;

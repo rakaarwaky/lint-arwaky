@@ -9,7 +9,7 @@ use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber, Score};
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use crate::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 

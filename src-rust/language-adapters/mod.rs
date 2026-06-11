@@ -1,4 +1,12 @@
 // PURPOSE: Module declarations and re-exports for language-adapters (scanners, tracers, providers, linters)
+pub mod taxonomy_adapter_error;
+pub use taxonomy_adapter_error::{AdapterError, ScanError, ValidationError};
+pub mod taxonomy_naming_error;
+pub use taxonomy_naming_error::NamingError;
+pub mod taxonomy_naming_list_vo;
+pub use taxonomy_naming_list_vo::{
+    primitive_type_list, CallChainList, ImportNameList, PrimitiveTypeList, SymbolNameList,
+};
 pub mod contract_naming_port;
 pub use contract_naming_port::INamingProviderPort;
 pub mod contract_variant_port;

@@ -1,4 +1,6 @@
 // PURPOSE: Module declarations and re-exports for config-system (orchestrator, validators, providers, VOs, ports)
+pub mod taxonomy_adapter_vo;
+pub use taxonomy_adapter_vo::{AdapterClassMap, AdapterMetadataList, AdapterNameList};
 pub mod agent_config_loading_orchestrator;
 pub use agent_config_loading_orchestrator::ConfigLoadingOrchestrator;
 pub mod capabilities_rules_validator;

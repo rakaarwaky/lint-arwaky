@@ -7,12 +7,10 @@ pub mod contract_dev_aggregate;
 pub use contract_dev_aggregate::DevCommandsAggregate;
 pub mod taxonomy_command_catalog_vo;
 pub use taxonomy_command_catalog_vo::{command_catalog, CommandCatalogVO};
-pub mod contract_executor_port;
-pub use contract_executor_port::ICommandExecutorPort;
+
 pub mod contract_maintenance_aggregate;
 pub use contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-pub mod contract_report_aggregate;
-pub use contract_report_aggregate::ReportCommandsAggregate;
+
 pub mod surface_check_command;
 pub use surface_check_command::{register_check_commands, CheckCommandsSurface};
 pub mod surface_core_command;

@@ -6,8 +6,8 @@ use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_definition_vo::NamingConfig;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use crate::shared_common::taxonomy_rule_vo::ArchitectureRule;
-use crate::shared_common::taxonomy_rule_vo::LegacyLayerRuleList;
+use crate::layer_rules::taxonomy_rule_vo::ArchitectureRule;
+use crate::layer_rules::taxonomy_rule_vo::LegacyLayerRuleList;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::collections::HashMap;
 

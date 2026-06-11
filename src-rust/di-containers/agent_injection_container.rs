@@ -1,7 +1,7 @@
 // PURPOSE: InjectionContainer — DI container wiring capabilities and protocols via arc_swap references
 
 use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use crate::cli_transport::contract_executor_port::ICommandExecutorPort;
 use crate::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
@@ -22,8 +22,8 @@ use crate::language_adapters::contract_naming_port::INamingProviderPort;
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
 use crate::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
 use crate::language_adapters::contract_variant_port::INamingVariantPort;
-use crate::layer_rules::contract_import_parser_port::IImportParserPort;
-use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
+use crate::import_rules::contract_import_parser_port::IImportParserPort;
+use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::mcp_server::contract_server_port::IMcpServerPort;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
@@ -159,7 +159,7 @@ impl DependencyInjectionContainer {
             crate::git_hooks::agent_management_orchestrator::HookManagementOrchestrator::new(),
         );
         let import_parser_port: Arc<dyn IImportParserPort> = Arc::new(
-            crate::layer_rules::infrastructure_import_parser_adapter::ImportParserAdapter::new(),
+            crate::import_rules::infrastructure_import_parser_adapter::ImportParserAdapter::new(),
         );
         let javascript_flow_port: Arc<dyn IJavascriptFlowPort> =
             Arc::new(crate::language_adapters::infrastructure_js_flow_tracer::JSFlowAdapter::new());

@@ -8,14 +8,14 @@ use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
 use crate::code_analysis::capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
 use crate::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
-use crate::layer_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
-use crate::layer_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
-use crate::layer_rules::capabilities_import_intent_checker::ImportIntentChecker;
-use crate::layer_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
-use crate::layer_rules::capabilities_naming_checker::ArchNamingChecker;
-use crate::layer_rules::contract_cycle_protocol::ICycleAnalysisProtocol;
-use crate::layer_rules::contract_rule_protocol::{
+use crate::code_analysis::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
+use crate::import_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
+use crate::import_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
+use crate::import_rules::capabilities_import_intent_checker::ImportIntentChecker;
+use crate::import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
+use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
+use crate::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
+use crate::import_rules::contract_rule_protocol::{
     IAnalyzer, IArchImportProtocol, INamingCheckerProtocol,
 };
 use crate::orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
@@ -73,7 +73,7 @@ impl CheckerContainer {
             ),
         );
         let parser = Arc::new(
-            crate::layer_rules::infrastructure_import_parser_adapter::ImportParserAdapter::new(),
+            crate::import_rules::infrastructure_import_parser_adapter::ImportParserAdapter::new(),
         );
         let orphan_analyzer: Arc<dyn IOrphanAggregate> = Arc::new(ArchOrphanAnalyzer::new(
             Arc::new(TaxonomyOrphanAnalyzer::new()),

@@ -1,7 +1,7 @@
 // PURPOSE: ArchNamingChecker — INamingCheckerProtocol for AES011 (naming convention) and AES012 (suffix/prefix rules)
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::layer_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
+use crate::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
 use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;

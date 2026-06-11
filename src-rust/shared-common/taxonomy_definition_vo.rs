@@ -5,8 +5,8 @@ use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_common_vo::PatternList;
 use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use crate::shared_common::taxonomy_rule_vo::MandatoryImportRuleVO;
-use crate::shared_common::taxonomy_suffix_vo::SuffixPolicyVO;
+use crate::import_rules::taxonomy_rule_vo::MandatoryImportRuleVO;
+use crate::naming_rules::taxonomy_suffix_vo::SuffixPolicyVO;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]

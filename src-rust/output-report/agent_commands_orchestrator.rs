@@ -1,8 +1,8 @@
 // PURPOSE: CommandOrchestrator — orchestrates output formatting commands (plain, json, junit, sarif)
 
-use crate::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use crate::output_report::contract_report_aggregate::ReportCommandsAggregate;
 use crate::output_report::taxonomy_score_vo::FileFormat;
-use crate::shared_common::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use crate::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 use async_trait::async_trait;

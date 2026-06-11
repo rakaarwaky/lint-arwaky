@@ -1,4 +1,6 @@
 // PURPOSE: Module declarations and re-exports for output-report (orchestrators, formatters, VOs, constants)
+pub mod contract_report_aggregate;
+pub use contract_report_aggregate::ReportCommandsAggregate;
 pub mod agent_output_orchestrator;
 pub use agent_output_orchestrator::OutputClientOrchestrator;
 pub mod agent_commands_orchestrator;

@@ -18,6 +18,13 @@ pub enum AesViolation {
         required: SymbolName,
         reason: Option<LintMessage>,
     },
+    // AES002X — Import intent violation
+    ImportIntentViolation {
+        source_layer: LayerNameVO,
+        import_type: SymbolName,
+        intent: SymbolName,
+        reason: Option<LintMessage>,
+    },
     // AES012 — Suffix rules
     SuffixForbidden {
         reason: Option<LintMessage>,
@@ -229,6 +236,29 @@ impl fmt::Display for AesViolation {
                     WHY? {}\n\
                     FIX: Add the required import statement for '{}' in this file.",
                     source_layer, required, why, required
+                )
+            }
+            // AES002X
+            Self::ImportIntentViolation {
+                source_layer,
+                import_type,
+                intent,
+                reason,
+            } => {
+                let default_why = format!(
+                    "Import '{}' in layer '{}' is not used according to its intended purpose.",
+                    import_type, source_layer
+                );
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
+                write!(
+                    f,
+                    "AES002X IMPORT_INTENT: '{}' import in layer '{}' violates its intended purpose.\n\
+                    WHY? {}\n\
+                    FIX: {}",
+                    import_type, source_layer, why, intent
                 )
             }
             // AES012

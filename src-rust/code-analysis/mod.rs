@@ -1,4 +1,8 @@
 // PURPOSE: Module declarations and re-exports for code-analysis (checkers, reporters, protocols, fixers, renamers, analyzers)
+pub mod taxonomy_governance_entity;
+pub use taxonomy_governance_entity::ArchitectureGovernanceEntity;
+pub mod taxonomy_operation_error;
+pub use taxonomy_operation_error::LinterOperationError;
 pub mod capabilities_analysis_reporter;
 pub use capabilities_analysis_reporter::AnalysisReporter;
 pub mod capabilities_renamer_processor;
@@ -9,6 +13,15 @@ pub mod contract_unused_protocol;
 pub use contract_unused_protocol::IUnusedProtocol;
 pub mod agent_checking_orchestrator;
 pub use agent_checking_orchestrator::LintCheckingOrchestrator;
+
+pub mod contract_lint_protocol;
+pub use contract_lint_protocol::IArchLintProtocol;
+pub mod capabilities_arch_self_lint_checker;
+pub use capabilities_arch_self_lint_checker::ArchSelfLintChecker;
+pub mod contract_cycle_protocol;
+pub mod capabilities_cycle_analyzer;
+pub use capabilities_cycle_analyzer::{detect_cycle_edges, DependencyEdge, DependencyCycleAnalyzer};
+
 
 pub mod agent_codebase_scan_orchestrator;
 pub use agent_codebase_scan_orchestrator::{

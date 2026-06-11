@@ -1,6 +1,6 @@
 // PURPOSE: ServiceContainerAggregate — top-level DI aggregate bundling all container aggregates
 use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use crate::cli_transport::contract_executor_port::ICommandExecutorPort;
 use crate::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
@@ -20,8 +20,8 @@ use crate::language_adapters::contract_naming_port::INamingProviderPort;
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
 use crate::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
 use crate::language_adapters::contract_variant_port::INamingVariantPort;
-use crate::layer_rules::contract_import_parser_port::IImportParserPort;
-use crate::layer_rules::contract_lint_protocol::IArchLintProtocol;
+use crate::import_rules::contract_import_parser_port::IImportParserPort;
+use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::mcp_server::contract_server_port::IMcpServerPort;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;

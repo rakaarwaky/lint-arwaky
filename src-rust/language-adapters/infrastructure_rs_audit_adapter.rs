@@ -13,7 +13,7 @@ use crate::shared_common::taxonomy_error_vo::ErrorCode;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::ComplianceStatus;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
-use crate::shared_common::taxonomy_operation_error::LinterOperationError;
+use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
