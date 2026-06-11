@@ -41,7 +41,7 @@ jobs:
       - run: chmod +x lint-arwaky-cli lint-arwaky-mcp
       - run: ./lint-arwaky-cli --version
       - run: ./lint-arwaky-cli --help
-      - run: ./lint-arwaky-cli check . --format json | grep '"score"'
+      - run: ./lint-arwaky-cli report . --output-format json | grep '"score"'
 
   provenance:
     name: Generate SLSA provenance
@@ -56,7 +56,7 @@ jobs:
         with:
           name: binaries
           path: release-assets
-      - uses: actions/attest-build-provenance@v1
+      - uses: actions/attest-build-provenance@v2
         with:
           subject-path: "release-assets/*"
 

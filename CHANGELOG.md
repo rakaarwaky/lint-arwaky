@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.10.9 (2026-06-11) — Published to crates.io + Linux-Only Installer
+
+### Added
+
+- **Published to crates.io**: `lint_arwaky v1.10.9` now available via `cargo install lint_arwaky`.
+- **crates.io badge**: Added to `README.md`.
+
+### Changed
+
+- **`install.remote.sh` rewritten (Linux-only)**: Replaced Python-based `auto-linter` install flow with Rust/Cargo. Script now exits immediately on non-Linux OS. Primary install via `cargo install lint_arwaky`; fallback to pre-built GitHub Release binaries (Linux x86_64 only).
+- **`mcp.local.json`**: Updated to use `cargo run --manifest-path ... --release --bin lint-arwaky-mcp` for local development.
+- **`release.yml` fixed**: Smoke-test command corrected from `check . --format json` (invalid flag) to `report . --output-format json`. Updated `actions/attest-build-provenance` from `@v1` to `@v2`.
+- **All docs updated to v1.10.9**: `README.md`, `DEPLOY.md`, `CONTRIBUTING.md`, `PRD.md`, `TEST.md`. Broken `docs/` folder links replaced with root-level `RULES_AES.md` and `ARCHITECTURE.md`.
+
+---
+
 ## 1.11.0 (2026-06-09) — AES Renumbering + Barrel Removal
 
 ### Changed
@@ -26,7 +42,7 @@
 - **AES032 missing-vo-construction**: Flags capability calls missing required Value Object parameters.
 - **AES033 constant-purity**: Ensures `_constant` files contain only `pub const`/`pub static` declarations.
 - **Multi-language configs**: `lint_arwaky.config.rust.yaml`, `lint_arwaky.config.python.yaml`, `lint_arwaky.config.javascript.yaml` — per-language architecture enforcement with language-specific bypass patterns and barrel conventions.
-- **Docs**: `docs/RULES_AES.md` — full AES rule catalog with multi-condition import matrices, suffix tables, and agent role mandates. `docs/ARCHITECHTURE.md` — complete AES architecture reference with Mermaid diagram.
+- **Docs**: `RULES_AES.md` — full AES rule catalog with multi-condition import matrices, suffix tables, and agent role mandates. `ARCHITECTURE.md` — complete AES architecture reference with Mermaid diagram.
 
 ### Changed
 
@@ -46,7 +62,7 @@
 
 ### Added
 
-- **AES033 `constant-purity` rule**: New taxonomy rule. Files ending in `_constant` may contain only `pub const` / `pub static` declarations. `struct`, `enum`, `fn`, `impl`, `mod`, `pub mod`, `pub use` blocks in a `_constant` file trigger AES033 (HIGH). See [docs/AES_RULES.md](docs/AES_RULES.md).
+- **AES033 `constant-purity` rule**: New taxonomy rule. Files ending in `_constant` may contain only `pub const` / `pub static` declarations. `struct`, `enum`, `fn`, `impl`, `mod`, `pub mod`, `pub use` blocks in a `_constant` file trigger AES033 (HIGH). See [RULES_AES.md](RULES_AES.md).
 - **5 MCP tools wired through Rust**: `execute_command`, `list_commands`, `commands_schema`, `read_skill_context`, `health_check` — all routed through `src-rust/surfaces/mcp_tools_command.rs`.
 - **20+ CLI subcommands**: `check`, `scan`, `fix`, `report`, `ci`, `git-diff`, `multi-project`, `security`, `complexity`, `duplicates`, `trends`, `dependencies`, `setup init|doctor|mcp-config|hermes`, `adapters`, `config show`, `cancel`, `diff`, `import`, `export`, `watch`, `suggest`, `install-hook`, `uninstall-hook`, `version`.
 - **Report formats**: `text`, `json`, SARIF 2.1.0 (with `$schema` and `version: 2.1.0`), JUnit XML — all delegated to `ReportFormatterProcessor` (capability layer).

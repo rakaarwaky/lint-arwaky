@@ -1,9 +1,10 @@
 # Lint Arwaky
 
 [![Rust 2021](https://img.shields.io/badge/rust-2021-orange.svg)](https://www.rust-lang.org/)
+[![crates.io](https://img.shields.io/crates/v/lint_arwaky.svg)](https://crates.io/crates/lint_arwaky)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![MCP Server](https://img.shields.io/badge/MCP-Server-blue.svg)](https://modelcontextprotocol.io/)
-[![Architecture: AES](https://img.shields.io/badge/architecture-AES+Clean-green.svg)](docs/ARCHITECHTURE.md)
+[![Architecture: AES](https://img.shields.io/badge/architecture-AES+Clean-green.svg)](ARCHITECTURE.md)
 
 **Autonomous code quality and architecture enforcement for AI agents and developers — written in Rust.**
 
@@ -71,7 +72,7 @@ cargo build --release
 ### Verify installation
 
 ```bash
-lint-arwaky-cli version        # should print "Lint Arwaky v1.10.6 (AES Semantic Builder)"
+lint-arwaky-cli version        # should print "Lint Arwaky v1.10.9 (AES Semantic Builder)"
 lint-arwaky-cli setup doctor   # environment diagnostics
 ```
 
@@ -128,7 +129,7 @@ lint-arwaky-cli scan /path/to/some-project/
 
 ## Architecture Overview
 
-Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with six layers, organized into **26 feature folders** (vertical slicing). See [docs/ARCHITECHTURE.md](docs/ARCHITECHTURE.md) for the full specification.
+Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with six layers, organized into **26 feature folders** (vertical slicing). See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification.
 
 ### Layer prefix naming
 
@@ -268,11 +269,11 @@ The CLI is implemented in `src-rust/surfaces/cli_core_command.rs` (with subcomma
 | `lint-arwaky-cli adapters`                    | List active linter adapters                                |
 | `lint-arwaky-cli config show`                 | Show active configuration                                  |
 | `lint-arwaky-cli cancel <job_id>`             | Request cancellation of a running lint job                 |
-| `lint-arwaky-cli version`                     | Show version (`1.10.6`)                                    |
+| `lint-arwaky-cli version`                     | Show version (`1.10.9`)                                    |
 
 ---
 
-## Project Stats (v1.10.6)
+## Project Stats (v1.10.9)
 
 | Metric             | Value                                                                                               |
 | ------------------ | --------------------------------------------------------------------------------------------------- |

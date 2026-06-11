@@ -1,4 +1,4 @@
-# Deployment Guide — Lint Arwaky v1.10.2
+# Deployment Guide — Lint Arwaky v1.10.9
 
 **Status**: PRODUCTION-READY — self-lint target ships clean.
 
@@ -6,12 +6,12 @@
 
 ## Prerequisites
 
-| Requirement    | Minimum                            | Recommended                 |
-| -------------- | ---------------------------------- | --------------------------- |
-| Rust toolchain | 1.70 (edition 2021)                | 1.78+ (stable)              |
-| RAM            | 256 MB                             | 1 GB+ (for large codebases) |
-| Disk           | 50 MB (release binaries)           | -                           |
-| OS             | Linux, macOS, Windows (MSVC / GNU) | Linux x86_64                |
+| Requirement    | Minimum                  | Recommended                 |
+| -------------- | ------------------------ | --------------------------- |
+| Rust toolchain | 1.70 (edition 2021)      | 1.78+ (stable)              |
+| RAM            | 256 MB                   | 1 GB+ (for large codebases) |
+| Disk           | 50 MB (release binaries) | -                           |
+| OS             | Linux                    | Linux x86_64                |
 
 No external services required. The MCP server speaks JSON-RPC 2.0 over stdin/stdout and has no network dependencies.
 
@@ -61,7 +61,7 @@ cargo build --release --target x86_64-pc-windows-msvc
 
 ```bash
 lint-arwaky-cli version
-# Expected: Lint Arwaky v1.10.2 (AES Semantic Builder)
+# Expected: Lint Arwaky v1.10.9 (AES Semantic Builder)
 
 lint-arwaky-cli setup doctor
 # Expected: cargo: OK (cargo X.Y.Z), binary: OK (/path/to/lint-arwaky-cli)
@@ -197,7 +197,7 @@ adapters:
 - [ ] `cargo test --workspace` passes
 - [ ] `cargo run --bin lint-arwaky-cli -- check .` reports 0 CRITICAL findings
 - [ ] `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings` clean
-- [ ] `lint-arwaky-cli version` returns `1.10.2`
+- [ ] `lint-arwaky-cli version` returns `1.10.9`
 - [ ] `lint-arwaky-cli setup doctor` reports no issues
 - [ ] `lint-arwaky-mcp` responds to `tools/list` with the 5 expected tools
 - [ ] `health_check` MCP tool returns all adapters healthy
@@ -207,8 +207,8 @@ adapters:
 - [ ] Bump version in `Cargo.toml`
 - [ ] Update `CHANGELOG.md`
 - [ ] Build release: `cargo build --release`
-- [ ] Tag the release: `git tag v1.10.2`
-- [ ] Push tag: `git push origin v1.10.2`
+- [ ] Tag the release: `git tag v1.10.9`
+- [ ] Push tag: `git push origin v1.10.9`
 - [ ] Run installer smoke-test on a clean machine
 
 ### Post-Deploy
@@ -224,13 +224,13 @@ adapters:
 Reinstall the previous release:
 
 ```bash
-cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag v1.10.1
+cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag v1.10.9
 ```
 
 Or rebuild from a specific tag:
 
 ```bash
-git checkout v1.10.1
+git checkout v1.10.9
 cargo build --release
 ```
 
@@ -242,4 +242,4 @@ Restart any running MCP client (Claude Desktop, VS Code, Hermes).
 
 - Repository: https://github.com/rakaarwaky/lint-arwaky
 - Issues: https://github.com/rakaarwaky/lint-arwaky/issues
-- Documentation: [README.md](README.md), [SKILL.md](SKILL.md), [docs/AES_RULES.md](docs/AES_RULES.md), [docs/AESArchitecture.md](docs/AESArchitecture.md)
+- Documentation: [README.md](README.md), [SKILL.md](SKILL.md), [RULES_AES.md](RULES_AES.md), [ARCHITECTURE.md](ARCHITECTURE.md)

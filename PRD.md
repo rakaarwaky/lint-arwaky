@@ -1,6 +1,6 @@
 # Product Requirements Document (PRD)
 
-## Lint Arwaky v1.10.6 — SIGNED OFF
+## Lint Arwaky v1.10.9 — SIGNED OFF
 
 ---
 
@@ -280,7 +280,7 @@ mcp_command_handler.rs -- command_catalog and dispatch
 
 The DI container is created once at server start; the same `Arc<dyn ServiceContainerAggregate>` is passed to every tool call.
 
-### 7.4 Agentic Engineering System (AES) v1.10.6
+### 7.4 Agentic Engineering System (AES) v1.10.9
 
 Severity levels and their point penalty per finding:
 
@@ -301,7 +301,7 @@ Total score starts at 100.0 and is deducted per finding. If any CRITICAL finding
 
 **AES015 Constant Purity (v2.0)**: Taxonomy files ending in `_constant` must contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, or `impl` block in a `_constant` file is a violation.
 
-See [docs/AES_RULES.md](docs/AES_RULES.md) for the full rule catalog (27 active codes across 4 groups) and [docs/AESArchitecture.md](docs/AESArchitecture.md) for the layered specification with Mermaid diagrams.
+See [RULES_AES.md](RULES_AES.md) for the full rule catalog (27 active codes across 4 groups) and [ARCHITECTURE.md](ARCHITECTURE.md) for the layered specification with Mermaid diagrams.
 
 ---
 

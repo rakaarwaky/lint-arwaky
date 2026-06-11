@@ -83,7 +83,7 @@ echo "=== PYTHON ===" && cargo run --bin lint-arwaky-cli -- scan test-project-py
 echo "=== JAVASCRIPT ===" && cargo run --bin lint-arwaky-cli -- scan test-project-javascript/ 2>&1 | grep "Total AES Violations"
 ```
 
-**Baseline v1.10.2** (7 Juni 2026):
+**Baseline v1.10.9** (11 Juni 2026):
 
 | Project                 | Command                         | Total Violations | Unique AES Codes | Status |
 | ----------------------- | ------------------------------- | ---------------- | ---------------- | ------ |

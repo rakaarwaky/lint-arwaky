@@ -54,7 +54,7 @@ cargo build --release
 
 # Run the CLI
 ./target/release/lint-arwaky-cli version
-# Expected: Lint Arwaky v1.10.2 (AES Semantic Builder)
+# Expected: Lint Arwaky v1.10.9 (AES Semantic Builder)
 
 # Run the MCP server in a separate terminal
 ./target/release/lint-arwaky-mcp
