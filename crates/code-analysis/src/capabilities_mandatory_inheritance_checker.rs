@@ -3,7 +3,7 @@ use code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanc
 use config_system::taxonomy_config_vo::ArchitectureConfig;
 use output_report::taxonomy_result_vo::LintResult;
 use output_report::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared::taxonomy_layer_vo::LayerNameVO;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::Path;

@@ -6,10 +6,10 @@ use pipeline_jobs::taxonomy_action_vo::JobId;
 use pipeline_jobs::taxonomy_job_vo::ResponseData;
 use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use pipeline_jobs::taxonomy_registry_error::JobError;
-use shared_common::taxonomy_common_error::ErrorMessage;
-use shared_common::taxonomy_common_vo::Count;
-use shared_common::taxonomy_common_vo::ResponseDataList;
-use shared_common::taxonomy_duration_vo::Duration;
+use shared::taxonomy_common_error::ErrorMessage;
+use shared::taxonomy_common_vo::Count;
+use shared::taxonomy_common_vo::ResponseDataList;
+use shared::taxonomy_duration_vo::Duration;
 use std::collections::HashMap;
 use tokio::sync::Mutex;
 

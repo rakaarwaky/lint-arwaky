@@ -1,16 +1,16 @@
 // PURPOSE: ISourceParserPort — port trait for language-specific source code parsing (imports, definitions)
-use crate::common::taxonomy_import_source_vo::ImportInfoList;
-use crate::common::taxonomy_import_source_vo::PrimitiveViolationList;
-use crate::common::taxonomy_job_vo::ResponseData;
-use crate::common::taxonomy_job_vo::SuccessStatus;
+use crate::code_analysis::taxonomy_import_source_vo::ImportInfoList;
+use crate::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_name_vo::SymbolName;
-use crate::common::taxonomy_naming_list_vo::PrimitiveTypeList;
+use crate::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
 use crate::common::taxonomy_suggestion_vo::MetadataVO;
-use crate::common::taxonomy_parser_error::SourceParserError;
-use crate::common::taxonomy_path_vo::FilePath;
+use crate::source_parsing::taxonomy_parser_error::SourceParserError;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub trait ISourceParserPort: Send + Sync {
     fn extract_imports(&self, path: &FilePath) -> Result<ImportInfoList, SourceParserError>;

@@ -4,6 +4,10 @@
 #[path = "common/mod.rs"]
 pub mod common;
 
+// Re-export all taxonomy_* and contract_* types from common
+pub use common::*;
+
+// Feature-specific types (in feature folders)
 #[path = "auto-fix/mod.rs"]
 pub mod auto_fix;
 #[path = "cli-commands/mod.rs"]

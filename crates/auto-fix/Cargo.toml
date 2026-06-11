@@ -1,12 +1,12 @@
 [package]
-name = "auto_fix-arwaky"
+name = "auto_fix-lint-arwaky"
 version = "1.10.11"
 edition = "2021"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-code_analysis = { package = "code_analysis-arwaky", path = "../code-analysis" }
-output_report = { package = "output_report-arwaky", path = "../output-report" }
-shared_common = { package = "shared_common-arwaky", path = "../shared-common" }
-source_parsing = { package = "source_parsing-arwaky", path = "../source-parsing" }
+code_analysis = { package = "code_analysis-lint-arwaky", path = "../code-analysis" }
+output_report = { package = "output_report-lint-arwaky", path = "../output-report" }
+shared = { package = "shared-lint-arwaky", path = "../shared" }
+source_parsing = { package = "source_parsing-lint-arwaky", path = "../source-parsing" }

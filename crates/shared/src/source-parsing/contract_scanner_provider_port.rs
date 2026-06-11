@@ -1,8 +1,8 @@
 // PURPOSE: IScannerProviderPort — port trait for providing language-specific source scanners
 
-use crate::common::taxonomy_filesystem_error::FileSystemError;
-use crate::common::taxonomy_path_vo::DirectoryPath;
-use crate::common::taxonomy_paths_vo::FilePathList;
+use crate::file_system::taxonomy_filesystem_error::FileSystemError;
+use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
+use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 
 pub trait IScannerProviderPort: Send + Sync {
     fn scan_directory(&self, path: &DirectoryPath) -> Result<FilePathList, FileSystemError>;

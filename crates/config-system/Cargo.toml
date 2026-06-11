@@ -1,5 +1,5 @@
 [package]
-name = "config_system-arwaky"
+name = "config_system-lint-arwaky"
 version = "1.10.11"
 edition = "2021"
 
@@ -7,7 +7,7 @@ edition = "2021"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 async-trait = "0.1.89"
-import_rules = { package = "import_rules-arwaky", path = "../import-rules" }
-pipeline_jobs = { package = "pipeline_jobs-arwaky", path = "../pipeline-jobs" }
-shared_common = { package = "shared_common-arwaky", path = "../shared-common" }
-source_parsing = { package = "source_parsing-arwaky", path = "../source-parsing" }
+import_rules = { package = "import_rules-lint-arwaky", path = "../import-rules" }
+pipeline_jobs = { package = "pipeline_jobs-lint-arwaky", path = "../pipeline-jobs" }
+shared = { package = "shared-lint-arwaky", path = "../shared" }
+source_parsing = { package = "source_parsing-lint-arwaky", path = "../source-parsing" }

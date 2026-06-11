@@ -1,7 +1,7 @@
 // PURPOSE: TransportError — structured error type wrapping protocol, message, endpoint, and underlying error
 use crate::cli_commands::taxonomy_protocol_vo::TransportEndpoint;
 use crate::cli_commands::taxonomy_protocol_vo::TransportProtocol;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_common_error::ErrorMessage;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]

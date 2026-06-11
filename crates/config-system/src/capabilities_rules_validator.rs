@@ -2,7 +2,7 @@ use config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use config_system::taxonomy_setting_vo::AdapterStatus;
 use config_system::taxonomy_setting_vo::ProjectConfig;
 use config_system::taxonomy_validation_vo::ValidationResult;
-use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared::taxonomy_adapter_name_vo::AdapterName;
 
 /// Business logic for interpreting and validating project configuration.
 pub struct ConfigRulesValidator {

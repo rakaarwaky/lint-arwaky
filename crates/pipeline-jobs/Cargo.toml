@@ -1,5 +1,5 @@
 [package]
-name = "pipeline_jobs-arwaky"
+name = "pipeline_jobs-lint-arwaky"
 version = "1.10.11"
 edition = "2021"
 
@@ -8,6 +8,6 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 async-trait = "0.1.89"
 tokio = { version = "1.52.3", features = ["full"] }
-multi_project = { package = "multi_project-arwaky", path = "../multi-project" }
-shared_common = { package = "shared_common-arwaky", path = "../shared-common" }
-source_parsing = { package = "source_parsing-arwaky", path = "../source-parsing" }
+multi_project = { package = "multi_project-lint-arwaky", path = "../multi-project" }
+shared = { package = "shared-lint-arwaky", path = "../shared" }
+source_parsing = { package = "source_parsing-lint-arwaky", path = "../source-parsing" }

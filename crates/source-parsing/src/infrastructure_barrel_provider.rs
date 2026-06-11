@@ -1,5 +1,5 @@
 // PURPOSE: BarrelProvider — detects barrel/index files (_init_.py, mod.rs, index.ts)
-use shared_common::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_common_vo::LineNumber;
 use source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use std::collections::HashMap;
 

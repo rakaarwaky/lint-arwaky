@@ -1,6 +1,6 @@
 // PURPOSE: ICodeMetricAnalyzerProtocol — protocol for complexity, duplication, and trend queries.
 
-use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::common::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check

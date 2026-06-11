@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::naming_rules::taxonomy_suffix_vo::SuffixPolicyVO;
 use crate::naming_rules::taxonomy_suffix_vo::SuffixVO;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_common_vo::BooleanVO;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_common_vo::PatternList;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
-use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_common_vo::BooleanVO;
+use crate::common::taxonomy_common_vo::Count;
+use crate::common::taxonomy_common_vo::PatternList;
+use crate::common::taxonomy_error_vo::ErrorCode;
+use crate::common::taxonomy_layer_vo::LayerNameVO;
+use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]

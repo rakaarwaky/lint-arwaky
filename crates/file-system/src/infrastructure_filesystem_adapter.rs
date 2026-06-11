@@ -8,11 +8,11 @@ use file_system::contract_system_port::IFileSystemPort;
 use file_system::taxonomy_filesystem_error::FileSystemError;
 use pipeline_jobs::taxonomy_action_vo::ActionName;
 use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use shared_common::taxonomy_common_error::ErrorMessage;
-use shared_common::taxonomy_common_vo::Count;
-use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_layer_vo::Identity;
-use shared_common::taxonomy_source_vo::ContentString;
+use shared::taxonomy_common_error::ErrorMessage;
+use shared::taxonomy_common_vo::Count;
+use shared::taxonomy_common_vo::PatternList;
+use shared::taxonomy_layer_vo::Identity;
+use shared::taxonomy_source_vo::ContentString;
 use source_parsing::taxonomy_path_vo::FilePath;
 use source_parsing::taxonomy_paths_vo::FilePathList;
 

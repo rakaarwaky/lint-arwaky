@@ -1,7 +1,7 @@
 // PURPOSE: SemanticError — structured error type for semantic analysis failures
-use crate::shared_common::taxonomy_common_error::Cause;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_error_vo::ErrorCode;
+use crate::common::taxonomy_common_error::Cause;
+use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 

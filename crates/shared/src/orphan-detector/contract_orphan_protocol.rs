@@ -4,7 +4,7 @@ use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub trait ITaxonomyOrphanProtocol: Send + Sync {

@@ -1,5 +1,5 @@
 [package]
-name = "language_adapters-arwaky"
+name = "language_adapters-lint-arwaky"
 version = "1.10.11"
 edition = "2021"
 
@@ -10,9 +10,9 @@ async-trait = "0.1.89"
 once_cell = "1.21.4"
 regex = "1.10"
 tracing = "0.1"
-code_analysis = { package = "code_analysis-arwaky", path = "../code-analysis" }
-metrics_service = { package = "metrics_service-arwaky", path = "../metrics-service" }
-output_report = { package = "output_report-arwaky", path = "../output-report" }
-pipeline_jobs = { package = "pipeline_jobs-arwaky", path = "../pipeline-jobs" }
-shared_common = { package = "shared_common-arwaky", path = "../shared-common" }
-source_parsing = { package = "source_parsing-arwaky", path = "../source-parsing" }
+code_analysis = { package = "code_analysis-lint-arwaky", path = "../code-analysis" }
+metrics_service = { package = "metrics_service-lint-arwaky", path = "../metrics-service" }
+output_report = { package = "output_report-lint-arwaky", path = "../output-report" }
+pipeline_jobs = { package = "pipeline_jobs-lint-arwaky", path = "../pipeline-jobs" }
+shared = { package = "shared-lint-arwaky", path = "../shared" }
+source_parsing = { package = "source_parsing-lint-arwaky", path = "../source-parsing" }

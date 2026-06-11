@@ -2,10 +2,10 @@
 
 use language_adapters::contract_scope_port::IJavascriptScopePort;
 use language_adapters::taxonomy_semantic_error::SemanticError;
-use shared_common::taxonomy_common_vo::LineNumber;
-use shared_common::taxonomy_layer_vo::LineContentVO;
-use shared_common::taxonomy_lint_vo::ScopeBounds;
-use shared_common::taxonomy_name_vo::SymbolName;
+use shared::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_layer_vo::LineContentVO;
+use shared::taxonomy_lint_vo::ScopeBounds;
+use shared::taxonomy_name_vo::SymbolName;
 use regex::Regex;
 
 pub struct JSScopeProvider {}

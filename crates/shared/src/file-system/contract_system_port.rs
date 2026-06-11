@@ -4,9 +4,9 @@ use async_trait::async_trait;
 
 use crate::file_system::taxonomy_filesystem_error::FileSystemError;
 use crate::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_common_vo::PatternList;
-use crate::shared_common::taxonomy_layer_vo::Identity;
+use crate::common::taxonomy_common_vo::Count;
+use crate::common::taxonomy_common_vo::PatternList;
+use crate::common::taxonomy_layer_vo::Identity;
 use crate::config_system::taxonomy_source_vo::ContentString;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;

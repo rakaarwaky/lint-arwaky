@@ -1,5 +1,5 @@
 // PURPOSE: HookRemoved — domain event published when a git hook is removed
-use crate::shared_common::taxonomy_common_vo::Timestamp;
+use crate::common::taxonomy_common_vo::Timestamp;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 

@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 
 /* UNKNOWN: MetadataVO */
-use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
+use crate::common::taxonomy_suggestion_vo::MetadataVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ActionArgs {

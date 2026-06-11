@@ -7,7 +7,7 @@ use crate::role_rules::taxonomy_layer_names_constant::LAYER_INFRASTRUCTURE;
 use crate::role_rules::taxonomy_layer_names_constant::LAYER_ROOT;
 use crate::role_rules::taxonomy_layer_names_constant::LAYER_SURFACES;
 use crate::role_rules::taxonomy_layer_names_constant::LAYER_TAXONOMY;
-use crate::shared_common::taxonomy_layer_vo::LayerNameVO;
+use crate::common::taxonomy_layer_vo::LayerNameVO;
 
 /// Value object holding the set of core layer names.
 pub struct LayerNames {}

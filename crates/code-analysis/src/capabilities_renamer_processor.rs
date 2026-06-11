@@ -1,6 +1,6 @@
 // PURPOSE: SymbolRenamerProcessor — renames symbols/filenames across the entire codebase with regex matching
 use code_analysis::contract_analysis_protocol::IAnalysisProtocol;
-use shared_common::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_common_vo::LineNumber;
 use regex::Regex;
 use std::fs;
 

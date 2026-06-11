@@ -1,6 +1,6 @@
 // PURPOSE: ILineCheckerProtocol — port trait for AES020/AES021: check file line count limits
 use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::common::taxonomy_definition_vo::LayerDefinition;
 
 pub trait ILineCheckerProtocol: Send + Sync {
     fn check_line_counts(

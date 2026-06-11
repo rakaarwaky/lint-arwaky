@@ -1,6 +1,6 @@
 // PURPOSE: IContractRoleChecker — port trait for AES0302: contract primitive type audits
 use crate::output_report::taxonomy_result_vo::LintResult;
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::config_system::taxonomy_source_vo::SourceContentVO;
 
 pub trait IContractRoleChecker: Send + Sync {

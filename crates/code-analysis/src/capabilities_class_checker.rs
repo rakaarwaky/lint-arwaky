@@ -5,8 +5,8 @@ use std::path::Path;
 use code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use output_report::taxonomy_result_vo::LintResult;
 use output_report::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_definition_vo::LayerDefinition;
-use shared_common::taxonomy_violation_message_rs_error::AesViolation;
+use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::taxonomy_violation_message_rs_error::AesViolation;
 
 pub struct ArchClassChecker {}
 

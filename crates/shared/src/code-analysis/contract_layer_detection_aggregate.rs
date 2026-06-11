@@ -1,5 +1,5 @@
 // PURPOSE: ILayerDetectionAggregate — contract trait for layer detection (detect_layer + get_layer_def)
-use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
+use crate::common::taxonomy_definition_vo::LayerDefinition;
 
 /// Slim aggregate for layer detection — used by orphan detector and orchestrator.
 /// Container implements this; orchestrator calls individual checker protocols directly.

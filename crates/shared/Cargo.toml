@@ -1,5 +1,5 @@
 [package]
-name = "shared-arwaky"
+name = "shared-lint-arwaky"
 version = "1.10.11"
 edition = "2021"
 

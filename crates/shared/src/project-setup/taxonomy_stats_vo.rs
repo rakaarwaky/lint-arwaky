@@ -1,6 +1,6 @@
 // PURPOSE: ProjectStatsVO, MaintenanceStatsVO — VOs for project statistics and maintenance data
-use crate::shared_common::taxonomy_common_vo::Count;
-use crate::shared_common::taxonomy_common_vo::Score;
+use crate::common::taxonomy_common_vo::Count;
+use crate::common::taxonomy_common_vo::Score;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 

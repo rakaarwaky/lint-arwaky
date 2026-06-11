@@ -3,8 +3,8 @@ use crate::language_adapters::taxonomy_adapter_error::AdapterError;
 use crate::language_adapters::taxonomy_adapter_error::ScanError;
 /// linter_operation_error — Unified error type for linter adapter operations.
 /* UNKNOWN: ErrorMessage */
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_common_vo::LineNumber;
+use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_common_vo::LineNumber;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, thiserror::Error)]

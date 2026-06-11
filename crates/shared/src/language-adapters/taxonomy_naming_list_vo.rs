@@ -1,5 +1,5 @@
 // PURPOSE: SymbolNameList, PrimitiveTypeList — VOs for collections of symbol names and primitive types
-use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::common::taxonomy_name_vo::SymbolName;
 use serde::{Deserialize, Serialize};
 
 pub const CORE_PRIMITIVE_TYPES: &[&str] = &["str", "int", "float"];

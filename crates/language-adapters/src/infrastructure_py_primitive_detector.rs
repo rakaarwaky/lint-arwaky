@@ -1,6 +1,6 @@
 // PURPOSE: PyPrimitiveDetector — IDomainTypeProtocol implementation for Python primitive detection
 use language_adapters::contract_naming_port::INamingProviderPort;
-use shared_common::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_common_vo::LineNumber;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check
 fn _use_mandatory_imports() {

@@ -2,8 +2,8 @@
 
 use metrics_service::contract_metrics_port::IMetricsProviderPort;
 use metrics_service::taxonomy_metrics_error::MetricsError;
-use shared_common::taxonomy_common_error::ErrorMessage;
-use shared_common::taxonomy_common_vo::Count;
+use shared::taxonomy_common_error::ErrorMessage;
+use shared::taxonomy_common_vo::Count;
 use source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;

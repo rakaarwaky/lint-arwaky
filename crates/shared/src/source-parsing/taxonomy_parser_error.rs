@@ -4,7 +4,7 @@ use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_common_vo::ColumnNumber;
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_path_vo::FilePath;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]

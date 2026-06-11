@@ -17,7 +17,7 @@ use output_report::taxonomy_result_vo::LintResult;
 use output_report::taxonomy_result_vo::LintResultList;
 use role_rules::agent_role_container::RoleAggregateImpl;
 use role_rules::agent_role_orchestrator::RoleOrchestrator;
-use shared_common::taxonomy_source_vo::{ContentString, SourceContentVO};
+use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 use source_parsing::taxonomy_path_vo::FilePath;
 use source_parsing::taxonomy_paths_vo::FilePathList;
 

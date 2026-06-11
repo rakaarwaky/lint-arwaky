@@ -1,10 +1,10 @@
 // PURPOSE: IMcpServerPort — port trait for MCP server lifecycle operations
 use crate::cli_commands::taxonomy_transport_error::TransportError;
 use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::shared_common::taxonomy_common_error::ErrorMessage;
-use crate::shared_common::taxonomy_name_vo::SymbolName;
+use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_name_vo::SymbolName;
 /// mcp_server_port — Port interface for MCP server lifecycle and tool management.
-use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use std::future::Future;
 use std::pin::Pin;
 

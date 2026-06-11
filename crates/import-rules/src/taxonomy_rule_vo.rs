@@ -1,1 +1,1 @@
-pub use shared_common::taxonomy_rule_vo::*;
+pub use shared::taxonomy_rule_vo::*;

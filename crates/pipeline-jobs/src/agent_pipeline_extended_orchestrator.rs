@@ -7,8 +7,8 @@ use pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use pipeline_jobs::taxonomy_action_vo::JobId;
 use pipeline_jobs::taxonomy_job_vo::ResponseData;
 use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use shared_common::taxonomy_common_error::ErrorMessage;
-use shared_common::taxonomy_common_vo::BooleanVO;
+use shared::taxonomy_common_error::ErrorMessage;
+use shared::taxonomy_common_vo::BooleanVO;
 use source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashMap;
 

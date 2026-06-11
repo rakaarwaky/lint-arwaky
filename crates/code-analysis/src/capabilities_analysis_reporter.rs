@@ -7,10 +7,10 @@ use code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use output_report::taxonomy_score_vo::compute_score;
 use output_report::taxonomy_severity_vo::Severity;
-use shared_common::taxonomy_adapter_name_vo::AdapterName;
-use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber, Score};
-use shared_common::taxonomy_error_vo::ErrorCode;
-use shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
+use shared::taxonomy_adapter_name_vo::AdapterName;
+use shared::taxonomy_common_vo::{ColumnNumber, LineNumber, Score};
+use shared::taxonomy_error_vo::ErrorCode;
+use shared::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AnalysisReporter {

@@ -1,6 +1,6 @@
-// PURPOSE: Re-exports ContentString, SourceContentVO from shared-common + ConfigResult, ConfigSource for config-system
-pub use crate::shared_common::taxonomy_source_vo::ContentString;
-pub use crate::shared_common::taxonomy_source_vo::SourceContentVO;
+// PURPOSE: Re-exports ContentString, SourceContentVO from common + ConfigResult, ConfigSource for config-system
+pub use crate::common::taxonomy_source_vo::ContentString;
+pub use crate::common::taxonomy_source_vo::SourceContentVO;
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::source_parsing::taxonomy_path_vo::FilePath;

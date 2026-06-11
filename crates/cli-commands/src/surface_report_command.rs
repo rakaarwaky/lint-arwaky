@@ -1,7 +1,7 @@
 // PURPOSE: ReportCommandsSurface — CLI surface for generating quality reports (plain, json, junit, sarif)
 use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use output_report::contract_client_aggregate::OutputClientAggregate;
-use shared_common::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 use std::sync::Arc;
 

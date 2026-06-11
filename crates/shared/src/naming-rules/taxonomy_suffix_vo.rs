@@ -1,5 +1,5 @@
 // PURPOSE: SuffixPolicyVO, SuffixVO — value objects for suffix naming rules
-use crate::shared_common::taxonomy_common_vo::PatternList;
+use crate::common::taxonomy_common_vo::PatternList;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
