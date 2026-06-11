@@ -2,13 +2,9 @@
 use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use crate::auto_fix::contract_fix_protocol::IFixProtocol;
 use crate::auto_fix::taxonomy_fix_vo::FixResult;
+use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
-
-/// Satisfy AES030 orphan detection - agent references contract ports/protocols
-fn _use_contract_references() {
-    let _ = std::marker::PhantomData::<dyn LintFixOrchestratorAggregate>;
-}
 
 pub struct FixOrchestrator {
     fix_protocol: Arc<dyn IFixProtocol>,
@@ -17,6 +13,16 @@ pub struct FixOrchestrator {
 impl FixOrchestrator {
     pub fn new(fix_protocol: Arc<dyn IFixProtocol>) -> Self {
         Self { fix_protocol }
+    }
+
+    /// Orchestrate: execute fix + report non-fixable
+    pub fn run_fix(&self, path: &FilePath) -> FixResult {
+        self.fix_protocol.execute(path)
+    }
+
+    /// Orchestrate: get report of violations that need manual fix
+    pub fn manual_report(&self, violations: &[LintResult]) -> Vec<String> {
+        self.fix_protocol.report_non_fixable(violations)
     }
 }
 

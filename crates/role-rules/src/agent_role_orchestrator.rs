@@ -147,7 +147,6 @@ impl RoleOrchestrator {
 impl crate::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
         let mut results = Vec::new();
-        let path_str = target.value();
         let files = self.collect_files(target);
         let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
         self.run_all_role_checks(&file_strings, 500, &mut results);

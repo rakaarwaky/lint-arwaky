@@ -3,6 +3,7 @@ use crate::auto_fix::contract_fix_protocol::IFixProtocol;
 use crate::auto_fix::taxonomy_fix_applied_event::FixApplied;
 use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
@@ -25,108 +26,6 @@ impl LintFixProcessor {
 
     pub fn with_dry_run(dry_run: bool, linter: Arc<dyn IArchLintProtocol>) -> Self {
         Self { dry_run, linter }
-    }
-
-    fn fix_bypass_comments(&self, file_path: &str, line: u32) -> bool {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() {
-            return false;
-        }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return false,
-        };
-        let lines: Vec<&str> = content.lines().collect();
-        if (line as usize) > lines.len() || line == 0 {
-            return false;
-        }
-        let target_idx = (line - 1) as usize;
-        let target_line = lines[target_idx];
-
-        let bypass_patterns = [
-            "#[allow(",
-            "unwrap()",
-            "noqa",
-            "type: ignore",
-            "# type:",
-            "panic!",
-        ];
-        let is_bypass = bypass_patterns.iter().any(|p| target_line.contains(p));
-        if !is_bypass {
-            return false;
-        }
-
-        if self.dry_run {
-            return true;
-        }
-
-        let mut result = String::new();
-        for (i, l) in lines.iter().enumerate() {
-            if i == target_idx {
-                let trimmed = l.trim();
-                if trimmed.starts_with("#[allow(")
-                    || trimmed.starts_with("//")
-                    || trimmed.starts_with("#")
-                {
-                    continue;
-                }
-                if l.trim() == "unwrap()" || l.trim().ends_with("unwrap();") {
-                    let replaced = l.replace("unwrap()", "expect(\"safe\")");
-                    result.push_str(&replaced);
-                    result.push('\n');
-                    continue;
-                }
-            }
-            result.push_str(l);
-            result.push('\n');
-        }
-        std::fs::write(path, result).is_ok()
-    }
-
-    fn fix_unused_import(&self, file_path: &str, line: u32) -> bool {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() {
-            return false;
-        }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return false,
-        };
-        let lines: Vec<&str> = content.lines().collect();
-        if (line as usize) > lines.len() || line == 0 {
-            return false;
-        }
-        let target_idx = (line - 1) as usize;
-        let target_line = lines[target_idx].trim();
-
-        let import_patterns = ["use ", "import ", "from ", "require("];
-        let is_import = import_patterns.iter().any(|p| target_line.starts_with(p));
-        if !is_import {
-            return false;
-        }
-
-        if self.dry_run {
-            return true;
-        }
-
-        let mut result = String::new();
-        for (i, l) in lines.iter().enumerate() {
-            if i != target_idx {
-                result.push_str(l);
-                result.push('\n');
-            }
-        }
-        std::fs::write(path, result).is_ok()
-    }
-
-    fn emit_fix_event(&self, path: &FilePath, error_code: &str, changes: usize) {
-        let event = FixApplied::new(
-            path.clone(),
-            AdapterName::raw("lint-fix-orchestrator"),
-            ErrorCode::raw(error_code.to_string()),
-            Count::new(changes as i64),
-        );
-        let _ = event;
     }
 }
 
@@ -231,18 +130,110 @@ impl IFixProtocol for LintFixProcessor {
         }
     }
 
-    fn is_fixable(&self, violation: &LintResult) -> bool {
-        let fixable_codes = self.fixable_codes();
-        let code_str = violation.code.to_string();
-        fixable_codes.iter().any(|c| code_str.contains(c))
+    fn fix_bypass_comments(&self, file_path: &str, line: u32) -> bool {
+        let path = std::path::Path::new(file_path);
+        if !path.exists() {
+            return false;
+        }
+        let content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => return false,
+        };
+        let lines: Vec<&str> = content.lines().collect();
+        if (line as usize) > lines.len() || line == 0 {
+            return false;
+        }
+        let target_idx = (line - 1) as usize;
+        let target_line = lines[target_idx];
+
+        let bypass_patterns = [
+            "#[allow(",
+            "unwrap()",
+            "noqa",
+            "type: ignore",
+            "# type:",
+            "panic!",
+        ];
+        let is_bypass = bypass_patterns.iter().any(|p| target_line.contains(p));
+        if !is_bypass {
+            return false;
+        }
+
+        if self.dry_run {
+            return true;
+        }
+
+        let mut result = String::new();
+        for (i, l) in lines.iter().enumerate() {
+            if i == target_idx {
+                let trimmed = l.trim();
+                if trimmed.starts_with("#[allow(")
+                    || trimmed.starts_with("//")
+                    || trimmed.starts_with("#")
+                {
+                    continue;
+                }
+                if l.trim() == "unwrap()" || l.trim().ends_with("unwrap();") {
+                    let replaced = l.replace("unwrap()", "expect(\"safe\")");
+                    result.push_str(&replaced);
+                    result.push('\n');
+                    continue;
+                }
+            }
+            result.push_str(l);
+            result.push('\n');
+        }
+        std::fs::write(path, result).is_ok()
     }
 
-    fn fixable_codes(&self) -> &[&str] {
-        &["AES011", "AES022", "AES023"]
+    fn fix_unused_import(&self, file_path: &str, line: u32) -> bool {
+        let path = std::path::Path::new(file_path);
+        if !path.exists() {
+            return false;
+        }
+        let content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => return false,
+        };
+        let lines: Vec<&str> = content.lines().collect();
+        if (line as usize) > lines.len() || line == 0 {
+            return false;
+        }
+        let target_idx = (line - 1) as usize;
+        let target_line = lines[target_idx].trim();
+
+        let import_patterns = ["use ", "import ", "from ", "require("];
+        let is_import = import_patterns.iter().any(|p| target_line.starts_with(p));
+        if !is_import {
+            return false;
+        }
+
+        if self.dry_run {
+            return true;
+        }
+
+        let mut result = String::new();
+        for (i, l) in lines.iter().enumerate() {
+            if i != target_idx {
+                result.push_str(l);
+                result.push('\n');
+            }
+        }
+        std::fs::write(path, result).is_ok()
+    }
+
+    fn emit_fix_event(&self, path: &FilePath, error_code: &str, changes: usize) {
+        let event = FixApplied::new(
+            path.clone(),
+            AdapterName::raw("lint-fix-orchestrator"),
+            ErrorCode::raw(error_code.to_string()),
+            Count::new(changes as i64),
+        );
+        let _ = event;
     }
 
     fn report_non_fixable(&self, violations: &[LintResult]) -> Vec<String> {
-        let fixable_codes = self.fixable_codes();
+        let fixable_codes = ["AES011", "AES022", "AES023"];
         let mut manual: Vec<String> = Vec::new();
         for r in violations {
             let code_str = r.code.to_string();
@@ -255,9 +246,18 @@ impl IFixProtocol for LintFixProcessor {
         }
         manual
     }
+
+    fn is_fixable(&self, violation: &LintResult) -> bool {
+        let fixable_codes = self.fixable_codes();
+        let code_str = violation.code.to_string();
+        fixable_codes.iter().any(|c| code_str.contains(c))
+    }
+
+    fn fixable_codes(&self) -> &[&str] {
+        &["AES011", "AES022", "AES023"]
+    }
 }
 
-/// Simple in-place symbol renamer — replaces old_name with new_name in a single file.
 struct SimpleSymbolRenamer {}
 
 impl SimpleSymbolRenamer {
