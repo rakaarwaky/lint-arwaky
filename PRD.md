@@ -1,18 +1,18 @@
 # Product Requirements Document (PRD)
 
-## Lint Arwaky v1.10.2 — SIGNED OFF
+## Lint Arwaky v1.10.6 — SIGNED OFF
 
 ---
 
 ## 1. Product Overview
 
 **Name**: Lint Arwaky
-**Type**: CLI tool + MCP server
-**Version**: 1.10.2
+**Type**: CLI tool + MCP server + TUI launcher
+**Version**: 1.10.6
 **License**: MIT
 **Language**: Rust (2021 edition)
 
-Lint Arwaky is an autonomous multi-language linting, type-checking, and architectural rule auditing tool. It runs as both a CLI binary (`lint-arwaky-cli`) and an MCP server (`lint-arwaky-mcp`) that exposes 5 tools over JSON-RPC 2.0.
+Lint Arwaky is an autonomous multi-language linting, type-checking, and architectural rule auditing tool. It runs as a CLI binary (`lint-arwaky-cli`), an MCP server (`lint-arwaky-mcp`) that exposes 5 tools over JSON-RPC 2.0, and an interactive TUI launcher (`lint-arwaky-tui`).
 
 The project audits itself: `lint-arwaky-cli check .` runs the same AES rule engine against `src-rust/` that it runs against third-party code.
 
@@ -280,7 +280,7 @@ mcp_command_handler.rs -- command_catalog and dispatch
 
 The DI container is created once at server start; the same `Arc<dyn ServiceContainerAggregate>` is passed to every tool call.
 
-### 7.4 Agentic Engineering System (AES) v1.10.2
+### 7.4 Agentic Engineering System (AES) v1.10.6
 
 Severity levels and their point penalty per finding:
 

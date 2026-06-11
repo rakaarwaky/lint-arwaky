@@ -43,7 +43,7 @@ surface_compliance_command.rs          ← surface layer
 taxonomy_compliance_vo.rs              ← taxonomy layer
 ```
 
-Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
+Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `cli_main_entry.rs`, `mcp_main_entry.rs`, `tui_main_entry.rs`, `__init__.py`, `index.ts`, `index.js`.
 
 ---
 

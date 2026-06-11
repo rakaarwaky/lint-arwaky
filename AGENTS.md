@@ -15,6 +15,9 @@ cargo run --bin lint-arwaky-cli -- scan <project-path>
 # Run MCP server (JSON-RPC 2.0 over stdin/stdout)
 cargo run --bin lint-arwaky-mcp
 
+# Run TUI launcher (interactive terminal UI)
+cargo run --bin lint-arwaky-tui
+
 # Tests
 cargo test --workspace        # all
 cargo test --lib <name_fragment>  # single test by name
@@ -191,11 +194,11 @@ cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 
 ### Scripts
 
-| File                              | Purpose                                 |
-| --------------------------------- | --------------------------------------- |
-| `install.local.sh`                | Local install script                    |
-| `install.remote.sh`               | Remote/CI install script                |
-| `scripts/install_graphit_live.sh` | Build + install Graph-It-Live extension |
+| File                              | Purpose                                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------------------------- |
+| `install.local.sh`                | Bumps patch version + builds release + installs 3 binaries (`cli`, `mcp`, `tui`) locally |
+| `install.remote.sh`               | Remote/CI install script                                                                 |
+| `scripts/install_graphit_live.sh` | Build + install Graph-It-Live extension                                                  |
 
 ### Project Directories
 

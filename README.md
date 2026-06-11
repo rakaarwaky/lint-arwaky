@@ -65,13 +65,13 @@ curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/install.
 git clone https://github.com/rakaarwaky/lint-arwaky.git
 cd lint-arwaky
 cargo build --release
-# Binaries: target/release/lint-arwaky-cli, target/release/lint-arwaky-mcp
+# Binaries: target/release/lint-arwaky-cli, target/release/lint-arwaky-mcp, target/release/lint-arwaky-tui
 ```
 
 ### Verify installation
 
 ```bash
-lint-arwaky-cli version        # should print "Lint Arwaky v1.10.2 (AES Semantic Builder)"
+lint-arwaky-cli version        # should print "Lint Arwaky v1.10.6 (AES Semantic Builder)"
 lint-arwaky-cli setup doctor   # environment diagnostics
 ```
 
@@ -268,18 +268,18 @@ The CLI is implemented in `src-rust/surfaces/cli_core_command.rs` (with subcomma
 | `lint-arwaky-cli adapters`                    | List active linter adapters                                |
 | `lint-arwaky-cli config show`                 | Show active configuration                                  |
 | `lint-arwaky-cli cancel <job_id>`             | Request cancellation of a running lint job                 |
-| `lint-arwaky-cli version`                     | Show version (`1.10.2`)                                    |
+| `lint-arwaky-cli version`                     | Show version (`1.10.6`)                                    |
 
 ---
 
-## Project Stats (v1.10.2)
+## Project Stats (v1.10.6)
 
 | Metric             | Value                                                                                               |
 | ------------------ | --------------------------------------------------------------------------------------------------- |
 | Language           | Rust 2021 edition                                                                                   |
 | Crate              | `lint_arwaky` (library)                                                                             |
-| Binaries           | `lint-arwaky-cli`, `lint-arwaky-mcp`                                                                |
-| Source files       | 271 (across 6 layers + 2 entry points +`lib.rs`)                                                    |
+| Binaries           | `lint-arwaky-cli`, `lint-arwaky-mcp`, `lint-arwaky-tui`                                             |
+| Source files       | 270+ (across 6 layers + 3 entry points +`lib.rs`)                                                   |
 | Layers             | 6 (taxonomy, contract, capabilities, infrastructure, agent, surfaces)                               |
 | AES rules enforced | 27 (4 groups: Layer & Import, Naming & Structure, File & Content, Role Violations)                  |
 | Linter adapters    | 9 (Rust AST + Clippy, Python AST + Ruff + MyPy + Bandit + Metrics, JS/TS AST + ESLint/Prettier/TSC) |
