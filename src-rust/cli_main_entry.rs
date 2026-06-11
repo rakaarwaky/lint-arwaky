@@ -1,14 +1,35 @@
-use lint_arwaky::agent::dependency_injection_container::DependencyInjectionContainer;
+// PURPOSE: main entry point for lint-arwaky-cli — parses args, initializes DI, dispatches commands
 use std::env;
 use std::process::ExitCode;
 use std::sync::Arc;
 
 use clap::Parser;
-use lint_arwaky::capabilities::architecture_lint_handler::format_report;
-use lint_arwaky::surfaces::cli_core_command::{Cli, Commands, ConfigCommands, SetupCommands};
-use lint_arwaky::taxonomy::{DirectoryPath, FilePath, LintResult, Severity};
+use lint_arwaky::cli_commands::surface_bootstrap_command;
+use lint_arwaky::cli_commands::surface_check_command;
+use lint_arwaky::cli_commands::surface_config_command;
+use lint_arwaky::cli_commands::surface_core_command::{Cli, Commands};
+use lint_arwaky::cli_commands::surface_dev_command;
+use lint_arwaky::cli_commands::surface_fix_command;
+use lint_arwaky::cli_commands::surface_git_command;
+use lint_arwaky::cli_commands::surface_maintenance_command;
+use lint_arwaky::cli_commands::surface_map_command;
+use lint_arwaky::cli_commands::surface_multi_command;
+use lint_arwaky::cli_commands::surface_plugin_command;
+use lint_arwaky::cli_commands::surface_report_command;
+use lint_arwaky::cli_commands::surface_setup_command;
+use lint_arwaky::cli_commands::surface_watch_command;
+use lint_arwaky::code_analysis::agent_checking_orchestrator::init_global_checker;
+use lint_arwaky::code_analysis::{has_critical, lint_path};
+use lint_arwaky::config_system::taxonomy_config_vo::default_aes_config;
+use lint_arwaky::di_containers::agent_checker_container::CheckerContainer;
+use lint_arwaky::di_containers::agent_injection_container::DependencyInjectionContainer;
+use lint_arwaky::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use lint_arwaky::source_parsing::taxonomy_path_vo::DirectoryPath;
+
+pub struct CliMainEntry {}
 
 fn main() -> ExitCode {
+    init_global_checker(Arc::new(CheckerContainer::new(default_aes_config())));
     let raw_args: Vec<String> = env::args().collect();
     if raw_args.len() <= 1 {
         return run_default_check(".");
@@ -19,550 +40,81 @@ fn main() -> ExitCode {
         Err(e) => e.exit(),
     };
 
+    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(
+        DependencyInjectionContainer::new(DirectoryPath::new(".").unwrap_or_default()),
+    );
+
+    let filter = cli.filter.clone();
     match cli.command {
-        Commands::Check { path, git_diff } => handle_check(path, git_diff),
-        Commands::Scan { path } => handle_scan(path),
-        Commands::Fix { path } => handle_fix(path),
+        Commands::Check { path, git_diff } => {
+            surface_check_command::handle_check(path, git_diff, filter)
+        }
+        Commands::Scan { path } => {
+            surface_check_command::handle_scan(path, container.clone(), filter)
+        }
+        Commands::Fix { path, dry_run } => {
+            surface_fix_command::handle_fix(path, dry_run, container.clone())
+        }
         Commands::Report {
             path,
             output_format,
-        } => handle_report(path, output_format),
-        Commands::Ci { path, threshold } => handle_ci(path, threshold),
+        } => surface_report_command::handle_report(path, output_format),
+        Commands::Ci { path, threshold } => surface_dev_command::handle_ci(path, threshold),
         Commands::Version => {
-            lint_arwaky::surfaces::cli_core_command::CoreCommandsSurface::version();
-            ExitCode::SUCCESS
+            let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
+            surface_bootstrap_command::handle_version(verbose)
         }
-        Commands::Adapters => handle_adapters(),
-        Commands::Config { command } => handle_config(command),
-        Commands::GitDiff { base } => handle_git_diff(base),
-        Commands::MultiProject { paths } => handle_multi_project(paths),
-        Commands::Security { path } => handle_security(path),
-        Commands::Complexity { path } => handle_complexity(path),
-        Commands::Duplicates { path } => handle_duplicates(path),
-        Commands::Trends { path } => handle_trends(path),
-        Commands::Dependencies { path } => handle_dependencies(path),
-        Commands::Setup { command } => handle_setup(command),
-        Commands::Cancel { job_id } => {
-            println!("Cancellation requested for job {}", job_id);
-            ExitCode::SUCCESS
+        Commands::Adapters => surface_plugin_command::handle_adapters(container.clone()),
+        Commands::Config { command } => surface_config_command::handle_config(command),
+        Commands::GitDiff { base } => surface_git_command::handle_git_diff(base),
+        Commands::MultiProject { paths } => surface_multi_command::handle_multi_project(paths),
+        Commands::Security { path } => surface_maintenance_command::handle_security(path),
+        Commands::Complexity { path } => {
+            let resolver =
+                std::sync::Arc::new(lint_arwaky::code_analysis::ProjectTargetResolver::new());
+            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new(resolver);
+            use lint_arwaky::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+            analyzer.handle_complexity(path)
         }
-        Commands::Diff { path1, path2 } => handle_diff(path1, path2),
-        Commands::Import { config_file } => handle_import(config_file),
-        Commands::Export { format } => handle_export(format),
-        Commands::Watch { path } => handle_watch(path),
-        Commands::Suggest { path, ai: _ } => handle_suggest(path),
-        Commands::InstallHook => handle_install_hook(),
-        Commands::UninstallHook => handle_uninstall_hook(),
-    }
-}
-
-// ─── Command Handlers ────────────────────────────────────────────────────────
-
-fn handle_check(path: Option<String>, _git_diff: bool) -> ExitCode {
-    let root = resolve_target(path);
-    run_lint_and_report(&root)
-}
-
-fn handle_scan(path: Option<String>) -> ExitCode {
-    let root = resolve_target(path);
-    let container = Arc::new(DependencyInjectionContainer::new(
-        DirectoryPath::new(&root).unwrap_or_default(),
-    ));
-    let surface = lint_arwaky::surfaces::register_check_commands(container);
-    surface.scan(&root);
-    ExitCode::SUCCESS
-}
-
-fn handle_fix(path: Option<String>) -> ExitCode {
-    let root = resolve_target(path);
-    eprintln!("[info] `fix` is not yet fully implemented; running check instead");
-    run_lint_and_report(&root)
-}
-
-fn handle_report(path: Option<String>, output_format: String) -> ExitCode {
-    let root = resolve_target(path);
-    let results = lint_path(&root);
-    match output_format.as_str() {
-        "json" => print_json(&results),
-        "sarif" => print_sarif(&results, &root),
-        "junit" => print_junit(&results),
-        _ => {
-            let report = format_report(&results, &root);
-            println!("{}", report);
+        Commands::Duplicates { path } => {
+            let resolver =
+                std::sync::Arc::new(lint_arwaky::code_analysis::ProjectTargetResolver::new());
+            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new(resolver);
+            use lint_arwaky::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+            analyzer.handle_duplicates(path)
         }
-    }
-    if has_critical(&results) {
-        ExitCode::from(1)
-    } else {
-        ExitCode::SUCCESS
-    }
-}
-
-fn handle_ci(path: Option<String>, threshold: u32) -> ExitCode {
-    let root = resolve_target(path);
-    let results = lint_path(&root);
-    let score = compute_score(&results);
-    println!("CI score: {} (threshold: {})", score, threshold);
-    if (score as u32) < threshold {
-        eprintln!("[fail] score {} < threshold {}", score, threshold);
-        ExitCode::from(1)
-    } else {
-        ExitCode::SUCCESS
-    }
-}
-
-fn handle_adapters() -> ExitCode {
-    println!("Active adapters:");
-    println!("  - ast_rust_scanner (Rust)");
-    println!("  - ast_python_scanner (Python)");
-    println!("  - ast_js_scanner (JavaScript/TypeScript)");
-    println!("  - rust_linter_adapter (Clippy)");
-    println!("  - python_ruff_adapter (Ruff)");
-    ExitCode::SUCCESS
-}
-
-fn handle_config(command: ConfigCommands) -> ExitCode {
-    match command {
-        ConfigCommands::Show => {
-            println!("Active configuration: default AES self-lint");
-            println!("Source: hardcoded in capabilities::architecture_lint_handler::default_aes_config()");
+        Commands::Trends { path } => {
+            let resolver =
+                std::sync::Arc::new(lint_arwaky::code_analysis::ProjectTargetResolver::new());
+            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new(resolver);
+            use lint_arwaky::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+            analyzer.handle_trends(path)
         }
-    }
-    ExitCode::SUCCESS
-}
-
-fn handle_git_diff(base: String) -> ExitCode {
-    println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
-    let output = std::process::Command::new("git")
-        .args(["diff", "--name-only", &base])
-        .output();
-    match output {
-        Ok(o) if o.status.success() => {
-            let s = String::from_utf8_lossy(&o.stdout);
-            let files: Vec<&str> = s
-                .lines()
-                .filter(|l| {
-                    l.ends_with(".rs")
-                        || l.ends_with(".py")
-                        || l.ends_with(".ts")
-                        || l.ends_with(".js")
-                })
-                .collect();
-            println!("Changed files since {}: {}", base, files.len());
-            for f in files.iter().take(20) {
-                println!("  {}", f);
-            }
-            if files.len() > 20 {
-                println!("  ... and {} more", files.len() - 20);
-            }
-        }
-        _ => eprintln!("[warn] not a git repo or `git diff` failed"),
-    }
-    ExitCode::SUCCESS
-}
-
-fn handle_multi_project(paths: Vec<String>) -> ExitCode {
-    println!(
-        "Lint Arwaky v{} (Multi-Project Mode)",
-        env!("CARGO_PKG_VERSION")
-    );
-    let mut total = 0usize;
-    for p in &paths {
-        let r = lint_path(p);
-        println!("  {} -> {} violations", p, r.len());
-        total += r.len();
-    }
-    println!(
-        "Total: {} violations across {} projects",
-        total,
-        paths.len()
-    );
-    ExitCode::SUCCESS
-}
-
-fn handle_security(path: Option<String>) -> ExitCode {
-    let root = resolve_target(path);
-    let results = lint_path(&root);
-    println!("Lint Arwaky v{} (Security Scan)", env!("CARGO_PKG_VERSION"));
-    println!("Target: {}", root);
-    println!("Findings: {}", results.len());
-    for x in results.iter().take(20) {
-        println!(
-            "  [{}] {}:{} {} - {}",
-            format!("{:?}", x.severity).to_uppercase(),
-            x.file.value(),
-            x.line.value(),
-            x.code.to_string(),
-            x.message.value()
-        );
-    }
-    if results.len() > 20 {
-        println!("  ... and {} more", results.len() - 20);
-    }
-    ExitCode::SUCCESS
-}
-
-fn handle_complexity(path: Option<String>) -> ExitCode {
-    let root = resolve_target(path);
-    println!("Lint Arwaky v{} (Complexity)", env!("CARGO_PKG_VERSION"));
-    let src = std::path::Path::new(&root).join("src-rust");
-    let mut files: Vec<(std::path::PathBuf, usize, usize)> = Vec::new();
-    walk_rs_files(&src, &mut |p| {
-        if let Ok(c) = std::fs::read_to_string(&p) {
-            let fns = c.matches(" fn ").count() + c.matches(" pub fn ").count();
-            let branches = c.matches("if ").count()
-                + c.matches("match ").count()
-                + c.matches(" for ").count()
-                + c.matches(" while ").count();
-            files.push((p, fns, branches));
-        }
-    });
-    files.sort_by(|a, b| b.2.cmp(&a.2));
-    println!("Top 5 complex files (branches):");
-    for (p, fns, br) in files.iter().take(5) {
-        println!("  {}: {} fns, {} branches", p.display(), fns, br);
-    }
-    ExitCode::SUCCESS
-}
-
-fn handle_duplicates(path: Option<String>) -> ExitCode {
-    let root = resolve_target(path);
-    println!("Lint Arwaky v{} (Duplicates)", env!("CARGO_PKG_VERSION"));
-    let src = std::path::Path::new(&root).join("src-rust");
-    let mut blocks: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
-    walk_rs_files(&src, &mut |p| {
-        if let Ok(c) = std::fs::read_to_string(&p) {
-            for w in c.lines().collect::<Vec<_>>().windows(5) {
-                *blocks
-                    .entry(
-                        w.iter()
-                            .map(|s| s.trim().to_string())
-                            .collect::<Vec<_>>()
-                            .join("|"),
-                    )
-                    .or_insert(0) += 1;
-            }
-        }
-    });
-    let dupes: Vec<_> = blocks.values().filter(|&&c| c > 1).collect();
-    println!(
-        "Duplicate 5-line blocks: {} (across all files)",
-        dupes.len()
-    );
-    ExitCode::SUCCESS
-}
-
-fn handle_trends(path: Option<String>) -> ExitCode {
-    let root = resolve_target(path);
-    let results = lint_path(&root);
-    let score = compute_score(&results);
-    println!("Lint Arwaky v{} (Trends)", env!("CARGO_PKG_VERSION"));
-    println!("Current score: {}", score);
-    let history = std::path::Path::new(&root).join(".lint-arwaky-trends.json");
-    if history.exists() {
-        println!("History file: {}", history.display());
-    } else {
-        println!("No history yet — first run");
-    }
-    ExitCode::SUCCESS
-}
-
-fn handle_dependencies(path: Option<String>) -> ExitCode {
-    let root = resolve_target(path);
-    println!("Lint Arwaky v{} (Dependencies)", env!("CARGO_PKG_VERSION"));
-    let cargo = std::path::Path::new(&root).join("Cargo.toml");
-    if cargo.exists() {
-        println!("Rust (Cargo.toml):");
-        if let Ok(c) = std::fs::read_to_string(&cargo) {
-            let mut in_deps = false;
-            for line in c.lines() {
-                if line.starts_with("[dependencies]") {
-                    in_deps = true;
-                    continue;
-                }
-                if line.starts_with('[') {
-                    in_deps = false;
-                }
-                if in_deps && line.contains('=') && !line.starts_with('#') {
-                    println!("  {}", line.trim());
-                }
-            }
-        }
-    }
-    ExitCode::SUCCESS
-}
-
-fn handle_setup(command: SetupCommands) -> ExitCode {
-    match command {
-        SetupCommands::Init => {
-            let target = std::path::PathBuf::from("lint_arwaky.config.yaml");
-            if target.exists() {
-                println!("[info] {} already exists", target.display());
-            } else {
-                let content = "# Lint Arwaky config\nversion: 1.10.2\n";
-                let _ = std::fs::write(&target, content);
-                println!("Created {}", target.display());
-            }
-        }
-        SetupCommands::Doctor => {
-            println!("Environment diagnostics:");
-            match std::process::Command::new("cargo")
-                .arg("--version")
-                .output()
-            {
-                Ok(o) if o.status.success() => {
-                    println!(
-                        "  cargo: OK ({})",
-                        String::from_utf8_lossy(&o.stdout).trim()
-                    );
-                }
-                _ => println!("  cargo: NOT FOUND"),
-            }
-            match env::current_exe() {
-                Ok(p) => println!("  binary: OK ({})", p.display()),
-                _ => println!("  binary: NOT FOUND"),
-            }
-        }
-        SetupCommands::McpConfig { client } => {
-            println!("# MCP config for {}", client);
-            println!("{{\"command\": \"lint-arwaky-mcp\", \"args\": []}}");
-        }
-        SetupCommands::Hermes { remove } => {
-            if remove {
-                println!("Remove [mcp.lint-arwaky] section from ~/.hermes/config.toml");
-            } else {
-                println!("Add to ~/.hermes/config.toml:");
-                println!("[mcp.lint-arwaky]\ncommand = \"lint-arwaky-mcp\"\nargs = []");
-            }
-        }
-    }
-    ExitCode::SUCCESS
-}
-
-fn handle_diff(path1: String, path2: String) -> ExitCode {
-    let r1 = lint_path(&path1);
-    let r2 = lint_path(&path2);
-    let s1 = compute_score(&r1);
-    let s2 = compute_score(&r2);
-    println!("{:<40} {:>10} {:>10}", "", "Violations", "Score");
-    println!("{:<40} {:>10} {:>10}", path1, r1.len(), s1);
-    println!("{:<40} {:>10} {:>10}", path2, r2.len(), s2);
-    ExitCode::SUCCESS
-}
-
-fn handle_import(config_file: String) -> ExitCode {
-    if !std::path::Path::new(&config_file).exists() {
-        eprintln!("[error] file not found: {}", config_file);
-        return ExitCode::from(1);
-    }
-    println!("Imported config from {}", config_file);
-    ExitCode::SUCCESS
-}
-
-fn handle_export(format: String) -> ExitCode {
-    let results = lint_path(".");
-    match format.as_str() {
-        "json" => print_json(&results),
-        "sarif" => print_sarif(&results, "."),
-        "junit" => print_junit(&results),
-        _ => eprintln!("unknown format: {}", format),
-    }
-    ExitCode::SUCCESS
-}
-
-fn handle_watch(path: Option<String>) -> ExitCode {
-    let root = resolve_target(path);
-    println!("Lint Arwaky v{} (Watch Mode)", env!("CARGO_PKG_VERSION"));
-    println!("Target: {}", root);
-    println!("Polling every 2s. Press Ctrl+C to stop.");
-    loop {
-        std::thread::sleep(std::time::Duration::from_secs(2));
-        let results = lint_path(&root);
-        println!(
-            "[{} violations, score {}]",
-            results.len(),
-            compute_score(&results)
-        );
+        Commands::Dependencies { path } => surface_maintenance_command::handle_dependencies(path),
+        Commands::Setup { command } => surface_setup_command::handle_setup(command),
+        Commands::Cancel { job_id } => surface_map_command::handle_cancel(job_id),
+        Commands::Diff { path1, path2 } => surface_map_command::handle_diff(path1, path2),
+        Commands::Import { config_file } => surface_map_command::handle_import(config_file),
+        Commands::Export { format } => surface_map_command::handle_export(format),
+        Commands::Watch { path } => surface_watch_command::handle_watch(path),
+        Commands::Suggest { path, ai: _ } => surface_map_command::handle_suggest(path),
+        Commands::InstallHook => surface_git_command::handle_install_hook(),
+        Commands::UninstallHook => surface_git_command::handle_uninstall_hook(),
     }
 }
-
-fn handle_suggest(path: Option<String>) -> ExitCode {
-    let root = resolve_target(path);
-    let results = lint_path(&root);
-    println!("Lint Arwaky v{} (Suggest)", env!("CARGO_PKG_VERSION"));
-    if results.is_empty() {
-        println!("No suggestions needed.");
-    } else {
-        println!("{} suggestions. Top by file:", results.len());
-    }
-    ExitCode::SUCCESS
-}
-
-fn handle_install_hook() -> ExitCode {
-    let hook = std::path::PathBuf::from(".githooks/pre-commit");
-    let _ = std::fs::create_dir_all(hook.parent().unwrap());
-    let _ = std::fs::write(&hook, "#!/bin/sh\nlint-arwaky check . || exit 1\n");
-    println!("Installed hook at {}", hook.display());
-    ExitCode::SUCCESS
-}
-
-fn handle_uninstall_hook() -> ExitCode {
-    let hook = std::path::PathBuf::from(".githooks/pre-commit");
-    if hook.exists() {
-        let _ = std::fs::remove_file(&hook);
-        println!("Removed hook");
-    } else {
-        println!("No hook installed");
-    }
-    ExitCode::SUCCESS
-}
-
-// ─── Shared Helpers ──────────────────────────────────────────────────────────
 
 fn run_default_check(project_root: &str) -> ExitCode {
+    use lint_arwaky::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
+    let results = lint_path(project_root);
+    let formatter = ReportFormatterProcessor::new();
+    let report = formatter.format_text(&results, project_root);
     println!("Lint Arwaky v{} (AES Self-Lint)", env!("CARGO_PKG_VERSION"));
     println!("Scanning: {}", project_root);
     println!();
-    let results = lint_path(project_root);
-    let report = format_report(&results, project_root);
     println!("{}", report);
     if has_critical(&results) {
         ExitCode::from(1)
     } else {
         ExitCode::SUCCESS
     }
-}
-
-fn resolve_target(path: Option<String>) -> String {
-    normalize_project_root(&path.unwrap_or_else(|| ".".to_string()))
-}
-
-fn normalize_project_root(path: &str) -> String {
-    let p = std::path::Path::new(path);
-    if p.join("src-rust").exists() {
-        return path.to_string();
-    }
-    if p.file_name().map(|n| n == "src-rust").unwrap_or(false) {
-        let parent = p.parent().unwrap_or(std::path::Path::new("."));
-        let parent_str = parent.to_string_lossy();
-        return if parent_str.is_empty() {
-            ".".to_string()
-        } else {
-            parent_str.to_string()
-        };
-    }
-    path.to_string()
-}
-
-fn lint_path(path: &str) -> Vec<LintResult> {
-    let root =
-        FilePath::new(normalize_project_root(path)).unwrap_or_else(|_| FilePath::new(".").unwrap());
-    let orchestrator =
-        lint_arwaky::agent::architecture_lint_orchestrator::ArchitectureLintOrchestrator::new();
-    orchestrator.run_self_lint(&root)
-}
-
-fn has_critical(results: &[LintResult]) -> bool {
-    results.iter().any(|r| r.severity == Severity::CRITICAL)
-}
-
-fn compute_score(results: &[LintResult]) -> f64 {
-    let penalty: f64 = results.iter().map(|r| r.severity.score_impact()).sum();
-    (100.0 - penalty).max(0.0)
-}
-
-fn walk_rs_files(dir: &std::path::Path, cb: &mut impl FnMut(std::path::PathBuf)) {
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for e in entries.flatten() {
-            let p = e.path();
-            if p.is_dir() {
-                walk_rs_files(&p, cb);
-            } else if p.extension().map(|x| x == "rs").unwrap_or(false) {
-                cb(p);
-            }
-        }
-    }
-}
-
-fn run_lint_and_report(root: &str) -> ExitCode {
-    let results = lint_path(root);
-    let report = format_report(&results, root);
-    println!("{}", report);
-    if has_critical(&results) {
-        ExitCode::from(1)
-    } else {
-        ExitCode::SUCCESS
-    }
-}
-
-// ─── Output Formatters ────────────────────────────────────────────────────────
-
-fn print_json(results: &[LintResult]) {
-    match serde_json::to_string_pretty(results) {
-        Ok(s) => println!("{}", s),
-        Err(e) => eprintln!("[error] failed to serialize: {}", e),
-    }
-}
-
-fn print_sarif(results: &[LintResult], target: &str) {
-    let results_json: Vec<serde_json::Value> = results
-        .iter()
-        .map(|r| {
-            serde_json::json!({
-                "ruleId": r.code.to_string(),
-                "level": match r.severity {
-                    Severity::CRITICAL => "error",
-                    Severity::HIGH => "error",
-                    Severity::MEDIUM => "warning",
-                    _ => "note",
-                },
-                "message": { "text": r.message.value() },
-                "locations": [{
-                    "physicalLocation": {
-                        "artifactLocation": { "uri": target },
-                        "region": { "startLine": r.line.value(), "startColumn": r.column.value() }
-                    }
-                }]
-            })
-        })
-        .collect();
-    let sarif = serde_json::json!({
-        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-        "version": "2.1.0",
-        "runs": [{
-            "tool": { "driver": { "name": "lint-arwaky", "version": env!("CARGO_PKG_VERSION") } },
-            "results": results_json
-        }]
-    });
-    match serde_json::to_string_pretty(&sarif) {
-        Ok(s) => println!("{}", s),
-        Err(e) => eprintln!("[error] failed to serialize SARIF: {}", e),
-    }
-}
-
-fn print_junit(results: &[LintResult]) {
-    let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    let failures = results
-        .iter()
-        .filter(|r| matches!(r.severity, Severity::CRITICAL | Severity::HIGH))
-        .count();
-    xml.push_str(&format!(
-        "<testsuite name=\"lint-arwaky\" tests=\"{}\" failures=\"{}\">\n",
-        results.len(),
-        failures
-    ));
-    for r in results {
-        let safe = r.message.value().replace('"', "&quot;");
-        xml.push_str(&format!(
-            "  <testcase classname=\"{}\" name=\"{}\">\n",
-            r.code.to_string(),
-            safe
-        ));
-        if matches!(r.severity, Severity::CRITICAL | Severity::HIGH) {
-            xml.push_str(&format!("    <failure message=\"{}\"/>\n", safe));
-        }
-        xml.push_str("  </testcase>\n");
-    }
-    xml.push_str("</testsuite>\n");
-    println!("{}", xml);
 }

@@ -1,6 +1,6 @@
 [package]
 name = "lint_arwaky"
-version = "1.10.2"
+version = "1.10.9"
 edition = "2021"
 
 [lib]
@@ -14,6 +14,10 @@ path = "src-rust/cli_main_entry.rs"
 [[bin]]
 name = "lint-arwaky-mcp"
 path = "src-rust/mcp_main_entry.rs"
+
+[[bin]]
+name = "lint-arwaky-tui"
+path = "src-rust/tui_main_entry.rs"
 
 [features]
 default = ["check_surfaces"]
@@ -45,3 +49,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 rustsec = "0.33"
 dirs = "6.0"
+dialoguer = "0.11"
+console = "0.15"
+
+[profile.release]
+opt-level = 2

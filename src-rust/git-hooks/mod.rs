@@ -1,0 +1,25 @@
+// PURPOSE: Module declarations and re-exports for git-hooks (orchestrators, adapters, VOs, errors, events)
+pub mod agent_commands_orchestrator;
+pub use agent_commands_orchestrator::GitCommandsOrchestrator;
+pub mod agent_management_orchestrator;
+pub use agent_management_orchestrator::HookManagementOrchestrator;
+pub mod contract_commands_aggregate;
+pub use contract_commands_aggregate::GitCommandsAggregate;
+pub mod contract_manager_port;
+pub use contract_manager_port::IHookManagerPort;
+pub mod contract_orchestrator_aggregate;
+pub use contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+pub mod taxonomy_diff_result_vo;
+pub use taxonomy_diff_result_vo::GitDiffResultVO;
+pub mod infrastructure_diff_scanner;
+pub use infrastructure_diff_scanner::{DiffResult, GitDiffScanner};
+pub mod infrastructure_hook_adapter;
+pub use infrastructure_hook_adapter::GitHookAdapter;
+pub mod taxonomy_hook_error;
+pub use taxonomy_hook_error::GitHookError;
+pub mod taxonomy_installed_event;
+pub use taxonomy_installed_event::HookInstalled;
+pub mod taxonomy_ref_vo;
+pub use taxonomy_ref_vo::GitRef;
+pub mod taxonomy_removed_event;
+pub use taxonomy_removed_event::HookRemoved;

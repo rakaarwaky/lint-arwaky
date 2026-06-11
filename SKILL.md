@@ -1,6 +1,7 @@
 ---
-version: 1.10.2
+version: 1.11.0
 ---
+
 # Lint Arwaky Skill
 
 > **GUIDE FOR AI AGENTS.**
@@ -11,7 +12,7 @@ Rust MCP server for autonomous multi-language linting and architectural governan
 ## Key Features
 
 - **Multi-Language**: Audits Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon-style metrics), and JavaScript/TypeScript (ESLint, Prettier, TSC) in a single command.
-- **Architecture Audit**: Enforces 31 Agentic Engineering System (AES) rules (codes AES001–AES033, with AES028 and AES029 reserved) — e.g., "Surfaces are prohibited from importing Infrastructure" (AES001, AES023).
+- **Architecture Audit**: Enforces 21 Agentic Engineering System (AES) rules (codes AES001–AES002, AES010–AES016, AES020–AES024, and AES030–AES0306) — e.g., "Surfaces are prohibited from importing Infrastructure" (AES001, AES023).
 - **Auto-Fix**: The `fix` subcommand applies safe style fixes without human intervention.
 - **Reporting**: Quality score = `100 - sum(penalty)` (no lower bound). Output formats: `text`, `json`, SARIF 2.1.0, JUnit XML.
 - **Self-Auditing**: The project scans itself under `lint-arwaky-cli check .` using the same rules it exposes to others.
@@ -39,7 +40,7 @@ Primary dispatch tool. Execute any CLI subcommand. Examples of valid `action` va
 
 ### `list_commands(domain)`
 
-List all available CLI subcommands grouped by domain. Returns rows from `COMMAND_CATALOG` in `src-rust/taxonomy/command_catalog_constant.rs`.
+List all available CLI subcommands grouped by domain. Returns rows from `COMMAND_CATALOG` in `src-rust/cli-commands/taxonomy_catalog_constant.rs`.
 
 ### `commands_schema(tool_name)`
 
@@ -77,6 +78,8 @@ Check linter adapter liveness and system state. Reports which of the 9 adapters 
 
 - `lint-arwaky-cli setup init`: Create a default `lint_arwaky.config.yaml`.
 - `lint-arwaky-cli setup doctor`: Diagnose environment health and `cargo` toolchain.
+- `lint-arwaky-cli setup install`: Install all linter adapter dependencies (ruff, mypy, bandit, eslint, prettier, tsc).
+- `lint-arwaky-cli setup install --sudo`: Same as above but uses `sudo npm install -g` for JS tools (will prompt for password).
 - `lint-arwaky-cli setup mcp-config --client <claude|vscode|hermes|all>`: Print MCP configuration.
 - `lint-arwaky-cli setup hermes [--remove]`: Add or remove the `[mcp.lint-arwaky]` section in Hermes.
 - `lint-arwaky-cli adapters`: List active linter adapters.
