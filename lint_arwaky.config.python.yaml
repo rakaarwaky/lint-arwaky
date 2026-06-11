@@ -33,7 +33,7 @@ architecture:
   layers:
     root:
       suffix:
-        - strict: ["hook", "store", "action", "screen"]
+        - strict: ["entry","container"]
     taxonomy:
       suffix:
         - strict: ["vo", "entity", "error", "event", "constant"]
@@ -153,7 +153,7 @@ architecture:
             ]
     agent:
       suffix:
-        - strict: ["container", "orchestrator", "lifecycle"]
+        - strict: ["orchestrator"]
 
   rules:
     AES001:
@@ -239,29 +239,16 @@ architecture:
           forbidden:
             ["surfaces", "capabilities", "agent", "infrastructure", "root"]
 
-        - scope: "agent(container)"
-          allowed: ["taxonomy", "contract", "infrastructure", "capabilities"]
-          mandatory: ["taxonomy", "contract"]
-          forbidden: ["surfaces", "root"]
-
         - scope: "agent(orchestrator)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(aggregate)"]
           forbidden:
             [
               "surfaces",
-              "agent(lifecycle)",
-              "agent(container)",
               "infrastructure",
               "capabilities",
               "root",
             ]
-
-        - scope: "agent(lifecycle)"
-          allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden:
-            ["agent", "infrastructure", "capabilities", "surfaces", "root"]
 
         - scope: "surfaces(command|controller|page|entry)"
           allowed: ["taxonomy", "contract"]
@@ -375,7 +362,7 @@ architecture:
 
     AES0305:
       enabled: true
-      scope: ["agent(container)", "agent(orchestrator)", "agent(lifecycle)"]
+      scope: ["agent(orchestrator)"]
       max_lines: 1000
       exceptions: ["__init__.py", "__main__.py"]
 

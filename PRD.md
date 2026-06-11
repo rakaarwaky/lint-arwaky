@@ -245,7 +245,7 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 ```
 src-rust/
-  agent/           -- Lifecycle, orchestration, pipeline, DI container
+  agent/           -- Orchestration and pipeline execution
   capabilities/    -- Use-case logic: analysis, formatting, architecture
   contract/        -- Interfaces: traits, protocols, aggregates
   infrastructure/  -- Adapters: rust_linter, python_ruff, eslint, transports
@@ -256,7 +256,7 @@ src-rust/
 ### 7.2 Dependency Rules
 
 ```
-agent          -> taxonomy, contract, infrastructure, capabilities
+agent          -> taxonomy, contract
 surface        -> taxonomy, contract
 capabilities   -> taxonomy, contract
 infrastructure -> taxonomy, contract

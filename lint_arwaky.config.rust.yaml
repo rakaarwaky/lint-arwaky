@@ -29,7 +29,7 @@ architecture:
   layers:
     root:
       suffix:
-        - strict: ["hook", "store", "action", "screen"]
+        - strict: ["entry","container"]
     taxonomy:
       check_orphan: true
       suffix:
@@ -156,7 +156,7 @@ architecture:
     agent:
       check_orphan: true
       suffix:
-        - strict: ["container", "orchestrator", "lifecycle"]
+        - strict: ["orchestrator"]
 
   rules:
     AES001:
@@ -251,22 +251,10 @@ architecture:
           forbidden:
             ["surfaces", "capabilities", "agent", "infrastructure", "root"]
 
-        - scope: "agent(container)"
-          allowed:
-            ["taxonomy", "contract", "infrastructure", "capabilities", "agent"]
-          mandatory: ["taxonomy"]
-          forbidden: ["surfaces", "root"]
-
         - scope: "agent(orchestrator)"
           allowed: ["taxonomy", "contract", "agent"]
           mandatory: ["taxonomy"]
           forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
-
-        - scope: "agent(lifecycle)"
-          allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy"]
-          forbidden:
-            ["agent", "infrastructure", "capabilities", "surfaces", "root"]
 
         - scope: "surfaces(command|controller|page|)"
           allowed: ["taxonomy", "contract"]
@@ -405,7 +393,7 @@ architecture:
 
     AES0305:
       enabled: true
-      scope: ["agent(container)", "agent(orchestrator)", "agent(lifecycle)"]
+      scope: ["agent(orchestrator)"]
       max_lines: 1000
       exceptions:
         [

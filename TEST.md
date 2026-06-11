@@ -152,7 +152,7 @@ Ensure that layer boundaries are maintained and no dead code (_orphan code_) rem
   ```bash
   graph-it serve path-in src-rust/language-adapters/infrastructure_js_naming.rs
   ```
-  _Criteria:_ Infrastructure files are only imported by `agent/` or `di-container/` files.
+  _Criteria:_ Infrastructure files are only imported by `root/` (di-container) files.
 - [ ] **Orphan Code (Dead Code) Verification:**
       Ensure that no active logic files are isolated or unreferenced:
   ```bash

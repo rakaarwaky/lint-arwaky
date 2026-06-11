@@ -37,7 +37,7 @@ The codebase uses **6 architectural layers** as file prefixes, organized into **
 | `contract_`       | `_port`, `_protocol`, `_aggregate`                |
 | `capabilities_`   | `_checker`, `_analyzer`, `_processor`, etc.       |
 | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.         |
-| `agent_`          | `_container`, `_orchestrator`, `_lifecycle`       |
+| `agent_`          | `_orchestrator`                                   |
 | `surface_`        | `_command`, `_handler`, `_controller`             |
 
 ### Feature folders
@@ -128,7 +128,7 @@ cargo run --bin lint-arwaky-cli -- check .
 # 3. Verify layer boundary — pastikan surface tidak import infra langsung
 #    Panggil tool path-in untuk file infrastructure:
 #    - path-in language-adapters/infrastructure_js_naming.rs
-#    Harusnya di-import hanya oleh agent/di-container files
+#    Harusnya di-import hanya oleh root/di-container files
 
 # 4. Orphan check — cari file yang tidak di-import siapa pun
 #    Panggil tool path-in untuk file yang mencurigakan:
@@ -161,7 +161,7 @@ cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 | Missing inheritance      | `trace capabilities/...#IAnalyzer` | Lacak siapa yang implement IAnalyzer protocol                |
 | Dead code                | `path-in suspicious_file.rs`       | Jika 0 incoming references, file tidak dipakai               |
 | Circular dependency      | `cycles <file>`                    | Identifikasi cycle, extract shared logic ke lower layer      |
-| Layer boundary leak      | `path-in infrastructure/...`       | Pastikan hanya di-import oleh agent + container              |
+| Layer boundary leak      | `path-in infrastructure/...`       | Pastikan hanya di-import oleh container (root layer)        |
 
 ## Project Files & Directories
 

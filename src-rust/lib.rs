@@ -49,3 +49,8 @@ pub mod role_rules;
 pub mod shared_common;
 #[path = "source-parsing/mod.rs"]
 pub mod source_parsing;
+
+// Feature containers (root layer, wiring only)
+pub mod import_container;
+pub mod naming_container;
+pub mod role_container;

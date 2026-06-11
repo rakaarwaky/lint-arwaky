@@ -2,6 +2,7 @@
 
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::role_rules::contract_role_aggregate::IRoleAggregate;
+use crate::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use crate::shared_common::taxonomy_source_vo::{ContentString, SourceContentVO};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
@@ -110,4 +111,16 @@ impl RoleOrchestrator {
             }
         }
     }
+}
+
+#[async_trait::async_trait]
+impl IRoleRunnerAggregate for RoleOrchestrator {
+    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        let mut results = Vec::new();
+        let path_str = target.value();
+        self.run_all_role_checks(&[path_str.to_string()], 500, &mut results);
+        results
+    }
+
+    fn name(&self) -> &str { "role-rules" }
 }

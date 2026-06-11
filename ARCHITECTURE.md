@@ -53,7 +53,7 @@ Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `cli_main_entry.rs`, `mcp_main_entry.
 %%{init: {'theme': 'default'}}%%
 graph TD
     S["Surfaces<br/>(CLI, MCP Server, API)"]
-    A["Agent<br/>(DI Container, Orchestrators)"]
+    A["Agent<br/>(Orchestrators)"]
     C["Capabilities<br/>(Checkers, Analyzers)"]
     I["Infrastructure<br/>(Adapters, Scanners)"]
     CT["Contract<br/>(Ports, Protocols, Aggregates)"]
@@ -61,8 +61,6 @@ graph TD
 
     S -->|"imports"| CT
     S -->|"imports"| T
-    A -->|"imports"| C
-    A -->|"imports"| I
     A -->|"imports"| CT
     A -->|"imports"| T
     C -->|"imports"| CT
@@ -82,7 +80,7 @@ Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[
 | `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                    | `layer-rules/`, `config-system/`, `di-containers/`, `pipeline-jobs/`, etc.                      |
 | `capabilities_`   | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions`                                                                                                                          | `layer-rules/`, `semantic-analysis/`, `naming-rules/`, `code-analysis/`, etc.                   |
 | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `language-adapters/`, `source-parsing/`, `config-system/`, `file-system/`, `http-client/`, etc. |
-| `agent_`          | `_container`, `_orchestrator`, `_lifecycle`                                                                                                                                                                                                                                                                                                                                                                                                                           | `role-rules/`, `pipeline-jobs/`, `code-analysis/`, `di-containers/`, `lifecycle-state/`, etc.   |
+| `agent_`          | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                       | `pipeline-jobs/`, `code-analysis/`, etc.                                                        |
 | `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                    | `cli-commands/`, `mcp-server/`                                                                  |
 
 ### Feature Folders (26 vertical slices)
@@ -160,12 +158,9 @@ src-rust/
 #### 5. Agent (`agent_` prefix)
 
 |- **Prefix**: `agent_`
-|- **Allowed Suffixes**: `_container`, `_orchestrator`, `_lifecycle`
-|- **Allowed Imports**: Depends on role:
-| - `orchestrator`: `taxonomy_` + `contract_` only (AES0305). Must NOT import capabilities/infrastructure directly.
-| - `container`: `taxonomy_` + `contract_` + `capabilities_` + `infrastructure_` (wiring assembly, registry, mixin).
-| - `lifecycle`: `taxonomy_` + `contract_` only (state tracking, lifecycle management).
-|- **Description**: Orchestration, DI wiring, pipeline execution, lifecycle tracking.
+- **Allowed Suffixes**: `_orchestrator`
+- **Allowed Imports**: `taxonomy_` + `contract_` only (AES0305). Must NOT import capabilities/infrastructure directly.
+- **Description**: Orchestration and pipeline execution.
 
 #### 6. Surfaces (`surface_` prefix)
 

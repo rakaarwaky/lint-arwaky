@@ -31,3 +31,5 @@ pub mod contract_capabilities_role_protocol;
 pub use contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 pub mod agent_role_container;
 pub use agent_role_container::RoleAggregateImpl;
+pub mod contract_role_runner_aggregate;
+pub use contract_role_runner_aggregate::IRoleRunnerAggregate;
