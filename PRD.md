@@ -8,7 +8,7 @@
 
 **Name**: Lint Arwaky
 **Type**: CLI tool + MCP server + TUI launcher
-**Version**: 1.10.6
+**Version**: 1.10.9
 **License**: MIT
 **Language**: Rust (2021 edition)
 
@@ -344,24 +344,28 @@ Subcommands are defined in `src-rust/surfaces/cli_core_command.rs` and dispatche
 
 ## 11. Dependencies (Cargo.toml)
 
-| Crate              | Version           | Purpose                   |
-| ------------------ | ----------------- | ------------------------- |
-| serde              | 1.0               | Serialization framework   |
-| serde_json         | 1.0               | JSON support              |
-| serde_yaml         | 0.9.34            | YAML config support       |
-| toml               | 1.1.2             | TOML parsing (Cargo.lock) |
-| regex              | 1.10              | Pattern matching          |
-| tokio              | 1.52.3            | Async runtime             |
-| async-trait        | 0.89              | Async trait support       |
-| once_cell          | 1.21.4            | Global statics            |
-| thiserror          | 1.0.52            | Error derive macros       |
-| anyhow             | 1.0.102           | Error context             |
-| clap               | 4.6.1             | CLI parsing               |
-| reqwest            | 0.13.4 (blocking) | HTTP client               |
-| chrono             | 0.4.44            | Date/time                 |
-| mcp-sdk-rs         | 0.3.4             | MCP protocol              |
-| rand               | 0.10.1            | Random number generation  |
-| tracing            | 0.1               | Structured logging        |
-| tracing-subscriber | 0.3               | Log filtering             |
+| Crate              | Version           | Purpose                        |
+| ------------------ | ----------------- | ------------------------------ |
+| serde              | 1.0               | Serialization framework        |
+| serde_json         | 1.0               | JSON support                   |
+| serde_yaml         | 0.9.34            | YAML config support            |
+| toml               | 1.1.2             | TOML parsing (Cargo.lock)      |
+| regex              | 1.10              | Pattern matching               |
+| tokio              | 1.52.3 (full)     | Async runtime                  |
+| async-trait        | 0.1.89            | Async trait support            |
+| once_cell          | 1.21.4            | Global statics                 |
+| thiserror          | 1.0.52            | Error derive macros            |
+| anyhow             | 1.0.102           | Error context                  |
+| clap               | 4.6.1 (derive)    | CLI parsing                    |
+| reqwest            | 0.13.4 (blocking) | HTTP client                    |
+| chrono             | 0.4.44            | Date/time                      |
+| mcp-sdk-rs         | 0.3.4             | MCP protocol (JSON-RPC 2.0)    |
+| rand               | 0.10.1            | Random number generation       |
+| tracing            | 0.1               | Structured logging             |
+| tracing-subscriber | 0.3 (env-filter)  | Log filtering                  |
+| rustsec            | 0.33              | Cargo audit / advisory DB      |
+| dirs               | 6.0               | Platform-specific directories  |
+| dialoguer          | 0.11              | Interactive CLI prompts        |
+| console            | 0.15              | Terminal styling & colors      |
 
 ---
