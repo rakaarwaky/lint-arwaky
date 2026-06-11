@@ -59,3 +59,7 @@ pub mod taxonomy_catalog_constant;
 pub use taxonomy_catalog_constant::COMMAND_CATALOG;
 pub mod taxonomy_metadata_vo;
 pub use taxonomy_metadata_vo::CommandMetadataVO;
+
+// Re-export moved contracts for backward compatibility with existing surface imports
+pub use crate::cli_transport::contract_executor_port;
+pub use crate::output_report::contract_report_aggregate;

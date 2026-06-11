@@ -1,11 +1,12 @@
 // PURPOSE: InjectionContainer — DI container wiring capabilities and protocols via arc_swap references
 
 use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use crate::cli_transport::contract_executor_port::ICommandExecutorPort;
 use crate::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use crate::cli_transport::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
 use crate::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use crate::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
 use crate::code_analysis::contract_unused_protocol::IUnusedProtocol;
 use crate::config_system::contract_discovery_port::IConfigDiscoveryPort;
@@ -17,13 +18,12 @@ use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::file_watch::contract_provider_port::IWatchProviderPort;
 use crate::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
 use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use crate::import_rules::contract_import_parser_port::IImportParserPort;
 use crate::language_adapters::contract_flow_port::IJavascriptFlowPort;
 use crate::language_adapters::contract_naming_port::INamingProviderPort;
 use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
 use crate::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
 use crate::language_adapters::contract_variant_port::INamingVariantPort;
-use crate::import_rules::contract_import_parser_port::IImportParserPort;
-use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use crate::mcp_server::contract_server_port::IMcpServerPort;
 use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
@@ -440,9 +440,7 @@ impl ServiceContainerAggregate for DependencyInjectionContainer {
     fn get_config_discovery_port(&self) -> Option<Arc<dyn IConfigDiscoveryPort>> {
         Some(self.config_discovery_port.clone())
     }
-    fn get_config_orchestration_aggregate(
-        &self,
-    ) -> Option<Arc<dyn IConfigOrchestrationAggregate>> {
+    fn get_config_orchestration_aggregate(&self) -> Option<Arc<dyn IConfigOrchestrationAggregate>> {
         Some(self.config_orchestration_aggregate.clone())
     }
     fn get_config_parser_port(&self) -> Option<Arc<dyn IConfigParserPort>> {

@@ -18,10 +18,11 @@ pub mod contract_lint_protocol;
 pub use contract_lint_protocol::IArchLintProtocol;
 pub mod capabilities_arch_self_lint_checker;
 pub use capabilities_arch_self_lint_checker::ArchSelfLintChecker;
-pub mod contract_cycle_protocol;
 pub mod capabilities_cycle_analyzer;
-pub use capabilities_cycle_analyzer::{detect_cycle_edges, DependencyEdge, DependencyCycleAnalyzer};
-
+pub mod contract_cycle_protocol;
+pub use capabilities_cycle_analyzer::{
+    detect_cycle_edges, DependencyCycleAnalyzer, DependencyEdge,
+};
 
 pub mod agent_codebase_scan_orchestrator;
 pub use agent_codebase_scan_orchestrator::{

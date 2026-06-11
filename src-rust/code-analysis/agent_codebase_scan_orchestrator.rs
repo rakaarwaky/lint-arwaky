@@ -1,9 +1,9 @@
 // PURPOSE: detect_source_dir + collect_source_files — entry point for codebase scan orchestration, discovers source dirs and scans all files for AES compliance
 use std::path::Path;
 
+use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use crate::config_system::taxonomy_config_vo::default_aes_config;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};

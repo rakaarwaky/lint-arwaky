@@ -1,8 +1,8 @@
 // PURPOSE: Command: CLI surface for check — runs lint_path and resolves violations for a target path
 use std::sync::Arc;
 
-use futures::future;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use futures::future;
 use std::process::ExitCode;
 
 use crate::code_analysis::{has_critical, lint_path, resolve_target};
@@ -79,7 +79,7 @@ impl CheckCommandsSurface {
                 adapter_futures.push(async move {
                     match adapter.scan(&path_clone).await {
                         Ok(results) => Ok((name_owned, results.values)),
-                        Err(e) => Err((name_owned, format!("{:?}", e)))
+                        Err(e) => Err((name_owned, format!("{:?}", e))),
                     }
                 });
             }

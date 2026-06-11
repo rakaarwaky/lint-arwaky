@@ -17,10 +17,10 @@ pub mod file_system;
 pub mod file_watch;
 #[path = "git-hooks/mod.rs"]
 pub mod git_hooks;
-#[path = "language-adapters/mod.rs"]
-pub mod language_adapters;
 #[path = "import-rules/mod.rs"]
 pub mod import_rules;
+#[path = "language-adapters/mod.rs"]
+pub mod language_adapters;
 #[path = "naming-rules/mod.rs"]
 pub mod naming_rules;
 

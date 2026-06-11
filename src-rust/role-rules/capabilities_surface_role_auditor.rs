@@ -1,14 +1,14 @@
 // PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES0306: smart/utility/passive surface role checks
-use crate::layer_rules::contract_rule_protocol::IAnalyzer;
+use crate::import_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
 use crate::output_report::taxonomy_severity_vo::Severity;
 use crate::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
+use crate::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_layer_names_vo::layer_surfaces;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_source_vo::SourceContentVO;

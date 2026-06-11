@@ -2,7 +2,6 @@
 pub mod taxonomy_name_vo;
 pub use taxonomy_name_vo::{NameVariants, SymbolName};
 
-
 pub mod taxonomy_common_error;
 pub use taxonomy_common_error::{
     Cause, Constraint, ExitCode, FieldName, ModuleName, PrimitiveTypeName,
@@ -27,10 +26,8 @@ pub use taxonomy_message_vo::{ComplianceStatus, LintMessage};
 pub mod taxonomy_adapter_name_vo;
 pub use taxonomy_adapter_name_vo::AdapterName;
 
-
 pub mod taxonomy_source_vo;
 pub use taxonomy_source_vo::{ContentString, SourceContentVO};
-
 
 pub mod taxonomy_violation_message_rs_error;
 pub use taxonomy_violation_message_rs_error::*;
@@ -39,9 +36,7 @@ pub use taxonomy_definition_vo::{LayerDefinition, LayerMapVO, NamingConfig};
 pub mod taxonomy_violation_message_js_error;
 pub mod taxonomy_violation_message_py_error;
 
-
 pub mod taxonomy_suggestion_vo;
 pub use taxonomy_suggestion_vo::{
     ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion,
 };
-

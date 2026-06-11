@@ -20,18 +20,15 @@ use std::sync::Arc;
 pub struct ImportIntentChecker {}
 
 impl ImportIntentChecker {
-    pub fn new(_parser: Arc<dyn crate::import_rules::contract_import_parser_port::IImportParserPort>) -> Self {
+    pub fn new(
+        _parser: Arc<dyn crate::import_rules::contract_import_parser_port::IImportParserPort>,
+    ) -> Self {
         Self {}
     }
 
     /// Check if taxonomy imports are used in function signatures (not just in dummy functions).
     /// Intent: surface files harus pakai Value Objects di signatures, bukan primitives.
-    fn check_taxonomy_intent(
-        &self,
-        file: &str,
-        content: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_taxonomy_intent(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
         let mut has_dummy_function = false;
         let mut dummy_function_line = 0;
@@ -52,8 +49,16 @@ impl ImportIntentChecker {
 
         // Check if taxonomy imports (LineNumber, ColumnNumber, etc.) are used in actual function signatures
         let taxonomy_primitives = [
-            "LineNumber", "ColumnNumber", "Count", "Score",
-            "String", "bool", "i32", "u32", "f64", "usize",
+            "LineNumber",
+            "ColumnNumber",
+            "Count",
+            "Score",
+            "String",
+            "bool",
+            "i32",
+            "u32",
+            "f64",
+            "usize",
         ];
 
         // Get all public function signatures
@@ -120,20 +125,19 @@ impl ImportIntentChecker {
 
     /// Check if contract(aggregate) imports are actually called (not just PhantomData).
     /// Intent: surface files harus delegate ke aggregate, bukan implement logic sendiri.
-    fn check_aggregate_intent(
-        &self,
-        file: &str,
-        content: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_aggregate_intent(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
 
         // Find PhantomData usage of aggregate types
         let aggregate_types = [
-            "ReportCommandsAggregate", "DevCommandsAggregate",
-            "LintFixOrchestratorAggregate", "PipelineActionDispatcherAggregate",
-            "PluginCommandsAggregate", "OutputClientAggregate",
-            "MaintenanceCommandsAggregate", "GitCommandsAggregate",
+            "ReportCommandsAggregate",
+            "DevCommandsAggregate",
+            "LintFixOrchestratorAggregate",
+            "PipelineActionDispatcherAggregate",
+            "PluginCommandsAggregate",
+            "OutputClientAggregate",
+            "MaintenanceCommandsAggregate",
+            "GitCommandsAggregate",
         ];
 
         for (i, line) in lines.iter().enumerate() {
@@ -146,13 +150,16 @@ impl ImportIntentChecker {
                         // Found PhantomData::<dyn AggregateType> — this is a dummy import
                         // Check if this aggregate type is actually USED in the file (not just PhantomData)
                         let type_name = agg_type.to_string();
-                        let real_usage_count = lines.iter().filter(|l| {
-                            let t = l.trim();
-                            t.contains(&type_name)
-                                && !t.contains("PhantomData")
-                                && !t.contains("fn _use_")
-                                && !t.starts_with("//")
-                        }).count();
+                        let real_usage_count = lines
+                            .iter()
+                            .filter(|l| {
+                                let t = l.trim();
+                                t.contains(&type_name)
+                                    && !t.contains("PhantomData")
+                                    && !t.contains("fn _use_")
+                                    && !t.starts_with("//")
+                            })
+                            .count();
 
                         if real_usage_count == 0 {
                             violations.push(LintResult::new_arch(
@@ -164,7 +171,8 @@ impl ImportIntentChecker {
                                     source_layer: LayerNameVO::new("surfaces".to_string()),
                                     import_type: SymbolName::new(agg_type.to_string()),
                                     intent: SymbolName::new(
-                                        "Call aggregate functions instead of using PhantomData".to_string()
+                                        "Call aggregate functions instead of using PhantomData"
+                                            .to_string(),
                                     ),
                                     reason: None,
                                 },
@@ -178,20 +186,15 @@ impl ImportIntentChecker {
 
     /// Check if surface file implements logic that should be in aggregate.
     /// Intent: surface harus delegate, bukan implement.
-    fn check_surface_logic(
-        &self,
-        file: &str,
-        content: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_surface_logic(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
 
         // Patterns that indicate surface is implementing logic instead of delegating
         let logic_patterns = [
-            "lint_path(",       // direct call instead of through aggregate
-            "compute_score(",   // direct call instead of through aggregate
-            "has_critical(",    // direct call instead of through aggregate
-            "walk_rs_files(",   // direct call instead of through aggregate
+            "lint_path(",     // direct call instead of through aggregate
+            "compute_score(", // direct call instead of through aggregate
+            "has_critical(",  // direct call instead of through aggregate
+            "walk_rs_files(", // direct call instead of through aggregate
         ];
 
         for (i, line) in lines.iter().enumerate() {
@@ -211,7 +214,8 @@ impl ImportIntentChecker {
                             source_layer: LayerNameVO::new("surfaces".to_string()),
                             import_type: SymbolName::new(pattern.to_string()),
                             intent: SymbolName::new(format!(
-                                "Delegate to aggregate instead of calling '{}' directly", pattern
+                                "Delegate to aggregate instead of calling '{}' directly",
+                                pattern
                             )),
                             reason: None,
                         },

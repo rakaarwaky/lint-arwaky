@@ -19,4 +19,3 @@ pub use infrastructure_import_parser_adapter::ImportParserAdapter;
 
 pub mod contract_rule_protocol;
 pub use contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
-

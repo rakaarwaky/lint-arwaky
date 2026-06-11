@@ -3,15 +3,15 @@ use crate::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::layer_rules::contract_rule_protocol::IAnalyzer;
+use crate::import_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_severity_vo::Severity;
+use crate::role_rules::taxonomy_layer_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::ColumnNumber;
 use crate::shared_common::taxonomy_common_vo::LineNumber;
 use crate::shared_common::taxonomy_definition_vo::LayerDefinition;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::shared_common::taxonomy_layer_names_vo::layer_infrastructure;
 use crate::shared_common::taxonomy_lint_vo::LocationList;
 use crate::shared_common::taxonomy_message_vo::LintMessage;
 use crate::shared_common::taxonomy_name_vo::SymbolName;

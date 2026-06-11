@@ -79,10 +79,8 @@ static FUNC_DEF_RE: Lazy<Regex> = Lazy::new(|| {
         .expect("FUNC_DEF_RE regex compile failed")
 });
 
-static DECORATOR_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\s*@(.+)$")
-        .expect("DECORATOR_RE regex compile failed")
-});
+static DECORATOR_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^\s*@(.+)$").expect("DECORATOR_RE regex compile failed"));
 
 static DOCSTRING_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"^\s*(?:"""[\s\S]*?"""|'''[\s\S]*?''')"#)

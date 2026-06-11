@@ -2,8 +2,8 @@
 
 use crate::code_analysis::taxonomy_import_source_vo::ImportInfo;
 use crate::language_adapters::contract_flow_port::IJavascriptFlowPort;
+use crate::language_adapters::taxonomy_naming_list_vo::SymbolNameList;
 use crate::shared_common::taxonomy_name_vo::SymbolName;
-use crate::shared_common::taxonomy_naming_list_vo::SymbolNameList;
 use crate::shared_common::taxonomy_suggestion_vo::MetadataVO;
 
 pub type JavascriptFlowPortRef = Box<dyn IJavascriptFlowPort>;

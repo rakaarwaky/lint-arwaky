@@ -1,8 +1,8 @@
 // PURPOSE: AppConfigVO, AppName, AppVersion — value objects for application configuration metadata
 use std::env;
 
+use crate::config_system::taxonomy_adapter_vo::AdapterNameList;
 use crate::config_system::taxonomy_setting_vo::{AdapterStatus, ProjectConfig, Thresholds};
-use crate::shared_common::taxonomy_adapter_vo::AdapterNameList;
 use crate::shared_common::taxonomy_common_vo::BooleanVO;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 

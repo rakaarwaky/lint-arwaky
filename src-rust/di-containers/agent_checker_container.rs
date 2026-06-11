@@ -2,22 +2,22 @@
 
 use crate::code_analysis::capabilities_check_bypass_checker::BypassChecker;
 use crate::code_analysis::capabilities_class_checker::ArchClassChecker;
+use crate::code_analysis::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
 use crate::code_analysis::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
 use crate::code_analysis::capabilities_inline_unused_checker::InlineUnusedChecker;
 use crate::code_analysis::capabilities_line_checker::ArchLineChecker;
 use crate::code_analysis::capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
+use crate::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
 use crate::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::code_analysis::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
 use crate::import_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
-use crate::import_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use crate::import_rules::capabilities_import_intent_checker::ImportIntentChecker;
+use crate::import_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use crate::import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
-use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
-use crate::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
 use crate::import_rules::contract_rule_protocol::{
     IAnalyzer, IArchImportProtocol, INamingCheckerProtocol,
 };
+use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
 use crate::orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
 use crate::orphan_detector::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
 use crate::orphan_detector::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;

@@ -284,7 +284,7 @@ impl OrphanGraphResolver {
     }
 }
 
-use crate::shared_common::taxonomy_layer_names_constant::{
+use crate::orphan_detector::taxonomy_layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_SURFACES,
     LAYER_TAXONOMY,
 };

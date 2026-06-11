@@ -1,11 +1,11 @@
 // PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations via IArchLintProtocol, tracks fix results
 use crate::auto_fix::contract_fix_protocol::IFixProtocol;
+use crate::auto_fix::taxonomy_fix_applied_event::FixApplied;
+use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
 use crate::shared_common::taxonomy_common_vo::Count;
 use crate::shared_common::taxonomy_error_vo::ErrorCode;
-use crate::auto_fix::taxonomy_fix_applied_event::FixApplied;
-use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;

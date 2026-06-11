@@ -1,9 +1,9 @@
 // PURPOSE: ValidationUtil — helper functions for validating JSON-RPC request parameters
+use crate::language_adapters::taxonomy_adapter_error::ValidationError;
 use crate::mcp_server::contract_server_port::IMcpServerPort;
 use crate::mcp_server::taxonomy_server_constant::MAX_PATH_DEPTH;
 use crate::mcp_server::taxonomy_server_constant::MAX_PATH_LENGTH;
 use crate::mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;
-use crate::shared_common::taxonomy_adapter_error::ValidationError;
 use crate::shared_common::taxonomy_common_error::Constraint;
 use crate::shared_common::taxonomy_common_error::ErrorMessage;
 use crate::shared_common::taxonomy_common_error::FieldName;

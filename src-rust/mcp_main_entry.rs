@@ -127,7 +127,11 @@ async fn handle_request(request: Value, state: &Arc<Mutex<ServerState>>) -> Valu
 
             let result = match tool_name {
                 "execute_command" => {
-                    let action = arguments.get("action").and_then(|a| a.as_str()).unwrap_or("").to_string();
+                    let action = arguments
+                        .get("action")
+                        .and_then(|a| a.as_str())
+                        .unwrap_or("")
+                        .to_string();
                     let args = arguments.get("args").cloned();
                     let container = state.lock().unwrap().container.clone();
                     surface_tools_command::execute_command_tool(container, action, args).await
@@ -188,10 +192,9 @@ pub async fn run_server() {
     eprintln!("Listening on stdin/stdout (JSON-RPC 2.0)");
     eprintln!("Press Ctrl+C to stop");
 
-    let container: Arc<dyn ServiceContainerAggregate> =
-        Arc::new(DependencyInjectionContainer::new(
-            DirectoryPath::new(".").unwrap_or_default(),
-        ));
+    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(
+        DependencyInjectionContainer::new(DirectoryPath::new(".").unwrap_or_default()),
+    );
     let state = Arc::new(Mutex::new(ServerState { container }));
 
     use tokio::io::{stdin, AsyncBufReadExt, BufReader};
@@ -223,7 +226,10 @@ pub async fn run_server() {
                                 "message": format!("Parse error: {}", e)
                             }
                         });
-                        println!("{}", serde_json::to_string(&error_response).unwrap_or_default());
+                        println!(
+                            "{}",
+                            serde_json::to_string(&error_response).unwrap_or_default()
+                        );
                     }
                 }
             }

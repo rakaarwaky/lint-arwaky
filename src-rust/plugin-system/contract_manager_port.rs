@@ -1,11 +1,11 @@
 // PURPOSE: IPluginManagerPort — port trait for plugin lifecycle management
 /* UNKNOWN: AdapterClassMap */
+use crate::config_system::taxonomy_adapter_vo::AdapterClassMap;
 use crate::plugin_system::taxonomy_group_vo::PluginGroup;
 /* UNKNOWN: PluginError */ use crate::plugin_system::taxonomy_manager_error::PluginError;
-use crate::shared_common::taxonomy_adapter_vo::AdapterClassMap;
 /* UNKNOWN: AdapterMetadataList */
+use crate::config_system::taxonomy_adapter_vo::AdapterMetadataList;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::shared_common::taxonomy_adapter_vo::AdapterMetadataList;
 use crate::shared_common::taxonomy_source_vo::ContentString;
 
 pub trait IPluginManagerPort: Send + Sync {

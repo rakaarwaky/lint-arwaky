@@ -11,9 +11,8 @@ use std::path::Path;
 static TRAIT_RUST_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(?:pub\s+)?trait\s+([A-Z][A-Za-z0-9_]+)").expect("TRAIT_RUST_RE compile failed")
 });
-static CLASS_PY_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"class\s+([A-Z][A-Za-z0-9_]+)").expect("CLASS_PY_RE compile failed")
-});
+static CLASS_PY_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"class\s+([A-Z][A-Za-z0-9_]+)").expect("CLASS_PY_RE compile failed"));
 static INTERFACE_TS_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(?:export\s+)?interface\s+([A-Z][A-Za-z0-9_]+)")
         .expect("INTERFACE_TS_RE compile failed")
