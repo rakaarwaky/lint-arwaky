@@ -1,4 +1,4 @@
-// PURPOSE: ArchImportForbiddenChecker — AES001: enforce forbidden import rules via definition, scope, and legacy governance
+// PURPOSE: ArchImportForbiddenChecker — AES001: enforce forbidden import rules via layer definition and scoped rules
 use async_trait::async_trait;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
@@ -190,86 +190,6 @@ impl ArchImportForbiddenChecker {
                 }
             }
         }
-    }
-
-    pub fn check_legacy_import_rules(
-        &self,
-        file: &str,
-        file_layer: &str,
-        config: &ArchitectureConfig,
-        violations: &mut Vec<LintResult>,
-    ) {
-        if config.governance_rules.is_empty() {
-            return;
-        }
-        if file_layer == "agent" {
-            return;
-        }
-
-        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
-        let import_lines = self.parser.read_import_lines(&file_path);
-        for (line_num, line) in &import_lines {
-            if let Some(module) = self.parser.extract_module_from_line(line) {
-                let target_layer = self.detect_module_layer(module.value(), config);
-                if let Some(target) = target_layer {
-                    for rule in config.governance_rules.iter() {
-                        let source_matches = rule.source_layer.value == file_layer;
-                        let target_matches = rule.forbidden_target.value == target;
-                        if source_matches && target_matches {
-                            let allowed: Vec<LayerNameVO> = config
-                                .rules
-                                .iter()
-                                .filter(|r| {
-                                    let scope_identity = Identity::new(&r.scope.value);
-                                    self.parser.resolve_scope(&scope_identity).0.value()
-                                        == file_layer
-                                })
-                                .flat_map(|r| {
-                                    r.allowed.values.iter().map(|s| LayerNameVO::new(s.clone()))
-                                })
-                                .collect();
-                            violations.push(LintResult::new_arch(
-                                file,
-                                line_num.value() as usize,
-                                "AES001",
-                                Severity::CRITICAL,
-                                AesViolation::ForbiddenImport {
-                                    source_layer: LayerNameVO::new(file_layer.to_string()),
-                                    forbidden_layer: LayerNameVO::new(target.clone()),
-                                    allowed,
-                                    reason: None,
-                                },
-                            ));
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fn detect_module_layer(&self, module: &str, config: &ArchitectureConfig) -> Option<String> {
-        let parts: Vec<&str> = if module.contains("::") {
-            module.split("::").collect()
-        } else {
-            module.split('.').collect()
-        };
-        for part in &parts {
-            let part_identity = Identity::new(*part);
-            if let Some(layer) = self.parser.extract_layer_from_import(&part_identity) {
-                return Some(layer.value().to_string());
-            }
-            for (name, def) in &config.layers {
-                if *part == name.value.as_str() {
-                    return Some(name.value.clone());
-                }
-                let path_last = def.path.value.split('/').next_back().unwrap_or("");
-                if *part == path_last {
-                    return Some(name.value.clone());
-                }
-            }
-        }
-        None
     }
 }
 
