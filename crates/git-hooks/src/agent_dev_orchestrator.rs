@@ -3,11 +3,11 @@ use cli_commands::contract_dev_aggregate::DevCommandsAggregate;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use std::collections::HashMap;
 
-use output_report::taxonomy_score_vo::FileFormat;
+use async_trait::async_trait;
+use shared::output_report::taxonomy_score_vo::FileFormat;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_vo::BooleanVO;
 use shared::taxonomy_layer_vo::Identity;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use async_trait::async_trait;
 
 /// Satisfy AES030 orphan detection - agent references contract ports/protocols
 fn _use_contract_references() {

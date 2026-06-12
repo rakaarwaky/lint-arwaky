@@ -56,7 +56,7 @@ pub fn check_taxonomy_orphan(
     fp: &str,
     basename: &str,
     files: &[String],
-    violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
 ) {
     let stem = basename.replace(".rs", "").replace(".py", "");
     let mut imported = false;

@@ -1,20 +1,10 @@
-// PURPOSE: Module declarations and re-exports for language-adapters (scanners, tracers, providers, linters)
-pub mod taxonomy_adapter_error;
-pub use taxonomy_adapter_error::{AdapterError, ScanError, ValidationError};
-pub mod taxonomy_naming_error;
-pub use taxonomy_naming_error::NamingError;
-pub mod taxonomy_naming_list_vo;
-pub use taxonomy_naming_list_vo::{
+// PURPOSE: Module declarations for language-adapters (tracers, providers, linters)
+pub use shared::language_adapters::taxonomy_adapter_error::{AdapterError, ScanError, ValidationError};
+pub use shared::language_adapters::taxonomy_naming_error::NamingError;
+pub use shared::language_adapters::taxonomy_naming_list_vo::{
     primitive_type_list, CallChainList, ImportNameList, PrimitiveTypeList, SymbolNameList,
 };
-pub mod contract_naming_port;
-pub use contract_naming_port::INamingProviderPort;
-pub mod contract_variant_port;
-pub use contract_variant_port::INamingVariantPort;
-pub mod contract_flow_port;
-pub use contract_flow_port::IJavascriptFlowPort;
-pub mod contract_scope_port;
-pub use contract_scope_port::{IJavascriptScopePort, IJsTracerPort};
+pub use shared::language_adapters::taxonomy_semantic_error::SemanticError;
 pub mod infrastructure_js_call_tracer;
 pub use infrastructure_js_call_tracer::JSCallAdapter;
 pub mod infrastructure_js_flow_tracer;
@@ -53,8 +43,4 @@ pub mod infrastructure_rs_fmt_adapter;
 pub use infrastructure_rs_fmt_adapter::RustFmtAdapter;
 pub mod infrastructure_rs_clippy_adapter;
 pub use infrastructure_rs_clippy_adapter::RustLinterAdapter;
-pub mod contract_semantic_tracer_port;
-pub use contract_semantic_tracer_port::ISemanticTracerPort;
-pub mod taxonomy_semantic_error;
-pub use taxonomy_semantic_error::SemanticError;
 pub mod root_language_container;

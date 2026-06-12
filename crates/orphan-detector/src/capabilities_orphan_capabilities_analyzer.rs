@@ -142,7 +142,7 @@ pub fn check_capabilities_orphan(
     fp: &str,
     basename: &str,
     files: &[String],
-    violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+    violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
 ) {
     let stem = basename.replace(".rs", "").replace(".py", "");
     let content = std::fs::read_to_string(fp).unwrap_or_default();

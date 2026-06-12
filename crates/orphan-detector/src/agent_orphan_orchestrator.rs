@@ -435,9 +435,9 @@ impl ArchOrphanAnalyzer {
         alive_files_set: &[String],
         layer_vo: &LayerNameVO,
         all_files: &[String],
-    ) -> crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult {
+    ) -> code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult {
         if f.ends_with("__init__.py") {
-            return crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
+            return code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
                 false,
                 String::new(),
                 Severity::HIGH,

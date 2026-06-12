@@ -1,10 +1,10 @@
 // PURPOSE: ConfigDiscoveryProvider — IDiscoveryPort implementation for finding config files in filesystem
 
-use config_system::contract_discovery_port::IConfigDiscoveryPort;
-use config_system::taxonomy_config_error::ConfigError;
-use config_system::taxonomy_config_vo::default_aes_config;
-use config_system::taxonomy_config_vo::parse_config_yaml;
-use config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::contract_discovery_port::IConfigDiscoveryPort;
+use shared::config_system::taxonomy_config_error::ConfigError;
+use shared::config_system::taxonomy_config_vo::default_aes_config;
+use shared::config_system::taxonomy_config_vo::parse_config_yaml;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::env;

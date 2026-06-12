@@ -3,12 +3,12 @@ use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use std::sync::Arc;
 
 pub struct AutoFixContainer {
-    arch_linter: Arc<dyn crate::code_analysis::contract_lint_protocol::IArchLintProtocol>,
+    arch_linter: Arc<dyn code_analysis::contract_lint_protocol::IArchLintProtocol>,
 }
 
 impl AutoFixContainer {
     pub fn new(
-        arch_linter: Arc<dyn crate::code_analysis::contract_lint_protocol::IArchLintProtocol>,
+        arch_linter: Arc<dyn code_analysis::contract_lint_protocol::IArchLintProtocol>,
     ) -> Self {
         Self { arch_linter }
     }

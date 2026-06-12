@@ -83,7 +83,7 @@ impl ILinterAdapterPort for BanditAdapter {
             .execute_command(
                 command,
                 working_dir,
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                Some(shared::taxonomy_duration_vo::Timeout::new(
                     120.0,
                 )),
             )

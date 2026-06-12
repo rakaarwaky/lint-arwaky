@@ -111,7 +111,7 @@ impl AgentRoleChecker {
         f: &FilePath,
         _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
+        results: &mut output_report::taxonomy_result_vo::LintResultList,
     ) {
         let contract_name = SymbolName::new("ServiceContainerAggregate");
         self._check_must_implement_contract(
@@ -129,7 +129,7 @@ impl AgentRoleChecker {
         f: &FilePath,
         _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
+        results: &mut output_report::taxonomy_result_vo::LintResultList,
     ) {
         let metadata_assigns = analyzer.parser().get_assignment_targets(f);
         let assignments = metadata_assigns
@@ -163,7 +163,7 @@ impl AgentRoleChecker {
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
-                            crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                            shared::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }
@@ -175,7 +175,7 @@ impl AgentRoleChecker {
         f: &FilePath,
         _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
+        results: &mut output_report::taxonomy_result_vo::LintResultList,
     ) {
         let imports = match analyzer.parser().extract_imports(f) {
             Ok(imp) => imp,
@@ -204,7 +204,7 @@ impl AgentRoleChecker {
         f: &FilePath,
         _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
+        results: &mut output_report::taxonomy_result_vo::LintResultList,
     ) {
         let metadata = analyzer.parser().get_class_methods(f);
         for class_methods in metadata.value.values() {
@@ -224,7 +224,7 @@ impl AgentRoleChecker {
                         severity: Severity::MEDIUM,
                         enclosing_scope: None,
                         related_locations:
-                            crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                            shared::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }
@@ -272,7 +272,7 @@ impl AgentRoleChecker {
         f: &FilePath,
         _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
+        results: &mut output_report::taxonomy_result_vo::LintResultList,
         code: &str,
     ) {
         let control_flow_count = analyzer.parser().get_control_flow_count(f);
@@ -296,7 +296,7 @@ impl AgentRoleChecker {
         f: &FilePath,
         _definition: &LayerDefinition,
         analyzer: &dyn IAnalyzer,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
+        results: &mut output_report::taxonomy_result_vo::LintResultList,
     ) {
         let metadata = analyzer.parser().get_class_methods(f);
         for class_methods in metadata.value.values() {
@@ -319,7 +319,7 @@ impl AgentRoleChecker {
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
-                            crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                            shared::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }
@@ -332,7 +332,7 @@ impl AgentRoleChecker {
         contract_name: &SymbolName,
         _violation_msg: impl Into<String>,
         analyzer: &dyn IAnalyzer,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
+        results: &mut output_report::taxonomy_result_vo::LintResultList,
         code: &str,
     ) {
         let bases_map = analyzer.parser().get_class_bases_map(f);
@@ -393,7 +393,7 @@ impl AgentRoleChecker {
         f: &FilePath,
         _definition: &LayerDefinition,
         _analyzer: &dyn IAnalyzer,
-        results: &mut crate::output_report::taxonomy_result_vo::LintResultList,
+        results: &mut output_report::taxonomy_result_vo::LintResultList,
     ) {
         let content = match std::fs::read_to_string(f.to_string().as_str()) {
             Ok(c) => c,
@@ -418,7 +418,7 @@ impl AgentRoleChecker {
                         severity: Severity::HIGH,
                         enclosing_scope: None,
                         related_locations:
-                            crate::shared_common::taxonomy_lint_vo::LocationList::new(),
+                            shared::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }
@@ -430,33 +430,33 @@ impl IAgentRoleChecker for AgentRoleChecker {
     fn check_container(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_orchestrator(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_lifecycle(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_file_size_limit(
         &self,
         source: &SourceContentVO,
         max_lines: usize,
-        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_file_size_limit(source, max_lines, violations);
     }
     fn check_any_type_annotation(
         &self,
         source: &SourceContentVO,
-        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_any_type_annotation(source, violations);
     }

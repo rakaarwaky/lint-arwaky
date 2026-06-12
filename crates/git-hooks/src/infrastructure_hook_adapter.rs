@@ -1,6 +1,6 @@
 // PURPOSE: HookAdapter — IHookManagerPort implementation for installing/uninstalling git hook scripts
 
-use git_hooks::contract_manager_port::IHookManagerPort;
+use shared::git_hooks::contract_manager_port::IHookManagerPort;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
@@ -59,7 +59,7 @@ exit 0
         );
         std::fs::write(&hook_path, &hook_content).map_err(|e| {
             crate::git_hooks::taxonomy_hook_error::GitHookError::new(
-                crate::shared_common::taxonomy_common_error::ErrorMessage::new(format!(
+                shared::taxonomy_common_error::ErrorMessage::new(format!(
                     "Failed to write hook: {}",
                     e
                 )),
@@ -70,7 +70,7 @@ exit 0
             let mut perms = std::fs::metadata(&hook_path)
                 .map_err(|e| {
                     crate::git_hooks::taxonomy_hook_error::GitHookError::new(
-                        crate::shared_common::taxonomy_common_error::ErrorMessage::new(format!(
+                        shared::taxonomy_common_error::ErrorMessage::new(format!(
                             "Failed to get metadata: {}",
                             e
                         )),
@@ -80,7 +80,7 @@ exit 0
             perms.set_mode(0o755);
             std::fs::set_permissions(&hook_path, perms).map_err(|e| {
                 crate::git_hooks::taxonomy_hook_error::GitHookError::new(
-                    crate::shared_common::taxonomy_common_error::ErrorMessage::new(format!(
+                    shared::taxonomy_common_error::ErrorMessage::new(format!(
                         "Failed to set permissions: {}",
                         e
                     )),
@@ -100,7 +100,7 @@ exit 0
         if hook_path.exists() {
             std::fs::remove_file(&hook_path).map_err(|e| {
                 crate::git_hooks::taxonomy_hook_error::GitHookError::new(
-                    crate::shared_common::taxonomy_common_error::ErrorMessage::new(format!(
+                    shared::taxonomy_common_error::ErrorMessage::new(format!(
                         "Failed to remove hook: {}",
                         e
                     )),
