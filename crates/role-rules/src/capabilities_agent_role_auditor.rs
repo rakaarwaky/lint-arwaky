@@ -2,8 +2,8 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
-use shared::shared::output_report::taxonomy_result_vo::LintResult;
-use shared::shared::output_report::taxonomy_severity_vo::Severity;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_infrastructure;
 use shared::taxonomy_adapter_name_vo::AdapterName;

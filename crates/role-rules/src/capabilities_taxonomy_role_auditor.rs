@@ -1,5 +1,5 @@
-use shared::shared::output_report::taxonomy_result_vo::LintResult;
-use shared::shared::output_report::taxonomy_severity_vo::Severity;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;

@@ -1,9 +1,9 @@
 // PURPOSE: InfrastructureOrphanAnalyzer — IInfrastructureOrphanProtocol for orphan infrastructure detection
-use shared::shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::orphan_detector::contract_orphan_protocol::IInfrastructureOrphanProtocol;
-use shared::shared::output_report::taxonomy_severity_vo::Severity;
-use shared::shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct InfrastructureOrphanAnalyzer {}
 

@@ -1,8 +1,8 @@
 // PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection
-use shared::shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use shared::shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
+use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::orphan_detector::contract_orphan_protocol::ITaxonomyOrphanProtocol;
-use shared::shared::output_report::taxonomy_severity_vo::Severity;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_definition_vo::LayerDefinition;
 

@@ -2,9 +2,9 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
-use shared::shared::output_report::taxonomy_result_vo::LintResult;
-use shared::shared::output_report::taxonomy_result_vo::LintResultList;
-use shared::shared::output_report::taxonomy_severity_vo::Severity;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::source_parsing::taxonomy_path_vo::FilePath;

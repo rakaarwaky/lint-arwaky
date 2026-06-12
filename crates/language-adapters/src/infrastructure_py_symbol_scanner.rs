@@ -1,6 +1,6 @@
 // PURPOSE: PySymbolScanner — scans Python files for class and function symbol definitions
 
-use shared::shared::code_analysis::taxonomy_import_source_vo::ImportInfo;
+use shared::code_analysis::taxonomy_import_source_vo::ImportInfo;
 use shared::language_adapters::contract_flow_port::IJavascriptFlowPort;
 use shared::language_adapters::taxonomy_naming_list_vo::SymbolNameList;
 use shared::taxonomy_name_vo::SymbolName;

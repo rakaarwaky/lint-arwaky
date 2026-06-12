@@ -3,8 +3,8 @@
 use async_trait::async_trait;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
-use shared::shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::shared::output_report::taxonomy_severity_vo::Severity;
+use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_adapter_name_vo::AdapterName;

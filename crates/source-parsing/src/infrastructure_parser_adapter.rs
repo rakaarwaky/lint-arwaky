@@ -1,7 +1,7 @@
 // PURPOSE: ParserAdapter — routes file extensions to the correct language-specific scanner
 
-use shared::shared::code_analysis::taxonomy_import_source_vo::ImportInfoList;
-use shared::shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
+use shared::code_analysis::taxonomy_import_source_vo::ImportInfoList;
+use shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
 use shared::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
 use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;

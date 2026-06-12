@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::naming_rules::ArchNamingChecker;
-use shared::shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::FilePathList;
 use std::path::Path;
