@@ -1,50 +1,45 @@
 // PURPOSE: CompositionRoot — composition root container (root_container layer)
-use std::sync::Arc;
 use std::collections::HashMap;
+use std::sync::Arc;
 
-use crate::import_rules::root_import_container::ImportContainer;
-use crate::naming_rules::root_naming_container::NamingContainer;
-use crate::role_rules::root_role_container::RoleContainer;
-use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-
-use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use crate::cli_transport::contract_executor_port::ICommandExecutorPort;
-use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use shared::source_parsing::contract_parser_port::ISourceParserPort;
-use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
-use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
-use crate::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use crate::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
-use crate::code_analysis::contract_unused_protocol::IUnusedProtocol;
-use crate::config_system::contract_discovery_port::IConfigDiscoveryPort;
-use crate::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
-use crate::config_system::contract_parser_port::IConfigParserPort;
-use crate::config_system::contract_validator_protocol::IConfigValidatorProtocol;
-use crate::file_system::contract_system_port::IFileSystemPort;
-use crate::file_watch::contract_provider_port::IWatchProviderPort;
-use crate::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
-use crate::git_hooks::orchestrator_aggregate::HookManagementOrchestratorAggregate;
-use crate::language_adapters::contract_flow_port::IJavascriptFlowPort;
-use crate::language_adapters::contract_naming_port::INamingProviderPort;
-use crate::language_adapters::contract_scope_port::IJavascriptScopePort;
-use crate::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
-use crate::language_adapters::contract_variant_port::INamingVariantPort;
-use crate::import_rules::contract_import_parser_port::IImportParserPort;
-use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
-use crate::mcp_server::contract_server_port::IMcpServerPort;
-use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
+use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::cli_transport::contract_executor_port::ICommandExecutorPort;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
+use shared::code_analysis::contract_unused_protocol::IUnusedProtocol;
+use shared::config_system::contract_discovery_port::IConfigDiscoveryPort;
+use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
+use shared::config_system::contract_parser_port::IConfigParserPort;
+use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
+use shared::file_system::contract_system_port::IFileSystemPort;
+use shared::file_watch::contract_provider_port::IWatchProviderPort;
+use shared::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
+use shared::git_hooks::orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::language_adapters::contract_flow_port::IJavascriptFlowPort;
+use shared::language_adapters::contract_naming_port::INamingProviderPort;
+use shared::language_adapters::contract_scope_port::IJavascriptScopePort;
+use shared::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
+use shared::language_adapters::contract_variant_port::INamingVariantPort;
+use shared::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
+use shared::mcp_server::contract_server_port::IMcpServerPort;
+use shared::metrics_service::contract_metrics_port::IMetricsProviderPort;
 use shared::multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
-use crate::output_report::contract_output_aggregate::IReportFormatterProtocol;
-use crate::pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
-use crate::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
-use crate::pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use crate::plugin_system::contract_manager_port::IPluginManagerPort;
-use crate::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared::output_report::contract_output_aggregate::IReportFormatterProtocol;
+use shared::pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
+use shared::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
+use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use shared::plugin_system::contract_manager_port::IPluginManagerPort;
+use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use shared::shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
-use crate::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 
 pub struct CompositionRoot {
     // Feature containers (new pattern)
@@ -175,15 +170,23 @@ impl CompositionRoot {
     }
 
     // NEW: Typed orchestrators (feature-specific)
-    pub fn import_orchestrator(&self) -> Arc<dyn crate::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate> {
+    pub fn import_orchestrator(
+        &self,
+    ) -> Arc<dyn crate::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate>
+    {
         self.import.orchestrator()
     }
 
-    pub fn naming_orchestrator(&self) -> Arc<dyn crate::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate> {
+    pub fn naming_orchestrator(
+        &self,
+    ) -> Arc<dyn crate::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate>
+    {
         self.naming.orchestrator()
     }
 
-    pub fn role_orchestrator(&self) -> Arc<dyn crate::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate> {
+    pub fn role_orchestrator(
+        &self,
+    ) -> Arc<dyn crate::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate> {
         self.role.orchestrator()
     }
 }

@@ -1,6 +1,6 @@
 // PURPOSE: RoleContainer — wiring for role-rules feature (root layer, wiring only)
-use crate::role_rules::contract_role_aggregate::IRoleAggregate;
-use crate::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::role_rules::contract_role_aggregate::IRoleAggregate;
+use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
 
 pub struct RoleContainer {

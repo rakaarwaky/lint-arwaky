@@ -11,25 +11,25 @@ pub struct NamingContainer {
 
 impl NamingContainer {
     pub fn new() -> Self {
-        let config = crate::config_system::taxonomy_config_vo::default_aes_config();
+        let config = config_system::taxonomy_config_vo::default_aes_config();
         let fs = Arc::new(
-            crate::file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
+            file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
         );
         let source_parser = Arc::new(
-            crate::source_parsing::infrastructure_parser_adapter::SourceParserOrchestrator::new(
+            source_parsing::infrastructure_parser_adapter::SourceParserOrchestrator::new(
                 Box::new(
-                    crate::source_parsing::infrastructure_py_scanner::ASTPythonParserAdapter::new(),
+                    source_parsing::infrastructure_py_scanner::ASTPythonParserAdapter::new(),
                 ),
                 Box::new(
-                    crate::source_parsing::infrastructure_rust_scanner::ASTRustParserAdapter::new(),
+                    source_parsing::infrastructure_rust_scanner::ASTRustParserAdapter::new(),
                 ),
                 Box::new(
-                    crate::source_parsing::infrastructure_js_scanner::ASTJSParserAdapter::new(),
+                    source_parsing::infrastructure_js_scanner::ASTJSParserAdapter::new(),
                 ),
             ),
         );
         let analyzer = Arc::new(
-            crate::import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
+            import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
                 config,
                 fs,
                 source_parser,

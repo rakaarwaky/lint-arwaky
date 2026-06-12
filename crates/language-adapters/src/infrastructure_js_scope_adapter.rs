@@ -110,7 +110,7 @@ impl IJsTracerPort for JSScopeTracer {
                 kind: if name.starts_with("class") {
                     DescriptionVO::new("class")
                 } else {
-                    crate::shared_common::taxonomy_suggestion_vo::DescriptionVO::new("function")
+                    shared::taxonomy_suggestion_vo::DescriptionVO::new("function")
                 },
                 file: Some(file_path.clone()),
                 start_line: Some(LineNumber::new(*start_line as i64)),

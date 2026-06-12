@@ -1,9 +1,9 @@
 // PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk
-use config_system::contract_reader_port::IConfigReaderPort;
-use config_system::taxonomy_source_vo::ConfigSource;
+use async_trait::async_trait;
+use shared::config_system::contract_reader_port::IConfigReaderPort;
+use shared::config_system::taxonomy_source_vo::ConfigSource;
 use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
-use async_trait::async_trait;
 use std::sync::Arc;
 
 pub struct ConfigYamlReader {

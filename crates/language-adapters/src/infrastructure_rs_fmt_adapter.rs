@@ -95,7 +95,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir.clone(),
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                Some(shared::taxonomy_duration_vo::Timeout::new(
                     120.0,
                 )),
             )
@@ -168,7 +168,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir,
-                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
+                Some(shared::taxonomy_duration_vo::Timeout::new(
                     120.0,
                 )),
             )
