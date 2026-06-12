@@ -2888,12 +2888,9 @@ name = "project_setup-lint-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "cli_commands-lint-arwaky",
- "pipeline_jobs-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
 ]
 
 [[package]]

@@ -2,57 +2,76 @@
 set -euo pipefail
 
 CRATES=(
-  "shared-lint-arwaky" "source_parsing-lint-arwaky" "naming_rules-lint-arwaky" "import_rules-lint-arwaky"
-  "output_report-lint-arwaky" "pipeline_jobs-lint-arwaky" "code_analysis-lint-arwaky" "auto_fix-lint-arwaky"
-  "cli_commands-lint-arwaky" "config_system-lint-arwaky" "file_system-lint-arwaky" "file_watch-lint-arwaky"
-  "git_hooks-lint-arwaky" "language_adapters-lint-arwaky" "lifecycle_state-lint-arwaky" "mcp_server-lint-arwaky"
-  "metrics_service-lint-arwaky" "multi_project-lint-arwaky" "orphan_detector-lint-arwaky" "plugin_system-lint-arwaky"
-  "project_setup-lint-arwaky" "role_rules-lint-arwaky"
+  # LEVEL 0: Foundation
+  "shared-lint-arwaky"
+  # LEVEL 1: Depends only on shared
+  "source_parsing-lint-arwaky"
+  # LEVEL 2: Depends on shared + source-parsing
+  "file_system-lint-arwaky" "file_watch-lint-arwaky" "metrics_service-lint-arwaky" "multi_project-lint-arwaky" "code_analysis-lint-arwaky"
+  # LEVEL 3: Depends on Level 2
+  "lifecycle_state-lint-arwaky" "import_rules-lint-arwaky" "output_report-lint-arwaky" "pipeline_jobs-lint-arwaky" "config_system-lint-arwaky" "naming_rules-lint-arwaky" "git_hooks-lint-arwaky" "role_rules-lint-arwaky"
+  # LEVEL 4: Depends on Level 3
+  "auto_fix-lint-arwaky" "language_adapters-lint-arwaky" "plugin_system-lint-arwaky" "orphan_detector-lint-arwaky" "project_setup-lint-arwaky"
+  # LEVEL 5: Depends on Level 4
+  "cli_commands-lint-arwaky"
+  # LEVEL 6: Top-level
+  "mcp_server-lint-arwaky"
 )
 
-echo "=== Lint Arwaky — Cargo Check All Crates ==="
-echo ""
-echo "Select crates to check:"
-for i in "${!CRATES[@]}"; do
-  echo "  $((i+1))) ${CRATES[$i]}"
-done
-echo "  a) All crates (sequentially)"
-echo "  q) Quit"
-echo ""
+while true; do
+  echo "=== Lint Arwaky — Cargo Check All Crates ==="
+  echo ""
+  echo "Select crates to check:"
+  for i in "${!CRATES[@]}"; do
+    echo "  $((i+1))) ${CRATES[$i]}"
+  done
+  echo "  a) All crates (sequentially)"
+  echo "  q) Quit"
+  echo ""
 
-read -rp "Choose [1-22, a, q]: " choice
+  read -rp "Choose [1-22, a, q]: " choice
 
-case "$choice" in
-  a|A)
-    for crate in "${CRATES[@]}"; do
+  case "$choice" in
+    a|A)
+      failed=0
+      for crate in "${CRATES[@]}"; do
+        echo ""
+        echo "=== Checking $crate ==="
+        if ! cargo check -p "$crate" 2>&1; then
+          echo "=== $crate: FAILED ==="
+          failed=1
+          break
+        fi
+        echo "=== $crate: OK ==="
+      done
+      echo ""
+      if [ $failed -eq 0 ]; then
+        echo "=== All crates passed ==="
+      else
+        echo "=== Some crates failed ==="
+      fi
+      ;;
+    q|Q)
+      echo "Bye."
+      exit 0
+      ;;
+    [1-9]|1[0-9]|2[0-2])
+      idx=$((choice-1))
+      crate="${CRATES[$idx]}"
       echo ""
       echo "=== Checking $crate ==="
       if ! cargo check -p "$crate" 2>&1; then
         echo "=== $crate: FAILED ==="
-        exit 1
+      else
+        echo "=== $crate: OK ==="
       fi
-      echo "=== $crate: OK ==="
-    done
-    echo ""
-    echo "=== All crates passed ==="
-    ;;
-  q|Q)
-    echo "Bye."
-    exit 0
-    ;;
-  [1-9]|1[0-9]|2[0-2])
-    idx=$((choice-1))
-    crate="${CRATES[$idx]}"
-    echo ""
-    echo "=== Checking $crate ==="
-    if ! cargo check -p "$crate" 2>&1; then
-      echo "=== $crate: FAILED ==="
-      exit 1
-    fi
-    echo "=== $crate: OK ==="
-    ;;
-  *)
-    echo "Invalid choice."
-    exit 1
-    ;;
-esac
+      ;;
+    *)
+      echo "Invalid choice."
+      ;;
+  esac
+  echo ""
+  echo "--------------------------------------------------"
+  read -rp "Press Enter to return to the main menu... " _unused
+  echo ""
+done

@@ -43,7 +43,7 @@ capabilities_import_intent_checker.rs     ← capabilities layer
 capabilities_layer_detection_analyzer.rs  ← capabilities layer
 infrastructure_import_parser_adapter.rs   ← infrastructure layer
 agent_import_orchestrator.rs              ← agent layer
-taxonomy_rule_vo.rs                       ← taxonomy layer
+taxonomy_import_rule_vo.rs                ← taxonomy layer
 ```
 
 Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
@@ -143,7 +143,7 @@ crates/
 - **Allowed Imports**: Other `taxonomy_` files only. Outer imports trigger **AES001**.
 - **Description**: Pure domain models, value objects, and business entities.
 - **Components**:
-  - **Value Object (`_vo`)**: Immutable data containers. Primitive types forbidden (**AES016**). _Ex: `taxonomy_rule_vo.rs`_
+  - **Value Object (`_vo`)**: Immutable data containers. Primitive types forbidden (**AES016**). _Ex: `taxonomy_import_rule_vo.rs`_
   - **Entity (`_entity`)**: Stateful domain concepts with unique IDs. _Ex: `taxonomy_governance_entity.rs`_
   - **Event (`_event`)**: Immutable domain fact snapshots. _Ex: `taxonomy_fix_applied_event.rs`_
   - **Error (`_error`)**: Domain-level exceptions. _Ex: `taxonomy_system_error.rs`_
