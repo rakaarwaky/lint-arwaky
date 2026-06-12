@@ -1,6 +1,6 @@
 // PURPOSE: Orchestrator: Implements MaintenanceCommandsAggregate — stats, doctor, gc, rename, project maintenance
 
-use cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::pipeline_jobs::taxonomy_job_vo::JobId;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;

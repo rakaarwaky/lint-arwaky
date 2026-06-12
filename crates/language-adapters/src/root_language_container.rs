@@ -2,54 +2,54 @@
 use std::sync::Arc;
 
 pub struct LanguageContainer {
-    javascript_flow_port: Arc<dyn language_adapters::contract_flow_port::IJavascriptFlowPort>,
-    naming_provider_port: Arc<dyn language_adapters::contract_naming_port::INamingProviderPort>,
-    javascript_scope_port: Arc<dyn language_adapters::contract_scope_port::IJavascriptScopePort>,
-    semantic_tracer_port: Arc<dyn language_adapters::contract_semantic_tracer_port::ISemanticTracerPort>,
-    naming_variant_port: Arc<dyn language_adapters::contract_variant_port::INamingVariantPort>,
+    javascript_flow_port: Arc<dyn shared::language_adapters::contract_flow_port::IJavascriptFlowPort>,
+    naming_provider_port: Arc<dyn shared::language_adapters::contract_naming_port::INamingProviderPort>,
+    javascript_scope_port: Arc<dyn shared::language_adapters::contract_scope_port::IJavascriptScopePort>,
+    semantic_tracer_port: Arc<dyn shared::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort>,
+    naming_variant_port: Arc<dyn shared::language_adapters::contract_variant_port::INamingVariantPort>,
 }
 
 impl LanguageContainer {
     pub fn new() -> Self {
-        let variant: Arc<dyn language_adapters::contract_variant_port::INamingVariantPort> = Arc::new(
-            language_adapters::infrastructure_py_variants::PythonNamingVariantProvider::new(),
+        let variant: Arc<dyn shared::language_adapters::contract_variant_port::INamingVariantPort> = Arc::new(
+            crate::infrastructure_py_variants::PythonNamingVariantProvider::new(),
         );
         Self {
             javascript_flow_port: Arc::new(
-                language_adapters::infrastructure_js_flow_tracer::JSFlowAdapter::new(),
+                crate::infrastructure_js_flow_tracer::JSFlowAdapter::new(),
             ),
             naming_provider_port: Arc::new(
-                language_adapters::infrastructure_js_naming_provider::JavascriptNamingProvider::new(),
+                crate::infrastructure_js_naming_provider::JavascriptNamingProvider::new(),
             ),
             javascript_scope_port: Arc::new(
-                language_adapters::infrastructure_js_scope_provider::JSScopeProvider::new(),
+                crate::infrastructure_js_scope_provider::JSScopeProvider::new(),
             ),
             semantic_tracer_port: Arc::new(
-                language_adapters::infrastructure_py_ast_tracer::PythonTracer::new(
-                    Box::new(language_adapters::infrastructure_py_variants::PythonNamingVariantProvider::new()),
+                crate::infrastructure_py_ast_tracer::PythonTracer::new(
+                    Box::new(crate::infrastructure_py_variants::PythonNamingVariantProvider::new()),
                 ),
             ),
             naming_variant_port: variant,
         }
     }
 
-    pub fn javascript_flow_port(&self) -> Arc<dyn language_adapters::contract_flow_port::IJavascriptFlowPort> {
+    pub fn javascript_flow_port(&self) -> Arc<dyn shared::language_adapters::contract_flow_port::IJavascriptFlowPort> {
         self.javascript_flow_port.clone()
     }
 
-    pub fn naming_provider_port(&self) -> Arc<dyn language_adapters::contract_naming_port::INamingProviderPort> {
+    pub fn naming_provider_port(&self) -> Arc<dyn shared::language_adapters::contract_naming_port::INamingProviderPort> {
         self.naming_provider_port.clone()
     }
 
-    pub fn javascript_scope_port(&self) -> Arc<dyn language_adapters::contract_scope_port::IJavascriptScopePort> {
+    pub fn javascript_scope_port(&self) -> Arc<dyn shared::language_adapters::contract_scope_port::IJavascriptScopePort> {
         self.javascript_scope_port.clone()
     }
 
-    pub fn semantic_tracer_port(&self) -> Arc<dyn language_adapters::contract_semantic_tracer_port::ISemanticTracerPort> {
+    pub fn semantic_tracer_port(&self) -> Arc<dyn shared::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort> {
         self.semantic_tracer_port.clone()
     }
 
-    pub fn naming_variant_port(&self) -> Arc<dyn language_adapters::contract_variant_port::INamingVariantPort> {
+    pub fn naming_variant_port(&self) -> Arc<dyn shared::language_adapters::contract_variant_port::INamingVariantPort> {
         self.naming_variant_port.clone()
     }
 }

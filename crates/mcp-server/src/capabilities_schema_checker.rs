@@ -1,9 +1,9 @@
 // PURPOSE: SchemaChecker — validates JSON-RPC method schemas against server capabilities
 
-use code_analysis::contract_analysis_protocol::IAnalysisProtocol;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_result_vo::LintResultList;
-use output_report::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;

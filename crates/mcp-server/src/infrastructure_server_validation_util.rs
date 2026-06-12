@@ -1,9 +1,9 @@
 // PURPOSE: ValidationUtil — helper functions for validating JSON-RPC request parameters
-use language_adapters::taxonomy_adapter_error::ValidationError;
-use mcp_server::contract_server_port::IMcpServerPort;
-use mcp_server::taxonomy_server_constant::MAX_PATH_DEPTH;
-use mcp_server::taxonomy_server_constant::MAX_PATH_LENGTH;
-use mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;
+use shared::language_adapters::taxonomy_adapter_error::ValidationError;
+use shared::mcp_server::contract_server_port::IMcpServerPort;
+use shared::mcp_server::taxonomy_server_constant::MAX_PATH_DEPTH;
+use shared::mcp_server::taxonomy_server_constant::MAX_PATH_LENGTH;
+use shared::mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;
 use shared::taxonomy_common_error::Constraint;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_error::FieldName;

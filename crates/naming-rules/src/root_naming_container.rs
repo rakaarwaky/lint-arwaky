@@ -1,6 +1,6 @@
 // PURPOSE: NamingContainer — wiring for naming-rules feature (root layer, wiring only)
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
-use shared::naming_rules::capabilities_naming_checker::ArchNamingChecker;
+use crate::ArchNamingChecker;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use std::sync::Arc;
 
@@ -11,7 +11,7 @@ pub struct NamingContainer {
 
 impl NamingContainer {
     pub fn new() -> Self {
-        let config = config_system::taxonomy_config_vo::default_aes_config();
+        let config = shared::config_system::taxonomy_config_vo::default_aes_config();
         let fs = Arc::new(
             file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
         );
@@ -51,7 +51,7 @@ impl NamingContainer {
 
     pub fn orchestrator(&self) -> Arc<dyn INamingRunnerAggregate> {
         Arc::new(
-            crate::naming_rules::agent_naming_orchestrator::NamingOrchestrator::new(
+            crate::agent_naming_orchestrator::NamingOrchestrator::new(
                 self.checker.clone(),
                 self.analyzer.clone(),
             ),

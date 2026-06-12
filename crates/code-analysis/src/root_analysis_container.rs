@@ -1,6 +1,6 @@
 // PURPOSE: AnalysisContainer — wiring for code-analysis feature (root layer, wiring only)
 use std::sync::Arc;
-use crate::IArchLintProtocol;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use crate::CodebaseScanOrchestrator;
 
 pub struct AnalysisContainer {

@@ -5,8 +5,8 @@ use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use futures::future;
 use std::process::ExitCode;
 
-use code_analysis::{has_critical, lint_path, resolve_target};
-use output_report::taxonomy_result_vo::LintResultList;
+use shared::code_analysis::{has_critical, lint_path, resolve_target};
+use shared::output_report::taxonomy_result_vo::LintResultList;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 

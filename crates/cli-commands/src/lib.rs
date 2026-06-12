@@ -1,12 +1,11 @@
-// PURPOSE: Module declarations and re-exports for all CLI command surfaces
-pub mod taxonomy_command_catalog_vo;
-pub use taxonomy_command_catalog_vo::{command_catalog, CommandCatalogVO};
+// PURPOSE: Module declarations for cli-commands (surfaces, transport, container)
+pub use shared::cli_commands::taxonomy_command_catalog_vo::{command_catalog, CommandCatalogVO};
+pub use shared::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
+pub use shared::cli_commands::taxonomy_metadata_vo::CommandMetadataVO;
 
-// Transport (merged from cli-transport)
 pub mod infrastructure_transport_client;
 pub use infrastructure_transport_client::StdioClient;
 pub mod root_transport_container;
-
 pub mod surface_check_command;
 pub use surface_check_command::{register_check_commands, CheckCommandsSurface};
 pub mod surface_core_command;
@@ -37,7 +36,6 @@ pub mod surface_setup_command;
 pub use surface_setup_command::{get_setup, register_setup_commands, SetupCommandsSurface};
 pub mod surface_tui_command;
 pub use surface_tui_command::TuiCommandSurface;
-
 pub mod surface_watch_command;
 pub use surface_watch_command::{register_watch_command, WatchCommandsSurface, WatchdogBridge};
 pub mod surface_config_command;
@@ -46,16 +44,3 @@ pub mod surface_map_command;
 pub use surface_map_command::{
     handle_cancel, handle_diff, handle_export, handle_import, handle_suggest,
 };
-// backend logic moved to code-analysis/capabilities_project_target_resolver.rs
-pub use code_analysis::{
-    compute_score, count_loc, has_critical, lint_path, normalize_project_root, resolve_target,
-    walk_rs_files,
-};
-pub mod taxonomy_catalog_constant;
-pub use taxonomy_catalog_constant::COMMAND_CATALOG;
-pub mod taxonomy_metadata_vo;
-pub use taxonomy_metadata_vo::CommandMetadataVO;
-
-// Re-export moved contracts for backward compatibility with existing surface imports
-pub use cli_transport::contract_executor_port;
-pub use output_report::contract_report_aggregate;

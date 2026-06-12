@@ -1,5 +1,5 @@
 // PURPOSE: TuiCommandSurface — interactive menu-driven TUI for lint-arwaky-tui binary
-use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use shared::taxonomy_common_vo::LineNumber;
 use console::{style, Term};
 use dialoguer::theme::ColorfulTheme;

@@ -2,8 +2,8 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_severity_vo::Severity;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;

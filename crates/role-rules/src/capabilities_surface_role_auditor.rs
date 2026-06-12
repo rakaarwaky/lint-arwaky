@@ -93,7 +93,7 @@ impl SurfaceRoleChecker {
     pub async fn check_surface_roles(
         &self,
         analyzer: &dyn IAnalyzer,
-        files: &source_parsing::taxonomy_paths_vo::FilePathList,
+        files: &shared::source_parsing::taxonomy_paths_vo::FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
     ) {

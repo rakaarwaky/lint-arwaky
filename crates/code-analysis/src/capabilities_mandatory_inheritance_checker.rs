@@ -1,8 +1,8 @@
 // PURPOSE: MandatoryInheritanceChecker — IMandatoryInheritanceProtocol for AES014: enforce contract implementation (bidirectional)
-use crate::IMandatoryInheritanceProtocol;
-use crate::ArchitectureConfig;
-use crate::LintResult;
-use crate::Severity;
+use shared::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::taxonomy_layer_vo::LayerNameVO;
 use once_cell::sync::Lazy;
 use regex::Regex;

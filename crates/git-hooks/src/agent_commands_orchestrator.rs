@@ -1,8 +1,8 @@
 // PURPOSE: CommandsOrchestrator — orchestrates git hook operations (install, uninstall, run, update)
 
 use async_trait::async_trait;
-use git_hooks::contract_commands_aggregate::GitCommandsAggregate;
-use git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
+use shared::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
+use shared::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
 use shared::output_report::taxonomy_result_vo::LintResultList;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;

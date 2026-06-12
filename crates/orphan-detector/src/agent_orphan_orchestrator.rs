@@ -25,7 +25,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 // Only contract layer imports for indicators!
-use orphan_detector::contract_orphan_protocol::{
+use shared::orphan_detector::contract_orphan_protocol::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     IInfrastructureOrphanProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
 };
@@ -284,7 +284,7 @@ impl OrphanGraphResolver {
     }
 }
 
-use orphan_detector::taxonomy_layer_names_constant::{
+use shared::orphan_detector::taxonomy_layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_SURFACES,
     LAYER_TAXONOMY,
 };

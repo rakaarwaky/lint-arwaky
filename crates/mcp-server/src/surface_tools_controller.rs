@@ -1,7 +1,7 @@
 // PURPOSE: ToolsController — MCP surface for tool listing and execution
 
-use cli_commands::contract_dev_aggregate::DevCommandsAggregate;
-use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use shared::cli_commands::contract_dev_aggregate::DevCommandsAggregate;
+use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use shared::taxonomy_common_vo::LineNumber;
 use std::sync::Arc;
@@ -22,8 +22,8 @@ pub fn register_tools(container: Arc<dyn ServiceContainerAggregate>) {
     println!("Registering tools with container...");
 
     // Delegate to split modules
-    crate::mcp_server::surface_execute_command::register_execute_commands(container.clone());
-    crate::mcp_server::surface_command_controller::register_catalog_commands(container.clone());
-    crate::mcp_server::surface_health_controller::register_health_commands(container.clone());
-    crate::mcp_server::surface_client_controller::register_desktop_client(container.clone());
+    crate::surface_execute_command::register_execute_commands(container.clone());
+    crate::surface_command_controller::register_catalog_commands(container.clone());
+    crate::surface_health_controller::register_health_commands(container.clone());
+    crate::surface_client_controller::register_desktop_client(container.clone());
 }

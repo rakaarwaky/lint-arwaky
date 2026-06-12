@@ -1,8 +1,8 @@
 // PURPOSE: RoleContainer — assembles concrete role checkers into IRoleAggregate implementation
-use role_rules::capabilities_agent_role_auditor::AgentRoleChecker;
-use role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
-use role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
-use role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use crate::capabilities_agent_role_auditor::AgentRoleChecker;
+use crate::capabilities_contract_role_auditor::ContractRoleChecker;
+use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
+use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;

@@ -1,6 +1,6 @@
 // PURPOSE: PluginCommandsSurface — CLI surface for listing and managing enabled adapters/plugins
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use plugin_system::contract_commands_aggregate::PluginCommandsAggregate;
+use shared::plugin_system::contract_commands_aggregate::PluginCommandsAggregate;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use std::collections::BTreeMap;
 use std::process::ExitCode;

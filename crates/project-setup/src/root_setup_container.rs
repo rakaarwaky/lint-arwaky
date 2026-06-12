@@ -1,7 +1,7 @@
 // PURPOSE: SetupContainer — wiring for project-setup feature (root layer, wiring only)
 use std::sync::Arc;
-use crate::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 
 pub struct SetupContainer {
     aggregate: Arc<dyn SetupManagementAggregate>,
@@ -12,10 +12,10 @@ impl SetupContainer {
     pub fn new() -> Self {
         Self {
             aggregate: Arc::new(
-                crate::project_setup::agent_setup_orchestrator::SetupManagementOrchestrator::new(),
+                crate::agent_setup_orchestrator::SetupManagementOrchestrator::new(),
             ),
             protocol: Arc::new(
-                crate::project_setup::capabilities_setup_processor::SetupManagementProcessor::new(),
+                crate::capabilities_setup_processor::SetupManagementProcessor::new(),
             ),
         }
     }

@@ -1,11 +1,11 @@
 // PURPOSE: FixCommandsSurface — CLI surface for auto-fix operations via ServiceContainerAggregate
-use auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use cli_commands::surface_output_controller::{get_output_dir, tee_stdout, write_output};
-use code_analysis::resolve_target;
+use crate::surface_output_controller::{get_output_dir, tee_stdout, write_output};
+use shared::code_analysis::resolve_target;
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -49,7 +49,7 @@ impl FixCommandsSurface {
             }
 
             let orchestrator =
-                crate::code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new();
+                shared::code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new();
             let results = orchestrator.run_self_lint(&project_path);
             println!("Found {} violations before fix", results.len());
 

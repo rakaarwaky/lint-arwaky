@@ -1,11 +1,11 @@
 // PURPOSE: DependencyCycleAnalyzer — ICycleAnalysisProtocol for AES015: circular dependency detection
 
-use crate::ICycleAnalysisProtocol;
-use crate::ArchitectureConfig;
-use crate::IAnalyzer;
-use crate::LintResult;
-use crate::LintResultList;
-use crate::Severity;
+use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_rule_protocol::IAnalyzer;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;

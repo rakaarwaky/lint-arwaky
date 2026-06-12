@@ -73,7 +73,7 @@ pub fn check_taxonomy_orphan(
         }
     }
     if !imported {
-        violations.push(crate::orphan_detector::mk_orphan_result(
+        violations.push(shared::orphan_detector::mk_orphan_result(
             fp,
             "Taxonomy not imported by any contract.",
             Severity::LOW,

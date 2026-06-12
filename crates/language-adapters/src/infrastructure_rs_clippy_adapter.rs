@@ -3,7 +3,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use cli_transport::contract_executor_port::ICommandExecutorPort;
+use shared::cli_transport::contract_executor_port::ICommandExecutorPort;
 use serde_json::Value;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;

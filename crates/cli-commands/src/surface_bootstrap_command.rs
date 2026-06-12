@@ -1,5 +1,5 @@
 // PURPOSE: Command: CLI surface for bootstrap — initializes tracing/subscriber logging
-use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use shared::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 
@@ -57,7 +57,7 @@ pub fn handle_version(verbose: bool) -> ExitCode {
         println!("  Rustc:     {}", rustc);
         println!("  License:   MIT");
     } else {
-        crate::cli_commands::surface_core_command::CoreCommandsSurface::version();
+        crate::surface_core_command::CoreCommandsSurface::version();
     }
     ExitCode::SUCCESS
 }

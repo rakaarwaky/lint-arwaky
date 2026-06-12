@@ -31,7 +31,7 @@ impl IHookManagerPort for GitHookAdapter {
     fn install_pre_commit(
         &self,
         executable_path: &FilePath,
-    ) -> Result<SuccessStatus, crate::git_hooks::taxonomy_hook_error::GitHookError> {
+    ) -> Result<SuccessStatus, shared::git_hooks::taxonomy_hook_error::GitHookError> {
         if !self.is_git_repo() {
             return Ok(SuccessStatus::new(false));
         }
@@ -58,7 +58,7 @@ exit 0
             exe_str
         );
         std::fs::write(&hook_path, &hook_content).map_err(|e| {
-            crate::git_hooks::taxonomy_hook_error::GitHookError::new(
+            shared::git_hooks::taxonomy_hook_error::GitHookError::new(
                 shared::taxonomy_common_error::ErrorMessage::new(format!(
                     "Failed to write hook: {}",
                     e
@@ -69,7 +69,7 @@ exit 0
         {
             let mut perms = std::fs::metadata(&hook_path)
                 .map_err(|e| {
-                    crate::git_hooks::taxonomy_hook_error::GitHookError::new(
+                    shared::git_hooks::taxonomy_hook_error::GitHookError::new(
                         shared::taxonomy_common_error::ErrorMessage::new(format!(
                             "Failed to get metadata: {}",
                             e
@@ -79,7 +79,7 @@ exit 0
                 .permissions();
             perms.set_mode(0o755);
             std::fs::set_permissions(&hook_path, perms).map_err(|e| {
-                crate::git_hooks::taxonomy_hook_error::GitHookError::new(
+                shared::git_hooks::taxonomy_hook_error::GitHookError::new(
                     shared::taxonomy_common_error::ErrorMessage::new(format!(
                         "Failed to set permissions: {}",
                         e
@@ -92,14 +92,14 @@ exit 0
 
     fn uninstall_pre_commit(
         &self,
-    ) -> Result<SuccessStatus, crate::git_hooks::taxonomy_hook_error::GitHookError> {
+    ) -> Result<SuccessStatus, shared::git_hooks::taxonomy_hook_error::GitHookError> {
         if !self.is_git_repo() {
             return Ok(SuccessStatus::new(false));
         }
         let hook_path = self.git_dir().join("hooks").join("pre-commit");
         if hook_path.exists() {
             std::fs::remove_file(&hook_path).map_err(|e| {
-                crate::git_hooks::taxonomy_hook_error::GitHookError::new(
+                shared::git_hooks::taxonomy_hook_error::GitHookError::new(
                     shared::taxonomy_common_error::ErrorMessage::new(format!(
                         "Failed to remove hook: {}",
                         e

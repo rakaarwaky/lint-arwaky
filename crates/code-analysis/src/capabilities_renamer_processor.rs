@@ -1,5 +1,5 @@
 // PURPOSE: SymbolRenamerProcessor — renames symbols/filenames across the entire codebase with regex matching
-use crate::IAnalysisProtocol;
+use shared::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
 use shared::taxonomy_common_vo::LineNumber;
 use regex::Regex;
 use std::fs;

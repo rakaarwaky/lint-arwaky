@@ -1,8 +1,8 @@
 // PURPOSE: ServerLifespan — manages MCP server lifecycle (app, lifespan context, shutdown)
 
-use mcp_server::contract_server_port::IMcpServerPort;
-use mcp_server::taxonomy_server_constant::AUTO_LINT_VERSION;
-use mcp_server::taxonomy_server_constant::MCP_SERVER_VERSION;
+use shared::mcp_server::contract_server_port::IMcpServerPort;
+use shared::mcp_server::taxonomy_server_constant::AUTO_LINT_VERSION;
+use shared::mcp_server::taxonomy_server_constant::MCP_SERVER_VERSION;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 use std::path::PathBuf;

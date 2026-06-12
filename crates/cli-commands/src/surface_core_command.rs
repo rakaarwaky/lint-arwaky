@@ -1,5 +1,5 @@
 // PURPOSE: Cli + Commands enums — clap-based CLI definition with all subcommands (check, scan, fix, dev, config, report, setup, etc.)
-use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use shared::taxonomy_common_vo::LineNumber;
 
 use clap::{Parser, Subcommand};

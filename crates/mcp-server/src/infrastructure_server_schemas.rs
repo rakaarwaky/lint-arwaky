@@ -1,6 +1,6 @@
 // PURPOSE: ServerSchemas — JSON-RPC method schemas for all MCP endpoints
 /* UNKNOWN: MAX_STRING_LENGTH */
-use mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;
+use shared::mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;
 
 use serde_json::Value;
 

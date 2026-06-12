@@ -1,7 +1,7 @@
 // PURPOSE: handle_tools — MCP surface for listing available tools/capabilities
 
-use cli_commands::contract_dev_aggregate::DevCommandsAggregate;
-use cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use shared::cli_commands::contract_dev_aggregate::DevCommandsAggregate;
+use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use shared::taxonomy_common_vo::LineNumber;
 use serde_json::{json, Value};

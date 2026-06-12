@@ -2,10 +2,10 @@
 use async_trait::async_trait;
 use std::path::Path;
 
-use crate::IArchLintProtocol;
-use crate::LintResult;
-use crate::LintResultList;
-use crate::ArchitectureConfig;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::LintCheckingOrchestrator;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 

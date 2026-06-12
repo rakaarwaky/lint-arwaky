@@ -2,12 +2,12 @@
 
 use async_trait::async_trait;
 
-use crate::IAnalysisProtocol;
-use crate::ArchitectureGovernanceEntity;
-use crate::LintResult;
-use crate::LintResultList;
-use crate::Severity;
-use crate::shared_compute_score as compute_score;
+use shared::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
+use shared::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::output_report::taxonomy_score_vo::compute_score as compute_score;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber, Score};
 use shared::taxonomy_error_vo::ErrorCode;

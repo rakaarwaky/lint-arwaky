@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::FilePathList;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;
@@ -150,7 +150,7 @@ impl RoleOrchestrator {
 }
 
 #[async_trait]
-impl crate::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
+impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
         let mut results = Vec::new();
         let files = self.collect_files(target);

@@ -2,19 +2,19 @@
 
 use std::sync::Arc;
 
-use crate::IBypassCheckerProtocol;
-use crate::IMandatoryClassProtocol;
-use crate::IDeadInheritanceProtocol;
-use crate::IInlineUnusedProtocol;
-use crate::ILayerDetectionAggregate;
-use crate::ILineCheckerProtocol;
-use crate::IMandatoryInheritanceProtocol;
-use crate::ArchitectureConfig;
-use crate::LintResult;
-use crate::LintResultList;
-use crate::IRoleAggregate;
-use crate::IAnalyzer;
-use crate::ICycleAnalysisProtocol;
+use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
+use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
+use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
+use shared::code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
+use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use shared::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::role_rules::contract_role_aggregate::IRoleAggregate;
+use shared::import_rules::contract_rule_protocol::IAnalyzer;
+use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
 use crate::capabilities_check_bypass_checker::BypassChecker;
 use crate::capabilities_inline_unused_checker::InlineUnusedChecker;
 use crate::capabilities_dead_inheritance_checker::DeadInheritanceChecker;

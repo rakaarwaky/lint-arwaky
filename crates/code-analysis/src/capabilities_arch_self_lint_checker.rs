@@ -1,6 +1,6 @@
 // PURPOSE: ArchSelfLintChecker — capabilities implementation of IArchLintProtocol for AES architecture compliance self-linting
-use crate::IArchLintProtocol;
-use crate::LintResultList;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::output_report::taxonomy_result_vo::LintResultList;
 use crate::CodebaseScanOrchestrator;
 
 pub struct ArchSelfLintChecker {}

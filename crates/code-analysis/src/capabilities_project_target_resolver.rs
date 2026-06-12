@@ -41,7 +41,7 @@ impl ITargetResolverProtocol for ProjectTargetResolver {
     fn lint_path(&self, path: &str) -> Vec<LintResult> {
         let root = FilePath::new(self.normalize_project_root(path))
             .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
-        let orchestrator = crate::CodebaseScanOrchestrator::new();
+        let orchestrator = crate::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new();
         orchestrator.run_self_lint(&root.value)
     }
 

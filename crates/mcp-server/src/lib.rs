@@ -1,8 +1,11 @@
-// PURPOSE: Module declarations and re-exports for mcp-server (controllers, actions, schemas, constants)
+// PURPOSE: Module declarations for mcp-server (controllers, actions, schemas)
+pub use shared::mcp_server::contract_server_port::{IMcpServerPort, ToolHandler};
+pub use shared::mcp_server::taxonomy_server_constant::{
+    AUTO_LINT_VERSION, MAX_BATCH_SIZE, MAX_PATH_DEPTH, MAX_PATH_LENGTH, MAX_STRING_LENGTH,
+    MCP_SERVER_VERSION,
+};
 pub mod capabilities_schema_checker;
 pub use capabilities_schema_checker::McpSchemaChecker;
-pub mod contract_server_port;
-pub use contract_server_port::{IMcpServerPort, ToolHandler};
 pub mod infrastructure_server_lifespan;
 pub use infrastructure_server_lifespan::WrapperContext;
 pub mod infrastructure_server_schemas;
@@ -39,9 +42,4 @@ pub use surface_tools_command::{
 };
 pub mod surface_tools_controller;
 pub use surface_tools_controller::{register_tools, McpToolsHandler};
-pub mod taxonomy_server_constant;
-pub use taxonomy_server_constant::{
-    AUTO_LINT_VERSION, MAX_BATCH_SIZE, MAX_PATH_DEPTH, MAX_PATH_LENGTH, MAX_STRING_LENGTH,
-    MCP_SERVER_VERSION,
-};
 pub mod root_mcp_container;
