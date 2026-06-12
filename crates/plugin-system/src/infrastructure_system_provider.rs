@@ -1,8 +1,8 @@
 // PURPOSE: SystemProvider — IPluginManagerPort implementation for plugin filesystem operations
 /// plugin_system_provider — Entry point discovery and loading for custom adapters.
-use plugin_system::contract_manager_port::IPluginManagerPort;
-use plugin_system::taxonomy_group_vo::PluginGroup;
-use plugin_system::taxonomy_manager_error::PluginError;
+use shared::plugin_system::contract_plugin_manager_port::IPluginManagerPort;
+use shared::plugin_system::taxonomy_group_vo::PluginGroup;
+use shared::plugin_system::taxonomy_manager_error::PluginError;
 use shared::config_system::taxonomy_adapter_vo::AdapterClassMap;
 use shared::config_system::taxonomy_adapter_vo::AdapterMetadataList;
 use shared::pipeline_jobs::taxonomy_job_vo::AdapterMetadata;

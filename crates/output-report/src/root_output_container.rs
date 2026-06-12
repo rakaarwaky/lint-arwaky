@@ -6,9 +6,9 @@ impl OutputContainer {
         Self {}
     }
 
-    pub fn report_formatter(&self) -> Box<dyn crate::output_report::contract_output_aggregate::IReportFormatterProtocol> {
+    pub fn report_formatter(&self) -> Box<dyn crate::IReportFormatterProtocol> {
         Box::new(
-            crate::output_report::capabilities_reporting_formatter::ReportFormatterProcessor::new(),
+            crate::capabilities_reporting_formatter::ReportFormatterProcessor::new(),
         )
     }
 }
@@ -17,4 +17,3 @@ impl Default for OutputContainer {
         Self::new()
     }
 }
-

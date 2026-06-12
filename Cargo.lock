@@ -2728,6 +2728,7 @@ name = "output_report-lint-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
+ "chrono",
  "code_analysis-lint-arwaky",
  "pipeline_jobs-lint-arwaky",
  "serde",

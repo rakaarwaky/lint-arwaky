@@ -1,6 +1,6 @@
 // PURPOSE: LifecycleContainer — wiring for lifecycle-state feature (root layer, wiring only)
 use std::sync::Arc;
-use crate::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
+use shared::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 
 pub struct LifecycleContainer {
     aggregate: Arc<dyn AgentLifecycleAggregate>,
@@ -10,7 +10,7 @@ impl LifecycleContainer {
     pub fn new() -> Self {
         Self {
             aggregate: Arc::new(
-                crate::lifecycle_state::agent_status_lifecycle::LifecycleStateManager::new(),
+                crate::agent_status_lifecycle::LifecycleStateManager::new(),
             ),
         }
     }

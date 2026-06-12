@@ -1,6 +1,6 @@
 // PURPOSE: CommandsOrchestrator — orchestrates plugin management commands (list, enable, disable, install)
 
-use shared::plugin_system::contract_commands_aggregate::PluginCommandsAggregate;
+use shared::plugin_system::contract_plugin_commands_aggregate::PluginCommandsAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashMap;
 
