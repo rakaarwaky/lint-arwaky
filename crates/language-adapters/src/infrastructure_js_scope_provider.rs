@@ -1,12 +1,12 @@
 // PURPOSE: JSScopeProvider — provides JavaScript scope metadata for architecture analysis
 
-use language_adapters::contract_scope_port::IJavascriptScopePort;
-use language_adapters::taxonomy_semantic_error::SemanticError;
+use regex::Regex;
+use shared::language_adapters::contract_scope_port::IJavascriptScopePort;
+use shared::language_adapters::taxonomy_semantic_error::SemanticError;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_layer_vo::LineContentVO;
 use shared::taxonomy_lint_vo::ScopeBounds;
 use shared::taxonomy_name_vo::SymbolName;
-use regex::Regex;
 
 pub struct JSScopeProvider {}
 

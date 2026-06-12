@@ -1,12 +1,12 @@
 // PURPOSE: PipelineExtendedOrchestrator — initializes extended pipeline with all sub-orchestrators
 use shared::file_watch::taxonomy_watch_vo::DirectoryWatchVO;
-use multi_project::taxonomy_multi_project_vo::MultiProjectVO;
-use pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
-use pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
-use pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use pipeline_jobs::taxonomy_action_vo::JobId;
-use pipeline_jobs::taxonomy_job_vo::ResponseData;
-use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::multi_project::taxonomy_multi_project_vo::MultiProjectVO;
+use shared::pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
+use shared::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
+use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use shared::pipeline_jobs::taxonomy_action_vo::JobId;
+use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::BooleanVO;
 use shared::source_parsing::taxonomy_path_vo::FilePath;

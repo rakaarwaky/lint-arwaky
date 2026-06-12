@@ -1,11 +1,13 @@
 // PURPOSE: PyQualityAdapter — ILinterAdapterPort implementation for Python quality tool integration
 
-use cli_transport::contract_executor_port::ICommandExecutorPort;
-use code_analysis::contract_adapter_port::ILinterAdapterPort;
-use code_analysis::taxonomy_operation_error::LinterOperationError;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_result_vo::LintResultList;
-use output_report::taxonomy_severity_vo::Severity;
+use shared::cli_transport::contract_executor_port::ICommandExecutorPort;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::Count;
@@ -13,8 +15,6 @@ use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
-use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
 use std::sync::Arc;
 

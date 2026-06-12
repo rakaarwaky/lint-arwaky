@@ -6,7 +6,7 @@ use output_report::taxonomy_result_vo::LintResult;
 use output_report::taxonomy_result_vo::LintResultList;
 use output_report::taxonomy_score_vo::FileFormat;
 use output_report::taxonomy_severity_vo::Severity;
-use pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use shared::taxonomy_suggestion_vo::LogOutput;
 use serde_json::json;
 use std::collections::BTreeMap;

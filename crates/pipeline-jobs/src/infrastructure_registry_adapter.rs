@@ -1,11 +1,11 @@
 // PURPOSE: JobRegistryAdapter — IJobRegistryPort implementation using in-memory HashMap and background notifier
 
-use pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use pipeline_jobs::taxonomy_action_vo::ActionName;
-use pipeline_jobs::taxonomy_action_vo::JobId;
-use pipeline_jobs::taxonomy_job_vo::ResponseData;
-use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use pipeline_jobs::taxonomy_registry_error::JobError;
+use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use shared::pipeline_jobs::taxonomy_action_vo::ActionName;
+use shared::pipeline_jobs::taxonomy_action_vo::JobId;
+use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::pipeline_jobs::taxonomy_registry_error::JobError;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::ResponseDataList;

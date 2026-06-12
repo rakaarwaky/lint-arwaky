@@ -1,15 +1,6 @@
-// PURPOSE: Module declarations and re-exports for all CLI command surfaces and aggregates
-pub mod agent_dev_orchestrator;
-pub use agent_dev_orchestrator::DevCommandsOrchestrator;
-pub mod agent_maintenance_orchestrator;
-pub use agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;
-pub mod contract_dev_aggregate;
-pub use contract_dev_aggregate::DevCommandsAggregate;
+// PURPOSE: Module declarations and re-exports for all CLI command surfaces
 pub mod taxonomy_command_catalog_vo;
 pub use taxonomy_command_catalog_vo::{command_catalog, CommandCatalogVO};
-
-pub mod contract_maintenance_aggregate;
-pub use contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 
 // Transport (merged from cli-transport)
 pub mod infrastructure_transport_client;

@@ -1,17 +1,17 @@
 // PURPOSE: ArchImportMandatoryChecker — AES002: enforce mandatory import rules per layer definition and scope rules
-use config_system::taxonomy_config_vo::ArchitectureConfig;
-use import_rules::contract_import_parser_port::IImportParserPort;
-use import_rules::contract_rule_protocol::{
+use async_trait::async_trait;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::contract_rule_protocol::{
     IAnalyzer, IArchImportProtocol, IArchRuleProtocol,
 };
-use output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use output_report::taxonomy_severity_vo::Severity;
+use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_violation_message_rs_error::AesViolation;
 use shared::{FileContentVO, Identity, LayerNameVO, SymbolName};
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
-use async_trait::async_trait;
 use std::sync::Arc;
 
 pub struct ArchImportMandatoryChecker {

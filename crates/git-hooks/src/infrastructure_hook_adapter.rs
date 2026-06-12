@@ -1,7 +1,7 @@
 // PURPOSE: HookAdapter — IHookManagerPort implementation for installing/uninstalling git hook scripts
 
 use git_hooks::contract_manager_port::IHookManagerPort;
-use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
 

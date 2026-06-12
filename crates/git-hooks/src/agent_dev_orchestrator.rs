@@ -1,6 +1,6 @@
 // PURPOSE: Orchestrator: Implements DevCommandsAggregate — diff, suggest, ignore, init, hook management
 use cli_commands::contract_dev_aggregate::DevCommandsAggregate;
-use cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use std::collections::HashMap;
 
 use output_report::taxonomy_score_vo::FileFormat;

@@ -1,5 +1,5 @@
 // PURPOSE: PyASTUtil — utility functions for Python AST parsing and node traversal
-use language_adapters::contract_naming_port::INamingProviderPort;
+use shared::language_adapters::contract_naming_port::INamingProviderPort;
 use shared::taxonomy_common_vo::LineNumber;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check

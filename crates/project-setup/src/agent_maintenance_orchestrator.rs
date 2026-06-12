@@ -1,9 +1,9 @@
 // PURPOSE: Orchestrator: Implements MaintenanceCommandsAggregate — stats, doctor, gc, rename, project maintenance
 
 use cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use pipeline_jobs::taxonomy_action_vo::JobId;
-use project_setup::taxonomy_doctor_vo::DoctorResultVO;
-use project_setup::taxonomy_stats_vo::MaintenanceStatsVO;
+use shared::pipeline_jobs::taxonomy_job_vo::JobId;
+use crate::taxonomy_doctor_vo::DoctorResultVO;
+use crate::taxonomy_stats_vo::MaintenanceStatsVO;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::Count;

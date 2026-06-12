@@ -1,12 +1,12 @@
 // PURPOSE: PyVariants — Python naming variant builder (snake_case, PascalCase, SCREAMING_SNAKE)
 
-use language_adapters::contract_variant_port::INamingVariantPort;
-use language_adapters::taxonomy_naming_error::NamingError;
-use language_adapters::taxonomy_naming_list_vo::SymbolNameList;
-use shared::taxonomy_common_error::ErrorMessage;
-use shared::taxonomy_name_vo::SymbolName;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use shared::language_adapters::contract_variant_port::INamingVariantPort;
+use shared::language_adapters::taxonomy_naming_error::NamingError;
+use shared::language_adapters::taxonomy_naming_list_vo::SymbolNameList;
+use shared::taxonomy_common_error::ErrorMessage;
+use shared::taxonomy_name_vo::SymbolName;
 
 static RE_WORDS: Lazy<Result<Regex, NamingError>> = Lazy::new(|| {
     Regex::new(r"[A-Z]{2,}|[A-Z][a-z0-9]*|[a-z0-9]+")

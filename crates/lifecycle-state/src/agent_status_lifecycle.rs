@@ -2,7 +2,7 @@
 
 use lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use lifecycle_state::taxonomy_agent_status_vo::AgentStatusVO;
-use pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use shared::taxonomy_common_vo::BooleanVO;
 use shared::taxonomy_duration_vo::Duration;
 

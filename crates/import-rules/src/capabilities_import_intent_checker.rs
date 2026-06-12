@@ -7,14 +7,14 @@
 //
 // Rule ini cek apakah import BENAR-BENAR digunakan sesuai intent.
 
-use import_rules::contract_rule_protocol::IAnalyzer;
-use output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use output_report::taxonomy_severity_vo::Severity;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
-use shared::{Identity, LayerNameVO, SymbolName};
+use async_trait::async_trait;
+use shared::import_rules::contract_rule_protocol::IAnalyzer;
+use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
-use async_trait::async_trait;
+use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared::{Identity, LayerNameVO, SymbolName};
 use std::sync::Arc;
 
 pub struct ImportIntentChecker {}
@@ -100,8 +100,7 @@ impl ImportIntentChecker {
         if !has_real_usage {
             // Check if file actually imports taxonomy types
             let has_taxonomy_import = lines.iter().any(|l| {
-                l.contains("use shared::taxonomy_")
-                    || l.contains("use output_report::taxonomy_")
+                l.contains("use shared::taxonomy_") || l.contains("use output_report::taxonomy_")
             });
 
             if has_taxonomy_import {

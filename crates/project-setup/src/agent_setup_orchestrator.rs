@@ -2,9 +2,9 @@
 use cli_commands::taxonomy_protocol_vo::TransportProtocol;
 use cli_commands::taxonomy_protocol_vo::TransportUrlVO;
 use config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
-use pipeline_jobs::taxonomy_job_vo::EnvContentVO;
-use pipeline_jobs::taxonomy_job_vo::McpConfigVO;
-use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::pipeline_jobs::taxonomy_job_vo::EnvContentVO;
+use shared::pipeline_jobs::taxonomy_job_vo::McpConfigVO;
+use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 use std::collections::HashMap;

@@ -1,13 +1,13 @@
 // PURPOSE: JSScopeAdapter — ILanguageScopePort implementation for JavaScript scope resolution
 
-use language_adapters::contract_scope_port::IJsTracerPort;
-use language_adapters::taxonomy_semantic_error::SemanticError;
+use regex::Regex;
+use shared::language_adapters::contract_scope_port::IJsTracerPort;
+use shared::language_adapters::taxonomy_semantic_error::SemanticError;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use regex::Regex;
 
 pub struct JSScopeTracer {}
 

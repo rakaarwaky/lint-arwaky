@@ -1,12 +1,12 @@
 // PURPOSE: JSNamingProvider — INamingProviderPort implementation for JavaScript naming conventions
 
-use language_adapters::contract_naming_port::INamingProviderPort;
-use language_adapters::taxonomy_naming_error::NamingError;
+use once_cell::sync::Lazy;
+use regex::Regex;
+use shared::language_adapters::contract_naming_port::INamingProviderPort;
+use shared::language_adapters::taxonomy_naming_error::NamingError;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_name_vo::NameVariants;
 use shared::taxonomy_name_vo::SymbolName;
-use once_cell::sync::Lazy;
-use regex::Regex;
 
 static RE_WORDS: Lazy<Result<Regex, NamingError>> = Lazy::new(|| {
     Regex::new(r"[A-Z]{2,}|[A-Z][a-z0-9]*|[a-z0-9]+")

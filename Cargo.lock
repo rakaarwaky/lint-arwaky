@@ -2776,7 +2776,8 @@ name = "pipeline_jobs-lint-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
- "multi_project-lint-arwaky",
+ "chrono",
+ "rand 0.8.6",
  "serde",
  "serde_json",
  "shared-lint-arwaky",

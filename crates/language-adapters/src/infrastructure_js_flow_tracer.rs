@@ -1,13 +1,13 @@
 // PURPOSE: JSFlowProvider — IFlowProviderPort implementation for JavaScript data flow tracing
 
-use language_adapters::contract_flow_port::IJavascriptFlowPort;
-use language_adapters::taxonomy_semantic_error::SemanticError;
+use regex::Regex;
+use shared::language_adapters::contract_flow_port::IJavascriptFlowPort;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::DataFlowList;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_name_vo::SymbolName;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use regex::Regex;
+use shared::taxonomy_semantic_error::SemanticError;
 
 pub struct JSFlowAdapter {}
 

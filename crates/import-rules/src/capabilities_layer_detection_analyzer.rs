@@ -3,14 +3,14 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use config_system::taxonomy_config_vo::ArchitectureConfig;
-use file_system::contract_system_port::IFileSystemPort;
-use import_rules::contract_rule_protocol::IAnalyzer;
-use import_rules::taxonomy_rule_vo::ArchitectureRule;
-use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::taxonomy_layer_vo::LayerNameVO;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::file_system::contract_system_port::IFileSystemPort;
+use shared::import_rules::contract_rule_protocol::IAnalyzer;
+use shared::import_rules::taxonomy_rule_vo::ArchitectureRule;
 use shared::source_parsing::contract_parser_port::ISourceParserPort;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::taxonomy_layer_vo::LayerNameVO;
 use std::sync::Arc;
 
 pub struct LayerDetectionAnalyzer {

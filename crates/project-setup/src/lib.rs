@@ -14,3 +14,5 @@ pub use taxonomy_language_vo::{LanguageSource, ProjectLanguage};
 pub mod taxonomy_stats_vo;
 pub use taxonomy_stats_vo::MaintenanceStatsVO;
 pub mod root_setup_container;
+pub mod agent_maintenance_orchestrator;
+pub use agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;

@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use pipeline_jobs::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
+use shared::pipeline_jobs::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 

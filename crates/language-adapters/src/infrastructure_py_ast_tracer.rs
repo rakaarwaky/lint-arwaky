@@ -1,19 +1,19 @@
 // PURPOSE: PyASTTracer — IFlowProviderPort implementation for Python AST-based call tracing
 
-use language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
-use language_adapters::contract_variant_port::INamingVariantPort;
-use language_adapters::taxonomy_naming_list_vo::CallChainList;
-use language_adapters::taxonomy_naming_list_vo::SymbolNameList;
-use language_adapters::taxonomy_semantic_error::SemanticError;
-use pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
+use shared::language_adapters::contract_variant_port::INamingVariantPort;
+use shared::language_adapters::taxonomy_naming_list_vo::CallChainList;
+use shared::language_adapters::taxonomy_naming_list_vo::SymbolNameList;
+use shared::language_adapters::taxonomy_semantic_error::SemanticError;
+use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::DataFlowList;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_common_vo::ResponseDataList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_name_vo::SymbolName;
-use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 use async_trait::async_trait;
 

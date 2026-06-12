@@ -1,12 +1,12 @@
 // PURPOSE: JobContainer — IJobRegistryPort implementation using HashMap-based job registry
 
-use pipeline_jobs::contract_registry_aggregate::JobRegistryAggregate;
-use pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use pipeline_jobs::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
-use pipeline_jobs::taxonomy_action_vo::ActionName;
-use pipeline_jobs::taxonomy_action_vo::JobId;
-use pipeline_jobs::taxonomy_job_vo::ResponseData;
-use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::pipeline_jobs::contract_registry_aggregate::JobRegistryAggregate;
+use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use crate::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
+use shared::pipeline_jobs::taxonomy_action_vo::ActionName;
+use shared::pipeline_jobs::taxonomy_action_vo::JobId;
+use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::ResponseDataList;

@@ -15,6 +15,13 @@ use crate::LintResultList;
 use crate::IRoleAggregate;
 use crate::IAnalyzer;
 use crate::ICycleAnalysisProtocol;
+use crate::capabilities_check_bypass_checker::BypassChecker;
+use crate::capabilities_inline_unused_checker::InlineUnusedChecker;
+use crate::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
+use crate::capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
+use crate::capabilities_line_checker::ArchLineChecker;
+use crate::capabilities_class_checker::ArchClassChecker;
+use crate::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 
@@ -24,18 +31,18 @@ pub struct CheckerContainer {
     inline_unused_checker: Arc<dyn IInlineUnusedProtocol>,
     dead_inheritance_checker: Arc<dyn IDeadInheritanceProtocol>,
     mandatory_inheritance_checker: Arc<dyn IMandatoryInheritanceProtocol>,
-    capabilities_role_checker: Arc<dyn crate::ICapabilitiesRoleProtocol>,
+    capabilities_role_checker: Arc<dyn ICapabilitiesRoleProtocol>,
     line_checker: Arc<dyn ILineCheckerProtocol>,
-    taxonomy_checker: Arc<dyn crate::ITaxonomyProtocol>,
-    contract_checker: Arc<dyn crate::IContractProtocol>,
+    taxonomy_checker: Arc<dyn ITaxonomyProtocol>,
+    contract_checker: Arc<dyn IContractProtocol>,
     class_checker: Arc<dyn IMandatoryClassProtocol>,
-    naming_checker: Arc<dyn crate::INamingProtocol>,
-    import_mandatory_checker: Arc<dyn crate::IImportMandatoryProtocol>,
-    import_intent_checker: Arc<dyn crate::IImportIntentProtocol>,
-    import_forbidden_checker: Arc<dyn crate::IImportForbiddenProtocol>,
+    naming_checker: Arc<dyn INamingProtocol>,
+    import_mandatory_checker: Arc<dyn IImportMandatoryProtocol>,
+    import_intent_checker: Arc<dyn IImportIntentProtocol>,
+    import_forbidden_checker: Arc<dyn IImportForbiddenProtocol>,
     cycle_analyzer: Arc<dyn ICycleAnalysisProtocol>,
-    surface_checker: Arc<dyn crate::ISurfaceProtocol>,
-    orphan_aggregate: Arc<dyn crate::IOrphanAggregate>,
+    surface_checker: Arc<dyn ISurfaceProtocol>,
+    orphan_aggregate: Arc<dyn IOrphanAggregate>,
 }
 
 impl CheckerContainer {
@@ -43,20 +50,20 @@ impl CheckerContainer {
         // These will be initialized by init_global_checker
         // For now, panic if accessed before initialization
         Self {
-            bypass_checker: Arc::new(crate::BypassChecker),
-            inline_unused_checker: Arc::new(crate::InlineUnusedChecker),
-            dead_inheritance_checker: Arc::new(crate::DeadInheritanceChecker),
-            mandatory_inheritance_checker: Arc::new(crate::MandatoryInheritanceChecker),
+            bypass_checker: Arc::new(BypassChecker {}),
+            inline_unused_checker: Arc::new(InlineUnusedChecker {}),
+            dead_inheritance_checker: Arc::new(DeadInheritanceChecker {}),
+            mandatory_inheritance_checker: Arc::new(MandatoryInheritanceChecker {}),
             capabilities_role_checker: panic!("CheckerContainer not initialized"),
-            line_checker: Arc::new(crate::ArchLineChecker),
+            line_checker: Arc::new(ArchLineChecker {}),
             taxonomy_checker: panic!("CheckerContainer not initialized"),
             contract_checker: panic!("CheckerContainer not initialized"),
-            class_checker: Arc::new(crate::ArchClassChecker),
+            class_checker: Arc::new(ArchClassChecker {}),
             naming_checker: panic!("CheckerContainer not initialized"),
             import_mandatory_checker: panic!("CheckerContainer not initialized"),
             import_intent_checker: panic!("CheckerContainer not initialized"),
             import_forbidden_checker: panic!("CheckerContainer not initialized"),
-            cycle_analyzer: Arc::new(crate::DependencyCycleAnalyzer::new()),
+            cycle_analyzer: Arc::new(DependencyCycleAnalyzer::new()),
             surface_checker: panic!("CheckerContainer not initialized"),
             orphan_aggregate: panic!("CheckerContainer not initialized"),
         }
@@ -78,7 +85,7 @@ impl CheckerContainer {
         &self.mandatory_inheritance_checker
     }
 
-    pub fn capabilities_role_checker(&self) -> &Arc<dyn crate::ICapabilitiesRoleProtocol> {
+    pub fn capabilities_role_checker(&self) -> &Arc<dyn ICapabilitiesRoleProtocol> {
         &self.capabilities_role_checker
     }
 
@@ -86,11 +93,11 @@ impl CheckerContainer {
         &self.line_checker
     }
 
-    pub fn taxonomy_checker(&self) -> &Arc<dyn crate::ITaxonomyProtocol> {
+    pub fn taxonomy_checker(&self) -> &Arc<dyn ITaxonomyProtocol> {
         &self.taxonomy_checker
     }
 
-    pub fn contract_checker(&self) -> &Arc<dyn crate::IContractProtocol> {
+    pub fn contract_checker(&self) -> &Arc<dyn IContractProtocol> {
         &self.contract_checker
     }
 
@@ -98,19 +105,19 @@ impl CheckerContainer {
         &self.class_checker
     }
 
-    pub fn naming_checker(&self) -> &Arc<dyn crate::INamingProtocol> {
+    pub fn naming_checker(&self) -> &Arc<dyn INamingProtocol> {
         &self.naming_checker
     }
 
-    pub fn import_mandatory_checker(&self) -> &Arc<dyn crate::IImportMandatoryProtocol> {
+    pub fn import_mandatory_checker(&self) -> &Arc<dyn IImportMandatoryProtocol> {
         &self.import_mandatory_checker
     }
 
-    pub fn import_intent_checker(&self) -> &Arc<dyn crate::IImportIntentProtocol> {
+    pub fn import_intent_checker(&self) -> &Arc<dyn IImportIntentProtocol> {
         &self.import_intent_checker
     }
 
-    pub fn import_forbidden_checker(&self) -> &Arc<dyn crate::IImportForbiddenProtocol> {
+    pub fn import_forbidden_checker(&self) -> &Arc<dyn IImportForbiddenProtocol> {
         &self.import_forbidden_checker
     }
 
@@ -118,11 +125,11 @@ impl CheckerContainer {
         &self.cycle_analyzer
     }
 
-    pub fn surface_checker(&self) -> &Arc<dyn crate::ISurfaceProtocol> {
+    pub fn surface_checker(&self) -> &Arc<dyn ISurfaceProtocol> {
         &self.surface_checker
     }
 
-    pub fn orphan_aggregate(&self) -> &Arc<dyn crate::IOrphanAggregate> {
+    pub fn orphan_aggregate(&self) -> &Arc<dyn IOrphanAggregate> {
         &self.orphan_aggregate
     }
 
@@ -138,7 +145,7 @@ impl CheckerContainer {
         panic!("analyzer not initialized")
     }
 
-    pub fn as_ref(&self) -> &dyn crate::CheckerContainerRef {
+    pub fn as_ref(&self) -> &dyn CheckerContainerRef {
         self
     }
 }
@@ -211,8 +218,8 @@ impl RoleOrchestrator {
                 violations.push(LintResult::new_arch(
                     "AES0305".to_string(),
                     "Role violation: agent file exceeds max lines".to_string(),
-                    shared::taxonomy_path_vo::FilePath::new(file.to_string()).unwrap_or_default(),
-                    shared::taxonomy_severity_vo::Severity::Critical,
+                    shared::source_parsing::taxonomy_path_vo::FilePath::new(file.to_string()).unwrap_or_default(),
+                    shared::output_report::taxonomy_severity_vo::Severity::Critical,
                 ));
             }
         }

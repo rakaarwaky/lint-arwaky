@@ -1,10 +1,10 @@
 // PURPOSE: ImportOrchestrator — agent that orchestrates import rule checks
-use import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
-use output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use async_trait::async_trait;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
+use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::FilePathList;
-use async_trait::async_trait;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -49,8 +49,14 @@ impl ImportOrchestrator {
                     self.walk_dir(&path, files);
                 } else if path.is_file() {
                     if let Some(ext) = path.extension() {
-                        if matches!(ext.to_str(), Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")) {
-                            files.push(FilePath::new(path.to_string_lossy().to_string()).unwrap_or_default());
+                        if matches!(
+                            ext.to_str(),
+                            Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
+                        ) {
+                            files.push(
+                                FilePath::new(path.to_string_lossy().to_string())
+                                    .unwrap_or_default(),
+                            );
                         }
                     }
                 }
@@ -64,15 +70,8 @@ impl IImportRunnerAggregate for ImportOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
         let mut results = LintResultList::new(Vec::new());
         let files = self.collect_files(target);
-        let root_dir = FilePath::new(
-            target
-                .value()
-                .split('/')
-                .next()
-                .unwrap_or(".")
-                .to_string(),
-        )
-        .unwrap_or_default();
+        let root_dir = FilePath::new(target.value().split('/').next().unwrap_or(".").to_string())
+            .unwrap_or_default();
 
         self.mandatory
             .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)

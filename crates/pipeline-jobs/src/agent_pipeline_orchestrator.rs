@@ -1,10 +1,10 @@
 // PURPOSE: PipelineOrchestrator — orchestrates main pipeline: analysis, output, and report generation
 
-use pipeline_jobs::contract_dispatcher_aggregate::PipelineActionDispatcherAggregate;
-use pipeline_jobs::taxonomy_action_vo::ActionArgs;
-use pipeline_jobs::taxonomy_action_vo::ActionName;
-use pipeline_jobs::taxonomy_job_vo::ResponseData;
-use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::pipeline_jobs::contract_dispatcher_aggregate::PipelineActionDispatcherAggregate;
+use shared::pipeline_jobs::taxonomy_action_vo::ActionArgs;
+use shared::pipeline_jobs::taxonomy_action_vo::ActionName;
+use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashMap;
 

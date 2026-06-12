@@ -1,6 +1,6 @@
 // PURPOSE: DiffScanner — scans git diff output for architecture violation analysis
 use file_system::taxonomy_filesystem_error::FileSystemError;
-use pipeline_jobs::taxonomy_action_vo::ActionName;
+use shared::pipeline_jobs::taxonomy_action_vo::ActionName;
 use shared::taxonomy_common_error::ErrorMessage;
 /// git_diff_scanner — Git-aware file change detection for linting only modified files.
 use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;

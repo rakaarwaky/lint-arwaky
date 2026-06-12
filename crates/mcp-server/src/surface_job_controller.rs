@@ -1,6 +1,6 @@
 // PURPOSE: JobController — MCP surface for job lifecycle management endpoints
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use pipeline_jobs::taxonomy_action_vo::JobId;
+use shared::pipeline_jobs::taxonomy_action_vo::JobId;
 use serde_json::json;
 use std::sync::Arc;
 
