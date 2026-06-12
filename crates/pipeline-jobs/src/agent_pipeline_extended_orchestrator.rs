@@ -1,5 +1,5 @@
 // PURPOSE: PipelineExtendedOrchestrator — initializes extended pipeline with all sub-orchestrators
-use file_watch::taxonomy_watch_vo::DirectoryWatchVO;
+use shared::file_watch::taxonomy_watch_vo::DirectoryWatchVO;
 use multi_project::taxonomy_multi_project_vo::MultiProjectVO;
 use pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
 use pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;

@@ -1,7 +1,7 @@
 // PURPOSE: WatchResult — result type for watch operations
 use serde::{Deserialize, Serialize};
 
-use crate::taxonomy_service_error::WatchServiceError;
+use shared::file_watch::taxonomy_service_error::WatchServiceError;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub enum WatchResult {

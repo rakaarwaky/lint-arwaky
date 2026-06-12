@@ -1,6 +1,6 @@
 // PURPOSE: MultiProjectContainer — wiring for multi-project feature (root layer, wiring only)
 use std::sync::Arc;
-use crate::multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+use shared::multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 
 pub struct MultiProjectContainer {
     aggregate: Arc<dyn MultiProjectOrchestratorAggregate>,

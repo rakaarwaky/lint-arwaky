@@ -770,6 +770,7 @@ dependencies = [
 name = "file_watch-lint-arwaky"
 version = "1.10.11"
 dependencies = [
+ "async-trait",
  "serde",
  "serde_json",
  "shared-lint-arwaky",

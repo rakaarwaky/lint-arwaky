@@ -1,7 +1,7 @@
 // PURPOSE: GitContainer — wiring for git-hooks feature (root layer, wiring only)
 use std::sync::Arc;
 use crate::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
-use crate::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use crate::git_hooks::orchestrator_aggregate::HookManagementOrchestratorAggregate;
 
 pub struct GitContainer {
     commands_aggregate: Arc<dyn GitCommandsAggregate>,

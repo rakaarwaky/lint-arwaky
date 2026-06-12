@@ -1,6 +1,6 @@
 // PURPOSE: ManagementOrchestrator — orchestrates git hook management (format patch, commit gen, PR review)
 use git_hooks::contract_manager_port::IHookManagerPort;
-use git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use git_hooks::orchestrator_aggregate::HookManagementOrchestratorAggregate;
 use git_hooks::taxonomy_hook_error::GitHookError;
 use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_adapter_name_vo::AdapterName;

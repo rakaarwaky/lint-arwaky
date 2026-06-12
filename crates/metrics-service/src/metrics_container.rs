@@ -1,6 +1,6 @@
 // PURPOSE: MetricsContainer — wiring for metrics-service feature (root layer, wiring only)
 use std::sync::Arc;
-use crate::metrics_service::contract_metrics_port::IMetricsProviderPort;
+use crate::IMetricsProviderPort;
 
 pub struct MetricsContainer {
     provider: Arc<dyn IMetricsProviderPort>,
@@ -30,4 +30,3 @@ impl Default for MetricsContainer {
         Self::new()
     }
 }
-

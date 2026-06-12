@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::SystemTime;
 
-use file_watch::contract_provider_port::IWatchProviderPort;
-use file_watch::taxonomy_service_error::WatchServiceError;
+use shared::file_watch::contract_provider_port::IWatchProviderPort;
+use shared::file_watch::taxonomy_service_error::WatchServiceError;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::BooleanVO;
 use shared::source_parsing::taxonomy_path_vo::FilePath;

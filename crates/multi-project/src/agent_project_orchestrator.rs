@@ -1,5 +1,5 @@
 // PURPOSE: ProjectOrchestrator — orchestrates multi-project governance operations
-use multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+use shared::multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use multi_project::taxonomy_summary_vo::AggregatedResults;
 use multi_project::taxonomy_summary_vo::ProjectResult;
 use shared::taxonomy_common_error::ErrorMessage;

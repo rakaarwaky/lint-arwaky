@@ -1,6 +1,4 @@
-// PURPOSE: Module declarations and re-exports for metrics-service (port, error)
-pub mod contract_metrics_port;
-pub use contract_metrics_port::IMetricsProviderPort;
-pub mod taxonomy_metrics_error;
-pub use taxonomy_metrics_error::MetricsError;
+// PURPOSE: Module declarations for metrics-service
+pub use shared::metrics_service::contract_metrics_port::IMetricsProviderPort;
+pub use shared::metrics_service::taxonomy_metrics_error::MetricsError;
 pub mod metrics_container;
