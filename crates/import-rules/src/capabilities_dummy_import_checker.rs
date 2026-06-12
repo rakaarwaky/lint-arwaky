@@ -1,4 +1,4 @@
-// PURPOSE: ImportIntentChecker — AES002X: enforce mandatory import intent, not just syntax
+// PURPOSE: DummyImportChecker — AES002X: detect dummy imports, dummy functions, and dummy trait implementations
 //
 // AES002 saat ini hanya cek apakah import ADA di file.
 // Tapi intent-nya adalah:
@@ -18,9 +18,9 @@ use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_violation_message_rs_error::AesViolation;
 use std::sync::Arc;
 
-pub struct ImportIntentChecker {}
+pub struct DummyImportChecker {}
 
-impl ImportIntentChecker {
+impl DummyImportChecker {
     pub fn new(
         _parser: Arc<dyn shared::import_rules::contract_import_parser_port::IImportParserPort>,
     ) -> Self {
@@ -551,14 +551,14 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
 }
 
 #[async_trait]
-impl shared::import_rules::contract_rule_protocol::IArchRuleProtocol for ImportIntentChecker {
+impl shared::import_rules::contract_rule_protocol::IArchRuleProtocol for DummyImportChecker {
     fn rule_name(&self) -> Identity {
         Identity::new("AES002X")
     }
 }
 
 #[async_trait]
-impl shared::import_rules::contract_rule_protocol::IArchImportProtocol for ImportIntentChecker {
+impl shared::import_rules::contract_rule_protocol::IArchImportProtocol for DummyImportChecker {
     async fn check_mandatory_imports(
         &self,
         _analyzer: &dyn IAnalyzer,

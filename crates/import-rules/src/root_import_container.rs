@@ -45,7 +45,7 @@ impl ImportContainer {
             ),
         );
         let intent =
-            Arc::new(crate::capabilities_import_intent_checker::ImportIntentChecker::new(parser));
+            Arc::new(crate::capabilities_dummy_import_checker::DummyImportChecker::new(parser));
 
         Self {
             mandatory: mandatory.clone(),

@@ -5,66 +5,27 @@ use std::sync::Arc;
 // Contract/Port types from shared crate
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
-use shared::code_analysis::{
-    contract_adapter_port::ILinterAdapterPort,
-    contract_analysis_protocol::IAnalysisProtocol,
-    contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol,
-    contract_lint_protocol::IArchLintProtocol,
-    contract_target_resolver_protocol::ITargetResolverProtocol,
-    contract_unused_protocol::IUnusedProtocol,
-};
-use shared::config_system::{
-    contract_discovery_port::IConfigDiscoveryPort,
-    contract_orchestration_aggregate::IConfigOrchestrationAggregate,
-    contract_parser_port::IConfigParserPort,
-    contract_validator_protocol::IConfigValidatorProtocol,
-};
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use shared::file_system::contract_system_port::IFileSystemPort;
-use shared::file_watch::contract_provider_port::IWatchProviderPort;
-use shared::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
-use shared::import_rules::contract_import_parser_port::IImportParserPort;
-use shared::language_adapters::{
-    contract_flow_port::IJavascriptFlowPort,
-    contract_naming_port::INamingProviderPort,
-    contract_scope_port::IJavascriptScopePort,
-    contract_semantic_tracer_port::ISemanticTracerPort,
-    contract_variant_port::INamingVariantPort,
-};
-use shared::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
-use shared::mcp_server::contract_server_port::IMcpServerPort;
 use shared::metrics_service::contract_metrics_port::IMetricsProviderPort;
-use shared::multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
-use shared::output_report::contract_output_aggregate::IReportFormatterProtocol;
-use shared::pipeline_jobs::{
-    contract_extended_aggregate::PipelineExtendedOrchestratorAggregate,
-    contract_output_aggregate::PipelineOutputAggregate,
-    contract_registry_port::IJobRegistryPort,
-};
-use shared::plugin_system::contract_plugin_manager_port::IPluginManagerPort;
-use shared::project_setup::{
-    contract_setup_aggregate::SetupManagementAggregate,
-    contract_setup_protocol::ISetupManagementProtocol,
-};
-use shared::source_parsing::{
-    contract_parser_port::ISourceParserPort,
-    contract_path_normalization_port::IPathNormalizationPort,
-    contract_scanner_provider_port::IScannerProviderPort,
-};
+use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 
 // Infrastructure implementations from feature crates
-// Note: these need the crate to export them in lib.rs
 
 pub struct CompositionRoot {
     // Legacy fields (for ServiceContainerAggregate backward compat)
+    linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
+    arch_linter: Arc<dyn IArchLintProtocol>,
+    // Infrastructure fields (not in trait but needed for wiring)
     file_system: Arc<dyn IFileSystemPort>,
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
     source_parser: Arc<dyn ISourceParserPort>,
-    arch_linter: Arc<dyn IArchLintProtocol>,
-    linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
     metrics: Arc<dyn IMetricsProviderPort>,
-    // ... other fields as needed
 }
 
 impl CompositionRoot {
@@ -171,19 +132,6 @@ impl CompositionRoot {
         }
     }
 
-    // NEW: Typed orchestrators (feature-specific) - return Option since not wired yet
-    pub fn import_orchestrator(&self) -> Option<Arc<dyn shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate>> {
-        None
-    }
-
-    pub fn naming_orchestrator(&self) -> Option<Arc<dyn shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate>> {
-        None
-    }
-
-    pub fn role_orchestrator(&self) -> Option<Arc<dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate>> {
-        None
-    }
-
     // Helper for CLI initialization
     pub fn checker_container(&self) -> code_analysis::root_container::CheckerContainer {
         code_analysis::root_container::CheckerContainer::new()
@@ -192,116 +140,22 @@ impl CompositionRoot {
 
 // BACKWARD COMPAT: Implement old trait for existing surface commands
 impl shared::common::contract_service_aggregate::ServiceContainerAggregate for CompositionRoot {
-    fn file_system(&self) -> Option<Arc<dyn IFileSystemPort>> {
-        Some(self.file_system.clone())
-    }
-    fn command_executor(&self) -> Option<Arc<dyn ICommandExecutorPort>> {
-        Some(self.executor.clone())
-    }
-    fn path_normalization(&self) -> Option<Arc<dyn IPathNormalizationPort>> {
-        Some(self.path_norm.clone())
-    }
-    fn source_parser(&self) -> Option<Arc<dyn ISourceParserPort>> {
-        Some(self.source_parser.clone())
-    }
     fn linter_adapter(&self, name: &AdapterName) -> Option<Arc<dyn ILinterAdapterPort>> {
         self.linter_adapters.get(name.value()).cloned()
     }
+
     fn get_architecture_linter(&self) -> Option<Arc<dyn IArchLintProtocol>> {
         Some(self.arch_linter.clone())
     }
-    fn metrics_provider(&self) -> Option<Arc<dyn IMetricsProviderPort>> {
-        Some(self.metrics.clone())
-    }
-    fn get_job_registry(&self) -> Option<Arc<dyn shared::pipeline_jobs::contract_registry_port::IJobRegistryPort>> {
+
+    fn get_fix_orchestrator(
+        &self,
+        _dry_run: bool,
+    ) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
         None
     }
-    fn get_fix_orchestrator(&self, _dry_run: bool) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
-        None
-    }
-    fn get_report_formatter(&self) -> Option<Box<dyn IReportFormatterProtocol>> {
-        None
-    }
-    // AES030 orphan detection getters — return None for unimplemented
-    fn get_maintenance_aggregate(&self) -> Option<Arc<dyn shared::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate>> {
-        None
-    }
-    fn get_analysis_protocol(&self) -> Option<Arc<dyn IAnalysisProtocol>> {
-        None
-    }
-    fn get_code_metric_protocol(&self) -> Option<Arc<dyn ICodeMetricAnalyzerProtocol>> {
-        None
-    }
-    fn get_target_resolver_protocol(&self) -> Option<Arc<dyn ITargetResolverProtocol>> {
-        None
-    }
-    fn get_unused_protocol(&self) -> Option<Arc<dyn IUnusedProtocol>> {
-        None
-    }
-    fn get_config_discovery_port(&self) -> Option<Arc<dyn IConfigDiscoveryPort>> {
-        None
-    }
-    fn get_config_orchestration_aggregate(&self) -> Option<Arc<dyn IConfigOrchestrationAggregate>> {
-        None
-    }
-    fn get_config_parser_port(&self) -> Option<Arc<dyn IConfigParserPort>> {
-        None
-    }
-    fn get_config_validator_protocol(&self) -> Option<Arc<dyn IConfigValidatorProtocol>> {
-        None
-    }
-    fn get_watch_provider_port(&self) -> Option<Arc<dyn IWatchProviderPort>> {
-        None
-    }
-    fn get_git_commands_aggregate(&self) -> Option<Arc<dyn GitCommandsAggregate>> {
-        None
-    }
-    fn get_git_orchestrator_aggregate(&self) -> Option<Arc<dyn shared::git_hooks::orchestrator_aggregate::HookManagementOrchestratorAggregate>> {
-        None
-    }
-    fn get_import_parser_port(&self) -> Option<Arc<dyn IImportParserPort>> {
-        None
-    }
-    fn get_javascript_flow_port(&self) -> Option<Arc<dyn IJavascriptFlowPort>> {
-        None
-    }
-    fn get_naming_provider_port(&self) -> Option<Arc<dyn INamingProviderPort>> {
-        None
-    }
-    fn get_javascript_scope_port(&self) -> Option<Arc<dyn IJavascriptScopePort>> {
-        None
-    }
-    fn get_semantic_tracer_port(&self) -> Option<Arc<dyn ISemanticTracerPort>> {
-        None
-    }
-    fn get_naming_variant_port(&self) -> Option<Arc<dyn INamingVariantPort>> {
-        None
-    }
-    fn get_agent_lifecycle_aggregate(&self) -> Option<Arc<dyn AgentLifecycleAggregate>> {
-        None
-    }
-    fn get_mcp_server_port(&self) -> Option<Arc<dyn IMcpServerPort>> {
-        None
-    }
-    fn get_multi_project_aggregate(&self) -> Option<Arc<dyn MultiProjectOrchestratorAggregate>> {
-        None
-    }
-    fn get_pipeline_extended_aggregate(&self) -> Option<Arc<dyn PipelineExtendedOrchestratorAggregate>> {
-        None
-    }
-    fn get_pipeline_output_aggregate(&self) -> Option<Arc<dyn PipelineOutputAggregate>> {
-        None
-    }
-    fn get_plugin_manager_port(&self) -> Option<Arc<dyn IPluginManagerPort>> {
-        None
-    }
-    fn get_setup_management_aggregate(&self) -> Option<Arc<dyn SetupManagementAggregate>> {
-        None
-    }
-    fn get_setup_management_protocol(&self) -> Option<Arc<dyn ISetupManagementProtocol>> {
-        None
-    }
-    fn get_scanner_provider_port(&self) -> Option<Arc<dyn IScannerProviderPort>> {
+
+    fn get_job_registry(&self) -> Option<Arc<dyn IJobRegistryPort>> {
         None
     }
 }
