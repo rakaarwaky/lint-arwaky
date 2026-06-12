@@ -4,8 +4,10 @@ use crate::language_adapters::taxonomy_semantic_error::SemanticError;
 use crate::taxonomy_lint_vo::ScopeRef;
 use crate::taxonomy_name_vo::SymbolName;
 use crate::taxonomy_layer_vo::LineContentVO;
-use crate::taxonomy_common_vo::LineNumber;
+use crate::taxonomy_common_vo::{LineNumber, LineContentList};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+
+pub type ScopeBounds = (usize, usize);
 
 #[async_trait]
 pub trait IJavascriptScopePort: Send + Sync {
@@ -16,8 +18,9 @@ pub trait IJavascriptScopePort: Send + Sync {
 
     async fn find_scope_bounds(
         &self,
-        stripped_line: &LineContentVO,
-    ) -> Result<Option<(usize, usize)>, SemanticError>;
+        lines: &LineContentList,
+        scope_line: Option<LineNumber>,
+    ) -> Result<Option<ScopeBounds>, SemanticError>;
 }
 
 #[async_trait]

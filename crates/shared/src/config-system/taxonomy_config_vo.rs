@@ -10,8 +10,6 @@ use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::import_rules::taxonomy_import_rule_vo::LegacyLayerRuleList;
-use crate::import_rules::taxonomy_import_rule_vo::MandatoryImportRuleVO;
-use crate::naming_rules::taxonomy_suffix_vo::SuffixPolicyVO;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::collections::HashMap;
 
