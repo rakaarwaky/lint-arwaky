@@ -25,7 +25,7 @@ use crate::taxonomy_parser_error::SourceParserError;
 use crate::taxonomy_path_vo::FilePath;
 
 static IMPORT_REGEX: LazyLock<Option<Regex>> =
-    LazyLock::new(|| Regex::new(r"^import\s+(\w+(?:\.\w+)*)").ok());
+    LazyLock::new(|| Regex::new(r"^import\s+(\w+(?:\.\w+)*)(?:\s+as\s+(\w+))?").ok());
 static FROM_IMPORT_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^from\s+(\w+(?:\.\w+)*)\s+import\s+(.+)$").ok());
 static CLASS_REGEX: LazyLock<Option<Regex>> =
@@ -157,7 +157,11 @@ impl ASTPythonParserAdapter {
 
         data.is_barrel = path.value.ends_with("__init__.py");
 
+        let mut skip_until = 0;
         for (idx_zero, line) in lines.iter().enumerate() {
+            if idx_zero < skip_until {
+                continue;
+            }
             let stripped = line.trim();
             if stripped.is_empty() || stripped.starts_with('#') {
                 continue;
@@ -180,7 +184,11 @@ impl ASTPythonParserAdapter {
             // 1. Imports
             if let Some(imp_cap) = IMPORT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let module = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
-                let alias = module.split('.').next_back().unwrap_or(&module).to_string();
+                let alias = if let Some(alias_match) = imp_cap.get(2) {
+                    alias_match.as_str().to_string()
+                } else {
+                    module.split('.').next_back().unwrap_or(&module).to_string()
+                };
                 data.imported_aliases.insert(alias.clone(), module.clone());
                 data.imports_list.push(ImportInfo {
                     line: LineNumber::new((idx_zero + 1) as i64),
@@ -210,6 +218,7 @@ impl ASTPythonParserAdapter {
                             combined.push(' ');
                             combined.push_str(cont);
                             if cont.contains(')') {
+                                skip_until = j + 1;
                                 break;
                             }
                             j += 1;
@@ -227,20 +236,26 @@ impl ASTPythonParserAdapter {
 
                 for sym in unwrapped
                     .split(',')
-                    .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
+                    .map(|s| s.trim())
                 {
                     let clean = sym.trim();
                     if clean.is_empty() || clean == "(" || clean == ")" {
                         continue;
                     }
                     if !clean.is_empty() {
-                        let fullname = format!("{}.{}", module, clean);
+                        let (name, alias) = if clean.contains(" as ") {
+                            let parts: Vec<&str> = clean.split(" as ").collect();
+                            (parts[0].trim().to_string(), parts[1].trim().to_string())
+                        } else {
+                            (clean.to_string(), clean.to_string())
+                        };
+                        let fullname = format!("{}.{}", module, name);
                         data.imported_aliases
-                            .insert(clean.to_string(), fullname.clone());
+                            .insert(alias.clone(), fullname.clone());
                         data.imports_list.push(ImportInfo {
                             line: LineNumber::new((idx_zero + 1) as i64),
                             module: fullname,
-                            name: Some(clean.to_string()),
+                            name: Some(name),
                         });
                     }
                 }
@@ -327,11 +342,13 @@ impl ASTPythonParserAdapter {
                 as i64;
 
             // 6. Used symbols
-            if let Some(word_re) = WORD_REGEX.as_ref() {
-                for cap in word_re.find_iter(stripped) {
-                    let word = cap.as_str();
-                    if !PY_KEYWORDS.contains(word) && !word.starts_with(|c: char| c.is_numeric()) {
-                        data.used.insert(word.to_string());
+            if !stripped.starts_with("import ") && !stripped.starts_with("from ") {
+                if let Some(word_re) = WORD_REGEX.as_ref() {
+                    for cap in word_re.find_iter(stripped) {
+                        let word = cap.as_str();
+                        if !PY_KEYWORDS.contains(word) && !word.starts_with(|c: char| c.is_numeric()) {
+                            data.used.insert(word.to_string());
+                        }
                     }
                 }
             }
@@ -652,5 +669,113 @@ impl ISourceParserPort for ASTPythonParserAdapter {
 
     fn get_supported_extensions(&self) -> PatternList {
         PatternList::new(vec![".py".to_string()])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shared::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
+    use shared::taxonomy_name_vo::SymbolName;
+    use std::fs;
+
+    #[test]
+    fn test_python_scanner_full() {
+        let test_path_str = "target/test_python_scanner.py";
+        let py_code = r#"
+# This is a test Python file
+import os
+import numpy as np
+from math import sin, cos as cosine
+from datetime import (
+    date,
+    time as time_alias,
+)
+
+class Animal:
+    pass
+
+class Dog(Animal):
+    def bark(self):
+        x = 5
+        if x > 3:
+            print("Woof")
+
+def run():
+    print(sin(0))
+
+def annotated_func(a: int) -> bool:
+    return True
+"#;
+
+        fs::create_dir_all("target").unwrap();
+        fs::write(test_path_str, py_code).unwrap();
+
+        let path = FilePath::new(test_path_str.to_string()).unwrap();
+        let adapter = ASTPythonParserAdapter::new();
+
+        // Test extract_imports
+        let imports = adapter.extract_imports(&path).unwrap();
+        let modules: Vec<String> = imports.values.iter().map(|i| i.module.clone()).collect();
+        assert!(modules.contains(&"os".to_string()));
+        assert!(modules.contains(&"numpy".to_string()));
+        assert!(modules.contains(&"math.sin".to_string()));
+        assert!(modules.contains(&"math.cos".to_string()));
+        assert!(modules.contains(&"datetime.date".to_string()));
+        assert!(modules.contains(&"datetime.time".to_string()));
+
+        // Check aliases map from read_and_parse
+        let parsed = adapter.read_and_parse(&path).unwrap();
+        assert_eq!(parsed.imported_aliases.get("os").unwrap(), "os");
+        assert_eq!(parsed.imported_aliases.get("np").unwrap(), "numpy");
+        assert_eq!(parsed.imported_aliases.get("sin").unwrap(), "math.sin");
+        assert_eq!(parsed.imported_aliases.get("cosine").unwrap(), "math.cos");
+        assert_eq!(parsed.imported_aliases.get("date").unwrap(), "datetime.date");
+        assert_eq!(parsed.imported_aliases.get("time_alias").unwrap(), "datetime.time");
+
+        // Test get_raw_symbols
+        let response = adapter.get_raw_symbols(&path).unwrap();
+        let val_map = response.value.unwrap();
+        let defined = val_map.get("defined").unwrap().as_array().unwrap();
+        let defined_strs: Vec<&str> = defined.iter().map(|v| v.as_str().unwrap()).collect();
+        assert!(defined_strs.contains(&"Animal"));
+        assert!(defined_strs.contains(&"Dog"));
+        assert!(defined_strs.contains(&"bark"));
+        assert!(defined_strs.contains(&"run"));
+        assert!(defined_strs.contains(&"annotated_func"));
+
+        // Test find_unused_imports
+        let unused = adapter.find_unused_imports(&path);
+        let unused_mods: Vec<String> = unused.values.iter().map(|i| i.module.clone()).collect();
+        assert!(unused_mods.contains(&"os".to_string()));
+        assert!(unused_mods.contains(&"numpy".to_string()));
+
+        // Test class bases
+        let bases_map = adapter.get_class_bases_map(&path);
+        let bases = bases_map.value.get("bases").unwrap().as_object().unwrap();
+        let dog_bases = bases.get("Dog").unwrap().as_array().unwrap();
+        assert_eq!(dog_bases[0].as_str().unwrap(), "Animal");
+
+        // Test control flow count
+        assert_eq!(adapter.get_control_flow_count(&path).value, 1);
+
+        // Test find_primitive_violations
+        let prim_types = PrimitiveTypeList {
+            values: vec![
+                SymbolName::new("int".to_string()),
+                SymbolName::new("bool".to_string()),
+            ],
+        };
+        let violations = adapter.find_primitive_violations(&path, &prim_types);
+        assert_eq!(violations.values.len(), 3);
+
+        // General helpers
+        assert!(!adapter.is_barrel_file(&path).value());
+        assert_eq!(adapter.get_stem(&path).value, "test_python_scanner");
+        assert!(!adapter.is_entry_point(&path).value());
+        assert!(adapter.get_supported_extensions().values.contains(&".py".to_string()));
+
+        // Clean up
+        let _ = fs::remove_file(test_path_str);
     }
 }

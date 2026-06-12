@@ -142,3 +142,35 @@ impl ISourceParserPort for SourceParserOrchestrator {
         ])
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::infrastructure_rust_scanner::ASTRustParserAdapter;
+    use crate::infrastructure_py_scanner::ASTPythonParserAdapter;
+    use crate::infrastructure_js_scanner::ASTJSParserAdapter;
+
+    #[test]
+    fn test_orchestrator_routing() {
+        let orchestrator = SourceParserOrchestrator::new(
+            Box::new(ASTPythonParserAdapter::new()),
+            Box::new(ASTRustParserAdapter::new()),
+            Box::new(ASTJSParserAdapter::new()),
+        );
+
+        // Test rust routing
+        let rust_path = FilePath::new("test.rs").unwrap();
+        let ext_rust = orchestrator.select_parser(&rust_path).get_supported_extensions();
+        assert!(ext_rust.values.contains(&".rs".to_string()));
+
+        // Test js/ts routing
+        let ts_path = FilePath::new("test.ts").unwrap();
+        let ext_js = orchestrator.select_parser(&ts_path).get_supported_extensions();
+        assert!(ext_js.values.contains(&".ts".to_string()));
+
+        // Test python routing
+        let py_path = FilePath::new("test.py").unwrap();
+        let ext_py = orchestrator.select_parser(&py_path).get_supported_extensions();
+        assert!(ext_py.values.contains(&".py".to_string()));
+    }
+}

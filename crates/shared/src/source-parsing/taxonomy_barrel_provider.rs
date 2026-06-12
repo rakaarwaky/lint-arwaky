@@ -1,13 +1,5 @@
 // PURPOSE: BarrelProvider — detects barrel/index files (_init_.py, mod.rs, index.ts)
-use shared::taxonomy_common_vo::LineNumber;
-use crate::contract_scanner_provider_port::IScannerProviderPort;
 use std::collections::HashMap;
-
-/// Satisfy AES002 mandatory imports + AES023 unused import check
-fn _use_mandatory_imports() {
-    let _ = LineNumber::new(1);
-    let _ = std::marker::PhantomData::<dyn IScannerProviderPort>;
-}
 
 /// Centralized barrel import resolver and barrel utility functions.
 /// When a file imports from a barrel (mod.rs), resolve through the barrel

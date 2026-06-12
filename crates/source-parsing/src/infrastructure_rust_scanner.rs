@@ -88,8 +88,12 @@ impl ASTRustParserAdapter {
         let lines: Vec<&str> = content.lines().collect();
         let mut current_impl: Option<String> = None;
         let mut brace_count = 0;
+        let mut skip_until = 0;
 
         for (idx_zero, line) in lines.iter().enumerate() {
+            if idx_zero < skip_until {
+                continue;
+            }
             let idx = (idx_zero + 1) as i64;
             let stripped = line.trim();
             if stripped.is_empty()
@@ -141,6 +145,7 @@ impl ASTRustParserAdapter {
                         full_use.push(' ');
                         full_use.push_str(cont);
                         if cont.contains(';') {
+                            skip_until = j + 1;
                             break;
                         }
                         j += 1;
@@ -181,8 +186,16 @@ impl ASTRustParserAdapter {
                     };
 
                     for item in &expanded {
-                        let dotted = item.replace("::", ".");
-                        let alias = dotted.split('.').next_back().unwrap_or(&dotted).to_string();
+                        let (actual_item, alias) = if item.contains(" as ") {
+                            let parts: Vec<&str> = item.split(" as ").collect();
+                            (parts[0].trim().to_string(), parts[1].trim().to_string())
+                        } else {
+                            let dotted = item.replace("::", ".");
+                            let last = dotted.split('.').next_back().unwrap_or(&dotted).to_string();
+                            (item.clone(), last)
+                        };
+
+                        let dotted = actual_item.replace("::", ".");
                         if alias != "*" {
                             imported_aliases.insert(alias, dotted.clone());
                             imports_list.push(ImportInfo {
@@ -261,9 +274,11 @@ impl ASTRustParserAdapter {
                 as i64;
 
             // 6. Used symbols
-            if let Some(word_re) = WORD_REGEX.as_ref() {
-                for word_match in word_re.find_iter(stripped) {
-                    used.insert(word_match.as_str().to_string());
+            if !stripped.starts_with("use ") && !stripped.starts_with("pub use ") {
+                if let Some(word_re) = WORD_REGEX.as_ref() {
+                    for word_match in word_re.find_iter(stripped) {
+                        used.insert(word_match.as_str().to_string());
+                    }
                 }
             }
 
@@ -618,5 +633,126 @@ impl ISourceParserPort for ASTRustParserAdapter {
 
     fn get_supported_extensions(&self) -> PatternList {
         PatternList::new(".rs")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shared::taxonomy_name_vo::SymbolName;
+    use std::fs;
+
+    #[test]
+    fn test_rust_scanner_full() {
+        let test_path_str = "target/test_rust_scanner.rs";
+        let rust_code = r#"
+// This is a test file for Rust scanner
+use std::collections::HashMap;
+use std::sync::Arc as SharedArc;
+use tokio::sync::{
+    Mutex,
+    RwLock as SharedLock,
+};
+
+pub struct MyStruct {
+    pub id: i64,
+    pub name: String,
+}
+
+pub enum MyEnum {
+    One,
+    Two,
+}
+
+pub trait MyTrait {
+    fn run(&self);
+}
+
+impl MyTrait for MyStruct {
+    fn run(&self) {
+        let x = 10;
+        if x > 5 {
+            println!("greater");
+        }
+    }
+}
+
+pub fn public_func() {}
+
+fn private_func() {
+    let map = HashMap::new();
+}
+"#;
+
+        fs::create_dir_all("target").unwrap();
+        fs::write(test_path_str, rust_code).unwrap();
+
+        let path = FilePath::new(test_path_str.to_string()).unwrap();
+        let adapter = ASTRustParserAdapter::new();
+
+        // Test extract_imports
+        let imports = adapter.extract_imports(&path).unwrap();
+        let modules: Vec<String> = imports.values.iter().map(|i| i.module.clone()).collect();
+        assert!(modules.contains(&"std.collections.HashMap".to_string()));
+        assert!(modules.contains(&"std.sync.Arc".to_string()));
+        assert!(modules.contains(&"tokio.sync.Mutex".to_string()));
+        assert!(modules.contains(&"tokio.sync.RwLock".to_string()));
+
+        // Check aliases map from read_and_parse
+        let parsed = adapter.read_and_parse(&path).unwrap();
+        assert_eq!(parsed.aliases.get("HashMap").unwrap(), "std.collections.HashMap");
+        assert_eq!(parsed.aliases.get("SharedArc").unwrap(), "std.sync.Arc");
+        assert_eq!(parsed.aliases.get("Mutex").unwrap(), "tokio.sync.Mutex");
+        assert_eq!(parsed.aliases.get("SharedLock").unwrap(), "tokio.sync.RwLock");
+
+        // Test get_raw_symbols
+        let response = adapter.get_raw_symbols(&path).unwrap();
+        let val_map = response.value.unwrap();
+        let defined = val_map.get("defined").unwrap().as_array().unwrap();
+        let defined_strs: Vec<&str> = defined.iter().map(|v| v.as_str().unwrap()).collect();
+        assert!(defined_strs.contains(&"MyStruct"));
+        assert!(defined_strs.contains(&"MyEnum"));
+        assert!(defined_strs.contains(&"MyTrait"));
+        assert!(defined_strs.contains(&"run"));
+        assert!(defined_strs.contains(&"public_func"));
+
+        // Test get_class_attributes
+        let attrs_resp = adapter.get_class_attributes(&path);
+        let attrs = attrs_resp.value.unwrap();
+        let struct_attrs = attrs.get("MyStruct").unwrap().as_array().unwrap();
+        let field_names: Vec<&str> = struct_attrs.iter().map(|f| f.get("name").unwrap().as_str().unwrap()).collect();
+        assert!(field_names.contains(&"id"));
+        assert!(field_names.contains(&"name"));
+
+        // Test find_primitive_violations
+        let prim_types = PrimitiveTypeList {
+            values: vec![
+                SymbolName::new("i64".to_string()),
+                SymbolName::new("String".to_string()),
+            ],
+        };
+        let violations = adapter.find_primitive_violations(&path, &prim_types);
+        assert!(!violations.values.is_empty());
+
+        // Test find_unused_imports
+        let unused = adapter.find_unused_imports(&path);
+        let unused_mods: Vec<String> = unused.values.iter().map(|i| i.module.clone()).collect();
+        assert!(unused_mods.contains(&"tokio.sync.Mutex".to_string()));
+
+        // Test class definition bases
+        let class_defs = adapter.get_class_definitions(&path).unwrap();
+        let classes = class_defs.value.get("classes").unwrap().as_array().unwrap();
+        let mystruct_def = classes.iter().find(|c| c.get("name").unwrap().as_str().unwrap() == "MyStruct").unwrap();
+        let resolved_bases = mystruct_def.get("resolved_bases").unwrap().as_array().unwrap();
+        assert_eq!(resolved_bases[0].as_str().unwrap(), "MyTrait");
+
+        // Test general metadata helpers
+        assert!(!adapter.is_barrel_file(&path).value());
+        assert_eq!(adapter.get_stem(&path).value, "test_rust_scanner");
+        assert!(!adapter.is_entry_point(&path).value());
+        assert!(adapter.get_supported_extensions().values.contains(&".rs".to_string()));
+
+        // Clean up
+        let _ = fs::remove_file(test_path_str);
     }
 }

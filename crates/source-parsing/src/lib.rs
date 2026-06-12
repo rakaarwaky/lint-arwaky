@@ -15,8 +15,8 @@ pub use shared::source_parsing::taxonomy_path_vo;
 pub use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 // Local infrastructure modules
-pub mod infrastructure_barrel_provider;
-pub use infrastructure_barrel_provider::BarrelImportResolver;
+// BarrelImportResolver is a utility (taxonomy layer) — lives in shared crate
+pub use shared::source_parsing::taxonomy_barrel_provider::BarrelImportResolver;
 pub mod infrastructure_file_collector;
 pub use infrastructure_file_collector::FileCollectorProvider;
 pub mod infrastructure_js_scanner;
@@ -29,4 +29,5 @@ pub mod infrastructure_py_scanner;
 pub use infrastructure_py_scanner::ASTPythonParserAdapter;
 pub mod infrastructure_rust_scanner;
 pub use infrastructure_rust_scanner::ASTRustParserAdapter;
-pub mod source_parsing_container;
+pub mod root_source_parsing_container;
+pub use root_source_parsing_container::SourceParsingContainer;

@@ -5,3 +5,4 @@ pub mod contract_scanner_provider_port;
 pub mod taxonomy_parser_error;
 pub mod taxonomy_path_vo;
 pub mod taxonomy_paths_vo;
+pub mod taxonomy_barrel_provider;

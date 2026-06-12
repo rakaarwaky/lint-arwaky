@@ -380,13 +380,16 @@ impl ASTJSParserAdapter {
                 .map_or(0, |r| r.find_iter(stripped).count()) as i64;
             data.control_flow_count += cf_matches;
 
-            if let Some(word_re) = WORD_REGEX.as_ref() {
-                for cap in word_re.find_iter(stripped) {
-                    let word = cap.as_str();
-                    if !js_keywords.contains(word)
-                        && !word.chars().next().is_none_or(|c| c.is_numeric())
-                    {
-                        data.used.insert(word.to_string());
+            // 6. Used symbols
+            if !stripped.starts_with("import ") && !stripped.contains("require(") {
+                if let Some(word_re) = WORD_REGEX.as_ref() {
+                    for cap in word_re.find_iter(stripped) {
+                        let word = cap.as_str();
+                        if !js_keywords.contains(word)
+                            && !word.chars().next().is_none_or(|c| c.is_numeric())
+                        {
+                            data.used.insert(word.to_string());
+                        }
                     }
                 }
             }
@@ -739,5 +742,97 @@ impl ISourceParserPort for ASTJSParserAdapter {
             ".jsx".to_string(),
             ".tsx".to_string(),
         ])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn test_js_scanner_full() {
+        let test_path_str = "target/test_js_scanner.ts";
+        let js_code = r#"
+// This is a test TS file
+import fs from 'fs';
+import { HttpClient as Client, get } from 'http';
+const path = require('path');
+
+class Animal {
+    constructor() {
+        this.kind = "generic";
+    }
+}
+
+class Dog extends Animal {
+    bark() {
+        let x = 5;
+        if (x > 3) {
+            console.log("Woof");
+        }
+    }
+}
+
+function run() {
+    get("url");
+}
+
+export { Dog };
+"#;
+
+        fs::create_dir_all("target").unwrap();
+        fs::write(test_path_str, js_code).unwrap();
+
+        let path = FilePath::new(test_path_str.to_string()).unwrap();
+        let adapter = ASTJSParserAdapter::new();
+
+        // Test extract_imports
+        let imports = adapter.extract_imports(&path).unwrap();
+        let modules: Vec<String> = imports.values.iter().map(|i| i.module.clone()).collect();
+        assert!(modules.contains(&"fs".to_string()));
+        assert!(modules.contains(&"http.HttpClient".to_string()));
+        assert!(modules.contains(&"http.get".to_string()));
+        assert!(modules.contains(&"path".to_string()));
+
+        // Check aliases map from read_and_parse
+        let parsed = adapter.read_and_parse(&path).unwrap();
+        assert_eq!(parsed.imported_aliases.get("fs").unwrap(), "fs");
+        assert_eq!(parsed.imported_aliases.get("Client").unwrap(), "http.HttpClient");
+        assert_eq!(parsed.imported_aliases.get("get").unwrap(), "http.get");
+        assert_eq!(parsed.imported_aliases.get("path").unwrap(), "path");
+
+        // Test get_raw_symbols
+        let response = adapter.get_raw_symbols(&path).unwrap();
+        let val_map = response.value.unwrap();
+        let defined = val_map.get("defined").unwrap().as_array().unwrap();
+        let defined_strs: Vec<&str> = defined.iter().map(|v| v.as_str().unwrap()).collect();
+        assert!(defined_strs.contains(&"Animal"));
+        assert!(defined_strs.contains(&"Dog"));
+        assert!(defined_strs.contains(&"run"));
+
+        // Test find_unused_imports
+        let unused = adapter.find_unused_imports(&path);
+        let unused_mods: Vec<String> = unused.values.iter().map(|i| i.module.clone()).collect();
+        assert!(unused_mods.contains(&"fs".to_string()));
+        assert!(unused_mods.contains(&"path".to_string()));
+
+        // Test class bases
+        let bases_map = adapter.get_class_bases_map(&path);
+        let bases = bases_map.value.get("bases").unwrap().as_object().unwrap();
+        let dog_bases = bases.get("Dog").unwrap().as_array().unwrap();
+        assert_eq!(dog_bases[0].as_str().unwrap(), "Animal");
+
+        // Test control flow count
+        assert_eq!(adapter.get_control_flow_count(&path).value, 1);
+
+        // General helpers
+        assert!(!adapter.is_barrel_file(&path).value());
+        assert_eq!(adapter.get_stem(&path).value, "test_js_scanner");
+        assert!(!adapter.is_entry_point(&path).value());
+        assert!(adapter.get_supported_extensions().values.contains(&".ts".to_string()));
+
+        // Clean up
+        let _ = fs::remove_file(test_path_str);
     }
 }
