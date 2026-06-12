@@ -492,6 +492,131 @@ impl Default for CheckerContainer {
     }
 }
 
+struct NullFileSystem;
+
+#[async_trait::async_trait]
+impl shared::file_system::contract_system_port::IFileSystemPort for NullFileSystem {
+    async fn walk(&self, _path: &FilePath, _ignored_patterns: Option<&shared::common::taxonomy_common_vo::PatternList>) -> FilePathList {
+        FilePathList::new(vec![])
+    }
+    async fn is_directory(&self, _path: &FilePath) -> shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus {
+        shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus::new(false)
+    }
+    async fn is_file(&self, _path: &FilePath) -> shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus {
+        shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus::new(false)
+    }
+    async fn get_relative_path(&self, path: &FilePath, _start: &FilePath) -> FilePath {
+        path.clone()
+    }
+    async fn read_text(&self, _path: &FilePath) -> Result<shared::common::taxonomy_source_vo::ContentString, shared::file_system::taxonomy_filesystem_error::FileSystemError> {
+        Err(shared::file_system::taxonomy_filesystem_error::FileSystemError::new(
+            FilePath::default(),
+            shared::common::taxonomy_common_error::ErrorMessage::new("null filesystem: not initialized"),
+            shared::pipeline_jobs::taxonomy_action_vo::ActionName::new("read"),
+        ))
+    }
+    async fn get_line_count(&self, _path: &FilePath) -> shared::common::taxonomy_common_vo::Count {
+        shared::common::taxonomy_common_vo::Count::default()
+    }
+    async fn exists(&self, _path: &FilePath) -> shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus {
+        shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus::new(false)
+    }
+    async fn get_parent(&self, _path: &FilePath) -> FilePath {
+        FilePath::default()
+    }
+    async fn write_text(
+        &self,
+        _path: &FilePath,
+        _content: &shared::common::taxonomy_source_vo::ContentString,
+        _mode: Option<&shared::common::taxonomy_layer_vo::Identity>,
+    ) -> Result<shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus, shared::file_system::taxonomy_filesystem_error::FileSystemError> {
+        Err(shared::file_system::taxonomy_filesystem_error::FileSystemError::new(
+            FilePath::default(),
+            shared::common::taxonomy_common_error::ErrorMessage::new("null filesystem: not initialized"),
+            shared::pipeline_jobs::taxonomy_action_vo::ActionName::new("write"),
+        ))
+    }
+    async fn glob(&self, _pattern: &shared::common::taxonomy_layer_vo::Identity) -> FilePathList {
+        FilePathList::new(vec![])
+    }
+    async fn get_cwd(&self) -> FilePath {
+        FilePath::default()
+    }
+    async fn get_basename(&self, _path: &FilePath) -> shared::common::taxonomy_layer_vo::Identity {
+        shared::common::taxonomy_layer_vo::Identity::default()
+    }
+    async fn path_join(&self, _parts: &[shared::common::taxonomy_layer_vo::Identity]) -> FilePath {
+        FilePath::default()
+    }
+    async fn read_file(&self, _path: &FilePath) -> Result<shared::common::taxonomy_source_vo::ContentString, shared::file_system::taxonomy_filesystem_error::FileSystemError> {
+        Err(shared::file_system::taxonomy_filesystem_error::FileSystemError::new(
+            FilePath::default(),
+            shared::common::taxonomy_common_error::ErrorMessage::new("null filesystem: not initialized"),
+            shared::pipeline_jobs::taxonomy_action_vo::ActionName::new("read"),
+        ))
+    }
+}
+
+struct NullSourceParser;
+
+impl shared::source_parsing::contract_parser_port::ISourceParserPort for NullSourceParser {
+    fn extract_imports(&self, _path: &FilePath) -> Result<shared::code_analysis::taxonomy_import_source_vo::ImportInfoList, shared::source_parsing::taxonomy_parser_error::SourceParserError> {
+        Ok(shared::code_analysis::taxonomy_import_source_vo::ImportInfoList::default())
+    }
+    fn get_raw_symbols(&self, _path: &FilePath) -> Result<shared::pipeline_jobs::taxonomy_job_vo::ResponseData, shared::source_parsing::taxonomy_parser_error::SourceParserError> {
+        Ok(shared::pipeline_jobs::taxonomy_job_vo::ResponseData::default())
+    }
+    fn get_class_attributes(&self, _path: &FilePath) -> shared::pipeline_jobs::taxonomy_job_vo::ResponseData {
+        shared::pipeline_jobs::taxonomy_job_vo::ResponseData::default()
+    }
+    fn has_all_export(&self, _path: &FilePath) -> shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus {
+        shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus::new(false)
+    }
+    fn find_primitive_violations(
+        &self,
+        _path: &FilePath,
+        _primitive_types: &shared::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList,
+    ) -> shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList {
+        shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList::default()
+    }
+    fn find_unused_imports(&self, _path: &FilePath) -> shared::code_analysis::taxonomy_import_source_vo::ImportInfoList {
+        shared::code_analysis::taxonomy_import_source_vo::ImportInfoList::default()
+    }
+    fn get_class_definitions(&self, _path: &FilePath) -> Result<shared::common::taxonomy_suggestion_vo::MetadataVO, shared::source_parsing::taxonomy_parser_error::SourceParserError> {
+        Ok(shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new()))
+    }
+    fn get_function_definitions(&self, _path: &FilePath) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
+        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
+    }
+    fn is_symbol_exported(&self, _path: &FilePath, _symbol: &shared::common::taxonomy_name_vo::SymbolName) -> shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus {
+        shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus::new(false)
+    }
+    fn get_class_methods(&self, _path: &FilePath) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
+        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
+    }
+    fn get_class_bases_map(&self, _path: &FilePath) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
+        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
+    }
+    fn get_assignment_targets(&self, _path: &FilePath) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
+        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
+    }
+    fn get_control_flow_count(&self, _path: &FilePath) -> shared::common::taxonomy_common_vo::Count {
+        shared::common::taxonomy_common_vo::Count::default()
+    }
+    fn is_barrel_file(&self, _path: &FilePath) -> shared::common::taxonomy_common_vo::BooleanVO {
+        shared::common::taxonomy_common_vo::BooleanVO::default()
+    }
+    fn get_stem(&self, _path: &FilePath) -> shared::common::taxonomy_name_vo::SymbolName {
+        shared::common::taxonomy_name_vo::SymbolName::new("")
+    }
+    fn is_entry_point(&self, _path: &FilePath) -> shared::common::taxonomy_common_vo::BooleanVO {
+        shared::common::taxonomy_common_vo::BooleanVO::default()
+    }
+    fn get_supported_extensions(&self) -> shared::common::taxonomy_common_vo::PatternList {
+        shared::common::taxonomy_common_vo::PatternList::default()
+    }
+}
+
 struct PlaceholderAnalyzer;
 impl IAnalyzer for PlaceholderAnalyzer {
     fn config(&self) -> &ArchitectureConfig {
@@ -506,10 +631,12 @@ impl IAnalyzer for PlaceholderAnalyzer {
         })
     }
     fn fs(&self) -> &dyn shared::file_system::contract_system_port::IFileSystemPort {
-        panic!("fs not initialized")
+        static FS: std::sync::OnceLock<NullFileSystem> = std::sync::OnceLock::new();
+        FS.get_or_init(|| NullFileSystem)
     }
     fn parser(&self) -> &dyn shared::source_parsing::contract_parser_port::ISourceParserPort {
-        panic!("parser not initialized")
+        static PARSER: std::sync::OnceLock<NullSourceParser> = std::sync::OnceLock::new();
+        PARSER.get_or_init(|| NullSourceParser)
     }
     fn detect_layer(
         &self,
