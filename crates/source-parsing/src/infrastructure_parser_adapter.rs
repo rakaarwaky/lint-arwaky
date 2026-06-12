@@ -57,7 +57,7 @@ impl SourceParserOrchestrator {
 impl Default for SourceParserOrchestrator {
     fn default() -> Self {
         // Intentionally create empty parser — caller must use SourceParserOrchestrator::new()
-        todo!("SourceParserOrchestrator requires DI — use SourceParserOrchestrator::new() with parser instances")
+        panic!("SourceParserOrchestrator requires DI — use SourceParserOrchestrator::new() with parser instances")
     }
 }
 
