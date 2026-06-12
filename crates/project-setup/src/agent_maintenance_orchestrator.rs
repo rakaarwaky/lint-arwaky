@@ -2,16 +2,16 @@
 
 use cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::pipeline_jobs::taxonomy_job_vo::JobId;
-use crate::taxonomy_doctor_vo::DoctorResultVO;
-use crate::taxonomy_stats_vo::MaintenanceStatsVO;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::Score;
+use shared::taxonomy_doctor_vo::DoctorResultVO;
 use shared::taxonomy_message_vo::ComplianceStatus;
+use shared::taxonomy_stats_vo::MaintenanceStatsVO;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 

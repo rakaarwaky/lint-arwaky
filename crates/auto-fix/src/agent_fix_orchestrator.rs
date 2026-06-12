@@ -1,8 +1,8 @@
 // PURPOSE: FixOrchestrator — orchestrates auto-fix operations via IFixProtocol (agent layer)
-use auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use auto_fix::contract_fix_protocol::IFixProtocol;
-use auto_fix::taxonomy_fix_vo::FixResult;
-use output_report::taxonomy_result_vo::LintResult;
+use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::auto_fix::contract_fix_protocol::IFixProtocol;
+use shared::auto_fix::taxonomy_fix_vo::FixResult;
+use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 

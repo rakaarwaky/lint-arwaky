@@ -1,15 +1,15 @@
 // PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations via IArchLintProtocol, tracks fix results
-use auto_fix::contract_fix_protocol::IFixProtocol;
-use auto_fix::taxonomy_fix_applied_event::FixApplied;
-use auto_fix::taxonomy_fix_vo::FixResult;
-use auto_fix::taxonomy_symbol_renamer_utility::SymbolRenamer;
-use code_analysis::contract_lint_protocol::IArchLintProtocol;
-use output_report::taxonomy_result_vo::LintResult;
+use shared::auto_fix::contract_fix_protocol::IFixProtocol;
+use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
+use shared::auto_fix::taxonomy_fix_vo::FixResult;
+use shared::auto_fix::taxonomy_symbol_renamer_utility::SymbolRenamer;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct LintFixProcessor {

@@ -63,7 +63,7 @@ impl CheckerContainer {
             import_mandatory_checker: panic!("CheckerContainer not initialized"),
             import_intent_checker: panic!("CheckerContainer not initialized"),
             import_forbidden_checker: panic!("CheckerContainer not initialized"),
-            cycle_analyzer: Arc::new(DependencyCycleAnalyzer::new()),
+            cycle_analyzer: Arc::new(DependencyCycleAnalyzer::new(ArchitectureConfig::default())),
             surface_checker: panic!("CheckerContainer not initialized"),
             orphan_aggregate: panic!("CheckerContainer not initialized"),
         }
@@ -216,13 +216,23 @@ impl RoleOrchestrator {
             let line_count = content.lines().count();
             if line_count > max_lines {
                 violations.push(LintResult::new_arch(
-                    "AES0305".to_string(),
-                    "Role violation: agent file exceeds max lines".to_string(),
-                    shared::source_parsing::taxonomy_path_vo::FilePath::new(file.to_string()).unwrap_or_default(),
-                    shared::output_report::taxonomy_severity_vo::Severity::Critical,
+                    file,
+                    0,
+                    "AES0305",
+                    shared::output_report::taxonomy_severity_vo::Severity::CRITICAL,
+                    "Role violation: agent file exceeds max lines",
                 ));
             }
         }
+    }
+}
+
+impl CheckerContainerRef for CheckerContainer {
+    fn detect_layer(&self, file: &str, root_dir: &str) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
+        self.detect_layer(file, root_dir)
+    }
+    fn get_layer_def(&self, layer: &shared::taxonomy_layer_vo::LayerNameVO) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
+        self.get_layer_def(layer)
     }
 }
 

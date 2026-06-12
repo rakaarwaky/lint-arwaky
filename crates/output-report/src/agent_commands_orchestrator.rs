@@ -1,8 +1,8 @@
 // PURPOSE: CommandOrchestrator — orchestrates output formatting commands (plain, json, junit, sarif)
 
-use code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
-use output_report::contract_report_aggregate::ReportCommandsAggregate;
-use output_report::taxonomy_score_vo::FileFormat;
+use shared::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use shared::output_report::contract_report_aggregate::ReportCommandsAggregate;
+use shared::output_report::taxonomy_score_vo::FileFormat;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 use async_trait::async_trait;

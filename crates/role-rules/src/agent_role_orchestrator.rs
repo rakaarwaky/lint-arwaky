@@ -1,11 +1,11 @@
 // PURPOSE: RoleOrchestrator — dispatches files to correct role checker based on filename prefix
 
-use output_report::taxonomy_result_vo::LintResult;
-use role_rules::contract_role_aggregate::IRoleAggregate;
-use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
+use async_trait::async_trait;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::FilePathList;
-use async_trait::async_trait;
+use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -133,8 +133,14 @@ impl RoleOrchestrator {
                     self.walk_dir(&path, files);
                 } else if path.is_file() {
                     if let Some(ext) = path.extension() {
-                        if matches!(ext.to_str(), Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")) {
-                            files.push(FilePath::new(path.to_string_lossy().to_string()).unwrap_or_default());
+                        if matches!(
+                            ext.to_str(),
+                            Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
+                        ) {
+                            files.push(
+                                FilePath::new(path.to_string_lossy().to_string())
+                                    .unwrap_or_default(),
+                            );
                         }
                     }
                 }

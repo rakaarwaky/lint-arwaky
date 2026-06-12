@@ -1,9 +1,12 @@
 // PURPOSE: ArchNamingChecker — INamingCheckerProtocol for AES011 (naming convention) and AES012 (suffix/prefix rules)
 
-use config_system::taxonomy_config_vo::ArchitectureConfig;
-use import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
-use output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use output_report::taxonomy_severity_vo::Severity;
+use async_trait::async_trait;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
+use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
@@ -14,9 +17,6 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
-use async_trait::async_trait;
 fn aes011_naming_convention(_expected_word_count: i32) -> String {
     String::from(
         "AES011 NAMING_CONVENTION: Filename must follow prefix_concept_suffix pattern.\n\
@@ -25,8 +25,8 @@ fn aes011_naming_convention(_expected_word_count: i32) -> String {
     )
 }
 
-use shared::taxonomy_violation_message_rs_error::AesViolation;
 use regex::Regex;
+use shared::taxonomy_violation_message_rs_error::AesViolation;
 
 #[derive(Clone)]
 pub struct ArchNamingChecker {}

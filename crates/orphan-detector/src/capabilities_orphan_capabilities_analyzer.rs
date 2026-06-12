@@ -1,10 +1,10 @@
 // PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
-use code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
-use output_report::taxonomy_severity_vo::Severity;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
+use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct CapabilitiesOrphanAnalyzer {}
 

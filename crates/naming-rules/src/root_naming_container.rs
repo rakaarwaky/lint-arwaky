@@ -1,7 +1,7 @@
 // PURPOSE: NamingContainer — wiring for naming-rules feature (root layer, wiring only)
-use crate::import_rules::contract_rule_protocol::IAnalyzer;
-use crate::naming_rules::capabilities_naming_checker::ArchNamingChecker;
-use crate::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared::import_rules::contract_rule_protocol::IAnalyzer;
+use shared::naming_rules::capabilities_naming_checker::ArchNamingChecker;
+use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use std::sync::Arc;
 
 pub struct NamingContainer {

@@ -15,7 +15,12 @@ use crate::ArchitectureConfig;
 use crate::CheckerContainer;
 use crate::LintResult;
 use crate::LintResultList;
-use crate::IRoleAggregate;
+use shared::role_rules::contract_role_aggregate::IRoleAggregate;
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::contract_role_protocol::IContractRoleChecker;
+use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
+use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+use shared::common::taxonomy_definition_vo::LayerDefinition;
 use crate::RoleOrchestrator;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 use shared::source_parsing::taxonomy_path_vo::FilePath;
@@ -271,36 +276,29 @@ impl LintCheckingOrchestrator {
         // Naming checks
         self.container
             .naming_checker()
-            .check_file_naming(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
-            .await;
+            .check_file_naming(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl);
         self.container
             .naming_checker()
-            .check_domain_suffixes(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
-            .await;
+            .check_domain_suffixes(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl);
 
         // Import checks
         self.container
             .import_mandatory_checker()
-            .check_mandatory_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
-            .await;
+            .check_mandatory_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl);
         self.container
             .import_intent_checker()
-            .check_mandatory_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
-            .await;
+            .check_mandatory_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl);
         self.container
             .import_forbidden_checker()
-            .check_forbidden_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
-            .await;
+            .check_forbidden_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl);
         self.container
             .import_forbidden_checker()
-            .check_legacy_import_rules(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
-            .await;
+            .check_legacy_import_rules(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl);
 
         // Cycle detection
         self.container
             .cycle_analyzer()
-            .check_cycles(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl)
-            .await;
+            .check_cycles(self.container.analyzer().as_ref(), &files_list_vo, &root_fp, &mut rl);
 
         // Surface hierarchy check — call protocol directly
         self.container
@@ -313,7 +311,44 @@ impl LintCheckingOrchestrator {
         rl.values.append(&mut orphan_results);
 
         // Wire role orchestrator for agent and surface role checks
-        let role_agg: Arc<dyn IRoleAggregate> = Arc::new(()); // Placeholder
+struct NoopRoleAggregate;
+impl IRoleAggregate for NoopRoleAggregate {
+    fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker { &NoopTaxonomy }
+    fn contract(&self) -> &dyn IContractRoleChecker { &NoopContract }
+    fn surface(&self) -> &dyn ISurfaceRoleChecker { &NoopSurface }
+    fn agent(&self) -> &dyn IAgentRoleChecker { &NoopAgent }
+}
+struct NoopTaxonomy;
+impl ITaxonomyRoleChecker for NoopTaxonomy {
+    fn check_vo(&self) -> Vec<LintResult> { vec![] }
+    fn check_entity(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+    fn check_error(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+    fn check_event(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+    fn check_constant(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+}
+struct NoopContract;
+impl IContractRoleChecker for NoopContract {
+    fn check_port(&self, _: &SourceContentVO) -> Vec<LintResult> { vec![] }
+    fn check_protocol(&self, _: &SourceContentVO) -> Vec<LintResult> { vec![] }
+    fn check_aggregate(&self, _: &SourceContentVO, _: &LayerDefinition, _: &mut Vec<LintResult>) {}
+}
+struct NoopSurface;
+impl ISurfaceRoleChecker for NoopSurface {
+    fn check_smart_surface(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+    fn check_utility_surface(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+    fn check_passive_surface(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+    fn check_fn_count_limit(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+}
+struct NoopAgent;
+impl IAgentRoleChecker for NoopAgent {
+    fn check_container(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+    fn check_orchestrator(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+    fn check_lifecycle(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+    fn check_file_size_limit(&self, _: &SourceContentVO, _: usize, _: &mut Vec<LintResult>) {}
+    fn check_any_type_annotation(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
+}
+
+        let role_agg: Arc<dyn IRoleAggregate> = Arc::new(NoopRoleAggregate);
         let role_orch = RoleOrchestrator::new(role_agg);
         let max_lines = config
             .rules

@@ -1,11 +1,11 @@
 // PURPOSE: SetupOrchestrator — orchestrates project initialization and setup operations
-use cli_commands::taxonomy_protocol_vo::TransportProtocol;
-use cli_commands::taxonomy_protocol_vo::TransportUrlVO;
-use config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
+use shared::cli_commands::taxonomy_protocol_vo::TransportProtocol;
+use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
+use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::pipeline_jobs::taxonomy_job_vo::EnvContentVO;
 use shared::pipeline_jobs::taxonomy_job_vo::McpConfigVO;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 use std::collections::HashMap;
 

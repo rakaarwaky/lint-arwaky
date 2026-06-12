@@ -3,12 +3,12 @@
 // - Smart surface (_command, _controller, _page, _entry): must be imported by entry or router
 // - Utility surface (_hook, _store, _action, _screen, _router): must be imported by smart surface
 // - Passive surface (_component, _view, _layout): must be imported by smart or utility surface
-use code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use orphan_detector::contract_orphan_protocol::ISurfacesOrphanProtocol;
-use output_report::taxonomy_severity_vo::Severity;
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use shared::orphan_detector::contract_orphan_protocol::ISurfacesOrphanProtocol;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::taxonomy_definition_vo::LayerDefinition;
 
 pub struct SurfacesOrphanAnalyzer {}
 

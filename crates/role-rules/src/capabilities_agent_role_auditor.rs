@@ -1,12 +1,11 @@
 // PURPOSE: AgentRoleChecker — IAgentRoleChecker for AES0305: agent container/orchestrator/lifecycle role audits
-use role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use once_cell::sync::Lazy;
 use regex::Regex;
-
-use import_rules::contract_rule_protocol::IAnalyzer;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_severity_vo::Severity;
-use role_rules::taxonomy_layer_names_vo::layer_infrastructure;
+use shared::import_rules::contract_rule_protocol::IAnalyzer;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::taxonomy_layer_names_vo::layer_infrastructure;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
@@ -29,9 +28,9 @@ pub fn aes0305_any_type(line: &str) -> String {
     )
 }
 
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_source_vo::SourceContentVO;
 use shared::taxonomy_violation_message_rs_error::AesViolation;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AgentRoleChecker {}
 impl Default for AgentRoleChecker {

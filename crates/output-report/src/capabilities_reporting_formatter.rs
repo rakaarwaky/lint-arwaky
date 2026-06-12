@@ -1,14 +1,14 @@
 // PURPOSE: LintReportingFormatter — ILintReportingProtocol implementation for all output formats
 
-use code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
-use output_report::contract_output_aggregate::IReportFormatterProtocol;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_result_vo::LintResultList;
-use output_report::taxonomy_score_vo::FileFormat;
-use output_report::taxonomy_severity_vo::Severity;
+use serde_json::json;
+use shared::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use shared::output_report::contract_output_aggregate::IReportFormatterProtocol;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::output_report::taxonomy_score_vo::FileFormat;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use shared::taxonomy_suggestion_vo::LogOutput;
-use serde_json::json;
 use std::collections::BTreeMap;
 
 /// Business logic for transforming ArchitectureGovernanceEntitys into standard formats.

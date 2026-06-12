@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use shared::pipeline_jobs::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
-use project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 
 /// Business logic for generating setup and configuration artifacts.

@@ -1,10 +1,10 @@
 // PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
 // Agent is orphan if the contract aggregate it implements is NOT called by any surface or container.
-use code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
-use output_report::taxonomy_severity_vo::Severity;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
+use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AgentOrphanAnalyzer {}
 

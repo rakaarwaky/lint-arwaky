@@ -1,15 +1,16 @@
 // PURPOSE: IOrphanAggregate — aggregate trait implementing all orphan detection protocols
-use code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
-use code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-use code_analysis::taxonomy_analysis_vo::ImportGraph;
-use code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
+use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
+use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
+use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
+use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
+use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
@@ -20,7 +21,6 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashSet;
 use std::sync::Arc;
 

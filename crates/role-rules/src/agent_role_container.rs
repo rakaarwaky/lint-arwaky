@@ -3,11 +3,11 @@ use role_rules::capabilities_agent_role_auditor::AgentRoleChecker;
 use role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
 use role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
-use role_rules::contract_agent_role_protocol::IAgentRoleChecker;
-use role_rules::contract_role_aggregate::IRoleAggregate;
-use role_rules::contract_role_protocol::IContractRoleChecker;
-use role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
-use role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::contract_role_aggregate::IRoleAggregate;
+use shared::role_rules::contract_role_protocol::IContractRoleChecker;
+use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
+use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 
 /// Satisfy AES030 orphan detection - agent references contract ports/protocols
 fn _use_contract_references() {

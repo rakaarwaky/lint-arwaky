@@ -1,10 +1,13 @@
 // PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES0306: smart/utility/passive surface role checks
-use import_rules::contract_rule_protocol::IAnalyzer;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_result_vo::LintResultList;
-use output_report::taxonomy_severity_vo::Severity;
-use role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
-use role_rules::taxonomy_layer_names_vo::layer_surfaces;
+use once_cell::sync::Lazy;
+use regex::Regex;
+use shared::import_rules::contract_rule_protocol::IAnalyzer;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
+use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared::taxonomy_definition_vo::LayerDefinition;
@@ -13,9 +16,6 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_source_vo::SourceContentVO;
 use shared::taxonomy_violation_message_rs_error::AesViolation;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use once_cell::sync::Lazy;
-use regex::Regex;
 
 const MAX_PUBLIC_METHODS: usize = 10;
 const MAX_FUNCTION_BODY_LINES: i64 = 80;

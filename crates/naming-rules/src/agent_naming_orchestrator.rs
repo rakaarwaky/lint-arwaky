@@ -1,11 +1,11 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks
-use naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use naming_rules::ArchNamingChecker;
-use import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
-use output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use async_trait::async_trait;
+use shared::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
+use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared::naming_rules::ArchNamingChecker;
+use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::FilePathList;
-use async_trait::async_trait;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -15,10 +15,7 @@ pub struct NamingOrchestrator {
 }
 
 impl NamingOrchestrator {
-    pub fn new(
-        checker: ArchNamingChecker,
-        analyzer: Arc<dyn IAnalyzer>,
-    ) -> Self {
+    pub fn new(checker: ArchNamingChecker, analyzer: Arc<dyn IAnalyzer>) -> Self {
         Self {
             checker: Arc::new(checker),
             analyzer,
@@ -44,8 +41,14 @@ impl NamingOrchestrator {
                     self.walk_dir(&path, files);
                 } else if path.is_file() {
                     if let Some(ext) = path.extension() {
-                        if matches!(ext.to_str(), Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")) {
-                            files.push(FilePath::new(path.to_string_lossy().to_string()).unwrap_or_default());
+                        if matches!(
+                            ext.to_str(),
+                            Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
+                        ) {
+                            files.push(
+                                FilePath::new(path.to_string_lossy().to_string())
+                                    .unwrap_or_default(),
+                            );
                         }
                     }
                 }
@@ -59,15 +62,8 @@ impl INamingRunnerAggregate for NamingOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
         let mut results = LintResultList::new(Vec::new());
         let files = self.collect_files(target);
-        let root_dir = FilePath::new(
-            target
-                .value()
-                .split('/')
-                .next()
-                .unwrap_or(".")
-                .to_string(),
-        )
-        .unwrap_or_default();
+        let root_dir = FilePath::new(target.value().split('/').next().unwrap_or(".").to_string())
+            .unwrap_or_default();
 
         self.checker
             .check_file_naming(self.analyzer.as_ref(), &files, &root_dir, &mut results)
