@@ -5,11 +5,11 @@ use std::collections::HashMap;
 use std::time::Duration as StdDuration;
 use tokio::process::Command;
 
-use cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_duration_vo::Timeout;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct StdioClient {
     timeout: StdDuration,

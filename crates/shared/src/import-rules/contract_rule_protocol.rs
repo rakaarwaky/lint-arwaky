@@ -155,22 +155,23 @@ pub trait IArchStructureProtocol: IArchRuleProtocol + Send + Sync {
     );
 }
 
+#[async_trait::async_trait]
 pub trait IArchImportProtocol: IArchRuleProtocol + Send + Sync {
-    fn check_mandatory_imports(
+    async fn check_mandatory_imports(
         &self,
         analyzer: &dyn IAnalyzer,
         files: &FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
-    fn check_forbidden_imports(
+    async fn check_forbidden_imports(
         &self,
         analyzer: &dyn IAnalyzer,
         files: &FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
-    fn check_legacy_import_rules(
+    async fn check_legacy_import_rules(
         &self,
         analyzer: &dyn IAnalyzer,
         files: &FilePathList,

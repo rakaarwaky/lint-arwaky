@@ -4,7 +4,7 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
 use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::FilePathList;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::path::Path;
 use std::sync::Arc;
 

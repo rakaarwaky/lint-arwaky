@@ -14,14 +14,15 @@ use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_violation_message_rs_error::AesViolation;
-use shared::{Identity, LayerNameVO, SymbolName};
+use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
+use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
 
 pub struct ImportIntentChecker {}
 
 impl ImportIntentChecker {
     pub fn new(
-        _parser: Arc<dyn crate::import_rules::contract_import_parser_port::IImportParserPort>,
+        _parser: Arc<dyn crate::IImportParserPort>,
     ) -> Self {
         Self {}
     }
@@ -226,14 +227,14 @@ impl ImportIntentChecker {
 }
 
 #[async_trait]
-impl crate::import_rules::contract_rule_protocol::IArchRuleProtocol for ImportIntentChecker {
+impl crate::IArchRuleProtocol for ImportIntentChecker {
     fn rule_name(&self) -> Identity {
         Identity::new("AES002X")
     }
 }
 
 #[async_trait]
-impl crate::import_rules::contract_rule_protocol::IArchImportProtocol for ImportIntentChecker {
+impl crate::IArchImportProtocol for ImportIntentChecker {
     async fn check_mandatory_imports(
         &self,
         _analyzer: &dyn IAnalyzer,

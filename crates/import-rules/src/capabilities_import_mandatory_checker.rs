@@ -11,7 +11,8 @@ use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_violation_message_rs_error::AesViolation;
-use shared::{FileContentVO, Identity, LayerNameVO, SymbolName};
+use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO};
+use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
 
 pub struct ArchImportMandatoryChecker {
