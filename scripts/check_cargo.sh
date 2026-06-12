@@ -2,12 +2,12 @@
 set -euo pipefail
 
 CRATES=(
-  "shared_common" "source_parsing" "naming_rules" "import_rules"
-  "output_report" "pipeline_jobs" "code_analysis" "auto_fix"
-  "cli_commands" "cli_transport" "config_system" "di_containers"
-  "file_system" "file_watch" "git_hooks" "language_adapters"
-  "lifecycle_state" "mcp_server" "metrics_service" "multi_project"
-  "orphan_detector" "plugin_system" "project_setup" "role_rules"
+  "shared-lint-arwaky" "source_parsing-lint-arwaky" "naming_rules-lint-arwaky" "import_rules-lint-arwaky"
+  "output_report-lint-arwaky" "pipeline_jobs-lint-arwaky" "code_analysis-lint-arwaky" "auto_fix-lint-arwaky"
+  "cli_commands-lint-arwaky" "config_system-lint-arwaky" "file_system-lint-arwaky" "file_watch-lint-arwaky"
+  "git_hooks-lint-arwaky" "language_adapters-lint-arwaky" "lifecycle_state-lint-arwaky" "mcp_server-lint-arwaky"
+  "metrics_service-lint-arwaky" "multi_project-lint-arwaky" "orphan_detector-lint-arwaky" "plugin_system-lint-arwaky"
+  "project_setup-lint-arwaky" "role_rules-lint-arwaky"
 )
 
 echo "=== Lint Arwaky — Cargo Check All Crates ==="
@@ -20,7 +20,7 @@ echo "  a) All crates (sequentially)"
 echo "  q) Quit"
 echo ""
 
-read -rp "Choose [1-24, a, q]: " choice
+read -rp "Choose [1-22, a, q]: " choice
 
 case "$choice" in
   a|A)
@@ -40,7 +40,7 @@ case "$choice" in
     echo "Bye."
     exit 0
     ;;
-  [1-9]|1[0-9]|2[0-4])
+  [1-9]|1[0-9]|2[0-2])
     idx=$((choice-1))
     crate="${CRATES[$idx]}"
     echo ""

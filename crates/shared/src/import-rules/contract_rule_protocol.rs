@@ -1,16 +1,16 @@
 // PURPOSE: IAnalyzer trait — core analyzer interface for import checks
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::file_system::contract_system_port::IFileSystemPort;
-use crate::output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use crate::output_report::taxonomy_result_vo::LintResultList;
+use crate::source_parsing::contract_parser_port::ISourceParserPort;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use crate::taxonomy_common_error::ErrorMessage;
 use crate::taxonomy_common_vo::Count;
 use crate::taxonomy_common_vo::PatternList;
 use crate::taxonomy_definition_vo::LayerMapVO;
 use crate::taxonomy_layer_vo::Identity;
 use crate::taxonomy_layer_vo::LayerNameVO;
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 
 pub trait IAnalyzer: Send + Sync {
     fn config(&self) -> &ArchitectureConfig;
