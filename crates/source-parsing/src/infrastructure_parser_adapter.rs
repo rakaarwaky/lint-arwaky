@@ -10,9 +10,9 @@ use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_suggestion_vo::MetadataVO;
-use crate::contract_parser_port::ISourceParserPort;
-use crate::taxonomy_parser_error::SourceParserError;
-use crate::taxonomy_path_vo::FilePath;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::taxonomy_parser_error::SourceParserError;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 /// Composite source parser that delegates to language-specific adapters via DI.
 ///
