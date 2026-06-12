@@ -6,12 +6,14 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-pub struct PluginCommandsOrchestrator {}
+pub struct PluginCommandsOrchestrator {
+    root_path: Option<FilePath>,
+}
 
 #[async_trait]
 impl PluginCommandsAggregate for PluginCommandsOrchestrator {
     fn root_path(&self) -> Option<&FilePath> {
-        None
+        self.root_path.as_ref()
     }
     async fn adapters(&self) {
         let names = self.get_adapter_names();
@@ -25,22 +27,52 @@ impl PluginCommandsAggregate for PluginCommandsOrchestrator {
 
 impl Default for PluginCommandsOrchestrator {
     fn default() -> Self {
-        Self::new()
+        Self::new(None)
     }
 }
 
 impl PluginCommandsOrchestrator {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(root_path: Option<FilePath>) -> Self {
+        Self { root_path }
     }
 
     pub fn get_adapter_names(&self) -> Vec<String> {
-        // Get names of all enabled adapters
-        Vec::new()
+        let mut adapters = Vec::new();
+        if let Some(root) = &self.root_path {
+            let adapters_dir =
+                std::path::Path::new(&root.value).join("crates").join("language-adapters").join("src");
+            if let Ok(entries) = std::fs::read_dir(&adapters_dir) {
+                for entry in entries.flatten() {
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    if name.starts_with("infrastructure_") && name.ends_with("_adapter.rs") {
+                        let adapter_name = name
+                            .strip_prefix("infrastructure_").unwrap_or(&name)
+                            .strip_suffix("_adapter.rs").unwrap_or(&name)
+                            .to_string();
+                        adapters.push(adapter_name);
+                    }
+                }
+            }
+        }
+        adapters
     }
 
     pub fn get_discovered_plugins_info(&self) -> HashMap<String, String> {
-        // Get information about discovered plugins
-        HashMap::new()
+        let mut info = HashMap::new();
+        if let Some(root) = &self.root_path {
+            let crates_dir = std::path::Path::new(&root.value).join("crates");
+            if let Ok(entries) = std::fs::read_dir(&crates_dir) {
+                for entry in entries.flatten() {
+                    if entry.path().is_dir() {
+                        let name = entry.file_name().to_string_lossy().to_string();
+                        let toml_path = entry.path().join("Cargo.toml");
+                        if toml_path.exists() {
+                            info.insert(name, "active".to_string());
+                        }
+                    }
+                }
+            }
+        }
+        info
     }
 }
