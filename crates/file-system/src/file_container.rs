@@ -1,6 +1,6 @@
 // PURPOSE: FileContainer — wiring for file-system feature (root layer, wiring only)
 use std::sync::Arc;
-use crate::file_system::contract_system_port::IFileSystemPort;
+use crate::IFileSystemPort;
 
 pub struct FileContainer {
     filesystem: Arc<dyn IFileSystemPort>,
@@ -10,7 +10,7 @@ impl FileContainer {
     pub fn new() -> Self {
         Self {
             filesystem: Arc::new(
-                crate::file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
+                crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
             ),
         }
     }
@@ -24,4 +24,5 @@ impl Default for FileContainer {
         Self::new()
     }
 }
+
 
