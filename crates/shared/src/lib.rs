@@ -7,6 +7,10 @@ pub mod common;
 // Re-export all taxonomy_* and contract_* types from common
 pub use common::*;
 
+// Error macros — must precede feature modules that use define_error!/define_wrapper!
+#[macro_use]
+pub mod taxonomy_error_macro;
+
 // Feature-specific types (in feature folders)
 #[path = "auto-fix/mod.rs"]
 pub mod auto_fix;
