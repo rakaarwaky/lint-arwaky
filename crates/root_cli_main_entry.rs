@@ -1,0 +1,113 @@
+// PURPOSE: main entry point for lint-arwaky-cli — parses args, initializes DI, dispatches commands
+use std::env;
+use std::process::ExitCode;
+use std::sync::Arc;
+
+use clap::Parser;
+use cli_commands::surface_bootstrap_command;
+use cli_commands::surface_check_command;
+use cli_commands::surface_config_command;
+use cli_commands::surface_core_command::{Cli, Commands};
+use cli_commands::surface_dev_command;
+use cli_commands::surface_fix_command;
+use cli_commands::surface_git_command;
+use cli_commands::surface_maintenance_command;
+use cli_commands::surface_map_command;
+use cli_commands::surface_multi_command;
+use cli_commands::surface_plugin_command;
+use cli_commands::surface_report_command;
+use cli_commands::surface_setup_command;
+use cli_commands::surface_watch_command;
+use code_analysis::agent_checking_orchestrator::init_global_checker;
+use code_analysis::{has_critical, lint_path, CodeMetricAnalyzer, ProjectTargetResolver};
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+
+// Declare root layer module from local file
+mod root_composition_container;
+use root_composition_container::CompositionRoot;
+
+pub struct CliMainEntry {}
+
+fn main() -> ExitCode {
+    init_global_checker(Arc::new(CompositionRoot::new().checker_container()));
+    let raw_args: Vec<String> = env::args().collect();
+    if raw_args.len() <= 1 {
+        return run_default_check(".");
+    }
+
+    let cli = match Cli::try_parse_from(&raw_args) {
+        Ok(c) => c,
+        Err(e) => e.exit(),
+    };
+
+    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(CompositionRoot::new());
+
+    let filter = cli.filter.clone();
+    match cli.command {
+        Commands::Check { path, git_diff } => {
+            surface_check_command::handle_check(path, git_diff, filter)
+        }
+        Commands::Scan { path } => {
+            surface_check_command::handle_scan(path, container.clone(), filter)
+        }
+        Commands::Fix { path, dry_run } => {
+            surface_fix_command::handle_fix(path, dry_run, container.clone())
+        }
+        Commands::Report {
+            path,
+            output_format,
+        } => surface_report_command::handle_report(path, output_format),
+        Commands::Ci { path, threshold } => surface_dev_command::handle_ci(path, threshold),
+        Commands::Version => {
+            let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
+            surface_bootstrap_command::handle_version(verbose)
+        }
+        Commands::Adapters => surface_plugin_command::handle_adapters(container.clone()),
+        Commands::Config { command } => surface_config_command::handle_config(command),
+        Commands::GitDiff { base } => surface_git_command::handle_git_diff(base),
+        Commands::MultiProject { paths } => surface_multi_command::handle_multi_project(paths),
+        Commands::Security { path } => surface_maintenance_command::handle_security(path),
+        Commands::Complexity { path } => {
+            let resolver = ProjectTargetResolver::new();
+            let analyzer = CodeMetricAnalyzer::new(Arc::new(resolver));
+            analyzer.handle_complexity(path)
+        }
+        Commands::Duplicates { path } => {
+            let resolver = ProjectTargetResolver::new();
+            let analyzer = CodeMetricAnalyzer::new(Arc::new(resolver));
+            analyzer.handle_duplicates(path)
+        }
+        Commands::Trends { path } => {
+            let resolver = ProjectTargetResolver::new();
+            let analyzer = CodeMetricAnalyzer::new(Arc::new(resolver));
+            analyzer.handle_trends(path)
+        }
+        Commands::Dependencies { path } => surface_maintenance_command::handle_dependencies(path),
+        Commands::Setup { command } => surface_setup_command::handle_setup(command),
+        Commands::Cancel { job_id } => surface_map_command::handle_cancel(job_id),
+        Commands::Diff { path1, path2 } => surface_map_command::handle_diff(path1, path2),
+        Commands::Import { config_file } => surface_map_command::handle_import(config_file),
+        Commands::Export { format } => surface_map_command::handle_export(format),
+        Commands::Watch { path } => surface_watch_command::handle_watch(path),
+        Commands::Suggest { path, ai: _ } => surface_map_command::handle_suggest(path),
+        Commands::InstallHook => surface_git_command::handle_install_hook(),
+        Commands::UninstallHook => surface_git_command::handle_uninstall_hook(),
+    }
+}
+
+fn run_default_check(project_root: &str) -> ExitCode {
+    use output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
+    let results = lint_path(project_root);
+    let formatter = ReportFormatterProcessor::new();
+    let report = formatter.format_text(&results, project_root);
+    println!("Lint Arwaky v{} (AES Self-Lint)", env!("CARGO_PKG_VERSION"));
+    println!("Scanning: {}", project_root);
+    println!();
+    println!("{}", report);
+    if has_critical(&results) {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
+}

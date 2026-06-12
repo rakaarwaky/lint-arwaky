@@ -1,0 +1,31 @@
+{
+  "folders": [
+    {
+      "name": "Shared (Foundation)",
+      "path": "../crates/shared"
+    },
+    {
+      "name": "Project Root (Files)",
+      "path": ".."
+    }
+  ],
+  "settings": {
+    "rust-analyzer.linkedProjects": [
+      "../crates/shared/Cargo.toml"
+    ],
+    "files.exclude": {
+      "crates": true,
+      "test-project-javascript": true,
+      "test-project-python": true,
+      "test-project-rust": true,
+      "Graph-It-Live-arwaky": true,
+      "dist": true,
+      "target": true,
+      ".git": true,
+      ".jj": true,
+      ".graph-it": true,
+      ".github": true,
+      "scripts": true
+    }
+  }
+}

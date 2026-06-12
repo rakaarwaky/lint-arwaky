@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.10.10 (Upcoming)
+
+### Changed
+
+- **Agent Suffix Restriction**: Restricted `agent` layer suffixes strictly to `_orchestrator` (removing `_container` and `_lifecycle` from suffix, rules, and scopes) across all YAML configuration files and documentation, as `_container` has been relocated to the `root` layer and `_lifecycle` is no longer needed.
+
+---
+
 ## 1.10.9 (2026-06-11) — Published to crates.io + Linux-Only Installer
 
 ### Added

@@ -1,6 +1,6 @@
 # Contributing to Lint Arwaky
 
-> This guide covers everything you need to start contributing to the Rust reference implementation in `src-rust/`.
+> This guide covers everything you need to start contributing to the Rust implementation in `crates/`.
 
 ## Why Contribute
 
@@ -62,7 +62,7 @@ cargo build --release
 
 # Self-lint the project
 ./target/release/lint-arwaky-cli check .
-# Scans src-rust/ under the same AES rules the project enforces.
+# Scans `crates/` under the same AES rules the project enforces.
 ```
 
 For development without the release profile:
@@ -78,15 +78,15 @@ cargo run --bin lint-arwaky-mcp
 
 ### 6-Layer Model
 
-```
-src-rust/
-  agent/           Wiring layer — DI container, orchestrators, lifecycle
-  capabilities/    Thinking layer — analysis logic, processors, evaluators
-  contract/        Interface layer — ports (I*), protocols, aggregates
-  infrastructure/  Toolbox layer — linter adapters, providers, scanners
-  surfaces/        Interface layer — CLI commands, MCP handlers
-  taxonomy/        Language layer — Value Objects (VOs), entities, constants
-```
+The codebase is organized into **feature crates** (vertical slicing) in the `crates/` directory. Within each crate, files from different layers coexist and are identified strictly by their **file prefix**:
+
+- `taxonomy_` — Value Objects (VOs), entities, constants, errors, events
+- `contract_` — Interface layer: ports (I*), protocols, aggregates
+- `capabilities_` — Thinking layer: checkers, analyzers, processors, evaluators, resolvers, etc.
+- `infrastructure_` — Toolbox layer: linter adapters, providers, scanners
+- `agent_` — Wiring layer: orchestrators
+- `surface_` — Interface layer: CLI commands, MCP handlers
+- `root_` — Composition containers, main entries (root layer)
 
 ### Dependency Rules
 
@@ -114,7 +114,7 @@ To prevent architectural bypasses, every logic file **must** define a struct tha
 
 | Layer              | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Trait / Example File                         |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| **Agent**          | `_container`, `_orchestrator`, `_lifecycle`                                                                                                                                                                                                                                                                                                                                                                                                                                     | `analysis_execution_orchestrator.rs`         |
+| **Agent**          | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `analysis_execution_orchestrator.rs`         |
 | **Capabilities**   | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_handler`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_actions`                                                                                                                        | `architecture_compliance_analyzer.rs`        |
 | **Infrastructure** | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_store`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `python_ruff_adapter.rs`                     |
 | **Surfaces**       | `_command`, `_handler`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_provider`                                                                                                                                                                                                                                                                                                                                           | `cli_check_command.rs`                       |
@@ -128,11 +128,11 @@ To prevent architectural bypasses, every logic file **must** define a struct tha
 
 ### 1. Pick the right layer
 
-Linter adapters live in `src-rust/infrastructure/` and must end in `_adapter.rs` (or `_scanner.rs` for AST-level tools). The file name follows the 3-word convention: `[domain]_[tool]_[role].rs`.
+Linter adapters live in `crates/language-adapters/src/` and follow the `infrastructure_[language]_[tool]_adapter.rs` naming pattern (or `_scanner.rs` for AST-level tools).
 
 ### 2. Create the adapter file
 
-For example, `src-rust/infrastructure/rust_clippy_adapter.rs`:
+For example, `crates/language-adapters/src/infrastructure_rs_clippy_adapter.rs`:
 
 ```rust
 //! Adapter wrapping the Clippy linter.
@@ -140,8 +140,9 @@ use async_trait::async_trait;
 use std::path::Path;
 use std::process::Command;
 
-use crate::contract::ILinterAdapterPort;
-use crate::taxonomy::{AdapterName, LintResult, LintResultList};
+use code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::taxonomy_adapter_name_vo::AdapterName;
+use shared::taxonomy_result_vo::{LintResult, LintResultList};
 
 pub struct RustClippyAdapter;
 
@@ -166,18 +167,18 @@ impl ILinterAdapterPort for RustClippyAdapter {
 
 ### 3. Register in the DI container
 
-Edit `src-rust/agent/dependency_injection_container.rs` and add the adapter:
+Edit `crates/composition_root.rs` (or `crates/root_compsotion_container.rs`) and add the adapter registration:
 
 ```rust
-use crate::infrastructure::rust_clippy_adapter::RustClippyAdapter;
+use crate::language_adapters::infrastructure_rs_clippy_adapter::RustClippyAdapter;
 
-// inside DependencyInjectionContainer::new()
-self.adapters.push(Box::new(RustClippyAdapter::new()));
+// inside CompositionRoot / container building logic
+let clippy = Arc::new(RustClippyAdapter::new());
 ```
 
 ### 4. Add a test
 
-Create `src-rust/infrastructure/rust_clippy_adapter.rs` `#[cfg(test)] mod tests` (Rust convention: keep tests in-file) or a sibling test in `tests/`:
+Create `#[cfg(test)] mod tests` inside the same file (Rust convention: keep unit tests in-file) or a sibling test in `tests/`:
 
 ```rust
 #[cfg(test)]
@@ -190,6 +191,7 @@ mod tests {
         assert_eq!(a.name().value, "clippy");
     }
 }
+```
 ```
 
 ### 5. Run the tests
@@ -205,21 +207,20 @@ cargo test --lib
 
 ### 1. Pick the right module
 
-CLI surface modules live in `src-rust/surfaces/` and follow the `cli_<group>_command.rs` pattern:
+CLI surface modules live in `crates/cli-commands/src/` and follow the `surface_<group>_command.rs` pattern:
 
 | Module                       | Purpose                                                                 |
 | ---------------------------- | ----------------------------------------------------------------------- |
-| `cli_core_command.rs`        | `check`, `scan`, `fix`, `report`, `ci`, `version`, `adapters`, `config` |
-| `cli_analysis_command.rs`    | `complexity`, `duplicates`, `trends`, `dependencies`                    |
-| `cli_dev_command.rs`         | `diff`, `suggest`, `import`, `export`                                   |
-| `cli_setup_command.rs`       | `setup init/doctor/mcp-config/hermes`                                   |
-| `cli_watch_command.rs`       | `watch`                                                                 |
-| `cli_maintenance_command.rs` | `install-hook`, `uninstall-hook`, `clean`, `update`                     |
-| `core_git_command.rs`        | `git-diff`, `multi-project`                                             |
+| `surface_core_command.rs`    | `check`, `scan`, `fix`, `report`, `ci`, `version`, `adapters`, `config` |
+| `surface_dev_command.rs`     | `diff`, `suggest`, `import`, `export`                                   |
+| `surface_setup_command.rs`   | `setup init/doctor/mcp-config/hermes`                                   |
+| `surface_watch_command.rs`   | `watch`                                                                 |
+| `surface_maintenance_command.rs` | `install-hook`, `uninstall-hook`, `clean`, `update`                 |
+| `surface_git_command.rs`     | `git-diff`, `multi-project`                                             |
 
 ### 2. Add the subcommand
 
-In `src-rust/surfaces/cli_core_command.rs`:
+In `crates/cli-commands/src/surface_core_command.rs`:
 
 ```rust
 #[derive(Subcommand, Debug)]
@@ -233,14 +234,13 @@ pub enum Commands {
 }
 ```
 
-In `src-rust/cli_main_entry.rs` add a `match` arm:
+In `crates/root_cli_main_entry.rs` add a `match` arm:
 
 ```rust
 Commands::MyCommand { path } => {
     let target = path.unwrap_or_else(|| ".".to_string());
-    // delegate to an agent orchestrator
-    let container: Arc<dyn ServiceContainerAggregate> =
-        Arc::new(DependencyInjectionContainer::new());
+    // delegate to an agent orchestrator using CompositionRoot
+    let container = Arc::new(CompositionRoot::new(default_aes_config()));
     container.get_my_orchestrator().run(&target);
     ExitCode::SUCCESS
 }
@@ -248,7 +248,7 @@ Commands::MyCommand { path } => {
 
 ### 3. Register in COMMAND_CATALOG
 
-`src-rust/taxonomy/command_catalog_constant.rs` is the single source of truth (AES030). Add a row:
+`crates/shared/src/cli-commands/taxonomy_catalog_constant.rs` is the single source of truth (AES030). Add a row:
 
 ```rust
 pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
@@ -274,7 +274,7 @@ cargo run --bin lint-arwaky-cli -- list_commands core
 
 ### 1. Implement the tool
 
-In `src-rust/surfaces/mcp_tools_command.rs`, add a new function:
+In `crates/mcp-server/src/surface_tools_command.rs`, add a new function:
 
 ```rust
 pub async fn my_tool_handler(args: Option<serde_json::Value>) -> serde_json::Value {
@@ -284,12 +284,12 @@ pub async fn my_tool_handler(args: Option<serde_json::Value>) -> serde_json::Val
 
 ### 2. Register the tool schema
 
-In `src-rust/mcp_main_entry.rs`, add an entry to the `tools/list` array:
+In `crates/root_mcp_main_entry.rs` (or `crates/mcp-server/src/surface_tools_controller.rs` as appropriate), add an entry to the `tools/list` array:
 
 ```rust
 {
     "name": "my_tool",
-    "description": "What the tool does (AES025: must be a non-empty string).",
+    "description": "What the tool does (non-empty string).",
     "inputSchema": {
         "type": "object",
         "properties": {
@@ -301,10 +301,10 @@ In `src-rust/mcp_main_entry.rs`, add an entry to the `tools/list` array:
 
 ### 3. Wire the dispatch arm
 
-In the `match tool_name` block in `mcp_main_entry.rs`:
+In the `match tool_name` block:
 
 ```rust
-"my_tool" => mcp_tools_command::my_tool_handler(arguments).await,
+"my_tool" => surface_tools_command::my_tool_handler(arguments).await,
 ```
 
 ### 4. Smoke-test
@@ -335,11 +335,11 @@ cargo test --lib arch_compliance
 
 ### Test organization
 
-Tests live next to the code they exercise (Rust convention):
+Tests live next to the code they exercise (Rust convention) within each feature crate:
 
 ```
-src-rust/
-  capabilities/architecture_compliance_analyzer.rs
+crates/
+  code-analysis/src/capabilities_cycle_analyzer.rs
     └── #[cfg(test)] mod tests { ... }
   contract/...
   ...
@@ -367,11 +367,11 @@ cargo clippy --all-targets -- -D warnings
 
 ### Conventions
 
-- **Naming**: Strict 3-word snake_case filename with a layer-role suffix (e.g., `architecture_compliance_analyzer.rs`).
-- **Structs**: Mandatory struct definitions in all logic modules. Free-standing functions are forbidden in the capability/agent/infrastructure layers (AES009).
-- **Lines**: Files must stay within the AES004/AES005 bounds (configurable; default 10-500 lines).
+- **Naming**: Strict layer prefix snake_case filename with a layer-role suffix (e.g., `capabilities_naming_checker.rs`).
+- **Structs**: Mandatory struct definitions in all logic modules. Free-standing functions are forbidden in the capability/agent/infrastructure layers (AES011).
+- **Lines**: Files must stay within the AES020/AES021 bounds (configurable; default 10-500 lines).
 - **Score**: `cargo run --bin lint-arwaky-cli -- check .` should report 0 critical findings on a clean PR.
-- **Bypasses**: `#[allow(...)]` on lint rules, `noqa`-style comments, and `type: ignore`-style suppressions are forbidden by AES014 and will fail CI.
+- **Bypasses**: `#[allow(...)]` on lint rules, `noqa`-style comments, and `type: ignore`-style suppressions are forbidden by AES022 and will fail CI.
 
 ### AES006 Primitive Type Policy
 

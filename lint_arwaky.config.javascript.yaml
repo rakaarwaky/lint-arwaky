@@ -33,10 +33,10 @@ architecture:
   layers:
     root:
       suffix:
-        - strict: ["hook", "store", "action", "screen"]
+        - strict: ["entry","container"]
     taxonomy:
       suffix:
-        - strict: ["vo", "entity", "error", "event", "constant"]
+        - strict: ["vo", "entity", "error", "event", "constant", "utility", "helper"]
     contract:
       suffix:
         - strict: ["port", "protocol", "aggregate"]
@@ -79,6 +79,8 @@ architecture:
               "event",
               "constant",
               "constants",
+              "utility",
+              "helper",
               "port",
               "protocol",
               "aggregate",
@@ -132,6 +134,8 @@ architecture:
               "event",
               "constant",
               "constants",
+              "utility",
+              "helper",
               "port",
               "protocol",
               "aggregate",
@@ -154,7 +158,7 @@ architecture:
             ]
     agent:
       suffix:
-        - strict: ["container", "orchestrator", "lifecycle"]
+        - strict: ["orchestrator"]
 
   rules:
     AES001:
@@ -168,7 +172,21 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -224,49 +242,31 @@ architecture:
 
         - scope: "contract(aggregate)"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port|protocol|aggregate)"]
+          mandatory: ["taxonomy"]
           forbidden:
             ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+          forbidden_inheritance: ["contract(port)", "contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(protocol)"]
+          mandatory: ["taxonomy"]
           forbidden:
             ["infrastructure", "surfaces", "agent", "capabilities", "root"]
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port)"]
+          mandatory: ["taxonomy"]
           forbidden:
             ["surfaces", "capabilities", "agent", "infrastructure", "root"]
 
-        - scope: "agent(container)"
-          allowed: ["taxonomy", "contract", "infrastructure", "capabilities"]
-          mandatory: ["taxonomy", "contract"]
-          forbidden: ["surfaces", "root"]
-
         - scope: "agent(orchestrator)"
-          allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden:
-            [
-              "surfaces",
-              "agent(lifecycle)",
-              "agent(container)",
-              "infrastructure",
-              "capabilities",
-              "root",
-            ]
+          allowed: ["taxonomy", "contract", "agent"]
+          mandatory: ["taxonomy"]
+          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
 
-        - scope: "agent(lifecycle)"
+        - scope: "surfaces(command|controller|page|)"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden:
-            ["agent", "infrastructure", "capabilities", "surfaces", "root"]
-
-        - scope: "surfaces(command|controller|page|entry)"
-          allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(aggregate)"]
+          mandatory: null
           forbidden:
             [
               "agent",
@@ -293,7 +293,7 @@ architecture:
 
         - scope: "surfaces(component|view|layout)"
           allowed: ["taxonomy"]
-          mandatory: ["taxonomy"]
+          mandatory: null
           forbidden:
             [
               "agent",
@@ -315,21 +315,21 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
-
-    AES010:
-      enabled: true
-      scope:
+      exceptions:
         [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-          "root",
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
         ]
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
 
     AES011:
       enabled: true
@@ -343,9 +343,51 @@ architecture:
           "surfaces",
           "root",
         ]
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
 
     AES012:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
+
+    AES015:
       enabled: true
       scope:
         [
@@ -365,20 +407,62 @@ architecture:
     AES0302:
       enabled: true
       scope: ["contract(aggregate)", "contract(port|protocol)"]
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
 
     AES0303:
       enabled: true
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
 
     AES0305:
       enabled: true
-      scope: ["agent(container)", "agent(orchestrator)", "agent(lifecycle)"]
+      scope: ["agent(orchestrator)"]
       max_lines: 1000
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
 
     AES0306:
       enabled: true
@@ -389,7 +473,21 @@ architecture:
           "surfaces(component|view|layout)",
         ]
       max_functions: 15
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
 
     AES020:
       enabled: true
@@ -402,8 +500,22 @@ architecture:
           "agent",
           "surfaces",
         ]
-      max_lines: 700
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+      max_lines: 1000
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
 
     AES021:
       enabled: true
@@ -417,7 +529,21 @@ architecture:
           "surfaces",
         ]
       min_lines: 5
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
 
     AES022:
       enabled: true
@@ -465,7 +591,21 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
 
     AES030:
       enabled: true
@@ -478,10 +618,25 @@ architecture:
           "agent",
           "surfaces",
         ]
-      entry_points: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+      entry_points:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
 
     AES013:
       enabled: true
       scope: ["contract"]
       forbidden_inheritance: ["contract(port)", "contract(protocol)"]
-      exceptions: ["index.ts", "index.js", "index.tsx", "index.jsx"]
+      exceptions:
+        ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]

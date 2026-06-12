@@ -1,0 +1,18 @@
+// PURPOSE: IJavascriptFlowPort — port for JavaScript data flow tracing
+use crate::language_adapters::taxonomy_semantic_error::SemanticError;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::taxonomy_common_vo::{DataFlowList, LineNumber};
+use crate::taxonomy_name_vo::SymbolName;
+use async_trait::async_trait;
+
+#[async_trait]
+pub trait IJavascriptFlowPort: Send + Sync {
+    async fn find_flow(
+        &self,
+        file_path: &FilePath,
+        var_name: &SymbolName,
+        start_line: Option<LineNumber>,
+    ) -> Result<DataFlowList, SemanticError>;
+
+    async fn trace_flow(&self, path: &FilePath) -> Result<DataFlowList, SemanticError>;
+}

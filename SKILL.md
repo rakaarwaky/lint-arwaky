@@ -1,5 +1,5 @@
 ---
-version: 1.11.0
+version: 1.10.11
 ---
 
 # Lint Arwaky Skill
@@ -12,7 +12,7 @@ Rust MCP server for autonomous multi-language linting and architectural governan
 ## Key Features
 
 - **Multi-Language**: Audits Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon-style metrics), and JavaScript/TypeScript (ESLint, Prettier, TSC) in a single command.
-- **Architecture Audit**: Enforces 21 Agentic Engineering System (AES) rules (codes AES001–AES002, AES010–AES016, AES020–AES024, and AES030–AES0306) — e.g., "Surfaces are prohibited from importing Infrastructure" (AES001, AES023).
+- **Architecture Audit**: Enforces 27 Agentic Engineering System (AES) rules (codes AES001–AES002, AES010–AES016, AES020–AES024, AES030–AES0306) — e.g., "Surfaces are prohibited from importing Infrastructure" (AES001, AES023).
 - **Auto-Fix**: The `fix` subcommand applies safe style fixes without human intervention.
 - **Reporting**: Quality score = `100 - sum(penalty)` (no lower bound). Output formats: `text`, `json`, SARIF 2.1.0, JUnit XML.
 - **Self-Auditing**: The project scans itself under `lint-arwaky-cli check .` using the same rules it exposes to others.
@@ -20,9 +20,9 @@ Rust MCP server for autonomous multi-language linting and architectural governan
 ## Agent Workflow (Recommended)
 
 1. `list_commands(domain="core")` — Discover available subcommands.
-2. `execute_command("check", {"path": "src-rust/"})` — Run a quality audit.
-3. `execute_command("report", {"path": "src-rust/", "format": "json"})` — Retrieve structured data.
-4. `execute_command("fix", {"path": "src-rust/"})` — Apply safe fixes.
+2. `execute_command("check", {"path": "crates/"})` — Run a quality audit.
+3. `execute_command("report", {"path": "crates/", "format": "json"})` — Retrieve structured data.
+4. `execute_command("fix", {"path": "crates/"})` — Apply safe fixes.
 5. `health_check()` — Confirm linter adapters are reachable.
 
 ## MCP Tools (5 tools)
@@ -34,13 +34,13 @@ Primary dispatch tool. Execute any CLI subcommand. Examples of valid `action` va
 ```json
 {
   "action": "check",
-  "args": { "path": "src-rust/", "git_diff": false }
+  "args": { "path": "crates/", "git_diff": false }
 }
 ```
 
 ### `list_commands(domain)`
 
-List all available CLI subcommands grouped by domain. Returns rows from `COMMAND_CATALOG` in `src-rust/cli-commands/taxonomy_catalog_constant.rs`.
+List all available CLI subcommands grouped by domain. Returns rows from `COMMAND_CATALOG` in `crates/shared/src/cli-commands/taxonomy_catalog_constant.rs`.
 
 ### `commands_schema(tool_name)`
 
@@ -85,7 +85,7 @@ Check linter adapter liveness and system state. Reports which of the 9 adapters 
 - `lint-arwaky-cli adapters`: List active linter adapters.
 - `lint-arwaky-cli config show`: Show active configuration.
 - `lint-arwaky-cli cancel <job_id>`: Request cancellation of a running lint job.
-- `lint-arwaky-cli version`: Show current version (1.10.2).
+- `lint-arwaky-cli version`: Show current version.
 
 ### Dev
 
@@ -103,9 +103,34 @@ Check linter adapter liveness and system state. Reports which of the 9 adapters 
 # Build
 cargo build --release
 
-# Run CLI
+# Run CLI binary
 ./target/release/lint-arwaky-cli check .
 
 # Run MCP server (speaks JSON-RPC 2.0 over stdin/stdout)
 ./target/release/lint-arwaky-mcp
+
+# Run TUI
+./target/release/lint-arwaky-tui
+
+# Per-crate development
+cargo check -p import_rules
+cargo test -p naming_rules
+cargo build -p code_analysis
 ```
+
+## Architecture Notes (for AI agents)
+
+- **Workspace**: Cargo workspace at root with 26 member crates in `crates/`
+- **Foundation**: `crates/shared-common` — ALL `taxonomy_*` + `contract_*` types (no deps)
+- **Feature crates**: `import-rules`, `naming-rules`, `role-rules`, `code-analysis`, `auto-fix`, `orphan-detector`, `config-system`, `source-parsing`, `language-adapters`, `file-system`, `pipeline-jobs`, `cli-transport`, etc.
+- **Surface crates**: `cli-commands`, `mcp-server`, `git-hooks`
+- **Composition**: `crates/composition_root.rs` + `crates/di-containers/` (legacy)
+
+**Import rules (AES enforced)**:
+- `taxonomy_` → only `taxonomy_`
+- `contract_` → `taxonomy_` + `contract_`
+- `capabilities_`/`infrastructure_` → `taxonomy_` + `contract_`
+- `agent_` → `taxonomy_` + `contract_` (via `ServiceContainerAggregate`)
+- `surface_` → `taxonomy_` + `contract_aggregate_` (via `ServiceContainerAggregate`)
+
+Violations caught at compile time (Cargo deps) and lint time (AES checkers).
