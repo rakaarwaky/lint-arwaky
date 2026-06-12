@@ -100,7 +100,7 @@ Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[
 | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` |
 | `agent_`          | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                                                                      |
-| `root_`           | `_container`, `_entry`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `root_`           | `_container`, `_entry`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 ### Feature Crates (Workspace Crates & Members)
 
@@ -220,16 +220,3 @@ The AES layer rules are enforced at two levels:
 | **Feature (agent)**              | `code-analysis`, `auto-fix`, `pipeline-jobs`                            | `shared` + other feature crates (lower layer only) |
 | **Surface**                      | `cli-commands`, `mcp-server`                                              | `shared` + feature crates (via DI)                 |
 | **Composition**                  | `root_compsotion_container.rs`                                              | All feature crates                                   |
-
----
-
-## Decentralized Container Pattern (New)
-
-Replaces the old "God Container" (`crates/legacy-di-container(shoudberemovelater)/src/agent_injection_container.rs`):
-
-- **Before**: Single `DependencyInjectionContainer` implementing `ServiceContainerAggregate` (31 methods, 500+ lines)
-- **After**: Per-feature containers inside each feature crate's source directory (e.g., `crates/import-rules/src/import_container.rs`, `crates/naming-rules/src/naming_container.rs`, etc.)
-  - Wire only their own feature's dependencies
-  - No trait impl — just `new()` + `orchestrator()` factory
-  - `CompositionRoot` (in `crates/root_compsotion_container.rs`) composes them and implements `ServiceContainerAggregate` for backward compat
-  - Surfaces get typed orchestrators: `composition_root.import_orchestrator()` → `Arc<dyn IImportRunnerAggregate>`
