@@ -3,10 +3,10 @@ use std::fs;
 use std::path::Path;
 
 use shared::file_system::taxonomy_filesystem_error::FileSystemError;
-use crate::contract_scanner_provider_port::IScannerProviderPort;
-use crate::taxonomy_path_vo::DirectoryPath;
-use crate::taxonomy_path_vo::FilePath;
-use crate::taxonomy_paths_vo::FilePathList;
+use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
+use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 
 pub struct FileCollectorProvider {}
 

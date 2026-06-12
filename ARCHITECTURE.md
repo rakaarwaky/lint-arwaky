@@ -55,22 +55,37 @@ Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`
 ```mermaid
 %%{init: {'theme': 'default'}}%%
 graph TD
-    S["Surfaces<br/>(CLI, MCP Server, API)"]
-    A["Agent<br/>(Orchestrators)"]
-    C["Capabilities<br/>(Checkers, Analyzers)"]
-    I["Infrastructure<br/>(Adapters, Scanners)"]
-    CT["Contract<br/>(Ports, Protocols, Aggregates)"]
-    T["Taxonomy<br/>(VOs, Entities, Errors, Events, Constants)"]
+    subgraph ROOT["root_  ── Wiring Layer (wraps all layers)"]
+        direction TB
 
-    S -->|"imports"| CT
-    S -->|"imports"| T
-    A -->|"imports"| CT
-    A -->|"imports"| T
-    C -->|"imports"| CT
-    C -->|"imports"| T
-    I -->|"imports"| CT
-    I -->|"imports"| T
-    CT -->|"imports"| T
+        S["surface_<br/>(CLI, MCP Server, API)"]
+        A["agent_<br/>(Orchestrators)"]
+
+        subgraph PEER["Peer Layers (no direct sibling import)"]
+            direction LR
+            C["capabilities_<br/>(Checkers, Analyzers)"]
+            I["infrastructure_<br/>(Adapters, Scanners)"]
+        end
+
+        CT["contract_<br/>(Ports, Protocols, Aggregates)"]
+        T["taxonomy_<br/>(VOs, Entities, Errors, Events, Constants)"]
+
+        S -->|"imports"| CT
+        S -->|"imports"| T
+        A -->|"imports"| CT
+        A -->|"imports"| T
+        C -->|"imports"| CT
+        C -->|"imports"| T
+        I -->|"imports"| CT
+        I -->|"imports"| T
+        CT -->|"imports"| T
+    end
+
+    ROOT_CONT["root_container<br/>(DI Wiring — instantiates & injects all)"]
+    ROOT_ENTRY["root_entry<br/>(Binary Bootstrap)"]
+
+    ROOT_CONT -->|"wires"| ROOT
+    ROOT_ENTRY -->|"starts"| ROOT_CONT
 ```
 
 #### Layer Prefix Specifications
@@ -85,6 +100,7 @@ Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[
 | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` |
 | `agent_`          | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_entry`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                                                                      |
+| `root_`           | `_container`, `_entry`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ### Feature Crates (Workspace Crates & Members)
 
@@ -174,6 +190,20 @@ crates/
   - Utility surfaces (`hook`/`store`/`action`/`screen`): `taxonomy_` only + passive surfaces. Must NOT import smart surfaces (AES0306).
   - Passive surfaces (`component`/`view`/`layout`): `taxonomy_` only (AES0306). No logic or orchestration.
 - **Description**: CLI and MCP server entry points.
+
+#### 7. Root (`root_` prefix)
+
+- **Prefix**: `root_`
+- **Allowed Suffixes**: `_container`, `_entry`
+- **Allowed Imports**: All layers — `taxonomy_`, `contract_`, `capabilities_`, `infrastructure_`, `agent_`, `surface_`. This is the **only** layer permitted to import across all other layers.
+- **Description**: Wiring layer. Responsible for Dependency Injection (DI) composition. No business logic is allowed here — only instantiation and wiring.
+- **Components**:
+  - **Container (`_container`)**: Per-feature DI container. Instantiates `infrastructure_*` and `capabilities_*` implementations, wires them behind `contract_*` traits, and exposes typed factory methods (e.g., `orchestrator()`, `source_parser()`). Each feature crate owns exactly one `root_*_container.rs`. _Ex: `root_source_parsing_container.rs`_
+  - **Entry (`_entry`)**: Binary entry point. Bootstraps the application by creating the `CompositionRoot` (the top-level root container that composes all feature containers) and starts the main loop. _Ex: `root_cli_main_entry.rs`, `root_mcp_main_entry.rs`_
+- **Rules**:
+  - A `root_container` **must NOT** contain business logic — only `new()` calls and trait-object wiring.
+  - Infrastructure and capabilities files **must NOT** import each other directly — all cross-infra/cross-capabilities wiring happens exclusively in the container.
+  - `root_entry` files must only call into the `CompositionRoot` and are forbidden from importing feature crate internals directly.
 
 ---
 
