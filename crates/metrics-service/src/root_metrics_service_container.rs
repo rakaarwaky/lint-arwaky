@@ -1,5 +1,5 @@
 // PURPOSE: MetricsContainer — wiring for metrics-service feature (root layer, wiring only)
-use crate::MetricsProvider;
+use crate::RustMetricsProvider;
 use shared::metrics_service::contract_metrics_port::IMetricsProviderPort;
 use std::sync::Arc;
 
@@ -14,7 +14,7 @@ impl MetricsContainer {
         >,
     ) -> Self {
         Self {
-            provider: Arc::new(MetricsProvider::new(path_norm, ".lint_history.json")),
+            provider: Arc::new(RustMetricsProvider::new(path_norm, ".lint_history.json")),
         }
     }
 
