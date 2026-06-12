@@ -18,9 +18,8 @@ impl McpServerHandlerSurface {
 
     pub fn run_server(&self, container: std::sync::Arc<dyn ServiceContainerAggregate>) {
         register_tools(container);
-        println!("Lint Arwaky MCP server starting...");
-        println!("Server name: lint-arwaky");
-        println!("Note: Full MCP server requires 'fastmcp' / 'mcp' crate integration");
+        eprintln!("Lint Arwaky MCP server starting...");
+        eprintln!("Server name: lint-arwaky");
     }
 
     pub fn run(&self, container: std::sync::Arc<dyn ServiceContainerAggregate>) {

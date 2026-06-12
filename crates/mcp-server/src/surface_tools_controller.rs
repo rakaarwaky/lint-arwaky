@@ -7,11 +7,7 @@ use std::sync::Arc;
 pub struct McpToolsHandler {}
 
 pub fn register_tools(container: Arc<dyn ServiceContainerAggregate>) {
-    // In real impl: register each tool to the MCP server
-    // For now, this is a placeholder that wires the logic
-    println!("Registering tools with container...");
-
-    // Delegate to split modules
+    // Tools registered via sub-modules below
     crate::surface_execute_command::register_execute_commands(container.clone());
     crate::surface_command_controller::register_catalog_commands(container.clone());
     crate::surface_health_controller::register_health_commands(container.clone());
