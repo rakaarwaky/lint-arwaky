@@ -2,12 +2,15 @@
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 
+use mcp_server::surface_tools_command;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+
+// Declare root layer module from local file
+mod root_composition_container;
+use root_composition_container::CompositionRoot;
+
 /// MCP binary entry point for lint-arwaky-mcp.
 pub struct McpMainEntry {}
-
-use lint_arwaky::composition_root::CompositionRoot;
-use lint_arwaky::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use lint_arwaky::mcp_server::surface_tools_command;
 
 struct ServerState {
     container: Arc<dyn ServiceContainerAggregate>,

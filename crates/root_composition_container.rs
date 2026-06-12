@@ -2,51 +2,60 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+// Contract/Port types from shared crate
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::cli_transport::contract_executor_port::ICommandExecutorPort;
-use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use shared::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
-use shared::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
-use shared::code_analysis::contract_unused_protocol::IUnusedProtocol;
-use shared::config_system::contract_discovery_port::IConfigDiscoveryPort;
-use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
-use shared::config_system::contract_parser_port::IConfigParserPort;
-use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
+use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::code_analysis::{
+    contract_adapter_port::ILinterAdapterPort,
+    contract_analysis_protocol::IAnalysisProtocol,
+    contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol,
+    contract_lint_protocol::IArchLintProtocol,
+    contract_target_resolver_protocol::ITargetResolverProtocol,
+    contract_unused_protocol::IUnusedProtocol,
+};
+use shared::config_system::{
+    contract_discovery_port::IConfigDiscoveryPort,
+    contract_orchestration_aggregate::IConfigOrchestrationAggregate,
+    contract_parser_port::IConfigParserPort,
+    contract_validator_protocol::IConfigValidatorProtocol,
+};
 use shared::file_system::contract_system_port::IFileSystemPort;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
-use shared::git_hooks::orchestrator_aggregate::HookManagementOrchestratorAggregate;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
-use shared::language_adapters::contract_flow_port::IJavascriptFlowPort;
-use shared::language_adapters::contract_naming_port::INamingProviderPort;
-use shared::language_adapters::contract_scope_port::IJavascriptScopePort;
-use shared::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
-use shared::language_adapters::contract_variant_port::INamingVariantPort;
+use shared::language_adapters::{
+    contract_flow_port::IJavascriptFlowPort,
+    contract_naming_port::INamingProviderPort,
+    contract_scope_port::IJavascriptScopePort,
+    contract_semantic_tracer_port::ISemanticTracerPort,
+    contract_variant_port::INamingVariantPort,
+};
 use shared::lifecycle_state::contract_lifecycle_aggregate::AgentLifecycleAggregate;
 use shared::mcp_server::contract_server_port::IMcpServerPort;
 use shared::metrics_service::contract_metrics_port::IMetricsProviderPort;
 use shared::multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::output_report::contract_output_aggregate::IReportFormatterProtocol;
-use shared::pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
-use shared::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
-use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use shared::plugin_system::contract_manager_port::IPluginManagerPort;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use shared::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use shared::source_parsing::contract_parser_port::ISourceParserPort;
-use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
+use shared::pipeline_jobs::{
+    contract_extended_aggregate::PipelineExtendedOrchestratorAggregate,
+    contract_output_aggregate::PipelineOutputAggregate,
+    contract_registry_port::IJobRegistryPort,
+};
+use shared::plugin_system::contract_plugin_manager_port::IPluginManagerPort;
+use shared::project_setup::{
+    contract_setup_aggregate::SetupManagementAggregate,
+    contract_setup_protocol::ISetupManagementProtocol,
+};
+use shared::source_parsing::{
+    contract_parser_port::ISourceParserPort,
+    contract_path_normalization_port::IPathNormalizationPort,
+    contract_scanner_provider_port::IScannerProviderPort,
+};
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
+
+// Infrastructure implementations from feature crates
+// Note: these need the crate to export them in lib.rs
 
 pub struct CompositionRoot {
-    // Feature containers (new pattern)
-    import: ImportContainer,
-    naming: NamingContainer,
-    role: RoleContainer,
-
     // Legacy fields (for ServiceContainerAggregate backward compat)
     file_system: Arc<dyn IFileSystemPort>,
     executor: Arc<dyn ICommandExecutorPort>,
@@ -60,42 +69,38 @@ pub struct CompositionRoot {
 
 impl CompositionRoot {
     pub fn new() -> Self {
-        let import = ImportContainer::new();
-        let naming = NamingContainer::new();
-        let role = RoleContainer::new();
-
         let file_system: Arc<dyn IFileSystemPort> = Arc::new(
-            crate::file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
+            file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
         );
         let executor: Arc<dyn ICommandExecutorPort> = Arc::new(
-            crate::cli_transport::infrastructure_transport_client::StdioClient::new(
+            cli_commands::infrastructure_transport_client::StdioClient::new(
                 std::time::Duration::from_secs(60),
             ),
         );
         let path_norm: Arc<dyn IPathNormalizationPort> = Arc::new(
-            crate::source_parsing::infrastructure_path_provider::PathNormalizationProvider {},
+            source_parsing::infrastructure_path_provider::PathNormalizationProvider {},
         );
         let source_parser: Arc<dyn ISourceParserPort> = Arc::new(
-            crate::source_parsing::infrastructure_parser_adapter::SourceParserOrchestrator::new(
+            source_parsing::infrastructure_parser_adapter::SourceParserOrchestrator::new(
                 Box::new(
-                    crate::source_parsing::infrastructure_py_scanner::ASTPythonParserAdapter::new(),
+                    source_parsing::infrastructure_py_scanner::ASTPythonParserAdapter::new(),
                 ),
                 Box::new(
-                    crate::source_parsing::infrastructure_rust_scanner::ASTRustParserAdapter::new(),
+                    source_parsing::infrastructure_rust_scanner::ASTRustParserAdapter::new(),
                 ),
                 Box::new(
-                    crate::source_parsing::infrastructure_js_scanner::ASTJSParserAdapter::new(),
+                    source_parsing::infrastructure_js_scanner::ASTJSParserAdapter::new(),
                 ),
             ),
         );
         let arch_linter: Arc<dyn IArchLintProtocol> = Arc::new(
-            crate::code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new(),
+            code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new(),
         );
 
         let mut linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
         // Wire adapters...
         let ruff = Arc::new(
-            crate::language_adapters::infrastructure_py_ruff_adapter::RuffAdapter::new(
+            language_adapters::infrastructure_py_ruff_adapter::RuffAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -103,7 +108,7 @@ impl CompositionRoot {
         );
         linter_adapters.insert("ruff".to_string(), ruff);
         let bandit = Arc::new(
-            crate::language_adapters::infrastructure_py_bandit_adapter::BanditAdapter::new(
+            language_adapters::infrastructure_py_bandit_adapter::BanditAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -111,7 +116,7 @@ impl CompositionRoot {
         );
         linter_adapters.insert("bandit".to_string(), bandit);
         let mypy = Arc::new(
-            crate::language_adapters::infrastructure_py_mypy_adapter::MyPyAdapter::new(
+            language_adapters::infrastructure_py_mypy_adapter::MyPyAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -119,28 +124,28 @@ impl CompositionRoot {
         );
         linter_adapters.insert("mypy".to_string(), mypy);
         let eslint = Arc::new(
-            crate::language_adapters::infrastructure_js_linter_adapter::ESLintAdapter::new(
+            language_adapters::infrastructure_js_linter_adapter::ESLintAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
             ),
         );
         linter_adapters.insert("eslint".to_string(), eslint);
         let prettier = Arc::new(
-            crate::language_adapters::infrastructure_js_linter_adapter::PrettierAdapter::new(
+            language_adapters::infrastructure_js_linter_adapter::PrettierAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
             ),
         );
         linter_adapters.insert("prettier".to_string(), prettier);
         let tsc = Arc::new(
-            crate::language_adapters::infrastructure_js_linter_adapter::TSCAdapter::new(
+            language_adapters::infrastructure_js_linter_adapter::TSCAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
             ),
         );
         linter_adapters.insert("tsc".to_string(), tsc);
         let clippy = Arc::new(
-            crate::language_adapters::infrastructure_rs_clippy_adapter::RustLinterAdapter::new(
+            language_adapters::infrastructure_rs_clippy_adapter::RustLinterAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -149,16 +154,13 @@ impl CompositionRoot {
         linter_adapters.insert("clippy".to_string(), clippy);
 
         let metrics: Arc<dyn IMetricsProviderPort> = Arc::new(
-            crate::metrics_service::infrastructure_py_metrics_adapter::MetricsProvider::new(
+            metrics_service::infrastructure_py_metrics_adapter::MetricsProvider::new(
                 path_norm.clone(),
                 ".lint_history.json",
             ),
         );
 
         Self {
-            import,
-            naming,
-            role,
             file_system,
             executor,
             path_norm,
@@ -169,30 +171,27 @@ impl CompositionRoot {
         }
     }
 
-    // NEW: Typed orchestrators (feature-specific)
-    pub fn import_orchestrator(
-        &self,
-    ) -> Arc<dyn crate::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate>
-    {
-        self.import.orchestrator()
+    // NEW: Typed orchestrators (feature-specific) - return Option since not wired yet
+    pub fn import_orchestrator(&self) -> Option<Arc<dyn shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate>> {
+        None
     }
 
-    pub fn naming_orchestrator(
-        &self,
-    ) -> Arc<dyn crate::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate>
-    {
-        self.naming.orchestrator()
+    pub fn naming_orchestrator(&self) -> Option<Arc<dyn shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate>> {
+        None
     }
 
-    pub fn role_orchestrator(
-        &self,
-    ) -> Arc<dyn crate::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate> {
-        self.role.orchestrator()
+    pub fn role_orchestrator(&self) -> Option<Arc<dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate>> {
+        None
+    }
+
+    // Helper for CLI initialization
+    pub fn checker_container(&self) -> code_analysis::root_container::CheckerContainer {
+        code_analysis::root_container::CheckerContainer::new()
     }
 }
 
 // BACKWARD COMPAT: Implement old trait for existing surface commands
-impl ServiceContainerAggregate for CompositionRoot {
+impl shared::common::contract_service_aggregate::ServiceContainerAggregate for CompositionRoot {
     fn file_system(&self) -> Option<Arc<dyn IFileSystemPort>> {
         Some(self.file_system.clone())
     }
@@ -214,20 +213,17 @@ impl ServiceContainerAggregate for CompositionRoot {
     fn metrics_provider(&self) -> Option<Arc<dyn IMetricsProviderPort>> {
         Some(self.metrics.clone())
     }
-    fn get_job_registry(&self) -> Option<Arc<dyn IJobRegistryPort>> {
+    fn get_job_registry(&self) -> Option<Arc<dyn shared::pipeline_jobs::contract_registry_port::IJobRegistryPort>> {
         None
     }
-    fn get_fix_orchestrator(
-        &self,
-        _dry_run: bool,
-    ) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
+    fn get_fix_orchestrator(&self, _dry_run: bool) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
         None
     }
     fn get_report_formatter(&self) -> Option<Box<dyn IReportFormatterProtocol>> {
         None
     }
     // AES030 orphan detection getters — return None for unimplemented
-    fn get_maintenance_aggregate(&self) -> Option<Arc<dyn MaintenanceCommandsAggregate>> {
+    fn get_maintenance_aggregate(&self) -> Option<Arc<dyn shared::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate>> {
         None
     }
     fn get_analysis_protocol(&self) -> Option<Arc<dyn IAnalysisProtocol>> {
@@ -260,9 +256,7 @@ impl ServiceContainerAggregate for CompositionRoot {
     fn get_git_commands_aggregate(&self) -> Option<Arc<dyn GitCommandsAggregate>> {
         None
     }
-    fn get_git_orchestrator_aggregate(
-        &self,
-    ) -> Option<Arc<dyn HookManagementOrchestratorAggregate>> {
+    fn get_git_orchestrator_aggregate(&self) -> Option<Arc<dyn shared::git_hooks::orchestrator_aggregate::HookManagementOrchestratorAggregate>> {
         None
     }
     fn get_import_parser_port(&self) -> Option<Arc<dyn IImportParserPort>> {
@@ -292,9 +286,7 @@ impl ServiceContainerAggregate for CompositionRoot {
     fn get_multi_project_aggregate(&self) -> Option<Arc<dyn MultiProjectOrchestratorAggregate>> {
         None
     }
-    fn get_pipeline_extended_aggregate(
-        &self,
-    ) -> Option<Arc<dyn PipelineExtendedOrchestratorAggregate>> {
+    fn get_pipeline_extended_aggregate(&self) -> Option<Arc<dyn PipelineExtendedOrchestratorAggregate>> {
         None
     }
     fn get_pipeline_output_aggregate(&self) -> Option<Arc<dyn PipelineOutputAggregate>> {

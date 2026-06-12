@@ -1,17 +1,7 @@
 // PURPOSE: ServerController — MCP surface for server lifecycle management
 
 use crate::surface_tools_controller::register_tools;
-use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use shared::cli_commands::contract_dev_aggregate::DevCommandsAggregate;
-use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use shared::taxonomy_common_vo::LineNumber;
-
-/// Satisfy AES002 mandatory imports + AES023 unused import check
-fn _use_mandatory_imports() {
-    let _ = LineNumber::new(1);
-    let _ = std::marker::PhantomData::<dyn DevCommandsAggregate>;
-    let _ = std::marker::PhantomData::<dyn ReportCommandsAggregate>;
-}
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 pub struct McpServerHandlerSurface {}
 

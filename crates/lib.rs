@@ -19,11 +19,4 @@ pub use pipeline_jobs;
 pub use plugin_system;
 pub use project_setup;
 pub use role_rules;
-pub use shared_common;
 pub use source_parsing;
-
-// Root layer modules (entry points + composition root)
-pub mod root_cli_main_entry;
-pub mod root_composition_container;
-pub mod root_mcp_main_entry;
-pub mod root_tui_main_entry;

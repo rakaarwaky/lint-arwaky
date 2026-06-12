@@ -375,7 +375,6 @@ Self-contained feature component responsible for exposing linter capabilities as
 | FR-105 | MCP tool:`health_check()`                        | FR-100    |
 | FR-106 | CI/CD integration (OIDC, SLSA Provenance)          | FR-100    |
 
-
 Layer prefixes (determined by FILE NAME, not folder):
   taxonomy_       → _vo, _entity, _event, _error, _constant
   contract_       → _port, _protocol, _aggregate
@@ -384,49 +383,7 @@ Layer prefixes (determined by FILE NAME, not folder):
   agent_          → _orchestrator (ONLY)
   surface_        → _command, _handler, _controller
   root_           → _container, _entry
-```
 
-### 7.2 Feature Crate → Container Mapping (Vertical Slicing)
-
-Each feature crate contains **multiple layers internally** (taxonomy, contract, capabilities, infrastructure, agent, surface, root) as needed. The layer is determined by **file prefix**, not by crate. Every crate owns a `root_container.rs` that wires its internal implementations.
-
-| Crate                 | Container File(s)                                            | Purpose                                                                                                      |
-| --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `shared`            | — (no container; re-exports `common` module)              | All `taxonomy_*` VOs, entities, events, errors, constants; all `contract_*` ports, protocols, aggregates |
-| `import-rules`      | `import_container.rs`                                      | AES001/AES002 import checkers (capabilities + contracts + orchestrators)                                     |
-| `naming-rules`      | `naming_container.rs`                                      | AES010/AES011 naming checkers (capabilities + contracts + orchestrators)                                     |
-| `role-rules`        | `role_container.rs`, `agent_role_container.rs`           | AES0305/AES0306 role auditors (capabilities + contracts + orchestrators)                                     |
-| `code-analysis`     | `analysis_container.rs`, `contract_checker_container.rs` | AES022/AES023/AES024/AES0303 quality & auto-fix (capabilities + contracts + orchestrators)                   |
-| `auto-fix`          | `auto_fix_container.rs`                                    | AES0303 auto-fix processor (capabilities + contracts)                                                        |
-| `orphan-detector`   | `orphan_container.rs`                                      | AES030 orphan detection (capabilities + contracts + orchestrators)                                           |
-| `config-system`     | `config_container.rs`                                      | Config loading, parsing, validation (infrastructure + contracts)                                             |
-| `source-parsing`    | `source_parsing_container.rs`                              | Source code parsing (infrastructure + contracts)                                                             |
-| `language-adapters` | `language_container.rs`                                    | External linter adapters (infrastructure + contracts + surfaces)                                             |
-| `file-system`       | `file_container.rs`                                        | File system abstraction (infrastructure + contracts)                                                         |
-| `file-watch`        | `file_watch_container.rs`                                  | File watching (infrastructure + contracts)                                                                   |
-| `git-hooks`         | `git_container.rs`                                         | Git hooks management (infrastructure + contracts + agent)                                                    |
-| `multi-project`     | `multi_project_container.rs`                               | Multi-project governance (agent + contracts)                                                                 |
-| `project-setup`     | `setup_container.rs`                                       | Project init, doctor, mcp-config (agent + contracts + surfaces)                                              |
-| `plugin-system`     | `plugin_container.rs`                                      | Plugin discovery & management (infrastructure + contracts)                                                   |
-| `output-report`     | `output_container.rs`                                      | Output formatting & report generation (agent + contracts)                                                    |
-| `lifecycle-state`   | `lifecycle_container.rs`                                   | Agent lifecycle management (agent + contracts)                                                               |
-| `metrics-service`   | `metrics_container.rs`                                     | Metrics provider (infrastructure + contracts)                                                                |
-| `pipeline-jobs`     | `pipeline_container.rs`, `agent_job_container.rs`        | Jobs, dispatcher, execution (agent + contracts)                                                              |
-| `cli-commands`      | `transport_container.rs`                                   | CLI surfaces + command transport (surfaces + root + contracts)                                               |
-| `mcp-server`        | `mcp_container.rs`                                         | MCP JSON-RPC 2.0 server (surfaces + root + contracts)                                                        |
->>>>>>
->>>>>
->>>>
->>>
->>
-
-**Rule**: Containers are at `root_` layer (`root_container.rs`). They wire `capabilities_*`, `infrastructure_*`, and `agent_*` impls behind `contract_*` traits. Surface crates access features **only** through container methods or `ServiceContainerAggregate` trait.
-
-### 7.3 Dependency Graph (Build Order) — UPDATED
-
-Based on actual Cargo.toml dependencies (verified):
-
-```
 LEVEL 0: Foundation (zero deps)
   shared-lint-arwaky              ← taxonomy types, contract traits
 
@@ -462,27 +419,17 @@ LEVEL 5: Depends on Level 4
 
 LEVEL 6: Top-level
   mcp-server-lint-arwaky          ← shared, source-parsing, cli-commands, code-analysis, language-adapters, output-report, pipeline-jobs
-```
-
-### 7.3.1 Build Constraints
-
-- Each feature crate compiles independently after its dependencies are satisfied
-- `shared-lint-arwaky` is the foundation — must compile first
-- `source-parsing-lint-arwaky` depends only on `shared-lint-arwaky`
-- All other feature crates depend on `shared-lint-arwaky` + `source-parsing-lint-arwaky`
-- Feature crates may depend on other feature crates (see dependency graph above)
-- `di-containers-lint-arwaky` is deprecated — will be replaced by per-feature containers
 
 
-### 7.4 Dependency Rules
 
-```
+
 agent          -> taxonomy, contract
 surface        -> taxonomy, contract
 capabilities   -> taxonomy, contract
 infrastructure -> taxonomy, contract
 contract       -> taxonomy
 taxonomy       -> taxonomy
+
 ```
 
 Surfaces must NOT import from `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through the **feature crate's container** or the `ServiceContainerAggregate` trait in the contract layer (AES001 sub-condition `surface_direct`). The `CompositionRoot` (in `root_compsotion_container.rs`, root layer) composes all feature containers and implements `ServiceContainerAggregate` for backward compatibility with existing surface commands.
@@ -606,3 +553,4 @@ Subcommands are defined in `crates/cli-commands/src/` surfaces and dispatched fr
 | console            | 0.15              | Terminal styling & colors     |
 
 ---
+```

@@ -1,5 +1,4 @@
 // PURPOSE: ServerWrapper — IMcpServerPort implementation wrapping the MCP server lifecycle
-use async_trait::async_trait;
 use shared::cli_commands::taxonomy_transport_error::TransportError;
 use shared::mcp_server::contract_server_port::{IMcpServerPort, ToolHandler};
 use shared::taxonomy_name_vo::SymbolName;

@@ -2463,6 +2463,7 @@ dependencies = [
 name = "mcp_server-lint-arwaky"
 version = "1.10.11"
 dependencies = [
+ "async-trait",
  "cli_commands-lint-arwaky",
  "code_analysis-lint-arwaky",
  "language_adapters-lint-arwaky",

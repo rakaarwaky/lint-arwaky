@@ -2,7 +2,7 @@
 
 use once_cell::sync::Lazy;
 use regex::Regex;
-use shared::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
+use shared::mcp_server::contract_schema_checker_protocol::IMcpSchemaCheckerProtocol;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_result_vo::LintResultList;
 use shared::output_report::taxonomy_severity_vo::Severity;
@@ -13,11 +13,6 @@ use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::LintMessage;
-
-/// Satisfy AES002 mandatory imports + AES023 unused import check
-fn _use_mandatory_imports() {
-    let _ = std::marker::PhantomData::<dyn IAnalysisProtocol>;
-}
 
 // JSON Schema draft-07/2020-12 required keywords
 static _JSON_SCHEMA_KEYWORDS: Lazy<std::collections::HashSet<&'static str>> = Lazy::new(|| {
@@ -93,6 +88,17 @@ pub struct McpSchemaChecker {}
 impl Default for McpSchemaChecker {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl IMcpSchemaCheckerProtocol for McpSchemaChecker {
+    fn check_mcp_tool_schema(
+        &self,
+        files: &[FilePath],
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        McpSchemaChecker::check_mcp_tool_schema(self, files, root_dir, results);
     }
 }
 

@@ -4,31 +4,34 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use clap::Parser;
-use lint_arwaky::cli_commands::surface_bootstrap_command;
-use lint_arwaky::cli_commands::surface_check_command;
-use lint_arwaky::cli_commands::surface_config_command;
-use lint_arwaky::cli_commands::surface_core_command::{Cli, Commands};
-use lint_arwaky::cli_commands::surface_dev_command;
-use lint_arwaky::cli_commands::surface_fix_command;
-use lint_arwaky::cli_commands::surface_git_command;
-use lint_arwaky::cli_commands::surface_maintenance_command;
-use lint_arwaky::cli_commands::surface_map_command;
-use lint_arwaky::cli_commands::surface_multi_command;
-use lint_arwaky::cli_commands::surface_plugin_command;
-use lint_arwaky::cli_commands::surface_report_command;
-use lint_arwaky::cli_commands::surface_setup_command;
-use lint_arwaky::cli_commands::surface_watch_command;
-use lint_arwaky::code_analysis::agent_checking_orchestrator::init_global_checker;
-use lint_arwaky::code_analysis::{has_critical, lint_path};
-use lint_arwaky::config_system::taxonomy_config_vo::default_aes_config;
-use lint_arwaky::di_containers::agent_checker_container::CheckerContainer;
-use lint_arwaky::di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use lint_arwaky::root_composition_container::CompositionRoot;
+use cli_commands::surface_bootstrap_command;
+use cli_commands::surface_check_command;
+use cli_commands::surface_config_command;
+use cli_commands::surface_core_command::{Cli, Commands};
+use cli_commands::surface_dev_command;
+use cli_commands::surface_fix_command;
+use cli_commands::surface_git_command;
+use cli_commands::surface_maintenance_command;
+use cli_commands::surface_map_command;
+use cli_commands::surface_multi_command;
+use cli_commands::surface_plugin_command;
+use cli_commands::surface_report_command;
+use cli_commands::surface_setup_command;
+use cli_commands::surface_watch_command;
+use code_analysis::agent_checking_orchestrator::init_global_checker;
+use code_analysis::{has_critical, lint_path, ProjectTargetResolver, CodeMetricAnalyzer};
+use shared::config_system::taxonomy_config_vo::default_aes_config;
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+
+// Declare root layer module from local file
+mod root_composition_container;
+use root_composition_container::CompositionRoot;
 
 pub struct CliMainEntry {}
 
 fn main() -> ExitCode {
-    init_global_checker(Arc::new(CheckerContainer::new(default_aes_config())));
+    init_global_checker(Arc::new(CompositionRoot::new().checker_container()));
     let raw_args: Vec<String> = env::args().collect();
     if raw_args.len() <= 1 {
         return run_default_check(".");
@@ -67,25 +70,19 @@ fn main() -> ExitCode {
         Commands::MultiProject { paths } => surface_multi_command::handle_multi_project(paths),
         Commands::Security { path } => surface_maintenance_command::handle_security(path),
         Commands::Complexity { path } => {
-            let resolver =
-                std::sync::Arc::new(lint_arwaky::code_analysis::ProjectTargetResolver::new());
-            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new(resolver);
-            use lint_arwaky::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-            analyzer.handle_complexity(path)
+            let resolver = ProjectTargetResolver::new();
+            let analyzer = CodeMetricAnalyzer::new(Arc::new(resolver));
+            analyzer.handle_complexity(Some(path))
         }
         Commands::Duplicates { path } => {
-            let resolver =
-                std::sync::Arc::new(lint_arwaky::code_analysis::ProjectTargetResolver::new());
-            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new(resolver);
-            use lint_arwaky::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-            analyzer.handle_duplicates(path)
+            let resolver = ProjectTargetResolver::new();
+            let analyzer = CodeMetricAnalyzer::new(Arc::new(resolver));
+            analyzer.handle_duplicates(Some(path))
         }
         Commands::Trends { path } => {
-            let resolver =
-                std::sync::Arc::new(lint_arwaky::code_analysis::ProjectTargetResolver::new());
-            let analyzer = lint_arwaky::code_analysis::CodeMetricAnalyzer::new(resolver);
-            use lint_arwaky::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-            analyzer.handle_trends(path)
+            let resolver = ProjectTargetResolver::new();
+            let analyzer = CodeMetricAnalyzer::new(Arc::new(resolver));
+            analyzer.handle_trends(Some(path))
         }
         Commands::Dependencies { path } => surface_maintenance_command::handle_dependencies(path),
         Commands::Setup { command } => surface_setup_command::handle_setup(command),
@@ -101,7 +98,7 @@ fn main() -> ExitCode {
 }
 
 fn run_default_check(project_root: &str) -> ExitCode {
-    use lint_arwaky::output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
+    use output_report::capabilities_reporting_formatter::ReportFormatterProcessor;
     let results = lint_path(project_root);
     let formatter = ReportFormatterProcessor::new();
     let report = formatter.format_text(&results, project_root);
