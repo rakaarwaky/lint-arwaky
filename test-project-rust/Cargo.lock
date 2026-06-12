@@ -6,7 +6,9 @@ version = 4
 name = "cli-commands"
 version = "0.1.0"
 dependencies = [
- "shared-common",
+ "di-containers",
+ "language-adapters",
+ "layer-rules",
  "taxonomy",
 ]
 
@@ -14,7 +16,7 @@ dependencies = [
 name = "code-analysis"
 version = "0.1.0"
 dependencies = [
- "shared-common",
+ "layer-rules",
  "taxonomy",
 ]
 
@@ -22,15 +24,15 @@ dependencies = [
 name = "di-containers"
 version = "0.1.0"
 dependencies = [
- "shared-common",
- "taxonomy",
+ "code-analysis",
 ]
 
 [[package]]
 name = "language-adapters"
 version = "0.1.0"
 dependencies = [
- "shared-common",
+ "di-containers",
+ "layer-rules",
  "taxonomy",
 ]
 
@@ -38,13 +40,16 @@ dependencies = [
 name = "layer-rules"
 version = "0.1.0"
 dependencies = [
- "shared-common",
  "taxonomy",
 ]
 
 [[package]]
 name = "shared-common"
 version = "0.1.0"
+dependencies = [
+ "di-containers",
+ "taxonomy",
+]
 
 [[package]]
 name = "taxonomy"
@@ -53,3 +58,12 @@ version = "0.1.0"
 [[package]]
 name = "test-project-rust"
 version = "0.1.0"
+dependencies = [
+ "cli-commands",
+ "code-analysis",
+ "di-containers",
+ "language-adapters",
+ "layer-rules",
+ "shared-common",
+ "taxonomy",
+]

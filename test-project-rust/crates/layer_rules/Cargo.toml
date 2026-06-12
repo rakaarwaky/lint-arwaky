@@ -7,5 +7,5 @@ edition = "2021"
 path = "src/lib.rs"
 
 [dependencies]
-shared-common = { path = "../shared_common" }
 taxonomy = { path = "../taxonomy" }
+

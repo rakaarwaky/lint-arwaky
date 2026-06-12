@@ -7,3 +7,6 @@ edition = "2021"
 path = "src/lib.rs"
 
 [dependencies]
+taxonomy = { path = "../taxonomy" }
+di-containers = { path = "../di_containers" }
+
