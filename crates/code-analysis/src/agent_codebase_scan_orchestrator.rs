@@ -1,11 +1,12 @@
 // PURPOSE: detect_source_dir + collect_source_files — entry point for codebase scan orchestration, discovers source dirs and scans all files for AES compliance
+use async_trait::async_trait;
 use std::path::Path;
 
-use code_analysis::contract_lint_protocol::IArchLintProtocol;
-use config_system::taxonomy_config_vo::default_aes_config;
-use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_result_vo::LintResultList;
+use crate::IArchLintProtocol;
+use crate::LintResult;
+use crate::LintResultList;
+use crate::ArchitectureConfig;
+use crate::LintCheckingOrchestrator;
 use source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
@@ -28,7 +29,6 @@ impl Default for CodebaseScanOrchestrator {
 
 impl CodebaseScanOrchestrator {
     pub fn new() -> Self {
-        let _: Option<&dyn ServiceContainerAggregate> = None;
         Self {}
     }
 
@@ -43,7 +43,7 @@ impl CodebaseScanOrchestrator {
     }
 
     fn run_lint_at(&self, src_dir: &Path, _project_root: Option<&Path>) -> Vec<LintResult> {
-        let config = default_aes_config();
+        let config = ArchitectureConfig::default();
         let dir_path =
             DirectoryPath::new(src_dir.to_string_lossy().to_string()).unwrap_or_default();
         let files = collect_source_files(&dir_path);
@@ -52,8 +52,7 @@ impl CodebaseScanOrchestrator {
         }
         let root_dir = src_dir.to_string_lossy().to_string();
         let files_str: Vec<String> = files.iter().map(|f| f.value.clone()).collect();
-        let orchestrator =
-            crate::code_analysis::agent_checking_orchestrator::LintCheckingOrchestrator::new();
+        let orchestrator = LintCheckingOrchestrator::new();
         let rt = match tokio::runtime::Runtime::new() {
             Ok(runtime) => runtime,
             Err(_) => return Vec::new(),

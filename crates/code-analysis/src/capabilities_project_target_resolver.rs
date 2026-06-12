@@ -1,7 +1,8 @@
 // PURPOSE: capabilities_project_target_resolver — resolves project target paths, triggers codebase scans, evaluates compliance results, and counts LOC
-use code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::output_report::taxonomy_score_vo::compute_score;
 use source_parsing::taxonomy_path_vo::FilePath;
 use std::path::{Path, PathBuf};
 
@@ -40,13 +41,12 @@ impl ITargetResolverProtocol for ProjectTargetResolver {
     fn lint_path(&self, path: &str) -> Vec<LintResult> {
         let root = FilePath::new(self.normalize_project_root(path))
             .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
-        let orchestrator =
-            crate::code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new();
+        let orchestrator = crate::CodebaseScanOrchestrator::new();
         orchestrator.run_self_lint(&root.value)
     }
 
     fn compute_score(&self, results: &[LintResult]) -> f64 {
-        crate::output_report::taxonomy_score_vo::compute_score(results)
+        compute_score(results)
     }
 }
 

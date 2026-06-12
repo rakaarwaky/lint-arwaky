@@ -1,7 +1,7 @@
 // PURPOSE: DeadInheritanceChecker — IDeadInheritanceProtocol for AES024: detect empty struct/trait impl blocks
-use code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_severity_vo::Severity;
+use crate::IDeadInheritanceProtocol;
+use crate::LintResult;
+use crate::Severity;
 
 pub struct DeadInheritanceChecker {}
 

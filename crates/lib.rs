@@ -22,5 +22,8 @@ pub use plugin_system;
 pub use project_setup;
 pub use role_rules;
 
-// Composition root — local module, wraps feature containers
-pub mod composition_root;
+// Root layer modules (entry points + composition root)
+pub mod root_composition_container;
+pub mod root_cli_main_entry;
+pub mod root_mcp_main_entry;
+pub mod root_tui_main_entry;

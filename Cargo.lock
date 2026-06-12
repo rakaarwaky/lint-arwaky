@@ -397,12 +397,14 @@ name = "code_analysis-lint-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
+ "chrono",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
  "source_parsing-lint-arwaky",
+ "tokio",
 ]
 
 [[package]]

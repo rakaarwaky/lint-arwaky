@@ -1,7 +1,7 @@
 // PURPOSE: InlineUnusedChecker — IInlineUnusedProtocol for AES023: detect cross-language unused imports (Rust/Python/JS)
-use code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_severity_vo::Severity;
+use crate::IInlineUnusedProtocol;
+use crate::LintResult;
+use crate::Severity;
 
 pub struct InlineUnusedChecker {}
 

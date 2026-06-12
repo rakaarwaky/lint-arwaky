@@ -1,4 +1,4 @@
-// PURPOSE: CompositionRoot — composes all feature containers, implements ServiceContainerAggregate (transitional)
+// PURPOSE: CompositionRoot — composition root container (root_container layer)
 use std::sync::Arc;
 use std::collections::HashMap;
 

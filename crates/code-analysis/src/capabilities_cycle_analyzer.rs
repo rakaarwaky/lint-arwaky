@@ -1,10 +1,11 @@
 // PURPOSE: DependencyCycleAnalyzer — ICycleAnalysisProtocol for AES015: circular dependency detection
 
-use code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
-use config_system::taxonomy_config_vo::ArchitectureConfig;
-use import_rules::contract_rule_protocol::IAnalyzer;
-use output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use output_report::taxonomy_severity_vo::Severity;
+use crate::ICycleAnalysisProtocol;
+use crate::ArchitectureConfig;
+use crate::IAnalyzer;
+use crate::LintResult;
+use crate::LintResultList;
+use crate::Severity;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
@@ -16,16 +17,17 @@ use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 use source_parsing::taxonomy_paths_vo::FilePathList;
+use source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
+use std::collections::{HashMap, HashSet};
+use std::fs;
+
 fn aes012_circular_import(source: &str, target: &str) -> String {
     format!(
         "AES015 CIRCULAR_IMPORT: Circular dependency detected: '{}' -> '{}'.",
         source, target
     )
 }
-use source_parsing::taxonomy_path_vo::FilePath;
-use std::collections::{HashMap, HashSet};
-use std::fs;
 
 /// Represents a single edge in a dependency graph (normalized by layer prefix).
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -194,7 +196,7 @@ impl DependencyCycleAnalyzer {
             .trim_start_matches('/');
         let mut layers: Vec<(
             &LayerNameVO,
-            &crate::shared_common::taxonomy_definition_vo::LayerDefinition,
+            &shared::common::taxonomy_definition_vo::LayerDefinition,
         )> = self.config.layers.iter().collect();
         layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 
