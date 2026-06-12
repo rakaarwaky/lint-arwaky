@@ -2,6 +2,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 use shared::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
+use shared::common::taxonomy_violation_message::AesViolation;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_severity_vo::Severity;
@@ -186,7 +187,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                             0,
                             "AES014",
                             Severity::HIGH,
-                            aes014_mandatory_inheritance(t),
+                            AesViolation::MandatoryInheritance { reason: None }.to_string(),
                         ));
                     }
                 }
@@ -218,7 +219,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                             idx + 1,
                             "AES014",
                             Severity::HIGH,
-                            aes014_mandatory_inheritance(t),
+                            AesViolation::MandatoryInheritance { reason: None }.to_string(),
                         ));
                     }
                 }
@@ -232,7 +233,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                                 idx + 1,
                                 "AES014",
                                 Severity::HIGH,
-                                aes014_mandatory_inheritance(t),
+                                AesViolation::MandatoryInheritance { reason: None }.to_string(),
                             ));
                         }
                     }
@@ -298,7 +299,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
                 0,
                 "AES014",
                 Severity::HIGH,
-                aes014_bidirectional(&trait_name, suffix, target_prefix),
+                AesViolation::MandatoryInheritance { reason: None }.to_string(),
             ));
         }
     }
@@ -321,13 +322,3 @@ fn extract_trait_name(content: &str) -> Option<String> {
     None
 }
 
-fn aes014_mandatory_inheritance(contracts: &str) -> String {
-    format!("AES014 MANDATORY_INHERITANCE: File imports contracts ({}) but no class inherits from them.\nWHY? Layers that import contracts must provide an implementation.\nFIX: Add impl TraitName for YourStruct.", contracts)
-}
-
-fn aes014_bidirectional(trait_name: &str, contract_suffix: &str, expected_layer: &str) -> String {
-    format!(
-        "AES014 MANDATORY_INHERITANCE: Contract {} '{}' must be implemented by {}_* layer.\n        WHY? Contracts define interfaces that must be fulfilled by the expected layer.\n        FIX: Create a {}_* file that implements '{}'.",
-        contract_suffix, trait_name, expected_layer, expected_layer, trait_name
-    )
-}

@@ -184,17 +184,41 @@ impl AesViolation {
     pub fn with_language(self, lang: Language) -> LabeledViolation {
         LabeledViolation { violation: self, lang }
     }
+
+    pub(crate) fn with_language_ref(&self, lang: Language) -> LabeledViolationRef<'_> {
+        LabeledViolationRef { violation: self, lang }
+    }
 }
 
-struct LabeledViolation {
+pub struct LabeledViolation {
     violation: AesViolation,
     lang: Language,
 }
 
+pub(crate) struct LabeledViolationRef<'a> {
+    violation: &'a AesViolation,
+    lang: Language,
+}
+
+impl fmt::Display for LabeledViolationRef<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Reuse LabeledViolation Display logic — karena field violation sama-sama diakses via reference
+        fmt_violation(self.violation, self.lang, f)
+    }
+}
+
 impl fmt::Display for LabeledViolation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let lang = self.lang;
-        match &self.violation {
+        fmt_violation(&self.violation, self.lang, f)
+    }
+}
+
+fn fmt_violation(
+    violation: &AesViolation,
+    lang: Language,
+    f: &mut fmt::Formatter<'_>,
+) -> fmt::Result {
+    match violation {
             // AES001
             AesViolation::ForbiddenImport {
                 source_layer,
@@ -217,7 +241,10 @@ impl fmt::Display for LabeledViolation {
                         let src = source_layer.value();
                         if src == "taxonomy(vo)" {
                             "Taxonomy Value Objects (VO) must remain completely pure and cannot import agents, infrastructure, surfaces, contracts, capabilities, or root components.".to_string()
-                        } else if src == "taxonomy(entity)" || src == "taxonomy(error)" || src == "taxonomy(event)" {
+                        } else if src == "taxonomy(entity)"
+                            || src == "taxonomy(error)"
+                            || src == "taxonomy(event)"
+                        {
                             "Taxonomy Entities, Errors, and Events can only import taxonomy VOs/constants and are forbidden from importing agents, infrastructure, surfaces, contracts, or capabilities.".to_string()
                         } else if src == "taxonomy(constant)" {
                             "Taxonomy Constants must remain pure static value declarations and cannot import agents, infrastructure, surfaces, contracts, capabilities, or root components.".to_string()
@@ -235,11 +262,23 @@ impl fmt::Display for LabeledViolation {
                             "Agent Orchestrators coordinate flows and are forbidden from importing UI/surfaces, infrastructure adapters, capabilities, or root components.".to_string()
                         } else if src == "agent(lifecycle)" {
                             "Agent Lifecycles manage agent states and are forbidden from importing orchestrators/containers, infrastructure, capabilities, surfaces, or root components.".to_string()
-                        } else if src == "surfaces(command)" || src == "surfaces(controller)" || src == "surfaces(page)" || src == "surfaces(entry)" {
+                        } else if src == "surfaces(command)"
+                            || src == "surfaces(controller)"
+                            || src == "surfaces(page)"
+                            || src == "surfaces(entry)"
+                        {
                             "Smart Surfaces act as user/CLI entry points and must never import agents, infrastructure, capabilities, or ports/protocols directly (must use ServiceContainerAggregate).".to_string()
-                        } else if src == "surfaces(hook)" || src == "surfaces(store)" || src == "surfaces(action)" || src == "surfaces(screen)" || src == "surfaces(router)" {
+                        } else if src == "surfaces(hook)"
+                            || src == "surfaces(store)"
+                            || src == "surfaces(action)"
+                            || src == "surfaces(screen)"
+                            || src == "surfaces(router)"
+                        {
                             "Surface utility components (hooks, stores, routers) manage local state and must never import agents, infrastructure, capabilities, or ports/protocols.".to_string()
-                        } else if src == "surfaces(component)" || src == "surfaces(view)" || src == "surfaces(layout)" {
+                        } else if src == "surfaces(component)"
+                            || src == "surfaces(view)"
+                            || src == "surfaces(layout)"
+                        {
                             "Passive Surface components (views, layouts) render UI and are forbidden from importing agents, contracts, infrastructure, capabilities, or smart surfaces.".to_string()
                         } else if src.starts_with("taxonomy") {
                             "Taxonomy must remain pure and free from framework/layer dependencies to ensure domain model integrity.".to_string()
@@ -272,7 +311,10 @@ impl fmt::Display for LabeledViolation {
                     "Layer '{}' must import '{}' to satisfy architectural contract requirements.",
                     source_layer, required
                 );
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(
                     f,
                     "AES002 MANDATORY_IMPORT: Layer '{}' is missing required import '{}'.\n\
@@ -292,7 +334,10 @@ impl fmt::Display for LabeledViolation {
                     "Import '{}' in layer '{}' is not used according to its intended purpose.",
                     import_type, source_layer
                 );
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(
                     f,
                     "AES002X IMPORT_INTENT: '{}' import in layer '{}' violates its intended purpose.\n\
@@ -304,7 +349,10 @@ impl fmt::Display for LabeledViolation {
             // AES012
             AesViolation::SuffixForbidden { reason } => {
                 let default_why = "Forbidden suffixes prevent technical concepts from leaking into domain layers.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(
                     f,
                     "AES012 SUFFIX_FORBIDDEN: File uses a forbidden suffix for this layer.\n\
@@ -315,7 +363,10 @@ impl fmt::Display for LabeledViolation {
             }
             AesViolation::SuffixMismatch { reason } => {
                 let default_why = "Contract files must end with '_port', '_protocol', or '_aggregate' to specify their interface type.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES012 SUFFIX_MISMATCH: Contract file is missing a valid contract suffix.\n\
                     WHY? {}\n\
                     FIX: Rename the file to include '_port', '_protocol', or '_aggregate' as a suffix.", why)
@@ -323,7 +374,10 @@ impl fmt::Display for LabeledViolation {
             // AES013
             AesViolation::ForbiddenInheritance { reason } => {
                 let default_why = format!("Contract aggregates must not {} from port or protocol contracts to keep composition clean.", lang.inherits_kw());
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES013 FORBIDDEN_INHERITANCE: Implementation/inheritance from forbidden source.\n\
                     WHY? {}\n\
                     FIX: Use composition (fields) instead of direct inheritance/implementation.", why)
@@ -331,7 +385,10 @@ impl fmt::Display for LabeledViolation {
             // AES014
             AesViolation::MandatoryInheritance { reason } => {
                 let default_why = "Files that import contract interfaces are expected to implement them to fulfill architectural roles.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES014 MANDATORY_INHERITANCE: File imports contracts but no {} implements them.\n\
                     WHY? {}\n\
                     FIX: Define a {} that implements the imported contract interface.", lang.struct_keyword(), why, lang.struct_keyword())
@@ -339,7 +396,10 @@ impl fmt::Display for LabeledViolation {
             // AES015
             AesViolation::CircularImport { reason } => {
                 let default_why = "Circular dependencies couple components together and break unidirectional data/import flow.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(
                     f,
                     "AES015 CIRCULAR_IMPORT: Circular dependency detected.\n\
@@ -350,8 +410,12 @@ impl fmt::Display for LabeledViolation {
             }
             // AES020
             AesViolation::FileTooLarge { reason } => {
-                let default_why = "Large files violate the Single Responsibility Principle.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let default_why =
+                    "Large files violate the Single Responsibility Principle.".to_string();
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(
                     f,
                     "AES020 FILE_TOO_LARGE: File exceeds the maximum allowed line count.\n\
@@ -361,8 +425,12 @@ impl fmt::Display for LabeledViolation {
                 )
             }
             AesViolation::FileTooShort { reason } => {
-                let default_why = "Excessively small files clutter the project structure.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let default_why =
+                    "Excessively small files clutter the project structure.".to_string();
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(
                     f,
                     "AES021 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\n\
@@ -373,30 +441,48 @@ impl fmt::Display for LabeledViolation {
             }
             // AES022
             AesViolation::BypassComment { reason } => {
-                let default_why = "Bypassing code checks hides issues and risks architectural regressions.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let default_why =
+                    "Bypassing code checks hides issues and risks architectural regressions."
+                        .to_string();
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES022 BYPASS_COMMENT: Forbidden bypass comment or annotation detected.\n\
                     WHY? {}\n\
                     FIX: Remove the bypass comment (e.g. noqa, eslint-disable, ts-ignore) and resolve the issue properly.", why)
             }
             AesViolation::UnwrapExpect { reason } => {
                 let default_why = "Using unwrap or expect results in runtime panics and bypasses proper error propagation.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES022 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.\n\
                     WHY? {}\n\
                     FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').", why)
             }
             AesViolation::Panic { reason } => {
                 let default_why = "Manual panic calls crash the program unexpectedly instead of using structured error recovery.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
-                write!(f, "AES022 PANIC: Forbidden panic call detected.\n\
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
+                write!(
+                    f,
+                    "AES022 PANIC: Forbidden panic call detected.\n\
                     WHY? {}\n\
-                    FIX: Return a Result or handle the failure case gracefully without panicking.", why)
+                    FIX: Return a Result or handle the failure case gracefully without panicking.",
+                    why
+                )
             }
             // AES023
             AesViolation::FixUnusedImport { reason } => {
                 let default_why = "Unused imports clutter the codebase and increase compilation/dependency overhead.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES023 UNUSED_IMPORT: Unused import detected.\n\
                     WHY? {}\n\
                     FIX: Remove the unused import statement or use the imported symbol in this file.", why)
@@ -404,14 +490,20 @@ impl fmt::Display for LabeledViolation {
             // AES024
             AesViolation::MandatoryClassDefinition { reason } => {
                 let default_why = format!("Encapsulation in {} is required for proper modularization and contract adherence.", lang.struct_keyword());
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES024 MANDATORY_DEFINITION: File is missing a {}, {}, or {} definition.\n\
                     WHY? {}\n\
                     FIX: Group functions into a {} or implement a {} that defines the module interface.", lang.struct_keyword(), lang.interface_kw(), lang.type_kw(), why, lang.struct_keyword(), lang.interface_kw())
             }
             AesViolation::DeadInheritance { reason } => {
                 let default_why = format!("Empty {} implementation blocks do not add behavior and indicate dead or incomplete code.", lang.inherits_kw());
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES024 DEAD_INHERITANCE: Empty {}, class, or {} implementation block detected.\n\
                     WHY? {}\n\
                     FIX: Implement the necessary methods/fields or remove the empty definition block.", lang.struct_keyword(), lang.interface_kw(), why)
@@ -419,7 +511,10 @@ impl fmt::Display for LabeledViolation {
             // AES030
             AesViolation::OrphanCode { reason } => {
                 let default_why = "Orphan code indicates dead, unreachable, or unreferenced logic that should not exist in the active workspace.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES030 ORPHAN_CODE: Unused or unreachable orphan file detected.\n\
                     WHY? {}\n\
                     FIX: [AI DECISION REQUIRED] Decide whether you should wire this implementation (import/reference it in the appropriate container, orchestrator, or router) or delete this file if it is obsolete.", why)
@@ -427,14 +522,20 @@ impl fmt::Display for LabeledViolation {
             // AES0301
             AesViolation::ConstantPurity { reason } => {
                 let default_why = "Constant taxonomy modules must only contain pure constant or static values to maintain value-level immutability.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0301 TAXONOMY_ROLE: Constant file contains non-constant declaration.\n\
                     WHY? {}\n\
                     FIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", why)
             }
             AesViolation::PrimitiveUsage { primitive, reason } => {
                 let default_why = format!("Direct primitive types (like '{}') are forbidden in taxonomy entities, errors, and events to maintain strict value object boundaries and avoid primitive obsession.", primitive);
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy entity, error, or event.\n\
                     WHY? {}\n\
                     FIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.", primitive, why)
@@ -442,22 +543,43 @@ impl fmt::Display for LabeledViolation {
             // AES0302
             AesViolation::ContractPrimitive { reason } => {
                 let default_why = format!("Contracts must enforce value object boundaries to prevent primitive obsession. Use {} instead of primitives.", lang.type_kw());
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0302 CONTRACT_PRIMITIVE: Contract {} or method signature uses primitive types instead of taxonomy VO or constant.\n\
                     WHY? {}\n\
                     FIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.", lang.interface_kw(), why)
             }
             // AES0303
-            AesViolation::CapabilityRouting { struct_name, reason } => {
+            AesViolation::CapabilityRouting {
+                struct_name,
+                reason,
+            } => {
                 let default_why = format!("Capability {}s must implement their corresponding {} traits/interfaces to ensure clean interface boundaries.", lang.struct_keyword(), lang.interface_kw());
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
-                write!(f, "AES0303 CAPABILITY_ROLE: {} '{}' has no {} implementation.\n\
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
+                write!(
+                    f,
+                    "AES0303 CAPABILITY_ROLE: {} '{}' has no {} implementation.\n\
                     WHY? {}\n\
-                    FIX: Implement the capability protocol {} for '{}'.", lang.struct_keyword(), struct_name, lang.interface_kw(), why, lang.interface_kw(), struct_name)
+                    FIX: Implement the capability protocol {} for '{}'.",
+                    lang.struct_keyword(),
+                    struct_name,
+                    lang.interface_kw(),
+                    why,
+                    lang.interface_kw(),
+                    struct_name
+                )
             }
             AesViolation::SingleBottleneck { reason } => {
                 let default_why = "Routing all commands to a single capability violates high-level decomposition and creates a single bottleneck.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0303 CAPABILITY_ROLE: All orchestrator dispatch routes route to a single capability.\n\
                     WHY? {}\n\
                     FIX: Distribute logic or route commands to multiple distinct capabilities.", why)
@@ -465,49 +587,72 @@ impl fmt::Display for LabeledViolation {
             // AES0305
             AesViolation::StatelessExecution { reason } => {
                 let default_why = "Agent execution components must be stateless to guarantee reentrancy and prevent side effects.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0305 AGENT_ROLE: Non-stateless behavior detected.\n\
                     WHY? {}\n\
                     FIX: Remove mutable class state assignments or move initialization logic to the constructor.", why)
             }
             AesViolation::HighLevelPolicy { reason } => {
                 let default_why = "Agents must focus on high-level orchestration policies and not import infrastructure adapters directly.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0305 AGENT_ROLE: Low-level implementation details imported.\n\
                     WHY? {}\n\
                     FIX: Reference components using their contract interfaces instead of concrete infrastructure types.", why)
             }
             AesViolation::CoordinatesMultiple { reason } => {
                 let default_why = "Orchestrator agents exist to coordinate multiple subsystems; simple single-component logic belongs elsewhere.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0305 AGENT_ROLE: Orchestrator coordinates too few subsystems.\n\
                     WHY? {}\n\
                     FIX: Merge this simple flow into its caller or delegate at least two subsystems to this orchestrator.", why)
             }
             AesViolation::NoDomainLogic { reason } => {
-                let default_why = "Complex domain logic detected in a passive agent role or surface wrapper.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let default_why =
+                    "Complex domain logic detected in a passive agent role or surface wrapper."
+                        .to_string();
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0305 AGENT_ROLE: Complex domain logic detected in a passive role.\n\
                     WHY? {}\n\
                     FIX: Move the complex domain/control logic into capabilities or orchestrator components.", why)
             }
             AesViolation::LazyEagerInit { reason } => {
                 let default_why = "Agent containers must only declare and wire dependencies, avoiding complex logic in constructors.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0305 AGENT_ROLE: Complex initialization logic found in container module.\n\
                     WHY? {}\n\
                     FIX: Move the initialization/conditional logic out of the constructor or container setup.", why)
             }
             AesViolation::MustImplementContract { reason } => {
                 let default_why = format!("Agent containers must implement the 'ServiceContainerAggregate' {} to satisfy dependency injection protocols.", lang.interface_kw());
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0305 AGENT_ROLE: Class is missing required contract implementation.\n\
                     WHY? {}\n\
                     FIX: Add the 'ServiceContainerAggregate' implementation for the container class.", why)
             }
             AesViolation::AnyType { reason } => {
                 let default_why = format!("Using 'any' or 'Any' type annotations bypasses type safety and violates agent-level domain-driven design.");
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
                 write!(f, "AES0305 AGENT_ROLE: Forbidden 'any' type annotation found.\n\
                     WHY? {}\n\
                     FIX: Replace 'any' annotations with strongly-typed objects, structures, or domain Value Objects (VO).", why)
@@ -515,25 +660,46 @@ impl fmt::Display for LabeledViolation {
             // AES0306
             AesViolation::PassiveViolation { reason } => {
                 let default_why = "Passive surfaces must not contain logic that should be in capabilities or agents.".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
-                write!(f, "AES0306 SURFACE_ROLE: Passive surface contains business logic.\n\
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
+                write!(
+                    f,
+                    "AES0306 SURFACE_ROLE: Passive surface contains business logic.\n\
                     WHY? {}\n\
-                    FIX: Move logic to appropriate capability or agent.", why)
+                    FIX: Move logic to appropriate capability or agent.",
+                    why
+                )
             }
             AesViolation::SurfaceRoleViolation { reason } => {
                 let default_why = "Surface role violation - surfaces must adhere to their designated role (command, controller, component, hook, etc.).".to_string();
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default_why);
-                write!(f, "AES0306 SURFACE_ROLE: Surface role boundary violation.\n\
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
+                write!(
+                    f,
+                    "AES0306 SURFACE_ROLE: Surface role boundary violation.\n\
                     WHY? {}\n\
-                    FIX: Ensure surface only performs its designated responsibilities.", why)
+                    FIX: Ensure surface only performs its designated responsibilities.",
+                    why
+                )
             }
         }
-    }
 }
 
 impl From<AesViolation> for String {
     fn from(v: AesViolation) -> String {
         // Default to Rust-language formatting
         v.with_language(Language::Rust).to_string()
+    }
+}
+
+impl fmt::Display for AesViolation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Delegate ke LabeledViolationRef (borrow) dengan default language Rust.
+        // TIDAK boleh pakai self.to_string() — itu circular (to_string() memanggil fmt() lagi).
+        write!(f, "{}", self.with_language_ref(Language::Rust))
     }
 }

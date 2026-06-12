@@ -6,7 +6,7 @@ use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::taxonomy_definition_vo::LayerDefinition;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared::taxonomy_violation_message::AesViolation;
 
 pub struct ArchLineChecker {}
 

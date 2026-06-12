@@ -1,5 +1,6 @@
 // PURPOSE: DeadInheritanceChecker — IDeadInheritanceProtocol for AES024: detect empty struct/trait impl blocks
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
+use shared::common::taxonomy_violation_message::AesViolation;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_severity_vo::Severity;
 
@@ -30,7 +31,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     i + 1,
                     "AES024",
                     Severity::MEDIUM,
-                    aes024_dead_inheritance("unit struct"),
+                    AesViolation::DeadInheritance { reason: None }.to_string(),
                 ));
                 i += 1;
                 continue;
@@ -50,7 +51,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                             i + 1,
                             "AES024",
                             Severity::MEDIUM,
-                            aes024_dead_inheritance("impl block"),
+                            AesViolation::DeadInheritance { reason: None }.to_string(),
                         ));
                     } else {
                         let mut k = j;
@@ -67,7 +68,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                                 i + 1,
                                 "AES024",
                                 Severity::MEDIUM,
-                                aes024_dead_inheritance("impl block (multi-line)"),
+                                AesViolation::DeadInheritance { reason: None }.to_string(),
                             ));
                         }
                     }
@@ -81,7 +82,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                         i + 1,
                         "AES024",
                         Severity::MEDIUM,
-                        aes024_dead_inheritance("empty class (Python)"),
+                        AesViolation::DeadInheritance { reason: None }.to_string(),
                     ));
                 } else if t.ends_with(':') && i + 1 < lines.len() {
                     let next = lines[i + 1].trim();
@@ -91,7 +92,7 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                             i + 1,
                             "AES024",
                             Severity::MEDIUM,
-                            aes024_dead_inheritance("empty class (Python)"),
+                            AesViolation::DeadInheritance { reason: None }.to_string(),
                         ));
                     }
                 }
@@ -103,17 +104,10 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
                     i + 1,
                     "AES024",
                     Severity::MEDIUM,
-                    aes024_dead_inheritance("empty class (JS/TS)"),
+                    AesViolation::DeadInheritance { reason: None }.to_string(),
                 ));
             }
             i += 1;
         }
     }
-}
-
-fn aes024_dead_inheritance(type_name: &str) -> String {
-    format!(
-        "AES024 DEAD_INHERITANCE: Empty struct/trait '{}' detected.",
-        type_name
-    )
 }

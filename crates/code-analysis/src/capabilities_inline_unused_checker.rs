@@ -1,5 +1,6 @@
 // PURPOSE: InlineUnusedChecker — IInlineUnusedProtocol for AES023: detect cross-language unused imports (Rust/Python/JS)
 use shared::code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
+use shared::common::taxonomy_violation_message::AesViolation;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_severity_vo::Severity;
 
@@ -130,13 +131,9 @@ impl IInlineUnusedProtocol for InlineUnusedChecker {
                     i + 1,
                     "AES023",
                     Severity::MEDIUM,
-                    aes023_unused_import(name),
+                    AesViolation::FixUnusedImport { reason: None }.to_string(),
                 ));
             }
         }
     }
-}
-
-fn aes023_unused_import(name: &str) -> String {
-    format!("AES023 UNUSED_IMPORT: '{}' imported but never used.", name)
 }

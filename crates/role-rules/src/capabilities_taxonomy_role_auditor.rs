@@ -3,9 +3,7 @@ use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
-use shared::taxonomy_violation_message_js_error::AesViolationJs;
-use shared::taxonomy_violation_message_py_error::AesViolationPy;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared::taxonomy_violation_message::{AesViolation, Language};
 use std::path::Path;
 
 fn has_suffix(file: &str, suffix: &str) -> bool {
@@ -145,27 +143,19 @@ impl TaxonomyRoleChecker {
                             inner_trimmed == prim_clean || inner_trimmed.starts_with(prim_clean)
                         }) {
                             let primitive_clean = p.trim_end_matches('<');
-                            let msg = if is_rs {
-                                AesViolation::PrimitiveUsage {
-                                    primitive: SymbolName::new(primitive_clean),
-                                    reason: None,
-                                }
-                                .to_string()
+                            let lang = if is_rs {
+                                Language::Rust
                             } else if is_py {
-                                AesViolationPy::PrimitiveUsage {
-                                    primitive: SymbolName::new(primitive_clean),
-                                    reason: None,
-                                }
-                                .to_string()
-                            } else if is_js {
-                                AesViolationJs::PrimitiveUsage {
-                                    primitive: SymbolName::new(primitive_clean),
-                                    reason: None,
-                                }
-                                .to_string()
+                                Language::Python
                             } else {
-                                format!("AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy entity, error, or event.", primitive_clean)
+                                Language::JavaScript
                             };
+                            let msg = AesViolation::PrimitiveUsage {
+                                primitive: SymbolName::new(primitive_clean),
+                                reason: None,
+                            }
+                            .with_language(lang)
+                            .to_string();
 
                             violations.push(LintResult::new_arch(
                                 file,
@@ -182,27 +172,19 @@ impl TaxonomyRoleChecker {
                 // Direct primitive types (String, i64, etc.)
                 if type_candidate.starts_with(p) || type_candidate == *p {
                     let primitive_clean = p.trim_end_matches('<');
-                    let msg = if is_rs {
-                        AesViolation::PrimitiveUsage {
-                            primitive: SymbolName::new(primitive_clean),
-                            reason: None,
-                        }
-                        .to_string()
+                    let lang = if is_rs {
+                        Language::Rust
                     } else if is_py {
-                        AesViolationPy::PrimitiveUsage {
-                            primitive: SymbolName::new(primitive_clean),
-                            reason: None,
-                        }
-                        .to_string()
-                    } else if is_js {
-                        AesViolationJs::PrimitiveUsage {
-                            primitive: SymbolName::new(primitive_clean),
-                            reason: None,
-                        }
-                        .to_string()
+                        Language::Python
                     } else {
-                        format!("AES0301 TAXONOMY_ROLE: Direct primitive '{}' in taxonomy entity, error, or event.", primitive_clean)
+                        Language::JavaScript
                     };
+                    let msg = AesViolation::PrimitiveUsage {
+                        primitive: SymbolName::new(primitive_clean),
+                        reason: None,
+                    }
+                    .with_language(lang)
+                    .to_string();
 
                     violations.push(LintResult::new_arch(
                         file,
@@ -286,7 +268,7 @@ impl TaxonomyRoleChecker {
                     i + 1,
                     "AES0301",
                     Severity::HIGH,
-                    AesViolation::ConstantPurity { reason: None },
+                    AesViolation::ConstantPurity { reason: None }.to_string(),
                 ));
             }
         }

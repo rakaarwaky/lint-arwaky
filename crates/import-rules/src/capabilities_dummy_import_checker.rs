@@ -1,10 +1,5 @@
 // PURPOSE: DummyImportChecker — AES002X: detect dummy imports, dummy functions, and dummy trait implementations
-//
-// AES002 saat ini hanya cek apakah import ADA di file.
-// Tapi intent-nya adalah:
-//   1. taxonomy imports → surface harus pakai Value Objects di function signatures
-//   2. contract(aggregate) imports → surface harus delegate ke aggregate, bukan implement sendiri
-//
+
 // Rule ini cek apakah import BENAR-BENAR digunakan sesuai intent.
 
 use async_trait::async_trait;
@@ -422,7 +417,9 @@ fn symbol_used_real(
 }
 
 fn in_dummy_range(line_no: usize, ranges: &[(usize, usize)]) -> bool {
-    ranges.iter().any(|(start, end)| line_no >= *start && line_no <= *end)
+    ranges
+        .iter()
+        .any(|(start, end)| line_no >= *start && line_no <= *end)
 }
 
 fn dummy_impl_traits(lines: &[&str]) -> Vec<String> {
