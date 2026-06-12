@@ -8,7 +8,7 @@ pub struct MetricsContainer {
 
 impl MetricsContainer {
     pub fn new() -> Self {
-        let path_norm: Arc<dyn crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort> = Arc::new(
+        let path_norm: Arc<dyn shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort> = Arc::new(
             crate::source_parsing::infrastructure_path_provider::PathNormalizationProvider {},
         );
         Self {

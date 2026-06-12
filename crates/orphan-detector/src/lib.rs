@@ -35,7 +35,7 @@ use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::LintMessage;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 pub fn mk_orphan_result(file: &str, msg: &str, sev: Severity) -> LintResult {
     LintResult {
         file: FilePath::new(file.to_string()).unwrap_or_default(),

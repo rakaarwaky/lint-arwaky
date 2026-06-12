@@ -2,7 +2,7 @@
 
 use import_rules::contract_import_parser_port::IImportParserPort;
 use shared::{FileContentVO, Identity, LayerNameVO, LineContentVO, LineNumber};
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::fs;
 
 pub struct ImportParserAdapter {}

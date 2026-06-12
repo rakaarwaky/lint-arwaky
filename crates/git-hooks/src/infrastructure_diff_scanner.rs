@@ -3,12 +3,12 @@ use file_system::taxonomy_filesystem_error::FileSystemError;
 use pipeline_jobs::taxonomy_action_vo::ActionName;
 use shared::taxonomy_common_error::ErrorMessage;
 /// git_diff_scanner — Git-aware file change detection for linting only modified files.
-use source_parsing::contract_scanner_provider_port::IScannerProviderPort;
-use source_parsing::taxonomy_path_vo::DirectoryPath;
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::taxonomy_paths_vo::FilePathList;
-use source_parsing::taxonomy_paths_vo::RenamedFile;
-use source_parsing::taxonomy_paths_vo::RenamedFileList;
+use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
+use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
+use shared::source_parsing::taxonomy_paths_vo::RenamedFile;
+use shared::source_parsing::taxonomy_paths_vo::RenamedFileList;
 
 pub struct DiffResult {
     pub added: FilePathList,

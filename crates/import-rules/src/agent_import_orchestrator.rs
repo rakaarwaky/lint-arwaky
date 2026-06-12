@@ -2,8 +2,8 @@
 use import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
 use output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::FilePathList;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::FilePathList;
 use async_trait::async_trait;
 use std::path::Path;
 use std::sync::Arc;

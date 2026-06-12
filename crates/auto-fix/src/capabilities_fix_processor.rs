@@ -9,7 +9,7 @@ use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct LintFixProcessor {

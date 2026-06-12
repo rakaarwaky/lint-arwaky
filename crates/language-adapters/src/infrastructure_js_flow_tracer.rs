@@ -6,7 +6,7 @@ use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::DataFlowList;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_name_vo::SymbolName;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
 
 pub struct JSFlowAdapter {}

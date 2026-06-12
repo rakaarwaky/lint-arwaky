@@ -7,7 +7,7 @@ use config_system::taxonomy_config_vo::parse_config_yaml;
 use config_system::taxonomy_source_vo::ConfigResult;
 use config_system::taxonomy_source_vo::ConfigSource;
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 use std::sync::Arc;
 

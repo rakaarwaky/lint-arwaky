@@ -14,8 +14,8 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::taxonomy_paths_vo::FilePathList;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
 fn aes011_naming_convention(_expected_word_count: i32) -> String {
     String::from(

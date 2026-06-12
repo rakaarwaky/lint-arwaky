@@ -9,8 +9,8 @@ use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use crate::cli_transport::contract_executor_port::ICommandExecutorPort;
-use crate::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use crate::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
 use crate::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
@@ -42,7 +42,7 @@ use crate::plugin_system::contract_manager_port::IPluginManagerPort;
 use crate::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use crate::shared_common::taxonomy_adapter_name_vo::AdapterName;
-use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
+use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use crate::cli_commands::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use crate::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 

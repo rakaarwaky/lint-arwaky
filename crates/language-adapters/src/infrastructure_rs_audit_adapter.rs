@@ -14,8 +14,8 @@ use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
-use source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 use tracing::debug;
 

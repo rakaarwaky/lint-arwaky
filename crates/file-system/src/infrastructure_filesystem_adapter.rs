@@ -13,8 +13,8 @@ use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_layer_vo::Identity;
 use shared::taxonomy_source_vo::ContentString;
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::taxonomy_paths_vo::FilePathList;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 
 pub struct OSFileSystemAdapter {}
 

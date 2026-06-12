@@ -34,9 +34,9 @@ use plugin_system::contract_manager_port::IPluginManagerPort;
 use project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::taxonomy_adapter_name_vo::AdapterName;
-use source_parsing::contract_parser_port::ISourceParserPort;
-use source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use source_parsing::contract_scanner_provider_port::IScannerProviderPort;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
+use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use std::sync::Arc;
 
 pub trait ServiceContainerAggregate: Send + Sync {

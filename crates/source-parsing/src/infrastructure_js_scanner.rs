@@ -11,6 +11,9 @@ use shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
 use shared::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
 use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::taxonomy_parser_error::SourceParserError;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_error::Cause;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::BooleanVO;
@@ -21,9 +24,6 @@ use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_suggestion_vo::MetadataVO;
-use shared::source_parsing::contract_parser_port::ISourceParserPort;
-use shared::source_parsing::taxonomy_parser_error::SourceParserError;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 static IMPORT_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^import\s+(.+?)\s+from\s+'([^']+)'").ok());
@@ -798,7 +798,10 @@ export { Dog };
         // Check aliases map from read_and_parse
         let parsed = adapter.read_and_parse(&path).unwrap();
         assert_eq!(parsed.imported_aliases.get("fs").unwrap(), "fs");
-        assert_eq!(parsed.imported_aliases.get("Client").unwrap(), "http.HttpClient");
+        assert_eq!(
+            parsed.imported_aliases.get("Client").unwrap(),
+            "http.HttpClient"
+        );
         assert_eq!(parsed.imported_aliases.get("get").unwrap(), "http.get");
         assert_eq!(parsed.imported_aliases.get("path").unwrap(), "path");
 
@@ -830,7 +833,10 @@ export { Dog };
         assert!(!adapter.is_barrel_file(&path).value());
         assert_eq!(adapter.get_stem(&path).value, "test_js_scanner");
         assert!(!adapter.is_entry_point(&path).value());
-        assert!(adapter.get_supported_extensions().values.contains(&".ts".to_string()));
+        assert!(adapter
+            .get_supported_extensions()
+            .values
+            .contains(&".ts".to_string()));
 
         // Clean up
         let _ = fs::remove_file(test_path_str);

@@ -12,7 +12,7 @@ use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber, Score};
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_message_vo::{ComplianceStatus, LintMessage};
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AnalysisReporter {
     history_path: String,

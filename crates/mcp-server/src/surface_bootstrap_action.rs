@@ -2,7 +2,7 @@
 
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use shared::taxonomy_common_vo::BooleanVO;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct SyspathBootstrapHandler {}

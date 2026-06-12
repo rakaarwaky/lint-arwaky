@@ -4,9 +4,9 @@ use git_hooks::contract_commands_aggregate::GitCommandsAggregate;
 use git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
 use output_report::taxonomy_result_vo::LintResultList;
 use shared::taxonomy_common_vo::Count;
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::taxonomy_paths_vo::FilePathList;
-use source_parsing::taxonomy_paths_vo::RenamedFileList;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
+use shared::source_parsing::taxonomy_paths_vo::RenamedFileList;
 use async_trait::async_trait;
 use std::collections::HashSet;
 

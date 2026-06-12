@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use output_report::taxonomy_score_vo::FileFormat;
 use shared::taxonomy_common_vo::BooleanVO;
 use shared::taxonomy_layer_vo::Identity;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 /// Satisfy AES030 orphan detection - agent references contract ports/protocols

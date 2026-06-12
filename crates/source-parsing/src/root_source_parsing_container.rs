@@ -1,8 +1,8 @@
-// PURPOSE: SourceParsingContainer — wiring for source-parsing feature (root layer, wiring only)
+// PURPOSE: SourceParsingContainer — source-parsing feature container (root_container layer)
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
+use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use std::sync::Arc;
-use crate::contract_parser_port::ISourceParserPort;
-use crate::contract_path_normalization_port::IPathNormalizationPort;
-use crate::contract_scanner_provider_port::IScannerProviderPort;
 
 pub struct SourceParsingContainer {
     source_parser: Arc<dyn ISourceParserPort>,
@@ -12,20 +12,13 @@ pub struct SourceParsingContainer {
 
 impl SourceParsingContainer {
     pub fn new() -> Self {
-        let path_norm: Arc<dyn IPathNormalizationPort> = Arc::new(
-            crate::infrastructure_path_provider::PathNormalizationProvider {},
-        );
+        let path_norm: Arc<dyn IPathNormalizationPort> =
+            Arc::new(crate::infrastructure_path_provider::PathNormalizationProvider {});
         let source_parser: Arc<dyn ISourceParserPort> = Arc::new(
             crate::infrastructure_parser_adapter::SourceParserOrchestrator::new(
-                Box::new(
-                    crate::infrastructure_py_scanner::ASTPythonParserAdapter::new(),
-                ),
-                Box::new(
-                    crate::infrastructure_rust_scanner::ASTRustParserAdapter::new(),
-                ),
-                Box::new(
-                    crate::infrastructure_js_scanner::ASTJSParserAdapter::new(),
-                ),
+                Box::new(crate::infrastructure_py_scanner::ASTPythonParserAdapter::new()),
+                Box::new(crate::infrastructure_rust_scanner::ASTRustParserAdapter::new()),
+                Box::new(crate::infrastructure_js_scanner::ASTJSParserAdapter::new()),
             ),
         );
         Self {

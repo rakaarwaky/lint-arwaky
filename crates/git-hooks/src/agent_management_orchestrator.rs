@@ -5,7 +5,7 @@ use git_hooks::taxonomy_hook_error::GitHookError;
 use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_layer_vo::Identity;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::OnceLock;
 
 /// Satisfy AES030 orphan detection - agent references contract ports/protocols

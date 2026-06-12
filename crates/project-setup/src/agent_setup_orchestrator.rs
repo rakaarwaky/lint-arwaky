@@ -6,7 +6,7 @@ use pipeline_jobs::taxonomy_job_vo::EnvContentVO;
 use pipeline_jobs::taxonomy_job_vo::McpConfigVO;
 use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use source_parsing::taxonomy_path_vo::DirectoryPath;
+use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 use std::collections::HashMap;
 
 use async_trait::async_trait;

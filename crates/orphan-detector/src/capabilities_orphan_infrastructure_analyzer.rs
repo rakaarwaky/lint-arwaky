@@ -3,7 +3,7 @@ use code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use orphan_detector::contract_orphan_protocol::IInfrastructureOrphanProtocol;
 use output_report::taxonomy_severity_vo::Severity;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct InfrastructureOrphanAnalyzer {}
 

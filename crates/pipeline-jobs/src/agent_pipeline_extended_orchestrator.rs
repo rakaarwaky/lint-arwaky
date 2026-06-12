@@ -9,7 +9,7 @@ use pipeline_jobs::taxonomy_job_vo::ResponseData;
 use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::BooleanVO;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashMap;
 
 use async_trait::async_trait;

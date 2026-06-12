@@ -4,7 +4,7 @@ use config_system::taxonomy_config_error::ConfigError;
 use config_system::taxonomy_identifier_vo::ConfigKey;
 use config_system::taxonomy_setting_vo::ProjectConfig;
 use shared::taxonomy_common_error::ErrorMessage;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
 
 pub struct ConfigParserProvider {}

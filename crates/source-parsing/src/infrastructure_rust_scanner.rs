@@ -11,6 +11,9 @@ use shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
 use shared::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
 use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::taxonomy_parser_error::SourceParserError;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_error::Cause;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::BooleanVO;
@@ -21,9 +24,6 @@ use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_suggestion_vo::MetadataVO;
-use shared::source_parsing::contract_parser_port::ISourceParserPort;
-use shared::source_parsing::taxonomy_parser_error::SourceParserError;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 static USE_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^(?:pub\s+)?use\s+([^;]+);").ok());
@@ -700,10 +700,16 @@ fn private_func() {
 
         // Check aliases map from read_and_parse
         let parsed = adapter.read_and_parse(&path).unwrap();
-        assert_eq!(parsed.aliases.get("HashMap").unwrap(), "std.collections.HashMap");
+        assert_eq!(
+            parsed.aliases.get("HashMap").unwrap(),
+            "std.collections.HashMap"
+        );
         assert_eq!(parsed.aliases.get("SharedArc").unwrap(), "std.sync.Arc");
         assert_eq!(parsed.aliases.get("Mutex").unwrap(), "tokio.sync.Mutex");
-        assert_eq!(parsed.aliases.get("SharedLock").unwrap(), "tokio.sync.RwLock");
+        assert_eq!(
+            parsed.aliases.get("SharedLock").unwrap(),
+            "tokio.sync.RwLock"
+        );
 
         // Test get_raw_symbols
         let response = adapter.get_raw_symbols(&path).unwrap();
@@ -720,7 +726,10 @@ fn private_func() {
         let attrs_resp = adapter.get_class_attributes(&path);
         let attrs = attrs_resp.value.unwrap();
         let struct_attrs = attrs.get("MyStruct").unwrap().as_array().unwrap();
-        let field_names: Vec<&str> = struct_attrs.iter().map(|f| f.get("name").unwrap().as_str().unwrap()).collect();
+        let field_names: Vec<&str> = struct_attrs
+            .iter()
+            .map(|f| f.get("name").unwrap().as_str().unwrap())
+            .collect();
         assert!(field_names.contains(&"id"));
         assert!(field_names.contains(&"name"));
 
@@ -742,15 +751,25 @@ fn private_func() {
         // Test class definition bases
         let class_defs = adapter.get_class_definitions(&path).unwrap();
         let classes = class_defs.value.get("classes").unwrap().as_array().unwrap();
-        let mystruct_def = classes.iter().find(|c| c.get("name").unwrap().as_str().unwrap() == "MyStruct").unwrap();
-        let resolved_bases = mystruct_def.get("resolved_bases").unwrap().as_array().unwrap();
+        let mystruct_def = classes
+            .iter()
+            .find(|c| c.get("name").unwrap().as_str().unwrap() == "MyStruct")
+            .unwrap();
+        let resolved_bases = mystruct_def
+            .get("resolved_bases")
+            .unwrap()
+            .as_array()
+            .unwrap();
         assert_eq!(resolved_bases[0].as_str().unwrap(), "MyTrait");
 
         // Test general metadata helpers
         assert!(!adapter.is_barrel_file(&path).value());
         assert_eq!(adapter.get_stem(&path).value, "test_rust_scanner");
         assert!(!adapter.is_entry_point(&path).value());
-        assert!(adapter.get_supported_extensions().values.contains(&".rs".to_string()));
+        assert!(adapter
+            .get_supported_extensions()
+            .values
+            .contains(&".rs".to_string()));
 
         // Clean up
         let _ = fs::remove_file(test_path_str);

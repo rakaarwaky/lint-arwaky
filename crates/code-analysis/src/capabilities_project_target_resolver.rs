@@ -3,7 +3,7 @@ use shared::code_analysis::contract_target_resolver_protocol::ITargetResolverPro
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::output_report::taxonomy_score_vo::compute_score;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::{Path, PathBuf};
 
 pub struct ProjectTargetResolver {}

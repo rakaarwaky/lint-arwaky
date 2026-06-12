@@ -5,8 +5,8 @@ use config_system::taxonomy_config_error::ConfigError;
 use config_system::taxonomy_config_vo::default_aes_config;
 use config_system::taxonomy_config_vo::parse_config_yaml;
 use config_system::taxonomy_config_vo::ArchitectureConfig;
-use source_parsing::taxonomy_path_vo::DirectoryPath;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::env;
 use std::path::Path;
 

@@ -12,6 +12,9 @@ use shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
 use shared::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
 use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::taxonomy_parser_error::SourceParserError;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::BooleanVO;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -20,9 +23,6 @@ use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_suggestion_vo::MetadataVO;
-use shared::source_parsing::contract_parser_port::ISourceParserPort;
-use shared::source_parsing::taxonomy_parser_error::SourceParserError;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 static IMPORT_REGEX: LazyLock<Option<Regex>> =
     LazyLock::new(|| Regex::new(r"^import\s+(\w+(?:\.\w+)*)(?:\s+as\s+(\w+))?").ok());
@@ -234,10 +234,7 @@ impl ASTPythonParserAdapter {
                     symbols_part.to_string()
                 };
 
-                for sym in unwrapped
-                    .split(',')
-                    .map(|s| s.trim())
-                {
+                for sym in unwrapped.split(',').map(|s| s.trim()) {
                     let clean = sym.trim();
                     if clean.is_empty() || clean == "(" || clean == ")" {
                         continue;
@@ -346,7 +343,9 @@ impl ASTPythonParserAdapter {
                 if let Some(word_re) = WORD_REGEX.as_ref() {
                     for cap in word_re.find_iter(stripped) {
                         let word = cap.as_str();
-                        if !PY_KEYWORDS.contains(word) && !word.starts_with(|c: char| c.is_numeric()) {
+                        if !PY_KEYWORDS.contains(word)
+                            && !word.starts_with(|c: char| c.is_numeric())
+                        {
                             data.used.insert(word.to_string());
                         }
                     }
@@ -730,8 +729,14 @@ def annotated_func(a: int) -> bool:
         assert_eq!(parsed.imported_aliases.get("np").unwrap(), "numpy");
         assert_eq!(parsed.imported_aliases.get("sin").unwrap(), "math.sin");
         assert_eq!(parsed.imported_aliases.get("cosine").unwrap(), "math.cos");
-        assert_eq!(parsed.imported_aliases.get("date").unwrap(), "datetime.date");
-        assert_eq!(parsed.imported_aliases.get("time_alias").unwrap(), "datetime.time");
+        assert_eq!(
+            parsed.imported_aliases.get("date").unwrap(),
+            "datetime.date"
+        );
+        assert_eq!(
+            parsed.imported_aliases.get("time_alias").unwrap(),
+            "datetime.time"
+        );
 
         // Test get_raw_symbols
         let response = adapter.get_raw_symbols(&path).unwrap();
@@ -773,7 +778,10 @@ def annotated_func(a: int) -> bool:
         assert!(!adapter.is_barrel_file(&path).value());
         assert_eq!(adapter.get_stem(&path).value, "test_python_scanner");
         assert!(!adapter.is_entry_point(&path).value());
-        assert!(adapter.get_supported_extensions().values.contains(&".py".to_string()));
+        assert!(adapter
+            .get_supported_extensions()
+            .values
+            .contains(&".py".to_string()));
 
         // Clean up
         let _ = fs::remove_file(test_path_str);

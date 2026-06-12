@@ -3,7 +3,7 @@
 use code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use output_report::contract_report_aggregate::ReportCommandsAggregate;
 use output_report::taxonomy_score_vo::FileFormat;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 use async_trait::async_trait;
 

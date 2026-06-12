@@ -84,6 +84,8 @@ pub use agent_codebase_scan_orchestrator::{
 // Local container
 pub mod analysis_container;
 pub use analysis_container::AnalysisContainer;
+pub mod container;
+pub use container::{CheckerContainer, RoleOrchestrator};
 
 use once_cell::sync::Lazy;
 

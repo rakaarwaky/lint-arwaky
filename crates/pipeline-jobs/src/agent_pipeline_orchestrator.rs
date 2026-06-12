@@ -5,7 +5,7 @@ use pipeline_jobs::taxonomy_action_vo::ActionArgs;
 use pipeline_jobs::taxonomy_action_vo::ActionName;
 use pipeline_jobs::taxonomy_job_vo::ResponseData;
 use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::collections::HashMap;
 
 pub struct PipelineActionOrchestrator {}

@@ -7,7 +7,7 @@ use crate::LintResult;
 use crate::LintResultList;
 use crate::ArchitectureConfig;
 use crate::LintCheckingOrchestrator;
-use source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
     for name in &["src-rust", "src-python", "src-javascript", "src"] {

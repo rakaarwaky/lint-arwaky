@@ -9,8 +9,8 @@ use output_report::taxonomy_severity_vo::Severity;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_violation_message_rs_error::AesViolation;
 use shared::{FileContentVO, Identity, LayerNameVO, SymbolName};
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::taxonomy_paths_vo::FilePathList;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
 use std::sync::Arc;
 

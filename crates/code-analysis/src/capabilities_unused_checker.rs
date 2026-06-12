@@ -2,7 +2,7 @@
 
 use crate::IUnusedProtocol;
 use shared::taxonomy_name_vo::SymbolName;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};

@@ -10,8 +10,8 @@ use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::Score;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::taxonomy_paths_vo::FilePathList;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 

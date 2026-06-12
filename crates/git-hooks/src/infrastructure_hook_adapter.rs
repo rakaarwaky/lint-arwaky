@@ -2,7 +2,7 @@
 
 use git_hooks::contract_manager_port::IHookManagerPort;
 use pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
 
 #[cfg(unix)]

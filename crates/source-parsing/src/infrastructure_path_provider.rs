@@ -196,7 +196,6 @@ impl PathNormalizationProvider {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -223,7 +222,10 @@ mod tests {
         let phantom_path = FilePath::new("/phantom/root/my_file.rs".to_string()).unwrap();
         let resolved = provider.normalize_path(phantom_path);
         let expected = format!("{}/my_file.rs", temp_dir_str.replace("\\\\", "/"));
-        assert_eq!(resolved.value.replace("//", "/"), expected.replace("//", "/"));
+        assert_eq!(
+            resolved.value.replace("//", "/"),
+            expected.replace("//", "/")
+        );
 
         // Clean up env variables
         env::remove_var("PHANTOM_ROOT");

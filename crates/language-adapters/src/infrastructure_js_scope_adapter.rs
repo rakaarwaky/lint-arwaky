@@ -6,7 +6,7 @@ use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use regex::Regex;
 
 pub struct JSScopeTracer {}

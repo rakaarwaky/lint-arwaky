@@ -18,8 +18,8 @@ use crate::LintResultList;
 use crate::IRoleAggregate;
 use crate::RoleOrchestrator;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::taxonomy_paths_vo::FilePathList;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 
 static GLOBAL_CONTAINER: OnceLock<Arc<CheckerContainer>> = OnceLock::new();
 
@@ -313,7 +313,8 @@ impl LintCheckingOrchestrator {
         rl.values.append(&mut orphan_results);
 
         // Wire role orchestrator for agent and surface role checks
-        let role_orch = RoleOrchestrator::new(Arc::new(RoleAggregateImpl::new()));
+        let role_agg: Arc<dyn IRoleAggregate> = Arc::new(()); // Placeholder
+        let role_orch = RoleOrchestrator::new(role_agg);
         let max_lines = config
             .rules
             .iter()

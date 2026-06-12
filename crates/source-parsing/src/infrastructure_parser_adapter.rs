@@ -5,14 +5,14 @@ use shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
 use shared::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
 use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::taxonomy_parser_error::SourceParserError;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_vo::BooleanVO;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_suggestion_vo::MetadataVO;
-use shared::source_parsing::contract_parser_port::ISourceParserPort;
-use shared::source_parsing::taxonomy_parser_error::SourceParserError;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 /// Composite source parser that delegates to language-specific adapters via DI.
 ///
@@ -146,9 +146,9 @@ impl ISourceParserPort for SourceParserOrchestrator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure_rust_scanner::ASTRustParserAdapter;
-    use crate::infrastructure_py_scanner::ASTPythonParserAdapter;
     use crate::infrastructure_js_scanner::ASTJSParserAdapter;
+    use crate::infrastructure_py_scanner::ASTPythonParserAdapter;
+    use crate::infrastructure_rust_scanner::ASTRustParserAdapter;
 
     #[test]
     fn test_orchestrator_routing() {
@@ -160,17 +160,23 @@ mod tests {
 
         // Test rust routing
         let rust_path = FilePath::new("test.rs").unwrap();
-        let ext_rust = orchestrator.select_parser(&rust_path).get_supported_extensions();
+        let ext_rust = orchestrator
+            .select_parser(&rust_path)
+            .get_supported_extensions();
         assert!(ext_rust.values.contains(&".rs".to_string()));
 
         // Test js/ts routing
         let ts_path = FilePath::new("test.ts").unwrap();
-        let ext_js = orchestrator.select_parser(&ts_path).get_supported_extensions();
+        let ext_js = orchestrator
+            .select_parser(&ts_path)
+            .get_supported_extensions();
         assert!(ext_js.values.contains(&".ts".to_string()));
 
         // Test python routing
         let py_path = FilePath::new("test.py").unwrap();
-        let ext_py = orchestrator.select_parser(&py_path).get_supported_extensions();
+        let ext_py = orchestrator
+            .select_parser(&py_path)
+            .get_supported_extensions();
         assert!(ext_py.values.contains(&".py".to_string()));
     }
 }

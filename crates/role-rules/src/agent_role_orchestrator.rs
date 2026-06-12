@@ -3,8 +3,8 @@
 use output_report::taxonomy_result_vo::LintResult;
 use role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
-use source_parsing::taxonomy_path_vo::FilePath;
-use source_parsing::FilePathList;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::FilePathList;
 use async_trait::async_trait;
 use std::path::Path;
 use std::sync::Arc;

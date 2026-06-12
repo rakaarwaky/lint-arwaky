@@ -31,7 +31,7 @@ pub fn aes0305_any_type(line: &str) -> String {
 
 use shared::taxonomy_source_vo::SourceContentVO;
 use shared::taxonomy_violation_message_rs_error::AesViolation;
-use source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AgentRoleChecker {}
 impl Default for AgentRoleChecker {
