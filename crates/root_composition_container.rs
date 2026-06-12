@@ -1,142 +1,127 @@
-// PURPOSE: CompositionRoot — composition root container (root_container layer)
+// PURPOSE: CompositionRoot — composition root container (root layer, wiring only)
+//
+// Delegates to feature containers for infrastructure instantiation.
+// Only wires cross-cutting concerns: linter adapters (need executor + path_norm from containers).
 use std::collections::HashMap;
 use std::sync::Arc;
 
-// Contract/Port types from shared crate
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::file_system::contract_system_port::IFileSystemPort;
-use shared::metrics_service::contract_metrics_port::IMetricsProviderPort;
 use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
-use shared::source_parsing::contract_parser_port::ISourceParserPort;
-use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 
-// Infrastructure implementations from feature crates
+use auto_fix::root_auto_fix_container::AutoFixContainer;
+use code_analysis::root_code_analysis_container::AnalysisContainer;
+use import_rules::root_import_rules_container::ImportContainer;
+use pipeline_jobs::root_pipeline_jobs_container::PipelineContainer;
+use source_parsing::root_source_parsing_container::SourceParsingContainer;
 
 pub struct CompositionRoot {
-    linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
     arch_linter: Arc<dyn IArchLintProtocol>,
-    // Infrastructure fields (not in trait but needed for wiring)
-    #[allow(dead_code)]
-    file_system: Arc<dyn IFileSystemPort>,
-    #[allow(dead_code)]
-    executor: Arc<dyn ICommandExecutorPort>,
-    #[allow(dead_code)]
-    path_norm: Arc<dyn IPathNormalizationPort>,
-    #[allow(dead_code)]
-    source_parser: Arc<dyn ISourceParserPort>,
-    #[allow(dead_code)]
-    metrics: Arc<dyn IMetricsProviderPort>,
+    import_container: ImportContainer,
+    auto_fix_container: AutoFixContainer,
+    pipeline_container: PipelineContainer,
+    linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
 }
 
 impl CompositionRoot {
     pub fn new() -> Self {
-        let file_system: Arc<dyn IFileSystemPort> =
-            Arc::new(file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
-        let executor: Arc<dyn ICommandExecutorPort> = Arc::new(
-            cli_commands::infrastructure_transport_client::StdioClient::new(
+        let source_parsing_container = SourceParsingContainer::new();
+        let path_norm = source_parsing_container.path_normalization();
+
+        let arch_linter = AnalysisContainer::new().architecture_linter();
+
+        let auto_fix_container = AutoFixContainer::new(arch_linter.clone());
+        let import_container = ImportContainer::new();
+        let pipeline_container = PipelineContainer::new();
+
+        let executor =
+            Arc::new(cli_commands::infrastructure_transport_client::StdioClient::new(
                 std::time::Duration::from_secs(60),
-            ),
-        );
-        let path_norm: Arc<dyn IPathNormalizationPort> =
-            Arc::new(source_parsing::infrastructure_path_provider::PathNormalizationProvider {});
-        let source_parser: Arc<dyn ISourceParserPort> = Arc::new(
-            source_parsing::infrastructure_parser_adapter::SourceParserOrchestrator::new(
-                Box::new(source_parsing::infrastructure_py_scanner::ASTPythonParserAdapter::new()),
-                Box::new(source_parsing::infrastructure_rust_scanner::ASTRustParserAdapter::new()),
-                Box::new(source_parsing::infrastructure_js_scanner::ASTJSParserAdapter::new()),
-            ),
-        );
-        let arch_linter: Arc<dyn IArchLintProtocol> = Arc::new(
-            code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new(),
-        );
+            ));
 
         let mut linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
-        // Wire adapters...
-        let ruff = Arc::new(
-            language_adapters::infrastructure_py_ruff_adapter::RuffAdapter::new(
-                executor.clone(),
-                path_norm.clone(),
-                None,
+        linter_adapters.insert(
+            "ruff".to_string(),
+            Arc::new(
+                language_adapters::infrastructure_py_ruff_adapter::RuffAdapter::new(
+                    executor.clone(),
+                    path_norm.clone(),
+                    None,
+                ),
             ),
         );
-        linter_adapters.insert("ruff".to_string(), ruff);
-        let bandit = Arc::new(
-            language_adapters::infrastructure_py_bandit_adapter::BanditAdapter::new(
-                executor.clone(),
-                path_norm.clone(),
-                None,
+        linter_adapters.insert(
+            "bandit".to_string(),
+            Arc::new(
+                language_adapters::infrastructure_py_bandit_adapter::BanditAdapter::new(
+                    executor.clone(),
+                    path_norm.clone(),
+                    None,
+                ),
             ),
         );
-        linter_adapters.insert("bandit".to_string(), bandit);
-        let mypy = Arc::new(
-            language_adapters::infrastructure_py_mypy_adapter::MyPyAdapter::new(
-                executor.clone(),
-                path_norm.clone(),
-                None,
+        linter_adapters.insert(
+            "mypy".to_string(),
+            Arc::new(
+                language_adapters::infrastructure_py_mypy_adapter::MyPyAdapter::new(
+                    executor.clone(),
+                    path_norm.clone(),
+                    None,
+                ),
             ),
         );
-        linter_adapters.insert("mypy".to_string(), mypy);
-        let eslint = Arc::new(
-            language_adapters::infrastructure_js_linter_adapter::ESLintAdapter::new(
-                executor.clone(),
-                path_norm.clone(),
+        linter_adapters.insert(
+            "eslint".to_string(),
+            Arc::new(
+                language_adapters::infrastructure_js_linter_adapter::ESLintAdapter::new(
+                    executor.clone(),
+                    path_norm.clone(),
+                ),
             ),
         );
-        linter_adapters.insert("eslint".to_string(), eslint);
-        let prettier = Arc::new(
-            language_adapters::infrastructure_js_linter_adapter::PrettierAdapter::new(
-                executor.clone(),
-                path_norm.clone(),
+        linter_adapters.insert(
+            "prettier".to_string(),
+            Arc::new(
+                language_adapters::infrastructure_js_linter_adapter::PrettierAdapter::new(
+                    executor.clone(),
+                    path_norm.clone(),
+                ),
             ),
         );
-        linter_adapters.insert("prettier".to_string(), prettier);
-        let tsc = Arc::new(
-            language_adapters::infrastructure_js_linter_adapter::TSCAdapter::new(
-                executor.clone(),
-                path_norm.clone(),
+        linter_adapters.insert(
+            "tsc".to_string(),
+            Arc::new(
+                language_adapters::infrastructure_js_linter_adapter::TSCAdapter::new(
+                    executor.clone(),
+                    path_norm.clone(),
+                ),
             ),
         );
-        linter_adapters.insert("tsc".to_string(), tsc);
-        let clippy = Arc::new(
-            language_adapters::infrastructure_rs_clippy_adapter::RustLinterAdapter::new(
-                executor.clone(),
-                path_norm.clone(),
-                None,
-            ),
-        );
-        linter_adapters.insert("clippy".to_string(), clippy);
-
-        let metrics: Arc<dyn IMetricsProviderPort> = Arc::new(
-            metrics_service::infrastructure_py_metrics_adapter::MetricsProvider::new(
-                path_norm.clone(),
-                ".lint_history.json",
+        linter_adapters.insert(
+            "clippy".to_string(),
+            Arc::new(
+                language_adapters::infrastructure_rs_clippy_adapter::RustLinterAdapter::new(
+                    executor.clone(),
+                    path_norm.clone(),
+                    None,
+                ),
             ),
         );
 
         Self {
-            file_system,
-            executor,
-            path_norm,
-            source_parser,
             arch_linter,
+            import_container,
+            auto_fix_container,
+            pipeline_container,
             linter_adapters,
-            metrics,
         }
     }
 
-    // Helper for CLI initialization
-    #[allow(dead_code)]
-    pub fn checker_container(&self) -> code_analysis::root_container::CheckerContainer {
-        let analyzer = Arc::new(import_rules::LayerDetectionAnalyzer::new(
-            shared::config_system::taxonomy_config_vo::default_aes_config(),
-            self.file_system.clone(),
-            self.source_parser.clone(),
-        ));
-        code_analysis::root_container::CheckerContainer::new(analyzer)
+    pub fn checker_container(&self) -> code_analysis::root_code_analysis_container::CheckerContainer {
+        let analyzer = self.import_container.analyzer();
+        code_analysis::root_code_analysis_container::CheckerContainer::new(analyzer)
     }
 }
 
@@ -151,12 +136,12 @@ impl shared::common::contract_service_aggregate::ServiceContainerAggregate for C
 
     fn get_fix_orchestrator(
         &self,
-        _dry_run: bool,
+        dry_run: bool,
     ) -> Option<Arc<dyn LintFixOrchestratorAggregate>> {
-        None
+        Some(self.auto_fix_container.orchestrator(dry_run))
     }
 
     fn get_job_registry(&self) -> Option<Arc<dyn IJobRegistryPort>> {
-        None
+        Some(self.pipeline_container.job_registry())
     }
 }
