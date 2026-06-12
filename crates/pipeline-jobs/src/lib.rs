@@ -7,4 +7,4 @@ pub mod agent_pipeline_extended_orchestrator;
 pub use agent_pipeline_extended_orchestrator::PipelineExtendedOrchestrator;
 pub mod infrastructure_registry_adapter;
 pub use infrastructure_registry_adapter::MemoryJobRegistryAdapter;
-pub mod root_pipeline_container;
+pub mod root_pipeline_jobs_container;

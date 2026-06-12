@@ -1,4 +1,4 @@
-// PURPOSE: LocalContainer — defines CheckerContainer and RoleOrchestrator for code-analysis feature
+// PURPOSE: Root container for code-analysis — defines CheckerContainer, RoleOrchestrator, and AnalysisContainer
 
 use std::sync::Arc;
 
@@ -45,26 +45,55 @@ pub struct CheckerContainer {
     orphan_aggregate: Arc<dyn IOrphanAggregate>,
 }
 
+pub struct CheckerContainerParts {
+    pub capabilities_role_checker: Arc<dyn ICapabilitiesRoleProtocol>,
+    pub taxonomy_checker: Arc<dyn ITaxonomyProtocol>,
+    pub contract_checker: Arc<dyn IContractProtocol>,
+    pub naming_checker: Arc<dyn INamingProtocol>,
+    pub import_mandatory_checker: Arc<dyn IImportMandatoryProtocol>,
+    pub import_intent_checker: Arc<dyn IImportIntentProtocol>,
+    pub import_forbidden_checker: Arc<dyn IImportForbiddenProtocol>,
+    pub surface_checker: Arc<dyn ISurfaceProtocol>,
+    pub orphan_aggregate: Arc<dyn IOrphanAggregate>,
+}
+
 impl CheckerContainer {
     pub fn new(analyzer: Arc<dyn IAnalyzer>) -> Self {
+        Self::new_with_parts(
+            analyzer,
+            CheckerContainerParts {
+                capabilities_role_checker: Arc::new(PlaceholderCapabilitiesRoleChecker),
+                taxonomy_checker: Arc::new(PlaceholderTaxonomyChecker),
+                contract_checker: Arc::new(PlaceholderContractChecker),
+                naming_checker: Arc::new(PlaceholderNamingChecker),
+                import_mandatory_checker: Arc::new(PlaceholderImportMandatoryChecker),
+                import_intent_checker: Arc::new(PlaceholderImportIntentChecker),
+                import_forbidden_checker: Arc::new(PlaceholderImportForbiddenChecker),
+                surface_checker: Arc::new(PlaceholderSurfaceChecker),
+                orphan_aggregate: Arc::new(PlaceholderOrphanAggregate),
+            },
+        )
+    }
+
+    pub fn new_with_parts(analyzer: Arc<dyn IAnalyzer>, parts: CheckerContainerParts) -> Self {
         Self {
             analyzer,
             bypass_checker: Arc::new(BypassChecker {}),
             inline_unused_checker: Arc::new(InlineUnusedChecker {}),
             dead_inheritance_checker: Arc::new(DeadInheritanceChecker {}),
             mandatory_inheritance_checker: Arc::new(MandatoryInheritanceChecker {}),
-            capabilities_role_checker: Arc::new(PlaceholderCapabilitiesRoleChecker),
+            capabilities_role_checker: parts.capabilities_role_checker,
             line_checker: Arc::new(ArchLineChecker {}),
-            taxonomy_checker: Arc::new(PlaceholderTaxonomyChecker),
-            contract_checker: Arc::new(PlaceholderContractChecker),
+            taxonomy_checker: parts.taxonomy_checker,
+            contract_checker: parts.contract_checker,
             class_checker: Arc::new(ArchClassChecker {}),
-            naming_checker: Arc::new(PlaceholderNamingChecker),
-            import_mandatory_checker: Arc::new(PlaceholderImportMandatoryChecker),
-            import_intent_checker: Arc::new(PlaceholderImportIntentChecker),
-            import_forbidden_checker: Arc::new(PlaceholderImportForbiddenChecker),
+            naming_checker: parts.naming_checker,
+            import_mandatory_checker: parts.import_mandatory_checker,
+            import_intent_checker: parts.import_intent_checker,
+            import_forbidden_checker: parts.import_forbidden_checker,
             cycle_analyzer: Arc::new(DependencyCycleAnalyzer::new(ArchitectureConfig::default())),
-            surface_checker: Arc::new(PlaceholderSurfaceChecker),
-            orphan_aggregate: Arc::new(PlaceholderOrphanAggregate),
+            surface_checker: parts.surface_checker,
+            orphan_aggregate: parts.orphan_aggregate,
         }
     }
 
@@ -494,5 +523,31 @@ impl IAnalyzer for PlaceholderAnalyzer {
         _module_path: &FilePath,
     ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
         None
+    }
+}
+
+// AnalysisContainer — wiring for code-analysis feature
+use crate::CodebaseScanOrchestrator;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+
+pub struct AnalysisContainer {
+    arch_linter: Arc<dyn IArchLintProtocol>,
+}
+
+impl AnalysisContainer {
+    pub fn new() -> Self {
+        Self {
+            arch_linter: Arc::new(CodebaseScanOrchestrator::new()),
+        }
+    }
+
+    pub fn architecture_linter(&self) -> Arc<dyn IArchLintProtocol> {
+        self.arch_linter.clone()
+    }
+}
+
+impl Default for AnalysisContainer {
+    fn default() -> Self {
+        Self::new()
     }
 }

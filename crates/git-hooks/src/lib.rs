@@ -17,4 +17,4 @@ pub mod infrastructure_diff_scanner;
 pub use infrastructure_diff_scanner::{DiffResult, GitDiffScanner};
 pub mod infrastructure_hook_adapter;
 pub use infrastructure_hook_adapter::GitHookAdapter;
-pub mod root_git_container;
+pub mod root_git_hooks_container;

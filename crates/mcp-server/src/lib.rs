@@ -41,4 +41,4 @@ pub use surface_tools_command::{
 };
 pub mod surface_tools_controller;
 pub use surface_tools_controller::{register_tools, McpToolsHandler};
-pub mod root_mcp_container;
+pub mod root_mcp_server_container;

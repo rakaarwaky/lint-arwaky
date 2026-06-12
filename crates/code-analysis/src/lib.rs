@@ -37,7 +37,5 @@ pub mod agent_codebase_scan_orchestrator;
 pub use agent_codebase_scan_orchestrator::{
     detect_source_dir, CodebaseScanOrchestrator, CodebaseScanPipelineOrchestrator,
 };
-pub mod root_analysis_container;
-pub use root_analysis_container::AnalysisContainer;
-pub mod root_container;
-pub use root_container::{CheckerContainer, RoleOrchestrator};
+pub mod root_code_analysis_container;
+pub use root_code_analysis_container::{AnalysisContainer, CheckerContainer, RoleOrchestrator};

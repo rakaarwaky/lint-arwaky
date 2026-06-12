@@ -11,4 +11,4 @@ pub mod infrastructure_import_parser_adapter;
 pub use infrastructure_import_parser_adapter::ImportParserAdapter;
 pub mod agent_import_orchestrator;
 pub use agent_import_orchestrator::ImportOrchestrator;
-pub mod root_import_container;
+pub mod root_import_rules_container;

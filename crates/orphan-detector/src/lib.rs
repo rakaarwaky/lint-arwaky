@@ -34,4 +34,4 @@ pub fn mk_orphan_result(file: &str, msg: &str, sev: Severity) -> LintResult {
         related_locations: LocationList::new(),
     }
 }
-pub mod root_orphan_container;
+pub mod root_orphan_detector_container;

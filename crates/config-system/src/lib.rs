@@ -11,4 +11,4 @@ pub mod infrastructure_parser_provider;
 pub use infrastructure_parser_provider::ConfigParserProvider;
 pub mod infrastructure_yaml_reader;
 pub use infrastructure_yaml_reader::ConfigYamlReader;
-pub mod root_config_container;
+pub mod root_config_system_container;

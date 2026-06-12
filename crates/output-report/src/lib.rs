@@ -15,4 +15,4 @@ pub mod agent_commands_orchestrator;
 pub use agent_commands_orchestrator::ReportCommandsOrchestrator;
 pub mod capabilities_reporting_formatter;
 pub use capabilities_reporting_formatter::ReportFormatterProcessor;
-pub mod root_output_container;
+pub mod root_output_report_container;

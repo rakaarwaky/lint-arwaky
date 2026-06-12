@@ -9,4 +9,4 @@ pub mod agent_commands_orchestrator;
 pub use agent_commands_orchestrator::PluginCommandsOrchestrator;
 pub mod infrastructure_system_provider;
 pub use infrastructure_system_provider::PluginSystemProvider;
-pub mod root_plugin_container;
+pub mod root_plugin_system_container;

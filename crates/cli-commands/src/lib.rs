@@ -5,7 +5,7 @@ pub use shared::cli_commands::taxonomy_metadata_vo::CommandMetadataVO;
 
 pub mod infrastructure_transport_client;
 pub use infrastructure_transport_client::StdioClient;
-pub mod root_transport_container;
+pub mod root_cli_commands_container;
 pub mod surface_check_command;
 pub use surface_check_command::{register_check_commands, CheckCommandsSurface};
 pub mod surface_core_command;

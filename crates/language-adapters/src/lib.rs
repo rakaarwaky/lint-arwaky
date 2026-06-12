@@ -45,4 +45,4 @@ pub mod infrastructure_rs_fmt_adapter;
 pub use infrastructure_rs_fmt_adapter::RustFmtAdapter;
 pub mod infrastructure_rs_clippy_adapter;
 pub use infrastructure_rs_clippy_adapter::RustLinterAdapter;
-pub mod root_language_container;
+pub mod root_language_adapters_container;

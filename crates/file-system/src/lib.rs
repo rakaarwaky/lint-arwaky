@@ -4,4 +4,4 @@
 pub mod infrastructure_filesystem_adapter;
 pub use infrastructure_filesystem_adapter::OSFileSystemAdapter;
 
-pub mod root_file_container;
+pub mod root_file_system_container;

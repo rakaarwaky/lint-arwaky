@@ -5,4 +5,4 @@ pub mod capabilities_setup_processor;
 pub use capabilities_setup_processor::SetupManagementProcessor;
 pub mod agent_maintenance_orchestrator;
 pub use agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;
-pub mod root_setup_container;
+pub mod root_project_setup_container;
