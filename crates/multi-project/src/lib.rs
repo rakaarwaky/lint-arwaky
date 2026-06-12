@@ -3,4 +3,4 @@
 // Local modules
 pub mod agent_project_orchestrator;
 pub use agent_project_orchestrator::MultiProjectOrchestrator;
-pub mod multi_project_container;
+pub mod root_multi_project_container;

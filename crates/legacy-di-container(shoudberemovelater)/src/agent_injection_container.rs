@@ -319,7 +319,7 @@ impl DependencyInjectionContainer {
         linter_adapters.insert("dependency".to_string(), dependency);
 
         let metrics_provider: Arc<dyn IMetricsProviderPort> = Arc::new(
-            crate::language_adapters::infrastructure_py_metrics_adapter::MetricsProvider::new(
+            crate::metrics_service::infrastructure_py_metrics_adapter::MetricsProvider::new(
                 path_norm.clone(),
                 ".lint_history.json",
             ),

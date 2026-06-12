@@ -20,4 +20,4 @@ pub mod taxonomy_score_vo;
 pub use taxonomy_score_vo::{compute_score, FileFormat};
 pub mod taxonomy_severity_vo;
 pub use taxonomy_severity_vo::Severity;
-pub mod output_container;
+pub mod root_output_container;

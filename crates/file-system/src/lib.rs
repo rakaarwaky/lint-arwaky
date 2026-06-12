@@ -7,4 +7,4 @@ pub use shared::file_system::taxonomy_filesystem_error::{AccessDeniedError, File
 pub mod infrastructure_filesystem_adapter;
 pub use infrastructure_filesystem_adapter::OSFileSystemAdapter;
 
-pub mod file_container;
+pub mod root_file_container;

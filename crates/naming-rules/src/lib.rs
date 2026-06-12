@@ -7,4 +7,4 @@ pub mod contract_naming_runner_aggregate;
 pub use contract_naming_runner_aggregate::INamingRunnerAggregate;
 pub mod agent_naming_orchestrator;
 pub use agent_naming_orchestrator::NamingOrchestrator;
-pub mod naming_container;
+pub mod root_naming_container;

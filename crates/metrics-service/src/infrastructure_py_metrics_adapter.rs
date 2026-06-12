@@ -1,7 +1,7 @@
 // PURPOSE: PyMetricsAdapter — ILinterAdapterPort implementation for code metrics (Radon) integration
 
-use metrics_service::contract_metrics_port::IMetricsProviderPort;
-use metrics_service::taxonomy_metrics_error::MetricsError;
+use shared::metrics_service::contract_metrics_port::IMetricsProviderPort;
+use shared::metrics_service::taxonomy_metrics_error::MetricsError;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::Count;
 use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;

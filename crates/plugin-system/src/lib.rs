@@ -11,4 +11,4 @@ pub mod taxonomy_group_vo;
 pub use taxonomy_group_vo::PluginGroup;
 pub mod taxonomy_manager_error;
 pub use taxonomy_manager_error::{DiscoveryError, PluginError, RegistrationError};
-pub mod plugin_container;
+pub mod root_plugin_container;

@@ -23,4 +23,4 @@ pub mod taxonomy_ref_vo;
 pub use taxonomy_ref_vo::GitRef;
 pub mod taxonomy_removed_event;
 pub use taxonomy_removed_event::HookRemoved;
-pub mod git_container;
+pub mod root_git_container;

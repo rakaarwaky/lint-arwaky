@@ -2,9 +2,9 @@
 use std::sync::Arc;
 use std::collections::HashMap;
 
-use crate::import_rules::import_container::ImportContainer;
-use crate::naming_rules::naming_container::NamingContainer;
-use crate::role_rules::role_container::RoleContainer;
+use crate::import_rules::root_import_container::ImportContainer;
+use crate::naming_rules::root_naming_container::NamingContainer;
+use crate::role_rules::root_role_container::RoleContainer;
 use crate::di_containers::contract_service_aggregate::ServiceContainerAggregate;
 
 use crate::code_analysis::contract_adapter_port::ILinterAdapterPort;
@@ -154,7 +154,7 @@ impl CompositionRoot {
         linter_adapters.insert("clippy".to_string(), clippy);
 
         let metrics: Arc<dyn IMetricsProviderPort> = Arc::new(
-            crate::language_adapters::infrastructure_py_metrics_adapter::MetricsProvider::new(
+            crate::metrics_service::infrastructure_py_metrics_adapter::MetricsProvider::new(
                 path_norm.clone(),
                 ".lint_history.json",
             ),

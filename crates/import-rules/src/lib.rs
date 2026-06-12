@@ -22,4 +22,4 @@ pub mod contract_import_runner_aggregate;
 pub use contract_import_runner_aggregate::IImportRunnerAggregate;
 pub mod agent_import_orchestrator;
 pub use agent_import_orchestrator::ImportOrchestrator;
-pub mod import_container;
+pub mod root_import_container;

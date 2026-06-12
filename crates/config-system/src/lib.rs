@@ -41,4 +41,4 @@ pub use taxonomy_setting_vo::{
 };
 pub mod taxonomy_source_vo;
 pub use taxonomy_source_vo::{ConfigResult, ConfigSource};
-pub mod config_container;
+pub mod root_config_container;

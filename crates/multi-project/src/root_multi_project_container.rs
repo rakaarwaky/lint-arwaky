@@ -10,7 +10,7 @@ impl MultiProjectContainer {
     pub fn new() -> Self {
         Self {
             aggregate: Arc::new(
-                crate::multi_project::agent_project_orchestrator::MultiProjectOrchestrator::new(),
+                crate::agent_project_orchestrator::MultiProjectOrchestrator::new(),
             ),
         }
     }

@@ -44,4 +44,4 @@ pub use taxonomy_server_constant::{
     AUTO_LINT_VERSION, MAX_BATCH_SIZE, MAX_PATH_DEPTH, MAX_PATH_LENGTH, MAX_STRING_LENGTH,
     MCP_SERVER_VERSION,
 };
-pub mod mcp_container;
+pub mod root_mcp_container;

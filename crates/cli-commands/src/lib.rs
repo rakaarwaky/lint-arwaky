@@ -14,7 +14,7 @@ pub use contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 // Transport (merged from cli-transport)
 pub mod infrastructure_transport_client;
 pub use infrastructure_transport_client::StdioClient;
-pub mod transport_container;
+pub mod root_transport_container;
 
 pub mod surface_check_command;
 pub use surface_check_command::{register_check_commands, CheckCommandsSurface};

@@ -27,4 +27,4 @@ pub use taxonomy_job_vo::{
 };
 pub mod taxonomy_registry_error;
 pub use taxonomy_registry_error::JobError;
-pub mod pipeline_container;
+pub mod root_pipeline_container;

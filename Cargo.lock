@@ -2303,7 +2303,6 @@ version = "1.10.11"
 dependencies = [
  "async-trait",
  "code_analysis-lint-arwaky",
- "metrics_service-lint-arwaky",
  "once_cell",
  "output_report-lint-arwaky",
  "pipeline_jobs-lint-arwaky",
@@ -2517,6 +2516,7 @@ dependencies = [
 name = "metrics_service-lint-arwaky"
 version = "1.10.11"
 dependencies = [
+ "async-trait",
  "serde",
  "serde_json",
  "shared-lint-arwaky",

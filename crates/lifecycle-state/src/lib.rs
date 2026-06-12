@@ -5,4 +5,4 @@ pub mod contract_lifecycle_aggregate;
 pub use contract_lifecycle_aggregate::AgentLifecycleAggregate;
 pub mod taxonomy_agent_status_vo;
 pub use taxonomy_agent_status_vo::{AgentStatus, AgentStatusVO};
-pub mod lifecycle_container;
+pub mod root_lifecycle_container;
