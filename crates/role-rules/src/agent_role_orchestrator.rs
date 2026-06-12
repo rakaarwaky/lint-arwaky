@@ -109,7 +109,9 @@ impl RoleOrchestrator {
                     checker.check_event(&source_vo, violations);
                     checker.check_constant(&source_vo, violations);
                 }
-                _ => {}
+                other => {
+                    eprintln!("Warning: unhandled case {:?} in {}", other, module_path!());
+                }
             }
         }
     }

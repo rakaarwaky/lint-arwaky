@@ -92,7 +92,9 @@ impl GitDiffScanner {
                         });
                     }
                 }
-                _ => {}
+                other => {
+                    eprintln!("Warning: unhandled case {:?} in {}", other, module_path!());
+                }
             }
         }
         DiffResult::new(

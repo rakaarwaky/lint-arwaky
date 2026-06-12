@@ -57,7 +57,9 @@ impl ILanguageDetectorPort for LanguageDetectorProvider {
                             "js" | "ts" | "jsx" | "tsx" => {
                                 return LanguageSource::new("javascript", 70, "extension")
                             }
-                            _ => {}
+                            other => {
+                                eprintln!("Warning: unhandled case {:?} in {}", other, module_path!());
+                            }
                         }
                     }
                 }

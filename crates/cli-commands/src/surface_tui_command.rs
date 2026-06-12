@@ -335,7 +335,9 @@ pub fn run_tui_loop() -> ExitCode {
                 pause();
             }
 
-            _ => {}
+            other => {
+                eprintln!("Warning: unhandled case {:?} in {}", other, module_path!());
+            }
         }
     }
 
