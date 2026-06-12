@@ -134,7 +134,7 @@ impl ILinterAdapterPort for PrettierAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     60.0,
                 )),
             )
@@ -190,7 +190,7 @@ impl ILinterAdapterPort for PrettierAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd,
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     60.0,
                 )),
             )
@@ -265,7 +265,7 @@ impl ILinterAdapterPort for TSCAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     60.0,
                 )),
             )
@@ -390,7 +390,7 @@ impl ILinterAdapterPort for ESLintAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     60.0,
                 )),
             )
@@ -483,7 +483,7 @@ impl ILinterAdapterPort for ESLintAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd,
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     60.0,
                 )),
             )

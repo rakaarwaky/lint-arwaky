@@ -83,7 +83,7 @@ impl ILinterAdapterPort for RuffAdapter {
             .execute_command(
                 command,
                 working_dir,
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     60.0,
                 )),
             )
@@ -153,7 +153,7 @@ impl ILinterAdapterPort for RuffAdapter {
             .execute_command(
                 command,
                 working_dir,
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     60.0,
                 )),
             )

@@ -140,7 +140,7 @@ pub fn check_agent_orphan(
     fp: &str,
     _basename: &str,
     files: &[String],
-    violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+    violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
 ) {
     let result = is_agent_orphan_raw(&FilePath::new(fp.to_string()).unwrap_or_default(), files);
     if result.is_orphan {

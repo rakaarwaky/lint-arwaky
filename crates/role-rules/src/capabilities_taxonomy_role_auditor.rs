@@ -294,34 +294,34 @@ impl TaxonomyRoleChecker {
 }
 
 impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
-    fn check_vo(&self) -> Vec<output_report::taxonomy_result_vo::LintResult> {
+    fn check_vo(&self) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
         self.check_vo()
     }
     fn check_entity(
         &self,
         source: &SourceContentVO,
-        violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_entity(source, violations);
     }
     fn check_error(
         &self,
         source: &SourceContentVO,
-        violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_error(source, violations);
     }
     fn check_event(
         &self,
         source: &SourceContentVO,
-        violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_event(source, violations);
     }
     fn check_constant(
         &self,
         source: &SourceContentVO,
-        violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_constant(source, violations);
     }

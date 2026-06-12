@@ -1,24 +1,24 @@
-// PURPOSE: Module declarations for config-system (orchestrator, validators, providers)
-pub use shared::config_system::taxonomy_adapter_vo::{AdapterClassMap, AdapterMetadataList, AdapterNameList};
-pub use shared::config_system::taxonomy_validation_vo::ValidationResult;
-pub use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
-pub use shared::config_system::contract_detector_port::ILanguageDetectorPort;
-pub use shared::config_system::contract_discovery_port::IConfigDiscoveryPort;
-pub use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
-pub use shared::config_system::contract_parser_port::IConfigParserPort;
-pub use shared::config_system::contract_reader_port::IConfigReaderPort;
-pub use shared::config_system::taxonomy_app_vo::AppConfig;
-pub use shared::config_system::taxonomy_config_vo::{default_aes_config, default_config_for_language, ArchitectureConfig};
-pub use shared::config_system::taxonomy_identifier_vo::ConfigKey;
-pub use shared::config_system::taxonomy_config_error::ConfigError;
-pub use shared::config_system::taxonomy_setting_vo::{
-    ActualValue, AdapterEntry, AdapterStatus, ExpectedValue, ProjectConfig, Thresholds,
-};
-pub use shared::config_system::taxonomy_source_vo::{ConfigResult, ConfigSource};
+// PURPOSE: Module declarations and re-exports for config-system (orchestrator, validators, providers, VOs, ports)
+pub mod taxonomy_adapter_vo;
+pub use taxonomy_adapter_vo::{AdapterClassMap, AdapterMetadataList, AdapterNameList};
 pub mod agent_config_loading_orchestrator;
 pub use agent_config_loading_orchestrator::ConfigLoadingOrchestrator;
 pub mod capabilities_rules_validator;
 pub use capabilities_rules_validator::ConfigRulesValidator;
+pub mod taxonomy_validation_vo;
+pub use taxonomy_validation_vo::ValidationResult;
+pub mod contract_validator_protocol;
+pub use contract_validator_protocol::IConfigValidatorProtocol;
+pub mod contract_detector_port;
+pub use contract_detector_port::ILanguageDetectorPort;
+pub mod contract_discovery_port;
+pub use contract_discovery_port::IConfigDiscoveryPort;
+pub mod contract_orchestration_aggregate;
+pub use contract_orchestration_aggregate::IConfigOrchestrationAggregate;
+pub mod contract_parser_port;
+pub use contract_parser_port::IConfigParserPort;
+pub mod contract_reader_port;
+pub use contract_reader_port::IConfigReaderPort;
 pub mod infrastructure_detector_provider;
 pub use infrastructure_detector_provider::LanguageDetectorProvider;
 pub mod infrastructure_discovery_provider;
@@ -27,4 +27,18 @@ pub mod infrastructure_parser_provider;
 pub use infrastructure_parser_provider::ConfigParserProvider;
 pub mod infrastructure_yaml_reader;
 pub use infrastructure_yaml_reader::ConfigYamlReader;
+pub mod taxonomy_app_vo;
+pub use taxonomy_app_vo::AppConfig;
+pub mod taxonomy_config_vo;
+pub use taxonomy_config_vo::{default_aes_config, default_config_for_language, ArchitectureConfig};
+pub mod taxonomy_identifier_vo;
+pub use taxonomy_identifier_vo::ConfigKey;
+pub mod taxonomy_config_error;
+pub use taxonomy_config_error::ConfigError;
+pub mod taxonomy_setting_vo;
+pub use taxonomy_setting_vo::{
+    ActualValue, AdapterEntry, AdapterStatus, ExpectedValue, ProjectConfig, Thresholds,
+};
+pub mod taxonomy_source_vo;
+pub use taxonomy_source_vo::{ConfigResult, ConfigSource};
 pub mod root_config_container;

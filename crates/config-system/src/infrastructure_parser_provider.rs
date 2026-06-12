@@ -1,10 +1,10 @@
 // PURPOSE: ConfigParserProvider — IConfigParserPort implementation for YAML and TOML config parsing
-use shared::config_system::contract_parser_port::IConfigParserPort;
-use shared::config_system::taxonomy_config_error::ConfigError;
-use shared::config_system::taxonomy_identifier_vo::ConfigKey;
-use shared::config_system::taxonomy_setting_vo::ProjectConfig;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
+use config_system::contract_parser_port::IConfigParserPort;
+use config_system::taxonomy_config_error::ConfigError;
+use config_system::taxonomy_identifier_vo::ConfigKey;
+use config_system::taxonomy_setting_vo::ProjectConfig;
 use shared::taxonomy_common_error::ErrorMessage;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
 
 pub struct ConfigParserProvider {}

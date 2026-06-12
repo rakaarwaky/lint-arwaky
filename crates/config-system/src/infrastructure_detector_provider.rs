@@ -1,8 +1,8 @@
 // PURPOSE: LanguageDetectorProvider — ILanguageDetectorPort implementation using file extension heuristic
-use async_trait::async_trait;
-use shared::config_system::contract_detector_port::ILanguageDetectorPort;
-use shared::project_setup::taxonomy_language_vo::LanguageSource;
+use config_system::contract_detector_port::ILanguageDetectorPort;
+use project_setup::taxonomy_language_vo::LanguageSource;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use async_trait::async_trait;
 
 pub struct LanguageDetectorProvider {}
 

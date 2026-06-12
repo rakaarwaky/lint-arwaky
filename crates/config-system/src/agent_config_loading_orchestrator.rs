@@ -1,14 +1,14 @@
 // PURPOSE: ConfigLoadingOrchestrator — orchestrates config discovery, loading, parsing across languages
-use async_trait::async_trait;
-use shared::config_system::contract_detector_port::ILanguageDetectorPort;
-use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
-use shared::config_system::contract_reader_port::IConfigReaderPort;
-use shared::config_system::taxonomy_config_vo::default_config_for_language;
-use shared::config_system::taxonomy_config_vo::parse_config_yaml;
-use shared::config_system::taxonomy_source_vo::ConfigResult;
-use shared::config_system::taxonomy_source_vo::ConfigSource;
-use shared::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use config_system::contract_detector_port::ILanguageDetectorPort;
+use config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
+use config_system::contract_reader_port::IConfigReaderPort;
+use config_system::taxonomy_config_vo::default_config_for_language;
+use config_system::taxonomy_config_vo::parse_config_yaml;
+use config_system::taxonomy_source_vo::ConfigResult;
+use config_system::taxonomy_source_vo::ConfigSource;
+use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use async_trait::async_trait;
 use std::sync::Arc;
 
 pub type ServiceContainerAggregateRef = Box<dyn ServiceContainerAggregate>;

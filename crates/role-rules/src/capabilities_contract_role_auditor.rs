@@ -182,20 +182,20 @@ impl IContractRoleChecker for ContractRoleChecker {
     fn check_port(
         &self,
         source: &SourceContentVO,
-    ) -> Vec<output_report::taxonomy_result_vo::LintResult> {
+    ) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
         self.check_port(source)
     }
     fn check_protocol(
         &self,
         source: &SourceContentVO,
-    ) -> Vec<output_report::taxonomy_result_vo::LintResult> {
+    ) -> Vec<crate::output_report::taxonomy_result_vo::LintResult> {
         self.check_protocol(source)
     }
     fn check_aggregate(
         &self,
         source: &SourceContentVO,
-        def: &shared::taxonomy_definition_vo::LayerDefinition,
-        violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        def: &crate::shared_common::taxonomy_definition_vo::LayerDefinition,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_aggregate(source, def, violations);
     }

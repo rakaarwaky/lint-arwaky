@@ -1,6 +1,7 @@
 // PURPOSE: DiffScanner — scans git diff output for architecture violation analysis
-use shared::file_system::taxonomy_filesystem_error::FileSystemError;
+use file_system::taxonomy_filesystem_error::FileSystemError;
 use shared::pipeline_jobs::taxonomy_action_vo::ActionName;
+use shared::taxonomy_common_error::ErrorMessage;
 /// git_diff_scanner — Git-aware file change detection for linting only modified files.
 use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
@@ -8,7 +9,6 @@ use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::source_parsing::taxonomy_paths_vo::RenamedFile;
 use shared::source_parsing::taxonomy_paths_vo::RenamedFileList;
-use shared::taxonomy_common_error::ErrorMessage;
 
 pub struct DiffResult {
     pub added: FilePathList,

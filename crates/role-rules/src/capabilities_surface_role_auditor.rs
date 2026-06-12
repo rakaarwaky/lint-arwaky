@@ -83,7 +83,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES0306",
                 Severity::HIGH,
-                shared::taxonomy_violation_message_rs_error::AesViolation::SurfaceRoleViolation { reason: None },
+                crate::shared_common::taxonomy_violation_message_rs_error::AesViolation::SurfaceRoleViolation { reason: None },
             ));
         }
     }
@@ -93,7 +93,7 @@ impl SurfaceRoleChecker {
     pub async fn check_surface_roles(
         &self,
         analyzer: &dyn IAnalyzer,
-        files: &source_parsing::taxonomy_paths_vo::FilePathList,
+        files: &crate::source_parsing::taxonomy_paths_vo::FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
@@ -564,25 +564,25 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
     fn check_smart_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_utility_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_passive_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_fn_count_limit(
         &self,
         source: &SourceContentVO,
-        violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_fn_count_limit(source, violations);
     }

@@ -1,11 +1,11 @@
 // PURPOSE: ManagementOrchestrator — orchestrates git hook management (format patch, commit gen, PR review)
-use shared::git_hooks::contract_manager_port::IHookManagerPort;
-use shared::git_hooks::orchestrator_aggregate::HookManagementOrchestratorAggregate;
-use shared::git_hooks::taxonomy_hook_error::GitHookError;
+use git_hooks::contract_manager_port::IHookManagerPort;
+use git_hooks::orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use git_hooks::taxonomy_hook_error::GitHookError;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_layer_vo::Identity;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::OnceLock;
 
 /// Satisfy AES030 orphan detection - agent references contract ports/protocols

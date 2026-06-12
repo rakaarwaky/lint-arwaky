@@ -103,7 +103,7 @@ impl ILinterAdapterPort for RustLinterAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir.clone(),
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     180.0,
                 )),
             )
@@ -218,7 +218,7 @@ impl ILinterAdapterPort for RustLinterAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir,
-                Some(shared::taxonomy_duration_vo::Timeout::new(
+                Some(crate::shared_common::taxonomy_duration_vo::Timeout::new(
                     180.0,
                 )),
             )

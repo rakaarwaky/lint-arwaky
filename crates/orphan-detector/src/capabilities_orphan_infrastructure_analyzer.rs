@@ -42,7 +42,7 @@ pub fn check_infrastructure_orphan(
     fp: &str,
     basename: &str,
     files: &[String],
-    violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+    violations: &mut Vec<crate::output_report::taxonomy_result_vo::LintResult>,
 ) {
     crate::orphan_detector::capabilities_orphan_capabilities_analyzer::check_capabilities_orphan(
         fp, basename, files, violations,
