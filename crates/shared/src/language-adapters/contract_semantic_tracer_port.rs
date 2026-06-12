@@ -2,7 +2,8 @@
 use async_trait::async_trait;
 use crate::language_adapters::taxonomy_semantic_error::SemanticError;
 use crate::language_adapters::taxonomy_naming_list_vo::{CallChainList, SymbolNameList};
-use crate::taxonomy_name_vo::{ScopeRef, SymbolName};
+use crate::taxonomy_lint_vo::ScopeRef;
+use crate::taxonomy_name_vo::SymbolName;
 use crate::taxonomy_common_vo::LineNumber;
 use crate::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 

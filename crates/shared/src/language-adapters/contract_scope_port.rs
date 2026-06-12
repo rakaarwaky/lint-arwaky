@@ -2,7 +2,7 @@
 use async_trait::async_trait;
 use crate::language_adapters::taxonomy_semantic_error::SemanticError;
 use crate::taxonomy_name_vo::SymbolName;
-use crate::taxonomy_name_vo::LineContentVO;
+use crate::taxonomy_layer_vo::LineContentVO;
 
 #[async_trait]
 pub trait IJavascriptScopePort: Send + Sync {
