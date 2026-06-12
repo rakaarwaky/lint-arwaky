@@ -5,7 +5,6 @@ use shared::language_adapters::contract_scope_port::IJavascriptScopePort;
 use shared::language_adapters::taxonomy_semantic_error::SemanticError;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_layer_vo::LineContentVO;
-use shared::taxonomy_lint_vo::ScopeBounds;
 use shared::taxonomy_name_vo::SymbolName;
 
 pub struct JSScopeProvider {}
@@ -56,8 +55,7 @@ impl IJavascriptScopePort for JSScopeProvider {
         &self,
         _lines: &shared::taxonomy_common_vo::LineContentList,
         _scope_line: Option<LineNumber>,
-    ) -> Result<Option<ScopeBounds>, SemanticError> {
-        // Placeholder
+    ) -> Result<Option<(usize, usize)>, SemanticError> {
         Ok(None)
     }
 }

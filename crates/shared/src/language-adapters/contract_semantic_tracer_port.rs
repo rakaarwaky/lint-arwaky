@@ -1,14 +1,17 @@
 // PURPOSE: ISemanticTracerPort — port for semantic scope tracing across languages
 use async_trait::async_trait;
+use crate::language_adapters::taxonomy_naming_list_vo::CallChainList;
+use crate::language_adapters::taxonomy_naming_list_vo::SymbolNameList;
 use crate::language_adapters::taxonomy_semantic_error::SemanticError;
-use crate::language_adapters::taxonomy_naming_list_vo::{CallChainList, SymbolNameList};
+use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
+use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::taxonomy_common_vo::Count;
+use crate::taxonomy_common_vo::DataFlowList;
+use crate::taxonomy_common_vo::LineNumber;
+use crate::taxonomy_common_vo::ResponseDataList;
 use crate::taxonomy_lint_vo::ScopeRef;
 use crate::taxonomy_name_vo::SymbolName;
-use crate::taxonomy_common_vo::LineNumber;
-use crate::pipeline_jobs::taxonomy_job_vo::ResponseData;
-use crate::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
-
-pub type ResponseDataList = Vec<ResponseData>;
 
 #[async_trait]
 pub trait ISemanticTracerPort: Send + Sync {
@@ -29,7 +32,7 @@ pub trait ISemanticTracerPort: Send + Sync {
         file_path: &FilePath,
         var_name: &SymbolName,
         start_line: LineNumber,
-    ) -> Result<crate::taxonomy_common_vo::DataFlowList, SemanticError>;
+    ) -> DataFlowList;
 
     async fn get_variant_dict(&self, name: &SymbolName) -> ResponseData;
 
@@ -38,7 +41,7 @@ pub trait ISemanticTracerPort: Send + Sync {
         root_dir: &DirectoryPath,
         old_name: &SymbolName,
         new_name: &SymbolName,
-    ) -> ResponseData;
+    ) -> Count;
 
     async fn get_symbol_locations(
         &self,

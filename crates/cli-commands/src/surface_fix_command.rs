@@ -5,8 +5,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::surface_output_controller::{get_output_dir, tee_stdout, write_output};
-use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use shared::code_analysis::resolve_target;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+use code_analysis::resolve_target;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 /// Satisfy AES030 orphan detection - surface references contract aggregates

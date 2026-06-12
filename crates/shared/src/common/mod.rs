@@ -1,6 +1,7 @@
 // common — truly shared types used by multiple features
 pub mod taxonomy_adapter_name_vo;
 pub mod taxonomy_common_error;
+pub mod contract_service_aggregate;
 pub mod taxonomy_common_vo;
 pub mod taxonomy_definition_vo;
 pub mod taxonomy_duration_vo;

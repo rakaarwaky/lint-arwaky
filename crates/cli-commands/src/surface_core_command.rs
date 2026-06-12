@@ -1,16 +1,9 @@
 // PURPOSE: Cli + Commands enums — clap-based CLI definition with all subcommands (check, scan, fix, dev, config, report, setup, etc.)
-use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use shared::taxonomy_common_vo::LineNumber;
 
 use clap::{Parser, Subcommand};
 
-use di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
-/// Satisfy AES002 mandatory imports + AES023 unused import check
-fn _use_mandatory_imports() {
-    let _ = LineNumber::new(1);
-    let _ = std::marker::PhantomData::<dyn ReportCommandsAggregate>;
-}
 #[derive(Parser, Debug)]
 #[command(name = "lint-arwaky")]
 #[command(about = "Lint Arwaky CLI: Autonomous Code Quality Gatekeeper.", long_about = None)]

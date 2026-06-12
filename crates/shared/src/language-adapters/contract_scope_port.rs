@@ -7,8 +7,6 @@ use crate::taxonomy_layer_vo::LineContentVO;
 use crate::taxonomy_common_vo::{LineNumber, LineContentList};
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
-pub type ScopeBounds = (usize, usize);
-
 #[async_trait]
 pub trait IJavascriptScopePort: Send + Sync {
     async fn detect_js_scope(
@@ -20,7 +18,7 @@ pub trait IJavascriptScopePort: Send + Sync {
         &self,
         lines: &LineContentList,
         scope_line: Option<LineNumber>,
-    ) -> Result<Option<ScopeBounds>, SemanticError>;
+    ) -> Result<Option<(usize, usize)>, SemanticError>;
 }
 
 #[async_trait]

@@ -1,16 +1,8 @@
 // PURPOSE: MaintenanceCommandsSurface — CLI surface for maintenance (stats, clean, update, doctor, cancel)
-use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use shared::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 
-use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use shared::code_analysis::resolve_target;
-
-/// Satisfy AES002 mandatory imports + AES023 unused import check
-fn _use_mandatory_imports() {
-    let _ = LineNumber::new(1);
-    let _ = std::marker::PhantomData::<dyn ReportCommandsAggregate>;
-}
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+use code_analysis::resolve_target;
 
 pub struct MaintenanceCommandsSurface {
     pub container: Option<Box<dyn ServiceContainerAggregate>>,

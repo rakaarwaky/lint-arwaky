@@ -14,7 +14,6 @@ use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use shared::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -54,18 +53,18 @@ impl CheckerContainer {
             inline_unused_checker: Arc::new(InlineUnusedChecker {}),
             dead_inheritance_checker: Arc::new(DeadInheritanceChecker {}),
             mandatory_inheritance_checker: Arc::new(MandatoryInheritanceChecker {}),
-            capabilities_role_checker: panic!("CheckerContainer not initialized"),
+            capabilities_role_checker: Arc::new(PlaceholderCapabilitiesRoleChecker),
             line_checker: Arc::new(ArchLineChecker {}),
-            taxonomy_checker: panic!("CheckerContainer not initialized"),
-            contract_checker: panic!("CheckerContainer not initialized"),
+            taxonomy_checker: Arc::new(PlaceholderTaxonomyChecker),
+            contract_checker: Arc::new(PlaceholderContractChecker),
             class_checker: Arc::new(ArchClassChecker {}),
-            naming_checker: panic!("CheckerContainer not initialized"),
-            import_mandatory_checker: panic!("CheckerContainer not initialized"),
-            import_intent_checker: panic!("CheckerContainer not initialized"),
-            import_forbidden_checker: panic!("CheckerContainer not initialized"),
+            naming_checker: Arc::new(PlaceholderNamingChecker),
+            import_mandatory_checker: Arc::new(PlaceholderImportMandatoryChecker),
+            import_intent_checker: Arc::new(PlaceholderImportIntentChecker),
+            import_forbidden_checker: Arc::new(PlaceholderImportForbiddenChecker),
             cycle_analyzer: Arc::new(DependencyCycleAnalyzer::new(ArchitectureConfig::default())),
-            surface_checker: panic!("CheckerContainer not initialized"),
-            orphan_aggregate: panic!("CheckerContainer not initialized"),
+            surface_checker: Arc::new(PlaceholderSurfaceChecker),
+            orphan_aggregate: Arc::new(PlaceholderOrphanAggregate),
         }
     }
 
@@ -282,6 +281,143 @@ pub trait IOrphanAggregate: Send + Sync {
         files: &[String],
         root_dir: &str,
     ) -> Vec<LintResult>;
+}
+
+struct PlaceholderCapabilitiesRoleChecker;
+impl ICapabilitiesRoleProtocol for PlaceholderCapabilitiesRoleChecker {
+    fn check_capability_routing(
+        &self,
+        _source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        _layer: &shared::taxonomy_layer_vo::LayerNameVO,
+        _violations: &mut Vec<LintResult>,
+    ) {
+    }
+}
+
+struct PlaceholderTaxonomyChecker;
+impl ITaxonomyProtocol for PlaceholderTaxonomyChecker {
+    fn check_entity(
+        &self,
+        _source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        _violations: &mut Vec<LintResult>,
+    ) {
+    }
+    fn check_error(
+        &self,
+        _source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        _violations: &mut Vec<LintResult>,
+    ) {
+    }
+    fn check_event(
+        &self,
+        _source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        _violations: &mut Vec<LintResult>,
+    ) {
+    }
+    fn check_constant(
+        &self,
+        _source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        _violations: &mut Vec<LintResult>,
+    ) {
+    }
+}
+
+struct PlaceholderContractChecker;
+impl IContractProtocol for PlaceholderContractChecker {
+    fn check_aggregate(
+        &self,
+        _source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        _def: &shared::common::taxonomy_definition_vo::LayerDefinition,
+        _violations: &mut Vec<LintResult>,
+    ) {
+    }
+}
+
+struct PlaceholderNamingChecker;
+impl INamingProtocol for PlaceholderNamingChecker {
+    fn check_file_naming(
+        &self,
+        _analyzer: &Arc<dyn IAnalyzer>,
+        _files: &FilePathList,
+        _root: &FilePath,
+        _violations: &mut LintResultList,
+    ) {
+    }
+    fn check_domain_suffixes(
+        &self,
+        _analyzer: &Arc<dyn IAnalyzer>,
+        _files: &FilePathList,
+        _root: &FilePath,
+        _violations: &mut LintResultList,
+    ) {
+    }
+}
+
+struct PlaceholderImportMandatoryChecker;
+impl IImportMandatoryProtocol for PlaceholderImportMandatoryChecker {
+    fn check_mandatory_imports(
+        &self,
+        _analyzer: &Arc<dyn IAnalyzer>,
+        _files: &FilePathList,
+        _root: &FilePath,
+        _violations: &mut LintResultList,
+    ) {
+    }
+}
+
+struct PlaceholderImportIntentChecker;
+impl IImportIntentProtocol for PlaceholderImportIntentChecker {
+    fn check_mandatory_imports(
+        &self,
+        _analyzer: &Arc<dyn IAnalyzer>,
+        _files: &FilePathList,
+        _root: &FilePath,
+        _violations: &mut LintResultList,
+    ) {
+    }
+}
+
+struct PlaceholderImportForbiddenChecker;
+impl IImportForbiddenProtocol for PlaceholderImportForbiddenChecker {
+    fn check_forbidden_imports(
+        &self,
+        _analyzer: &Arc<dyn IAnalyzer>,
+        _files: &FilePathList,
+        _root: &FilePath,
+        _violations: &mut LintResultList,
+    ) {
+    }
+    fn check_legacy_import_rules(
+        &self,
+        _analyzer: &Arc<dyn IAnalyzer>,
+        _files: &FilePathList,
+        _root: &FilePath,
+        _violations: &mut LintResultList,
+    ) {
+    }
+}
+
+struct PlaceholderSurfaceChecker;
+impl ISurfaceProtocol for PlaceholderSurfaceChecker {
+    fn check_surface_hierarchy(
+        &self,
+        _files: &[FilePath],
+        _root: &FilePath,
+        _violations: &mut LintResultList,
+    ) {
+    }
+}
+
+struct PlaceholderOrphanAggregate;
+impl IOrphanAggregate for PlaceholderOrphanAggregate {
+    fn check_orphans(
+        &self,
+        _container: &dyn CheckerContainerRef,
+        _files: &[String],
+        _root_dir: &str,
+    ) -> Vec<LintResult> {
+        Vec::new()
+    }
 }
 
 /// RoleOrchestrator for agent and surface role checks

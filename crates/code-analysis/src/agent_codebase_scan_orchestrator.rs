@@ -1,5 +1,4 @@
 // PURPOSE: detect_source_dir + collect_source_files — entry point for codebase scan orchestration, discovers source dirs and scans all files for AES compliance
-use async_trait::async_trait;
 use std::path::Path;
 
 use crate::LintCheckingOrchestrator;

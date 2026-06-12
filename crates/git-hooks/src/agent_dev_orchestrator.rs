@@ -1,11 +1,6 @@
 // PURPOSE: DevCommandsOrchestrator — diff, suggest, ignore, init, hook management
 use std::collections::HashMap;
 
-use shared::output_report::taxonomy_score_vo::FileFormat;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::taxonomy_common_vo::BooleanVO;
-use shared::taxonomy_layer_vo::Identity;
-
 pub struct DevCommandsOrchestrator {}
 
 impl Default for DevCommandsOrchestrator {

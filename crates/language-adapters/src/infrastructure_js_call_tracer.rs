@@ -1,7 +1,6 @@
 // PURPOSE: JSCallTracer — IFlowProviderPort implementation for JavaScript call chain tracing
 use async_trait::async_trait;
 use regex::Regex;
-/// javascript_call_tracer — Semantic analysis adapter for JavaScript/TypeScript files.
 use shared::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
 use shared::language_adapters::taxonomy_naming_list_vo::CallChainList;
 use shared::language_adapters::taxonomy_naming_list_vo::SymbolNameList;

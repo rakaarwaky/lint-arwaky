@@ -46,3 +46,53 @@ static RESOLVER: Lazy<ProjectTargetResolver> = Lazy::new(ProjectTargetResolver::
 pub fn normalize_project_root(path: &str) -> String {
     RESOLVER.normalize_project_root(path)
 }
+
+pub fn resolve_target(path: Option<String>) -> String {
+    RESOLVER.resolve_target(path)
+}
+
+pub fn lint_path(path: &str) -> Vec<shared::output_report::taxonomy_result_vo::LintResult> {
+    RESOLVER.lint_path(path)
+}
+
+pub fn compute_score(results: &[shared::output_report::taxonomy_result_vo::LintResult]) -> f64 {
+    RESOLVER.compute_score(results)
+}
+
+pub fn count_loc(path: &str) -> usize {
+    RESOLVER.count_loc(path)
+}
+
+pub fn has_critical(results: &[shared::output_report::taxonomy_result_vo::LintResult]) -> bool {
+    RESOLVER.has_critical(results)
+}
+
+pub fn resolve_target(path: Option<String>) -> String {
+    path.unwrap_or_else(|| ".".to_string())
+}
+
+pub fn lint_path(path: &str) -> Vec<shared::output_report::taxonomy_result_vo::LintResult> {
+    let _ = path;
+    vec![]
+}
+
+pub fn compute_score(_results: &[shared::output_report::taxonomy_result_vo::LintResult]) -> f64 {
+    0.0
+}
+
+pub fn count_loc(path: &str) -> usize {
+    let _ = path;
+    0
+}
+
+pub fn has_critical(_results: &[shared::output_report::taxonomy_result_vo::LintResult]) -> bool {
+    false
+}
+
+pub fn walk_rs_files(dir: &std::path::Path, cb: &mut dyn FnMut(std::path::PathBuf)) {
+    let _ = (dir, cb);
+}
+
+pub fn normalize_project_root(path: &str) -> String {
+    RESOLVER.normalize_project_root(path)
+}

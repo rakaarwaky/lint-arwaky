@@ -1,5 +1,6 @@
 // PURPOSE: PyASTTracer — IFlowProviderPort implementation for Python AST-based call tracing
 
+use async_trait::async_trait;
 use shared::language_adapters::contract_semantic_tracer_port::ISemanticTracerPort;
 use shared::language_adapters::contract_variant_port::INamingVariantPort;
 use shared::language_adapters::taxonomy_naming_list_vo::CallChainList;
@@ -14,8 +15,6 @@ use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_common_vo::ResponseDataList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_name_vo::SymbolName;
-
-use async_trait::async_trait;
 
 pub struct PythonTracer {
     naming_provider: Box<dyn INamingVariantPort>,

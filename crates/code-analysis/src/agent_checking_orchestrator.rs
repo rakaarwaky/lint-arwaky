@@ -6,13 +6,6 @@ use std::sync::OnceLock;
 
 use crate::CheckerContainer;
 use crate::RoleOrchestrator;
-use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use shared::code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use shared::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::output_report::taxonomy_result_vo::LintResult;
@@ -307,12 +300,15 @@ impl LintCheckingOrchestrator {
             );
 
         // Cycle detection
-        self.container.cycle_analyzer().check_cycles(
-            self.container.analyzer().as_ref(),
-            &files_list_vo,
-            &root_fp,
-            &mut rl,
-        );
+        self.container
+            .cycle_analyzer()
+            .check_cycles(
+                self.container.analyzer().as_ref(),
+                &files_list_vo,
+                &root_fp,
+                &mut rl,
+            )
+            .await;
 
         // Surface hierarchy check — call protocol directly
         self.container

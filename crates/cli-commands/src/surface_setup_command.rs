@@ -1,17 +1,9 @@
 // PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, env, mcp config, doctor)
-use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use shared::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::surface_core_command::SetupCommands;
-use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-
-/// Satisfy AES002 mandatory imports + AES023 unused import check
-fn _use_mandatory_imports() {
-    let _ = LineNumber::new(1);
-    let _ = std::marker::PhantomData::<dyn ReportCommandsAggregate>;
-}
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 #[derive(Clone)]
 pub struct SetupCommandsSurface {

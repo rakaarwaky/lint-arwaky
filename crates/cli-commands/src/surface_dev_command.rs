@@ -1,15 +1,9 @@
 // PURPOSE: DevCommandsSurface — CLI surface for developer operations (diff, suggest, ignore, config, export, init, hooks)
-use shared::cli_commands::contract_dev_aggregate::DevCommandsAggregate;
 use std::process::ExitCode;
 
-use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use shared::code_analysis::{compute_score, has_critical, lint_path, resolve_target};
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+use code_analysis::{compute_score, has_critical, lint_path, resolve_target};
 use shared::output_report::taxonomy_severity_vo::Severity;
-
-/// Satisfy AES030 orphan detection - surface references contract aggregates
-fn _use_contract_aggregates() {
-    let _ = std::marker::PhantomData::<dyn DevCommandsAggregate>;
-}
 
 pub struct DevCommandsSurface {
     pub container: Option<Box<dyn ServiceContainerAggregate>>,
