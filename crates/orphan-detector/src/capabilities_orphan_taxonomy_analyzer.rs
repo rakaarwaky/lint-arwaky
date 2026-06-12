@@ -1,8 +1,8 @@
 // PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection
-use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
+use shared::shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::orphan_detector::contract_orphan_protocol::ITaxonomyOrphanProtocol;
-use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
@@ -56,7 +56,7 @@ pub fn check_taxonomy_orphan(
     fp: &str,
     basename: &str,
     files: &[String],
-    violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+    violations: &mut Vec<shared::output_report::taxonomy_result_vo::LintResult>,
 ) {
     let stem = basename.replace(".rs", "").replace(".py", "");
     let mut imported = false;

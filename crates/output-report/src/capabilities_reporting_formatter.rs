@@ -1,7 +1,7 @@
 // PURPOSE: LintReportingFormatter — ILintReportingProtocol implementation for all output formats
 
 use serde_json::json;
-use shared::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
+use shared::shared::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use shared::output_report::contract_output_aggregate::IReportFormatterProtocol;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_result_vo::LintResultList;

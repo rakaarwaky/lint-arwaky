@@ -1,6 +1,6 @@
 // PURPOSE: ContractRoleChecker — IContractRoleChecker for AES0302: contract primitive type audits
-use shared::output_report::taxonomy_result_vo::LintResult;
-use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::shared::output_report::taxonomy_result_vo::LintResult;
+use shared::shared::output_report::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_source_vo::SourceContentVO;
@@ -182,20 +182,20 @@ impl IContractRoleChecker for ContractRoleChecker {
     fn check_port(
         &self,
         source: &SourceContentVO,
-    ) -> Vec<output_report::taxonomy_result_vo::LintResult> {
+    ) -> Vec<shared::output_report::taxonomy_result_vo::LintResult> {
         self.check_port(source)
     }
     fn check_protocol(
         &self,
         source: &SourceContentVO,
-    ) -> Vec<output_report::taxonomy_result_vo::LintResult> {
+    ) -> Vec<shared::output_report::taxonomy_result_vo::LintResult> {
         self.check_protocol(source)
     }
     fn check_aggregate(
         &self,
         source: &SourceContentVO,
         def: &shared::taxonomy_definition_vo::LayerDefinition,
-        violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<shared::output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_aggregate(source, def, violations);
     }

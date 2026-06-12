@@ -3,7 +3,7 @@
 use async_trait::async_trait;
 use git_hooks::contract_commands_aggregate::GitCommandsAggregate;
 use git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
-use output_report::taxonomy_result_vo::LintResultList;
+use shared::output_report::taxonomy_result_vo::LintResultList;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::source_parsing::taxonomy_paths_vo::RenamedFileList;

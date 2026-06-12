@@ -2,9 +2,9 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
-use shared::output_report::taxonomy_result_vo::LintResult;
-use shared::output_report::taxonomy_result_vo::LintResultList;
-use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::shared::output_report::taxonomy_result_vo::LintResult;
+use shared::shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::shared::output_report::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
@@ -564,25 +564,25 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
     fn check_smart_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<shared::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_utility_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<shared::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_passive_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<shared::output_report::taxonomy_result_vo::LintResult>,
     ) {
     }
     fn check_fn_count_limit(
         &self,
         source: &SourceContentVO,
-        violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<shared::output_report::taxonomy_result_vo::LintResult>,
     ) {
         self.check_fn_count_limit(source, violations);
     }

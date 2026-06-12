@@ -1,9 +1,9 @@
 // PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
 use regex::Regex;
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use shared::shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
-use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct CapabilitiesOrphanAnalyzer {}
@@ -142,7 +142,7 @@ pub fn check_capabilities_orphan(
     fp: &str,
     basename: &str,
     files: &[String],
-    violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+    violations: &mut Vec<shared::output_report::taxonomy_result_vo::LintResult>,
 ) {
     let stem = basename.replace(".rs", "").replace(".py", "");
     let content = std::fs::read_to_string(fp).unwrap_or_default();

@@ -4,7 +4,7 @@ use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use shared::output_report::taxonomy_score_vo::FileFormat;
+use shared::shared::output_report::taxonomy_score_vo::FileFormat;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_vo::BooleanVO;
 use shared::taxonomy_layer_vo::Identity;

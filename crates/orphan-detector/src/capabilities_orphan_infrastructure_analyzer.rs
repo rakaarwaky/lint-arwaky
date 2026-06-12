@@ -1,8 +1,8 @@
 // PURPOSE: InfrastructureOrphanAnalyzer — IInfrastructureOrphanProtocol for orphan infrastructure detection
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use shared::shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::orphan_detector::contract_orphan_protocol::IInfrastructureOrphanProtocol;
-use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::shared::output_report::taxonomy_severity_vo::Severity;
 use shared::shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct InfrastructureOrphanAnalyzer {}
@@ -42,7 +42,7 @@ pub fn check_infrastructure_orphan(
     fp: &str,
     basename: &str,
     files: &[String],
-    violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+    violations: &mut Vec<shared::output_report::taxonomy_result_vo::LintResult>,
 ) {
     crate::orphan_detector::capabilities_orphan_capabilities_analyzer::check_capabilities_orphan(
         fp, basename, files, violations,

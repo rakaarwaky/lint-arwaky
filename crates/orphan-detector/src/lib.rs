@@ -13,8 +13,8 @@ pub mod capabilities_orphan_surfaces_analyzer;
 pub mod capabilities_orphan_taxonomy_analyzer;
 pub use agent_orphan_orchestrator::{ArchOrphanAnalyzer, OrphanGraphResolver};
 
-use output_report::taxonomy_result_vo::LintResult;
-use output_report::taxonomy_severity_vo::Severity;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared::taxonomy_error_vo::ErrorCode;

@@ -4,7 +4,7 @@ use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::auto_fix::taxonomy_symbol_renamer_utility::SymbolRenamer;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
-use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::shared::output_report::taxonomy_result_vo::LintResult;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::Count;

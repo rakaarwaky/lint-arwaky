@@ -1,6 +1,6 @@
 // PURPOSE: CapabilitiesRoleChecker — AES0303: detect capability routing bottlenecks (single bottleneck, missing dispatch)
-use shared::output_report::taxonomy_result_vo::LintResult;
-use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::shared::output_report::taxonomy_result_vo::LintResult;
+use shared::shared::output_report::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;

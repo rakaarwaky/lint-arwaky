@@ -1,15 +1,15 @@
 // PURPOSE: IOrphanAggregate — aggregate trait implementing all orphan detection protocols
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
-use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
-use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use shared::shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
+use shared::shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
+use shared::shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
+use shared::shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
+use shared::shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
+use shared::shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::output_report::taxonomy_result_vo::LintResult;
-use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::shared::output_report::taxonomy_result_vo::LintResult;
+use shared::shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -435,9 +435,9 @@ impl ArchOrphanAnalyzer {
         alive_files_set: &[String],
         layer_vo: &LayerNameVO,
         all_files: &[String],
-    ) -> code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult {
+    ) -> shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult {
         if f.ends_with("__init__.py") {
-            return code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
+            return shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
                 false,
                 String::new(),
                 Severity::HIGH,

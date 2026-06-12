@@ -3,10 +3,10 @@
 // - Smart surface (_command, _controller, _page, _entry): must be imported by entry or router
 // - Utility surface (_hook, _store, _action, _screen, _router): must be imported by smart surface
 // - Passive surface (_component, _view, _layout): must be imported by smart or utility surface
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use shared::shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::orphan_detector::contract_orphan_protocol::ISurfacesOrphanProtocol;
-use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
@@ -170,8 +170,8 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
 
 pub fn check_surfaces_orphan(
     fp: &str,
-    _ctx: &code_analysis::taxonomy_analysis_vo::GraphAnalysisContext,
-    violations: &mut Vec<output_report::taxonomy_result_vo::LintResult>,
+    _ctx: &shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext,
+    violations: &mut Vec<shared::output_report::taxonomy_result_vo::LintResult>,
 ) {
     let all_files: Vec<String> = Vec::new(); // TODO: pass actual file list
     let result = is_surface_orphan_raw(

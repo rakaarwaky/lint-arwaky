@@ -1,7 +1,7 @@
 // PURPOSE: RoleOrchestrator — dispatches files to correct role checker based on filename prefix
 
 use async_trait::async_trait;
-use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::shared::output_report::taxonomy_result_vo::LintResult;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::FilePathList;

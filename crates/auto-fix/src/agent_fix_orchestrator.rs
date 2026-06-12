@@ -2,7 +2,7 @@
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
-use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::shared::output_report::taxonomy_result_vo::LintResult;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 

@@ -4,10 +4,10 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::sync::LazyLock;
 
-use shared::code_analysis::taxonomy_import_source_vo::ImportInfo;
-use shared::code_analysis::taxonomy_import_source_vo::ImportInfoList;
-use shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolation;
-use shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
+use shared::shared::code_analysis::taxonomy_import_source_vo::ImportInfo;
+use shared::shared::code_analysis::taxonomy_import_source_vo::ImportInfoList;
+use shared::shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolation;
+use shared::shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList;
 use shared::language_adapters::taxonomy_naming_list_vo::PrimitiveTypeList;
 use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;

@@ -3,11 +3,11 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::output_report::taxonomy_result_vo::LintResult;
-use shared::output_report::taxonomy_result_vo::LintResultList;
-use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::shared::code_analysis::taxonomy_operation_error::LinterOperationError;
+use shared::shared::output_report::taxonomy_result_vo::LintResult;
+use shared::shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
