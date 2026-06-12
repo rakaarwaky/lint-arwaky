@@ -1,6 +1,6 @@
 [package]
 name = "git_hooks-lint-arwaky"
-version = "1.10.11"
+version = "1.10.13"
 edition = "2021"
 
 [dependencies]
