@@ -1,6 +1,6 @@
 // PURPOSE: OrphanContainer — wiring for orphan-detector feature (root layer, wiring only)
-use std::sync::Arc;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
+use std::sync::Arc;
 
 pub struct OrphanContainer {
     analyzer: Arc<dyn IOrphanAggregate>,
@@ -31,4 +31,3 @@ impl Default for OrphanContainer {
         Self::new()
     }
 }
-

@@ -1,6 +1,6 @@
 // PURPOSE: Module declarations for cli-commands (surfaces, transport, container)
-pub use shared::cli_commands::taxonomy_command_catalog_vo::{command_catalog, CommandCatalogVO};
 pub use shared::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
+pub use shared::cli_commands::taxonomy_command_catalog_vo::{command_catalog, CommandCatalogVO};
 pub use shared::cli_commands::taxonomy_metadata_vo::CommandMetadataVO;
 
 pub mod infrastructure_transport_client;

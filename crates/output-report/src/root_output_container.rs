@@ -7,9 +7,7 @@ impl OutputContainer {
     }
 
     pub fn report_formatter(&self) -> Box<dyn crate::IReportFormatterProtocol> {
-        Box::new(
-            crate::capabilities_reporting_formatter::ReportFormatterProcessor::new(),
-        )
+        Box::new(crate::capabilities_reporting_formatter::ReportFormatterProcessor::new())
     }
 }
 impl Default for OutputContainer {

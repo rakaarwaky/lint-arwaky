@@ -2305,10 +2305,12 @@ version = "1.10.11"
 dependencies = [
  "async-trait",
  "code_analysis-lint-arwaky",
+ "dirs",
  "once_cell",
  "output_report-lint-arwaky",
  "pipeline_jobs-lint-arwaky",
  "regex",
+ "rustsec",
  "serde",
  "serde_json",
  "shared-lint-arwaky",

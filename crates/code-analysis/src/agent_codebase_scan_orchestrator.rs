@@ -2,11 +2,11 @@
 use async_trait::async_trait;
 use std::path::Path;
 
+use crate::LintCheckingOrchestrator;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_result_vo::LintResultList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::LintCheckingOrchestrator;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {

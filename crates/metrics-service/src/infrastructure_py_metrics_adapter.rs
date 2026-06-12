@@ -2,10 +2,10 @@
 
 use shared::metrics_service::contract_metrics_port::IMetricsProviderPort;
 use shared::metrics_service::taxonomy_metrics_error::MetricsError;
-use shared::taxonomy_common_error::ErrorMessage;
-use shared::taxonomy_common_vo::Count;
 use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::taxonomy_common_error::ErrorMessage;
+use shared::taxonomy_common_vo::Count;
 use std::sync::Arc;
 
 pub struct MetricsProvider {

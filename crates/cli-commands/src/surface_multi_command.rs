@@ -2,8 +2,8 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use shared::code_analysis::{compute_score, count_loc, lint_path};
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use shared::code_analysis::{compute_score, count_loc, lint_path};
 use shared::output_report::taxonomy_severity_vo::Severity;
 pub struct MultiCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,

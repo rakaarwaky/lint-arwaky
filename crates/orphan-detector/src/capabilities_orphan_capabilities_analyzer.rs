@@ -189,7 +189,7 @@ pub fn check_capabilities_orphan(
         }
     }
     if !wired {
-        violations.push(shared::orphan_detector::mk_orphan_result(
+        violations.push(crate::mk_orphan_result(
             fp,
             &format!("capabilities '{}' not wired in container.", stem),
             Severity::HIGH,

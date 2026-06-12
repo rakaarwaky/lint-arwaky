@@ -1,26 +1,47 @@
-// PURPOSE: Re-exports ContentString, SourceContentVO from common + ConfigResult, ConfigSource for config-system
+// PURPOSE: ConfigResult, ConfigSource for config-system
 pub use crate::common::taxonomy_source_vo::ContentString;
 pub use crate::common::taxonomy_source_vo::SourceContentVO;
 
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use serde::{Deserialize, Serialize};
 
-/// Result type for config loading operations.
-pub type ConfigResult = Result<ArchitectureConfig, String>;
-
-/// Represents a configuration source with its language and path.
+/// Represents a configuration source with its language, path, and raw content.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ConfigSource {
-    pub config: ArchitectureConfig,
     pub language: String,
     pub path: FilePath,
+    pub raw_content: String,
 }
 
 impl ConfigSource {
-    pub fn new(config: ArchitectureConfig, language: impl Into<String>, path: FilePath) -> Self {
+    pub fn new(
+        language: impl Into<String>,
+        path: impl Into<String>,
+        raw_content: impl Into<String>,
+    ) -> Self {
+        Self {
+            language: language.into(),
+            path: FilePath::new(path.into()).unwrap_or_default(),
+            raw_content: raw_content.into(),
+        }
+    }
+}
+
+/// Result type for config loading operations containing the parsed config, source info, and warnings.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ConfigResult {
+    pub config: ArchitectureConfig,
+    pub source: ConfigSource,
+    pub warnings: Vec<String>,
+}
+
+impl ConfigResult {
+    pub fn new(config: ArchitectureConfig, source: ConfigSource, warnings: Vec<String>) -> Self {
         Self {
             config,
-            language: language.into(),
-            path,
+            source,
+            warnings,
         }
     }
 }

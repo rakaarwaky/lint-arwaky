@@ -1,7 +1,7 @@
 // PURPOSE: AnalysisContainer — wiring for code-analysis feature (root layer, wiring only)
-use std::sync::Arc;
-use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use crate::CodebaseScanOrchestrator;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use std::sync::Arc;
 
 pub struct AnalysisContainer {
     arch_linter: Arc<dyn IArchLintProtocol>,
@@ -10,9 +10,7 @@ pub struct AnalysisContainer {
 impl AnalysisContainer {
     pub fn new() -> Self {
         Self {
-            arch_linter: Arc::new(
-                CodebaseScanOrchestrator::new(),
-            ),
+            arch_linter: Arc::new(CodebaseScanOrchestrator::new()),
         }
     }
 
@@ -25,4 +23,3 @@ impl Default for AnalysisContainer {
         Self::new()
     }
 }
-

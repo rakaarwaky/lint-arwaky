@@ -2,26 +2,26 @@
 
 use std::sync::Arc;
 
+use crate::capabilities_check_bypass_checker::BypassChecker;
+use crate::capabilities_class_checker::ArchClassChecker;
+use crate::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
+use crate::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
+use crate::capabilities_inline_unused_checker::InlineUnusedChecker;
+use crate::capabilities_line_checker::ArchLineChecker;
+use crate::capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
+use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use shared::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_result_vo::LintResultList;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
-use shared::import_rules::contract_rule_protocol::IAnalyzer;
-use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
-use crate::capabilities_check_bypass_checker::BypassChecker;
-use crate::capabilities_inline_unused_checker::InlineUnusedChecker;
-use crate::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
-use crate::capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
-use crate::capabilities_line_checker::ArchLineChecker;
-use crate::capabilities_class_checker::ArchClassChecker;
-use crate::capabilities_cycle_analyzer::DependencyCycleAnalyzer;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 
@@ -133,11 +133,18 @@ impl CheckerContainer {
         &self.orphan_aggregate
     }
 
-    pub fn detect_layer(&self, _file: &str, _root_dir: &str) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
+    pub fn detect_layer(
+        &self,
+        _file: &str,
+        _root_dir: &str,
+    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
         None
     }
 
-    pub fn get_layer_def(&self, _layer: &shared::taxonomy_layer_vo::LayerNameVO) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
+    pub fn get_layer_def(
+        &self,
+        _layer: &shared::taxonomy_layer_vo::LayerNameVO,
+    ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
         None
     }
 
@@ -152,50 +159,129 @@ impl CheckerContainer {
 
 /// Trait for dynamic dispatch of CheckerContainer
 pub trait CheckerContainerRef {
-    fn detect_layer(&self, file: &str, root_dir: &str) -> Option<shared::taxonomy_layer_vo::LayerNameVO>;
-    fn get_layer_def(&self, layer: &shared::taxonomy_layer_vo::LayerNameVO) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition>;
+    fn detect_layer(
+        &self,
+        file: &str,
+        root_dir: &str,
+    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO>;
+    fn get_layer_def(
+        &self,
+        layer: &shared::taxonomy_layer_vo::LayerNameVO,
+    ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition>;
 }
 
 // Local protocols that aren't in shared
 pub trait ICapabilitiesRoleProtocol: Send + Sync {
-    fn check_capability_routing(&self, source: &shared::config_system::taxonomy_source_vo::SourceContentVO, layer: &shared::taxonomy_layer_vo::LayerNameVO, violations: &mut Vec<LintResult>);
+    fn check_capability_routing(
+        &self,
+        source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        layer: &shared::taxonomy_layer_vo::LayerNameVO,
+        violations: &mut Vec<LintResult>,
+    );
 }
 
 pub trait ITaxonomyProtocol: Send + Sync {
-    fn check_entity(&self, source: &shared::config_system::taxonomy_source_vo::SourceContentVO, violations: &mut Vec<LintResult>);
-    fn check_error(&self, source: &shared::config_system::taxonomy_source_vo::SourceContentVO, violations: &mut Vec<LintResult>);
-    fn check_event(&self, source: &shared::config_system::taxonomy_source_vo::SourceContentVO, violations: &mut Vec<LintResult>);
-    fn check_constant(&self, source: &shared::config_system::taxonomy_source_vo::SourceContentVO, violations: &mut Vec<LintResult>);
+    fn check_entity(
+        &self,
+        source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        violations: &mut Vec<LintResult>,
+    );
+    fn check_error(
+        &self,
+        source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        violations: &mut Vec<LintResult>,
+    );
+    fn check_event(
+        &self,
+        source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        violations: &mut Vec<LintResult>,
+    );
+    fn check_constant(
+        &self,
+        source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        violations: &mut Vec<LintResult>,
+    );
 }
 
 pub trait IContractProtocol: Send + Sync {
-    fn check_aggregate(&self, source: &shared::config_system::taxonomy_source_vo::SourceContentVO, def: &shared::common::taxonomy_definition_vo::LayerDefinition, violations: &mut Vec<LintResult>);
+    fn check_aggregate(
+        &self,
+        source: &shared::config_system::taxonomy_source_vo::SourceContentVO,
+        def: &shared::common::taxonomy_definition_vo::LayerDefinition,
+        violations: &mut Vec<LintResult>,
+    );
 }
 
 pub trait INamingProtocol: Send + Sync {
-    fn check_file_naming(&self, analyzer: &Arc<dyn IAnalyzer>, files: &FilePathList, root: &FilePath, violations: &mut LintResultList);
-    fn check_domain_suffixes(&self, analyzer: &Arc<dyn IAnalyzer>, files: &FilePathList, root: &FilePath, violations: &mut LintResultList);
+    fn check_file_naming(
+        &self,
+        analyzer: &Arc<dyn IAnalyzer>,
+        files: &FilePathList,
+        root: &FilePath,
+        violations: &mut LintResultList,
+    );
+    fn check_domain_suffixes(
+        &self,
+        analyzer: &Arc<dyn IAnalyzer>,
+        files: &FilePathList,
+        root: &FilePath,
+        violations: &mut LintResultList,
+    );
 }
 
 pub trait IImportMandatoryProtocol: Send + Sync {
-    fn check_mandatory_imports(&self, analyzer: &Arc<dyn IAnalyzer>, files: &FilePathList, root: &FilePath, violations: &mut LintResultList);
+    fn check_mandatory_imports(
+        &self,
+        analyzer: &Arc<dyn IAnalyzer>,
+        files: &FilePathList,
+        root: &FilePath,
+        violations: &mut LintResultList,
+    );
 }
 
 pub trait IImportIntentProtocol: Send + Sync {
-    fn check_mandatory_imports(&self, analyzer: &Arc<dyn IAnalyzer>, files: &FilePathList, root: &FilePath, violations: &mut LintResultList);
+    fn check_mandatory_imports(
+        &self,
+        analyzer: &Arc<dyn IAnalyzer>,
+        files: &FilePathList,
+        root: &FilePath,
+        violations: &mut LintResultList,
+    );
 }
 
 pub trait IImportForbiddenProtocol: Send + Sync {
-    fn check_forbidden_imports(&self, analyzer: &Arc<dyn IAnalyzer>, files: &FilePathList, root: &FilePath, violations: &mut LintResultList);
-    fn check_legacy_import_rules(&self, analyzer: &Arc<dyn IAnalyzer>, files: &FilePathList, root: &FilePath, violations: &mut LintResultList);
+    fn check_forbidden_imports(
+        &self,
+        analyzer: &Arc<dyn IAnalyzer>,
+        files: &FilePathList,
+        root: &FilePath,
+        violations: &mut LintResultList,
+    );
+    fn check_legacy_import_rules(
+        &self,
+        analyzer: &Arc<dyn IAnalyzer>,
+        files: &FilePathList,
+        root: &FilePath,
+        violations: &mut LintResultList,
+    );
 }
 
 pub trait ISurfaceProtocol: Send + Sync {
-    fn check_surface_hierarchy(&self, files: &[FilePath], root: &FilePath, violations: &mut LintResultList);
+    fn check_surface_hierarchy(
+        &self,
+        files: &[FilePath],
+        root: &FilePath,
+        violations: &mut LintResultList,
+    );
 }
 
 pub trait IOrphanAggregate: Send + Sync {
-    fn check_orphans(&self, container: &dyn CheckerContainerRef, files: &[String], root_dir: &str) -> Vec<LintResult>;
+    fn check_orphans(
+        &self,
+        container: &dyn CheckerContainerRef,
+        files: &[String],
+        root_dir: &str,
+    ) -> Vec<LintResult>;
 }
 
 /// RoleOrchestrator for agent and surface role checks
@@ -205,10 +291,17 @@ pub struct RoleOrchestrator {
 
 impl RoleOrchestrator {
     pub fn new(aggregate: Arc<dyn IRoleAggregate>) -> Self {
-        Self { _aggregate: aggregate }
+        Self {
+            _aggregate: aggregate,
+        }
     }
 
-    pub fn run_all_role_checks(&self, files: &[String], max_lines: usize, violations: &mut Vec<LintResult>) {
+    pub fn run_all_role_checks(
+        &self,
+        files: &[String],
+        max_lines: usize,
+        violations: &mut Vec<LintResult>,
+    ) {
         // Placeholder implementation
         // In a full implementation, this would check AES0305 and AES0306
         for file in files {
@@ -228,10 +321,17 @@ impl RoleOrchestrator {
 }
 
 impl CheckerContainerRef for CheckerContainer {
-    fn detect_layer(&self, file: &str, root_dir: &str) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
+    fn detect_layer(
+        &self,
+        file: &str,
+        root_dir: &str,
+    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
         self.detect_layer(file, root_dir)
     }
-    fn get_layer_def(&self, layer: &shared::taxonomy_layer_vo::LayerNameVO) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
+    fn get_layer_def(
+        &self,
+        layer: &shared::taxonomy_layer_vo::LayerNameVO,
+    ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
         self.get_layer_def(layer)
     }
 }

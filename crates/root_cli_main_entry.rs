@@ -20,10 +20,10 @@ use lint_arwaky::cli_commands::surface_setup_command;
 use lint_arwaky::cli_commands::surface_watch_command;
 use lint_arwaky::code_analysis::agent_checking_orchestrator::init_global_checker;
 use lint_arwaky::code_analysis::{has_critical, lint_path};
-use lint_arwaky::root_composition_container::CompositionRoot;
 use lint_arwaky::config_system::taxonomy_config_vo::default_aes_config;
 use lint_arwaky::di_containers::agent_checker_container::CheckerContainer;
 use lint_arwaky::di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use lint_arwaky::root_composition_container::CompositionRoot;
 
 pub struct CliMainEntry {}
 
@@ -39,9 +39,7 @@ fn main() -> ExitCode {
         Err(e) => e.exit(),
     };
 
-    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(
-        CompositionRoot::new(),
-    );
+    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(CompositionRoot::new());
 
     let filter = cli.filter.clone();
     match cli.command {

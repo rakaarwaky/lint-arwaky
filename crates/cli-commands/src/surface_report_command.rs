@@ -6,8 +6,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::surface_output_controller::{print_json, print_junit, print_sarif};
-use shared::code_analysis::{has_critical, lint_path, resolve_target};
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use shared::code_analysis::{has_critical, lint_path, resolve_target};
 
 /// Satisfy AES030 orphan detection - surface references contract aggregates
 fn _use_contract_aggregates() {

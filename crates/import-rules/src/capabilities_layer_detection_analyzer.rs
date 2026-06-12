@@ -4,9 +4,9 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_vo::ArchitectureRule;
 use shared::file_system::contract_system_port::IFileSystemPort;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
-use shared::config_system::taxonomy_config_vo::ArchitectureRule;
 use shared::source_parsing::contract_parser_port::ISourceParserPort;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
@@ -63,18 +63,18 @@ impl LayerDetectionAnalyzer {
                         if !rule.forbidden.values.is_empty() {
                             ldef.forbidden = rule.forbidden.clone();
                         }
-                        if rule.min_lines.value > 0 {
-                            ldef.min_lines = rule.min_lines.clone();
+                        if rule.code_analysis.min_lines.value > 0 {
+                            ldef.code_analysis.min_lines = rule.code_analysis.min_lines.clone();
                         }
-                        if rule.max_lines.value > 0 {
-                            ldef.max_lines = rule.max_lines.clone();
+                        if rule.code_analysis.max_lines.value > 0 {
+                            ldef.code_analysis.max_lines = rule.code_analysis.max_lines.clone();
                         }
-                        if rule.mandatory_class_definition.value {
-                            ldef.mandatory_class_definition =
-                                rule.mandatory_class_definition.clone();
+                        if rule.code_analysis.mandatory_class_definition.value {
+                            ldef.code_analysis.mandatory_class_definition =
+                                rule.code_analysis.mandatory_class_definition.clone();
                         }
-                        if !rule.forbidden_inheritance.values.is_empty() {
-                            ldef.forbidden_inheritance = rule.forbidden_inheritance.clone();
+                        if !rule.code_analysis.forbidden_inheritance.values.is_empty() {
+                            ldef.code_analysis.forbidden_inheritance = rule.code_analysis.forbidden_inheritance.clone();
                         }
                     }
                 }
@@ -136,9 +136,9 @@ impl LayerDetectionAnalyzer {
                                 if !r.allowed.values.is_empty() {
                                     spec_def.allowed = r.allowed.clone();
                                 }
-                                if !r.forbidden_inheritance.values.is_empty() {
-                                    spec_def.forbidden_inheritance =
-                                        r.forbidden_inheritance.clone();
+                                if !r.code_analysis.forbidden_inheritance.values.is_empty() {
+                                    spec_def.code_analysis.forbidden_inheritance =
+                                        r.code_analysis.forbidden_inheritance.clone();
                                 }
                             }
                         }

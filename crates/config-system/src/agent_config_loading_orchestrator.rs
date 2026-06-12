@@ -7,8 +7,8 @@ use shared::config_system::taxonomy_config_vo::default_config_for_language;
 use shared::config_system::taxonomy_config_vo::parse_config_yaml;
 use shared::config_system::taxonomy_source_vo::ConfigResult;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
-use std::sync::Arc;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use std::sync::Arc;
 
 pub struct ConfigLoadingOrchestrator {
     language_detector: Arc<dyn ILanguageDetectorPort>,
@@ -52,7 +52,7 @@ impl IConfigOrchestrationAggregate for ConfigLoadingOrchestrator {
             Some(source) => {
                 // Read file content and parse through the proper YAML pipeline
                 // (with suffix array → policy/allowed/forbidden transformation)
-                let config = match std::fs::read_to_string(&source.path) {
+                let config = match std::fs::read_to_string(&*source.path) {
                     Ok(content) => {
                         let parsed = parse_config_yaml(&content);
                         if !parsed.layers.is_empty() {

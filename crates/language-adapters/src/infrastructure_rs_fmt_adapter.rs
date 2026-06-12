@@ -3,7 +3,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use shared::cli_transport::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::language_adapters::taxonomy_adapter_error::AdapterError;
@@ -95,9 +95,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir.clone(),
-                Some(shared::taxonomy_duration_vo::Timeout::new(
-                    120.0,
-                )),
+                Some(shared::taxonomy_duration_vo::Timeout::new(120.0)),
             )
             .await
             .map_err(|e| {
@@ -168,9 +166,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 working_dir,
-                Some(shared::taxonomy_duration_vo::Timeout::new(
-                    120.0,
-                )),
+                Some(shared::taxonomy_duration_vo::Timeout::new(120.0)),
             )
             .await;
         Ok(ComplianceStatus::new(true))

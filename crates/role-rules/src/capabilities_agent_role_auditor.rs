@@ -162,8 +162,7 @@ impl AgentRoleChecker {
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
-                        related_locations:
-                            shared::taxonomy_lint_vo::LocationList::new(),
+                        related_locations: shared::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }
@@ -223,8 +222,7 @@ impl AgentRoleChecker {
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::MEDIUM,
                         enclosing_scope: None,
-                        related_locations:
-                            shared::taxonomy_lint_vo::LocationList::new(),
+                        related_locations: shared::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }
@@ -318,8 +316,7 @@ impl AgentRoleChecker {
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
-                        related_locations:
-                            shared::taxonomy_lint_vo::LocationList::new(),
+                        related_locations: shared::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }
@@ -417,8 +414,7 @@ impl AgentRoleChecker {
                         source: Some(AdapterName::raw("architecture")),
                         severity: Severity::HIGH,
                         enclosing_scope: None,
-                        related_locations:
-                            shared::taxonomy_lint_vo::LocationList::new(),
+                        related_locations: shared::taxonomy_lint_vo::LocationList::new(),
                     });
                 }
             }

@@ -284,7 +284,7 @@ impl OrphanGraphResolver {
     }
 }
 
-use shared::orphan_detector::taxonomy_layer_names_constant::{
+use shared::role_rules::taxonomy_layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_SURFACES,
     LAYER_TAXONOMY,
 };
@@ -369,7 +369,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 continue;
             }
 
-            if !definition.check_orphan.value {
+            if !definition.orphan.check_orphan.value {
                 continue;
             }
 

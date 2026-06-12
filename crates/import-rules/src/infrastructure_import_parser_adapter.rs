@@ -1,9 +1,9 @@
 // PURPOSE: ImportParserAdapter — infrastructure implementation of IImportParserPort using standard filesystem and string search utilities
 
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
-use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
-use shared::taxonomy_common_vo::LineNumber;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use std::fs;
 
 pub struct ImportParserAdapter {}

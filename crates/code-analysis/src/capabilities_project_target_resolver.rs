@@ -1,8 +1,8 @@
 // PURPOSE: capabilities_project_target_resolver — resolves project target paths, triggers codebase scans, evaluates compliance results, and counts LOC
 use shared::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
 use shared::output_report::taxonomy_result_vo::LintResult;
-use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::output_report::taxonomy_score_vo::compute_score;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::{Path, PathBuf};
 

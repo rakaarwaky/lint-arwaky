@@ -14,9 +14,6 @@ use import_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChec
 use import_rules::capabilities_import_intent_checker::ImportIntentChecker;
 use import_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
-use shared::import_rules::contract_rule_protocol::{
-    IAnalyzer, IArchImportProtocol, INamingCheckerProtocol,
-};
 use naming_rules::capabilities_naming_checker::ArchNamingChecker;
 use orphan_detector::agent_orphan_orchestrator::ArchOrphanAnalyzer;
 use orphan_detector::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
@@ -31,6 +28,9 @@ use role_rules::capabilities_contract_role_auditor::ContractRoleChecker;
 use role_rules::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use role_rules::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
+use shared::import_rules::contract_rule_protocol::{
+    IAnalyzer, IArchImportProtocol, INamingCheckerProtocol,
+};
 use shared::taxonomy_definition_vo::LayerDefinition;
 use std::sync::Arc;
 

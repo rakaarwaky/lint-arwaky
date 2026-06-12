@@ -1,7 +1,7 @@
 // PURPOSE: GitContainer — wiring for git-hooks feature (root layer, wiring only)
-use std::sync::Arc;
 use shared::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
 use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use std::sync::Arc;
 
 pub struct GitContainer {
     commands_aggregate: Arc<dyn GitCommandsAggregate>,
@@ -33,4 +33,3 @@ impl Default for GitContainer {
         Self::new()
     }
 }
-

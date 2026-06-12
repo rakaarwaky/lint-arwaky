@@ -191,9 +191,7 @@ pub async fn run_server() {
     eprintln!("Listening on stdin/stdout (JSON-RPC 2.0)");
     eprintln!("Press Ctrl+C to stop");
 
-    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(
-        CompositionRoot::new(),
-    );
+    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(CompositionRoot::new());
     let state = Arc::new(Mutex::new(ServerState { container }));
 
     use tokio::io::{stdin, AsyncBufReadExt, BufReader};

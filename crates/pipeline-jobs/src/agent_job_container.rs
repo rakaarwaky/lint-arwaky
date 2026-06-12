@@ -1,7 +1,7 @@
 // PURPOSE: JobContainer — IJobRegistryPort implementation using HashMap-based job registry
 
-use async_trait::async_trait;
 use crate::infrastructure_registry_adapter::MemoryJobRegistryAdapter;
+use async_trait::async_trait;
 use shared::pipeline_jobs::contract_registry_aggregate::JobRegistryAggregate;
 use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use shared::pipeline_jobs::taxonomy_action_vo::ActionName;

@@ -83,7 +83,9 @@ impl SurfaceRoleChecker {
                 0,
                 "AES0306",
                 Severity::HIGH,
-                shared::taxonomy_violation_message_rs_error::AesViolation::SurfaceRoleViolation { reason: None },
+                shared::taxonomy_violation_message_rs_error::AesViolation::SurfaceRoleViolation {
+                    reason: None,
+                },
             ));
         }
     }

@@ -15,6 +15,8 @@ pub mod contract_mandatory_inheritance_protocol;
 pub mod contract_target_resolver_protocol;
 pub mod contract_unused_protocol;
 pub mod taxonomy_analysis_vo;
+pub mod taxonomy_code_analysis_rule_vo;
 pub mod taxonomy_governance_entity;
 pub mod taxonomy_import_source_vo;
 pub mod taxonomy_operation_error;
+

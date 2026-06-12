@@ -1,5 +1,10 @@
-// language-adapters — taxonomy and contract types
+pub mod contract_flow_port;
+pub mod contract_naming_port;
+pub mod contract_scope_port;
+pub mod contract_semantic_tracer_port;
+pub mod contract_variant_port;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_naming_error;
 pub mod taxonomy_naming_list_vo;
 pub mod taxonomy_semantic_error;
+

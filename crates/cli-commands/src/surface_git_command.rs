@@ -4,8 +4,8 @@ use shared::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use shared::code_analysis::lint_path;
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use shared::code_analysis::lint_path;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check
 fn _use_mandatory_imports() {

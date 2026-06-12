@@ -7,8 +7,8 @@ use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use shared::code_analysis::{compute_score, lint_path, resolve_target};
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use shared::code_analysis::{compute_score, lint_path, resolve_target};
 
 /// Satisfy AES030 orphan detection - surface references contract aggregates
 fn _use_contract_aggregates() {

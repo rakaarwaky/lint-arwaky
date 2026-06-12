@@ -1,8 +1,8 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks
+use crate::ArchNamingChecker;
 use async_trait::async_trait;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use crate::ArchNamingChecker;
 use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;

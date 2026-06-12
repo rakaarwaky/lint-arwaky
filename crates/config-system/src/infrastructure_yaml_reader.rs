@@ -53,7 +53,7 @@ impl IConfigReaderPort for ConfigYamlReader {
         let mut found = Vec::new();
         for lang in &["rust", "python", "javascript"] {
             if let Some(config) = self.read_config(project_root, lang).await {
-                found.push((lang.to_string(), config.path));
+                found.push((lang.to_string(), config.path.to_string()));
             }
         }
         found

@@ -6,13 +6,13 @@ use shared::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
 use shared::code_analysis::taxonomy_governance_entity::ArchitectureGovernanceEntity;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_result_vo::LintResultList;
+use shared::output_report::taxonomy_score_vo::compute_score;
 use shared::output_report::taxonomy_severity_vo::Severity;
-use shared::output_report::taxonomy_score_vo::compute_score as compute_score;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber, Score};
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_message_vo::{ComplianceStatus, LintMessage};
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct AnalysisReporter {
     history_path: String,

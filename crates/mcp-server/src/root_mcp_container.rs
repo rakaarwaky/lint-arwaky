@@ -1,6 +1,6 @@
 // PURPOSE: McpContainer — wiring for mcp-server feature (root layer, wiring only)
-use std::sync::Arc;
 use shared::mcp_server::contract_server_port::IMcpServerPort;
+use std::sync::Arc;
 
 pub struct McpContainer {
     server: Arc<dyn IMcpServerPort>,
@@ -9,12 +9,10 @@ pub struct McpContainer {
 impl McpContainer {
     pub fn new() -> Self {
         Self {
-            server: Arc::new(
-                crate::infrastructure_server_wrapper::McpServerWrapper::new(
-                    ".",
-                    "lint-arwaky",
-                ),
-            ),
+            server: Arc::new(crate::infrastructure_server_wrapper::McpServerWrapper::new(
+                ".",
+                "lint-arwaky",
+            )),
         }
     }
 
@@ -27,4 +25,3 @@ impl Default for McpContainer {
         Self::new()
     }
 }
-

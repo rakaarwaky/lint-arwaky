@@ -4,7 +4,7 @@ use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
 use shared::output_report::taxonomy_severity_vo::Severity;
-use shared::regex::Regex;
+use regex::Regex;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct ContractOrphanAnalyzer {}

@@ -8,3 +8,5 @@ pub mod contract_surface_role_protocol;
 pub mod contract_taxonomy_role_protocol;
 pub mod taxonomy_layer_names_constant;
 pub mod taxonomy_layer_names_vo;
+pub mod taxonomy_role_rule_vo;
+

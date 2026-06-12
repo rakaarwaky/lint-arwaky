@@ -1,18 +1,18 @@
 // PURPOSE: SchemaChecker — validates JSON-RPC method schemas against server capabilities
 
+use once_cell::sync::Lazy;
+use regex::Regex;
 use shared::code_analysis::contract_analysis_protocol::IAnalysisProtocol;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_result_vo::LintResultList;
 use shared::output_report::taxonomy_severity_vo::Severity;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::LintMessage;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use once_cell::sync::Lazy;
-use regex::Regex;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check
 fn _use_mandatory_imports() {

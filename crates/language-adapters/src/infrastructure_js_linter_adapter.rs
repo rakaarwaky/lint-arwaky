@@ -2,7 +2,7 @@
 
 use regex::Regex;
 use serde_json::Value;
-use shared::cli_transport::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::language_adapters::taxonomy_adapter_error::AdapterError;
@@ -134,9 +134,7 @@ impl ILinterAdapterPort for PrettierAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(shared::taxonomy_duration_vo::Timeout::new(
-                    60.0,
-                )),
+                Some(shared::taxonomy_duration_vo::Timeout::new(60.0)),
             )
             .await
         {
@@ -190,9 +188,7 @@ impl ILinterAdapterPort for PrettierAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd,
-                Some(shared::taxonomy_duration_vo::Timeout::new(
-                    60.0,
-                )),
+                Some(shared::taxonomy_duration_vo::Timeout::new(60.0)),
             )
             .await
         {
@@ -265,9 +261,7 @@ impl ILinterAdapterPort for TSCAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(shared::taxonomy_duration_vo::Timeout::new(
-                    60.0,
-                )),
+                Some(shared::taxonomy_duration_vo::Timeout::new(60.0)),
             )
             .await
         {
@@ -390,9 +384,7 @@ impl ILinterAdapterPort for ESLintAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd.clone(),
-                Some(shared::taxonomy_duration_vo::Timeout::new(
-                    60.0,
-                )),
+                Some(shared::taxonomy_duration_vo::Timeout::new(60.0)),
             )
             .await
         {
@@ -483,9 +475,7 @@ impl ILinterAdapterPort for ESLintAdapter {
             .execute_command(
                 PatternList::new(cmd),
                 wd,
-                Some(shared::taxonomy_duration_vo::Timeout::new(
-                    60.0,
-                )),
+                Some(shared::taxonomy_duration_vo::Timeout::new(60.0)),
             )
             .await
         {

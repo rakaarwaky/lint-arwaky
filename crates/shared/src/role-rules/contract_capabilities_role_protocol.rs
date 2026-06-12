@@ -1,5 +1,5 @@
 // PURPOSE: ICapabilitiesRoleChecker — port trait for AES0303: capability routing bottlenecks and role audits
-use crate::config_system::taxonomy_source_vo::SourceContentVO;
+use crate::common::taxonomy_source_vo::SourceContentVO;
 use crate::output_report::taxonomy_result_vo::LintResult;
 
 pub trait ICapabilitiesRoleChecker: Send + Sync {

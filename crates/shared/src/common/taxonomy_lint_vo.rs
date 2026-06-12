@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::taxonomy_common_vo::ColumnNumber;
 use crate::common::taxonomy_common_vo::LineNumber;
+use crate::common::taxonomy_source_vo::ContentString;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::config_system::taxonomy_source_vo::ContentString;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

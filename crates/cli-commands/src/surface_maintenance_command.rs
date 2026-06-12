@@ -3,8 +3,8 @@ use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
 use shared::taxonomy_common_vo::LineNumber;
 use std::process::ExitCode;
 
-use shared::code_analysis::resolve_target;
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use shared::code_analysis::resolve_target;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check
 fn _use_mandatory_imports() {

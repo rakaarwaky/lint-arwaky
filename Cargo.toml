@@ -30,7 +30,7 @@ path = "crates/root_tui_main_entry.rs"
 
 [features]
 default = ["check_surfaces"]
-watch = []
+watch = ["file_watch/watch"]
 check_taxonomy = []
 check_contract = ["check_taxonomy"]
 check_capabilities = ["check_contract"]

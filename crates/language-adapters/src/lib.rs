@@ -1,5 +1,7 @@
 // PURPOSE: Module declarations for language-adapters (tracers, providers, linters)
-pub use shared::language_adapters::taxonomy_adapter_error::{AdapterError, ScanError, ValidationError};
+pub use shared::language_adapters::taxonomy_adapter_error::{
+    AdapterError, ScanError, ValidationError,
+};
 pub use shared::language_adapters::taxonomy_naming_error::NamingError;
 pub use shared::language_adapters::taxonomy_naming_list_vo::{
     primitive_type_list, CallChainList, ImportNameList, PrimitiveTypeList, SymbolNameList,

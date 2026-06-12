@@ -59,7 +59,8 @@ impl SetupCommandsSurface {
             println!("  .env already exists — skipping");
         } else {
             let processor =
-                shared::project_setup::capabilities_setup_processor::SetupManagementProcessor::new();
+                shared::project_setup::capabilities_setup_processor::SetupManagementProcessor::new(
+                );
             let home_vo =
                 shared::source_parsing::taxonomy_path_vo::DirectoryPath::new(home.to_string())
                     .unwrap_or_default();
@@ -510,7 +511,8 @@ source:
         }
         SetupCommands::McpConfig { client } => {
             let processor =
-                shared::project_setup::capabilities_setup_processor::SetupManagementProcessor::new();
+                shared::project_setup::capabilities_setup_processor::SetupManagementProcessor::new(
+                );
             let binary = <shared::project_setup::capabilities_setup_processor::SetupManagementProcessor as shared::project_setup::contract_setup_protocol::ISetupManagementProtocol>::which_mcp_binary(&processor);
             let config = match client.as_str() {
                 "claude-code" | "claude" => serde_json::json!({

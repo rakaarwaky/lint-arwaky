@@ -49,7 +49,7 @@ impl IMandatoryClassProtocol for ArchClassChecker {
             Some(d) => d,
             None => return,
         };
-        if !def.mandatory_class_definition.value {
+        if !def.code_analysis.mandatory_class_definition.value {
             return;
         }
         if def.exceptions.values.contains(&basename) {

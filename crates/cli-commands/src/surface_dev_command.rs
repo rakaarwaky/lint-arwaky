@@ -2,8 +2,8 @@
 use shared::cli_commands::contract_dev_aggregate::DevCommandsAggregate;
 use std::process::ExitCode;
 
-use shared::code_analysis::{compute_score, has_critical, lint_path, resolve_target};
 use di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use shared::code_analysis::{compute_score, has_critical, lint_path, resolve_target};
 use shared::output_report::taxonomy_severity_vo::Severity;
 
 /// Satisfy AES030 orphan detection - surface references contract aggregates

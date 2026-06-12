@@ -4,14 +4,14 @@ use serde::{Deserialize, Serialize};
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
-use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_definition_vo::NamingConfig;
+use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::naming_rules::taxonomy_suffix_vo::SuffixPolicyVO;
 use crate::import_rules::taxonomy_import_rule_vo::LegacyLayerRuleList;
 use crate::import_rules::taxonomy_import_rule_vo::MandatoryImportRuleVO;
+use crate::naming_rules::taxonomy_suffix_vo::SuffixPolicyVO;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::collections::HashMap;
 
@@ -22,7 +22,6 @@ pub struct ArchitectureRule {
     pub description: DescriptionVO,
     pub rule_type: ErrorCode,
     pub scope: LayerNameVO,
-    pub naming_convention: BooleanVO,
     pub exceptions: PatternList,
     #[serde(default)]
     pub allowed: PatternList,
@@ -30,35 +29,15 @@ pub struct ArchitectureRule {
     pub forbidden: PatternList,
     #[serde(default)]
     pub mandatory: PatternList,
-    pub suffix_policy: SuffixPolicyVO,
-    pub allowed_suffix: PatternList,
-    pub forbidden_suffix: PatternList,
-    pub no_primitives: BooleanVO,
-    pub mandatory_imports: Vec<MandatoryImportRuleVO>,
-    pub min_lines: Count,
-    pub max_lines: Count,
-    pub forbidden_bypass: PatternList,
-    pub mandatory_class_definition: BooleanVO,
-    pub dead_inheritance_bypass: BooleanVO,
-    pub check_orphan: BooleanVO,
-    #[serde(default, alias = "entry_points")]
-    pub orphan_entry_points: PatternList,
-    pub check_unused_mandatory_imports: BooleanVO,
-    pub forbidden_inheritance: PatternList,
-    pub no_domain_logic: BooleanVO,
-    pub must_implement_service_container_aggregate: BooleanVO,
-    pub lazy_eager_initialization_only: BooleanVO,
-    pub stateless_execution: BooleanVO,
-    pub single_execution_goal: BooleanVO,
-    pub high_level_policy_only: BooleanVO,
-    pub coordinates_multiple_orchestrators: BooleanVO,
-    pub crud_only: BooleanVO,
-    pub no_decision_logic: BooleanVO,
-    pub thread_async_safe: BooleanVO,
-    pub no_domain_data_storage: BooleanVO,
-    pub owns_system_health_transitions: BooleanVO,
-    pub lifecycle_tracking_only: BooleanVO,
-    pub forbid_any_type: BooleanVO,
+
+    #[serde(flatten)]
+    pub naming: crate::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO,
+    #[serde(flatten)]
+    pub code_analysis: crate::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO,
+    #[serde(flatten)]
+    pub role: crate::role_rules::taxonomy_role_rule_vo::RoleRuleVO,
+    #[serde(flatten)]
+    pub orphan: crate::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

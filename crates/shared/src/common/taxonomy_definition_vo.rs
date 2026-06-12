@@ -12,11 +12,6 @@ use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LayerDefinition {
     pub path: DirectoryPath,
-    pub suffix_policy: SuffixPolicyVO,
-    #[serde(default, alias = "allowed_suffix")]
-    pub allowed_suffix: PatternList,
-    #[serde(default, alias = "forbidden_suffix")]
-    pub forbidden_suffix: PatternList,
     #[serde(default)]
     pub allowed: PatternList,
     #[serde(default)]
@@ -29,56 +24,15 @@ pub struct LayerDefinition {
     pub exceptions: PatternList,
     #[serde(default)]
     pub recursive: BooleanVO,
-    #[serde(default)]
-    pub no_primitives: BooleanVO,
-    #[serde(default)]
-    pub mandatory_imports: Vec<MandatoryImportRuleVO>,
-    #[serde(default)]
-    pub min_lines: Count,
-    #[serde(default)]
-    pub max_lines: Count,
-    #[serde(default)]
-    pub forbidden_bypass: PatternList,
-    #[serde(default)]
-    pub mandatory_class_definition: BooleanVO,
-    #[serde(default)]
-    pub dead_inheritance_bypass: BooleanVO,
-    #[serde(default)]
-    pub check_orphan: BooleanVO,
-    #[serde(default, alias = "entry_points")]
-    pub orphan_entry_points: PatternList,
-    #[serde(default)]
-    pub check_unused_mandatory_imports: BooleanVO,
-    #[serde(default)]
-    pub forbidden_inheritance: PatternList,
-    #[serde(default)]
-    pub no_domain_logic: BooleanVO,
-    #[serde(default)]
-    pub must_implement_service_container_aggregate: BooleanVO,
-    #[serde(default)]
-    pub lazy_eager_initialization_only: BooleanVO,
-    #[serde(default)]
-    pub stateless_execution: BooleanVO,
-    #[serde(default)]
-    pub single_execution_goal: BooleanVO,
-    #[serde(default)]
-    pub high_level_policy_only: BooleanVO,
-    #[serde(default)]
-    pub coordinates_multiple_orchestrators: BooleanVO,
-    #[serde(default)]
-    pub crud_only: BooleanVO,
-    #[serde(default)]
-    pub no_decision_logic: BooleanVO,
-    #[serde(default)]
-    pub thread_async_safe: BooleanVO,
-    #[serde(default)]
-    pub no_domain_data_storage: BooleanVO,
-    #[serde(default)]
-    pub owns_system_health_transitions: BooleanVO,
-    #[serde(default)]
-    pub lifecycle_tracking_only: BooleanVO,
-    #[serde(default)]
-    pub forbid_any_type: BooleanVO,
+
+    #[serde(flatten)]
+    pub naming: crate::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO,
+    #[serde(flatten)]
+    pub code_analysis: crate::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO,
+    #[serde(flatten)]
+    pub role: crate::role_rules::taxonomy_role_rule_vo::RoleRuleVO,
+    #[serde(flatten)]
+    pub orphan: crate::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO,
 }
 
 impl LayerDefinition {

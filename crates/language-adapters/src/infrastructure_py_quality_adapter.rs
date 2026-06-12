@@ -1,6 +1,6 @@
 // PURPOSE: PyQualityAdapter — ILinterAdapterPort implementation for Python quality tool integration
 
-use shared::cli_transport::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::output_report::taxonomy_result_vo::LintResult;

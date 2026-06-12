@@ -1,8 +1,8 @@
 // PURPOSE: PipelineContainer — wiring for pipeline-jobs feature (root layer, wiring only)
-use std::sync::Arc;
 use shared::pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
 use shared::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
 use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
+use std::sync::Arc;
 
 pub struct PipelineContainer {
     extended_aggregate: Arc<dyn PipelineExtendedOrchestratorAggregate>,
@@ -44,7 +44,9 @@ impl PipelineContainer {
         use std::sync::OnceLock;
         static REGISTRY: OnceLock<Arc<dyn IJobRegistryPort>> = OnceLock::new();
         REGISTRY
-            .get_or_init(|| Arc::new(crate::infrastructure_registry_adapter::MemoryJobRegistryAdapter::new()))
+            .get_or_init(|| {
+                Arc::new(crate::infrastructure_registry_adapter::MemoryJobRegistryAdapter::new())
+            })
             .clone()
     }
 }

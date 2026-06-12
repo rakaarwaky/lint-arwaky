@@ -1,10 +1,10 @@
 // PURPOSE: IImportParserPort — contract port trait for import parsing utilities
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::taxonomy_common_vo::LineNumber;
 use crate::taxonomy_layer_vo::FileContentVO;
 use crate::taxonomy_layer_vo::Identity;
 use crate::taxonomy_layer_vo::LayerNameVO;
 use crate::taxonomy_layer_vo::LineContentVO;
-use crate::taxonomy_common_vo::LineNumber;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub trait IImportParserPort: Send + Sync {
     fn resolve_scope(&self, scope: &Identity) -> (LayerNameVO, Vec<Identity>);

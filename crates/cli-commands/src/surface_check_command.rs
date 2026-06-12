@@ -7,8 +7,8 @@ use std::process::ExitCode;
 
 use shared::code_analysis::{has_critical, lint_path, resolve_target};
 use shared::output_report::taxonomy_result_vo::LintResultList;
-use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::taxonomy_adapter_name_vo::AdapterName;
 
 pub struct CheckCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,

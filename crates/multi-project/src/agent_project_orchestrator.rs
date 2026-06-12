@@ -1,16 +1,16 @@
 // PURPOSE: ProjectOrchestrator — orchestrates multi-project governance operations
+use async_trait::async_trait;
 use shared::multi_project::contract_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::multi_project::taxonomy_summary_vo::AggregatedResults;
 use shared::multi_project::taxonomy_summary_vo::ProjectResult;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_common_vo::Score;
 use shared::taxonomy_layer_vo::Identity;
 use shared::taxonomy_message_vo::ComplianceStatus;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
-use async_trait::async_trait;
 
 pub struct MultiProjectOrchestrator {}
 

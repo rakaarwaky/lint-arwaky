@@ -1,11 +1,11 @@
 // PURPOSE: MandatoryInheritanceChecker — IMandatoryInheritanceProtocol for AES014: enforce contract implementation (bidirectional)
+use once_cell::sync::Lazy;
+use regex::Regex;
 use shared::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::taxonomy_layer_vo::LayerNameVO;
-use once_cell::sync::Lazy;
-use regex::Regex;
 use std::path::Path;
 
 static TRAIT_RUST_RE: Lazy<Regex> = Lazy::new(|| {
@@ -47,7 +47,8 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
             .layers
             .get(&LayerNameVO::new("contract"))
             .map(|d| {
-                d.allowed_suffix
+                d.naming
+                    .allowed_suffix
                     .values()
                     .iter()
                     .map(|s| format!("_{}", s))
@@ -63,7 +64,7 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
             Some(def) => def,
             None => return,
         };
-        let implementer_suffixes = layer_def.allowed_suffix.values();
+        let implementer_suffixes = layer_def.naming.allowed_suffix.values();
         if implementer_suffixes.is_empty() {
             return;
         }

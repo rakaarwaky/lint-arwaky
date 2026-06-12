@@ -1,10 +1,10 @@
 // PURPOSE: CodeMetricAnalyzer — capabilities implementation for complexity, duplication, and quality trends analysis
+use chrono;
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
 use shared::output_report::taxonomy_severity_vo::Severity;
 use std::process::ExitCode;
 use std::sync::Arc;
-use chrono;
 
 pub struct CodeMetricAnalyzer {
     resolver: Arc<dyn ITargetResolverProtocol>,

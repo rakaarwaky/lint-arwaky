@@ -1,6 +1,6 @@
 // PURPOSE: TransportContainer — wiring for cli-transport feature (root layer, wiring only)
-use std::sync::Arc;
 use shared::cli_transport::contract_executor_port::ICommandExecutorPort;
+use std::sync::Arc;
 
 pub struct TransportContainer {
     executor: Arc<dyn ICommandExecutorPort>,
@@ -26,4 +26,3 @@ impl Default for TransportContainer {
         Self::new()
     }
 }
-

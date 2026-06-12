@@ -53,7 +53,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
             Err(_) => return,
         };
 
-        if def.min_lines.value > 0 && count < def.min_lines.value {
+        if def.code_analysis.min_lines.value > 0 && count < def.code_analysis.min_lines.value {
             violations.push(LintResult::new_arch(
                 file,
                 0,
@@ -62,12 +62,12 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 format!(
                     "{} (min: {}).",
                     AesViolation::FileTooShort { reason: None },
-                    def.min_lines.value
+                    def.code_analysis.min_lines.value
                 ),
             ));
         }
 
-        if def.max_lines.value > 0 && count > def.max_lines.value {
+        if def.code_analysis.max_lines.value > 0 && count > def.code_analysis.max_lines.value {
             violations.push(LintResult::new_arch(
                 file,
                 0,
@@ -76,7 +76,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 format!(
                     "{} (max: {}).",
                     AesViolation::FileTooLarge { reason: None },
-                    def.max_lines.value
+                    def.code_analysis.max_lines.value
                 ),
             ));
         }

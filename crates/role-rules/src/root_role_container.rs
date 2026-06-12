@@ -9,7 +9,8 @@ pub struct RoleContainer {
 
 impl RoleContainer {
     pub fn new() -> Self {
-        let aggregate: Arc<dyn IRoleAggregate> = Arc::new(crate::agent_role_container::RoleAggregateImpl::new());
+        let aggregate: Arc<dyn IRoleAggregate> =
+            Arc::new(crate::agent_role_container::RoleAggregateImpl::new());
         Self { aggregate }
     }
 
@@ -18,11 +19,9 @@ impl RoleContainer {
     }
 
     pub fn orchestrator(&self) -> Arc<dyn IRoleRunnerAggregate> {
-        Arc::new(
-            crate::agent_role_orchestrator::RoleOrchestrator::new(
-                self.aggregate.clone(),
-            ),
-        )
+        Arc::new(crate::agent_role_orchestrator::RoleOrchestrator::new(
+            self.aggregate.clone(),
+        ))
     }
 }
 

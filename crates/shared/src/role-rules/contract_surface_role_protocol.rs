@@ -1,5 +1,5 @@
 // PURPOSE: ISurfaceRoleChecker — port trait for AES0306: smart, utility, and passive surface role checks
-use crate::config_system::taxonomy_source_vo::SourceContentVO;
+use crate::common::taxonomy_source_vo::SourceContentVO;
 use crate::output_report::taxonomy_result_vo::LintResult;
 
 pub trait ISurfaceRoleChecker: Send + Sync {

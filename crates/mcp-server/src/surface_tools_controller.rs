@@ -1,8 +1,8 @@
 // PURPOSE: ToolsController — MCP surface for tool listing and execution
 
+use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use shared::cli_commands::contract_dev_aggregate::DevCommandsAggregate;
 use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
-use di_containers::contract_service_aggregate::ServiceContainerAggregate;
 use shared::taxonomy_common_vo::LineNumber;
 use std::sync::Arc;
 

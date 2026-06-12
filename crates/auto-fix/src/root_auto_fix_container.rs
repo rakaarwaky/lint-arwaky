@@ -14,13 +14,12 @@ impl AutoFixContainer {
     }
 
     pub fn orchestrator(&self, dry_run: bool) -> Arc<dyn LintFixOrchestratorAggregate> {
-        let fix_protocol =
-            crate::capabilities_fix_processor::LintFixProcessor::with_dry_run(
-                dry_run,
-                self.arch_linter.clone(),
-            );
-        Arc::new(
-            crate::agent_fix_orchestrator::FixOrchestrator::new(Arc::new(fix_protocol)),
-        )
+        let fix_protocol = crate::capabilities_fix_processor::LintFixProcessor::with_dry_run(
+            dry_run,
+            self.arch_linter.clone(),
+        );
+        Arc::new(crate::agent_fix_orchestrator::FixOrchestrator::new(
+            Arc::new(fix_protocol),
+        ))
     }
 }
