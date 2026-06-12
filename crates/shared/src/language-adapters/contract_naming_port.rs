@@ -1,6 +1,5 @@
-// PURPOSE: INamingProviderPort — port trait for retrieving naming convention variants for a symbol
-use crate::common::taxonomy_name_vo::NameVariants;
-use crate::common::taxonomy_name_vo::SymbolName;
+// PURPOSE: INamingProviderPort — port for symbol naming and variant generation
+use crate::taxonomy_name_vo::{NameVariants, SymbolName};
 
 pub trait INamingProviderPort: Send + Sync {
     fn get_variants(&self, name: &SymbolName) -> NameVariants;
