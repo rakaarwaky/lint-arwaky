@@ -2,8 +2,8 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use code_analysis::lint_path;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 pub struct GitCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,

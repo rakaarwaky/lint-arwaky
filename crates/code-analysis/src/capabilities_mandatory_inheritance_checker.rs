@@ -148,9 +148,25 @@ impl IMandatoryInheritanceProtocol for MandatoryInheritanceChecker {
             }
         }
 
-        let has_impl = imported
-            .iter()
-            .any(|t| content.contains(&format!("impl {} for ", t)));
+        let has_impl = imported.iter().any(|t| {
+            let struct_names = extract_rust_struct_names(content);
+            if struct_names.is_empty() {
+                false
+            } else {
+                struct_names.iter().any(|s| {
+                    let pattern = format!(
+                        r"(?m)^[ \t]*impl\b(?:[^{{]*\b{}\b[^{{]*)?\bfor\b[ \t]+{}\b",
+                        regex::escape(t),
+                        regex::escape(s)
+                    );
+                    if let Ok(re) = Regex::new(&pattern) {
+                        re.is_match(content)
+                    } else {
+                        false
+                    }
+                })
+            }
+        });
         let has_python_impl = imported.iter().any(|t| {
             let pattern = format!("({})", t);
             content.lines().any(|line| {
@@ -322,3 +338,33 @@ fn extract_trait_name(content: &str) -> Option<String> {
     None
 }
 
+fn extract_rust_struct_names(content: &str) -> Vec<String> {
+    let mut names = Vec::new();
+    for line in content.lines() {
+        let t = line.trim();
+        // Ignore lines that are comments
+        if t.starts_with("//") || t.starts_with("/*") || t.starts_with("*") {
+            continue;
+        }
+        // Match `struct Name` or `pub struct Name` or `pub(crate) struct Name`
+        let parts: Vec<&str> = t.split_whitespace().collect();
+        let struct_idx = parts.iter().position(|&w| w == "struct");
+        if let Some(idx) = struct_idx {
+            if idx + 1 < parts.len() {
+                let name_part = parts[idx + 1];
+                let name = name_part
+                    .split('<')
+                    .next()
+                    .unwrap_or("")
+                    .trim_end_matches(';')
+                    .trim_end_matches('{')
+                    .trim_end_matches('(')
+                    .trim();
+                if !name.is_empty() && name.chars().next().unwrap_or(' ').is_uppercase() {
+                    names.push(name.to_string());
+                }
+            }
+        }
+    }
+    names
+}

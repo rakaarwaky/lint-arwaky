@@ -4,9 +4,8 @@ use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use code_analysis::{compute_score, lint_path, resolve_target};
-
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 pub struct WatchdogBridge {}
 

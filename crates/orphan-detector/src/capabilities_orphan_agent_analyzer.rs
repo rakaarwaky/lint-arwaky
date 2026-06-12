@@ -144,10 +144,6 @@ pub fn check_agent_orphan(
 ) {
     let result = is_agent_orphan_raw(&FilePath::new(fp.to_string()).unwrap_or_default(), files);
     if result.is_orphan {
-        violations.push(crate::mk_orphan_result(
-            fp,
-            &result.reason,
-            result.severity,
-        ));
+        violations.push(crate::mk_orphan_result(fp, &result.reason, result.severity));
     }
 }

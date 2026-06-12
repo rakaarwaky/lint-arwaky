@@ -207,7 +207,7 @@ impl BarrelImportResolver {
             }) {
                 return true;
             }
-            // Also check direct contains (legacy fallback)
+            // Also check direct contains fallback.
             if let Ok(c) = std::fs::read_to_string(cf) {
                 if c.contains(&target_stem) {
                     return true;

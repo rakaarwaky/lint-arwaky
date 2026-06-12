@@ -179,10 +179,6 @@ pub fn check_surfaces_orphan(
         &all_files,
     );
     if result.is_orphan {
-        violations.push(crate::mk_orphan_result(
-            fp,
-            &result.reason,
-            result.severity,
-        ));
+        violations.push(crate::mk_orphan_result(fp, &result.reason, result.severity));
     }
 }

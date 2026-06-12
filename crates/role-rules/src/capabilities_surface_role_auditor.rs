@@ -83,9 +83,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES0306",
                 Severity::HIGH,
-                AesViolation::SurfaceRoleViolation {
-                    reason: None,
-                },
+                AesViolation::SurfaceRoleViolation { reason: None },
             ));
         }
     }

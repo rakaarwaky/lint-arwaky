@@ -74,7 +74,8 @@ impl LayerDetectionAnalyzer {
                                 rule.code_analysis.mandatory_class_definition.clone();
                         }
                         if !rule.code_analysis.forbidden_inheritance.values.is_empty() {
-                            ldef.code_analysis.forbidden_inheritance = rule.code_analysis.forbidden_inheritance.clone();
+                            ldef.code_analysis.forbidden_inheritance =
+                                rule.code_analysis.forbidden_inheritance.clone();
                         }
                     }
                 }

@@ -43,13 +43,6 @@ pub trait ILocalArchImportProtocol: Send + Sync {
         root_dir: &FilePath,
         results: &mut LintResultList,
     ) -> impl std::future::Future<Output = ()> + Send;
-    fn check_legacy_import_rules(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) -> impl std::future::Future<Output = ()> + Send;
 }
 
 pub trait ILocalCapabilitiesRoleChecker: Send + Sync {

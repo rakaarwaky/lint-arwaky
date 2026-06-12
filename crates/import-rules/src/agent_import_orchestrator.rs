@@ -79,8 +79,8 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         self.forbidden
             .check_forbidden_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)
             .await;
-        self.forbidden
-            .check_legacy_import_rules(self.analyzer.as_ref(), &files, &root_dir, &mut results)
+        self.intent
+            .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)
             .await;
         self.intent
             .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)

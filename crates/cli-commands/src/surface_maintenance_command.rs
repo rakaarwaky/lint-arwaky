@@ -1,8 +1,8 @@
 // PURPOSE: MaintenanceCommandsSurface — CLI surface for maintenance (stats, clean, update, doctor, cancel)
 use std::process::ExitCode;
 
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use code_analysis::resolve_target;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 pub struct MaintenanceCommandsSurface {
     pub container: Option<Box<dyn ServiceContainerAggregate>>,

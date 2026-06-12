@@ -11,10 +11,7 @@ pub trait ServiceContainerAggregate: Send + Sync {
 
     fn get_architecture_linter(&self) -> Option<Arc<dyn IArchLintProtocol>>;
 
-    fn get_fix_orchestrator(
-        &self,
-        dry_run: bool,
-    ) -> Option<Arc<dyn LintFixOrchestratorAggregate>>;
+    fn get_fix_orchestrator(&self, dry_run: bool) -> Option<Arc<dyn LintFixOrchestratorAggregate>>;
 
     fn get_job_registry(&self) -> Option<Arc<dyn IJobRegistryPort>>;
 }

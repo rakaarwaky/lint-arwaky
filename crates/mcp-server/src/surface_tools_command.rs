@@ -1,7 +1,7 @@
 // PURPOSE: handle_tools — MCP surface for listing available tools/capabilities
 
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use serde_json::{json, Value};
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use std::path::Path;
 use std::sync::Arc;
 

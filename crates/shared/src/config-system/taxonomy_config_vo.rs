@@ -9,7 +9,6 @@ use crate::common::taxonomy_definition_vo::NamingConfig;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::import_rules::taxonomy_import_rule_vo::LegacyLayerRuleList;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::collections::HashMap;
 
@@ -44,7 +43,6 @@ pub struct ArchitectureConfig {
     pub enabled: BooleanVO,
     pub layers: std::collections::HashMap<LayerNameVO, LayerDefinition>,
     pub rules: Vec<ArchitectureRule>,
-    pub governance_rules: LegacyLayerRuleList,
     pub naming: NamingConfig,
     pub ignored_paths: FilePathList,
     pub mandatory_class_definition: BooleanVO,
@@ -55,7 +53,6 @@ impl ArchitectureConfig {
         enabled: BooleanVO,
         layers: std::collections::HashMap<LayerNameVO, LayerDefinition>,
         rules: Vec<ArchitectureRule>,
-        governance_rules: LegacyLayerRuleList,
         naming: NamingConfig,
         ignored_paths: FilePathList,
         mandatory_class_definition: BooleanVO,
@@ -64,7 +61,6 @@ impl ArchitectureConfig {
             enabled,
             layers,
             rules,
-            governance_rules,
             naming,
             ignored_paths,
             mandatory_class_definition,
@@ -78,7 +74,6 @@ impl Default for ArchitectureConfig {
             enabled: BooleanVO::new(true),
             layers: HashMap::new(),
             rules: Vec::new(),
-            governance_rules: LegacyLayerRuleList::new(vec![]),
             naming: NamingConfig::new(Count::new(2)),
             ignored_paths: FilePathList { values: vec![] },
             mandatory_class_definition: BooleanVO::new(false),
@@ -119,13 +114,9 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
                 }
             }
         }
-        // Convert governance_rules and ignored_paths from array to {values: [...]} format
-        // because the Rust struct expects objects with a "values" field
-        for key in &["governance_rules", "ignored_paths"] {
-            if let Some(arr) = json.get(*key).and_then(|v| v.as_array()) {
-                let wrapped = serde_json::json!({"values": arr});
-                json[*key] = wrapped;
-            }
+        // Convert ignored_paths from array to {values: [...]} format because the Rust struct expects an object with a "values" field.
+        if let Some(arr) = json.get("ignored_paths").and_then(|v| v.as_array()) {
+            json["ignored_paths"] = serde_json::json!({"values": arr});
         }
         if let Some(layers_obj) = json.get_mut("layers") {
             if let Some(obj) = layers_obj.as_object_mut() {

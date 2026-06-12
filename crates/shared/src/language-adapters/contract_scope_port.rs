@@ -1,11 +1,11 @@
 // PURPOSE: IJavascriptScopePort, IJsTracerPort — ports for JavaScript scope detection and tracing
-use async_trait::async_trait;
 use crate::language_adapters::taxonomy_semantic_error::SemanticError;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::taxonomy_common_vo::{LineContentList, LineNumber};
+use crate::taxonomy_layer_vo::LineContentVO;
 use crate::taxonomy_lint_vo::ScopeRef;
 use crate::taxonomy_name_vo::SymbolName;
-use crate::taxonomy_layer_vo::LineContentVO;
-use crate::taxonomy_common_vo::{LineNumber, LineContentList};
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use async_trait::async_trait;
 
 #[async_trait]
 pub trait IJavascriptScopePort: Send + Sync {

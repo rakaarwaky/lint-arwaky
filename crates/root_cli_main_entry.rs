@@ -19,7 +19,7 @@ use cli_commands::surface_report_command;
 use cli_commands::surface_setup_command;
 use cli_commands::surface_watch_command;
 use code_analysis::agent_checking_orchestrator::init_global_checker;
-use code_analysis::{has_critical, lint_path, ProjectTargetResolver, CodeMetricAnalyzer};
+use code_analysis::{has_critical, lint_path, CodeMetricAnalyzer, ProjectTargetResolver};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 

@@ -172,11 +172,4 @@ pub trait IArchImportProtocol: IArchRuleProtocol + Send + Sync {
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
-    async fn check_legacy_import_rules(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    );
 }

@@ -601,13 +601,4 @@ impl shared::import_rules::contract_rule_protocol::IArchImportProtocol for Dummy
         _results: &mut LintResultList,
     ) {
     }
-
-    async fn check_legacy_import_rules(
-        &self,
-        _analyzer: &dyn IAnalyzer,
-        _files: &FilePathList,
-        _root_dir: &FilePath,
-        _results: &mut LintResultList,
-    ) {
-    }
 }

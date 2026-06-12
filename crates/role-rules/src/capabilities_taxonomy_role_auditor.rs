@@ -91,10 +91,6 @@ impl TaxonomyRoleChecker {
         };
         let is_rs = file.ends_with(".rs");
         let is_py = file.ends_with(".py");
-        let is_js = file.ends_with(".ts")
-            || file.ends_with(".tsx")
-            || file.ends_with(".js")
-            || file.ends_with(".jsx");
 
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();

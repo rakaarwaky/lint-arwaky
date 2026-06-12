@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use shared::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 /// COMMAND_CATALOG — mirrors the Python dict exactly.
 pub struct CommandEntry {

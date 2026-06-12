@@ -1,21 +1,13 @@
-// PURPOSE: ValidationUtil — helper functions for validating JSON-RPC request parameters
-use shared::language_adapters::taxonomy_adapter_error::ValidationError;
-use shared::mcp_server::contract_server_port::IMcpServerPort;
-use shared::mcp_server::taxonomy_server_constant::MAX_PATH_DEPTH;
-use shared::mcp_server::taxonomy_server_constant::MAX_PATH_LENGTH;
-use shared::mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;
-use shared::taxonomy_common_error::Constraint;
-use shared::taxonomy_common_error::ErrorMessage;
-use shared::taxonomy_common_error::FieldName;
-use shared::taxonomy_common_vo::BooleanVO;
-use shared::taxonomy_common_vo::LineNumber;
+// PURPOSE: ValidationUtility — helper functions for validating JSON-RPC request parameters
+use crate::common::taxonomy_common_error::Constraint;
+use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_common_error::FieldName;
+use crate::common::taxonomy_common_vo::BooleanVO;
+use crate::language_adapters::taxonomy_adapter_error::ValidationError;
+use crate::mcp_server::taxonomy_server_constant::MAX_PATH_DEPTH;
+use crate::mcp_server::taxonomy_server_constant::MAX_PATH_LENGTH;
+use crate::mcp_server::taxonomy_server_constant::MAX_STRING_LENGTH;
 use std::path::Path;
-
-/// Satisfy AES002 mandatory imports + AES023 unused import check
-fn _use_mandatory_imports() {
-    let _ = std::marker::PhantomData::<dyn IMcpServerPort>;
-    let _ = LineNumber::new(1);
-}
 
 #[derive(Debug, Clone)]
 pub struct ValidationResult {

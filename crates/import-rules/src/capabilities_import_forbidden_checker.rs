@@ -228,25 +228,4 @@ impl IArchImportProtocol for ArchImportForbiddenChecker {
             self.check_scope_forbidden_imports(&f_str, analyzer.config(), &mut results.values);
         }
     }
-
-    async fn check_legacy_import_rules(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
-        for f in &files.values {
-            let f_str = f.to_string();
-            if let Some(layer) = analyzer.detect_layer(f, root_dir) {
-                let layer_str = layer.value();
-                self.check_legacy_import_rules(
-                    &f_str,
-                    layer_str,
-                    analyzer.config(),
-                    &mut results.values,
-                );
-            }
-        }
-    }
 }

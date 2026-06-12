@@ -26,6 +26,7 @@ use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 
 /// CheckerContainer holds all the protocol implementations for AES checking
 pub struct CheckerContainer {
+    analyzer: Arc<dyn IAnalyzer>,
     bypass_checker: Arc<dyn IBypassCheckerProtocol>,
     inline_unused_checker: Arc<dyn IInlineUnusedProtocol>,
     dead_inheritance_checker: Arc<dyn IDeadInheritanceProtocol>,
@@ -45,10 +46,9 @@ pub struct CheckerContainer {
 }
 
 impl CheckerContainer {
-    pub fn new() -> Self {
-        // These will be initialized by init_global_checker
-        // For now, panic if accessed before initialization
+    pub fn new(analyzer: Arc<dyn IAnalyzer>) -> Self {
         Self {
+            analyzer,
             bypass_checker: Arc::new(BypassChecker {}),
             inline_unused_checker: Arc::new(InlineUnusedChecker {}),
             dead_inheritance_checker: Arc::new(DeadInheritanceChecker {}),
@@ -148,10 +148,10 @@ impl CheckerContainer {
     }
 
     pub fn analyzer(&self) -> &Arc<dyn IAnalyzer> {
-        panic!("analyzer not initialized")
+        &self.analyzer
     }
 
-    pub fn as_ref(&self) -> &dyn CheckerContainerRef {
+    pub fn as_checker_ref(&self) -> &dyn CheckerContainerRef {
         self
     }
 }
@@ -250,13 +250,6 @@ pub trait IImportIntentProtocol: Send + Sync {
 
 pub trait IImportForbiddenProtocol: Send + Sync {
     fn check_forbidden_imports(
-        &self,
-        analyzer: &Arc<dyn IAnalyzer>,
-        files: &FilePathList,
-        root: &FilePath,
-        violations: &mut LintResultList,
-    );
-    fn check_legacy_import_rules(
         &self,
         analyzer: &Arc<dyn IAnalyzer>,
         files: &FilePathList,
@@ -387,14 +380,6 @@ impl IImportForbiddenProtocol for PlaceholderImportForbiddenChecker {
         _violations: &mut LintResultList,
     ) {
     }
-    fn check_legacy_import_rules(
-        &self,
-        _analyzer: &Arc<dyn IAnalyzer>,
-        _files: &FilePathList,
-        _root: &FilePath,
-        _violations: &mut LintResultList,
-    ) {
-    }
 }
 
 struct PlaceholderSurfaceChecker;
@@ -474,6 +459,40 @@ impl CheckerContainerRef for CheckerContainer {
 
 impl Default for CheckerContainer {
     fn default() -> Self {
-        Self::new()
+        Self::new(Arc::new(PlaceholderAnalyzer))
+    }
+}
+
+struct PlaceholderAnalyzer;
+impl IAnalyzer for PlaceholderAnalyzer {
+    fn config(&self) -> &ArchitectureConfig {
+        static CONFIG: std::sync::OnceLock<ArchitectureConfig> = std::sync::OnceLock::new();
+        CONFIG.get_or_init(ArchitectureConfig::default)
+    }
+    fn layer_map(&self) -> &shared::taxonomy_definition_vo::LayerMapVO {
+        static MAP: std::sync::OnceLock<shared::taxonomy_definition_vo::LayerMapVO> =
+            std::sync::OnceLock::new();
+        MAP.get_or_init(|| {
+            shared::taxonomy_definition_vo::LayerMapVO::new(std::collections::HashMap::new())
+        })
+    }
+    fn fs(&self) -> &dyn shared::file_system::contract_system_port::IFileSystemPort {
+        panic!("fs not initialized")
+    }
+    fn parser(&self) -> &dyn shared::source_parsing::contract_parser_port::ISourceParserPort {
+        panic!("parser not initialized")
+    }
+    fn detect_layer(
+        &self,
+        _f: &FilePath,
+        _root_dir: &FilePath,
+    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
+        None
+    }
+    fn detect_module_layer(
+        &self,
+        _module_path: &FilePath,
+    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
+        None
     }
 }

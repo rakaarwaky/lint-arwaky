@@ -1,8 +1,8 @@
 // PURPOSE: DevCommandsSurface — CLI surface for developer operations (diff, suggest, ignore, config, export, init, hooks)
 use std::process::ExitCode;
 
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use code_analysis::{compute_score, has_critical, lint_path, resolve_target};
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use shared::output_report::taxonomy_severity_vo::Severity;
 
 pub struct DevCommandsSurface {

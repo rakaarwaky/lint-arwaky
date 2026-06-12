@@ -19,4 +19,3 @@ pub mod taxonomy_code_analysis_rule_vo;
 pub mod taxonomy_governance_entity;
 pub mod taxonomy_import_source_vo;
 pub mod taxonomy_operation_error;
-

@@ -1,8 +1,8 @@
 // PURPOSE: Command: CLI surface for check — runs lint_path and resolves violations for a target path
 use std::sync::Arc;
 
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use futures::future;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use std::process::ExitCode;
 
 use code_analysis::{has_critical, lint_path, resolve_target};

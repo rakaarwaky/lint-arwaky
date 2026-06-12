@@ -204,10 +204,9 @@ impl LintCheckingOrchestrator {
             }
 
             // Layer-dependent inline checks — call protocols directly
-            // check_mandatory_inheritance disabled per user request (primitif info cukup di contract)
-            // self.container
-            //     .mandatory_inheritance_checker()
-            //     .check_mandatory_inheritance(file, &c, &layer, config, &mut violations);
+            self.container
+                .mandatory_inheritance_checker()
+                .check_mandatory_inheritance(file, &c, layer.value(), config, &mut violations);
             self.container
                 .mandatory_inheritance_checker()
                 .check_contract_implementation(file, &c, files, &mut violations);
@@ -235,7 +234,7 @@ impl LintCheckingOrchestrator {
                 .check_capability_routing(&source_vo, &layer, &mut violations);
             self.container
                 .line_checker()
-                .check_line_counts(file, Some(&def), &mut violations);
+                .check_line_counts(file, Some(def), &mut violations);
 
             // Taxonomy & contract role checks — call protocols directly
             self.container
@@ -252,10 +251,10 @@ impl LintCheckingOrchestrator {
                 .check_constant(&source_vo, &mut violations);
             self.container
                 .contract_checker()
-                .check_aggregate(&source_vo, &def, &mut violations);
+                .check_aggregate(&source_vo, def, &mut violations);
             self.container
                 .class_checker()
-                .check_mandatory_class_definition(file, Some(&def), &mut violations);
+                .check_mandatory_class_definition(file, Some(def), &mut violations);
         }
 
         let mut rl = LintResultList::new(violations);
@@ -290,14 +289,6 @@ impl LintCheckingOrchestrator {
         self.container
             .import_forbidden_checker()
             .check_forbidden_imports(self.container.analyzer(), &files_list_vo, &root_fp, &mut rl);
-        self.container
-            .import_forbidden_checker()
-            .check_legacy_import_rules(
-                self.container.analyzer(),
-                &files_list_vo,
-                &root_fp,
-                &mut rl,
-            );
 
         // Cycle detection
         self.container
@@ -317,7 +308,7 @@ impl LintCheckingOrchestrator {
 
         // Orphan check (AES030) - enabled in config
         let orphan_agg = self.container.orphan_aggregate();
-        let mut orphan_results = orphan_agg.check_orphans(self.container.as_ref(), files, root_dir);
+        let mut orphan_results = orphan_agg.check_orphans(self.container.as_checker_ref(), files, root_dir);
         rl.values.append(&mut orphan_results);
 
         // Wire role orchestrator for agent and surface role checks

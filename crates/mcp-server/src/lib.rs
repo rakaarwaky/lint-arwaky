@@ -10,8 +10,7 @@ pub mod infrastructure_server_lifespan;
 pub use infrastructure_server_lifespan::WrapperContext;
 pub mod infrastructure_server_schemas;
 pub use infrastructure_server_schemas::{build_tool_schemas, ToolSchema};
-pub mod infrastructure_server_validation_util;
-pub use infrastructure_server_validation_util::{
+pub use shared::mcp_server::taxonomy_server_validation_utility::{
     validate_path, validate_string_input, ValidationResult,
 };
 pub mod infrastructure_server_wrapper;

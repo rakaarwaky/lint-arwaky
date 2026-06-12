@@ -3,9 +3,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::surface_output_controller::{print_json, print_junit, print_sarif};
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use code_analysis::{has_critical, lint_path, resolve_target};
-
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 pub struct ReportCommandsSurface {
     pub container: Option<Arc<dyn ServiceContainerAggregate>>,

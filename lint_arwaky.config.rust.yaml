@@ -75,6 +75,8 @@ architecture:
               "event",
               "constant",
               "constants",
+              "utility", 
+              "helper",
               "port",
               "protocol",
               "aggregate",
@@ -95,7 +97,6 @@ architecture:
               "variants",
               "detector",
               "patterns",
-              "util",
               "system",
               "repository",
               "cache",
@@ -128,6 +129,8 @@ architecture:
               "event",
               "constant",
               "constants",
+              "utility", 
+              "helper",
               "port",
               "protocol",
               "aggregate",
@@ -375,6 +378,21 @@ architecture:
     AES0302:
       enabled: true
       scope: ["contract(aggregate)", "contract(port|protocol)"]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "cli_main_entry.rs",
+          "mcp_main_entry.rs",
+          "tui_main_entry.rs",
+        ]
+
+    AES0303:
+      enabled: true
+      scope: ["capabilities"]
+      max_functions: 30
+      max_impl: 5
       exceptions:
         [
           "main.rs",

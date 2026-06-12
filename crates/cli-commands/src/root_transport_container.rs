@@ -9,11 +9,9 @@ pub struct TransportContainer {
 impl TransportContainer {
     pub fn new() -> Self {
         Self {
-            executor: Arc::new(
-                crate::infrastructure_transport_client::StdioClient::new(
-                    std::time::Duration::from_secs(60),
-                ),
-            ),
+            executor: Arc::new(crate::infrastructure_transport_client::StdioClient::new(
+                std::time::Duration::from_secs(60),
+            )),
         }
     }
 

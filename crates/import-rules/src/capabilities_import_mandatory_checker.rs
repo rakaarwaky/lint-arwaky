@@ -24,7 +24,7 @@ impl ArchImportMandatoryChecker {
         Self { parser }
     }
 
-    /// Check mandatory imports from layer definition (legacy path).
+    /// Check mandatory imports from layer definition.
     pub fn check_mandatory_imports(
         &self,
         file: &str,
@@ -186,15 +186,6 @@ impl IArchImportProtocol for ArchImportMandatoryChecker {
     }
 
     async fn check_forbidden_imports(
-        &self,
-        _analyzer: &dyn IAnalyzer,
-        _files: &FilePathList,
-        _root_dir: &FilePath,
-        _results: &mut LintResultList,
-    ) {
-    }
-
-    async fn check_legacy_import_rules(
         &self,
         _analyzer: &dyn IAnalyzer,
         _files: &FilePathList,
