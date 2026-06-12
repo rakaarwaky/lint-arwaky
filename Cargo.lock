@@ -608,36 +608,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "di_containers-lint-arwaky"
-version = "1.10.11"
-dependencies = [
- "auto_fix-lint-arwaky",
- "cli_commands-lint-arwaky",
- "code_analysis-lint-arwaky",
- "config_system-lint-arwaky",
- "file_system-lint-arwaky",
- "file_watch-lint-arwaky",
- "git_hooks-lint-arwaky",
- "import_rules-lint-arwaky",
- "language_adapters-lint-arwaky",
- "lifecycle_state-lint-arwaky",
- "mcp_server-lint-arwaky",
- "metrics_service-lint-arwaky",
- "multi_project-lint-arwaky",
- "naming_rules-lint-arwaky",
- "orphan_detector-lint-arwaky",
- "output_report-lint-arwaky",
- "pipeline_jobs-lint-arwaky",
- "plugin_system-lint-arwaky",
- "project_setup-lint-arwaky",
- "role_rules-lint-arwaky",
- "serde",
- "serde_json",
- "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
-]
-
-[[package]]
 name = "dialoguer"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -50,3 +50,6 @@ pub mod project_setup;
 pub mod role_rules;
 #[path = "source-parsing/mod.rs"]
 pub mod source_parsing;
+
+#[path = "di-containers/mod.rs"]
+pub mod di_containers;

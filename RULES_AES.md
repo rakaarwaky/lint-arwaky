@@ -22,7 +22,7 @@
 | AES0301 | Taxonomy Role          | HIGH       | Role Violations    | Constant purity violation or primitive usage in domain models.                             |
 | AES0302 | Contract Role          | HIGH       | Role Violations    | Contract trait/method must use taxonomy VO/constant types, not primitives.                 |
 | AES0305 | Agent Role             | HIGH       | Role Violations    | non-stateless, low-level imports, or `any` type.                                           |
-| AES0306 | Surface Role           | HIGH       | Role Violations    | Surface file >15 functions, contains domain logic, or violates hierarchy.                  |
+| AES0306 | Surface Role           | HIGH       | Role Violations    | Surface file >15 functions or contains domain logic.                                       |
 
 ---
 
