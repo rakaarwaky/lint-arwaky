@@ -118,7 +118,7 @@ impl SurfaceRoleChecker {
                 None => continue,
             };
 
-            if definition.no_domain_logic.value {
+            if definition.role.no_domain_logic.value {
                 let basename = std::path::Path::new(&f.value)
                     .file_stem()
                     .and_then(|s| s.to_str())

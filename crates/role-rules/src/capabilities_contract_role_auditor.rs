@@ -46,7 +46,7 @@ impl ContractRoleChecker {
         def: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
-        if def.forbidden_inheritance.values.is_empty() {
+        if def.role.forbidden_inheritance.values.is_empty() {
             return;
         }
         let content = source.content.value();
@@ -60,7 +60,7 @@ impl ContractRoleChecker {
             if !is_import {
                 continue;
             }
-            for pattern in &def.forbidden_inheritance.values {
+            for pattern in &def.role.forbidden_inheritance.values {
                 let (layer, suffixes) = Self::resolve_scope(pattern);
                 let lower = t.to_lowercase();
                 let layer_match = lower.contains(&format!("{}::", layer))

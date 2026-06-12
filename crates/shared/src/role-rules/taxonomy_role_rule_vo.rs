@@ -1,5 +1,5 @@
 // PURPOSE: RoleRuleVO — value object containing role compliance rule definitions
-use crate::common::taxonomy_common_vo::BooleanVO;
+use crate::common::taxonomy_common_vo::{BooleanVO, PatternList};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -32,4 +32,6 @@ pub struct RoleRuleVO {
     pub lifecycle_tracking_only: BooleanVO,
     #[serde(default)]
     pub no_primitives: BooleanVO,
+    #[serde(default)]
+    pub forbidden_inheritance: PatternList,
 }

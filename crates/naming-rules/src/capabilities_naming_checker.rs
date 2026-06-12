@@ -168,7 +168,7 @@ impl ArchNamingChecker {
 
         // AES012: Forbidden suffix check
         if let Some(ref suf) = suffix {
-            if def.forbidden_suffix.values.contains(suf) {
+            if def.naming.forbidden_suffix.values.contains(suf) {
                 violations.push(Self::make_result(
                     file,
                     "AES012",
@@ -180,13 +180,13 @@ impl ArchNamingChecker {
         }
 
         // AES012: Strict suffix policy check
-        if def.suffix_policy.value == "strict" {
+        if def.naming.suffix_policy.value == "strict" {
             let valid = suffix
                 .as_ref()
-                .map(|s| def.allowed_suffix.values.contains(s))
+                .map(|s| def.naming.allowed_suffix.values.contains(s))
                 .unwrap_or(false);
             if !valid {
-                let allowed_list = def.allowed_suffix.values.join(", ");
+                let allowed_list = def.naming.allowed_suffix.values.join(", ");
                 if _layer_name.as_ref().map(|l| l.as_str()) == Some("contract") {
                     violations.push(Self::make_result(
                         file,

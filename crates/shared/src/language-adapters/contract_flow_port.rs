@@ -13,4 +13,6 @@ pub trait IJavascriptFlowPort: Send + Sync {
         var_name: &SymbolName,
         start_line: Option<LineNumber>,
     ) -> Result<DataFlowList, SemanticError>;
+
+    async fn trace_flow(&self, path: &FilePath) -> Result<DataFlowList, SemanticError>;
 }
