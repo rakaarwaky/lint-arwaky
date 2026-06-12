@@ -76,10 +76,10 @@ crates/
   metrics-service/      — Metrics provider
   cli-commands/         — CLI surfaces (_command) + transport
   mcp-server/           — MCP server surfaces
-  composition_root.rs   — Root composition (root layer)
-  cli_main_entry.rs     — CLI binary entry (root_entry)
-  mcp_main_entry.rs     — MCP binary entry (root_entry)
-  tui_main_entry.rs     — TUI binary entry (root_entry)
+  root_compsotion_container.rs — Root composition (root layer)
+  root_cli_main_entry.rs       — CLI binary entry (root_entry)
+  root_mcp_main_entry.rs       — MCP binary entry (root_entry)
+  root_tui_main_entry.rs       — TUI binary entry (root_entry)
 ```
 
 **Container Pattern**: Each feature crate owns its own `root_container.rs` at crate root. Containers wire `capabilities_*`, `infrastructure_*`, `agent_*` implementations behind `contract_*` traits. Agent layer contains ONLY orchestrators (`agent_*_orchestrator.rs`). Root layer contains containers and binary entries. **Folder structure ≠ layer assignment.**
@@ -99,7 +99,7 @@ lifecycle-state, metrics-service, pipeline-jobs
        │                         deps: shared ONLY
 cli-commands, mcp-server          (surface_*)
        ▲                         deps: all feature crates + shared
-composition_root (root_*)
+root_compsotion_container (root_*)
 ```
 
 Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
@@ -153,12 +153,12 @@ cargo run --bin lint-arwaky-cli -- check .
 #    Panggil tool cycles untuk file di tiap layer:
 #    - cycles crates/source-parsing/contract_parser_port.rs
 #    - cycles crates/naming-rules/contract_naming_runner_aggregate.rs
-#    - cycles crates/di-containers/contract_service_aggregate.rs
+#    - cycles crates/role-rules/src/role_container.rs
 
 # 3. Verify layer boundary — pastikan surface tidak import infra langsung
 #    Panggil tool path-in untuk file infrastructure:
 #    - path-in crates/language-adapters/infrastructure_js_naming.rs
-#    Harusnya di-import hanya oleh root/di-container files
+#    Harusnya di-import hanya oleh root/container files
 
 # 4. Orphan check — cari file yang tidak di-import siapa pun
 #    Panggil tool path-in untuk file yang mencurigakan:

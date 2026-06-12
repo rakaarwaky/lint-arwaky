@@ -72,7 +72,7 @@ Filename must follow pattern:`prefix_concept_suffix` or `prefix_concept1_concept
 - Maximum : Unlimited
 - Examples: `capabilities_user_checker.rs`, `infrastructure_db_adapter.py`
 
-**Exceptions:** `main.rs`, `lib.rs`, `mod.rs`, `cli_main_entry.rs`, `mcp_main_entry.rs`, `tui_main_entry.rs`, `__init__.py`, `index.ts`, `index.js`, barrel/entry files.
+**Exceptions:** `main.rs`, `lib.rs`, `mod.rs`, `root_cli_main_entry.rs`, `root_mcp_main_entry.rs`, `root_tui_main_entry.rs`, `root_compsotion_container.rs`, `__init__.py`, `index.ts`, `index.js`, barrel/entry files.
 
 ---
 

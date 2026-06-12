@@ -72,7 +72,7 @@ cargo build --release
 ### Verify installation
 
 ```bash
-lint-arwaky-cli version        # should print "Lint Arwaky v1.10.9 (AES Semantic Builder)"
+lint-arwaky-cli version        # should print "Lint Arwaky v1.10.11 (AES Semantic Builder)"
 lint-arwaky-cli setup doctor   # environment diagnostics
 ```
 
@@ -83,7 +83,7 @@ lint-arwaky-cli setup doctor   # environment diagnostics
 ### Lint a codebase
 
 ```bash
-# Full self-lint: AES architecture rules over src-rust/
+# Full self-lint: AES architecture rules over crates/
 lint-arwaky-cli check .
 
 # Git diff mode: only audit files changed since a base ref
@@ -115,7 +115,7 @@ lint-arwaky-cli export junit
 
 ```bash
 cargo run --bin lint-arwaky-cli -- check .
-# Scans src-rust/ under the same AES rules the project enforces on others.
+# Scans crates/ under the same AES rules the project enforces on others.
 ```
 
 ### Lint other repos
@@ -147,16 +147,15 @@ Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[
 ### Feature folders (vertical slicing)
 
 ```
-src-rust/
+crates/
   cli-commands/      import-rules/         role-rules/
-  cli-transport/     naming-rules/        orphan-detector/
-  config-system/     semantic-analysis/   primitive-checker/
-  pipeline-jobs/     file-watch/          lifecycle-state/
-  project-setup/     git-hooks/           language-adapters/
-  plugin-system/     multi-project/       di-containers/
-  output-report/     mcp-server/          file-system/
-  code-analysis/     source-parsing/      http-client/
-  shared-common/     metrics-service/
+  config-system/     naming-rules/         orphan-detector/
+  pipeline-jobs/     file-watch/           lifecycle-state/
+  project-setup/     git-hooks/            language-adapters/
+  plugin-system/     multi-project/        auto-fix/
+  output-report/     mcp-server/           file-system/
+  code-analysis/     source-parsing/       metrics-service/
+  shared/
 ```
 
 Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
@@ -183,7 +182,7 @@ The architecture compliance analyzer (`arch_compliance_analyzer.rs`) carries the
 
 ### Entry point
 
-The MCP server is bootstrapped by `src-rust/mcp_main_entry.rs`:
+The MCP server is bootstrapped by `crates/root_mcp_main_entry.rs`:
 
 ### MCP tools (5 tools)
 
@@ -222,7 +221,7 @@ lint-arwaky-cli setup mcp-config --client hermes
 
 ## CLI Commands Reference
 
-The CLI is implemented in `src-rust/surfaces/cli_core_command.rs` (with subcommands split across `cli_check_command.rs`, `cli_dev_command.rs`, `cli_setup_command.rs`, etc.). All commands are defined in `src-rust/taxonomy/command_catalog_constant.rs` (`COMMAND_CATALOG`).
+The CLI is implemented in `crates/cli-commands/src/surface_core_command.rs` (with subcommands split across `surface_check_command.rs`, `surface_dev_command.rs`, `surface_setup_command.rs`, etc.). All commands are defined in `crates/shared/src/cli-commands/taxonomy_catalog_constant.rs` (`COMMAND_CATALOG`).
 
 ### Core
 
@@ -269,11 +268,11 @@ The CLI is implemented in `src-rust/surfaces/cli_core_command.rs` (with subcomma
 | `lint-arwaky-cli adapters`                  | List active linter adapters                                  |
 | `lint-arwaky-cli config show`               | Show active configuration                                    |
 | `lint-arwaky-cli cancel <job_id>`           | Request cancellation of a running lint job                   |
-| `lint-arwaky-cli version`                   | Show version (`1.10.9`)                                    |
+| `lint-arwaky-cli version`                   | Show version (`1.10.11`)                                    |
 
 ---
 
-## Project Stats (v1.10.9)
+## Project Stats (v1.10.11)
 
 | Metric             | Value                                                                                               |
 | ------------------ | --------------------------------------------------------------------------------------------------- |
@@ -287,4 +286,4 @@ The CLI is implemented in `src-rust/surfaces/cli_core_command.rs` (with subcomma
 | MCP tools          | 5 (execute_command, list_commands, commands_schema, read_skill_context, health_check)               |
 | CLI subcommands    | 20+ across core/scans/setup/dev                                                                     |
 | Report formats     | `text`, `json`, `sarif` 2.1.0, `junit` XML                                                  |
-| Self-lint target   | `src-rust/` scanned under the same rules the project enforces                                     |
+| Self-lint target   | `crates/` scanned under the same rules the project enforces                                     |

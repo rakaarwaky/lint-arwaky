@@ -1,0 +1,25 @@
+{
+  "folders": [
+    {
+      "name": "Project Root (All)",
+      "path": ".."
+    }
+  ],
+  "settings": {
+    "rust-analyzer.linkedProjects": [
+      "../Cargo.toml"
+    ],
+    "files.exclude": {
+      "test-project-javascript": true,
+      "test-project-python": true,
+      "test-project-rust": true,
+      "Graph-It-Live-arwaky": true,
+      "dist": true,
+      "target": true,
+      ".git": true,
+      ".jj": true,
+      ".graph-it": true,
+      ".github": true
+    }
+  }
+}

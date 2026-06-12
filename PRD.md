@@ -58,25 +58,34 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 ## 5. Feature Requirements
 
-Requirements are organized by **dependency order** (Level 0 → Level 6). Each level builds upon the previous levels.
+Feature requirements are organized by **feature crates** (Cargo workspace members) representing self-contained vertical slices of functionality.
 
-**Layer convention:** Layer determined by file prefix (`taxonomy_`, `contract_`, `capabilities_`, `infrastructure_`, `agent_`, `surface_`), NOT by folder.
+**Vertical Slicing & Layer Boundary Rules**:
 
-### 5.1 Level 0: `shared` — Foundation (Zero Dependencies)
+1. **No Crate-Level Layer Restriction**: A feature crate is not restricted to a single layer. Instead, a single feature folder/crate can contain files from multiple layers internally as needed:
+   * `capabilities_` (business/domain logic of the feature)
+   * `infrastructure_` (external tool integrations, OS, file system, or protocol libraries)
+   * `agent_` (orchestration and coordination logic within the feature)
+   * `root_` (the crate's local root container, wiring implementations)
+2. **Layer Prefix Convention**: The layer of a file is strictly determined by its **file prefix** (`taxonomy_`, `contract_`, `capabilities_`, `infrastructure_`, `agent_`, `surface_`, `root_`), NOT by its folder location or crate.
+3. **No Direct Inter-Layer Imports**: `infrastructure_` and `capabilities_` layers must not import each other directly (enforced by import rules). Instead, they communicate via ports/protocols (`contract_`) or are coordinated by an `agent_` orchestrator.
+
+### 5.1 `shared` — Foundation
 
 **Depends on:** Nothing
 
-| ID     | Requirement                                                 | AES Codes |
-| ------ | ----------------------------------------------------------- | --------- |
-| FR-001 | All `taxonomy_*` VOs, entities, events, errors, constants | —        |
-| FR-002 | All `contract_*` ports, protocols, aggregates             | —        |
-| FR-003 | No dependencies on any feature crate                        | —        |
+Foundational domain component containing the core taxonomy and contract definitions of the entire system. It operates under a zero-dependency constraint (meaning it cannot import from any other workspace crate). It holds strictly declarative, primitive-level data and abstractions—such as domain Value Objects, common error entities, shared constants, generic helper utilities, and abstract contract ports—which serve as the universal vocabulary and interfaces implemented by feature crates.
 
-### 5.2 Level 1: `source-parsing` — Source Code Parsing
+| ID     | Requirement                                                                                         | AES Codes |
+| ------ | --------------------------------------------------------------------------------------------------- | --------- |
+| FR-001 | All `taxonomy_*` VOs, entities, events, errors, constants, utilities, and helpers across features | —        |
+| FR-002 | All `contract_*` ports, protocols, and aggregates across features                                 | —        |
+
+### 5.2 `source-parsing` — Source Code Parsing
 
 **Depends on:** `shared`
 
-Empirical parsing component responsible for extracting the structural features of source code across Rust, Python, and JavaScript/TypeScript. Its sole responsibility is to scan raw files and standardize metadata (imports, symbols, inheritance, control flow, paths) into clean, language-agnostic Value Objects defined in `shared`. It enforces a strict separation of concerns: it behaves as an empirical data gatherer and does not perform validation or rule evaluation, leaving all architectural policy enforcement to upper-level rules modules.
+Self-contained feature component responsible for extracting the structural features of source code across Rust, Python, and JavaScript/TypeScript. It encapsulates multi-language structural scanning (infrastructure) and AST/metadata parsing routines (capabilities) to standardize code metadata into clean, language-agnostic Value Objects defined in `shared`. It enforces a strict separation of concerns: it behaves as an empirical data gatherer and does not perform validation or rule evaluation, leaving all architectural policy enforcement to upper-level rules modules.
 
 | ID      | Requirement                                                                                                                                                    | AES Codes |
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
@@ -90,14 +99,13 @@ Empirical parsing component responsible for extracting the structural features o
 | FR-009  | Complexity & Flow Analysis — extract and expose raw control flow tokens and variable assignment structures within files for downstream analysis               | —        |
 | FR-128  | Barrel & Package Resolution — identify index/package entrypoints to trace delegated exports                                                                   | —        |
 | FR-129  | Path Normalization — normalize file paths and relative imports into absolute package paths                                                                    | —        |
+| FR-120  | Show enclosing scope (function/class) for violations                                                                                                           | FR-003    |
+| FR-121  | Trace call chains across project                                                                                                                               | FR-003    |
+| FR-122  | Track variable flow within scope                                                                                                                               | FR-003    |
 
-### 5.3 Level 2: Core Infrastructure Features
+### 5.3 `file-system` — File System Abstraction
 
-**Depends on:** `shared`, `source-parsing`
-
-#### 5.3.1 `file-system` — File System Abstraction
-
-Infrastructure abstraction component responsible for physical disk I/O and file system queries. It acts as the project's single gateway to the operating system's file system, offering features like directory traversal, globbing, reading/writing files, and path validation. It maintains a strict boundary: it has no knowledge of code syntax or parsing rules (which belongs to `source-parsing`), nor does it enforce configuration or architectural validation policies. It treats files purely as raw data streams and directories as structural paths.
+Self-contained feature component responsible for physical disk I/O and file system queries. It acts as the project's single gateway to the operating system's file system, offering features like directory traversal, globbing, reading/writing files, and path validation. In accordance with the cross-layer feature architecture, it encapsulates both OS-specific infrastructure adapters and any required path-validation domain capabilities. It maintains a strict boundary: it has no knowledge of code syntax or parsing rules (which belongs to `source-parsing`), nor does it enforce configuration or architectural validation policies. It treats files purely as raw data streams and directories as structural paths.
 
 | ID     | Requirement                                                                                                         | AES Codes |
 | ------ | ------------------------------------------------------------------------------------------------------------------- | --------- |
@@ -107,84 +115,115 @@ Infrastructure abstraction component responsible for physical disk I/O and file 
 | FR-126 | Path Existence and Type Checks — check if paths exist and determine if they are files or directories               | —        |
 | FR-127 | Path Resolution and Manipulation — get parent paths, working directory, relative path mapping, and path joining    | —        |
 
-#### 5.3.2 `file-watch` — File Watching
+### 5.4 `file-watch` — File Watching
 
-| ID     | Requirement                            | AES Codes |
-| ------ | -------------------------------------- | --------- |
-| FR-113 | File watcher for auto-lint (`watch`) | —        |
+Self-contained feature component responsible for real-time file system change detection. In accordance with the cross-layer feature architecture, it encapsulates both notify-based filesystem polling (infrastructure) and snapshot state comparison (capabilities). It maintains a stateful snapshot of file system modification times to compute diffs. It maintains a strict boundary: it has no knowledge of file parsing or linting rules, nor does it initiate the lint process itself; it only raises events containing a list of modified file paths for upper-level orchestrators to consume.
 
-#### 5.3.3 `metrics-service` — Metrics Provider
+| ID      | Requirement                                                                                                                                                        | AES Codes |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| FR-113a | Directory Snapshotting — take initial recursive snapshot of project files and their modification timestamps                                                       | —        |
+| FR-113b | File Modification Detection — scan watched directories to compare current timestamps against the snapshot and detect new or modified files                        | —        |
+| FR-113c | Ignore Patterns Filtering — filter out standard ignored directories (e.g.,`.git`, `node_modules`, `__pycache__`) from file watching to optimize performance | —        |
+| FR-113d | Event Trigger Dispatching — expose list of changed files to trigger immediate, incremental linting runs                                                           | —        |
 
-| ID     | Requirement                 | AES Codes |
-| ------ | --------------------------- | --------- |
-| FR-088 | Quality trends (`trends`) | —        |
+### 5.5 `metrics-service` — Metrics Provider
 
-#### 5.3.4 `multi-project` — Multi-Project Governance
+**Depends on:** `shared`, `source-parsing`, `code-analysis`
 
-| ID     | Requirement                                      | AES Codes |
-| ------ | ------------------------------------------------ | --------- |
-| FR-091 | Multi-project aggregate lint (`multi-project`) | —        |
+Self-contained feature component responsible for tracking and calculating long-term codebase quality trends and scoring metrics. In accordance with the cross-layer feature architecture, it encapsulates quality score mathematical engines (capabilities) and history serialization adapters (infrastructure) to store data locally. It maintains a strict boundary: it does not perform raw source code parsing or evaluate compliance rules itself (which belongs to `source-parsing` and rules modules), nor does it format final reports for CLI consumption (which belongs to `output-report` and `cli-commands`). It consumes static violations lists, computes point deductions, and manages local history files purely as structured metrics.
 
-#### 5.3.5 `code-analysis` — Code Quality & Auto-Fix
+| ID      | Requirement                                                                                                                    | AES Codes |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| FR-088a | Score Calculation Engine — compute project compliance score on a 0-100 scale by deducting penalty points from rule violations | —        |
+| FR-088b | Metrics History Persistence — store historical score trend data locally to a `.lint-trends.json` file                       | —        |
+| FR-088c | Trend Report Visualization — output comparative score trend changes over time to stdout                                       | —        |
 
-| ID     | Requirement                                                           | AES Codes |
-| ------ | --------------------------------------------------------------------- | --------- |
-| FR-025 | File size limit checker — max line threshold                         | AES020    |
-| FR-026 | File minimum size checker — min line threshold                       | AES021    |
-| FR-030 | Bypass comment violation detector — no #[allow], unwrap, panic, noqa | AES022    |
-| FR-031 | Unused mandatory import detector — unused imports flagged            | AES023    |
-| FR-032 | Dead inheritance bypass detector — empty struct/trait                | AES024    |
-| FR-045 | Capability method existence checker — dispatch method exists         | AES0303   |
-| FR-046 | Single capability bottleneck detector — balance dispatch routes      | AES0303   |
+### 5.6 `multi-project` — Multi-Project Governance
 
-### 5.4 Level 3: Middle Features
+**Depends on:** `shared`, `source-parsing`, `file-system`
 
-**Depends on:** `shared`, `source-parsing`, Level 2 features
+Self-contained feature component responsible for managing and aggregating lint compliance across complex workspaces containing nested, multiple sub-projects. In accordance with the cross-layer feature architecture, it encapsulates recursive sub-project configuration discovery (infrastructure) and rules inheritance/consolidation logic (capabilities). It maintains a strict boundary: it does not run rules or modify files directly, nor does it compile AST/tokens for source modules. It acts purely as a coordinator that inventories workspace paths, resolves inherited rule configurations, and compiles project metadata into a unified workspace registry.
 
-#### 5.4.1 `lifecycle-state` — Agent Lifecycle Management
+| ID      | Requirement                                                                                                                               | AES Codes |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| FR-091a | Multi-Project Auto-Discovery — recursively detect nested sub-projects by scanning configuration files                                    | —        |
+| FR-091b | Workspace Compliance Aggregation — run lint checking across all projects in parallel and consolidate them into a single aggregate report | —        |
+
+### 5.7 `code-analysis` — Code Quality & Auto-Fix
+
+**Depends on:** `shared`, `source-parsing`, `file-system`
+
+Self-contained feature component responsible for running file-level structural audits, quality checkers, and bypass comments detectors. In accordance with the cross-layer feature architecture, it encapsulates specialized rule validators (capabilities) and local process coordinators (agents) that execute multiple audits over files. It maintains a strict boundary: it has no direct interaction with the OS file system or physical I/O (which belongs to `file-system`), nor does it handle raw file parsing or syntax scanning (which belongs to `source-parsing`). It processes language-agnostic source metadata Value Objects and returns structural compliance violations list.
+
+| ID      | Requirement                                                                                                                               | AES Codes |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| FR-025a | Maximum File Line Count Validation — verify that no source code file exceeds the maximum configured lines limit                          | AES020    |
+| FR-025b | Minimum File Line Count Validation — verify that no source code file falls below the minimum required lines threshold                    | AES021    |
+| FR-030a | Attribute Bypass Detection — scan for forbidden compilation bypass attributes such as `#[allow(...)]` or compiler warnings suppressors | AES022    |
+| FR-030b | Fatal Panic and Unwrap Detection — check for raw, direct code panic or unwrap calls bypassing safe error handling architectures          | AES022    |
+| FR-030c | Comment-Based Linter Bypass Detection — scan for inline linter suppression tags like `noqa` or `type: ignore`                        | AES022    |
+| FR-031a | Unused Mandatory Imports Check — identify and flag imported dependency modules that are not actively referenced in the file              | AES023    |
+| FR-032a | Empty Struct and Trait Bypass Check — flag defined traits and structures that contain no fields or methods (dead inheritance bypass)     | AES024    |
+| FR-045a | Capability Dispatch Method Check — verify that dynamic dispatch routes correspond to existing target capability methods                  | AES0303   |
+| FR-046a | Capability Load Balancing Check — audit and balance dispatch routes to ensure no single capability becomes a logic bottleneck            | AES0303   |
+| FR-050  | Circular dependency cycle analyzer — detect circular imports                                                                             | AES015    |
+| FR-042  | Mandatory inheritance checker — every file implements a contract                                                                         | AES014    |
+
+### 5.8 `lifecycle-state` — Agent Lifecycle Management
 
 **Depends on:** `shared`, `pipeline-jobs`
 
-| ID     | Requirement                    | AES Codes |
-| ------ | ------------------------------ | --------- |
-| FR-006 | Track quality trends over time | —        |
+Self-contained feature component responsible for tracking, transitioning, and broadcasting the running lifecycle states of the linter agent. In accordance with the cross-layer feature architecture, it encapsulates state-transition state machines (capabilities) and state event handlers (agent). It maintains a strict boundary: it has no knowledge of code files, file paths, parsed source metadata, or linter compliance rules. It focuses purely on process flow transitions (e.g. from initialization to checking to completion)
 
-#### 5.4.2 `import-rules` — Import Compliance
+| ID      | Requirement                                                                                                                         | AES Codes |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| FR-006a | Agent State Transition Tracking — model and transition the execution stages of the linter agent (INIT, RUNNING, COMPLETED, FAILED) | —        |
+| FR-006b | Lifecycle Event Hooking — provide event callbacks/hooks when state transitions occur for TUI or pipeline tracking                  | —        |
+
+### 5.9 `import-rules` — Import Compliance
 
 **Depends on:** `shared`, `source-parsing`, `file-system`, `output-report`
 
-| ID     | Requirement                                                                    | AES Codes |
-| ------ | ------------------------------------------------------------------------------ | --------- |
-| FR-010 | Import layer violation detector — cross-layer import detection                | AES001    |
-| FR-011 | Mandatory import missing detector — required imports per layer                | AES002    |
-| FR-013 | Root layer detection — forbidden root import patterns                         | AES004    |
-| FR-014 | Layer suffix mismatch detector — file suffix must match layer                 | AES005    |
-| FR-015 | Contract suffix mismatch detector — contract needs _port/_protocol/_aggregate | AES006    |
-| FR-017 | Surface direct import checker — no direct infra/cap imports                   | AES003    |
+Self-contained feature component responsible for validating code imports and module dependency structures against strict architectural layer boundaries. In accordance with the cross-layer feature architecture, it encapsulates compliance check engines (capabilities) and configuration mapping adapters. It maintains a strict boundary: it has no direct interaction with the physical filesystem (which belongs to `file-system`), nor does it parse code files to build ASTs (which belongs to `source-parsing`). It consumes language-agnostic code metadata (specifically extracted import statements) and reports layer compliance violations.
 
-#### 5.4.3 `output-report` — Output Formatting & Report Generation
+| ID      | Requirement                                                                                                                             | AES Codes |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| FR-010a | Layer Dependency Violation Scan — verify that lower layers do not import from upper layers and enforce unidirectional import flows     | AES001    |
+| FR-011a | Mandatory Crate/Layer Imports Verification — check that files in specific layers import their mandatory contracts or taxonomies        | AES002    |
+| FR-013a | Forbidden Root Imports Audit — identify and flag imports of root components/containers by other internal library layers                | AES004    |
+| FR-014a | File Layer Name Suffix Compliance — verify that all logic files carry a suffix corresponding exactly to their layer prefix designation | AES005    |
+| FR-015a | Contract Name Suffix Compliance — verify that contract files only use `_port`, `_protocol`, or `_aggregate` suffixes             | AES006    |
+| FR-017a | Surface Direct Imports Enforcement — verify that surface command/handler files do not import capabilities or infrastructure directly   | AES003    |
+
+### 5.10 `output-report` — Output Formatting & Report Generation
 
 **Depends on:** `shared`, `source-parsing`, `code-analysis`, `pipeline-jobs`
 
-| ID     | Requirement                                                          | AES Codes |
-| ------ | -------------------------------------------------------------------- | --------- |
-| FR-058 | Generate quality report (`report [path] --output-format <format>`) | —        |
-| FR-095 | Text (human-readable)                                                | —        |
-| FR-096 | JSON (machine-readable)                                              | —        |
-| FR-097 | SARIF 2.1.0 (GitHub Code Scanning)                                   | —        |
-| FR-098 | JUnit XML (Jenkins/CI)                                               | —        |
+Self-contained feature component responsible for formatting compliance findings and generating linting reports. In accordance with the cross-layer feature architecture, it encapsulates report formatting engines (capabilities) and physical output writers (infrastructure) that write reports to files or standard output streams. It maintains a strict boundary: it has no knowledge of how rules are parsed, calculated, or enforced. It consumes a list of compliance violations (Value Objects) and translates them into structured reports.
 
-#### 5.4.4 `pipeline-jobs` — Jobs, Dispatcher, Execution
+| ID      | Requirement                                                                                                            | AES Codes |
+| ------- | ---------------------------------------------------------------------------------------------------------------------- | --------- |
+| FR-058a | Report File Output Writer — generate and write compliance reports to specified local filesystem output paths          | —        |
+| FR-095a | Plain Text Formatter — format findings into human-readable text console outputs with styled error reporting           | —        |
+| FR-096a | JSON Formatter — serialize findings list into a machine-readable JSON structure for integrations                      | —        |
+| FR-097a | SARIF Formatter — output reports conforming to the Static Analysis Results Interchange Format (SARIF) v2.1.0 standard | —        |
+| FR-098a | JUnit Formatter — format output into JUnit XML schema to support CI build quality gate pipelines                      | —        |
+
+### 5.11 `pipeline-jobs` — Jobs, Dispatcher, Execution
 
 **Depends on:** `shared`, `source-parsing`, `multi-project`
+
+Self-contained feature component responsible for scheduling and executing concurrent asynchronous linting runs.
 
 | ID     | Requirement                           | AES Codes |
 | ------ | ------------------------------------- | --------- |
 | FR-067 | Cancel lint job (`cancel <job_id>`) | —        |
 
-#### 5.4.5 `config-system` — Config Loading & Parsing
+### 5.12 `config-system` — Config Loading & Parsing
 
 **Depends on:** `shared`, `source-parsing`, `import-rules`, `pipeline-jobs`
+
+Self-contained feature component responsible for loading and parsing project linter profiles (YAML configs).
 
 | ID     | Requirement                                                        | AES Codes |
 | ------ | ------------------------------------------------------------------ | --------- |
@@ -192,50 +231,61 @@ Infrastructure abstraction component responsible for physical disk I/O and file 
 | FR-048 | Constant purity checker — _constant files: only pub const/static  | AES015    |
 | FR-040 | MCP schema checker — MCP tools need docstrings + JSON Schema      | AES025    |
 
-#### 5.4.6 `naming-rules` — Naming Convention
+### 5.13 `naming-rules` — Naming Convention
 
 **Depends on:** `shared`, `source-parsing`, `import-rules`, `output-report`
 
-| ID     | Requirement                                                                     | AES Codes |
-| ------ | ------------------------------------------------------------------------------- | --------- |
-| FR-020 | Naming convention checker — strict word snake_case                             | AES010    |
-| FR-021 | Mandatory struct/trait definition checker — every file needs struct/enum/trait | AES011    |
+Self-contained feature component responsible for checking and enforcing naming convention rules for logic filenames and code definitions. In accordance with the cross-layer feature architecture, it encapsulates convention checker engines (capabilities) and coordinates naming compliance audits. It maintains a strict boundary: it has no direct interaction with file modification, AST parsing, or compiler tasks. It consumes token mappings (Value Objects) and reports prefix/suffix naming violations.
 
-#### 5.4.7 `git-hooks` — Git Hooks Management
+| ID     | Requirement                                                                                                  | AES Codes |
+| ------ | ------------------------------------------------------------------------------------------------------------ | --------- |
+| FR-020 | Naming convention checker — strict word snake_case                                                          | AES010    |
+| FR-021 | Mandatory struct/trait definition checker — every file needs struct/enum/trait                              | AES011    |
+| FR-022 | Suffix/Prefix rules — suffix must match layer definition rules (e.g., _vo for taxonomy, _port for contract) | AES012    |
+| FR-124 | Generate naming variants (snake_case, camelCase, etc.)                                                       | FR-003    |
+
+### 5.14 `git-hooks` — Git Hooks Management
 
 **Depends on:** `shared`, `source-parsing`, `output-report`, `pipeline-jobs`
+
+Self-contained feature component responsible for configuring and deploying automated hooks into Git.
 
 | ID     | Requirement                                                | AES Codes |
 | ------ | ---------------------------------------------------------- | --------- |
 | FR-114 | Git pre-commit hook (`install-hook`, `uninstall-hook`) | —        |
 
-#### 5.4.8 `role-rules` — Role Violations
+### 5.15 `role-rules` — Role Violations
 
 **Depends on:** `shared`, `source-parsing`, `import-rules`, `output-report`
 
-| ID     | Requirement                                                           | AES Codes |
-| ------ | --------------------------------------------------------------------- | --------- |
-| FR-035 | Surface hierarchy violation detector — utility imports smart surface | AES0306   |
-| FR-036 | Passive surface violation detector — passive imports taxonomy only   | AES0306   |
-| FR-037 | Agent role violation detector — behavioral mandates per agent role   | AES0305   |
-| FR-038 | Agent any-bypass detector — no `any` type in orchestrators         | AES0305   |
-| FR-027 | Primitive usage checker — no raw primitives in domain types          | AES016    |
+Self-contained feature component responsible for verifying architectural pattern assignments and detecting role-boundary violations.
 
-### 5.5 Level 4: Upper Features
+| ID     | Requirement                                                                   | AES Codes |
+| ------ | ----------------------------------------------------------------------------- | --------- |
+| FR-035 | Surface hierarchy violation detector — utility imports smart surface         | AES0306   |
+| FR-036 | Passive surface violation detector — passive imports taxonomy only           | AES0306   |
+| FR-037 | Agent role violation detector — behavioral mandates per agent role           | AES0305   |
+| FR-038 | Agent any-bypass detector — no `any` type in orchestrators                 | AES0305   |
+| FR-027 | Primitive usage checker — no raw primitives in domain types                  | AES016    |
+| FR-041 | Forbidden inheritance detector — aggregate not inherit port/protocol         | AES013    |
+| FR-016 | Surface layer rule checker — surfaces delegate via ServiceContainerAggregate | AES0306   |
 
-**Depends on:** `shared`, `source-parsing`, Level 3 features
-
-#### 5.5.1 `auto-fix` — Auto-Fix Processor
+### 5.16 `auto-fix` — Auto-Fix Processor
 
 **Depends on:** `shared`, `source-parsing`, `code-analysis`, `output-report`
+
+Self-contained feature component responsible for generating code modifications to resolve linter violations.
 
 | ID     | Requirement                                   | AES Codes |
 | ------ | --------------------------------------------- | --------- |
 | FR-005 | Apply safe auto-fixes (Rust + Python + JS/TS) | AES0303   |
+| FR-123 | Project-wide symbol rename                    | FR-003    |
 
-#### 5.5.2 `language-adapters` — External Linter Adapters
+### 5.17 `language-adapters` — External Linter Adapters
 
 **Depends on:** `shared`, `source-parsing`, `code-analysis`, `metrics-service`, `output-report`, `pipeline-jobs`
+
+Self-contained feature component responsible for adapting and executing external code tools (Ruff, Clippy, ESLint).
 
 | ID     | Requirement                                           | AES Codes |
 | ------ | ----------------------------------------------------- | --------- |
@@ -251,29 +301,44 @@ Infrastructure abstraction component responsible for physical disk I/O and file 
 | FR-079 | Run Prettier formatting on JS/TS files                | —        |
 | FR-080 | Run TSC type checking on TypeScript files             | —        |
 
-#### 5.5.3 `plugin-system` — Plugin Discovery & Management
+### 5.18 `plugin-system` — Plugin Discovery & Management
 
 **Depends on:** `shared`, `source-parsing`, `pipeline-jobs`
+
+Self-contained feature component responsible for registering and invoking custom external rules extensions.
 
 | ID     | Requirement                           | AES Codes |
 | ------ | ------------------------------------- | --------- |
 | FR-089 | Dependency listing (`dependencies`) | —        |
 
-#### 5.5.4 `orphan-detector` — Orphan Code Detection
+### 5.19 `orphan-detector` — Orphan Code Detection
 
 **Depends on:** `shared`, `source-parsing`, `code-analysis`, `output-report`
+
+Self-contained feature component responsible for performing project dependency tracing to find unused components.
 
 | ID     | Requirement                                    | AES Codes |
 | ------ | ---------------------------------------------- | --------- |
 | FR-033 | Orphan code detector — unreachable components | AES030    |
 
-### 5.6 Level 5: Surface Features
+### 5.20 `project-setup` — Project Init, Doctor, MCP Config
 
-**Depends on:** `shared`, `source-parsing`, Level 4 features
+**Depends on:** `shared`, `source-parsing`, `pipeline-jobs`
 
-#### 5.6.1 `cli-commands` — CLI Surfaces + Transport (Root Layer)
+Self-contained feature component responsible for initializing workspace profiles, creating configs, and running doctor diagnostics.
 
-**Depends on:** `shared`, `source-parsing`, `auto-fix`, `code-analysis`, `output-report`, `pipeline-jobs`
+| ID     | Requirement                                              | AES Codes |
+| ------ | -------------------------------------------------------- | --------- |
+| FR-060 | Environment diagnostics (`setup doctor`)               | —        |
+| FR-061 | Create default config (`setup init`)                   | —        |
+| FR-062 | MCP client config (`setup mcp-config --client <name>`) | —        |
+| FR-063 | Hermes integration (`setup hermes [--remove]`)         | —        |
+
+### 5.21 `cli-commands` — CLI Surfaces + Transport
+
+**Depends on:** `shared`, `source-parsing`, `auto-fix`, `code-analysis`, `output-report`, `pipeline-jobs`, `project-setup`
+
+Self-contained feature component responsible for implementing and presenting CLI surfaces (`clap` commands) and parsing/dispatching transport requests.
 
 | ID     | Requirement                                                            | AES Codes      |
 | ------ | ---------------------------------------------------------------------- | -------------- |
@@ -290,25 +355,15 @@ Infrastructure abstraction component responsible for physical disk I/O and file 
 | FR-112 | Import/export configuration (`import`, `export`)                   | FR-002         |
 | FR-115 | CLI via `clap` 4.6 subcommand groups                                 | FR-001         |
 | FR-116 | Direct command execution via `std::process::Command`                 | FR-001         |
+| FR-085 | Security vulnerability scan (`security`)                             | FR-075         |
+| FR-086 | Cyclomatic complexity analysis (`complexity`)                        | FR-076         |
+| FR-087 | Code duplication detection (`duplicates`)                            | FR-055         |
 
-#### 5.6.2 `project-setup` — Project Init, Doctor, MCP Config
-
-**Depends on:** `shared`, `source-parsing`, `cli-commands`, `pipeline-jobs`
-
-| ID     | Requirement                                              | AES Codes |
-| ------ | -------------------------------------------------------- | --------- |
-| FR-060 | Environment diagnostics (`setup doctor`)               | —        |
-| FR-061 | Create default config (`setup init`)                   | —        |
-| FR-062 | MCP client config (`setup mcp-config --client <name>`) | —        |
-| FR-063 | Hermes integration (`setup hermes [--remove]`)         | —        |
-
-### 5.7 Level 6: Top-Level
-
-**Depends on:** `shared`, `source-parsing`, Level 5 features
-
-#### 5.7.1 `mcp-server` — MCP JSON-RPC 2.0 Server (Root Layer)
+### 5.22 `mcp-server` — MCP JSON-RPC 2.0 Server
 
 **Depends on:** `shared`, `source-parsing`, `cli-commands`, `code-analysis`, `language-adapters`, `output-report`, `pipeline-jobs`
+
+Self-contained feature component responsible for exposing linter capabilities as MCP JSON-RPC 2.0 services.
 
 | ID     | Requirement                                        | AES Codes |
 | ------ | -------------------------------------------------- | --------- |
@@ -319,47 +374,6 @@ Infrastructure abstraction component responsible for physical disk I/O and file 
 | FR-104 | MCP tool:`read_skill_context(section)`           | FR-100    |
 | FR-105 | MCP tool:`health_check()`                        | FR-100    |
 | FR-106 | CI/CD integration (OIDC, SLSA Provenance)          | FR-100    |
-
-### 5.8 Cross-Cutting Requirements
-
-These requirements span multiple crates and are not tied to a single level.
-
-#### 5.8.1 Analysis & Scan Subcommands
-
-| ID     | Requirement                                     | AES Codes |
-| ------ | ----------------------------------------------- | --------- |
-| FR-085 | Security vulnerability scan (`security`)      | FR-075    |
-| FR-086 | Cyclomatic complexity analysis (`complexity`) | FR-076    |
-| FR-087 | Code duplication detection (`duplicates`)     | FR-055    |
-
-#### 5.8.2 Semantic Analysis (Enrichment)
-
-| ID     | Requirement                                            | AES Codes |
-| ------ | ------------------------------------------------------ | --------- |
-| FR-120 | Show enclosing scope (function/class) for violations   | FR-003    |
-| FR-121 | Trace call chains across project                       | FR-003    |
-| FR-122 | Track variable flow within scope                       | FR-003    |
-| FR-123 | Project-wide symbol rename                             | FR-003    |
-| FR-124 | Generate naming variants (snake_case, camelCase, etc.) | FR-003    |
-
-#### 5.8.3 Circular Dependency Detection
-
-| ID     | Requirement                                                   | AES Codes |
-| ------ | ------------------------------------------------------------- | --------- |
-| FR-050 | Circular dependency cycle analyzer — detect circular imports | AES012    |
-
-#### 5.8.4 Forbidden Inheritance & Mandatory Contract Implementation
-
-| ID     | Requirement                                                           | AES Codes |
-| ------ | --------------------------------------------------------------------- | --------- |
-| FR-041 | Forbidden inheritance detector — aggregate not inherit port/protocol | AES013    |
-| FR-042 | Mandatory inheritance checker — every file implements a contract     | AES014    |
-
-#### 5.8.5 Surface Layer Rules (Code Structure)
-
-| ID     | Requirement                                                                   | AES Codes |
-| ------ | ----------------------------------------------------------------------------- | --------- |
-| FR-016 | Surface layer rule checker — surfaces delegate via ServiceContainerAggregate | AES0306   |
 
 ---
 
@@ -403,10 +417,10 @@ crates/
   metrics-service/      -- Metrics provider
   cli-commands/         -- CLI surfaces (_command) + transport
   mcp-server/           -- MCP JSON-RPC 2.0 server
-  composition_root.rs   -- Root composition (root layer)
-  cli_main_entry.rs     -- CLI binary entry (root_entry)
-  mcp_main_entry.rs     -- MCP binary entry (root_entry)
-  tui_main_entry.rs     -- TUI binary entry (root_entry)
+  root_compsotion_container.rs -- Root composition (root layer)
+  root_cli_main_entry.rs       -- CLI binary entry (root_entry)
+  root_mcp_main_entry.rs       -- MCP binary entry (root_entry)
+  root_tui_main_entry.rs       -- TUI binary entry (root_entry)
 
 Layer prefixes (determined by FILE NAME, not folder):
   taxonomy_       → _vo, _entity, _event, _error, _constant
@@ -435,7 +449,7 @@ Each feature crate contains **multiple layers internally** (taxonomy, contract, 
 | `source-parsing`    | `source_parsing_container.rs`                              | Source code parsing (infrastructure + contracts)                                                             |
 | `language-adapters` | `language_container.rs`                                    | External linter adapters (infrastructure + contracts + surfaces)                                             |
 | `file-system`       | `file_container.rs`                                        | File system abstraction (infrastructure + contracts)                                                         |
-| `file-watch`        | **MISSING** (needs `file_watch_container.rs`)        | File watching (infrastructure + contracts)                                                                   |
+| `file-watch`        | `file_watch_container.rs`                                  | File watching (infrastructure + contracts)                                                                   |
 | `git-hooks`         | `git_container.rs`                                         | Git hooks management (infrastructure + contracts + agent)                                                    |
 | `multi-project`     | `multi_project_container.rs`                               | Multi-project governance (agent + contracts)                                                                 |
 | `project-setup`     | `setup_container.rs`                                       | Project init, doctor, mcp-config (agent + contracts + surfaces)                                              |
@@ -482,15 +496,13 @@ LEVEL 4: Depends on Level 3
   language-adapters-lint-arwaky   ← shared, source-parsing, code-analysis, metrics-service, output-report, pipeline-jobs
   plugin-system-lint-arwaky       ← shared, source-parsing, pipeline-jobs
   orphan-detector-lint-arwaky     ← shared, source-parsing, code-analysis, output-report
+  project-setup-lint-arwaky       ← shared, source-parsing, pipeline-jobs
 
 LEVEL 5: Depends on Level 4
-  cli-commands-lint-arwaky        ← shared, source-parsing, auto-fix, code-analysis, output-report, pipeline-jobs
-  project-setup-lint-arwaky       ← shared, source-parsing, cli-commands, pipeline-jobs
+  cli-commands-lint-arwaky        ← shared, source-parsing, auto-fix, code-analysis, output-report, pipeline-jobs, project-setup
 
 LEVEL 6: Top-level
   mcp-server-lint-arwaky          ← shared, source-parsing, cli-commands, code-analysis, language-adapters, output-report, pipeline-jobs
-
-DELETE: di-containers-lint-arwaky (God Container — will be replaced by per-feature containers)
 ```
 
 ### 7.3.1 Build Constraints
@@ -500,7 +512,6 @@ DELETE: di-containers-lint-arwaky (God Container — will be replaced by per-fea
 - `source-parsing-lint-arwaky` depends only on `shared-lint-arwaky`
 - All other feature crates depend on `shared-lint-arwaky` + `source-parsing-lint-arwaky`
 - Feature crates may depend on other feature crates (see dependency graph above)
-- `di-containers-lint-arwaky` is deprecated — will be replaced by per-feature containers
 
 ### 7.4 Dependency Rules
 
@@ -513,62 +524,13 @@ contract       -> taxonomy
 taxonomy       -> taxonomy
 ```
 
-Surfaces must NOT import from `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through the **feature crate's container** or the `ServiceContainerAggregate` trait in the contract layer (AES001 sub-condition `surface_direct`). The `CompositionRoot` (in `composition_root.rs`, root layer) composes all feature containers and implements `ServiceContainerAggregate` for backward compatibility with existing surface commands.
-
-### 7.5 MCP Server Architecture
-
-The MCP server uses `mcp-sdk-rs` 0.3.4 over JSON-RPC 2.0 on stdin/stdout. It announces `protocolVersion: 2024-11-05` and exposes the `tools` capability.
-
-```
-mcp_main_entry.rs    -- tokio main loop, reads JSON-RPC from stdin
-mcp_container.rs     -- wires MCP server dependencies
-mcp_tools_command.rs -- execute_command / list_commands / commands_schema /
-                        read_skill_context / health_check
-mcp_server_handler.rs / mcp_server_wrapper.rs -- Schema, validation, lifespan
-```
-
-The DI container is created once at server start; the same `Arc<dyn ServiceContainerAggregate>` is passed to every tool call.
-
-### 7.6 Agentic Engineering System (AES) v1.10.11
-
-Severity levels and their point penalty per finding:
-
-| Severity | Penalty | Description                                   |
-| -------- | ------- | --------------------------------------------- |
-| LOW      | -1      | Minor style or naming issue                   |
-| MEDIUM   | -2      | Structural concern, import patterns           |
-| HIGH     | -3      | Architecture violation, mandatory requirement |
-| CRITICAL | -5      | Bypass markers, dead inheritance, layer fraud |
-
-Total score starts at 100.0 and is deducted per finding. If any CRITICAL finding exists, the run fails regardless of score.
-
-**AES016 Primitive Policy**: Value Object enforcement is **granular per layer**:
-
-- `contract` and `taxonomy(entity|error|event)` → `no_primitives: true` (strict)
-- `infrastructure`, `capabilities`, `surfaces` → `no_primitives: false` (adapter layers may use primitives as supporting types)
-- `taxonomy(constant)` → raw primitives allowed by definition; must contain ONLY constant declarations (AES0301)
-
-**AES015 Constant Purity (v2.0)**: Taxonomy files ending in `_constant` must contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, or `impl` block in a `_constant` file is a violation.
-
-See [RULES_AES.md](RULES_AES.md) for the full rule catalog (27 active codes across 4 groups) and [ARCHITECTURE.md](ARCHITECTURE.md) for the layered specification with Mermaid diagrams.
+Surfaces must NOT import from `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through the **feature crate's container** or the `ServiceContainerAggregate` trait in the contract layer (AES001 sub-condition `surface_direct`). The `CompositionRoot` (in `root_compsotion_container.rs`, root layer) composes all feature containers and implements `ServiceContainerAggregate` for backward compatibility with existing surface commands.
 
 ---
 
-## 8. MCP Interface (5 Tools)
+## 8. CLI Interface
 
-| Tool                              | Purpose                                        |
-| --------------------------------- | ---------------------------------------------- |
-| `execute_command(action, args)` | Execute any CLI command                        |
-| `list_commands(domain)`         | Discover available CLI commands                |
-| `commands_schema(tool_name)`    | Retrieve the JSON Schema for a registered tool |
-| `read_skill_context(section)`   | Read SKILL.md documentation by section         |
-| `health_check()`                | Check linter adapter health and system state   |
-
----
-
-## 9. CLI Interface
-
-Subcommands are defined in `crates/cli-commands/src/` surfaces and dispatched from `cli_main_entry.rs`.
+Subcommands are defined in `crates/cli-commands/src/` surfaces and dispatched from `root_cli_main_entry.rs`.
 
 | Category | Subcommands                                                                |
 | -------- | -------------------------------------------------------------------------- |
@@ -577,6 +539,18 @@ Subcommands are defined in `crates/cli-commands/src/` surfaces and dispatched fr
 | Setup    | setup init, setup doctor, setup mcp-config, setup hermes                   |
 | Dev      | diff, suggest, import, export, config, install-hook, uninstall-hook, watch |
 | Git      | git-diff, multi-project                                                    |
+
+---
+
+## 9. MCP Interface (5 Tools)
+
+| Tool                              | Purpose                                        |
+| --------------------------------- | ---------------------------------------------- |
+| `execute_command(action, args)` | Execute any CLI command                        |
+| `list_commands(domain)`         | Discover available CLI commands                |
+| `commands_schema(tool_name)`    | Retrieve the JSON Schema for a registered tool |
+| `read_skill_context(section)`   | Read SKILL.md documentation by section         |
+| `health_check()`                | Check linter adapter health and system state   |
 
 ---
 
@@ -591,34 +565,34 @@ Subcommands are defined in `crates/cli-commands/src/` surfaces and dispatched fr
 
 ## 11. Workspace Crates (Cargo.toml members)
 
-| Crate             | Package Name                      | Path                           |
-| ----------------- | --------------------------------- | ------------------------------ |
-| shared            | `shared-lint-arwaky`            | `crates/shared`              |
-| import-rules      | `import_rules-lint-arwaky`      | `crates/import-rules`        |
-| naming-rules      | `naming_rules-lint-arwaky`      | `crates/naming-rules`        |
-| role-rules        | `role_rules-lint-arwaky`        | `crates/role-rules`          |
-| orphan-detector   | `orphan_detector-lint-arwaky`   | `crates/orphan-detector`     |
-| code-analysis     | `code_analysis-lint-arwaky`     | `crates/code-analysis`       |
-| auto-fix          | `auto_fix-lint-arwaky`          | `crates/auto-fix`            |
-| config-system     | `config_system-lint-arwaky`     | `crates/config-system`       |
-| pipeline-jobs     | `pipeline_jobs-lint-arwaky`     | `crates/pipeline-jobs`       |
-| source-parsing    | `source_parsing-lint-arwaky`    | `crates/source-parsing`      |
-| language-adapters | `language_adapters-lint-arwaky` | `crates/language-adapters`   |
-| file-system       | `file_system-lint-arwaky`       | `crates/file-system`         |
-| file-watch        | `file_watch-lint-arwaky`        | `crates/file-watch`          |
-| git-hooks         | `git_hooks-lint-arwaky`         | `crates/git-hooks`           |
-| multi-project     | `multi_project-lint-arwaky`     | `crates/multi-project`       |
-| project-setup     | `project_setup-lint-arwaky`     | `crates/project-setup`       |
-| plugin-system     | `plugin_system-lint-arwaky`     | `crates/plugin-system`       |
-| output-report     | `output_report-lint-arwaky`     | `crates/output-report`       |
-| lifecycle-state   | `lifecycle_state-lint-arwaky`   | `crates/lifecycle-state`     |
-| metrics-service   | `metrics_service-lint-arwaky`   | `crates/metrics-service`     |
-| cli-commands      | `cli_commands-lint-arwaky`      | `crates/cli-commands`        |
-| mcp-server        | `mcp_server-lint-arwaky`        | `crates/mcp-server`          |
-| composition_root  | (local module)                    | `crates/composition_root.rs` |
-| cli_main_entry    | (binary)                          | `crates/cli_main_entry.rs`   |
-| mcp_main_entry    | (binary)                          | `crates/mcp_main_entry.rs`   |
-| tui_main_entry    | (binary)                          | `crates/tui_main_entry.rs`   |
+| Crate                     | Package Name                      | Path                                    | Internal Dependencies                                                                                                            | External Dependencies                                                                                    |
+| ------------------------- | --------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| shared                    | `shared-lint-arwaky`            | `crates/shared`                       | None                                                                                                                             | `anyhow`, `async-trait`, `chrono`, `serde`, `serde_json`, `serde_yaml`, `thiserror`        |
+| source-parsing            | `source_parsing-lint-arwaky`    | `crates/source-parsing`               | `shared`                                                                                                                       | `regex`, `serde`, `serde_json`                                                                     |
+| file-system               | `file_system-lint-arwaky`       | `crates/file-system`                  | `shared`, `source-parsing`                                                                                                   | `async-trait`, `serde`, `serde_json`                                                               |
+| file-watch                | `file_watch-lint-arwaky`        | `crates/file-watch`                   | `shared`, `source-parsing`                                                                                                   | `serde`, `serde_json`                                                                                |
+| metrics-service           | `metrics_service-lint-arwaky`   | `crates/metrics-service`              | `shared`, `source-parsing`                                                                                                   | `serde`, `serde_json`                                                                                |
+| multi-project             | `multi_project-lint-arwaky`     | `crates/multi-project`                | `shared`, `source-parsing`                                                                                                   | `async-trait`, `serde`, `serde_json`                                                               |
+| code-analysis             | `code_analysis-lint-arwaky`     | `crates/code-analysis`                | `shared`, `source-parsing`, `file-system`                                                                                  | `async-trait`, `once_cell`, `regex`, `serde`, `serde_json`                                     |
+| pipeline-jobs             | `pipeline_jobs-lint-arwaky`     | `crates/pipeline-jobs`                | `shared`, `source-parsing`, `multi-project`                                                                                | `async-trait`, `serde`, `serde_json`, `tokio`                                                    |
+| lifecycle-state           | `lifecycle_state-lint-arwaky`   | `crates/lifecycle-state`              | `shared`, `pipeline-jobs`                                                                                                    | `async-trait`, `serde`, `serde_json`                                                               |
+| output-report             | `output_report-lint-arwaky`     | `crates/output-report`                | `shared`, `source-parsing`, `code-analysis`, `pipeline-jobs`                                                             | `async-trait`, `serde`, `serde_json`                                                               |
+| project-setup             | `project_setup-lint-arwaky`     | `crates/project-setup`                | `shared`, `source-parsing`, `pipeline-jobs`                                                                                | `async-trait`, `serde`, `serde_json`                                                               |
+| plugin-system             | `plugin_system-lint-arwaky`     | `crates/plugin-system`                | `shared`, `source-parsing`, `pipeline-jobs`                                                                                | `async-trait`, `serde`, `serde_json`                                                               |
+| git-hooks                 | `git_hooks-lint-arwaky`         | `crates/git-hooks`                    | `shared`, `source-parsing`, `output-report`, `pipeline-jobs`                                                             | `async-trait`, `serde`, `serde_json`                                                               |
+| import-rules              | `import_rules-lint-arwaky`      | `crates/import-rules`                 | `shared`, `source-parsing`, `file-system`, `output-report`                                                               | `async-trait`, `serde`, `serde_json`                                                               |
+| naming-rules              | `naming_rules-lint-arwaky`      | `crates/naming-rules`                 | `shared`, `source-parsing`, `import-rules`, `output-report`                                                              | `async-trait`, `regex`, `serde`, `serde_json`                                                    |
+| role-rules                | `role_rules-lint-arwaky`        | `crates/role-rules`                   | `shared`, `source-parsing`, `import-rules`, `output-report`                                                              | `async-trait`, `once_cell`, `regex`, `serde`, `serde_json`                                     |
+| orphan-detector           | `orphan_detector-lint-arwaky`   | `crates/orphan-detector`              | `shared`, `source-parsing`, `code-analysis`, `output-report`                                                             | `regex`, `serde`, `serde_json`                                                                     |
+| auto-fix                  | `auto_fix-lint-arwaky`          | `crates/auto-fix`                     | `shared`, `source-parsing`, `code-analysis`, `output-report`                                                             | `serde`, `serde_json`                                                                                |
+| config-system             | `config_system-lint-arwaky`     | `crates/config-system`                | `shared`, `source-parsing`, `import-rules`, `pipeline-jobs`                                                              | `async-trait`, `serde`, `serde_json`                                                               |
+| language-adapters         | `language_adapters-lint-arwaky` | `crates/language-adapters`            | `shared`, `source-parsing`, `code-analysis`, `metrics-service`, `output-report`, `pipeline-jobs`                     | `async-trait`, `once_cell`, `regex`, `serde`, `serde_json`, `tracing`                        |
+| cli-commands              | `cli_commands-lint-arwaky`      | `crates/cli-commands`                 | `shared`, `source-parsing`, `auto-fix`, `code-analysis`, `output-report`, `pipeline-jobs`, `project-setup`         | `async-trait`, `clap`, `console`, `dialoguer`, `futures`, `serde`, `serde_json`, `tokio` |
+| mcp-server                | `mcp_server-lint-arwaky`        | `crates/mcp-server`                   | `shared`, `source-parsing`, `cli-commands`, `code-analysis`, `language-adapters`, `output-report`, `pipeline-jobs` | `once_cell`, `regex`, `serde`, `serde_json`, `tracing`                                         |
+| root_compsotion_container | (local module)                    | `crates/root_compsotion_container.rs` | All workspace member crates                                                                                                      | `ctrlc`, `futures`, `tokio`                                                                        |
+| root_cli_main_entry       | (binary)                          | `crates/root_cli_main_entry.rs`       | `cli-commands`, `root_compsotion_container`                                                                                  | `clap`, `ctrlc`, `tokio`                                                                           |
+| root_mcp_main_entry       | (binary)                          | `crates/root_mcp_main_entry.rs`       | `mcp-server`, `root_compsotion_container`                                                                                    | `tokio`                                                                                                |
+| root_tui_main_entry       | (binary)                          | `crates/root_tui_main_entry.rs`       | `cli-commands`                                                                                                                 | None                                                                                                     |
 
 **Removed / Legacy**:
 

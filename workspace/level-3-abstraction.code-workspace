@@ -1,0 +1,54 @@
+{
+  "folders": [
+    {
+      "name": "File System",
+      "path": "../crates/file-system"
+    },
+    {
+      "name": "File Watch",
+      "path": "../crates/file-watch"
+    },
+    {
+      "name": "Metrics Service",
+      "path": "../crates/metrics-service"
+    },
+    {
+      "name": "Multi-Project",
+      "path": "../crates/multi-project"
+    },
+    {
+      "name": "Shared (Foundation)",
+      "path": "../crates/shared"
+    },
+    {
+      "name": "Source Parsing",
+      "path": "../crates/source-parsing"
+    },
+    {
+      "name": "Project Root (Files)",
+      "path": ".."
+    }
+  ],
+  "settings": {
+    "rust-analyzer.linkedProjects": [
+      "../crates/file-system/Cargo.toml",
+      "../crates/file-watch/Cargo.toml",
+      "../crates/metrics-service/Cargo.toml",
+      "../crates/multi-project/Cargo.toml"
+    ],
+    "files.exclude": {
+      "crates": true,
+      "test-project-javascript": true,
+      "test-project-python": true,
+      "test-project-rust": true,
+      "Graph-It-Live-arwaky": true,
+      "dist": true,
+      "target": true,
+      ".git": true,
+      ".jj": true,
+      ".graph-it": true,
+      ".github": true,
+      "scripts": true
+    }
+  }
+}
