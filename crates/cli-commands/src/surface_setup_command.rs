@@ -25,7 +25,9 @@ impl SetupCommandsSurface {
 
         // 1. Detect environment
         println!("\n[1/4] Detecting environment...");
-        let home = std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string());
+        let home = std::env::var("HOME").unwrap_or_else(|_| {
+            std::env::var("USERPROFILE").unwrap_or_else(|_| ".".to_string())
+        });
         println!("  OS: Linux");
         println!("  Home: {home}");
 
