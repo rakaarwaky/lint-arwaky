@@ -1,14 +1,12 @@
 // PURPOSE: ClientController — MCP surface for client connection management
-use di_containers::contract_service_aggregate::ServiceContainerAggregate;
-use shared::cli_commands::contract_dev_aggregate::DevCommandsAggregate;
-use shared::cli_commands::contract_report_aggregate::ReportCommandsAggregate;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+use shared::output_report::contract_report_aggregate::ReportCommandsAggregate;
 use shared::taxonomy_common_vo::LineNumber;
 use std::sync::Arc;
 
 /// Satisfy AES002 mandatory imports + AES023 unused import check
 fn _use_mandatory_imports() {
     let _ = LineNumber::new(1);
-    let _ = std::marker::PhantomData::<dyn DevCommandsAggregate>;
     let _ = std::marker::PhantomData::<dyn ReportCommandsAggregate>;
 }
 
