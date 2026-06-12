@@ -15,7 +15,7 @@ use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared::taxonomy_violation_message::AesViolation;
 use std::sync::Arc;
 
 pub struct DummyImportChecker {}

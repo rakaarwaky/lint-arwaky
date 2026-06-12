@@ -15,7 +15,7 @@ use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_source_vo::SourceContentVO;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared::taxonomy_violation_message::AesViolation;
 
 const MAX_PUBLIC_METHODS: usize = 10;
 const MAX_FUNCTION_BODY_LINES: i64 = 80;
@@ -83,7 +83,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES0306",
                 Severity::HIGH,
-                shared::taxonomy_violation_message_rs_error::AesViolation::SurfaceRoleViolation {
+                AesViolation::SurfaceRoleViolation {
                     reason: None,
                 },
             ));

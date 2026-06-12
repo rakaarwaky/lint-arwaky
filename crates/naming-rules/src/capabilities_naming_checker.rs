@@ -26,7 +26,7 @@ fn aes011_naming_convention(_expected_word_count: i32) -> String {
 }
 
 use regex::Regex;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared::taxonomy_violation_message::AesViolation;
 
 #[derive(Clone)]
 pub struct ArchNamingChecker {}

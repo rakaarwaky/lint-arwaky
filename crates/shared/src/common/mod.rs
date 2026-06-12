@@ -12,6 +12,4 @@ pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_suggestion_vo;
-pub mod taxonomy_violation_message_js_error;
-pub mod taxonomy_violation_message_py_error;
-pub mod taxonomy_violation_message_rs_error;
+pub mod taxonomy_violation_message;

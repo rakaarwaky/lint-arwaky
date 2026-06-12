@@ -4,7 +4,7 @@ use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared::taxonomy_violation_message::AesViolation;
 
 pub struct CapabilitiesRoleChecker {}
 

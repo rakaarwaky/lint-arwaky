@@ -4,9 +4,7 @@ use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_source_vo::SourceContentVO;
-use shared::taxonomy_violation_message_js_error::AesViolationJs;
-use shared::taxonomy_violation_message_py_error::AesViolationPy;
-use shared::taxonomy_violation_message_rs_error::AesViolation;
+use shared::taxonomy_violation_message::{AesViolation, Language};
 
 fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     format!(
@@ -137,13 +135,16 @@ impl ContractRoleChecker {
         ];
         let has_primitive = primitive_keywords.iter().any(|kw| lower.contains(kw));
         if has_primitive {
-            let msg = if is_rs {
-                AesViolation::ContractPrimitive { reason: None }.to_string()
+            let lang = if is_rs {
+                Language::Rust
             } else if is_py {
-                AesViolationPy::ContractPrimitive { reason: None }.to_string()
+                Language::Python
             } else {
-                AesViolationJs::ContractPrimitive { reason: None }.to_string()
+                Language::JavaScript
             };
+            let msg = AesViolation::ContractPrimitive { reason: None }
+                .with_language(lang)
+                .to_string();
             violations.push(LintResult::new_arch(
                 file,
                 0,
