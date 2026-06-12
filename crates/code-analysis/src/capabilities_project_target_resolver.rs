@@ -81,17 +81,19 @@ impl ITargetResolverProtocol for ProjectTargetResolver {
 impl ProjectTargetResolver {
     pub fn normalize_project_root(&self, path: &str) -> String {
         let p = std::path::Path::new(path);
-        if p.join("src-rust").exists() {
-            return path.to_string();
-        }
-        if p.file_name().map(|n| n == "src-rust").unwrap_or(false) {
-            let parent = p.parent().unwrap_or(std::path::Path::new("."));
-            let parent_str = parent.to_string_lossy();
-            return if parent_str.is_empty() {
-                ".".to_string()
-            } else {
-                parent_str.to_string()
-            };
+        for name in &["packages", "crates", "modules"] {
+            if p.join(name).exists() {
+                return path.to_string();
+            }
+            if p.file_name().map(|n| n == *name).unwrap_or(false) {
+                let parent = p.parent().unwrap_or(std::path::Path::new("."));
+                let parent_str = parent.to_string_lossy();
+                return if parent_str.is_empty() {
+                    ".".to_string()
+                } else {
+                    parent_str.to_string()
+                };
+            }
         }
         path.to_string()
     }

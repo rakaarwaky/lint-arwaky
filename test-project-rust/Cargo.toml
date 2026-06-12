@@ -1,6 +1,18 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
 [package]
 name = "test-project-rust"
 version = "0.1.0"
 edition = "2021"
+
+[[bin]]
+name = "test-project-rust-bin"
+path = "crates/main.rs"
+
+[[bin]]
+name = "root_violation"
+path = "crates/root_violation.rs"
 
 [dependencies]
