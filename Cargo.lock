@@ -358,20 +358,26 @@ checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 name = "cli_commands-lint-arwaky"
 version = "1.10.11"
 dependencies = [
+ "anyhow",
  "async-trait",
  "auto_fix-lint-arwaky",
  "clap",
  "code_analysis-lint-arwaky",
  "console",
+ "ctrlc",
  "dialoguer",
  "futures",
  "output_report-lint-arwaky",
  "pipeline_jobs-lint-arwaky",
+ "project_setup-lint-arwaky",
  "serde",
  "serde_json",
+ "serde_yaml",
  "shared-lint-arwaky",
  "source_parsing-lint-arwaky",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

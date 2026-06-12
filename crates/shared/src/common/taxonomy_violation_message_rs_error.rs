@@ -120,9 +120,6 @@ pub enum AesViolation {
         reason: Option<LintMessage>,
     },
     // AES0306 — Surface role
-    HierarchyViolation {
-        reason: Option<LintMessage>,
-    },
     PassiveViolation {
         reason: Option<LintMessage>,
     },
@@ -575,16 +572,6 @@ impl fmt::Display for AesViolation {
                     FIX: Replace 'any' annotations with strongly-typed objects, structures, or domain Value Objects (VO).", why)
             }
             // AES0306
-            Self::HierarchyViolation { reason } => {
-                let default_why = "Surface components must expose their capabilities cleanly through layer barrels to prevent leaky encapsulation.".to_string();
-                let why = reason
-                    .as_ref()
-                    .map(|r| r.to_string())
-                    .unwrap_or(default_why);
-                write!(f, "AES0306 SURFACE_ROLE: Surface file is not imported from the layer barrel/router.\n\
-                    WHY? {}\n\
-                    FIX: Add the file's exports to the module barrel or main entry router.", why)
-            }
             Self::PassiveViolation { reason } => {
                 let default_why = "Surfaces must act strictly as passive I/O boundaries and not implement core business rules.".to_string();
                 let why = reason

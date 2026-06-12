@@ -49,7 +49,7 @@ impl FixCommandsSurface {
             }
 
             let orchestrator =
-                shared::code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new();
+                code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new();
             let results = orchestrator.run_self_lint(&project_path);
             println!("Found {} violations before fix", results.len());
 

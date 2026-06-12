@@ -11,10 +11,16 @@ clap = { version = "4.6.1", features = ["derive"] }
 console = "0.15"
 dialoguer = "0.11"
 futures = "0.3"
+anyhow = "1.0.102"
+serde_yaml = "0.9.34"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+ctrlc = "3.4"
 auto_fix = { package = "auto_fix-lint-arwaky", path = "../auto-fix" }
 code_analysis = { package = "code_analysis-lint-arwaky", path = "../code-analysis" }
 output_report = { package = "output_report-lint-arwaky", path = "../output-report" }
 pipeline_jobs = { package = "pipeline_jobs-lint-arwaky", path = "../pipeline-jobs" }
 shared = { package = "shared-lint-arwaky", path = "../shared" }
 source_parsing = { package = "source_parsing-lint-arwaky", path = "../source-parsing" }
+project_setup = { package = "project_setup-lint-arwaky", path = "../project-setup" }
 tokio = { version = "1.52.3", features = ["full"] }
