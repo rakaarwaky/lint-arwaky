@@ -191,23 +191,12 @@ impl LayerDetectionAnalyzer {
         // parent directory name against known layer names. This supports test projects
         // and codebases organized by directory (e.g., "taxonomy/foo.rs" → taxonomy layer)
         // without requiring every file to carry the layer prefix.
-        let mut parent_dir_str = Path::new(&rel)
+        let parent_dir = Path::new(&rel)
             .parent()
             .and_then(|p| p.to_str())
-            .unwrap_or("")
-            .replace('\\', "/");
-        for suffix in &["/src", "/src-rust", "/src-python", "/src-javascript"] {
-            if parent_dir_str.ends_with(suffix) {
-                parent_dir_str = parent_dir_str[..parent_dir_str.len() - suffix.len()].to_string();
-                break;
-            }
-        }
-        if parent_dir_str == "src" || parent_dir_str == "src-rust" || parent_dir_str == "src-python" || parent_dir_str == "src-javascript" {
-            parent_dir_str = "".to_string();
-        }
-
-        if !parent_dir_str.is_empty() && parent_dir_str != "." {
-            let dir_name = parent_dir_str.split('/').next_back().unwrap_or(&parent_dir_str);
+            .unwrap_or("");
+        if !parent_dir.is_empty() && parent_dir != "." {
+            let dir_name = parent_dir.split('/').next_back().unwrap_or(parent_dir);
             const DIR_MAP: &[(&str, &str)] = &[
                 ("taxonomy", "taxonomy"),
                 ("contract", "contract"),
@@ -230,7 +219,6 @@ impl LayerDetectionAnalyzer {
                 }
             }
         }
-
 
         let mut sorted_layers: Vec<(&LayerNameVO, &LayerDefinition)> =
             self.config.layers.iter().collect();

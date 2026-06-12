@@ -99,10 +99,9 @@ impl CheckCommandsSurface {
         }
 
         // AES architecture lint via ServiceContainerAggregate contract (no direct agent import)
-        let has_src = ["packages", "crates", "modules"]
+        let has_src = ["src-rust", "src-python", "src-javascript", "src"]
             .iter()
             .any(|d| std::path::Path::new(path).join(d).is_dir());
-
         if let Some(linter) = container.get_architecture_linter() {
             if has_src {
                 let aes_results = linter.run_self_lint(path);

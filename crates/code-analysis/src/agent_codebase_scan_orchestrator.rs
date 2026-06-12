@@ -9,13 +9,13 @@ use shared::output_report::taxonomy_result_vo::LintResultList;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
-    for name in &["packages", "crates", "modules"] {
+    for name in &["src-rust", "src-python", "src-javascript", "src"] {
         let candidate = project_root.join(name);
         if candidate.is_dir() {
             return candidate;
         }
     }
-    project_root.join("crates")
+    project_root.join("src-rust")
 }
 
 pub struct CodebaseScanOrchestrator {}

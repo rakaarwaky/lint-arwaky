@@ -172,14 +172,15 @@ pub fn get_setup() -> Option<SetupCommandsSurface> {
 pub fn handle_setup(command: SetupCommands) -> ExitCode {
     match command {
         SetupCommands::Init => {
-            let language = if std::path::Path::new("crates").exists() {
+            let language = if std::path::Path::new("src-rust").exists() {
                 "rust"
-            } else if std::path::Path::new("packages").exists()
-                || std::path::Path::new("modules").exists()
+            } else if std::path::Path::new("src-python").exists()
                 || std::path::Path::new("pyproject.toml").exists()
             {
                 "python"
-            } else if std::path::Path::new("package.json").exists() {
+            } else if std::path::Path::new("src-javascript").exists()
+                || std::path::Path::new("package.json").exists()
+            {
                 "javascript"
             } else {
                 "rust"
@@ -220,8 +221,7 @@ layers:
     suffixes: ["_command", "_handler", "_controller"]
 source:
   include:
-    - "packages/**/*.py"
-    - "modules/**/*.py"
+    - "src-python/**/*.py"
   exclude:
     - "**/.venv/**"
     - "**/vendor/**"
@@ -256,8 +256,7 @@ layers:
     suffixes: ["_command", "_handler", "_controller"]
 source:
   include:
-    - "packages/**/*.{js,ts,tsx}"
-    - "modules/**/*.{js,ts,tsx}"
+    - "src-javascript/**/*.{js,ts,tsx}"
   exclude:
     - "**/node_modules/**"
     - "**/dist/**"
@@ -292,15 +291,13 @@ layers:
     suffixes: ["_command", "_handler", "_controller"]
 source:
   include:
-    - "crates/**/*.rs"
-    - "modules/**/*.rs"
+    - "src-rust/**/*.rs"
   exclude:
     - "**/target/**"
     - "**/vendor/**"
 "#
                     }
                 };
-
                 let _ = std::fs::write(&target, content);
                 println!(
                     "Config created: {} (language: {})",
