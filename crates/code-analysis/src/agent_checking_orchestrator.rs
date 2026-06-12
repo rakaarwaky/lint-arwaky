@@ -308,7 +308,8 @@ impl LintCheckingOrchestrator {
 
         // Orphan check (AES030) - enabled in config
         let orphan_agg = self.container.orphan_aggregate();
-        let mut orphan_results = orphan_agg.check_orphans(self.container.as_checker_ref(), files, root_dir);
+        let mut orphan_results =
+            orphan_agg.check_orphans(self.container.as_checker_ref(), files, root_dir);
         rl.values.append(&mut orphan_results);
 
         // Wire role orchestrator for agent and surface role checks

@@ -13,4 +13,3 @@ pub mod taxonomy_name_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_violation_message;
-
