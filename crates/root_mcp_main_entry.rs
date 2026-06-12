@@ -135,7 +135,10 @@ async fn handle_request(request: Value, state: &Arc<Mutex<ServerState>>) -> Valu
                         .unwrap_or("")
                         .to_string();
                     let args = arguments.get("args").cloned();
-                    let container = state.lock().unwrap().container.clone();
+                    let container = match state.lock() {
+                        Ok(guard) => guard.container.clone(),
+                        Err(poisoned) => poisoned.into_inner().container.clone(),
+                    };
                     surface_tools_command::execute_command_tool(container, action, args).await
                 }
 
