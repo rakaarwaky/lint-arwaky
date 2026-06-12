@@ -1,6 +1,6 @@
 // PURPOSE: handle_bootstrap — MCP surface for server initialization and capability listing
 
-use di_containers::contract_service_aggregate::ServiceContainerAggregate;
+use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_vo::BooleanVO;
 use std::sync::Arc;

@@ -1,7 +1,7 @@
 // PURPOSE: capabilities_project_target_resolver — resolves project target paths, triggers codebase scans, evaluates compliance results, and counts LOC
 use shared::code_analysis::contract_target_resolver_protocol::ITargetResolverProtocol;
 use shared::output_report::taxonomy_result_vo::LintResult;
-use shared::output_report::taxonomy_score_vo::compute_score;
+use shared::output_report::taxonomy_score_vo::compute_score as compute_lint_score;
 use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::{Path, PathBuf};
@@ -18,6 +18,34 @@ impl Default for ProjectTargetResolver {
     fn default() -> Self {
         Self::new()
     }
+}
+
+pub fn normalize_project_root(path: &str) -> String {
+    ProjectTargetResolver::new().normalize_project_root(path)
+}
+
+pub fn resolve_target(path: Option<String>) -> String {
+    ProjectTargetResolver::new().resolve_target(path)
+}
+
+pub fn lint_path(path: &str) -> Vec<LintResult> {
+    ProjectTargetResolver::new().lint_path(path)
+}
+
+pub fn compute_score(results: &[LintResult]) -> f64 {
+    ProjectTargetResolver::new().compute_score(results)
+}
+
+pub fn count_loc(path: &str) -> usize {
+    ProjectTargetResolver::new().count_loc(path)
+}
+
+pub fn has_critical(results: &[LintResult]) -> bool {
+    ProjectTargetResolver::new().has_critical(results)
+}
+
+pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf)) {
+    ProjectTargetResolver::new().walk_rs_files(dir, cb)
 }
 
 impl ITargetResolverProtocol for ProjectTargetResolver {
@@ -46,7 +74,7 @@ impl ITargetResolverProtocol for ProjectTargetResolver {
     }
 
     fn compute_score(&self, results: &[LintResult]) -> f64 {
-        compute_score(results)
+        compute_lint_score(results)
     }
 }
 

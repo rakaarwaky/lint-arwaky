@@ -1,5 +1,4 @@
 // PURPOSE: WatchCommandsSurface — CLI surface for file watching with auto-lint on changes
-use shared::pipeline_jobs::contract_dispatcher_aggregate::PipelineActionDispatcherAggregate;
 
 use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
