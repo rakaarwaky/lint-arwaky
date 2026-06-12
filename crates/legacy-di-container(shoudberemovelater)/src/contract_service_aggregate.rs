@@ -16,7 +16,7 @@ use file_system::contract_system_port::IFileSystemPort;
 use file_watch::contract_provider_port::IWatchProviderPort;
 use git_hooks::contract_commands_aggregate::GitCommandsAggregate;
 use git_hooks::orchestrator_aggregate::HookManagementOrchestratorAggregate;
-use import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use language_adapters::contract_flow_port::IJavascriptFlowPort;
 use language_adapters::contract_naming_port::INamingProviderPort;
 use language_adapters::contract_scope_port::IJavascriptScopePort;

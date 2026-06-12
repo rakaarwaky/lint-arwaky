@@ -3,7 +3,7 @@
 ## Build & dev
 
 ```bash
-# Build everything
+_# Build everything
 cargo build --release
 
 # Self-lint — project audits itself under AES rules (no path needed)
@@ -19,13 +19,13 @@ cargo run --bin lint-arwaky-mcp
 cargo run --bin lint-arwaky-tui
 
 # Per-crate build/check/test
-cargo build -p import_rules
-cargo check -p naming_rules
-cargo test -p code_analysis
+cargo build -p import_rules_lint_arwaky
+cargo check -p naming_rules_lint_arwaky
+cargo test -p code_analysis_lint_arwaky
 
 # Tests
 cargo test --workspace        # all
-cargo test -p import_rules    # single crate
+cargo test -p import_rules_lint_arwaky    # single crate
 cargo test --lib <name_fragment>  # single test by name
 
 # Format & lint
@@ -40,15 +40,15 @@ The codebase uses **7 architectural layers** as **file prefixes**, organized int
 
 **CRITICAL**: Layers are determined by **file prefix** (`taxonomy_`, `contract_`, `capabilities_`, `infrastructure_`, `agent_`, `surface_`, `root_`), NOT by folder location or crate name. Each feature crate contains files from multiple layers internally.
 
-| Layer (prefix)    | Allowed suffixes                                  |
-| ----------------- | ------------------------------------------------- |
+| Layer (prefix)      | Allowed suffixes                                            |
+| ------------------- | ----------------------------------------------------------- |
 | `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant` |
-| `contract_`       | `_port`, `_protocol`, `_aggregate`                |
-| `capabilities_`   | `_checker`, `_analyzer`, `_processor`, etc.       |
-| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.         |
-| `agent_`          | `_orchestrator`                                   |
-| `surface_`        | `_command`, `_handler`, `_controller`             |
-| `root_`           | `_container`, `_entry`                            |
+| `contract_`       | `_port`, `_protocol`, `_aggregate`                    |
+| `capabilities_`   | `_checker`, `_analyzer`, `_processor`, etc.           |
+| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.             |
+| `agent_`          | `_orchestrator`                                           |
+| `surface_`        | `_command`, `_handler`, `_controller`                 |
+| `root_`           | `_container`, `_entry`                                  |
 
 ### Workspace Crates (feature folders → workspace members)
 
@@ -143,14 +143,14 @@ Graph-It-Live is integrated via MCP (`graph-it serve`) untuk visualisasi dan ana
 
 ### Tool MCP yang tersedia
 
-| Tool             | Fungsi                                            | Contoh Use Case                                |
-| ---------------- | ------------------------------------------------- | ---------------------------------------------- |
-| `path-in <file>` | Cari semua file yang import file tertentu         | Cek siapa saja yang import suatu contract port |
-| `trace <sym>`    | Trace execution flow: `path/file.rs#FunctionName` | Lacak alur dari surface sampai infrastructure  |
-| `explain <file>` | Analisis intra-file call hierarchy                | Pahami struktur internal suatu file            |
-| `path <file>`    | Crawl dependency graph dari entry file            | Graph seluruh project dari entry point         |
-| `cycles <file>`  | Deteksi circular dependencies                     | Pastikan tidak ada cycle antar layer           |
-| `scan`           | Re-index workspace setelah perubahan              | Update index setelah pull/merge                |
+| Tool               | Fungsi                                             | Contoh Use Case                                |
+| ------------------ | -------------------------------------------------- | ---------------------------------------------- |
+| `path-in <file>` | Cari semua file yang import file tertentu          | Cek siapa saja yang import suatu contract port |
+| `trace <sym>`    | Trace execution flow:`path/file.rs#FunctionName` | Lacak alur dari surface sampai infrastructure  |
+| `explain <file>` | Analisis intra-file call hierarchy                 | Pahami struktur internal suatu file            |
+| `path <file>`    | Crawl dependency graph dari entry file             | Graph seluruh project dari entry point         |
+| `cycles <file>`  | Deteksi circular dependencies                      | Pastikan tidak ada cycle antar layer           |
+| `scan`           | Re-index workspace setelah perubahan               | Update index setelah pull/merge                |
 
 ### Production Readiness Checklist (pakai Graph-It-Live)
 
@@ -196,30 +196,30 @@ cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 
 ### Contoh Resolusi Masalah via Graph-It-Live
 
-| Problem                  | Graph-It-Live Command              | What to check                                                |
-| ------------------------ | ---------------------------------- | ------------------------------------------------------------ |
+| Problem                  | Graph-It-Live Command                | What to check                                                  |
+| ------------------------ | ------------------------------------ | -------------------------------------------------------------- |
 | Surface import violation | `path-in surfaces/...`             | Pastikan surface hanya import taxonomy + contract*aggregate* |
-| Missing inheritance      | `trace capabilities/...#IAnalyzer` | Lacak siapa yang implement IAnalyzer protocol                |
-| Dead code                | `path-in suspicious_file.rs`       | Jika 0 incoming references, file tidak dipakai               |
-| Circular dependency      | `cycles <file>`                    | Identifikasi cycle, extract shared logic ke lower layer      |
-| Layer boundary leak      | `path-in infrastructure/...`       | Pastikan hanya di-import oleh container (root layer)        |
+| Missing inheritance      | `trace capabilities/...#IAnalyzer` | Lacak siapa yang implement IAnalyzer protocol                  |
+| Dead code                | `path-in suspicious_file.rs`       | Jika 0 incoming references, file tidak dipakai                 |
+| Circular dependency      | `cycles <file>`                    | Identifikasi cycle, extract shared logic ke lower layer        |
+| Layer boundary leak      | `path-in infrastructure/...`       | Pastikan hanya di-import oleh container (root layer)           |
 
 ## Project Files & Directories
 
 ### Configuration & Rules
 
-| File                                 | Purpose                                           |
-| ------------------------------------ | ------------------------------------------------- |
-| `Cargo.toml` (root)                  | Workspace manifest — members, deps, bins          |
-| `crates/*/Cargo.toml`                | Per-crate manifests                               |
-| `lint_arwaky.config.rust.yaml`       | AES rules config for Rust                         |
-| `lint_arwaky.config.python.yaml`     | AES rules config for Python                       |
-| `lint_arwaky.config.javascript.yaml` | AES rules config for JavaScript/TypeScript        |
+| File                                   | Purpose                                    |
+| -------------------------------------- | ------------------------------------------ |
+| `Cargo.toml` (root)                  | Workspace manifest — members, deps, bins  |
+| `crates/*/Cargo.toml`                | Per-crate manifests                        |
+| `lint_arwaky.config.rust.yaml`       | AES rules config for Rust                  |
+| `lint_arwaky.config.python.yaml`     | AES rules config for Python                |
+| `lint_arwaky.config.javascript.yaml` | AES rules config for JavaScript/TypeScript |
 
 ### Documentation
 
-| File              | Purpose                                  |
-| ----------------- | ---------------------------------------- |
+| File                | Purpose                                  |
+| ------------------- | ---------------------------------------- |
 | `RULES_AES.md`    | Complete 27 AES rules catalog (v2.0)     |
 | `RULES_RUFF.md`   | Python Ruff rule mapping                 |
 | `RULES_MYPY.md`   | Python MyPy rule mapping                 |
@@ -236,22 +236,22 @@ cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
 
 ### Scripts
 
-| File                              | Purpose                                                                                  |
-| --------------------------------- | ---------------------------------------------------------------------------------------- |
+| File                                | Purpose                                                                                        |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `install.local.sh`                | Bumps patch version + builds release + installs 3 binaries (`cli`, `mcp`, `tui`) locally |
-| `install.remote.sh`               | Remote/CI install script                                                                 |
-| `scripts/install_graphit_live.sh` | Build + install Graph-It-Live extension                                                  |
+| `install.remote.sh`               | Remote/CI install script                                                                       |
+| `scripts/install_graphit_live.sh` | Build + install Graph-It-Live extension                                                        |
 
 ### Project Directories
 
-| Directory                  | Purpose                                             |
-| -------------------------- | --------------------------------------------------- |
+| Directory                    | Purpose                                              |
+| ---------------------------- | ---------------------------------------------------- |
 | `crates/`                  | Source code — 26 workspace crates, 6 layers         |
-| `test-project-rust/`       | Test project with intentional violations (Rust)     |
-| `test-project-python/`     | Test project with intentional violations (Python)   |
-| `test-project-javascript/` | Test project with intentional violations (JS/TS)    |
+| `test-project-rust/`       | Test project with intentional violations (Rust)      |
+| `test-project-python/`     | Test project with intentional violations (Python)    |
+| `test-project-javascript/` | Test project with intentional violations (JS/TS)     |
 | `Graph-It-Live-arwaky/`    | Graph-It-Live fork — dependency graph visualization |
-| `scripts/`                 | Build, install, and utility scripts                 |
+| `scripts/`                 | Build, install, and utility scripts                  |
 
 ## VCS: jj (Jujutsu) — always use instead of git
 

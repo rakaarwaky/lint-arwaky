@@ -14,7 +14,7 @@ use import_rules::capabilities_import_forbidden_checker::ArchImportForbiddenChec
 use import_rules::capabilities_import_intent_checker::ImportIntentChecker;
 use import_rules::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
-use import_rules::contract_rule_protocol::{
+use shared::import_rules::contract_rule_protocol::{
     IAnalyzer, IArchImportProtocol, INamingCheckerProtocol,
 };
 use naming_rules::capabilities_naming_checker::ArchNamingChecker;
