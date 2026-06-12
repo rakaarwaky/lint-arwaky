@@ -170,13 +170,12 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
 
 pub fn check_surfaces_orphan(
     fp: &str,
-    _ctx: &shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext,
+    all_files: &[String],
     violations: &mut Vec<shared::output_report::taxonomy_result_vo::LintResult>,
 ) {
-    let all_files: Vec<String> = Vec::new(); // TODO: pass actual file list
     let result = is_surface_orphan_raw(
         &FilePath::new(fp.to_string()).unwrap_or_default(),
-        &all_files,
+        all_files,
     );
     if result.is_orphan {
         violations.push(crate::mk_orphan_result(fp, &result.reason, result.severity));
