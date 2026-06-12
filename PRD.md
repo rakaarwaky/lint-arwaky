@@ -58,6 +58,7 @@ Lint Arwaky is designed to integrate with AI coding agents through its MCP inter
 
 ## 5. Feature Requirements
 
+<<<<<<< HEAD
 Feature requirements are organized by **feature crates** (Cargo workspace members) representing self-contained vertical slices of functionality.
 
 **Vertical Slicing & Layer Boundary Rules**:
@@ -374,6 +375,299 @@ Self-contained feature component responsible for exposing linter capabilities as
 | FR-104 | MCP tool:`read_skill_context(section)`           | FR-100    |
 | FR-105 | MCP tool:`health_check()`                        | FR-100    |
 | FR-106 | CI/CD integration (OIDC, SLSA Provenance)          | FR-100    |
+=======
+Requirements are organized by **dependency order** (Level 0 → Level 6). Each level builds upon the previous levels.
+
+**Layer convention:** Layer determined by file prefix (`taxonomy_`, `contract_`, `capabilities_`, `infrastructure_`, `agent_`, `surface_`), NOT by folder.
+
+### 5.1 Level 0: `shared` — Foundation (Zero Dependencies)
+
+**Depends on:** Nothing
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                               | AES Codes | Layer(s) |
+| ------ | ------------------------------------------------------------------------- | --------- | -------- |
+| FR-001 | All `taxonomy_*` VOs, entities, events, errors, constants                 | —         | taxonomy |
+| FR-002 | All `contract_*` ports, protocols, aggregates                             | —         | contract |
+| FR-003 | No dependencies on any feature crate                                      | —         | —        |
+
+### 5.2 Level 1: `source-parsing` — Source Code Parsing
+
+**Depends on:** `shared`
+**Layers:** taxonomy, contract, infrastructure
+
+| ID     | Requirement                                                                      | AES Codes | Layer(s)       |
+| ------ | -------------------------------------------------------------------------------- | --------- | -------------- |
+| FR-003 | Regex-based line scanners for Rust, Python, JavaScript/TypeScript               | —         | infrastructure |
+
+### 5.3 Level 2: Core Infrastructure Features
+
+**Depends on:** `shared`, `source-parsing`
+
+#### 5.3.1 `file-system` — File System Abstraction
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                         | AES Codes | Layer(s) |
+| ------ | --------------------------------------------------- | --------- | -------- |
+| FR-027 | Primitive usage checker — no raw primitives in domain types | AES016 | taxonomy |
+
+#### 5.3.2 `file-watch` — File Watching
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                              | AES Codes | Layer(s) |
+| ------ | ---------------------------------------- | --------- | -------- |
+| FR-113 | File watcher for auto-lint (`watch`)     | —         | taxonomy |
+
+#### 5.3.3 `metrics-service` — Metrics Provider
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                               | AES Codes | Layer(s) |
+| ------ | ----------------------------------------- | --------- | -------- |
+| FR-088 | Quality trends (`trends`)                 | —         | taxonomy |
+
+#### 5.3.4 `multi-project` — Multi-Project Governance
+**Layers:** taxonomy
+
+| ID     | Requirement                                                    | AES Codes | Layer(s) |
+| ------ | -------------------------------------------------------------- | --------- | -------- |
+| FR-091 | Multi-project aggregate lint (`multi-project`)                 | —         | taxonomy |
+
+#### 5.3.5 `code-analysis` — Code Quality & Auto-Fix
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                                             | AES Codes | Layer(s) |
+| ------ | --------------------------------------------------------------------------------------- | --------- | -------- |
+| FR-025 | File size limit checker — max line threshold                                            | AES020    | contract |
+| FR-026 | File minimum size checker — min line threshold                                          | AES021    | contract |
+| FR-030 | Bypass comment violation detector — no #[allow], unwrap, panic, noqa                    | AES022    | contract |
+| FR-031 | Unused mandatory import detector — unused imports flagged                               | AES023    | contract |
+| FR-032 | Dead inheritance bypass detector — empty struct/trait                                   | AES024    | contract |
+| FR-045 | Capability method existence checker — dispatch method exists                            | AES0303   | contract |
+| FR-046 | Single capability bottleneck detector — balance dispatch routes                         | AES0303   | contract |
+
+### 5.4 Level 3: Middle Features
+
+**Depends on:** `shared`, `source-parsing`, Level 2 features
+
+#### 5.4.1 `lifecycle-state` — Agent Lifecycle Management
+**Depends on:** `shared`, `pipeline-jobs`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                         | AES Codes | Layer(s) |
+| ------ | --------------------------------------------------- | --------- | -------- |
+| FR-006 | Track quality trends over time                      | —         | taxonomy |
+
+#### 5.4.2 `import-rules` — Import Compliance
+**Depends on:** `shared`, `source-parsing`, `file-system`, `output-report`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                                 | AES Codes | Layer(s) |
+| ------ | --------------------------------------------------------------------------- | --------- | -------- |
+| FR-010 | Import layer violation detector — cross-layer import detection              | AES001    | contract |
+| FR-011 | Mandatory import missing detector — required imports per layer              | AES002    | contract |
+| FR-013 | Root layer detection — forbidden root import patterns                       | AES004    | contract |
+| FR-014 | Layer suffix mismatch detector — file suffix must match layer               | AES005    | contract |
+| FR-015 | Contract suffix mismatch detector — contract needs _port/_protocol/_aggregate | AES006    | contract |
+| FR-017 | Surface direct import checker — no direct infra/cap imports                 | AES003    | contract |
+
+#### 5.4.3 `output-report` — Output Formatting & Report Generation
+**Depends on:** `shared`, `source-parsing`, `code-analysis`, `pipeline-jobs`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                           | AES Codes | Layer(s) |
+| ------ | --------------------------------------------------------------------- | --------- | -------- |
+| FR-058 | Generate quality report (`report [path] --output-format <format>`)    | —         | taxonomy |
+| FR-095 | Text (human-readable)                                                 | —         | taxonomy |
+| FR-096 | JSON (machine-readable)                                               | —         | taxonomy |
+| FR-097 | SARIF 2.1.0 (GitHub Code Scanning)                                    | —         | taxonomy |
+| FR-098 | JUnit XML (Jenkins/CI)                                                | —         | taxonomy |
+
+#### 5.4.4 `pipeline-jobs` — Jobs, Dispatcher, Execution
+**Depends on:** `shared`, `source-parsing`, `multi-project`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                             | AES Codes | Layer(s) |
+| ------ | ------------------------------------------------------- | --------- | -------- |
+| FR-067 | Cancel lint job (`cancel <job_id>`)                     | —         | taxonomy |
+
+#### 5.4.5 `config-system` — Config Loading & Parsing
+**Depends on:** `shared`, `source-parsing`, `import-rules`, `pipeline-jobs`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                                                   | AES Codes | Layer(s) |
+| ------ | --------------------------------------------------------------------------------------------- | --------- | -------- |
+| FR-002 | Multi-config YAML support, language detection, config-driven rules                            | —         | taxonomy |
+| FR-048 | Constant purity checker — _constant files: only pub const/static                              | AES015    | taxonomy |
+| FR-040 | MCP schema checker — MCP tools need docstrings + JSON Schema                                  | AES025    | taxonomy |
+
+#### 5.4.6 `naming-rules` — Naming Convention
+**Depends on:** `shared`, `source-parsing`, `import-rules`, `output-report`
+**Layers:** taxonomy
+
+| ID     | Requirement                                                                        | AES Codes | Layer(s) |
+| ------ | ---------------------------------------------------------------------------------- | --------- | -------- |
+| FR-020 | Naming convention checker — strict word snake_case                                 | AES010    | taxonomy |
+| FR-021 | Mandatory struct/trait definition checker — every file needs struct/enum/trait     | AES011    | taxonomy |
+
+#### 5.4.7 `git-hooks` — Git Hooks Management
+**Depends on:** `shared`, `source-parsing`, `output-report`, `pipeline-jobs`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                        | AES Codes | Layer(s) |
+| ------ | ------------------------------------------------------------------ | --------- | -------- |
+| FR-114 | Git pre-commit hook (`install-hook`, `uninstall-hook`)             | —         | taxonomy |
+
+#### 5.4.8 `role-rules` — Role Violations
+**Depends on:** `shared`, `source-parsing`, `import-rules`, `output-report`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                                           | AES Codes | Layer(s) |
+| ------ | ------------------------------------------------------------------------------------- | --------- | -------- |
+| FR-035 | Surface hierarchy violation detector — utility imports smart surface                  | AES0306   | contract |
+| FR-036 | Passive surface violation detector — passive imports taxonomy only                    | AES0306   | contract |
+| FR-037 | Agent role violation detector — behavioral mandates per agent role                    | AES0305   | contract |
+| FR-038 | Agent any-bypass detector — no `any` type in orchestrators                            | AES0305   | contract |
+
+### 5.5 Level 4: Upper Features
+
+**Depends on:** `shared`, `source-parsing`, Level 3 features
+
+#### 5.5.1 `auto-fix` — Auto-Fix Processor
+**Depends on:** `shared`, `source-parsing`, `code-analysis`, `output-report`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                      | AES Codes | Layer(s) |
+| ------ | ---------------------------------------------------------------- | --------- | -------- |
+| FR-005 | Apply safe auto-fixes (Rust + Python + JS/TS)                    | AES0303   | contract |
+
+#### 5.5.2 `language-adapters` — External Linter Adapters
+**Depends on:** `shared`, `source-parsing`, `code-analysis`, `metrics-service`, `output-report`, `pipeline-jobs`
+**Layers:** taxonomy
+
+| ID     | Requirement                                                            | AES Codes | Layer(s) |
+| ------ | ---------------------------------------------------------------------- | --------- | -------- |
+| FR-070 | Run Clippy linting on Rust files                                       | —         | taxonomy |
+| FR-071 | Run rustfmt formatting check on Rust files                             | —         | taxonomy |
+| FR-072 | Run cargo-audit dependency vulnerability scan on Rust                  | —         | taxonomy |
+| FR-073 | Run Ruff linting on Python files                                       | —         | taxonomy |
+| FR-074 | Run MyPy type checking on Python files                                 | —         | taxonomy |
+| FR-075 | Run Bandit security scanning on Python files                           | —         | taxonomy |
+| FR-076 | Run Radon-style complexity analysis on Python files                    | —         | taxonomy |
+| FR-077 | Run pip-audit dependency vulnerability scan on Python                  | —         | taxonomy |
+| FR-078 | Run ESLint on JavaScript/TypeScript files                              | —         | taxonomy |
+| FR-079 | Run Prettier formatting on JS/TS files                                 | —         | taxonomy |
+| FR-080 | Run TSC type checking on TypeScript files                              | —         | taxonomy |
+
+#### 5.5.3 `plugin-system` — Plugin Discovery & Management
+**Depends on:** `shared`, `source-parsing`, `pipeline-jobs`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                             | AES Codes | Layer(s) |
+| ------ | ------------------------------------------------------- | --------- | -------- |
+| FR-089 | Dependency listing (`dependencies`)                     | —         | taxonomy |
+
+#### 5.5.4 `orphan-detector` — Orphan Code Detection
+**Depends on:** `shared`, `source-parsing`, `code-analysis`, `output-report`
+**Layers:** contract
+
+| ID     | Requirement                                              | AES Codes | Layer(s) |
+| ------ | -------------------------------------------------------- | --------- | -------- |
+| FR-033 | Orphan code detector — unreachable components            | AES030    | contract |
+
+### 5.6 Level 5: Surface Features
+
+**Depends on:** `shared`, `source-parsing`, Level 4 features
+
+#### 5.6.1 `cli-commands` — CLI Surfaces + Transport (Root Layer)
+**Depends on:** `shared`, `source-parsing`, `auto-fix`, `code-analysis`, `output-report`, `pipeline-jobs`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                                    | AES Codes | Layer(s) |
+| ------ | ------------------------------------------------------------------------------ | --------- | -------- |
+| FR-055 | Full architecture compliance analysis (`check [path] [--git-diff]`)            | FR-001–FR-050 | taxonomy |
+| FR-056 | External project scan (`scan [path]`) — AES + all external adapters            | FR-055    | taxonomy |
+| FR-057 | Apply safe fixes (`fix [path]`)                                                | FR-005    | taxonomy |
+| FR-059 | CI mode with exit codes (`ci [path] --threshold <N>`)                          | FR-055    | taxonomy |
+| FR-064 | List adapters (`adapters`)                                                     | FR-055    | taxonomy |
+| FR-065 | Show config (`config show`)                                                    | FR-002    | taxonomy |
+| FR-066 | Display version (`version`)                                                    | —         | taxonomy |
+| FR-090 | Git diff lint (`git-diff`)                                                     | FR-055    | taxonomy |
+| FR-110 | Compare violation diff between paths (`diff`)                                  | FR-055    | taxonomy |
+| FR-111 | AI-powered fix suggestions (`suggest`)                                         | FR-057    | taxonomy |
+| FR-112 | Import/export configuration (`import`, `export`)                               | FR-002    | taxonomy |
+| FR-115 | CLI via `clap` 4.6 subcommand groups                                           | FR-001    | taxonomy |
+| FR-116 | Direct command execution via `std::process::Command`                           | FR-001    | taxonomy |
+
+#### 5.6.2 `project-setup` — Project Init, Doctor, MCP Config
+**Depends on:** `shared`, `source-parsing`, `cli-commands`, `pipeline-jobs`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                       | AES Codes | Layer(s) |
+| ------ | ----------------------------------------------------------------- | --------- | -------- |
+| FR-060 | Environment diagnostics (`setup doctor`)                          | —         | taxonomy |
+| FR-061 | Create default config (`setup init`)                              | —         | taxonomy |
+| FR-062 | MCP client config (`setup mcp-config --client <name>`)            | —         | taxonomy |
+| FR-063 | Hermes integration (`setup hermes [--remove]`)                    | —         | taxonomy |
+
+### 5.7 Level 6: Top-Level
+
+**Depends on:** `shared`, `source-parsing`, Level 5 features
+
+#### 5.7.1 `mcp-server` — MCP JSON-RPC 2.0 Server (Root Layer)
+**Depends on:** `shared`, `source-parsing`, `cli-commands`, `code-analysis`, `language-adapters`, `output-report`, `pipeline-jobs`
+**Layers:** taxonomy, contract
+
+| ID     | Requirement                                                          | AES Codes | Layer(s) |
+| ------ | -------------------------------------------------------------------- | --------- | -------- |
+| FR-100 | MCP server via JSON-RPC 2.0 (`mcp-sdk-rs` 0.3.4)                     | FR-055    | taxonomy |
+| FR-101 | MCP tool: `execute_command(action, args)`                            | FR-100    | taxonomy |
+| FR-102 | MCP tool: `list_commands(domain)`                                    | FR-100    | taxonomy |
+| FR-103 | MCP tool: `commands_schema(tool_name)`                               | FR-100    | taxonomy |
+| FR-104 | MCP tool: `read_skill_context(section)`                              | FR-100    | taxonomy |
+| FR-105 | MCP tool: `health_check()`                                           | FR-100    | taxonomy |
+| FR-106 | CI/CD integration (OIDC, SLSA Provenance)                            | FR-100    | taxonomy |
+
+### 5.8 Cross-Cutting Requirements
+
+These requirements span multiple crates and are not tied to a single level.
+
+#### 5.8.1 Analysis & Scan Subcommands
+
+| ID     | Requirement                                                    | AES Codes | Layer(s) |
+| ------ | -------------------------------------------------------------- | --------- | -------- |
+| FR-085 | Security vulnerability scan (`security`)                       | FR-075    | taxonomy |
+| FR-086 | Cyclomatic complexity analysis (`complexity`)                  | FR-076    | taxonomy |
+| FR-087 | Code duplication detection (`duplicates`)                      | FR-055    | taxonomy |
+
+#### 5.8.2 Semantic Analysis (Enrichment)
+
+| ID     | Requirement                                            | AES Codes | Layer(s) |
+| ------ | ------------------------------------------------------ | --------- | -------- |
+| FR-120 | Show enclosing scope (function/class) for violations   | FR-003    | taxonomy |
+| FR-121 | Trace call chains across project                       | FR-003    | taxonomy |
+| FR-122 | Track variable flow within scope                       | FR-003    | taxonomy |
+| FR-123 | Project-wide symbol rename                             | FR-003    | taxonomy |
+| FR-124 | Generate naming variants (snake_case, camelCase, etc.) | FR-003    | taxonomy |
+
+#### 5.8.3 Circular Dependency Detection
+
+| ID     | Requirement                                                   | AES Codes | Layer(s) |
+| ------ | ------------------------------------------------------------- | --------- | -------- |
+| FR-050 | Circular dependency cycle analyzer — detect circular imports  | AES012    | taxonomy |
+
+#### 5.8.4 Forbidden Inheritance & Mandatory Contract Implementation
+
+| ID     | Requirement                                                             | AES Codes | Layer(s) |
+| ------ | ----------------------------------------------------------------------- | --------- | -------- |
+| FR-041 | Forbidden inheritance detector — aggregate not inherit port/protocol    | AES013    | contract |
+| FR-042 | Mandatory inheritance checker — every file implements a contract        | AES014    | contract |
+
+#### 5.8.5 Surface Layer Rules (Code Structure)
+
+| ID     | Requirement                                                                       | AES Codes | Layer(s) |
+| ------ | --------------------------------------------------------------------------------- | --------- | -------- |
+| FR-016 | Surface layer rule checker — surfaces delegate via ServiceContainerAggregate      | AES0306   | contract |
+>>>>>>> 24b4cbbe877a380e3bbf26265302f924a80b5e96
 
 ---
 
@@ -417,10 +711,17 @@ crates/
   metrics-service/      -- Metrics provider
   cli-commands/         -- CLI surfaces (_command) + transport
   mcp-server/           -- MCP JSON-RPC 2.0 server
+<<<<<<< HEAD
   root_compsotion_container.rs -- Root composition (root layer)
   root_cli_main_entry.rs       -- CLI binary entry (root_entry)
   root_mcp_main_entry.rs       -- MCP binary entry (root_entry)
   root_tui_main_entry.rs       -- TUI binary entry (root_entry)
+=======
+  composition_root.rs   -- Root composition (root layer)
+  cli_main_entry.rs     -- CLI binary entry (root_entry)
+  mcp_main_entry.rs     -- MCP binary entry (root_entry)
+  tui_main_entry.rs     -- TUI binary entry (root_entry)
+>>>>>>> 24b4cbbe877a380e3bbf26265302f924a80b5e96
 
 Layer prefixes (determined by FILE NAME, not folder):
   taxonomy_       → _vo, _entity, _event, _error, _constant
@@ -436,6 +737,7 @@ Layer prefixes (determined by FILE NAME, not folder):
 
 Each feature crate contains **multiple layers internally** (taxonomy, contract, capabilities, infrastructure, agent, surface, root) as needed. The layer is determined by **file prefix**, not by crate. Every crate owns a `root_container.rs` that wires its internal implementations.
 
+<<<<<<< HEAD
 | Crate                 | Container File(s)                                            | Purpose                                                                                                      |
 | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
 | `shared`            | — (no container; re-exports `common` module)              | All `taxonomy_*` VOs, entities, events, errors, constants; all `contract_*` ports, protocols, aggregates |
@@ -460,6 +762,32 @@ Each feature crate contains **multiple layers internally** (taxonomy, contract, 
 | `pipeline-jobs`     | `pipeline_container.rs`, `agent_job_container.rs`        | Jobs, dispatcher, execution (agent + contracts)                                                              |
 | `cli-commands`      | `transport_container.rs`                                   | CLI surfaces + command transport (surfaces + root + contracts)                                               |
 | `mcp-server`        | `mcp_container.rs`                                         | MCP JSON-RPC 2.0 server (surfaces + root + contracts)                                                        |
+=======
+| Crate               | Container File(s)                              | Purpose                                                          |
+| ------------------- | ---------------------------------------------- | ---------------------------------------------------------------- |
+| `shared`            | — (no container; re-exports `common` module)   | All `taxonomy_*` VOs, entities, events, errors, constants; all `contract_*` ports, protocols, aggregates |
+| `import-rules`      | `import_container.rs`                          | AES001/AES002 import checkers (capabilities + contracts + orchestrators) |
+| `naming-rules`      | `naming_container.rs`                          | AES010/AES011 naming checkers (capabilities + contracts + orchestrators) |
+| `role-rules`        | `role_container.rs`, `agent_role_container.rs` | AES0305/AES0306 role auditors (capabilities + contracts + orchestrators) |
+| `code-analysis`     | `analysis_container.rs`, `contract_checker_container.rs` | AES022/AES023/AES024/AES0303 quality & auto-fix (capabilities + contracts + orchestrators) |
+| `auto-fix`          | `auto_fix_container.rs`                        | AES0303 auto-fix processor (capabilities + contracts)            |
+| `orphan-detector`   | `orphan_container.rs`                          | AES030 orphan detection (capabilities + contracts + orchestrators) |
+| `config-system`     | `config_container.rs`                          | Config loading, parsing, validation (infrastructure + contracts) |
+| `source-parsing`    | `source_parsing_container.rs`                  | Source code parsing (infrastructure + contracts)                 |
+| `language-adapters` | `language_container.rs`                        | External linter adapters (infrastructure + contracts + surfaces) |
+| `file-system`       | `file_container.rs`                            | File system abstraction (infrastructure + contracts)             |
+| `file-watch`        | **MISSING** (needs `file_watch_container.rs`)  | File watching (infrastructure + contracts)                       |
+| `git-hooks`         | `git_container.rs`                             | Git hooks management (infrastructure + contracts + agent)        |
+| `multi-project`     | `multi_project_container.rs`                   | Multi-project governance (agent + contracts)                     |
+| `project-setup`     | `setup_container.rs`                           | Project init, doctor, mcp-config (agent + contracts + surfaces)  |
+| `plugin-system`     | `plugin_container.rs`                          | Plugin discovery & management (infrastructure + contracts)       |
+| `output-report`     | `output_container.rs`                          | Output formatting & report generation (agent + contracts)        |
+| `lifecycle-state`   | `lifecycle_container.rs`                       | Agent lifecycle management (agent + contracts)                   |
+| `metrics-service`   | `metrics_container.rs`                         | Metrics provider (infrastructure + contracts)                    |
+| `pipeline-jobs`     | `pipeline_container.rs`, `agent_job_container.rs` | Jobs, dispatcher, execution (agent + contracts)                  |
+| `cli-commands`      | `transport_container.rs`                       | CLI surfaces + command transport (surfaces + root + contracts)   |
+| `mcp-server`        | `mcp_container.rs`                             | MCP JSON-RPC 2.0 server (surfaces + root + contracts)            |
+>>>>>>> 24b4cbbe877a380e3bbf26265302f924a80b5e96
 
 **Rule**: Containers are at `root_` layer (`root_container.rs`). They wire `capabilities_*`, `infrastructure_*`, and `agent_*` impls behind `contract_*` traits. Surface crates access features **only** through container methods or `ServiceContainerAggregate` trait.
 
@@ -496,6 +824,7 @@ LEVEL 4: Depends on Level 3
   language-adapters-lint-arwaky   ← shared, source-parsing, code-analysis, metrics-service, output-report, pipeline-jobs
   plugin-system-lint-arwaky       ← shared, source-parsing, pipeline-jobs
   orphan-detector-lint-arwaky     ← shared, source-parsing, code-analysis, output-report
+<<<<<<< HEAD
   project-setup-lint-arwaky       ← shared, source-parsing, pipeline-jobs
 
 LEVEL 5: Depends on Level 4
@@ -503,6 +832,17 @@ LEVEL 5: Depends on Level 4
 
 LEVEL 6: Top-level
   mcp-server-lint-arwaky          ← shared, source-parsing, cli-commands, code-analysis, language-adapters, output-report, pipeline-jobs
+=======
+
+LEVEL 5: Depends on Level 4
+  cli-commands-lint-arwaky        ← shared, source-parsing, auto-fix, code-analysis, output-report, pipeline-jobs
+  project-setup-lint-arwaky       ← shared, source-parsing, cli-commands, pipeline-jobs
+
+LEVEL 6: Top-level
+  mcp-server-lint-arwaky          ← shared, source-parsing, cli-commands, code-analysis, language-adapters, output-report, pipeline-jobs
+
+DELETE: di-containers-lint-arwaky (God Container — will be replaced by per-feature containers)
+>>>>>>> 24b4cbbe877a380e3bbf26265302f924a80b5e96
 ```
 
 ### 7.3.1 Build Constraints
@@ -512,6 +852,10 @@ LEVEL 6: Top-level
 - `source-parsing-lint-arwaky` depends only on `shared-lint-arwaky`
 - All other feature crates depend on `shared-lint-arwaky` + `source-parsing-lint-arwaky`
 - Feature crates may depend on other feature crates (see dependency graph above)
+<<<<<<< HEAD
+=======
+- `di-containers-lint-arwaky` is deprecated — will be replaced by per-feature containers
+>>>>>>> 24b4cbbe877a380e3bbf26265302f924a80b5e96
 
 ### 7.4 Dependency Rules
 
@@ -524,13 +868,70 @@ contract       -> taxonomy
 taxonomy       -> taxonomy
 ```
 
+<<<<<<< HEAD
 Surfaces must NOT import from `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through the **feature crate's container** or the `ServiceContainerAggregate` trait in the contract layer (AES001 sub-condition `surface_direct`). The `CompositionRoot` (in `root_compsotion_container.rs`, root layer) composes all feature containers and implements `ServiceContainerAggregate` for backward compatibility with existing surface commands.
+=======
+Surfaces must NOT import from `agent`, `capabilities`, or `infrastructure` directly — they access capabilities and infrastructure only through the **feature crate's container** or the `ServiceContainerAggregate` trait in the contract layer (AES001 sub-condition `surface_direct`). The `CompositionRoot` (in `composition_root.rs`, root layer) composes all feature containers and implements `ServiceContainerAggregate` for backward compatibility with existing surface commands.
+
+### 7.5 MCP Server Architecture
+
+The MCP server uses `mcp-sdk-rs` 0.3.4 over JSON-RPC 2.0 on stdin/stdout. It announces `protocolVersion: 2024-11-05` and exposes the `tools` capability.
+
+```
+mcp_main_entry.rs    -- tokio main loop, reads JSON-RPC from stdin
+mcp_container.rs     -- wires MCP server dependencies
+mcp_tools_command.rs -- execute_command / list_commands / commands_schema /
+                        read_skill_context / health_check
+mcp_server_handler.rs / mcp_server_wrapper.rs -- Schema, validation, lifespan
+```
+
+The DI container is created once at server start; the same `Arc<dyn ServiceContainerAggregate>` is passed to every tool call.
+
+### 7.6 Agentic Engineering System (AES) v1.10.11
+
+Severity levels and their point penalty per finding:
+
+| Severity | Penalty | Description                                   |
+| -------- | ------- | --------------------------------------------- |
+| LOW      | -1      | Minor style or naming issue                   |
+| MEDIUM   | -2      | Structural concern, import patterns           |
+| HIGH     | -3      | Architecture violation, mandatory requirement |
+| CRITICAL | -5      | Bypass markers, dead inheritance, layer fraud |
+
+Total score starts at 100.0 and is deducted per finding. If any CRITICAL finding exists, the run fails regardless of score.
+
+**AES016 Primitive Policy**: Value Object enforcement is **granular per layer**:
+
+- `contract` and `taxonomy(entity|error|event)` → `no_primitives: true` (strict)
+- `infrastructure`, `capabilities`, `surfaces` → `no_primitives: false` (adapter layers may use primitives as supporting types)
+- `taxonomy(constant)` → raw primitives allowed by definition; must contain ONLY constant declarations (AES0301)
+
+**AES015 Constant Purity (v2.0)**: Taxonomy files ending in `_constant` must contain only `pub const` / `pub static` declarations. Any `struct`, `enum`, `fn`, or `impl` block in a `_constant` file is a violation.
+
+See [RULES_AES.md](RULES_AES.md) for the full rule catalog (27 active codes across 4 groups) and [ARCHITECTURE.md](ARCHITECTURE.md) for the layered specification with Mermaid diagrams.
+>>>>>>> 24b4cbbe877a380e3bbf26265302f924a80b5e96
 
 ---
 
 ## 8. CLI Interface
 
+<<<<<<< HEAD
 Subcommands are defined in `crates/cli-commands/src/` surfaces and dispatched from `root_cli_main_entry.rs`.
+=======
+| Tool                            | Purpose                                        |
+| ------------------------------- | ---------------------------------------------- |
+| `execute_command(action, args)` | Execute any CLI command                        |
+| `list_commands(domain)`         | Discover available CLI commands                |
+| `commands_schema(tool_name)`    | Retrieve the JSON Schema for a registered tool |
+| `read_skill_context(section)`   | Read SKILL.md documentation by section         |
+| `health_check()`                | Check linter adapter health and system state   |
+
+---
+
+## 9. CLI Interface
+
+Subcommands are defined in `crates/cli-commands/src/` surfaces and dispatched from `cli_main_entry.rs`.
+>>>>>>> 24b4cbbe877a380e3bbf26265302f924a80b5e96
 
 | Category | Subcommands                                                                |
 | -------- | -------------------------------------------------------------------------- |
@@ -564,6 +965,47 @@ Subcommands are defined in `crates/cli-commands/src/` surfaces and dispatched fr
 ---
 
 ## 11. Workspace Crates (Cargo.toml members)
+<<<<<<< HEAD
+=======
+
+| Crate                         | Package Name                    | Path                  |
+| ----------------------------- | ------------------------------- | --------------------- |
+| shared                        | `shared-lint-arwaky`            | `crates/shared`       |
+| import-rules                  | `import_rules-lint-arwaky`      | `crates/import-rules` |
+| naming-rules                  | `naming_rules-lint-arwaky`      | `crates/naming-rules` |
+| role-rules                    | `role_rules-lint-arwaky`        | `crates/role-rules`   |
+| orphan-detector               | `orphan_detector-lint-arwaky`   | `crates/orphan-detector` |
+| code-analysis                 | `code_analysis-lint-arwaky`     | `crates/code-analysis` |
+| auto-fix                      | `auto_fix-lint-arwaky`          | `crates/auto-fix`     |
+| config-system                 | `config_system-lint-arwaky`     | `crates/config-system` |
+| pipeline-jobs                 | `pipeline_jobs-lint-arwaky`     | `crates/pipeline-jobs` |
+| source-parsing                | `source_parsing-lint-arwaky`    | `crates/source-parsing` |
+| language-adapters             | `language_adapters-lint-arwaky` | `crates/language-adapters` |
+| file-system                   | `file_system-lint-arwaky`       | `crates/file-system`  |
+| file-watch                    | `file_watch-lint-arwaky`        | `crates/file-watch`   |
+| git-hooks                     | `git_hooks-lint-arwaky`         | `crates/git-hooks`    |
+| multi-project                 | `multi_project-lint-arwaky`     | `crates/multi-project` |
+| project-setup                 | `project_setup-lint-arwaky`     | `crates/project-setup` |
+| plugin-system                 | `plugin_system-lint-arwaky`     | `crates/plugin-system` |
+| output-report                 | `output_report-lint-arwaky`     | `crates/output-report` |
+| lifecycle-state               | `lifecycle_state-lint-arwaky`   | `crates/lifecycle-state` |
+| metrics-service               | `metrics_service-lint-arwaky`   | `crates/metrics-service` |
+| cli-commands                  | `cli_commands-lint-arwaky`      | `crates/cli-commands` |
+| mcp-server                    | `mcp_server-lint-arwaky`        | `crates/mcp-server`   |
+| composition_root              | (local module)                  | `crates/composition_root.rs` |
+| cli_main_entry                | (binary)                        | `crates/cli_main_entry.rs` |
+| mcp_main_entry                | (binary)                        | `crates/mcp_main_entry.rs` |
+| tui_main_entry                | (binary)                        | `crates/tui_main_entry.rs` |
+
+**Removed / Legacy**:
+- `di-containers` → replaced by `CompositionRoot` + per-feature containers
+- `legacy-di-container(shoudberemovelater)` → to be deleted
+- `cli-transport` → merged into `cli-commands` (transport_container.rs)
+
+---
+
+## 12. Dependencies (Cargo.toml — external)
+>>>>>>> 24b4cbbe877a380e3bbf26265302f924a80b5e96
 
 | Crate                     | Package Name                      | Path                                    | Internal Dependencies                                                                                                            | External Dependencies                                                                                    |
 | ------------------------- | --------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |

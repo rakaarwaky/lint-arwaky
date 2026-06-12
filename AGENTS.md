@@ -76,10 +76,17 @@ crates/
   metrics-service/      — Metrics provider
   cli-commands/         — CLI surfaces (_command) + transport
   mcp-server/           — MCP server surfaces
+<<<<<<< HEAD
   root_compsotion_container.rs — Root composition (root layer)
   root_cli_main_entry.rs       — CLI binary entry (root_entry)
   root_mcp_main_entry.rs       — MCP binary entry (root_entry)
   root_tui_main_entry.rs       — TUI binary entry (root_entry)
+=======
+  composition_root.rs   — Root composition (root layer)
+  cli_main_entry.rs     — CLI binary entry (root_entry)
+  mcp_main_entry.rs     — MCP binary entry (root_entry)
+  tui_main_entry.rs     — TUI binary entry (root_entry)
+>>>>>>> 24b4cbbe877a380e3bbf26265302f924a80b5e96
 ```
 
 **Container Pattern**: Each feature crate owns its own `root_container.rs` at crate root. Containers wire `capabilities_*`, `infrastructure_*`, `agent_*` implementations behind `contract_*` traits. Agent layer contains ONLY orchestrators (`agent_*_orchestrator.rs`). Root layer contains containers and binary entries. **Folder structure ≠ layer assignment.**
@@ -99,7 +106,11 @@ lifecycle-state, metrics-service, pipeline-jobs
        │                         deps: shared ONLY
 cli-commands, mcp-server          (surface_*)
        ▲                         deps: all feature crates + shared
+<<<<<<< HEAD
 root_compsotion_container (root_*)
+=======
+composition_root (root_*)
+>>>>>>> 24b4cbbe877a380e3bbf26265302f924a80b5e96
 ```
 
 Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
