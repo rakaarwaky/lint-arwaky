@@ -3,7 +3,9 @@ use std::collections::{HashMap, HashSet};
 
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_error_vo::ErrorCode;
+use crate::common::taxonomy_lint_vo::ScopeRef;
 use crate::common::taxonomy_message_vo::LintMessage;
+use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::import_rules::contract_rule_protocol::IAnalyzer;
 use crate::output_report::taxonomy_result_vo::LintResult;
 use crate::output_report::taxonomy_result_vo::LintResultList;
@@ -25,6 +27,29 @@ pub trait ICycleAnalysisProtocol: Send + Sync {
 
 pub struct DefaultCycleAnalysisProtocol {}
 
+fn try_resolve_candidates(base_path: &str, module_path: &str, file_set: &HashSet<String>) -> Option<String> {
+    let exts = ["rs", "py", "ts", "js"];
+    for ext in &exts {
+        let candidate = format!("{}/{}.{}", base_path, module_path, ext);
+        if file_set.contains(&candidate) {
+            return Some(candidate);
+        }
+    }
+    for ext in &exts {
+        let candidate = format!("{}/{}/mod.{}", base_path, module_path, ext);
+        if file_set.contains(&candidate) {
+            return Some(candidate);
+        }
+    }
+    for ext in &exts {
+        let candidate = format!("{}/{}/__init__.{}", base_path, module_path, ext);
+        if file_set.contains(&candidate) {
+            return Some(candidate);
+        }
+    }
+    None
+}
+
 fn resolve_import_to_file(
     module: &str,
     source_file: &FilePath,
@@ -36,83 +61,67 @@ fn resolve_import_to_file(
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_default();
 
-    if module.starts_with("crate::") || module.starts_with("super::") || module.starts_with("self::") {
-        let relative = module
-            .trim_start_matches("crate::")
-            .trim_start_matches("super::")
-            .trim_start_matches("self::");
-
+    if module.starts_with("crate::") {
+        let relative = module.trim_start_matches("crate::");
         let segments: Vec<&str> = relative.split("::").collect();
         let module_path = segments.join("/");
+        return try_resolve_candidates(root_dir.value(), &module_path, file_set);
+    }
 
-        let root = root_dir.value();
-        for ext in &["rs", "py", "ts", "js"] {
-            let candidate = format!("{}/{}.{}", root, module_path, ext);
-            if file_set.contains(&candidate) {
-                return Some(candidate);
+    if module.starts_with("self::") {
+        let relative = module.trim_start_matches("self::");
+        let segments: Vec<&str> = relative.split("::").collect();
+        let module_path = segments.join("/");
+        return try_resolve_candidates(&source_dir, &module_path, file_set);
+    }
+
+    if module.starts_with("super::") {
+        let mut current_dir = std::path::PathBuf::from(&source_dir);
+        let mut remaining = module;
+        while remaining.starts_with("super::") {
+            remaining = remaining.trim_start_matches("super::");
+            if let Some(parent) = current_dir.parent() {
+                current_dir = parent.to_path_buf();
             }
         }
-        for ext in &["rs", "py", "ts", "js"] {
-            let candidate = format!("{}/{}/mod.{}", root, module_path, ext);
-            if file_set.contains(&candidate) {
-                return Some(candidate);
-            }
+        let segments: Vec<&str> = remaining.split("::").filter(|s| !s.is_empty()).collect();
+        let module_path = segments.join("/");
+        if !module_path.is_empty() {
+            return try_resolve_candidates(&current_dir.to_string_lossy(), &module_path, file_set);
         }
-        for ext in &["rs", "py", "ts", "js"] {
-            let candidate = format!("{}/{}/__init__.{}", root, module_path, ext);
-            if file_set.contains(&candidate) {
-                return Some(candidate);
-            }
-        }
-    } else if module.starts_with('.') {
+        return None;
+    }
+
+    if module.starts_with('.') {
         let base = std::path::Path::new(&source_dir);
         let resolved = base.join(module.trim_start_matches('.').trim_start_matches('/'));
         let resolved_str = resolved.to_string_lossy().to_string();
 
-        for ext in &["rs", "py", "ts", "js"] {
+        let exts = ["rs", "py", "ts", "js"];
+        for ext in &exts {
             let candidate = format!("{}.{}", resolved_str, ext);
             if file_set.contains(&candidate) {
                 return Some(candidate);
             }
         }
-        for ext in &["rs", "py", "ts", "js"] {
+        for ext in &exts {
             let candidate = format!("{}/mod.{}", resolved_str, ext);
             if file_set.contains(&candidate) {
                 return Some(candidate);
             }
         }
-        for ext in &["rs", "py", "ts", "js"] {
+        for ext in &exts {
             let candidate = format!("{}/__init__.{}", resolved_str, ext);
             if file_set.contains(&candidate) {
                 return Some(candidate);
             }
         }
-    } else {
-        let segments: Vec<&str> = module.split('.').collect();
-        let module_path = segments.join("/");
-
-        let root = root_dir.value();
-        for ext in &["rs", "py", "ts", "js"] {
-            let candidate = format!("{}/{}.{}", root, module_path, ext);
-            if file_set.contains(&candidate) {
-                return Some(candidate);
-            }
-        }
-        for ext in &["rs", "py", "ts", "js"] {
-            let candidate = format!("{}/{}/mod.{}", root, module_path, ext);
-            if file_set.contains(&candidate) {
-                return Some(candidate);
-            }
-        }
-        for ext in &["rs", "py", "ts", "js"] {
-            let candidate = format!("{}/{}/__init__.{}", root, module_path, ext);
-            if file_set.contains(&candidate) {
-                return Some(candidate);
-            }
-        }
+        return None;
     }
 
-    None
+    let segments: Vec<&str> = module.split('.').collect();
+    let module_path = segments.join("/");
+    try_resolve_candidates(root_dir.value(), &module_path, file_set)
 }
 
 fn find_cycle_dfs(
@@ -202,14 +211,20 @@ impl ICycleAnalysisProtocol for DefaultCycleAnalysisProtocol {
                     file: file.clone(),
                     line: crate::common::taxonomy_common_vo::LineNumber::new(1),
                     column: crate::common::taxonomy_common_vo::ColumnNumber::new(0),
-                    code: ErrorCode::raw("AES_CYCLE"),
+                    code: ErrorCode::raw("AES015"),
                     message: LintMessage::new(format!(
                         "Circular dependency detected: {}",
                         cycle_display
                     )),
                     source: Some(AdapterName::raw("architecture")),
-                    severity: Severity::HIGH,
-                    enclosing_scope: None,
+                    severity: Severity::CRITICAL,
+                    enclosing_scope: Some(ScopeRef {
+                        name: DescriptionVO::new(String::new()),
+                        kind: DescriptionVO::new(String::new()),
+                        file: None,
+                        start_line: None,
+                        end_line: None,
+                    }),
                     related_locations: crate::common::taxonomy_lint_vo::LocationList::new(),
                 });
             }

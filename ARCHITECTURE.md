@@ -128,7 +128,7 @@ crates/
   metrics-service/      — Metrics provider
   cli-commands/         — CLI surfaces (_command) + transport
   mcp-server/           — MCP server surfaces
-  root_compsotion_container.rs — Root composition (root layer)
+  root_composition_container.rs — Root composition (root layer)
   root_cli_main_entry.rs       — CLI binary entry (root_entry)
   root_mcp_main_entry.rs       — MCP binary entry (root_entry)
   root_tui_main_entry.rs       — TUI binary entry (root_entry)
@@ -219,4 +219,4 @@ The AES layer rules are enforced at two levels:
 | **Feature (capabilities/infra)** | `import-rules`, `naming-rules`, `language-adapters`, `source-parsing` | `shared` only                                      |
 | **Feature (agent)**              | `code-analysis`, `auto-fix`, `pipeline-jobs`                            | `shared` + other feature crates (lower layer only) |
 | **Surface**                      | `cli-commands`, `mcp-server`                                              | `shared` + feature crates (via DI)                 |
-| **Composition**                  | `root_compsotion_container.rs`                                              | All feature crates                                   |
+| **Composition**                  | `root_composition_container.rs`                                              | All feature crates                                   |

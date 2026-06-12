@@ -167,7 +167,7 @@ impl ILinterAdapterPort for RustClippyAdapter {
 
 ### 3. Register in the DI container
 
-Edit `crates/composition_root.rs` (or `crates/root_compsotion_container.rs`) and add the adapter registration:
+Edit `crates/composition_root.rs` (or `crates/root_composition_container.rs`) and add the adapter registration:
 
 ```rust
 use crate::language_adapters::infrastructure_rs_clippy_adapter::RustClippyAdapter;
