@@ -22,7 +22,7 @@ pub struct ImportIntentChecker {}
 
 impl ImportIntentChecker {
     pub fn new(
-        _parser: Arc<dyn crate::IImportParserPort>,
+        _parser: Arc<dyn shared::import_rules::contract_import_parser_port::IImportParserPort>,
     ) -> Self {
         Self {}
     }
@@ -227,14 +227,14 @@ impl ImportIntentChecker {
 }
 
 #[async_trait]
-impl crate::IArchRuleProtocol for ImportIntentChecker {
+impl shared::import_rules::contract_rule_protocol::IArchRuleProtocol for ImportIntentChecker {
     fn rule_name(&self) -> Identity {
         Identity::new("AES002X")
     }
 }
 
 #[async_trait]
-impl crate::IArchImportProtocol for ImportIntentChecker {
+impl shared::import_rules::contract_rule_protocol::IArchImportProtocol for ImportIntentChecker {
     async fn check_mandatory_imports(
         &self,
         _analyzer: &dyn IAnalyzer,

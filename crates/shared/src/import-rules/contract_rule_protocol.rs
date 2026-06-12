@@ -25,15 +25,16 @@ pub trait IArchRuleProtocol {
     fn rule_name(&self) -> Identity;
 }
 
+#[async_trait::async_trait]
 pub trait INamingCheckerProtocol: Send + Sync {
-    fn check_file_naming(
+    async fn check_file_naming(
         &self,
         analyzer: &dyn IAnalyzer,
         files: &FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
-    fn check_domain_suffixes(
+    async fn check_domain_suffixes(
         &self,
         analyzer: &dyn IAnalyzer,
         files: &FilePathList,

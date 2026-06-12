@@ -2,7 +2,6 @@
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
-use shared::auto_fix::taxonomy_symbol_renamer_utility::SymbolRenamer;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::source_parsing::taxonomy_path_vo::FilePath;

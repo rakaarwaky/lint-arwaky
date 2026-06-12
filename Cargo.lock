@@ -449,8 +449,10 @@ dependencies = [
  "pipeline_jobs-lint-arwaky",
  "serde",
  "serde_json",
+ "serde_yaml",
  "shared-lint-arwaky",
  "source_parsing-lint-arwaky",
+ "toml 1.1.2+spec-1.1.0",
 ]
 
 [[package]]
@@ -2566,6 +2568,7 @@ name = "naming_rules-lint-arwaky"
 version = "1.10.11"
 dependencies = [
  "async-trait",
+ "file_system-lint-arwaky",
  "import_rules-lint-arwaky",
  "output_report-lint-arwaky",
  "regex",

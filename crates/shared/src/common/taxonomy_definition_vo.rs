@@ -5,7 +5,7 @@ use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::import_rules::taxonomy_rule_vo::MandatoryImportRuleVO;
+use crate::import_rules::taxonomy_import_rule_vo::MandatoryImportRuleVO;
 use crate::naming_rules::taxonomy_suffix_vo::SuffixPolicyVO;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 
