@@ -2334,7 +2334,7 @@ dependencies = [
 
 [[package]]
 name = "lint_arwaky-arwaky"
-version = "1.10.11"
+version = "1.10.12"
 dependencies = [
  "anyhow",
  "async-trait",

@@ -18,13 +18,19 @@ use shared::common::taxonomy_adapter_name_vo::AdapterName;
 
 pub struct CompositionRoot {
     // Legacy fields (for ServiceContainerAggregate backward compat)
+    #[allow(dead_code)]
     linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
     arch_linter: Arc<dyn IArchLintProtocol>,
     // Infrastructure fields (not in trait but needed for wiring)
+    #[allow(dead_code)]
     file_system: Arc<dyn IFileSystemPort>,
+    #[allow(dead_code)]
     executor: Arc<dyn ICommandExecutorPort>,
+    #[allow(dead_code)]
     path_norm: Arc<dyn IPathNormalizationPort>,
+    #[allow(dead_code)]
     source_parser: Arc<dyn ISourceParserPort>,
+    #[allow(dead_code)]
     metrics: Arc<dyn IMetricsProviderPort>,
 }
 
@@ -133,6 +139,7 @@ impl CompositionRoot {
     }
 
     // Helper for CLI initialization
+    #[allow(dead_code)]
     pub fn checker_container(&self) -> code_analysis::root_container::CheckerContainer {
         code_analysis::root_container::CheckerContainer::new()
     }

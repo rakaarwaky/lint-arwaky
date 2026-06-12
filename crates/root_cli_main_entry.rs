@@ -20,7 +20,6 @@ use cli_commands::surface_setup_command;
 use cli_commands::surface_watch_command;
 use code_analysis::agent_checking_orchestrator::init_global_checker;
 use code_analysis::{has_critical, lint_path, ProjectTargetResolver, CodeMetricAnalyzer};
-use shared::config_system::taxonomy_config_vo::default_aes_config;
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
@@ -72,17 +71,17 @@ fn main() -> ExitCode {
         Commands::Complexity { path } => {
             let resolver = ProjectTargetResolver::new();
             let analyzer = CodeMetricAnalyzer::new(Arc::new(resolver));
-            analyzer.handle_complexity(Some(path))
+            analyzer.handle_complexity(path)
         }
         Commands::Duplicates { path } => {
             let resolver = ProjectTargetResolver::new();
             let analyzer = CodeMetricAnalyzer::new(Arc::new(resolver));
-            analyzer.handle_duplicates(Some(path))
+            analyzer.handle_duplicates(path)
         }
         Commands::Trends { path } => {
             let resolver = ProjectTargetResolver::new();
             let analyzer = CodeMetricAnalyzer::new(Arc::new(resolver));
-            analyzer.handle_trends(Some(path))
+            analyzer.handle_trends(path)
         }
         Commands::Dependencies { path } => surface_maintenance_command::handle_dependencies(path),
         Commands::Setup { command } => surface_setup_command::handle_setup(command),
