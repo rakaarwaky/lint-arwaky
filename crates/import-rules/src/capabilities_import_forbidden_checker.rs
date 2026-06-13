@@ -42,8 +42,6 @@ impl ArchImportForbiddenChecker {
                 "agent".to_string(),
                 "infrastructure".to_string(),
                 "capabilities".to_string(),
-                "contract(port)".to_string(),
-                "contract(protocol)".to_string(),
             ]
         };
 

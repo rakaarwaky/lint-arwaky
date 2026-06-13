@@ -193,7 +193,12 @@ pub async fn run_server() {
     eprintln!("Press Ctrl+C to stop");
 
     // Inline MCP composition — create exactly what MCP needs
-    let arch_linter = code_analysis::root_code_analysis_container::AnalysisContainer::new().architecture_linter();
+    let import_container = import_rules::root_import_rules_container::ImportContainer::new();
+    let analyzer = import_container.analyzer();
+    let checker_container = code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(analyzer);
+    code_analysis::agent_code_analysis_orchestrator::init_global_checker(Arc::new(checker_container));
+
+    let arch_linter = code_analysis::root_code_analysis_container::CodeAnalysisContainer::new().architecture_linter();
 
     let state = Arc::new(Mutex::new(ServerState { arch_linter }));
 

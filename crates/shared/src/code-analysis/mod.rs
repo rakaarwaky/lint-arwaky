@@ -3,6 +3,7 @@ pub mod contract_adapter_port;
 pub mod contract_analysis_protocol;
 pub mod contract_bypass_checker_protocol;
 pub mod contract_class_protocol;
+pub mod contract_code_analysis_aggregate;
 pub mod contract_code_metric_analyzer_protocol;
 pub mod contract_cycle_protocol;
 pub mod contract_dead_inheritance_protocol;

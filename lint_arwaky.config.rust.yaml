@@ -31,15 +31,19 @@ architecture:
   enabled: true
   layers:
     root:
+      path: "crates"
       suffix:
         - strict: ["entry","container"]
     taxonomy:
+      path: "crates/shared"
       suffix:
         - strict: ["vo", "entity", "error", "event", "constant", "utility", "helper"] 
     contract:
+      path: "crates/shared"
       suffix:
         - strict: ["port", "protocol", "aggregate"]
     capabilities:
+      path: "crates"
       suffix:
         - flexible:
             [
@@ -85,6 +89,7 @@ architecture:
               "aggregate",
             ]
     infrastructure:
+      path: "crates"
       suffix:
         - flexible:
             [
@@ -139,6 +144,7 @@ architecture:
               "aggregate",
             ]
     surfaces:
+      path: "crates"
       suffix:
         - strict:
             [
@@ -155,6 +161,7 @@ architecture:
               "screen",
             ]
     agent:
+      path: "crates"
       suffix:
         - strict: ["orchestrator"]
 
@@ -267,14 +274,18 @@ architecture:
               purpose: "call"
 
         - scope: "agent(orchestrator)"
-          allowed: ["taxonomy", "contract(aggregate)"]
+          allowed: ["taxonomy", "contract(aggregate)", "contract(port)", "contract(protocol)"]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["surfaces", "infrastructure", "capabilities", "contract(port|protocol)", "root"]
+          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
             - layer: "contract(aggregate)"
               purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "call"
+            - layer: "contract(protocol)"
+              purpose: "call"
 
         - scope: "root"
           allowed: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
@@ -471,14 +482,18 @@ architecture:
               purpose: "call"
 
         - scope: "agent(orchestrator)"
-          allowed: ["taxonomy", "contract(aggregate)"]
+          allowed: ["taxonomy", "contract(aggregate)", "contract(port)", "contract(protocol)"]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["surfaces", "infrastructure", "capabilities", "contract(port|protocol)", "root"]
+          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
             - layer: "contract(aggregate)"
               purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "call"
+            - layer: "contract(protocol)"
+              purpose: "call"
 
         - scope: "root"
           allowed: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]

@@ -145,7 +145,7 @@ impl DummyImportChecker {
         let lines: Vec<&str> = content.lines().collect();
         let lang = Language::from_path(file);
 
-        let layer_name = analyzer
+        let _layer_name = analyzer
             .detect_layer(&FilePath::new(file.to_string()).unwrap_or_default(), root_dir)
             .map(|l| l.to_string())
             .unwrap_or_else(|| "any".to_string());

@@ -1,15 +1,10 @@
 // PURPOSE: PluginCommandsSurface — CLI surface for listing and managing enabled adapters/plugins
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use shared::plugin_system::contract_plugin_commands_aggregate::PluginCommandsAggregate;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::process::ExitCode;
 use std::sync::Arc;
-
-fn _use_contract_aggregates() {
-    let _ = std::marker::PhantomData::<dyn PluginCommandsAggregate>;
-}
 
 pub struct PluginCommandsSurface {
     pub linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,

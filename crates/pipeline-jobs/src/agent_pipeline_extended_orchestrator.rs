@@ -3,7 +3,6 @@ use shared::file_watch::taxonomy_watch_vo::DirectoryWatchVO;
 use shared::multi_project::taxonomy_multi_project_vo::MultiProjectVO;
 use shared::pipeline_jobs::contract_extended_aggregate::PipelineExtendedOrchestratorAggregate;
 use shared::pipeline_jobs::contract_output_aggregate::PipelineOutputAggregate;
-use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use shared::pipeline_jobs::taxonomy_action_vo::JobId;
 use shared::pipeline_jobs::taxonomy_job_vo::ResponseData;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
@@ -13,12 +12,6 @@ use shared::taxonomy_common_vo::BooleanVO;
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-
-/// Satisfy AES030 orphan detection - agent references contract ports/protocols
-fn _use_contract_references() {
-    let _ = std::marker::PhantomData::<dyn PipelineExtendedOrchestratorAggregate>;
-    let _ = std::marker::PhantomData::<dyn IJobRegistryPort>;
-}
 
 pub struct PipelineExtendedOrchestrator {}
 

@@ -260,8 +260,8 @@ architecture:
             ["surfaces", "capabilities", "agent", "infrastructure", "root"]
 
         - scope: "agent(orchestrator)"
-          allowed: ["taxonomy", "contract", "agent"]
-          mandatory: ["taxonomy"]
+          allowed: ["taxonomy", "contract(aggregate)", "contract(port)", "contract(protocol)"]
+          mandatory: ["taxonomy", "contract(aggregate)"]
           forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
 
         - scope: "surfaces(command|controller|page|)"

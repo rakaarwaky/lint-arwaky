@@ -38,7 +38,7 @@ impl ICodeMetricAnalyzerProtocol for CodeMetricAnalyzer {
         println!("Cyclomatic Complexity Analysis — {}", root);
         println!();
 
-        let src = crate::agent_codebase_scan_orchestrator::detect_source_dir(std::path::Path::new(&root));
+        let src = crate::agent_code_analysis_orchestrator::detect_source_dir(std::path::Path::new(&root));
         let mut functions: Vec<(std::path::PathBuf, String, usize, usize)> = Vec::new();
 
         self.resolver.walk_rs_files(&src, &mut |p| {
@@ -129,7 +129,7 @@ impl ICodeMetricAnalyzerProtocol for CodeMetricAnalyzer {
         println!("Code Duplication Detection — {}", root);
         println!();
 
-        let src = crate::agent_codebase_scan_orchestrator::detect_source_dir(std::path::Path::new(&root));
+        let src = crate::agent_code_analysis_orchestrator::detect_source_dir(std::path::Path::new(&root));
         let min_lines: usize = 10;
         let mut blocks: std::collections::HashMap<String, Vec<(std::path::PathBuf, usize)>> =
             std::collections::HashMap::new();

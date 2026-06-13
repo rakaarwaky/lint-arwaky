@@ -1,8 +1,12 @@
 // PURPOSE: ImportOrchestrator — agent that orchestrates import rule checks
 use async_trait::async_trait;
+use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
+use shared::code_analysis::contract_unused_protocol::IUnusedProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::import_rules::contract_import_rules_aggregate::IImportRulesAggregate;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
 use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::path::Path;
@@ -12,6 +16,8 @@ pub struct ImportOrchestrator {
     mandatory: Arc<dyn IArchImportProtocol>,
     forbidden: Arc<dyn IArchImportProtocol>,
     intent: Arc<dyn IArchImportProtocol>,
+    unused: Arc<dyn IUnusedProtocol>,
+    cycle: Arc<dyn ICycleAnalysisProtocol>,
     analyzer: Arc<dyn IAnalyzer>,
 }
 
@@ -20,12 +26,16 @@ impl ImportOrchestrator {
         mandatory: Arc<dyn IArchImportProtocol>,
         forbidden: Arc<dyn IArchImportProtocol>,
         intent: Arc<dyn IArchImportProtocol>,
+        unused: Arc<dyn IUnusedProtocol>,
+        cycle: Arc<dyn ICycleAnalysisProtocol>,
         analyzer: Arc<dyn IAnalyzer>,
     ) -> Self {
         Self {
             mandatory,
             forbidden,
             intent,
+            unused,
+            cycle,
             analyzer,
         }
     }
@@ -82,8 +92,24 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         self.intent
             .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)
             .await;
-        self.intent
-            .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)
+
+        // AES023: unused import check
+        for file in files.iter() {
+            let unused_symbols = self.unused.find_unused_imports(file);
+            for symbol in unused_symbols {
+                results.values.push(LintResult::new_arch(
+                    file.value(),
+                    1,
+                    "AES023",
+                    Severity::MEDIUM,
+                    format!("Unused import: {}", symbol.value()),
+                ));
+            }
+        }
+
+        // AES015: circular dependency / cycle detection
+        self.cycle
+            .check_cycles(self.analyzer.as_ref(), &files, &root_dir, &mut results)
             .await;
 
         results.values
@@ -91,5 +117,16 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 
     fn name(&self) -> &str {
         "import-rules"
+    }
+}
+
+#[async_trait]
+impl IImportRulesAggregate for ImportOrchestrator {
+    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        <Self as IImportRunnerAggregate>::run_audit(self, target).await
+    }
+
+    fn name(&self) -> &str {
+        <Self as IImportRunnerAggregate>::name(self)
     }
 }

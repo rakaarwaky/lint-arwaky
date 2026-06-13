@@ -2107,7 +2107,9 @@ version = "1.10.13"
 dependencies = [
  "async-trait",
  "file_system-lint-arwaky",
+ "once_cell",
  "output_report-lint-arwaky",
+ "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",

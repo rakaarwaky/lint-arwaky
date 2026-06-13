@@ -1,7 +1,6 @@
 // PURPOSE: SetupOrchestrator — orchestrates project initialization and setup operations
 use shared::cli_commands::taxonomy_protocol_vo::TransportProtocol;
 use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
-use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::pipeline_jobs::taxonomy_job_vo::EnvContentVO;
 use shared::pipeline_jobs::taxonomy_job_vo::McpConfigVO;
 use shared::pipeline_jobs::taxonomy_job_vo::SuccessStatus;
@@ -10,12 +9,6 @@ use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-
-/// Satisfy AES030 orphan detection - agent references contract ports/protocols
-fn _use_contract_references() {
-    let _ = std::marker::PhantomData::<dyn SetupManagementAggregate>;
-    let _ = std::marker::PhantomData::<dyn IConfigOrchestrationAggregate>;
-}
 
 pub struct SetupManagementOrchestrator {}
 

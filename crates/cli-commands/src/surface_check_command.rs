@@ -1,10 +1,10 @@
-// PURPOSE: Command: CLI surface for check — runs lint_path and resolves violations for a target path
+// PURPOSE: Command: CLI surface for check/scan — runs AES analysis on target path
 use std::sync::Arc;
 
 use futures::future;
 use std::process::ExitCode;
 
-use code_analysis::{has_critical, lint_path, resolve_target};
+use code_analysis::resolve_target;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use shared::output_report::taxonomy_result_vo::LintResultList;
@@ -24,12 +24,15 @@ impl CheckCommandsSurface {
         Self { linter_adapters, arch_linter }
     }
 
-    pub fn scan(&self, path: &str) {
-        self.scan_filtered(path, None);
-    }
-
-    pub fn scan_filtered(&self, path: &str, filter: Option<&str>) {
+    /// Run AES analysis + external adapters on a target path.
+    pub fn scan(&self, path: &str, filter: Option<&str>) {
         let mut all_results = Vec::new();
+
+        // 1. Run AES analysis (same algorithm for check and scan)
+        let aes_results = self.arch_linter.run_self_lint(path);
+        all_results.extend(aes_results.values);
+
+        // 2. Run external linter adapters
         let adapter_names = [
             "clippy", "rustfmt", "cargo-audit", "ruff", "mypy", "bandit", "eslint", "prettier", "tsc",
         ];
@@ -62,31 +65,15 @@ impl CheckCommandsSurface {
         }
 
         let adapter_results = rt.block_on(future::join_all(adapter_futures));
-
         for result in adapter_results {
             match result {
-                Ok((_name, values)) => {
-                    all_results.extend(values);
-                }
-                Err((name, e)) => {
-                    eprintln!("[warn] {} adapter failed: {}", name, e);
-                }
+                Ok((_name, values)) => all_results.extend(values),
+                Err((name, e)) => eprintln!("[warn] {} adapter failed: {}", name, e),
             }
         }
 
-        let has_src = ["packages", "crates", "modules"]
-            .iter()
-            .any(|d| std::path::Path::new(path).join(d).is_dir());
-
-        if has_src {
-            let aes_results = self.arch_linter.run_self_lint(path);
-            all_results.extend(aes_results.values);
-        }
         let filtered_results: Vec<_> = if let Some(code) = filter {
-            all_results
-                .into_iter()
-                .filter(|r| r.code.to_string().contains(code))
-                .collect()
+            all_results.into_iter().filter(|r| r.code.to_string().contains(code)).collect()
         } else {
             all_results
         };
@@ -95,11 +82,20 @@ impl CheckCommandsSurface {
     }
 }
 
-pub fn handle_check(path: Option<String>, _git_diff: bool, filter: Option<String>) -> ExitCode {
+/// check = self-lint (AES analysis on current project, same algorithm as scan)
+pub fn handle_check(
+    path: Option<String>,
+    _git_diff: bool,
+    arch_linter: Arc<dyn IArchLintProtocol>,
+    filter: Option<String>,
+) -> ExitCode {
     let root = resolve_target(path);
-    run_lint_and_report(&root, filter.as_deref())
+    let surface = CheckCommandsSurface::new(std::collections::HashMap::new(), arch_linter);
+    surface.scan(&root, filter.as_deref());
+    ExitCode::SUCCESS
 }
 
+/// scan = AES analysis on external project + external adapters
 pub fn handle_scan(
     path: Option<String>,
     linter_adapters: std::collections::HashMap<String, Arc<dyn ILinterAdapterPort>>,
@@ -108,31 +104,7 @@ pub fn handle_scan(
 ) -> ExitCode {
     let root = resolve_target(path);
     let surface = CheckCommandsSurface::new(linter_adapters, arch_linter);
-    surface.scan_filtered(&root, filter.as_deref());
+    surface.scan(&root, filter.as_deref());
     ExitCode::SUCCESS
 }
 
-fn run_lint_and_report(root: &str, filter: Option<&str>) -> ExitCode {
-    let results = lint_path(root);
-    println!("=== AES Compliance Report for {} ===", root);
-    let filtered: Vec<_> = if let Some(code) = filter {
-        results
-            .iter()
-            .filter(|r| r.code.to_string().contains(code))
-            .collect()
-    } else {
-        results.iter().collect()
-    };
-    for r in &filtered {
-        println!(
-            "[{}] {}:{}:{} {} - {}",
-            r.severity, r.file, r.line, r.column, r.code, r.message
-        );
-    }
-    println!("Total violations: {}", filtered.len());
-    if has_critical(&results) {
-        ExitCode::from(1)
-    } else {
-        ExitCode::SUCCESS
-    }
-}

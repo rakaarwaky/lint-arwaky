@@ -8,10 +8,6 @@ use crate::surface_output_controller::{get_output_dir, tee_stdout, write_output}
 use code_analysis::resolve_target;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
-fn _use_contract_aggregates() {
-    let _ = std::marker::PhantomData::<dyn LintFixOrchestratorAggregate>;
-}
-
 pub struct FixCommandsSurface {
     pub fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>,
 }
@@ -43,7 +39,7 @@ impl FixCommandsSurface {
             }
 
             let orchestrator =
-                code_analysis::agent_codebase_scan_orchestrator::CodebaseScanOrchestrator::new();
+                code_analysis::agent_code_analysis_orchestrator::CodeAnalysisOrchestrator::new();
             let results = orchestrator.run_self_lint(&project_path);
             println!("Found {} violations before fix", results.len());
 

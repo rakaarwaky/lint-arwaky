@@ -1,4 +1,7 @@
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
+use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
+use shared::code_analysis::contract_unused_protocol::IUnusedProtocol;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
@@ -9,6 +12,8 @@ pub struct ImportContainer {
     mandatory: Arc<dyn IArchImportProtocol>,
     forbidden: Arc<dyn IArchImportProtocol>,
     intent: Arc<dyn IArchImportProtocol>,
+    unused: Arc<dyn IUnusedProtocol>,
+    cycle: Arc<dyn ICycleAnalysisProtocol>,
     analyzer: Arc<dyn IAnalyzer>,
 }
 
@@ -46,11 +51,19 @@ impl ImportContainer {
         );
         let intent =
             Arc::new(crate::capabilities_dummy_import_checker::DummyImportChecker::new(parser));
+        let unused =
+            Arc::new(crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new());
+        let cycle =
+            Arc::new(crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new(
+                ArchitectureConfig::default(),
+            ));
 
         Self {
             mandatory: mandatory.clone(),
             forbidden: forbidden.clone(),
             intent: intent.clone(),
+            unused: unused.clone(),
+            cycle: cycle.clone(),
             analyzer,
         }
     }
@@ -72,6 +85,8 @@ impl ImportContainer {
             self.mandatory.clone(),
             self.forbidden.clone(),
             self.intent.clone(),
+            self.unused.clone(),
+            self.cycle.clone(),
             self.analyzer.clone(),
         ))
     }
