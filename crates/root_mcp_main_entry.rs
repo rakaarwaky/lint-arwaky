@@ -1,19 +1,14 @@
 // PURPOSE: main entry point for lint-arwaky-mcp — initializes MCP server with stdio transport
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
+use tokio::io::{stdin, BufReader};
 
 use mcp_server::surface_tools_command;
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
-// Declare root layer module from local file
-mod root_composition_container;
-use root_composition_container::CompositionRoot;
-
-/// MCP binary entry point for lint-arwaky-mcp.
 pub struct McpMainEntry {}
 
 struct ServerState {
-    container: Arc<dyn ServiceContainerAggregate>,
+    arch_linter: Arc<dyn shared::code_analysis::contract_lint_protocol::IArchLintProtocol>,
 }
 
 async fn handle_request(request: Value, state: &Arc<Mutex<ServerState>>) -> Value {
@@ -135,11 +130,11 @@ async fn handle_request(request: Value, state: &Arc<Mutex<ServerState>>) -> Valu
                         .unwrap_or("")
                         .to_string();
                     let args = arguments.get("args").cloned();
-                    let container = match state.lock() {
-                        Ok(guard) => guard.container.clone(),
-                        Err(poisoned) => poisoned.into_inner().container.clone(),
+                    let arch_linter = match state.lock() {
+                        Ok(guard) => guard.arch_linter.clone(),
+                        Err(poisoned) => poisoned.into_inner().arch_linter.clone(),
                     };
-                    surface_tools_command::execute_command_tool(container, action, args).await
+                    surface_tools_command::execute_command_tool(arch_linter, action, args).await
                 }
 
                 "list_commands" => {
@@ -197,17 +192,18 @@ pub async fn run_server() {
     eprintln!("Listening on stdin/stdout (JSON-RPC 2.0)");
     eprintln!("Press Ctrl+C to stop");
 
-    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(CompositionRoot::new());
-    let state = Arc::new(Mutex::new(ServerState { container }));
+    // Inline MCP composition — create exactly what MCP needs
+    let arch_linter = code_analysis::root_code_analysis_container::AnalysisContainer::new().architecture_linter();
 
-    use tokio::io::{stdin, AsyncBufReadExt, BufReader};
+    let state = Arc::new(Mutex::new(ServerState { arch_linter }));
+
     let stdin = stdin();
     let mut reader = BufReader::new(stdin);
     let mut line = String::new();
 
     loop {
         line.clear();
-        match reader.read_line(&mut line).await {
+        match tokio::io::AsyncBufReadExt::read_line(&mut reader, &mut line).await {
             Ok(0) => break,
             Ok(_) => {
                 let trimmed = line.trim();

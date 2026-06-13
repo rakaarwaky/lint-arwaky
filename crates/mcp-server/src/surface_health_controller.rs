@@ -1,15 +1,17 @@
 // PURPOSE: HealthController — MCP surface for server health check endpoint
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use std::collections::HashMap;
-use std::sync::Arc;
 
-pub struct McpHealthCheckSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
+pub struct McpHealthCheckSurface {}
+
+impl Default for McpHealthCheckSurface {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl McpHealthCheckSurface {
-    pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
-        Self { container }
+    pub fn new() -> Self {
+        Self {}
     }
 
     pub async fn execute_check(&self) -> HashMap<String, serde_json::Value> {
@@ -50,8 +52,6 @@ impl McpHealthCheckSurface {
     }
 }
 
-pub fn register_health_commands(
-    container: Arc<dyn ServiceContainerAggregate>,
-) -> McpHealthCheckSurface {
-    McpHealthCheckSurface::new(Some(container))
+pub fn register_health_commands() -> McpHealthCheckSurface {
+    McpHealthCheckSurface::new()
 }

@@ -54,13 +54,6 @@ impl SourceParserOrchestrator {
     }
 }
 
-impl Default for SourceParserOrchestrator {
-    fn default() -> Self {
-        // Intentionally create empty parser — caller must use SourceParserOrchestrator::new()
-        panic!("SourceParserOrchestrator requires DI — use SourceParserOrchestrator::new() with parser instances")
-    }
-}
-
 impl ISourceParserPort for SourceParserOrchestrator {
     fn extract_imports(&self, path: &FilePath) -> Result<ImportInfoList, SourceParserError> {
         self.select_parser(path).extract_imports(path)

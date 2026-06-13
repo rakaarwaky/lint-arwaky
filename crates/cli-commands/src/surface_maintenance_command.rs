@@ -2,19 +2,18 @@
 use std::process::ExitCode;
 
 use code_analysis::resolve_target;
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
-pub struct MaintenanceCommandsSurface {
-    pub container: Option<Box<dyn ServiceContainerAggregate>>,
+pub struct MaintenanceCommandsSurface {}
+
+impl Default for MaintenanceCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MaintenanceCommandsSurface {
-    pub fn new(container: Option<Box<dyn ServiceContainerAggregate>>) -> Self {
-        Self { container }
-    }
-
-    pub fn register_all(&mut self, container: Box<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+    pub fn new() -> Self {
+        Self {}
     }
 
     pub fn stats(&self, path: &str) {
@@ -53,14 +52,6 @@ impl MaintenanceCommandsSurface {
     pub fn cancel(&self, job_id: &str) {
         println!("Request to cancel job {job_id} sent.");
     }
-}
-
-pub fn register_maintenance_commands(
-    container: impl ServiceContainerAggregate + Clone + 'static,
-) -> MaintenanceCommandsSurface {
-    let mut surface = MaintenanceCommandsSurface::new(Some(Box::new(container.clone())));
-    surface.register_all(Box::new(container));
-    surface
 }
 
 pub fn handle_security(path: Option<String>) -> ExitCode {

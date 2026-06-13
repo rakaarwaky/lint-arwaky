@@ -1,22 +1,20 @@
 // PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, env, mcp config, doctor)
 use std::process::ExitCode;
-use std::sync::Arc;
 
 use crate::surface_core_command::SetupCommands;
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 #[derive(Clone)]
-pub struct SetupCommandsSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
+pub struct SetupCommandsSurface {}
+
+impl Default for SetupCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SetupCommandsSurface {
-    pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
-        Self { container }
-    }
-
-    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+    pub fn new() -> Self {
+        Self {}
     }
 
     pub fn init(&self) {
@@ -151,17 +149,12 @@ impl SetupCommandsSurface {
 // Lazy singleton
 static INSTANCE: std::sync::Mutex<Option<SetupCommandsSurface>> = std::sync::Mutex::new(None);
 
-pub fn register_setup_commands(
-    container: impl ServiceContainerAggregate + Clone + 'static,
-) -> SetupCommandsSurface {
-    let arc_container = std::sync::Arc::new(container);
+pub fn register_setup_commands() -> SetupCommandsSurface {
     let mut guard = INSTANCE.lock().unwrap_or_else(|e| e.into_inner());
     if let Some(ref mut s) = *guard {
-        s.register_all(arc_container.clone());
         return s.clone();
     }
-    let mut s = SetupCommandsSurface::new(Some(arc_container.clone()));
-    s.register_all(arc_container);
+    let s = SetupCommandsSurface::new();
     *guard = Some(s.clone());
     s
 }
@@ -361,7 +354,7 @@ source:
                 rustfmt_st
             );
             if let Ok(p) = std::env::current_exe() {
-                println!("  ℹ️  binary: {}", p.display());
+                println!("  binary: {}", p.display());
             }
 
             println!();

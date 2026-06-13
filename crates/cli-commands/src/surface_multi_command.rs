@@ -1,13 +1,10 @@
 // PURPOSE: MultiCommandsSurface — CLI surface for multi-project governance and batch linting
 use std::process::ExitCode;
-use std::sync::Arc;
 
 use code_analysis::{compute_score, count_loc, lint_path};
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use shared::output_report::taxonomy_severity_vo::Severity;
-pub struct MultiCommandsSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
-}
+
+pub struct MultiCommandsSurface {}
 
 impl Default for MultiCommandsSurface {
     fn default() -> Self {
@@ -17,26 +14,15 @@ impl Default for MultiCommandsSurface {
 
 impl MultiCommandsSurface {
     pub fn new() -> Self {
-        Self { container: None }
-    }
-
-    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+        Self {}
     }
 
     pub fn multi_project(&self, paths: &[String], output_format: &str, _config: Option<&str>) {
         let project_list = if paths.is_empty() {
-            if let Some(ref _container) = self.container {
-                vec![std::env::current_dir()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .to_string()]
-            } else {
-                vec![std::env::current_dir()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .to_string()]
-            }
+            vec![std::env::current_dir()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()]
         } else {
             paths.to_vec()
         };
@@ -49,14 +35,6 @@ impl MultiCommandsSurface {
             }
         }
     }
-}
-
-pub fn register_multi_commands(
-    container: Arc<dyn ServiceContainerAggregate>,
-) -> MultiCommandsSurface {
-    let mut surface = MultiCommandsSurface::new();
-    surface.register_all(container);
-    surface
 }
 
 pub fn handle_multi_project(paths: Vec<String>) -> ExitCode {

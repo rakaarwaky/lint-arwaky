@@ -313,22 +313,7 @@ impl LintCheckingOrchestrator {
         rl.values.append(&mut orphan_results);
 
         // Wire role orchestrator for agent and surface role checks
-        struct NoopRoleAggregate;
-        impl IRoleAggregate for NoopRoleAggregate {
-            fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker {
-                &NoopTaxonomy
-            }
-            fn contract(&self) -> &dyn IContractRoleChecker {
-                &NoopContract
-            }
-            fn surface(&self) -> &dyn ISurfaceRoleChecker {
-                &NoopSurface
-            }
-            fn agent(&self) -> &dyn IAgentRoleChecker {
-                &NoopAgent
-            }
-        }
-        struct NoopTaxonomy;
+        struct NoopTaxonomy { _dummy: bool }
         impl ITaxonomyRoleChecker for NoopTaxonomy {
             fn check_vo(&self) -> Vec<LintResult> {
                 vec![]
@@ -338,7 +323,7 @@ impl LintCheckingOrchestrator {
             fn check_event(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
             fn check_constant(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
         }
-        struct NoopContract;
+        struct NoopContract { _dummy: bool }
         impl IContractRoleChecker for NoopContract {
             fn check_port(&self, _: &SourceContentVO) -> Vec<LintResult> {
                 vec![]
@@ -354,14 +339,14 @@ impl LintCheckingOrchestrator {
             ) {
             }
         }
-        struct NoopSurface;
+        struct NoopSurface { _dummy: bool }
         impl ISurfaceRoleChecker for NoopSurface {
             fn check_smart_surface(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
             fn check_utility_surface(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
             fn check_passive_surface(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
             fn check_fn_count_limit(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
         }
-        struct NoopAgent;
+        struct NoopAgent { _dummy: bool }
         impl IAgentRoleChecker for NoopAgent {
             fn check_container(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
             fn check_orchestrator(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
@@ -375,8 +360,33 @@ impl LintCheckingOrchestrator {
             }
             fn check_any_type_annotation(&self, _: &SourceContentVO, _: &mut Vec<LintResult>) {}
         }
+        struct NoopRoleAggregate {
+            taxonomy: NoopTaxonomy,
+            contract: NoopContract,
+            surface: NoopSurface,
+            agent: NoopAgent,
+        }
+        impl IRoleAggregate for NoopRoleAggregate {
+            fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker {
+                &self.taxonomy
+            }
+            fn contract(&self) -> &dyn IContractRoleChecker {
+                &self.contract
+            }
+            fn surface(&self) -> &dyn ISurfaceRoleChecker {
+                &self.surface
+            }
+            fn agent(&self) -> &dyn IAgentRoleChecker {
+                &self.agent
+            }
+        }
 
-        let role_agg: Arc<dyn IRoleAggregate> = Arc::new(NoopRoleAggregate);
+        let role_agg: Arc<dyn IRoleAggregate> = Arc::new(NoopRoleAggregate {
+            taxonomy: NoopTaxonomy { _dummy: false },
+            contract: NoopContract { _dummy: false },
+            surface: NoopSurface { _dummy: false },
+            agent: NoopAgent { _dummy: false },
+        });
         let role_orch = RoleOrchestrator::new(role_agg);
         let max_lines = config
             .rules

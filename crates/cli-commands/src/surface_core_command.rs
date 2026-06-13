@@ -2,8 +2,6 @@
 
 use clap::{Parser, Subcommand};
 
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
-
 #[derive(Parser, Debug)]
 #[command(name = "lint-arwaky")]
 #[command(about = "Lint Arwaky CLI: Autonomous Code Quality Gatekeeper.", long_about = None)]
@@ -216,9 +214,7 @@ pub enum ConfigCommands {
     Show,
 }
 
-pub struct CoreCommandsSurface {
-    pub container: Option<Box<dyn ServiceContainerAggregate>>,
-}
+pub struct CoreCommandsSurface {}
 
 impl Default for CoreCommandsSurface {
     fn default() -> Self {
@@ -228,11 +224,7 @@ impl Default for CoreCommandsSurface {
 
 impl CoreCommandsSurface {
     pub fn new() -> Self {
-        Self { container: None }
-    }
-
-    pub fn register_all(&mut self, container: Box<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+        Self {}
     }
 
     pub fn version() {

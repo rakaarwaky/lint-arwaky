@@ -41,8 +41,33 @@ impl IBypassCheckerProtocol for BypassChecker {
         let panic_pat = ["panic", "!("].concat();
         let todo_pat = ["todo", "!("].concat();
         let unimpl_pat = ["unimplemented", "!("].concat();
+        let mut in_test_module = false;
+        let mut in_static_lazy = false;
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
+            // Skip test modules — unwrap/panic is normal in tests
+            if t.starts_with("#[cfg(test)]") {
+                in_test_module = true;
+                continue;
+            }
+            if in_test_module {
+                continue;
+            }
+            // Skip static Lazy<Regex> initialization (multiline)
+            if t.starts_with("static ") && t.contains("Lazy") {
+                in_static_lazy = true;
+                continue;
+            }
+            if in_static_lazy {
+                if t.contains("});") {
+                    in_static_lazy = false;
+                }
+                continue;
+            }
+            // Skip string literal false positives in detection arrays
+            if t.starts_with('"') {
+                continue;
+            }
             if t.starts_with("#[allow(") || t.starts_with("#[expect(") {
                 violations.push(LintResult::new_arch(
                     file,

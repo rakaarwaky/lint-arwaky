@@ -213,10 +213,10 @@ The AES layer rules are enforced at two levels:
 
 **Dependency rules per crate type:**
 
-| Crate Type                             | Example                                                                       | Allowed Deps                                         |
-| -------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------- |
-| **Foundation**                   | `shared`                                                                    | NONE (only std/external)                             |
-| **Feature (capabilities/infra)** | `import-rules`, `naming-rules`, `language-adapters`, `source-parsing` | `shared` only                                      |
-| **Feature (agent)**              | `code-analysis`, `auto-fix`, `pipeline-jobs`                            | `shared` + other feature crates (lower layer only) |
-| **Surface**                      | `cli-commands`, `mcp-server`                                              | `shared` + feature crates (via DI)                 |
-| **Composition**                  | `root_composition_container.rs`                                              | All feature crates                                   |
+| Crate Type                             | Example                                                                       | Allowed Deps             |
+| -------------------------------------- | ----------------------------------------------------------------------------- | ------------------------ |
+| **Foundation**                   | `shared`                                                                    | NONE (only std/external) |
+| **Feature (capabilities/infra)** | `import-rules`, `naming-rules`, `language-adapters`, `source-parsing` | `shared`               |
+| **Feature (agent)**              | `code-analysis`, `auto-fix`, `pipeline-jobs`                            | `shared`              |
+| **Surface**                      | `cli-commands`, `mcp-server`                                              | `shared`              |
+| **Composition**                  | `root_composition_container.rs`                                             | All feature crates       |

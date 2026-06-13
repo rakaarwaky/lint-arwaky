@@ -22,6 +22,5 @@ pub mod capabilities_surface_role_auditor;
 pub use capabilities_surface_role_auditor::SurfaceRoleChecker;
 pub mod capabilities_taxonomy_role_auditor;
 pub use capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
-pub mod agent_role_container;
-pub use agent_role_container::RoleAggregateImpl;
+pub use agent_role_orchestrator::RoleAggregateImpl;
 pub mod root_role_rules_container;

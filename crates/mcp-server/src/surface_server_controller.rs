@@ -1,7 +1,6 @@
 // PURPOSE: ServerController — MCP surface for server lifecycle management
 
 use crate::surface_tools_controller::register_tools;
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 pub struct McpServerHandlerSurface {}
 
@@ -16,13 +15,13 @@ impl McpServerHandlerSurface {
         Self {}
     }
 
-    pub fn run_server(&self, container: std::sync::Arc<dyn ServiceContainerAggregate>) {
-        register_tools(container);
+    pub fn run_server(&self) {
+        register_tools();
         eprintln!("Lint Arwaky MCP server starting...");
         eprintln!("Server name: lint-arwaky");
     }
 
-    pub fn run(&self, container: std::sync::Arc<dyn ServiceContainerAggregate>) {
-        self.run_server(container);
+    pub fn run(&self) {
+        self.run_server();
     }
 }

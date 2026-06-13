@@ -2,60 +2,36 @@
 use std::sync::Arc;
 
 use futures::future;
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use std::process::ExitCode;
 
 use code_analysis::{has_critical, lint_path, resolve_target};
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use shared::output_report::taxonomy_result_vo::LintResultList;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 
 pub struct CheckCommandsSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
-}
-
-impl Default for CheckCommandsSurface {
-    fn default() -> Self {
-        Self::new()
-    }
+    pub linter_adapters: std::collections::HashMap<String, Arc<dyn ILinterAdapterPort>>,
+    pub arch_linter: Arc<dyn IArchLintProtocol>,
 }
 
 impl CheckCommandsSurface {
-    pub fn new() -> Self {
-        Self { container: None }
+    pub fn new(
+        linter_adapters: std::collections::HashMap<String, Arc<dyn ILinterAdapterPort>>,
+        arch_linter: Arc<dyn IArchLintProtocol>,
+    ) -> Self {
+        Self { linter_adapters, arch_linter }
     }
 
-    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
-    }
-
-    /// scan: Full multi-language lint on target project path.
-    /// Uses all available linter adapters via tokio runtime.
     pub fn scan(&self, path: &str) {
         self.scan_filtered(path, None);
     }
 
-    /// scan_filtered: scan with optional AES rule code filter.
     pub fn scan_filtered(&self, path: &str, filter: Option<&str>) {
-        let container = match self.container.as_ref() {
-            Some(c) => c.clone(),
-            None => {
-                eprintln!("[error] container not registered");
-                return;
-            }
-        };
-
         let mut all_results = Vec::new();
         let adapter_names = [
-            "clippy",
-            "rustfmt",
-            "cargo-audit",
-            "ruff",
-            "mypy",
-            "bandit",
-            "eslint",
-            "prettier",
-            "tsc",
+            "clippy", "rustfmt", "cargo-audit", "ruff", "mypy", "bandit", "eslint", "prettier", "tsc",
         ];
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
@@ -73,7 +49,7 @@ impl CheckCommandsSurface {
                 Ok(a) => a,
                 Err(_) => continue,
             };
-            if let Some(adapter) = container.linter_adapter(&adapter_name) {
+            if let Some(adapter) = self.linter_adapters.get(adapter_name.value()).cloned() {
                 let path_clone = path_obj.clone();
                 let name_owned = name.to_string();
                 adapter_futures.push(async move {
@@ -98,36 +74,25 @@ impl CheckCommandsSurface {
             }
         }
 
-        // AES architecture lint via ServiceContainerAggregate contract (no direct agent import)
         let has_src = ["packages", "crates", "modules"]
             .iter()
             .any(|d| std::path::Path::new(path).join(d).is_dir());
 
-        if let Some(linter) = container.get_architecture_linter() {
-            if has_src {
-                let aes_results = linter.run_self_lint(path);
-                all_results.extend(aes_results.values);
-            }
-            let filtered_results: Vec<_> = if let Some(code) = filter {
-                all_results
-                    .into_iter()
-                    .filter(|r| r.code.to_string().contains(code))
-                    .collect()
-            } else {
-                all_results
-            };
-            let results_list = LintResultList::new(filtered_results);
-            println!("{}", linter.format_report(&results_list, path));
+        if has_src {
+            let aes_results = self.arch_linter.run_self_lint(path);
+            all_results.extend(aes_results.values);
         }
+        let filtered_results: Vec<_> = if let Some(code) = filter {
+            all_results
+                .into_iter()
+                .filter(|r| r.code.to_string().contains(code))
+                .collect()
+        } else {
+            all_results
+        };
+        let results_list = LintResultList::new(filtered_results);
+        println!("{}", self.arch_linter.format_report(&results_list, path));
     }
-}
-
-pub fn register_check_commands(
-    container: Arc<dyn ServiceContainerAggregate>,
-) -> CheckCommandsSurface {
-    let mut surface = CheckCommandsSurface::new();
-    surface.register_all(container);
-    surface
 }
 
 pub fn handle_check(path: Option<String>, _git_diff: bool, filter: Option<String>) -> ExitCode {
@@ -137,11 +102,12 @@ pub fn handle_check(path: Option<String>, _git_diff: bool, filter: Option<String
 
 pub fn handle_scan(
     path: Option<String>,
-    container: Arc<dyn ServiceContainerAggregate>,
+    linter_adapters: std::collections::HashMap<String, Arc<dyn ILinterAdapterPort>>,
+    arch_linter: Arc<dyn IArchLintProtocol>,
     filter: Option<String>,
 ) -> ExitCode {
     let root = resolve_target(path);
-    let surface = register_check_commands(container);
+    let surface = CheckCommandsSurface::new(linter_adapters, arch_linter);
     surface.scan_filtered(&root, filter.as_deref());
     ExitCode::SUCCESS
 }

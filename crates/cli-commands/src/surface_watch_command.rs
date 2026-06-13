@@ -5,29 +5,23 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use code_analysis::{compute_score, lint_path, resolve_target};
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 pub struct WatchdogBridge {}
 
-pub struct WatchCommandsSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
+pub struct WatchCommandsSurface {}
+
+impl Default for WatchCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl WatchCommandsSurface {
-    pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
-        Self { container }
-    }
-
-    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+    pub fn new() -> Self {
+        Self {}
     }
 
     pub fn watch(&self, path: &str) {
-        if self.container.is_none() {
-            eprintln!("[error] container not registered");
-            return;
-        }
-
         let abs_path = std::path::Path::new(path);
         let abs_path_str = abs_path.to_string_lossy().to_string();
 
@@ -36,14 +30,6 @@ impl WatchCommandsSurface {
         println!("Initial scan complete. Score: 100.0");
         println!("\nStarting file watcher (Ctrl+C to stop)...");
     }
-}
-
-pub fn register_watch_command(
-    container: Arc<dyn ServiceContainerAggregate>,
-) -> WatchCommandsSurface {
-    let mut surface = WatchCommandsSurface::new(Some(container.clone()));
-    surface.register_all(container);
-    surface
 }
 
 pub fn handle_watch(path: Option<String>) -> ExitCode {

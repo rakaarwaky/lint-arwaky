@@ -23,6 +23,9 @@ ignored_paths:
   - "/Graph-It-Live-arwaky"
   - "/.github"
   - "/scratch"
+  - "/test-project-rust"
+  - "/test-project-python"
+  - "/test-project-javascript"
 
 architecture:
   enabled: true
@@ -331,9 +334,9 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES012:
@@ -353,9 +356,9 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES015:
@@ -383,9 +386,9 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES0303:
@@ -398,9 +401,9 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES0305:
@@ -412,9 +415,9 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES0306:
@@ -431,9 +434,9 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES020:
@@ -453,8 +456,9 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "python_taxonomy_bridge.rs",
-          "js_taxonomy_bridge.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES021:
@@ -474,21 +478,21 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES022:
       enabled: true
       scope:
         [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
       patterns:
         [
@@ -499,7 +503,15 @@ architecture:
           "type: ignore",
           "eslint-disable",
         ]
-      exceptions: ["python_taxonomy_bridge.rs", "js_taxonomy_bridge.rs"]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
 
     AES023:
       enabled: true
@@ -511,6 +523,15 @@ architecture:
           "infrastructure",
           "agent",
           "surfaces",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES024:
@@ -529,9 +550,9 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES030:
@@ -546,15 +567,13 @@ architecture:
           "surfaces",
         ]
       entry_points:
-        [
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
+         [
+          "main.rs",
           "lib.rs",
           "mod.rs",
-          "__init__.py",
-          "index.ts",
-          "index.js",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
 
     AES013:

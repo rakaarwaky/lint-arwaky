@@ -20,8 +20,17 @@ impl InlineUnusedChecker {
 
 impl IInlineUnusedProtocol for InlineUnusedChecker {
     fn check_unused_imports(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let mut in_test_module = false;
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
+            // Skip test modules
+            if t.starts_with("#[cfg(test)]") {
+                in_test_module = true;
+                continue;
+            }
+            if in_test_module {
+                continue;
+            }
 
             let names: Vec<String> = if t.starts_with("use ") {
                 let target = t.trim_end_matches(';').trim_start_matches("use ").trim();

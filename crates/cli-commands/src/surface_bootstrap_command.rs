@@ -1,17 +1,17 @@
 // PURPOSE: Command: CLI surface for bootstrap — initializes tracing/subscriber logging
 use std::process::ExitCode;
 
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+pub struct BootstrapCommandSurface {}
 
-pub struct BootstrapCommandSurface {
-    _container: Option<Box<dyn ServiceContainerAggregate>>,
+impl Default for BootstrapCommandSurface {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl BootstrapCommandSurface {
-    pub fn new(container: Option<Box<dyn ServiceContainerAggregate>>) -> Self {
-        Self {
-            _container: container,
-        }
+    pub fn new() -> Self {
+        Self {}
     }
 
     pub fn execute(&self) {
@@ -25,7 +25,7 @@ impl BootstrapCommandSurface {
 }
 
 pub fn run_cli_entry() {
-    let surface = BootstrapCommandSurface::new(None);
+    let surface = BootstrapCommandSurface::new();
     surface.execute();
 }
 

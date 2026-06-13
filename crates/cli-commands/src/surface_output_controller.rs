@@ -1,15 +1,11 @@
 // PURPOSE: OutputControllerSurface — CLI output management (tee, write output files, JSON/JUnit/SARIF formatting)
-use std::sync::Arc;
 use std::sync::Mutex;
 
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
-pub struct OutputControllerSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
-}
+pub struct OutputControllerSurface {}
 
 impl Default for OutputControllerSurface {
     fn default() -> Self {
@@ -19,7 +15,7 @@ impl Default for OutputControllerSurface {
 
 impl OutputControllerSurface {
     pub fn new() -> Self {
-        Self { container: None }
+        Self {}
     }
 
     pub fn get_output_dir(&self, ctx_output_dir: Option<&str>) -> Option<FilePath> {
@@ -27,7 +23,6 @@ impl OutputControllerSurface {
             .map(|d| FilePath {
                 value: d.to_string(),
             })
-            .or_else(|| self.container.as_ref().and(None::<FilePath>))
     }
 
     pub fn write_output(&self, output: &str, command: &str, fmt: Option<&str>) -> Option<FilePath> {
@@ -62,12 +57,11 @@ pub fn get_output_dir(ctx_dir: Option<&str>) -> Option<FilePath> {
 }
 
 pub fn write_output(
-    container: Option<&str>,
+    _container: Option<&str>,
     output: &str,
     command: &str,
     fmt: Option<&str>,
 ) -> Option<FilePath> {
-    let _ = container;
     let guard = get_instance();
     guard
         .as_ref()
@@ -77,17 +71,6 @@ pub fn write_output(
 pub fn tee_stdout<F: FnOnce()>(_container: Option<&str>, f: F) -> String {
     f();
     String::new()
-}
-
-pub fn set_container(container: Arc<dyn ServiceContainerAggregate>) {
-    let mut guard = INSTANCE.lock().unwrap_or_else(|e| e.into_inner());
-    if let Some(ref mut s) = *guard {
-        s.container = Some(container);
-    } else {
-        *guard = Some(OutputControllerSurface {
-            container: Some(container),
-        });
-    }
 }
 
 pub fn print_json(results: &[LintResult]) {

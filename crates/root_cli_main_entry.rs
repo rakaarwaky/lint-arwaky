@@ -1,4 +1,5 @@
 // PURPOSE: main entry point for lint-arwaky-cli — parses args, initializes DI, dispatches commands
+use std::collections::HashMap;
 use std::env;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -21,16 +22,40 @@ use cli_commands::surface_watch_command;
 use code_analysis::agent_checking_orchestrator::init_global_checker;
 use code_analysis::{has_critical, lint_path, CodeMetricAnalyzer, ProjectTargetResolver};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
-
-// Declare root layer module from local file
-mod root_composition_container;
-use root_composition_container::CompositionRoot;
 
 pub struct CliMainEntry {}
 
 fn main() -> ExitCode {
-    init_global_checker(Arc::new(CompositionRoot::new().checker_container()));
+    // Inline CLI composition — create exactly what CLI needs
+    let source_parsing_container = source_parsing::root_source_parsing_container::SourceParsingContainer::new();
+    let path_norm = source_parsing_container.path_normalization();
+
+    let arch_linter = code_analysis::root_code_analysis_container::AnalysisContainer::new().architecture_linter();
+
+    let auto_fix_container = auto_fix::root_auto_fix_container::AutoFixContainer::new(arch_linter.clone());
+
+    let import_container = import_rules::root_import_rules_container::ImportContainer::new();
+    let analyzer = import_container.analyzer();
+    let checker_container = code_analysis::root_code_analysis_container::CheckerContainer::new(analyzer);
+    init_global_checker(Arc::new(checker_container));
+
+    let executor = Arc::new(cli_commands::infrastructure_transport_client::StdioClient::new(
+        std::time::Duration::from_secs(60),
+    ));
+
+    let mut linter_adapters: HashMap<String, Arc<dyn shared::code_analysis::contract_adapter_port::ILinterAdapterPort>> = HashMap::new();
+    linter_adapters.insert("ruff".to_string(), Arc::new(language_adapters::infrastructure_py_ruff_adapter::RuffAdapter::new(executor.clone(), path_norm.clone(), None)));
+    linter_adapters.insert("bandit".to_string(), Arc::new(language_adapters::infrastructure_py_bandit_adapter::BanditAdapter::new(executor.clone(), path_norm.clone(), None)));
+    linter_adapters.insert("mypy".to_string(), Arc::new(language_adapters::infrastructure_py_mypy_adapter::MyPyAdapter::new(executor.clone(), path_norm.clone(), None)));
+    linter_adapters.insert("eslint".to_string(), Arc::new(language_adapters::infrastructure_js_linter_adapter::ESLintAdapter::new(executor.clone(), path_norm.clone())));
+    linter_adapters.insert("prettier".to_string(), Arc::new(language_adapters::infrastructure_js_linter_adapter::PrettierAdapter::new(executor.clone(), path_norm.clone())));
+    linter_adapters.insert("tsc".to_string(), Arc::new(language_adapters::infrastructure_js_linter_adapter::TSCAdapter::new(executor.clone(), path_norm.clone())));
+    linter_adapters.insert("clippy".to_string(), Arc::new(language_adapters::infrastructure_rs_clippy_adapter::RustLinterAdapter::new(executor.clone(), path_norm.clone(), None)));
+
+    let fix_container = auto_fix_container.clone();
+    let fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate> + Send + Sync> =
+        Arc::new(move |dry_run| fix_container.orchestrator(dry_run));
+
     let raw_args: Vec<String> = env::args().collect();
     if raw_args.len() <= 1 {
         return run_default_check(".");
@@ -41,29 +66,24 @@ fn main() -> ExitCode {
         Err(e) => e.exit(),
     };
 
-    let container: Arc<dyn ServiceContainerAggregate> = Arc::new(CompositionRoot::new());
-
     let filter = cli.filter.clone();
     match cli.command {
         Commands::Check { path, git_diff } => {
             surface_check_command::handle_check(path, git_diff, filter)
         }
         Commands::Scan { path } => {
-            surface_check_command::handle_scan(path, container.clone(), filter)
+            surface_check_command::handle_scan(path, linter_adapters, arch_linter, filter)
         }
         Commands::Fix { path, dry_run } => {
-            surface_fix_command::handle_fix(path, dry_run, container.clone())
+            surface_fix_command::handle_fix(path, dry_run, fix_orchestrator_factory)
         }
-        Commands::Report {
-            path,
-            output_format,
-        } => surface_report_command::handle_report(path, output_format),
+        Commands::Report { path, output_format } => surface_report_command::handle_report(path, output_format),
         Commands::Ci { path, threshold } => surface_dev_command::handle_ci(path, threshold),
         Commands::Version => {
             let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
             surface_bootstrap_command::handle_version(verbose)
         }
-        Commands::Adapters => surface_plugin_command::handle_adapters(container.clone()),
+        Commands::Adapters => surface_plugin_command::handle_adapters(linter_adapters),
         Commands::Config { command } => surface_config_command::handle_config(command),
         Commands::GitDiff { base } => surface_git_command::handle_git_diff(base),
         Commands::MultiProject { paths } => surface_multi_command::handle_multi_project(paths),

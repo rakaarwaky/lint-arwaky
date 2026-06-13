@@ -9,6 +9,15 @@ use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;
 
+use crate::capabilities_agent_role_auditor::AgentRoleChecker;
+use crate::capabilities_contract_role_auditor::ContractRoleChecker;
+use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
+use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::contract_role_protocol::IContractRoleChecker;
+use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
+use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+
 pub struct RoleOrchestrator {
     aggregate: Arc<dyn IRoleAggregate>,
 }
@@ -163,5 +172,44 @@ impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate fo
 
     fn name(&self) -> &str {
         "role-rules"
+    }
+}
+
+pub struct RoleAggregateImpl {
+    taxonomy: TaxonomyRoleChecker,
+    contract: ContractRoleChecker,
+    surface: SurfaceRoleChecker,
+    agent: AgentRoleChecker,
+}
+
+impl Default for RoleAggregateImpl {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl RoleAggregateImpl {
+    pub fn new() -> Self {
+        Self {
+            taxonomy: TaxonomyRoleChecker::new(),
+            contract: ContractRoleChecker::new(),
+            surface: SurfaceRoleChecker::new(),
+            agent: AgentRoleChecker::new(),
+        }
+    }
+}
+
+impl IRoleAggregate for RoleAggregateImpl {
+    fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker {
+        &self.taxonomy
+    }
+    fn contract(&self) -> &dyn IContractRoleChecker {
+        &self.contract
+    }
+    fn surface(&self) -> &dyn ISurfaceRoleChecker {
+        &self.surface
+    }
+    fn agent(&self) -> &dyn IAgentRoleChecker {
+        &self.agent
     }
 }

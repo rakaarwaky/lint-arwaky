@@ -1,13 +1,9 @@
 // PURPOSE: GitCommandsSurface — CLI surface for git integration (format patch, commit messages, PR review)
 use std::process::ExitCode;
-use std::sync::Arc;
 
 use code_analysis::lint_path;
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
-pub struct GitCommandsSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
-}
+pub struct GitCommandsSurface {}
 
 impl Default for GitCommandsSurface {
     fn default() -> Self {
@@ -17,15 +13,7 @@ impl Default for GitCommandsSurface {
 
 impl GitCommandsSurface {
     pub fn new() -> Self {
-        Self { container: None }
-    }
-
-    pub fn register_all(
-        &mut self,
-        container: Arc<dyn ServiceContainerAggregate>,
-        _cli: Option<&str>,
-    ) {
-        self.container = Some(container);
+        Self {}
     }
 
     pub fn print_section<F, T>(&self, title: &str, items: &[T], item_fmt: F)
@@ -53,12 +41,6 @@ impl GitCommandsSurface {
             self.print_diff_text(base);
         }
     }
-}
-
-pub fn register_git_commands(container: Arc<dyn ServiceContainerAggregate>) -> GitCommandsSurface {
-    let mut surface = GitCommandsSurface::new();
-    surface.register_all(container, None);
-    surface
 }
 
 pub fn handle_git_diff(base: String) -> ExitCode {

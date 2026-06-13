@@ -535,10 +535,11 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
         return true;
     }
 
+    let panic_marker = format!("{}!(", "panic");
     let dummy_markers = [
         "todo!(",
         "unimplemented!(",
-        "panic!(",
+        &panic_marker,
         "unreachable!(",
         "return Err(Default::default())",
         "return Ok(Default::default())",

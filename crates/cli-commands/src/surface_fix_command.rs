@@ -1,4 +1,4 @@
-// PURPOSE: FixCommandsSurface — CLI surface for auto-fix operations via ServiceContainerAggregate
+// PURPOSE: FixCommandsSurface — CLI surface for auto-fix operations
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -6,25 +6,19 @@ use std::sync::Arc;
 
 use crate::surface_output_controller::{get_output_dir, tee_stdout, write_output};
 use code_analysis::resolve_target;
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
-/// Satisfy AES030 orphan detection - surface references contract aggregates
 fn _use_contract_aggregates() {
     let _ = std::marker::PhantomData::<dyn LintFixOrchestratorAggregate>;
 }
 
 pub struct FixCommandsSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
+    pub fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>,
 }
 
 impl FixCommandsSurface {
-    pub fn new(container: Option<Arc<dyn ServiceContainerAggregate>>) -> Self {
-        Self { container }
-    }
-
-    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+    pub fn new(fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>) -> Self {
+        Self { fix_orchestrator_factory }
     }
 
     pub fn fix(&self, path: &str) {
@@ -53,18 +47,7 @@ impl FixCommandsSurface {
             let results = orchestrator.run_self_lint(&project_path);
             println!("Found {} violations before fix", results.len());
 
-            // Get fix orchestrator from container (AES023: surfaces must not import agent directly)
-            let fix_orch = match self
-                .container
-                .as_ref()
-                .and_then(|c| c.get_fix_orchestrator(dry_run))
-            {
-                Some(o) => o,
-                None => {
-                    println!("[error] Fix orchestrator not available in container");
-                    return;
-                }
-            };
+            let fix_orch = (self.fix_orchestrator_factory)(dry_run);
             let fix_result = fix_orch.execute(&project_path);
 
             println!("{}", fix_result.output.value);
@@ -89,19 +72,13 @@ impl FixCommandsSurface {
     }
 }
 
-pub fn register_fix_commands(container: Arc<dyn ServiceContainerAggregate>) -> FixCommandsSurface {
-    let mut surface = FixCommandsSurface::new(Some(container.clone()));
-    surface.register_all(container);
-    surface
-}
-
 pub fn handle_fix(
     path: Option<String>,
     dry_run: bool,
-    container: Arc<dyn ServiceContainerAggregate>,
+    fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>,
 ) -> ExitCode {
     let root = resolve_target(path);
-    let fix_surface = register_fix_commands(container);
+    let fix_surface = FixCommandsSurface::new(fix_orchestrator_factory);
     fix_surface.run_fix(FilePath::new(root).unwrap_or_default(), dry_run);
     ExitCode::SUCCESS
 }

@@ -1,6 +1,6 @@
 // PURPOSE: JobController — MCP surface for job lifecycle management endpoints
 use serde_json::json;
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+use shared::pipeline_jobs::contract_registry_port::IJobRegistryPort;
 use shared::pipeline_jobs::taxonomy_action_vo::JobId;
 use std::sync::Arc;
 
@@ -19,13 +19,9 @@ impl McpJobCommandsSurface {
 
     pub async fn check_status(
         &self,
-        container: &Arc<dyn ServiceContainerAggregate>,
+        job_registry: &Arc<dyn IJobRegistryPort>,
         job_id: Option<String>,
     ) -> Result<String, String> {
-        let job_registry = container
-            .get_job_registry()
-            .ok_or_else(|| "Container not initialized".to_string())?;
-
         match job_id {
             None => {
                 let jobs_list = job_registry.list_jobs().await;
@@ -52,13 +48,9 @@ impl McpJobCommandsSurface {
 
     pub async fn cancel_job(
         &self,
-        container: &Arc<dyn ServiceContainerAggregate>,
+        job_registry: &Arc<dyn IJobRegistryPort>,
         job_id: String,
     ) -> Result<String, String> {
-        let job_registry = container
-            .get_job_registry()
-            .ok_or_else(|| "Container not initialized".to_string())?;
-
         let success = job_registry.cancel_job(&JobId::new(&job_id)).await;
 
         Ok(json!({

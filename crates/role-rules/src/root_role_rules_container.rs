@@ -10,7 +10,7 @@ pub struct RoleContainer {
 impl RoleContainer {
     pub fn new() -> Self {
         let aggregate: Arc<dyn IRoleAggregate> =
-            Arc::new(crate::agent_role_container::RoleAggregateImpl::new());
+            Arc::new(crate::agent_role_orchestrator::RoleAggregateImpl::new());
         Self { aggregate }
     }
 

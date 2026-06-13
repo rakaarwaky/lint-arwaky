@@ -2,10 +2,8 @@
 
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::Arc;
 
 use shared::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
 /// COMMAND_CATALOG — mirrors the Python dict exactly.
 pub struct CommandEntry {
@@ -31,9 +29,7 @@ pub fn list_commands_func(domain: Option<&str>) -> HashMap<String, HashMap<Strin
     result
 }
 
-pub struct McpCommandCatalogSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
-}
+pub struct McpCommandCatalogSurface {}
 
 impl Default for McpCommandCatalogSurface {
     fn default() -> Self {
@@ -43,11 +39,7 @@ impl Default for McpCommandCatalogSurface {
 
 impl McpCommandCatalogSurface {
     pub fn new() -> Self {
-        Self { container: None }
-    }
-
-    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+        Self {}
     }
 
     pub fn list_commands(&self, domain: Option<&str>) -> HashMap<String, HashMap<String, String>> {
@@ -79,22 +71,14 @@ impl McpCommandCatalogSurface {
     }
 }
 
-pub fn register_catalog_commands(
-    container: Arc<dyn ServiceContainerAggregate>,
-) -> McpCommandCatalogSurface {
-    let mut surface = McpCommandCatalogSurface::new();
-    surface.register_all(container);
-    surface
+pub fn register_catalog_commands() -> McpCommandCatalogSurface {
+    McpCommandCatalogSurface::new()
 }
 
-pub fn register_list_commands(
-    container: Arc<dyn ServiceContainerAggregate>,
-) -> McpCommandCatalogSurface {
-    register_catalog_commands(container)
+pub fn register_list_commands() -> McpCommandCatalogSurface {
+    register_catalog_commands()
 }
 
-pub fn register_read_skill_context(
-    container: Arc<dyn ServiceContainerAggregate>,
-) -> McpCommandCatalogSurface {
-    register_catalog_commands(container)
+pub fn register_read_skill_context() -> McpCommandCatalogSurface {
+    register_catalog_commands()
 }

@@ -22,17 +22,41 @@ impl IDeadInheritanceProtocol for DeadInheritanceChecker {
     fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
         let mut i = 0;
+        let mut in_test_module = false;
         while i < lines.len() {
             let t = lines[i].trim();
+            // Skip test modules
+            if t.starts_with("#[cfg(test)]") {
+                in_test_module = true;
+                i += 1;
+                continue;
+            }
+            if in_test_module {
+                i += 1;
+                continue;
+            }
             // Rust: unit struct `struct Foo;`
             if t.starts_with("struct ") && t.ends_with(';') {
-                violations.push(LintResult::new_arch(
-                    file,
-                    i + 1,
-                    "AES024",
-                    Severity::MEDIUM,
-                    AesViolation::DeadInheritance { reason: None }.to_string(),
-                ));
+                // Skip if followed by impl block or attribute (intentional placeholder)
+                let mut next_idx = i + 1;
+                while next_idx < lines.len() {
+                    let next_t = lines[next_idx].trim();
+                    if next_t.is_empty() || next_t.starts_with('#') {
+                        next_idx += 1;
+                    } else {
+                        break;
+                    }
+                }
+                let next_is_impl = lines.get(next_idx).map(|l| l.trim().starts_with("impl ")).unwrap_or(false);
+                if !next_is_impl {
+                    violations.push(LintResult::new_arch(
+                        file,
+                        i + 1,
+                        "AES024",
+                        Severity::MEDIUM,
+                        AesViolation::DeadInheritance { reason: None }.to_string(),
+                    ));
+                }
                 i += 1;
                 continue;
             }

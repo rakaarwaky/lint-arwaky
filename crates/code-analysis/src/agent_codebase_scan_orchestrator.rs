@@ -66,7 +66,7 @@ impl CodebaseScanOrchestrator {
     pub fn format_report(&self, results: &[LintResult], project_root: &str) -> String {
         let mut output = String::new();
         output.push_str(&"=".repeat(60));
-        output.push_str("\n  AES Architecture Compliance Report (Self-Lint)\n");
+        output.push_str("\n  AES Architecture Compliance Report \n");
         output.push_str(&"=".repeat(60));
         output.push_str(&format!("\n  Project: {}\n", project_root));
         output.push_str(&format!("  Violations: {}\n", results.len()));

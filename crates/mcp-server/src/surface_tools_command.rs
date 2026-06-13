@@ -1,16 +1,14 @@
 // PURPOSE: handle_tools — MCP surface for listing available tools/capabilities
 
 use serde_json::{json, Value};
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use std::path::Path;
 use std::sync::Arc;
 
-/// Surface for MCP tools command implementations.
 pub struct McpToolsCommandSurface {}
 
-/// Tool 1: execute_command(action, args) - Universal CLI executor
 pub async fn execute_command_tool(
-    container: Arc<dyn ServiceContainerAggregate>,
+    arch_linter: Arc<dyn IArchLintProtocol>,
     action: String,
     args: Option<Value>,
 ) -> Value {
@@ -23,12 +21,8 @@ pub async fn execute_command_tool(
     match action.as_ref() {
         "check" | "scan" => {
             let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
-            let linter = match container.get_architecture_linter() {
-                Some(l) => l,
-                None => return json!({"error": "Architecture linter not registered"}),
-            };
-            let results = linter.run_self_lint(path);
-            let report = linter.format_report(&results, path);
+            let results = arch_linter.run_self_lint(path);
+            let report = arch_linter.format_report(&results, path);
             let total = results.values.len();
 
             json!({
@@ -66,11 +60,7 @@ pub async fn execute_command_tool(
                 .get("output-format")
                 .and_then(|v| v.as_str())
                 .unwrap_or("text");
-            let linter = match container.get_architecture_linter() {
-                Some(l) => l,
-                None => return json!({"error": "Architecture linter not registered"}),
-            };
-            let results = linter.run_self_lint(path);
+            let results = arch_linter.run_self_lint(path);
 
             match output_format {
                 "json" => {
@@ -126,7 +116,7 @@ pub async fn execute_command_tool(
                     })
                 }
                 _ => {
-                    let report = linter.format_report(&results, path);
+                    let report = arch_linter.format_report(&results, path);
                     json!({
                         "status": "success",
                         "action": "report",
@@ -214,7 +204,6 @@ pub async fn execute_command_tool(
     }
 }
 
-/// Tool 2: list_commands(domain) - List available CLI commands
 pub fn list_commands_tool(domain: Option<&str>) -> Value {
     let commands = match domain {
         Some("core") | None => {
@@ -285,7 +274,6 @@ pub fn list_commands_tool(domain: Option<&str>) -> Value {
     })
 }
 
-/// Tool 3: commands_schema(tool_name) - Get JSON schemas for MCP tools
 pub fn commands_schema_tool(tool_name: Option<&str>) -> Value {
     let schemas = match tool_name {
         Some("execute_command") => {
@@ -374,7 +362,6 @@ pub fn commands_schema_tool(tool_name: Option<&str>) -> Value {
     })
 }
 
-/// Tool 4: read_skill_context(section) - Read SKILL.md documentation
 pub fn read_skill_context_tool(section: Option<&str>, project_root: &str) -> Value {
     let skill_path = Path::new(project_root).join("SKILL.md");
 
@@ -426,7 +413,6 @@ pub fn read_skill_context_tool(section: Option<&str>, project_root: &str) -> Val
     }
 }
 
-/// Tool 5: health_check() - Check system health
 pub fn health_check_tool() -> Value {
     let mut adapters = Vec::new();
 
@@ -482,7 +468,6 @@ pub fn health_check_tool() -> Value {
     })
 }
 
-/// Helper: Check if a command exists in PATH
 fn command_exists(cmd: &str) -> bool {
     std::process::Command::new("which")
         .arg(cmd)

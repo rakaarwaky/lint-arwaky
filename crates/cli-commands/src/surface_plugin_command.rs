@@ -1,43 +1,30 @@
 // PURPOSE: PluginCommandsSurface — CLI surface for listing and managing enabled adapters/plugins
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::plugin_system::contract_plugin_commands_aggregate::PluginCommandsAggregate;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-/// Satisfy AES030 orphan detection - surface references contract aggregates
 fn _use_contract_aggregates() {
     let _ = std::marker::PhantomData::<dyn PluginCommandsAggregate>;
 }
 
 pub struct PluginCommandsSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
-}
-
-impl Default for PluginCommandsSurface {
-    fn default() -> Self {
-        Self::new()
-    }
+    pub linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
 }
 
 impl PluginCommandsSurface {
-    pub fn new() -> Self {
-        Self { container: None }
-    }
-
-    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+    pub fn new(linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>) -> Self {
+        Self { linter_adapters }
     }
 
     pub fn adapters(&self) {
         println!("Enabled Adapters:");
-        // In real impl: iterate self.container.adapters
-        println!(" - ruff");
-        println!(" - mypy");
-        println!(" - bandit");
-        println!(" - radon");
-        println!(" - architecture");
+        for name in self.linter_adapters.keys() {
+            println!(" - {}", name);
+        }
     }
 
     pub fn plugins(&self) {
@@ -49,15 +36,7 @@ impl PluginCommandsSurface {
     }
 }
 
-pub fn register_plugin_commands(
-    container: Arc<dyn ServiceContainerAggregate>,
-) -> PluginCommandsSurface {
-    let mut surface = PluginCommandsSurface::new();
-    surface.register_all(container);
-    surface
-}
-
-pub fn handle_adapters(container: Arc<dyn ServiceContainerAggregate>) -> ExitCode {
+pub fn handle_adapters(linter_adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>) -> ExitCode {
     let adapter_names = [
         ("clippy", "Rust", "lint, fix"),
         ("ruff", "Python", "lint, fix"),
@@ -80,7 +59,7 @@ pub fn handle_adapters(container: Arc<dyn ServiceContainerAggregate>) -> ExitCod
         println!("{}:", lang);
         for (name, caps) in adapters {
             let an = AdapterName::new(name.to_string()).unwrap_or_default();
-            let status = if container.linter_adapter(&an).is_some() {
+            let status = if linter_adapters.contains_key(an.value()) {
                 "Ready"
             } else {
                 "Not found"

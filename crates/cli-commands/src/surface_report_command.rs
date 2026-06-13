@@ -1,14 +1,10 @@
 // PURPOSE: ReportCommandsSurface — CLI surface for generating quality reports (plain, json, junit, sarif)
 use std::process::ExitCode;
-use std::sync::Arc;
 
 use crate::surface_output_controller::{print_json, print_junit, print_sarif};
 use code_analysis::{has_critical, lint_path, resolve_target};
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 
-pub struct ReportCommandsSurface {
-    pub container: Option<Arc<dyn ServiceContainerAggregate>>,
-}
+pub struct ReportCommandsSurface {}
 
 impl Default for ReportCommandsSurface {
     fn default() -> Self {
@@ -18,11 +14,7 @@ impl Default for ReportCommandsSurface {
 
 impl ReportCommandsSurface {
     pub fn new() -> Self {
-        Self { container: None }
-    }
-
-    pub fn register_all(&mut self, container: Arc<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+        Self {}
     }
 
     pub fn report(&self, path: &str, output_format: &str) {
@@ -56,14 +48,6 @@ impl ReportCommandsSurface {
         println!(" Running security scan on {abs_path_str}...");
         println!(" No security vulnerabilities found.");
     }
-}
-
-pub fn register_report_commands(
-    container: Arc<dyn ServiceContainerAggregate>,
-) -> ReportCommandsSurface {
-    let mut surface = ReportCommandsSurface::new();
-    surface.register_all(container);
-    surface
 }
 
 pub fn handle_report(path: Option<String>, output_format: String) -> ExitCode {

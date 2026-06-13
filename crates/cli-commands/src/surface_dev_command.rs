@@ -2,20 +2,19 @@
 use std::process::ExitCode;
 
 use code_analysis::{compute_score, has_critical, lint_path, resolve_target};
-use shared::common::contract_service_aggregate::ServiceContainerAggregate;
 use shared::output_report::taxonomy_severity_vo::Severity;
 
-pub struct DevCommandsSurface {
-    pub container: Option<Box<dyn ServiceContainerAggregate>>,
+pub struct DevCommandsSurface {}
+
+impl Default for DevCommandsSurface {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DevCommandsSurface {
-    fn new(container: Option<Box<dyn ServiceContainerAggregate>>) -> Self {
-        Self { container }
-    }
-
-    fn register_all(&mut self, container: Box<dyn ServiceContainerAggregate>) {
-        self.container = Some(container);
+    pub fn new() -> Self {
+        Self {}
     }
 
     pub fn diff(&self, path1: &str, path2: &str, _output_format: &str) {
@@ -142,14 +141,6 @@ impl DevCommandsSurface {
             println!(" Pre-commit hook removed successfully.");
         }
     }
-}
-
-pub fn register_dev_commands(
-    container: impl ServiceContainerAggregate + Clone + 'static,
-) -> DevCommandsSurface {
-    let mut surface = DevCommandsSurface::new(Some(Box::new(container.clone())));
-    surface.register_all(Box::new(container));
-    surface
 }
 
 pub fn handle_ci(path: Option<String>, threshold: u32) -> ExitCode {

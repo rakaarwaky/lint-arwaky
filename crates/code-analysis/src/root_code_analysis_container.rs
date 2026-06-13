@@ -25,6 +25,7 @@ use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 
 /// CheckerContainer holds all the protocol implementations for AES checking
+#[derive(Clone)]
 pub struct CheckerContainer {
     analyzer: Arc<dyn IAnalyzer>,
     bypass_checker: Arc<dyn IBypassCheckerProtocol>,

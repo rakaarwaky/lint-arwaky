@@ -2,6 +2,7 @@
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use std::sync::Arc;
 
+#[derive(Clone)]
 pub struct AutoFixContainer {
     arch_linter: Arc<dyn shared::code_analysis::contract_lint_protocol::IArchLintProtocol>,
 }
