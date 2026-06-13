@@ -21,6 +21,7 @@ use cli_commands::surface_setup_command;
 use cli_commands::surface_watch_command;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
 use code_analysis::{has_critical, lint_path, CodeMetricAnalyzer, ProjectTargetResolver};
+use import_rules::root_import_rules_container::ImportContainer;
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 
 pub struct CliMainEntry {}
@@ -30,12 +31,13 @@ fn main() -> ExitCode {
     let source_parsing_container = source_parsing::root_source_parsing_container::SourceParsingContainer::new();
     let path_norm = source_parsing_container.path_normalization();
 
-    let import_container = import_rules::root_import_rules_container::ImportContainer::new();
+    let import_container = ImportContainer::new();
     let analyzer = import_container.analyzer();
     let checker_container = code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(analyzer);
     init_global_checker(Arc::new(checker_container));
 
     let arch_linter = code_analysis::root_code_analysis_container::CodeAnalysisContainer::new().architecture_linter();
+    let import_orchestrator = import_container.orchestrator();
 
     let auto_fix_container = auto_fix::root_auto_fix_container::AutoFixContainer::new(arch_linter.clone());
 
@@ -69,10 +71,10 @@ fn main() -> ExitCode {
     let filter = cli.filter.clone();
     match cli.command {
         Commands::Check { path, git_diff } => {
-            surface_check_command::handle_check(path, git_diff, arch_linter.clone(), filter)
+            surface_check_command::handle_check(path, git_diff, arch_linter.clone(), import_orchestrator.clone(), filter)
         }
         Commands::Scan { path } => {
-            surface_check_command::handle_scan(path, linter_adapters, arch_linter, filter)
+            surface_check_command::handle_scan(path, linter_adapters, arch_linter, import_orchestrator, filter)
         }
         Commands::Fix { path, dry_run } => {
             surface_fix_command::handle_fix(path, dry_run, fix_orchestrator_factory)

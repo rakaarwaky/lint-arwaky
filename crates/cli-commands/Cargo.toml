@@ -18,6 +18,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ctrlc = "3.4"
 auto_fix = { package = "auto_fix-lint-arwaky", path = "../auto-fix" }
 code_analysis = { package = "code_analysis-lint-arwaky", path = "../code-analysis" }
+import_rules = { package = "import_rules-lint-arwaky", path = "../import-rules" }
 output_report = { package = "output_report-lint-arwaky", path = "../output-report" }
 pipeline_jobs = { package = "pipeline_jobs-lint-arwaky", path = "../pipeline-jobs" }
 shared = { package = "shared-lint-arwaky", path = "../shared" }

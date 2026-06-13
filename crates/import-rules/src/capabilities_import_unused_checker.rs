@@ -1,10 +1,12 @@
-// PURPOSE: UnusedImportRuleChecker — IUnusedProtocol for AES023: detect imports that are never used in the code
+// PURPOSE: UnusedImportRuleChecker — IUnusedImportProtocol for AES023: detect imports that are never used in the code (Rust/Python/JS)
 
 use once_cell::sync::Lazy;
 use regex::Regex;
-use shared::code_analysis::contract_unused_protocol::IUnusedProtocol;
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::output_report::taxonomy_result_vo::LintResult;
+use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::taxonomy_name_vo::SymbolName;
+use shared::taxonomy_violation_message::AesViolation;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
@@ -131,13 +133,145 @@ impl UnusedImportRuleChecker {
             .map(|(alias, _)| alias.clone())
             .collect()
     }
+
+    /// Extract imported names from Rust/JS content (use statements, import statements)
+    fn extract_rust_js_imports(content: &str) -> Vec<(String, usize)> {
+        let mut imports = Vec::new();
+        for (i, line) in content.lines().enumerate() {
+            let t = line.trim();
+            // Skip test modules in Rust
+            if t.starts_with("#[cfg(test)]") {
+                continue;
+            }
+            
+            let names: Vec<String> = if t.starts_with("use ") {
+                let target = t.trim_end_matches(';').trim_start_matches("use ").trim();
+                if target.starts_with("std::")
+                    || target.starts_with("core::")
+                    || target.starts_with("alloc::")
+                {
+                    continue;
+                }
+                if let Some(brace_pos) = target.find("::{") {
+                    let inner = target[brace_pos + 3..].trim_end_matches('}').trim();
+                    inner
+                        .split(',')
+                        .map(|s| {
+                            s.trim()
+                                .split(" as ")
+                                .last()
+                                .unwrap_or("")
+                                .trim()
+                                .to_string()
+                        })
+                        .filter(|n| !n.is_empty() && n != "_" && n != "*")
+                        .collect()
+                } else {
+                    let name = target
+                        .split("::")
+                        .last()
+                        .unwrap_or("")
+                        .split(" as ")
+                        .last()
+                        .unwrap_or("")
+                        .trim()
+                        .to_string();
+                    if name.is_empty() || name == "_" || name == "*" {
+                        continue;
+                    }
+                    vec![name]
+                }
+            } else if t.starts_with("import ") {
+                // JS/TS: import X from 'Y' or import { X } from 'Y'
+                if let Some(from_idx) = t.find(" from ") {
+                    let import_part = t[7..from_idx].trim();
+                    let names: Vec<String> = if import_part.starts_with('{') {
+                        import_part[1..import_part.len()-1]
+                            .split(',')
+                            .map(|s| s.trim().split(" as ").last().unwrap_or("").trim().to_string())
+                            .filter(|n| !n.is_empty())
+                            .collect()
+                    } else {
+                        vec![import_part.trim().to_string()]
+                    };
+                    names
+                } else {
+                    continue;
+                }
+            } else {
+                continue;
+            };
+
+            for name in names {
+                // Skip interface/protocol/trait-like names
+                if (name.starts_with('I') && name.len() > 1 && name.chars().nth(1).unwrap_or(' ').is_uppercase())
+                    || name.ends_with("Protocol")
+                    || name.ends_with("Port")
+                    || name.ends_with("Trait")
+                    || name.ends_with("Aggregate")
+                    || name == "Parser"
+                {
+                    continue;
+                }
+                imports.push((name, i));
+            }
+        }
+        imports
+    }
+
+    /// Check if a name is used in the rest of the content
+    fn is_name_used(name: &str, content: &str, exclude_line: usize) -> bool {
+        let rest = content
+            .lines()
+            .enumerate()
+            .filter(|(j, _)| *j != exclude_line)
+            .map(|(_, l)| l)
+            .collect::<Vec<_>>()
+            .join("\n");
+        rest.contains(name)
+    }
 }
 
-impl IUnusedProtocol for UnusedImportRuleChecker {
-    fn find_unused_imports(&self, path: &FilePath) -> Vec<SymbolName> {
+impl IUnusedImportProtocol for UnusedImportRuleChecker {
+    fn find_unused_imports(&self, path: &FilePath) -> Vec<String> {
         self.find_unused_imports(path.value())
-            .into_iter()
-            .map(SymbolName::new)
-            .collect()
+    }
+
+    fn check_unused_imports(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        // First handle Python imports
+        let imported_aliases = Self::extract_imported_aliases(content);
+        let exported_symbols = Self::extract_exported_symbols(content);
+        let used_symbols = Self::extract_used_symbols(content, &imported_aliases);
+
+        for (alias, _fullname) in &imported_aliases {
+            if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
+                // Find line number
+                let line_num = content.lines()
+                    .position(|l| l.trim().contains(&format!("import {}", alias)) || l.trim().contains(&format!("from {} import", alias.split('.').next().unwrap_or(""))))
+                    .map(|p| p + 1)
+                    .unwrap_or(1);
+                violations.push(LintResult::new_arch(
+                    file,
+                    line_num,
+                    "AES023",
+                    Severity::MEDIUM,
+                    AesViolation::FixUnusedImport { reason: None }.to_string(),
+                ));
+            }
+        }
+
+        // Then handle Rust/JS imports
+        let rust_js_imports = Self::extract_rust_js_imports(content);
+        for (name, line_idx) in rust_js_imports {
+            if !Self::is_name_used(&name, content, line_idx) {
+                violations.push(LintResult::new_arch(
+                    file,
+                    line_idx + 1,
+                    "AES023",
+                    Severity::MEDIUM,
+                    AesViolation::FixUnusedImport { reason: None }.to_string(),
+                ));
+            }
+        }
     }
 }

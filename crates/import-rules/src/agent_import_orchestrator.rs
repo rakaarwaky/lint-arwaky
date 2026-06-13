@@ -1,12 +1,11 @@
 // PURPOSE: ImportOrchestrator — agent that orchestrates import rule checks
 use async_trait::async_trait;
 use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
-use shared::code_analysis::contract_unused_protocol::IUnusedProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_import_rules_aggregate::IImportRulesAggregate;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::output_report::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::output_report::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::path::Path;
@@ -16,7 +15,7 @@ pub struct ImportOrchestrator {
     mandatory: Arc<dyn IArchImportProtocol>,
     forbidden: Arc<dyn IArchImportProtocol>,
     intent: Arc<dyn IArchImportProtocol>,
-    unused: Arc<dyn IUnusedProtocol>,
+    unused: Arc<dyn IUnusedImportProtocol>,
     cycle: Arc<dyn ICycleAnalysisProtocol>,
     analyzer: Arc<dyn IAnalyzer>,
 }
@@ -26,7 +25,7 @@ impl ImportOrchestrator {
         mandatory: Arc<dyn IArchImportProtocol>,
         forbidden: Arc<dyn IArchImportProtocol>,
         intent: Arc<dyn IArchImportProtocol>,
-        unused: Arc<dyn IUnusedProtocol>,
+        unused: Arc<dyn IUnusedImportProtocol>,
         cycle: Arc<dyn ICycleAnalysisProtocol>,
         analyzer: Arc<dyn IAnalyzer>,
     ) -> Self {
@@ -93,17 +92,11 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)
             .await;
 
-        // AES023: unused import check
+        // AES023: unused import check - read file content once and check all languages
         for file in files.iter() {
-            let unused_symbols = self.unused.find_unused_imports(file);
-            for symbol in unused_symbols {
-                results.values.push(LintResult::new_arch(
-                    file.value(),
-                    1,
-                    "AES023",
-                    Severity::MEDIUM,
-                    format!("Unused import: {}", symbol.value()),
-                ));
+            let file_path = file.value();
+            if let Ok(content) = std::fs::read_to_string(file_path) {
+                self.unused.check_unused_imports(file_path, &content, &mut results.values);
             }
         }
 

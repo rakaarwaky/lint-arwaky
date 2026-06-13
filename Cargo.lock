@@ -367,6 +367,7 @@ dependencies = [
  "ctrlc",
  "dialoguer",
  "futures",
+ "import_rules-lint-arwaky",
  "output_report-lint-arwaky",
  "pipeline_jobs-lint-arwaky",
  "project_setup-lint-arwaky",

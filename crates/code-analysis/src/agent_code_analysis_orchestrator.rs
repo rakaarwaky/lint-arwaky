@@ -144,9 +144,6 @@ impl CodeAnalysisOrchestrator {
                 .bypass_checker()
                 .check_bypass_comments(file, &c, &mut violations);
             self.container
-                .inline_unused_checker()
-                .check_unused_imports(file, &c, &mut violations);
-            self.container
                 .dead_inheritance_checker()
                 .check_dead_inheritance(file, &c, &mut violations);
 

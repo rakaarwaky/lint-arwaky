@@ -1,17 +1,14 @@
 // PURPOSE: Root container for code-analysis — defines CodeAnalysisCheckerContainer and CodeAnalysisContainer
 
 use std::sync::Arc;
-
 use crate::capabilities_check_bypass_checker::BypassChecker;
 use crate::capabilities_class_checker::ArchClassChecker;
 use crate::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
-use crate::capabilities_inline_unused_checker::InlineUnusedChecker;
 use crate::capabilities_line_checker::ArchLineChecker;
 use crate::capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use shared::code_analysis::contract_inline_unused_protocol::IInlineUnusedProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use shared::code_analysis::contract_mandatory_inheritance_protocol::IMandatoryInheritanceProtocol;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -26,7 +23,6 @@ use shared::source_parsing::taxonomy_path_vo::FilePath;
 pub struct CodeAnalysisCheckerContainer {
     analyzer: Arc<dyn IAnalyzer>,
     bypass_checker: Arc<dyn IBypassCheckerProtocol>,
-    inline_unused_checker: Arc<dyn IInlineUnusedProtocol>,
     dead_inheritance_checker: Arc<dyn IDeadInheritanceProtocol>,
     mandatory_inheritance_checker: Arc<dyn IMandatoryInheritanceProtocol>,
     capabilities_role_checker: Arc<dyn ICapabilitiesRoleProtocol>,
@@ -52,7 +48,6 @@ impl CodeAnalysisCheckerContainer {
         Self {
             analyzer,
             bypass_checker: Arc::new(BypassChecker {}),
-            inline_unused_checker: Arc::new(InlineUnusedChecker {}),
             dead_inheritance_checker: Arc::new(DeadInheritanceChecker {}),
             mandatory_inheritance_checker: Arc::new(MandatoryInheritanceChecker {}),
             capabilities_role_checker: parts.capabilities_role_checker,
@@ -63,10 +58,6 @@ impl CodeAnalysisCheckerContainer {
 
     pub fn bypass_checker(&self) -> &Arc<dyn IBypassCheckerProtocol> {
         &self.bypass_checker
-    }
-
-    pub fn inline_unused_checker(&self) -> &Arc<dyn IInlineUnusedProtocol> {
-        &self.inline_unused_checker
     }
 
     pub fn dead_inheritance_checker(&self) -> &Arc<dyn IDeadInheritanceProtocol> {

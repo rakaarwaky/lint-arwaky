@@ -7,6 +7,7 @@ use std::process::ExitCode;
 use code_analysis::resolve_target;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::output_report::taxonomy_result_vo::LintResultList;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -14,14 +15,20 @@ use shared::taxonomy_adapter_name_vo::AdapterName;
 pub struct CheckCommandsSurface {
     pub linter_adapters: std::collections::HashMap<String, Arc<dyn ILinterAdapterPort>>,
     pub arch_linter: Arc<dyn IArchLintProtocol>,
+    pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
 }
 
 impl CheckCommandsSurface {
     pub fn new(
         linter_adapters: std::collections::HashMap<String, Arc<dyn ILinterAdapterPort>>,
         arch_linter: Arc<dyn IArchLintProtocol>,
+        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     ) -> Self {
-        Self { linter_adapters, arch_linter }
+        Self {
+            linter_adapters,
+            arch_linter,
+            import_orchestrator,
+        }
     }
 
     /// Run AES analysis + external adapters on a target path.
@@ -32,10 +39,9 @@ impl CheckCommandsSurface {
         let aes_results = self.arch_linter.run_self_lint(path);
         all_results.extend(aes_results.values);
 
-        // 2. Run external linter adapters
-        let adapter_names = [
-            "clippy", "rustfmt", "cargo-audit", "ruff", "mypy", "bandit", "eslint", "prettier", "tsc",
-        ];
+        // 2. Run import-rules audit (AES001, AES002, AES015, AES023, cycles)
+        let path_obj = FilePath::new(path.to_string())
+            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
             Err(_) => {
@@ -43,7 +49,14 @@ impl CheckCommandsSurface {
                 return;
             }
         };
-        let path_obj = FilePath::new(path.to_string())
+        let import_results = rt.block_on(self.import_orchestrator.run_audit(&path_obj));
+        all_results.extend(import_results);
+
+        // 3. Run external linter adapters
+        let adapter_names = [
+            "clippy", "rustfmt", "cargo-audit", "ruff", "mypy", "bandit", "eslint", "prettier", "tsc",
+        ];
+        let path_obj2 = FilePath::new(path.to_string())
             .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
 
         let mut adapter_futures = Vec::new();
@@ -53,7 +66,7 @@ impl CheckCommandsSurface {
                 Err(_) => continue,
             };
             if let Some(adapter) = self.linter_adapters.get(adapter_name.value()).cloned() {
-                let path_clone = path_obj.clone();
+                let path_clone = path_obj2.clone();
                 let name_owned = name.to_string();
                 adapter_futures.push(async move {
                     match adapter.scan(&path_clone).await {
@@ -87,10 +100,11 @@ pub fn handle_check(
     path: Option<String>,
     _git_diff: bool,
     arch_linter: Arc<dyn IArchLintProtocol>,
+    import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     filter: Option<String>,
 ) -> ExitCode {
     let root = resolve_target(path);
-    let surface = CheckCommandsSurface::new(std::collections::HashMap::new(), arch_linter);
+    let surface = CheckCommandsSurface::new(std::collections::HashMap::new(), arch_linter, import_orchestrator);
     surface.scan(&root, filter.as_deref());
     ExitCode::SUCCESS
 }
@@ -100,10 +114,11 @@ pub fn handle_scan(
     path: Option<String>,
     linter_adapters: std::collections::HashMap<String, Arc<dyn ILinterAdapterPort>>,
     arch_linter: Arc<dyn IArchLintProtocol>,
+    import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     filter: Option<String>,
 ) -> ExitCode {
     let root = resolve_target(path);
-    let surface = CheckCommandsSurface::new(linter_adapters, arch_linter);
+    let surface = CheckCommandsSurface::new(linter_adapters, arch_linter, import_orchestrator);
     surface.scan(&root, filter.as_deref());
     ExitCode::SUCCESS
 }

@@ -14,8 +14,6 @@ pub mod capabilities_check_bypass_checker;
 pub use capabilities_check_bypass_checker::BypassChecker;
 pub mod capabilities_dead_inheritance_checker;
 pub use capabilities_dead_inheritance_checker::DeadInheritanceChecker;
-pub mod capabilities_inline_unused_checker;
-pub use capabilities_inline_unused_checker::InlineUnusedChecker;
 pub mod capabilities_mandatory_inheritance_checker;
 pub use capabilities_mandatory_inheritance_checker::MandatoryInheritanceChecker;
 pub mod capabilities_project_target_resolver;

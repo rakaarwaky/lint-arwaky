@@ -1,18 +1,18 @@
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
 use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
-use shared::code_analysis::contract_unused_protocol::IUnusedProtocol;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::import_rules::contract_rule_protocol::IArchImportProtocol;
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use std::sync::Arc;
 
 pub struct ImportContainer {
     mandatory: Arc<dyn IArchImportProtocol>,
     forbidden: Arc<dyn IArchImportProtocol>,
     intent: Arc<dyn IArchImportProtocol>,
-    unused: Arc<dyn IUnusedProtocol>,
+    unused: Arc<dyn IUnusedImportProtocol>,
     cycle: Arc<dyn ICycleAnalysisProtocol>,
     analyzer: Arc<dyn IAnalyzer>,
 }

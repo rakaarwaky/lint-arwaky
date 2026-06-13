@@ -1,35 +1,39 @@
 // PURPOSE: GitContainer — wiring for git-hooks feature (root layer, wiring only)
 use shared::git_hooks::contract_commands_aggregate::GitCommandsAggregate;
+use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
+use shared::git_hooks::contract_hook_protocol::IHookProtocol;
+use shared::git_hooks::contract_manager_port::IHookManagerPort;
 use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use std::sync::Arc;
 
 pub struct GitContainer {
-    commands_aggregate: Arc<dyn GitCommandsAggregate>,
-    orchestrator_aggregate: Arc<dyn HookManagementOrchestratorAggregate>,
+    aggregate: Arc<dyn GitHooksAggregate>,
 }
 
 impl GitContainer {
-    pub fn new() -> Self {
-        Self {
-            commands_aggregate: Arc::new(
-                crate::agent_commands_orchestrator::GitCommandsOrchestrator::new(),
+    pub fn new(
+        scanner: Arc<dyn IScannerProviderPort>,
+        hook_adapter: Arc<dyn IHookManagerPort>,
+    ) -> Self {
+        let diff_protocol: Arc<dyn IDiffProtocol> =
+            Arc::new(crate::capabilities_diff_checker::DiffChecker::new(scanner));
+        let hook_protocol: Arc<dyn IHookProtocol> =
+            Arc::new(crate::capabilities_hook_manager::HookManager::new(hook_adapter));
+
+        let aggregate: Arc<dyn GitHooksAggregate> = Arc::new(
+            crate::agent_git_hooks_orchestrator::GitHooksOrchestrator::new(
+                diff_protocol,
+                hook_protocol,
+                crate::agent_git_hooks_orchestrator::SimpleHookManager::static_instance(),
             ),
-            orchestrator_aggregate: Arc::new(
-                crate::agent_management_orchestrator::HookManagementOrchestrator::new(),
-            ),
-        }
+        );
+
+        Self { aggregate }
     }
 
-    pub fn commands_aggregate(&self) -> Arc<dyn GitCommandsAggregate> {
-        self.commands_aggregate.clone()
-    }
-
-    pub fn orchestrator_aggregate(&self) -> Arc<dyn HookManagementOrchestratorAggregate> {
-        self.orchestrator_aggregate.clone()
-    }
-}
-impl Default for GitContainer {
-    fn default() -> Self {
-        Self::new()
+    pub fn aggregate(&self) -> Arc<dyn GitHooksAggregate> {
+        self.aggregate.clone()
     }
 }
