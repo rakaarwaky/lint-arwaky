@@ -19,6 +19,7 @@ use source_parsing::root_source_parsing_container::SourceParsingContainer;
 
 pub struct CompositionRoot {
     arch_linter: Arc<dyn IArchLintProtocol>,
+    #[allow(dead_code)]
     import_container: ImportContainer,
     auto_fix_container: AutoFixContainer,
     pipeline_container: PipelineContainer,
@@ -119,6 +120,7 @@ impl CompositionRoot {
         }
     }
 
+    #[allow(dead_code)]
     pub fn checker_container(&self) -> code_analysis::root_code_analysis_container::CheckerContainer {
         let analyzer = self.import_container.analyzer();
         code_analysis::root_code_analysis_container::CheckerContainer::new(analyzer)

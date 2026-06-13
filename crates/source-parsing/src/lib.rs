@@ -2,6 +2,8 @@
 
 pub mod infrastructure_file_collector;
 pub use infrastructure_file_collector::FileCollectorProvider;
+pub mod infrastructure_scanner_common;
+pub use infrastructure_scanner_common::{read_file_content, ParseState};
 pub mod infrastructure_js_scanner;
 pub use infrastructure_js_scanner::ASTJSParserAdapter;
 pub mod infrastructure_parser_adapter;
