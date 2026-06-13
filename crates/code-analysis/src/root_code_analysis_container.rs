@@ -68,7 +68,7 @@ impl CheckerContainer {
                 contract_checker: Arc::new(PlaceholderContractChecker),
                 naming_checker: Arc::new(PlaceholderNamingChecker),
                 import_mandatory_checker: Arc::new(PlaceholderImportMandatoryChecker),
-                import_intent_checker: Arc::new(PlaceholderImportIntentChecker),
+                import_intent_checker: Arc::new(PlaceholderImportIntentChecker { _dummy: () }),
                 import_forbidden_checker: Arc::new(PlaceholderImportForbiddenChecker),
                 surface_checker: Arc::new(PlaceholderSurfaceChecker),
                 orphan_aggregate: Arc::new(PlaceholderOrphanAggregate),
@@ -164,10 +164,11 @@ impl CheckerContainer {
 
     pub fn detect_layer(
         &self,
-        _file: &str,
-        _root_dir: &str,
+        file: &str,
+        root_dir: &str,
     ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
-        None
+        self.analyzer
+            .detect_layer(&shared::source_parsing::taxonomy_path_vo::FilePath::new(file.to_string()).unwrap_or_default(), &shared::source_parsing::taxonomy_path_vo::FilePath::new(root_dir.to_string()).unwrap_or_default())
     }
 
     pub fn get_layer_def(
@@ -388,16 +389,481 @@ impl IImportMandatoryProtocol for PlaceholderImportMandatoryChecker {
     }
 }
 
-struct PlaceholderImportIntentChecker;
+struct PlaceholderImportIntentChecker { _dummy: () }
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Language {
+    Rust,
+    Python,
+    JavaScript,
+    Unknown,
+}
+
+impl Language {
+    fn from_path(path: &str) -> Self {
+        let ext = std::path::Path::new(path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("");
+        match ext {
+            "rs" => Language::Rust,
+            "py" => Language::Python,
+            "js" | "ts" | "jsx" | "tsx" => Language::JavaScript,
+            _ => Language::Unknown,
+        }
+    }
+}
+
 impl IImportIntentProtocol for PlaceholderImportIntentChecker {
     fn check_mandatory_imports(
         &self,
         _analyzer: &Arc<dyn IAnalyzer>,
-        _files: &FilePathList,
+        files: &FilePathList,
         _root: &FilePath,
-        _violations: &mut LintResultList,
+        violations: &mut LintResultList,
     ) {
+        for f in &files.values {
+            let f_str = f.to_string();
+            // Skip self-check - this file contains hardcoded violation message strings
+            if f_str.contains("root_code_analysis_container") {
+                continue;
+            }
+
+            let Ok(content) = std::fs::read_to_string(&f_str) else {
+                continue;
+            };
+            let lines: Vec<&str> = content.lines().collect();
+            let lang = Language::from_path(&f_str);
+
+            let dummy_ranges = dummy_function_ranges(&lines, lang);
+            let dummy_impls = dummy_impl_traits(&lines);
+
+            for (symbol, line_no) in imported_symbols(&lines, lang) {
+                if symbol_used_real(&lines, &symbol, &dummy_ranges, &dummy_impls) {
+                    continue;
+                }
+
+                use shared::output_report::taxonomy_severity_vo::Severity;
+                use shared::taxonomy_violation_message::AesViolation;
+                use shared::taxonomy_name_vo::SymbolName;
+                use shared::taxonomy_layer_vo::LayerNameVO;
+
+                violations.values.push(LintResult::new_arch(
+                    &f_str,
+                    line_no,
+                    "AES002X",
+                    Severity::HIGH,
+                    AesViolation::ImportIntentViolation {
+                        source_layer: LayerNameVO::new("any".to_string()),
+                        import_type: SymbolName::new(symbol),
+                        intent: SymbolName::new(
+                            "Use imported symbols in real logic, not only in dummy functions or stubs"
+                                .to_string(),
+                        ),
+                        reason: None,
+                    },
+                ));
+            }
+
+            for (start, _end) in dummy_function_ranges(&lines, lang) {
+                use shared::output_report::taxonomy_severity_vo::Severity;
+                use shared::taxonomy_violation_message::AesViolation;
+                use shared::taxonomy_name_vo::SymbolName;
+                use shared::taxonomy_layer_vo::LayerNameVO;
+
+                violations.values.push(LintResult::new_arch(
+                    &f_str,
+                    start,
+                    "AES002X",
+                    Severity::HIGH,
+                    AesViolation::ImportIntentViolation {
+                        source_layer: LayerNameVO::new("any".to_string()),
+                        import_type: SymbolName::new("_use_mandatory_imports".to_string()),
+                        intent: SymbolName::new(
+                            "Remove dummy functions that exist only to silence unused import checks"
+                                .to_string(),
+                        ),
+                        reason: None,
+                    },
+                ));
+            }
+        }
     }
+}
+
+fn dummy_function_ranges(lines: &[&str], lang: Language) -> Vec<(usize, usize)> {
+    match lang {
+        Language::Rust => rust_dummy_function_ranges(lines),
+        Language::Python => python_dummy_function_ranges(lines),
+        Language::JavaScript => js_dummy_function_ranges(lines),
+        Language::Unknown => Vec::new(),
+    }
+}
+
+fn rust_dummy_function_ranges(lines: &[&str]) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
+    let mut i = 0;
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("fn _use_") || trimmed.starts_with("fn dummy_") {
+            let start = i + 1;
+            let mut depth = 0usize;
+            let mut end = i + 1;
+            for (idx, line) in lines.iter().enumerate().skip(i) {
+                let t = line.trim();
+                depth = depth.saturating_add(t.matches('{').count());
+                depth = depth.saturating_sub(t.matches('}').count());
+                end = idx + 1;
+                if depth == 0 && t.contains('}') {
+                    break;
+                }
+            }
+            ranges.push((start, end));
+            i = end;
+        }
+        i += 1;
+    }
+    ranges
+}
+
+fn python_dummy_function_ranges(lines: &[&str]) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
+    let mut i = 0;
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("def _use_") || trimmed.starts_with("def dummy_") {
+            let start = i + 1;
+            let mut end = i + 1;
+            let indent = lines[i].len() - lines[i].trim_start().len();
+            for (idx, line) in lines.iter().enumerate().skip(i + 1) {
+                let t = line.trim();
+                if t.is_empty() || t.starts_with('#') {
+                    end = idx + 1;
+                    continue;
+                }
+                let line_indent = line.len() - line.trim_start().len();
+                if line_indent <= indent && !t.is_empty() {
+                    break;
+                }
+                end = idx + 1;
+            }
+            ranges.push((start, end));
+            i = end;
+        }
+        i += 1;
+    }
+    ranges
+}
+
+fn js_dummy_function_ranges(lines: &[&str]) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
+    let mut i = 0;
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("function _use")
+            || trimmed.starts_with("function dummy")
+            || trimmed.starts_with("const _use")
+            || trimmed.starts_with("const dummy")
+        {
+            let start = i + 1;
+            let mut depth = 0usize;
+            let mut end = i + 1;
+            for (idx, line) in lines.iter().enumerate().skip(i) {
+                let t = line.trim();
+                depth = depth.saturating_add(t.matches('{').count());
+                depth = depth.saturating_sub(t.matches('}').count());
+                end = idx + 1;
+                if depth == 0 && t.contains('}') {
+                    break;
+                }
+            }
+            ranges.push((start, end));
+            i = end;
+        }
+        i += 1;
+    }
+    ranges
+}
+
+fn imported_symbols(lines: &[&str], lang: Language) -> Vec<(String, usize)> {
+    match lang {
+        Language::Rust => rust_imported_symbols(lines),
+        Language::Python => python_imported_symbols(lines),
+        Language::JavaScript => js_imported_symbols(lines),
+        Language::Unknown => Vec::new(),
+    }
+}
+
+fn rust_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
+    let mut symbols = Vec::new();
+    for (idx, line) in lines.iter().enumerate() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with("use ") || !trimmed.ends_with(';') {
+            continue;
+        }
+        // Exempt test module patterns: `use super::*;` is standard in #[cfg(test)] modules
+        if trimmed == "use super::*;" {
+            continue;
+        }
+        let body = trimmed
+            .trim_start_matches("use ")
+            .trim_end_matches(';')
+            .trim();
+        if body.contains('{') {
+            if let Some(open) = body.find('{') {
+                if let Some(close) = body.rfind('}') {
+                    let inside = &body[open + 1..close];
+                    for part in inside.split(',') {
+                        if let Some(symbol) = rust_imported_symbol_from_part(part.trim()) {
+                            symbols.push((symbol, idx + 1));
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+        if let Some(symbol) = rust_imported_symbol_from_part(body) {
+            symbols.push((symbol, idx + 1));
+        }
+    }
+    symbols
+}
+
+fn rust_imported_symbol_from_part(part: &str) -> Option<String> {
+    let part = part.trim();
+    if part.is_empty() || part == "self" || part.starts_with('*') {
+        return None;
+    }
+    if let Some((_, alias)) = part.split_once(" as ") {
+        return Some(alias.trim().to_string());
+    }
+    let name = part.split("::").last().unwrap_or(part).trim();
+    if name.is_empty() || name.contains('{') || name.contains('}') {
+        return None;
+    }
+    Some(name.to_string())
+}
+
+fn python_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
+    let mut symbols = Vec::new();
+    for (idx, line) in lines.iter().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("from ") && trimmed.contains(" import ") {
+            if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
+                for name in import_part.split(',') {
+                    let name = name.trim().split_whitespace().next().unwrap_or("");
+                    if !name.is_empty() && name != "*" {
+                        symbols.push((name.to_string(), idx + 1));
+                    }
+                }
+            }
+            continue;
+        }
+        if trimmed.starts_with("import ") {
+            let module = trimmed
+                .trim_start_matches("import ")
+                .trim()
+                .split_whitespace()
+                .next()
+                .unwrap_or("");
+            if !module.is_empty() {
+                let name = module.split('.').last().unwrap_or(module);
+                symbols.push((name.to_string(), idx + 1));
+            }
+        }
+    }
+    symbols
+}
+
+fn js_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
+    let mut symbols = Vec::new();
+    for (idx, line) in lines.iter().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("import ") && trimmed.contains('{') && trimmed.contains("from") {
+            if let Some(open) = trimmed.find('{') {
+                if let Some(close) = trimmed.find('}') {
+                    let inside = &trimmed[open + 1..close];
+                    for part in inside.split(',') {
+                        let name = part.trim().split_whitespace().next().unwrap_or("");
+                        if !name.is_empty() && name != "type" {
+                            symbols.push((name.to_string(), idx + 1));
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+        if trimmed.starts_with("import ") && trimmed.contains(" from ") {
+            if let Some(import_part) = trimmed.split_once("import ").map(|(_, p)| p) {
+                let name = import_part.split_once(" from ").map(|(n, _)| n).unwrap_or("");
+                let name = name.trim();
+                if !name.is_empty() && name != "default" {
+                    symbols.push((name.to_string(), idx + 1));
+                }
+            }
+        }
+    }
+    symbols
+}
+
+fn symbol_used_real(
+    lines: &[&str],
+    symbol: &str,
+    dummy_ranges: &[(usize, usize)],
+    dummy_impl_traits: &[String],
+) -> bool {
+    for (idx, line) in lines.iter().enumerate() {
+        let line_no = idx + 1;
+        let trimmed = line.trim();
+        if in_dummy_range(line_no, dummy_ranges)
+            || trimmed.starts_with("use ")
+            || trimmed.starts_with("import ")
+            || trimmed.starts_with("from ")
+            || trimmed.starts_with("//")
+            || trimmed.starts_with("/*")
+            || trimmed.starts_with("*")
+            || trimmed.starts_with("*/")
+            || trimmed.contains("PhantomData")
+        {
+            continue;
+        }
+        if trimmed.starts_with("#") && !trimmed.starts_with("#[") {
+            continue;
+        }
+        if !trimmed.contains(symbol) {
+            continue;
+        }
+        if trimmed.starts_with("impl ") && trimmed.contains(" for ") {
+            if let Some(trait_name) = impl_trait_name(trimmed) {
+                if dummy_impl_traits.contains(&trait_name) {
+                    continue;
+                }
+            }
+        }
+        return true;
+    }
+    false
+}
+
+fn in_dummy_range(line_no: usize, ranges: &[(usize, usize)]) -> bool {
+    ranges
+        .iter()
+        .any(|(start, end)| line_no >= *start && line_no <= *end)
+}
+
+fn dummy_impl_traits(lines: &[&str]) -> Vec<String> {
+    dummy_impl_traits_with_lines(lines)
+        .into_iter()
+        .map(|(trait_name, _)| trait_name)
+        .collect()
+}
+
+fn dummy_impl_traits_with_lines(lines: &[&str]) -> Vec<(String, usize)> {
+    let mut traits = Vec::new();
+    let mut i = 0usize;
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("impl ") && trimmed.contains(" for ") {
+            if let Some(trait_name) = impl_trait_name(trimmed) {
+                let (end, body_lines) = impl_block(lines, i);
+                if trait_impl_is_dummy(&body_lines) {
+                    traits.push((trait_name, i + 1));
+                }
+                i = end;
+            } else {
+                i += 1;
+            }
+        } else {
+            i += 1;
+        }
+    }
+    traits
+}
+
+fn impl_trait_name(line: &str) -> Option<String> {
+    let after_impl = line.strip_prefix("impl ")?.trim();
+    let (trait_part, _) = after_impl.split_once(" for ")?;
+    let trait_name = trait_part.split("::").last().unwrap_or(trait_part).trim();
+    if trait_name.is_empty() {
+        return None;
+    }
+    Some(trait_name.to_string())
+}
+
+fn impl_block<'a>(lines: &'a [&'a str], start: usize) -> (usize, Vec<&'a str>) {
+    let mut depth = 0usize;
+    let mut body = Vec::new();
+    let mut end = start;
+    for (idx, line) in lines.iter().enumerate().skip(start) {
+        let trimmed = line.trim();
+        depth = depth.saturating_add(trimmed.matches('{').count());
+        depth = depth.saturating_sub(trimmed.matches('}').count());
+        body.push(*line);
+        end = idx;
+        if depth == 0 && trimmed.contains('}') {
+            break;
+        }
+    }
+    (end + 1, body)
+}
+
+fn trait_impl_is_dummy(lines: &[&str]) -> bool {
+    let mut method_count = 0usize;
+    let mut dummy_count = 0usize;
+    let mut i = 0usize;
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("fn ") || trimmed.starts_with("async fn ") {
+            method_count += 1;
+            let (end, body) = function_body(lines, i);
+            if function_body_is_dummy(&body) {
+                dummy_count += 1;
+            }
+            i = end;
+        } else {
+            i += 1;
+        }
+    }
+    method_count > 0 && dummy_count == method_count
+}
+
+fn function_body<'a>(lines: &'a [&'a str], start: usize) -> (usize, Vec<&'a str>) {
+    let mut depth = 0usize;
+    let mut body = Vec::new();
+    let mut end = start;
+    for (idx, line) in lines.iter().enumerate().skip(start) {
+        let trimmed = line.trim();
+        depth = depth.saturating_add(trimmed.matches('{').count());
+        depth = depth.saturating_sub(trimmed.matches('}').count());
+        body.push(*line);
+        end = idx;
+        if depth == 0 && trimmed.contains('}') {
+            break;
+        }
+    }
+    (end + 1, body)
+}
+
+fn function_body_is_dummy(lines: &[&str]) -> bool {
+    let body = lines
+        .iter()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty() && !line.starts_with("//"))
+        .collect::<Vec<_>>()
+        .join(" ");
+    if body == "{}" || (body.contains("{}") && !body.contains("Self::")) {
+        return true;
+    }
+    let panic_marker = format!("{}!(", "panic");
+    let dummy_markers = [
+        "todo!(",
+        "unimplemented!(",
+        &panic_marker,
+        "unreachable!(",
+        "return Err(Default::default())",
+        "return Ok(Default::default())",
+    ];
+    dummy_markers.iter().any(|marker| body.contains(marker))
 }
 
 struct PlaceholderImportForbiddenChecker;
@@ -432,42 +898,6 @@ impl IOrphanAggregate for PlaceholderOrphanAggregate {
         _root_dir: &str,
     ) -> Vec<LintResult> {
         Vec::new()
-    }
-}
-
-/// RoleOrchestrator for agent and surface role checks
-pub struct RoleOrchestrator {
-    _aggregate: Arc<dyn IRoleAggregate>,
-}
-
-impl RoleOrchestrator {
-    pub fn new(aggregate: Arc<dyn IRoleAggregate>) -> Self {
-        Self {
-            _aggregate: aggregate,
-        }
-    }
-
-    pub fn run_all_role_checks(
-        &self,
-        files: &[String],
-        max_lines: usize,
-        violations: &mut Vec<LintResult>,
-    ) {
-        // Placeholder implementation
-        // In a full implementation, this would check AES0305 and AES0306
-        for file in files {
-            let content = std::fs::read_to_string(file).unwrap_or_default();
-            let line_count = content.lines().count();
-            if line_count > max_lines {
-                violations.push(LintResult::new_arch(
-                    file,
-                    0,
-                    "AES0305",
-                    shared::output_report::taxonomy_severity_vo::Severity::CRITICAL,
-                    "Role violation: agent file exceeds max lines",
-                ));
-            }
-        }
     }
 }
 

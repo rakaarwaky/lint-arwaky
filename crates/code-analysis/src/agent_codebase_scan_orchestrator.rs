@@ -3,7 +3,7 @@ use std::path::Path;
 
 use crate::LintCheckingOrchestrator;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_vo::default_aes_config;
 use shared::output_report::taxonomy_result_vo::LintResult;
 use shared::output_report::taxonomy_result_vo::LintResultList;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
@@ -42,7 +42,7 @@ impl CodebaseScanOrchestrator {
     }
 
     fn run_lint_at(&self, src_dir: &Path, _project_root: Option<&Path>) -> Vec<LintResult> {
-        let config = ArchitectureConfig::default();
+        let config = default_aes_config();
         let dir_path =
             DirectoryPath::new(src_dir.to_string_lossy().to_string()).unwrap_or_default();
         let files = collect_source_files(&dir_path);

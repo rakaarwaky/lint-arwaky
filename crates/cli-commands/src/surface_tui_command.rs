@@ -4,15 +4,6 @@ use dialoguer::theme::ColorfulTheme;
 use dialoguer::{Input, Select};
 use std::process::ExitCode;
 
-use shared::output_report::contract_report_aggregate::ReportCommandsAggregate;
-use shared::taxonomy_common_vo::LineNumber;
-
-/// Satisfy AES002 mandatory imports
-fn _use_mandatory_imports() {
-    let _ = LineNumber::new(1);
-    let _ = std::marker::PhantomData::<dyn ReportCommandsAggregate>;
-}
-
 pub struct TuiCommandSurface;
 
 impl TuiCommandSurface {

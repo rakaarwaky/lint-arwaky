@@ -5,7 +5,6 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 
 use crate::CheckerContainer;
-use crate::RoleOrchestrator;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::output_report::taxonomy_result_vo::LintResult;
@@ -381,20 +380,12 @@ impl LintCheckingOrchestrator {
             }
         }
 
-        let role_agg: Arc<dyn IRoleAggregate> = Arc::new(NoopRoleAggregate {
+        let _role_agg: Arc<dyn IRoleAggregate> = Arc::new(NoopRoleAggregate {
             taxonomy: NoopTaxonomy { _dummy: false },
             contract: NoopContract { _dummy: false },
             surface: NoopSurface { _dummy: false },
             agent: NoopAgent { _dummy: false },
         });
-        let role_orch = RoleOrchestrator::new(role_agg);
-        let max_lines = config
-            .rules
-            .iter()
-            .find(|r| r.name.value == "AES0305")
-            .map(|r| r.code_analysis.max_lines.value() as usize)
-            .unwrap_or(1000);
-        role_orch.run_all_role_checks(files, max_lines, &mut rl.values);
 
         rl.values
     }

@@ -38,4 +38,4 @@ pub use agent_codebase_scan_orchestrator::{
     detect_source_dir, CodebaseScanOrchestrator, CodebaseScanPipelineOrchestrator,
 };
 pub mod root_code_analysis_container;
-pub use root_code_analysis_container::{AnalysisContainer, CheckerContainer, RoleOrchestrator};
+pub use root_code_analysis_container::{AnalysisContainer, CheckerContainer};

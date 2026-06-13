@@ -169,6 +169,7 @@ architecture:
           "infrastructure",
           "agent",
           "surfaces",
+          "root",
         ]
       exceptions:
         [
@@ -178,6 +179,9 @@ architecture:
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
           "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -235,29 +239,63 @@ architecture:
         - scope: "contract(aggregate)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
-          forbidden:
-            ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+          forbidden: ["agent", "infrastructure", "surfaces", "capabilities", "root"]
           forbidden_inheritance: ["contract(port)", "contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
-          forbidden:
-            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          forbidden: ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "call"
+            - layer: "contract(port|protocol|aggregate)"
+              purpose: "call"
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
-          forbidden:
-            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          forbidden: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "call"
+            - layer: "contract(port|protocol|aggregate)"
+              purpose: "call"
 
         - scope: "agent(orchestrator)"
-          allowed: ["taxonomy", "contract", "agent"]
-          mandatory: ["taxonomy"]
-          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
+          allowed: ["taxonomy", "contract(aggregate)"]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+          forbidden: ["surfaces", "infrastructure", "capabilities", "contract(port|protocol)", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(aggregate)"
+              purpose: "implement"
+
+        - scope: "root"
+          allowed: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+          forbidden: []
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "implement"
+            - layer: "capabilities"
+              purpose: "implement"
+            - layer: "infrastructure"
+              purpose: "implement"
+            - layer: "agent"
+              purpose: "implement"
+            - layer: "surfaces"
+              purpose: "implement"
 
         - scope: "surfaces(command|controller|page|)"
-          allowed: ["taxonomy", "contract"]
+          allowed: ["taxonomy", "contract(aggregate)"]
           mandatory: null
           forbidden:
             [
@@ -268,6 +306,11 @@ architecture:
               "contract(protocol)",
               "root",
             ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(aggregate)"
+              purpose: "call"
 
         - scope: "surfaces(hook|store|action|screen|router)"
           allowed: ["taxonomy"]
@@ -282,6 +325,9 @@ architecture:
               "surfaces(command|controller|page|entry)",
               "root",
             ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
 
         - scope: "surfaces(component|view|layout)"
           allowed: ["taxonomy"]
@@ -295,6 +341,9 @@ architecture:
               "surfaces(command|controller|page|entry|hook|store|action|screen|router)",
               "root",
             ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
 
     AES002:
       enabled: true
@@ -306,6 +355,7 @@ architecture:
           "infrastructure",
           "agent",
           "surfaces",
+          "root",
         ]
       exceptions:
         [
@@ -315,7 +365,189 @@ architecture:
           "cli_main_entry.rs",
           "mcp_main_entry.rs",
           "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
         ]
+      conditions:
+        - scope: "taxonomy(vo)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+        - scope: "taxonomy(entity,error,event)"
+          allowed: ["taxonomy"]
+          mandatory: ["taxonomy(vo|constant)"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+        - scope: "taxonomy(constant)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+        - scope: "contract(port|protocol)"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "capabilities",
+              "contract(aggregate)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "implement"
+
+        - scope: "contract(aggregate)"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden: ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "implement"
+
+        - scope: "capabilities"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden: ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "call"
+            - layer: "contract(port|protocol|aggregate)"
+              purpose: "call"
+
+        - scope: "infrastructure"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "call"
+            - layer: "contract(port|protocol|aggregate)"
+              purpose: "call"
+
+        - scope: "agent(orchestrator)"
+          allowed: ["taxonomy", "contract(aggregate)"]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+          forbidden: ["surfaces", "infrastructure", "capabilities", "contract(port|protocol)", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(aggregate)"
+              purpose: "implement"
+
+        - scope: "root"
+          allowed: ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surfaces"]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+          forbidden: []
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "implement"
+            - layer: "capabilities"
+              purpose: "implement"
+            - layer: "infrastructure"
+              purpose: "implement"
+            - layer: "agent"
+              purpose: "implement"
+            - layer: "surfaces"
+              purpose: "implement"
+
+        - scope: "surfaces(command|controller|page|)"
+          allowed: ["taxonomy", "contract(aggregate)"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "capabilities",
+              "contract(port)",
+              "contract(protocol)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(aggregate)"
+              purpose: "call"
+
+        - scope: "surfaces(hook|store|action|screen|router)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "capabilities",
+              "contract(port)",
+              "contract(protocol)",
+              "surfaces(command|controller|page|entry)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+        - scope: "surfaces(component|view|layout)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "contract",
+              "infrastructure",
+              "capabilities",
+              "surfaces(command|controller|page|entry|hook|store|action|screen|router)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
 
     AES011:
       enabled: true

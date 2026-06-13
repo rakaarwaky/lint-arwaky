@@ -74,6 +74,10 @@ impl RoleOrchestrator {
                         checker.check_lifecycle(&source_vo, violations);
                     }
                 }
+                "root" => {
+                    // Root layer files (_container, _entry) have no role checks
+                    // They are composition/entry points, not agents or surfaces
+                }
                 "surfaces" | "surface" => {
                     let checker = self.aggregate.surface();
                     // All surface files get this check

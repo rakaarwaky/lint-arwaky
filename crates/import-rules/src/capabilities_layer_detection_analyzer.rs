@@ -172,6 +172,11 @@ impl LayerDetectionAnalyzer {
             return Some(self.resolve_specialized_layer(&layer, file_path));
         }
 
+        // ROOT ENTRY FILES: Files ending with _main_entry.rs → root layer
+        if filename.ends_with("_main_entry.rs") {
+            return Some("root".to_string());
+        }
+
         // FALLBACK: Path-based detection untuk root entry files (cli_main_entry, mcp_main_entry)
         let rel = Self::get_relative_path(file_path, root_dir);
 
@@ -258,6 +263,7 @@ impl LayerDetectionAnalyzer {
     /// Extract layer name dari filename prefix.
     /// e.g. "capabilities_import_checker.rs" → Some("capabilities")
     ///      "surface_command_handler.rs" → Some("surfaces")
+    ///      "root_code_analysis_container.rs" → Some("root")
     ///      "cli_main_entry.rs" → None (root)
     fn extract_layer_from_prefix(filename: &str) -> Option<String> {
         let stem = Path::new(filename)
@@ -272,6 +278,7 @@ impl LayerDetectionAnalyzer {
             ("infrastructure_", "infrastructure"),
             ("agent_", "agent"),
             ("surface_", "surfaces"),
+            ("root_", "root"),
         ];
 
         for (prefix, layer) in PREFIX_MAP {
@@ -436,8 +443,14 @@ impl LayerDetectionAnalyzer {
     /// Compute the path of `file_path` relative to `root_dir`.
     /// Falls back to the normalised absolute path when no prefix match is found.
     fn get_relative_path(file_path: &str, root_dir: &str) -> String {
-        let normalized_file = file_path.replace('\\', "/");
-        let normalized_root = root_dir.trim_end_matches('/').replace('\\', "/");
+        let normalized_file = std::path::Path::new(file_path)
+            .canonicalize()
+            .map(|p| p.to_string_lossy().replace('\\', "/"))
+            .unwrap_or_else(|_| file_path.replace('\\', "/"));
+        let normalized_root = std::path::Path::new(root_dir)
+            .canonicalize()
+            .map(|p| p.to_string_lossy().replace('\\', "/"))
+            .unwrap_or_else(|_| root_dir.trim_end_matches('/').replace('\\', "/"));
         if normalized_file.starts_with(&normalized_root) {
             normalized_file[normalized_root.len()..]
                 .trim_start_matches('/')
