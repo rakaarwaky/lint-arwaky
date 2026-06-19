@@ -1,0 +1,971 @@
+thresholds:
+  score: 100.0
+  complexity: 15
+
+output_dir: "output"
+
+adapters:
+  - name: "clippy"
+    weight: 1.0
+  - name: "rustfmt"
+    weight: 1.0
+  - name: "cargo-audit"
+    weight: 1.0
+  - name: "architecture"
+    weight: 3.0
+
+ignored_rules: []
+
+ignored_paths:
+  - "./output"
+  - "/target"
+  - "/.git"
+  - "/Graph-It-Live"
+  - "/.github"
+  - "/scratch"
+  - "/test-project-rust"
+  - "/test-project-python"
+  - "/test-project-javascript"
+
+architecture:
+  enabled: true
+  layers:
+    root:
+      path: "crates"
+      suffix:
+        - strict: ["entry", "container"]
+    taxonomy:
+      path: "crates/shared"
+      suffix:
+        - strict:
+            ["vo", "entity", "error", "event", "constant", "utility", "helper"]
+    contract:
+      path: "crates/shared"
+      suffix:
+        - strict: ["port", "protocol", "aggregate"]
+    capabilities:
+      path: "crates"
+      suffix:
+        - flexible:
+            [
+              "analyzer",
+              "checker",
+              "processor",
+              "evaluator",
+              "resolver",
+              "validator",
+              "formatter",
+              "executor",
+              "transformer",
+              "calculator",
+              "builder",
+              "compiler",
+              "aggregator",
+              "classifier",
+              "extractor",
+              "reporter",
+              "mapper",
+              "filter",
+              "collector",
+              "comparator",
+              "scorer",
+              "inspector",
+              "reviewer",
+              "assessor",
+              "auditor",
+              "actions",
+            ]
+        - forbidden:
+            [
+              "vo",
+              "entity",
+              "error",
+              "event",
+              "constant",
+              "constants",
+              "utility",
+              "helper",
+              "port",
+              "protocol",
+              "aggregate",
+            ]
+    infrastructure:
+      path: "crates"
+      suffix:
+        - flexible:
+            [
+              "adapter",
+              "provider",
+              "scanner",
+              "client",
+              "schemas",
+              "lifespan",
+              "wrapper",
+              "tracer",
+              "tracker",
+              "variants",
+              "detector",
+              "patterns",
+              "system",
+              "repository",
+              "cache",
+              "loader",
+              "writer",
+              "reader",
+              "driver",
+              "connector",
+              "gateway",
+              "serializer",
+              "encoder",
+              "decoder",
+              "fetcher",
+              "watcher",
+              "indexer",
+              "dispatcher",
+              "recorder",
+              "proxy",
+              "publisher",
+              "subscriber",
+              "listener",
+              "poller",
+              "streamer",
+            ]
+        - forbidden:
+            [
+              "vo",
+              "entity",
+              "error",
+              "event",
+              "constant",
+              "constants",
+              "utility",
+              "helper",
+              "port",
+              "protocol",
+              "aggregate",
+            ]
+    surfaces:
+      path: "crates"
+      suffix:
+        - strict:
+            [
+              "command",
+              "controller",
+              "page",
+              "view",
+              "component",
+              "router",
+              "layout",
+              "hook",
+              "store",
+              "action",
+              "screen",
+            ]
+    agent:
+      path: "crates"
+      suffix:
+        - strict: ["orchestrator"]
+
+  rules:
+    AES201:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "cli_main_entry.rs",
+          "mcp_main_entry.rs",
+          "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+      conditions:
+        - scope: "taxonomy(vo)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
+
+        - scope: "taxonomy(entity,error,event)"
+          allowed: ["taxonomy"]
+          mandatory: ["taxonomy(vo|constant)"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
+
+        - scope: "taxonomy(constant)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
+
+        - scope: "contract(port|protocol)"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "capabilities",
+              "contract(aggregate)",
+              "root",
+            ]
+
+        - scope: "contract(aggregate)"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden:
+            ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+          forbidden_inheritance: ["contract(port)", "contract(protocol)"]
+
+        - scope: "capabilities"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden:
+            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "call"
+            - layer: "contract(port|protocol|aggregate)"
+              purpose: "call"
+
+        - scope: "infrastructure"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden:
+            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "call"
+            - layer: "contract(port|protocol|aggregate)"
+              purpose: "call"
+
+        - scope: "agent(orchestrator)"
+          allowed:
+            [
+              "taxonomy",
+              "contract(aggregate)",
+              "contract(port)",
+              "contract(protocol)",
+            ]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(aggregate)"
+              purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "call"
+            - layer: "contract(protocol)"
+              purpose: "call"
+
+        - scope: "root"
+          allowed:
+            [
+              "taxonomy",
+              "contract",
+              "capabilities",
+              "infrastructure",
+              "agent",
+              "surfaces",
+            ]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+          forbidden: []
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "implement"
+            - layer: "capabilities"
+              purpose: "implement"
+            - layer: "infrastructure"
+              purpose: "implement"
+            - layer: "agent"
+              purpose: "implement"
+            - layer: "surfaces"
+              purpose: "implement"
+
+        - scope: "surfaces(command|controller|page|)"
+          allowed: ["taxonomy", "contract(aggregate)"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "capabilities",
+              "contract(port)",
+              "contract(protocol)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(aggregate)"
+              purpose: "call"
+
+        - scope: "surfaces(hook|store|action|screen|router)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "capabilities",
+              "contract(port)",
+              "contract(protocol)",
+              "surfaces(command|controller|page|entry)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+        - scope: "surfaces(component|view|layout)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "contract",
+              "infrastructure",
+              "capabilities",
+              "surfaces(command|controller|page|entry|hook|store|action|screen|router)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+    AES202:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "cli_main_entry.rs",
+          "mcp_main_entry.rs",
+          "tui_main_entry.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+      conditions:
+        - scope: "taxonomy(vo)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+        - scope: "taxonomy(entity,error,event)"
+          allowed: ["taxonomy"]
+          mandatory: ["taxonomy(vo|constant)"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+        - scope: "taxonomy(constant)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "contract",
+              "capabilities",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+        - scope: "contract(port|protocol)"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "surfaces",
+              "capabilities",
+              "contract(aggregate)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "implement"
+
+        - scope: "contract(aggregate)"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden:
+            ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "implement"
+
+        - scope: "capabilities"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden:
+            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "call"
+            - layer: "contract(port|protocol|aggregate)"
+              purpose: "call"
+
+        - scope: "infrastructure"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy"]
+          forbidden:
+            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "call"
+            - layer: "contract(port|protocol|aggregate)"
+              purpose: "call"
+
+        - scope: "agent(orchestrator)"
+          allowed:
+            [
+              "taxonomy",
+              "contract(aggregate)",
+              "contract(port)",
+              "contract(protocol)",
+            ]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(aggregate)"
+              purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "call"
+            - layer: "contract(protocol)"
+              purpose: "call"
+
+        - scope: "root"
+          allowed:
+            [
+              "taxonomy",
+              "contract",
+              "capabilities",
+              "infrastructure",
+              "agent",
+              "surfaces",
+            ]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+          forbidden: []
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "implement"
+            - layer: "capabilities"
+              purpose: "implement"
+            - layer: "infrastructure"
+              purpose: "implement"
+            - layer: "agent"
+              purpose: "implement"
+            - layer: "surfaces"
+              purpose: "implement"
+
+        - scope: "surfaces(command|controller|page|)"
+          allowed: ["taxonomy", "contract(aggregate)"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "capabilities",
+              "contract(port)",
+              "contract(protocol)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(aggregate)"
+              purpose: "call"
+
+        - scope: "surfaces(hook|store|action|screen|router)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "infrastructure",
+              "capabilities",
+              "contract(port)",
+              "contract(protocol)",
+              "surfaces(command|controller|page|entry)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+        - scope: "surfaces(component|view|layout)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "contract",
+              "infrastructure",
+              "capabilities",
+              "surfaces(command|controller|page|entry|hook|store|action|screen|router)",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+    AES101:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES102:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES205:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+
+    AES401:
+      enabled: true
+      scope:
+        ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)"]
+
+    AES402:
+      enabled: true
+      scope: ["contract(aggregate)", "contract(port|protocol)"]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES403:
+      enabled: true
+      scope: ["capabilities"]
+      max_functions: 30
+      max_impl: 5
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES404:
+      enabled: true
+      scope: ["infrastructure"]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES405:
+      enabled: true
+      scope: ["agent(orchestrator)"]
+      max_lines: 1000
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES406:
+      enabled: true
+      scope:
+        [
+          "surfaces(command|controller|page|entry)",
+          "surfaces(hook|store|action|screen|router)",
+          "surfaces(component|view|layout)",
+        ]
+      max_functions: 15
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES301:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      max_lines: 1000
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES302:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      min_lines: 5
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES304:
+      enabled: true
+      scope:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+      patterns:
+        [
+          "#[allow(",
+          "unwrap()",
+          "panic!",
+          "noqa",
+          "type: ignore",
+          "eslint-disable",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES305:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES203:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES204:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES303:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES501:
+      enabled: true
+      scope: ["taxonomy"]
+      entry_points:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES502:
+      enabled: true
+      scope: ["contract"]
+      entry_points:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES503:
+      enabled: true
+      scope: ["capabilities"]
+      entry_points:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES504:
+      enabled: true
+      scope: ["infrastructure"]
+      entry_points:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES505:
+      enabled: true
+      scope: ["agent"]
+      entry_points:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES506:
+      enabled: true
+      scope: ["surfaces"]
+      entry_points:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]

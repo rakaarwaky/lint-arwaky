@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "lint-arwaky": {
+      "command": "cargo",
+      "args": [
+        "run",
+        "--manifest-path",
+        "/home/raka/mcp-arwaky/lint-arwaky/Cargo.toml",
+        "--release",
+        "--bin",
+        "lint-arwaky-mcp"
+      ]
+    }
+  }
+}

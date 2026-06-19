@@ -1,0 +1,69 @@
+{
+  "folders": [
+    {
+      "name": "Import Rules",
+      "path": "../crates/import-rules",
+    },
+    {
+      "name": "Naming Rules",
+      "path": "../crates/naming-rules",
+    },
+    {
+      "name": "Role Rules",
+      "path": "../crates/role-rules",
+    },
+    {
+      "name": "Orphan Detector",
+      "path": "../crates/orphan-detector",
+    },
+    {
+      "name": "Auto Fix",
+      "path": "../crates/auto-fix",
+    },
+    {
+      "name": "Config System",
+      "path": "../crates/config-system",
+    },
+    {
+      "name": "Language Adapters",
+      "path": "../crates/language-adapters",
+    },
+    {
+      "name": "Shared (Foundation)",
+      "path": "../crates/shared",
+    },
+    {
+      "name": "Source Parsing",
+      "path": "../crates/source-parsing",
+    },
+    {
+      "name": "Project Root (Files)",
+      "path": "..",
+    },
+  ],
+  "settings": {
+    "rust-analyzer.linkedProjects": [
+      "../crates/import-rules/Cargo.toml",
+      "../crates/naming-rules/Cargo.toml",
+      "../crates/role-rules/Cargo.toml",
+      "../crates/orphan-detector/Cargo.toml",
+      "../crates/auto-fix/Cargo.toml",
+      "../crates/config-system/Cargo.toml",
+      "../crates/language-adapters/Cargo.toml",
+    ],
+    "files.exclude": {
+      "crates": true,
+      "test-project-javascript": true,
+      "test-project-python": true,
+      "test-project-rust": true,
+      "Graph-It-Live": true,
+      "dist": true,
+      "target": true,
+      ".git": true,
+      ".jj": true,
+      ".graph-it": true,
+      ".github": true,
+      "scripts": true,
+    },
+  },
+}

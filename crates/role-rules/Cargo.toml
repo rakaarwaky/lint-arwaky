@@ -1,0 +1,14 @@
+[package]
+name = "role_rules-lint-arwaky"
+version = "1.10.14"
+edition = "2021"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+async-trait.workspace = true
+once_cell.workspace = true
+regex.workspace = true
+shared.workspace = true
+source_parsing.workspace = true
+import_rules.workspace = true

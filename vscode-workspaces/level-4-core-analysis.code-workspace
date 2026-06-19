@@ -1,0 +1,44 @@
+{
+  "folders": [
+    {
+      "name": "Code Analysis",
+      "path": "../crates/code-analysis",
+    },
+    {
+      "name": "Pipeline Jobs",
+      "path": "../crates/pipeline-jobs",
+    },
+    {
+      "name": "Shared (Foundation)",
+      "path": "../crates/shared",
+    },
+    {
+      "name": "Source Parsing",
+      "path": "../crates/source-parsing",
+    },
+    {
+      "name": "Project Root (Files)",
+      "path": "..",
+    },
+  ],
+  "settings": {
+    "rust-analyzer.linkedProjects": [
+      "../crates/code-analysis/Cargo.toml",
+      "../crates/pipeline-jobs/Cargo.toml",
+    ],
+    "files.exclude": {
+      "crates": true,
+      "test-project-javascript": true,
+      "test-project-python": true,
+      "test-project-rust": true,
+      "Graph-It-Live": true,
+      "dist": true,
+      "target": true,
+      ".git": true,
+      ".jj": true,
+      ".graph-it": true,
+      ".github": true,
+      "scripts": true,
+    },
+  },
+}

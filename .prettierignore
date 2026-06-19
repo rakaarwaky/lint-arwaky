@@ -1,0 +1,7 @@
+test-project-javascript/
+test-project-python/
+test-project-rust/
+target/
+dist/
+node_modules/
+packages/vscode-extension/media/cytoscape.min.js

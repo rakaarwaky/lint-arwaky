@@ -1,0 +1,382 @@
+// PURPOSE: UnusedImportRuleChecker — IUnusedImportProtocol for AES203: detect imports that are never used in the code (Rust/Python/JS)
+
+use once_cell::sync::Lazy;
+use regex::Regex;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+use std::collections::{HashMap, HashSet};
+use std::fs;
+
+static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
+
+/// Business logic for identifying imports that are not utilized in the code.
+pub struct UnusedImportRuleChecker {}
+
+impl Default for UnusedImportRuleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl UnusedImportRuleChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+
+    fn extract_imported_aliases(content: &str) -> HashMap<String, String> {
+        let mut aliases: HashMap<String, String> = HashMap::new();
+        let mut in_cfg_test = false;
+
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("#[cfg(test)]") {
+                in_cfg_test = true;
+                continue;
+            }
+            if in_cfg_test {
+                if trimmed == "}" || trimmed.starts_with("}") {
+                    in_cfg_test = false;
+                }
+                continue;
+            }
+
+            // `from x import Y as Z` or `from x import Y`
+            if let Some(rest) = trimmed.strip_prefix("from ") {
+                let parts: Vec<&str> = rest.splitn(2, " import ").collect();
+                if parts.len() == 2 {
+                    let module = parts[0].trim();
+                    let names_str = parts[1].trim().trim_matches(|c| c == '(' || c == ')');
+                    for name_part in names_str.split(',') {
+                        let name_part = name_part.trim();
+                        if name_part.contains(" as ") {
+                            let alias_parts: Vec<&str> = name_part.splitn(2, " as ").collect();
+                            let alias = alias_parts[1].trim().to_string();
+                            let fullname = format!("{}.{}", module, alias_parts[0].trim());
+                            aliases.insert(alias, fullname);
+                        } else if !name_part.is_empty() {
+                            let fullname = format!("{}.{}", module, name_part);
+                            aliases.insert(name_part.to_string(), fullname);
+                        }
+                    }
+                }
+            }
+            // `import X as Y` or `import X`
+            else if let Some(rest) = trimmed.strip_prefix("import ") {
+                for name_part in rest.split(',') {
+                    let name_part = name_part.trim();
+                    if name_part.contains(" as ") {
+                        let alias_parts: Vec<&str> = name_part.splitn(2, " as ").collect();
+                        let alias = alias_parts[1].trim().to_string();
+                        let fullname = alias_parts[0].trim().to_string();
+                        aliases.insert(alias, fullname);
+                    } else if !name_part.is_empty() {
+                        aliases.insert(name_part.to_string(), name_part.to_string());
+                    }
+                }
+            }
+        }
+
+        aliases
+    }
+
+    fn extract_exported_symbols(content: &str) -> HashSet<String> {
+        let mut exported: HashSet<String> = HashSet::new();
+        if let Some(caps) = ALL_RE.as_ref().and_then(|re| re.captures(content)) {
+            let inner = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+            for item in inner.split(',') {
+                let name = item.trim().trim_matches('"').trim_matches('\'').to_string();
+                if !name.is_empty() {
+                    exported.insert(name);
+                }
+            }
+        }
+        exported
+    }
+
+    fn extract_used_symbols(
+        content: &str,
+        all_imports: &HashMap<String, String>,
+    ) -> HashSet<String> {
+        let mut used: HashSet<String> = HashSet::new();
+
+        // Strip import lines to avoid false positives
+        let code_lines: String = content
+            .lines()
+            .filter(|l| {
+                let t = l.trim();
+                !t.starts_with("import ") && !t.starts_with("from ")
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        for alias in all_imports.keys() {
+            // Check if the alias is used as a word in the code
+            let pattern = format!(r"\b{}\b", regex::escape(alias));
+            if let Ok(re) = Regex::new(&pattern) {
+                if re.is_match(&code_lines) {
+                    used.insert(alias.clone());
+                }
+            }
+        }
+
+        used
+    }
+
+    /// Find unused imports in a Python file.
+    pub fn find_unused_imports(&self, file_path: &str) -> Vec<String> {
+        let Ok(content) = fs::read_to_string(file_path) else {
+            return vec![];
+        };
+
+        let imported_aliases = Self::extract_imported_aliases(&content);
+        let exported_symbols = Self::extract_exported_symbols(&content);
+        let used_symbols = Self::extract_used_symbols(&content, &imported_aliases);
+
+        imported_aliases
+            .iter()
+            .filter(|(alias, _fullname)| {
+                // Unused if: not in used_symbols AND not in __all__ exports
+                !used_symbols.contains(*alias) && !exported_symbols.contains(*alias)
+            })
+            .map(|(alias, _)| alias.clone())
+            .collect()
+    }
+
+    /// Extract imported names from Rust/JS content (use statements, import statements)
+    fn extract_rust_js_imports(content: &str) -> Vec<(String, usize)> {
+        let mut imports = Vec::new();
+        let mut in_cfg_test = false;
+        for (i, line) in content.lines().enumerate() {
+            let t = line.trim();
+            if t.starts_with("#[cfg(test)]") {
+                in_cfg_test = true;
+                continue;
+            }
+            if in_cfg_test {
+                if t == "}" || t.starts_with("}") {
+                    in_cfg_test = false;
+                }
+                continue;
+            }
+
+            let names: Vec<String> = if t.starts_with("use ") {
+                let target = t.trim_end_matches(';').trim_start_matches("use ").trim();
+                if target.starts_with("std::")
+                    || target.starts_with("core::")
+                    || target.starts_with("alloc::")
+                {
+                    continue;
+                }
+                if let Some(brace_pos) = target.find("::{") {
+                    let inner = target[brace_pos + 3..].trim_end_matches('}').trim();
+                    inner
+                        .split(',')
+                        .map(|s| {
+                            s.trim()
+                                .split(" as ")
+                                .last()
+                                .unwrap_or("")
+                                .trim()
+                                .to_string()
+                        })
+                        .filter(|n| !n.is_empty() && n != "_" && n != "*")
+                        .collect()
+                } else {
+                    let name = target
+                        .split("::")
+                        .last()
+                        .unwrap_or("")
+                        .split(" as ")
+                        .last()
+                        .unwrap_or("")
+                        .trim()
+                        .to_string();
+                    if name.is_empty() || name == "_" || name == "*" {
+                        continue;
+                    }
+                    vec![name]
+                }
+            } else if t.starts_with("import ") {
+                // JS/TS: import X from 'Y' or import { X } from 'Y'
+                if let Some(from_idx) = t.find(" from ") {
+                    let import_part = t[7..from_idx].trim();
+                    let names: Vec<String> = if import_part.starts_with('{') {
+                        import_part[1..import_part.len() - 1]
+                            .split(',')
+                            .map(|s| {
+                                s.trim()
+                                    .split(" as ")
+                                    .last()
+                                    .unwrap_or("")
+                                    .trim()
+                                    .to_string()
+                            })
+                            .filter(|n| !n.is_empty())
+                            .collect()
+                    } else {
+                        vec![import_part.trim().to_string()]
+                    };
+                    names
+                } else {
+                    continue;
+                }
+            } else {
+                continue;
+            };
+
+            for name in names {
+                // Skip interface/protocol/trait-like names
+                if (name.starts_with('I')
+                    && name.len() > 1
+                    && name.chars().nth(1).unwrap_or(' ').is_uppercase())
+                    || name.ends_with("Protocol")
+                    || name.ends_with("Port")
+                    || name.ends_with("Trait")
+                    || name.ends_with("Aggregate")
+                    || name == "Parser"
+                {
+                    continue;
+                }
+                imports.push((name, i));
+            }
+        }
+        imports
+    }
+
+    /// Check if a name is used in the rest of the content
+    fn is_name_used(name: &str, content: &str, exclude_line: usize) -> bool {
+        // Rust traits used implicitly via method calls — name never appears in code
+        if Self::is_rust_trait_import(name) {
+            return true;
+        }
+
+        let rest = content
+            .lines()
+            .enumerate()
+            .filter(|(j, _)| *j != exclude_line)
+            .map(|(_, l)| l)
+            .collect::<Vec<_>>()
+            .join("\n");
+        rest.contains(name)
+    }
+
+    /// Rust trait imports that are used implicitly via method resolution.
+    /// The trait name doesn't appear in code but enables trait methods.
+    fn is_rust_trait_import(name: &str) -> bool {
+        // AES-convention traits
+        if name.starts_with('I')
+            && name.len() > 1
+            && name.chars().nth(1).unwrap_or(' ').is_uppercase()
+        {
+            return true;
+        }
+        if name.ends_with("Protocol")
+            || name.ends_with("Port")
+            || name.ends_with("Trait")
+            || name.ends_with("Aggregate")
+            || name.ends_with("Ext")
+        {
+            return true;
+        }
+        matches!(
+            name,
+            "Default"
+                | "Debug"
+                | "Display"
+                | "Clone"
+                | "Copy"
+                | "PartialEq"
+                | "Eq"
+                | "PartialOrd"
+                | "Ord"
+                | "Hash"
+                | "From"
+                | "Into"
+                | "TryFrom"
+                | "TryInto"
+                | "AsRef"
+                | "AsMut"
+                | "Deref"
+                | "DerefMut"
+                | "Iterator"
+                | "IntoIterator"
+                | "ExactSizeIterator"
+                | "FusedIterator"
+                | "Future"
+                | "Stream"
+                | "Read"
+                | "Write"
+                | "BufRead"
+                | "Seek"
+                | "Send"
+                | "Sync"
+                | "Unpin"
+                | "Sized"
+                | "Drop"
+                | "Fn"
+                | "FnMut"
+                | "FnOnce"
+                | "async_trait"
+                | "Digest"
+                | "Manager"
+                | "Emitter"
+                | "Serialize"
+                | "Deserialize"
+                | "Parser"
+        )
+    }
+}
+
+impl IUnusedImportProtocol for UnusedImportRuleChecker {
+    fn find_unused_imports(&self, path: &FilePath) -> Vec<String> {
+        self.find_unused_imports(path.value())
+    }
+
+    fn check_unused_imports(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        // First handle Python imports
+        let imported_aliases = Self::extract_imported_aliases(content);
+        let exported_symbols = Self::extract_exported_symbols(content);
+        let used_symbols = Self::extract_used_symbols(content, &imported_aliases);
+
+        for alias in imported_aliases.keys() {
+            if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
+                // Find line number
+                let line_num = content
+                    .lines()
+                    .position(|l| {
+                        l.trim().contains(&format!("import {}", alias))
+                            || l.trim().contains(&format!(
+                                "from {} import",
+                                alias.split('.').next().unwrap_or("")
+                            ))
+                    })
+                    .map(|p| p + 1)
+                    .unwrap_or(1);
+                violations.push(LintResult::new_arch(
+                    file,
+                    line_num,
+                    "AES203",
+                    Severity::MEDIUM,
+                    AesImportViolation::FixUnusedImport { reason: None }.to_string(),
+                ));
+            }
+        }
+
+        // Then handle Rust/JS imports
+        let rust_js_imports = Self::extract_rust_js_imports(content);
+        for (name, line_idx) in rust_js_imports {
+            if !Self::is_name_used(&name, content, line_idx) {
+                violations.push(LintResult::new_arch(
+                    file,
+                    line_idx + 1,
+                    "AES203",
+                    Severity::MEDIUM,
+                    AesImportViolation::FixUnusedImport { reason: None }.to_string(),
+                ));
+            }
+        }
+    }
+}

@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lint Arwaky Code Graph</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Cytoscape.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.29.2/cytoscape.min.js"></script>
+
+    <style>
+      :root {
+        --bg-color: #0d1117;
+        --sidebar-bg: rgba(22, 27, 34, 0.7);
+        --panel-border: rgba(240, 246, 252, 0.1);
+        --accent-color: #58a6ff;
+        --accent-glow: rgba(88, 166, 255, 0.4);
+
+        --color-file: #1f6feb;
+        --color-class: #aff5b4;
+        --color-function: #ff7b72;
+        --color-interface: #d2a8ff;
+        --color-trait: #ff9e3b;
+
+        --font-main: "Plus Jakarta Sans", system-ui, sans-serif;
+        --font-display: "Outfit", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font-main);
+        background-color: var(--bg-color);
+        color: #c9d1d9;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* Mode-specific Layouts */
+      .mode-full {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .mode-full .sidebar {
+        width: 320px;
+        height: 100vh;
+        border-right: 1px solid var(--panel-border);
+        flex-shrink: 0;
+      }
+
+      .mode-full #cy {
+        flex: 1;
+        height: 100vh;
+      }
+
+      .mode-sidebar {
+        display: block;
+        position: relative;
+      }
+
+      .mode-sidebar #cy {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .mode-sidebar .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+        border-right: none;
+      }
+
+      .mode-sidebar.controls-open .sidebar {
+        transform: translateX(0);
+      }
+
+      /* Sidebar Glassmorphism */
+      .sidebar {
+        background: var(--sidebar-bg);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        z-index: 100;
+        overflow-y: auto;
+      }
+
+      .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--panel-border);
+      }
+
+      .logo-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #1f6feb, #d2a8ff);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-display);
+        font-weight: 700;
+        color: #fff;
+        box-shadow: 0 0 12px var(--accent-glow);
+      }
+
+      .logo-title {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 1.2rem;
+        letter-spacing: 0.5px;
+        background: linear-gradient(135deg, #fff, #8b949e);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      /* Control Group Card */
+      .control-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .card-title {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #f0f6fc;
+        letter-spacing: 0.3px;
+      }
+
+      /* Search input */
+      .search-box {
+        position: relative;
+      }
+
+      .search-input {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: #fff;
+        font-family: var(--font-main);
+        font-size: 0.85rem;
+        transition: all 0.2s;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 8px rgba(88, 166, 255, 0.2);
+      }
+
+      /* Checkboxes */
+      .filter-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        user-select: none;
+        padding: 4px 0;
+        transition: opacity 0.2s;
+      }
+
+      .filter-item:hover {
+        opacity: 0.8;
+      }
+
+      .filter-checkbox {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--panel-border);
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .filter-checkbox:checked {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+      }
+
+      .filter-checkbox:checked::after {
+        content: "✓";
+        color: #0d1117;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .color-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      /* Action Buttons */
+      .btn-group {
+        display: flex;
+        gap: 8px;
+      }
+
+      .btn {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #c9d1d9;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 500;
+        font-family: var(--font-main);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .btn:hover {
+        background: var(--accent-color);
+        color: #0d1117;
+        border-color: var(--accent-color);
+        box-shadow: 0 4px 12px var(--accent-glow);
+      }
+
+      /* Canvas */
+      #cy {
+        flex: 1;
+        height: 100vh;
+        background-color: #090d13;
+        background-image: radial-gradient(
+          rgba(255, 255, 255, 0.03) 1px,
+          transparent 0
+        );
+        background-size: 24px 24px;
+      }
+
+      /* Details Card Floating */
+      .details-card {
+        position: absolute;
+        bottom: 24px;
+        right: 24px;
+        width: 350px;
+        background: rgba(22, 27, 34, 0.85);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        z-index: 10;
+        display: none;
+        flex-direction: column;
+        gap: 14px;
+        animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .details-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .details-type-tag {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        padding: 4px 8px;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+      }
+
+      .details-title {
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #fff;
+        margin-top: 6px;
+        word-break: break-all;
+      }
+
+      .details-meta-item {
+        font-size: 0.8rem;
+        color: #8b949e;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .details-meta-val {
+        color: #c9d1d9;
+        font-family: monospace;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 4px 8px;
+        border-radius: 4px;
+        word-break: break-all;
+      }
+
+      .open-btn {
+        background: #1f6feb;
+        border: none;
+        color: #fff;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+      }
+
+      .open-btn:hover {
+        background: #388bfd;
+        box-shadow: 0 4px 12px rgba(56, 139, 253, 0.4);
+      }
+
+      /* Floating Toggle Button for Sidebar Mode */
+      .floating-toggle-btn {
+        display: none;
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 110; /* Above sidebar overlay */
+        background: rgba(22, 27, 34, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--panel-border);
+        color: #c9d1d9;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-family: var(--font-main);
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+
+      .floating-toggle-btn:hover {
+        background: var(--accent-color);
+        color: #0d1117;
+        border-color: var(--accent-color);
+        box-shadow: 0 4px 12px var(--accent-glow);
+      }
+
+      .mode-sidebar .floating-toggle-btn {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="logo-section">
+        <div class="logo-icon">LA</div>
+        <div class="logo-title">Lint Arwaky Graph</div>
+      </div>
+
+      <!-- Search -->
+      <div class="control-card">
+        <div class="card-title">Search Symbol</div>
+        <div class="search-box">
+          <input
+            type="text"
+            id="search-input"
+            class="search-input"
+            placeholder="Type name to highlight..."
+          />
+        </div>
+      </div>
+
+      <!-- Node Filters -->
+      <div class="control-card">
+        <div class="card-title">Visible Nodes</div>
+        <label class="filter-item">
+          <input
+            type="checkbox"
+            id="filter-file"
+            class="filter-checkbox"
+            checked
+          />
+          <span
+            class="color-indicator"
+            style="background-color: var(--color-file)"
+          ></span>
+          Files
+        </label>
+        <label class="filter-item">
+          <input
+            type="checkbox"
+            id="filter-class"
+            class="filter-checkbox"
+            checked
+          />
+          <span
+            class="color-indicator"
+            style="background-color: var(--color-class)"
+          ></span>
+          Classes / Structs
+        </label>
+        <label class="filter-item">
+          <input
+            type="checkbox"
+            id="filter-function"
+            class="filter-checkbox"
+            checked
+          />
+          <span
+            class="color-indicator"
+            style="background-color: var(--color-function)"
+          ></span>
+          Functions
+        </label>
+        <label class="filter-item">
+          <input
+            type="checkbox"
+            id="filter-interface"
+            class="filter-checkbox"
+            checked
+          />
+          <span
+            class="color-indicator"
+            style="background-color: var(--color-interface)"
+          ></span>
+          Interfaces
+        </label>
+        <label class="filter-item">
+          <input
+            type="checkbox"
+            id="filter-trait"
+            class="filter-checkbox"
+            checked
+          />
+          <span
+            class="color-indicator"
+            style="background-color: var(--color-trait)"
+          ></span>
+          Traits (Rust)
+        </label>
+      </div>
+
+      <!-- Edge Filters -->
+      <div class="control-card">
+        <div class="card-title">Edge Relations</div>
+        <label class="filter-item">
+          <input
+            type="checkbox"
+            id="edge-call"
+            class="filter-checkbox"
+            checked
+          />
+          Calls (In/Out)
+        </label>
+        <label class="filter-item">
+          <input
+            type="checkbox"
+            id="edge-lateral"
+            class="filter-checkbox"
+            checked
+          />
+          Lateral (AES Layer)
+        </label>
+        <label class="filter-item">
+          <input
+            type="checkbox"
+            id="edge-inherit"
+            class="filter-checkbox"
+            checked
+          />
+          Inherits / Implements
+        </label>
+        <label class="filter-item">
+          <input
+            type="checkbox"
+            id="edge-uses"
+            class="filter-checkbox"
+            checked
+          />
+          Uses / Structure
+        </label>
+      </div>
+
+      <!-- Controls -->
+      <div class="btn-group">
+        <button id="btn-fit" class="btn">Fit Graph</button>
+        <button id="btn-layout" class="btn">Re-Layout</button>
+      </div>
+    </div>
+
+    <!-- Floating toggle button for sidebar controls -->
+    <button id="btn-toggle-controls" class="floating-toggle-btn">
+      ⚙ Filters
+    </button>
+
+    <!-- Graph container -->
+    <div id="cy"></div>
+
+    <!-- Floating details card -->
+    <div id="details-card" class="details-card">
+      <div class="details-header">
+        <div>
+          <span id="details-tag" class="details-type-tag">File</span>
+          <h4 id="details-title" class="details-title">SomeClass</h4>
+        </div>
+        <button
+          id="details-close"
+          style="
+            background: none;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 1.1rem;
+          "
+        >
+          ×
+        </button>
+      </div>
+      <div class="details-meta-item">
+        <span>Location File:</span>
+        <span id="details-file" class="details-meta-val"
+          >crates/core/src/lib.rs</span
+        >
+      </div>
+      <div
+        id="details-line-container"
+        class="details-meta-item"
+        style="display: none"
+      >
+        <span>Line Number:</span>
+        <span id="details-line" class="details-meta-val">124</span>
+      </div>
+      <button id="details-open" class="open-btn">Open in VS Code Editor</button>
+    </div>
+
+    <script>
+      const vscode = acquireVsCodeApi();
+      let cy = null;
+      let originalElements = [];
+      let selectedNode = null;
+
+      let pendingActiveFile = null;
+
+      // Message listener from Extension
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        if (message.command === "loadGraph") {
+          renderGraph(message.data);
+        } else if (message.command === "selectNode") {
+          selectNodeByPath(message.file);
+        }
+      });
+
+      function renderGraph(data) {
+        const elements = [];
+
+        // Map Rust JSON nodes to Cytoscape format
+        data.nodes.forEach((node) => {
+          elements.push({
+            group: "nodes",
+            data: {
+              id: node.id,
+              label: node.label,
+              kind: node.kind, // File, Class, Function, Interface, Trait
+              file: node.file,
+              line: node.line,
+            },
+          });
+        });
+
+        // Map Rust JSON edges to Cytoscape format
+        data.edges.forEach((edge) => {
+          elements.push({
+            group: "edges",
+            data: {
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              relation: edge.relation, // IncomingCall, OutgoingCall, Lateral, Inherit, Implement, Uses
+            },
+          });
+        });
+
+        originalElements = elements;
+        initializeCytoscape(elements);
+      }
+
+      function initializeCytoscape(elements) {
+        cy = cytoscape({
+          container: document.getElementById("cy"),
+          elements: elements,
+          style: [
+            {
+              selector: "node",
+              style: {
+                label: "data(label)",
+                color: "#c9d1d9",
+                "font-family": "Plus Jakarta Sans",
+                "font-size": "11px",
+                "text-valign": "bottom",
+                "text-margin-y": "6px",
+                "background-color": "#58a6ff",
+                width: "22px",
+                height: "22px",
+                "transition-property":
+                  "background-color, border-width, border-color",
+                "transition-duration": "0.2s",
+                "overlay-opacity": 0,
+              },
+            },
+            {
+              selector: 'node[kind="File"]',
+              style: {
+                "background-color": "#1f6feb",
+                shape: "round-rectangle",
+                width: "28px",
+                height: "28px",
+              },
+            },
+            {
+              selector: 'node[kind="Class"]',
+              style: {
+                "background-color": "#34d399",
+                shape: "ellipse",
+              },
+            },
+            {
+              selector: 'node[kind="Function"]',
+              style: {
+                "background-color": "#ff7b72",
+                shape: "hexagon",
+              },
+            },
+            {
+              selector: 'node[kind="Interface"]',
+              style: {
+                "background-color": "#a78bfa",
+                shape: "diamond",
+              },
+            },
+            {
+              selector: 'node[kind="Trait"]',
+              style: {
+                "background-color": "#fb923c",
+                shape: "triangle",
+              },
+            },
+            {
+              selector: "edge",
+              style: {
+                width: 1.5,
+                "line-color": "#30363d",
+                "target-arrow-color": "#30363d",
+                "target-arrow-shape": "triangle",
+                "curve-style": "bezier",
+                "arrow-scale": 0.8,
+                "overlay-opacity": 0,
+              },
+            },
+            {
+              selector:
+                'edge[relation="IncomingCall"], edge[relation="OutgoingCall"]',
+              style: {
+                "line-color": "#ff7b72",
+                "target-arrow-color": "#ff7b72",
+                "line-style": "dashed",
+              },
+            },
+            {
+              selector: 'edge[relation="Lateral"]',
+              style: {
+                "line-color": "#fb923c",
+                "target-arrow-color": "#fb923c",
+              },
+            },
+            {
+              selector: 'edge[relation="Inherit"], edge[relation="Implement"]',
+              style: {
+                "line-color": "#a78bfa",
+                "target-arrow-color": "#a78bfa",
+              },
+            },
+            {
+              selector: "node:selected",
+              style: {
+                "border-width": "3px",
+                "border-color": "#fff",
+                "shadow-blur": "10px",
+                "shadow-color": "#fff",
+                "shadow-opacity": 0.5,
+              },
+            },
+            {
+              selector: ".highlighted",
+              style: {
+                "background-color": "#f0e68c",
+                "line-color": "#f0e68c",
+                "target-arrow-color": "#f0e68c",
+              },
+            },
+          ],
+          layout: {
+            name: "cose",
+            animate: true,
+            nodeRepulsion: function (node) {
+              return 4000;
+            },
+            idealEdgeLength: function (edge) {
+              return 80;
+            },
+            edgeElasticity: function (edge) {
+              return 100;
+            },
+            nestingFactor: 1.2,
+          },
+        });
+
+        // Node click event
+        cy.on("tap", "node", function (evt) {
+          const node = evt.target;
+          selectedNode = node.data();
+          showDetailsCard(selectedNode);
+        });
+
+        // Double click to open editor
+        cy.on("dbltap", "node", function (evt) {
+          const node = evt.target.data();
+          vscode.postMessage({
+            command: "openFile",
+            file: node.file,
+            line: node.line,
+          });
+        });
+
+        // Hide details card on tapping background
+        cy.on("tap", function (evt) {
+          if (evt.target === cy) {
+            hideDetailsCard();
+          }
+        });
+
+        // Check for pending active file selection
+        if (pendingActiveFile) {
+          selectNodeByPath(pendingActiveFile);
+          pendingActiveFile = null;
+        }
+      }
+
+      function selectNodeByPath(filePath) {
+        if (!cy) {
+          pendingActiveFile = filePath;
+          return;
+        }
+
+        const cleanPath = filePath.replace(/\\/g, "/");
+
+        // Find the node by id
+        let targetNode = cy.getElementById(cleanPath);
+        if (!targetNode.length) {
+          // Fallback to fuzzy suffix matching
+          targetNode = cy.nodes().filter((node) => {
+            const nodeFile = node.data("file");
+            if (!nodeFile) return false;
+            const cleanNodeFile = nodeFile.replace(/\\/g, "/");
+            return (
+              cleanNodeFile === cleanPath ||
+              cleanNodeFile.endsWith("/" + cleanPath) ||
+              cleanPath.endsWith("/" + cleanNodeFile)
+            );
+          });
+        }
+
+        if (targetNode.length) {
+          cy.batch(() => {
+            cy.elements().unselect();
+            targetNode.first().select();
+          });
+          // Center and zoom on it
+          cy.animate(
+            {
+              center: { eles: targetNode.first() },
+              zoom: 1.2,
+            },
+            {
+              duration: 400,
+            },
+          );
+          showDetailsCard(targetNode.first().data());
+        }
+      }
+
+      // Apply filters
+      function applyFilters() {
+        if (!cy) return;
+
+        const visibleKinds = [];
+        if (document.getElementById("filter-file").checked)
+          visibleKinds.push("File");
+        if (document.getElementById("filter-class").checked)
+          visibleKinds.push("Class");
+        if (document.getElementById("filter-function").checked)
+          visibleKinds.push("Function");
+        if (document.getElementById("filter-interface").checked)
+          visibleKinds.push("Interface");
+        if (document.getElementById("filter-trait").checked)
+          visibleKinds.push("Trait");
+
+        const visibleRelations = [];
+        if (document.getElementById("edge-call").checked) {
+          visibleRelations.push("IncomingCall");
+          visibleRelations.push("OutgoingCall");
+        }
+        if (document.getElementById("edge-lateral").checked)
+          visibleRelations.push("Lateral");
+        if (document.getElementById("edge-inherit").checked) {
+          visibleRelations.push("Inherit");
+          visibleRelations.push("Implement");
+        }
+        if (document.getElementById("edge-uses").checked)
+          visibleRelations.push("Uses");
+
+        cy.batch(() => {
+          cy.elements().remove();
+          cy.add(originalElements);
+
+          // Filter nodes
+          const nodesToRemove = cy.nodes().filter((node) => {
+            return !visibleKinds.includes(node.data("kind"));
+          });
+          nodesToRemove.remove();
+
+          // Filter edges
+          const edgesToRemove = cy.edges().filter((edge) => {
+            return !visibleRelations.includes(edge.data("relation"));
+          });
+          edgesToRemove.remove();
+
+          // Clean orphaned edges (if any)
+          cy.edges()
+            .filter((edge) => {
+              return (
+                !cy.getElementById(edge.data("source")).length ||
+                !cy.getElementById(edge.data("target")).length
+              );
+            })
+            .remove();
+        });
+      }
+
+      // Add filter listeners
+      document.querySelectorAll(".filter-checkbox").forEach((chk) => {
+        chk.addEventListener("change", applyFilters);
+      });
+
+      // Search input event
+      document
+        .getElementById("search-input")
+        .addEventListener("input", function (e) {
+          const query = e.target.value.toLowerCase().trim();
+          if (!cy) return;
+
+          cy.batch(() => {
+            cy.nodes().removeClass("highlighted");
+            if (query.length > 0) {
+              cy.nodes()
+                .filter((node) => {
+                  return node.data("label").toLowerCase().includes(query);
+                })
+                .addClass("highlighted");
+            }
+          });
+        });
+
+      // Detail Panel Helpers
+      function showDetailsCard(nodeData) {
+        const card = document.getElementById("details-card");
+        const title = document.getElementById("details-title");
+        const tag = document.getElementById("details-tag");
+        const file = document.getElementById("details-file");
+        const line = document.getElementById("details-line");
+        const lineContainer = document.getElementById("details-line-container");
+
+        title.innerText = nodeData.label;
+        tag.innerText = nodeData.kind;
+
+        // Adjust tag color based on kind
+        tag.className = "details-type-tag";
+        if (nodeData.kind === "File")
+          tag.style.backgroundColor = "var(--color-file)";
+        else if (nodeData.kind === "Class")
+          tag.style.backgroundColor = "#047857"; // emerald
+        else if (nodeData.kind === "Function")
+          tag.style.backgroundColor = "#b91c1c"; // red
+        else if (nodeData.kind === "Interface")
+          tag.style.backgroundColor = "#6d28d9"; // violet
+        else if (nodeData.kind === "Trait")
+          tag.style.backgroundColor = "#c2410c"; // orange
+
+        file.innerText = nodeData.file;
+
+        if (nodeData.line) {
+          line.innerText = nodeData.line;
+          lineContainer.style.display = "flex";
+        } else {
+          lineContainer.style.display = "none";
+        }
+
+        card.style.display = "flex";
+      }
+
+      function hideDetailsCard() {
+        document.getElementById("details-card").style.display = "none";
+        selectedNode = null;
+      }
+
+      document
+        .getElementById("details-close")
+        .addEventListener("click", hideDetailsCard);
+
+      // Open in VS Code button
+      document.getElementById("details-open").addEventListener("click", () => {
+        if (selectedNode) {
+          vscode.postMessage({
+            command: "openFile",
+            file: selectedNode.file,
+            line: selectedNode.line,
+          });
+        }
+      });
+
+      // Fit & Layout Controls
+      document.getElementById("btn-fit").addEventListener("click", () => {
+        if (cy) cy.fit();
+      });
+
+      document.getElementById("btn-layout").addEventListener("click", () => {
+        if (cy) {
+          cy.layout({
+            name: "cose",
+            animate: true,
+          }).run();
+        }
+      });
+
+      // Toggle controls overlay in sidebar mode
+      const toggleBtn = document.getElementById("btn-toggle-controls");
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+          document.body.classList.toggle("controls-open");
+          if (document.body.classList.contains("controls-open")) {
+            toggleBtn.innerHTML = "✕ Close";
+          } else {
+            toggleBtn.innerHTML = "⚙ Filters";
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

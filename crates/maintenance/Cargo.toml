@@ -1,0 +1,10 @@
+[package]
+name = "maintenance-lint-arwaky"
+version = "1.10.14"
+edition = "2021"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+async-trait.workspace = true
+shared.workspace = true

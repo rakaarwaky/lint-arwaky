@@ -1,0 +1,10 @@
+[package]
+name = "source_parsing-lint-arwaky"
+version = "1.10.14"
+edition = "2021"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+regex.workspace = true
+shared.workspace = true

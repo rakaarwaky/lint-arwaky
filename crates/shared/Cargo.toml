@@ -1,0 +1,16 @@
+[package]
+name = "shared-lint-arwaky"
+version = "1.10.14"
+edition = "2021"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+anyhow.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

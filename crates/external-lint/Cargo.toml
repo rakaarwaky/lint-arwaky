@@ -1,0 +1,19 @@
+[package]
+name = "external_lint-lint-arwaky"
+version = "1.10.14"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+async-trait.workspace = true
+regex.workspace = true
+tracing.workspace = true
+rustsec.workspace = true
+dirs.workspace = true
+futures.workspace = true
+tokio.workspace = true
+shared.workspace = true
+source_parsing.workspace = true
+code_analysis.workspace = true

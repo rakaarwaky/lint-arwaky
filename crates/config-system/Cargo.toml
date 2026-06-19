@@ -1,0 +1,15 @@
+[package]
+name = "config_system-lint-arwaky"
+version = "1.10.14"
+edition = "2021"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+async-trait.workspace = true
+serde_yaml.workspace = true
+toml.workspace = true
+shared.workspace = true
+source_parsing.workspace = true
+import_rules.workspace = true
+dirs.workspace = true
