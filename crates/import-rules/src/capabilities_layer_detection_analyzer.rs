@@ -177,26 +177,11 @@ impl LayerDetectionAnalyzer {
             return Some("root".to_string());
         }
 
-        // FALLBACK: Path-based detection untuk root entry files (cli_main_entry, mcp_main_entry)
-        let rel = Self::get_relative_path(file_path, root_dir);
-
-        // PRIORITY: Files at scan root (no subdirectory) with no prefix → root layer.
-        // This MUST be checked BEFORE the path-based loop because parse_config_yaml
-        // adds path: \".\" to all layers without an explicit path, causing Case 4 of
-        // match_layer_nonrecursive to match the first iterated layer (non-deterministic).
-        if Path::new(&rel)
-            .parent()
-            .map(|p| p.to_string_lossy() == "")
-            .unwrap_or(false)
-        {
-            return Some("root".to_string());
-        }
-
         // DIRECTORY-BASED FALLBACK: If prefix detection failed, check the immediate
         // parent directory name against known layer names. This supports test projects
         // and codebases organized by directory (e.g., "taxonomy/foo.rs" → taxonomy layer)
         // without requiring every file to carry the layer prefix.
-        let mut parent_dir_str = Path::new(&rel)
+        let mut parent_dir_str = Path::new(file_path)
             .parent()
             .and_then(|p| p.to_str())
             .unwrap_or("")
@@ -216,10 +201,11 @@ impl LayerDetectionAnalyzer {
         }
 
         if !parent_dir_str.is_empty() && parent_dir_str != "." {
-            let dir_name = parent_dir_str
+            let raw_dir = parent_dir_str
                 .split('/')
                 .next_back()
                 .unwrap_or(&parent_dir_str);
+            let dir_name = raw_dir.replace('-', "_");
             const DIR_MAP: &[(&str, &str)] = &[
                 ("taxonomy", "taxonomy"),
                 ("contract", "contract"),
@@ -241,6 +227,21 @@ impl LayerDetectionAnalyzer {
                     return Some(self.resolve_specialized_layer(layer, file_path));
                 }
             }
+        }
+
+        // FALLBACK: Path-based detection untuk root entry files (cli_main_entry, mcp_main_entry)
+        let rel = Self::get_relative_path(file_path, root_dir);
+
+        // PRIORITY: Files at scan root (no subdirectory) with no prefix → root layer.
+        // This MUST be checked BEFORE the path-based loop because parse_config_yaml
+        // adds path: \".\" to all layers without an explicit path, causing Case 4 of
+        // match_layer_nonrecursive to match the first iterated layer (non-deterministic).
+        if Path::new(&rel)
+            .parent()
+            .map(|p| p.to_string_lossy() == "")
+            .unwrap_or(false)
+        {
+            return Some("root".to_string());
         }
 
         let mut sorted_layers: Vec<(&LayerNameVO, &LayerDefinition)> =

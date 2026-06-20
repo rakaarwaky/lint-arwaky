@@ -115,6 +115,7 @@ impl ArchNamingChecker {
             "root_",
         ];
 
+        println!("[debug] check_file_naming: filename = {}, layer = {:?}, def is some: {}", filename, layer_name, definition.is_some());
         if Self::is_barrel_file(filename) || Self::is_entry_point(filename) {
             return;
         }
@@ -271,6 +272,8 @@ impl INamingCheckerProtocol for ArchNamingChecker {
         root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
+        let keys: Vec<String> = analyzer.layer_map().values.keys().map(|k| k.value().to_string()).collect();
+        println!("[debug] layer_map keys: {:?}", keys);
         for f in &files.values {
             let f_str = f.to_string();
             let filename = f.rsplit('/').next().unwrap_or(&f_str);

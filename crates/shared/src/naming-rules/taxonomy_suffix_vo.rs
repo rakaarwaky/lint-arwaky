@@ -3,6 +3,7 @@ use crate::common::taxonomy_common_vo::PatternList;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(transparent)]
 pub struct SuffixPolicyVO {
     pub value: String,
 }

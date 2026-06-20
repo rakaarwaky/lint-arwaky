@@ -135,8 +135,26 @@ impl IImportParserPort for ImportParserAdapter {
         if let Some(rest) = trimmed.strip_prefix("from ") {
             return Some(Identity::new(rest.split_whitespace().next()?.to_string()));
         }
-        if let Some(rest) = trimmed.strip_prefix("import ") {
-            return Some(Identity::new(rest.split_whitespace().next()?.to_string()));
+        if trimmed.starts_with("import ") {
+            if let Some(pos) = trimmed.rfind(" from ") {
+                let module_part = trimmed[pos + 6..].trim();
+                let cleaned = module_part
+                    .trim_end_matches(';')
+                    .trim_matches(|c| c == '\'' || c == '"' || c == '`' || c == ';')
+                    .trim();
+                return Some(Identity::new(cleaned.to_string()));
+            }
+            if let Some(rest) = trimmed.strip_prefix("import ") {
+                if rest.contains('"') || rest.contains('\'') || rest.contains('`') {
+                    let cleaned = rest
+                        .trim_end_matches(';')
+                        .trim_matches(|c| c == '\'' || c == '"' || c == '`' || c == ';')
+                        .trim();
+                    return Some(Identity::new(cleaned.to_string()));
+                }
+                let first_token = rest.split_whitespace().next().unwrap_or("");
+                return Some(Identity::new(first_token.to_string()));
+            }
         }
         if let Some(rest) = trimmed.strip_prefix("use ") {
             let module = rest.trim_end_matches(';').trim().to_string();

@@ -13,7 +13,6 @@ use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_layer_vo::LayerNameVO;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
@@ -177,9 +176,24 @@ impl DependencyCycleAnalyzer {
                 if let Some(module) = rest.split_whitespace().next() {
                     modules.push(module.to_string());
                 }
-            } else if let Some(rest) = trimmed.strip_prefix("import ") {
-                if let Some(module) = rest.split_whitespace().next() {
-                    modules.push(module.trim_end_matches(',').to_string());
+            } else if trimmed.starts_with("import ") {
+                if let Some(pos) = trimmed.rfind(" from ") {
+                    let module_part = trimmed[pos + 6..].trim();
+                    let cleaned = module_part
+                        .trim_end_matches(';')
+                        .trim_matches(|c| c == '\'' || c == '"' || c == '`' || c == ';')
+                        .trim();
+                    modules.push(cleaned.to_string());
+                } else if let Some(rest) = trimmed.strip_prefix("import ") {
+                    if rest.contains('"') || rest.contains('\'') || rest.contains('`') {
+                        let cleaned = rest
+                            .trim_end_matches(';')
+                            .trim_matches(|c| c == '\'' || c == '"' || c == '`' || c == ';')
+                            .trim();
+                        modules.push(cleaned.to_string());
+                    } else if let Some(first_token) = rest.split_whitespace().next() {
+                        modules.push(first_token.trim_end_matches(',').to_string());
+                    }
                 }
             } else if let Some(rest) = trimmed.strip_prefix("use ") {
                 let module = rest.trim_end_matches(';');
@@ -189,42 +203,8 @@ impl DependencyCycleAnalyzer {
         modules
     }
 
-    fn detect_file_layer(&self, config: &ArchitectureConfig, file: &str, root_dir: &str) -> Option<String> {
-        let rel = file
-            .strip_prefix(root_dir)
-            .unwrap_or(file)
-            .trim_start_matches('/');
-        let mut layers: Vec<(
-            &LayerNameVO,
-            &shared::common::taxonomy_definition_vo::LayerDefinition,
-        )> = config.layers.iter().collect();
-        layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
-
-        for (name, def) in layers {
-            let layer_path = def.path.value.as_str();
-            if rel.starts_with(layer_path) {
-                return Some(name.value.clone());
-            }
-        }
-        None
-    }
-
-    fn detect_module_layer(&self, config: &ArchitectureConfig, module: &str) -> Option<String> {
-        let parts: Vec<&str> = module
-            .split(|c: char| c == ':' || c == '.' || c == '/' || c == '\\')
-            .filter(|s| !s.is_empty())
-            .collect();
-        for part in &parts {
-            for name in config.layers.keys() {
-                if *part == name.value.as_str() {
-                    return Some(name.value.clone());
-                }
-            }
-        }
-        None
-    }
-
-    pub fn scan(&self, config: &ArchitectureConfig, files: &[String], root_dir: &str) -> Vec<LintResult> {
+    pub fn scan(&self, analyzer: &dyn IAnalyzer, files: &[String], root_dir: &str) -> Vec<LintResult> {
+        let config = analyzer.config();
         if !config.enabled.value {
             return vec![];
         }
@@ -236,8 +216,9 @@ impl DependencyCycleAnalyzer {
             let Ok(content) = fs::read_to_string(file) else {
                 continue;
             };
-            let file_layer = match self.detect_file_layer(config, file, root_dir) {
-                Some(l) => l,
+            let file_fp = FilePath::new(file.clone()).unwrap_or_default();
+            let file_layer = match analyzer.detect_layer(&file_fp, &FilePath::new(root_dir.to_string()).unwrap_or_default()) {
+                Some(l) => l.value().to_string(),
                 None => continue,
             };
 
@@ -247,9 +228,11 @@ impl DependencyCycleAnalyzer {
 
             let modules = Self::extract_import_modules(&content);
             for module in modules {
-                if let Some(target_layer) = self.detect_module_layer(config, &module) {
-                    if target_layer != file_layer {
-                        edges.push(DependencyEdge::new(file_layer.clone(), target_layer));
+                let module_fp = FilePath::new(module.clone()).unwrap_or_default();
+                if let Some(target_layer) = analyzer.detect_module_layer(&module_fp) {
+                    let target_layer_str = target_layer.value().to_string();
+                    if target_layer_str != file_layer {
+                        edges.push(DependencyEdge::new(file_layer.clone(), target_layer_str));
                     }
                 }
             }
@@ -285,7 +268,7 @@ impl ICycleAnalysisProtocol for DependencyCycleAnalyzer {
         results: &mut LintResultList,
     ) {
         let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        let cycle_violations = self.scan(analyzer.config(), &file_strs, &root_dir.to_string());
+        let cycle_violations = self.scan(analyzer, &file_strs, &root_dir.to_string());
         results.values.extend(cycle_violations);
     }
 }

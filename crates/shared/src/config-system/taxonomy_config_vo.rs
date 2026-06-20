@@ -244,7 +244,13 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
                 *rules_obj = flat;
             }
         }
-        let mut config = serde_json::from_value::<ArchitectureConfig>(json).unwrap_or_default();
+        let mut config = match serde_json::from_value::<ArchitectureConfig>(json) {
+            Ok(c) => c,
+            Err(e) => {
+                println!("[debug] serde_json from_value error: {:?}", e);
+                ArchitectureConfig::default()
+            }
+        };
         // Top-level ignored_paths (outside architecture section) — merge into config
         if config.ignored_paths.values.is_empty() {
             if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
@@ -288,5 +294,17 @@ pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
             "../../../../lint_arwaky.config.javascript.yaml"
         )),
         _ => default_aes_config(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config_parsing() {
+        let config = default_config_for_language("typescript");
+        println!("typescript layers: {:?}", config.layers.keys());
+        assert!(!config.layers.is_empty());
     }
 }

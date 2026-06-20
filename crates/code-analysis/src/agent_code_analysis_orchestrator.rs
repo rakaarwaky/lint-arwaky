@@ -25,7 +25,7 @@ pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
             return candidate;
         }
     }
-    project_root.join("crates")
+    project_root.to_path_buf()
 }
 
 /// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree.
