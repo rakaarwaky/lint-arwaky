@@ -235,6 +235,20 @@ impl IArchImportProtocol for ArchImportForbiddenChecker {
     ) {
         for f in &files.values {
             let f_str = f.to_string();
+            let basename = f.basename();
+
+            // Check Rule Exception directly (avoid LayerDefinition overwrite bugs)
+            let mut is_exception = false;
+            for r in &analyzer.config().rules {
+                if r.name.value.as_str() == "AES201" && r.exceptions.values.contains(&basename) {
+                    is_exception = true;
+                    break;
+                }
+            }
+            if is_exception {
+                continue;
+            }
+
             if let Some(layer) = analyzer.detect_layer(f, root_dir) {
                 let layer_str = layer.value();
                 if let Some(def) = analyzer.layer_map().values.get(&layer) {

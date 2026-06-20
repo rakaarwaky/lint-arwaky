@@ -11,61 +11,7 @@ use crate::capabilities_infrastructure_role_auditor::InfrastructureRoleChecker;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
-use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use shared::role_rules::contract_infrastructure_role_protocol::IInfrastructureRoleChecker;
-use shared::role_rules::contract_role_protocol::IContractRoleChecker;
-use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
-use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
-
-pub struct RoleAggregateImpl {
-    taxonomy: TaxonomyRoleChecker,
-    contract: ContractRoleChecker,
-    infrastructure: InfrastructureRoleChecker,
-    capabilities: CapabilitiesRoleChecker,
-    surface: SurfaceRoleChecker,
-    agent: AgentRoleChecker,
-}
-
-impl Default for RoleAggregateImpl {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl RoleAggregateImpl {
-    pub fn new() -> Self {
-        Self {
-            taxonomy: TaxonomyRoleChecker::new(),
-            contract: ContractRoleChecker::new(),
-            infrastructure: InfrastructureRoleChecker::new(),
-            capabilities: CapabilitiesRoleChecker::new(),
-            surface: SurfaceRoleChecker::new(),
-            agent: AgentRoleChecker::new(),
-        }
-    }
-}
-
-impl IRoleAggregate for RoleAggregateImpl {
-    fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker {
-        &self.taxonomy
-    }
-    fn contract(&self) -> &dyn IContractRoleChecker {
-        &self.contract
-    }
-    fn infrastructure(&self) -> &dyn IInfrastructureRoleChecker {
-        &self.infrastructure
-    }
-    fn capabilities(&self) -> &dyn ICapabilitiesRoleChecker {
-        &self.capabilities
-    }
-    fn surface(&self) -> &dyn ISurfaceRoleChecker {
-        &self.surface
-    }
-    fn agent(&self) -> &dyn IAgentRoleChecker {
-        &self.agent
-    }
-}
+use crate::agent_role_orchestrator::RoleAggregateImpl;
 
 pub struct RoleContainer {
     aggregate: Arc<dyn IRoleAggregate>,
@@ -80,7 +26,14 @@ impl RoleContainer {
     pub fn new_with_config(
         config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
     ) -> Self {
-        let aggregate: Arc<dyn IRoleAggregate> = Arc::new(RoleAggregateImpl::new());
+        let aggregate: Arc<dyn IRoleAggregate> = Arc::new(RoleAggregateImpl::new(
+            Arc::new(TaxonomyRoleChecker::new()),
+            Arc::new(ContractRoleChecker::new()),
+            Arc::new(InfrastructureRoleChecker::new()),
+            Arc::new(CapabilitiesRoleChecker::new()),
+            Arc::new(SurfaceRoleChecker::new()),
+            Arc::new(AgentRoleChecker::new()),
+        ));
         Self { aggregate, config }
     }
 

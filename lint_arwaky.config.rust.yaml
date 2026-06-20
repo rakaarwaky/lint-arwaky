@@ -712,10 +712,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES205:
@@ -724,11 +721,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "infrastructure_language_detector.rs",
-          "root_source_parsing_container.rs",
-          "root_auto_fix_container.rs",
-          "infrastructure_path_provider.rs",
+          "mod.rs"
         ]
       scope:
         [
@@ -758,9 +751,6 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
         ]
 
     AES302:
