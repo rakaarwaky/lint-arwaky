@@ -52,7 +52,7 @@ impl ArchImportForbiddenChecker {
             if let Some(module) = self.parser.extract_module_from_line(line) {
                 let segments: Vec<&str> = module
                     .value()
-                    .split(|c: char| c == ':' || c == '.' || c == '/' || c == '\\')
+                    .split([':', '.', '/', '\\'])
                     .filter(|s| !s.is_empty())
                     .collect();
                 for forbidden in &forbidden_list {
@@ -142,7 +142,7 @@ impl ArchImportForbiddenChecker {
                 if let Some(module) = self.parser.extract_module_from_line(line) {
                     let segments: Vec<&str> = module
                         .value()
-                        .split(|c: char| c == ':' || c == '.' || c == '/' || c == '\\')
+                        .split([':', '.', '/', '\\'])
                         .filter(|s| !s.is_empty())
                         .collect();
                     for forbidden in &rule.forbidden.values {

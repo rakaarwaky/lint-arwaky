@@ -434,6 +434,7 @@ pub fn handle_check(
 }
 
 /// scan = AES analysis on external project + external adapters
+#[allow(clippy::too_many_arguments)]
 pub fn handle_scan(
     path: Option<String>,
     arch_linter: Arc<dyn IArchLintProtocol>,

@@ -121,7 +121,7 @@ impl CodeAnalysisOrchestrator {
             Ok(runtime) => runtime,
             Err(_) => return Vec::new(),
         };
-        rt.block_on(async { self.run_all_checks(&config, &files_str, &root_dir).await })
+        rt.block_on(async { self.run_all_checks(config, &files_str, &root_dir).await })
     }
 
     /// Run code-analysis AES checks on the given files.

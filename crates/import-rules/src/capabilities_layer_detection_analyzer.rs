@@ -305,7 +305,7 @@ impl LayerDetectionAnalyzer {
     ///   3. Path-based match: module-path-as-filesystem-path contains the layer path.
     pub fn detect_module_layer(&self, module: &str) -> Option<String> {
         let meaningful_parts: Vec<&str> = module
-            .split(|c: char| c == ':' || c == '.' || c == '/' || c == '\\')
+            .split([':', '.', '/', '\\'])
             .filter(|p| !p.is_empty())
             .collect();
 
