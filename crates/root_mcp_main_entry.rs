@@ -193,7 +193,10 @@ pub async fn run_server() {
     eprintln!("Press Ctrl+C to stop");
 
     // Inline MCP composition — create exactly what MCP needs
-    let import_container = import_rules::root_import_rules_container::ImportContainer::new();
+    let source_parsing_container =
+        source_parsing::root_source_parsing_container::SourceParsingContainer::new();
+    let source_parser = source_parsing_container.source_parser();
+    let import_container = import_rules::root_import_rules_container::ImportContainer::new(source_parser);
     let analyzer = import_container.analyzer();
     let checker_container =
         code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(analyzer);

@@ -30,8 +30,9 @@ fn main() -> ExitCode {
     let source_parsing_container =
         source_parsing::root_source_parsing_container::SourceParsingContainer::new();
     let path_norm = source_parsing_container.path_normalization();
+    let source_parser = source_parsing_container.source_parser();
 
-    let import_container = ImportContainer::new();
+    let import_container = ImportContainer::new(source_parser.clone());
     let analyzer = import_container.analyzer();
     let checker_container =
         code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(analyzer);
@@ -55,8 +56,9 @@ fn main() -> ExitCode {
     let external_lint_aggregate = external_lint_container.aggregate();
 
     let external_lint_aggregate_clone = external_lint_aggregate.clone();
+    let source_parser_clone = source_parser.clone();
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
-        let import_container = ImportContainer::new_with_config(config.clone());
+        let import_container = ImportContainer::new_with_config(config.clone(), source_parser_clone.clone());
         let naming_container =
             naming_rules::root_naming_rules_container::NamingContainer::new_with_config(
                 config.clone(),

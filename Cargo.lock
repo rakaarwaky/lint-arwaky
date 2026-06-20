@@ -2131,7 +2131,6 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
 ]
 
 [[package]]

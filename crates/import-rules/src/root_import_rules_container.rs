@@ -6,6 +6,7 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::import_rules::contract_rule_protocol::IArchImportProtocol;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
 use std::sync::Arc;
 
 pub struct ImportContainer {
@@ -18,20 +19,13 @@ pub struct ImportContainer {
 }
 
 impl ImportContainer {
-    pub fn new() -> Self {
-        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
+    pub fn new(source_parser: Arc<dyn ISourceParserPort>) -> Self {
+        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config(), source_parser)
     }
 
-    pub fn new_with_config(config: ArchitectureConfig) -> Self {
+    pub fn new_with_config(config: ArchitectureConfig, source_parser: Arc<dyn ISourceParserPort>) -> Self {
         let fs =
             Arc::new(file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
-        let source_parser = Arc::new(
-            source_parsing::infrastructure_parser_adapter::SourceParserOrchestrator::new(
-                Box::new(source_parsing::infrastructure_py_scanner::ASTPythonParserAdapter::new()),
-                Box::new(source_parsing::infrastructure_rust_scanner::ASTRustParserAdapter::new()),
-                Box::new(source_parsing::infrastructure_js_scanner::ASTJSParserAdapter::new()),
-            ),
-        );
         let parser: Arc<dyn IImportParserPort> =
             Arc::new(crate::infrastructure_import_parser_adapter::ImportParserAdapter::new());
         let analyzer = Arc::new(
@@ -91,11 +85,5 @@ impl ImportContainer {
             self.cycle.clone(),
             self.analyzer.clone(),
         ))
-    }
-}
-
-impl Default for ImportContainer {
-    fn default() -> Self {
-        Self::new()
     }
 }
