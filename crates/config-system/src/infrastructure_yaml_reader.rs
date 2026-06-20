@@ -88,30 +88,26 @@ impl IConfigReaderPort for ConfigYamlReader {
     /// 3) XDG config dirs ($XDG_CONFIG_HOME, $XDG_CONFIG_DIRS)
     async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource> {
         let filename = Self::config_filename(language);
+        let mut current = std::path::PathBuf::from(&project_root.value);
 
-        // Priority 1: project root
-        let project_path = std::path::PathBuf::from(&project_root.value).join(&filename);
-        if let Ok(content) = std::fs::read_to_string(&project_path) {
-            return Some(ConfigSource::new(
-                language,
-                project_path.to_string_lossy().to_string(),
-                content,
-            ));
-        }
-
-        // Priority 2: parent of project root
-        if let Some(parent) = std::path::Path::new(&project_root.value).parent() {
-            let parent_path = parent.join(&filename);
-            if let Ok(content) = std::fs::read_to_string(&parent_path) {
+        while !current.as_os_str().is_empty() {
+            let candidate = current.join(&filename);
+            if let Ok(content) = std::fs::read_to_string(&candidate) {
                 return Some(ConfigSource::new(
                     language,
-                    parent_path.to_string_lossy().to_string(),
+                    candidate.to_string_lossy().to_string(),
                     content,
                 ));
             }
+
+            if let Some(parent) = current.parent() {
+                current = parent.to_path_buf();
+            } else {
+                break;
+            }
         }
 
-        // Priority 3: XDG config dirs (fallback)
+        // Fallback: XDG config dirs
         Self::read_any(language)
     }
 
