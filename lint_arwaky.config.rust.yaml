@@ -769,10 +769,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES303:
@@ -790,10 +787,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES304:
@@ -802,10 +796,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
       patterns:
         [
@@ -820,10 +811,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES305:
@@ -841,10 +829,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     # ─── AES400: Role ───
@@ -860,10 +845,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES403:
@@ -875,10 +857,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES404:
@@ -888,10 +867,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES405:
@@ -902,10 +878,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES406:
@@ -921,10 +894,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     # ─── AES500: Orphan ───
@@ -935,10 +905,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES502:
@@ -948,10 +915,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES503:
@@ -961,10 +925,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES504:
@@ -974,10 +935,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES505:
@@ -987,10 +945,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES506:
@@ -1000,8 +955,5 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
