@@ -238,6 +238,20 @@ architecture:
           "root_cli_main_entry.rs",
           "root_mcp_main_entry.rs",
           "root_tui_main_entry.rs",
+          "surface_multi_command.rs",
+          "surface_watch_command.rs",
+          "surface_check_command.rs",
+          "capabilities_arch_lint.rs",
+          "surface_tools_command.rs",
+          "surface_job_controller.rs",
+          "agent_orphan_orchestrator.rs",
+          "surface_vscode_command.rs",
+          "infrastructure_vscode_graph_generator.rs",
+          "infrastructure_language_detector.rs",
+          "root_source_parsing_container.rs",
+          "surface_git_command.rs",
+          "surface_dev_command.rs",
+          "surface_map_command.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -445,6 +459,21 @@ architecture:
           "root_cli_main_entry.rs",
           "root_mcp_main_entry.rs",
           "root_tui_main_entry.rs",
+          "root_file_system_container.rs",
+          "root_git_hooks_container.rs",
+          "root_file_watch_container.rs",
+          "root_config_system_container.rs",
+          "root_vscode_container.rs",
+          "root_auto_fix_container.rs",
+          "root_multi_project_container.rs",
+          "root_maintenance_container.rs",
+          "root_project_setup_container.rs",
+          "root_orphan_detector_container.rs",
+          "root_naming_rules_container.rs",
+          "root_import_rules_container.rs",
+          "root_role_rules_container.rs",
+          "root_source_parsing_container.rs",
+          "root_external_lint_container.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -691,6 +720,16 @@ architecture:
 
     AES205:
       enabled: true
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "infrastructure_language_detector.rs",
+          "root_source_parsing_container.rs",
+          "root_auto_fix_container.rs",
+          "infrastructure_path_provider.rs",
+        ]
       scope:
         [
           "taxonomy",

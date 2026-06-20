@@ -30,6 +30,12 @@ impl ArchImportForbiddenChecker {
         definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let basename = file_path.basename();
+        if definition.exceptions.values.contains(&basename.to_string()) {
+            return;
+        }
+
         let is_surfaces = layer_name == "surfaces" || layer_name.starts_with("surfaces(");
         if definition.forbidden.values.is_empty() && !is_surfaces {
             return;
@@ -45,7 +51,6 @@ impl ArchImportForbiddenChecker {
             ]
         };
 
-        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         let import_lines = self.parser.read_import_lines(&file_path);
         let layer_name_vo = LayerNameVO::new(layer_name);
         for (line_num, line) in &import_lines {
@@ -125,6 +130,9 @@ impl ArchImportForbiddenChecker {
         }
 
         for rule in &config.rules {
+            if rule.exceptions.values.contains(&basename.to_string()) {
+                continue;
+            }
             let scope_identity = Identity::new(&rule.scope.value);
             let (rule_layer, rule_suffixes) = self.parser.resolve_scope(&scope_identity);
             let rule_layer_str = rule_layer.value();

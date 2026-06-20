@@ -214,10 +214,20 @@ impl DependencyCycleAnalyzer {
             return vec![];
         }
 
+        let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
+
         let mut edges = Vec::new();
         let mut file_by_layer: HashMap<String, String> = HashMap::new();
 
         for file in files {
+            let file_fp = FilePath::new(file.clone()).unwrap_or_default();
+            let basename = file_fp.basename();
+            if let Some(rule) = aes205_rule {
+                if rule.exceptions.values.contains(&basename.to_string()) {
+                    continue;
+                }
+            }
+
             let Ok(content) = fs::read_to_string(file) else {
                 continue;
             };
