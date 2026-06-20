@@ -162,24 +162,8 @@ impl IPathNormalizationPort for PathNormalizationProvider {
     }
 }
 
-/// Normalize project root: if the path itself is a source dir (crates/packages/modules),
-/// return its parent. Otherwise return as-is.
+/// Normalize project root: return as-is.
 pub fn normalize_project_root(path: &str) -> String {
-    let p = Path::new(path);
-    for name in &["packages", "crates", "modules"] {
-        if p.join(name).exists() {
-            return path.to_string();
-        }
-        if p.file_name().map(|n| n == *name).unwrap_or(false) {
-            let parent = p.parent().unwrap_or(Path::new("."));
-            let parent_str = parent.to_string_lossy();
-            return if parent_str.is_empty() {
-                ".".to_string()
-            } else {
-                parent_str.to_string()
-            };
-        }
-    }
     path.to_string()
 }
 

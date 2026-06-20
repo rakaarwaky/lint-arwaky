@@ -28,6 +28,28 @@ impl MultiProjectOrchestrator {
         let workspace_dirs = ["crates", "packages", "modules"];
         let mut results = Vec::new();
 
+        let is_root_workspace_dir = root
+            .file_name()
+            .map(|name| {
+                let name_str = name.to_string_lossy();
+                workspace_dirs.contains(&name_str.as_ref())
+            })
+            .unwrap_or(false);
+
+        if is_root_workspace_dir {
+            if let Ok(entries) = std::fs::read_dir(root) {
+                for entry in entries.flatten() {
+                    let sub = entry.path();
+                    if sub.is_dir() {
+                        if let Ok(fp) = FilePath::new(sub.to_string_lossy().to_string()) {
+                            results.push(fp);
+                        }
+                    }
+                }
+            }
+            return results;
+        }
+
         for dir in &workspace_dirs {
             let dir_path = root.join(dir);
             if dir_path.is_dir() {
