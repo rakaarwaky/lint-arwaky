@@ -47,24 +47,24 @@ impl RustFmtAdapter {
         if path_str.is_empty() {
             return path.clone();
         }
-        let current = match std::env::current_dir() {
-            Ok(c) => c,
-            Err(_) => return path.clone(),
-        };
-        let mut current = current;
-        for _ in 0..10 {
-            if current.join("Cargo.toml").exists()
-                || current.join("lint_arwaky.config.yaml").exists()
-                || current.join(".git").is_dir()
-            {
-                return FilePath::new(current.to_string_lossy().replace('\\', "/"))
-                    .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
+        let current = std::path::Path::new(path_str);
+        if current.is_dir() {
+            if current.join("Cargo.toml").exists() {
+                return path.clone();
             }
-            if !current.pop() {
-                break;
+        } else if let Some(parent) = current.parent() {
+            if parent.join("Cargo.toml").exists() {
+                return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
+                    .unwrap_or_else(|_| path.clone());
+            }
+            if let Some(grandparent) = parent.parent() {
+                if grandparent.join("Cargo.toml").exists() {
+                    return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
+                        .unwrap_or_else(|_| path.clone());
+                }
             }
         }
-        FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
+        FilePath::new("nonexistent_directory_for_cargo_toml".to_string()).unwrap_or_default()
     }
 }
 

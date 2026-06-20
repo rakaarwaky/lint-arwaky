@@ -19,9 +19,31 @@ impl Default for WorkspaceDetector {
 
 impl IWorkspaceDetectorPort for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
-        let root = std::path::Path::new(&path.value);
+        let mut current = std::path::Path::new(&path.value).to_path_buf();
 
-        // Check workspace folder structure
+        while !current.as_os_str().is_empty() {
+            if current.join("Cargo.toml").exists() {
+                return WorkspaceType::Rust;
+            }
+            if current.join("package.json").exists() {
+                return WorkspaceType::TypeScript;
+            }
+            if current.join("pyproject.toml").exists()
+                || current.join("setup.py").exists()
+                || current.join("requirements.txt").exists()
+            {
+                return WorkspaceType::Python;
+            }
+
+            if let Some(parent) = current.parent() {
+                current = parent.to_path_buf();
+            } else {
+                break;
+            }
+        }
+
+        // Check workspace folder structure (fallback for root detection)
+        let root = std::path::Path::new(&path.value);
         let has_workspace_folder = ["crates", "packages", "services", "modules"]
             .iter()
             .any(|dir| root.join(dir).is_dir());
