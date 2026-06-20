@@ -92,7 +92,7 @@ impl IVsCodeBridgePort for VsCodeGraphGenerator {
             .iter()
             .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
             .collect();
-        let files = collect_source_files(root_dir, &ignored);
+        let files = collect_source_files(Path::new(&root_dir.value), root_dir, &ignored);
         let mut graph = VsCodeGraph::new();
 
         // 1. First Pass: Collect all files and define their symbols (Classes, Functions)

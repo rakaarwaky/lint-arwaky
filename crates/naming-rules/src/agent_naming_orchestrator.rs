@@ -69,7 +69,6 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         let mut results = LintResultList::new(Vec::new());
         let all_files = self.fs.walk(target, Some(&self.ignored_patterns)).await;
         let files = Self::filter_source_files(&all_files);
-        println!("[debug] NamingOrchestrator target: {}, files count: {}", target.value(), files.values.len());
         let root_dir = target.clone();
 
         self.checker

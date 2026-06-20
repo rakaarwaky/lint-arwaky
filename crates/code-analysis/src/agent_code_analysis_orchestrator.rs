@@ -29,19 +29,20 @@ pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
 }
 
 /// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree.
-pub fn collect_source_files(dir_path: &DirectoryPath, ignored: &[String]) -> Vec<FilePath> {
+pub fn collect_source_files(root_dir: &Path, dir_path: &DirectoryPath, ignored: &[String]) -> Vec<FilePath> {
     let mut files = Vec::new();
     if let Ok(entries) = std::fs::read_dir(&dir_path.value) {
         for entry in entries.flatten() {
             let path = entry.path();
-            let full = path.to_string_lossy();
-            if ignored.iter().any(|i| full.contains(i.as_str())) {
+            let relative_path = path.strip_prefix(root_dir).unwrap_or(&path);
+            let rel_str = relative_path.to_string_lossy();
+            if ignored.iter().any(|i| rel_str.contains(i.as_str())) {
                 continue;
             }
             if path.is_dir() {
                 let sub_dir =
                     DirectoryPath::new(path.to_string_lossy().to_string()).unwrap_or_default();
-                files.extend(collect_source_files(&sub_dir, ignored));
+                files.extend(collect_source_files(root_dir, &sub_dir, ignored));
             } else if let Some(path_str) = path.to_str() {
                 if let Ok(fp) = FilePath::new(path_str.to_string()) {
                     let detector =
@@ -106,7 +107,7 @@ impl CodeAnalysisOrchestrator {
             .collect();
         let dir_path =
             DirectoryPath::new(src_dir.to_string_lossy().to_string()).unwrap_or_default();
-        let files = collect_source_files(&dir_path, &ignored);
+        let files = collect_source_files(src_dir, &dir_path, &ignored);
         if files.is_empty() {
             return Vec::new();
         }
