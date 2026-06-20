@@ -30,6 +30,6 @@ pub trait IWorkspaceDetectorPort: Send + Sync {
     /// Detect workspace type by checking folder structure and config files.
     fn detect(&self, path: &FilePath) -> WorkspaceType;
 
-    /// Check if a path is a workspace root (contains crates/, packages/, services/, or modules/).
+    /// Check if a path is a workspace root (contains crates/, packages/, or modules/).
     fn is_workspace(&self, path: &FilePath) -> bool;
 }

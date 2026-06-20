@@ -44,7 +44,7 @@ impl IWorkspaceDetectorPort for WorkspaceDetector {
 
         // Check workspace folder structure (fallback for root detection)
         let root = std::path::Path::new(&path.value);
-        let has_workspace_folder = ["crates", "packages", "services", "modules"]
+        let has_workspace_folder = ["crates", "packages", "modules"]
             .iter()
             .any(|dir| root.join(dir).is_dir());
 
@@ -53,7 +53,7 @@ impl IWorkspaceDetectorPort for WorkspaceDetector {
         }
 
         // Check config files inside workspace folders
-        for dir in &["crates", "packages", "services", "modules"] {
+        for dir in &["crates", "packages", "modules"] {
             let dir_path = root.join(dir);
             if !dir_path.is_dir() {
                 continue;
@@ -93,7 +93,7 @@ impl IWorkspaceDetectorPort for WorkspaceDetector {
 
     fn is_workspace(&self, path: &FilePath) -> bool {
         let root = std::path::Path::new(&path.value);
-        ["crates", "packages", "services", "modules"]
+        ["crates", "packages", "modules"]
             .iter()
             .any(|dir| root.join(dir).is_dir())
     }

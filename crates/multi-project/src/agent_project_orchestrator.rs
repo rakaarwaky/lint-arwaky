@@ -25,7 +25,7 @@ impl MultiProjectOrchestrator {
     }
 
     fn scan_workspace_dirs(root: &std::path::Path) -> Vec<FilePath> {
-        let workspace_dirs = ["crates", "packages", "services", "modules"];
+        let workspace_dirs = ["crates", "packages", "modules"];
         let mut results = Vec::new();
 
         for dir in &workspace_dirs {
