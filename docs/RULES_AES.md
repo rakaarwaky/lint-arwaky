@@ -2,6 +2,33 @@
 
 ---
 
+## Terminology
+
+AES uses **Rust terminology** across all supported languages (Rust, TypeScript, Python). This is a **deliberate design decision** — a single unified vocabulary avoids confusion when working across a multi-language monorepo.
+
+| Term          | Meaning                                                                                                                             |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Workspace** | The entire project root folder. One repository = One Workspace. Example: `lint-arwaky/`                                            |
+| **Crate**     | A single self-contained sub-project inside the Workspace, with its own manifest (`Cargo.toml`, `package.json`, `pyproject.toml`).   |
+| **Member**    | Synonym for Crate — the official Cargo term for each sub-project listed in the workspace `[members]` array.                        |
+
+### Monorepo Structure Convention
+
+A multi-language Workspace separates Crates by **language** into dedicated top-level folders. Each folder uses the **native terminology** of its language ecosystem:
+
+| Folder      | Language        | Native Term | Example Crate                          |
+| ----------- | --------------- | ----------- | -------------------------------------- |
+| `crates/`   | Rust            | crate       | `crates/shared`, `crates/cli-commands` |
+| `packages/` | TypeScript / JS | package     | `packages/vscode-extension`            |
+| `modules/`  | Python          | module      | `modules/my-lib`                       |
+
+> **Why separated?** Cargo's `members = ["crates/*"]` in the root `Cargo.toml` scans every subfolder inside `crates/` as a Rust crate. Mixing TypeScript or Python into `crates/` would crash Cargo because those folders do not contain a `Cargo.toml`.
+
+> **Important:** `node_modules/`, `dist/`, `build/`, and `target/` are **NOT Crates**. They are dependency and build output directories and are always excluded from linting.
+
+
+---
+
 ## Summary
 
 | Code   | Name                | Severity | Group  | Description                                                                                |

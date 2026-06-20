@@ -897,59 +897,29 @@ architecture:
     AES501:
       enabled: true
       scope: ["taxonomy"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: []
 
     AES502:
       enabled: true
       scope: ["contract"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: []
 
     AES503:
       enabled: true
       scope: ["capabilities"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: []
 
     AES504:
       enabled: true
       scope: ["infrastructure"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: []
 
     AES505:
       enabled: true
       scope: ["agent"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: []
 
     AES506:
       enabled: true
       scope: ["surfaces"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: []
