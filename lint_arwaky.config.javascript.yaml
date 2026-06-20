@@ -639,13 +639,7 @@ architecture:
           "index.tsx",
           "index.jsx",
           "main.ts",
-          "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
+          "main.js"
         ]
 
     AES501:
@@ -658,13 +652,7 @@ architecture:
           "index.tsx",
           "index.jsx",
           "main.ts",
-          "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
+          "main.js"
         ]
 
     AES502:
@@ -678,12 +666,6 @@ architecture:
           "index.jsx",
           "main.ts",
           "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
         ]
 
     AES503:
@@ -696,13 +678,7 @@ architecture:
           "index.tsx",
           "index.jsx",
           "main.ts",
-          "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
+          "main.js"
         ]
 
     AES504:
@@ -715,13 +691,7 @@ architecture:
           "index.tsx",
           "index.jsx",
           "main.ts",
-          "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
+          "main.js"
         ]
 
     AES505:
@@ -735,12 +705,7 @@ architecture:
           "index.jsx",
           "main.ts",
           "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
+
         ]
 
     AES506:
@@ -753,11 +718,5 @@ architecture:
           "index.tsx",
           "index.jsx",
           "main.ts",
-          "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
+          "main.js"
         ]

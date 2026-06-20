@@ -286,23 +286,51 @@ impl OrphanGraphResolver {
     }
 
     pub fn identify_entry_points(&self, files: &[String], configured: &[String]) -> Vec<String> {
-        files
+        let default: Vec<String> = files
             .iter()
-            .filter(|f| {
-                if !configured.is_empty() {
+            .filter(|f| is_standard_entry_point(f))
+            .cloned()
+            .collect();
+
+        if !configured.is_empty() {
+            files
+                .iter()
+                .filter(|f| {
                     configured
                         .iter()
                         .any(|pattern| f.ends_with(pattern) || f.contains(pattern))
-                } else {
-                    f.contains("__main__")
-                        || f.ends_with("main.rs")
-                        || f.ends_with("lib.rs")
-                        || f.ends_with("cli_main_entry.rs")
-                        || f.ends_with("mcp_main_entry.rs")
-                        || f.ends_with("tui_main_entry.rs")
-                }
-            })
-            .cloned()
-            .collect()
+                        || is_standard_entry_point(f)
+                })
+                .cloned()
+                .collect()
+        } else {
+            default
+        }
     }
+}
+
+fn is_standard_entry_point(path: &str) -> bool {
+    let name = match path.rsplit(['/', '\\']).next() {
+        Some(n) => n,
+        None => return false,
+    };
+
+    name == "__main__.py"
+        || name == "main.py"
+        || name.ends_with("_main_entry.py")
+        || name == "lib.rs"
+        || name == "main.rs"
+        || name == "mod.rs"
+        || name.ends_with("_main_entry.rs")
+        || name.ends_with("_entry.rs")
+        || name == "index.ts"
+        || name == "index.js"
+        || name == "index.tsx"
+        || name == "index.jsx"
+        || name == "main.ts"
+        || name == "main.js"
+        || name.ends_with("_main_entry.ts")
+        || name.ends_with("_main_entry.js")
+        || name.ends_with("_entry.ts")
+        || name.ends_with("_entry.js")
 }

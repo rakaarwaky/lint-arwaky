@@ -48,10 +48,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES102:
@@ -221,10 +218,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -364,10 +358,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES205:
@@ -394,10 +385,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES403:
@@ -409,10 +397,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES404:
@@ -422,10 +407,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES405:
@@ -436,10 +418,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES406:
@@ -455,10 +434,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES301:
@@ -477,10 +453,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES302:
@@ -499,10 +472,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES304:
@@ -582,10 +552,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES501:
@@ -595,10 +562,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES502:
@@ -608,10 +572,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES503:
@@ -621,10 +582,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES504:
@@ -634,10 +592,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES505:
@@ -647,10 +602,7 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
 
     AES506:
@@ -660,8 +612,5 @@ architecture:
         [
           "__init__.py",
           "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
+          "main.py"
         ]
