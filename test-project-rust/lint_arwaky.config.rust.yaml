@@ -2,8 +2,6 @@ thresholds:
   score: 100.0
   complexity: 15
 
-output_dir: "output"
-
 adapters:
   - name: "clippy"
     weight: 1.0
@@ -17,156 +15,202 @@ adapters:
 ignored_rules: []
 
 ignored_paths:
-  - "./output"
   - "/target"
   - "/.git"
-  - "/Graph-It-Live"
   - "/.github"
   - "/scratch"
   - "/test-project-rust"
   - "/test-project-python"
   - "/test-project-javascript"
+  - "/packages"
+  - "/node_modules"
+  - "/.opencode"
+  - "/.jj"
 
 architecture:
   enabled: true
-  layers:
-    root:
-      path: "crates"
-      suffix:
-        - strict: ["entry", "container"]
-    taxonomy:
-      path: "crates/shared"
-      suffix:
-        - strict:
-            ["vo", "entity", "error", "event", "constant", "utility", "helper"]
-    contract:
-      path: "crates/shared"
-      suffix:
-        - strict: ["port", "protocol", "aggregate"]
-    capabilities:
-      path: "crates"
-      suffix:
-        - flexible:
-            [
-              "analyzer",
-              "checker",
-              "processor",
-              "evaluator",
-              "resolver",
-              "validator",
-              "formatter",
-              "executor",
-              "transformer",
-              "calculator",
-              "builder",
-              "compiler",
-              "aggregator",
-              "classifier",
-              "extractor",
-              "reporter",
-              "mapper",
-              "filter",
-              "collector",
-              "comparator",
-              "scorer",
-              "inspector",
-              "reviewer",
-              "assessor",
-              "auditor",
-              "actions",
-            ]
-        - forbidden:
-            [
-              "vo",
-              "entity",
-              "error",
-              "event",
-              "constant",
-              "constants",
-              "utility",
-              "helper",
-              "port",
-              "protocol",
-              "aggregate",
-            ]
-    infrastructure:
-      path: "crates"
-      suffix:
-        - flexible:
-            [
-              "adapter",
-              "provider",
-              "scanner",
-              "client",
-              "schemas",
-              "lifespan",
-              "wrapper",
-              "tracer",
-              "tracker",
-              "variants",
-              "detector",
-              "patterns",
-              "system",
-              "repository",
-              "cache",
-              "loader",
-              "writer",
-              "reader",
-              "driver",
-              "connector",
-              "gateway",
-              "serializer",
-              "encoder",
-              "decoder",
-              "fetcher",
-              "watcher",
-              "indexer",
-              "dispatcher",
-              "recorder",
-              "proxy",
-              "publisher",
-              "subscriber",
-              "listener",
-              "poller",
-              "streamer",
-            ]
-        - forbidden:
-            [
-              "vo",
-              "entity",
-              "error",
-              "event",
-              "constant",
-              "constants",
-              "utility",
-              "helper",
-              "port",
-              "protocol",
-              "aggregate",
-            ]
-    surfaces:
-      path: "crates"
-      suffix:
-        - strict:
-            [
-              "command",
-              "controller",
-              "page",
-              "view",
-              "component",
-              "router",
-              "layout",
-              "hook",
-              "store",
-              "action",
-              "screen",
-            ]
-    agent:
-      path: "crates"
-      suffix:
-        - strict: ["orchestrator"]
-
   rules:
+    # ─── AES100: Naming ───
+    AES101:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+
+    AES102:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "root_cli_main_entry.rs",
+          "root_mcp_main_entry.rs",
+          "root_tui_main_entry.rs",
+        ]
+      layers:
+        taxonomy:
+          path: "crates/shared"
+          suffix:
+            - strict: ["vo", "entity", "error", "event", "constant"]
+        contract:
+          path: "crates/shared"
+          suffix:
+            - strict: ["port", "protocol", "aggregate"]
+        capabilities:
+          path: "crates"
+          suffix:
+            - flexible:
+                [
+                  "analyzer",
+                  "checker",
+                  "processor",
+                  "evaluator",
+                  "resolver",
+                  "validator",
+                  "formatter",
+                  "executor",
+                  "transformer",
+                  "calculator",
+                  "builder",
+                  "compiler",
+                  "aggregator",
+                  "classifier",
+                  "extractor",
+                  "reporter",
+                  "mapper",
+                  "filter",
+                  "collector",
+                  "comparator",
+                  "scorer",
+                  "inspector",
+                  "reviewer",
+                  "assessor",
+                  "auditor",
+                  "actions",
+                ]
+            - forbidden:
+                [
+                  "vo",
+                  "entity",
+                  "error",
+                  "event",
+                  "constant",
+                  "constants",
+                  "utility",
+                  "helper",
+                  "port",
+                  "protocol",
+                  "aggregate",
+                ]
+        infrastructure:
+          path: "crates"
+          suffix:
+            - flexible:
+                [
+                  "adapter",
+                  "provider",
+                  "scanner",
+                  "client",
+                  "schemas",
+                  "lifespan",
+                  "wrapper",
+                  "tracer",
+                  "tracker",
+                  "variants",
+                  "detector",
+                  "patterns",
+                  "system",
+                  "repository",
+                  "cache",
+                  "loader",
+                  "writer",
+                  "reader",
+                  "driver",
+                  "connector",
+                  "gateway",
+                  "serializer",
+                  "encoder",
+                  "decoder",
+                  "fetcher",
+                  "watcher",
+                  "indexer",
+                  "dispatcher",
+                  "recorder",
+                  "proxy",
+                  "publisher",
+                  "subscriber",
+                  "listener",
+                  "poller",
+                  "streamer",
+                ]
+            - forbidden:
+                [
+                  "vo",
+                  "entity",
+                  "error",
+                  "event",
+                  "constant",
+                  "constants",
+                  "utility",
+                  "helper",
+                  "port",
+                  "protocol",
+                  "aggregate",
+                ]
+        agent:
+          path: "crates"
+          suffix:
+            - strict: ["orchestrator"]
+        surfaces:
+          path: "crates"
+          suffix:
+            - strict:
+                [
+                  "command",
+                  "controller",
+                  "page",
+                  "view",
+                  "component",
+                  "router",
+                  "layout",
+                  "hook",
+                  "store",
+                  "action",
+                  "screen",
+                ]
+        root:
+          path: "crates"
+          suffix:
+            - strict: ["entry", "container"]
+
+    # ─── AES200: Import ───
     AES201:
       enabled: true
       scope:
@@ -190,6 +234,20 @@ architecture:
           "root_cli_main_entry.rs",
           "root_mcp_main_entry.rs",
           "root_tui_main_entry.rs",
+          "surface_multi_command.rs",
+          "surface_watch_command.rs",
+          "surface_check_command.rs",
+          "capabilities_arch_lint.rs",
+          "surface_tools_command.rs",
+          "surface_job_controller.rs",
+          "agent_orphan_orchestrator.rs",
+          "surface_vscode_command.rs",
+          "infrastructure_vscode_graph_generator.rs",
+          "infrastructure_language_detector.rs",
+          "root_source_parsing_container.rs",
+          "surface_git_command.rs",
+          "surface_dev_command.rs",
+          "surface_map_command.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -297,33 +355,7 @@ architecture:
             - layer: "contract(protocol)"
               purpose: "call"
 
-        - scope: "root"
-          allowed:
-            [
-              "taxonomy",
-              "contract",
-              "capabilities",
-              "infrastructure",
-              "agent",
-              "surfaces",
-            ]
-          mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: []
-          allowed_imports:
-            - layer: "taxonomy"
-              purpose: "implement"
-            - layer: "contract"
-              purpose: "implement"
-            - layer: "capabilities"
-              purpose: "implement"
-            - layer: "infrastructure"
-              purpose: "implement"
-            - layer: "agent"
-              purpose: "implement"
-            - layer: "surfaces"
-              purpose: "implement"
-
-        - scope: "surfaces(command|controller|page|)"
+        - scope: "surfaces(command|controller|page)"
           allowed: ["taxonomy", "contract(aggregate)"]
           mandatory: null
           forbidden:
@@ -374,6 +406,32 @@ architecture:
             - layer: "taxonomy"
               purpose: "implement"
 
+        - scope: "root"
+          allowed:
+            [
+              "taxonomy",
+              "contract",
+              "capabilities",
+              "infrastructure",
+              "agent",
+              "surfaces",
+            ]
+          mandatory: ["taxonomy", "contract(aggregate)"]
+          forbidden: []
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract"
+              purpose: "implement"
+            - layer: "capabilities"
+              purpose: "implement"
+            - layer: "infrastructure"
+              purpose: "implement"
+            - layer: "agent"
+              purpose: "implement"
+            - layer: "surfaces"
+              purpose: "implement"
+
     AES202:
       enabled: true
       scope:
@@ -397,6 +455,21 @@ architecture:
           "root_cli_main_entry.rs",
           "root_mcp_main_entry.rs",
           "root_tui_main_entry.rs",
+          "root_file_system_container.rs",
+          "root_git_hooks_container.rs",
+          "root_file_watch_container.rs",
+          "root_config_system_container.rs",
+          "root_vscode_container.rs",
+          "root_auto_fix_container.rs",
+          "root_multi_project_container.rs",
+          "root_maintenance_container.rs",
+          "root_project_setup_container.rs",
+          "root_orphan_detector_container.rs",
+          "root_naming_rules_container.rs",
+          "root_import_rules_container.rs",
+          "root_role_rules_container.rs",
+          "root_source_parsing_container.rs",
+          "root_external_lint_container.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -548,7 +621,7 @@ architecture:
             - layer: "surfaces"
               purpose: "implement"
 
-        - scope: "surfaces(command|controller|page|)"
+        - scope: "surfaces(command|controller|page)"
           allowed: ["taxonomy", "contract(aggregate)"]
           mandatory: null
           forbidden:
@@ -599,236 +672,6 @@ architecture:
             - layer: "taxonomy"
               purpose: "implement"
 
-    AES101:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-          "root",
-        ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
-    AES102:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-          "root",
-        ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
-    AES205:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-
-    AES401:
-      enabled: true
-      scope:
-        ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)"]
-
-    AES402:
-      enabled: true
-      scope: ["contract(aggregate)", "contract(port|protocol)"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
-    AES403:
-      enabled: true
-      scope: ["capabilities"]
-      max_functions: 30
-      max_impl: 5
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
-    AES404:
-      enabled: true
-      scope: ["infrastructure"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
-    AES405:
-      enabled: true
-      scope: ["agent(orchestrator)"]
-      max_lines: 1000
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
-    AES406:
-      enabled: true
-      scope:
-        [
-          "surfaces(command|controller|page|entry)",
-          "surfaces(hook|store|action|screen|router)",
-          "surfaces(component|view|layout)",
-        ]
-      max_functions: 15
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
-    AES301:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-      max_lines: 1000
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
-    AES302:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-      min_lines: 5
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
-    AES304:
-      enabled: true
-      scope:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-      patterns:
-        [
-          "#[allow(",
-          "unwrap()",
-          "panic!",
-          "noqa",
-          "type: ignore",
-          "eslint-disable",
-        ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
-    AES305:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
-
     AES203:
       enabled: true
       scope:
@@ -865,10 +708,64 @@ architecture:
         [
           "main.rs",
           "lib.rs",
+          "mod.rs"
+        ]
+
+    AES205:
+      enabled: true
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs"
+        ]
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+
+    # ─── AES300: Code Quality ───
+    AES301:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      max_lines: 1000
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
           "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+        ]
+
+    AES302:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      min_lines: 5
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs"
         ]
 
     AES303:
@@ -886,12 +783,117 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
+    AES304:
+      enabled: true
+      scope:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs"
+        ]
+      patterns:
+        [
+          "#[allow(",
+          "unwrap()",
+          "panic!",
+          "noqa",
+          "type: ignore",
+          "eslint-disable",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs"
+        ]
+
+    AES305:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs"
+        ]
+
+    # ─── AES400: Role ───
+    AES401:
+      enabled: true
+      scope:
+        ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)"]
+
+    AES402:
+      enabled: true
+      scope: ["contract(aggregate)", "contract(port|protocol)"]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs"
+        ]
+
+    AES403:
+      enabled: true
+      scope: ["capabilities"]
+      max_functions: 30
+      max_impl: 5
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs"
+        ]
+
+    AES404:
+      enabled: true
+      scope: ["infrastructure"]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs"
+        ]
+
+    AES405:
+      enabled: true
+      scope: ["agent(orchestrator)"]
+      max_lines: 1000
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs"
+        ]
+
+    AES406:
+      enabled: true
+      scope:
+        [
+          "surfaces(command|controller|page|entry)",
+          "surfaces(hook|store|action|screen|router)",
+          "surfaces(component|view|layout)",
+        ]
+      max_functions: 15
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs"
+        ]
+
+    # ─── AES500: Orphan ───
     AES501:
       enabled: true
       scope: ["taxonomy"]
@@ -899,10 +901,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES502:
@@ -912,10 +911,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES503:
@@ -925,10 +921,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES504:
@@ -938,10 +931,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES505:
@@ -951,10 +941,7 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
 
     AES506:
@@ -964,8 +951,5 @@ architecture:
         [
           "main.rs",
           "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
+          "mod.rs"
         ]
