@@ -90,7 +90,9 @@ impl CheckCommandsSurface {
                 use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
                 let detector = config_system::WorkspaceDetector::new();
                 let ws_type = detector.detect(&path_obj);
-                let config = shared::config_system::taxonomy_config_vo::default_config_for_language(ws_type.as_str());
+                let config = shared::config_system::taxonomy_config_vo::default_config_for_language(
+                    ws_type.as_str(),
+                );
                 let ctx = factory(config);
                 (
                     ctx.arch_linter,

@@ -80,7 +80,9 @@ pub fn check_taxonomy_orphan(
         violations.push(crate::mk_orphan_result(
             fp,
             &AesOrphanViolation::OrphanCode {
-                reason: Some(format!("Taxonomy '{}' is not imported by any contract.", stem).into()),
+                reason: Some(
+                    format!("Taxonomy '{}' is not imported by any contract.", stem).into(),
+                ),
             }
             .to_string(),
             Severity::LOW,

@@ -10,12 +10,6 @@ use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::capabilities_agent_role_auditor::AgentRoleChecker;
-use crate::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
-use crate::capabilities_contract_role_auditor::ContractRoleChecker;
-use crate::capabilities_infrastructure_role_auditor::InfrastructureRoleChecker;
-use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
-use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use shared::role_rules::contract_infrastructure_role_protocol::IInfrastructureRoleChecker;
@@ -205,53 +199,4 @@ impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate fo
     fn name(&self) -> &str {
         "role-rules"
     }
-}
 
-pub struct RoleAggregateImpl {
-    taxonomy: TaxonomyRoleChecker,
-    contract: ContractRoleChecker,
-    infrastructure: InfrastructureRoleChecker,
-    capabilities: CapabilitiesRoleChecker,
-    surface: SurfaceRoleChecker,
-    agent: AgentRoleChecker,
-}
-
-impl Default for RoleAggregateImpl {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl RoleAggregateImpl {
-    pub fn new() -> Self {
-        Self {
-            taxonomy: TaxonomyRoleChecker::new(),
-            contract: ContractRoleChecker::new(),
-            infrastructure: InfrastructureRoleChecker::new(),
-            capabilities: CapabilitiesRoleChecker::new(),
-            surface: SurfaceRoleChecker::new(),
-            agent: AgentRoleChecker::new(),
-        }
-    }
-}
-
-impl IRoleAggregate for RoleAggregateImpl {
-    fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker {
-        &self.taxonomy
-    }
-    fn contract(&self) -> &dyn IContractRoleChecker {
-        &self.contract
-    }
-    fn infrastructure(&self) -> &dyn IInfrastructureRoleChecker {
-        &self.infrastructure
-    }
-    fn capabilities(&self) -> &dyn ICapabilitiesRoleChecker {
-        &self.capabilities
-    }
-    fn surface(&self) -> &dyn ISurfaceRoleChecker {
-        &self.surface
-    }
-    fn agent(&self) -> &dyn IAgentRoleChecker {
-        &self.agent
-    }
-}

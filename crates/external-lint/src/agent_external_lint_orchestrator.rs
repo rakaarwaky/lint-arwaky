@@ -26,13 +26,21 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         let mut has_py = false;
         let mut has_js = false;
 
-        fn detect_languages(dir: &std::path::Path, has_rs: &mut bool, has_py: &mut bool, has_js: &mut bool) {
+        fn detect_languages(
+            dir: &std::path::Path,
+            has_rs: &mut bool,
+            has_py: &mut bool,
+            has_js: &mut bool,
+        ) {
             if let Ok(entries) = std::fs::read_dir(dir) {
                 for entry in entries.flatten() {
                     let path = entry.path();
                     if path.is_dir() {
                         let name = path.file_name().unwrap_or_default().to_string_lossy();
-                        if !matches!(name.as_ref(), "node_modules" | "target" | ".git" | ".jj" | "Graph-It-Live") {
+                        if !matches!(
+                            name.as_ref(),
+                            "node_modules" | "target" | ".git" | ".jj" | "Graph-It-Live"
+                        ) {
                             detect_languages(&path, has_rs, has_py, has_js);
                         }
                     } else if let Some(ext) = path.extension() {

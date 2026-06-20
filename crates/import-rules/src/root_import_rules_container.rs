@@ -57,9 +57,7 @@ impl ImportContainer {
         let unused =
             Arc::new(crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new());
         let cycle = Arc::new(
-            crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new(
-                config,
-            ),
+            crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new(config),
         );
 
         Self {

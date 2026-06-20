@@ -29,7 +29,11 @@ pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
 }
 
 /// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree.
-pub fn collect_source_files(root_dir: &Path, dir_path: &DirectoryPath, ignored: &[String]) -> Vec<FilePath> {
+pub fn collect_source_files(
+    root_dir: &Path,
+    dir_path: &DirectoryPath,
+    ignored: &[String],
+) -> Vec<FilePath> {
     let mut files = Vec::new();
     if let Ok(entries) = std::fs::read_dir(&dir_path.value) {
         for entry in entries.flatten() {

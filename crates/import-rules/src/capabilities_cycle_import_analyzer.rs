@@ -203,7 +203,12 @@ impl DependencyCycleAnalyzer {
         modules
     }
 
-    pub fn scan(&self, analyzer: &dyn IAnalyzer, files: &[String], root_dir: &str) -> Vec<LintResult> {
+    pub fn scan(
+        &self,
+        analyzer: &dyn IAnalyzer,
+        files: &[String],
+        root_dir: &str,
+    ) -> Vec<LintResult> {
         let config = analyzer.config();
         if !config.enabled.value {
             return vec![];
@@ -217,7 +222,10 @@ impl DependencyCycleAnalyzer {
                 continue;
             };
             let file_fp = FilePath::new(file.clone()).unwrap_or_default();
-            let file_layer = match analyzer.detect_layer(&file_fp, &FilePath::new(root_dir.to_string()).unwrap_or_default()) {
+            let file_layer = match analyzer.detect_layer(
+                &file_fp,
+                &FilePath::new(root_dir.to_string()).unwrap_or_default(),
+            ) {
                 Some(l) => l.value().to_string(),
                 None => continue,
             };

@@ -386,7 +386,9 @@ impl CodeAnalysisContainer {
 
     pub fn new_with_analyzer(analyzer: Arc<dyn IAnalyzer>) -> Self {
         let checker_container = CodeAnalysisCheckerContainer::new(analyzer);
-        let orchestrator = Arc::new(CodeAnalysisOrchestrator::new_with_container(Arc::new(checker_container)));
+        let orchestrator = Arc::new(CodeAnalysisOrchestrator::new_with_container(Arc::new(
+            checker_container,
+        )));
         Self {
             arch_linter: Arc::new(CodeAnalysisArchLint::new(orchestrator)),
         }

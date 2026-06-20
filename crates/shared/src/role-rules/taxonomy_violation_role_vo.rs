@@ -160,9 +160,13 @@ impl fmt::Display for LabeledRoleViolation {
                         FIX: Replace 'any' annotations with strongly-typed objects, structures, or domain Value Objects (VO).", why)
             }
             AesRoleViolation::AgentFileSizeLimit { max_lines } => {
-                write!(f, "AES405 AGENT_ROLE: Agent file exceeds {} lines.\n\
+                write!(
+                    f,
+                    "AES405 AGENT_ROLE: Agent file exceeds {} lines.\n\
                         WHY? Agent files must remain compact to preserve role clarity.\n\
-                        FIX: Split the orchestrator/container into smaller focused modules.", max_lines)
+                        FIX: Split the orchestrator/container into smaller focused modules.",
+                    max_lines
+                )
             }
             AesRoleViolation::PassiveViolation { reason } => {
                 let default_why =
@@ -418,9 +422,13 @@ impl fmt::Display for AesRoleViolation {
                         FIX: Replace 'any' annotations with strongly-typed objects, structures, or domain Value Objects (VO).", why)
             }
             AesRoleViolation::AgentFileSizeLimit { max_lines } => {
-                write!(f, "AES405 AGENT_ROLE: Agent file exceeds {} lines.\n\
+                write!(
+                    f,
+                    "AES405 AGENT_ROLE: Agent file exceeds {} lines.\n\
                         WHY? Agent files must remain compact to preserve role clarity.\n\
-                        FIX: Split the orchestrator/container into smaller focused modules.", max_lines)
+                        FIX: Split the orchestrator/container into smaller focused modules.",
+                    max_lines
+                )
             }
             AesRoleViolation::PassiveViolation { reason } => {
                 let default_why =
