@@ -12,7 +12,10 @@ pub struct NamingContainer {
 
 impl NamingContainer {
     pub fn new() -> Self {
-        let config = shared::config_system::taxonomy_config_vo::default_aes_config();
+        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
+    }
+
+    pub fn new_with_config(config: shared::config_system::taxonomy_config_vo::ArchitectureConfig) -> Self {
         let fs: Arc<dyn IFileSystemPort> =
             Arc::new(file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
         let source_parser = Arc::new(

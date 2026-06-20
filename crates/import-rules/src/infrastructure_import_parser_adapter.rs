@@ -57,7 +57,22 @@ impl IImportParserPort for ImportParserAdapter {
         suffixes: &[Identity],
     ) -> bool {
         let import_line_str = import_line.value();
-        let segments: Vec<&str> = import_line_str.split("::").collect();
+        let segments: Vec<&str> = import_line_str
+            .split(|c: char| {
+                c == ':'
+                    || c == '.'
+                    || c == '/'
+                    || c == '\\'
+                    || c.is_whitespace()
+                    || c == '"'
+                    || c == '\''
+                    || c == '{'
+                    || c == '}'
+                    || c == ','
+                    || c == ';'
+            })
+            .filter(|s| !s.is_empty())
+            .collect();
         let layer_lower = layer.value().to_lowercase();
         let layer_prefix = format!("{}_", layer_lower);
         let layer_match = segments.iter().any(|s| {

@@ -19,7 +19,10 @@ pub struct ImportContainer {
 
 impl ImportContainer {
     pub fn new() -> Self {
-        let config = shared::config_system::taxonomy_config_vo::default_aes_config();
+        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
+    }
+
+    pub fn new_with_config(config: ArchitectureConfig) -> Self {
         let fs =
             Arc::new(file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
         let source_parser = Arc::new(
@@ -33,7 +36,7 @@ impl ImportContainer {
             Arc::new(crate::infrastructure_import_parser_adapter::ImportParserAdapter::new());
         let analyzer = Arc::new(
             crate::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
-                config,
+                config.clone(),
                 fs,
                 source_parser,
             ),
@@ -55,7 +58,7 @@ impl ImportContainer {
             Arc::new(crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new());
         let cycle = Arc::new(
             crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new(
-                ArchitectureConfig::default(),
+                config,
             ),
         );
 

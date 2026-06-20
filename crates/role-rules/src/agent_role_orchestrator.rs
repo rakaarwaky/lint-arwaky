@@ -29,8 +29,10 @@ pub struct RoleOrchestrator {
 }
 
 impl RoleOrchestrator {
-    pub fn new(aggregate: Arc<dyn IRoleAggregate>) -> Self {
-        let config = shared::config_system::taxonomy_config_vo::default_aes_config();
+    pub fn new(
+        aggregate: Arc<dyn IRoleAggregate>,
+        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+    ) -> Self {
         let ignored_paths: Vec<String> = config
             .ignored_paths
             .values

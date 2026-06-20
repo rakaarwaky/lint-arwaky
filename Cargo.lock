@@ -362,6 +362,7 @@ dependencies = [
  "auto_fix-lint-arwaky",
  "clap",
  "code_analysis-lint-arwaky",
+ "config_system-lint-arwaky",
  "console",
  "ctrlc",
  "dialoguer",

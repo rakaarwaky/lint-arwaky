@@ -29,7 +29,7 @@ impl ImportOrchestrator {
         cycle: Arc<dyn ICycleAnalysisProtocol>,
         analyzer: Arc<dyn IAnalyzer>,
     ) -> Self {
-        let config = shared::config_system::taxonomy_config_vo::default_aes_config();
+        let config = analyzer.config();
         let ignored_paths: Vec<String> = config
             .ignored_paths
             .values

@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 
 use crate::CodeAnalysisCheckerContainer;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::config_system::taxonomy_config_vo::{default_aes_config, ArchitectureConfig};
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
@@ -79,6 +79,10 @@ impl CodeAnalysisOrchestrator {
         }
     }
 
+    pub fn new_with_container(container: Arc<CodeAnalysisCheckerContainer>) -> Self {
+        Self { container }
+    }
+
     /// Run AES analysis on the current project (self-lint).
     pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
         let root = Path::new(project_root);
@@ -93,7 +97,7 @@ impl CodeAnalysisOrchestrator {
 
     /// Core method: collect files and run all checks.
     fn run_lint_at(&self, src_dir: &Path) -> Vec<LintResult> {
-        let config = default_aes_config();
+        let config = self.container.analyzer().config();
         let ignored: Vec<String> = config
             .ignored_paths
             .values

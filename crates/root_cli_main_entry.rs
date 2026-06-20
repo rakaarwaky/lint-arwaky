@@ -54,6 +54,24 @@ fn main() -> ExitCode {
         external_lint::root_external_lint_container::ExternalLintContainer::new(path_norm);
     let external_lint_aggregate = external_lint_container.aggregate();
 
+    let external_lint_aggregate_clone = external_lint_aggregate.clone();
+    let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
+        let import_container = ImportContainer::new_with_config(config.clone());
+        let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new_with_config(config.clone());
+        let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(config.clone());
+        let analyzer = import_container.analyzer();
+        let arch_linter = code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_analyzer(analyzer)
+            .architecture_linter();
+
+        surface_check_command::CheckContext {
+            arch_linter,
+            import_orchestrator: import_container.orchestrator(),
+            naming_orchestrator: naming_container.orchestrator(),
+            external_lint: external_lint_aggregate_clone.clone(),
+            role_orchestrator: role_container.orchestrator(),
+        }
+    });
+
     let fix_container = auto_fix_container.clone();
     let fix_orchestrator_factory: Arc<
         dyn Fn(
@@ -95,6 +113,7 @@ fn main() -> ExitCode {
             naming_orchestrator.clone(),
             external_lint_aggregate.clone(),
             role_orchestrator.clone(),
+            factory,
             filter,
         ),
         Commands::Fix { path, dry_run } => {

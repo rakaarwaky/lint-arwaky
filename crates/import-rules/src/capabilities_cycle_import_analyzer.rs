@@ -141,12 +141,12 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
 
 /// Detects circular imports and dependency cycles (Capability).
 pub struct DependencyCycleAnalyzer {
-    config: ArchitectureConfig,
+    _config: ArchitectureConfig,
 }
 
 impl DependencyCycleAnalyzer {
     pub fn new(config: ArchitectureConfig) -> Self {
-        Self { config }
+        Self { _config: config }
     }
 
     fn make_result(file: &str, msg: &str) -> LintResult {
@@ -189,7 +189,7 @@ impl DependencyCycleAnalyzer {
         modules
     }
 
-    fn detect_file_layer(&self, file: &str, root_dir: &str) -> Option<String> {
+    fn detect_file_layer(&self, config: &ArchitectureConfig, file: &str, root_dir: &str) -> Option<String> {
         let rel = file
             .strip_prefix(root_dir)
             .unwrap_or(file)
@@ -197,7 +197,7 @@ impl DependencyCycleAnalyzer {
         let mut layers: Vec<(
             &LayerNameVO,
             &shared::common::taxonomy_definition_vo::LayerDefinition,
-        )> = self.config.layers.iter().collect();
+        )> = config.layers.iter().collect();
         layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 
         for (name, def) in layers {
@@ -209,10 +209,13 @@ impl DependencyCycleAnalyzer {
         None
     }
 
-    fn detect_module_layer(&self, module: &str) -> Option<String> {
-        let parts: Vec<&str> = module.split('.').collect();
+    fn detect_module_layer(&self, config: &ArchitectureConfig, module: &str) -> Option<String> {
+        let parts: Vec<&str> = module
+            .split(|c: char| c == ':' || c == '.' || c == '/' || c == '\\')
+            .filter(|s| !s.is_empty())
+            .collect();
         for part in &parts {
-            for name in self.config.layers.keys() {
+            for name in config.layers.keys() {
                 if *part == name.value.as_str() {
                     return Some(name.value.clone());
                 }
@@ -221,8 +224,8 @@ impl DependencyCycleAnalyzer {
         None
     }
 
-    pub fn scan(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
-        if !self.config.enabled.value {
+    pub fn scan(&self, config: &ArchitectureConfig, files: &[String], root_dir: &str) -> Vec<LintResult> {
+        if !config.enabled.value {
             return vec![];
         }
 
@@ -233,7 +236,7 @@ impl DependencyCycleAnalyzer {
             let Ok(content) = fs::read_to_string(file) else {
                 continue;
             };
-            let file_layer = match self.detect_file_layer(file, root_dir) {
+            let file_layer = match self.detect_file_layer(config, file, root_dir) {
                 Some(l) => l,
                 None => continue,
             };
@@ -244,7 +247,7 @@ impl DependencyCycleAnalyzer {
 
             let modules = Self::extract_import_modules(&content);
             for module in modules {
-                if let Some(target_layer) = self.detect_module_layer(&module) {
+                if let Some(target_layer) = self.detect_module_layer(config, &module) {
                     if target_layer != file_layer {
                         edges.push(DependencyEdge::new(file_layer.clone(), target_layer));
                     }
@@ -276,13 +279,13 @@ impl DependencyCycleAnalyzer {
 impl ICycleAnalysisProtocol for DependencyCycleAnalyzer {
     async fn check_cycles(
         &self,
-        _analyzer: &dyn IAnalyzer,
+        analyzer: &dyn IAnalyzer,
         files: &FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
         let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        let cycle_violations = self.scan(&file_strs, &root_dir.to_string());
+        let cycle_violations = self.scan(analyzer.config(), &file_strs, &root_dir.to_string());
         results.values.extend(cycle_violations);
     }
 }

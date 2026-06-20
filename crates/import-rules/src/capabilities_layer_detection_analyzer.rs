@@ -303,11 +303,10 @@ impl LayerDetectionAnalyzer {
     ///   2. Prefix-based match: segment starts with layer prefix (e.g. "taxonomy_definition_vo").
     ///   3. Path-based match: module-path-as-filesystem-path contains the layer path.
     pub fn detect_module_layer(&self, module: &str) -> Option<String> {
-        let meaningful_parts: Vec<&str> = if module.contains("::") {
-            module.split("::").filter(|p| !p.is_empty()).collect()
-        } else {
-            module.split('.').filter(|p| !p.is_empty()).collect()
-        };
+        let meaningful_parts: Vec<&str> = module
+            .split(|c: char| c == ':' || c == '.' || c == '/' || c == '\\')
+            .filter(|p| !p.is_empty())
+            .collect();
 
         if meaningful_parts.is_empty() {
             return None;

@@ -1,7 +1,6 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks via contract ports
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::config_system::taxonomy_config_vo::default_aes_config;
 use shared::file_system::contract_system_port::IFileSystemPort;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
@@ -23,7 +22,7 @@ impl NamingOrchestrator {
         analyzer: Arc<dyn IAnalyzer>,
         fs: Arc<dyn IFileSystemPort>,
     ) -> Self {
-        let config = default_aes_config();
+        let config = analyzer.config();
         let ignored_patterns = PatternList {
             values: config
                 .ignored_paths

@@ -50,7 +50,11 @@ impl ArchImportForbiddenChecker {
         let layer_name_vo = LayerNameVO::new(layer_name);
         for (line_num, line) in &import_lines {
             if let Some(module) = self.parser.extract_module_from_line(line) {
-                let segments: Vec<&str> = module.value().split("::").collect();
+                let segments: Vec<&str> = module
+                    .value()
+                    .split(|c: char| c == ':' || c == '.' || c == '/' || c == '\\')
+                    .filter(|s| !s.is_empty())
+                    .collect();
                 for forbidden in &forbidden_list {
                     let forbidden_identity = Identity::new(forbidden);
                     let (layer, suffixes) = self.parser.resolve_scope(&forbidden_identity);
@@ -136,7 +140,11 @@ impl ArchImportForbiddenChecker {
             }
             for (line_num, line) in &import_lines {
                 if let Some(module) = self.parser.extract_module_from_line(line) {
-                    let segments: Vec<&str> = module.value().split("::").collect();
+                    let segments: Vec<&str> = module
+                        .value()
+                        .split(|c: char| c == ':' || c == '.' || c == '/' || c == '\\')
+                        .filter(|s| !s.is_empty())
+                        .collect();
                     for forbidden in &rule.forbidden.values {
                         let forbidden_identity = Identity::new(forbidden);
                         let (forbidden_layer, forbidden_suffixes) =
