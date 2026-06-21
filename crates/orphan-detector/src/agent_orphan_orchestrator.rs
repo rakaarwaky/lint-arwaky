@@ -312,6 +312,10 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
 
     fn get_orphan_entry_points(&self) -> Vec<String> {
         vec![
+            "_container.rs".to_string(),
+            "_container.py".to_string(),
+            "_container.ts".to_string(),
+            "_container.js".to_string(),
             "_entry.rs".to_string(),
             "_entry.py".to_string(),
             "_entry.ts".to_string(),

@@ -94,12 +94,11 @@ pub fn find_workspace_root(start: &std::path::Path) -> Result<std::path::PathBuf
     let member_dirs = ["crates", "packages", "modules"];
     let mut current = start.to_path_buf();
     loop {
-        let has_cargo = current.join("Cargo.toml").exists()
-            && current.join("Cargo.toml").is_file();
-        let has_package_json = current.join("package.json").exists()
-            && current.join("package.json").is_file();
-        let has_pyproject = current.join("pyproject.toml").exists()
-            && current.join("pyproject.toml").is_file();
+        let has_cargo = current.join("Cargo.toml").exists() && current.join("Cargo.toml").is_file();
+        let has_package_json =
+            current.join("package.json").exists() && current.join("package.json").is_file();
+        let has_pyproject =
+            current.join("pyproject.toml").exists() && current.join("pyproject.toml").is_file();
         let has_member_dir = member_dirs.iter().any(|d| current.join(d).is_dir());
 
         if has_member_dir && (has_cargo || has_package_json || has_pyproject) {
@@ -121,10 +120,8 @@ pub fn check_wired_in_container(
 ) -> Result<bool, std::io::Error> {
     for dir_name in &["crates", "packages", "modules"] {
         let dir = workspace_root.join(dir_name);
-        if dir.is_dir() {
-            if check_dir_containers(&dir, identifiers)? {
-                return Ok(true);
-            }
+        if dir.is_dir() && check_dir_containers(&dir, identifiers)? {
+            return Ok(true);
         }
     }
     Ok(false)

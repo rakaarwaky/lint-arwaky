@@ -31,13 +31,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         inheritance_map: &InheritanceMap,
         all_files: &[String],
     ) -> OrphanIndicatorResult {
-        is_contract_orphan(
-            f,
-            root_dir,
-            file_definitions,
-            inheritance_map,
-            all_files,
-        )
+        is_contract_orphan(f, root_dir, file_definitions, inheritance_map, all_files)
     }
 }
 
@@ -109,7 +103,13 @@ pub fn is_contract_orphan(
                 suffix: suffix.clone(),
                 trait_name: trait_name.clone(),
                 target_layer: target_prefix,
-                reason: Some(format!("Contract {} '{}' not implemented by any {} file.", suffix, trait_name, target_prefix).into()),
+                reason: Some(
+                    format!(
+                        "Contract {} '{}' not implemented by any {} file.",
+                        suffix, trait_name, target_prefix
+                    )
+                    .into(),
+                ),
             }
             .to_string(),
             Severity::LOW,
@@ -147,7 +147,13 @@ pub fn is_contract_orphan(
                     suffix: suffix.clone(),
                     trait_name: trait_name.clone(),
                     target_layer: target_prefix,
-                    reason: Some(format!("Contract {} '{}' not called by any orchestrator or container.", suffix, trait_name).into()),
+                    reason: Some(
+                        format!(
+                            "Contract {} '{}' not called by any orchestrator or container.",
+                            suffix, trait_name
+                        )
+                        .into(),
+                    ),
                 }
                 .to_string(),
                 Severity::LOW,
@@ -182,7 +188,13 @@ pub fn is_contract_orphan(
                     suffix: suffix.clone(),
                     trait_name: trait_name.clone(),
                     target_layer: target_prefix,
-                    reason: Some(format!("Contract aggregate '{}' not called by any surface or container.", trait_name).into()),
+                    reason: Some(
+                        format!(
+                            "Contract aggregate '{}' not called by any surface or container.",
+                            trait_name
+                        )
+                        .into(),
+                    ),
                 }
                 .to_string(),
                 Severity::LOW,

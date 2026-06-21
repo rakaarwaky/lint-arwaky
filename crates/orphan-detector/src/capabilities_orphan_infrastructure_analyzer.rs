@@ -79,7 +79,9 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
             true,
             AesOrphanViolation::InfrastructureOrphan {
                 stem,
-                reason: Some("Not reachable from any entry point and not wired in any container.".into()),
+                reason: Some(
+                    "Not reachable from any entry point and not wired in any container.".into(),
+                ),
             }
             .to_string(),
             Severity::MEDIUM,

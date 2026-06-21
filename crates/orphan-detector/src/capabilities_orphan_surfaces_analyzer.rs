@@ -152,10 +152,8 @@ fn check_imported_by_entry_or_router(
 ) -> Result<bool, std::io::Error> {
     for dir_name in &["crates", "packages", "modules"] {
         let dir = workspace_root.join(dir_name);
-        if dir.is_dir() {
-            if check_dir_imports(&dir, stem)? {
-                return Ok(true);
-            }
+        if dir.is_dir() && check_dir_imports(&dir, stem)? {
+            return Ok(true);
         }
     }
     Ok(false)
@@ -175,10 +173,11 @@ fn check_dir_imports(dir: &std::path::Path, stem: &str) -> Result<bool, std::io:
                     || name.starts_with("mcp_")
                     || name.contains("_entry")
                     || name.contains("_router");
-                if is_entry_or_router && (name.ends_with(".rs")
-                    || name.ends_with(".py")
-                    || name.ends_with(".ts")
-                    || name.ends_with(".js"))
+                if is_entry_or_router
+                    && (name.ends_with(".rs")
+                        || name.ends_with(".py")
+                        || name.ends_with(".ts")
+                        || name.ends_with(".js"))
                 {
                     if let Ok(content) = std::fs::read_to_string(&path) {
                         if content.contains(stem) {
@@ -229,7 +228,13 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
                 AesOrphanViolation::SurfaceOrphan {
                     category: "smart",
                     stem: stem.clone(),
-                    reason: Some(format!("Smart surface '{}' not imported by any entry point or router.", stem).into()),
+                    reason: Some(
+                        format!(
+                            "Smart surface '{}' not imported by any entry point or router.",
+                            stem
+                        )
+                        .into(),
+                    ),
                 }
                 .to_string(),
                 Severity::HIGH,
@@ -255,7 +260,13 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
                 AesOrphanViolation::SurfaceOrphan {
                     category: "utility",
                     stem: stem.clone(),
-                    reason: Some(format!("Utility surface '{}' not imported by any smart surface.", stem).into()),
+                    reason: Some(
+                        format!(
+                            "Utility surface '{}' not imported by any smart surface.",
+                            stem
+                        )
+                        .into(),
+                    ),
                 }
                 .to_string(),
                 Severity::HIGH,
@@ -282,7 +293,13 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
                 AesOrphanViolation::SurfaceOrphan {
                     category: "passive",
                     stem: stem.clone(),
-                    reason: Some(format!("Passive surface '{}' not imported by any smart or utility surface.", stem).into()),
+                    reason: Some(
+                        format!(
+                            "Passive surface '{}' not imported by any smart or utility surface.",
+                            stem
+                        )
+                        .into(),
+                    ),
                 }
                 .to_string(),
                 Severity::HIGH,

@@ -194,7 +194,7 @@ impl OrphanGraphResolver {
                             let rest = &full_import[colon_idx + 2..];
                             let segments: Vec<&str> = rest.split("::").collect();
                             if !segments.is_empty() {
-                                 let module_name = segments[0];
+                                let module_name = segments[0];
                                 let member_roots = ["crates", "packages", "modules"];
                                 let mut member_dirs = Vec::new();
                                 for root in &member_roots {
