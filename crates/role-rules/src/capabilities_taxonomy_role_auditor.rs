@@ -1,3 +1,18 @@
+// PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES401: taxonomy primitive usage + constant purity
+//
+// ALGORITHM:
+//   1. scan_primitives (entity/error/event) — Detects primitive type annotations
+//      in taxonomy files. For each line with a `:`, extracts the type after the colon
+//      and checks against language-specific primitive lists (RUST_PRIMITIVES,
+//      PY_PRIMITIVES, JS_PRIMITIVES). Handles generic wrappers (Option<X>, Vec<X>)
+//      by checking the inner type. Skips: pub(crate) value: Primitive (newtype pattern),
+//      From<Primitive>/visit_* from() methods (trait-mandated boundaries).
+//   2. check_constant — Scans _constant files for non-constant declarations.
+//      Allows only: pub const, pub static, use/pub use/pub(crate) use.
+//      Flags struct, enum, fn, impl, mod, trait, class, type declarations.
+//
+// NOTE: scan_primitives uses language-specific primitive sets. Only Rust, Python,
+//      and JavaScript/TypeScript are currently supported.
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;

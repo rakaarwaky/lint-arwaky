@@ -1,7 +1,20 @@
 // PURPOSE: RoleOrchestrator — dispatches files to correct role checker based on filename prefix
+//
+// ALGORITHM:
+//   1. run_all_role_checks iterates files, extracts filename prefix (first underscore-segment).
+//   2. Matches prefix to layer (taxonomy, contract, capabilities, infrastructure, agent,
+//      surfaces, root/lib/mod) and dispatches to the corresponding role checker.
+//   3. Each checker receives the SourceContentVO (file path + content + language) and
+//      returns violations via the violations Vec.
+//   4. Unknown prefixes emit an INFO-level structured violation instead of eprintln!.
+//
+// NOTE: check_aggregate (forbidden inheritance) is NOT called here because the orchestrator
+//      lacks layer definitions; that check runs via the IContractRoleChecker trait path
+//      where callers supply the proper LayerDefinition.
 
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
@@ -115,18 +128,11 @@ impl RoleOrchestrator {
                 }
                 "contract" => {
                     let checker = self.aggregate.contract();
-                    let mut contract_violations = Vec::new();
                     if filename.contains("_port") {
-                        contract_violations.extend(checker.check_port(&source_vo));
+                        violations.extend(checker.check_port(&source_vo));
                     } else if filename.contains("_protocol") {
-                        contract_violations.extend(checker.check_protocol(&source_vo));
+                        violations.extend(checker.check_protocol(&source_vo));
                     }
-                    checker.check_aggregate(
-                        &source_vo,
-                        &Default::default(),
-                        &mut contract_violations,
-                    );
-                    violations.extend(contract_violations);
                 }
                 "capabilities" | "capability" => {
                     let checker = self.aggregate.capabilities();
@@ -141,7 +147,17 @@ impl RoleOrchestrator {
                 }
                 "lib" | "mod" => {}
                 other => {
-                    eprintln!("Warning: unhandled case {:?} in {}", other, module_path!());
+                    violations.push(LintResult::new_arch(
+                        file,
+                        0,
+                        "AES999",
+                        Severity::INFO,
+                        format!(
+                            "Unhandled file prefix '{other}' for file '{file}'.\n\
+                             WHY? File does not match any known AES layer prefix (taxonomy, contract, capabilities, infrastructure, agent, surfaces, root, lib, mod).\n\
+                             FIX: Rename file with a valid layer prefix or add the prefix to the dispatch table."
+                        ),
+                    ));
                 }
             }
         }

@@ -1,4 +1,13 @@
 // PURPOSE: InfrastructureRoleChecker — IInfrastructureRoleChecker for AES404: infrastructure has no port implementation
+//
+// ALGORITHM:
+//   1. check_port_implementation checks if the file imports a port/protocol
+//      (contains `_port::` or `_protocol::` after `use `) but has no `impl ... for ...`
+//      block. If an import exists without a corresponding impl, emits
+//      InfrastructureNoPort violation.
+//
+// NOTE: This is a simple keyword-based heuristic. It may miss cases where the
+//      implementation is in a different file or uses a different pattern.
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_infrastructure_role_protocol::IInfrastructureRoleChecker;

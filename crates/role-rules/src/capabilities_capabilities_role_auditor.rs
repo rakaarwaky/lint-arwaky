@@ -1,4 +1,13 @@
-// PURPOSE: CapabilitiesRoleChecker — AES403: detect capability routing bottlenecks (single bottleneck, missing dispatch)
+// PURPOSE: CapabilitiesRoleChecker — AES403: detect capability routing (missing interface implementation)
+//
+// ALGORITHM:
+//   1. check_capability_routing — Scans capabilities-layer files for struct definitions.
+//      For each struct, checks if the file contains `impl I{StructName}`, `impl ... for {StructName}`,
+//      or `impl {StructName}`. If not and the file has <= 3 structs, flags CapabilityRouting.
+//      Skips `#[cfg(test)]` blocks.
+//
+// NOTE: The layer guard is redundant with the caller but kept for defensive programming.
+//      This checker assumes Rust syntax; Python/JS support would need additional parsing.
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;

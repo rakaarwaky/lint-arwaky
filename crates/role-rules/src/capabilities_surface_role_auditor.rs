@@ -1,4 +1,22 @@
 // PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES406: smart/utility/passive surface role checks
+//
+// ALGORITHM:
+//   1. check_fn_count_limit — Counts `fn ` occurrences. If > 15, flags SurfaceRoleViolation.
+//   2. check_surface_hierarchy — Iterates files, filters to surface-prefixed or surface-dir files,
+//      skips smart surfaces (_command, _controller, _page, _entry) and init files, then runs
+//      _check_passive on remaining (passive) surfaces.
+//   3. _check_passive — Reads file content, detects language (Rust/Python/JS), dispatches to
+//      language-specific passive checks:
+//      - Rust: Scans impl blocks for too many public methods (>10) or methods exceeding 80 lines.
+//      - Python: Scans class definitions for too many public methods, method length, if-nesting depth.
+//      - JS/TS: Same as Python but uses JS-specific class/method regex.
+//   4. check_surface_roles (async, IAnalyzer-dependent) — Uses analyzer.detect_layer + layer_map
+//      to check no_domain_logic on non-smart surfaces (control_flow_count > 3).
+//
+// NOTE: check_smart_surface / check_utility_surface / check_passive_surface are no-ops because
+//      the actual surface role checks run via check_surface_hierarchy (passive checks) and
+//      check_surface_roles (no-domain-logic checks) which are the primary entry points.
+//      These trait methods are required by ISurfaceRoleChecker but are intentionally empty.
 use once_cell::sync::Lazy;
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::LintResult;

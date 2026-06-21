@@ -1,4 +1,15 @@
 // PURPOSE: ContractRoleChecker — IContractRoleChecker for AES402: contract primitive type audits
+//
+// ALGORITHM:
+//   1. check_aggregate — Scans import lines for forbidden trait patterns (layer + suffix)
+//      defined in LayerDefinition.role.forbidden_inheritance. Flags any `impl Trait for X`
+//      or equivalent that uses a forbidden trait by name.
+//   2. check_contract_primitive (port/protocol dispatch) — Detects primitive type usage
+//      in contract interfaces (port/protocol files). Uses LanguageDetector to determine
+//      language, then checks for known primitive keywords per language.
+//
+// NOTE: check_contract_primitive is called for all files (not just test projects)
+//      since AES402 applies universally — removed test-project guard per DX audit.
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
@@ -10,7 +21,9 @@ use shared::taxonomy_source_vo::SourceContentVO;
 
 fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     format!(
-        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.",
+        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.\n\
+         WHY? Contracts must not inherit from forbidden source layers.\n\
+         FIX: Remove the inheritance or use a valid contract port/protocol instead.",
         trait_name
     )
 }
@@ -121,9 +134,6 @@ impl ContractRoleChecker {
     fn check_contract_primitive(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
-        if !file.contains("test-project") && !file.contains("test_project") {
-            return;
-        }
         let lower = content.to_lowercase();
         let detector =
             shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
