@@ -3,6 +3,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::orphan_detector::contract_orphan_protocol::IInfrastructureOrphanProtocol;
+use shared::orphan_detector::taxonomy_orphan_utility::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -87,33 +88,6 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
             Severity::MEDIUM,
         )
     }
-}
-
-use regex::Regex;
-
-fn extract_struct_names(content: &str) -> Vec<String> {
-    let re = Regex::new(r"(?:pub\s+)?struct\s+([A-Za-z0-9_]+)").ok();
-    let mut names = Vec::new();
-    if let Some(re) = re {
-        for cap in re.captures_iter(content) {
-            let name = cap[1].to_string();
-            if name != "Self" && !name.is_empty() {
-                names.push(name);
-            }
-        }
-    }
-    names
-}
-
-fn extract_trait_names(content: &str) -> Vec<String> {
-    let re = Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok();
-    let mut names = Vec::new();
-    if let Some(re) = re {
-        for cap in re.captures_iter(content) {
-            names.push(cap[1].to_string());
-        }
-    }
-    names
 }
 
 pub fn check_infrastructure_orphan(
