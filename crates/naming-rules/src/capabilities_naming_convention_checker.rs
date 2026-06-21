@@ -121,9 +121,14 @@ impl NamingConventionChecker {
                     file,
                     "AES102",
                     NamingViolation::UnknownPrefix {
-                        prefix: actual_prefix,
+                        prefix: actual_prefix.clone(),
                         allowed,
-                        reason: None,
+                        reason: Some(LintMessage::new(format!(
+                            "The prefix '{}' is not one of the {} recognised AES layer prefixes. \
+                             Every source file must start with a valid layer prefix so it can be assigned to the correct architectural layer. \
+                             Likely causes: typo in the prefix name, or the file is in the wrong directory.",
+                            actual_prefix, LAYER_PREFIXES.len()
+                        ))),
                     }
                     .to_string(),
                     Severity::HIGH,
@@ -132,13 +137,19 @@ impl NamingConventionChecker {
             }
 
             // If the prefix is recognized or is empty, but there is no underscore or does not meet basic naming requirements.
+            let stem = filename.split('.').next().unwrap_or(filename);
             violations.push(Self::make_result(
                 file,
                 "AES101",
                 NamingViolation::NamingConvention {
                     min_words: 2,
                     separator: "_".to_string(),
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "No architectural layer could be determined for '{}', and the stem '{}' does not follow \
+                         the 'prefix_concept_suffix' naming pattern. Files must contain at least 2 underscore-separated \
+                         lowercase words (e.g., 'capabilities_user_checker'). A valid layer prefix is the first word.",
+                        file, stem
+                    ))),
                 }
                 .to_string(),
                 Severity::HIGH,
@@ -170,7 +181,13 @@ impl NamingConventionChecker {
                     NamingViolation::NamingConvention {
                         min_words: 2,
                         separator: "_".to_string(),
-                        reason: None,
+                        reason: Some(LintMessage::new(format!(
+                            "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
+                             Expected: lowercase alphanumeric words separated by underscores, minimum 2 words. \
+                             Example valid names: 'capabilities_user_checker', 'infrastructure_db_adapter'. \
+                             Issue: '{}' may have uppercase characters, wrong separator, or only 1 word.",
+                            stem, stem
+                        ))),
                     }
                     .to_string(),
                     Severity::HIGH,

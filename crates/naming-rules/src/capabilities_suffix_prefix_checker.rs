@@ -134,9 +134,14 @@ impl SuffixPrefixChecker {
                     file,
                     "AES102",
                     NamingViolation::SuffixForbidden {
-                        layer_name: layer_display,
+                        layer_name: layer_display.clone(),
                         forbidden_suffix: suf.clone(),
-                        reason: None,
+                        reason: Some(LintMessage::new(format!(
+                            "Suffix '{}' is not permitted in the '{}' layer. Each architectural layer allows only \
+                             specific suffixes that match its role. The suffix '{}' belongs to a different layer's domain. \
+                             Rename the file with an allowed suffix for '{}', or move it to the appropriate layer.",
+                            suf, layer_display, suf, layer_display
+                        ))),
                     }
                     .to_string(),
                     Severity::HIGH,
@@ -161,9 +166,17 @@ impl SuffixPrefixChecker {
                     file,
                     "AES102",
                     NamingViolation::SuffixMismatch {
-                        layer_name: layer_display,
-                        allowed: allowed_list,
-                        reason: None,
+                        layer_name: layer_display.clone(),
+                        allowed: allowed_list.clone(),
+                        reason: Some(LintMessage::new(format!(
+                            "Layer '{}' enforces a strict suffix policy, but the file uses suffix '{}'. \
+                             Expected one of: {}. \
+                             The suffix determines the file's architectural role — a missing or incorrect suffix \
+                             breaks the layer-to-role mapping that automated checks depend on.",
+                            layer_display,
+                            suffix.as_deref().unwrap_or("(none)"),
+                            allowed_list.join(", ")
+                        ))),
                     }
                     .to_string(),
                     Severity::HIGH,
