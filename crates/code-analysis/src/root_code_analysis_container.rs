@@ -368,29 +368,26 @@ impl IAnalyzer for PlaceholderAnalyzer {
 }
 
 // CodeAnalysisContainer — wiring for code-analysis feature
-use crate::CodeAnalysisArchLint;
 use crate::CodeAnalysisOrchestrator;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 
 pub struct CodeAnalysisContainer {
-    arch_linter: Arc<dyn IArchLintProtocol>,
+    arch_linter: Arc<CodeAnalysisOrchestrator>,
 }
 
 impl CodeAnalysisContainer {
     pub fn new() -> Self {
-        let orchestrator = Arc::new(CodeAnalysisOrchestrator::new());
         Self {
-            arch_linter: Arc::new(CodeAnalysisArchLint::new(orchestrator)),
+            arch_linter: Arc::new(CodeAnalysisOrchestrator::new()),
         }
     }
 
     pub fn new_with_analyzer(analyzer: Arc<dyn IAnalyzer>) -> Self {
         let checker_container = CodeAnalysisCheckerContainer::new(analyzer);
-        let orchestrator = Arc::new(CodeAnalysisOrchestrator::new_with_container(Arc::new(
-            checker_container,
-        )));
         Self {
-            arch_linter: Arc::new(CodeAnalysisArchLint::new(orchestrator)),
+            arch_linter: Arc::new(CodeAnalysisOrchestrator::new_with_container(Arc::new(
+                checker_container,
+            ))),
         }
     }
 

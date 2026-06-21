@@ -6,6 +6,10 @@ use std::sync::OnceLock;
 
 use crate::CodeAnalysisCheckerContainer;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::cli_commands::taxonomy_score_vo::compute_score;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
@@ -69,6 +73,24 @@ impl Default for CodeAnalysisOrchestrator {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Resolve target path: normalize "crates" → parent, keep "." as-is, etc.
+pub fn resolve_target(path: Option<String>) -> String {
+    path.unwrap_or_else(|| ".".to_string())
+}
+
+/// Run a full AES self-lint on a path.
+pub fn lint_path(path: &str) -> Vec<LintResult> {
+    let root = FilePath::new(path.to_string())
+        .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+    let orchestrator = CodeAnalysisOrchestrator::new();
+    orchestrator.run_self_lint(&root.value)
+}
+
+/// Check if any CRITICAL severity violations exist in results.
+pub fn has_critical(results: &[LintResult]) -> bool {
+    results.iter().any(|r| r.severity == Severity::CRITICAL)
 }
 
 impl CodeAnalysisOrchestrator {
@@ -200,5 +222,31 @@ impl CodeAnalysisOrchestrator {
             ));
         }
         output
+    }
+}
+
+impl IArchLintProtocol for CodeAnalysisOrchestrator {
+    fn run_self_lint(&self, project_root: &str) -> LintResultList {
+        LintResultList::new(self.run_self_lint(project_root))
+    }
+
+    fn run_self_lint_dir(&self, src_dir: &str) -> LintResultList {
+        LintResultList::new(self.run_scan(src_dir))
+    }
+
+    fn run_lint(&self, path: &str) -> Vec<LintResult> {
+        self.run_self_lint(path)
+    }
+
+    fn calc_score(&self, results: &[LintResult]) -> f64 {
+        compute_score(results)
+    }
+
+    fn check_critical(&self, results: &[LintResult]) -> bool {
+        has_critical(results)
+    }
+
+    fn format_report(&self, results: &LintResultList, project_root: &str) -> String {
+        self.format_report(&results.values, project_root)
     }
 }

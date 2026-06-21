@@ -20,7 +20,7 @@ impl Default for CodeDuplicationAnalyzer {
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates(&self, path: Option<String>) -> ExitCode {
-        let root = crate::agent_project_target_orchestrator::resolve_target(path);
+        let root = crate::agent_code_analysis_orchestrator::resolve_target(path);
         println!("Code Duplication Detection — {}", root);
         println!();
 
