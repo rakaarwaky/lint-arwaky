@@ -44,6 +44,22 @@ impl OrphanGraphResolver {
             }
         }
 
+        // Build set of known workspace crate dirs for external dep detection
+        let mut workspace_modules: std::collections::HashSet<String> =
+            std::collections::HashSet::new();
+        for ws_dir in &["crates", "packages", "modules"] {
+            if let Ok(entries) = std::fs::read_dir(ws_dir) {
+                for entry in entries.flatten() {
+                    if entry.path().is_dir() {
+                        if let Some(name) = entry.file_name().to_str().map(|s| s.to_string()) {
+                            workspace_modules.insert(name.clone());
+                            workspace_modules.insert(name.replace('-', "_"));
+                        }
+                    }
+                }
+            }
+        }
+
         // Also handle pub mod declarations with #[path] attributes (lib.rs pattern)
         let pub_mod_re =
             regex::Regex::new(r#"#\[path\s*=\s*"([^"]+)"\]\s*(?:pub\s+)?mod\s+([a-zA-Z_]+)"#).ok();
@@ -157,7 +173,7 @@ impl OrphanGraphResolver {
                             continue;
                         }
 
-                        // Skip external crates
+                        // Skip external crates — dynamic check against local modules + workspace dirs
                         let mut dep = full_import.clone();
                         if let Some(dot) = dep.find('.') {
                             dep = dep[..dot].to_string();
@@ -165,52 +181,10 @@ impl OrphanGraphResolver {
                         if let Some(colon) = dep.find("::") {
                             dep = dep[..colon].to_string();
                         }
-                        if matches!(
-                            dep.as_str(),
-                            "crate"
-                                | "self"
-                                | "super"
-                                | "std"
-                                | "core"
-                                | "alloc"
-                                | "serde"
-                                | "tokio"
-                                | "regex"
-                                | "once_cell"
-                                | "thiserror"
-                                | "anyhow"
-                                | "async_trait"
-                                | "clap"
-                                | "chrono"
-                                | "tracing"
-                                | "rand"
-                                | "toml"
-                                | "serde_json"
-                                | "serde_yaml"
-                                | "mcp_sdk_rs"
-                                | "reqwest"
-                                | "futures"
-                                | "dashmap"
-                                | "rustpython"
-                                | "rustpython_vm"
-                                | "rustpython_parser"
-                                | "num_traits"
-                                | "enum_dispatch"
-                                | "pyo3"
-                                | "nom"
-                                | "log"
-                                | "env_logger"
-                                | "colored"
-                                | "indicatif"
-                                | "uuid"
-                                | "sha2"
-                                | "hex"
-                                | "base64"
-                                | "ctrlc"
-                                | "git2"
-                                | "ignore"
-                                | "walkdir"
-                        ) {
+                        let is_known_local = module_to_file.contains_key(&dep)
+                            || workspace_modules.contains(&dep)
+                            || matches!(dep.as_str(), "crate" | "self" | "super");
+                        if !is_known_local {
                             continue;
                         }
 
@@ -286,51 +260,18 @@ impl OrphanGraphResolver {
     }
 
     pub fn identify_entry_points(&self, files: &[String], configured: &[String]) -> Vec<String> {
-        let default: Vec<String> = files
-            .iter()
-            .filter(|f| is_standard_entry_point(f))
-            .cloned()
-            .collect();
-
-        if !configured.is_empty() {
-            files
-                .iter()
-                .filter(|f| {
-                    configured
-                        .iter()
-                        .any(|pattern| f.ends_with(pattern) || f.contains(pattern))
-                        || is_standard_entry_point(f)
-                })
-                .cloned()
-                .collect()
-        } else {
-            default
+        if configured.is_empty() {
+            return Vec::new();
         }
+
+        files
+            .iter()
+            .filter(|f| {
+                configured
+                    .iter()
+                    .any(|pattern| f.ends_with(pattern) || f.contains(pattern))
+            })
+            .cloned()
+            .collect()
     }
-}
-
-fn is_standard_entry_point(path: &str) -> bool {
-    let name = match path.rsplit(['/', '\\']).next() {
-        Some(n) => n,
-        None => return false,
-    };
-
-    name == "__main__.py"
-        || name == "main.py"
-        || name.ends_with("_main_entry.py")
-        || name == "lib.rs"
-        || name == "main.rs"
-        || name == "mod.rs"
-        || name.ends_with("_main_entry.rs")
-        || name.ends_with("_entry.rs")
-        || name == "index.ts"
-        || name == "index.js"
-        || name == "index.tsx"
-        || name == "index.jsx"
-        || name == "main.ts"
-        || name == "main.js"
-        || name.ends_with("_main_entry.ts")
-        || name.ends_with("_main_entry.js")
-        || name.ends_with("_entry.ts")
-        || name.ends_with("_entry.js")
 }
