@@ -31,7 +31,7 @@ impl ImportContainer {
         source_parser: Arc<dyn ISourceParserPort>,
     ) -> Self {
         let fs =
-            Arc::new(file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
+            Arc::new(crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
         let parser: Arc<dyn IImportParserPort> =
             Arc::new(crate::infrastructure_import_parser_adapter::ImportParserAdapter::new());
         let analyzer = Arc::new(

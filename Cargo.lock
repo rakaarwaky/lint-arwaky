@@ -755,17 +755,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f1f227452a390804cdb637b74a86990f2a7d7ba4b7d5693aac9b4dd6defd8d6"
 
 [[package]]
-name = "file_system-lint-arwaky"
-version = "1.10.14"
-dependencies = [
- "async-trait",
- "serde",
- "serde_json",
- "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
-]
-
-[[package]]
 name = "file_watch-lint-arwaky"
 version = "1.10.14"
 dependencies = [
@@ -2125,7 +2114,6 @@ name = "import_rules-lint-arwaky"
 version = "1.10.14"
 dependencies = [
  "async-trait",
- "file_system-lint-arwaky",
  "once_cell",
  "regex",
  "serde",
@@ -2338,7 +2326,6 @@ dependencies = [
  "dialoguer",
  "dirs",
  "external_lint-lint-arwaky",
- "file_system-lint-arwaky",
  "file_watch-lint-arwaky",
  "futures",
  "git_hooks-lint-arwaky",
@@ -2531,13 +2518,8 @@ name = "naming_rules-lint-arwaky"
 version = "1.10.14"
 dependencies = [
  "async-trait",
- "file_system-lint-arwaky",
- "import_rules-lint-arwaky",
  "regex",
- "serde",
- "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
 ]
 
 [[package]]

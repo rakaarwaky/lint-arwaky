@@ -12,29 +12,7 @@ pub struct NamingContainer {
 }
 
 impl NamingContainer {
-    pub fn new() -> Self {
-        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
-    }
-
-    pub fn new_with_config(
-        config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-    ) -> Self {
-        let fs: Arc<dyn IFileSystemPort> =
-            Arc::new(file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
-        let source_parser = Arc::new(
-            source_parsing::infrastructure_parser_adapter::SourceParserOrchestrator::new(
-                Box::new(source_parsing::infrastructure_py_scanner::ASTPythonParserAdapter::new()),
-                Box::new(source_parsing::infrastructure_rust_scanner::ASTRustParserAdapter::new()),
-                Box::new(source_parsing::infrastructure_js_scanner::ASTJSParserAdapter::new()),
-            ),
-        );
-        let analyzer = Arc::new(
-            import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
-                config,
-                fs.clone(),
-                source_parser,
-            ),
-        );
+    pub fn new(analyzer: Arc<dyn IAnalyzer>, fs: Arc<dyn IFileSystemPort>) -> Self {
         let naming_convention_checker: Arc<dyn INamingCheckerProtocol> =
             Arc::new(crate::capabilities_naming_convention_checker::NamingConventionChecker::new());
         let suffix_prefix_checker: Arc<dyn INamingCheckerProtocol> =
@@ -66,11 +44,5 @@ impl NamingContainer {
             self.analyzer.clone(),
             self.fs.clone(),
         ))
-    }
-}
-
-impl Default for NamingContainer {
-    fn default() -> Self {
-        Self::new()
     }
 }

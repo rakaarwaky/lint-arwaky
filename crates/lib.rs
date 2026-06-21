@@ -4,7 +4,6 @@ pub use cli_commands;
 pub use code_analysis;
 pub use config_system;
 pub use external_lint;
-pub use file_system;
 pub use file_watch;
 pub use git_hooks;
 pub use import_rules;

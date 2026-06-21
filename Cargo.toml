@@ -12,7 +12,6 @@ code_analysis = { package = "code_analysis-lint-arwaky", path = "crates/code-ana
 auto_fix = { package = "auto_fix-lint-arwaky", path = "crates/auto-fix" }
 cli_commands = { package = "cli_commands-lint-arwaky", path = "crates/cli-commands" }
 config_system = { package = "config_system-lint-arwaky", path = "crates/config-system" }
-file_system = { package = "file_system-lint-arwaky", path = "crates/file-system" }
 file_watch = { package = "file_watch-lint-arwaky", path = "crates/file-watch" }
 git_hooks = { package = "git_hooks-lint-arwaky", path = "crates/git-hooks" }
 external_lint = { package = "external_lint-lint-arwaky", path = "crates/external-lint" }
@@ -94,7 +93,6 @@ code_analysis.workspace = true
 auto_fix.workspace = true
 cli_commands.workspace = true
 config_system.workspace = true
-file_system.workspace = true
 file_watch.workspace = true
 git_hooks.workspace = true
 external_lint.workspace = true

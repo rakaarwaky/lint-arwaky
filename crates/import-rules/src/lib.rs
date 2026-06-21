@@ -13,6 +13,8 @@ pub mod capabilities_cycle_import_analyzer;
 pub use capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
 pub mod infrastructure_import_parser_adapter;
 pub use infrastructure_import_parser_adapter::ImportParserAdapter;
+pub mod infrastructure_filesystem_adapter;
+pub use infrastructure_filesystem_adapter::OSFileSystemAdapter;
 pub mod agent_import_orchestrator;
 pub use agent_import_orchestrator::ImportOrchestrator;
 pub mod root_import_rules_container;
