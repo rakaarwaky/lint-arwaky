@@ -63,26 +63,45 @@ pub fn check_taxonomy_orphan(
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
 ) {
     let stem = basename.replace(".rs", "").replace(".py", "");
+    let suffix = stem.split('_').next_back().unwrap_or("");
+
+    let is_utility_or_helper = matches!(suffix, "utility" | "helper");
+
     let mut imported = false;
     for cf in files {
         let cb = cf.split('/').next_back().unwrap_or("");
-        if !cb.starts_with("contract_") {
-            continue;
-        }
-        if let Ok(c) = std::fs::read_to_string(cf) {
-            if c.contains(&stem) {
-                imported = true;
-                break;
+
+        if is_utility_or_helper {
+            // utility/helper: can be imported directly by any layer, no contract needed
+            if let Ok(c) = std::fs::read_to_string(cf) {
+                if c.contains(&stem) {
+                    imported = true;
+                    break;
+                }
+            }
+        } else {
+            // vo, entity, error, event, constant: must be imported via contract layer
+            if !cb.starts_with("contract_") {
+                continue;
+            }
+            if let Ok(c) = std::fs::read_to_string(cf) {
+                if c.contains(&stem) {
+                    imported = true;
+                    break;
+                }
             }
         }
     }
     if !imported {
+        let reason = if is_utility_or_helper {
+            format!("Taxonomy '{}' is not imported by any file.", stem)
+        } else {
+            format!("Taxonomy '{}' is not imported by any contract.", stem)
+        };
         violations.push(crate::mk_orphan_result(
             fp,
             &AesOrphanViolation::OrphanCode {
-                reason: Some(
-                    format!("Taxonomy '{}' is not imported by any contract.", stem).into(),
-                ),
+                reason: Some(reason.into()),
             }
             .to_string(),
             Severity::LOW,

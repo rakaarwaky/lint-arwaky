@@ -16,10 +16,10 @@ impl OrphanContainer {
         Self::new_with_ignored(Vec::new())
     }
 
-    pub fn new_with_ignored(ignored_paths: Vec<String>) -> Self {
+    pub fn new_with_ignored(_ignored_paths: Vec<String>) -> Self {
         let arch = Arc::new(ArchOrphanAnalyzer::new(
             Arc::new(crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new()),
-            Arc::new(crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::with_ignored_paths(ignored_paths)),
+            Arc::new(crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new()),
             Arc::new(crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new()),
             Arc::new(crate::capabilities_orphan_infrastructure_analyzer::InfrastructureOrphanAnalyzer::new()),
             Arc::new(crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new()),

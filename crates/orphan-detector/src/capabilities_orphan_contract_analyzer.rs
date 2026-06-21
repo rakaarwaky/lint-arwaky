@@ -7,9 +7,7 @@ use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
-pub struct ContractOrphanAnalyzer {
-    ignored_paths: Vec<String>,
-}
+pub struct ContractOrphanAnalyzer {}
 
 impl Default for ContractOrphanAnalyzer {
     fn default() -> Self {
@@ -19,13 +17,7 @@ impl Default for ContractOrphanAnalyzer {
 
 impl ContractOrphanAnalyzer {
     pub fn new() -> Self {
-        Self {
-            ignored_paths: Vec::new(),
-        }
-    }
-
-    pub fn with_ignored_paths(ignored_paths: Vec<String>) -> Self {
-        Self { ignored_paths }
+        Self {}
     }
 }
 
@@ -44,68 +36,8 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             file_definitions,
             inheritance_map,
             all_files,
-            &self.ignored_paths,
         )
     }
-}
-
-fn find_workspace_root(start_path: &str) -> Option<std::path::PathBuf> {
-    let mut current = std::path::Path::new(start_path);
-    if current.is_file() {
-        current = current.parent()?;
-    }
-    while let Some(parent) = current.parent() {
-        let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
-                    return Some(current.to_path_buf());
-                }
-            }
-        }
-        current = parent;
-    }
-    let cargo_toml = current.join("Cargo.toml");
-    if cargo_toml.exists() {
-        if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-            if content.contains("[workspace]") {
-                return Some(current.to_path_buf());
-            }
-        }
-    }
-    None
-}
-
-fn collect_all_workspace_files(dir: &std::path::Path, ignored_paths: &[String]) -> Vec<String> {
-    let mut files = Vec::new();
-    if dir.is_dir() {
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    let dir_name = path.file_name().unwrap_or_default().to_string_lossy();
-                    let mut is_ignored = false;
-                    for i in ignored_paths {
-                        let clean = i.trim_start_matches('/');
-                        if dir_name == clean || path.to_string_lossy().contains(i) {
-                            is_ignored = true;
-                            break;
-                        }
-                    }
-                    if is_ignored {
-                        continue;
-                    }
-                    files.extend(collect_all_workspace_files(&path, ignored_paths));
-                } else if let Some(ext) = path.extension() {
-                    let ext_str = ext.to_string_lossy();
-                    if matches!(ext_str.as_ref(), "rs" | "py" | "js" | "ts") {
-                        files.push(path.to_string_lossy().to_string());
-                    }
-                }
-            }
-        }
-    }
-    files
 }
 
 pub fn is_contract_orphan(
@@ -114,7 +46,6 @@ pub fn is_contract_orphan(
     _file_definitions: &FileDefinitionMap,
     _inheritance_map: &InheritanceMap,
     all_files: &[String],
-    ignored_paths: &[String],
 ) -> OrphanIndicatorResult {
     let fp = f.value();
     let basename = fp.split('/').next_back().unwrap_or("");
@@ -138,15 +69,7 @@ pub fn is_contract_orphan(
         None => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
     };
 
-    let mut search_files: Vec<String> = all_files.to_vec();
-    if let Some(ws_root) = find_workspace_root(fp) {
-        let ws_files = collect_all_workspace_files(&ws_root, ignored_paths);
-        for wf in ws_files {
-            if !search_files.contains(&wf) {
-                search_files.push(wf);
-            }
-        }
-    }
+    let search_files = all_files;
 
     // Check 1: contract not implemented by expected layer
     let target_prefix = match suffix.as_str() {
@@ -157,7 +80,7 @@ pub fn is_contract_orphan(
     };
 
     let mut has_impl = false;
-    for cf in &search_files {
+    for cf in search_files {
         let cb = cf.split('/').next_back().unwrap_or("");
         if !cb.starts_with(target_prefix) {
             continue;
@@ -189,7 +112,7 @@ pub fn is_contract_orphan(
     // Check 2: port/protocol not called by any orchestrator OR container
     if suffix == "port" || suffix == "protocol" {
         let mut called_by_orchestrator_or_container = false;
-        for cf in &search_files {
+        for cf in search_files {
             let cb = cf.split('/').next_back().unwrap_or("");
             // Check orchestrator files
             let is_orchestrator = cb.starts_with("agent_")
@@ -225,7 +148,7 @@ pub fn is_contract_orphan(
     // Check 3: aggregate not called by any surface OR container
     if suffix == "aggregate" {
         let mut called_by_surface_or_container = false;
-        for cf in &search_files {
+        for cf in search_files {
             let cb = cf.split('/').next_back().unwrap_or("");
             // Check surface files
             let is_surface = cb.starts_with("surface_");
