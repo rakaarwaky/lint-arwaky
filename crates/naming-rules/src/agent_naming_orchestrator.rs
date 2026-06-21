@@ -10,7 +10,8 @@ use shared::taxonomy_common_vo::PatternList;
 use std::sync::Arc;
 
 pub struct NamingOrchestrator {
-    checker: Arc<dyn INamingCheckerProtocol>,
+    naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
+    suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
     analyzer: Arc<dyn IAnalyzer>,
     fs: Arc<dyn IFileSystemPort>,
     ignored_patterns: PatternList,
@@ -18,7 +19,8 @@ pub struct NamingOrchestrator {
 
 impl NamingOrchestrator {
     pub fn new(
-        checker: Arc<dyn INamingCheckerProtocol>,
+        naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
+        suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
         analyzer: Arc<dyn IAnalyzer>,
         fs: Arc<dyn IFileSystemPort>,
     ) -> Self {
@@ -38,7 +40,8 @@ impl NamingOrchestrator {
                 .collect(),
         };
         Self {
-            checker,
+            naming_convention_checker,
+            suffix_prefix_checker,
             analyzer,
             fs,
             ignored_patterns,
@@ -71,10 +74,10 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         let files = Self::filter_source_files(&all_files);
         let root_dir = target.clone();
 
-        self.checker
+        self.naming_convention_checker
             .check_file_naming(self.analyzer.as_ref(), &files, &root_dir, &mut results)
             .await;
-        self.checker
+        self.suffix_prefix_checker
             .check_domain_suffixes(self.analyzer.as_ref(), &files, &root_dir, &mut results)
             .await;
 

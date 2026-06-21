@@ -2,39 +2,12 @@
 
 ---
 
-## Terminology
-
-AES uses **Rust terminology** across all supported languages (Rust, TypeScript, Python). This is a **deliberate design decision** — a single unified vocabulary avoids confusion when working across a multi-language monorepo.
-
-| Term          | Meaning                                                                                                                             |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Workspace** | The entire project root folder. One repository = One Workspace. Example: `lint-arwaky/`                                            |
-| **Crate**     | A single self-contained sub-project inside the Workspace, with its own manifest (`Cargo.toml`, `package.json`, `pyproject.toml`).   |
-| **Member**    | Synonym for Crate — the official Cargo term for each sub-project listed in the workspace `[members]` array.                        |
-
-### Monorepo Structure Convention
-
-A multi-language Workspace separates Crates by **language** into dedicated top-level folders. Each folder uses the **native terminology** of its language ecosystem:
-
-| Folder      | Language        | Native Term | Example Crate                          |
-| ----------- | --------------- | ----------- | -------------------------------------- |
-| `crates/`   | Rust            | crate       | `crates/shared`, `crates/cli-commands` |
-| `packages/` | TypeScript / JS | package     | `packages/vscode-extension`            |
-| `modules/`  | Python          | module      | `modules/my-lib`                       |
-
-> **Why separated?** Cargo's `members = ["crates/*"]` in the root `Cargo.toml` scans every subfolder inside `crates/` as a Rust crate. Mixing TypeScript or Python into `crates/` would crash Cargo because those folders do not contain a `Cargo.toml`.
-
-> **Important:** `node_modules/`, `dist/`, `build/`, and `target/` are **NOT Crates**. They are dependency and build output directories and are always excluded from linting.
-
-
----
-
 ## Summary
 
-| Code   | Name                | Severity | Group  | Description                                                                                |
-| ------ | ------------------- | -------- | ------ | ------------------------------------------------------------------------------------------ |
+| Code   | Name                | Severity | Group  | Description                                                                                   |
+| ------ | ------------------- | -------- | ------ | --------------------------------------------------------------------------------------------- |
 | AES101 | Naming Convention   | HIGH     | Naming | Filename must follow `prefix_concept_suffix` pattern — lowercase, underscore, min 2 words. |
-| AES102 | Suffix Prefix Rules | HIGH     | Naming | Suffix must match layer definition — allowed, forbidden, mandatory strict.                 |
+| AES102 | Suffix Prefix Rules | HIGH     | Naming | Suffix must match layer definition — allowed, forbidden, mandatory strict.                   |
 
 | Code   | Name             | Severity | Group  | Description                                                                  |
 | ------ | ---------------- | -------- | ------ | ---------------------------------------------------------------------------- |
@@ -42,23 +15,23 @@ A multi-language Workspace separates Crates by **language** into dedicated top-l
 | AES202 | Mandatory Import | HIGH     | Import | File is missing required imports defined by config.                          |
 | AES203 | Unused Import    | MEDIUM   | Import | Symbol is imported but never used in file scope.                             |
 | AES204 | Dummy Import     | MEDIUM   | Import | Import string matches a forbidden dummy pattern (e.g. orphan detector test). |
-| AES205 | Circular Import  | HIGH     | Import | Circular dependency between layers — must be unidirectional bottom-up.       |
+| AES205 | Circular Import  | HIGH     | Import | Circular dependency between layers — must be unidirectional bottom-up.      |
 
-| Code   | Name                 | Severity | Group   | Description                                                                        |
-| ------ | -------------------- | -------- | ------- | ---------------------------------------------------------------------------------- |
-| AES301 | File Maximum Limit   | LOW      | Quality | File exceeds maximum allowed line count (default: 1000).                           |
-| AES302 | File Minimum Limit   | LOW      | Quality | File is below minimum required line count (default: 5).                            |
-| AES303 | Mandatory Definition | HIGH     | Quality | File missing struct/enum/trait/class definition, or definition is empty.           |
+| Code   | Name                 | Severity | Group   | Description                                                                                |
+| ------ | -------------------- | -------- | ------- | ------------------------------------------------------------------------------------------ |
+| AES301 | File Maximum Limit   | LOW      | Quality | File exceeds maximum allowed line count (default: 1000).                                   |
+| AES302 | File Minimum Limit   | LOW      | Quality | File is below minimum required line count (default: 5).                                    |
+| AES303 | Mandatory Definition | HIGH     | Quality | File missing struct/enum/trait/class definition, or definition is empty.                   |
 | AES304 | Bypass Comment       | CRITICAL | Quality | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`, etc). |
-| AES305 | Duplication Code     | MEDIUM   | Quality | Duplicate code blocks detected across files.                                       |
+| AES305 | Duplication Code     | MEDIUM   | Quality | Duplicate code blocks detected across files.                                               |
 
 | Code   | Name                | Severity | Group | Description                                                                               |
 | ------ | ------------------- | -------- | ----- | ----------------------------------------------------------------------------------------- |
 | AES401 | Taxonomy Role       | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in /entity/error/event. |
 | AES402 | Contract Role       | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.      |
 | AES403 | Capabilities Role   | HIGH     | Role  | Capability has no protocol implementation                                                 |
-| AES404 | Infrastructure Role | HIGH     | Role  | Infrastructure has no  port implementation                                                |
-| AES405 | Agent Role          | MEDIUM   | Role  | orchestrator do not call  any port  or protocol                                           |
+| AES404 | Infrastructure Role | HIGH     | Role  | Infrastructure has no  port implementation                                              |
+| AES405 | Agent Role          | MEDIUM   | Role  | orchestrator do not call  any port  or protocol                                         |
 | AES406 | Surface Role        | MEDIUM   | Role  | Passive surface contains active domain logic; file exceeds 25 functions.                  |
 
 | Code   | Name                  | Severity | Group  | Description                                                                          |
@@ -67,7 +40,7 @@ A multi-language Workspace separates Crates by **language** into dedicated top-l
 | AES502 | Contract Orphan       | LOW      | Orphan | Contract trait not implemented by expected layer; port/protocol not called by agent. |
 | AES503 | Capabilities Orphan   | MEDIUM   | Orphan | Capability not wired in any container AND unreachable in import graph.               |
 | AES504 | Infrastructure Orphan | MEDIUM   | Orphan | Infrastructure not wired in any container AND unreachable in import graph.           |
-| AES505 | Agent Orphan          | HIGH     | Orphan | Aggregate contracts  that implement by agents are not call by the surface            |
+| AES505 | Agent Orphan          | HIGH     | Orphan | Aggregate contracts  that implement by agents are not call by the surface           |
 | AES506 | Surface Orphan        | HIGH     | Orphan | Smart surface not imported by entry/router; utility not imported by smart surface.   |
 
 ---
@@ -102,15 +75,15 @@ Suffix must match the layer definition. Three sub-checks:
 
 #### Suffix Policy per Layer
 
-| Layer            | Policy   | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Forbidden Suffixes                                                       |
-| ---------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `root`           | strict   | `_entry`, `_container`                                                                                                                                                                                                                                                                                                                                                                                                                                                | N/A                                                                      |
-| `taxonomy`       | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`, `_helper`                                                                                                                                                                                                                                                                                                                                                                                              | N/A                                                                      |
-| `contract`       | strict   | `_port`, `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                    | N/A                                                                      |
-| `capabilities`   | flexible | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_auditor`, `_actions`                                                                                                              | `_vo`, `_entity`, `_error`, `_event`, `_port`, `_protocol`, `_aggregate` |
+| Layer              | Policy   | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Forbidden Suffixes                                                                     |
+| ------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `root`           | strict   | `_entry`, `_container`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | N/A                                                                                    |
+| `taxonomy`       | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`, `_helper`                                                                                                                                                                                                                                                                                                                                                                                                                                                          | N/A                                                                                    |
+| `contract`       | strict   | `_port`, `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | N/A                                                                                    |
+| `capabilities`   | flexible | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_auditor`, `_actions`                                                                                                                                    | `_vo`, `_entity`, `_error`, `_event`, `_port`, `_protocol`, `_aggregate` |
 | `infrastructure` | flexible | `_adapter`, `_provider`, `_scanner`, `_client`, `_constants`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_util`, `_system`, `_repository`, `_cache`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `_vo`, `_entity`, `_error`, `_event`, `_port`, `_protocol`, `_aggregate` |
-| `surfaces`       | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                              | N/A                                                                      |
-| `agent`          | strict   | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                                                       | N/A                                                                      |
+| `surfaces`       | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                                                                                  | N/A                                                                                    |
+| `agent`          | strict   | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | N/A                                                                                    |
 
 ---
 
@@ -122,19 +95,19 @@ Suffix must match the layer definition. Three sub-checks:
 
 A single rule with **13 sub-conditions** — each has `allowed`, `mandatory`, and `forbidden` fields. Layers are identified by **filename prefix** (`taxonomy_`, `contract_`, etc.), not directory path.
 
-| #   | Scope                                                           | Allowed Imports                                                   | Mandatory Imports                                     | Forbidden Imports                                                                                 |
-| --- | --------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| 1   | `taxonomy(vo)`                                                  | taxonomy                                                          | None                                                  | agent*, infrastructure*, surface*, contract*, capabilities\_, root                                |
-| 2   | `taxonomy(entity,error,event)`                                  | taxonomy                                                          | taxonomy(vo&#124;constant)                            | agent*, infrastructure*, surface*, contract*, capabilities\_, root                                |
-| 3   | `taxonomy(constant)`                                            | taxonomy                                                          | None                                                  | agent*, infrastructure*, surface*, contract*, capabilities\_, root                                |
-| 4   | `contract(port&#124;protocol)`                                  | taxonomy, contract                                                | taxonomy                                              | agent*, infrastructure*, surface*, capabilities*, contract(aggregate), root                       |
-| 5   | `contract(aggregate)`                                           | taxonomy, contract                                                | taxonomy, contract(port&#124;protocol&#124;aggregate) | agent*, infrastructure*, surface*, capabilities*, root                                            |
-| 6   | `capabilities`                                                  | taxonomy, contract                                                | taxonomy, contract(protocol)                          | infrastructure*, surface*, agent*, capabilities*, root                                            |
-| 7   | `infrastructure`                                                | taxonomy, contract                                                | taxonomy, contract(port)                              | surface*, capabilities*, agent*, infrastructure*, root                                            |
-| 8   | `agent(orchestrator)`                                           | taxonomy, contract(aggregate), contract(port), contract(protocol) | taxonomy, contract(aggregate)                         | surfaces, infrastructure, capabilities, root                                                      |
-| 9   | `surfaces(command&#124;controller&#124;page&#124;entry)`        | taxonomy, contract                                                | taxonomy, contract(aggregate)                         | agent*, infrastructure*, capabilities\_, contract(port), contract(protocol), root                 |
-| 10  | `surfaces(hook&#124;store&#124;action&#124;screen&#124;router)` | taxonomy                                                          | None                                                  | agent*, infrastructure*, capabilities*, contract(port), contract(protocol), smart surfaces*, root |
-| 11  | `surfaces(component&#124;view&#124;layout)`                     | taxonomy                                                          | taxonomy                                              | agent*, contract*, infrastructure*, capabilities*, all surface\_, root                            |
+| #  | Scope                                                             | Allowed Imports                                                   | Mandatory Imports                                     | Forbidden Imports                                                                                 |
+| -- | ----------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 1  | `taxonomy(vo)`                                                  | taxonomy                                                          | None                                                  | agent*, infrastructure*, surface*, contract*, capabilities\_, root                                |
+| 2  | `taxonomy(entity,error,event)`                                  | taxonomy                                                          | taxonomy(vo&#124;constant)                            | agent*, infrastructure*, surface*, contract*, capabilities\_, root                                |
+| 3  | `taxonomy(constant)`                                            | taxonomy                                                          | None                                                  | agent*, infrastructure*, surface*, contract*, capabilities\_, root                                |
+| 4  | `contract(port&#124;protocol)`                                  | taxonomy, contract                                                | taxonomy                                              | agent*, infrastructure*, surface*, capabilities*, contract(aggregate), root                       |
+| 5  | `contract(aggregate)`                                           | taxonomy, contract                                                | taxonomy, contract(port&#124;protocol&#124;aggregate) | agent*, infrastructure*, surface*, capabilities*, root                                            |
+| 6  | `capabilities`                                                  | taxonomy, contract                                                | taxonomy, contract(protocol)                          | infrastructure*, surface*, agent*, capabilities*, root                                            |
+| 7  | `infrastructure`                                                | taxonomy, contract                                                | taxonomy, contract(port)                              | surface*, capabilities*, agent*, infrastructure*, root                                            |
+| 8  | `agent(orchestrator)`                                           | taxonomy, contract(aggregate), contract(port), contract(protocol) | taxonomy, contract(aggregate)                         | surfaces, infrastructure, capabilities, root                                                      |
+| 9  | `surfaces(command&#124;controller&#124;page&#124;entry)`        | taxonomy, contract                                                | taxonomy, contract(aggregate)                         | agent*, infrastructure*, capabilities\_, contract(port), contract(protocol), root                 |
+| 10 | `surfaces(hook&#124;store&#124;action&#124;screen&#124;router)` | taxonomy                                                          | None                                                  | agent*, infrastructure*, capabilities*, contract(port), contract(protocol), smart surfaces*, root |
+| 11 | `surfaces(component&#124;view&#124;layout)`                     | taxonomy                                                          | taxonomy                                              | agent*, contract*, infrastructure*, capabilities*, all surface\_, root                            |
 
 ---
 
@@ -211,8 +184,8 @@ Two sub-checks:
 1. **Missing definition** — file has no struct/enum/trait/class at all
 2. **Empty definition** — `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}`
 
-| Checker                  | Method                               | Path                                                     |
-| ------------------------ | ------------------------------------ | -------------------------------------------------------- |
+| Checker                    | Method                                 | Path                                                       |
+| -------------------------- | -------------------------------------- | ---------------------------------------------------------- |
 | `ArchClassChecker`       | `check_mandatory_class_definition()` | `code-analysis/capabilities_class_checker.rs`            |
 | `DeadInheritanceChecker` | `check_dead_inheritance()`           | `code-analysis/capabilities_dead_inheritance_checker.rs` |
 
