@@ -14,7 +14,6 @@ use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
-use std::collections::HashSet;
 use std::sync::Arc;
 
 /// Checks AES204 rules: dummy imports, dummy functions, dummy trait impls,
@@ -294,7 +293,7 @@ impl DummyImportChecker {
 
         let imported = self.parser.get_imported_symbols(&lines, lang);
         let has_real_usage = imported.iter().any(|(symbol, line_no)| {
-            let is_taxonomy = lines.get(line_no.saturating_sub(1)).map_or(false, |line| {
+            let is_taxonomy = lines.get(line_no.saturating_sub(1)).is_some_and(|line| {
                 let t = line.trim();
                 match lang {
                     LanguageVO::Rust => {
