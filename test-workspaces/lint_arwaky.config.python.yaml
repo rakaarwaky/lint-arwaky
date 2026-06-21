@@ -88,13 +88,12 @@ architecture:
             ]
     infrastructure:
       suffix:
-        - flexible:
+            - flexible:
             [
               "adapter",
               "provider",
               "scanner",
               "client",
-              "constants",
               "schemas",
               "lifespan",
               "wrapper",
@@ -103,7 +102,6 @@ architecture:
               "variants",
               "detector",
               "patterns",
-              "util",
               "system",
               "repository",
               "cache",
