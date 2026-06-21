@@ -146,10 +146,8 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 | FR-027  | Primitive usage — no raw primitives in taxonomy domain types                     | AES401   |
 | FR-035  | Contract primitive checker — contract uses VO/constants, not primitives          | AES402   |
 | FR-037  | Capability role — capability must implement a protocol                           | AES403   |
-| FR-045a | Capability Dispatch Method Check — capability routing bottleneck detection       | AES403   |
-| FR-046a | Capability Load Balancing Check — capability dispatch load analysis              | AES403   |
-| FR-404  | Infrastructure role — infra must implement contract, no direct surface import    | AES404   |
-| FR-038  | Agent role — no `any` type, no low-level infra imports in orchestrators        | AES405   |
+| FR-404  | Infrastructure role — infra must implement contract                              | AES404   |
+| FR-038  | Agent role — no `any` type in orchestrators                                     | AES405   |
 | FR-039  | Surface role — passive surface must not contain business logic                   | AES406   |
 
 ### 5.11 `git-hooks` — Git Hooks
