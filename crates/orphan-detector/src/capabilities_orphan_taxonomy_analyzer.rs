@@ -46,9 +46,12 @@ pub fn is_taxonomy_orphan(
     inbound: &InboundLinkMap,
 ) -> OrphanIndicatorResult {
     let is_orphan = !inbound.mapping.contains_key(f.value());
+    let stem = f.value().split('/').next_back().unwrap_or("").replace(".rs", "").replace(".py", "");
     OrphanIndicatorResult::new(
         is_orphan,
-        AesOrphanViolation::OrphanCode {
+        AesOrphanViolation::TaxonomyOrphan {
+            stem,
+            category: "",
             reason: Some("Taxonomy VO has no inbound imports.".into()),
         }
         .to_string(),
@@ -93,6 +96,7 @@ pub fn check_taxonomy_orphan(
         }
     }
     if !imported {
+        let category = if is_utility_or_helper { "utility" } else { "vo" };
         let reason = if is_utility_or_helper {
             format!("Taxonomy '{}' is not imported by any file.", stem)
         } else {
@@ -100,7 +104,9 @@ pub fn check_taxonomy_orphan(
         };
         violations.push(crate::mk_orphan_result(
             fp,
-            &AesOrphanViolation::OrphanCode {
+            &AesOrphanViolation::TaxonomyOrphan {
+                stem: stem.clone(),
+                category,
                 reason: Some(reason.into()),
             }
             .to_string(),

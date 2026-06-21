@@ -7,6 +7,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::orphan_detector::contract_orphan_protocol::ISurfacesOrphanProtocol;
+use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
@@ -76,8 +77,8 @@ pub fn is_surface_orphan(
     }
 
     // Check if imported by entry or router
-    let fp = f.value();
-    let basename = std::path::Path::new(fp)
+    let fp_val = f.value();
+    let basename = std::path::Path::new(fp_val)
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("");
@@ -87,7 +88,7 @@ pub fn is_surface_orphan(
         .replace(".ts", "")
         .replace(".js", "");
 
-    if let Ok(content) = std::fs::read_to_string(fp) {
+    if let Ok(content) = std::fs::read_to_string(fp_val) {
         // Check if this surface is imported by any entry or router file
         let root = std::path::Path::new(".");
         if let Ok(workspace_root) =
@@ -131,7 +132,18 @@ pub fn is_surface_orphan(
         }
     }
 
-    OrphanIndicatorResult::new(true, "Surface is unreachable.".into(), Severity::HIGH)
+    let suffix = get_surface_suffix(basename);
+    let category = surface_category(&suffix);
+    OrphanIndicatorResult::new(
+        true,
+        AesOrphanViolation::SurfaceOrphan {
+            category,
+            stem,
+            reason: Some("Surface is unreachable.".into()),
+        }
+        .to_string(),
+        Severity::HIGH,
+    )
 }
 
 fn check_imported_by_entry_or_router(
@@ -214,10 +226,12 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
             }
             OrphanIndicatorResult::new(
                 !imported_by_entry_or_router,
-                format!(
-                    "Smart surface '{}' not imported by any entry point or router.",
-                    stem
-                ),
+                AesOrphanViolation::SurfaceOrphan {
+                    category: "smart",
+                    stem: stem.clone(),
+                    reason: Some(format!("Smart surface '{}' not imported by any entry point or router.", stem).into()),
+                }
+                .to_string(),
                 Severity::HIGH,
             )
         }
@@ -238,10 +252,12 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
             }
             OrphanIndicatorResult::new(
                 !imported_by_smart,
-                format!(
-                    "Utility surface '{}' not imported by any smart surface.",
-                    stem
-                ),
+                AesOrphanViolation::SurfaceOrphan {
+                    category: "utility",
+                    stem: stem.clone(),
+                    reason: Some(format!("Utility surface '{}' not imported by any smart surface.", stem).into()),
+                }
+                .to_string(),
                 Severity::HIGH,
             )
         }
@@ -263,10 +279,12 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
             }
             OrphanIndicatorResult::new(
                 !imported,
-                format!(
-                    "Passive surface '{}' not imported by any smart or utility surface.",
-                    stem
-                ),
+                AesOrphanViolation::SurfaceOrphan {
+                    category: "passive",
+                    stem: stem.clone(),
+                    reason: Some(format!("Passive surface '{}' not imported by any smart or utility surface.", stem).into()),
+                }
+                .to_string(),
                 Severity::HIGH,
             )
         }

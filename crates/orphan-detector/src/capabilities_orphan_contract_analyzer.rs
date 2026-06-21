@@ -5,6 +5,7 @@ use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
+use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct ContractOrphanAnalyzer {}
@@ -104,7 +105,13 @@ pub fn is_contract_orphan(
     if !has_impl {
         return OrphanIndicatorResult::new(
             true,
-            format!("Contract {} '{}' not implemented.", suffix, trait_name),
+            AesOrphanViolation::ContractOrphan {
+                suffix: suffix.clone(),
+                trait_name: trait_name.clone(),
+                target_layer: target_prefix,
+                reason: Some(format!("Contract {} '{}' not implemented by any {} file.", suffix, trait_name, target_prefix).into()),
+            }
+            .to_string(),
             Severity::LOW,
         );
     }
@@ -136,10 +143,13 @@ pub fn is_contract_orphan(
         if !called_by_orchestrator_or_container {
             return OrphanIndicatorResult::new(
                 true,
-                format!(
-                    "Contract {} '{}' not called by any orchestrator or container.",
-                    suffix, trait_name
-                ),
+                AesOrphanViolation::ContractOrphan {
+                    suffix: suffix.clone(),
+                    trait_name: trait_name.clone(),
+                    target_layer: target_prefix,
+                    reason: Some(format!("Contract {} '{}' not called by any orchestrator or container.", suffix, trait_name).into()),
+                }
+                .to_string(),
                 Severity::LOW,
             );
         }
@@ -168,10 +178,13 @@ pub fn is_contract_orphan(
         if !called_by_surface_or_container {
             return OrphanIndicatorResult::new(
                 true,
-                format!(
-                    "Contract aggregate '{}' not called by any surface or container.",
-                    trait_name
-                ),
+                AesOrphanViolation::ContractOrphan {
+                    suffix: suffix.clone(),
+                    trait_name: trait_name.clone(),
+                    target_layer: target_prefix,
+                    reason: Some(format!("Contract aggregate '{}' not called by any surface or container.", trait_name).into()),
+                }
+                .to_string(),
                 Severity::LOW,
             );
         }

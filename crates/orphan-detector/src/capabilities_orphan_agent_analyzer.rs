@@ -39,7 +39,8 @@ pub fn is_agent_orphan(_f: &FilePath, _root_dir: &FilePath) -> OrphanIndicatorRe
 pub fn is_agent_orphan_raw_wired(is_wired: bool) -> OrphanIndicatorResult {
     OrphanIndicatorResult::new(
         !is_wired,
-        AesOrphanViolation::OrphanCode {
+        AesOrphanViolation::AgentOrphan {
+            agg_name: String::new(),
             reason: Some(
                 "Agent orphan: contract aggregate not called by any surface or container.".into(),
             ),
@@ -133,7 +134,8 @@ pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicato
         if !called_by_surface_or_container {
             return OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::OrphanCode {
+                AesOrphanViolation::AgentOrphan {
+                    agg_name: agg_name.clone(),
                     reason: Some(
                         format!(
                             "Agent orphan: aggregate '{}' not called by any surface.",

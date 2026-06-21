@@ -26,6 +26,7 @@ use shared::orphan_detector::contract_orphan_protocol::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     IInfrastructureOrphanProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
 };
+use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::role_rules::taxonomy_layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_SURFACES,
     LAYER_TAXONOMY,
@@ -265,9 +266,14 @@ impl ArchOrphanAnalyzer {
             .collect();
         let orphan = !alive.contains(&f.value().to_string())
             && !inbound_links.mapping.contains_key(f.value());
+        let stem = f.value().split('/').next_back().unwrap_or("").to_string();
         OrphanIndicatorResult::new(
             orphan,
-            "File is unreachable and has no inbound imports.".into(),
+            AesOrphanViolation::OrphanCode {
+                stem,
+                reason: Some("File is unreachable and has no inbound imports.".into()),
+            }
+            .to_string(),
             Severity::MEDIUM,
         )
     }

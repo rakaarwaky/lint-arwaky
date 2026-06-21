@@ -3,6 +3,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::orphan_detector::contract_orphan_protocol::IInfrastructureOrphanProtocol;
+use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct InfrastructureOrphanAnalyzer {}
@@ -76,7 +77,11 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
 
         OrphanIndicatorResult::new(
             true,
-            "Not reachable from any entry point.".into(),
+            AesOrphanViolation::InfrastructureOrphan {
+                stem,
+                reason: Some("Not reachable from any entry point and not wired in any container.".into()),
+            }
+            .to_string(),
             Severity::MEDIUM,
         )
     }

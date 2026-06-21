@@ -81,7 +81,8 @@ pub fn is_infra_cap_orphan(
 
     OrphanIndicatorResult::new(
         true,
-        AesOrphanViolation::OrphanCode {
+        AesOrphanViolation::CapabilitiesOrphan {
+            stem,
             reason: Some("Not reachable from any entry point.".into()),
         }
         .to_string(),
@@ -304,7 +305,8 @@ pub fn check_capabilities_orphan(
     if !wired {
         violations.push(crate::mk_orphan_result(
             fp,
-            &AesOrphanViolation::OrphanCode {
+            &AesOrphanViolation::CapabilitiesOrphan {
+                stem: stem.clone(),
                 reason: Some(format!("capabilities '{}' not wired in container.", stem).into()),
             }
             .to_string(),
