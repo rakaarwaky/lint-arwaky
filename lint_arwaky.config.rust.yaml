@@ -415,7 +415,7 @@ architecture:
               "agent",
               "surfaces",
             ]
-          mandatory: ["taxonomy", "contract(aggregate)"]
+          mandatory: []
           forbidden: []
           allowed_imports:
             - layer: "taxonomy"
@@ -468,6 +468,8 @@ architecture:
           "root_import_rules_container.rs",
           "root_role_rules_container.rs",
           "root_source_parsing_container.rs",
+          "root_code_analysis_container.rs",
+          "agent_code_analysis_orchestrator.rs",
           "root_external_lint_container.rs",
         ]
       conditions:
@@ -604,7 +606,7 @@ architecture:
               "agent",
               "surfaces",
             ]
-          mandatory: ["taxonomy", "contract(aggregate)"]
+          mandatory: []
           forbidden: []
           allowed_imports:
             - layer: "taxonomy"

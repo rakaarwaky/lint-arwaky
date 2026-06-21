@@ -35,7 +35,9 @@ fn main() -> ExitCode {
     let import_container = ImportContainer::new(source_parser.clone());
     let analyzer = import_container.analyzer();
     let checker_container =
-        code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(analyzer.clone());
+        code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(
+            analyzer.clone(),
+        );
     init_global_checker(Arc::new(checker_container));
 
     let arch_linter = code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()

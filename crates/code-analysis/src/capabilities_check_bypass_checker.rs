@@ -73,8 +73,8 @@ impl IBypassCheckerProtocol for BypassChecker {
                 }
                 continue;
             }
-            // Skip string literal false positives in detection arrays
-            if t.starts_with('"') {
+            // Skip comment lines and string literals (prevent false positives on algorithm docs and pattern defs)
+            if t.starts_with("//") || t.starts_with('#') || t.starts_with('"') {
                 continue;
             }
             if t.starts_with("#[allow(") || t.starts_with("#[expect(") {

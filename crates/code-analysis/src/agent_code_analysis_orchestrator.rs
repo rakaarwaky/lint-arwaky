@@ -98,8 +98,8 @@ pub fn resolve_target(path: Option<String>) -> String {
 
 /// Run a full AES self-lint on a path.
 pub fn lint_path(path: &str) -> Vec<LintResult> {
-    let root = FilePath::new(path.to_string())
-        .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+    let root =
+        FilePath::new(path.to_string()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
     let orchestrator = CodeAnalysisOrchestrator::new();
     orchestrator.run_self_lint(&root.value)
 }

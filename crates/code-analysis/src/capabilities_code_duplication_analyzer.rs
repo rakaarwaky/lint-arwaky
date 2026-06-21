@@ -112,7 +112,9 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             let msg = format!(
                 "Duplicate block found across {} files (similarity ~{}%). Locations: {}",
                 locations.len(),
-                100usize.saturating_sub(locations.len().saturating_sub(1) * 5).min(100),
+                100usize
+                    .saturating_sub(locations.len().saturating_sub(1) * 5)
+                    .min(100),
                 locations
                     .iter()
                     .take(3)

@@ -201,9 +201,13 @@ impl fmt::Display for AesCodeAnalysisViolation {
                     .as_ref()
                     .map(|r| r.to_string())
                     .unwrap_or(default_why);
-                write!(f, "AES305 CODE_DUPLICATION: Duplicate code block detected.\n\
+                write!(
+                    f,
+                    "AES305 CODE_DUPLICATION: Duplicate code block detected.\n\
                         WHY? {}\n\
-                        FIX: Extract the duplicated logic into a shared function or module.", why)
+                        FIX: Extract the duplicated logic into a shared function or module.",
+                    why
+                )
             }
         }
     }

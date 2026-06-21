@@ -72,21 +72,21 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
         }
 
         let has_class = content.contains("\nclass ")
-                || content.starts_with("class ")
-                || content.contains("\npub struct ")
-                || content.starts_with("pub struct ")
-                || content.contains("\nstruct ")
-                || content.starts_with("struct ")
-                || content.contains("\npub trait ")
-                || content.starts_with("pub trait ")
-                || content.contains("\ntrait ")
-                || content.starts_with("trait ")
-                || content.contains("\npub enum ")
-                || content.starts_with("pub enum ")
-                || content.contains("\nenum ")
-                || content.starts_with("enum ")
-                || content.contains("\nexport class ")
-                || content.contains("\nexport default class ");
+            || content.starts_with("class ")
+            || content.contains("\npub struct ")
+            || content.starts_with("pub struct ")
+            || content.contains("\nstruct ")
+            || content.starts_with("struct ")
+            || content.contains("\npub trait ")
+            || content.starts_with("pub trait ")
+            || content.contains("\ntrait ")
+            || content.starts_with("trait ")
+            || content.contains("\npub enum ")
+            || content.starts_with("pub enum ")
+            || content.contains("\nenum ")
+            || content.starts_with("enum ")
+            || content.contains("\nexport class ")
+            || content.contains("\nexport default class ");
 
         if !has_class {
             violations.push(LintResult::new_arch(
