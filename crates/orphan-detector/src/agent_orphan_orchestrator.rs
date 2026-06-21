@@ -252,11 +252,7 @@ impl ArchOrphanAnalyzer {
         }
 
         if layer_str.contains(LAYER_ROOT) {
-            return OrphanIndicatorResult::new(
-                false,
-                String::new(),
-                Severity::MEDIUM,
-            );
+            return OrphanIndicatorResult::new(false, String::new(), Severity::MEDIUM);
         }
 
         self._is_generic_orphan_helper(&fp, &alive_set, &context.inbound_links)

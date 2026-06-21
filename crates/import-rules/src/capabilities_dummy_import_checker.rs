@@ -2,7 +2,7 @@
 // AES204 rule: Symbols imported solely to silence unused-import warnings (via dummy/stub functions
 // or PhantomData markers) are violations. Additionally, surface-layer files must use taxonomy VOs
 // in real function signatures, must call aggregate methods instead of direct logic, and must not
-// contain empty/todo/panic trait implementations.
+// contain empty/todo stub trait implementations.
 
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
@@ -25,7 +25,7 @@ use std::sync::Arc;
 ///      flag the rest as dummy-only imports (they exist only to silence unused-import warnings).
 ///   2. `check_dummy_functions` — Find functions named _use_* (e.g. `fn _use_imports()`) that exist
 ///      solely to consume imported symbols; flag each as a dummy function violation.
-///   3. `check_dummy_impls` — Find trait implementations that are stubs (empty body, todo!, panic);
+///   3. `check_dummy_impls` — Find trait implementations that are stubs (empty body);
 ///      flag each as a dummy impl violation.
 ///   4. `check_taxonomy_intent` — For surface-layer files: if a dummy function exists but the real
 ///      function signatures use only primitive types (i32, String, bool) instead of taxonomy VOs,
@@ -48,7 +48,7 @@ impl DummyImportChecker {
     /// Steps:
     ///   1. Split content into lines and detect the programming language.
     ///   2. Get all dummy function line ranges (functions named _use_*).
-    ///   3. Get all dummy trait impls (empty/todo/panic implementations).
+    ///   3. Get all dummy trait impls (empty/todo stub implementations).
     ///   4. Detect the file's architectural layer.
     ///   5. Extract every imported symbol with its line number.
     ///   6. For each symbol, check if it is used in real (non-dummy, non-stub) code.
@@ -166,12 +166,12 @@ impl DummyImportChecker {
         }
     }
 
-    /// Sub-check 3: Detect trait implementations that are stubs (empty body, todo!, panic!, unimplemented!).
+    /// Sub-check 3: Detect trait implementations that are stubs (empty body).
     ///
     /// Steps:
     ///   1. Split content into lines.
     ///   2. Detect the file's architectural layer.
-    ///   3. Use parser to find all dummy/stub trait impls (e.g. `fn foo() { todo!() }`).
+    ///   3. Use parser to find all dummy/stub trait impls (e.g. empty functions).
     ///   4. Flag each as an AES204 HIGH violation — contract methods must have real behavior.
     fn check_dummy_impls(
         &self,
@@ -204,11 +204,12 @@ impl DummyImportChecker {
                     source_layer: LayerNameVO::new(layer_name.clone()),
                     import_type: SymbolName::new(trait_name),
                     intent: SymbolName::new(
-                        "Implement contract methods with real behavior instead of empty/todo/panic stubs"
+                        "Implement contract methods with real behavior instead of empty/todo stubs"
                             .to_string(),
                     ),
                     reason: None,
-                }.to_string(),
+                }
+                .to_string(),
             ));
         }
     }
