@@ -1,4 +1,10 @@
 // PURPOSE: LayerDetectionAnalyzer — layer detection via filename prefix (FRD v1.1), directory fallback, and path matching
+// This is the central analyzer that implements IAnalyzer. It provides:
+//   1. Layer detection per file (prefix-based → directory-based → path-based).
+//   2. Module layer detection (direct match → prefix match → path match).
+//   3. Specialised sub-layer resolution (e.g., "capabilities(command)" from suffix).
+//   4. Layer map construction with rule merging (global rules + per-layer rules + specialised rules).
+// Used by all AES rule checkers to determine which architectural layer a file belongs to.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -14,6 +20,22 @@ use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::taxonomy_layer_vo::LayerNameVO;
 use std::sync::Arc;
 
+/// Central layer detection and rule analysis engine implementing IAnalyzer.
+///
+/// Capabilities:
+///   - `detect_layer(file, root)` → determines which architectural layer a file belongs to
+///     using three strategies in priority order: prefix-based (FRD v1.1), directory-based, path-based.
+///   - `detect_module_layer(module_path)` → determines which layer a module path imports from.
+///   - `resolve_specialized_layer(base, file)` → resolves sub-layers (e.g., "capabilities(command)").
+///   - `new(config)` → builds a complete layer map by merging global rules, base-layer rules,
+///     and specialised sub-layer rules from the rule configuration.
+///
+/// Constructor workflow:
+///   1. Index all config rules by layer scope (both base name and full scoped name).
+///   2. For each layer definition: merge global rules + base-layer rules into the definition.
+///   3. For each scoped rule (e.g., "agent(container)"): create specialised sub-layer entries
+///      by cloning the base definition and overlaying the scoped rule's values.
+///   4. Replace config.layers with the enriched layer map for fast lookup.
 pub struct LayerDetectionAnalyzer {
     pub config: ArchitectureConfig,
     pub layer_map: LayerMapVO,
@@ -22,12 +44,27 @@ pub struct LayerDetectionAnalyzer {
 }
 
 impl LayerDetectionAnalyzer {
+    /// Construct a new LayerDetectionAnalyzer with merged rule configuration.
+    ///
+    /// Steps:
+    ///   1. Build a `rules_by_layer` index: for each rule, map by both its base scope
+    ///      (e.g., "agent") and its full scoped name (e.g., "agent(container|registry)").
+    ///   2. Iterate all layer definitions from config. For each:
+    ///      a. Apply global rules (empty scope key).
+    ///      b. Apply base-layer rules (e.g., rules scoped to "agent").
+    ///      c. Skip specialised scoped rules (e.g., "agent(container)") at this stage.
+    ///   3. For each scoped rule "X(Y|Z)":
+    ///      a. Parse the base name X and the set of suffixes {Y, Z}.
+    ///      b. Clone the base layer definition.
+    ///      c. Overlay the scoped rule's values (forbidden, mandatory, allowed, etc.).
+    ///      d. Insert as a new sub-layer entry "X(Y)", "X(Z)".
+    ///   4. Store the enriched config and build a LayerMapVO for fast lookups.
     pub fn new(
         mut config: ArchitectureConfig,
         fs: Arc<dyn IFileSystemPort>,
         parser: Arc<dyn ISourceParserPort>,
     ) -> Self {
-        // Group rules by layer name — both base name and full scope
+        // Step 1: Index all rules by layer scope (both base + full scoped)
         let mut rules_by_layer: HashMap<String, Vec<&ArchitectureRule>> = HashMap::new();
         for rule in &config.rules {
             let scope = rule.scope.to_string();
@@ -43,15 +80,16 @@ impl LayerDetectionAnalyzer {
             }
         }
 
+        // Step 2: Merge global + base-layer rules into each layer definition
         let mut new_layers: HashMap<LayerNameVO, LayerDefinition> = HashMap::new();
         for (lname, mut ldef) in config.layers {
             let lstr = lname.to_string();
             let base_name = lstr.split('(').next().unwrap_or(&lstr).to_string();
-            // Apply: global rules + base-layer rules
+            // Apply: global rules (key="") + base-layer rules (key=base_name)
             for key in &[String::new(), base_name.clone()] {
                 if let Some(rules) = rules_by_layer.get(key.as_str()) {
                     for rule in rules {
-                        // Skip specialized rules (e.g. contract(port)) when processing base layers
+                        // Skip specialised scoped rules (e.g. contract(port)) when processing base layers
                         if key.as_str() == base_name && rule.scope.value.contains('(') {
                             continue;
                         }
@@ -84,9 +122,8 @@ impl LayerDetectionAnalyzer {
             new_layers.insert(lname, ldef);
         }
 
-        // Create specialized sub-layer entries from rules (e.g., "agent(container)")
-        // This enables resolve_specialized_layer to find and return these sub-layers
-        // and apply per-role forbidden/mandatory import rules correctly.
+        // Step 3: Create specialised sub-layer entries from scoped rules
+        // e.g., "agent(container)" → clone agent def + overlay container-specific rules
         for rule in &config.rules {
             let scope = rule.scope.to_string();
             if !scope.contains('(') {
@@ -103,6 +140,7 @@ impl LayerDetectionAnalyzer {
                     new_layers.get(&base_key).cloned()
                 };
                 if let Some(base_def) = base_def_opt {
+                    // Step 3a: Parse suffixes (separated by | or ,)
                     let suffixes: Vec<&str> = if inner.contains('|') {
                         inner
                             .split('|')
@@ -116,6 +154,7 @@ impl LayerDetectionAnalyzer {
                             .filter(|s| !s.is_empty())
                             .collect()
                     };
+                    // Step 3b-d: Create one sub-layer per suffix
                     for suffix in suffixes {
                         let specialized_key =
                             LayerNameVO::new(format!("{}({})", base_name, suffix));
@@ -123,7 +162,7 @@ impl LayerDetectionAnalyzer {
                             continue;
                         }
                         let mut spec_def = base_def.clone();
-                        // Apply specialized rules
+                        // Step 3c: Overlay scoped rule values onto the cloned definition
                         if let Some(rules) = rules_by_layer.get(&scope) {
                             for r in rules {
                                 if !r.exceptions.values.is_empty() {
@@ -144,12 +183,14 @@ impl LayerDetectionAnalyzer {
                                 }
                             }
                         }
+                        // Step 3d: Insert the new specialised sub-layer
                         new_layers.insert(specialized_key, spec_def);
                     }
                 }
             }
         }
 
+        // Step 4: Store enriched config and build LayerMapVO
         config.layers = new_layers;
         let layer_map = LayerMapVO::new(config.layers.clone());
         Self {
@@ -160,15 +201,30 @@ impl LayerDetectionAnalyzer {
         }
     }
 
-    /// Detect layer from filename — prioritize prefix-based detection (FRD v1.1),
-    /// fallback ke path-based untuk root layer files.
+    /// Detect layer from filename — three strategies in priority order.
+    ///
+    /// Strategy 1 — Prefix-based (FRD v1.1):
+    ///   Extract the layer prefix from the filename (e.g., "capabilities_foo.rs" → "capabilities").
+    ///   Then resolve any specialised sub-layer from the file suffix.
+    ///
+    /// Strategy 2 — Directory-based fallback:
+    ///   If no prefix found, check the immediate parent directory name against a known
+    ///   directory-to-layer mapping (e.g., "taxonomy/" → taxonomy, "surfaces/" → surfaces).
+    ///   Strips /src and variant suffixes to find the meaningful directory.
+    ///
+    /// Strategy 3 — Path-based matching:
+    ///   Compute the relative path from root_dir and compare against each layer definition's
+    ///   `path` field. Sorted by longest path first. Also handles non-recursive vs recursive matching.
+    ///
+    /// Special: root entry files (_main_entry.rs) and files at scan root get "root" layer.
     pub fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String> {
         let filename = Path::new(file_path)
             .file_name()
             .and_then(|s| s.to_str())
             .unwrap_or("");
 
-        // PREFIX-BASED DETECTION (FRD v1.1)
+        // STRATEGY 1: PREFIX-BASED DETECTION (FRD v1.1)
+        // Check if filename starts with a known layer prefix (e.g., "capabilities_", "contract_")
         if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(filename) {
             return Some(self.resolve_specialized_layer(&layer, file_path));
         }
@@ -178,15 +234,15 @@ impl LayerDetectionAnalyzer {
             return Some("root".to_string());
         }
 
-        // DIRECTORY-BASED FALLBACK: If prefix detection failed, check the immediate
-        // parent directory name against known layer names. This supports test projects
-        // and codebases organized by directory (e.g., "taxonomy/foo.rs" → taxonomy layer)
-        // without requiring every file to carry the layer prefix.
+        // STRATEGY 2: DIRECTORY-BASED FALLBACK
+        // Check the parent directory name against known layer directory names.
+        // This supports test projects organized by directory structure (no prefix requirements).
         let mut parent_dir_str = Path::new(file_path)
             .parent()
             .and_then(|p| p.to_str())
             .unwrap_or("")
             .replace('\\', "/");
+        // Strip /src and variant suffixes to find the meaningful directory layer root
         for suffix in &["/src", "/src-rust", "/src-python", "/src-javascript"] {
             if parent_dir_str.ends_with(suffix) {
                 parent_dir_str = parent_dir_str[..parent_dir_str.len() - suffix.len()].to_string();
@@ -201,6 +257,7 @@ impl LayerDetectionAnalyzer {
             parent_dir_str = "".to_string();
         }
 
+        // Look up the last directory component in the known DIR_MAP
         if !parent_dir_str.is_empty() && parent_dir_str != "." {
             let raw_dir = parent_dir_str
                 .split('/')
@@ -208,6 +265,7 @@ impl LayerDetectionAnalyzer {
                 .unwrap_or(&parent_dir_str);
             let dir_name = raw_dir.replace('-', "_");
             const DIR_MAP: &[(&str, &str)] = &[
+                // Standard AES layer directories
                 ("taxonomy", "taxonomy"),
                 ("contract", "contract"),
                 ("capabilities", "capabilities"),
@@ -230,13 +288,13 @@ impl LayerDetectionAnalyzer {
             }
         }
 
-        // FALLBACK: Path-based detection untuk root entry files (cli_main_entry, mcp_main_entry)
+        // STRATEGY 3: PATH-BASED MATCHING
         let rel = taxonomy_path_helper::get_relative_path(file_path, root_dir);
 
-        // PRIORITY: Files at scan root (no subdirectory) with no prefix → root layer.
+        // Priority: Files at scan root (no subdirectory) with no prefix → root layer.
         // This MUST be checked BEFORE the path-based loop because parse_config_yaml
-        // adds path: \".\" to all layers without an explicit path, causing Case 4 of
-        // match_layer_nonrecursive to match the first iterated layer (non-deterministic).
+        // adds path: "." to all layers without an explicit path, causing the first
+        // iterated layer to match non-deterministically.
         if Path::new(&rel)
             .parent()
             .map(|p| p.to_string_lossy() == "")
@@ -245,10 +303,12 @@ impl LayerDetectionAnalyzer {
             return Some("root".to_string());
         }
 
+        // Sort layer definitions by path length (longest first) for most-specific-first matching
         let mut sorted_layers: Vec<(&LayerNameVO, &LayerDefinition)> =
             self.config.layers.iter().collect();
         sorted_layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
 
+        // Compare relative path against each layer's configured path
         for (name, def) in &sorted_layers {
             if name.value.contains('(') {
                 continue;
@@ -268,18 +328,27 @@ impl LayerDetectionAnalyzer {
         None
     }
 
-    /// Extract layer name dari filename prefix.
-    /// e.g. "capabilities_import_checker.rs" → Some("capabilities")
-    ///      "surface_command_handler.rs" → Some("surfaces")
-    ///      "root_code_analysis_container.rs" → Some("root")
-    ///      "cli_main_entry.rs" → None (root)
-    /// Determine which layer a dotted module path belongs to.
+    /// Determine which architectural layer a module path (from an import statement) belongs to.
     ///
-    /// Three strategies (prefix-based first per FRD v1.1):
-    ///   1. Direct segment match against layer names.
-    ///   2. Prefix-based match: segment starts with layer prefix (e.g. "taxonomy_definition_vo").
-    ///   3. Path-based match: module-path-as-filesystem-path contains the layer path.
+    /// Three strategies, in priority order:
+    ///
+    /// Strategy 1 — Direct segment match:
+    ///   Compare each segment of the module path against known layer names.
+    ///   E.g., "shared::taxonomy::..." → segment "taxonomy" matches → taxonomy layer.
+    ///
+    /// Strategy 2 — Prefix-based match (FRD v1.1):
+    ///   If no direct match, check if any segment starts with a layer prefix.
+    ///   E.g., "taxonomy_definition_vo" starts with "taxonomy_" → taxonomy layer.
+    ///
+    /// Strategy 3 — Path-based match:
+    ///   Convert the module path to a filesystem path and check if it contains any
+    ///   layer definition's configured path.
+    ///   E.g., module "crates/shared/taxonomy" contains path "shared" → taxonomy layer.
+    ///
+    /// Each match is refined via `refine_module_layer` to detect specialised sub-layers
+    /// (e.g., "capabilities(command)" when the segment after the layer name has a suffix).
     pub fn detect_module_layer(&self, module: &str) -> Option<String> {
+        // Split module path into meaningful segments (handles ::, ., /, \ separators)
         let meaningful_parts: Vec<&str> = module
             .split([':', '.', '/', '\\'])
             .filter(|p| !p.is_empty())
@@ -289,7 +358,7 @@ impl LayerDetectionAnalyzer {
             return None;
         }
 
-        // 1. Direct match with layer names (ignoring specialisation suffix).
+        // Strategy 1: Direct match with layer names (ignoring specialisation suffix)
         for name in self.config.layers.keys() {
             let base_name = name.value.split('(').next().unwrap_or(&name.value);
             if meaningful_parts.contains(&base_name) {
@@ -297,14 +366,14 @@ impl LayerDetectionAnalyzer {
             }
         }
 
-        // 2. Prefix-based match: segment starts with layer prefix (e.g. "taxonomy_definition_vo").
+        // Strategy 2: Prefix-based match (e.g., "taxonomy_definition_vo" → "taxonomy")
         for part in &meaningful_parts {
             if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(part) {
                 return Some(self.refine_module_layer(&layer, &meaningful_parts));
             }
         }
 
-        // 3. Match with definition paths (e.g. "src/capabilities" → "capabilities").
+        // Strategy 3: Path-based match (module path as filesystem path vs. layer paths)
         let module_as_path = module.replace('.', "/");
         for (name, def) in &self.config.layers {
             let def_path = def.path.value.trim_matches('/');
@@ -317,20 +386,33 @@ impl LayerDetectionAnalyzer {
         None
     }
 
-    /// If the file's stem ends with a suffix that corresponds to a specialised layer
-    /// (e.g. `user_command.py` → `capabilities(command)`), return that specialised name.
-    /// Otherwise return `base_layer` unchanged.
+    /// Try to resolve a specialised sub-layer from the file's suffix.
+    ///
+    /// E.g., `capabilities_user_command.rs` with base_layer="capabilities":
+    ///   → stem = "capabilities_user_command", last suffix = "command"
+    ///   → checks if "capabilities(command)" is a defined specialised layer
+    ///   → if yes, returns "capabilities(command)", else returns "capabilities".
+    ///
+    /// Steps:
+    ///   1. Extract the file stem (name without extension).
+    ///   2. Find the last underscore segment as the suffix hint.
+    ///   3. Construct the specialised layer key: "{base_layer}({suffix})".
+    ///   4. Check if this key exists in the built layer map (must have been created from scoped rules).
+    ///   5. Return the specialised name if found, otherwise the base layer unchanged.
     fn resolve_specialized_layer(&self, base_layer: &str, file_path: &str) -> String {
+        // Step 1: Get file stem
         let basename = Path::new(file_path)
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("");
 
+        // Step 2-5: Check if last underscore suffix matches a specialised sub-layer
         if let Some(underscore_pos) = basename.rfind('_') {
             let suffix = &basename[underscore_pos + 1..];
             if !suffix.is_empty() {
                 let specialized = format!("{}({})", base_layer, suffix);
                 let key = LayerNameVO::new(specialized.as_str());
+                // Step 4: Must have been created in new() from scoped rules
                 if self.config.layers.contains_key(&key) {
                     return specialized;
                 }
@@ -340,18 +422,29 @@ impl LayerDetectionAnalyzer {
         base_layer.to_string()
     }
 
-    /// Given a known base-layer name and the dotted-module parts, try to find a more
-    /// specific specialised layer by inspecting the segment immediately after the base name.
+    /// Refine a base layer to a specialised sub-layer by inspecting the segment
+    /// immediately after the layer name in a dotted module path.
     ///
-    /// E.g. parts = ["capabilities", "user_command", "UserCommand"] and base = "capabilities"
-    ///      → next part is "user_command", suffix = "command"
-    ///      → checks if "capabilities(command)" exists in layers
+    /// E.g., parts = ["capabilities", "user_command", "UserCommand"], base = "capabilities"
+    ///   → next part after "capabilities" is "user_command"
+    ///   → last underscore suffix of "user_command" is "command"
+    ///   → checks if "capabilities(command)" exists → returns it if yes.
+    ///
+    /// Steps:
+    ///   1. Find the position of the base layer name in the module parts.
+    ///   2. Get the next segment after the base layer name.
+    ///   3. Extract the last underscore suffix from that segment.
+    ///   4. Construct the specialised key and check if it exists.
+    ///   5. Return specialised name or fall back to base name.
     fn refine_module_layer(&self, base_name: &str, parts: &[&str]) -> String {
+        // Step 1-2: Find base name position and get next segment
         if let Some(idx) = parts.iter().position(|&p| p == base_name) {
             if idx + 1 < parts.len() {
                 let next_part = parts[idx + 1];
+                // Step 3: Extract suffix from next segment
                 if let Some(underscore_pos) = next_part.rfind('_') {
                     let suffix = &next_part[underscore_pos + 1..];
+                    // Step 4-5: Check if specialised sub-layer exists
                     let specialized = format!("{}({})", base_name, suffix);
                     let key = LayerNameVO::new(specialized.as_str());
                     if self.config.layers.contains_key(&key) {
@@ -364,6 +457,11 @@ impl LayerDetectionAnalyzer {
     }
 
     /// Look up a `LayerDefinition` by its layer name string.
+    /// Falls back to the base layer definition if the specialised key is not found.
+    ///
+    /// Steps:
+    ///   1. Try direct lookup with the full layer name (including parenthesised suffix).
+    ///   2. If not found, extract the base name (before the parenthesis) and try again.
     pub fn get_layer_def(&self, layer: &str) -> Option<&LayerDefinition> {
         self.config
             .layers
@@ -376,22 +474,28 @@ impl LayerDetectionAnalyzer {
 }
 
 impl IAnalyzer for LayerDetectionAnalyzer {
+    /// Return the merged architecture configuration.
     fn config(&self) -> &ArchitectureConfig {
         &self.config
     }
+    /// Return the layer map (layer name → LayerDefinition).
     fn layer_map(&self) -> &LayerMapVO {
         &self.layer_map
     }
+    /// Return the filesystem port for file I/O.
     fn fs(&self) -> &dyn IFileSystemPort {
         &*self.fs
     }
+    /// Return the source parser port for code analysis.
     fn parser(&self) -> &dyn ISourceParserPort {
         &*self.parser
     }
+    /// Adapter: delegates to internal `detect_layer` and wraps result in LayerNameVO.
     fn detect_layer(&self, f: &FilePath, root_dir: &FilePath) -> Option<LayerNameVO> {
         self.detect_layer(&f.value, &root_dir.value)
             .map(|s| LayerNameVO::new(s.as_str()))
     }
+    /// Adapter: delegates to internal `detect_module_layer` and wraps result in LayerNameVO.
     fn detect_module_layer(&self, module_path: &FilePath) -> Option<LayerNameVO> {
         self.detect_module_layer(&module_path.value)
             .map(|s| LayerNameVO::new(s.as_str()))
