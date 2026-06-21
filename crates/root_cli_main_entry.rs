@@ -58,7 +58,8 @@ fn main() -> ExitCode {
     let external_lint_aggregate_clone = external_lint_aggregate.clone();
     let source_parser_clone = source_parser.clone();
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
-        let import_container = ImportContainer::new_with_config(config.clone(), source_parser_clone.clone());
+        let import_container =
+            ImportContainer::new_with_config(config.clone(), source_parser_clone.clone());
         let naming_container =
             naming_rules::root_naming_rules_container::NamingContainer::new_with_config(
                 config.clone(),

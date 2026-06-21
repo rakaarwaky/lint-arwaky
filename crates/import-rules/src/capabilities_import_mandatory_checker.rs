@@ -45,7 +45,7 @@ impl ArchImportMandatoryChecker {
             return;
         }
 
-        let Ok(content) = std::fs::read_to_string(file) else {
+        let Ok(content) = self.parser.read_file_to_string(&file_path) else {
             return;
         };
         let file_content = FileContentVO::new(content);

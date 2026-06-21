@@ -20,10 +20,16 @@ pub struct ImportContainer {
 
 impl ImportContainer {
     pub fn new(source_parser: Arc<dyn ISourceParserPort>) -> Self {
-        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config(), source_parser)
+        Self::new_with_config(
+            shared::config_system::taxonomy_config_vo::default_aes_config(),
+            source_parser,
+        )
     }
 
-    pub fn new_with_config(config: ArchitectureConfig, source_parser: Arc<dyn ISourceParserPort>) -> Self {
+    pub fn new_with_config(
+        config: ArchitectureConfig,
+        source_parser: Arc<dyn ISourceParserPort>,
+    ) -> Self {
         let fs =
             Arc::new(file_system::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
         let parser: Arc<dyn IImportParserPort> =
@@ -46,12 +52,17 @@ impl ImportContainer {
                 parser.clone(),
             ),
         );
-        let intent =
-            Arc::new(crate::capabilities_dummy_import_checker::DummyImportChecker::new(parser));
-        let unused =
-            Arc::new(crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new());
+        let intent = Arc::new(
+            crate::capabilities_dummy_import_checker::DummyImportChecker::new(parser.clone()),
+        );
+        let unused = Arc::new(
+            crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new(parser.clone()),
+        );
         let cycle = Arc::new(
-            crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new(config),
+            crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new(
+                config,
+                parser.clone(),
+            ),
         );
 
         Self {

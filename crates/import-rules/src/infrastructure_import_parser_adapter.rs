@@ -1,9 +1,15 @@
 // PURPOSE: ImportParserAdapter — infrastructure implementation of IImportParserPort using standard filesystem and string search utilities
 
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
+use shared::import_rules::taxonomy_language_vo::LanguageVO;
+use shared::import_rules::{
+    taxonomy_cycle_helper, taxonomy_dummy_helper, taxonomy_parser_helper, taxonomy_unused_helper,
+};
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
+use shared::taxonomy_name_vo::SymbolName;
 use std::fs;
 
 pub struct ImportParserAdapter {}
@@ -190,6 +196,82 @@ impl IImportParserPort for ImportParserAdapter {
             "surfaces" | "surface" => Some(LayerNameVO::new("surfaces")),
             _ => None,
         }
+    }
+
+    fn read_file_to_string(&self, file: &FilePath) -> Result<String, std::io::Error> {
+        fs::read_to_string(file.value())
+    }
+
+    fn extract_import_modules(&self, content: &str) -> Vec<String> {
+        taxonomy_parser_helper::extract_import_modules(content)
+    }
+
+    fn get_language_from_path(&self, path: &str) -> LanguageVO {
+        LanguageVO::from_path(path)
+    }
+
+    fn get_dummy_function_ranges(&self, lines: &[&str], lang: LanguageVO) -> Vec<(usize, usize)> {
+        taxonomy_dummy_helper::dummy_function_ranges(lines, lang)
+    }
+
+    fn get_imported_symbols(&self, lines: &[&str], lang: LanguageVO) -> Vec<(String, usize)> {
+        taxonomy_dummy_helper::imported_symbols(lines, lang)
+    }
+
+    fn get_dummy_impl_traits_with_lines(&self, lines: &[&str]) -> Vec<(String, usize)> {
+        taxonomy_dummy_helper::dummy_impl_traits_with_lines(lines)
+    }
+
+    fn is_symbol_used_real(
+        &self,
+        lines: &[&str],
+        symbol: &str,
+        dummy_ranges: &[(usize, usize)],
+        dummy_impl_traits: &[String],
+    ) -> bool {
+        taxonomy_dummy_helper::symbol_used_real(lines, symbol, dummy_ranges, dummy_impl_traits)
+    }
+
+    fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
+        taxonomy_cycle_helper::detect_cycle_edges(edges)
+    }
+
+    fn extract_imported_aliases(&self, content: &str) -> std::collections::HashMap<String, String> {
+        taxonomy_unused_helper::extract_imported_aliases(content)
+    }
+
+    fn extract_exported_symbols(&self, content: &str) -> std::collections::HashSet<String> {
+        taxonomy_unused_helper::extract_exported_symbols(content)
+    }
+
+    fn extract_used_symbols(
+        &self,
+        content: &str,
+        imported_aliases: &std::collections::HashMap<String, String>,
+    ) -> std::collections::HashSet<String> {
+        taxonomy_unused_helper::extract_used_symbols(content, imported_aliases)
+    }
+
+    fn find_import_line_number(&self, content: &str, alias: &str) -> usize {
+        content
+            .lines()
+            .position(|l| {
+                l.trim().contains(&format!("import {}", alias))
+                    || l.trim().contains(&format!(
+                        "from {} import",
+                        alias.split('.').next().unwrap_or("")
+                    ))
+            })
+            .map(|p| p + 1)
+            .unwrap_or(1)
+    }
+
+    fn extract_rust_js_imports(&self, content: &str) -> Vec<(String, usize)> {
+        taxonomy_unused_helper::extract_rust_js_imports(content)
+    }
+
+    fn is_name_used(&self, name: &str, content: &str, exclude_line: usize) -> bool {
+        taxonomy_unused_helper::is_name_used(name, content, exclude_line)
     }
 }
 

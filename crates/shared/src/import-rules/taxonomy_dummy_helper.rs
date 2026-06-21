@@ -1,0 +1,494 @@
+// PURPOSE: taxonomy_dummy_helper — pure utility functions for dummy function, block, and trait detection
+use crate::import_rules::taxonomy_language_vo::LanguageVO;
+
+pub fn dummy_function_ranges(lines: &[&str], lang: LanguageVO) -> Vec<(usize, usize)> {
+    match lang {
+        LanguageVO::Rust => rust_dummy_function_ranges(lines),
+        LanguageVO::Python => python_dummy_function_ranges(lines),
+        LanguageVO::JavaScript => js_dummy_function_ranges(lines),
+        LanguageVO::Unknown => Vec::new(),
+    }
+}
+
+pub fn imported_symbols(lines: &[&str], lang: LanguageVO) -> Vec<(String, usize)> {
+    match lang {
+        LanguageVO::Rust => rust_imported_symbols(lines),
+        LanguageVO::Python => python_imported_symbols(lines),
+        LanguageVO::JavaScript => js_imported_symbols(lines),
+        LanguageVO::Unknown => Vec::new(),
+    }
+}
+
+pub fn dummy_impl_traits_with_lines(lines: &[&str]) -> Vec<(String, usize)> {
+    let mut traits = Vec::new();
+    let mut i = 0usize;
+
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("impl ") && trimmed.contains(" for ") {
+            if let Some(trait_name) = impl_trait_name(trimmed) {
+                let (end, body_lines) = impl_block(lines, i);
+                if trait_impl_is_dummy(&body_lines) {
+                    traits.push((trait_name, i + 1));
+                }
+                i = end;
+            } else {
+                i += 1;
+            }
+        } else {
+            i += 1;
+        }
+    }
+
+    traits
+}
+
+pub fn symbol_used_real(
+    lines: &[&str],
+    symbol: &str,
+    dummy_ranges: &[(usize, usize)],
+    dummy_impl_traits: &[String],
+) -> bool {
+    if (symbol.starts_with('I')
+        && symbol.len() > 1
+        && symbol.chars().nth(1).unwrap_or(' ').is_uppercase())
+        || symbol.ends_with("Protocol")
+        || symbol.ends_with("Port")
+        || symbol.ends_with("Trait")
+        || symbol.ends_with("Aggregate")
+        || symbol.ends_with("Ext")
+        || symbol == "Default"
+        || symbol == "Debug"
+        || symbol == "Display"
+        || symbol == "Clone"
+        || symbol == "Copy"
+        || symbol == "From"
+        || symbol == "Into"
+        || symbol == "TryFrom"
+        || symbol == "TryInto"
+        || symbol == "AsRef"
+        || symbol == "AsMut"
+        || symbol == "Deref"
+        || symbol == "DerefMut"
+        || symbol == "Iterator"
+        || symbol == "IntoIterator"
+        || symbol == "Future"
+        || symbol == "Stream"
+        || symbol == "Read"
+        || symbol == "Write"
+        || symbol == "BufRead"
+        || symbol == "Seek"
+        || symbol == "Hash"
+        || symbol == "PartialEq"
+        || symbol == "Eq"
+        || symbol == "PartialOrd"
+        || symbol == "Ord"
+        || symbol == "Send"
+        || symbol == "Sync"
+        || symbol == "Unpin"
+        || symbol == "Sized"
+        || symbol == "Drop"
+        || symbol == "Fn"
+        || symbol == "FnMut"
+        || symbol == "FnOnce"
+        || symbol == "async_trait"
+        || symbol == "Parser"
+        || symbol == "Digest"
+        || symbol == "Manager"
+        || symbol == "Emitter"
+        || symbol == "Serialize"
+        || symbol == "Deserialize"
+    {
+        return true;
+    }
+
+    for (idx, line) in lines.iter().enumerate() {
+        let line_no = idx + 1;
+        let trimmed = line.trim();
+
+        if in_dummy_range(line_no, dummy_ranges)
+            || trimmed.starts_with("use ")
+            || trimmed.starts_with("import ")
+            || trimmed.starts_with("from ")
+            || trimmed.starts_with("//")
+            || trimmed.starts_with("/*")
+            || trimmed.starts_with("*")
+            || trimmed.starts_with("*/")
+            || (trimmed.starts_with("#") && !trimmed.starts_with("#["))
+            || trimmed.contains("PhantomData")
+        {
+            continue;
+        }
+
+        if !trimmed.contains(symbol) {
+            continue;
+        }
+
+        if trimmed.starts_with("impl ") && trimmed.contains(" for ") {
+            if let Some(trait_name) = impl_trait_name(trimmed) {
+                if dummy_impl_traits.contains(&trait_name) {
+                    continue;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    false
+}
+
+// ─── Private Helpers ───
+
+fn rust_dummy_function_ranges(lines: &[&str]) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
+    let mut i = 0;
+
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("fn _use_") || trimmed.starts_with("fn dummy_") {
+            let start = i + 1;
+            let mut depth = 0usize;
+            let mut end = i + 1;
+
+            for (idx, line) in lines.iter().enumerate().skip(i) {
+                let t = line.trim();
+                depth = depth.saturating_add(t.matches('{').count());
+                depth = depth.saturating_sub(t.matches('}').count());
+                end = idx + 1;
+                if depth == 0 && t.contains('}') {
+                    break;
+                }
+            }
+
+            ranges.push((start, end));
+            i = end;
+        }
+        i += 1;
+    }
+
+    ranges
+}
+
+fn python_dummy_function_ranges(lines: &[&str]) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
+    let mut i = 0;
+
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("def _use_") || trimmed.starts_with("def dummy_") {
+            let start = i + 1;
+            let mut end = i + 1;
+            let indent = lines[i].len() - lines[i].trim_start().len();
+
+            for (idx, line) in lines.iter().enumerate().skip(i + 1) {
+                let t = line.trim();
+                if t.is_empty() || t.starts_with('#') {
+                    end = idx + 1;
+                    continue;
+                }
+                let line_indent = line.len() - line.trim_start().len();
+                if line_indent <= indent && !t.is_empty() {
+                    break;
+                }
+                end = idx + 1;
+            }
+
+            ranges.push((start, end));
+            i = end;
+        }
+        i += 1;
+    }
+
+    ranges
+}
+
+fn js_dummy_function_ranges(lines: &[&str]) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
+    let mut i = 0;
+
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("function _use")
+            || trimmed.starts_with("function dummy")
+            || trimmed.starts_with("const _use")
+            || trimmed.starts_with("const dummy")
+        {
+            let start = i + 1;
+            let mut depth = 0usize;
+            let mut end = i + 1;
+
+            for (idx, line) in lines.iter().enumerate().skip(i) {
+                let t = line.trim();
+                depth = depth.saturating_add(t.matches('{').count());
+                depth = depth.saturating_sub(t.matches('}').count());
+                end = idx + 1;
+                if depth == 0 && t.contains('}') {
+                    break;
+                }
+            }
+
+            ranges.push((start, end));
+            i = end;
+        }
+        i += 1;
+    }
+
+    ranges
+}
+
+fn rust_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
+    let mut symbols = Vec::new();
+
+    for (idx, line) in lines.iter().enumerate() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with("use ") || !trimmed.ends_with(';') {
+            continue;
+        }
+
+        if trimmed == "use super::*;" {
+            continue;
+        }
+
+        let body = trimmed
+            .trim_start_matches("use ")
+            .trim_end_matches(';')
+            .trim();
+
+        if body.contains('{') {
+            if let Some(open) = body.find('{') {
+                if let Some(close) = body.rfind('}') {
+                    let inside = &body[open + 1..close];
+                    for part in inside.split(',') {
+                        if let Some(symbol) = rust_imported_symbol_from_part(part.trim()) {
+                            symbols.push((symbol, idx + 1));
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
+        if let Some(symbol) = rust_imported_symbol_from_part(body) {
+            symbols.push((symbol, idx + 1));
+        }
+    }
+
+    symbols
+}
+
+fn rust_imported_symbol_from_part(part: &str) -> Option<String> {
+    let part = part.trim();
+    if part.is_empty() || part == "self" || part.starts_with('*') {
+        return None;
+    }
+
+    if let Some((_, alias)) = part.split_once(" as ") {
+        return Some(alias.trim().to_string());
+    }
+
+    let name = part.split("::").last().unwrap_or(part).trim();
+    if name.is_empty() || name.contains('{') || name.contains('}') {
+        return None;
+    }
+
+    Some(name.to_string())
+}
+
+fn python_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
+    let mut symbols = Vec::new();
+
+    for (idx, line) in lines.iter().enumerate() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with("from ") && trimmed.contains(" import ") {
+            if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
+                for name in import_part.split(',') {
+                    let name = name.split_whitespace().next().unwrap_or("");
+                    if !name.is_empty() && name != "*" {
+                        symbols.push((name.to_string(), idx + 1));
+                    }
+                }
+            }
+            continue;
+        }
+
+        if trimmed.starts_with("import ") {
+            let module = trimmed
+                .trim_start_matches("import ")
+                .split_whitespace()
+                .next()
+                .unwrap_or("");
+            if !module.is_empty() {
+                let name = module.rsplit('.').next().unwrap_or(module);
+                symbols.push((name.to_string(), idx + 1));
+            }
+        }
+    }
+
+    symbols
+}
+
+fn js_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
+    let mut symbols = Vec::new();
+
+    for (idx, line) in lines.iter().enumerate() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with("import ") && trimmed.contains('{') && trimmed.contains("from") {
+            if let Some(open) = trimmed.find('{') {
+                if let Some(close) = trimmed.find('}') {
+                    let inside = &trimmed[open + 1..close];
+                    for part in inside.split(',') {
+                        let name = part.split_whitespace().next().unwrap_or("");
+                        if !name.is_empty() && name != "type" {
+                            symbols.push((name.to_string(), idx + 1));
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
+        if trimmed.starts_with("import ") && trimmed.contains(" from ") {
+            if let Some(import_part) = trimmed.split_once("import ").map(|(_, p)| p) {
+                let name = import_part
+                    .split_once(" from ")
+                    .map(|(n, _)| n)
+                    .unwrap_or("");
+                let name = name.trim();
+                if !name.is_empty() && name != "default" {
+                    symbols.push((name.to_string(), idx + 1));
+                }
+            }
+            continue;
+        }
+
+        if trimmed.starts_with("const ") && trimmed.contains("require(") && trimmed.contains('{') {
+            if let Some(open) = trimmed.find('{') {
+                if let Some(close) = trimmed.find('}') {
+                    let inside = &trimmed[open + 1..close];
+                    for part in inside.split(',') {
+                        let name = part.trim().split(':').next().unwrap_or("").trim();
+                        if !name.is_empty() {
+                            symbols.push((name.to_string(), idx + 1));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    symbols
+}
+
+fn in_dummy_range(line_no: usize, ranges: &[(usize, usize)]) -> bool {
+    ranges
+        .iter()
+        .any(|(start, end)| line_no >= *start && line_no <= *end)
+}
+
+fn impl_trait_name(line: &str) -> Option<String> {
+    let after_impl = line.strip_prefix("impl ")?.trim();
+    let (trait_part, _) = after_impl.split_once(" for ")?;
+    let trait_name = trait_part.split("::").last().unwrap_or(trait_part).trim();
+    if trait_name.is_empty() {
+        return None;
+    }
+    Some(trait_name.to_string())
+}
+
+fn impl_block<'a>(lines: &'a [&'a str], start: usize) -> (usize, Vec<&'a str>) {
+    let mut depth = 0usize;
+    let mut body = Vec::new();
+    let mut end = start;
+
+    for (idx, line) in lines.iter().enumerate().skip(start) {
+        let trimmed = line.trim();
+        depth = depth.saturating_add(trimmed.matches('{').count());
+        depth = depth.saturating_sub(trimmed.matches('}').count());
+        body.push(*line);
+        end = idx;
+        if depth == 0 && trimmed.contains('}') {
+            break;
+        }
+    }
+
+    (end + 1, body)
+}
+
+fn trait_impl_is_dummy(lines: &[&str]) -> bool {
+    let mut method_count = 0usize;
+    let mut dummy_count = 0usize;
+    let mut i = 0usize;
+
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("fn ") || trimmed.starts_with("async fn ") {
+            method_count += 1;
+            let (end, body) = function_body(lines, i);
+            if function_body_is_dummy(&body) {
+                dummy_count += 1;
+            }
+            i = end;
+        } else {
+            i += 1;
+        }
+    }
+
+    method_count > 0 && dummy_count == method_count
+}
+
+fn function_body<'a>(lines: &'a [&'a str], start: usize) -> (usize, Vec<&'a str>) {
+    let mut depth = 0usize;
+    let mut body = Vec::new();
+    let mut end = start;
+
+    for (idx, line) in lines.iter().enumerate().skip(start) {
+        let trimmed = line.trim();
+        depth = depth.saturating_add(trimmed.matches('{').count());
+        depth = depth.saturating_sub(trimmed.matches('}').count());
+        body.push(*line);
+        end = idx;
+        if depth == 0 && trimmed.contains('}') {
+            break;
+        }
+    }
+
+    (end + 1, body)
+}
+
+fn function_body_is_dummy(lines: &[&str]) -> bool {
+    let body: String = lines
+        .iter()
+        .skip(1)
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty() && !line.starts_with("//"))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    let trimmed = body.trim();
+    if trimmed == "{}" || trimmed == "{ }" {
+        return true;
+    }
+
+    if trimmed.len() < 100 {
+        let inner = trimmed.trim_start_matches('{').trim_end_matches('}').trim();
+        let short_markers = ["todo!(", "unimplemented!(", "panic!(", "unreachable!("];
+        if inner.is_empty() || short_markers.iter().any(|m| inner.starts_with(m)) {
+            return true;
+        }
+    }
+
+    let panic_marker = format!("{}!(", "panic");
+    let dummy_markers = [
+        "todo!(",
+        "unimplemented!(",
+        &panic_marker,
+        "unreachable!(",
+        "return Err(Default::default())",
+        "return Ok(Default::default())",
+    ];
+
+    dummy_markers.iter().any(|marker| body.contains(marker))
+}
