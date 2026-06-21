@@ -73,7 +73,7 @@ cargo build --release
 
 ```bash
 lint-arwaky-cli version        # should print "Lint Arwaky v1.10.14 (AES Semantic Builder)"
-lint-arwaky-cli setup doctor   # environment diagnostics
+lint-arwaky-cli maintenance doctor   # environment diagnostics
 ```
 
 ---
@@ -140,7 +140,7 @@ crates/
   cli-commands/      import-rules/         role-rules/
   config-system/     naming-rules/         external-lint/
   project-setup/     git-hooks/            orphan-detector/
-  file-watch/        multi-project/        auto-fix/
+  file-watch/        auto-fix/
   maintenance/       mcp-server/           file-system/
   code-analysis/     source-parsing/
   shared/            vscode-extension/
@@ -213,50 +213,48 @@ The CLI is implemented in `crates/cli-commands/src/surface_core_command.rs` (wit
 
 ### Core
 
-| Command                                                                    | Description                                        |
-| -------------------------------------------------------------------------- | -------------------------------------------------- |
-| `lint-arwaky-cli check [path] [--git-diff]`                                | Run full architecture compliance analysis          |
-| `lint-arwaky-cli scan [path]`                                              | Alias for `check` (CI-friendly)                    |
-| `lint-arwaky-cli fix [path]`                                               | Apply safe fixes automatically                     |
-| `lint-arwaky-cli report [path] --output-format <text\|json\|sarif\|junit>` | Generate quality report                            |
-| `lint-arwaky-cli ci [path] --threshold <N>`                                | CI mode with exit codes                            |
-| `lint-arwaky-cli git-diff [--base <ref>]`                                  | List files changed since base ref (default `HEAD`) |
-| `lint-arwaky-cli multi-project <paths...>`                                 | Aggregate lint results across projects             |
+| Command                                                  | Description                                        |
+| -------------------------------------------------------- | -------------------------------------------------- |
+| `lint-arwaky-cli check [path] [--git-diff]`              | Run full architecture compliance analysis          |
+| `lint-arwaky-cli scan [path]`                            | Alias for `check` (CI-friendly)                    |
+| `lint-arwaky-cli fix [path]`                             | Apply safe fixes automatically                     |
+| `lint-arwaky-cli ci [path] --threshold <N>`              | CI mode with exit codes                            |
+| `lint-arwaky-cli orphan <path>`                          | Check if file is dead/unreachable code             |
 
 ### Scans
 
-| Command                               | Description                                  |
-| ------------------------------------- | -------------------------------------------- |
-| `lint-arwaky-cli security [path]`     | Bandit-style vulnerability scan              |
-| `lint-arwaky-cli complexity [path]`   | Cyclomatic complexity hotspots (top 5 files) |
-| `lint-arwaky-cli duplicates [path]`   | 5-line block duplication detection           |
-| `lint-arwaky-cli trends [path]`       | Quality score trends over time               |
-| `lint-arwaky-cli dependencies [path]` | Parse and list `Cargo.toml` dependencies     |
+| Command                                 | Description                                  |
+| --------------------------------------- | -------------------------------------------- |
+| `lint-arwaky-cli security [path]`       | Bandit-style vulnerability scan              |
+| `lint-arwaky-cli duplicates [path]`     | 5-line block duplication detection           |
+| `lint-arwaky-cli dependencies [path]`   | Parse and list `Cargo.toml` dependencies     |
+
+### Maintenance
+
+| Command                                | Description                                  |
+| -------------------------------------- | -------------------------------------------- |
+| `lint-arwaky-cli maintenance doctor`   | Environment diagnostics (Rust toolchain)     |
 
 ### Setup
 
 | Command                                                                   | Description                                           |
 | ------------------------------------------------------------------------- | ----------------------------------------------------- |
 | `lint-arwaky-cli setup init`                                              | Create a default `lint_arwaky.config.yaml`            |
-| `lint-arwaky-cli setup doctor`                                            | Environment diagnostics (Rust toolchain, binary path) |
+| `lint-arwaky-cli setup install [--sudo]`                                  | Install linter adapter dependencies                   |
 | `lint-arwaky-cli setup mcp-config --client <claude\|vscode\|hermes\|all>` | Print MCP config for AI clients                       |
 | `lint-arwaky-cli setup hermes [--remove]`                                 | Add/remove the `[mcp.lint-arwaky]` section in Hermes  |
 
-### Dev & Maintenance
+### Dev & Info
 
 | Command                                       | Description                                                |
 | --------------------------------------------- | ---------------------------------------------------------- |
-| `lint-arwaky-cli diff <path1> <path2>`        | Compare violation counts and scores between two paths      |
-| `lint-arwaky-cli import <config_file>`        | Import configuration from JSON/YAML file                   |
-| `lint-arwaky-cli export <sarif\|junit\|json>` | Export reports in standard formats                         |
-| `lint-arwaky-cli watch [path]`                | Poll the path every 2s and re-run lint                     |
-| `lint-arwaky-cli suggest [path] [--ai]`       | Print top suggestions by file                              |
+| `lint-arwaky-cli git-diff [--base <ref>]`     | List files changed since base ref (default `HEAD`)         |
+| `lint-arwaky-cli watch [path]`                | Watch path for changes and re-lint (inotify-based)         |
 | `lint-arwaky-cli install-hook`                | Install `lint-arwaky-cli check .` as a git pre-commit hook |
 | `lint-arwaky-cli uninstall-hook`              | Remove the installed git pre-commit hook                   |
 | `lint-arwaky-cli adapters`                    | List active linter adapters                                |
 | `lint-arwaky-cli config show`                 | Show active configuration                                  |
-| `lint-arwaky-cli cancel <job_id>`             | Request cancellation of a running lint job                 |
-| `lint-arwaky-cli version`                     | Show version (`1.10.11`)                                   |
+| `lint-arwaky-cli version`                     | Show version                                               |
 
 ---
 
@@ -272,6 +270,6 @@ The CLI is implemented in `crates/cli-commands/src/surface_core_command.rs` (wit
 | AES rules enforced | 24 (5 groups: Naming, Import, Quality, Role, Orphan)                                                |
 | Linter adapters    | 9 (Rust AST + Clippy, Python AST + Ruff + MyPy + Bandit + Metrics, JS/TS AST + ESLint/Prettier/TSC) |
 | MCP tools          | 5 (execute_command, list_commands, commands_schema, read_skill_context, health_check)               |
-| CLI subcommands    | 20+ across core/scans/setup/dev                                                                     |
+| CLI subcommands    | 15+ across core/scans/maintenance/setup/dev               |
 | Report formats     | `text`, `json`, `sarif` 2.1.0, `junit` XML                                                          |
 | Self-lint target   | `crates/` scanned under the same rules the project enforces                                         |

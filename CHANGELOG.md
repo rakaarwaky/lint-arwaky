@@ -6,6 +6,13 @@
 
 - **Deleted dead crates**: Removed `pipeline-jobs`, `output-report`, `plugin-system`, `lifecycle-state` — unused or replaced by other crates.
 - **Removed `pub use` re-exports** from `crates/lib.rs` for deleted crates.
+- **Removed unused CLI commands**: `suggest`, `multi-project`, `cancel`, `import`, `export`, `diff`, `report`, `complexity` — stubs or redundant with existing commands.
+- **Removed `setup doctor`**: Moved to `maintenance doctor` (top-level subcommand).
+
+### Added
+
+- **`maintenance doctor`**: Environment diagnostics moved from `setup doctor` to `maintenance doctor` — better placement for periodic health checks.
+- **`watch` with inotify**: Proper file watcher using `notify` crate (inotify on Linux) with debounce, instead of polling-based sleep loop.
 
 ### Changed
 
@@ -87,7 +94,7 @@
 
 - **AES033 `constant-purity` rule**: New taxonomy rule. Files ending in `_constant` may contain only `pub const` / `pub static` declarations. `struct`, `enum`, `fn`, `impl`, `mod`, `pub mod`, `pub use` blocks in a `_constant` file trigger AES033 (HIGH). See [RULES_AES.md](RULES_AES.md).
 - **5 MCP tools wired through Rust**: `execute_command`, `list_commands`, `commands_schema`, `read_skill_context`, `health_check` — all routed through `src-rust/surfaces/mcp_tools_command.rs`.
-- **20+ CLI subcommands**: `check`, `scan`, `fix`, `report`, `ci`, `git-diff`, `multi-project`, `security`, `complexity`, `duplicates`, `trends`, `dependencies`, `setup init|doctor|mcp-config|hermes`, `adapters`, `config show`, `cancel`, `diff`, `import`, `export`, `watch`, `suggest`, `install-hook`, `uninstall-hook`, `version`.
+- **20+ CLI subcommands**: `check`, `scan`, `fix`, `ci`, `git-diff`, `security`, `duplicates`, `dependencies`, `maintenance doctor`, `setup init|install|mcp-config|hermes`, `adapters`, `config show`, `watch`, `install-hook`, `uninstall-hook`, `version`, `vscode-graph`, `orphan`.
 - **Report formats**: `text`, `json`, SARIF 2.1.0 (with `$schema` and `version: 2.1.0`), JUnit XML — all delegated to `ReportFormatterProcessor` (capability layer).
 - **AST scanners**: New infrastructure adapters for Rust (`ast_rust_scanner`), Python (`ast_py_scanner`), and JavaScript/TypeScript (`ast_js_scanner`) source parsing.
 - **Self-lint target**: `lint-arwaky-cli check .` scans `src-rust/` under the same AES rule engine that is exposed to third-party projects.
@@ -277,8 +284,7 @@
 - Full value object (VO) system — no bare primitives for typed concepts
 - 11 lint adapters: ruff, mypy, bandit, radon, pip-audit, duplicates, trends, eslint, prettier, tsc, architecture
 - 5 MCP tools: execute_command, list_commands, read_skill_context, check_status, health_check
-- 30 CLI commands: check, scan, fix, report, security, complexity, duplicates, trends, dependencies, ci, batch, watch, version, adapters, stats, clean, update, doctor, install-hook, uninstall-hook, config, diff, export, import, ignore, init, suggest, cancel, plugins, multi-project
-- 4 setup commands: setup init, setup hermes, setup doctor, setup mcp-config
+- 15+ CLI commands: check, scan, fix, security, duplicates, dependencies, ci, watch, version, adapters, config show, maintenance doctor, setup init/install/mcp-config/hermes, install-hook, uninstall-hook, git-diff, orphan, vscode-graph
 - Governance scoring with configurable thresholds
 - SARIF and JUnit report formats
 - Direct execution transport via Stdio

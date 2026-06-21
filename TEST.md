@@ -188,7 +188,7 @@ The multi-adapter scanner must be proven to successfully detect at least 18 uniq
   ```
 - [ ] Run binary health diagnostics:
   ```bash
-  lint-arwaky-cli setup doctor
+  lint-arwaky-cli maintenance doctor
   ```
 - [ ] Run JSON-RPC MCP protocol smoke-test:
   ```bash

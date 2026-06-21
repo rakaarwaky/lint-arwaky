@@ -63,7 +63,7 @@ cargo build --release --target x86_64-pc-windows-msvc
 lint-arwaky-cli version
 # Expected: Lint Arwaky v1.10.14 (AES Semantic Builder)
 
-lint-arwaky-cli setup doctor
+lint-arwaky-cli maintenance doctor
 # Expected: cargo: OK (cargo X.Y.Z), binary: OK (/path/to/lint-arwaky-cli)
 ```
 
@@ -175,7 +175,7 @@ lint-arwaky-cli setup init
 - [ ] `cargo run --bin lint-arwaky-cli -- check .` reports 0 CRITICAL findings
 - [ ] `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings` clean
 - [ ] `lint-arwaky-cli version` returns `1.10.14`
-- [ ] `lint-arwaky-cli doctor` reports no issues
+- [ ] `lint-arwaky-cli maintenance doctor` reports no issues
 - [ ] `lint-arwaky-mcp` responds to `tools/list` with the expected tools
 - [ ] `health_check` MCP tool returns all adapters healthy
 

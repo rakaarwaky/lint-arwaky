@@ -11,7 +11,7 @@ Multi-language linting and AES (Agentic Engineering System) architecture enforce
 - **Multi-Language**: Audits Rust (Clippy, Cargo Audit, rustfmt), Python (Ruff, MyPy, Bandit), and JavaScript/TypeScript (ESLint, Prettier, TSC) in a single command.
 - **AES Rules**: 24 rules across 5 groups — Naming, Import, Quality, Role, Orphan.
 - **Auto-Fix**: `fix` subcommand applies safe style fixes without human intervention.
-- **Multi-Project**: Run lint across multiple projects with `multi-project` command.
+- **Watch**: Real-time file watching with inotify-based change detection.
 
 # MCP Tools
 
@@ -57,11 +57,14 @@ Execute a command action (check, scan, fix, etc.) with arguments.
 ### Setup & Config
 
 - `setup init`: Auto-configure lint-arwaky.
-- `setup doctor`: Diagnose environment health and toolchain.
 - `setup install [--sudo]`: Install linter deps (ruff, mypy, bandit, eslint, prettier, tsc).
 - `setup mcp-config --client <claude|hermes|vscode|all>`: Print MCP server config.
 - `config show`: Show active configuration.
 - `adapters`: List active linter adapters.
+
+### Maintenance
+
+- `maintenance doctor`: Diagnose environment health and toolchain.
 
 ### Info
 

@@ -95,14 +95,7 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 | FR-113c | Ignore Patterns Filtering — filter `.git`, `node_modules`, `__pycache__` from watching |
 | FR-113d | Event Trigger Dispatching — expose changed files for incremental linting                     |
 
-### 5.5 `multi-project` — Multi-Project Governance
-
-| ID      | Requirement                                                                                         |
-| ------- | --------------------------------------------------------------------------------------------------- |
-| FR-091a | Multi-Project Auto-Discovery — detect nested sub-projects by scanning config files                 |
-| FR-091b | Workspace Compliance Aggregation — run lint across all projects and consolidate into single report |
-
-### 5.6 `code-analysis` — Code Quality
+### 5.5 `code-analysis` — Code Quality
 
 | ID      | Requirement                                                                            | AES Code |
 | ------- | -------------------------------------------------------------------------------------- | -------- |
@@ -186,7 +179,7 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 
 | ID     | Requirement                                              |
 | ------ | -------------------------------------------------------- |
-| FR-060 | Environment diagnostics (`setup doctor`)               |
+| FR-060 | Environment diagnostics (`maintenance doctor`)          |
 | FR-061 | Create default config (`setup init`)                   |
 | FR-062 | MCP client config (`setup mcp-config --client <name>`) |
 
@@ -201,7 +194,6 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 | FR-064 | List adapters (`adapters`)                             |
 | FR-065 | Show config (`config show`)                            |
 | FR-066 | Display version (`version`)                            |
-| FR-091 | Multi-project lint (`multi-project <paths...>`)        |
 | FR-092 | Orphan file check (`orphan <path>`)                    |
 | FR-115 | CLI via `clap` 4.6 subcommand groups                   |
 
@@ -254,13 +246,14 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 
 ## 8. CLI Interface
 
-| Category       | Subcommands                                                                      |
-| -------------- | -------------------------------------------------------------------------------- |
-| Core           | check, scan, fix, ci, orphan                                                     |
-| Git            | install-hook, uninstall-hook                                                     |
-| Project        | watch                                                                            |
-| Setup & Config | setup init, setup doctor, setup install, setup mcp-config, config show, adapters |
-| Info           | version                                                                          |
+| Category       | Subcommands                                                              |
+| -------------- | ------------------------------------------------------------------------ |
+| Core           | check, scan, fix, ci, orphan, security, duplicates, dependencies        |
+| Git            | install-hook, uninstall-hook, git-diff                                   |
+| Maintenance    | maintenance doctor                                                       |
+| Setup & Config | setup init, setup install, setup mcp-config, config show, adapters       |
+| Dev            | watch                                                                    |
+| Info           | version, vscode-graph                                                    |
 
 ---
 
