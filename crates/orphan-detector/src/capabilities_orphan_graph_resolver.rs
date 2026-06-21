@@ -194,14 +194,24 @@ impl OrphanGraphResolver {
                             let rest = &full_import[colon_idx + 2..];
                             let segments: Vec<&str> = rest.split("::").collect();
                             if !segments.is_empty() {
-                                let module_name = segments[0];
-                                let crate_dirs = [
-                                    format!("./crates/{}/src", crate_name.replace('_', "-")),
-                                    format!("crates/{}/src", crate_name.replace('_', "-")),
-                                    format!("./crates/{}/src", crate_name),
-                                    format!("crates/{}/src", crate_name),
-                                ];
-                                for dir in &crate_dirs {
+                                 let module_name = segments[0];
+                                let member_roots = ["crates", "packages", "modules"];
+                                let mut member_dirs = Vec::new();
+                                for root in &member_roots {
+                                    for path in &[
+                                        format!("./{}/{}/src", root, crate_name.replace('_', "-")),
+                                        format!("{}/{}/src", root, crate_name.replace('_', "-")),
+                                        format!("./{}/{}/src", root, crate_name),
+                                        format!("{}/{}/src", root, crate_name),
+                                        format!("./{}/{}", root, crate_name.replace('_', "-")),
+                                        format!("{}/{}", root, crate_name.replace('_', "-")),
+                                        format!("./{}/{}", root, crate_name),
+                                        format!("{}/{}", root, crate_name),
+                                    ] {
+                                        member_dirs.push(path.clone());
+                                    }
+                                }
+                                for dir in &member_dirs {
                                     if let Ok(entries) = std::fs::read_dir(dir) {
                                         for entry in entries.flatten() {
                                             let path = entry.path();
