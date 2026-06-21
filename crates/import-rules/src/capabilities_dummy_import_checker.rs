@@ -283,71 +283,41 @@ impl DummyImportChecker {
             return;
         }
 
-        // Step 3: Define the "taxonomy primitive" types that should be replaced by VOs
-        let taxonomy_primitives = [
-            "LineNumber",
-            "ColumnNumber",
-            "Count",
-            "Score",
-            "String",
-            "bool",
-            "i32",
-            "u32",
-            "f64",
-            "usize",
-        ];
+        // Step 3: Check if any taxonomy-imported symbol is used in real (non-dummy) code
+        let dummy_ranges = self.parser.get_dummy_function_ranges(&lines, lang);
+        let dummy_impl_traits: Vec<String> = self
+            .parser
+            .get_dummy_impl_traits_with_lines(&lines)
+            .into_iter()
+            .map(|(trait_name, _)| trait_name)
+            .collect();
 
-        // Step 4: Walk all lines skipping dummy function bodies
-        let mut has_real_usage = false;
-        let mut in_dummy_function = false;
-        let mut brace_count = 0;
-
-        for line in &lines {
-            let trimmed = line.trim();
-
-            // Track when we enter/exit a dummy function body
-            let is_dummy_start = match lang {
-                LanguageVO::Rust => trimmed.starts_with("fn _use_"),
-                LanguageVO::Python => trimmed.starts_with("def _use_"),
-                LanguageVO::JavaScript => trimmed.starts_with("function _use"),
-                LanguageVO::Unknown => false,
-            };
-            if is_dummy_start {
-                in_dummy_function = true;
-                brace_count = 0;
-                continue;
-            }
-
-            // Skip lines inside dummy function bodies (brace counting)
-            if in_dummy_function {
-                brace_count += trimmed.matches('{').count();
-                brace_count = brace_count.saturating_sub(trimmed.matches('}').count());
-                if brace_count == 0 && trimmed.contains('}') {
-                    in_dummy_function = false;
-                }
-                continue;
-            }
-
-            // Check if real function signatures use taxonomy primitives
-            let is_fn = match lang {
-                LanguageVO::Rust => trimmed.starts_with("pub fn ") || trimmed.starts_with("fn "),
-                LanguageVO::Python => trimmed.starts_with("def "),
-                LanguageVO::JavaScript => {
-                    trimmed.starts_with("function ")
-                        || trimmed.starts_with("const ") && trimmed.contains("=>")
-                        || trimmed.starts_with("export ")
-                }
-                LanguageVO::Unknown => false,
-            };
-            if is_fn {
-                for primitive in &taxonomy_primitives {
-                    if trimmed.contains(primitive) {
-                        has_real_usage = true;
-                        break;
+        let imported = self.parser.get_imported_symbols(&lines, lang);
+        let has_real_usage = imported.iter().any(|(symbol, line_no)| {
+            let is_taxonomy = lines.get(line_no.saturating_sub(1)).map_or(false, |line| {
+                let t = line.trim();
+                match lang {
+                    LanguageVO::Rust => {
+                        t.contains("use shared::taxonomy_")
+                            || t.contains("use output_report::taxonomy_")
+                            || t.contains("use crate::common::taxonomy_")
+                            || t.contains("use crate::taxonomy_")
                     }
+                    LanguageVO::Python => {
+                        t.contains("from taxonomy_") || t.contains("from shared.taxonomy_")
+                    }
+                    LanguageVO::JavaScript => {
+                        t.contains("from 'taxonomy_") || t.contains("from \"taxonomy_")
+                    }
+                    LanguageVO::Unknown => false,
                 }
+            });
+            if !is_taxonomy {
+                return false;
             }
-        }
+            self.parser
+                .is_symbol_used_real(&lines, symbol, &dummy_ranges, &dummy_impl_traits)
+        });
 
         // Step 5: If no real function uses taxonomy primitives but taxonomy imports exist → violation
         if !has_real_usage {
@@ -409,14 +379,13 @@ impl DummyImportChecker {
         let lines: Vec<&str> = content.lines().collect();
         let lang = self.parser.get_language_from_path(file);
 
-        // Step 2: Known aggregate types that should be called, not phantom-referenced
-        let aggregate_types = [
-            "DevCommandsAggregate",
-            "LintFixOrchestratorAggregate",
-            "PluginCommandsAggregate",
-            "MaintenanceCommandsAggregate",
-            "GitCommandsAggregate",
-        ];
+        // Step 2: Detect aggregate types by naming convention (type names ending with "Aggregate")
+        let imported = self.parser.get_imported_symbols(&lines, lang);
+        let aggregate_types: Vec<String> = imported
+            .into_iter()
+            .filter(|(symbol, _)| symbol.ends_with("Aggregate"))
+            .map(|(symbol, _)| symbol)
+            .collect();
 
         // Step 3-5: Scan lines for phantom + aggregate type combinations
         for (i, line) in lines.iter().enumerate() {
