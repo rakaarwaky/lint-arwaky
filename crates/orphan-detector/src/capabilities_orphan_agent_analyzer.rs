@@ -115,7 +115,10 @@ pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicato
             // Check surface files
             let is_surface = cb.starts_with("surface_");
             // Check container files (DI wiring)
-            let is_container = cb.ends_with("_container.rs");
+            let is_container = cb.ends_with("_container.rs")
+                || cb.ends_with("_container.py")
+                || cb.ends_with("_container.ts")
+                || cb.ends_with("_container.js");
 
             if !is_surface && !is_container {
                 continue;

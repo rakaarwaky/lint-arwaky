@@ -138,8 +138,15 @@ fn check_imported_by_entry_or_router(
     workspace_root: &std::path::Path,
     stem: &str,
 ) -> Result<bool, std::io::Error> {
-    let crates_dir = workspace_root.join("crates");
-    check_dir_imports(&crates_dir, stem)
+    for dir_name in &["crates", "packages", "modules"] {
+        let dir = workspace_root.join(dir_name);
+        if dir.is_dir() {
+            if check_dir_imports(&dir, stem)? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
 }
 
 fn check_dir_imports(dir: &std::path::Path, stem: &str) -> Result<bool, std::io::Error> {
@@ -156,7 +163,11 @@ fn check_dir_imports(dir: &std::path::Path, stem: &str) -> Result<bool, std::io:
                     || name.starts_with("mcp_")
                     || name.contains("_entry")
                     || name.contains("_router");
-                if is_entry_or_router && name.ends_with(".rs") {
+                if is_entry_or_router && (name.ends_with(".rs")
+                    || name.ends_with(".py")
+                    || name.ends_with(".ts")
+                    || name.ends_with(".js"))
+                {
                     if let Ok(content) = std::fs::read_to_string(&path) {
                         if content.contains(stem) {
                             return Ok(true);

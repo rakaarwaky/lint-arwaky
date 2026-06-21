@@ -90,11 +90,21 @@ pub fn is_infra_cap_orphan(
 }
 
 pub fn find_workspace_root(start: &std::path::Path) -> Result<std::path::PathBuf, std::io::Error> {
+    let member_dirs = ["crates", "packages", "modules"];
     let mut current = start.to_path_buf();
     loop {
-        if current.join("Cargo.toml").exists() && current.join("crates").is_dir() {
+        let has_cargo = current.join("Cargo.toml").exists()
+            && current.join("Cargo.toml").is_file();
+        let has_package_json = current.join("package.json").exists()
+            && current.join("package.json").is_file();
+        let has_pyproject = current.join("pyproject.toml").exists()
+            && current.join("pyproject.toml").is_file();
+        let has_member_dir = member_dirs.iter().any(|d| current.join(d).is_dir());
+
+        if has_member_dir && (has_cargo || has_package_json || has_pyproject) {
             return Ok(current);
         }
+
         if !current.pop() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
@@ -108,8 +118,15 @@ pub fn check_wired_in_container(
     workspace_root: &std::path::Path,
     identifiers: &[String],
 ) -> Result<bool, std::io::Error> {
-    let crates_dir = workspace_root.join("crates");
-    check_dir_containers(&crates_dir, identifiers)
+    for dir_name in &["crates", "packages", "modules"] {
+        let dir = workspace_root.join(dir_name);
+        if dir.is_dir() {
+            if check_dir_containers(&dir, identifiers)? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
 }
 
 fn check_dir_containers(
@@ -124,7 +141,11 @@ fn check_dir_containers(
                     return Ok(true);
                 }
             } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.ends_with("_container.rs") {
+                if name.ends_with("_container.rs")
+                    || name.ends_with("_container.py")
+                    || name.ends_with("_container.ts")
+                    || name.ends_with("_container.js")
+                {
                     if let Ok(content) = std::fs::read_to_string(&path) {
                         for id in identifiers {
                             if content.contains(id) {
