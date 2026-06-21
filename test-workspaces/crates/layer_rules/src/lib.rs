@@ -1,5 +1,6 @@
 pub use self as layer_rules;
 pub use self as contract;
+pub use self as capabilities;
 pub use ::taxonomy;
 
 pub mod base_aggregate {
@@ -35,3 +36,9 @@ pub mod forbidden_inherit_aggregate;
 pub mod missing_suffix;
 #[path = "contract_wrong_name_port.rs"]
 pub mod wrong_name_port;
+
+#[path = "capabilities_cycle_violation_processor.rs"]
+pub mod cycle_violation_processor;
+
+#[path = "contract_cycle_violation_aggregate.rs"]
+pub mod cycle_violation_aggregate;

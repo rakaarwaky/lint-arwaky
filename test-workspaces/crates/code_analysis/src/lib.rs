@@ -2,6 +2,7 @@ pub use self as code_analysis;
 pub use ::taxonomy;
 pub use ::layer_rules as contract;
 
+
 pub mod capabilities_deep_import_processor;
 pub mod capabilities_forbidden_suffix_vo;
 pub mod capabilities_forbidden_trait_processor;
