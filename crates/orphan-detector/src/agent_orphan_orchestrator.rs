@@ -326,3 +326,17 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
         ]
     }
 }
+
+pub fn mk_orphan_result(file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
+    LintResult {
+        file: FilePath::new(file.to_string()).unwrap_or_default(),
+        line: LineNumber::new(0),
+        column: ColumnNumber::new(0),
+        code: ErrorCode::raw(code),
+        message: LintMessage::new(msg),
+        source: Some(AdapterName::raw("architecture")),
+        severity: sev,
+        enclosing_scope: None,
+        related_locations: LocationList::new(),
+    }
+}

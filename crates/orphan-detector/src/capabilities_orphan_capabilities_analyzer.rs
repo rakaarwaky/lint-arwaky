@@ -303,7 +303,7 @@ pub fn check_capabilities_orphan(
         }
     }
     if !wired {
-        violations.push(crate::mk_orphan_result(
+        violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
             fp,
             &AesOrphanViolation::CapabilitiesOrphan {
                 stem: stem.clone(),

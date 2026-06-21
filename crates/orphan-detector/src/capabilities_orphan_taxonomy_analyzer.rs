@@ -102,7 +102,7 @@ pub fn check_taxonomy_orphan(
         } else {
             format!("Taxonomy '{}' is not imported by any contract.", stem)
         };
-        violations.push(crate::mk_orphan_result(
+        violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
             fp,
             &AesOrphanViolation::TaxonomyOrphan {
                 stem: stem.clone(),
