@@ -1,13 +1,11 @@
 // PURPOSE: WatchCommandsSurface — CLI surface for file watching with auto-lint on changes
-
 use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use code_analysis::resolve_target;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
-
-pub struct WatchdogBridge {}
+use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 
 pub struct WatchCommandsSurface {}
 
@@ -21,23 +19,14 @@ impl WatchCommandsSurface {
     pub fn new() -> Self {
         Self {}
     }
-
-    pub fn watch(&self, path: &str) {
-        let abs_path = std::path::Path::new(path);
-        let abs_path_str = abs_path.to_string_lossy().to_string();
-
-        println!("Watching {abs_path_str} for changes...");
-        println!("Performing initial scan...");
-        println!("Initial scan complete. Score: 100.0");
-        println!("\nStarting file watcher (Ctrl+C to stop)...");
-    }
 }
 
 pub fn handle_watch(arch_linter: Arc<dyn IArchLintProtocol>, path: Option<String>) -> ExitCode {
     let root = resolve_target(path);
-    println!("Lint Arwaky v{} (Watch Mode)", env!("CARGO_PKG_VERSION"));
-    println!("Target: {}", root);
-    println!("Polling every 2s. Press Ctrl+C to stop.");
+    let config = WatchConfig::from_path(root);
+
+    let container = file_watch::FileWatchContainer::new();
+    let orchestrator = container.orchestrator(arch_linter);
 
     let running = Arc::new(AtomicBool::new(true));
     let r = running.clone();
@@ -50,19 +39,10 @@ pub fn handle_watch(arch_linter: Arc<dyn IArchLintProtocol>, path: Option<String
         return ExitCode::FAILURE;
     }
 
-    while running.load(Ordering::SeqCst) {
-        std::thread::sleep(std::time::Duration::from_secs(2));
-        if !running.load(Ordering::SeqCst) {
-            break;
-        }
-        let results = arch_linter.run_lint(&root);
-        println!(
-            "[{} violations, score {}]",
-            results.len(),
-            arch_linter.calc_score(&results)
-        );
-    }
+    let rt = tokio::runtime::Runtime::new().unwrap_or_else(|e| {
+        eprintln!("Failed to create tokio runtime: {}", e);
+        std::process::exit(1);
+    });
 
-    println!("Watcher stopped.");
-    ExitCode::SUCCESS
+    rt.block_on(orchestrator.run(config, running))
 }

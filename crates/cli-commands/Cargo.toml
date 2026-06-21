@@ -28,3 +28,4 @@ project_setup.workspace = true
 external_lint.workspace = true
 multi_project.workspace = true
 orphan_detector.workspace = true
+file_watch.workspace = true

@@ -6,15 +6,12 @@ use std::sync::Arc;
 use cli_commands::surface_bootstrap_command;
 use cli_commands::surface_check_command;
 use cli_commands::surface_config_command;
-use cli_commands::surface_core_command::{Cli, Commands};
+use cli_commands::surface_core_command::{Cli, Commands, MaintenanceCommands};
 use cli_commands::surface_dev_command;
 use cli_commands::surface_fix_command;
 use cli_commands::surface_git_command;
 use cli_commands::surface_maintenance_command;
-use cli_commands::surface_map_command;
-use cli_commands::surface_multi_command;
 use cli_commands::surface_plugin_command;
-use cli_commands::surface_report_command;
 use cli_commands::surface_setup_command;
 use cli_commands::surface_watch_command;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
@@ -132,13 +129,15 @@ fn main() -> ExitCode {
         Commands::Fix { path, dry_run } => {
             surface_fix_command::handle_fix(path, dry_run, fix_orchestrator_factory)
         }
-        Commands::Report {
-            path,
-            output_format,
-        } => surface_report_command::handle_report(path, output_format),
         Commands::Ci { path, threshold } => {
             surface_dev_command::handle_ci(arch_linter.clone(), path, threshold)
         }
+        Commands::Maintenance { command } => match command {
+            MaintenanceCommands::Doctor => {
+                surface_maintenance_command::handle_doctor();
+                ExitCode::SUCCESS
+            }
+        },
         Commands::Version => {
             let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
             surface_bootstrap_command::handle_version(verbose)
@@ -147,9 +146,6 @@ fn main() -> ExitCode {
         Commands::Config { command } => surface_config_command::handle_config(command),
         Commands::GitDiff { base } => {
             surface_git_command::handle_git_diff(arch_linter.clone(), base)
-        }
-        Commands::MultiProject { paths } => {
-            surface_multi_command::handle_multi_project(arch_linter.clone(), paths)
         }
         Commands::Orphan { path } => {
             let surface = surface_check_command::CheckCommandsSurface::new(
@@ -178,18 +174,8 @@ fn main() -> ExitCode {
         }
         Commands::Dependencies { path } => surface_maintenance_command::handle_dependencies(path),
         Commands::Setup { command } => surface_setup_command::handle_setup(command),
-        Commands::Cancel { job_id } => surface_map_command::handle_cancel(job_id),
-        Commands::Diff { path1, path2 } => {
-            surface_map_command::handle_diff(arch_linter.clone(), path1, path2)
-        }
-        Commands::Import { config_file } => surface_map_command::handle_import(config_file),
-        Commands::Export { format } => {
-            surface_map_command::handle_export(arch_linter.clone(), format)
-        }
         Commands::Watch { path } => surface_watch_command::handle_watch(arch_linter.clone(), path),
-        Commands::Suggest { path, ai: _ } => {
-            surface_map_command::handle_suggest(arch_linter.clone(), path)
-        }
+
         Commands::InstallHook => surface_git_command::handle_install_hook(),
         Commands::UninstallHook => surface_git_command::handle_uninstall_hook(),
         Commands::VscodeGraph { path } => {

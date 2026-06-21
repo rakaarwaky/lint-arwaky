@@ -1,6 +1,6 @@
 # Deployment Guide — Lint Arwaky v1.10.14
 
-**Status**: PRODUCTION-READY — self-lint target ships clean.
+**Status**: PRODUCTION-READY — 
 
 ---
 
@@ -22,7 +22,7 @@ No external services required. The MCP server speaks JSON-RPC 2.0 over stdin/std
 ### Option 1: Installer script
 
 ```bash
-# Linux / macOS
+# Linux 
 curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/install.remote.sh | bash
 ```
 
@@ -127,7 +127,7 @@ echo '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"health_che
 
 ```bash
 lint-arwaky-cli version        # Version check
-lint-arwaky-cli setup doctor   # Self-diagnose (Rust toolchain, binary path)
+lint-arwaky-cli doctor   # Self-diagnose (Rust toolchain, binary path)
 lint-arwaky-cli adapters       # List active linter adapters
 ```
 
@@ -145,15 +145,15 @@ lint-arwaky-cli check .
 lint-arwaky-cli scan <path> .
 
 # CI mode with exit codes
-lint-arwaky-cli ci . --threshold 80
+lint-arwaky-cli ci 
 
 # Auto-fix (where safe)
-lint-arwaky-cli fix .
+lint-arwaky-cli fix 
 
 # Orphan check
 lint-arwaky-cli orphan <path>
 
-# File watching (auto-re-lint)
+# File watching 
 lint-arwaky-cli watch .
 ```
 
@@ -161,31 +161,10 @@ lint-arwaky-cli watch .
 
 ## Configuration
 
-Default configuration is defined in `crates/shared/src/config-system/taxonomy_config_vo.rs` (via `config_system::default_aes_config()`). To override, generate a YAML file:
-
 ```bash
 lint-arwaky-cli setup init
 # Creates lint_arwaky.config.yaml in the current directory
 ```
-
-Key sections:
-
-```yaml
-thresholds:
-  score_target: 100.0      # target self-lint score
-  max_complexity: 10       # per-function branch cap
-
-adapters:
-  rust_linter:  { enabled: true, weight: 1.0 }
-  python_ruff:  { enabled: true, weight: 1.0 }
-  python_mypy:  { enabled: true, weight: 1.0 }
-  python_bandit:{ enabled: true, weight: 1.0 }
-  python_metrics:{ enabled: true, weight: 1.0 }
-  javascript:   { enabled: true, weight: 1.0 }
-  architecture: { enabled: true, weight: 3.0 }   # AES rules carry 3x weight
-```
-
----
 
 ## Production Deployment Checklist
 
@@ -196,7 +175,7 @@ adapters:
 - [ ] `cargo run --bin lint-arwaky-cli -- check .` reports 0 CRITICAL findings
 - [ ] `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings` clean
 - [ ] `lint-arwaky-cli version` returns `1.10.14`
-- [ ] `lint-arwaky-cli setup doctor` reports no issues
+- [ ] `lint-arwaky-cli doctor` reports no issues
 - [ ] `lint-arwaky-mcp` responds to `tools/list` with the expected tools
 - [ ] `health_check` MCP tool returns all adapters healthy
 
@@ -231,8 +210,6 @@ Or rebuild from a specific tag:
 git checkout v1.10.14
 cargo build --release
 ```
-
-Restart any running MCP client (Claude Desktop, VS Code, Hermes).
 
 ---
 

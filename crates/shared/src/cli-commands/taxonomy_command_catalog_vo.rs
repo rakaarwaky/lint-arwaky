@@ -32,24 +32,10 @@ impl CommandCatalogVO {
             ),
         );
         catalog.insert(
-            ActionName::from("report"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Generate quality reports"),
-                Suggestion::new("lint-arwaky report ./src --format json"),
-            ),
-        );
-        catalog.insert(
             ActionName::from("ci"),
             CommandMetadataVO::new(
                 DescriptionVO::new("CI-optimized with exit codes"),
                 Suggestion::new("lint-arwaky ci /path --exit-zero"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("batch"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Check multiple paths"),
-                Suggestion::new("lint-arwaky batch path1.py path2.js"),
             ),
         );
         catalog.insert(
@@ -67,24 +53,10 @@ impl CommandCatalogVO {
             ),
         );
         catalog.insert(
-            ActionName::from("complexity"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Cyclomatic complexity"),
-                Suggestion::new("lint-arwaky complexity ./src/"),
-            ),
-        );
-        catalog.insert(
             ActionName::from("duplicates"),
             CommandMetadataVO::new(
                 DescriptionVO::new("Code duplication detection"),
                 Suggestion::new("lint-arwaky duplicates /path"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("trends"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Quality trend over time"),
-                Suggestion::new("lint-arwaky trends ."),
             ),
         );
         catalog.insert(
@@ -95,73 +67,10 @@ impl CommandCatalogVO {
             ),
         );
         catalog.insert(
-            ActionName::from("diff"),
+            ActionName::from("maintenance doctor"),
             CommandMetadataVO::new(
-                DescriptionVO::new("Compare two versions"),
-                Suggestion::new("lint-arwaky diff v1.py v2.py"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("suggest"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("AI-powered suggestions"),
-                Suggestion::new("lint-arwaky suggest file.py"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("stats"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Statistics dashboard"),
-                Suggestion::new("lint-arwaky stats ./src/"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("init"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Initialize config"),
-                Suggestion::new("lint-arwaky init /path"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("config"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Edit configuration"),
-                Suggestion::new("lint-arwaky config get thresholds"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("ignore"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Manage ignore rules"),
-                Suggestion::new("lint-arwaky ignore add E501"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("export"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Export reports"),
-                Suggestion::new("lint-arwaky export --format sarif"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("clean"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Cleanup cache"),
-                Suggestion::new("lint-arwaky clean"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("update"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Update adapters"),
-                Suggestion::new("lint-arwaky update"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("doctor"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Diagnose issues"),
-                Suggestion::new("lint-arwaky doctor"),
+                DescriptionVO::new("Diagnose environment health"),
+                Suggestion::new("lint-arwaky maintenance doctor"),
             ),
         );
         catalog.insert(
@@ -186,24 +95,10 @@ impl CommandCatalogVO {
             ),
         );
         catalog.insert(
-            ActionName::from("cancel"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Cancel a running lint job"),
-                Suggestion::new("lint-arwaky cancel <job_id>"),
-            ),
-        );
-        catalog.insert(
             ActionName::from("plugins"),
             CommandMetadataVO::new(
                 DescriptionVO::new("List discovered plugins"),
                 Suggestion::new("lint-arwaky plugins"),
-            ),
-        );
-        catalog.insert(
-            ActionName::from("multi-project"),
-            CommandMetadataVO::new(
-                DescriptionVO::new("Run lint across multiple projects"),
-                Suggestion::new("lint-arwaky multi-project proj1/ proj2/"),
             ),
         );
         catalog.insert(
@@ -214,10 +109,9 @@ impl CommandCatalogVO {
             ),
         );
         catalog
-    } // end command_catalog
+    }
 }
 
-// Forward-compat free function wrapper for backward compatibility
 pub fn command_catalog() -> HashMap<ActionName, CommandMetadataVO> {
     CommandCatalogVO::command_catalog()
 }

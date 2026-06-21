@@ -32,9 +32,4 @@ pub trait IHookProtocol: Send + Sync {
         path2: &str,
     ) -> std::collections::HashMap<String, serde_json::Value>;
 
-    /// Get suggestions for a path
-    async fn get_suggestions(
-        &self,
-        path: &str,
-    ) -> std::collections::HashMap<String, serde_json::Value>;
 }

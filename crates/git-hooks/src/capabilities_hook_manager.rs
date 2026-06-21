@@ -73,14 +73,4 @@ impl IHookProtocol for HookManager {
         result
     }
 
-    async fn get_suggestions(
-        &self,
-        path: &str,
-    ) -> std::collections::HashMap<String, serde_json::Value> {
-        let mut result = std::collections::HashMap::new();
-        result.insert("score".to_string(), serde_json::json!(0.0));
-        result.insert("path".to_string(), serde_json::json!(path));
-        result.insert("has_issues".to_string(), serde_json::json!(true));
-        result
-    }
 }

@@ -1,4 +1,4 @@
-// PURPOSE: DevCommandsSurface — CLI surface for developer operations (diff, suggest, ignore, config, export, init, hooks)
+// PURPOSE: DevCommandsSurface — CLI surface for developer operations (diff, ignore, config, export, init, hooks)
 use std::process::ExitCode;
 use std::sync::Arc;
 
@@ -24,12 +24,6 @@ impl DevCommandsSurface {
         println!(" {path1}: 100.0");
         println!(" {path2}: 100.0");
         println!(" Difference: +0.0  UNCHANGED");
-    }
-
-    pub fn suggest(&self, path: &str, _ai: bool) {
-        println!(" Analyzing {path} for suggestions...");
-        println!("\nSuggestions for {path}:");
-        println!("  Code is at 100.0 architecture compliance score!");
     }
 
     pub fn ignore(&self, rule: &str, remove: bool, config_path: &str) {

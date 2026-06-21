@@ -54,79 +54,6 @@ pub async fn execute_command_tool(
             })
         }
 
-        "report" => {
-            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
-            let output_format = args
-                .get("output-format")
-                .and_then(|v| v.as_str())
-                .unwrap_or("text");
-            let results = arch_linter.run_self_lint(path);
-
-            match output_format {
-                "json" => {
-                    json!({
-                        "status": "success",
-                        "action": "report",
-                        "format": "json",
-                        "data": {
-                            "project": path,
-                            "total_violations": results.values.len(),
-                            "violations": results.values.iter().map(|r| {
-                                json!({
-                                    "file": r.file.value,
-                                    "line": r.line.value,
-                                    "code": &*r.code,
-                                    "message": r.message.value,
-                                    "severity": format!("{:?}", r.severity)
-                                })
-                            }).collect::<Vec<_>>()
-                        }
-                    })
-                }
-                "sarif" => {
-                    json!({
-                        "status": "success",
-                        "action": "report",
-                        "format": "sarif",
-                        "data": {
-                            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-                            "version": "2.1.0",
-                            "runs": [{
-                                "tool": {
-                                    "driver": {
-                                        "name": "lint-arwaky",
-                                        "version": env!("CARGO_PKG_VERSION"),
-                                        "informationUri": "https://github.com/rakaarwaky/lint-arwaky"
-                                    }
-                                },
-                                "results": results.values.iter().map(|r| {
-                                    json!({
-                                        "ruleId": &*r.code,
-                                        "message": {"text": r.message.value},
-                                        "locations": [{
-                                            "physicalLocation": {
-                                                "artifactLocation": {"uri": r.file.value},
-                                                "region": {"startLine": r.line.value}
-                                            }
-                                        }]
-                                    })
-                                }).collect::<Vec<_>>()
-                            }]
-                        }
-                    })
-                }
-                _ => {
-                    let report = arch_linter.format_report(&results, path);
-                    json!({
-                        "status": "success",
-                        "action": "report",
-                        "format": "text",
-                        "report": report
-                    })
-                }
-            }
-        }
-
         "security" => {
             let path = args.get("path").and_then(|v| v.as_str()).unwrap_or(".");
             json!({
@@ -160,7 +87,7 @@ pub async fn execute_command_tool(
             })
         }
 
-        "setup" | "doctor" => {
+        "maintenance" | "doctor" => {
             json!({
                 "status": "success",
                 "action": action,
@@ -212,16 +139,8 @@ pub fn list_commands_tool(domain: Option<&str>) -> Value {
                     {"command": "check", "description": "Run all linters and calculate score", "usage": "lint-arwaky check <path>"},
                     {"command": "scan", "description": "Alias for check (CI-friendly)", "usage": "lint-arwaky scan <path>"},
                     {"command": "fix", "description": "Apply safe automatic fixes", "usage": "lint-arwaky fix <path>"},
-                    {"command": "report", "description": "Generate detailed quality reports", "usage": "lint-arwaky report <path> --output-format json"},
                     {"command": "ci", "description": "CI mode (exit code 1 if score < threshold)", "usage": "lint-arwaky ci <path>"},
                     {"command": "git-diff", "description": "Show files changed since base ref", "usage": "lint-arwaky git-diff [--base HEAD]"}
-                ]
-            })
-        }
-        Some("multi") => {
-            json!({
-                "multi_project": [
-                    {"command": "multi-project", "description": "Run lint across multiple projects", "usage": "lint-arwaky multi-project <paths...>"}
                 ]
             })
         }
@@ -229,9 +148,7 @@ pub fn list_commands_tool(domain: Option<&str>) -> Value {
             json!({
                 "scans": [
                     {"command": "security", "description": "Scan for vulnerabilities", "usage": "lint-arwaky security <path>"},
-                    {"command": "complexity", "description": "Cyclomatic complexity analysis", "usage": "lint-arwaky complexity <path>"},
                     {"command": "duplicates", "description": "Detect code duplication", "usage": "lint-arwaky duplicates <path>"},
-                    {"command": "trends", "description": "Monitor quality trends", "usage": "lint-arwaky trends <path>"},
                     {"command": "dependencies", "description": "Scan for library vulnerabilities", "usage": "lint-arwaky dependencies <path>"}
                 ]
             })
@@ -239,32 +156,27 @@ pub fn list_commands_tool(domain: Option<&str>) -> Value {
         Some("setup") => {
             json!({
                 "setup": [
-                    {"command": "setup doctor", "description": "Diagnose environment health", "usage": "lint-arwaky setup doctor"},
+                    {"command": "maintenance doctor", "description": "Diagnose environment health", "usage": "lint-arwaky maintenance doctor"},
                     {"command": "setup init", "description": "Automatic environment configuration", "usage": "lint-arwaky setup init"},
                     {"command": "setup hermes", "description": "Auto-install into Hermes Agent", "usage": "lint-arwaky setup hermes"},
                     {"command": "setup mcp-config", "description": "Print MCP configuration", "usage": "lint-arwaky setup mcp-config"},
                     {"command": "adapters", "description": "List all active linters", "usage": "lint-arwaky adapters"},
                     {"command": "version", "description": "Show current version", "usage": "lint-arwaky version"},
-                    {"command": "config show", "description": "View active configuration", "usage": "lint-arwaky config show"},
-                    {"command": "cancel", "description": "Cancel a running lint job", "usage": "lint-arwaky cancel <job_id>"}
+                    {"command": "config show", "description": "View active configuration", "usage": "lint-arwaky config show"}
                 ]
             })
         }
         Some("dev") => {
             json!({
                 "dev": [
-                    {"command": "diff", "description": "Compare lint results between versions", "usage": "lint-arwaky diff <path1> <path2>"},
-                    {"command": "import", "description": "Import configurations", "usage": "lint-arwaky import <config_file>"},
-                    {"command": "export", "description": "Export lint reports", "usage": "lint-arwaky export <sarif|junit|json>"},
                     {"command": "watch", "description": "Monitor files and lint on changes", "usage": "lint-arwaky watch <path>"},
-                    {"command": "suggest", "description": "Provide improvement suggestions", "usage": "lint-arwaky suggest <path>"},
                     {"command": "install-hook", "description": "Install git pre-commit hook", "usage": "lint-arwaky install-hook"},
                     {"command": "uninstall-hook", "description": "Remove git pre-commit hook", "usage": "lint-arwaky uninstall-hook"}
                 ]
             })
         }
         _ => {
-            json!({"error": format!("Unknown domain: {}. Use: core, multi, scans, setup, dev", domain.unwrap_or("all"))})
+            json!({"error": format!("Unknown domain: {}. Use: core, scans, setup, dev", domain.unwrap_or("all"))})
         }
     };
 
@@ -286,15 +198,14 @@ pub fn commands_schema_tool(tool_name: Option<&str>) -> Value {
                         "action": {
                             "type": "string",
                             "description": "The command action to execute",
-                            "enum": ["check", "scan", "fix", "report", "security", "complexity", "dependencies", "setup", "doctor", "adapters", "version"]
+                            "enum": ["check", "scan", "fix", "security", "complexity", "dependencies", "maintenance", "doctor", "adapters", "version"]
                         },
                         "args": {
                             "type": "object",
                             "description": "Additional arguments for the command",
                             "properties": {
                                 "path": {"type": "string", "description": "Path to lint"},
-                                "git_diff": {"type": "boolean", "description": "Only check git diff"},
-                                "output-format": {"type": "string", "enum": ["text", "json", "sarif", "junit"]}
+                                "git_diff": {"type": "boolean", "description": "Only check git diff"}
                             }
                         }
                     },
@@ -312,7 +223,7 @@ pub fn commands_schema_tool(tool_name: Option<&str>) -> Value {
                         "domain": {
                             "type": "string",
                             "description": "Command domain to list",
-                            "enum": ["core", "multi", "scans", "setup", "dev"]
+                            "enum": ["core", "scans", "setup", "dev"]
                         }
                     }
                 }

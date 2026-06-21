@@ -1,8 +1,6 @@
-// PURPOSE: OutputControllerSurface — CLI output management (tee, write output files, JSON/JUnit/SARIF formatting)
+// PURPOSE: OutputControllerSurface — CLI output management (tee, write output files)
 use std::sync::Mutex;
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct OutputControllerSurface {}
@@ -25,7 +23,7 @@ impl OutputControllerSurface {
     }
 
     pub fn write_output(&self, output: &str, command: &str, fmt: Option<&str>) -> Option<FilePath> {
-        let _ = output; // suppress unused
+        let _ = output;
         let ext = fmt.unwrap_or("txt");
         let filename = format!(
             "{}_{command}.{ext}",
@@ -70,102 +68,4 @@ pub fn write_output(
 pub fn tee_stdout<F: FnOnce()>(_container: Option<&str>, f: F) -> String {
     f();
     String::new()
-}
-
-pub fn print_json(results: &[LintResult]) {
-    match serde_json::to_string_pretty(results) {
-        Ok(s) => println!("{}", s),
-        Err(e) => eprintln!("[error] failed to serialize: {}", e),
-    }
-}
-
-pub fn print_sarif(results: &[LintResult], target: &str) {
-    let abs_target = std::path::Path::new(target)
-        .canonicalize()
-        .ok()
-        .and_then(|p| p.to_str().map(|s| s.to_string()))
-        .unwrap_or_else(|| target.to_string());
-
-    let results_json: Vec<serde_json::Value> = results
-        .iter()
-        .map(|r| {
-            let file_uri = if r.file.value().is_empty() {
-                &abs_target
-            } else {
-                r.file.value()
-            };
-            serde_json::json!({
-                "ruleId": r.code.to_string(),
-                "level": match r.severity {
-                    Severity::CRITICAL => "error",
-                    Severity::HIGH => "error",
-                    Severity::MEDIUM => "warning",
-                    Severity::LOW | Severity::INFO => "note",
-                },
-                "message": { "text": r.message.value() },
-                "locations": [{
-                    "physicalLocation": {
-                        "artifactLocation": { "uri": file_uri, "uriBaseId": "PROJECT_ROOT" },
-                        "region": { "startLine": r.line.value(), "startColumn": r.column.value() }
-                    }
-                }]
-            })
-        })
-        .collect();
-    let sarif = serde_json::json!({
-        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-        "version": "2.1.0",
-        "runs": [{
-            "tool": { "driver": { "name": "lint-arwaky", "version": env!("CARGO_PKG_VERSION") } },
-            "originalUriBaseIds": {
-                "PROJECT_ROOT": {
-                    "uri": format!("file://{}/", abs_target)
-                }
-            },
-            "results": results_json
-        }]
-    });
-    match serde_json::to_string_pretty(&sarif) {
-        Ok(s) => println!("{}", s),
-        Err(e) => eprintln!("[error] failed to serialize SARIF: {}", e),
-    }
-}
-
-pub fn print_junit(results: &[LintResult]) {
-    let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    let errors_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::CRITICAL)
-        .count();
-    let failures_count = results
-        .iter()
-        .filter(|r| matches!(r.severity, Severity::HIGH | Severity::MEDIUM))
-        .count();
-    xml.push_str(&format!(
-        "<testsuite name=\"lint-arwaky\" tests=\"{}\" failures=\"{}\" errors=\"{}\">\n",
-        results.len(),
-        failures_count,
-        errors_count
-    ));
-    for r in results {
-        let safe = r.message.value().replace('"', "&quot;");
-        xml.push_str(&format!(
-            "  <testcase classname=\"{}\" name=\"{}\">\n",
-            r.code, safe
-        ));
-        match r.severity {
-            Severity::CRITICAL => {
-                xml.push_str(&format!("    <error message=\"{}\"/>\n", safe));
-            }
-            Severity::HIGH | Severity::MEDIUM => {
-                xml.push_str(&format!("    <failure message=\"{}\"/>\n", safe));
-            }
-            Severity::LOW | Severity::INFO => {
-                xml.push_str(&format!("    <skipped message=\"{}\"/>\n", safe));
-            }
-        }
-        xml.push_str("  </testcase>\n");
-    }
-    xml.push_str("</testsuite>\n");
-    println!("{}", xml);
 }

@@ -15,7 +15,6 @@ impl TuiCommandSurface {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 fn cli_binary() -> String {
-    // Prefer sibling binary in same directory as tui binary
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             let sibling = dir.join("lint-arwaky-cli");
@@ -24,7 +23,6 @@ fn cli_binary() -> String {
             }
         }
     }
-    // Fallback to PATH
     "lint-arwaky-cli".to_string()
 }
 
@@ -32,21 +30,21 @@ fn print_header(term: &Term) {
     let _ = term.clear_screen();
     println!(
         "{}",
-        style("╔══════════════════════════════════════════════╗")
+        style("╔══════════════════════════════════════════════════╗")
             .cyan()
             .bold()
     );
     println!(
         "{}  {}  {}",
         style("║").cyan().bold(),
-        style("🔍  Lint Arwaky TUI  — Code Quality Gateway")
+        style("  Lint Arwaky TUI  -- Code Quality Gateway")
             .white()
             .bold(),
         style("║").cyan().bold()
     );
     println!(
         "{}",
-        style("╚══════════════════════════════════════════════╝")
+        style("╚══════════════════════════════════════════════════╝")
             .cyan()
             .bold()
     );
@@ -65,21 +63,21 @@ fn run_cmd(args: &[&str]) {
     let cli = cli_binary();
     println!(
         "\n{} {} {}\n",
-        style("▶").green().bold(),
+        style(">").green().bold(),
         style("Running:").dim(),
         style(format!("{} {}", cli, args.join(" "))).yellow()
     );
     let status = std::process::Command::new(&cli).args(args).status();
     match status {
         Ok(s) if s.success() => {
-            println!("\n{} {}", style("✓").green().bold(), style("Done.").green())
+            println!("\n{} {}", style("OK").green().bold(), style("Done.").green())
         }
         Ok(s) => println!(
             "\n{} Exit code: {}",
-            style("✗").red().bold(),
+            style("FAIL").red().bold(),
             s.code().unwrap_or(-1)
         ),
-        Err(e) => println!("\n{} Failed to run binary: {e}", style("✗").red().bold()),
+        Err(e) => println!("\n{} Failed to run binary: {e}", style("FAIL").red().bold()),
     }
 }
 
@@ -93,105 +91,52 @@ fn pause() {
 
 // ── Menu definition ───────────────────────────────────────────────────────────
 
+#[derive(Clone, Copy, PartialEq)]
+enum MenuKind {
+    Action,
+    Separator,
+}
+
 struct MenuItem {
     label: &'static str,
-    description: &'static str,
+    id: &'static str,
+    kind: MenuKind,
 }
 
 const MENU: &[MenuItem] = &[
-    MenuItem {
-        label: "check  ·  AES self-lint audit",
-        description: "check",
-    },
-    MenuItem {
-        label: "scan   ·  Full multi-adapter scan",
-        description: "scan",
-    },
-    MenuItem {
-        label: "fix    ·  Apply safe automatic fixes",
-        description: "fix",
-    },
-    MenuItem {
-        label: "report ·  Generate quality report",
-        description: "report",
-    },
-    MenuItem {
-        label: "ci     ·  CI mode (exit 1 if score < N)",
-        description: "ci",
-    },
-    MenuItem {
-        label: "─────────────────────────────────────────────────────",
-        description: "sep1",
-    },
-    MenuItem {
-        label: "security    ·  Vulnerability scan",
-        description: "security",
-    },
-    MenuItem {
-        label: "complexity  ·  Cyclomatic complexity",
-        description: "complexity",
-    },
-    MenuItem {
-        label: "duplicates  ·  Duplication detection",
-        description: "duplicates",
-    },
-    MenuItem {
-        label: "─────────────────────────────────────────────────────",
-        description: "sep2",
-    },
-    MenuItem {
-        label: "setup doctor   ·  Diagnose environment",
-        description: "setup-doctor",
-    },
-    MenuItem {
-        label: "setup install  ·  Install all adapters",
-        description: "setup-install",
-    },
-    MenuItem {
-        label: "setup install --sudo  ·  (sudo npm)",
-        description: "setup-install-sudo",
-    },
-    MenuItem {
-        label: "─────────────────────────────────────────────────────",
-        description: "sep3",
-    },
-    MenuItem {
-        label: "scan test-project-rust",
-        description: "test-rust",
-    },
-    MenuItem {
-        label: "scan test-project-python",
-        description: "test-python",
-    },
-    MenuItem {
-        label: "scan test-project-javascript",
-        description: "test-javascript",
-    },
-    MenuItem {
-        label: "─────────────────────────────────────────────────────",
-        description: "sep4",
-    },
-    MenuItem {
-        label: "version",
-        description: "version",
-    },
-    MenuItem {
-        label: "adapters  ·  List active adapters",
-        description: "adapters",
-    },
-    MenuItem {
-        label: "─────────────────────────────────────────────────────",
-        description: "sep5",
-    },
-    MenuItem {
-        label: "❌  Exit",
-        description: "exit",
-    },
+    // -- Core commands --
+    MenuItem { label: "[check]   AES self-lint audit", id: "check", kind: MenuKind::Action },
+    MenuItem { label: "[scan]    Full multi-adapter scan", id: "scan", kind: MenuKind::Action },
+    MenuItem { label: "[fix]     Apply safe automatic fixes", id: "fix", kind: MenuKind::Action },
+    MenuItem { label: "[ci]      CI mode (exit 1 if score < N)", id: "ci", kind: MenuKind::Action },
+    MenuItem { label: "", id: "", kind: MenuKind::Separator },
+    // -- Detection commands --
+    MenuItem { label: "[orphan]        Check orphan files (AES501-506)", id: "orphan", kind: MenuKind::Action },
+    MenuItem { label: "[security]      Vulnerability scan", id: "security", kind: MenuKind::Action },
+    MenuItem { label: "[duplicates]    Duplication detection", id: "duplicates", kind: MenuKind::Action },
+    MenuItem { label: "[dependencies]  Library vulnerability scan", id: "dependencies", kind: MenuKind::Action },
+    MenuItem { label: "", id: "", kind: MenuKind::Separator },
+    // -- Watch --
+    MenuItem { label: "[watch]  Watch and lint on changes", id: "watch", kind: MenuKind::Action },
+    MenuItem { label: "", id: "", kind: MenuKind::Separator },
+    // -- Setup & config --
+    MenuItem { label: "[setup install]    Install all adapters", id: "setup-install", kind: MenuKind::Action },
+    MenuItem { label: "[setup init]       Create default config", id: "setup-init", kind: MenuKind::Action },
+    MenuItem { label: "[config show]      Show active configuration", id: "config-show", kind: MenuKind::Action },
+    MenuItem { label: "", id: "", kind: MenuKind::Separator },
+    // -- Git --
+    MenuItem { label: "[install-hook]     Install git pre-commit hook", id: "install-hook", kind: MenuKind::Action },
+    MenuItem { label: "[uninstall-hook]   Remove git pre-commit hook", id: "uninstall-hook", kind: MenuKind::Action },
+    MenuItem { label: "[git-diff]         Show files changed since base", id: "git-diff", kind: MenuKind::Action },
+    MenuItem { label: "", id: "", kind: MenuKind::Separator },
+    // -- Info --
+    MenuItem { label: "[maintenance doctor]  Diagnose environment", id: "maintenance-doctor", kind: MenuKind::Action },
+    MenuItem { label: "[version]      Show version", id: "version", kind: MenuKind::Action },
+    MenuItem { label: "[adapters]     List active adapters", id: "adapters", kind: MenuKind::Action },
+    MenuItem { label: "[vscode-graph] Export graph JSON for VS Code", id: "vscode-graph", kind: MenuKind::Action },
+    MenuItem { label: "", id: "", kind: MenuKind::Separator },
+    MenuItem { label: "Exit", id: "exit", kind: MenuKind::Action },
 ];
-
-fn is_separator(item: &MenuItem) -> bool {
-    item.description.starts_with("sep")
-}
 
 // ── Main loop ─────────────────────────────────────────────────────────────────
 
@@ -201,69 +146,30 @@ pub fn run_tui_loop() -> ExitCode {
     loop {
         print_header(&term);
 
-        let labels: Vec<&str> = MENU.iter().map(|m| m.label).collect();
+        let selectable: Vec<(usize, &MenuItem)> = MENU
+            .iter()
+            .enumerate()
+            .filter(|(_, m)| m.kind == MenuKind::Action)
+            .collect();
+
+        let display_labels: Vec<&str> = selectable.iter().map(|(_, m)| m.label).collect();
 
         let selection = Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("Pilih command")
-            .items(&labels)
+            .with_prompt("Select command")
+            .items(&display_labels)
             .default(0)
             .interact_on_opt(&term);
 
-        let idx = match selection {
+        let pick = match selection {
             Ok(Some(i)) => i,
             Ok(None) | Err(_) => break,
         };
 
-        let item = &MENU[idx];
-        if is_separator(item) {
-            // separators are not actionable; re-show menu
-            continue;
-        }
-
+        let item = selectable[pick].1;
         println!();
 
-        match item.description {
+        match item.id {
             "exit" => break,
-
-            "version" => {
-                run_cmd(&["version"]);
-                pause();
-            }
-
-            "adapters" => {
-                run_cmd(&["adapters"]);
-                pause();
-            }
-
-            "setup-doctor" => {
-                run_cmd(&["setup", "doctor"]);
-                pause();
-            }
-
-            "setup-install" => {
-                run_cmd(&["setup", "install"]);
-                pause();
-            }
-
-            "setup-install-sudo" => {
-                run_cmd(&["setup", "install", "--sudo"]);
-                pause();
-            }
-
-            "test-rust" => {
-                run_cmd(&["scan", "test-project-rust/"]);
-                pause();
-            }
-
-            "test-python" => {
-                run_cmd(&["scan", "test-project-python/"]);
-                pause();
-            }
-
-            "test-javascript" => {
-                run_cmd(&["scan", "test-project-javascript/"]);
-                pause();
-            }
 
             "check" => {
                 let path = ask_path("Path to check", ".");
@@ -283,20 +189,6 @@ pub fn run_tui_loop() -> ExitCode {
                 pause();
             }
 
-            "report" => {
-                let path = ask_path("Path to report", ".");
-                let formats = ["text", "json", "sarif", "junit"];
-                let fmt_idx = Select::with_theme(&ColorfulTheme::default())
-                    .with_prompt("Output format")
-                    .items(&formats)
-                    .default(0)
-                    .interact()
-                    .unwrap_or(0);
-                let fmt = formats[fmt_idx];
-                run_cmd(&["report", &path, "--output-format", fmt]);
-                pause();
-            }
-
             "ci" => {
                 let path = ask_path("Path", ".");
                 let threshold: String = Input::with_theme(&ColorfulTheme::default())
@@ -308,15 +200,15 @@ pub fn run_tui_loop() -> ExitCode {
                 pause();
             }
 
-            "security" => {
-                let path = ask_path("Path to scan", ".");
-                run_cmd(&["security", &path]);
+            "orphan" => {
+                let path = ask_path("File path to check", ".");
+                run_cmd(&["orphan", &path]);
                 pause();
             }
 
-            "complexity" => {
-                let path = ask_path("Path to analyze", ".");
-                run_cmd(&["complexity", &path]);
+            "security" => {
+                let path = ask_path("Path to scan", ".");
+                run_cmd(&["security", &path]);
                 pause();
             }
 
@@ -326,12 +218,74 @@ pub fn run_tui_loop() -> ExitCode {
                 pause();
             }
 
-            other => {
-                eprintln!("Warning: unhandled case {:?} in {}", other, module_path!());
+            "dependencies" => {
+                let path = ask_path("Path to scan", ".");
+                run_cmd(&["dependencies", &path]);
+                pause();
+            }
+
+            "watch" => {
+                let path = ask_path("Path to watch", ".");
+                run_cmd(&["watch", &path]);
+                pause();
+            }
+
+            "setup-install" => {
+                run_cmd(&["setup", "install"]);
+                pause();
+            }
+
+            "setup-init" => {
+                run_cmd(&["setup", "init"]);
+                pause();
+            }
+
+            "config-show" => {
+                run_cmd(&["config", "show"]);
+                pause();
+            }
+
+            "install-hook" => {
+                run_cmd(&["install-hook"]);
+                pause();
+            }
+
+            "uninstall-hook" => {
+                run_cmd(&["uninstall-hook"]);
+                pause();
+            }
+
+            "git-diff" => {
+                run_cmd(&["git-diff"]);
+                pause();
+            }
+
+            "maintenance-doctor" => {
+                run_cmd(&["maintenance", "doctor"]);
+                pause();
+            }
+
+            "version" => {
+                run_cmd(&["version"]);
+                pause();
+            }
+
+            "adapters" => {
+                run_cmd(&["adapters"]);
+                pause();
+            }
+
+            "vscode-graph" => {
+                run_cmd(&["vscode-graph"]);
+                pause();
+            }
+
+            _ => {
+                eprintln!("Warning: unhandled case {:?} in {}", item.id, module_path!());
             }
         }
     }
 
-    println!("\n{}", style("Bye! 👋").cyan().bold());
+    println!("\n{}", style("Bye!").cyan().bold());
     ExitCode::SUCCESS
 }

@@ -1,4 +1,4 @@
-// PURPOSE: MaintenanceCommandsSurface — CLI surface for maintenance (stats, clean, update, doctor, cancel)
+// PURPOSE: MaintenanceCommandsSurface — CLI surface for maintenance (doctor, security, dependencies)
 use std::process::ExitCode;
 
 use code_analysis::resolve_target;
@@ -15,43 +15,156 @@ impl MaintenanceCommandsSurface {
     pub fn new() -> Self {
         Self {}
     }
+}
 
-    pub fn stats(&self, path: &str) {
-        let abs_path = std::path::Path::new(path);
-        println!(" Auto-Linter Statistics for {}", abs_path.to_string_lossy());
-        println!("{}", "=".repeat(50));
-        println!(" Python files: 0");
-        println!(" Test files: 0");
-        println!(" Test ratio: 0.0%");
-        println!("{}", "=".repeat(50));
+pub fn handle_doctor() {
+    println!("Environment Diagnostics");
+    println!();
+
+    let check_tool = |name: &str, args: &[&str], required: bool| -> (&str, String) {
+        let output = std::process::Command::new(name).args(args).output();
+        match output {
+            Ok(o) if o.status.success() => {
+                let ver = String::from_utf8_lossy(&o.stdout)
+                    .lines()
+                    .next()
+                    .unwrap_or("")
+                    .trim()
+                    .to_string();
+                ("OK", ver)
+            }
+            _ => {
+                if required {
+                    ("FAIL", "NOT FOUND".to_string())
+                } else {
+                    ("WARN", "NOT FOUND".to_string())
+                }
+            }
+        }
+    };
+
+    println!("Rust Toolchain:");
+    let (cargo_st, cargo_ver) = check_tool("cargo", &["--version"], true);
+    println!(
+        "  {} cargo {}  ({})",
+        if cargo_st == "OK" { "check" } else { "X" },
+        cargo_ver,
+        cargo_st
+    );
+    let (clippy_st, clippy_ver) = check_tool("cargo", &["clippy", "--version"], true);
+    println!(
+        "  {} clippy {}  ({})",
+        if clippy_st == "OK" { "check" } else { "X" },
+        clippy_ver,
+        clippy_st
+    );
+    let (rustfmt_st, rustfmt_ver) = check_tool("rustfmt", &["--version"], true);
+    println!(
+        "  {} rustfmt {}  ({})",
+        if rustfmt_st == "OK" { "check" } else { "X" },
+        rustfmt_ver,
+        rustfmt_st
+    );
+    if let Ok(p) = std::env::current_exe() {
+        println!("  binary: {}", p.display());
     }
 
-    pub fn clean(&self) {
-        println!(" Cleaning cache...");
-        println!(" Cleanup complete.");
+    println!();
+    println!("Python Toolchain:");
+    let (py_st, py_ver) = check_tool("python3", &["--version"], false);
+    println!(
+        "  {} python3 {}  ({})",
+        if py_st == "OK" { "check" } else { "X" },
+        py_ver,
+        py_st
+    );
+    let (ruff_st, ruff_ver) = check_tool("ruff", &["--version"], false);
+    println!(
+        "  {} ruff {}  ({})",
+        if ruff_st == "OK" { "check" } else { "X" },
+        ruff_ver,
+        ruff_st
+    );
+    let (mypy_st, mypy_ver) = check_tool("mypy", &["--version"], false);
+    println!(
+        "  {} mypy {}  ({})",
+        if mypy_st == "OK" { "check" } else { "X" },
+        mypy_ver,
+        mypy_st
+    );
+    let (bandit_st, bandit_ver) = check_tool("bandit", &["--version"], false);
+    println!(
+        "  {} bandit {}  ({})",
+        if bandit_st == "OK" { "check" } else { "X" },
+        bandit_ver,
+        bandit_st
+    );
+
+    println!();
+    println!("JavaScript Toolchain:");
+    let (node_st, node_ver) = check_tool("node", &["--version"], false);
+    println!(
+        "  {} node {}  ({})",
+        if node_st == "OK" { "check" } else { "X" },
+        node_ver,
+        node_st
+    );
+
+    let eslint_local = std::path::Path::new("node_modules/.bin/eslint");
+    if eslint_local.exists() {
+        println!("  check eslint (local)");
+    } else {
+        let (es_st, es_ver) = check_tool("eslint", &["--version"], false);
+        println!(
+            "  {} eslint {}  ({})",
+            if es_st == "OK" { "check" } else { "X" },
+            es_ver,
+            es_st
+        );
     }
 
-    pub fn update(&self) {
-        println!(" Updating adapters...");
-        println!("\n Update complete");
+    let prettier_local = std::path::Path::new("node_modules/.bin/prettier");
+    if prettier_local.exists() {
+        println!("  check prettier (local)");
+    } else {
+        let (pr_st, pr_ver) = check_tool("prettier", &["--version"], false);
+        println!(
+            "  {} prettier {}  ({})",
+            if pr_st == "OK" { "check" } else { "X" },
+            pr_ver,
+            pr_st
+        );
     }
 
-    pub fn doctor(&self) {
-        println!(" Lint Arwaky Doctor");
-        println!("{}", "=".repeat(50));
-        println!(" Python: 3.12+");
-        println!(" Status: Installed");
-        println!(" Config: lint_arwaky.config.yaml");
-        println!("\n Adapters:");
-        println!("  - ruff: OK");
-        println!("  - mypy: OK");
-        println!("{}", "=".repeat(50));
-        println!("\n All systems healthy!");
+    let tsc_local = std::path::Path::new("node_modules/.bin/tsc");
+    if tsc_local.exists() {
+        println!("  check tsc (local)");
+    } else {
+        let (tsc_st, tsc_ver) = check_tool("tsc", &["--version"], false);
+        println!(
+            "  {} tsc {}  ({})",
+            if tsc_st == "OK" { "check" } else { "X" },
+            tsc_ver,
+            tsc_st
+        );
     }
 
-    pub fn cancel(&self, job_id: &str) {
-        println!("Request to cancel job {job_id} sent.");
-    }
+    println!();
+    println!("VCS:");
+    let (git_st, git_ver) = check_tool("git", &["--version"], true);
+    println!(
+        "  {} git {}  ({})",
+        if git_st == "OK" { "check" } else { "X" },
+        git_ver,
+        git_st
+    );
+    let (jj_st, jj_ver) = check_tool("jj", &["--version"], false);
+    println!(
+        "  {} jj {}  ({})",
+        if jj_st == "OK" { "check" } else { "X" },
+        jj_ver,
+        jj_st
+    );
 }
 
 pub fn handle_security(path: Option<String>) -> ExitCode {

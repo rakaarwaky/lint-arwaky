@@ -1,4 +1,4 @@
-// PURPOSE: Cli + Commands enums — clap-based CLI definition with all subcommands (check, scan, fix, dev, config, report, setup, etc.)
+// PURPOSE: Cli + Commands enums — clap-based CLI definition with all subcommands
 
 use clap::{Parser, Subcommand};
 
@@ -53,15 +53,6 @@ pub enum Commands {
         dry_run: bool,
     },
 
-    /// Generate quality reports
-    Report {
-        /// Path to report on
-        path: Option<String>,
-        /// Output format
-        #[arg(long, default_value = "text", value_parser = ["text", "json", "sarif", "junit"])]
-        output_format: String,
-    },
-
     /// CI mode (exit 1 if score < threshold)
     Ci {
         /// Path to lint
@@ -71,18 +62,17 @@ pub enum Commands {
         threshold: u32,
     },
 
+    /// Maintenance operations
+    Maintenance {
+        #[command(subcommand)]
+        command: MaintenanceCommands,
+    },
+
     /// Show files changed since base ref
     GitDiff {
         /// Base ref
         #[arg(long, default_value = "HEAD")]
         base: String,
-    },
-
-    /// Run lint across multiple projects
-    MultiProject {
-        /// Paths to lint
-        #[arg(required = true)]
-        paths: Vec<String>,
     },
 
     /// Check if a file is an orphan (AES030)
@@ -124,46 +114,10 @@ pub enum Commands {
         command: ConfigCommands,
     },
 
-    /// Cancel a running lint job
-    Cancel {
-        /// Job ID to cancel
-        job_id: String,
-    },
-
-    /// Compare lint results between two versions
-    Diff {
-        /// First path
-        path1: String,
-        /// Second path
-        path2: String,
-    },
-
-    /// Import configuration
-    Import {
-        /// Config file path
-        config_file: String,
-    },
-
-    /// Export lint reports
-    Export {
-        /// Output format
-        #[arg(value_parser = ["sarif", "junit", "json"])]
-        format: String,
-    },
-
     /// Watch and lint on changes
     Watch {
         /// Path to watch
         path: Option<String>,
-    },
-
-    /// Provide improvement suggestions
-    Suggest {
-        /// Path to analyze
-        path: Option<String>,
-        /// Use AI for suggestions
-        #[arg(long)]
-        ai: bool,
     },
 
     /// Install git pre-commit hook
@@ -183,6 +137,12 @@ pub enum Commands {
 }
 
 #[derive(Subcommand, Debug)]
+pub enum MaintenanceCommands {
+    /// Diagnose environment health
+    Doctor,
+}
+
+#[derive(Subcommand, Debug)]
 pub enum SetupCommands {
     /// Auto-configure lint-arwaky (project-local config)
     Init {
@@ -190,8 +150,6 @@ pub enum SetupCommands {
         #[arg(long)]
         global: bool,
     },
-    /// Diagnose environment
-    Doctor,
     /// Install all linter adapter dependencies (ruff, mypy, bandit, eslint, prettier, tsc)
     Install {
         /// Use sudo for npm global install (will prompt for password)

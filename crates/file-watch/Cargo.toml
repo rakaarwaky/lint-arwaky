@@ -9,6 +9,9 @@ serde.workspace = true
 serde_json.workspace = true
 shared.workspace = true
 source_parsing.workspace = true
+tokio.workspace = true
+notify.workspace = true
+notify-debouncer-mini.workspace = true
 
 [features]
 watch = []
