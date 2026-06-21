@@ -35,7 +35,7 @@ fn main() -> ExitCode {
     let import_container = ImportContainer::new(source_parser.clone());
     let analyzer = import_container.analyzer();
     let checker_container =
-        code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(analyzer);
+        code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(analyzer.clone());
     init_global_checker(Arc::new(checker_container));
 
     let arch_linter = code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
@@ -162,8 +162,17 @@ fn main() -> ExitCode {
         }
         Commands::Security { path } => surface_maintenance_command::handle_security(path),
         Commands::Duplicates { path } => {
-            let analyzer = CodeDuplicationAnalyzer::new();
-            analyzer.handle_duplicates(path)
+            let dup_analyzer = CodeDuplicationAnalyzer::new();
+            let violations = dup_analyzer.handle_duplicates(path, analyzer.fs());
+            if violations.is_empty() {
+                println!("No duplicate code blocks detected.");
+            } else {
+                for v in &violations {
+                    let s: String = v.clone().into();
+                    println!("{}", s);
+                }
+            }
+            ExitCode::SUCCESS
         }
         Commands::Dependencies { path } => surface_maintenance_command::handle_dependencies(path),
         Commands::Setup { command } => surface_setup_command::handle_setup(command),

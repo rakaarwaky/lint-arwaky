@@ -70,6 +70,7 @@ pub enum AesCodeAnalysisViolation {
     Unimplemented { reason: Option<LintMessage> },
     // AES305 — Duplicate/dead code (empty impl blocks)
     DeadInheritance { reason: Option<LintMessage> },
+    CodeDuplication { reason: Option<LintMessage> },
 }
 
 impl fmt::Display for AesCodeAnalysisViolation {
@@ -193,6 +194,16 @@ impl fmt::Display for AesCodeAnalysisViolation {
                 write!(f, "AES305 DEAD_INHERITANCE: Empty {}, class, or {} implementation block detected.\n\
                         WHY? {}\n\
                         FIX: Implement the necessary methods/fields or remove the empty definition block.", lang.struct_keyword(), lang.interface_kw(), why)
+            }
+            AesCodeAnalysisViolation::CodeDuplication { reason } => {
+                let default_why = "Duplicate code blocks increase maintenance burden and indicate missing abstraction.".to_string();
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
+                write!(f, "AES305 CODE_DUPLICATION: Duplicate code block detected.\n\
+                        WHY? {}\n\
+                        FIX: Extract the duplicated logic into a shared function or module.", why)
             }
         }
     }

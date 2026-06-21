@@ -1,5 +1,9 @@
 // PURPOSE: Root container for code-analysis — defines CodeAnalysisCheckerContainer and CodeAnalysisContainer
 // Wiring: ICodeMetricAnalyzerProtocol → CodeDuplicationAnalyzer (capabilities layer)
+// ALGORITHM:
+//   CodeAnalysisCheckerContainer: injects checkers (BypassChecker, ArchLineChecker,
+//     MandatoryDefinitionChecker, CodeDuplicationAnalyzer) and exposes them via typed accessors.
+//   CodeAnalysisContainer: wraps CodeAnalysisOrchestrator as IArchLintProtocol for surface consumption.
 
 use crate::capabilities_check_bypass_checker::BypassChecker;
 use crate::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;

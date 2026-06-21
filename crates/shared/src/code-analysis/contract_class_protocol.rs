@@ -7,6 +7,7 @@ pub trait IMandatoryClassProtocol: Send + Sync {
         &self,
         file: &str,
         definition: Option<&LayerDefinition>,
+        content: &str,
         violations: &mut Vec<LintResult>,
     );
 }

@@ -1,5 +1,11 @@
 // PURPOSE: ArchLineChecker — ILineCheckerProtocol for AES301 (file too large) and AES302 (file too short)
-use std::fs;
+// ALGORITHM:
+//   1. Skip barrel files (mod.rs, __init__.py)
+//   2. If no LayerDefinition provided, skip
+//   3. Check if filename is in exception list
+//   4. Count lines in passed content string
+//   5. If min_lines > 0 and count < min_lines → AES302 FILE_TOO_SHORT
+//   6. If max_lines > 0 and count > max_lines → AES301 FILE_TOO_LARGE
 use std::path::Path;
 
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -27,6 +33,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
         &self,
         file: &str,
         definition: Option<&LayerDefinition>,
+        content: &str,
         violations: &mut Vec<LintResult>,
     ) {
         let basename = Path::new(file)
@@ -48,10 +55,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
             return;
         }
 
-        let count = match fs::read_to_string(file) {
-            Ok(c) => c.lines().count() as i64,
-            Err(_) => return,
-        };
+        let count = content.lines().count() as i64;
 
         if def.code_analysis.min_lines.value > 0 && count < def.code_analysis.min_lines.value {
             violations.push(LintResult::new_arch(

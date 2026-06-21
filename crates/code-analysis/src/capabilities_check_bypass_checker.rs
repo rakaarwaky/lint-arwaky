@@ -1,4 +1,13 @@
 // PURPOSE: BypassChecker — IBypassCheckerProtocol for AES304: detect #[allow], noqa, unwrap, panic
+// ALGORITHM:
+//   1. Skip #[cfg(test)] blocks and static Lazy<Regex> multiline inits
+//   2. Skip string literal lines (false positive prevention)
+//   3. For each line, check: #[allow]/#[expect] → BYPASS_COMMENT
+//   4. Check for noqa/ts-ignore/eslint-disable/pylint:disable → BYPASS_COMMENT
+//   5. Check for .unwrap() / .expect("...") → UNWRAP_EXPECT
+//   6. Check for panic!() → PANIC
+//   7. Check for todo!() → TODO
+//   8. Check for unimplemented!() → UNIMPLEMENTED
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;

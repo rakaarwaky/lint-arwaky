@@ -1,4 +1,20 @@
 // PURPOSE: CodeAnalysisOrchestrator — single agent that orchestrates ALL AES checks, file collection, and reporting
+// ALGORITHM (run_lint_at):
+//   1. Load config; build ignored-patterns list
+//   2. Recursively collect all lintable source files from src_dir (via detect_source_dir + collect_source_files)
+//   3. Fail early if no files found
+//   4. Create tokio runtime; run_all_checks inside block_on
+// ALGORITHM (run_all_checks):
+//   1. If config.enabled = false, return empty
+//   2. For each file:
+//      a. Read file content
+//      b. Run bypass_checker.check_bypass_comments (AES304 — layer-independent)
+//      c. Run dead_inheritance_checker.check_dead_inheritance (AES303 sub-check 2)
+//      d. Skip barrel files (mod.rs, __init__.py, index.ts)
+//      e. Detect layer from filename prefix; skip if unknown or in exception list
+//      f. Run line_checker.check_line_counts (AES301–302)
+//      g. Run class_checker.check_mandatory_class_definition (AES303 sub-check 1)
+//   3. Return aggregated LintResult list
 
 use std::path::Path;
 use std::sync::Arc;
@@ -94,14 +110,13 @@ pub fn has_critical(results: &[LintResult]) -> bool {
 }
 
 impl CodeAnalysisOrchestrator {
-    /// Create a new orchestrator. Panics if init_global_checker has not been called.
+    /// Create a new orchestrator. Falls back to a default container if init_global_checker not called.
     pub fn new() -> Self {
         Self {
-            container: GLOBAL_CONTAINER.get().cloned().unwrap_or_else(|| {
-                unreachable!(
-                    "init_global_checker must be called before CodeAnalysisOrchestrator::new()"
-                )
-            }),
+            container: GLOBAL_CONTAINER
+                .get()
+                .cloned()
+                .unwrap_or_else(|| Arc::new(CodeAnalysisCheckerContainer::default())),
         }
     }
 
@@ -195,12 +210,12 @@ impl CodeAnalysisOrchestrator {
             // Layer-dependent checks (code-analysis only)
             self.container
                 .line_checker()
-                .check_line_counts(file, Some(def), &mut violations);
+                .check_line_counts(file, Some(def), &c, &mut violations);
 
             // Mandatory class definition check (AES303)
             self.container
                 .class_checker()
-                .check_mandatory_class_definition(file, Some(def), &mut violations);
+                .check_mandatory_class_definition(file, Some(def), &c, &mut violations);
         }
 
         violations

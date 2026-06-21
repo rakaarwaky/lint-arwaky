@@ -1,7 +1,17 @@
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class definitions exist AND are non-empty.
 // Sub-check 1: file must define at least one struct/trait/enum/class (IMandatoryClassProtocol).
 // Sub-check 2: empty unit struct (struct Foo;) and empty class (class Foo: pass, class Foo {}) flagged as dead inheritance.
-use std::fs;
+// ALGORITHM (check_mandatory_class_definition):
+//   1. Skip barrel/constant files (mod.rs, __init__.py, _constant.*)
+//   2. If no LayerDefinition or mandatory_class_definition disabled → skip
+//   3. Check if filename is in exception list
+//   4. Scan passed content for class/struct/trait/enum keyword declarations
+//   5. If none found → AES303 MANDATORY_DEFINITION
+// ALGORITHM (check_dead_inheritance):
+//   1. Iterate lines; skip #[cfg(test)] blocks
+//   2. For each `struct Foo;` (unit struct) → flag unless followed by impl block
+//   3. For each `class Foo: pass` (Python empty class) → flag
+//   4. For each `class Foo {}` (JS/TS empty class) → flag
 use std::path::Path;
 
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -31,6 +41,7 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
         &self,
         file: &str,
         definition: Option<&LayerDefinition>,
+        content: &str,
         violations: &mut Vec<LintResult>,
     ) {
         let basename = Path::new(file)
@@ -60,8 +71,7 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
             return;
         }
 
-        let has_class = if let Ok(content) = fs::read_to_string(file) {
-            content.contains("\nclass ")
+        let has_class = content.contains("\nclass ")
                 || content.starts_with("class ")
                 || content.contains("\npub struct ")
                 || content.starts_with("pub struct ")
@@ -76,10 +86,7 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
                 || content.contains("\nenum ")
                 || content.starts_with("enum ")
                 || content.contains("\nexport class ")
-                || content.contains("\nexport default class ")
-        } else {
-            false
-        };
+                || content.contains("\nexport default class ");
 
         if !has_class {
             violations.push(LintResult::new_arch(

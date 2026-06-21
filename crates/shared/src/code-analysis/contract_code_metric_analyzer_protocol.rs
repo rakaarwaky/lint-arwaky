@@ -1,6 +1,11 @@
 // PURPOSE: ICodeMetricAnalyzerProtocol — protocol for duplication detection (AES305)
-use std::process::ExitCode;
+use crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use crate::file_system::contract_system_port::IFileSystemPort;
 
 pub trait ICodeMetricAnalyzerProtocol: Send + Sync {
-    fn handle_duplicates(&self, path: Option<String>) -> ExitCode;
+    fn handle_duplicates(
+        &self,
+        path: Option<String>,
+        fs: &dyn IFileSystemPort,
+    ) -> Vec<AesCodeAnalysisViolation>;
 }
