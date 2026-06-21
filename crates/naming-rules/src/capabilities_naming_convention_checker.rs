@@ -5,6 +5,7 @@ use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
+use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -17,7 +18,6 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 
 #[derive(Clone)]
 pub struct NamingConventionChecker {}
@@ -110,7 +110,7 @@ impl NamingConventionChecker {
         if layer_name.is_none() {
             let stem = filename.split('.').next().unwrap_or(filename);
             let actual_prefix = stem.split('_').next().unwrap_or("").to_string();
-            
+
             // Check if the file starts with an unrecognized/invalid prefix (not corresponding to a standard AES layer).
             if !actual_prefix.is_empty() && !LAYER_PREFIXES.iter().any(|p| stem.starts_with(p)) {
                 let allowed: Vec<String> = LAYER_PREFIXES
@@ -130,7 +130,7 @@ impl NamingConventionChecker {
                 ));
                 return;
             }
-            
+
             // If the prefix is recognized or is empty, but there is no underscore or does not meet basic naming requirements.
             violations.push(Self::make_result(
                 file,
@@ -145,13 +145,13 @@ impl NamingConventionChecker {
             ));
             return;
         }
-        
+
         // Step 3: Retrieve the layer definition. If it does not exist, abort.
         let def = match definition {
             Some(d) => d,
             None => return,
         };
-        
+
         // Step 4: Skip validation if the file name is explicitly listed in the layer's exception config.
         if def.exceptions.values.contains(&filename.to_string()) {
             return;

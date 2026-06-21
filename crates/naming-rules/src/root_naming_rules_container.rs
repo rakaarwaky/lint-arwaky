@@ -1,6 +1,6 @@
 // PURPOSE: NamingContainer — wiring for naming-rules feature (root layer, wiring only)
-use shared::file_system::contract_system_port::IFileSystemPort;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
+use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use std::sync::Arc;
 
@@ -8,7 +8,7 @@ pub struct NamingContainer {
     naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
     suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
     analyzer: Arc<dyn IAnalyzer>,
-    fs: Arc<dyn IFileSystemPort>,
+    fs: Arc<dyn INamingFileSystemPort>,
 }
 
 impl NamingContainer {
@@ -17,7 +17,7 @@ impl NamingContainer {
             Arc::new(crate::capabilities_naming_convention_checker::NamingConventionChecker::new());
         let suffix_prefix_checker: Arc<dyn INamingCheckerProtocol> =
             Arc::new(crate::capabilities_suffix_prefix_checker::SuffixPrefixChecker::new());
-        let fs: Arc<dyn IFileSystemPort> =
+        let fs: Arc<dyn INamingFileSystemPort> =
             Arc::new(crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
         Self {
             naming_convention_checker,

@@ -4,7 +4,6 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
 use shared::source_parsing::contract_language_detector_port::Language as DetLang;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_source_vo::SourceContentVO;
@@ -126,7 +125,8 @@ impl ContractRoleChecker {
             return;
         }
         let lower = content.to_lowercase();
-        let detector = source_parsing::infrastructure_language_detector::LanguageDetector::new();
+        let detector =
+            shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
         let det_lang = detector.detect(&source.file_path);
         let is_rs = det_lang == DetLang::Rust;
         let is_py = det_lang == DetLang::Python;

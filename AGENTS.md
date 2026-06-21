@@ -64,7 +64,6 @@ crates/
   config-system/        — Config loading & parsing
   source-parsing/       — Source code parsing (scanners, parsers)
   external-lint/        — Python, JS, Rust external linter adapters
-  file-system/          — File system abstraction
   file-watch/           — File watching
   git-hooks/            — Git hooks management
   maintenance/          — Maintenance operations
@@ -78,31 +77,7 @@ crates/
   root_tui_main_entry.rs       — TUI binary entry (root_entry)
 ```
 
-**Container Pattern**: Each feature crate owns its own `root_container.rs` at crate root. Containers wire `capabilities_*`, `infrastructure_*`, `agent_*` implementations behind `contract_*` traits. Agent layer contains ONLY orchestrators (`agent_*_orchestrator.rs`). Root layer contains containers and binary entries. **Folder structure ≠ layer assignment.**
-
-### Dependency Graph (enforced by Cargo workspace)
-
-```
-shared (taxonomy_*, contract_*)     ◄── foundation, NO deps
-       ▲
-       │
-import-rules, naming-rules, role-rules, code-analysis,
-auto-fix, orphan-detector, config-system, source-parsing,
-external-lint, file-system, file-watch, git-hooks,
-multi-project, project-setup, maintenance
-       ▲                         (capabilities_*/infrastructure_* + agent_*)
-       │                         deps: shared ONLY
-cli-commands, mcp-server          (surface_*)
-       ▲                         deps: all feature crates + shared
-root_composition_container (root_*)
-```
-
-Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
-Surfaces must NOT import infrastructure/capabilities directly — they go through feature crate's `root_container` or `ServiceContainerAggregate` trait (AES201 sub-condition).
-
-AES rules enforced: 24 codes across 5 groups (Naming AES100s, Import AES200s, Quality AES300s, Role AES400s, Orphan AES500s). See `RULES_AES.md` for the complete catalog.
-
-## Key conventions
+### Key conventions
 
 - Filenames: `[layer]_[concept(s)]_[suffix].rs` — flexible word count (AES101)
 - Every logic file must define a struct implementing a contract trait (AES303)
@@ -114,9 +89,7 @@ AES rules enforced: 24 codes across 5 groups (Naming AES100s, Import AES200s, Qu
 ## Testing with test projects
 
 ```bash
-cargo run --bin lint-arwaky-cli -- scan test-project-rust/
-cargo run --bin lint-arwaky-cli -- scan test-project-python/
-cargo run --bin lint-arwaky-cli -- scan test-project-javascript/
+cargo run --bin lint-arwaky-cli -- scan test-workspaces
 ```
 
 Each contains intentional violations. See `TEST.md` for pass/fail criteria.

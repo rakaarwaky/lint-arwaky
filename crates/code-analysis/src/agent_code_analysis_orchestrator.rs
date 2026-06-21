@@ -7,7 +7,6 @@ use std::sync::OnceLock;
 use crate::CodeAnalysisCheckerContainer;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 static GLOBAL_CONTAINER: OnceLock<Arc<CodeAnalysisCheckerContainer>> = OnceLock::new();
@@ -50,7 +49,7 @@ pub fn collect_source_files(
             } else if let Some(path_str) = path.to_str() {
                 if let Ok(fp) = FilePath::new(path_str.to_string()) {
                     let detector =
-                        source_parsing::infrastructure_language_detector::LanguageDetector::new();
+                        shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
                     if detector.is_lintable(&fp) {
                         files.push(fp);
                     }

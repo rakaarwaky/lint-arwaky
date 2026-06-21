@@ -50,7 +50,7 @@ futures = "0.3"
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "1.10.19"
+version = "1.10.23"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
 license = "MIT"
@@ -129,3 +129,9 @@ futures.workspace = true
 
 [profile.release]
 opt-level = 2
+
+[profile.release.package.regex-automata]
+opt-level = 0
+
+[profile.release.package.regex-syntax]
+opt-level = 0

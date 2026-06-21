@@ -3,7 +3,6 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
 use shared::source_parsing::contract_language_detector_port::Language as DetLang;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
@@ -79,7 +78,8 @@ impl TaxonomyRoleChecker {
     fn scan_primitives(source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let detector = source_parsing::infrastructure_language_detector::LanguageDetector::new();
+        let detector =
+            shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
         let lang = detector.detect(&source.file_path);
         let primitives: &[&str] = match lang {
             DetLang::Rust => Self::RUST_PRIMITIVES,

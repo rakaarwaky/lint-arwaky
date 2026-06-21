@@ -28,6 +28,8 @@ ignored_paths:
   - "/venv"
   - "/.mypy_cache"
   - "/.ruff_cache"
+  - "/test-workspaces"
+  - "/Graph-It-Live"
 
 architecture:
   enabled: true

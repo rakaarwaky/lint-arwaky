@@ -1,7 +1,7 @@
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect duplicate code blocks across Rust files
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 pub struct CodeDuplicationAnalyzer {}
@@ -33,10 +33,10 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
             .collect();
         let min_lines: usize = 10;
-        let mut blocks: std::collections::HashMap<String, Vec<(std::path::PathBuf, usize)>> =
+        let mut blocks: std::collections::HashMap<String, Vec<(PathBuf, usize)>> =
             std::collections::HashMap::new();
 
-        source_parsing::infrastructure_file_collector::walk_rs_files(
+        walk_rs_files(
             &src,
             &mut |p| {
                 if let Ok(c) = std::fs::read_to_string(&p) {
@@ -64,7 +64,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
 
         let total_duplicated_lines = duplicates.len() * min_lines;
         let mut total_loc = 0usize;
-        source_parsing::infrastructure_file_collector::walk_rs_files(
+        walk_rs_files(
             &src,
             &mut |p| {
                 if let Ok(c) = std::fs::read_to_string(&p) {
@@ -104,5 +104,26 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             }
         }
         ExitCode::SUCCESS
+    }
+}
+
+fn is_ignored_dir(dir: &Path, ignored: &[String]) -> bool {
+    let s = dir.to_string_lossy();
+    ignored.iter().any(|i| s.contains(i.as_str()))
+}
+
+fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if is_ignored_dir(&p, ignored) {
+                continue;
+            }
+            if p.is_dir() {
+                walk_rs_files(&p, cb, ignored);
+            } else if p.extension().map(|x| x == "rs").unwrap_or(false) {
+                cb(p);
+            }
+        }
     }
 }

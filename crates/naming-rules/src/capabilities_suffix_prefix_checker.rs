@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
+use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -15,7 +16,6 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 
 #[derive(Clone)]
 pub struct SuffixPrefixChecker {}

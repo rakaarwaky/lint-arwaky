@@ -2,9 +2,9 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use code_analysis::count_loc;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use source_parsing::infrastructure_file_collector::count_loc;
 
 pub struct MultiCommandsSurface {}
 

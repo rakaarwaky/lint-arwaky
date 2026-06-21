@@ -84,16 +84,26 @@ impl CheckCommandsSurface {
             }
         };
 
+        // Load config from project root
+        let config_container = config_system::root_config_system_container::ConfigContainer::new();
+        let config = rt
+            .block_on(
+                config_container
+                    .orchestrator()
+                    .load_project_config(&path_obj),
+            )
+            .config;
+        let ignored_paths: Vec<String> = config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| fp.value.clone())
+            .collect();
+
         // Determine dynamic orchestrators based on detected language config
         let (arch_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
             if let Some(ref factory) = self.factory {
-                use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
-                let detector = config_system::WorkspaceDetector::new();
-                let ws_type = detector.detect(&path_obj);
-                let config = shared::config_system::taxonomy_config_vo::default_config_for_language(
-                    ws_type.as_str(),
-                );
-                let ctx = factory(config);
+                let ctx = factory(config.clone());
                 (
                     ctx.arch_linter,
                     ctx.naming_orchestrator,
@@ -135,9 +145,11 @@ impl CheckCommandsSurface {
 
         // 5. Run orphan detection
         let orphan_container =
-            orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+            orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_ignored(
+                ignored_paths.clone(),
+            );
         let orphan_analyzer = orphan_container.analyzer();
-        let source_files = collect_source_files(path);
+        let source_files = collect_source_files(path, &ignored_paths);
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         let orphan_results = orphan_analyzer.check_orphans(
             orphan_container.layer_detector().as_ref(),
@@ -172,8 +184,31 @@ impl CheckCommandsSurface {
             file_path.to_string()
         };
 
+        let path_obj_fp = FilePath::new(root_dir.clone()).unwrap_or_default();
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(r) => r,
+            Err(_) => {
+                eprintln!("[error] failed to create tokio runtime");
+                return;
+            }
+        };
+        let config_container = config_system::root_config_system_container::ConfigContainer::new();
+        let config = rt
+            .block_on(
+                config_container
+                    .orchestrator()
+                    .load_project_config(&path_obj_fp),
+            )
+            .config;
+        let ignored_paths: Vec<String> = config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| fp.value.clone())
+            .collect();
+
         // Collect all source files from project root for graph building
-        let source_files = collect_source_files(&root_dir);
+        let source_files = collect_source_files(&root_dir, &ignored_paths);
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
         // Normalize the target file path
@@ -186,7 +221,9 @@ impl CheckCommandsSurface {
 
         // Run orphan detection
         let orphan_container =
-            orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+            orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_ignored(
+                ignored_paths,
+            );
         let orphan_analyzer = orphan_container.analyzer();
         let all_results = orphan_analyzer.check_orphans(
             orphan_container.layer_detector().as_ref(),
@@ -294,11 +331,21 @@ impl CheckCommandsSurface {
             let role_results = rt.block_on(role_orchestrator.run_audit(&ws.path));
             all_results.extend(role_results);
 
+            let ignored_paths: Vec<String> = ws
+                .config
+                .ignored_paths
+                .values
+                .iter()
+                .map(|fp| fp.value.clone())
+                .collect();
+
             // Orphan detection per workspace
             let orphan_container =
-                orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+                orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_ignored(
+                    ignored_paths.clone(),
+                );
             let orphan_analyzer = orphan_container.analyzer();
-            let source_files = collect_source_files(&ws.path.value);
+            let source_files = collect_source_files(&ws.path.value, &ignored_paths);
             let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
             let orphan_results = orphan_analyzer.check_orphans(
                 orphan_container.layer_detector().as_ref(),
@@ -369,8 +416,8 @@ impl CheckCommandsSurface {
     }
 }
 
-/// Collect all source files from a directory
-fn collect_source_files(dir: &str) -> Vec<FilePath> {
+/// Collect all source files from a directory, ignoring paths matched by the ignore patterns
+fn collect_source_files(dir: &str, ignored: &[String]) -> Vec<FilePath> {
     let mut files = Vec::new();
     let root = std::path::Path::new(dir);
 
@@ -380,25 +427,18 @@ fn collect_source_files(dir: &str) -> Vec<FilePath> {
                 let path = entry.path();
                 if path.is_dir() {
                     let dir_name = path.file_name().unwrap_or_default().to_string_lossy();
-                    if matches!(
-                        dir_name.as_ref(),
-                        "target"
-                            | ".git"
-                            | ".jj"
-                            | ".opencode"
-                            | "node_modules"
-                            | ".github"
-                            | "Graph-It-Live"
-                            | "output"
-                            | "scratch"
-                            | "test-project-rust"
-                            | "test-project-python"
-                            | "test-project-javascript"
-                            | "packages"
-                    ) {
+                    let mut is_ignored = false;
+                    for i in ignored {
+                        let clean = i.trim_start_matches('/');
+                        if dir_name == clean || path.to_string_lossy().contains(i) {
+                            is_ignored = true;
+                            break;
+                        }
+                    }
+                    if is_ignored {
                         continue;
                     }
-                    let sub_files = collect_source_files(&path.to_string_lossy());
+                    let sub_files = collect_source_files(&path.to_string_lossy(), ignored);
                     files.extend(sub_files);
                 } else if let Some(ext) = path.extension() {
                     let ext_str = ext.to_string_lossy();

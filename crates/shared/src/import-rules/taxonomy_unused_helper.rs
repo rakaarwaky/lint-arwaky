@@ -31,8 +31,7 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<String, String> {
             continue;
         }
 
-        if trimmed.starts_with("import ") {
-            let import_part = &trimmed[7..];
+        if let Some(import_part) = trimmed.strip_prefix("import ") {
             for name in import_part.split(',') {
                 let name = name.trim();
                 if name.is_empty() {

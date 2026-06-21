@@ -18,6 +18,5 @@ pub mod agent_project_target_orchestrator;
 pub use agent_project_target_orchestrator::{has_critical, lint_path, resolve_target};
 // Re-export for CLI surfaces backward compatibility
 pub use shared::cli_commands::taxonomy_score_vo::compute_score;
-pub use source_parsing::infrastructure_file_collector::count_loc;
 pub mod root_code_analysis_container;
 pub use root_code_analysis_container::{CodeAnalysisCheckerContainer, CodeAnalysisContainer};

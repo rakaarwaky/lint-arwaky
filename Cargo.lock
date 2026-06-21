@@ -411,7 +411,6 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
  "tokio",
 ]
 
@@ -2311,7 +2310,7 @@ dependencies = [
 
 [[package]]
 name = "lint_arwaky-arwaky"
-version = "1.10.19"
+version = "1.10.23"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2661,12 +2660,10 @@ checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 name = "orphan_detector-lint-arwaky"
 version = "1.10.14"
 dependencies = [
- "code_analysis-lint-arwaky",
  "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
 ]
 
 [[package]]
@@ -3077,13 +3074,11 @@ name = "role_rules-lint-arwaky"
 version = "1.10.14"
 dependencies = [
  "async-trait",
- "import_rules-lint-arwaky",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
 ]
 
 [[package]]

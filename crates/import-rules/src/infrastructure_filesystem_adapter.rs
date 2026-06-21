@@ -1,4 +1,4 @@
-// PURPOSE: FileSystemAdapter — IFileSystemPort implementation using std::fs and glob crate
+// PURPOSE: FileSystemAdapter — IFileSystemPort implementation using std::fs
 use async_trait::async_trait;
 use std::fs;
 use std::path::{Path, PathBuf};

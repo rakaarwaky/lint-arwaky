@@ -14,6 +14,7 @@ pub mod agent_role_orchestrator;
 pub use agent_role_orchestrator::RoleOrchestrator;
 pub mod capabilities_agent_role_auditor;
 pub use capabilities_agent_role_auditor::AgentRoleChecker;
+
 pub mod capabilities_contract_role_auditor;
 pub use capabilities_contract_role_auditor::ContractRoleChecker;
 pub mod capabilities_infrastructure_role_auditor;

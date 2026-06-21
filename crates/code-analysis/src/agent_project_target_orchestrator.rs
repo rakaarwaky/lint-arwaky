@@ -5,15 +5,13 @@ use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 /// Resolve target path: normalize "crates" → parent, keep "." as-is, etc.
 pub fn resolve_target(path: Option<String>) -> String {
-    let p = path.unwrap_or_else(|| ".".to_string());
-    source_parsing::infrastructure_path_provider::normalize_project_root(&p)
+    path.unwrap_or_else(|| ".".to_string())
 }
 
 /// Run a full AES self-lint on a path via CodeAnalysisOrchestrator.
 pub fn lint_path(path: &str) -> Vec<LintResult> {
     let root =
-        FilePath::new(source_parsing::infrastructure_path_provider::normalize_project_root(path))
-            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+        FilePath::new(path.to_string()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
     let orchestrator = crate::agent_code_analysis_orchestrator::CodeAnalysisOrchestrator::new();
     orchestrator.run_self_lint(&root.value)
 }

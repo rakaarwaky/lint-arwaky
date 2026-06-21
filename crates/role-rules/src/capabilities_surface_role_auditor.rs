@@ -8,7 +8,6 @@ use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
 use shared::source_parsing::contract_language_detector_port::Language as DetLang;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -204,7 +203,8 @@ impl SurfaceRoleChecker {
 
         let lines: Vec<&str> = content.lines().collect();
         let mut violations: Vec<String> = Vec::new();
-        let detector = source_parsing::infrastructure_language_detector::LanguageDetector::new();
+        let detector =
+            shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
         let lang = detector.detect(f);
 
         match lang {
