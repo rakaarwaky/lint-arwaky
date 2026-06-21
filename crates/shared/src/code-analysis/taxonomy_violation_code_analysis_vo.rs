@@ -66,6 +66,8 @@ pub enum AesCodeAnalysisViolation {
     BypassComment { reason: Option<LintMessage> },
     UnwrapExpect { reason: Option<LintMessage> },
     Panic { reason: Option<LintMessage> },
+    Todo { reason: Option<LintMessage> },
+    Unimplemented { reason: Option<LintMessage> },
     // AES305 — Duplicate/dead code (empty impl blocks)
     DeadInheritance { reason: Option<LintMessage> },
 }
@@ -136,6 +138,34 @@ impl fmt::Display for AesCodeAnalysisViolation {
                     "AES304 PANIC: Forbidden panic call detected.\n\
                         WHY? {}\n\
                         FIX: Return a Result or handle the failure case gracefully without panicking.",
+                    why
+                )
+            }
+            AesCodeAnalysisViolation::Todo { reason } => {
+                let default_why = "todo!() placeholders represent incomplete code paths that can crash at runtime if reached unexpectedly.".to_string();
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
+                write!(
+                    f,
+                    "AES304 TODO: Forbidden todo!() call detected.\n\
+                        WHY? {}\n\
+                        FIX: Implement the function body with real logic, or return a meaningful default/error instead of leaving a todo!() placeholder.",
+                    why
+                )
+            }
+            AesCodeAnalysisViolation::Unimplemented { reason } => {
+                let default_why = "unimplemented!() claims a code path is unreachable, but when reached it crashes — violating the principle of fail-fast with clear error messages.".to_string();
+                let why = reason
+                    .as_ref()
+                    .map(|r| r.to_string())
+                    .unwrap_or(default_why);
+                write!(
+                    f,
+                    "AES304 UNIMPLEMENTED: Forbidden unimplemented!() call detected.\n\
+                        WHY? {}\n\
+                        FIX: Either implement the missing logic or return a Result::Err with a descriptive error message.",
                     why
                 )
             }

@@ -12,26 +12,13 @@ use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
+use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::DependencyEdge;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::ColumnNumber;
-use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_suggestion_vo::DescriptionVO;
 use std::collections::HashMap;
 use std::sync::Arc;
-
-fn aes205_circular_import(source: &str, target: &str) -> String {
-    format!(
-        "AES205 CIRCULAR_IMPORT: Circular dependency detected: '{}' -> '{}'.",
-        source, target
-    )
-}
 
 /// Detects circular imports and dependency cycles (Capability) — AES205.
 ///
@@ -51,26 +38,6 @@ impl DependencyCycleAnalyzer {
         Self {
             _config: config,
             parser,
-        }
-    }
-
-    fn make_result(file: &str, msg: &str) -> LintResult {
-        LintResult {
-            file: FilePath::new(file.to_string()).unwrap_or_default(),
-            line: LineNumber::new(1),
-            column: ColumnNumber::new(0),
-            code: ErrorCode::raw("AES205"),
-            message: LintMessage::new(msg),
-            source: Some(AdapterName::raw("architecture")),
-            severity: Severity::CRITICAL,
-            enclosing_scope: Some(ScopeRef {
-                name: DescriptionVO::new(String::new()),
-                kind: DescriptionVO::new(String::new()),
-                file: None,
-                start_line: None,
-                end_line: None,
-            }),
-            related_locations: LocationList::new(),
         }
     }
 
@@ -169,8 +136,21 @@ impl DependencyCycleAnalyzer {
                     .get(source)
                     .cloned()
                     .unwrap_or_else(|| source.to_string());
-                let msg = aes205_circular_import(source, target);
-                Self::make_result(&file, &msg)
+                LintResult::new_arch(
+                    &file,
+                    1,
+                    "AES205",
+                    Severity::CRITICAL,
+                    AesImportViolation::CircularImport {
+                        reason: Some(LintMessage::new(format!(
+                            "Circular dependency between layers '{}' and '{}' creates an implicit bidirectional coupling. \
+                             Architectural layers must form a Directed Acyclic Graph (DAG) — every cycle \
+                             prevents independent testing, deployment, and reasoning about each layer.",
+                            source, target
+                        ))),
+                    }
+                    .to_string(),
+                )
             })
             .collect()
     }

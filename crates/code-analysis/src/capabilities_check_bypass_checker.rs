@@ -116,7 +116,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                     i + 1,
                     "AES304",
                     Severity::CRITICAL,
-                    AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
+                    AesCodeAnalysisViolation::Todo { reason: None }.to_string(),
                 ));
                 continue;
             }
@@ -126,7 +126,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                     i + 1,
                     "AES304",
                     Severity::CRITICAL,
-                    AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
+                    AesCodeAnalysisViolation::Unimplemented { reason: None }.to_string(),
                 ));
                 continue;
             }

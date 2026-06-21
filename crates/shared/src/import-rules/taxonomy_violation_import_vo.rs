@@ -125,20 +125,56 @@ impl fmt::Display for AesImportViolation {
                 required,
                 reason,
             } => {
-                let default_why = format!(
-                    "Layer '{}' must import '{}' to satisfy architectural contract requirements.",
-                    source_layer, required
-                );
-                let why = reason
+                let default_why = {
+                    let src = source_layer.value();
+                    if src == "taxonomy(vo)" {
+                        "Taxonomy Value Objects define domain primitives — they must import contracts to declare their structural contract.".to_string()
+                    } else if src == "taxonomy(entity)" {
+                        "Taxonomy Entities model domain state — they must import aggregator contracts to participate in business operations.".to_string()
+                    } else if src == "contract(port)" || src == "contract(protocol)" {
+                        "Contract ports define service boundaries — they must import contract aggregate types to compose cross-cutting workflows.".to_string()
+                    } else if src == "contract(aggregate)" {
+                        "Contract aggregates orchestrate cross-layer collaboration — they must import all relevant port/protocol contracts.".to_string()
+                    } else if src == "capabilities" {
+                        "Capabilities implement business rules — they must import contract ports to honor interface contracts and enable dependency injection.".to_string()
+                    } else if src == "infrastructure" {
+                        "Infrastructure adapters bridge technology and domain — they must import contract ports to implement the required protocols.".to_string()
+                    } else if src == "agent(container)" {
+                        "Agent containers wire dependencies at startup — they must import service contracts to register all concrete implementations.".to_string()
+                    } else if src == "agent(orchestrator)" {
+                        "Agent orchestrators coordinate use-case flows — they must import capability contracts to dispatch work correctly.".to_string()
+                    } else if src == "surfaces(command)" || src == "surfaces(controller)" {
+                        "Command/controller surfaces are user entry points — they must import aggregate contracts to delegate without bypassing business logic.".to_string()
+                    } else if src == "surfaces(component)" || src == "surfaces(view)" {
+                        "Passive surface components render UI — they must import taxonomy VOs to display type-safe domain data.".to_string()
+                    } else if src.starts_with("taxonomy") {
+                        format!(
+                            "Layer '{}' must import '{}' to maintain domain model integrity.",
+                            src, required
+                        )
+                    } else if src.starts_with("contract") {
+                        format!("Layer '{}' must import '{}' to satisfy interface composition requirements.", src, required)
+                    } else if src.starts_with("agent") {
+                        format!(
+                            "Layer '{}' must import '{}' to wire all required dependencies.",
+                            src, required
+                        )
+                    } else if src.starts_with("surfaces") {
+                        format!("Layer '{}' must import '{}' to properly delegate to the aggregate layer.", src, required)
+                    } else {
+                        format!("Layer '{}' must import '{}' to satisfy architectural contract requirements.", src, required)
+                    }
+                };
+                let supplement = reason
                     .as_ref()
-                    .map(|r| r.to_string())
-                    .unwrap_or(default_why);
+                    .map(|r| format!("\n  Context: {}", r))
+                    .unwrap_or_default();
                 write!(
                     f,
                     "AES202 MANDATORY_IMPORT: Layer '{}' is missing required import '{}'.\n\
-                        WHY? {}\n\
+                        WHY? {}{}\n\
                         FIX: Add the required import statement for '{}' in this file.",
-                    source_layer, required, why, required
+                    source_layer, required, default_why, supplement, required
                 )
             }
             AesImportViolation::ImportIntentViolation {
@@ -181,13 +217,13 @@ impl fmt::Display for AesImportViolation {
                 let default_why =
                     "Unused imports clutter the codebase and increase compilation/dependency overhead."
                         .to_string();
-                let why = reason
+                let supplement = reason
                     .as_ref()
-                    .map(|r| r.to_string())
-                    .unwrap_or(default_why);
+                    .map(|r| format!("\n  Context: {}", r))
+                    .unwrap_or_default();
                 write!(f, "AES203 UNUSED_IMPORT: Unused import detected.\n\
-                        WHY? {}\n\
-                        FIX: Remove the unused import statement or use the imported symbol in this file.", why)
+                        WHY? {}{}\n\
+                        FIX: Remove the unused import statement or use the imported symbol in this file.", default_why, supplement)
             }
         }
     }

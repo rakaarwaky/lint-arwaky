@@ -107,7 +107,13 @@ impl DummyImportChecker {
                         "Use imported symbols in real logic, not only in dummy functions or stubs"
                             .to_string(),
                     ),
-                    reason: None,
+                    reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                        "Imported symbols placed inside _use_ dummy functions are dead code — \
+                         they exist only to suppress unused-import warnings. Real business logic \
+                         should consume the import directly; otherwise the dependency is misleading \
+                         and creates maintenance burden when the import changes."
+                            .to_string(),
+                    )),
                 }
                 .to_string(),
             ));
@@ -207,7 +213,14 @@ impl DummyImportChecker {
                         "Implement contract methods with real behavior instead of empty/todo stubs"
                             .to_string(),
                     ),
-                    reason: None,
+                    reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                        "Trait implementations with empty bodies, todo!(), or unimplemented!() \
+                         violate the contract abstraction — the import exists to fulfill a \
+                         dependency, but no real behavior is provided. Every method must have \
+                         meaningful logic; otherwise the contract becomes untestable and masks \
+                         missing functionality."
+                            .to_string(),
+                    )),
                 }
                 .to_string(),
             ));
@@ -370,7 +383,13 @@ impl DummyImportChecker {
                             "Use taxonomy Value Objects in function signatures instead of primitives"
                                 .to_string(),
                         ),
-                        reason: None,
+                        reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                            "Taxonomy Value Objects (VO) encode domain concepts with type safety — \
+                             using raw primitives (i32, String, bool) in surface-layer signatures \
+                             defeats the purpose of the taxonomy layer. VOs ensure consistent \
+                             validation, formatting, and semantic meaning across all layers."
+                                .to_string(),
+                        )),
                     }.to_string(),
                 ));
             }
@@ -442,7 +461,14 @@ impl DummyImportChecker {
                                         "Call aggregate functions instead of using PhantomData"
                                             .to_string(),
                                     ),
-                                    reason: None,
+                                    reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                                        "Aggregate types placed only inside PhantomData{} are \
+                                         never instantiated or called — the import is effectively \
+                                         dead code. Aggregates exist to be invoked; using them as \
+                                         mere type markers bypasses the contract layer and hides \
+                                         missing orchestration logic."
+                                            .to_string(),
+                                    )),
                                 }
                                 .to_string(),
                             ));
@@ -503,7 +529,14 @@ impl DummyImportChecker {
                                 "Delegate to aggregate instead of calling '{}' directly",
                                 pattern
                             )),
-                            reason: None,
+                            reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                                "Surface-layer code must delegate all business logic to the \
+                                 aggregate layer — calling domain/analysis functions directly \
+                                 from a command/controller bypasses the aggregate abstraction, \
+                                 couples I/O handling to domain logic, and makes the system \
+                                 harder to test, swap implementations, and evolve independently."
+                                    .to_string(),
+                            )),
                         }
                         .to_string(),
                     ));
