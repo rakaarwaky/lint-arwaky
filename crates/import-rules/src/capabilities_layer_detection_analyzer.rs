@@ -1,6 +1,7 @@
-// PURPOSE: LayerDetectionAnalyzer — layer detection via filename prefix (FRD v1.1), directory fallback, and path matching
+// PURPOSE: LayerDetectionAnalyzer — layer detection via filename prefix (FRD v1.1)
 // This is the central analyzer that implements IAnalyzer. It provides:
-//   1. Layer detection per file (prefix-based → directory-based → path-based).
+//   1. Layer detection per file — exclusively via filename prefix (FRD v1.1).
+//      Files without a valid prefix return None and will be reported by AES101 naming enforcement.
 //   2. Module layer detection (direct match → prefix match → path match).
 //   3. Specialised sub-layer resolution (e.g., "capabilities(command)" from suffix).
 //   4. Layer map construction with rule merging (global rules + per-layer rules + specialised rules).
@@ -23,8 +24,9 @@ use std::sync::Arc;
 /// Central layer detection and rule analysis engine implementing IAnalyzer.
 ///
 /// Capabilities:
-///   - `detect_layer(file, root)` → determines which architectural layer a file belongs to
-///     using three strategies in priority order: prefix-based (FRD v1.1), directory-based, path-based.
+///   - `detect_layer(file, root)` → determines which architectural layer a file belongs to,
+///     exclusively via filename prefix (FRD v1.1). Returns None for files without a valid
+///     prefix — the AES101 naming rule will report those as violations.
 ///   - `detect_module_layer(module_path)` → determines which layer a module path imports from.
 ///   - `resolve_specialized_layer(base, file)` → resolves sub-layers (e.g., "capabilities(command)").
 ///   - `new(config)` → builds a complete layer map by merging global rules, base-layer rules,
@@ -201,130 +203,30 @@ impl LayerDetectionAnalyzer {
         }
     }
 
-    /// Detect layer from filename — three strategies in priority order.
+    /// Detect layer from filename — exclusively via filename prefix (FRD v1.1).
     ///
-    /// Strategy 1 — Prefix-based (FRD v1.1):
-    ///   Extract the layer prefix from the filename (e.g., "capabilities_foo.rs" → "capabilities").
-    ///   Then resolve any specialised sub-layer from the file suffix.
+    /// Files MUST carry a layer prefix (e.g., `capabilities_foo.rs` → capabilities layer).
+    /// Files without a valid prefix return None, and AES101 naming enforcement will report
+    /// them as violations — forcing the developer to add the correct prefix.
     ///
-    /// Strategy 2 — Directory-based fallback:
-    ///   If no prefix found, check the immediate parent directory name against a known
-    ///   directory-to-layer mapping (e.g., "taxonomy/" → taxonomy, "surfaces/" → surfaces).
-    ///   Strips /src and variant suffixes to find the meaningful directory.
-    ///
-    /// Strategy 3 — Path-based matching:
-    ///   Compute the relative path from root_dir and compare against each layer definition's
-    ///   `path` field. Sorted by longest path first. Also handles non-recursive vs recursive matching.
-    ///
-    /// Special: root entry files (_main_entry.rs) and files at scan root get "root" layer.
-    pub fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String> {
+    /// After prefix detection, `resolve_specialized_layer` checks whether the file suffix
+    /// corresponds to a specialised sub-layer (e.g., `capabilities_command.rs` with a defined
+    /// `capabilities(command)` layer → returns `capabilities(command)` instead of `capabilities`).
+    pub fn detect_layer(&self, file_path: &str, _root_dir: &str) -> Option<String> {
         let filename = Path::new(file_path)
             .file_name()
             .and_then(|s| s.to_str())
             .unwrap_or("");
 
-        // STRATEGY 1: PREFIX-BASED DETECTION (FRD v1.1)
-        // Check if filename starts with a known layer prefix (e.g., "capabilities_", "contract_")
+        // PREFIX-BASED DETECTION (FRD v1.1)
+        // All valid files must carry a layer prefix — enforced by AES101/AES102 naming rules.
         if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(filename) {
             return Some(self.resolve_specialized_layer(&layer, file_path));
         }
 
-        // ROOT ENTRY FILES: Files ending with _main_entry.rs → root layer
-        if filename.ends_with("_main_entry.rs") {
-            return Some("root".to_string());
-        }
-
-        // STRATEGY 2: DIRECTORY-BASED FALLBACK
-        // Check the parent directory name against known layer directory names.
-        // This supports test projects organized by directory structure (no prefix requirements).
-        let mut parent_dir_str = Path::new(file_path)
-            .parent()
-            .and_then(|p| p.to_str())
-            .unwrap_or("")
-            .replace('\\', "/");
-        // Strip /src and variant suffixes to find the meaningful directory layer root
-        for suffix in &["/src", "/src-rust", "/src-python", "/src-javascript"] {
-            if parent_dir_str.ends_with(suffix) {
-                parent_dir_str = parent_dir_str[..parent_dir_str.len() - suffix.len()].to_string();
-                break;
-            }
-        }
-        if parent_dir_str == "src"
-            || parent_dir_str == "src-rust"
-            || parent_dir_str == "src-python"
-            || parent_dir_str == "src-javascript"
-        {
-            parent_dir_str = "".to_string();
-        }
-
-        // Look up the last directory component in the known DIR_MAP
-        if !parent_dir_str.is_empty() && parent_dir_str != "." {
-            let raw_dir = parent_dir_str
-                .split('/')
-                .next_back()
-                .unwrap_or(&parent_dir_str);
-            let dir_name = raw_dir.replace('-', "_");
-            const DIR_MAP: &[(&str, &str)] = &[
-                // Standard AES layer directories
-                ("taxonomy", "taxonomy"),
-                ("contract", "contract"),
-                ("capabilities", "capabilities"),
-                ("infrastructure", "infrastructure"),
-                ("agent", "agent"),
-                ("surfaces", "surfaces"),
-                ("surface", "surfaces"),
-                // Feature-based (vertical slicing) directory names
-                ("shared_common", "taxonomy"),
-                ("layer_rules", "contract"),
-                ("code_analysis", "capabilities"),
-                ("language_adapters", "infrastructure"),
-                ("di_containers", "agent"),
-                ("cli_commands", "surfaces"),
-            ];
-            for (dir, layer) in DIR_MAP {
-                if *dir == dir_name {
-                    return Some(self.resolve_specialized_layer(layer, file_path));
-                }
-            }
-        }
-
-        // STRATEGY 3: PATH-BASED MATCHING
-        let rel = taxonomy_path_helper::get_relative_path(file_path, root_dir);
-
-        // Priority: Files at scan root (no subdirectory) with no prefix → root layer.
-        // This MUST be checked BEFORE the path-based loop because parse_config_yaml
-        // adds path: "." to all layers without an explicit path, causing the first
-        // iterated layer to match non-deterministically.
-        if Path::new(&rel)
-            .parent()
-            .map(|p| p.to_string_lossy() == "")
-            .unwrap_or(false)
-        {
-            return Some("root".to_string());
-        }
-
-        // Sort layer definitions by path length (longest first) for most-specific-first matching
-        let mut sorted_layers: Vec<(&LayerNameVO, &LayerDefinition)> =
-            self.config.layers.iter().collect();
-        sorted_layers.sort_by_key(|b| std::cmp::Reverse(b.1.path.value.len()));
-
-        // Compare relative path against each layer's configured path
-        for (name, def) in &sorted_layers {
-            if name.value.contains('(') {
-                continue;
-            }
-
-            let is_match = if def.recursive.value {
-                taxonomy_path_helper::match_layer_recursive(&rel, &def.path.value)
-            } else {
-                taxonomy_path_helper::match_layer_nonrecursive(&rel, &def.path.value)
-            };
-
-            if is_match {
-                return Some(self.resolve_specialized_layer(&name.value, file_path));
-            }
-        }
-
+        // No valid prefix found — violates AES101 naming convention.
+        // AES101/AES102 will report this separately; we return None so the file
+        // is not silently assigned to a wrong layer.
         None
     }
 

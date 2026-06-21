@@ -1,8 +1,7 @@
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, and dummy trait implementations
 // AES204 rule: Symbols imported solely to silence unused-import warnings (via dummy/stub functions
 // or PhantomData markers) are violations. Additionally, surface-layer files must use taxonomy VOs
-// in real function signatures, must call aggregate methods instead of direct logic, and must not
-// contain empty/todo stub trait implementations.
+// in real function signatures and must not phantom-reference aggregate types without calling them.
 
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
@@ -15,6 +14,7 @@ use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 /// Checks AES204 rules: dummy imports, dummy functions, dummy trait impls,

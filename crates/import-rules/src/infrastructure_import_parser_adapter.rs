@@ -3,6 +3,7 @@
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
+use shared::import_rules::taxonomy_path_helper;
 use shared::import_rules::{
     taxonomy_cycle_helper, taxonomy_dummy_helper, taxonomy_parser_helper, taxonomy_unused_helper,
 };
@@ -174,19 +175,11 @@ impl IImportParserPort for ImportParserAdapter {
 
     fn extract_layer_from_import(&self, segment: &Identity) -> Option<LayerNameVO> {
         let segment_str = segment.value();
-        const PREFIX_MAP: &[(&str, &str)] = &[
-            ("taxonomy_", "taxonomy"),
-            ("contract_", "contract"),
-            ("capabilities_", "capabilities"),
-            ("infrastructure_", "infrastructure"),
-            ("agent_", "agent"),
-            ("surface_", "surfaces"),
-        ];
-        for (prefix, layer) in PREFIX_MAP {
-            if segment_str.starts_with(prefix) {
-                return Some(LayerNameVO::new(*layer));
-            }
+        // Strategy 1: Prefix-based — reuse canonical helper (avoids duplicating PREFIX_MAP)
+        if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(segment_str) {
+            return Some(LayerNameVO::new(layer));
         }
+        // Strategy 2: Direct segment match — bare layer names without underscore suffix
         match segment_str {
             "taxonomy" => Some(LayerNameVO::new("taxonomy")),
             "contract" => Some(LayerNameVO::new("contract")),
@@ -194,6 +187,7 @@ impl IImportParserPort for ImportParserAdapter {
             "infrastructure" => Some(LayerNameVO::new("infrastructure")),
             "agent" => Some(LayerNameVO::new("agent")),
             "surfaces" | "surface" => Some(LayerNameVO::new("surfaces")),
+            "root" => Some(LayerNameVO::new("root")),
             _ => None,
         }
     }
