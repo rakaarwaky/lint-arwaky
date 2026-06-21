@@ -7,6 +7,7 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_config_vo::ArchitectureRule;
 use shared::file_system::contract_system_port::IFileSystemPort;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
+use shared::import_rules::taxonomy_path_helper;
 use shared::source_parsing::contract_parser_port::ISourceParserPort;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
@@ -168,7 +169,7 @@ impl LayerDetectionAnalyzer {
             .unwrap_or("");
 
         // PREFIX-BASED DETECTION (FRD v1.1)
-        if let Some(layer) = Self::extract_layer_from_prefix(filename) {
+        if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(filename) {
             return Some(self.resolve_specialized_layer(&layer, file_path));
         }
 
@@ -230,7 +231,7 @@ impl LayerDetectionAnalyzer {
         }
 
         // FALLBACK: Path-based detection untuk root entry files (cli_main_entry, mcp_main_entry)
-        let rel = Self::get_relative_path(file_path, root_dir);
+        let rel = taxonomy_path_helper::get_relative_path(file_path, root_dir);
 
         // PRIORITY: Files at scan root (no subdirectory) with no prefix → root layer.
         // This MUST be checked BEFORE the path-based loop because parse_config_yaml
@@ -254,9 +255,9 @@ impl LayerDetectionAnalyzer {
             }
 
             let is_match = if def.recursive.value {
-                Self::match_layer_recursive(&rel, &def.path.value)
+                taxonomy_path_helper::match_layer_recursive(&rel, &def.path.value)
             } else {
-                Self::match_layer_nonrecursive(&rel, &def.path.value)
+                taxonomy_path_helper::match_layer_nonrecursive(&rel, &def.path.value)
             };
 
             if is_match {
@@ -272,31 +273,6 @@ impl LayerDetectionAnalyzer {
     ///      "surface_command_handler.rs" → Some("surfaces")
     ///      "root_code_analysis_container.rs" → Some("root")
     ///      "cli_main_entry.rs" → None (root)
-    fn extract_layer_from_prefix(filename: &str) -> Option<String> {
-        let stem = Path::new(filename)
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("");
-
-        const PREFIX_MAP: &[(&str, &str)] = &[
-            ("taxonomy_", "taxonomy"),
-            ("contract_", "contract"),
-            ("capabilities_", "capabilities"),
-            ("infrastructure_", "infrastructure"),
-            ("agent_", "agent"),
-            ("surface_", "surfaces"),
-            ("root_", "root"),
-        ];
-
-        for (prefix, layer) in PREFIX_MAP {
-            if stem.starts_with(prefix) {
-                return Some(layer.to_string());
-            }
-        }
-
-        None
-    }
-
     /// Determine which layer a dotted module path belongs to.
     ///
     /// Three strategies (prefix-based first per FRD v1.1):
@@ -323,7 +299,7 @@ impl LayerDetectionAnalyzer {
 
         // 2. Prefix-based match: segment starts with layer prefix (e.g. "taxonomy_definition_vo").
         for part in &meaningful_parts {
-            if let Some(layer) = Self::extract_layer_from_prefix(part) {
+            if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(part) {
                 return Some(self.refine_module_layer(&layer, &meaningful_parts));
             }
         }
@@ -387,54 +363,6 @@ impl LayerDetectionAnalyzer {
         base_name.to_string()
     }
 
-    /// Recursive match: the relative path starts with the layer path prefix,
-    /// or starts with the last path segment of that prefix.
-    fn match_layer_recursive(rel: &str, path_def: &str) -> bool {
-        let last_segment = path_def.rsplit('/').next().unwrap_or(path_def);
-        rel.starts_with(path_def) || rel.starts_with(last_segment)
-    }
-
-    /// Non-recursive match: the *parent directory* of the relative path equals the layer path.
-    ///
-    /// Also handles the case where the analysis is run from inside the layer directory
-    /// (rel is just a filename, parent is ".").
-    fn match_layer_nonrecursive(rel: &str, path_def: &str) -> bool {
-        let norm_path_def = path_def.trim_end_matches('/');
-
-        let parent_dir = match Path::new(rel).parent().and_then(|p| p.to_str()) {
-            Some("") => ".",
-            Some(p) => p.trim_end_matches('/'),
-            None => ".",
-        };
-
-        // Case 1: Standard match (rel is "src/capabilities/foo.py", path_def is "src/capabilities")
-        if parent_dir == norm_path_def {
-            return true;
-        }
-
-        // Case 2: Running analysis from inside the layer directory
-        // (rel is "foo.py", parent is ".", layer path has an actual value)
-        if parent_dir == "." && !norm_path_def.is_empty() && norm_path_def != "." {
-            return true;
-        }
-
-        // Case 3: rel has no directory but layer path appears as a suffix of rel
-        if parent_dir == "." && rel.ends_with(norm_path_def) {
-            return true;
-        }
-
-        // Case 4: File at scan root (no subdirectory) matches non-recursive layer.
-        // This case is needed because detect_source_dir descends into src-rust/ before
-        // scanning, so a root file like "root_violation.rs" has no "src-rust/" prefix
-        // in its relative path. Without this, root layer files never match any layer
-        // definition and are skipped entirely by the architectural checkers.
-        if parent_dir == "." && !norm_path_def.is_empty() {
-            return true;
-        }
-
-        false
-    }
-
     /// Look up a `LayerDefinition` by its layer name string.
     pub fn get_layer_def(&self, layer: &str) -> Option<&LayerDefinition> {
         self.config
@@ -444,26 +372,6 @@ impl LayerDetectionAnalyzer {
                 let base = layer.split('(').next().unwrap_or(layer);
                 self.config.layers.get(&LayerNameVO::new(base))
             })
-    }
-
-    /// Compute the path of `file_path` relative to `root_dir`.
-    /// Falls back to the normalised absolute path when no prefix match is found.
-    fn get_relative_path(file_path: &str, root_dir: &str) -> String {
-        let normalized_file = std::path::Path::new(file_path)
-            .canonicalize()
-            .map(|p| p.to_string_lossy().replace('\\', "/"))
-            .unwrap_or_else(|_| file_path.replace('\\', "/"));
-        let normalized_root = std::path::Path::new(root_dir)
-            .canonicalize()
-            .map(|p| p.to_string_lossy().replace('\\', "/"))
-            .unwrap_or_else(|_| root_dir.trim_end_matches('/').replace('\\', "/"));
-        if normalized_file.starts_with(&normalized_root) {
-            normalized_file[normalized_root.len()..]
-                .trim_start_matches('/')
-                .to_string()
-        } else {
-            normalized_file
-        }
     }
 }
 
