@@ -45,10 +45,8 @@ fn main() -> ExitCode {
     let role_container = RoleContainer::new();
     let role_orchestrator = role_container.orchestrator();
 
-    let fs = Arc::new(import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
     let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
         import_container.analyzer(),
-        fs.clone(),
     );
     let naming_orchestrator = naming_container.orchestrator();
 
@@ -64,11 +62,9 @@ fn main() -> ExitCode {
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
         let import_container =
             ImportContainer::new_with_config(config.clone(), source_parser_clone.clone());
-        let fs = Arc::new(import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
         let naming_container =
             naming_rules::root_naming_rules_container::NamingContainer::new(
                 import_container.analyzer(),
-                fs,
             );
         let role_container =
             role_rules::root_role_rules_container::RoleContainer::new_with_config(config.clone());

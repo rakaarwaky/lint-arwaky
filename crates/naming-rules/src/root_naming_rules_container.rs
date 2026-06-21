@@ -12,11 +12,13 @@ pub struct NamingContainer {
 }
 
 impl NamingContainer {
-    pub fn new(analyzer: Arc<dyn IAnalyzer>, fs: Arc<dyn IFileSystemPort>) -> Self {
+    pub fn new(analyzer: Arc<dyn IAnalyzer>) -> Self {
         let naming_convention_checker: Arc<dyn INamingCheckerProtocol> =
             Arc::new(crate::capabilities_naming_convention_checker::NamingConventionChecker::new());
         let suffix_prefix_checker: Arc<dyn INamingCheckerProtocol> =
             Arc::new(crate::capabilities_suffix_prefix_checker::SuffixPrefixChecker::new());
+        let fs: Arc<dyn IFileSystemPort> =
+            Arc::new(crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
         Self {
             naming_convention_checker,
             suffix_prefix_checker,
