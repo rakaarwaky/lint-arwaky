@@ -40,85 +40,11 @@ impl CodeDuplicationAnalyzer {
         files: &[String],
         min_dup_lines: usize,
     ) -> Vec<AesCodeAnalysisViolation> {
-        let mut blocks: HashMap<String, Vec<(PathBuf, usize)>> = HashMap::new();
         let detector = LanguageDetector::new();
-        let mut total_loc: usize = 0;
-
-        for file_str in files {
-            let fp = match FilePath::new(file_str.clone()) {
-                Ok(f) => f,
-                Err(_) => continue,
-            };
-            if !detector.is_lintable(&fp) {
-                continue;
-            }
-            let p = PathBuf::from(&fp.value);
-            let content = match std::fs::read_to_string(&fp.value) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
-            total_loc += content.lines().count();
-            let lines: Vec<&str> = content.lines().collect();
-            if lines.len() < min_dup_lines {
-                continue;
-            }
-            for w in lines.windows(min_dup_lines) {
-                let key: String = w
-                    .iter()
-                    .map(|s| {
-                        s.trim()
-                            .chars()
-                            .filter(|c| c.is_alphanumeric() || c.is_whitespace())
-                            .collect::<String>()
-                    })
-                    .collect::<Vec<_>>()
-                    .join("|");
-                let start_line = w.as_ptr() as usize - lines.as_ptr() as usize;
-                blocks.entry(key).or_default().push((p.clone(), start_line));
-            }
-        }
-
-        let duplicates: Vec<_> = blocks.into_iter().filter(|(_, v)| v.len() > 1).collect();
-
-        let mut violations = Vec::new();
-        for (_, locations) in &duplicates {
-            let msg = format!(
-                "Duplicate block found across {} files (similarity ~{}%). Locations: {}",
-                locations.len(),
-                100usize
-                    .saturating_sub(locations.len().saturating_sub(1) * 5)
-                    .min(100),
-                locations
-                    .iter()
-                    .take(3)
-                    .map(|(p, l)| format!("{}:{}", p.display(), l + 1))
-                    .collect::<Vec<_>>()
-                    .join(", "),
-            );
-            violations.push(AesCodeAnalysisViolation::CodeDuplication {
-                reason: Some(LintMessage::new(msg)),
-            });
-        }
-
-        if !duplicates.is_empty() {
-            let total_dup_lines = duplicates.len() * min_dup_lines;
-            let pct = if total_loc > 0 {
-                total_dup_lines as f64 / total_loc as f64 * 100.0
-            } else {
-                0.0
-            };
-            violations.push(AesCodeAnalysisViolation::CodeDuplication {
-                reason: Some(LintMessage::new(format!(
-                    "Summary: {} duplicate blocks ({} lines) out of {} total LOC ({:.1}%)",
-                    duplicates.len(),
-                    total_dup_lines,
-                    total_loc,
-                    pct,
-                ))),
-            });
-        }
-
-        violations
+        let entries = collect_file_entries(files, &detector);
+        let total_loc = entries.iter().map(|(_, c)| c.lines().count()).sum();
+        let blocks = scan_duplicate_blocks(entries, min_dup_lines);
+        build_violations(&blocks, total_loc, min_dup_lines)
     }
 }
 
@@ -147,10 +73,6 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             .map(|v| v as usize)
             .unwrap_or(10);
 
-        let mut blocks: HashMap<String, Vec<(PathBuf, usize)>> = HashMap::new();
-        let detector = LanguageDetector::new();
-        let mut total_loc: usize = 0;
-
         let src_fp = match FilePath::new(src.to_string_lossy().to_string()) {
             Ok(fp) => fp,
             Err(_) => return Vec::new(),
@@ -161,78 +83,258 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             Err(_) => return Vec::new(),
         };
 
+        let detector = LanguageDetector::new();
         let all_files = rt.block_on(fs.walk(&src_fp, Some(&ignored)));
+        let entries = collect_async_entries(&all_files.values, &detector, &rt, fs);
+        let total_loc = entries.iter().map(|(_, c)| c.lines().count()).sum();
+        let blocks = scan_duplicate_blocks(entries, min_lines);
+        build_violations(&blocks, total_loc, min_lines)
+    }
+}
 
-        for file_fp in &all_files.values {
-            if !detector.is_lintable(file_fp) {
-                continue;
-            }
-            let p = PathBuf::from(&file_fp.value);
-            let content = match rt.block_on(fs.read_text(file_fp)) {
-                Ok(c) => c.value,
-                Err(_) => continue,
-            };
-            total_loc += content.lines().count();
-            let lines: Vec<&str> = content.lines().collect();
-            if lines.len() < min_lines {
-                continue;
-            }
-            for w in lines.windows(min_lines) {
-                let key: String = w
-                    .iter()
-                    .map(|s| {
-                        s.trim()
-                            .chars()
-                            .filter(|c| c.is_alphanumeric() || c.is_whitespace())
-                            .collect::<String>()
-                    })
-                    .collect::<Vec<_>>()
-                    .join("|");
-                let start_line = w.as_ptr() as usize - lines.as_ptr() as usize;
-                blocks.entry(key).or_default().push((p.clone(), start_line));
-            }
+/// File content + path, ready for the sliding-window scan.
+type FileEntry = (PathBuf, String);
+
+/// Read each input file via std::fs; skip non-lintable / unreadable files.
+fn collect_file_entries(files: &[String], detector: &LanguageDetector) -> Vec<FileEntry> {
+    let mut out = Vec::new();
+    for file_str in files {
+        let fp = match FilePath::new(file_str.clone()) {
+            Ok(f) => f,
+            Err(_) => continue,
+        };
+        if !detector.is_lintable(&fp) {
+            continue;
         }
+        let content = match std::fs::read_to_string(&fp.value) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+        out.push((PathBuf::from(&fp.value), content));
+    }
+    out
+}
 
-        let duplicates: Vec<_> = blocks.into_iter().filter(|(_, v)| v.len() > 1).collect();
-
-        let mut violations = Vec::new();
-        for (_, locations) in &duplicates {
-            let msg = format!(
-                "Duplicate block found across {} files (similarity ~{}%). Locations: {}",
-                locations.len(),
-                100usize
-                    .saturating_sub(locations.len().saturating_sub(1) * 5)
-                    .min(100),
-                locations
-                    .iter()
-                    .take(3)
-                    .map(|(p, l)| format!("{}:{}", p.display(), l + 1))
-                    .collect::<Vec<_>>()
-                    .join(", "),
-            );
-            violations.push(AesCodeAnalysisViolation::CodeDuplication {
-                reason: Some(LintMessage::new(msg)),
-            });
+/// Read each input file via the async file-system port; skip non-lintable / unreadable files.
+fn collect_async_entries(
+    files: &[FilePath],
+    detector: &LanguageDetector,
+    rt: &tokio::runtime::Runtime,
+    fs: &dyn IFileSystemPort,
+) -> Vec<FileEntry> {
+    let mut out = Vec::new();
+    for file_fp in files {
+        if !detector.is_lintable(file_fp) {
+            continue;
         }
+        let content = match rt.block_on(fs.read_text(file_fp)) {
+            Ok(c) => c.value,
+            Err(_) => continue,
+        };
+        out.push((PathBuf::from(&file_fp.value), content));
+    }
+    out
+}
 
-        if !duplicates.is_empty() {
-            let total_dup_lines = duplicates.len() * min_lines;
-            let pct = if total_loc > 0 {
-                total_dup_lines as f64 / total_loc as f64 * 100.0
-            } else {
-                0.0
-            };
-            violations.push(AesCodeAnalysisViolation::CodeDuplication {
-                reason: Some(LintMessage::new(format!(
-                    "Summary: {} duplicate blocks ({} lines) out of {} total LOC ({:.1}%)",
-                    duplicates.len(),
-                    total_dup_lines,
-                    total_loc,
-                    pct,
-                ))),
-            });
+/// Slide a normalized `min_lines` window across each file and group identical windows.
+/// Returns one entry per duplicated block, each holding the (path, 1-indexed start_line)
+/// of every occurrence.
+fn scan_duplicate_blocks(entries: Vec<FileEntry>, min_lines: usize) -> Vec<Vec<(PathBuf, usize)>> {
+    let mut blocks: HashMap<String, Vec<(PathBuf, usize)>> = HashMap::new();
+    for (path, content) in entries {
+        let lines: Vec<&str> = content.lines().collect();
+        if lines.len() < min_lines {
+            continue;
         }
+        for (idx, w) in lines.windows(min_lines).enumerate() {
+            let key: String = w
+                .iter()
+                .map(|s| {
+                    s.trim()
+                        .chars()
+                        .filter(|c| c.is_alphanumeric() || c.is_whitespace())
+                        .collect::<String>()
+                })
+                .collect::<Vec<_>>()
+                .join("|");
+            blocks
+                .entry(key)
+                .or_default()
+                .push((path.clone(), idx + 1));
+        }
+    }
+    blocks.into_values().filter(|v| v.len() > 1).collect()
+}
 
-        violations
+/// Convert the grouped duplicate windows into AesCodeAnalysisViolation messages,
+/// appending a summary violation when any duplicates were found.
+fn build_violations(
+    duplicates: &[Vec<(PathBuf, usize)>],
+    total_loc: usize,
+    min_lines: usize,
+) -> Vec<AesCodeAnalysisViolation> {
+    let mut violations = Vec::new();
+    for locations in duplicates {
+        let msg = format!(
+            "Duplicate block found across {} files (similarity ~{}%). Locations: {}",
+            locations.len(),
+            100usize
+                .saturating_sub(locations.len().saturating_sub(1) * 5)
+                .min(100),
+            locations
+                .iter()
+                .take(3)
+                .map(|(p, l)| format!("{}:{}", p.display(), l))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        violations.push(AesCodeAnalysisViolation::CodeDuplication {
+            reason: Some(LintMessage::new(msg)),
+        });
+    }
+
+    if !duplicates.is_empty() {
+        let total_dup_lines = duplicates.len() * min_lines;
+        let pct = if total_loc > 0 {
+            total_dup_lines as f64 / total_loc as f64 * 100.0
+        } else {
+            0.0
+        };
+        violations.push(AesCodeAnalysisViolation::CodeDuplication {
+            reason: Some(LintMessage::new(format!(
+                "Summary: {} duplicate blocks ({} lines) out of {} total LOC ({:.1}%)",
+                duplicates.len(),
+                total_dup_lines,
+                total_loc,
+                pct,
+            ))),
+        });
+    }
+
+    violations
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+
+    /// A .rs file with 3 identical lines appears in the lintable set; the
+    /// duplicate must be reported with the real 1-indexed line number, not a
+    /// byte-offset (regression guard for the prior as_ptr() bug).
+    /// A single .rs file with the same 3-line block appearing twice must be
+    /// reported with the real 1-indexed start line for each occurrence — not
+    /// a byte-offset (regression guard for the prior as_ptr() bug).
+    #[test]
+    fn reported_line_numbers_are_1_indexed_not_byte_offsets() {
+        let dir = tempdir();
+        let file_path = dir.join("a.rs");
+        let mut f = std::fs::File::create(&file_path).unwrap();
+        // 5 lines of filler, the duplicate block, then 5 more filler lines,
+        // then the SAME block again. With min_lines=3 the first occurrence
+        // starts at line 6 and the second at line 14 (1-indexed).
+        for i in 0..5 {
+            writeln!(f, "filler line {i}").unwrap();
+        }
+        writeln!(f, "dup alpha").unwrap();
+        writeln!(f, "dup beta").unwrap();
+        writeln!(f, "dup gamma").unwrap();
+        for i in 0..5 {
+            writeln!(f, "more filler {i}").unwrap();
+        }
+        writeln!(f, "dup alpha").unwrap();
+        writeln!(f, "dup beta").unwrap();
+        writeln!(f, "dup gamma").unwrap();
+
+        let analyzer = CodeDuplicationAnalyzer::new();
+        let violations =
+            analyzer.check_duplicates(&[file_path.to_string_lossy().to_string()], 3);
+
+        let dup_msg = violations
+            .iter()
+            .map(|v| match v {
+                AesCodeAnalysisViolation::CodeDuplication { reason } => {
+                    reason.as_ref().map(|r| r.value.clone()).unwrap_or_default()
+                }
+                _ => String::new(),
+            })
+            .find(|m| m.contains("Duplicate block"))
+            .expect("expected a CodeDuplication violation");
+
+        // Reported lines MUST be 6 and 14 (the real 1-indexed starts).
+        // The buggy version reported byte-offsets like 12992 here.
+        assert!(
+            dup_msg.contains(":6"),
+            "expected line 6 in violation, got: {dup_msg}"
+        );
+        assert!(
+            dup_msg.contains(":14"),
+            "expected line 14 in violation, got: {dup_msg}"
+        );
+    }
+
+    /// A single file with no duplicates must produce no per-block violations.
+    #[test]
+    fn no_duplicates_emits_no_block_violation() {
+        let dir = tempdir();
+        let file_path = dir.join("unique.rs");
+        let mut f = std::fs::File::create(&file_path).unwrap();
+        for i in 0..30 {
+            writeln!(f, "fn unique_{i}() {{ println!({i}); }}").unwrap();
+        }
+        let violations = CodeDuplicationAnalyzer::new()
+            .check_duplicates(&[file_path.to_string_lossy().to_string()], 5);
+        assert!(
+            violations.is_empty(),
+            "expected no violations for unique content, got {}",
+            violations.len()
+        );
+    }
+
+    /// Two files sharing the same 4-line block must surface a single duplicate
+    /// violation whose locations point at both files at the correct lines.
+    #[test]
+    fn two_files_sharing_block_reports_both_locations() {
+        let dir = tempdir();
+        let a = dir.join("a.rs");
+        let b = dir.join("b.rs");
+        for (path, prefix) in [(&a, "alpha"), (&b, "beta")] {
+            let mut f = std::fs::File::create(path).unwrap();
+            for i in 0..20 {
+                writeln!(f, "{prefix}_line_{i}").unwrap();
+            }
+            writeln!(f, "shared one").unwrap();
+            writeln!(f, "shared two").unwrap();
+            writeln!(f, "shared three").unwrap();
+            writeln!(f, "shared four").unwrap();
+        }
+        let violations = CodeDuplicationAnalyzer::new().check_duplicates(
+            &[a.to_string_lossy().to_string(), b.to_string_lossy().to_string()],
+            4,
+        );
+        let dup = violations
+            .iter()
+            .map(|v| match v {
+                AesCodeAnalysisViolation::CodeDuplication { reason } => {
+                    reason.as_ref().map(|r| r.value.clone()).unwrap_or_default()
+                }
+                _ => String::new(),
+            })
+            .find(|m| m.contains("Duplicate block"))
+            .unwrap();
+        assert!(dup.contains("a.rs:21"), "missing a.rs line in: {dup}");
+        assert!(dup.contains("b.rs:21"), "missing b.rs line in: {dup}");
+    }
+
+    fn tempdir() -> std::path::PathBuf {
+        let p = std::env::temp_dir().join(format!(
+            "code_dup_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&p).unwrap();
+        p
     }
 }
