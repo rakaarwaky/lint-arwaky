@@ -436,7 +436,7 @@ impl CheckCommandsSurface {
         println!("============================================================");
         println!("  Combined Multi-Workspace Report Summary");
         println!("============================================================");
-        println!("  Total Workspaces: {}", workspaces.len());
+        println!("  Total Workspace Members: {}", workspaces.len());
         println!("  Total Unique AES Codes: {}", global_unique_codes);
         println!("  Total Violations: {}", global_total);
         if !global_code_counts.is_empty() {

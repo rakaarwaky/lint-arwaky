@@ -28,12 +28,22 @@ impl ISetupInstallerPort for SetupInstallerAdapter {
             .await
             .map_err(|e| e.to_string())?;
         if status.success() {
-            Ok(())
-        } else {
-            Err(format!(
+            return Ok(());
+        }
+
+        // Retry with --break-system-packages if initial attempt fails (typically PEP 668 on modern Linux)
+        let status2 = tokio::process::Command::new("pip")
+            .args(["install", "--user", "--break-system-packages"])
+            .args(packages)
+            .status()
+            .await;
+
+        match status2 {
+            Ok(s) if s.success() => Ok(()),
+            _ => Err(format!(
                 "pip install exited with status {:?}",
                 status.code()
-            ))
+            )),
         }
     }
 
