@@ -33,9 +33,18 @@ pub struct CodeAnalysisCheckerContainer {
 impl CodeAnalysisCheckerContainer {
     pub fn new(analyzer: Arc<dyn IAnalyzer>) -> Self {
         let mandatory = Arc::new(MandatoryDefinitionChecker::new());
+        // Honor AES304 forbidden_bypass from config when the analyzer exposes one;
+        // fall back to the in-code default list otherwise.
+        let bypass = analyzer
+            .config()
+            .rules
+            .iter()
+            .find(|r| r.name.value == "AES304")
+            .map(|r| BypassChecker::from_patterns(&r.code_analysis.forbidden_bypass))
+            .unwrap_or_else(BypassChecker::new);
         Self {
             analyzer,
-            bypass_checker: Arc::new(BypassChecker {}),
+            bypass_checker: Arc::new(bypass),
             mandatory_definition_checker: mandatory,
             line_checker: Arc::new(ArchLineChecker {}),
             code_duplication_analyzer: Arc::new(CodeDuplicationAnalyzer::new()),

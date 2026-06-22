@@ -737,14 +737,21 @@ architecture:
           "surfaces",
           "root",
         ]
-      patterns:
+      forbidden_bypass:
         [
           "#[allow(",
-          "unwrap()",
-          "panic!",
+          "unwrap",
+          "expect",
+          "panic",
+          "todo",
+          "unimplemented",
+          "unreachable",
           "noqa",
           "type: ignore",
           "eslint-disable",
+          "ts-ignore",
+          "ts-expect-error",
+          "pylint: disable",
         ]
       exceptions:
         ["main.rs", "lib.rs", "mod.rs"]

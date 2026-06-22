@@ -485,7 +485,7 @@ architecture:
           "agent",
           "surfaces",
         ]
-      patterns:
+      forbidden_bypass:
         [
           "# noqa",
           "# type: ignore",

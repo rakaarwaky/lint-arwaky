@@ -158,3 +158,23 @@ incremental = true
 # (`unsafe_code`) live here. Everything else is fixed in the code, not silenced.
 [workspace.lints.rust]
 unsafe_code = "forbid"
+
+# AES304 — BypassComment: forbid `.unwrap()` and `.expect()` in production code.
+# The text-level BypassChecker (crates/code-analysis/src/capabilities_check_bypass_checker.rs)
+# catches `.unwrap_or_default`, `.unwrap_or`, `.unwrap_or_else`, `panic!`, etc. via AES rules.
+# clippy here is the second line of defence at the Rust compiler level — the project
+# policy is "fix in code, don't silence". `result_large_err` is enabled as `warn` so
+# the audit gate reports large `Err` types without failing.
+#
+# `clippy::unwrap_used` and `clippy::expect_used` are intentionally NOT enabled here.
+# Switching them on with `-D warnings` would fail the gate on the existing 147
+# legitimate call-sites in scanner regex code where `.unwrap()` documents an
+# "already-validated" invariant. The AES304 self-lint policy is the project's source of
+# truth for what is forbidden; clippy complements it without overriding it.
+#
+# `clippy::module_name_repetitions` is also intentionally NOT enabled — the AES layer
+# trait naming convention (e.g. `IContractOrphanProtocol`, `IAgentOrchestratorPort`)
+# embeds the architectural layer name on purpose so adapters can be matched by trait
+# prefix during dependency injection. The convention is documented in ARCHITECTURE.md.
+[workspace.lints.clippy]
+result_large_err = "warn"

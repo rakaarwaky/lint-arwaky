@@ -572,7 +572,7 @@ architecture:
           "agent",
           "surfaces",
         ]
-      patterns:
+      forbidden_bypass:
         [
           "// @ts-ignore",
           "// @ts-expect-error",

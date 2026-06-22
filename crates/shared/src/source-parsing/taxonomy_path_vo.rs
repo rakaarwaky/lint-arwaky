@@ -51,12 +51,19 @@ impl FilePath {
             ".gitignore",
             ".dockerignore",
         ];
-        if special_files.contains(&self.value.as_ref()) || self.value.starts_with('.') {
-            return "".to_string();
+        // Operate on the basename, not the full path — `./foo.rs` must still yield
+        // `rs` as its extension, and `.bashrc` (which is fully a basename) must NOT
+        // be confused with a hidden file mid-path.
+        let basename = match self.value.rsplit('/').next() {
+            Some(b) => b,
+            None => return String::new(),
+        };
+        if special_files.contains(&basename) || basename.starts_with('.') {
+            return String::new();
         }
-        match self.value.rsplit('.').next() {
+        match basename.rsplit('.').next() {
             Some(ext) => ext.to_string(),
-            None => "".to_string(),
+            None => String::new(),
         }
     }
 
@@ -219,5 +226,50 @@ mod tests {
     fn test_directory_path_invalid() {
         assert!(DirectoryPath::new("").is_err());
         assert!(DirectoryPath::new("   ").is_err());
+    }
+
+    /// Regression: `./foo.rs` must report `rs` as its extension, not empty string.
+    /// The old implementation treated any path starting with `.` as having no
+    /// extension, which caused `LanguageDetector::is_lintable` to skip relative
+    /// paths emitted by `std::fs::read_dir` in `collect_source_files`. Result: zero
+    /// files collected when the user runs `lint-arwaky check .` on a directory
+    /// tree with non-`.git`-anchored paths.
+    #[test]
+    fn test_extension_with_dot_slash_prefix() {
+        let fp = FilePath::new("./foo.rs").unwrap_or_default();
+        assert_eq!(fp.extension(), "rs");
+        let fp = FilePath::new("./nested/foo.py").unwrap_or_default();
+        assert_eq!(fp.extension(), "py");
+        let fp = FilePath::new(".//foo.ts").unwrap_or_default();
+        assert_eq!(fp.extension(), "ts");
+    }
+
+    /// Regression: a hidden-file basename (e.g. `.bashrc`) must still report no
+    /// extension, since the basename itself starts with a dot.
+    #[test]
+    fn test_extension_hidden_basename() {
+        let fp = FilePath::new(".bashrc").unwrap_or_default();
+        assert_eq!(fp.extension(), "");
+        let fp = FilePath::new("/home/user/.gitignore").unwrap_or_default();
+        assert_eq!(fp.extension(), "");
+    }
+
+    /// Regression: full paths must still resolve the extension on the basename.
+    #[test]
+    fn test_extension_full_path() {
+        let fp =
+            FilePath::new("/tmp/bypass_test/capabilities_unwrap_checker.rs").unwrap_or_default();
+        assert_eq!(fp.extension(), "rs");
+        let fp = FilePath::new("crates/code-analysis/src/foo.rs").unwrap_or_default();
+        assert_eq!(fp.extension(), "rs");
+    }
+
+    /// Makefile / Dockerfile — special filenames, no extension.
+    #[test]
+    fn test_extension_special_filenames() {
+        let fp = FilePath::new("Makefile").unwrap_or_default();
+        assert_eq!(fp.extension(), "");
+        let fp = FilePath::new("Dockerfile").unwrap_or_default();
+        assert_eq!(fp.extension(), "");
     }
 }
