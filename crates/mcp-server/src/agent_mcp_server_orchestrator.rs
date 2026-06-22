@@ -204,11 +204,17 @@ impl LintArwakyMcpServer {
         serde_json::to_string_pretty(&result).unwrap_or_default()
     }
 
-    #[tool(description = "List all available CLI commands with descriptions and examples.")]
-    async fn list_commands(&self, Parameters(_args): Parameters<ListCommandsArgs>) -> String {
+    #[tool(description = "List all available CLI commands with descriptions and examples. Optional `domain` filter (e.g. \"setup\", \"check\").")]
+    async fn list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {
         let catalog = shared::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
         let commands: Vec<serde_json::Value> = catalog
             .iter()
+            .filter(|(name, _desc, _ex)| {
+                match args.domain.as_deref() {
+                    Some(d) if !d.is_empty() => name.contains(d),
+                    _ => true,
+                }
+            })
             .map(|(name, desc, example)| {
                 serde_json::json!({
                     "name": name,
@@ -217,37 +223,48 @@ impl LintArwakyMcpServer {
                 })
             })
             .collect();
-        let result = serde_json::json!({ "commands": commands });
+        let result = serde_json::json!({ "commands": commands, "total": commands.len() });
         serde_json::to_string_pretty(&result).unwrap_or_default()
     }
 
-    #[tool(description = "Read SKILL.md documentation by section.")]
+    #[tool(description = "Read SKILL.md documentation by section. Searches several candidate locations.")]
     async fn read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {
-        let skill_path = std::path::Path::new("SKILL.md");
-        if !skill_path.exists() {
-            return serde_json::json!({"error": "SKILL.md not found"}).to_string();
-        }
-        match std::fs::read_to_string(skill_path) {
-            Ok(content) => match args.section.as_deref() {
-                Some(s) if !s.is_empty() => {
-                    let header = format!("## {}", s);
-                    if let Some(start) = content.find(&header) {
-                        let remaining = &content[start..];
-                        let end = remaining[1..]
-                            .find("\n## ")
-                            .map(|i| i + 1)
-                            .unwrap_or(remaining.len());
-                        serde_json::json!({"section": s, "content": &remaining[..end]}).to_string()
-                    } else {
-                        serde_json::json!({"error": format!("Section '{}' not found", s)})
-                            .to_string()
-                    }
-                }
-                _ => serde_json::json!({"content": content}).to_string(),
-            },
-            Err(e) => {
-                serde_json::json!({"error": format!("Failed to read SKILL.md: {}", e)}).to_string()
+        let candidates = [
+            env!("CARGO_MANIFEST_DIR").to_string() + "/../SKILL.md",
+            env!("CARGO_MANIFEST_DIR").to_string() + "/SKILL.md",
+            "SKILL.md".to_string(),
+            "./SKILL.md".to_string(),
+        ];
+        let content = candidates
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.exists())
+            .and_then(|p| std::fs::read_to_string(p).ok());
+        let content = match content {
+            Some(c) => c,
+            None => {
+                return serde_json::json!({
+                    "error": "SKILL.md not found",
+                    "searched": candidates
+                }).to_string();
             }
+        };
+        match args.section.as_deref() {
+            Some(s) if !s.is_empty() => {
+                let header = format!("## {}", s);
+                if let Some(start) = content.find(&header) {
+                    let remaining = &content[start..];
+                    let end = remaining[1..]
+                        .find("\n## ")
+                        .map(|i| i + 1)
+                        .unwrap_or(remaining.len());
+                    serde_json::json!({"section": s, "content": &remaining[..end]}).to_string()
+                } else {
+                    serde_json::json!({"error": format!("Section '{}' not found", s)})
+                        .to_string()
+                }
+            }
+            _ => serde_json::json!({"content": content}).to_string(),
         }
     }
 

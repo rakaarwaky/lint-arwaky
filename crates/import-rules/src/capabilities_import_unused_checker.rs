@@ -7,6 +7,7 @@
 
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_message_vo::LintMessage;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
