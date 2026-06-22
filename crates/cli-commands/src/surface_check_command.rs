@@ -209,12 +209,7 @@ impl CheckCommandsSurface {
             .collect();
 
         // Collect all source files from workspace root for cross-folder graph building
-        let orphan_root = if std::path::Path::new("crates").exists() {
-            "crates".to_string()
-        } else {
-            root_dir.clone()
-        };
-        let source_files = collect_source_files(&orphan_root, &ignored_paths);
+        let source_files = collect_source_files(".", &ignored_paths);
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
         // Normalize the target file path
@@ -234,7 +229,7 @@ impl CheckCommandsSurface {
         let all_results = orphan_analyzer.check_orphans(
             orphan_container.layer_detector().as_ref(),
             &file_strs,
-            &root_dir,
+            ".",
         );
 
         // Filter results for the specific file
