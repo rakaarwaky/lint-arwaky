@@ -1,21 +1,32 @@
 // PURPOSE: WatchServiceError — structured error type for file watch service failures
 use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::taxonomy_common_error::ErrorMessage;
 
-define_error! {
-    pub struct WatchServiceError {
-        pub path: FilePath,
-    }
-    display("Watch Error", path: " on {}")
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct WatchServiceError {
+    pub path: FilePath,
+    pub message: String,
 }
 
-define_wrapper! {
-    pub struct WatchSubscriptionError {
-        pub base: WatchServiceError,
+impl WatchServiceError {
+    pub fn new(message: ErrorMessage) -> Self {
+        Self {
+            path: FilePath::default(),
+            message: message.0,
+        }
     }
 }
 
-define_wrapper! {
-    pub struct WatchEventError {
-        pub base: WatchServiceError,
+impl std::fmt::Display for WatchServiceError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Watch Error on {}: {}", self.path.value, self.message)
     }
 }
+
+impl std::error::Error for WatchServiceError {}
+
+#[derive(Debug, Clone)]
+pub struct WatchSubscriptionError(pub WatchServiceError);
+
+#[derive(Debug, Clone)]
+pub struct WatchEventError(pub WatchServiceError);
