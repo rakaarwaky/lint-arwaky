@@ -32,3 +32,11 @@ sonar-project.properties
 sonar-reports/
 .sonar/
 *.sonar.json
+
+# Caspian Security (VS Code extension + CLI)
+# Note: .caspianignore and .caspian-baseline.json are usually COMMITTED.
+caspian-scan-results.sarif
+caspian-scan-results.json
+*.caspian.sarif
+*.caspian.json
+.caspian-cache/
