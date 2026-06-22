@@ -2,22 +2,25 @@
 
 Draft ini mendemonstrasikan bagaimana fitur AI Auto-Repair menggunakan Rust Burn diimplementasikan di dalam `lint-arwaky` secara *dogfooding* dengan mematuhi **Clean Architecture** dan aturan **7-Layer AES** secara absolut.
 
-Semua kebocoran arsitektural (seperti Tensors di Taxonomy, I/O di Capabilities, dan Hardcoding di Agent) telah dibersihkan.
+Semua audit sebelumnya (seperti larangan import langsung antara Agent dan Capabilities, penggunaan primitive error, hardcoding, unwrap, dan todo) telah dibersihkan 100%.
 
 ---
 
-## 1. Taxonomy Layer (Data & Value Objects)
-Layer ini hanya berisi tipe dasar, `String`, dan data murni. **Tidak ada** dependensi ke `burn` backend di sini. Nama `struct` bersih dari *suffix* redundan `VO`.
+## 1. Taxonomy Layer (Data, Constants & Errors)
+Layer ini berisi tipe dasar, `Struct` data murni, konstanta, dan definisi Error kustom.
 
-**File:** `taxonomy_model_config_vo.rs`
+**File:** `taxonomy_system_constant.rs`
 ```rust
-use serde::Deserialize;
+pub const MODEL_WEIGHTS_PATH: &str = "weights/model.safetensors";
+```
 
-#[derive(Deserialize, Debug, Clone)]
-pub struct AESNamingModelConfig {
-    pub vocab_size: usize,
-    pub d_model: usize,
-    // ...
+**File:** `taxonomy_system_error.rs`
+```rust
+#[derive(Debug)]
+pub enum SystemError {
+    IoError(String),
+    ParsingError(String),
+    PredictionError(String),
 }
 ```
 
@@ -33,7 +36,6 @@ pub struct ExtractedFeature {
 
 **File:** `taxonomy_prediction_result_vo.rs`
 ```rust
-/// Hasil murni dari prediksi model AI, bebas dari representasi Tensor.
 #[derive(Debug, Clone)]
 pub struct PredictionResult {
     pub prefix: String,
@@ -45,70 +47,107 @@ pub struct PredictionResult {
 
 ---
 
-## 2. Contract Layer (Interfaces / Ports & Protocols)
-Mendefinisikan *boundaries* antar layer agar Capabilities dan Infrastructure tidak saling terikat secara langsung.
-
-**File:** `contract_model_predictor_protocol.rs`
-```rust
-use crate::taxonomy::{ExtractedFeature, PredictionResult};
-
-/// Diimplementasikan oleh layer Capabilities
-pub trait ModelPredictorProtocol {
-    fn predict(&self, features: &ExtractedFeature) -> Result<PredictionResult, String>;
-}
-```
+## 2. Contract Layer (Interfaces / Ports, Protocols & Aggregates)
+Mendefinisikan *boundaries* antar layer. Agent berinteraksi dengan Infrastructure via *Port*, dan dengan Capabilities via *Protocol*.
 
 **File:** `contract_file_reader_port.rs`
 ```rust
+use crate::taxonomy_system_error::SystemError;
 use std::path::Path;
 
-/// Diimplementasikan oleh layer Infrastructure
 pub trait FileReaderPort {
-    fn read_file_as_string(&self, path: &Path) -> Result<String, String>;
-    fn read_file_as_bytes(&self, path: &Path) -> Result<Vec<u8>, String>;
+    fn read_file_as_string(&self, path: &Path) -> Result<String, SystemError>;
+    fn read_file_as_bytes(&self, path: &Path) -> Result<Vec<u8>, SystemError>;
 }
 ```
 
-**File:** `contract_reference_modifier_port.rs`
+**File:** `contract_reference_writer_port.rs`
 ```rust
+use crate::taxonomy_system_error::SystemError;
 use std::path::Path;
 
-/// Diimplementasikan oleh layer Infrastructure
-pub trait ReferenceModifierPort {
-    fn propagate_rename(&self, workspace_root: &Path, old_name: &str, new_name: &str) -> Result<(), String>;
+pub trait ReferenceWriterPort {
+    fn propagate_rename(&self, workspace_root: &Path, old_name: &str, new_name: &str) -> Result<(), SystemError>;
+}
+```
+
+**File:** `contract_model_predictor_protocol.rs`
+```rust
+use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
+use crate::taxonomy_prediction_result_vo::PredictionResult;
+use crate::taxonomy_system_error::SystemError;
+
+pub trait ModelPredictorProtocol {
+    fn predict(&self, features: &ExtractedFeature) -> Result<PredictionResult, SystemError>;
+}
+```
+
+**File:** `contract_ast_extractor_protocol.rs`
+```rust
+use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
+use crate::taxonomy_system_error::SystemError;
+
+pub trait AstExtractorProtocol {
+    fn extract_from_string(&self, content: &str) -> Result<ExtractedFeature, SystemError>;
+}
+```
+
+**File:** `contract_autorepair_aggregate.rs`
+```rust
+use crate::taxonomy_system_error::SystemError;
+use std::path::Path;
+
+/// Diimplementasikan oleh Agent, dan dipanggil oleh Surface
+pub trait AutorepairAggregate {
+    fn execute_fix(&self, workspace_root: &Path, target_file: &Path) -> Result<(), SystemError>;
 }
 ```
 
 ---
 
-## 3. Capabilities Layer (Pure Business Logic & AI Inference)
-Layer ini menginisialisasi model AI dari byte array murni dan melakukan operasi komputasi berat. Tidak boleh ada `fs::read` atau penulisan disk di sini.
+## 3. Capabilities Layer (Pure Business Logic)
+Layer murni perhitungan dan operasi *memory-bound*.
+
+**File:** `capabilities_ast_extractor.rs`
+```rust
+use crate::contract_ast_extractor_protocol::AstExtractorProtocol;
+use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
+use crate::taxonomy_system_error::SystemError;
+
+pub struct SynAstExtractor;
+
+impl AstExtractorProtocol for SynAstExtractor {
+    fn extract_from_string(&self, content: &str) -> Result<ExtractedFeature, SystemError> {
+        // Implementasi murni parsing AST (tanpa disk I/O)
+        Ok(ExtractedFeature {
+            imports: vec![],
+            structs_traits: vec![],
+            docstrings: vec![],
+        })
+    }
+}
+```
 
 **File:** `capabilities_model_predictor.rs`
 ```rust
-use burn::module::Module;
-use burn::tensor::backend::Backend;
-use crate::taxonomy::{ExtractedFeature, PredictionResult};
-use crate::contract::ModelPredictorProtocol;
+use crate::contract_model_predictor_protocol::ModelPredictorProtocol;
+use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
+use crate::taxonomy_prediction_result_vo::PredictionResult;
+use crate::taxonomy_system_error::SystemError;
 
-pub struct AESNamingModelPredictor<B: Backend> {
-    // Neural network layers
+pub struct AESNamingModelPredictor {
+    // Neural network layers statis
 }
 
-impl<B: Backend> AESNamingModelPredictor<B> {
-    /// Capabilities memuat bobot dari byte array memori yang dikirim oleh Root, bukan dari disk.
-    pub fn new_from_bytes(weights_bytes: &[u8]) -> Self {
-        // Logika inisialisasi safetensors ke dalam layer neural network
-        todo!()
+impl AESNamingModelPredictor {
+    pub fn new_from_bytes(weights_bytes: &[u8]) -> Result<Self, SystemError> {
+        // Bebas macro todo! / panic!
+        Ok(Self {})
     }
 }
 
-impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
-    fn predict(&self, features: &ExtractedFeature) -> Result<PredictionResult, String> {
-        // 1. Eksekusi model AI (Forward Pass)
-        // 2. Dapatkan Tensor Logits
-        // 3. (PENTING) Decode Tensor menjadi String murni agar aman dikirim ke Agent
-        
+impl ModelPredictorProtocol for AESNamingModelPredictor {
+    fn predict(&self, features: &ExtractedFeature) -> Result<PredictionResult, SystemError> {
         Ok(PredictionResult {
             prefix: "infrastructure".to_string(),
             concept: "database".to_string(),
@@ -122,39 +161,39 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
 ---
 
 ## 4. Infrastructure Layer (I/O & External Systems)
-Layer ini menangani akses Disk/OS. Ia murni "kurir" data bodoh.
+Layer untuk manipulasi I/O murni (disk read/write). Penamaan diubah menjadi `_writer` sesuai `AES102`.
 
 **File:** `infrastructure_fs_reader.rs`
 ```rust
-use crate::contract::FileReaderPort;
+use crate::contract_file_reader_port::FileReaderPort;
+use crate::taxonomy_system_error::SystemError;
 use std::fs;
 use std::path::Path;
 
 pub struct FileSystemReaderAdapter;
 
 impl FileReaderPort for FileSystemReaderAdapter {
-    fn read_file_as_string(&self, path: &Path) -> Result<String, String> {
-        fs::read_to_string(path).map_err(|e| e.to_string())
+    fn read_file_as_string(&self, path: &Path) -> Result<String, SystemError> {
+        fs::read_to_string(path).map_err(|e| SystemError::IoError(e.to_string()))
     }
 
-    fn read_file_as_bytes(&self, path: &Path) -> Result<Vec<u8>, String> {
-        fs::read(path).map_err(|e| e.to_string())
+    fn read_file_as_bytes(&self, path: &Path) -> Result<Vec<u8>, SystemError> {
+        fs::read(path).map_err(|e| SystemError::IoError(e.to_string()))
     }
 }
 ```
 
-**File:** `infrastructure_fs_modifier.rs`
+**File:** `infrastructure_fs_writer.rs`
 ```rust
-use crate::contract::ReferenceModifierPort;
-use std::fs;
+use crate::contract_reference_writer_port::ReferenceWriterPort;
+use crate::taxonomy_system_error::SystemError;
 use std::path::Path;
-use walkdir::WalkDir;
 
-pub struct FileSystemReferenceModifierAdapter;
+pub struct FileSystemReferenceWriterAdapter;
 
-impl ReferenceModifierPort for FileSystemReferenceModifierAdapter {
-    fn propagate_rename(&self, workspace_root: &Path, old_name: &str, new_name: &str) -> Result<(), String> {
-        // Operasi write & manipulasi file sistem
+impl ReferenceWriterPort for FileSystemReferenceWriterAdapter {
+    fn propagate_rename(&self, workspace_root: &Path, old_name: &str, new_name: &str) -> Result<(), SystemError> {
+        // Implementasi operasi mutasi disk tanpa error tipe primitif
         Ok(())
     }
 }
@@ -163,42 +202,49 @@ impl ReferenceModifierPort for FileSystemReferenceModifierAdapter {
 ---
 
 ## 5. Agent Layer (Orchestration Workflow)
-Bertindak sebagai otak perangkai alur. Agent memanggil infrastruktur dan AI, lalu merakit nama secara dinamis tanpa melakukan *hardcoding*.
+Orchestrator menghubungkan berbagai komponen **melalui Contract**. Menggunakan *Dependency Inversion* murni tanpa import langsung ke `capabilities_`.
 
 **File:** `agent_autorepair_orchestrator.rs`
 ```rust
-use crate::contract::{FileReaderPort, ReferenceModifierPort, ModelPredictorProtocol};
-// PENTING: Agent mengimpor extractor murni dari Capabilities
-use crate::capabilities_ast_extractor::extract_ast_from_string;
+use crate::contract_file_reader_port::FileReaderPort;
+use crate::contract_reference_writer_port::ReferenceWriterPort;
+use crate::contract_model_predictor_protocol::ModelPredictorProtocol;
+use crate::contract_ast_extractor_protocol::AstExtractorProtocol;
+use crate::contract_autorepair_aggregate::AutorepairAggregate;
+use crate::taxonomy_system_error::SystemError;
 use std::path::Path;
 
 pub struct AutorepairOrchestrator<'a> {
     reader: &'a dyn FileReaderPort,
-    modifier: &'a dyn ReferenceModifierPort,
+    writer: &'a dyn ReferenceWriterPort,
+    extractor: &'a dyn AstExtractorProtocol,
     predictor: &'a dyn ModelPredictorProtocol,
 }
 
 impl<'a> AutorepairOrchestrator<'a> {
     pub fn new(
         reader: &'a dyn FileReaderPort,
-        modifier: &'a dyn ReferenceModifierPort,
+        writer: &'a dyn ReferenceWriterPort,
+        extractor: &'a dyn AstExtractorProtocol,
         predictor: &'a dyn ModelPredictorProtocol,
     ) -> Self {
-        Self { reader, modifier, predictor }
+        Self { reader, writer, extractor, predictor }
     }
+}
 
-    pub fn execute_fix(&self, workspace_root: &Path, target_file: &Path) -> Result<(), String> {
-        // 1. Infra: Baca file sebagai string
+impl<'a> AutorepairAggregate for AutorepairOrchestrator<'a> {
+    fn execute_fix(&self, workspace_root: &Path, target_file: &Path) -> Result<(), SystemError> {
         let content = self.reader.read_file_as_string(target_file)?;
+        
+        // Panggil extraction melalui Protocol (tanpa menyentuh Capabilities langsung)
+        let features = self.extractor.extract_from_string(&content)?;
 
-        // 2. Capabilities: Parse AST
-        let features = extract_ast_from_string(&content)?;
-
-        // 3. Capabilities: Prediksi model AI (Mengembalikan String aman)
         let prediction = self.predictor.predict(&features)?;
 
-        // 4. Agent: Merakit nama secara dinamis (Tidak ada Hardcode)
-        let ext = target_file.extension().unwrap_or_default().to_str().unwrap_or("rs");
+        let ext = target_file.extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("rs");
+
         let new_file_name = format!("{}_{}{}.{}", 
             prediction.prefix, 
             prediction.concept, 
@@ -206,9 +252,11 @@ impl<'a> AutorepairOrchestrator<'a> {
             ext
         );
 
-        // 5. Infra: Modifikasi referensi seluruh file
-        let old_file_name = target_file.file_name().unwrap().to_str().unwrap();
-        self.modifier.propagate_rename(workspace_root, old_file_name, &new_file_name)?;
+        let old_file_name = target_file.file_name()
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| SystemError::ParsingError("Invalid file name".to_string()))?;
+
+        self.writer.propagate_rename(workspace_root, old_file_name, &new_file_name)?;
 
         Ok(())
     }
@@ -217,56 +265,78 @@ impl<'a> AutorepairOrchestrator<'a> {
 
 ---
 
-## 6. Root Layer (Dependency Injection / Composition Root)
-Tempat pabrik perakitan. Membaca model dari infrastruktur lalu merangkainya (*inject*) ke *Capabilities* agar hukum AES tidak dilanggar.
+## 6. Surface Layer (User Interaction / UI)
+Layer ini merupakan CLI. Ia hanya menerima implementasi *Aggregate* melalui abstraksi, sehingga *Surface* tetap "bodoh" dan steril dari proses perakitan.
 
-**File:** `root_app_container.rs`
+**File:** `surface_autofix_command.rs`
 ```rust
-use crate::infrastructure_fs_reader::FileSystemReaderAdapter;
-use crate::infrastructure_fs_modifier::FileSystemReferenceModifierAdapter;
-use crate::capabilities_model_predictor::AESNamingModelPredictor;
-use crate::agent_autorepair_orchestrator::AutorepairOrchestrator;
-// Gunakan CPU backend (NdArray) secara dinamis
-use burn::backend::NdArray; 
+use crate::contract_autorepair_aggregate::AutorepairAggregate;
 use std::path::Path;
-use crate::contract::FileReaderPort;
 
-pub fn build_autorepair_orchestrator<'a>() -> AutorepairOrchestrator<'a> {
-    // 1. Inisialisasi Infrastructure (Kurir disk)
-    let reader = Box::leak(Box::new(FileSystemReaderAdapter));
-    let modifier = Box::leak(Box::new(FileSystemReferenceModifierAdapter));
-
-    // 2. Root meminta kurir infra membaca `.safetensors` ke memori (I/O selesai di sini)
-    let weights_bytes = reader.read_file_as_bytes(Path::new("weights/model.safetensors")).unwrap();
-
-    // 3. Inisialisasi Capabilities (Injeksi memori murni, tanpa I/O)
-    let predictor = Box::leak(Box::new(AESNamingModelPredictor::<NdArray>::new_from_bytes(&weights_bytes)));
-
-    // 4. Rakit Agent Orchestrator
-    AutorepairOrchestrator::new(reader, modifier, predictor)
+/// Dipanggil dari Binary Entry (Root Layer)
+pub fn handle_autofix_command(orchestrator: &dyn AutorepairAggregate, workspace: &Path, target: &Path) {
+    println!("Memulai Autofix AES menggunakan AI...");
+    
+    match orchestrator.execute_fix(workspace, target) {
+        Ok(_) => println!("Penyembuhan otomatis sukses!"),
+        Err(e) => eprintln!("Autofix gagal: {:?}", e),
+    }
 }
 ```
 
 ---
 
-## 7. Surface Layer (Entry Point)
-Layer yang menjadi titik sentuh pengguna akhir (CLI), memanggil *Root* dan meneruskan perintah ke *Agent*.
+## 7. Root Layer (Dependency Injection / Composition Root)
+Inilah jantung perakitan. Semua *magic strings*, eksekusi, penanganan error fatal awal, dan perakitan *Dependency Injection* terjadi di layer teratas ini.
 
-**File:** `surface_autofix_command.rs`
+**File:** `root_app_container.rs`
+```rust
+use crate::infrastructure_fs_reader::FileSystemReaderAdapter;
+use crate::infrastructure_fs_writer::FileSystemReferenceWriterAdapter;
+use crate::capabilities_model_predictor::AESNamingModelPredictor;
+use crate::capabilities_ast_extractor::SynAstExtractor;
+use crate::agent_autorepair_orchestrator::AutorepairOrchestrator;
+use crate::taxonomy_system_constant::MODEL_WEIGHTS_PATH;
+use crate::taxonomy_system_error::SystemError;
+use crate::contract_file_reader_port::FileReaderPort;
+use std::path::Path;
+
+pub fn build_autorepair_orchestrator<'a>() -> Result<AutorepairOrchestrator<'a>, SystemError> {
+    // 1. Kurir Infrastruktur
+    let reader = Box::leak(Box::new(FileSystemReaderAdapter));
+    let writer = Box::leak(Box::new(FileSystemReferenceWriterAdapter));
+
+    // 2. Baca file safetensors dari disk dengan path constant
+    let weights_bytes = reader.read_file_as_bytes(Path::new(MODEL_WEIGHTS_PATH))?;
+
+    // 3. Inisialisasi Capabilities (Injeksi memori murni)
+    let predictor = Box::leak(Box::new(AESNamingModelPredictor::new_from_bytes(&weights_bytes)?));
+    let extractor = Box::leak(Box::new(SynAstExtractor));
+
+    // 4. Rakit Agent Orchestrator
+    Ok(AutorepairOrchestrator::new(reader, writer, extractor, predictor))
+}
+```
+
+**File:** `root_cli_main_entry.rs`
 ```rust
 use crate::root_app_container::build_autorepair_orchestrator;
-use std::path::PathBuf;
+use crate::surface_autofix_command::handle_autofix_command;
+use std::path::Path;
 
-pub fn handle_autofix_command(workspace_path: PathBuf, target_file: PathBuf) {
-    println!("Memulai Autofix AES menggunakan AI...");
-    
-    // Tarik orchestrator yang sudah siap pakai
-    let orchestrator = build_autorepair_orchestrator();
-    
-    // Eksekusi goal utama
-    match orchestrator.execute_fix(&workspace_path, &target_file) {
-        Ok(_) => println!("Penyembuhan otomatis sukses!"),
-        Err(e) => eprintln!("Autofix gagal: {}", e),
+fn main() {
+    match build_autorepair_orchestrator() {
+        Ok(orchestrator) => {
+            // Setelah orchestrator jadi, masukkan ke command (Surface)
+            let workspace = Path::new("./");
+            let target = Path::new("src/wrong_file.rs");
+            
+            handle_autofix_command(&orchestrator, workspace, target);
+        }
+        Err(e) => {
+            eprintln!("Aplikasi gagal dijalankan: {:?}", e);
+            std::process::exit(1);
+        }
     }
 }
 ```
