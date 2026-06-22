@@ -47,9 +47,6 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
         ]
 
     AES102:
@@ -69,9 +66,6 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
         ]
       layers:
         taxonomy:
@@ -99,7 +93,6 @@ architecture:
                   "calculator",
                   "builder",
                   "compiler",
-                  "aggregator",
                   "classifier",
                   "extractor",
                   "reporter",
@@ -112,7 +105,6 @@ architecture:
                   "reviewer",
                   "assessor",
                   "auditor",
-                  "actions",
                 ]
             - forbidden:
                 [
@@ -227,26 +219,6 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-          "surface_multi_command.rs",
-          "surface_watch_command.rs",
-          "surface_check_command.rs",
-          "capabilities_arch_lint.rs",
-          "surface_tools_command.rs",
-          "surface_job_controller.rs",
-          "agent_orphan_orchestrator.rs",
-          "surface_vscode_command.rs",
-          "infrastructure_vscode_graph_generator.rs",
-          "infrastructure_language_detector.rs",
-          "root_source_parsing_container.rs",
-          "surface_git_command.rs",
-          "surface_dev_command.rs",
-          "surface_map_command.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"

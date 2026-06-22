@@ -4212,7 +4212,6 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 name = "vscode_extension-lint-arwaky"
 version = "1.10.14"
 dependencies = [
- "code_analysis-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",

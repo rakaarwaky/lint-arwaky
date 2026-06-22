@@ -8,11 +8,10 @@ use crate::contract_vscode_bridge_port::IVsCodeBridgePort;
 use crate::taxonomy_vscode_graph_vo::{
     VsCodeEdge, VsCodeEdgeRelation, VsCodeGraph, VsCodeNode, VsCodeNodeKind,
 };
-use code_analysis::agent_code_analysis_orchestrator::collect_source_files;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 use shared::source_parsing::contract_parser_port::ISourceParserPort;
+use shared::source_parsing::taxonomy_file_collector::collect_source_files;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
-use source_parsing::root_source_parsing_container::SourceParsingContainer;
 
 pub struct VsCodeGraphGenerator {
     source_parser: Arc<dyn ISourceParserPort>,
@@ -20,9 +19,9 @@ pub struct VsCodeGraphGenerator {
 
 impl VsCodeGraphGenerator {
     pub fn new() -> Self {
-        let parser_container = SourceParsingContainer::new();
+        let container = source_parsing::root_source_parsing_container::SourceParsingContainer::new();
         Self {
-            source_parser: parser_container.source_parser(),
+            source_parser: container.source_parser(),
         }
     }
 

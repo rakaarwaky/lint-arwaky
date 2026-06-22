@@ -7,7 +7,6 @@ use cli_commands::surface_bootstrap_command;
 use cli_commands::surface_check_command;
 use cli_commands::surface_config_command;
 use cli_commands::surface_core_command::{Cli, Commands, MaintenanceCommands};
-use cli_commands::surface_dev_command;
 use cli_commands::surface_fix_command;
 use cli_commands::surface_git_command;
 use cli_commands::surface_maintenance_command;
@@ -130,7 +129,7 @@ fn main() -> ExitCode {
             surface_fix_command::handle_fix(path, dry_run, fix_orchestrator_factory)
         }
         Commands::Ci { path, threshold } => {
-            surface_dev_command::handle_ci(arch_linter.clone(), path, threshold)
+            surface_check_command::handle_ci(arch_linter.clone(), path, threshold)
         }
         Commands::Maintenance { command } => match command {
             MaintenanceCommands::Doctor => {

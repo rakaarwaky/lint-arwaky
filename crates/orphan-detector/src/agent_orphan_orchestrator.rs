@@ -32,9 +32,10 @@ use shared::role_rules::taxonomy_layer_names_constant::{
     LAYER_SURFACES, LAYER_TAXONOMY,
 };
 
-use crate::capabilities_orphan_graph_resolver::OrphanGraphResolver;
+use shared::orphan_detector::contract_orphan_graph_resolver_port::IOrphanGraphResolverProtocol;
+
 pub struct ArchOrphanAnalyzer {
-    resolver: OrphanGraphResolver,
+    resolver: Arc<dyn IOrphanGraphResolverProtocol>,
     taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
     contract_analyzer: Arc<dyn IContractOrphanProtocol>,
     capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
@@ -45,6 +46,7 @@ pub struct ArchOrphanAnalyzer {
 
 impl ArchOrphanAnalyzer {
     pub fn new(
+        resolver: Arc<dyn IOrphanGraphResolverProtocol>,
         taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
         contract_analyzer: Arc<dyn IContractOrphanProtocol>,
         capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
@@ -53,7 +55,7 @@ impl ArchOrphanAnalyzer {
         surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
     ) -> Self {
         Self {
-            resolver: OrphanGraphResolver::new(),
+            resolver,
             taxonomy_analyzer,
             contract_analyzer,
             capabilities_analyzer,

@@ -10,8 +10,6 @@ pub use surface_core_command::{
     get_cli, get_surface, Cli, Commands, ConfigCommands, CoreCommandsSurface, MaintenanceCommands,
     SetupCommands,
 };
-pub mod surface_dev_command;
-pub use surface_dev_command::DevCommandsSurface;
 pub mod surface_fix_command;
 pub use surface_fix_command::FixCommandsSurface;
 pub mod surface_git_command;

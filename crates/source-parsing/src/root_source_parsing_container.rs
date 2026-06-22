@@ -16,11 +16,14 @@ impl SourceParsingContainer {
     pub fn new() -> Self {
         let path_norm: Arc<dyn IPathNormalizationPort> =
             Arc::new(crate::infrastructure_path_provider::PathNormalizationProvider {});
+        let lang_detector: Arc<dyn ILanguageDetectorPort> =
+            Arc::new(crate::infrastructure_language_detector::LanguageDetector::new());
         let source_parser: Arc<dyn ISourceParserPort> = Arc::new(
             crate::infrastructure_parser_adapter::SourceParserOrchestrator::new(
                 Box::new(crate::infrastructure_py_scanner::ASTPythonParserAdapter::new()),
                 Box::new(crate::infrastructure_rust_scanner::ASTRustParserAdapter::new()),
                 Box::new(crate::infrastructure_js_scanner::ASTJSParserAdapter::new()),
+                Box::new(crate::infrastructure_language_detector::LanguageDetector::new()),
             ),
         );
         Self {
@@ -29,9 +32,7 @@ impl SourceParsingContainer {
             scanner_provider: Arc::new(
                 crate::infrastructure_file_collector::FileCollectorProvider::new(),
             ),
-            language_detector: Arc::new(
-                crate::infrastructure_language_detector::LanguageDetector::new(),
-            ),
+            language_detector: lang_detector,
         }
     }
 

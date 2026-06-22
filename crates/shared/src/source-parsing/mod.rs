@@ -12,3 +12,4 @@ pub mod taxonomy_parser_error;
 pub mod taxonomy_path_vo;
 pub mod taxonomy_paths_vo;
 pub mod taxonomy_semantic_error;
+pub mod taxonomy_file_collector;

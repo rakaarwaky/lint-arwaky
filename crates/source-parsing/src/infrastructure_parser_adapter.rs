@@ -29,6 +29,7 @@ pub struct SourceParserOrchestrator {
     python_parser: Box<dyn ISourceParserPort>,
     rust_parser: Box<dyn ISourceParserPort>,
     js_parser: Box<dyn ISourceParserPort>,
+    language_detector: Box<dyn ILanguageDetectorPort>,
 }
 
 impl SourceParserOrchestrator {
@@ -36,17 +37,18 @@ impl SourceParserOrchestrator {
         python_parser: Box<dyn ISourceParserPort>,
         rust_parser: Box<dyn ISourceParserPort>,
         js_parser: Box<dyn ISourceParserPort>,
+        language_detector: Box<dyn ILanguageDetectorPort>,
     ) -> Self {
         Self {
             python_parser,
             rust_parser,
             js_parser,
+            language_detector,
         }
     }
 
     fn select_parser(&self, path: &FilePath) -> &dyn ISourceParserPort {
-        let detector = super::infrastructure_language_detector::LanguageDetector::new();
-        match detector.detect(path) {
+        match self.language_detector.detect(path) {
             Language::Rust => &*self.rust_parser,
             Language::JavaScript | Language::TypeScript => &*self.js_parser,
             _ => &*self.python_parser,
@@ -140,6 +142,7 @@ impl ISourceParserPort for SourceParserOrchestrator {
 mod tests {
     use super::*;
     use crate::infrastructure_js_scanner::ASTJSParserAdapter;
+    use crate::infrastructure_language_detector::LanguageDetector;
     use crate::infrastructure_py_scanner::ASTPythonParserAdapter;
     use crate::infrastructure_rust_scanner::ASTRustParserAdapter;
 
@@ -149,6 +152,7 @@ mod tests {
             Box::new(ASTPythonParserAdapter::new()),
             Box::new(ASTRustParserAdapter::new()),
             Box::new(ASTJSParserAdapter::new()),
+            Box::new(LanguageDetector::new()),
         );
 
         // Test rust routing

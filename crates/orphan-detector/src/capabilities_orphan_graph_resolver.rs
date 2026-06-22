@@ -4,6 +4,7 @@ use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
+use shared::orphan_detector::contract_orphan_graph_resolver_port::IOrphanGraphResolverProtocol;
 
 /// Build graph context and identify entry points for orphan analysis.
 pub struct OrphanGraphResolver {}
@@ -14,12 +15,33 @@ impl Default for OrphanGraphResolver {
     }
 }
 
+impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
+    fn build_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
+        self.build_graph_context_inner(files, root_dir)
+    }
+
+    fn identify_entry_points(&self, files: &[String], configured: &[String]) -> Vec<String> {
+        if configured.is_empty() {
+            return Vec::new();
+        }
+        files
+            .iter()
+            .filter(|f| {
+                configured
+                    .iter()
+                    .any(|pattern| f.ends_with(pattern) || f.contains(pattern))
+            })
+            .cloned()
+            .collect()
+    }
+}
+
 impl OrphanGraphResolver {
     pub fn new() -> Self {
         Self {}
     }
 
-    pub fn build_graph_context(&self, files: &[String], _root_dir: &str) -> GraphAnalysisContext {
+    fn build_graph_context_inner(&self, files: &[String], _root_dir: &str) -> GraphAnalysisContext {
         use std::collections::HashMap;
         let mut import_graph: HashMap<String, Vec<String>> = HashMap::new();
         let mut inbound_links: HashMap<String, Vec<String>> = HashMap::new();
@@ -267,21 +289,5 @@ impl OrphanGraphResolver {
             InheritanceMap::new(inheritance_map),
             FileDefinitionMap::new(file_definitions),
         )
-    }
-
-    pub fn identify_entry_points(&self, files: &[String], configured: &[String]) -> Vec<String> {
-        if configured.is_empty() {
-            return Vec::new();
-        }
-
-        files
-            .iter()
-            .filter(|f| {
-                configured
-                    .iter()
-                    .any(|pattern| f.ends_with(pattern) || f.contains(pattern))
-            })
-            .cloned()
-            .collect()
     }
 }

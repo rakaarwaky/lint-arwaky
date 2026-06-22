@@ -53,31 +53,7 @@ pub fn collect_source_files(
     dir_path: &DirectoryPath,
     ignored: &[String],
 ) -> Vec<FilePath> {
-    let mut files = Vec::new();
-    if let Ok(entries) = std::fs::read_dir(&dir_path.value) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            let relative_path = path.strip_prefix(root_dir).unwrap_or(&path);
-            let rel_str = relative_path.to_string_lossy();
-            if ignored.iter().any(|i| rel_str.contains(i.as_str())) {
-                continue;
-            }
-            if path.is_dir() {
-                let sub_dir =
-                    DirectoryPath::new(path.to_string_lossy().to_string()).unwrap_or_default();
-                files.extend(collect_source_files(root_dir, &sub_dir, ignored));
-            } else if let Some(path_str) = path.to_str() {
-                if let Ok(fp) = FilePath::new(path_str.to_string()) {
-                    let detector =
-                        shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
-                    if detector.is_lintable(&fp) {
-                        files.push(fp);
-                    }
-                }
-            }
-        }
-    }
-    files
+    shared::source_parsing::taxonomy_file_collector::collect_source_files(root_dir, dir_path, ignored)
 }
 
 /// Unified code-analysis orchestrator — collects files, runs ALL AES checks, formats reports.
@@ -247,6 +223,28 @@ impl IArchLintProtocol for CodeAnalysisOrchestrator {
 
     fn run_self_lint_dir(&self, src_dir: &str) -> LintResultList {
         LintResultList::new(self.run_scan(src_dir))
+    }
+
+    fn run_lint(&self, path: &str) -> Vec<LintResult> {
+        self.run_self_lint(path)
+    }
+
+    fn calc_score(&self, results: &[LintResult]) -> f64 {
+        compute_score(results)
+    }
+
+    fn check_critical(&self, results: &[LintResult]) -> bool {
+        has_critical(results)
+    }
+
+    fn format_report(&self, results: &LintResultList, project_root: &str) -> String {
+        self.format_report(&results.values, project_root)
+    }
+}
+
+impl shared::code_analysis::contract_lint_aggregate::ILintAggregate for CodeAnalysisOrchestrator {
+    fn run_self_lint(&self, project_root: &str) -> LintResultList {
+        LintResultList::new(self.run_self_lint(project_root))
     }
 
     fn run_lint(&self, path: &str) -> Vec<LintResult> {
