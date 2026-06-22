@@ -22,7 +22,11 @@ impl FixOrchestrator {
 
     /// Orchestrate: get report of violations that need manual fix
     pub fn manual_report(&self, violations: &[LintResult]) -> Vec<String> {
-        self.fix_protocol.report_non_fixable(violations)
+        self.fix_protocol
+            .report_non_fixable(violations)
+            .iter()
+            .map(|m| m.to_string())
+            .collect()
     }
 }
 
