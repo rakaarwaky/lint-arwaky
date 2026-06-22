@@ -48,34 +48,57 @@ impl ServerHandler for LintArwakyMcpServer {
 impl LintArwakyMcpServer {
     #[tool(description = "Execute any CLI command. This is the primary tool.")]
     async fn execute_command(&self, Parameters(args): Parameters<ExecuteCommandArgs>) -> String {
-        let result = match args.action.as_str() {
+        // Clone Arc so spawn_blocking owns a 'static reference to the linter
+        let linter = self.arch_linter.clone();
+        let action = args.action.clone();
+        let arg_path = args
+            .args
+            .as_ref()
+            .and_then(|a| a.get("path"))
+            .and_then(|v| v.as_str())
+            .map(String::from);
+        let arg_threshold = args
+            .args
+            .as_ref()
+            .and_then(|a| a.get("threshold"))
+            .and_then(|v| v.as_u64())
+            .map(|n| n as u32);
+        let arg_client = args
+            .args
+            .as_ref()
+            .and_then(|a| a.get("client"))
+            .and_then(|v| v.as_str())
+            .map(String::from);
+        let result = match action.as_str() {
             "check" | "scan" => {
-                let path = args
-                    .args
-                    .as_ref()
-                    .and_then(|a| a.get("path"))
-                    .and_then(|v| v.as_str())
-                    .unwrap_or(".");
-                let results = self.arch_linter.run_lint(path);
-                let report = self.arch_linter.format_report(
-                    &shared::cli_commands::taxonomy_result_vo::LintResultList::new(results.clone()),
-                    path,
-                );
-                serde_json::json!({
-                    "status": "success",
-                    "action": args.action,
-                    "path": path,
-                    "total_violations": results.len(),
-                    "report": report
+                let path = arg_path.unwrap_or_else(|| ".".to_string());
+                // spawn_blocking: arch_linter.run_lint internally creates a
+                // tokio runtime, which would panic if called from within
+                // rmcp's async context. Off-load to blocking thread pool.
+                let linter_for_blocking = linter.clone();
+                let path_for_blocking = path.clone();
+                let join_result = tokio::task::spawn_blocking(move || {
+                    let results = linter_for_blocking.run_lint(&path_for_blocking);
+                    let report = linter_for_blocking.format_report(
+                        &shared::cli_commands::taxonomy_result_vo::LintResultList::new(results.clone()),
+                        &path_for_blocking,
+                    );
+                    serde_json::json!({
+                        "status": "success",
+                        "action": action,
+                        "path": path_for_blocking,
+                        "total_violations": results.len(),
+                        "report": report
+                    })
                 })
+                .await;
+                match join_result {
+                    Ok(v) => v,
+                    Err(e) => serde_json::json!({"error": format!("blocking task failed: {}", e)}),
+                }
             }
             "fix" => {
-                let path = args
-                    .args
-                    .as_ref()
-                    .and_then(|a| a.get("path"))
-                    .and_then(|v| v.as_str())
-                    .unwrap_or(".");
+                let path = arg_path.unwrap_or_else(|| ".".to_string());
                 serde_json::json!({
                     "status": "success",
                     "action": "fix",
@@ -84,28 +107,27 @@ impl LintArwakyMcpServer {
                 })
             }
             "ci" => {
-                let path = args
-                    .args
-                    .as_ref()
-                    .and_then(|a| a.get("path"))
-                    .and_then(|v| v.as_str())
-                    .unwrap_or(".");
-                let threshold = args
-                    .args
-                    .as_ref()
-                    .and_then(|a| a.get("threshold"))
-                    .and_then(|v| v.as_u64())
-                    .unwrap_or(80) as u32;
-                let results = self.arch_linter.run_lint(path);
-                let score = self.arch_linter.calc_score(&results);
-                let pass = score >= threshold as f64;
-                serde_json::json!({
-                    "status": if pass { "pass" } else { "fail" },
-                    "action": "ci",
-                    "score": score,
-                    "threshold": threshold,
-                    "violations": results.len()
+                let path = arg_path.unwrap_or_else(|| ".".to_string());
+                let threshold = arg_threshold.unwrap_or(80);
+                let linter_for_blocking = linter.clone();
+                let path_for_blocking = path.clone();
+                let join_result = tokio::task::spawn_blocking(move || {
+                    let results = linter_for_blocking.run_lint(&path_for_blocking);
+                    let score = linter_for_blocking.calc_score(&results);
+                    let pass = score >= threshold as f64;
+                    serde_json::json!({
+                        "status": if pass { "pass" } else { "fail" },
+                        "action": "ci",
+                        "score": score,
+                        "threshold": threshold,
+                        "violations": results.len()
+                    })
                 })
+                .await;
+                match join_result {
+                    Ok(v) => v,
+                    Err(e) => serde_json::json!({"error": format!("blocking task failed: {}", e)}),
+                }
             }
             "doctor" => {
                 let mut checks = Vec::new();
@@ -122,41 +144,9 @@ impl LintArwakyMcpServer {
                 }
                 serde_json::json!({"status": "success", "action": "doctor", "checks": checks})
             }
-            "orphan" => {
-                let path = args
-                    .args
-                    .as_ref()
-                    .and_then(|a| a.get("path"))
-                    .and_then(|v| v.as_str())
-                    .unwrap_or(".");
-                serde_json::json!({"status": "success", "action": "orphan", "path": path})
-            }
-            "security" => {
-                let path = args
-                    .args
-                    .as_ref()
-                    .and_then(|a| a.get("path"))
-                    .and_then(|v| v.as_str())
-                    .unwrap_or(".");
-                serde_json::json!({"status": "success", "action": "security", "path": path})
-            }
-            "duplicates" => {
-                let path = args
-                    .args
-                    .as_ref()
-                    .and_then(|a| a.get("path"))
-                    .and_then(|v| v.as_str())
-                    .unwrap_or(".");
-                serde_json::json!({"status": "success", "action": "duplicates", "path": path})
-            }
-            "dependencies" => {
-                let path = args
-                    .args
-                    .as_ref()
-                    .and_then(|a| a.get("path"))
-                    .and_then(|v| v.as_str())
-                    .unwrap_or(".");
-                serde_json::json!({"status": "success", "action": "dependencies", "path": path})
+            "orphan" | "security" | "duplicates" | "dependencies" => {
+                let path = arg_path.unwrap_or_else(|| ".".to_string());
+                serde_json::json!({"status": "success", "action": action, "path": path})
             }
             "version" => {
                 serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "name": "lint-arwaky"})
@@ -190,16 +180,11 @@ impl LintArwakyMcpServer {
             "init" => serde_json::json!({"status": "success", "action": "init"}),
             "install" => serde_json::json!({"status": "success", "action": "install"}),
             "mcp-config" => {
-                let client = args
-                    .args
-                    .as_ref()
-                    .and_then(|a| a.get("client"))
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("all");
+                let client = arg_client.unwrap_or_else(|| "all".to_string());
                 serde_json::json!({"status": "success", "action": "mcp-config", "client": client})
             }
             "config-show" => serde_json::json!({"status": "success", "action": "config-show"}),
-            _ => serde_json::json!({"error": format!("Unknown action: {}", args.action)}),
+            _ => serde_json::json!({"error": format!("Unknown action: {}", action)}),
         };
         serde_json::to_string_pretty(&result).unwrap_or_default()
     }
