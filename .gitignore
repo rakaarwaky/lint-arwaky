@@ -27,3 +27,7 @@ output/
 target/
 .dsc_cache/
 .node_modules/
+
+# Sensitive files (CRED007a)
+credentials.json
+serviceAccountKey

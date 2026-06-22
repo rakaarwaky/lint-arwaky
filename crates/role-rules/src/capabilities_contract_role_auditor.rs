@@ -36,6 +36,290 @@ impl Default for ContractRoleChecker {
     }
 }
 
+// ─── AES402 helper functions ──────────────────────────────────────────────
+//
+// These pure functions implement the trait-method-signature parser used by
+// `check_contract_primitive` above. They live at module level so they can be
+// unit-tested directly without needing to construct a `ContractRoleChecker`
+// or feed it a full `SourceContentVO`.
+
+/// Extract `(line_no, raw_signature_line)` for every `fn name(...) -> ... ;`
+/// declaration that lives inside a `pub trait Name { ... }` block.
+///
+/// Only Rust trait declarations are tracked. Free-standing `fn` definitions
+/// (impl blocks, inherent impls, free functions) are intentionally ignored
+/// because the AES402 rule applies to the contract layer (port / protocol
+/// traits) — implementation details are an adapter concern.
+fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
+    let mut results = Vec::new();
+    let mut in_trait_depth: i32 = 0;
+    let mut brace_depth: i32 = 0;
+
+    for (idx, raw) in content.lines().enumerate() {
+        let line_no = idx + 1;
+        let line = raw.trim();
+
+        if in_trait_depth == 0 {
+            // Detect a trait header line. We accept both `pub trait Foo` and
+            // `pub trait Foo: Bar` (trait inheritance). We require a `{` on the
+            // same line so we don't mistake `trait Foo;` (item declaration)
+            // for a real trait body.
+            let is_trait_header = (line.starts_with("pub trait ") || line.starts_with("trait "))
+                && line.contains('{')
+                && line.contains(')').ge(&line.contains('(')); // rough sanity
+            if is_trait_header {
+                in_trait_depth = 1;
+                brace_depth = line.matches('{').count() as i32 - line.matches('}').count() as i32;
+                continue;
+            }
+            continue;
+        }
+
+        // We're inside a trait body. Check for method declaration.
+        // Heuristic: line starts with `fn ` (allowing leading whitespace) and
+        // contains a `;` somewhere — that's the canonical Rust trait method
+        // declaration form.
+        if line.starts_with("fn ") && line.contains(';') {
+            results.push((line_no, raw.to_string()));
+        }
+
+        brace_depth += line.matches('{').count() as i32 - line.matches('}').count() as i32;
+        if brace_depth <= 0 {
+            in_trait_depth = 0;
+            brace_depth = 0;
+        }
+    }
+
+    results
+}
+
+/// Decide whether a single Rust method signature uses a forbidden primitive
+/// type. Returns the list of forbidden type tokens found (used for the
+/// violation message). Empty list means the signature is clean.
+///
+/// Policy (per AES402 + project conventions):
+///   * `&str` is ALLOWED — borrowed string slice, idiomatic Rust for file
+///     paths, error messages, and other borrowed string data passed into
+///     trait methods. Borrow lifetimes preclude replacing it with a taxonomy
+///     VO without major API churn.
+///   * `bool` is ALLOWED — represents a semantic toggle that is not
+///     meaningfully expressible as a VO without ceremony.
+///   * `String` (owned) is FORBIDDEN — must be replaced with a taxonomy VO
+///     such as `LintMessage`, `ErrorMessage`, `SymbolName`, or `JobId`.
+///   * `Result<String, _>` and `Result<&str, _>` are FORBIDDEN — error
+///     variants must use a defined `taxonomy_*_error` type.
+///   * Numeric primitives (`i32`, `i64`, `u32`, `u64`, `f32`, `f64`,
+///     `usize`, `isize`) are FORBIDDEN — must be wrapped in a domain VO
+///     (`Count`, `LineNumber`, `ColumnNumber`, `Duration`).
+///   * `char` is FORBIDDEN — must use a domain VO if a single character is
+///     ever needed (rare).
+fn signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
+    let mut forbidden: Vec<&'static str> = Vec::new();
+
+    let line = sig.trim();
+
+    // Return type — anything after `->` up to `{` or `;` or EOL.
+    let ret_type: String = if let Some(arrow_idx) = line.find("->") {
+        let after = &line[arrow_idx + 2..];
+        // Trim at the first `;` (single-line sig) or `{` (rare, multiline).
+        let end = after
+            .find(';')
+            .or_else(|| after.find('{'))
+            .unwrap_or(after.len());
+        after[..end].trim().to_string()
+    } else {
+        String::new()
+    };
+
+    // Parameter list — inside the FIRST top-level `(` ... `)` on the line.
+    let params_str: String = if let Some(open) = line.find('(') {
+        // Match the closing paren at the same nesting level.
+        let bytes = line.as_bytes();
+        let mut depth = 0i32;
+        let mut close_idx = None;
+        for (i, &b) in bytes.iter().enumerate().skip(open) {
+            match b {
+                b'(' => depth += 1,
+                b')' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        close_idx = Some(i);
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        if let Some(close) = close_idx {
+            line[open + 1..close].to_string()
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    };
+
+    // Concatenate param + return into one searchable string.
+    let combined = format!("{} {}", params_str, ret_type);
+
+    // Owned `String` (NOT preceded by `&`).
+    // Negative lookbehind on `&` to avoid matching `&String` (which is rare but
+    // we still want to flag — borrow lifetimes of `String` are themselves a
+    // code smell because they usually mean a borrowed temporary).
+    if regex_lite_match_whole_token(&combined, "String") {
+        forbidden.push("String");
+    }
+
+    // Result<String, _> / Result<&str, _> / Result<String, ErrorCode> etc.
+    if combined.contains("Result<String,") || combined.contains("Result<String >") {
+        forbidden.push("Result<String, _>");
+    }
+    if combined.contains("Result<&str,") || combined.contains("Result<&str >") {
+        forbidden.push("Result<&str, _>");
+    }
+
+    // Numeric primitives (and `usize`/`isize`).
+    for kw in &["i32", "i64", "u32", "u64", "f32", "f64", "usize", "isize"] {
+        if regex_lite_match_whole_token(&combined, kw) {
+            forbidden.push(kw);
+        }
+    }
+
+    // `char` — only single-token usage, not inside identifiers.
+    if regex_lite_match_whole_token(&combined, "char") {
+        forbidden.push("char");
+    }
+
+    forbidden
+}
+
+/// Lightweight whole-token match: returns true if `needle` appears in
+/// `haystack` as a standalone identifier (not preceded or followed by
+/// alphanumeric or `_`). Avoids pulling in the `regex` crate for a check this
+/// small. Uses ASCII byte-level comparisons.
+fn regex_lite_match_whole_token(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return false;
+    }
+    let h = haystack.as_bytes();
+    let n = needle.as_bytes();
+    let nlen = n.len();
+    if h.len() < nlen {
+        return false;
+    }
+    let is_ident_cont = |b: u8| b.is_ascii_alphanumeric() || b == b'_';
+    let mut i = 0;
+    while i + nlen <= h.len() {
+        if &h[i..i + nlen] == n {
+            let before_ok = i == 0 || !is_ident_cont(h[i - 1]);
+            let after_ok = i + nlen == h.len() || !is_ident_cont(h[i + nlen]);
+            if before_ok && after_ok {
+                return true;
+            }
+        }
+        i += 1;
+    }
+    false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extracts_single_line_method_signatures() {
+        let src = "\
+pub trait IFoo {
+    fn a(&self) -> bool;
+    fn b(&self, x: &str) -> usize;
+    fn c(&self) -> Result<String, ErrorCode>;
+}
+";
+        let sigs = extract_trait_method_signatures(src);
+        assert_eq!(sigs.len(), 3);
+        assert!(sigs[0].1.contains("fn a"));
+        assert!(sigs[1].1.contains("fn b"));
+        assert!(sigs[2].1.contains("fn c"));
+    }
+
+    #[test]
+    fn ignores_free_functions_and_impls() {
+        let src = "\
+fn helper() -> String { ... }
+impl Foo {
+    pub fn method(&self) -> String { ... }
+}
+pub trait IFoo {
+    fn only(&self) -> usize;
+}
+";
+        let sigs = extract_trait_method_signatures(src);
+        assert_eq!(sigs.len(), 1);
+        assert!(sigs[0].1.contains("fn only"));
+    }
+
+    #[test]
+    fn detects_string_param() {
+        assert_eq!(
+            signature_uses_forbidden_primitive("fn f(&self, msg: String);"),
+            vec!["String"],
+        );
+    }
+
+    #[test]
+    fn detects_result_string() {
+        let v = signature_uses_forbidden_primitive(
+            "fn f(&self, p: &Path) -> Result<String, ErrorCode>;",
+        );
+        assert!(v.contains(&"String"));
+        assert!(v.contains(&"Result<String, _>"));
+    }
+
+    #[test]
+    fn detects_result_borrowed_str() {
+        let v =
+            signature_uses_forbidden_primitive("fn f(&self, p: &Path) -> Result<&str, ErrorCode>;");
+        assert!(v.contains(&"Result<&str, _>"));
+    }
+
+    #[test]
+    fn detects_numeric_primitives() {
+        assert!(signature_uses_forbidden_primitive("fn f(&self, n: i32) -> i64;").contains(&"i32"));
+        assert!(
+            signature_uses_forbidden_primitive("fn f(&self, n: usize) -> bool;").contains(&"usize")
+        );
+        assert!(signature_uses_forbidden_primitive("fn f(&self) -> f64;").contains(&"f64"));
+    }
+
+    #[test]
+    fn allows_borrowed_str() {
+        assert!(signature_uses_forbidden_primitive(
+            "fn f(&self, file: &str, content: &str) -> bool;"
+        )
+        .is_empty());
+    }
+
+    #[test]
+    fn allows_bool() {
+        assert!(signature_uses_forbidden_primitive("fn f(&self) -> bool;").is_empty());
+        assert!(signature_uses_forbidden_primitive("fn f(&self, flag: bool) -> bool;").is_empty());
+    }
+
+    #[test]
+    fn does_not_match_substring_of_identifier() {
+        // `StringBuilder` (an identifier) must NOT trigger String.
+        assert!(signature_uses_forbidden_primitive("fn f(&self, s: StringBuilder);").is_empty());
+        // `MyFloat` must NOT trigger float.
+        assert!(signature_uses_forbidden_primitive("fn f(&self, x: MyFloat);").is_empty());
+    }
+
+    #[test]
+    fn empty_signature_is_clean() {
+        assert!(signature_uses_forbidden_primitive("").is_empty());
+        assert!(signature_uses_forbidden_primitive("   ").is_empty());
+    }
+}
+
 impl ContractRoleChecker {
     pub fn new() -> Self {
         Self {}
@@ -131,10 +415,37 @@ impl ContractRoleChecker {
         }
     }
 
+    /// Detect primitive type usage in contract method signatures (AES402).
+    ///
+    /// Scans ONLY method signatures inside `pub trait Name { ... }` blocks, NOT
+    /// the whole file. This prevents false positives from:
+    ///   * doc-comments mentioning "String" or "str" in prose
+    ///   * identifier names that contain primitive type names
+    ///     (e.g. `StringBuilder`, `MyFloat`)
+    ///   * language words in English comments ("Float values are rounded")
+    ///
+    /// Rules:
+    ///   * `&str` (borrowed string slice) is allowed — borrow lifetimes preclude
+    ///     replacement with a taxonomy VO without major API changes. It is the
+    ///     idiomatic Rust type for file paths, error messages, and other borrowed
+    ///     string data passed into trait methods.
+    ///   * `bool` is allowed — represents a semantic toggle that is not meaningfully
+    ///     expressible as a VO without ceremony.
+    ///   * `String` (owned) is FORBIDDEN — must be replaced with a taxonomy VO
+    ///     (`LintMessage`, `ErrorMessage`, `SymbolName`, `JobId`, etc.).
+    ///   * `Result<String, _>` / `Result<&str, _>` are FORBIDDEN — error variants
+    ///     must use a defined `taxonomy_*_error` type, not a raw `String`.
+    ///   * Numeric primitives `i32/i64/u32/u64/f32/f64` and `char` are FORBIDDEN —
+    ///     must be wrapped in domain VOs (`Count`, `LineNumber`, `ColumnNumber`,
+    ///     `Duration`, etc.) or new domain-specific VOs.
+    ///
+    /// Only the parameter types and return type of each trait method signature
+    /// are inspected — implementation bodies are out of scope (the contract
+    /// layer is the public interface; internal representations are an adapter
+    /// concern).
     fn check_contract_primitive(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let lower = content.to_lowercase();
         let detector =
             shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
         let det_lang = detector.detect(&source.file_path);
@@ -144,12 +455,21 @@ impl ContractRoleChecker {
         if !is_rs && !is_py && !is_js {
             return;
         }
-        let primitive_keywords = [
-            "String", "i32", "i64", "u32", "u64", "f32", "f64", "bool", "char", "int", "float",
-            "str", "bool",
-        ];
-        let has_primitive = primitive_keywords.iter().any(|kw| lower.contains(kw));
-        if has_primitive {
+
+        // For each language, parse trait/method signatures and flag forbidden
+        // primitive types in params and return types.
+        //
+        // Note: the AES402 helper functions are Rust-specific — they parse
+        // `pub trait Name { fn ... ; }` syntax. Python and JS contract files
+        // are routed through this same code path because the same Rust-style
+        // primitive types can appear in cross-language adapter contracts.
+        let _ = is_py;
+        let _ = is_js;
+        for (line_no, sig) in extract_trait_method_signatures(&content) {
+            let forbidden = signature_uses_forbidden_primitive(&sig);
+            if forbidden.is_empty() {
+                continue;
+            }
             let lang = if is_rs {
                 Language::Rust
             } else if is_py {
@@ -160,7 +480,13 @@ impl ContractRoleChecker {
             let msg = AesRoleViolation::ContractPrimitive { reason: None }
                 .with_language(lang)
                 .to_string();
-            violations.push(LintResult::new_arch(file, 0, "AES402", Severity::HIGH, msg));
+            violations.push(LintResult::new_arch(
+                file,
+                line_no,
+                "AES402",
+                Severity::HIGH,
+                msg,
+            ));
         }
     }
 

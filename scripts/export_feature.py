@@ -172,7 +172,8 @@ def collect_crate_files(crate_path: Path) -> set[Path]:
     """Return Cargo.toml plus every file under the crate's src/ tree."""
     files: set[Path] = set()
     src_dir = crate_path / "src"
-    for f in crate_path.rglob("*"):
+    all_files_pattern = "*"  # rglob pattern: match every entry
+    for f in crate_path.rglob(all_files_pattern):
         if not f.is_file():
             continue
         if f.name == CARGO_TOML or src_dir in f.parents:

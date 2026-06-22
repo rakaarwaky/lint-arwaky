@@ -1,0 +1,11 @@
+# Caspian Security Ignore File
+# Format: RULE_CODE file/path.ts:line # optional reason
+# Lines starting with # are comments
+
+# False positive: Deva flags pathlib's `Path / str` operator as division-by-variable.
+# The `/` here is the pathlib __truediv__ overload for path joining, not arithmetic.
+# No ZeroDivisionError is possible because the right operand is a Path or str literal
+# and the result is a Path, never a number.
+deva.cwe-369.python-divide-by-variable scripts/export_feature.py:41 # pathlib path join, not arithmetic
+deva.cwe-369.python-divide-by-variable scripts/export_feature.py:79 # pathlib path join, not arithmetic
+deva.cwe-369.python-divide-by-variable scripts/export_feature.py:189 # pathlib path join, not arithmetic
