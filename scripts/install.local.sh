@@ -8,9 +8,15 @@ CARGO_TOML="$PROJECT_ROOT/Cargo.toml"
 RELEASE_DIR="$PROJECT_ROOT/target/release"
 DIST_DIR="$PROJECT_ROOT/dist"
 
-INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-$HOME/.cargo/bin}"
-CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-$HOME/.config/lint-arwaky}"
-REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-$HOME/.local/share/lint-arwaky/reports}"
+if [ "$(id -u)" -eq 0 ]; then
+    INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-/usr/local/bin}"
+    CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-/etc/lint-arwaky}"
+    REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-/var/lib/lint-arwaky/reports}"
+else
+    INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-$HOME/.cargo/bin}"
+    CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-$HOME/.config/lint-arwaky}"
+    REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-$HOME/.local/share/lint-arwaky/reports}"
+fi
 
 BINARIES=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
 

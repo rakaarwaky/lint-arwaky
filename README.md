@@ -258,15 +258,104 @@ The CLI is implemented in `crates/cli-commands/src/surface_core_command.rs` (wit
 
 ---
 
-## Project Stats (v1.10.14)
+## TUI (Interactive File Browser)
+
+`lint-arwaky-tui` — Ranger-style 3-panel file browser (`ratatui` + `crossterm`).
+Path project dimasukkan sekali di startup, lalu navigasi folder dan jalanin perintah pada file/folder terseleksi.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Path: /home/project/lint-arwaky                      [Ctrl+Q] Quit │
+├──────────┬──────────────────┬──────────────────────────────────────┤
+│  crates/ │  ► cli-commands/ │  File Preview / Lint Results        │
+│  docs/   │    src/          │                                      │
+│  shared/ │      ▼ surface_  │  AES203: OK                         │
+│  ...     │        check_    │  AES204: OK                         │
+│          │        scan_     │  Violations: 0                      │
+│          │        tui_      │                                      │
+│          │        fix_      │  [c]heck  [s]can  [f]ix  [w]atch    │
+│          │      infrastruc… │  [o]rphan  [d]octor  ?:[h]elp       │
+│          │    Cargo.toml    │                                      │
+│          │  src/            │                                      │
+│          │  tests/          │                                      │
+├──────────┴──────────────────┴──────────────────────────────────────┤
+│  c:check  s:scan  f:fix  t:ci  w:watch  o:orphan  d:doctor  i:init│
+│  I:install  m:mcp  C:config  H:hook  U:unhook  a:adapter  v:version│
+│  Status: Ready  |  Selected: crates/cli-commands/src/  |  0 viol.  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Panels
+
+| Panel | Isi |
+|-------|-----|
+| Kiri | Directory tree |
+| Tengah | File list + layer AES badges (warna-coded) |
+| Kanan | File preview / hasil lint |
+
+Setiap file dikasih **layer badge** warna:
+`[taxonomy]` cyan, `[contract]` blue, `[capabilities]` magenta, `[infra]` yellow, `[agent]` green, `[surface]` red, `[root]` white.
+
+### Shortcuts (always visible at bottom bar)
+
+#### Navigation
+| Key | Action |
+|-----|--------|
+| `j`/`k` | Gerak atas/bawah |
+| `h` | Back (parent dir) |
+| `l` / `Enter` | Buka folder / preview |
+| `gg` / `G` | Lompat awal/akhir |
+| `/` | Cari file |
+| Tab | Cycle panel focus |
+| Mouse click | Pilih item / fokus panel |
+| Scroll wheel | Scroll panel |
+
+#### Actions (on selected file/folder)
+| Key | Action | CLI Equivalent |
+|-----|--------|----------------|
+| `c` | **check** — full AES compliance | `check [path]` |
+| `s` | **scan** — multi-adapter scan | `scan [path]` |
+| `f` | **fix** — auto-fix (toggle dry-run) | `fix [path]` |
+| `t` | **ci** — CI mode (input threshold) | `ci [path] --threshold N` |
+| `w` | **watch** — real-time file watch | `watch [path]` |
+| `o` | **orphan** — dead code check | `orphan [path]` |
+| `^S` | **security** — vulnerability scan | `security [path]` |
+| `^D` | **duplicates** — duplication detection | `duplicates [path]` |
+| `^P` | **dependencies** — library vulnerability | `dependencies [path]` |
+| `d` | **doctor** — environment diagnosis | `maintenance doctor` |
+| `i` | **init** — create default config | `setup init` |
+| `I` | **install** — install adapter deps | `setup install` |
+| `m` | **mcp-config** — print MCP config | `setup mcp-config` |
+| `C` | **config-show** — show active config | `config show` |
+| `H` | **install-hook** — git hook install | `install-hook` |
+| `U` | **uninstall-hook** — git hook remove | `uninstall-hook` |
+| `a` | **adapters** — list active adapters | `adapters` |
+| `v` | **version** — show version | `version` |
+| `?` | Help overlay | — |
+| `q` | Quit | — |
+
+#### Mouse support
+Semua elemen bisa diklik: file list, action buttons, panel focus. Scroll wheel untuk scroll.
+
+### Run
+
+```bash
+cargo run --bin lint-arwaky-tui
+# atau langsung:
+./target/release/lint-arwaky-tui
+```
+
+---
+
+## Project Stats (v1.10.29)
 
 | Metric             | Value                                                                                               |
 | ------------------ | --------------------------------------------------------------------------------------------------- |
 | Language           | Rust 2021 edition                                                                                   |
 | Crate              | `lint_arwaky` (library)                                                                             |
 | Binaries           | `lint-arwaky-cli`, `lint-arwaky-mcp`, `lint-arwaky-tui`                                             |
-| Source files       | 270+ (across 6 layers + 3 entry points +`lib.rs`)                                                   |
-| Layers             | 6 (taxonomy, contract, capabilities, infrastructure, agent, surfaces)                               |
+| Source files       | 270+ (across 6 layers + 3 entry points + `lib.rs`)                                                  |
+| Layers             | 7 (taxonomy, contract, capabilities, infrastructure, agent, surfaces, root)                         |
 | AES rules enforced | 24 (5 groups: Naming, Import, Quality, Role, Orphan)                                                |
 | Linter adapters    | 9 (Rust AST + Clippy, Python AST + Ruff + MyPy + Bandit + Metrics, JS/TS AST + ESLint/Prettier/TSC) |
 | MCP tools          | 5 (execute_command, list_commands, commands_schema, read_skill_context, health_check)               |
