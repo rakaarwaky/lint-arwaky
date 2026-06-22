@@ -29,7 +29,6 @@ ignored_paths:
   - "/.next"
   - "/coverage"
   - "/test-workspaces"
-  - "/Graph-It-Live"
 
 architecture:
   enabled: true
