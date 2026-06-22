@@ -26,7 +26,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_score_vo::compute_score;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
@@ -219,7 +219,7 @@ impl CodeAnalysisOrchestrator {
     }
 }
 
-impl IArchLintProtocol for CodeAnalysisOrchestrator {
+impl IArchLintAggregate for CodeAnalysisOrchestrator {
     fn run_self_lint(&self, project_root: &str) -> LintResultList {
         LintResultList::new(self.run_self_lint(project_root))
     }

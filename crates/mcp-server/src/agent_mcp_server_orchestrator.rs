@@ -4,18 +4,18 @@ use rmcp::model::{Implementation, ProtocolVersion, ServerCapabilities, ServerInf
 use rmcp::{tool, tool_router, ServerHandler};
 use std::sync::Arc;
 
-use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
 
 use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 
 #[derive(Clone)]
 pub struct LintArwakyMcpServer {
     #[allow(dead_code)]
-    arch_linter: Arc<dyn IArchLintProtocol>,
+    arch_linter: Arc<dyn IArchLintAggregate>,
 }
 
 impl LintArwakyMcpServer {
-    pub fn new(arch_linter: Arc<dyn IArchLintProtocol>) -> Self {
+    pub fn new(arch_linter: Arc<dyn IArchLintAggregate>) -> Self {
         Self { arch_linter }
     }
 }

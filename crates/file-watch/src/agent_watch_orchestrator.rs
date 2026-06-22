@@ -3,18 +3,18 @@ use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 
 pub struct WatchOrchestrator {
     provider: Arc<dyn IWatchProviderPort>,
-    linter: Arc<dyn IArchLintProtocol>,
+    linter: Arc<dyn IArchLintAggregate>,
 }
 
 impl WatchOrchestrator {
-    pub fn new(provider: Arc<dyn IWatchProviderPort>, linter: Arc<dyn IArchLintProtocol>) -> Self {
+    pub fn new(provider: Arc<dyn IWatchProviderPort>, linter: Arc<dyn IArchLintAggregate>) -> Self {
         Self { provider, linter }
     }
 

@@ -6,7 +6,7 @@ use std::process::ExitCode;
 
 use code_analysis::resolve_target;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
@@ -20,7 +20,7 @@ pub type OrchestratorFactory = Arc<
 >;
 
 pub struct CheckContext {
-    pub arch_linter: Arc<dyn IArchLintProtocol>,
+    pub arch_linter: Arc<dyn IArchLintAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
@@ -29,7 +29,7 @@ pub struct CheckContext {
 
 pub struct CheckCommandsSurface {
     pub external_lint: Arc<dyn IExternalLintAggregate>,
-    pub arch_linter: Arc<dyn IArchLintProtocol>,
+    pub arch_linter: Arc<dyn IArchLintAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
@@ -39,7 +39,7 @@ pub struct CheckCommandsSurface {
 impl CheckCommandsSurface {
     pub fn new(
         external_lint: Arc<dyn IExternalLintAggregate>,
-        arch_linter: Arc<dyn IArchLintProtocol>,
+        arch_linter: Arc<dyn IArchLintAggregate>,
         import_orchestrator: Arc<dyn IImportRunnerAggregate>,
         naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
         role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
@@ -56,7 +56,7 @@ impl CheckCommandsSurface {
 
     pub fn new_with_factory(
         external_lint: Arc<dyn IExternalLintAggregate>,
-        arch_linter: Arc<dyn IArchLintProtocol>,
+        arch_linter: Arc<dyn IArchLintAggregate>,
         import_orchestrator: Arc<dyn IImportRunnerAggregate>,
         naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
         role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
@@ -478,7 +478,7 @@ pub fn handle_check(
 #[allow(clippy::too_many_arguments)]
 pub fn handle_scan(
     path: Option<String>,
-    arch_linter: Arc<dyn IArchLintProtocol>,
+    arch_linter: Arc<dyn IArchLintAggregate>,
     import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     external_lint: Arc<dyn IExternalLintAggregate>,
@@ -500,7 +500,7 @@ pub fn handle_scan(
 }
 
 pub fn handle_ci(
-    arch_linter: Arc<dyn IArchLintProtocol>,
+    arch_linter: Arc<dyn IArchLintAggregate>,
     path: Option<String>,
     threshold: u32,
 ) -> ExitCode {

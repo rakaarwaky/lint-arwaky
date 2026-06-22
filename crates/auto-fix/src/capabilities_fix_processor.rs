@@ -3,7 +3,7 @@ use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::Count;
@@ -13,18 +13,18 @@ use std::sync::Arc;
 
 pub struct LintFixProcessor {
     dry_run: bool,
-    linter: Arc<dyn IArchLintProtocol>,
+    linter: Arc<dyn IArchLintAggregate>,
 }
 
 impl LintFixProcessor {
-    pub fn new(linter: Arc<dyn IArchLintProtocol>) -> Self {
+    pub fn new(linter: Arc<dyn IArchLintAggregate>) -> Self {
         Self {
             dry_run: false,
             linter,
         }
     }
 
-    pub fn with_dry_run(dry_run: bool, linter: Arc<dyn IArchLintProtocol>) -> Self {
+    pub fn with_dry_run(dry_run: bool, linter: Arc<dyn IArchLintAggregate>) -> Self {
         Self { dry_run, linter }
     }
 

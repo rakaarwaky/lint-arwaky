@@ -373,7 +373,7 @@ impl IAnalyzer for PlaceholderAnalyzer {
 
 // CodeAnalysisContainer — wiring for code-analysis feature
 use crate::CodeAnalysisOrchestrator;
-use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
+use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
 
 pub struct CodeAnalysisContainer {
     arch_linter: Arc<CodeAnalysisOrchestrator>,
@@ -395,7 +395,7 @@ impl CodeAnalysisContainer {
         }
     }
 
-    pub fn architecture_linter(&self) -> Arc<dyn IArchLintProtocol> {
+    pub fn architecture_linter(&self) -> Arc<dyn IArchLintAggregate> {
         self.arch_linter.clone()
     }
 }
