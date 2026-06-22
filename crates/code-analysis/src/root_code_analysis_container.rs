@@ -283,8 +283,8 @@ impl shared::source_parsing::contract_parser_port::ISourceParserPort for NullSou
     fn find_unused_imports(
         &self,
         _path: &FilePath,
-    ) -> shared::code_analysis::taxonomy_import_source_vo::ImportInfoList {
-        shared::code_analysis::taxonomy_import_source_vo::ImportInfoList::default()
+    ) -> Vec<shared::common::taxonomy_message_vo::LintMessage> {
+        Vec::new()
     }
     fn get_class_definitions(
         &self,

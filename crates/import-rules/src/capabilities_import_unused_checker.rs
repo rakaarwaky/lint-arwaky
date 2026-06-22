@@ -45,7 +45,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
     ///   6. For Rust/JS named imports (e.g., `use foo::Bar`, `import { Bar }`):
     ///      extract and check each name individually via `is_name_used`.
     ///   7. Return the collected list of unused symbol names.
-    fn find_unused_imports(&self, path: &FilePath) -> Vec<String> {
+    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
         // Step 1: Read file content
         let Ok(content) = self.parser.read_file_to_string(path) else {
             return vec![];
@@ -62,7 +62,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             .parser
             .extract_used_symbols(&content, &imported_aliases);
 
-        let mut unused = Vec::new();
+        let mut unused: Vec<String> = Vec::new();
 
         // Step 5: Identify unused Python/standard imports
         for alias in imported_aliases.keys() {
@@ -79,7 +79,11 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             }
         }
 
+        // AES402: return VOs, not raw strings.
         unused
+            .into_iter()
+            .map(|s| LintMessage::new(format!("Unused import: {}", s)))
+            .collect()
     }
 
     /// Check for unused imports and record them as lint violations.
