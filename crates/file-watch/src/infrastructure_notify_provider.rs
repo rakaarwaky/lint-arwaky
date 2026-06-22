@@ -7,8 +7,8 @@ use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
 use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::taxonomy_service_error::WatchServiceError;
-use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
+use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
 use shared::taxonomy_common_error::ErrorMessage;
 use tokio::sync::broadcast;
 
@@ -47,8 +47,10 @@ impl IWatchProviderPort for NotifyWatchProvider {
             ))));
         }
 
-        *self.ignore_patterns.lock().unwrap_or_else(|e| e.into_inner()) =
-            config.ignore_patterns.clone();
+        *self
+            .ignore_patterns
+            .lock()
+            .unwrap_or_else(|e| e.into_inner()) = config.ignore_patterns.clone();
 
         let tx = self.tx.clone();
         let ignore = config.ignore_patterns.clone();
@@ -90,15 +92,9 @@ impl IWatchProviderPort for NotifyWatchProvider {
             RecursiveMode::NonRecursive
         };
 
-        debouncer
-            .watcher()
-            .watch(path, recursive)
-            .map_err(|e| {
-                WatchServiceError::new(ErrorMessage::new(format!(
-                    "Failed to watch path: {}",
-                    e
-                )))
-            })?;
+        debouncer.watcher().watch(path, recursive).map_err(|e| {
+            WatchServiceError::new(ErrorMessage::new(format!("Failed to watch path: {}", e)))
+        })?;
 
         *self.watcher.lock().unwrap_or_else(|e| e.into_inner()) = Some(debouncer);
         Ok(())

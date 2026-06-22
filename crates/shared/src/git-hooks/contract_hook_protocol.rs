@@ -31,5 +31,4 @@ pub trait IHookProtocol: Send + Sync {
         path1: &str,
         path2: &str,
     ) -> std::collections::HashMap<String, serde_json::Value>;
-
 }

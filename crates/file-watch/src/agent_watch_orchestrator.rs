@@ -14,14 +14,8 @@ pub struct WatchOrchestrator {
 }
 
 impl WatchOrchestrator {
-    pub fn new(
-        provider: Arc<dyn IWatchProviderPort>,
-        linter: Arc<dyn IArchLintProtocol>,
-    ) -> Self {
-        Self {
-            provider,
-            linter,
-        }
+    pub fn new(provider: Arc<dyn IWatchProviderPort>, linter: Arc<dyn IArchLintProtocol>) -> Self {
+        Self { provider, linter }
     }
 
     pub async fn run_async(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
@@ -34,11 +28,7 @@ impl WatchOrchestrator {
         // Initial full lint
         let results = self.linter.run_lint(&path);
         let score = self.linter.calc_score(&results);
-        println!(
-            "[initial] {} violations, score {:.1}",
-            results.len(),
-            score
-        );
+        println!("[initial] {} violations, score {:.1}", results.len(), score);
 
         // Start watcher
         if let Err(e) = self.provider.start(&config).await {

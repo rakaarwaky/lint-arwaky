@@ -5,11 +5,9 @@ use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LayerDefinition {
-    pub path: DirectoryPath,
     #[serde(default)]
     pub allowed: PatternList,
     #[serde(default)]
@@ -31,12 +29,6 @@ pub struct LayerDefinition {
     pub role: crate::role_rules::taxonomy_role_rule_vo::RoleRuleVO,
     #[serde(flatten)]
     pub orphan: crate::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO,
-}
-
-impl LayerDefinition {
-    pub fn path_str(&self) -> String {
-        self.path.value.clone()
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

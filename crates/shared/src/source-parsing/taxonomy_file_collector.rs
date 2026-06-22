@@ -1,7 +1,7 @@
 // PURPOSE: FileCollector — taxonomy utility for collecting lintable source files from a directory tree
 use crate::source_parsing::taxonomy_language_detector_helper::LanguageDetector;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 /// Collect lintable source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree.
 pub fn collect_source_files(

@@ -19,7 +19,8 @@ pub struct VsCodeGraphGenerator {
 
 impl VsCodeGraphGenerator {
     pub fn new() -> Self {
-        let container = source_parsing::root_source_parsing_container::SourceParsingContainer::new();
+        let container =
+            source_parsing::root_source_parsing_container::SourceParsingContainer::new();
         Self {
             source_parser: container.source_parser(),
         }

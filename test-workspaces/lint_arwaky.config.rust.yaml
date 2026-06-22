@@ -76,15 +76,12 @@ architecture:
         ]
       layers:
         taxonomy:
-          path: "crates/shared"
           suffix:
             - strict: ["vo", "entity", "error", "event", "constant"]
         contract:
-          path: "crates/shared"
           suffix:
             - strict: ["port", "protocol", "aggregate"]
         capabilities:
-          path: "crates"
           suffix:
             - flexible:
                 [
@@ -130,7 +127,6 @@ architecture:
                   "aggregate",
                 ]
         infrastructure:
-          path: "crates"
           suffix:
             - flexible:
                 [
@@ -185,11 +181,9 @@ architecture:
                   "aggregate",
                 ]
         agent:
-          path: "crates"
           suffix:
             - strict: ["orchestrator"]
         surfaces:
-          path: "crates"
           suffix:
             - strict:
                 [
@@ -206,7 +200,6 @@ architecture:
                   "screen",
                 ]
         root:
-          path: "crates"
           suffix:
             - strict: ["entry", "container"]
 

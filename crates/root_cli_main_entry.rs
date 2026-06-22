@@ -4,16 +4,16 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use cli_commands::surface_check_command;
-use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use cli_commands::surface_fix_command;
 use cli_commands::surface_maintenance_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
 use code_analysis::{has_critical, lint_path, CodeDuplicationAnalyzer};
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use import_rules::root_import_rules_container::ImportContainer;
 use role_rules::root_role_rules_container::RoleContainer;
+use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 
 pub struct CliMainEntry {}
 
@@ -197,18 +197,12 @@ fn main() -> ExitCode {
             println!("uninstall-hook: not yet implemented");
             ExitCode::SUCCESS
         }
-        Commands::Init { global } => {
-            cli_commands::surface_setup_command::handle_init(global)
-        }
-        Commands::Install { sudo } => {
-            cli_commands::surface_setup_command::handle_install(sudo)
-        }
+        Commands::Init { global } => cli_commands::surface_setup_command::handle_init(global),
+        Commands::Install { sudo } => cli_commands::surface_setup_command::handle_install(sudo),
         Commands::McpConfig { client } => {
             cli_commands::surface_setup_command::handle_mcp_config(&client)
         }
-        Commands::ConfigShow => {
-            cli_commands::surface_config_command::handle_config_show()
-        }
+        Commands::ConfigShow => cli_commands::surface_config_command::handle_config_show(),
     }
 }
 

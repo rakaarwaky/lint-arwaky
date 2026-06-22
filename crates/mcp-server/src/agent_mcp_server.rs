@@ -1,7 +1,7 @@
 // PURPOSE: LintArwakyMcpServer — MCP server using rmcp official SDK
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::{tool, tool_router, ServerHandler};
 use rmcp::model::{Implementation, ProtocolVersion, ServerCapabilities, ServerInfo};
+use rmcp::{tool, tool_router, ServerHandler};
 use std::sync::Arc;
 
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
@@ -10,6 +10,7 @@ use crate::taxonomy_mcp_tool_args::{ExecuteCommandArgs, ListCommandsArgs, ReadSk
 
 #[derive(Clone)]
 pub struct LintArwakyMcpServer {
+    #[allow(dead_code)]
     arch_linter: Arc<dyn IArchLintProtocol>,
 }
 
@@ -37,10 +38,7 @@ impl ServerHandler for LintArwakyMcpServer {
 #[tool_router]
 impl LintArwakyMcpServer {
     #[tool(description = "Execute any CLI command. This is the primary tool.")]
-    async fn execute_command(
-        &self,
-        Parameters(args): Parameters<ExecuteCommandArgs>,
-    ) -> String {
+    async fn execute_command(&self, Parameters(args): Parameters<ExecuteCommandArgs>) -> String {
         let result = match args.action.as_str() {
             "check" | "scan" => {
                 let path = args
@@ -156,18 +154,30 @@ impl LintArwakyMcpServer {
             }
             "adapters" => {
                 let mut adapters = Vec::new();
-                for (name, lang) in &[("ruff", "python"), ("mypy", "python"), ("bandit", "python"), ("clippy", "rust"), ("eslint", "javascript")] {
+                for (name, lang) in &[
+                    ("ruff", "python"),
+                    ("mypy", "python"),
+                    ("bandit", "python"),
+                    ("clippy", "rust"),
+                    ("eslint", "javascript"),
+                ] {
                     let found = std::process::Command::new("which")
                         .arg(name)
                         .output()
                         .map(|o| o.status.success())
                         .unwrap_or(false);
-                    adapters.push(serde_json::json!({"name": name, "language": lang, "enabled": found}));
+                    adapters.push(
+                        serde_json::json!({"name": name, "language": lang, "enabled": found}),
+                    );
                 }
                 serde_json::json!({"adapters": adapters})
             }
-            "install-hook" => serde_json::json!({"status": "success", "message": "Git hook installed."}),
-            "uninstall-hook" => serde_json::json!({"status": "success", "message": "Git hook removed."}),
+            "install-hook" => {
+                serde_json::json!({"status": "success", "message": "Git hook installed."})
+            }
+            "uninstall-hook" => {
+                serde_json::json!({"status": "success", "message": "Git hook removed."})
+            }
             "init" => serde_json::json!({"status": "success", "action": "init"}),
             "install" => serde_json::json!({"status": "success", "action": "install"}),
             "mcp-config" => {
@@ -186,10 +196,7 @@ impl LintArwakyMcpServer {
     }
 
     #[tool(description = "List all available CLI commands with descriptions and examples.")]
-    async fn list_commands(
-        &self,
-        Parameters(_args): Parameters<ListCommandsArgs>,
-    ) -> String {
+    async fn list_commands(&self, Parameters(_args): Parameters<ListCommandsArgs>) -> String {
         let catalog = shared::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
         let commands: Vec<serde_json::Value> = catalog
             .iter()
@@ -206,10 +213,7 @@ impl LintArwakyMcpServer {
     }
 
     #[tool(description = "Read SKILL.md documentation by section.")]
-    async fn read_skill(
-        &self,
-        Parameters(args): Parameters<ReadSkillArgs>,
-    ) -> String {
+    async fn read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {
         let skill_path = std::path::Path::new("SKILL.md");
         if !skill_path.exists() {
             return serde_json::json!({"error": "SKILL.md not found"}).to_string();
@@ -226,19 +230,28 @@ impl LintArwakyMcpServer {
                             .unwrap_or(remaining.len());
                         serde_json::json!({"section": s, "content": &remaining[..end]}).to_string()
                     } else {
-                        serde_json::json!({"error": format!("Section '{}' not found", s)}).to_string()
+                        serde_json::json!({"error": format!("Section '{}' not found", s)})
+                            .to_string()
                     }
                 }
                 _ => serde_json::json!({"content": content}).to_string(),
             },
-            Err(e) => serde_json::json!({"error": format!("Failed to read SKILL.md: {}", e)}).to_string(),
+            Err(e) => {
+                serde_json::json!({"error": format!("Failed to read SKILL.md: {}", e)}).to_string()
+            }
         }
     }
 
     #[tool(description = "Check system health: adapters and system state.")]
     async fn health_check(&self) -> String {
         let mut adapters = Vec::new();
-        for (name, lang) in &[("ruff", "python"), ("mypy", "python"), ("bandit", "python"), ("clippy", "rust"), ("eslint", "javascript")] {
+        for (name, lang) in &[
+            ("ruff", "python"),
+            ("mypy", "python"),
+            ("bandit", "python"),
+            ("clippy", "rust"),
+            ("eslint", "javascript"),
+        ] {
             let found = std::process::Command::new("which")
                 .arg(name)
                 .output()
@@ -250,7 +263,10 @@ impl LintArwakyMcpServer {
                 "status": if found { "available" } else { "not_installed" }
             }));
         }
-        let available = adapters.iter().filter(|a| a["status"] == "available").count();
+        let available = adapters
+            .iter()
+            .filter(|a| a["status"] == "available")
+            .count();
         let result = serde_json::json!({
             "version": env!("CARGO_PKG_VERSION"),
             "adapters_available": available,

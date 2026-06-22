@@ -64,7 +64,7 @@ Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`
 
 ---
 
-### Layer Hierarchy (Dependency Direction)
+## Layer Hierarchy (Dependency Direction)
 
 ```mermaid
 %%{init: {'theme': 'default'}}%%
@@ -102,7 +102,7 @@ graph TD
     ROOT_ENTRY -->|"starts"| ROOT_CONT
 ```
 
-#### Layer Prefix Specifications
+## Layer Prefix Specifications
 
 Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[suffix].`or `[layer]_[concept1]_[concept2]_[suffix]` if needed  All seven layers coexist in each feature crate, distinguished by their prefix.
 
@@ -116,7 +116,7 @@ Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[
 | `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                                        | Varies by surface role (see Surface layer details below).                                                    | Application entry points, UI components, CLI commands, controllers, and pages.                    |
 | `root_`           | `_container`, `_entry`                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | All layers (`taxonomy_`, `contract_`, `capabilities_`, `infrastructure_`, `agent_`, `surface_`). | App bootstrap, inline composition, and Dependency Injection wiring. Absolutely no business logic. |
 
-### Layer Specifications
+## Layer Specifications
 
 #### 1. Taxonomy (`taxonomy_` prefix)
 
@@ -140,11 +140,11 @@ Interface definitions — _what_ can be done without _how_.
 - **Protocol (`_protocol`)**: Inbound interfaces implemented by Capabilities. _Ex: `contract_rule_protocol.rs`_
 - **Aggregate (`_aggregate`)**: Composition facades. _Ex: `contract_service_aggregate.rs`_
 
-#### 3. Capabilities (`capabilities_` prefix)
+### 3. Capabilities (`capabilities_` prefix)
 
 Use-case logic. Entirely agnostic of infrastructure.
 
-#### 4. Infrastructure (`infrastructure_` prefix)
+### 4. Infrastructure (`infrastructure_` prefix)
 
 Technical implementations and external tool wrappers.
 

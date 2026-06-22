@@ -120,18 +120,6 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
             }
         }
         remove_nulls(&mut json);
-        // Add default path for layers that don't have one
-        if let Some(layers_obj) = json.get_mut("layers") {
-            if let Some(obj) = layers_obj.as_object_mut() {
-                for (_, layer) in obj.iter_mut() {
-                    if let Some(layer_obj) = layer.as_object_mut() {
-                        if !layer_obj.contains_key("path") {
-                            layer_obj.insert("path".to_string(), serde_json::json!("."));
-                        }
-                    }
-                }
-            }
-        }
         // Convert ignored_paths from array to {values: [...]} format because the Rust struct expects an object with a "values" field.
         if let Some(arr) = json.get("ignored_paths").and_then(|v| v.as_array()) {
             json["ignored_paths"] = serde_json::json!({"values": arr});

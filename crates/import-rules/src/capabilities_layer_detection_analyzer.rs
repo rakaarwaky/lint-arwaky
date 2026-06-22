@@ -275,16 +275,6 @@ impl LayerDetectionAnalyzer {
             }
         }
 
-        // Strategy 3: Path-based match (module path as filesystem path vs. layer paths)
-        let module_as_path = module.replace('.', "/");
-        for (name, def) in &self.config.layers {
-            let def_path = def.path.value.trim_matches('/');
-            if !def_path.is_empty() && module_as_path.contains(def_path) {
-                let base_name = name.value.split('(').next().unwrap_or(&name.value);
-                return Some(self.refine_module_layer(base_name, &meaningful_parts));
-            }
-        }
-
         None
     }
 

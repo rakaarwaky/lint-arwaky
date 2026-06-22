@@ -204,9 +204,15 @@ pub fn handle_install(sudo: bool) -> ExitCode {
 
     println!("\n[2/2] Installing JavaScript adapters (eslint, prettier, typescript)...");
     let (npm_cmd, npm_args): (&str, Vec<&str>) = if sudo {
-        ("sudo", vec!["npm", "install", "-g", "eslint", "prettier", "typescript"])
+        (
+            "sudo",
+            vec!["npm", "install", "-g", "eslint", "prettier", "typescript"],
+        )
     } else {
-        ("npm", vec!["install", "-g", "eslint", "prettier", "typescript"])
+        (
+            "npm",
+            vec!["install", "-g", "eslint", "prettier", "typescript"],
+        )
     };
     let js_status = std::process::Command::new(npm_cmd).args(&npm_args).status();
     match js_status {

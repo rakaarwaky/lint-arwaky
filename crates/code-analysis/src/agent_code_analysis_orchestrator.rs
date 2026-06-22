@@ -53,7 +53,9 @@ pub fn collect_source_files(
     dir_path: &DirectoryPath,
     ignored: &[String],
 ) -> Vec<FilePath> {
-    shared::source_parsing::taxonomy_file_collector::collect_source_files(root_dir, dir_path, ignored)
+    shared::source_parsing::taxonomy_file_collector::collect_source_files(
+        root_dir, dir_path, ignored,
+    )
 }
 
 /// Unified code-analysis orchestrator — collects files, runs ALL AES checks, formats reports.

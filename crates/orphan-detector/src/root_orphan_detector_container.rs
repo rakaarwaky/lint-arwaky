@@ -17,8 +17,7 @@ impl OrphanContainer {
     }
 
     pub fn new_with_ignored(_ignored_paths: Vec<String>) -> Self {
-        let resolver: Arc<dyn IOrphanGraphResolverProtocol> =
-            Arc::new(OrphanGraphResolver::new());
+        let resolver: Arc<dyn IOrphanGraphResolverProtocol> = Arc::new(OrphanGraphResolver::new());
         let arch = Arc::new(ArchOrphanAnalyzer::new(
             resolver,
             Arc::new(crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new()),

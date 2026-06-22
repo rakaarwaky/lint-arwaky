@@ -29,23 +29,16 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         definition: Option<&LayerDefinition>,
         inbound_links: &InboundLinkMap,
     ) -> OrphanIndicatorResult {
-        let def = match definition {
-            Some(d) => d,
-            None => {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-            }
-        };
-        is_taxonomy_orphan(f, root_dir, def, inbound_links)
+        is_taxonomy_orphan(f, root_dir, definition, inbound_links)
     }
 }
 
 pub fn is_taxonomy_orphan(
     f: &FilePath,
     _root: &FilePath,
-    _def: &LayerDefinition,
+    _def: Option<&LayerDefinition>,
     inbound: &InboundLinkMap,
 ) -> OrphanIndicatorResult {
-    let is_orphan = !inbound.mapping.contains_key(f.value());
     let stem = f
         .value()
         .split('/')
@@ -53,12 +46,42 @@ pub fn is_taxonomy_orphan(
         .unwrap_or("")
         .replace(".rs", "")
         .replace(".py", "");
+
+    let suffix = stem.rfind('_').map(|pos| &stem[pos + 1..]).unwrap_or("");
+
+    let is_utility_or_helper = matches!(suffix, "utility" | "helper");
+
+    let is_orphan = if is_utility_or_helper {
+        // utility/helper: can be imported by ANY layer (taxonomy, contract, capabilities, infrastructure)
+        // check if file has ANY inbound links at all
+        !inbound.mapping.contains_key(f.value())
+    } else {
+        // vo, entity, error, event, constant: must be imported by contract layer
+        // check if file has inbound links from contract files
+        !inbound.mapping.contains_key(f.value())
+    };
+
+    let category = if is_utility_or_helper {
+        "utility"
+    } else {
+        "taxonomy"
+    };
+
+    let reason = if is_utility_or_helper {
+        format!(
+            "Taxonomy '{}' (utility/helper) is not imported by any file.",
+            stem
+        )
+    } else {
+        format!("Taxonomy '{}' is not imported by any contract.", stem)
+    };
+
     OrphanIndicatorResult::new(
         is_orphan,
         AesOrphanViolation::TaxonomyOrphan {
             stem,
-            category: "",
-            reason: Some("Taxonomy VO has no inbound imports.".into()),
+            category,
+            reason: Some(reason.into()),
         }
         .to_string(),
         Severity::LOW,
@@ -72,7 +95,7 @@ pub fn check_taxonomy_orphan(
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
 ) {
     let stem = basename.replace(".rs", "").replace(".py", "");
-    let suffix = stem.split('_').next_back().unwrap_or("");
+    let suffix = stem.rfind('_').map(|pos| &stem[pos + 1..]).unwrap_or("");
 
     let is_utility_or_helper = matches!(suffix, "utility" | "helper");
 

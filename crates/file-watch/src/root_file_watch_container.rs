@@ -2,7 +2,6 @@
 use std::sync::Arc;
 
 use crate::agent_watch_orchestrator::WatchOrchestrator;
-use crate::capabilities_change_analyzer::ChangeAnalyzer;
 use crate::infrastructure_notify_provider::NotifyWatchProvider;
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;

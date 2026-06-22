@@ -72,5 +72,4 @@ impl IHookProtocol for HookManager {
         result.insert("status".to_string(), serde_json::json!("UNCHANGED"));
         result
     }
-
 }

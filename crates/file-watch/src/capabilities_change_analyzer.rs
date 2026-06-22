@@ -1,5 +1,5 @@
 // PURPOSE: ChangeAnalyzer — deduplicates and batches watch events for lint
-use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
+use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 use std::collections::HashMap;
 
 pub struct ChangeAnalyzer;
