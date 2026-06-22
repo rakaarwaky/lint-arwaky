@@ -16,5 +16,6 @@ cli_commands.workspace = true
 code_analysis.workspace = true
 external_lint.workspace = true
 rmcp.workspace = true
+schemars = "1.2"
 tokio.workspace = true
 anyhow.workspace = true
