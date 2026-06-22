@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 use shared::file_system::taxonomy_filesystem_error::FileSystemError;
 use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
+use shared::source_parsing::taxonomy_file_collector_helper::is_path_ignored;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
@@ -30,12 +31,6 @@ fn default_ignored_paths() -> Vec<String> {
         .values
         .iter()
         .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-        .filter(|path| {
-            // Retain only the actual nested duplicate test-workspaces folder
-            // (e.g. test-workspaces/test-workspaces), otherwise we would
-            // skip real `test-workspaces/packages` test material.
-            path.matches("test-workspaces").count() <= 1
-        })
         .collect()
 }
 
@@ -70,11 +65,7 @@ fn is_source_file(ext: &str) -> bool {
 
 fn is_ignored_dir(dir: &Path, ignored: &[String]) -> bool {
     let s = dir.to_string_lossy();
-    ignored.iter().any(|i| {
-        let pattern = i.trim_start_matches('/');
-        let trimmed = s.trim_start_matches('/');
-        trimmed == pattern || trimmed.starts_with(&format!("{}/", pattern))
-    })
+    is_path_ignored(&s, ignored)
 }
 
 fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {

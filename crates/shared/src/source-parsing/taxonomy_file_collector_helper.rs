@@ -7,19 +7,23 @@ use crate::source_parsing::taxonomy_path_vo::FilePath;
 ///
 /// Each pattern is matched as a **path segment** rather than a free-text substring. This
 /// fixes a long-standing bug where patterns like `/test-workspaces` failed to match the
-/// relative path `test-workspaces/crates/...` (no leading slash), causing all of
-/// `test-workspaces/**` to leak into `lint-arwaky check .` results even though it was
-/// listed in `ignored_paths`. The same bug also leaked `packages/vscode-extension/src/`
-/// (pattern `/packages` did not match `packages/...`).
+/// absolute path `/home/.../test-workspaces/crates/...` because the old substring-based
+/// matcher was tripped up by leading slashes, leading paths, and unrelated prefixes. The
+/// result was that all of `test-workspaces/**` and `packages/vscode-extension/src/**`
+/// leaked into `lint-arwaky check .` results even though they were listed in
+/// `ignored_paths`.
 ///
 /// Three forms of pattern are supported:
-///   1. Absolute-style prefix `"/foo"`, `"/foo/bar"` — matches any relative path that
-///      starts with `foo` or `foo/bar` (after trimming the leading slash).
+///   1. Absolute-style prefix `"/foo"`, `"/foo/bar"` — matches any path that contains
+///      the segments `foo` or `foo/bar` in order, at any depth. The leading slash is
+///      dropped before comparison; this works on both absolute paths
+///      (`/home/.../test-workspaces/crates/foo.rs`) and relative paths
+///      (`test-workspaces/crates/foo.rs`).
 ///   2. Single segment `"foo"` — matches any path segment equal to `foo`
 ///      (catches both `foo` at root and `nested/foo` mid-tree).
 ///   3. Suffix glob `".min.js"`, `"*.bak"` — matches any path whose basename ends with the
 ///      suffix. Used for vendor minified files like `cytoscape.min.js`.
-fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
+pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
     if rel_path.is_empty() {
         return false;
     }
@@ -43,17 +47,24 @@ fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
             if pat_segments.is_empty() {
                 continue;
             }
-            // Path must START with all pat_segments in order, at any depth.
-            if segments.len() >= pat_segments.len()
-                && segments[..pat_segments.len()] == pat_segments[..]
-            {
-                return true;
+            // Match if pat_segments appear contiguously in `segments` at any depth.
+            // We do NOT use `starts_with` here because `rel_path` may be absolute
+            // (`/home/.../test-workspaces/...`) — the pattern segments can appear
+            // anywhere along the path, not just at the very beginning.
+            let n_pat = pat_segments.len();
+            let n_seg = segments.len();
+            if n_seg < n_pat {
+                continue;
+            }
+            for start in 0..=(n_seg - n_pat) {
+                if segments[start..start + n_pat] == pat_segments[..] {
+                    return true;
+                }
             }
             continue;
         }
         // (2) Suffix glob "*.ext" or ".ext" (used for minified vendor files)
-        if pat.starts_with("*.") || pat.starts_with('.') && pat.contains('.') {
-            // Take the suffix after "*." or after the leading "." for things like ".min.js"
+        if pat.starts_with("*.") || (pat.starts_with('.') && pat.contains('.')) {
             let suffix = if let Some(s) = pat.strip_prefix('*') {
                 s.trim_start_matches('.')
             } else {
@@ -117,20 +128,36 @@ mod tests {
     }
 
     #[test]
-    fn absolute_prefix_matches_root_dir() {
+    fn absolute_prefix_matches_at_any_depth() {
+        // The pattern must match anywhere along the path, not only at the
+        // beginning — `rel_path` is typically absolute
+        // (`/home/raka/.../test-workspaces/crates/foo.rs`).
         let ig = ignored(&["/test-workspaces"]);
+        assert!(is_path_ignored(
+            "/home/raka/mcp-arwaky/lint-arwaky/test-workspaces",
+            &ig
+        ));
+        assert!(is_path_ignored(
+            "/home/raka/mcp-arwaky/lint-arwaky/test-workspaces/crates/foo.rs",
+            &ig
+        ));
+        // Bare (no leading slash) and relative forms must also match.
         assert!(is_path_ignored("test-workspaces", &ig));
         assert!(is_path_ignored("test-workspaces/crates/foo.rs", &ig));
-        assert!(is_path_ignored("test-workspaces/crates/foo/bar.py", &ig));
     }
 
     #[test]
-    fn absolute_prefix_does_not_match_partial_segment() {
-        // `/test-workspaces` must NOT match `not-test-workspaces/foo.rs` — substring match
-        // would have fired here, which was the original bug.
+    fn absolute_prefix_does_not_match_unrelated_segment() {
         let ig = ignored(&["/test-workspaces"]);
-        assert!(!is_path_ignored("not-test-workspaces/foo.rs", &ig));
-        assert!(!is_path_ignored("crates/test.rs", &ig));
+        // Unrelated paths must NOT match.
+        assert!(!is_path_ignored("/home/not-test-workspaces/foo.rs", &ig));
+        assert!(!is_path_ignored(
+            "/home/raka/lint-arwaky/crates/test.rs",
+            &ig
+        ));
+        // Identical name as a mid-segment of an unrelated path must NOT match
+        // (`not-test-workspaces` is its own segment, not `test-workspaces`).
+        assert!(!is_path_ignored("/home/not-test-workspaces", &ig));
     }
 
     #[test]
@@ -172,22 +199,26 @@ mod tests {
     #[test]
     fn multiple_patterns_any_match() {
         let ig = ignored(&["/target", "/test-workspaces", ".min.js"]);
-        assert!(is_path_ignored("target/debug/foo.rs", &ig));
-        assert!(is_path_ignored("test-workspaces/foo.rs", &ig));
-        assert!(is_path_ignored("lib/vendor.min.js", &ig));
-        assert!(!is_path_ignored("crates/foo.rs", &ig));
+        assert!(is_path_ignored("/home/raka/target/debug/foo.rs", &ig));
+        assert!(is_path_ignored("/home/raka/test-workspaces/foo.rs", &ig));
+        assert!(is_path_ignored("/home/raka/lib/vendor.min.js", &ig));
+        assert!(!is_path_ignored("/home/raka/crates/foo.rs", &ig));
     }
 
     #[test]
-    fn absolute_prefix_does_not_match_unrelated_segment() {
+    fn packages_pattern_excludes_only_packages_segment() {
         let ig = ignored(&["/packages"]);
-        // Path that doesn't start with `packages` segment must not match.
-        assert!(!is_path_ignored("not-packages/foo.ts", &ig));
-        assert!(!is_path_ignored("crates/packages-fake/foo.ts", &ig));
-        // Path that DOES start with `packages` segment must match.
-        assert!(is_path_ignored("packages/foo.ts", &ig));
+        // Unrelated paths must not match.
+        assert!(!is_path_ignored("/home/raka/crates/foo.rs", &ig));
+        // Path that DOES contain `packages` segment must match (at any depth).
+        assert!(is_path_ignored("/home/raka/packages/foo.ts", &ig));
         assert!(is_path_ignored(
-            "packages/vscode-extension/src/extension.ts",
+            "/home/raka/packages/vscode-extension/src/extension.ts",
+            &ig
+        ));
+        // Same name as mid-segment of an unrelated path must not match.
+        assert!(!is_path_ignored(
+            "/home/raka/crates/packages-fake/foo.ts",
             &ig
         ));
     }
