@@ -3,7 +3,7 @@ use crate::agent_orphan_orchestrator::ArchOrphanAnalyzer;
 use crate::capabilities_orphan_graph_resolver::OrphanGraphResolver;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::orphan_detector::contract_orphan_graph_resolver_port::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 use std::sync::Arc;
 
 pub struct OrphanContainer {

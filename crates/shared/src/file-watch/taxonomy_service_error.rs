@@ -12,7 +12,7 @@ impl WatchServiceError {
     pub fn new(message: ErrorMessage) -> Self {
         Self {
             path: FilePath::default(),
-            message: message.0,
+            message: message.value,
         }
     }
 }

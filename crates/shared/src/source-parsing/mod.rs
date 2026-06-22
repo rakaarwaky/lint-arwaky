@@ -5,7 +5,7 @@ pub mod contract_path_normalization_port;
 pub mod contract_scanner_provider_port;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_barrel_provider_vo;
-pub mod taxonomy_file_collector;
+pub mod taxonomy_file_collector_helper;
 pub mod taxonomy_language_detector_helper;
 pub mod taxonomy_naming_error;
 pub mod taxonomy_naming_list_vo;

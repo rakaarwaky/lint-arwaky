@@ -11,7 +11,7 @@ impl GitHookError {
     pub fn new(message: crate::taxonomy_common_error::ErrorMessage) -> Self {
         Self {
             path: FilePath::default(),
-            message: message.0,
+            message: message.value,
         }
     }
 }

@@ -472,23 +472,11 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
         return true;
     }
 
-    if trimmed.len() < 100 {
-        let inner = trimmed.trim_start_matches('{').trim_end_matches('}').trim();
-        let short_markers = ["todo!(", "unimplemented!(", "panic!(", "unreachable!("];
-        if inner.is_empty() || short_markers.iter().any(|m| inner.starts_with(m)) {
-            return true;
-        }
+    let inner = trimmed.trim_start_matches('{').trim_end_matches('}').trim();
+    let short_markers = ["todo!(", "unimplemented!(", "panic!(", "unreachable!("];
+    if inner.is_empty() || short_markers.iter().any(|m| inner.starts_with(m)) {
+        return true;
     }
 
-    let panic_marker = format!("{}!(", "panic");
-    let dummy_markers = [
-        "todo!(",
-        "unimplemented!(",
-        &panic_marker,
-        "unreachable!(",
-        "return Err(Default::default())",
-        "return Ok(Default::default())",
-    ];
-
-    dummy_markers.iter().any(|marker| body.contains(marker))
+    false
 }

@@ -287,7 +287,10 @@ fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentVO)> 
             i += 1;
             continue;
         }
-        if trimmed.starts_with("use ") {
+        if trimmed.starts_with("use ")
+            || trimmed.starts_with("pub use ")
+            || trimmed.starts_with("pub(crate) use ")
+        {
             let mut combined = lines[i].to_string();
             if combined.contains('{') && !combined.contains('}') {
                 let start = i;
@@ -308,7 +311,11 @@ fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentVO)> 
             } else if !combined.ends_with(';') {
                 while i + 1 < lines.len() {
                     let next = lines[i + 1].trim();
-                    if next.starts_with("use ") || next.is_empty() {
+                    if next.starts_with("use ")
+                        || next.starts_with("pub use ")
+                        || next.starts_with("pub(crate) use ")
+                        || next.is_empty()
+                    {
                         break;
                     }
                     combined.push_str(&format!(" {}", next));

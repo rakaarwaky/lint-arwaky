@@ -1,6 +1,8 @@
 // PURPOSE: GitHooksAggregate — unified aggregate trait for git hooks orchestration
+use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::git_hooks::contract_diff_protocol::IDiffProtocol;
 use crate::git_hooks::contract_hook_protocol::IHookProtocol;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 #[async_trait]
@@ -14,15 +16,15 @@ pub trait GitHooksAggregate: Send + Sync {
     /// Run full git hooks check on a path
     async fn run_git_hooks_check(
         &self,
-        path: &crate::source_parsing::taxonomy_path_vo::FilePath,
-    ) -> crate::cli_commands::taxonomy_result_vo::LintResultList {
+        path: &FilePath,
+    ) -> LintResultList {
         self.diff_protocol().run_git_diff_check(path).await
     }
 
     /// Install pre-commit hook
     async fn install_hook(
         &self,
-        executable_path: &crate::source_parsing::taxonomy_path_vo::FilePath,
+        executable_path: &FilePath,
     ) -> Result<
         crate::mcp_server::taxonomy_job_vo::SuccessStatus,
         crate::git_hooks::taxonomy_hook_error::GitHookError,

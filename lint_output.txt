@@ -1,0 +1,81 @@
+============================================================
+  AES Architecture Compliance Report 
+============================================================
+  Project: .
+  Violations: 26
+
+  [AES102] ./crates/mcp-server/src/taxonomy_mcp_tool_args.rs - AES102 SUFFIX_MISMATCH: File in layer 'taxonomy' is missing a required strict suffix.
+WHY? Layer 'taxonomy' enforces a strict suffix policy, but the file uses suffix 'args'. Expected one of: vo, entity, error, event, constant, utility, helper. The suffix determines the file's architectural role — a missing or incorrect suffix breaks the layer-to-role mapping that automated checks depend on.
+FIX: Rename the file to include one of the allowed suffixes: vo, entity, error, event, constant, utility, helper.
+  [AES102] ./crates/mcp-server/src/agent_mcp_server.rs - AES102 SUFFIX_MISMATCH: File in layer 'agent' is missing a required strict suffix.
+WHY? Layer 'agent' enforces a strict suffix policy, but the file uses suffix 'server'. Expected one of: orchestrator. The suffix determines the file's architectural role — a missing or incorrect suffix breaks the layer-to-role mapping that automated checks depend on.
+FIX: Rename the file to include one of the allowed suffixes: orchestrator.
+  [AES102] ./crates/shared/src/source-parsing/taxonomy_file_collector.rs - AES102 SUFFIX_MISMATCH: File in layer 'taxonomy' is missing a required strict suffix.
+WHY? Layer 'taxonomy' enforces a strict suffix policy, but the file uses suffix 'collector'. Expected one of: vo, entity, error, event, constant, utility, helper. The suffix determines the file's architectural role — a missing or incorrect suffix breaks the layer-to-role mapping that automated checks depend on.
+FIX: Rename the file to include one of the allowed suffixes: vo, entity, error, event, constant, utility, helper.
+  [AES202] ./crates/code-analysis/src/agent_code_analysis_orchestrator.rs - AES202 MANDATORY_IMPORT: Layer 'agent' is missing required import 'contract(aggregate)'.
+WHY? Layer 'agent' must import 'contract(aggregate)' to wire all required dependencies.
+FIX: Add the required import statement for 'contract(aggregate)' in this file.
+  [AES202] ./crates/code-analysis/src/agent_code_analysis_orchestrator.rs - AES202 MANDATORY_IMPORT: Layer 'agent' is missing required import 'contract(aggregate)'.
+WHY? Layer 'agent' must import 'contract(aggregate)' to wire all required dependencies.
+FIX: Add the required import statement for 'contract(aggregate)' in this file.
+  [AES202] ./crates/code-analysis/src/agent_code_analysis_orchestrator.rs - AES202 MANDATORY_IMPORT: Layer 'agent' is missing required import 'contract(aggregate)'.
+WHY? Layer 'agent' must import 'contract(aggregate)' to wire all required dependencies.
+FIX: Add the required import statement for 'contract(aggregate)' in this file.
+  [AES201] ./crates/cli-commands/src/surface_git_command.rs - AES201 FORBIDDEN_IMPORT: Layer 'surfaces(command)' is importing from forbidden layer 'contract(protocol)'.
+WHY? Smart Surfaces act as user/CLI entry points and must never import agents, infrastructure, capabilities, or ports/protocols directly (must use ServiceContainerAggregate).
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] ./crates/cli-commands/src/surface_git_command.rs - AES201 FORBIDDEN_IMPORT: Layer 'surfaces(command)' is importing from forbidden layer 'contract(port)'.
+WHY? Smart Surfaces act as user/CLI entry points and must never import agents, infrastructure, capabilities, or ports/protocols directly (must use ServiceContainerAggregate).
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] ./crates/cli-commands/src/surface_check_command.rs - AES201 FORBIDDEN_IMPORT: Layer 'surfaces(command)' is importing from forbidden layer 'contract(protocol)'.
+WHY? Smart Surfaces act as user/CLI entry points and must never import agents, infrastructure, capabilities, or ports/protocols directly (must use ServiceContainerAggregate).
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [none].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [none].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [none].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [none].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] ./crates/source-parsing/src/infrastructure_parser_adapter.rs - AES201 FORBIDDEN_IMPORT: Layer 'infrastructure' is importing from forbidden layer 'infrastructure'.
+WHY? Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [clippy::empty_line_after_outer_attr] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/lib.rs - empty lines after outer attribute
+  [rustfmt::unformatted] ./crates/shared/src/git-hooks/contract_git_hooks_aggregate.rs - +    async fn run_git_hooks_check(&self, path: &FilePath) -> LintResultList {
+  [AES503] ./crates/file-watch/src/capabilities_change_analyzer.rs - AES503 CAPABILITIES_ORPHAN: 'capabilities_change_analyzer' is not wired.
+WHY? Not reachable from any entry point.
+FIX: Register 'capabilities_change_analyzer' in the appropriate root_*_container.rs, or ensure it is reachable from an entry point.
+  [AES502] ./crates/shared/src/code-analysis/contract_lint_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IArchLintProtocol' is orphaned.
+WHY? Contract protocol 'IArchLintProtocol' not implemented by any capabilities file.
+FIX: Implement 'IArchLintProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
+  [AES502] ./crates/shared/src/orphan-detector/contract_orphan_graph_resolver_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IOrphanGraphResolverProtocol' is orphaned.
+WHY? Contract port 'IOrphanGraphResolverProtocol' not implemented by any infrastructure file.
+FIX: Implement 'IOrphanGraphResolverProtocol' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
+

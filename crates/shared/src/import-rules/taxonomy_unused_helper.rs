@@ -7,8 +7,20 @@ static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[
 
 pub fn extract_imported_aliases(content: &str) -> HashMap<String, String> {
     let mut aliases = HashMap::new();
+    let mut in_cfg_test = false;
     for line in content.lines() {
         let trimmed = line.trim();
+
+        if trimmed.starts_with("#[cfg(test)]") {
+            in_cfg_test = true;
+            continue;
+        }
+        if in_cfg_test {
+            if trimmed == "}" || trimmed.starts_with("}") {
+                in_cfg_test = false;
+            }
+            continue;
+        }
 
         if trimmed.starts_with("from ") && trimmed.contains(" import ") {
             if let Some((from_part, import_part)) = trimmed.split_once(" import ") {

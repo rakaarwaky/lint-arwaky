@@ -4,7 +4,7 @@ use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use shared::orphan_detector::contract_orphan_graph_resolver_port::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 
 /// Build graph context and identify entry points for orphan analysis.
 pub struct OrphanGraphResolver {}

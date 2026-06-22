@@ -25,6 +25,7 @@ ignored_paths:
   - "/.jj"
   - "/test-workspaces"
   - "/Graph-It-Live"
+  - "/scripts"
 
 architecture:
   enabled: true

@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 
-use crate::taxonomy_mcp_tool_args::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
+use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 
 #[derive(Clone)]
 pub struct LintArwakyMcpServer {

@@ -1,9 +1,9 @@
-// PURPOSE: IArchLintProtocol — port trait for self-linting the linter's own codebase and formatting reports
+// PURPOSE: IArchLintAggregate — aggregate trait for self-linting the linter's own codebase and formatting reports
 
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
 
-pub trait IArchLintProtocol: Send + Sync {
+pub trait IArchLintAggregate: Send + Sync {
     fn run_self_lint(&self, project_root: &str) -> LintResultList;
     fn run_self_lint_dir(&self, src_dir: &str) -> LintResultList;
     fn run_lint(&self, path: &str) -> Vec<LintResult>;

@@ -32,7 +32,7 @@ use shared::role_rules::taxonomy_layer_names_constant::{
     LAYER_SURFACES, LAYER_TAXONOMY,
 };
 
-use shared::orphan_detector::contract_orphan_graph_resolver_port::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 
 pub struct ArchOrphanAnalyzer {
     resolver: Arc<dyn IOrphanGraphResolverProtocol>,
