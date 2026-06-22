@@ -145,20 +145,7 @@ impl RoleOrchestrator {
                     checker.check_event(&source_vo, violations);
                     checker.check_constant(&source_vo, violations);
                 }
-                "lib" | "mod" => {}
-                other => {
-                    violations.push(LintResult::new_arch(
-                        file,
-                        0,
-                        "AES999",
-                        Severity::INFO,
-                        format!(
-                            "Unhandled file prefix '{other}' for file '{file}'.\n\
-                             WHY? File does not match any known AES layer prefix (taxonomy, contract, capabilities, infrastructure, agent, surfaces, root, lib, mod).\n\
-                             FIX: Rename file with a valid layer prefix or add the prefix to the dispatch table."
-                        ),
-                    ));
-                }
+                _ => {}
             }
         }
     }

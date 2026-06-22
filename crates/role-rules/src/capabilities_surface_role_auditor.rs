@@ -96,7 +96,11 @@ impl SurfaceRoleChecker {
     pub fn check_fn_count_limit(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let content = source.content.value();
         let file = source.file_path.value();
-        if content.matches("fn ").count() > 15 {
+        let detector =
+            shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
+        let lang = detector.detect(&source.file_path);
+        let fn_keyword = if lang == DetLang::Python { "def " } else { "fn " };
+        if content.matches(fn_keyword).count() > 15 {
             violations.push(LintResult::new_arch(
                 file,
                 0,

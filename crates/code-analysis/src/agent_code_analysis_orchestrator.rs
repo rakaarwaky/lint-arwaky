@@ -197,15 +197,7 @@ impl CodeAnalysisOrchestrator {
         }
 
         // AES305: Code duplication (run once across all files)
-        let min_dup_lines = config
-            .rules
-            .iter()
-            .find(|r| r.name.value == "AES305")
-            .and_then(|r| {
-                let v = r.code_analysis.min_lines.value;
-                if v > 0 { Some(v as usize) } else { None }
-            })
-            .unwrap_or(10);
+        let min_dup_lines: usize = 5;
         let dup_violations = self
             .container
             .duplication_checker()

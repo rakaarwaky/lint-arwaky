@@ -110,7 +110,10 @@ impl TaxonomyRoleChecker {
             if !t.contains(':') {
                 continue;
             }
-            // Skip value object newtype wrappers: pub(crate) value: Primitive
+            // Skip class/struct definitions and value object newtype wrappers
+            if t.starts_with("class ") || t.starts_with("pub struct ") || t.starts_with("struct ") {
+                continue;
+            }
             if t.contains("pub(crate) value:") || t.trim_start().starts_with("pub value:") {
                 continue;
             }
@@ -124,6 +127,7 @@ impl TaxonomyRoleChecker {
                 || t.ends_with(';')
                 || t.ends_with('}')
                 || t.ends_with(')')
+                || t.ends_with(':')
                 || t.contains("-> "))
             {
                 continue;
