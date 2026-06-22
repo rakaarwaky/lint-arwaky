@@ -25,3 +25,10 @@ scratch/
 .vscode/
 .idea/
 *.swp
+
+# SonarQube / SonarCloud
+.scannerwork/
+sonar-project.properties
+sonar-reports/
+.sonar/
+*.sonar.json
