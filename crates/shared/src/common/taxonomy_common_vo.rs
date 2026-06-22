@@ -291,7 +291,7 @@ impl LineContentList {
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
 #[derive(Default)]
 pub struct LineNumber {
