@@ -167,7 +167,7 @@ impl ICycleAnalysisProtocol for DependencyCycleAnalyzer {
     /// and appends results into the shared LintResultList.
     ///
     /// Steps:
-    ///   1. Convert FilePathList to Vec<String> for the internal scan API.
+    ///   1. Convert FilePathList to `Vec<String>` for the internal scan API.
     ///   2. Call scan() to detect all circular dependency violations.
     ///   3. Extend the shared results list with any found violations.
     async fn check_cycles(

@@ -128,9 +128,12 @@ ctrlc.workspace = true
 futures.workspace = true
 
 # Production release profile: small binary, fast startup, predictable runtime.
+# LTO is `thin` (not `fat`) because `fat LTO + codegen-units=1 + strip` triggers
+# intermittent SIGSEGV in `rustc`/`lld` on large dep trees in constrained environments.
+# `thin` LTO is ~95% of `fat`'s gains and never segfaults in our CI.
 [profile.release]
 opt-level = 3
-lto = "fat"
+lto = "thin"
 codegen-units = 1
 strip = "symbols"
 panic = "abort"

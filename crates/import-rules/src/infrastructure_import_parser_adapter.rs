@@ -29,7 +29,7 @@ impl Default for ImportParserAdapter {
 
 impl IImportParserPort for ImportParserAdapter {
     /// Resolve a scope value (e.g. "contract(protocol)", "taxonomy(entity,error,event)")
-    /// into layer + suffix matches. Returns (LayerNameVO, Vec<Identity>).
+    /// into layer + suffix matches. Returns (`LayerNameVO`, `Vec<Identity>`).
     fn resolve_scope(&self, scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
         let scope_str = scope.value();
         if let Some(paren) = scope_str.find('(') {
