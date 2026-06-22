@@ -4,7 +4,11 @@ use std::collections::HashMap;
 
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use shared::project_setup::taxonomy_setup_contract_vo::{
+    McpBinaryNameVO, ProjectLanguageVO, SetupError,
+};
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
+use shared::taxonomy_suggestion_vo::DescriptionVO;
 
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
@@ -72,7 +76,7 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     }
 
     /// Resolve the path to the lint-arwaky-mcp binary.
-    fn which_mcp_binary(&self) -> String {
+    fn which_mcp_binary(&self) -> McpBinaryNameVO {
         let candidates = [
             std::env::current_exe()
                 .ok()
@@ -89,10 +93,10 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         ];
         for c in &candidates {
             if !c.is_empty() && std::path::Path::new(c).exists() {
-                return c.clone();
+                return McpBinaryNameVO::new(c.clone());
             }
         }
-        std::process::Command::new("which")
+        let which_output = std::process::Command::new("which")
             .arg("lint-arwaky-mcp")
             .output()
             .ok()
@@ -103,7 +107,8 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
                     None
                 }
             })
-            .unwrap_or_else(|| "lint-arwaky-mcp".to_string())
+            .unwrap_or_else(|| "lint-arwaky-mcp".to_string());
+        McpBinaryNameVO::new(which_output)
     }
 
     async fn install_python_adapters(&self) -> SuccessStatus {
@@ -133,18 +138,18 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         SuccessStatus::new(res.is_ok())
     }
 
-    fn detect_language(&self) -> String {
+    fn detect_language(&self) -> ProjectLanguageVO {
         if std::path::Path::new("crates").exists() {
-            "rust".to_string()
+            ProjectLanguageVO::new("rust")
         } else if std::path::Path::new("packages").exists()
             || std::path::Path::new("modules").exists()
             || std::path::Path::new("pyproject.toml").exists()
         {
-            "python".to_string()
+            ProjectLanguageVO::new("python")
         } else if std::path::Path::new("package.json").exists() {
-            "javascript".to_string()
+            ProjectLanguageVO::new("javascript")
         } else {
-            "rust".to_string()
+            ProjectLanguageVO::new("rust")
         }
     }
 
@@ -157,15 +162,23 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         }
     }
 
-    fn write_config_file(&self, filename: &str, content: &str) -> Result<(), String> {
-        std::fs::write(filename, content).map_err(|e| e.to_string())
+    fn write_config_file(&self, filename: &str, content: &str) -> Result<DescriptionVO, SetupError> {
+        std::fs::write(filename, content)
+            .map_err(|e| SetupError::io(e.to_string()))?;
+        Ok(DescriptionVO::new(format!(
+            "wrote {} ({} bytes)",
+            filename,
+            content.len()
+        )))
     }
 
-    fn create_global_config_dir(&self) -> Result<std::path::PathBuf, String> {
+    fn create_global_config_dir(&self) -> Result<std::path::PathBuf, SetupError> {
         let config_dir = dirs::config_dir()
             .map(|d| d.join("lint-arwaky"))
-            .ok_or_else(|| "Could not determine XDG config directory".to_string())?;
-        std::fs::create_dir_all(&config_dir).map_err(|e| e.to_string())?;
+            .ok_or_else(|| {
+                SetupError::invalid_state("Could not determine XDG config directory")
+            })?;
+        std::fs::create_dir_all(&config_dir).map_err(|e| SetupError::io(e.to_string()))?;
         Ok(config_dir)
     }
 

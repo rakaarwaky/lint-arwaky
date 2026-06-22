@@ -2,6 +2,7 @@
 use async_trait::async_trait;
 use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
 use shared::project_setup::taxonomy_language_vo::ProjectLanguage;
+use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
 
 pub struct SetupInstallerAdapter;
 
@@ -20,13 +21,16 @@ impl SetupInstallerAdapter {
 
 #[async_trait]
 impl ISetupInstallerPort for SetupInstallerAdapter {
-    async fn install_python_packages(&self, packages: &[String]) -> Result<(), String> {
+    async fn install_python_packages(
+        &self,
+        packages: &[String],
+    ) -> Result<(), SetupError> {
         let status = tokio::process::Command::new("pip")
             .args(["install", "--user"])
             .args(packages)
             .status()
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| SetupError::io(e.to_string()))?;
         if status.success() {
             return Ok(());
         }
@@ -40,14 +44,18 @@ impl ISetupInstallerPort for SetupInstallerAdapter {
 
         match status2 {
             Ok(s) if s.success() => Ok(()),
-            _ => Err(format!(
+            _ => Err(SetupError::other(format!(
                 "pip install exited with status {:?}",
                 status.code()
-            )),
+            ))),
         }
     }
 
-    async fn install_npm_packages(&self, packages: &[String], sudo: bool) -> Result<(), String> {
+    async fn install_npm_packages(
+        &self,
+        packages: &[String],
+        sudo: bool,
+    ) -> Result<(), SetupError> {
         let (cmd, args) = if sudo {
             ("sudo", vec!["npm", "install", "-g"])
         } else {
@@ -58,14 +66,14 @@ impl ISetupInstallerPort for SetupInstallerAdapter {
             .args(packages)
             .status()
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| SetupError::io(e.to_string()))?;
         if status.success() {
             Ok(())
         } else {
-            Err(format!(
+            Err(SetupError::other(format!(
                 "npm install exited with status {:?}",
                 status.code()
-            ))
+            )))
         }
     }
 }

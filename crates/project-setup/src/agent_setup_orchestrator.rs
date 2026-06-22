@@ -5,6 +5,7 @@ use shared::mcp_server::taxonomy_job_vo::EnvContentVO;
 use shared::mcp_server::taxonomy_job_vo::McpConfigVO;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 use std::collections::HashMap;
 
@@ -75,7 +76,7 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
         self.protocol.install_javascript_adapters(sudo).await
     }
 
-    fn detect_language(&self) -> String {
+    fn detect_language(&self) -> ProjectLanguageVO {
         self.protocol.detect_language()
     }
 
@@ -83,11 +84,11 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
         self.protocol.get_config_template(language)
     }
 
-    fn write_config_file(&self, filename: &str, content: &str) -> Result<(), String> {
+    fn write_config_file(&self, filename: &str, content: &str) -> shared::project_setup::WriteConfigResult {
         self.protocol.write_config_file(filename, content)
     }
 
-    fn create_global_config_dir(&self) -> Result<std::path::PathBuf, String> {
+    fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
         self.protocol.create_global_config_dir()
     }
 

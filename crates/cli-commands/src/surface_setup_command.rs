@@ -12,15 +12,17 @@ pub fn handle_init(
         return ExitCode::SUCCESS;
     }
     let language = setup_orchestrator.detect_language();
+    let language_str = language.value().to_string();
 
-    let target = format!("lint_arwaky.config.{}.yaml", language);
+    let target = format!("lint_arwaky.config.{}.yaml", language_str);
     if setup_orchestrator.file_exists(&target) {
         println!("Config already exists: {}", target);
     } else {
-        let content = setup_orchestrator.get_config_template(&language);
+        let content = setup_orchestrator.get_config_template(&language_str);
         match setup_orchestrator.write_config_file(&target, content) {
-            Ok(()) => {
-                println!("Config created: {} (language: {})", target, language);
+            Ok(desc) => {
+                println!("Config created: {} (language: {})", target, language_str);
+                println!("  {}", desc.value);
             }
             Err(e) => {
                 println!("Error creating config: {e}");
@@ -63,7 +65,7 @@ fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) {
             println!("  {filename} — already exists, skipping");
         } else {
             match setup_orchestrator.write_config_file(&target_str, content) {
-                Ok(()) => println!("  {filename} — created"),
+                Ok(_) => println!("  {filename} — created"),
                 Err(e) => println!("  {filename} — error: {e}"),
             }
         }
