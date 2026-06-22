@@ -41,11 +41,15 @@ impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
         let lang = detector.detect(&source.file_path);
         let is_rs = lang == shared::source_parsing::contract_language_detector_port::Language::Rust;
         let is_py = lang == shared::source_parsing::contract_language_detector_port::Language::Python;
+        let is_js = lang == shared::source_parsing::contract_language_detector_port::Language::JavaScript
+            || lang == shared::source_parsing::contract_language_detector_port::Language::TypeScript;
 
         if is_rs {
             self._check_rust(file, content, violations);
         } else if is_py {
             self._check_python(file, content, violations);
+        } else if is_js {
+            self._check_js(file, content, violations);
         }
     }
 }
@@ -81,6 +85,24 @@ impl InfrastructureRoleChecker {
         }
         let has_impl = content.contains("class ")
             && (content.contains("(_port") || content.contains("(_protocol"));
+        if !has_impl {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES404",
+                Severity::HIGH,
+                AesRoleViolation::InfrastructureNoPort { reason: None }.to_string(),
+            ));
+        }
+    }
+
+    fn _check_js(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let has_import = content.contains("import ")
+            && (content.contains("_port") || content.contains("_protocol"));
+        if !has_import {
+            return;
+        }
+        let has_impl = content.contains("implements");
         if !has_impl {
             violations.push(LintResult::new_arch(
                 file,

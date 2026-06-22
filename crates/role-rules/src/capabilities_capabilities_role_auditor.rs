@@ -45,11 +45,14 @@ impl CapabilitiesRoleChecker {
         let lang = detector.detect(&source.file_path);
         let is_rs = lang == DetLang::Rust;
         let is_py = lang == DetLang::Python;
+        let is_js = lang == DetLang::JavaScript || lang == DetLang::TypeScript;
 
         if is_rs {
             self._check_rust_routing(file, content, violations);
         } else if is_py {
             self._check_python_routing(file, content, violations);
+        } else if is_js {
+            self._check_js_routing(file, content, violations);
         }
     }
 
@@ -104,6 +107,59 @@ impl CapabilitiesRoleChecker {
                     Severity::MEDIUM,
                     AesRoleViolation::CapabilityRouting {
                         struct_name: SymbolName::new(*s),
+                        reason: None,
+                    },
+                ));
+            }
+        }
+    }
+
+    fn _check_js_routing(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let lines: Vec<&str> = content.lines().collect();
+        let mut classes: Vec<(&str, usize)> = Vec::new();
+        for (i, l) in lines.iter().enumerate() {
+            let t = l.trim();
+            if t.starts_with("class ") {
+                let name = t.split_whitespace().nth(1).unwrap_or("")
+                    .split('{').next().unwrap_or("")
+                    .split(':').next().unwrap_or("")
+                    .split_whitespace().next().unwrap_or("");
+                if !name.is_empty() && !name.starts_with('_') {
+                    classes.push((name, i));
+                }
+            }
+        }
+        if classes.len() > 3 {
+            return;
+        }
+        for (name, start_line) in &classes {
+            let mut has_method = false;
+            for i in (start_line + 1)..lines.len() {
+                let line = lines[i].trim();
+                if line.starts_with('}') || line.starts_with(';') {
+                    break;
+                }
+                if line.starts_with("function ") || line.starts_with("public ") || line.starts_with("private ")
+                    || line.starts_with("protected ") || line.starts_with("static ")
+                    || line.starts_with("get ") || line.starts_with("set ")
+                    || line.starts_with("async ") {
+                    has_method = true;
+                    break;
+                }
+            }
+            if !has_method {
+                violations.push(LintResult::new_arch(
+                    file,
+                    0,
+                    "AES403",
+                    Severity::MEDIUM,
+                    AesRoleViolation::CapabilityRouting {
+                        struct_name: SymbolName::new(*name),
                         reason: None,
                     },
                 ));

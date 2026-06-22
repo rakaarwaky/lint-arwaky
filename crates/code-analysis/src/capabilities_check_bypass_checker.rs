@@ -73,10 +73,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                 }
                 continue;
             }
-            // Skip comment lines and string literals (prevent false positives on algorithm docs and pattern defs)
-            if t.starts_with("//") || t.starts_with('#') || t.starts_with('"') {
-                continue;
-            }
+            // Check bypass patterns BEFORE skipping comment lines (JS/TS directives are comments)
             if t.starts_with("#[allow(") || t.starts_with("#[expect(") {
                 violations.push(LintResult::new_arch(
                     file,
@@ -87,6 +84,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                 ));
                 continue;
             }
+            let mut matched = false;
             for p in &patterns {
                 if t.to_lowercase().contains(p.as_str()) {
                     violations.push(LintResult::new_arch(
@@ -96,8 +94,14 @@ impl IBypassCheckerProtocol for BypassChecker {
                         Severity::CRITICAL,
                         AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
                     ));
+                    matched = true;
                     break;
                 }
+            }
+            if matched { continue; }
+            // Skip comment lines and string literals (prevent false positives on algorithm docs and pattern defs)
+            if t.starts_with("//") || t.starts_with('#') || t.starts_with('"') {
+                continue;
             }
             if t.contains(&unwrap_pat) || t.contains(&expect_pat) {
                 violations.push(LintResult::new_arch(
