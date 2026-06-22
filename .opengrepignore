@@ -1,0 +1,2 @@
+# Exclude test-workspaces containing intentional security violations from Deva Security / OpenGrep scans
+test-workspaces/

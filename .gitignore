@@ -25,3 +25,5 @@ scratch/
 output/
 .jj
 target/
+.dsc_cache/
+.node_modules/

@@ -446,11 +446,7 @@ mod tests {
     fn detects_unwrap_or_default() {
         let checker = BypassChecker::new();
         let mut v = empty_violations();
-        checker.check_bypass_comments(
-            "f.rs",
-            "let x = fs::read(p).unwrap_or_default();\n",
-            &mut v,
-        );
+        checker.check_bypass_comments("f.rs", "let x = fs::read(p).unwrap_or_default();\n", &mut v);
         assert_eq!(
             count_code(&v, "AES304"),
             1,
@@ -614,12 +610,12 @@ mod tests {
     fn detects_python_assert_false() {
         let checker = BypassChecker::new();
         let mut v = empty_violations();
-        checker.check_bypass_comments("f.py", "def foo():\n    assert False, \"unreachable\"\n", &mut v);
-        assert_eq!(
-            count_code(&v, "AES304"),
-            1,
-            "Python assert False must fire"
+        checker.check_bypass_comments(
+            "f.py",
+            "def foo():\n    assert False, \"unreachable\"\n",
+            &mut v,
         );
+        assert_eq!(count_code(&v, "AES304"), 1, "Python assert False must fire");
     }
 
     #[test]
@@ -628,11 +624,7 @@ mod tests {
         // pattern must not fire even if the line contains the substring.
         let checker = BypassChecker::new();
         let mut v = empty_violations();
-        checker.check_bypass_comments(
-            "f.rs",
-            "// raise NotImplementedError here\n",
-            &mut v,
-        );
+        checker.check_bypass_comments("f.rs", "// raise NotImplementedError here\n", &mut v);
         // Line starts with `//` (comment) → bypass comment pattern fires instead.
         // The point is the phrase pattern must NOT fire on Rust files.
         let phrase_hits = v
@@ -665,7 +657,9 @@ mod tests {
         // from phrase pattern. Good — operator raises ValueError to bubble errors.
         let phrase_hits = v
             .iter()
-            .filter(|r| r.message.value.contains("unimplemented") || r.message.value.contains("panic"))
+            .filter(|r| {
+                r.message.value.contains("unimplemented") || r.message.value.contains("panic")
+            })
             .count();
         assert_eq!(phrase_hits, 0);
     }
@@ -681,11 +675,7 @@ mod tests {
             "function foo() {\n    throw new Error(\"oops\");\n}\n",
             &mut v,
         );
-        assert_eq!(
-            count_code(&v, "AES304"),
-            1,
-            "JS throw new Error must fire"
-        );
+        assert_eq!(count_code(&v, "AES304"), 1, "JS throw new Error must fire");
     }
 
     #[test]
@@ -728,11 +718,7 @@ mod tests {
     fn detects_eslint_disable_js() {
         let checker = BypassChecker::new();
         let mut v = empty_violations();
-        checker.check_bypass_comments(
-            "f.js",
-            "// eslint-disable-next-line\nvar x = 1;\n",
-            &mut v,
-        );
+        checker.check_bypass_comments("f.js", "// eslint-disable-next-line\nvar x = 1;\n", &mut v);
         assert_eq!(count_code(&v, "AES304"), 1);
     }
 
@@ -746,11 +732,7 @@ mod tests {
         // must NOT fire on Jest matchers.
         let checker = BypassChecker::new();
         let mut v = empty_violations();
-        checker.check_bypass_comments(
-            "f.js",
-            "expect(value).toBe(5);\n",
-            &mut v,
-        );
+        checker.check_bypass_comments("f.js", "expect(value).toBe(5);\n", &mut v);
         assert_eq!(
             count_code(&v, "AES304"),
             0,
@@ -783,11 +765,7 @@ mod tests {
         // `throw new Error` is the only phrase pattern that should fire.
         let checker = BypassChecker::new();
         let mut v = empty_violations();
-        checker.check_bypass_comments(
-            "f.js",
-            "function reraise() {\n    throw err;\n}\n",
-            &mut v,
-        );
+        checker.check_bypass_comments("f.js", "function reraise() {\n    throw err;\n}\n", &mut v);
         assert_eq!(count_code(&v, "AES304"), 0);
     }
 
@@ -797,11 +775,7 @@ mod tests {
         // must not fire on .py files even if the line happens to mention "throw".
         let checker = BypassChecker::new();
         let mut v = empty_violations();
-        checker.check_bypass_comments(
-            "f.py",
-            "# thrown away\nthrow_new_error = None\n",
-            &mut v,
-        );
+        checker.check_bypass_comments("f.py", "# thrown away\nthrow_new_error = None\n", &mut v);
         assert_eq!(
             count_code(&v, "AES304"),
             0,
