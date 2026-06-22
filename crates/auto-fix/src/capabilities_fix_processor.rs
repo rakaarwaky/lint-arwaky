@@ -7,7 +7,9 @@ use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::Count;
+use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_error_vo::ErrorCode;
+use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 use std::sync::Arc;
 
@@ -208,7 +210,11 @@ impl IFixProtocol for LintFixProcessor {
                 naming_violations.len(),
                 bypass_violations.len(),
                 unused_import_violations.len(),
-                manual_steps.join("\n")
+                manual_steps
+                    .iter()
+                    .map(|m| m.to_string())
+                    .collect::<Vec<_>>()
+                    .join("\n")
             )
         } else if fixed_count > 0 {
             let after_results = self.linter.run_self_lint(&path.value).values;
@@ -217,12 +223,20 @@ impl IFixProtocol for LintFixProcessor {
                 "Fixed {} violations automatically ({} remaining)\nManual violations requiring attention:\n{}",
                 fixed_count,
                 remaining,
-                manual_steps.join("\n")
+                manual_steps
+                    .iter()
+                    .map(|m| m.to_string())
+                    .collect::<Vec<_>>()
+                    .join("\n")
             )
         } else {
             format!(
                 "No automatic fixes applied\nManual violations requiring attention:\n{}",
-                manual_steps.join("\n")
+                manual_steps
+                    .iter()
+                    .map(|m| m.to_string())
+                    .collect::<Vec<_>>()
+                    .join("\n")
             )
         };
 
@@ -232,28 +246,37 @@ impl IFixProtocol for LintFixProcessor {
         }
     }
 
-    fn fix_bypass_comments(&self, file_path: &str, line: u32) -> bool {
-        self.fix_bypass_comments_impl(file_path, line)
+    fn fix_bypass_comments(&self, file_path: &str, line: LineNumber) -> bool {
+        self.fix_bypass_comments_impl(file_path, line.value as u32)
     }
 
-    fn fix_unused_import(&self, file_path: &str, line: u32) -> bool {
-        self.fix_unused_import_impl(file_path, line)
+    fn fix_unused_import(&self, file_path: &str, line: LineNumber) -> bool {
+        self.fix_unused_import_impl(file_path, line.value as u32)
     }
 
-    fn emit_fix_event(&self, path: &FilePath, error_code: &str, changes: usize) {
-        self.emit_fix_event_impl(path, error_code, changes)
+    fn emit_fix_event(
+        &self,
+        path: &FilePath,
+        error_code: ErrorCode,
+        changes: Count,
+    ) {
+        self.emit_fix_event_impl(path, error_code.code(), changes.value as usize)
     }
 
-    fn report_non_fixable(&self, violations: &[LintResult]) -> Vec<String> {
-        let fixable_codes = ["AES101", "AES304", "AES203"];
-        let mut manual: Vec<String> = Vec::new();
+    fn report_non_fixable(&self, violations: &[LintResult]) -> Vec<LintMessage> {
+        let fixable_codes = [
+            ErrorCode::raw("AES101"),
+            ErrorCode::raw("AES304"),
+            ErrorCode::raw("AES203"),
+        ];
+        let mut manual: Vec<LintMessage> = Vec::new();
         for r in violations {
             let code_str = r.code.to_string();
-            if !fixable_codes.iter().any(|c| code_str.contains(c)) {
-                manual.push(format!(
+            if !fixable_codes.iter().any(|c| code_str.contains(c.code())) {
+                manual.push(LintMessage::new(format!(
                     "  {} | {} | {}:{}",
                     code_str, r.message, r.file, r.line
-                ));
+                )));
             }
         }
         manual
@@ -262,11 +285,15 @@ impl IFixProtocol for LintFixProcessor {
     fn is_fixable(&self, violation: &LintResult) -> bool {
         let fixable_codes = self.fixable_codes();
         let code_str = violation.code.to_string();
-        fixable_codes.iter().any(|c| code_str.contains(c))
+        fixable_codes.iter().any(|c| code_str.contains(c.code()))
     }
 
-    fn fixable_codes(&self) -> &[&str] {
-        &["AES101", "AES304", "AES203"]
+    fn fixable_codes(&self) -> &[ErrorCode] {
+        Box::leak(Box::new([
+            ErrorCode::raw("AES101"),
+            ErrorCode::raw("AES304"),
+            ErrorCode::raw("AES203"),
+        ]))
     }
 }
 

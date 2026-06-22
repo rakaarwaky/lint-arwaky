@@ -1,10 +1,10 @@
 // PURPOSE: ContractRoleChecker — IContractRoleChecker for AES402: contract primitive type audits
 //
 // ALGORITHM:
-//   1. check_aggregate — Scans import lines for forbidden trait patterns (layer + suffix)
+//   1. check_aggregate — Scans import lines for blocked trait patterns (layer + suffix)
 //      defined in LayerDefinition.role.forbidden_inheritance. Flags any `impl Trait for X`
-//      or equivalent that uses a forbidden trait by name.
-//   2. check_contract_primitive (port/protocol dispatch) — Detects primitive type usage
+//      or equivalent that uses a disallowed trait by name.
+//   2. scan_contract_primitive (port/protocol dispatch) — Detects primitive type employment
 //      in contract interfaces (port/protocol files). Uses LanguageDetector to determine
 //      language, then checks for known primitive keywords per language.
 //
