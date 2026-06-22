@@ -39,6 +39,7 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
     let mut reported: HashSet<String> = HashSet::new();
 
     let nodes: Vec<String> = graph.keys().cloned().collect();
+
     for node in &nodes {
         let mut local_visited: HashSet<String> = HashSet::new();
         let mut path_stack: Vec<String> = Vec::new();
@@ -50,6 +51,7 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
             &mut path_stack,
             &mut cycles,
         );
+
         for cycle in cycles {
             let mut sorted_cycle = cycle.clone();
             sorted_cycle.sort();

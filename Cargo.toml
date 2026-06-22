@@ -51,7 +51,7 @@ futures = "0.3"
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "1.10.32"
+version = "1.10.33"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
 license = "MIT"

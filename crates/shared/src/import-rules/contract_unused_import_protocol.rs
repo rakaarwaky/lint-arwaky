@@ -16,10 +16,5 @@ pub trait IUnusedImportProtocol: Send + Sync {
 
     /// Check unused imports given file content directly (for inline checking).
     /// Useful when content is already available (avoids re-reading file).
-    fn check_unused_imports(
-        &self,
-        file: &str,
-        content: &str,
-        violations: &mut Vec<LintResult>,
-    );
+    fn check_unused_imports(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
 }

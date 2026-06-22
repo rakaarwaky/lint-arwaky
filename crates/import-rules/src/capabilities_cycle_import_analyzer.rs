@@ -104,10 +104,8 @@ impl DependencyCycleAnalyzer {
             file_by_layer
                 .entry(file_layer.clone())
                 .or_insert_with(|| file.clone());
-
             // Step 3e: Parse every import statement in the file
             let modules = self.parser.extract_import_modules(&content);
-
             // Step 3f: For each import, resolve its target layer (strip scoped suffix)
             for module in modules {
                 let module_fp = FilePath::new(module.clone()).unwrap_or_default();
