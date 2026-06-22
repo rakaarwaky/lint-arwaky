@@ -1,7 +1,9 @@
 // PURPOSE: LintArwakyMcpServer — MCP server using rmcp official SDK
 use rmcp::handler::server::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{Implementation, ProtocolVersion, ServerCapabilities, ServerInfo, ToolsCapability};
+use rmcp::model::{
+    Implementation, ProtocolVersion, ServerCapabilities, ServerInfo, ToolsCapability,
+};
 use rmcp::{tool, tool_handler, tool_router, ServerHandler};
 use std::sync::Arc;
 
@@ -80,7 +82,9 @@ impl LintArwakyMcpServer {
                 let join_result = tokio::task::spawn_blocking(move || {
                     let results = linter_for_blocking.run_lint(&path_for_blocking);
                     let report = linter_for_blocking.format_report(
-                        &shared::cli_commands::taxonomy_result_vo::LintResultList::new(results.clone()),
+                        &shared::cli_commands::taxonomy_result_vo::LintResultList::new(
+                            results.clone(),
+                        ),
                         &path_for_blocking,
                     );
                     serde_json::json!({
@@ -189,16 +193,16 @@ impl LintArwakyMcpServer {
         serde_json::to_string_pretty(&result).unwrap_or_default()
     }
 
-    #[tool(description = "List all available CLI commands with descriptions and examples. Optional `domain` filter (e.g. \"setup\", \"check\").")]
+    #[tool(
+        description = "List all available CLI commands with descriptions and examples. Optional `domain` filter (e.g. \"setup\", \"check\")."
+    )]
     async fn list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {
         let catalog = shared::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
         let commands: Vec<serde_json::Value> = catalog
             .iter()
-            .filter(|(name, _desc, _ex)| {
-                match args.domain.as_deref() {
-                    Some(d) if !d.is_empty() => name.contains(d),
-                    _ => true,
-                }
+            .filter(|(name, _desc, _ex)| match args.domain.as_deref() {
+                Some(d) if !d.is_empty() => name.contains(d),
+                _ => true,
             })
             .map(|(name, desc, example)| {
                 serde_json::json!({
@@ -212,7 +216,9 @@ impl LintArwakyMcpServer {
         serde_json::to_string_pretty(&result).unwrap_or_default()
     }
 
-    #[tool(description = "Read SKILL.md documentation by section. Searches several candidate locations.")]
+    #[tool(
+        description = "Read SKILL.md documentation by section. Searches several candidate locations."
+    )]
     async fn read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {
         let candidates = [
             env!("CARGO_MANIFEST_DIR").to_string() + "/../SKILL.md",
@@ -231,7 +237,8 @@ impl LintArwakyMcpServer {
                 return serde_json::json!({
                     "error": "SKILL.md not found",
                     "searched": candidates
-                }).to_string();
+                })
+                .to_string();
             }
         };
         match args.section.as_deref() {
@@ -245,8 +252,7 @@ impl LintArwakyMcpServer {
                         .unwrap_or(remaining.len());
                     serde_json::json!({"section": s, "content": &remaining[..end]}).to_string()
                 } else {
-                    serde_json::json!({"error": format!("Section '{}' not found", s)})
-                        .to_string()
+                    serde_json::json!({"error": format!("Section '{}' not found", s)}).to_string()
                 }
             }
             _ => serde_json::json!({"content": content}).to_string(),

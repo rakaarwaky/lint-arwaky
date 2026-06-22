@@ -222,104 +222,6 @@ fn regex_lite_match_whole_token(haystack: &str, needle: &str) -> bool {
     false
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn extracts_single_line_method_signatures() {
-        let src = "\
-pub trait IFoo {
-    fn a(&self) -> bool;
-    fn b(&self, x: &str) -> usize;
-    fn c(&self) -> Result<String, ErrorCode>;
-}
-";
-        let sigs = extract_trait_method_signatures(src);
-        assert_eq!(sigs.len(), 3);
-        assert!(sigs[0].1.contains("fn a"));
-        assert!(sigs[1].1.contains("fn b"));
-        assert!(sigs[2].1.contains("fn c"));
-    }
-
-    #[test]
-    fn ignores_free_functions_and_impls() {
-        let src = "\
-fn helper() -> String { ... }
-impl Foo {
-    pub fn method(&self) -> String { ... }
-}
-pub trait IFoo {
-    fn only(&self) -> usize;
-}
-";
-        let sigs = extract_trait_method_signatures(src);
-        assert_eq!(sigs.len(), 1);
-        assert!(sigs[0].1.contains("fn only"));
-    }
-
-    #[test]
-    fn detects_string_param() {
-        assert_eq!(
-            signature_uses_forbidden_primitive("fn f(&self, msg: String);"),
-            vec!["String"],
-        );
-    }
-
-    #[test]
-    fn detects_result_string() {
-        let v = signature_uses_forbidden_primitive(
-            "fn f(&self, p: &Path) -> Result<String, ErrorCode>;",
-        );
-        assert!(v.contains(&"String"));
-        assert!(v.contains(&"Result<String, _>"));
-    }
-
-    #[test]
-    fn detects_result_borrowed_str() {
-        let v =
-            signature_uses_forbidden_primitive("fn f(&self, p: &Path) -> Result<&str, ErrorCode>;");
-        assert!(v.contains(&"Result<&str, _>"));
-    }
-
-    #[test]
-    fn detects_numeric_primitives() {
-        assert!(signature_uses_forbidden_primitive("fn f(&self, n: i32) -> i64;").contains(&"i32"));
-        assert!(
-            signature_uses_forbidden_primitive("fn f(&self, n: usize) -> bool;").contains(&"usize")
-        );
-        assert!(signature_uses_forbidden_primitive("fn f(&self) -> f64;").contains(&"f64"));
-    }
-
-    #[test]
-    fn allows_borrowed_str() {
-        assert!(signature_uses_forbidden_primitive(
-            "fn f(&self, file: &str, content: &str) -> bool;"
-        )
-        .is_empty());
-    }
-
-    #[test]
-    fn allows_bool() {
-        assert!(signature_uses_forbidden_primitive("fn f(&self) -> bool;").is_empty());
-        assert!(signature_uses_forbidden_primitive("fn f(&self, flag: bool) -> bool;").is_empty());
-    }
-
-    #[test]
-    fn does_not_match_substring_of_identifier() {
-        // `StringBuilder` (an identifier) must NOT trigger String.
-        assert!(signature_uses_forbidden_primitive("fn f(&self, s: StringBuilder);").is_empty());
-        // `MyFloat` must NOT trigger float.
-        assert!(signature_uses_forbidden_primitive("fn f(&self, x: MyFloat);").is_empty());
-    }
-
-    #[test]
-    fn empty_signature_is_clean() {
-        assert!(signature_uses_forbidden_primitive("").is_empty());
-        assert!(signature_uses_forbidden_primitive("   ").is_empty());
-    }
-}
-
 impl ContractRoleChecker {
     pub fn new() -> Self {
         Self {}
@@ -465,7 +367,7 @@ impl ContractRoleChecker {
         // primitive types can appear in cross-language adapter contracts.
         let _ = is_py;
         let _ = is_js;
-        for (line_no, sig) in extract_trait_method_signatures(&content) {
+        for (line_no, sig) in extract_trait_method_signatures(content) {
             let forbidden = signature_uses_forbidden_primitive(&sig);
             if forbidden.is_empty() {
                 continue;
@@ -534,5 +436,103 @@ impl IContractRoleChecker for ContractRoleChecker {
         violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
     ) {
         self.check_aggregate(source, def, violations);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extracts_single_line_method_signatures() {
+        let src = "\
+pub trait IFoo {
+    fn a(&self) -> bool;
+    fn b(&self, x: &str) -> usize;
+    fn c(&self) -> Result<String, ErrorCode>;
+}
+";
+        let sigs = extract_trait_method_signatures(src);
+        assert_eq!(sigs.len(), 3);
+        assert!(sigs[0].1.contains("fn a"));
+        assert!(sigs[1].1.contains("fn b"));
+        assert!(sigs[2].1.contains("fn c"));
+    }
+
+    #[test]
+    fn ignores_free_functions_and_impls() {
+        let src = "\
+fn helper() -> String { ... }
+impl Foo {
+    pub fn method(&self) -> String { ... }
+}
+pub trait IFoo {
+    fn only(&self) -> usize;
+}
+";
+        let sigs = extract_trait_method_signatures(src);
+        assert_eq!(sigs.len(), 1);
+        assert!(sigs[0].1.contains("fn only"));
+    }
+
+    #[test]
+    fn detects_string_param() {
+        assert_eq!(
+            signature_uses_forbidden_primitive("fn f(&self, msg: String);"),
+            vec!["String"],
+        );
+    }
+
+    #[test]
+    fn detects_result_string() {
+        let v = signature_uses_forbidden_primitive(
+            "fn f(&self, p: &Path) -> Result<String, ErrorCode>;",
+        );
+        assert!(v.contains(&"String"));
+        assert!(v.contains(&"Result<String, _>"));
+    }
+
+    #[test]
+    fn detects_result_borrowed_str() {
+        let v =
+            signature_uses_forbidden_primitive("fn f(&self, p: &Path) -> Result<&str, ErrorCode>;");
+        assert!(v.contains(&"Result<&str, _>"));
+    }
+
+    #[test]
+    fn detects_numeric_primitives() {
+        assert!(signature_uses_forbidden_primitive("fn f(&self, n: i32) -> i64;").contains(&"i32"));
+        assert!(
+            signature_uses_forbidden_primitive("fn f(&self, n: usize) -> bool;").contains(&"usize")
+        );
+        assert!(signature_uses_forbidden_primitive("fn f(&self) -> f64;").contains(&"f64"));
+    }
+
+    #[test]
+    fn allows_borrowed_str() {
+        assert!(signature_uses_forbidden_primitive(
+            "fn f(&self, file: &str, content: &str) -> bool;"
+        )
+        .is_empty());
+    }
+
+    #[test]
+    fn allows_bool() {
+        assert!(signature_uses_forbidden_primitive("fn f(&self) -> bool;").is_empty());
+        assert!(signature_uses_forbidden_primitive("fn f(&self, flag: bool) -> bool;").is_empty());
+    }
+
+    #[test]
+    fn does_not_match_substring_of_identifier() {
+        // `StringBuilder` (an identifier) must NOT trigger String.
+        assert!(signature_uses_forbidden_primitive("fn f(&self, s: StringBuilder);").is_empty());
+        // `MyFloat` must NOT trigger float.
+        assert!(signature_uses_forbidden_primitive("fn f(&self, x: MyFloat);").is_empty());
+    }
+
+    #[test]
+    fn empty_signature_is_clean() {
+        assert!(signature_uses_forbidden_primitive("").is_empty());
+        assert!(signature_uses_forbidden_primitive("   ").is_empty());
     }
 }

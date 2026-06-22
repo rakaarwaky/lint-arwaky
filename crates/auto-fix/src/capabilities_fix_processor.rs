@@ -254,12 +254,7 @@ impl IFixProtocol for LintFixProcessor {
         self.fix_unused_import_impl(file_path, line.value as u32)
     }
 
-    fn emit_fix_event(
-        &self,
-        path: &FilePath,
-        error_code: ErrorCode,
-        changes: Count,
-    ) {
+    fn emit_fix_event(&self, path: &FilePath, error_code: ErrorCode, changes: Count) {
         self.emit_fix_event_impl(path, error_code.code(), changes.value as usize)
     }
 

@@ -68,12 +68,17 @@ impl ArchOrphanAnalyzer {
 
 impl IOrphanAggregate for ArchOrphanAnalyzer {
     fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
-        self.resolver.build_graph_context(files, root_dir)
+        // Bridge the raw &[String] parameter from IOrphanAggregate into the
+        // VO-typed contract surface of IOrphanGraphResolverProtocol.
+        let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
+        self.resolver.build_graph_context(&[file_vo], root_dir)
     }
 
     fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String> {
+        let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
         self.resolver
-            .identify_entry_points(files, &[])
+            .identify_entry_points(&[file_vo], &[])
+            .values
             .into_iter()
             .collect()
     }
@@ -88,14 +93,20 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let mut results: Vec<LintResult> = Vec::new();
         let _root_fp = FilePath::new(root_dir).unwrap_or_default();
 
-        // Build comprehensive context
-        let context: GraphAnalysisContext = self.resolver.build_graph_context(files, root_dir);
+        // Build comprehensive context — bridge &[String] -> &[OrphanFileListVO].
+        let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
+        let context: GraphAnalysisContext = self
+            .resolver
+            .build_graph_context(std::slice::from_ref(&file_vo), root_dir);
 
         // Trace reachability
         let configured = layer_detector.get_orphan_entry_points();
-        let entry_points = self.resolver.identify_entry_points(files, &configured);
+        let configured_vo = shared::orphan_detector::OrphanEntryPatternListVO::new(configured);
+        let entry_points = self
+            .resolver
+            .identify_entry_points(&[file_vo], &[configured_vo]);
         let alive_files_set: Vec<String> =
-            self._trace_reachability(&entry_points, &context.import_graph);
+            self._trace_reachability(&entry_points.values, &context.import_graph);
 
         // Evaluate each file
         for f in files {

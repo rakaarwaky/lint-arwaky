@@ -5,6 +5,9 @@ use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::taxonomy_orphan_contract_vo::{
+    OrphanEntryPatternListVO, OrphanFileListVO,
+};
 
 /// Build graph context and identify entry points for orphan analysis.
 pub struct OrphanGraphResolver {}
@@ -16,23 +19,47 @@ impl Default for OrphanGraphResolver {
 }
 
 impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
-    fn build_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
-        self.build_graph_context_inner(files, root_dir)
+    fn build_graph_context(
+        &self,
+        files: &[OrphanFileListVO],
+        root_dir: &str,
+    ) -> GraphAnalysisContext {
+        // Bridge the contract-level VO collection to the internal helper
+        // which still uses raw `&[String]` for backward compatibility with
+        // the rest of the orphan-detector graph builder.
+        let raw_paths: Vec<String> = files
+            .iter()
+            .flat_map(|v| v.values.iter().cloned())
+            .collect();
+        self.build_graph_context_inner(&raw_paths, root_dir)
     }
 
-    fn identify_entry_points(&self, files: &[String], configured: &[String]) -> Vec<String> {
-        if configured.is_empty() {
-            return Vec::new();
+    fn identify_entry_points(
+        &self,
+        files: &[OrphanFileListVO],
+        configured: &[OrphanEntryPatternListVO],
+    ) -> OrphanFileListVO {
+        if configured.is_empty() || configured.iter().all(|p| p.values.is_empty()) {
+            return OrphanFileListVO::new(Vec::new());
         }
-        files
+        let file_strs: Vec<String> = files
+            .iter()
+            .flat_map(|v| v.values.iter().cloned())
+            .collect();
+        let configured_strs: Vec<String> = configured
+            .iter()
+            .flat_map(|p| p.values.iter().cloned())
+            .collect();
+        let matched: Vec<String> = file_strs
             .iter()
             .filter(|f| {
-                configured
+                configured_strs
                     .iter()
                     .any(|pattern| f.ends_with(pattern) || f.contains(pattern))
             })
             .cloned()
-            .collect()
+            .collect();
+        OrphanFileListVO::new(matched)
     }
 }
 
