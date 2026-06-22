@@ -34,6 +34,85 @@ impl Default for CodeDuplicationAnalyzer {
     }
 }
 
+impl CodeDuplicationAnalyzer {
+    pub fn check_duplicates(&self, files: &[String], min_dup_lines: usize) -> Vec<AesCodeAnalysisViolation> {
+        let mut blocks: HashMap<String, Vec<(PathBuf, usize)>> = HashMap::new();
+        let detector = LanguageDetector::new();
+        let mut total_loc: usize = 0;
+
+        for file_str in files {
+            let fp = match FilePath::new(file_str.clone()) {
+                Ok(f) => f,
+                Err(_) => continue,
+            };
+            if !detector.is_lintable(&fp) {
+                continue;
+            }
+            let p = PathBuf::from(&fp.value);
+            let content = match std::fs::read_to_string(&fp.value) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
+            total_loc += content.lines().count();
+            let lines: Vec<&str> = content.lines().collect();
+            if lines.len() < min_dup_lines {
+                continue;
+            }
+            for w in lines.windows(min_dup_lines) {
+                let key: String = w
+                    .iter()
+                    .map(|s| {
+                        s.trim()
+                            .chars()
+                            .filter(|c| c.is_alphanumeric() || c.is_whitespace())
+                            .collect::<String>()
+                    })
+                    .collect::<Vec<_>>()
+                    .join("|");
+                let start_line = w.as_ptr() as usize - lines.as_ptr() as usize;
+                blocks.entry(key).or_default().push((p.clone(), start_line));
+            }
+        }
+
+        let duplicates: Vec<_> = blocks.into_iter().filter(|(_, v)| v.len() > 1).collect();
+
+        let mut violations = Vec::new();
+        for (_, locations) in &duplicates {
+            let msg = format!(
+                "Duplicate block found across {} files (similarity ~{}%). Locations: {}",
+                locations.len(),
+                100usize.saturating_sub(locations.len().saturating_sub(1) * 5).min(100),
+                locations
+                    .iter()
+                    .take(3)
+                    .map(|(p, l)| format!("{}:{}", p.display(), l + 1))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+            );
+            violations.push(AesCodeAnalysisViolation::CodeDuplication {
+                reason: Some(LintMessage::new(msg)),
+            });
+        }
+
+        if !duplicates.is_empty() {
+            let total_dup_lines = duplicates.len() * min_dup_lines;
+            let pct = if total_loc > 0 {
+                total_dup_lines as f64 / total_loc as f64 * 100.0
+            } else {
+                0.0
+            };
+            violations.push(AesCodeAnalysisViolation::CodeDuplication {
+                reason: Some(LintMessage::new(format!(
+                    "Summary: {} duplicate blocks ({} lines) out of {} total LOC ({:.1}%)",
+                    duplicates.len(), total_dup_lines, total_loc, pct,
+                ))),
+            });
+        }
+
+        violations
+    }
+}
+
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates(
         &self,

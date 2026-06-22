@@ -44,7 +44,10 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 | ----------------------------- | ----------------------- | ------------- |
 | Total discovered workspace members | 23 workspace members | < 23          |
 | Total violations (scan)       | >= 2000 violations      | < 2000 atau 0 |
-| Unique AES codes per category | >= 24 unique codes each | < 24          |
+| Unique AES codes (Rust)       | >= 24 unique AES codes  | < 24          |
+| Unique AES codes (Python)     | >= 24 unique AES codes  | < 24          |
+| Unique AES codes (JS/TS)      | >= 24 unique AES codes  | < 24          |
+| Total unique AES codes (all)  | >= 24 unique AES codes  | < 24          |
 
 ## 4. Violations yang Diharapkan
 
@@ -81,6 +84,20 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 | MyPy   | Type annotation violations  |
 | Bandit | Security violations         |
 
+| AES Code | Type                |
+| -------- | ------------------- |
+| AES102   | Suffix convention   |
+| AES201   | Forbidden import    |
+| AES202   | Mandatory import    |
+| AES203   | Unused import       |
+| AES204   | Dummy import        |
+| AES303   | Bypass suppression  |
+| AES304   | Missing def         |
+| AES405   | Role violation      |
+| AES501   | Orphan taxonomy     |
+| AES503   | Orphan capabilities |
+| AES506   | Orphan surface      |
+
 ### 4.3 JavaScript (Multi-Adapter — requires eslint, prettier, tsc installed)
 
 | Tool     | Expected Issues          |
@@ -88,6 +105,16 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 | ESLint   | Code quality violations  |
 | Prettier | Formatting violations    |
 | TSC      | Type checking violations |
+
+| AES Code | Type                |
+| -------- | ------------------- |
+| AES102   | Suffix convention   |
+| AES201   | Forbidden import    |
+| AES202   | Mandatory import    |
+| AES203   | Unused import       |
+| AES204   | Dummy import        |
+| AES303   | Bypass suppression  |
+| AES405   | Role violation      |
 
 ## 5. Baseline
 
@@ -97,17 +124,55 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/
 
 **Baseline v1.10.29** (22 Juni 2026):
 
-| Project                 | Command                   | Total Violations | Unique AES Codes | Status  |
-| ----------------------- | ------------------------- | ---------------- | ---------------- | ------- |
-| Self-lint (lint-arwaky) | `check .`               | 0                | 0                | ✅ PASS |
-| Multi-workspace scan    | `scan test-workspaces/` | 2081             | 26               | ✅ PASS |
-| **Combined**      |                           | **2081**   | **26**     | ✅ PASS |
+| Project                   | Command                     | Total Violations | Unique AES Codes | Status  |
+| ------------------------- | --------------------------- | ---------------- | ---------------- | ------- |
+| Self-lint (lint-arwaky)   | `check .`                   | 0                | 0                | ✅ PASS |
+| Rust (crates)             | `scan test-workspaces/crates` | 262             | 19               | ❌      |
+| Python (modules)          | `scan test-workspaces/modules` | 454            | 11               | ❌      |
+| JS/TS (packages)          | `scan test-workspaces/packages` | 1357           | 7                | ❌      |
+| **Combined**              | `scan test-workspaces/`     | 2073             | 81               | ❌      |
 
-**20+ Unique AES Codes (v3.0) target after source migration:**
-AES101, AES102, AES201, AES202, AES203, AES204, AES205,
-AES301, AES302, AES303, AES304, AES305,
-AES401, AES402, AES403, AES404, AES405, AES406,
-AES501, AES502, AES503, AES504, AES505, AES506
+**Target: 24 unique AES codes per language.**
+
+### Per-language AES Coverage (Current)
+
+**Rust (19/24):** AES102, AES201, AES202, AES203, AES204, AES205, AES303, AES304, AES401, AES402, AES403, AES404, AES405, AES406, AES501, AES502, AES503, AES504, AES506
+**Missing:** AES101, AES301, AES302, AES305, AES505
+
+**Python (11/24):** AES102, AES201, AES202, AES203, AES204, AES303, AES304, AES405, AES501, AES503, AES506
+**Missing:** AES101, AES205, AES301, AES302, AES305, AES401, AES402, AES403, AES404, AES406, AES502, AES504, AES505
+
+**JS/TS (7/24):** AES102, AES201, AES202, AES203, AES204, AES303, AES405
+**Missing:** AES101, AES205, AES301, AES302, AES304, AES305, AES401, AES402, AES403, AES404, AES406, AES501, AES502, AES503, AES504, AES505, AES506
+
+### All 24 AES Codes Target
+
+| Code | Group | Rust | Python | JS/TS |
+|------|-------|------|--------|-------|
+| AES101 | Naming — layer prefix | ❌ | ❌ | ❌ |
+| AES102 | Naming — suffix convention | ✅ | ✅ | ✅ |
+| AES201 | Import — forbidden layer | ✅ | ✅ | ✅ |
+| AES202 | Import — mandatory import | ✅ | ✅ | ✅ |
+| AES203 | Import — unused import | ✅ | ✅ | ✅ |
+| AES204 | Import — dummy/todo import | ✅ | ✅ | ✅ |
+| AES205 | Import — barrel re-export | ✅ | ❌ | ❌ |
+| AES301 | Quality — file max lines | ❌ | ❌ | ❌ |
+| AES302 | Quality — fn max lines | ❌ | ❌ | ❌ |
+| AES303 | Quality — bypass suppression | ✅ | ✅ | ✅ |
+| AES304 | Quality — mandatory def | ✅ | ✅ | ❌ |
+| AES305 | Quality — todo in non-test | ❌ | ❌ | ❌ |
+| AES401 | Role — layer-role suffix | ✅ | ❌ | ❌ |
+| AES402 | Role — bypass aggregate | ✅ | ❌ | ❌ |
+| AES403 | Role — capability bypasses agent | ✅ | ❌ | ❌ |
+| AES404 | Role — surface calls capability | ✅ | ❌ | ❌ |
+| AES405 | Role — infra no aggregate | ✅ | ✅ | ✅ |
+| AES406 | Role — duplicate container | ✅ | ❌ | ❌ |
+| AES501 | Orphan — unreachable file | ✅ | ✅ | ❌ |
+| AES502 | Orphan — unused contract | ✅ | ❌ | ❌ |
+| AES503 | Orphan — unused capability | ✅ | ✅ | ❌ |
+| AES504 | Orphan — dead dependency | ✅ | ❌ | ❌ |
+| AES505 | Orphan — circular dependency | ❌ | ❌ | ❌ |
+| AES506 | Orphan — barrel all-unused | ✅ | ✅ | ❌ |
 
 ---
 

@@ -19,8 +19,35 @@ impl Default for WorkspaceDetector {
 
 impl IWorkspaceDetectorPort for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
-        let mut current = std::path::Path::new(&path.value).to_path_buf();
+        let path_buf = std::path::Path::new(&path.value).to_path_buf();
 
+        // 1. Check for explicit language markers in the workspace directory itself
+        if path_buf.join("Cargo.toml").exists() {
+            return WorkspaceType::Rust;
+        }
+        if path_buf.join("package.json").exists() {
+            return WorkspaceType::TypeScript;
+        }
+        if path_buf.join("pyproject.toml").exists()
+            || path_buf.join("setup.py").exists()
+            || path_buf.join("requirements.txt").exists()
+        {
+            return WorkspaceType::Python;
+        }
+
+        // 2. Check parent workspace folder context (crates/ → Rust, packages/ → TS, modules/ → Python)
+        // This handles multi-language root dirs (e.g. test-workspaces/ which has all three).
+        if let Some(parent) = path_buf.parent() {
+            match parent.file_name().and_then(|n| n.to_str()) {
+                Some("modules") => return WorkspaceType::Python,
+                Some("packages") => return WorkspaceType::TypeScript,
+                Some("crates") => return WorkspaceType::Rust,
+                _ => {}
+            }
+        }
+
+        // 3. Walk up parent chain looking for config files (fallback)
+        let mut current = path_buf;
         while !current.as_os_str().is_empty() {
             if current.join("Cargo.toml").exists() {
                 return WorkspaceType::Rust;
@@ -34,57 +61,10 @@ impl IWorkspaceDetectorPort for WorkspaceDetector {
             {
                 return WorkspaceType::Python;
             }
-
             if let Some(parent) = current.parent() {
                 current = parent.to_path_buf();
             } else {
                 break;
-            }
-        }
-
-        // Check workspace folder structure (fallback for root detection)
-        let root = std::path::Path::new(&path.value);
-        let has_workspace_folder = ["crates", "packages", "modules"]
-            .iter()
-            .any(|dir| root.join(dir).is_dir());
-
-        if !has_workspace_folder {
-            return WorkspaceType::Unknown;
-        }
-
-        // Check config files inside workspace folders
-        for dir in &["crates", "packages", "modules"] {
-            let dir_path = root.join(dir);
-            if !dir_path.is_dir() {
-                continue;
-            }
-
-            if dir_path.join("Cargo.toml").exists() {
-                return WorkspaceType::Rust;
-            }
-            if dir_path.join("package.json").exists() {
-                return WorkspaceType::TypeScript;
-            }
-            if dir_path.join("pyproject.toml").exists() {
-                return WorkspaceType::Python;
-            }
-
-            // Scan subdirectories for config files
-            if let Ok(entries) = std::fs::read_dir(&dir_path) {
-                for entry in entries.flatten() {
-                    let sub = entry.path();
-                    if sub.is_dir() {
-                        if sub.join("Cargo.toml").exists() {
-                            return WorkspaceType::Rust;
-                        }
-                        if sub.join("package.json").exists() {
-                            return WorkspaceType::TypeScript;
-                        }
-                        if sub.join("pyproject.toml").exists() {
-                            return WorkspaceType::Python;
-                        }
-                    }
-                }
             }
         }
 

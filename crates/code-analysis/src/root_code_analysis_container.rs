@@ -27,7 +27,7 @@ pub struct CodeAnalysisCheckerContainer {
     bypass_checker: Arc<dyn IBypassCheckerProtocol>,
     mandatory_definition_checker: Arc<MandatoryDefinitionChecker>,
     line_checker: Arc<dyn ILineCheckerProtocol>,
-    _code_duplication_analyzer: Arc<CodeDuplicationAnalyzer>,
+    code_duplication_analyzer: Arc<CodeDuplicationAnalyzer>,
 }
 
 impl CodeAnalysisCheckerContainer {
@@ -38,7 +38,7 @@ impl CodeAnalysisCheckerContainer {
             bypass_checker: Arc::new(BypassChecker {}),
             mandatory_definition_checker: mandatory,
             line_checker: Arc::new(ArchLineChecker {}),
-            _code_duplication_analyzer: Arc::new(CodeDuplicationAnalyzer::new()),
+            code_duplication_analyzer: Arc::new(CodeDuplicationAnalyzer::new()),
         }
     }
 
@@ -73,13 +73,17 @@ impl CodeAnalysisCheckerContainer {
 
     pub fn get_layer_def(
         &self,
-        _layer: &shared::taxonomy_layer_vo::LayerNameVO,
+        layer: &shared::taxonomy_layer_vo::LayerNameVO,
     ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
-        None
+        self.analyzer.layer_map().values.get(layer)
     }
 
     pub fn analyzer(&self) -> &Arc<dyn IAnalyzer> {
         &self.analyzer
+    }
+
+    pub fn duplication_checker(&self) -> &Arc<CodeDuplicationAnalyzer> {
+        &self.code_duplication_analyzer
     }
 
     pub fn as_checker_ref(&self) -> &dyn CodeAnalysisCheckerContainerRef {
