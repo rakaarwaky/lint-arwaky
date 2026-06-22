@@ -14,7 +14,6 @@
 
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;

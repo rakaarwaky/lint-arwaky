@@ -139,8 +139,7 @@ impl CapabilitiesRoleChecker {
         }
         for (name, start_line) in &classes {
             let mut has_method = false;
-            for i in (start_line + 1)..lines.len() {
-                let line = lines[i].trim();
+            for line in lines.iter().skip(start_line + 1).map(|l| l.trim()) {
                 if line.starts_with('}') || line.starts_with(';') {
                     break;
                 }

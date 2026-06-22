@@ -150,21 +150,8 @@ debug = true
 incremental = true
 
 # Centralised lint policy — applied to every workspace crate via `lints.workspace = true`.
+# The gate is: `cargo clippy --workspace --all-targets -- -D warnings`
+# Only "forbid" rules (compile-breaking) and one truly universal "warn" rule
+# (`unsafe_code`) live here. Everything else is fixed in the code, not silenced.
 [workspace.lints.rust]
 unsafe_code = "forbid"
-missing_debug_implementations = "warn"
-rust_2018_idioms = { level = "warn", priority = -1 }
-unreachable_pub = "warn"
-
-[workspace.lints.clippy]
-all = { level = "warn", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
-module_name_repetitions = "allow"
-must_use_candidate = "allow"
-missing_errors_doc = "allow"
-missing_panics_doc = "allow"
-cast_possible_truncation = "allow"
-cast_precision_loss = "allow"
-cast_sign_loss = "allow"
-similar_names = "allow"
-struct_excessive_bools = "allow"
