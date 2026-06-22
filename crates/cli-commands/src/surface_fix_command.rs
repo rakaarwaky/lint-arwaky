@@ -1,24 +1,26 @@
 // PURPOSE: FixCommandsSurface — CLI surface for auto-fix operations
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use code_analysis::resolve_target;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-
 pub struct FixCommandsSurface {
+    pub arch_linter: Arc<dyn IArchLintAggregate>,
     pub fix_orchestrator_factory:
         Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>,
 }
 
 impl FixCommandsSurface {
     pub fn new(
+        arch_linter: Arc<dyn IArchLintAggregate>,
         fix_orchestrator_factory: Arc<
             dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync,
         >,
     ) -> Self {
         Self {
+            arch_linter,
             fix_orchestrator_factory,
         }
     }
@@ -41,9 +43,7 @@ impl FixCommandsSurface {
             println!("Applying safe fixes to {}...", project_path.value);
         }
 
-        let orchestrator =
-            code_analysis::agent_code_analysis_orchestrator::CodeAnalysisOrchestrator::new();
-        let results = orchestrator.run_self_lint(&project_path);
+        let results = self.arch_linter.run_self_lint(&project_path.value);
         println!("Found {} violations before fix", results.len());
 
         let fix_orch = (self.fix_orchestrator_factory)(dry_run);
@@ -52,7 +52,7 @@ impl FixCommandsSurface {
         println!("{}", fix_result.output.value);
 
         if !dry_run {
-            let after_results = orchestrator.run_self_lint(&project_path);
+            let after_results = self.arch_linter.run_self_lint(&project_path.value);
             let fixed_count = results.len().saturating_sub(after_results.len());
             println!(
                 "Fixed {} violations ({} remaining)",
@@ -69,12 +69,13 @@ impl FixCommandsSurface {
 pub fn handle_fix(
     path: Option<String>,
     dry_run: bool,
+    arch_linter: Arc<dyn IArchLintAggregate>,
     fix_orchestrator_factory: Arc<
         dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync,
     >,
 ) -> ExitCode {
-    let root = resolve_target(path);
-    let fix_surface = FixCommandsSurface::new(fix_orchestrator_factory);
+    let root = path.unwrap_or_else(|| ".".to_string());
+    let fix_surface = FixCommandsSurface::new(arch_linter, fix_orchestrator_factory);
     fix_surface.run_fix(FilePath::new(root).unwrap_or_default(), dry_run);
     ExitCode::SUCCESS
 }

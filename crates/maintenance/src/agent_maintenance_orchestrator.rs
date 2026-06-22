@@ -1,8 +1,8 @@
-// PURPOSE: Orchestrator: Implements MaintenanceCommandsAggregate — stats, doctor, gc, rename, project maintenance
-
 use shared::mcp_server::taxonomy_action_vo::JobId;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::project_setup::taxonomy_doctor_vo::DoctorResultVO;
+use shared::project_setup::taxonomy_doctor_vo::{
+    DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
+};
 use shared::project_setup::taxonomy_stats_vo::MaintenanceStatsVO;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::source_parsing::taxonomy_paths_vo::FilePathList;
@@ -142,6 +142,24 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
     }
 
     async fn cancel(&self, _job_id: JobId) {}
+
+    async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
+        let checker = crate::capabilities_maintenance_checker::MaintenanceChecker::new();
+        checker.diagnose_toolchain().await
+    }
+
+    async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
+        let checker = crate::capabilities_maintenance_checker::MaintenanceChecker::new();
+        checker.run_security_scan(project_path).await
+    }
+
+    async fn run_dependency_report(
+        &self,
+        project_path: &FilePath,
+    ) -> Result<DependencyReport, String> {
+        let checker = crate::capabilities_maintenance_checker::MaintenanceChecker::new();
+        checker.run_dependency_report(project_path).await
+    }
 }
 
 fn walk_dir(dir: &Path, py_files: &mut Vec<PathBuf>) {

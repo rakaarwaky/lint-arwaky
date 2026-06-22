@@ -19,6 +19,7 @@ ctrlc.workspace = true
 tokio.workspace = true
 shared.workspace = true
 dirs.workspace = true
+git_hooks.workspace = true
 source_parsing.workspace = true
 auto_fix.workspace = true
 code_analysis.workspace = true

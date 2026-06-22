@@ -74,6 +74,26 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
     async fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus {
         self.protocol.install_javascript_adapters(sudo).await
     }
+
+    fn detect_language(&self) -> String {
+        self.protocol.detect_language()
+    }
+
+    fn get_config_template(&self, language: &str) -> &'static str {
+        self.protocol.get_config_template(language)
+    }
+
+    fn write_config_file(&self, filename: &str, content: &str) -> Result<(), String> {
+        self.protocol.write_config_file(filename, content)
+    }
+
+    fn create_global_config_dir(&self) -> Result<std::path::PathBuf, String> {
+        self.protocol.create_global_config_dir()
+    }
+
+    fn file_exists(&self, path: &str) -> bool {
+        self.protocol.file_exists(path)
+    }
 }
 
 impl SetupManagementOrchestrator {

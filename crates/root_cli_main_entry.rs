@@ -5,7 +5,6 @@ use std::sync::Arc;
 
 use cli_commands::surface_check_command;
 use cli_commands::surface_fix_command;
-use cli_commands::surface_maintenance_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
@@ -68,12 +67,20 @@ fn main() -> ExitCode {
             )
             .architecture_linter();
 
+        let source_parsing_container =
+            source_parsing::root_source_parsing_container::SourceParsingContainer::new();
+        let orphan_container =
+            orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+
         surface_check_command::CheckContext {
             arch_linter,
             import_orchestrator: import_container.orchestrator(),
             naming_orchestrator: naming_container.orchestrator(),
             external_lint: external_lint_aggregate_clone.clone(),
             role_orchestrator: role_container.orchestrator(),
+            scanner_provider: source_parsing_container.scanner_provider(),
+            orphan_orchestrator: orphan_container.analyzer(),
+            language_detector: source_parsing_container.language_detector(),
         }
     });
 
@@ -108,6 +115,11 @@ fn main() -> ExitCode {
                 naming_orchestrator: naming_orchestrator.clone(),
                 external_lint: external_lint_aggregate.clone(),
                 role_orchestrator: role_orchestrator.clone(),
+                scanner_provider: source_parsing_container.scanner_provider(),
+                orphan_orchestrator:
+                    orphan_detector::root_orphan_detector_container::OrphanContainer::new()
+                        .analyzer(),
+                language_detector: source_parsing_container.language_detector(),
             },
             filter,
         ),
@@ -118,18 +130,31 @@ fn main() -> ExitCode {
             naming_orchestrator.clone(),
             external_lint_aggregate.clone(),
             role_orchestrator.clone(),
+            source_parsing_container.scanner_provider(),
+            orphan_detector::root_orphan_detector_container::OrphanContainer::new().analyzer(),
             factory,
             filter,
         ),
-        Commands::Fix { path, dry_run } => {
-            surface_fix_command::handle_fix(path, dry_run, fix_orchestrator_factory)
-        }
+        Commands::Fix { path, dry_run } => surface_fix_command::handle_fix(
+            path,
+            dry_run,
+            arch_linter.clone(),
+            fix_orchestrator_factory,
+        ),
         Commands::Ci { path, threshold } => {
             surface_check_command::handle_ci(arch_linter.clone(), path, threshold)
         }
         Commands::Doctor => {
-            surface_maintenance_command::handle_doctor();
-            ExitCode::SUCCESS
+            let maintenance_container =
+                maintenance::root_maintenance_container::MaintenanceContainer::new();
+            let orchestrator = maintenance_container.orchestrator();
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+            rt.block_on(cli_commands::surface_maintenance_command::handle_doctor(
+                orchestrator,
+            ))
         }
         Commands::Version => {
             let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
@@ -162,11 +187,25 @@ fn main() -> ExitCode {
                 import_orchestrator.clone(),
                 naming_orchestrator.clone(),
                 role_orchestrator.clone(),
+                source_parsing_container.scanner_provider(),
+                orphan_detector::root_orphan_detector_container::OrphanContainer::new().analyzer(),
             );
             surface.check_orphan_single_file(&path);
             ExitCode::SUCCESS
         }
-        Commands::Security { path } => surface_maintenance_command::handle_security(path),
+        Commands::Security { path } => {
+            let maintenance_container =
+                maintenance::root_maintenance_container::MaintenanceContainer::new();
+            let orchestrator = maintenance_container.orchestrator();
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+            rt.block_on(cli_commands::surface_maintenance_command::handle_security(
+                orchestrator,
+                path,
+            ))
+        }
         Commands::Duplicates { path } => {
             let dup_analyzer = CodeDuplicationAnalyzer::new();
             let violations = dup_analyzer.handle_duplicates(path, analyzer.fs());
@@ -180,7 +219,18 @@ fn main() -> ExitCode {
             }
             ExitCode::SUCCESS
         }
-        Commands::Dependencies { path } => surface_maintenance_command::handle_dependencies(path),
+        Commands::Dependencies { path } => {
+            let maintenance_container =
+                maintenance::root_maintenance_container::MaintenanceContainer::new();
+            let orchestrator = maintenance_container.orchestrator();
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+            rt.block_on(
+                cli_commands::surface_maintenance_command::handle_dependencies(orchestrator, path),
+            )
+        }
         Commands::Watch { path } => {
             let container = file_watch::FileWatchContainer::new();
             let watch_agg: Arc<dyn shared::file_watch::contract_watch_aggregate::IWatchAggregate> =
@@ -188,16 +238,58 @@ fn main() -> ExitCode {
             surface_watch_command::handle_watch(watch_agg, path)
         }
         Commands::InstallHook => {
-            // TODO: implement via git-hooks crate
-            println!("install-hook: not yet implemented");
-            ExitCode::SUCCESS
+            let container = git_hooks::root_git_hooks_container::GitContainer::new_default();
+            let aggregate = container.aggregate();
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+            let exe_path =
+                shared::source_parsing::taxonomy_path_vo::FilePath::new("lint-arwaky".to_string())
+                    .unwrap_or_default();
+            match rt.block_on(aggregate.install_hook(&exe_path)) {
+                Ok(status) if status.value => {
+                    println!("Installed git pre-commit hook successfully");
+                    ExitCode::SUCCESS
+                }
+                Ok(_) => {
+                    println!("Not a git repository, hook installation skipped");
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("Failed to install pre-commit hook: {:?}", e);
+                    ExitCode::FAILURE
+                }
+            }
         }
         Commands::UninstallHook => {
-            // TODO: implement via git-hooks crate
-            println!("uninstall-hook: not yet implemented");
-            ExitCode::SUCCESS
+            let container = git_hooks::root_git_hooks_container::GitContainer::new_default();
+            let aggregate = container.aggregate();
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+            match rt.block_on(aggregate.uninstall_hook()) {
+                Ok(status) if status.value => {
+                    println!("Removed git pre-commit hook successfully");
+                    ExitCode::SUCCESS
+                }
+                Ok(_) => {
+                    println!("Not a git repository, hook removal skipped");
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("Failed to remove pre-commit hook: {:?}", e);
+                    ExitCode::FAILURE
+                }
+            }
         }
-        Commands::Init { global } => cli_commands::surface_setup_command::handle_init(global),
+        Commands::Init { global } => {
+            let setup_container =
+                project_setup::root_project_setup_container::SetupContainer::new();
+            let setup_orchestrator = setup_container.aggregate();
+            cli_commands::surface_setup_command::handle_init(setup_orchestrator, global)
+        }
         Commands::Install { sudo } => {
             let setup_container =
                 project_setup::root_project_setup_container::SetupContainer::new();
@@ -214,7 +306,18 @@ fn main() -> ExitCode {
         Commands::McpConfig { client } => {
             cli_commands::surface_setup_command::handle_mcp_config(&client)
         }
-        Commands::ConfigShow => cli_commands::surface_config_command::handle_config_show(),
+        Commands::ConfigShow => {
+            let config_container =
+                config_system::root_config_system_container::ConfigContainer::new();
+            let config_orchestrator = config_container.orchestrator();
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+            rt.block_on(cli_commands::surface_config_command::handle_config_show(
+                config_orchestrator,
+            ))
+        }
     }
 }
 

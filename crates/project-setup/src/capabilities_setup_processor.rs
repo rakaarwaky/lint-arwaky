@@ -132,4 +132,44 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
             .await;
         SuccessStatus::new(res.is_ok())
     }
+
+    fn detect_language(&self) -> String {
+        if std::path::Path::new("crates").exists() {
+            "rust".to_string()
+        } else if std::path::Path::new("packages").exists()
+            || std::path::Path::new("modules").exists()
+            || std::path::Path::new("pyproject.toml").exists()
+        {
+            "python".to_string()
+        } else if std::path::Path::new("package.json").exists() {
+            "javascript".to_string()
+        } else {
+            "rust".to_string()
+        }
+    }
+
+    fn get_config_template(&self, language: &str) -> &'static str {
+        match language {
+            "rust" => include_str!("../../../lint_arwaky.config.rust.yaml"),
+            "python" => include_str!("../../../lint_arwaky.config.python.yaml"),
+            "javascript" => include_str!("../../../lint_arwaky.config.javascript.yaml"),
+            _ => include_str!("../../../lint_arwaky.config.rust.yaml"),
+        }
+    }
+
+    fn write_config_file(&self, filename: &str, content: &str) -> Result<(), String> {
+        std::fs::write(filename, content).map_err(|e| e.to_string())
+    }
+
+    fn create_global_config_dir(&self) -> Result<std::path::PathBuf, String> {
+        let config_dir = dirs::config_dir()
+            .map(|d| d.join("lint-arwaky"))
+            .ok_or_else(|| "Could not determine XDG config directory".to_string())?;
+        std::fs::create_dir_all(&config_dir).map_err(|e| e.to_string())?;
+        Ok(config_dir)
+    }
+
+    fn file_exists(&self, path: &str) -> bool {
+        std::path::Path::new(path).exists()
+    }
 }

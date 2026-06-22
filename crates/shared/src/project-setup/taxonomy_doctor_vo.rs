@@ -47,3 +47,49 @@ impl std::fmt::Display for DoctorResultVO {
         )
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ToolStatus {
+    pub name: String,
+    pub status: String, // "OK", "WARN", "FAIL"
+    pub version: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ToolchainDiagnostics {
+    pub rust_tools: Vec<ToolStatus>,
+    pub python_tools: Vec<ToolStatus>,
+    pub js_tools: Vec<ToolStatus>,
+    pub vcs_tools: Vec<ToolStatus>,
+    pub binary_path: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SecurityFinding {
+    pub severity: String,
+    pub test_id: String,
+    pub file: String,
+    pub line: u64,
+    pub issue: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SecurityScanReport {
+    pub language: String,
+    pub tool_name: String,
+    pub findings: Vec<SecurityFinding>,
+    pub tool_installed: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct DependencyInfo {
+    pub name: String,
+    pub version: String,
+    pub dep_type: String, // "direct" or "transitive"
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct DependencyReport {
+    pub language: String,
+    pub dependencies: Vec<DependencyInfo>,
+}

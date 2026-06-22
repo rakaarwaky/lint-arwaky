@@ -3,82 +3,66 @@ use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-pub fn handle_init(global: bool) -> ExitCode {
+pub fn handle_init(
+    setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    global: bool,
+) -> ExitCode {
     if global {
-        handle_init_global();
+        handle_init_global(setup_orchestrator);
         return ExitCode::SUCCESS;
     }
-    let language = if std::path::Path::new("crates").exists() {
-        "rust"
-    } else if std::path::Path::new("packages").exists()
-        || std::path::Path::new("modules").exists()
-        || std::path::Path::new("pyproject.toml").exists()
-    {
-        "python"
-    } else if std::path::Path::new("package.json").exists() {
-        "javascript"
-    } else {
-        "rust"
-    };
+    let language = setup_orchestrator.detect_language();
 
-    let target = std::path::PathBuf::from(format!("lint_arwaky.config.{}.yaml", language));
-    if target.exists() {
-        println!("Config already exists: {}", target.display());
+    let target = format!("lint_arwaky.config.{}.yaml", language);
+    if setup_orchestrator.file_exists(&target) {
+        println!("Config already exists: {}", target);
     } else {
-        let content = match language {
-            "rust" => include_str!("../../../lint_arwaky.config.rust.yaml"),
-            "python" => include_str!("../../../lint_arwaky.config.python.yaml"),
-            "javascript" => include_str!("../../../lint_arwaky.config.javascript.yaml"),
-            _ => include_str!("../../../lint_arwaky.config.rust.yaml"),
-        };
-
-        let _ = std::fs::write(&target, content);
-        println!(
-            "Config created: {} (language: {})",
-            target.display(),
-            language
-        );
+        let content = setup_orchestrator.get_config_template(&language);
+        match setup_orchestrator.write_config_file(&target, content) {
+            Ok(()) => {
+                println!("Config created: {} (language: {})", target, language);
+            }
+            Err(e) => {
+                println!("Error creating config: {e}");
+            }
+        }
     }
     ExitCode::SUCCESS
 }
 
-fn handle_init_global() {
-    let config_dir = match dirs::config_dir() {
-        Some(d) => d.join("lint-arwaky"),
-        None => {
-            println!("Error: Could not determine XDG config directory");
+fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) {
+    let config_dir = match setup_orchestrator.create_global_config_dir() {
+        Ok(d) => d,
+        Err(_) => {
+            println!("Error: Could not determine or create XDG config directory");
             return;
         }
     };
 
     println!("Installing default configs to: {}", config_dir.display());
 
-    if let Err(e) = std::fs::create_dir_all(&config_dir) {
-        println!("Error creating directory: {e}");
-        return;
-    }
-
     let configs = [
         (
             "lint_arwaky.config.rust.yaml",
-            include_str!("../../../lint_arwaky.config.rust.yaml"),
+            setup_orchestrator.get_config_template("rust"),
         ),
         (
             "lint_arwaky.config.python.yaml",
-            include_str!("../../../lint_arwaky.config.python.yaml"),
+            setup_orchestrator.get_config_template("python"),
         ),
         (
             "lint_arwaky.config.javascript.yaml",
-            include_str!("../../../lint_arwaky.config.javascript.yaml"),
+            setup_orchestrator.get_config_template("javascript"),
         ),
     ];
 
     for (filename, content) in &configs {
         let target = config_dir.join(filename);
-        if target.exists() {
+        let target_str = target.to_string_lossy();
+        if setup_orchestrator.file_exists(&target_str) {
             println!("  {filename} — already exists, skipping");
         } else {
-            match std::fs::write(&target, content) {
+            match setup_orchestrator.write_config_file(&target_str, content) {
                 Ok(()) => println!("  {filename} — created"),
                 Err(e) => println!("  {filename} — error: {e}"),
             }

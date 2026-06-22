@@ -1,8 +1,8 @@
-// PURPOSE: GitCommandsSurface — CLI surface for git integration (format patch, commit messages, PR review)
+// PURPOSE: GitCommandsSurface — CLI surface for git integration
+use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
-
-use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
 
 pub struct GitCommandsSurface {}
 
@@ -16,108 +16,64 @@ impl GitCommandsSurface {
     pub fn new() -> Self {
         Self {}
     }
-
-    pub fn print_section<F, T>(&self, title: &str, items: &[T], item_fmt: F)
-    where
-        T: std::fmt::Display,
-        F: Fn(&T),
-    {
-        if !items.is_empty() {
-            println!("  {title} ({}):", items.len());
-            for item in items {
-                item_fmt(item);
-            }
-        }
-    }
-
-    pub fn print_diff_text(&self, base_ref: &str) {
-        println!(" Changed files since {base_ref}:");
-        println!("  No changed files detected.");
-    }
-
-    pub fn git_diff(&self, base: &str, output_format: &str) {
-        if output_format == "json" {
-            println!("{{\"added\": [], \"modified\": [], \"deleted\": [], \"lintable_files\": [], \"total_changed\": 0}}");
-        } else {
-            self.print_diff_text(base);
-        }
-    }
 }
 
-pub fn handle_git_diff(arch_linter: Arc<dyn IArchLintAggregate>, base: String) -> ExitCode {
+pub async fn handle_git_diff(
+    git_aggregate: Arc<dyn GitHooksAggregate>,
+    arch_linter: Arc<dyn IArchLintAggregate>,
+    language_detector: Arc<
+        dyn shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort,
+    >,
+    base: String,
+) -> ExitCode {
     println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
-    let output = std::process::Command::new("git")
-        .args(["diff", "--name-only", &base])
-        .output();
-    match output {
-        Ok(o) if o.status.success() => {
-            let s = String::from_utf8_lossy(&o.stdout);
-            let files: Vec<&str> = s
-                .lines()
-                .filter(|l| {
-                    let detector =
-                        source_parsing::infrastructure_language_detector::LanguageDetector::new();
-                    if let Ok(fp) =
-                        shared::source_parsing::taxonomy_path_vo::FilePath::new(l.to_string())
-                    {
-                        detector.is_lintable(&fp)
-                    } else {
-                        false
-                    }
-                })
-                .collect();
-            println!("Base: {} (changed files)", base);
-            println!("Files changed: {}", files.len());
-            println!();
-            let mut total_violations = 0;
-            for f in &files {
-                let results = arch_linter.run_lint(f);
-                let fv = results.len();
-                total_violations += fv;
-                if fv > 0 {
-                    println!("  {}  -> {} violation(s)", f, fv);
-                    for r in results.iter().take(3) {
-                        println!(
-                            "    {}:{} [{}] {}",
-                            r.file.value(),
-                            r.line.value(),
-                            format!("{:?}", r.severity).to_uppercase(),
-                            r.message.value()
-                        );
-                    }
-                } else {
-                    println!("  {}  -> clean", f);
-                }
+
+    let project_path = shared::source_parsing::taxonomy_path_vo::FilePath::new(".".to_string())
+        .unwrap_or_default();
+
+    let changed_files = git_aggregate
+        .diff_protocol()
+        .get_changed_files(&project_path)
+        .await;
+
+    let files: Vec<&shared::source_parsing::taxonomy_path_vo::FilePath> = changed_files
+        .values
+        .iter()
+        .filter(|fp| {
+            shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort::is_lintable(language_detector.as_ref(), fp)
+        })
+        .collect();
+
+    println!("Base: {} (changed files)", base);
+    println!("Files changed: {}", files.len());
+    println!();
+
+    let mut total_violations = 0;
+    for f in &files {
+        let results = arch_linter.run_lint(&f.value);
+        let fv = results.len();
+        total_violations += fv;
+        if fv > 0 {
+            println!("  {}  -> {} violation(s)", f.value, fv);
+            for r in results.iter().take(3) {
+                println!(
+                    "    {}:{} [{}] {}",
+                    r.file.value(),
+                    r.line.value(),
+                    format!("{:?}", r.severity).to_uppercase(),
+                    r.message.value()
+                );
             }
-            println!();
-            println!(
-                "{} violations across {} changed files",
-                total_violations,
-                files.len()
-            );
+        } else {
+            println!("  {}  -> clean", f.value);
         }
-        _ => eprintln!("warn: not a git repo or `git diff` failed"),
     }
-    ExitCode::SUCCESS
-}
 
-pub fn handle_install_hook() -> ExitCode {
-    let hook = std::path::PathBuf::from(".githooks/pre-commit");
-    if let Some(parent) = hook.parent() {
-        let _ = std::fs::create_dir_all(parent);
-    }
-    let _ = std::fs::write(&hook, "#!/bin/sh\nlint-arwaky check . || exit 1\n");
-    println!("Installed hook at {}", hook.display());
-    ExitCode::SUCCESS
-}
-
-pub fn handle_uninstall_hook() -> ExitCode {
-    let hook = std::path::PathBuf::from(".githooks/pre-commit");
-    if hook.exists() {
-        let _ = std::fs::remove_file(&hook);
-        println!("Removed hook");
-    } else {
-        println!("No hook installed");
-    }
+    println!();
+    println!(
+        "{} violations across {} changed files",
+        total_violations,
+        files.len()
+    );
     ExitCode::SUCCESS
 }

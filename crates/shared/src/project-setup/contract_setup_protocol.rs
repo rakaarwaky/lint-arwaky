@@ -13,6 +13,11 @@ pub trait ISetupManagementProtocol: Send + Sync {
     fn which_mcp_binary(&self) -> String;
     async fn install_python_adapters(&self) -> SuccessStatus;
     async fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus;
+    fn detect_language(&self) -> String;
+    fn get_config_template(&self, language: &str) -> &'static str;
+    fn write_config_file(&self, filename: &str, content: &str) -> Result<(), String>;
+    fn create_global_config_dir(&self) -> Result<std::path::PathBuf, String>;
+    fn file_exists(&self, path: &str) -> bool;
 }
 
 #[async_trait::async_trait]

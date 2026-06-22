@@ -10,6 +10,7 @@ pub mod surface_fix_command;
 pub use surface_fix_command::FixCommandsSurface;
 pub mod surface_maintenance_command;
 pub use surface_maintenance_command::MaintenanceCommandsSurface;
+pub mod surface_git_command;
 pub mod surface_plugin_command;
 pub mod surface_setup_command;
 pub mod surface_tui_command;

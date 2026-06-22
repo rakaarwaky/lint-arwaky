@@ -370,6 +370,7 @@ dependencies = [
  "external_lint-lint-arwaky",
  "file_watch-lint-arwaky",
  "futures",
+ "git_hooks-lint-arwaky",
  "import_rules-lint-arwaky",
  "multi_project-lint-arwaky",
  "orphan_detector-lint-arwaky",
@@ -2823,6 +2824,7 @@ name = "project_setup-lint-arwaky"
 version = "1.10.14"
 dependencies = [
  "async-trait",
+ "dirs",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
