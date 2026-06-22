@@ -4,27 +4,22 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use cli_commands::surface_check_command;
-use cli_commands::surface_config_command;
-use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands, MaintenanceCommands};
+use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use cli_commands::surface_fix_command;
-use cli_commands::surface_git_command;
 use cli_commands::surface_maintenance_command;
 use cli_commands::surface_plugin_command;
-use cli_commands::surface_setup_command;
 use cli_commands::surface_watch_command;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
 use code_analysis::{has_critical, lint_path, CodeDuplicationAnalyzer};
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use import_rules::root_import_rules_container::ImportContainer;
 use role_rules::root_role_rules_container::RoleContainer;
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 
 pub struct CliMainEntry {}
 
 fn main() -> ExitCode {
-    // Inline CLI composition — create exactly what CLI needs
     let source_parsing_container =
         source_parsing::root_source_parsing_container::SourceParsingContainer::new();
-    let path_norm = source_parsing_container.path_normalization();
     let source_parser = source_parsing_container.source_parser();
 
     let import_container = ImportContainer::new(source_parser.clone());
@@ -51,7 +46,9 @@ fn main() -> ExitCode {
         auto_fix::root_auto_fix_container::AutoFixContainer::new(arch_linter.clone());
 
     let external_lint_container =
-        external_lint::root_external_lint_container::ExternalLintContainer::new(path_norm);
+        external_lint::root_external_lint_container::ExternalLintContainer::new(
+            source_parsing_container.path_normalization(),
+        );
     let external_lint_aggregate = external_lint_container.aggregate();
 
     let external_lint_aggregate_clone = external_lint_aggregate.clone();
@@ -130,12 +127,10 @@ fn main() -> ExitCode {
         Commands::Ci { path, threshold } => {
             surface_check_command::handle_ci(arch_linter.clone(), path, threshold)
         }
-        Commands::Maintenance { command } => match command {
-            MaintenanceCommands::Doctor => {
-                surface_maintenance_command::handle_doctor();
-                ExitCode::SUCCESS
-            }
-        },
+        Commands::Doctor => {
+            surface_maintenance_command::handle_doctor();
+            ExitCode::SUCCESS
+        }
         Commands::Version => {
             let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
             let ver = env!("CARGO_PKG_VERSION");
@@ -160,10 +155,6 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         Commands::Adapters => surface_plugin_command::handle_adapters(external_lint_aggregate),
-        Commands::Config { command } => surface_config_command::handle_config(command),
-        Commands::GitDiff { base } => {
-            surface_git_command::handle_git_diff(arch_linter.clone(), base)
-        }
         Commands::Orphan { path } => {
             let surface = surface_check_command::CheckCommandsSurface::new(
                 external_lint_aggregate.clone(),
@@ -190,23 +181,33 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         Commands::Dependencies { path } => surface_maintenance_command::handle_dependencies(path),
-        Commands::Setup { command } => surface_setup_command::handle_setup(command),
-        Commands::Watch { path } => surface_watch_command::handle_watch(arch_linter.clone(), path),
-
-        Commands::InstallHook => surface_git_command::handle_install_hook(),
-        Commands::UninstallHook => surface_git_command::handle_uninstall_hook(),
-        Commands::VscodeGraph { path } => {
-            let p = path.unwrap_or_else(|| ".".to_string());
-            match vscode_extension::handle_vscode_graph(&p) {
-                Ok(json) => {
-                    println!("{}", json);
-                    ExitCode::SUCCESS
-                }
-                Err(e) => {
-                    eprintln!("Error generating graph: {}", e);
-                    ExitCode::from(1)
-                }
-            }
+        Commands::Watch { path } => {
+            let container = file_watch::FileWatchContainer::new();
+            let watch_agg: Arc<dyn shared::file_watch::contract_watch_aggregate::IWatchAggregate> =
+                container.orchestrator(arch_linter.clone());
+            surface_watch_command::handle_watch(watch_agg, path)
+        }
+        Commands::InstallHook => {
+            // TODO: implement via git-hooks crate
+            println!("install-hook: not yet implemented");
+            ExitCode::SUCCESS
+        }
+        Commands::UninstallHook => {
+            // TODO: implement via git-hooks crate
+            println!("uninstall-hook: not yet implemented");
+            ExitCode::SUCCESS
+        }
+        Commands::Init { global } => {
+            cli_commands::surface_setup_command::handle_init(global)
+        }
+        Commands::Install { sudo } => {
+            cli_commands::surface_setup_command::handle_install(sudo)
+        }
+        Commands::McpConfig { client } => {
+            cli_commands::surface_setup_command::handle_mcp_config(&client)
+        }
+        Commands::ConfigShow => {
+            cli_commands::surface_config_command::handle_config_show()
         }
     }
 }

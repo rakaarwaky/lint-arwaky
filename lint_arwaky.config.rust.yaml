@@ -416,34 +416,7 @@ architecture:
           "root",
         ]
       exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-          "root_file_system_container.rs",
-          "root_git_hooks_container.rs",
-          "root_file_watch_container.rs",
-          "root_config_system_container.rs",
-          "root_vscode_container.rs",
-          "root_auto_fix_container.rs",
-          "root_multi_project_container.rs",
-          "root_maintenance_container.rs",
-          "root_project_setup_container.rs",
-          "root_orphan_detector_container.rs",
-          "root_naming_rules_container.rs",
-          "root_import_rules_container.rs",
-          "root_role_rules_container.rs",
-          "root_source_parsing_container.rs",
-          "root_code_analysis_container.rs",
-          "agent_code_analysis_orchestrator.rs",
-          "root_external_lint_container.rs",
-        ]
+        ["main.rs", "lib.rs", "mod.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -763,9 +736,13 @@ architecture:
       enabled: true
       scope:
         [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
         ]
       patterns:
         [
@@ -777,11 +754,7 @@ architecture:
           "eslint-disable",
         ]
       exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+        ["main.rs", "lib.rs", "mod.rs"]
 
     AES305:
       enabled: true

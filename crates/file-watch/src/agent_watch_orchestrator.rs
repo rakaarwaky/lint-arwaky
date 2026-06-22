@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
+use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 
 pub struct WatchOrchestrator {
@@ -23,7 +24,7 @@ impl WatchOrchestrator {
         }
     }
 
-    pub async fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
+    pub async fn run_async(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
         let path = config.path.value.clone();
         println!("Lint Arwaky v{} (Watch Mode)", env!("CARGO_PKG_VERSION"));
         println!("Target: {}", path);
@@ -68,5 +69,15 @@ impl WatchOrchestrator {
         let _ = self.provider.stop().await;
         println!("Watcher stopped.");
         ExitCode::SUCCESS
+    }
+}
+
+impl IWatchAggregate for WatchOrchestrator {
+    fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
+        let rt = tokio::runtime::Runtime::new().unwrap_or_else(|e| {
+            eprintln!("Failed to create tokio runtime: {}", e);
+            std::process::exit(1);
+        });
+        rt.block_on(self.run_async(config, running))
     }
 }

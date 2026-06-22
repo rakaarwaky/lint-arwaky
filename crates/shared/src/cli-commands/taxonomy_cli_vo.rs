@@ -61,18 +61,8 @@ pub enum Commands {
         threshold: u32,
     },
 
-    /// Maintenance operations
-    Maintenance {
-        #[command(subcommand)]
-        command: MaintenanceCommands,
-    },
-
-    /// Show files changed since base ref
-    GitDiff {
-        /// Base ref
-        #[arg(long, default_value = "HEAD")]
-        base: String,
-    },
+    /// Diagnose environment health
+    Doctor,
 
     /// Check if a file is an orphan (AES030)
     Orphan {
@@ -98,21 +88,6 @@ pub enum Commands {
         path: Option<String>,
     },
 
-    /// Setup and configuration
-    Setup {
-        #[command(subcommand)]
-        command: SetupCommands,
-    },
-
-    /// List active linters/adapters
-    Adapters,
-
-    /// Show current configuration
-    Config {
-        #[command(subcommand)]
-        command: ConfigCommands,
-    },
-
     /// Watch and lint on changes
     Watch {
         /// Path to watch
@@ -128,51 +103,32 @@ pub enum Commands {
     /// Show version
     Version,
 
-    /// Export graph JSON for VS Code extension
-    VscodeGraph {
-        /// Path to the codebase root
-        path: Option<String>,
-    },
-}
+    /// List active linters/adapters
+    Adapters,
 
-#[derive(Subcommand, Debug)]
-pub enum MaintenanceCommands {
-    /// Diagnose environment health
-    Doctor,
-}
-
-#[derive(Subcommand, Debug)]
-pub enum SetupCommands {
-    /// Auto-configure lint-arwaky (project-local config)
+    /// Create default config
     Init {
         /// Install default configs to ~/.config/lint-arwaky/ (XDG config dir)
         #[arg(long)]
         global: bool,
     },
-    /// Install all linter adapter dependencies (ruff, mypy, bandit, eslint, prettier, tsc)
+
+    /// Install linter adapter dependencies
     Install {
-        /// Use sudo for npm global install (will prompt for password)
+        /// Use sudo for npm global install
         #[arg(long)]
         sudo: bool,
     },
+
     /// Print MCP server config for clients
     McpConfig {
         /// Client type (claude, hermes, vscode, all)
         #[arg(long, default_value = "all")]
         client: String,
     },
-    /// Auto-install into Hermes Agent
-    Hermes {
-        /// Remove lint-arwaky from Hermes
-        #[arg(long)]
-        remove: bool,
-    },
-}
 
-#[derive(Subcommand, Debug)]
-pub enum ConfigCommands {
     /// Show active configuration
-    Show,
+    ConfigShow,
 }
 
 pub fn get_cli() -> Cli {
