@@ -381,12 +381,9 @@ impl CheckCommandsSurface {
                 orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_ignored(
                     ignored_paths.clone(),
                 );
-            let dir_path = DirectoryPath::new(ws.path.value.clone()).unwrap_or_default();
-            let source_files = self
-                .scanner_provider
-                .scan_directory(&dir_path)
-                .map(|list| list.values)
-                .unwrap_or_default();
+            let source_files = source_parsing::collect_all_source_files(
+                std::path::Path::new(&ws.path.value),
+            );
             let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
             let orphan_results = self.orphan_orchestrator.check_orphans(
                 orphan_container.layer_detector().as_ref(),

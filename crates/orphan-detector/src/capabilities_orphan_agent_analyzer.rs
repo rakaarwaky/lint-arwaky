@@ -90,6 +90,17 @@ fn extract_aggregate_traits(content: &str) -> Vec<String> {
         }
     }
 
+    // JS/TS: class Struct implements IAggregateTrait
+    let re_ts = Regex::new(r"class\s+\w+\s+implements\s+(\w+)").ok();
+    if let Some(re) = re_ts {
+        for cap in re.captures_iter(content) {
+            let name = cap[1].to_string();
+            if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                traits.push(name);
+            }
+        }
+    }
+
     traits.sort();
     traits.dedup();
     traits

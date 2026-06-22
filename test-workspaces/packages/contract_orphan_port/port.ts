@@ -1,0 +1,1 @@
+interface Port { do(): void }

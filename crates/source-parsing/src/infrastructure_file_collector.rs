@@ -30,7 +30,21 @@ fn default_ignored_paths() -> Vec<String> {
         .values
         .iter()
         .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
+        .filter(|path| {
+            // Retain only the actual nested duplicate test-workspaces folder
+            // (e.g. test-workspaces/test-workspaces), otherwise we would
+            // skip real `test-workspaces/packages` test material.
+            path.matches("test-workspaces").count() <= 1
+        })
         .collect()
+}
+
+pub fn collect_all_source_files(dir: &Path) -> Vec<FilePath> {
+    let mut files = Vec::new();
+    if dir.exists() && dir.is_dir() {
+        walk_source_files(dir, &mut files, &[]);
+    }
+    files
 }
 
 impl IScannerProviderPort for FileCollectorProvider {
@@ -56,7 +70,11 @@ fn is_source_file(ext: &str) -> bool {
 
 fn is_ignored_dir(dir: &Path, ignored: &[String]) -> bool {
     let s = dir.to_string_lossy();
-    ignored.iter().any(|i| s.contains(i.as_str()))
+    ignored.iter().any(|i| {
+        let pattern = i.trim_start_matches('/');
+        let trimmed = s.trim_start_matches('/');
+        trimmed == pattern || trimmed.starts_with(&format!("{}/", pattern))
+    })
 }
 
 fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {

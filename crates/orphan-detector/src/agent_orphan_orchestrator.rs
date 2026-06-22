@@ -91,20 +91,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         // Build comprehensive context
         let context: GraphAnalysisContext = self.resolver.build_graph_context(files, root_dir);
 
-        // DEBUG: check orphan detection
-        eprintln!("[ORPHAN_DEBUG] files.len()={}, root_dir={}", files.len(), root_dir);
-        for f in files.iter().take(5) {
-            let layer = layer_detector.detect_layer(f, root_dir);
-            eprintln!("[ORPHAN_DEBUG] file={}, layer={:?}", f, layer);
-        }
-        // Count TS/JS files
-        let ts_files: Vec<_> = files.iter().filter(|f| f.ends_with(".ts") || f.ends_with(".js")).collect();
-        eprintln!("[ORPHAN_DEBUG] ts/js files count={}", ts_files.len());
-        for f in ts_files.iter().take(3) {
-            let layer = layer_detector.detect_layer(f, root_dir);
-            eprintln!("[ORPHAN_DEBUG] ts_file={}, layer={:?}", f, layer);
-        }
-
         // Trace reachability
         let configured = layer_detector.get_orphan_entry_points();
         let entry_points = self.resolver.identify_entry_points(files, &configured);

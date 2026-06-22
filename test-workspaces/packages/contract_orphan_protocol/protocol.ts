@@ -1,0 +1,1 @@
+interface Protocol { run(): void }
