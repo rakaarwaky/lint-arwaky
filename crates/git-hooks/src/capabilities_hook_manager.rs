@@ -4,7 +4,7 @@ use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_port::IHookManagerPort;
 use shared::git_hooks::taxonomy_git_diff_data_vo::{
-    GitDiffDataVO, GitDiffStatus, GitDiffSideVO, HookIgnoreUpdateVO,
+    GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
 };
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
@@ -49,16 +49,10 @@ impl IHookProtocol for HookManager {
     fn update_ignore_rule(&self, request: HookIgnoreUpdateVO) -> DescriptionVO {
         let config_file = std::path::Path::new(&request.config_path);
         if !config_file.exists() {
-            return DescriptionVO::new(format!(
-                "Config file not found: {}",
-                request.config_path
-            ));
+            return DescriptionVO::new(format!("Config file not found: {}", request.config_path));
         }
         let verb = if request.remove { "Removed" } else { "Added" };
-        DescriptionVO::new(format!(
-            "{} '{}' from ignore list",
-            verb, request.rule
-        ))
+        DescriptionVO::new(format!("{} '{}' from ignore list", verb, request.rule))
     }
 
     async fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {

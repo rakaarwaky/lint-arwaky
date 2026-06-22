@@ -38,9 +38,5 @@ pub trait IHookProtocol: Send + Sync {
 
     /// Get diff data between two file paths. Returns a strongly-typed VO;
     /// no raw JSON in the contract surface.
-    async fn get_diff_data(
-        &self,
-        path1: &str,
-        path2: &str,
-    ) -> GitDiffDataVO;
+    async fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO;
 }

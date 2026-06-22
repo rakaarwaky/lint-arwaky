@@ -22,12 +22,7 @@ pub trait IFixProtocol: Send + Sync {
     fn execute(&self, path: &FilePath) -> FixResult;
     fn fix_bypass_comments(&self, file_path: &str, line: LineNumber) -> bool;
     fn fix_unused_import(&self, file_path: &str, line: LineNumber) -> bool;
-    fn emit_fix_event(
-        &self,
-        path: &FilePath,
-        error_code: ErrorCode,
-        changes: Count,
-    );
+    fn emit_fix_event(&self, path: &FilePath, error_code: ErrorCode, changes: Count);
     fn report_non_fixable(&self, violations: &[LintResult]) -> Vec<LintMessage>;
     fn is_fixable(&self, violation: &LintResult) -> bool;
     fn fixable_codes(&self) -> &[ErrorCode];

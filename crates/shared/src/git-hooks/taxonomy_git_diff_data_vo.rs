@@ -85,11 +85,7 @@ pub struct HookIgnoreUpdateVO {
 }
 
 impl HookIgnoreUpdateVO {
-    pub fn new(
-        rule: impl Into<String>,
-        remove: bool,
-        config_path: impl Into<String>,
-    ) -> Self {
+    pub fn new(rule: impl Into<String>, remove: bool, config_path: impl Into<String>) -> Self {
         Self {
             rule: rule.into(),
             remove,
