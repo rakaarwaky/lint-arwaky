@@ -198,7 +198,19 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         Commands::Init { global } => cli_commands::surface_setup_command::handle_init(global),
-        Commands::Install { sudo } => cli_commands::surface_setup_command::handle_install(sudo),
+        Commands::Install { sudo } => {
+            let setup_container =
+                project_setup::root_project_setup_container::SetupContainer::new();
+            let setup_orchestrator = setup_container.aggregate();
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+            rt.block_on(cli_commands::surface_setup_command::handle_install(
+                setup_orchestrator,
+                sudo,
+            ))
+        }
         Commands::McpConfig { client } => {
             cli_commands::surface_setup_command::handle_mcp_config(&client)
         }

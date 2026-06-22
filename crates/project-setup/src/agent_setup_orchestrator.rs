@@ -10,7 +10,12 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-pub struct SetupManagementOrchestrator {}
+use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use std::sync::Arc;
+
+pub struct SetupManagementOrchestrator {
+    protocol: Arc<dyn ISetupManagementProtocol>,
+}
 
 #[async_trait]
 impl SetupManagementAggregate for SetupManagementOrchestrator {
@@ -62,16 +67,17 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
         config.insert("client".to_string(), serde_json::json!("vscode"));
         McpConfigVO { value: config }
     }
-}
+    async fn install_python_adapters(&self) -> SuccessStatus {
+        self.protocol.install_python_adapters().await
+    }
 
-impl Default for SetupManagementOrchestrator {
-    fn default() -> Self {
-        Self::new()
+    async fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus {
+        self.protocol.install_javascript_adapters(sudo).await
     }
 }
 
 impl SetupManagementOrchestrator {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(protocol: Arc<dyn ISetupManagementProtocol>) -> Self {
+        Self { protocol }
     }
 }

@@ -6,21 +6,22 @@ use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 
-/// Business logic for generating setup and configuration artifacts.
-pub struct SetupManagementProcessor {}
+use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
+use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
+use std::sync::Arc;
 
-impl Default for SetupManagementProcessor {
-    fn default() -> Self {
-        Self::new()
-    }
+/// Business logic for generating setup and configuration artifacts.
+pub struct SetupManagementProcessor {
+    installer: Arc<dyn ISetupInstallerPort>,
 }
 
 impl SetupManagementProcessor {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(installer: Arc<dyn ISetupInstallerPort>) -> Self {
+        Self { installer }
     }
 }
 
+#[async_trait::async_trait]
 impl ISetupManagementProtocol for SetupManagementProcessor {
     /// Generate .env content for the lint-arwaky environment.
     fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO {
@@ -103,5 +104,32 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
                 }
             })
             .unwrap_or_else(|| "lint-arwaky-mcp".to_string())
+    }
+
+    async fn install_python_adapters(&self) -> SuccessStatus {
+        let res = self
+            .installer
+            .install_python_packages(&[
+                "ruff".to_string(),
+                "mypy".to_string(),
+                "bandit".to_string(),
+            ])
+            .await;
+        SuccessStatus::new(res.is_ok())
+    }
+
+    async fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus {
+        let res = self
+            .installer
+            .install_npm_packages(
+                &[
+                    "eslint".to_string(),
+                    "prettier".to_string(),
+                    "typescript".to_string(),
+                ],
+                sudo,
+            )
+            .await;
+        SuccessStatus::new(res.is_ok())
     }
 }

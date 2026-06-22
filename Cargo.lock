@@ -2826,6 +2826,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tokio",
 ]
 
 [[package]]

@@ -10,13 +10,16 @@ pub struct SetupContainer {
 
 impl SetupContainer {
     pub fn new() -> Self {
+        let installer =
+            Arc::new(crate::infrastructure_setup_installer_adapter::SetupInstallerAdapter::new());
+        let protocol =
+            Arc::new(crate::capabilities_setup_processor::SetupManagementProcessor::new(installer));
+        let aggregate = Arc::new(
+            crate::agent_setup_orchestrator::SetupManagementOrchestrator::new(protocol.clone()),
+        );
         Self {
-            aggregate: Arc::new(
-                crate::agent_setup_orchestrator::SetupManagementOrchestrator::new(),
-            ),
-            protocol: Arc::new(
-                crate::capabilities_setup_processor::SetupManagementProcessor::new(),
-            ),
+            aggregate,
+            protocol,
         }
     }
 

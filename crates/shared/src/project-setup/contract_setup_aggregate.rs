@@ -18,4 +18,6 @@ pub trait SetupManagementAggregate: Send + Sync {
     fn mcp_config_claude(&self, transport: &TransportProtocol) -> McpConfigVO;
     fn mcp_config_hermes(&self, transport: &TransportProtocol) -> McpConfigVO;
     fn mcp_config_vscode(&self, transport: &TransportProtocol) -> McpConfigVO;
+    async fn install_python_adapters(&self) -> SuccessStatus;
+    async fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus;
 }

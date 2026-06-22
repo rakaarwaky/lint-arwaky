@@ -1,5 +1,7 @@
 // PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, install, mcp-config)
+use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use std::process::ExitCode;
+use std::sync::Arc;
 
 pub fn handle_init(global: bool) -> ExitCode {
     if global {
@@ -24,114 +26,10 @@ pub fn handle_init(global: bool) -> ExitCode {
         println!("Config already exists: {}", target.display());
     } else {
         let content = match language {
-            "python" => {
-                r#"# Lint Arwaky Configuration — Python
-project:
-  language: python
-  name: my-project
-  version: 1.0.0
-ci:
-  threshold: 70
-layers:
-  taxonomy:
-    prefixes: ["taxonomy_"]
-    suffixes: ["_vo", "_entity", "_event", "_error", "_constant", "_util", "_helper"]
-  contract:
-    prefixes: ["contract_"]
-    suffixes: ["_port", "_protocol", "_aggregate"]
-  capabilities:
-    prefixes: ["capabilities_"]
-    suffixes: ["_checker", "_analyzer", "_processor"]
-  infrastructure:
-    prefixes: ["infrastructure_"]
-    suffixes: ["_adapter", "_provider", "_scanner"]
-  agent:
-    prefixes: ["agent_"]
-    suffixes: ["_container", "_orchestrator", "_lifecycle"]
-  surface:
-    prefixes: ["surface_"]
-    suffixes: ["_command", "_handler", "_controller"]
-source:
-  include:
-    - "packages/**/*.py"
-    - "modules/**/*.py"
-  exclude:
-    - "**/.venv/**"
-    - "**/vendor/**"
-"#
-            }
-            "javascript" => {
-                r#"# Lint Arwaky Configuration — JavaScript/TypeScript
-project:
-  language: javascript
-  name: my-project
-  version: 1.0.0
-ci:
-  threshold: 70
-layers:
-  taxonomy:
-    prefixes: ["taxonomy_"]
-    suffixes: ["_vo", "_entity", "_event", "_error", "_constant", "_util", "_helper"]
-  contract:
-    prefixes: ["contract_"]
-    suffixes: ["_port", "_protocol", "_aggregate"]
-  capabilities:
-    prefixes: ["capabilities_"]
-    suffixes: ["_checker", "_analyzer", "_processor"]
-  infrastructure:
-    prefixes: ["infrastructure_"]
-    suffixes: ["_adapter", "_provider", "_scanner"]
-  agent:
-    prefixes: ["agent_"]
-    suffixes: ["_container", "_orchestrator", "_lifecycle"]
-  surface:
-    prefixes: ["surface_"]
-    suffixes: ["_command", "_handler", "_controller"]
-source:
-  include:
-    - "packages/**/*.{js,ts,tsx}"
-    - "modules/**/*.{js,ts,tsx}"
-  exclude:
-    - "**/node_modules/**"
-    - "**/dist/**"
-"#
-            }
-            _ => {
-                r#"# Lint Arwaky Configuration — Rust
-project:
-  language: rust
-  name: my-project
-  version: 1.0.0
-ci:
-  threshold: 70
-layers:
-  taxonomy:
-    prefixes: ["taxonomy_"]
-    suffixes: ["_vo", "_entity", "_event", "_error", "_constant", "_util", "_helper"]
-  contract:
-    prefixes: ["contract_"]
-    suffixes: ["_port", "_protocol", "_aggregate"]
-  capabilities:
-    prefixes: ["capabilities_"]
-    suffixes: ["_checker", "_analyzer", "_processor"]
-  infrastructure:
-    prefixes: ["infrastructure_"]
-    suffixes: ["_adapter", "_provider", "_scanner"]
-  agent:
-    prefixes: ["agent_"]
-    suffixes: ["_container", "_orchestrator", "_lifecycle"]
-  surface:
-    prefixes: ["surface_"]
-    suffixes: ["_command", "_handler", "_controller"]
-source:
-  include:
-    - "crates/**/*.rs"
-    - "modules/**/*.rs"
-  exclude:
-    - "**/target/**"
-    - "**/vendor/**"
-"#
-            }
+            "rust" => include_str!("../../../lint_arwaky.config.rust.yaml"),
+            "python" => include_str!("../../../lint_arwaky.config.python.yaml"),
+            "javascript" => include_str!("../../../lint_arwaky.config.javascript.yaml"),
+            _ => include_str!("../../../lint_arwaky.config.rust.yaml"),
         };
 
         let _ = std::fs::write(&target, content);
@@ -188,42 +86,37 @@ fn handle_init_global() {
     }
 }
 
-pub fn handle_install(sudo: bool) -> ExitCode {
+pub async fn handle_install(
+    setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    sudo: bool,
+) -> ExitCode {
     println!("Lint Arwaky — Install Adapter Dependencies");
     println!("{}", "=".repeat(50));
 
     println!("\n[1/2] Installing Python adapters (ruff, mypy, bandit)...");
-    let py_status = std::process::Command::new("pip")
-        .args(["install", "--user", "ruff", "mypy", "bandit"])
-        .status();
-    match py_status {
-        Ok(s) if s.success() => println!("  Python adapters installed"),
-        Ok(s) => println!("  pip exited with code: {}", s.code().unwrap_or(-1)),
-        Err(e) => println!("  Failed to run pip: {e}"),
+    let py_status = setup_orchestrator.install_python_adapters().await;
+    if py_status.value {
+        println!("  Python adapters installed");
+    } else {
+        println!("  Failed to install Python adapters");
     }
 
     println!("\n[2/2] Installing JavaScript adapters (eslint, prettier, typescript)...");
-    let (npm_cmd, npm_args): (&str, Vec<&str>) = if sudo {
-        (
-            "sudo",
-            vec!["npm", "install", "-g", "eslint", "prettier", "typescript"],
-        )
+    let js_status = setup_orchestrator.install_javascript_adapters(sudo).await;
+    if js_status.value {
+        println!("  JavaScript adapters installed");
     } else {
-        (
-            "npm",
-            vec!["install", "-g", "eslint", "prettier", "typescript"],
-        )
-    };
-    let js_status = std::process::Command::new(npm_cmd).args(&npm_args).status();
-    match js_status {
-        Ok(s) if s.success() => println!("  JavaScript adapters installed"),
-        Ok(s) => println!("  npm exited with code: {}", s.code().unwrap_or(-1)),
-        Err(e) => println!("  Failed to run npm: {e}"),
+        println!("  Failed to install JavaScript adapters");
     }
 
     println!("\n{}", "=".repeat(50));
-    println!("Done! Run `lint-arwaky doctor` to verify.");
-    ExitCode::SUCCESS
+    if py_status.value && js_status.value {
+        println!("Done! Run `lint-arwaky doctor` to verify.");
+        ExitCode::SUCCESS
+    } else {
+        println!("Installation failed. Run with `--sudo` if npm globally requires permissions.");
+        ExitCode::from(1)
+    }
 }
 
 pub fn handle_mcp_config(client: &str) -> ExitCode {
