@@ -1,6 +1,6 @@
 // PURPOSE: LintArwakyMcpServer — MCP server using rmcp official SDK
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{Implementation, ProtocolVersion, ServerCapabilities, ServerInfo};
+use rmcp::model::{Implementation, ProtocolVersion, ServerCapabilities, ServerInfo, ToolsCapability};
 use rmcp::{tool, tool_router, ServerHandler};
 use std::sync::Arc;
 
@@ -24,7 +24,10 @@ impl ServerHandler for LintArwakyMcpServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             protocol_version: ProtocolVersion::default(),
-            capabilities: ServerCapabilities::default(),
+            capabilities: ServerCapabilities {
+                tools: Some(ToolsCapability { list_changed: None }),
+                ..Default::default()
+            },
             server_info: Implementation {
                 name: "lint-arwaky".to_string(),
                 version: env!("CARGO_PKG_VERSION").to_string(),
