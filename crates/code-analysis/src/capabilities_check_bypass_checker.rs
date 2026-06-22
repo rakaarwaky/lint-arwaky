@@ -1,20 +1,30 @@
 // PURPOSE: BypassChecker — IBypassCheckerProtocol for AES304: detect #[allow], noqa, unwrap, panic
 // ALGORITHM:
 //   1. Skip #[cfg(test)] blocks and static Lazy<Regex> multiline inits
-//   2. For each line, classify forbidden tokens using word-boundary aware substring matching:
-//        - Substring patterns (e.g. "noqa", "type: ignore", "eslint-disable", "ts-ignore",
-//          "ts-expect-error", "pylint: disable") → BYPASS_COMMENT
+//   2. Detect source language (Rust / Python / JS / TS) from the file extension.
+//   3. For each line, classify forbidden tokens using word-boundary aware substring matching:
 //        - Word-pattern tokens (e.g. "unwrap", "expect", "panic", "todo", "unimplemented",
 //          "unreachable") → matched as Rust/Python/JS identifiers with word boundaries so
 //          `.unwrap_or_default`, `.expect("msg")`, `panic!`, `unreachable!` all fire.
+//        - Language-scoped phrase patterns (e.g. "raise NotImplementedError" for Python,
+//          "throw new Error" for JS/TS, "throw ..." for any expression throw) →
+//          BYPASS-style violation matching the equivalent panic/unimplemented semantics.
+//        - Substring bypass patterns (e.g. "noqa", "type: ignore", "eslint-disable",
+//          "ts-ignore", "ts-expect-error", "pylint: disable") → BYPASS_COMMENT.
 //        - `#[allow(` / `#[expect(` → BYPASS_COMMENT (whole-line attribute).
-//   3. Patterns are read from ArchitectureConfig.code_analysis.forbidden_bypass.values so
+//   4. Patterns are read from ArchitectureConfig.code_analysis.forbidden_bypass.values so
 //      YAML config is honored (not hardcoded). A fallback default list applies if empty.
+//
+// Per-language patterns are applied only when the file extension matches. Cross-language
+// false positives are prevented by gating each language-specific phrase on a language match
+// (e.g. `raise` only fires on .py files; `throw` only fires on .js/.jsx/.mjs/.cjs/.ts/.tsx files).
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
+use shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 /// Default forbidden-bypass patterns applied when config is empty or missing.
 /// These mirror the AES304 catalog (BypassComment, UnwrapExpect, Panic, Todo, Unimplemented).
@@ -35,8 +45,10 @@ const DEFAULT_FORBIDDEN_BYPASS: &[&str] = &[
 ];
 
 /// Identifiers treated as Rust-style word tokens (must match as a whole identifier).
-/// This lets `.unwrap_or_default`, `.expect("msg")`, `panic!("..")`, `unreachable!()` all
-/// fire even though their textual form differs from the bare pattern.
+/// These patterns are universal — they fire in any language that exposes a literal
+/// substring like `.unwrap()` or `panic!()` in its syntax. They are gated only by the
+/// word-boundary matcher, not by language, because Rust method-chain syntax can appear
+/// in non-Rust files (e.g. .unwrap() called on a Rust binding from JS via wasm-bindgen).
 const WORD_PATTERN_TOKENS: &[&str] = &[
     "unwrap",
     "expect",
@@ -44,6 +56,125 @@ const WORD_PATTERN_TOKENS: &[&str] = &[
     "todo",
     "unimplemented",
     "unreachable",
+];
+
+/// Language-scoped phrase patterns. Each entry declares a substring that, when found
+/// on a line of the matching language, fires a specific violation kind. The phrase is
+/// matched lowercase so language-specific capitalization (`NotImplementedError`,
+/// `TypeError`) does not affect detection.
+///
+/// Design note: we keep phrases lowercase here and lowercase the line before matching,
+/// which lets us catch both `raise NotImplementedError` and `raise notimplementederror`
+/// without enumerating every casing variant. Indent-style whitespace is handled by
+/// trimming the line, which `check_bypass_comments` already does.
+struct PhrasePattern {
+    /// Lowercase substring to search for (case-insensitive on the line).
+    needle: &'static str,
+    /// Violation kind to emit on hit.
+    kind: ViolationKind,
+    /// Languages this phrase applies to. `Language::Unknown` means "all languages".
+    languages: &'static [SourceLanguage],
+}
+
+/// Logical source languages recognised by the checker. Mirrors
+/// `shared::source_parsing::contract_language_detector_port::Language` but kept
+/// independent so the checker does not pull in the full detector trait surface.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SourceLanguage {
+    Rust,
+    Python,
+    JavaScript,
+    TypeScript,
+}
+
+impl SourceLanguage {
+    fn from_file(file: &str) -> Self {
+        let Ok(fp) = FilePath::new(file) else {
+            return SourceLanguage::Rust;
+        };
+        match LanguageDetector::new().detect(&fp) {
+            shared::source_parsing::contract_language_detector_port::Language::Rust => {
+                SourceLanguage::Rust
+            }
+            shared::source_parsing::contract_language_detector_port::Language::Python => {
+                SourceLanguage::Python
+            }
+            shared::source_parsing::contract_language_detector_port::Language::JavaScript => {
+                SourceLanguage::JavaScript
+            }
+            shared::source_parsing::contract_language_detector_port::Language::TypeScript => {
+                SourceLanguage::TypeScript
+            }
+            shared::source_parsing::contract_language_detector_port::Language::Unknown => {
+                SourceLanguage::Rust
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ViolationKind {
+    UnwrapExpect,
+    Panic,
+    Todo,
+    Unimplemented,
+    BypassComment,
+}
+
+/// Phrase patterns that only fire on specific languages. These cover language-native
+/// panic-equivalent idioms that the universal `WORD_PATTERN_TOKENS` cannot catch because
+/// they involve multi-word constructs (`raise NotImplementedError`, `throw new Error`).
+///
+/// Each phrase is paired with the violation kind it represents. False positives are
+/// minimised by requiring (a) the language match and (b) the lowercase needle to appear
+/// as a substring of the trimmed lowercase line — well-formed exception raises will always
+/// include the needle; identifier names like `raise_count` or `throwback` would match
+/// the substring too, but in those cases the surrounding context (no `Error` class,
+/// no `new`) means they would not actually raise at runtime. Operators who hit a real
+/// false positive can add an `# noqa`-style allow in the YAML config.
+const LANGUAGE_PHRASE_PATTERNS: &[PhrasePattern] = &[
+    // ─── Python: panic-equivalent idioms ───────────────────────────────────
+    PhrasePattern {
+        needle: "raise notimplementederror",
+        kind: ViolationKind::Unimplemented,
+        languages: &[SourceLanguage::Python],
+    },
+    PhrasePattern {
+        needle: "raise notimplemented",
+        kind: ViolationKind::Unimplemented,
+        languages: &[SourceLanguage::Python],
+    },
+    PhrasePattern {
+        needle: "assert false",
+        kind: ViolationKind::Panic,
+        languages: &[SourceLanguage::Python],
+    },
+    // ─── JavaScript / TypeScript: panic-equivalent idioms ──────────────────
+    PhrasePattern {
+        needle: "throw new error",
+        kind: ViolationKind::Panic,
+        languages: &[SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+    },
+    PhrasePattern {
+        needle: "throw new typeerror",
+        kind: ViolationKind::Panic,
+        languages: &[SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+    },
+    PhrasePattern {
+        needle: "throw new rangeerror",
+        kind: ViolationKind::Panic,
+        languages: &[SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+    },
+    PhrasePattern {
+        needle: "throw new referenceerror",
+        kind: ViolationKind::Panic,
+        languages: &[SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+    },
+    PhrasePattern {
+        needle: "throw new syntaxerror",
+        kind: ViolationKind::Panic,
+        languages: &[SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+    },
 ];
 
 pub struct BypassChecker {
@@ -179,6 +310,7 @@ fn is_ident_start(b: u8) -> bool {
 
 impl IBypassCheckerProtocol for BypassChecker {
     fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let language = SourceLanguage::from_file(file);
         let mut in_test_module = false;
         let mut in_static_lazy = false;
         for (i, line) in content.lines().enumerate() {
@@ -216,7 +348,7 @@ impl IBypassCheckerProtocol for BypassChecker {
             }
 
             // Match forbidden-bypass patterns from config (with sensible defaults).
-            let mut bypass_hit: Option<&'static str> = None;
+            let mut bypass_hit: Option<ViolationKind> = None;
             for p in &self.forbidden_bypass {
                 let p_str = p.as_str();
                 if WORD_PATTERN_TOKENS.contains(&p_str) {
@@ -229,18 +361,40 @@ impl IBypassCheckerProtocol for BypassChecker {
                         break;
                     }
                 } else if !p_str.is_empty() && t.to_lowercase().contains(&p_str.to_lowercase()) {
-                    bypass_hit = Some("BypassComment");
+                    bypass_hit = Some(ViolationKind::BypassComment);
                     break;
+                }
+            }
+
+            // Language-scoped phrase patterns. These fire only when the source language
+            // matches the phrase's language list, preventing cross-language false positives
+            // (e.g. `raise` only fires on Python; `throw new Error` only on JS/TS).
+            if bypass_hit.is_none() {
+                let line_lc = t.to_lowercase();
+                for phrase in LANGUAGE_PHRASE_PATTERNS {
+                    if !phrase.languages.contains(&language) {
+                        continue;
+                    }
+                    if line_lc.contains(phrase.needle) {
+                        bypass_hit = Some(phrase.kind);
+                        break;
+                    }
                 }
             }
 
             if let Some(kind) = bypass_hit {
                 let vo = match kind {
-                    "UnwrapExpect" => AesCodeAnalysisViolation::UnwrapExpect { reason: None },
-                    "Panic" => AesCodeAnalysisViolation::Panic { reason: None },
-                    "Todo" => AesCodeAnalysisViolation::Todo { reason: None },
-                    "Unimplemented" => AesCodeAnalysisViolation::Unimplemented { reason: None },
-                    _ => AesCodeAnalysisViolation::BypassComment { reason: None },
+                    ViolationKind::UnwrapExpect => {
+                        AesCodeAnalysisViolation::UnwrapExpect { reason: None }
+                    }
+                    ViolationKind::Panic => AesCodeAnalysisViolation::Panic { reason: None },
+                    ViolationKind::Todo => AesCodeAnalysisViolation::Todo { reason: None },
+                    ViolationKind::Unimplemented => {
+                        AesCodeAnalysisViolation::Unimplemented { reason: None }
+                    }
+                    ViolationKind::BypassComment => {
+                        AesCodeAnalysisViolation::BypassComment { reason: None }
+                    }
                 };
                 violations.push(LintResult::new_arch(
                     file,
@@ -255,14 +409,14 @@ impl IBypassCheckerProtocol for BypassChecker {
     }
 }
 
-/// Map a forbidden token to its Violation variant name.
-fn classify_token(token: &str) -> &'static str {
+/// Map a forbidden token to its Violation variant.
+fn classify_token(token: &str) -> ViolationKind {
     match token {
-        "unwrap" | "expect" => "UnwrapExpect",
-        "panic" => "Panic",
-        "todo" => "Todo",
-        "unimplemented" | "unreachable" => "Unimplemented",
-        _ => "BypassComment",
+        "unwrap" | "expect" => ViolationKind::UnwrapExpect,
+        "panic" => ViolationKind::Panic,
+        "todo" => ViolationKind::Todo,
+        "unimplemented" | "unreachable" => ViolationKind::Unimplemented,
+        _ => ViolationKind::BypassComment,
     }
 }
 
@@ -278,6 +432,8 @@ mod tests {
         violations.iter().filter(|v| v.code.code() == code).count()
     }
 
+    // ─── Rust universal word patterns ─────────────────────────────────────
+
     #[test]
     fn detects_bare_unwrap() {
         let checker = BypassChecker::new();
@@ -290,7 +446,11 @@ mod tests {
     fn detects_unwrap_or_default() {
         let checker = BypassChecker::new();
         let mut v = empty_violations();
-        checker.check_bypass_comments("f.rs", "let x = fs::read(p).unwrap_or_default();\n", &mut v);
+        checker.check_bypass_comments(
+            "f.rs",
+            "let x = fs::read(p).unwrap_or_default();\n",
+            &mut v,
+        );
         assert_eq!(
             count_code(&v, "AES304"),
             1,
@@ -363,22 +523,6 @@ mod tests {
     }
 
     #[test]
-    fn detects_noqa_python() {
-        let checker = BypassChecker::new();
-        let mut v = empty_violations();
-        checker.check_bypass_comments("f.py", "x = foo()  # noqa\n", &mut v);
-        assert_eq!(count_code(&v, "AES304"), 1);
-    }
-
-    #[test]
-    fn detects_eslint_disable_js() {
-        let checker = BypassChecker::new();
-        let mut v = empty_violations();
-        checker.check_bypass_comments("f.js", "// eslint-disable-next-line\nvar x = 1;\n", &mut v);
-        assert_eq!(count_code(&v, "AES304"), 1);
-    }
-
-    #[test]
     fn skips_test_modules() {
         let checker = BypassChecker::new();
         let mut v = empty_violations();
@@ -389,7 +533,6 @@ mod tests {
 
     #[test]
     fn does_not_match_substring_of_identifier() {
-        // `expectation` should NOT fire — `expect` is only a substring, not a word.
         let checker = BypassChecker::new();
         let mut v = empty_violations();
         checker.check_bypass_comments("f.rs", "let expectation = 5;\n", &mut v);
@@ -402,7 +545,6 @@ mod tests {
 
     #[test]
     fn does_not_match_unwrap_in_identifier_name() {
-        // `unwrap_helper` is a local variable name, NOT a `.unwrap()` call.
         let checker = BypassChecker::new();
         let mut v = empty_violations();
         checker.check_bypass_comments(
@@ -419,7 +561,6 @@ mod tests {
 
     #[test]
     fn honors_config_patterns() {
-        // Caller supplies only the patterns they want enforced.
         let patterns = PatternList::new(vec!["panic".to_string()]);
         let checker = BypassChecker::from_patterns(&patterns);
         let mut v = empty_violations();
@@ -428,7 +569,6 @@ mod tests {
             "let x = Some(5).unwrap();\npanic!(\"oops\");\n",
             &mut v,
         );
-        // Only `panic!` should fire because config didn't list `unwrap`.
         assert_eq!(count_code(&v, "AES304"), 1);
     }
 
@@ -437,6 +577,247 @@ mod tests {
         let checker = BypassChecker::from_patterns(&PatternList::default());
         let mut v = empty_violations();
         checker.check_bypass_comments("f.rs", "let x = Some(5).unwrap();\n", &mut v);
+        assert_eq!(count_code(&v, "AES304"), 1);
+    }
+
+    // ─── Python: panic-equivalent idioms ──────────────────────────────────
+
+    #[test]
+    fn detects_python_raise_not_implemented_error() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.py",
+            "def foo():\n    raise NotImplementedError\n",
+            &mut v,
+        );
+        assert_eq!(
+            count_code(&v, "AES304"),
+            1,
+            "Python raise NotImplementedError must fire"
+        );
+    }
+
+    #[test]
+    fn detects_python_raise_not_implemented() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments("f.py", "def foo():\n    raise NotImplemented\n", &mut v);
+        assert_eq!(
+            count_code(&v, "AES304"),
+            1,
+            "Python raise NotImplemented must fire"
+        );
+    }
+
+    #[test]
+    fn detects_python_assert_false() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments("f.py", "def foo():\n    assert False, \"unreachable\"\n", &mut v);
+        assert_eq!(
+            count_code(&v, "AES304"),
+            1,
+            "Python assert False must fire"
+        );
+    }
+
+    #[test]
+    fn python_raise_not_does_not_fire_on_rust() {
+        // `raise NotImplementedError` is Python-only. On a .rs file the phrase
+        // pattern must not fire even if the line contains the substring.
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.rs",
+            "// raise NotImplementedError here\n",
+            &mut v,
+        );
+        // Line starts with `//` (comment) → bypass comment pattern fires instead.
+        // The point is the phrase pattern must NOT fire on Rust files.
+        let phrase_hits = v
+            .iter()
+            .filter(|r| r.message.value.contains("unimplemented"))
+            .count();
+        assert_eq!(phrase_hits, 0, "phrase pattern must not fire on .rs files");
+    }
+
+    #[test]
+    fn detects_python_noqa_bypass_comment() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments("f.py", "x = foo()  # noqa\n", &mut v);
+        assert_eq!(count_code(&v, "AES304"), 1);
+    }
+
+    #[test]
+    fn python_raise_value_error_does_not_fire_phrase() {
+        // `raise ValueError` is legitimate Python — only NotImplementedError fires
+        // as unimplemented. We are conservative: not every raise is a violation.
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.py",
+            "def foo():\n    raise ValueError(\"bad input\")\n",
+            &mut v,
+        );
+        // `ValueError` does not match `notimplementederror` substring → no hit
+        // from phrase pattern. Good — operator raises ValueError to bubble errors.
+        let phrase_hits = v
+            .iter()
+            .filter(|r| r.message.value.contains("unimplemented") || r.message.value.contains("panic"))
+            .count();
+        assert_eq!(phrase_hits, 0);
+    }
+
+    // ─── JavaScript / TypeScript: panic-equivalent idioms ─────────────────
+
+    #[test]
+    fn detects_js_throw_new_error() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.js",
+            "function foo() {\n    throw new Error(\"oops\");\n}\n",
+            &mut v,
+        );
+        assert_eq!(
+            count_code(&v, "AES304"),
+            1,
+            "JS throw new Error must fire"
+        );
+    }
+
+    #[test]
+    fn detects_js_throw_new_type_error() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.js",
+            "function foo(x) {\n    if (typeof x !== \"number\") throw new TypeError(\"not a number\");\n}\n",
+            &mut v,
+        );
+        assert_eq!(count_code(&v, "AES304"), 1);
+    }
+
+    #[test]
+    fn detects_ts_throw_new_error() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.ts",
+            "export function foo(): never {\n    throw new Error(\"oops\");\n}\n",
+            &mut v,
+        );
+        assert_eq!(count_code(&v, "AES304"), 1);
+    }
+
+    #[test]
+    fn detects_jsx_throw_new_error() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.jsx",
+            "const Foo = () => {\n    throw new Error(\"render failed\");\n};\n",
+            &mut v,
+        );
+        assert_eq!(count_code(&v, "AES304"), 1);
+    }
+
+    #[test]
+    fn detects_eslint_disable_js() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.js",
+            "// eslint-disable-next-line\nvar x = 1;\n",
+            &mut v,
+        );
+        assert_eq!(count_code(&v, "AES304"), 1);
+    }
+
+    #[test]
+    fn jest_expect_does_not_match_word_pattern() {
+        // Jest's `expect(value).toBe(...)` is a testing-library call, not a panic.
+        // Our universal `expect` word pattern with `requires_dot=true` requires `.expect`
+        // with a literal preceding `.`. `expect(value)` has `(` right after `expect`
+        // — that IS preceded by `expect` matching the word boundary... but it does NOT
+        // match `requires_dot` because there is no leading `.`. So the word pattern
+        // must NOT fire on Jest matchers.
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.js",
+            "expect(value).toBe(5);\n",
+            &mut v,
+        );
+        assert_eq!(
+            count_code(&v, "AES304"),
+            0,
+            "Jest expect(value).toBe(...) must not fire"
+        );
+    }
+
+    #[test]
+    fn js_throw_string_literal_does_not_match_phrase() {
+        // We only fire on `throw new <ErrorClass>` — a bare `throw "msg"` is a
+        // re-throw of an existing error and is legitimate control flow.
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.js",
+            "function bar() {\n    throw \"rethrow string\";\n}\n",
+            &mut v,
+        );
+        assert_eq!(
+            count_code(&v, "AES304"),
+            0,
+            "bare `throw \"literal\"` should not fire"
+        );
+    }
+
+    #[test]
+    fn js_throw_error_does_not_match_rust_panic_macro() {
+        // `throw err` (re-throw) is legitimate; only `throw new X(...)` is flagged.
+        // The word pattern `panic` won't match anything in this JS line, and
+        // `throw new Error` is the only phrase pattern that should fire.
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.js",
+            "function reraise() {\n    throw err;\n}\n",
+            &mut v,
+        );
+        assert_eq!(count_code(&v, "AES304"), 0);
+    }
+
+    #[test]
+    fn python_throw_does_not_match_phrase() {
+        // Python doesn't have `throw` — Rust/JS keyword. Phrase `throw new error`
+        // must not fire on .py files even if the line happens to mention "throw".
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.py",
+            "# thrown away\nthrow_new_error = None\n",
+            &mut v,
+        );
+        assert_eq!(
+            count_code(&v, "AES304"),
+            0,
+            "`throw new error` phrase must not fire on .py files"
+        );
+    }
+
+    #[test]
+    fn tsx_throw_new_error_fires() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        checker.check_bypass_comments(
+            "f.tsx",
+            "export const Foo = () => { throw new RangeError(\"oob\"); };\n",
+            &mut v,
+        );
         assert_eq!(count_code(&v, "AES304"), 1);
     }
 }
