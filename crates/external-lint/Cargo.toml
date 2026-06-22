@@ -2,8 +2,15 @@
 name = "external_lint-lint-arwaky"
 version = "1.10.14"
 edition = "2021"
+description = "Adapters for external linters — Rust (clippy, rustfmt, cargo-audit), Python (ruff, mypy, bandit), JavaScript/TypeScript (eslint, prettier, tsc). Invoked via stdio."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = false
 
-[dependencies]
+[lints]
+workspace = true
+
+[dependencies]  # (unchanged)
 anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true

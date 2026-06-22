@@ -2,8 +2,15 @@
 name = "naming_rules-lint-arwaky"
 version = "1.10.14"
 edition = "2021"
+description = "Naming-convention enforcer for AES101 (lowercase + underscore snake_case stems) and AES102 (suffix taxonomy `_checker`/`_analyzer`/...)."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = false
 
-[dependencies]
+[lints]
+workspace = true
+
+[dependencies]  # (unchanged)
 async-trait.workspace = true
 regex.workspace = true
 shared.workspace = true

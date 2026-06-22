@@ -2,8 +2,15 @@
 name = "maintenance-lint-arwaky"
 version = "1.10.14"
 edition = "2021"
+description = "Maintenance operations: dep updates, audit sweeps, drift detection, and rule-codebook refreshes for the AES catalog."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = false
 
-[dependencies]
+[lints]
+workspace = true
+
+[dependencies]  # (unchanged)
 serde.workspace = true
 serde_json.workspace = true
 async-trait.workspace = true

@@ -2,8 +2,15 @@
 name = "role_rules-lint-arwaky"
 version = "1.10.14"
 edition = "2021"
+description = "Architectural role-layer violation checks covering AES401–AES406 (taxonomy, contract, capability, infrastructure, surface, root wiring)."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = false
 
-[dependencies]
+[lints]
+workspace = true
+
+[dependencies]  # (unchanged)
 serde.workspace = true
 serde_json.workspace = true
 async-trait.workspace = true

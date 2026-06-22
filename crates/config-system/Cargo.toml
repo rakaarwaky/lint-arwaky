@@ -2,8 +2,15 @@
 name = "config_system-lint-arwaky"
 version = "1.10.14"
 edition = "2021"
+description = "Configuration loading, parsing, validation, and workspace detection. Resolves `lint_arwaky.config.*.yaml` and merges it with project-level overrides."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = false
 
-[dependencies]
+[lints]
+workspace = true
+
+[dependencies]  # (unchanged)
 serde.workspace = true
 serde_json.workspace = true
 async-trait.workspace = true

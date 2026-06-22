@@ -2,8 +2,15 @@
 name = "source_parsing-lint-arwaky"
 version = "1.10.14"
 edition = "2021"
+description = "Source-code parsing pipeline: file collectors, language detectors, and per-language scanners (Rust/Python/JavaScript/TypeScript)."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = false
 
-[dependencies]
+[lints]
+workspace = true
+
+[dependencies]  # (unchanged)
 serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true

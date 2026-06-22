@@ -127,11 +127,44 @@ console.workspace = true
 ctrlc.workspace = true
 futures.workspace = true
 
+# Production release profile: small binary, fast startup, predictable runtime.
 [profile.release]
-opt-level = 2
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+debug = false
+incremental = false
 
 [profile.release.package.regex-automata]
 opt-level = 0
 
 [profile.release.package.regex-syntax]
 opt-level = 0
+
+# Dev profile keeps good debug info but enables test-only optimizations.
+[profile.dev]
+opt-level = 0
+debug = true
+incremental = true
+
+# Centralised lint policy — applied to every workspace crate via `lints.workspace = true`.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+similar_names = "allow"
+struct_excessive_bools = "allow"
