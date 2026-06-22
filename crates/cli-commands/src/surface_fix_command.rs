@@ -4,7 +4,6 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use crate::surface_output_controller::{get_output_dir, tee_stdout, write_output};
 use code_analysis::resolve_target;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 
@@ -36,41 +35,33 @@ impl FixCommandsSurface {
     }
 
     pub fn run_fix(&self, project_path: FilePath, dry_run: bool) {
-        let output_dir = get_output_dir(None);
+        if dry_run {
+            println!("[DRY-RUN] Previewing fixes for {}...", project_path.value);
+        } else {
+            println!("Applying safe fixes to {}...", project_path.value);
+        }
 
-        let output = tee_stdout(None, || {
-            if dry_run {
-                println!("[DRY-RUN] Previewing fixes for {}...", project_path.value);
-            } else {
-                println!("Applying safe fixes to {}...", project_path.value);
-            }
+        let orchestrator =
+            code_analysis::agent_code_analysis_orchestrator::CodeAnalysisOrchestrator::new();
+        let results = orchestrator.run_self_lint(&project_path);
+        println!("Found {} violations before fix", results.len());
 
-            let orchestrator =
-                code_analysis::agent_code_analysis_orchestrator::CodeAnalysisOrchestrator::new();
-            let results = orchestrator.run_self_lint(&project_path);
-            println!("Found {} violations before fix", results.len());
+        let fix_orch = (self.fix_orchestrator_factory)(dry_run);
+        let fix_result = fix_orch.execute(&project_path);
 
-            let fix_orch = (self.fix_orchestrator_factory)(dry_run);
-            let fix_result = fix_orch.execute(&project_path);
+        println!("{}", fix_result.output.value);
 
-            println!("{}", fix_result.output.value);
-
-            if !dry_run {
-                let after_results = orchestrator.run_self_lint(&project_path);
-                let fixed_count = results.len().saturating_sub(after_results.len());
-                println!(
-                    "Fixed {} violations ({} remaining)",
-                    fixed_count,
-                    after_results.len()
-                );
-                println!("Fix complete.");
-            } else {
-                println!("Dry-run complete — no changes applied.");
-            }
-        });
-
-        if let Some(_dir) = output_dir {
-            write_output(None, &output, "fix", Some("txt"));
+        if !dry_run {
+            let after_results = orchestrator.run_self_lint(&project_path);
+            let fixed_count = results.len().saturating_sub(after_results.len());
+            println!(
+                "Fixed {} violations ({} remaining)",
+                fixed_count,
+                after_results.len()
+            );
+            println!("Fix complete.");
+        } else {
+            println!("Dry-run complete — no changes applied.");
         }
     }
 }
