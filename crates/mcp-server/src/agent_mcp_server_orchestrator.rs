@@ -1,7 +1,8 @@
 // PURPOSE: LintArwakyMcpServer — MCP server using rmcp official SDK
+use rmcp::handler::server::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{Implementation, ProtocolVersion, ServerCapabilities, ServerInfo, ToolsCapability};
-use rmcp::{tool, tool_router, ServerHandler};
+use rmcp::{tool, tool_handler, tool_router, ServerHandler};
 use std::sync::Arc;
 
 use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
@@ -12,14 +13,19 @@ use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, Rea
 pub struct LintArwakyMcpServer {
     #[allow(dead_code)]
     arch_linter: Arc<dyn IArchLintAggregate>,
+    tool_router: ToolRouter<Self>,
 }
 
 impl LintArwakyMcpServer {
     pub fn new(arch_linter: Arc<dyn IArchLintAggregate>) -> Self {
-        Self { arch_linter }
+        Self {
+            arch_linter,
+            tool_router: Self::tool_router(),
+        }
     }
 }
 
+#[tool_handler]
 impl ServerHandler for LintArwakyMcpServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
