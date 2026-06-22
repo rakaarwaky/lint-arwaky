@@ -44,5 +44,3 @@ pub mod project_setup;
 pub mod role_rules;
 #[path = "source-parsing/mod.rs"]
 pub mod source_parsing;
-#[path = "vscode-extension/mod.rs"]
-pub mod vscode_extension;

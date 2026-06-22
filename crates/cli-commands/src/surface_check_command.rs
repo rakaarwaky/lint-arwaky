@@ -143,18 +143,19 @@ impl CheckCommandsSurface {
         let role_results = rt.block_on(role_orchestrator.run_audit(&path_obj));
         all_results.extend(role_results);
 
-        // 5. Run orphan detection
+        // 5. Run orphan detection — always scan entire workspace for cross-folder import graph
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_ignored(
                 ignored_paths.clone(),
             );
         let orphan_analyzer = orphan_container.analyzer();
-        let source_files = collect_source_files(path, &ignored_paths);
+        // Use workspace root (.) for orphan detection — captures crates/, packages/, modules/
+        let source_files = collect_source_files(".", &ignored_paths);
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         let orphan_results = orphan_analyzer.check_orphans(
             orphan_container.layer_detector().as_ref(),
             &file_strs,
-            path,
+            ".",
         );
         all_results.extend(orphan_results);
 
@@ -207,8 +208,13 @@ impl CheckCommandsSurface {
             .map(|fp| fp.value.clone())
             .collect();
 
-        // Collect all source files from project root for graph building
-        let source_files = collect_source_files(&root_dir, &ignored_paths);
+        // Collect all source files from workspace root for cross-folder graph building
+        let orphan_root = if std::path::Path::new("crates").exists() {
+            "crates".to_string()
+        } else {
+            root_dir.clone()
+        };
+        let source_files = collect_source_files(&orphan_root, &ignored_paths);
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
         // Normalize the target file path

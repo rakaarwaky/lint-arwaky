@@ -243,25 +243,3 @@ impl IArchLintProtocol for CodeAnalysisOrchestrator {
         self.format_report(&results.values, project_root)
     }
 }
-
-impl shared::code_analysis::contract_lint_aggregate::ILintAggregate for CodeAnalysisOrchestrator {
-    fn run_self_lint(&self, project_root: &str) -> LintResultList {
-        LintResultList::new(self.run_self_lint(project_root))
-    }
-
-    fn run_lint(&self, path: &str) -> Vec<LintResult> {
-        self.run_self_lint(path)
-    }
-
-    fn calc_score(&self, results: &[LintResult]) -> f64 {
-        compute_score(results)
-    }
-
-    fn check_critical(&self, results: &[LintResult]) -> bool {
-        has_critical(results)
-    }
-
-    fn format_report(&self, results: &LintResultList, project_root: &str) -> String {
-        self.format_report(&results.values, project_root)
-    }
-}

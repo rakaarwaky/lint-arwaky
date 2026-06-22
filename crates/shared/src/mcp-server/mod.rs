@@ -1,9 +1,6 @@
 // mcp-server — taxonomy and contract types
-pub mod contract_registry_port;
-pub mod contract_schema_checker_protocol;
-pub mod contract_server_port;
-pub mod taxonomy_action_vo;
-pub mod taxonomy_job_vo;
-pub mod taxonomy_registry_error;
-pub mod taxonomy_server_constant;
-pub mod taxonomy_server_validation_utility;
+// Re-export from common for backward compatibility
+pub use crate::common::taxonomy_action_vo;
+pub use crate::common::taxonomy_job_vo;
+
+

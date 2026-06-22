@@ -44,35 +44,4 @@ pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
     }
 }
 
-pub fn match_layer_recursive(rel: &str, path_def: &str) -> bool {
-    let last_segment = path_def.rsplit('/').next().unwrap_or(path_def);
-    rel.starts_with(path_def) || rel.starts_with(last_segment)
-}
 
-pub fn match_layer_nonrecursive(rel: &str, path_def: &str) -> bool {
-    let norm_path_def = path_def.trim_end_matches('/');
-
-    let parent_dir = match Path::new(rel).parent().and_then(|p| p.to_str()) {
-        Some("") => ".",
-        Some(p) => p.trim_end_matches('/'),
-        None => ".",
-    };
-
-    if parent_dir == norm_path_def {
-        return true;
-    }
-
-    if parent_dir == "." && !norm_path_def.is_empty() && norm_path_def != "." {
-        return true;
-    }
-
-    if parent_dir == "." && rel.ends_with(norm_path_def) {
-        return true;
-    }
-
-    if parent_dir == "." && !norm_path_def.is_empty() {
-        return true;
-    }
-
-    false
-}

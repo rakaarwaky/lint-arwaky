@@ -7,7 +7,6 @@ pub mod contract_cycle_protocol;
 pub mod contract_dead_inheritance_protocol;
 pub mod contract_layer_detection_aggregate;
 pub mod contract_line_protocol;
-pub mod contract_lint_aggregate;
 pub mod contract_lint_protocol;
 pub mod taxonomy_analysis_vo;
 pub mod taxonomy_code_analysis_rule_vo;
