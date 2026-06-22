@@ -3484,6 +3484,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
+ "clap",
  "once_cell",
  "regex",
  "serde",

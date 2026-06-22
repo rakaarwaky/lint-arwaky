@@ -3,10 +3,9 @@ use std::env;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use cli_commands::surface_bootstrap_command;
 use cli_commands::surface_check_command;
 use cli_commands::surface_config_command;
-use cli_commands::surface_core_command::{Cli, Commands, MaintenanceCommands};
+use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands, MaintenanceCommands};
 use cli_commands::surface_fix_command;
 use cli_commands::surface_git_command;
 use cli_commands::surface_maintenance_command;
@@ -139,7 +138,26 @@ fn main() -> ExitCode {
         },
         Commands::Version => {
             let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
-            surface_bootstrap_command::handle_version(verbose)
+            let ver = env!("CARGO_PKG_VERSION");
+            if verbose {
+                println!("Lint Arwaky v{}", ver);
+                let commit = std::process::Command::new("git")
+                    .args(["rev-parse", "HEAD"])
+                    .output()
+                    .ok()
+                    .filter(|o| o.status.success())
+                    .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+                    .unwrap_or_else(|| "unknown".to_string());
+                println!("  Commit:    {}", commit);
+                let rustc = option_env!("VERGEN_RUSTC_SEMVER")
+                    .or(option_env!("RUSTC_VERSION"))
+                    .unwrap_or("stable");
+                println!("  Rustc:     {}", rustc);
+                println!("  License:   MIT");
+            } else {
+                println!("Lint Arwaky v{ver} (AES Semantic Builder)");
+            }
+            ExitCode::SUCCESS
         }
         Commands::Adapters => surface_plugin_command::handle_adapters(external_lint_aggregate),
         Commands::Config { command } => surface_config_command::handle_config(command),

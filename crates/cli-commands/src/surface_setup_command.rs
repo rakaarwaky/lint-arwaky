@@ -1,7 +1,7 @@
 // PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, env, mcp config, doctor)
 use std::process::ExitCode;
 
-use crate::surface_core_command::SetupCommands;
+use shared::cli_commands::taxonomy_cli_vo::SetupCommands;
 
 #[derive(Clone)]
 pub struct SetupCommandsSurface {}

@@ -1,7 +1,7 @@
 // PURPOSE: handle_config — CLI surface for displaying current lint-arwaky configuration from YAML files
 use std::process::ExitCode;
 
-use crate::surface_core_command::ConfigCommands;
+use shared::cli_commands::taxonomy_cli_vo::ConfigCommands;
 
 pub fn handle_config(command: ConfigCommands) -> ExitCode {
     match command {
