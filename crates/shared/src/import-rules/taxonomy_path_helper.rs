@@ -43,5 +43,3 @@ pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
         normalized_file
     }
 }
-
-

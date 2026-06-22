@@ -99,7 +99,17 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                     match adapter.scan(&path_clone).await {
                         Ok(results) => Ok::<Vec<_>, String>(results.values),
                         Err(e) => {
-                            eprintln!("[warn] {} adapter failed: {:?}", name_owned, e);
+                            let err_msg = e.to_string();
+                            if err_msg.contains("No such file or directory")
+                                || err_msg.contains("os error 2")
+                            {
+                                eprintln!(
+                                    "[warn] {} is not installed or not in system PATH. Skipping.",
+                                    name_owned
+                                );
+                            } else {
+                                eprintln!("[warn] {} adapter failed: {}", name_owned, err_msg);
+                            }
                             Ok(Vec::new())
                         }
                     }

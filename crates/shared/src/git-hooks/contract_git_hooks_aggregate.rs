@@ -14,10 +14,7 @@ pub trait GitHooksAggregate: Send + Sync {
     fn hook_protocol(&self) -> &dyn IHookProtocol;
 
     /// Run full git hooks check on a path
-    async fn run_git_hooks_check(
-        &self,
-        path: &FilePath,
-    ) -> LintResultList {
+    async fn run_git_hooks_check(&self, path: &FilePath) -> LintResultList {
         self.diff_protocol().run_git_diff_check(path).await
     }
 

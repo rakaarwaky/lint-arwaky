@@ -141,18 +141,14 @@ impl ISourceParserPort for SourceParserOrchestrator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure_js_scanner::ASTJSParserAdapter;
-    use crate::infrastructure_language_detector::LanguageDetector;
-    use crate::infrastructure_py_scanner::ASTPythonParserAdapter;
-    use crate::infrastructure_rust_scanner::ASTRustParserAdapter;
 
     #[test]
     fn test_orchestrator_routing() {
         let orchestrator = SourceParserOrchestrator::new(
-            Box::new(ASTPythonParserAdapter::new()),
-            Box::new(ASTRustParserAdapter::new()),
-            Box::new(ASTJSParserAdapter::new()),
-            Box::new(LanguageDetector::new()),
+            Box::new(crate::infrastructure_py_scanner::ASTPythonParserAdapter::new()),
+            Box::new(crate::infrastructure_rust_scanner::ASTRustParserAdapter::new()),
+            Box::new(crate::infrastructure_js_scanner::ASTJSParserAdapter::new()),
+            Box::new(crate::infrastructure_language_detector::LanguageDetector::new()),
         );
 
         // Test rust routing

@@ -2,8 +2,7 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use shared::code_analysis::contract_lint_protocol::IArchLintProtocol;
-use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
+use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
 
 pub struct GitCommandsSurface {}
 
@@ -45,7 +44,7 @@ impl GitCommandsSurface {
     }
 }
 
-pub fn handle_git_diff(arch_linter: Arc<dyn IArchLintProtocol>, base: String) -> ExitCode {
+pub fn handle_git_diff(arch_linter: Arc<dyn IArchLintAggregate>, base: String) -> ExitCode {
     println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
     let output = std::process::Command::new("git")
         .args(["diff", "--name-only", &base])
