@@ -53,11 +53,13 @@ impl ImportOrchestrator {
             .file_name()
             .map(|n| n.to_string_lossy())
             .unwrap_or_default();
-        shared::source_parsing::taxonomy_file_collector_helper::is_path_ignored(&s, &self.ignored_paths)
-            || dir_name
-                .strip_prefix('.')
-                .map(|n| self.ignored_paths.iter().any(|i| i.contains(n)))
-                .unwrap_or(false)
+        shared::source_parsing::taxonomy_file_collector_helper::is_path_ignored(
+            &s,
+            &self.ignored_paths,
+        ) || dir_name
+            .strip_prefix('.')
+            .map(|n| self.ignored_paths.iter().any(|i| i.contains(n)))
+            .unwrap_or(false)
     }
 
     fn collect_files(&self, target: &FilePath) -> FilePathList {
