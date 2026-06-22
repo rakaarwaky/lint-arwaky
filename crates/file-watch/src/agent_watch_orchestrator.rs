@@ -64,10 +64,13 @@ impl WatchOrchestrator {
 
 impl IWatchAggregate for WatchOrchestrator {
     fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
-        let rt = tokio::runtime::Runtime::new().unwrap_or_else(|e| {
-            eprintln!("Failed to create tokio runtime: {}", e);
-            std::process::exit(1);
-        });
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("Failed to create tokio runtime: {}", e);
+                std::process::exit(1);
+            }
+        };
         rt.block_on(self.run_async(config, running))
     }
 }

@@ -12,7 +12,10 @@ pub fn normalize_to_layer(name: &str) -> String {
         "agent_",
         "surface_",
     ];
-    let base = name.rsplit('/').next().unwrap_or(name);
+    let base = match name.rsplit('/').next() {
+        Some(b) => b,
+        None => name,
+    };
     for prefix in &layer_prefixes {
         if base.starts_with(prefix) {
             return prefix.trim_end_matches('_').to_string();

@@ -75,13 +75,14 @@ impl DummyImportChecker {
             .collect();
 
         // Step 4: Detect the architectural layer for this file
-        let layer_name = analyzer
-            .detect_layer(
-                &FilePath::new(file.to_string()).unwrap_or_default(),
-                root_dir,
-            )
-            .map(|l| l.to_string())
-            .unwrap_or_else(|| "any".to_string());
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => FilePath::default(),
+        };
+        let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
+            Some(l) => l.to_string(),
+            None => "any".to_string(),
+        };
 
         // Step 5-7: Iterate imported symbols and check if they have real usage
         for (symbol, line_no) in self.parser.get_imported_symbols(&lines, lang) {
@@ -139,13 +140,14 @@ impl DummyImportChecker {
         let lang = self.parser.get_language_from_path(file);
 
         // Step 2: Detect file layer
-        let layer_name = analyzer
-            .detect_layer(
-                &FilePath::new(file.to_string()).unwrap_or_default(),
-                root_dir,
-            )
-            .map(|l| l.to_string())
-            .unwrap_or_else(|| "any".to_string());
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => FilePath::default(),
+        };
+        let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
+            Some(l) => l.to_string(),
+            None => "any".to_string(),
+        };
 
         // Step 3-4: Flag each dummy function as violation
         for (start, end) in self.parser.get_dummy_function_ranges(&lines, lang) {
@@ -190,13 +192,14 @@ impl DummyImportChecker {
         let lines: Vec<&str> = content.lines().collect();
 
         // Step 2: Detect file layer
-        let layer_name = analyzer
-            .detect_layer(
-                &FilePath::new(file.to_string()).unwrap_or_default(),
-                root_dir,
-            )
-            .map(|l| l.to_string())
-            .unwrap_or_else(|| "any".to_string());
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => FilePath::default(),
+        };
+        let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
+            Some(l) => l.to_string(),
+            None => "any".to_string(),
+        };
 
         // Step 3-4: Flag each dummy/stub trait implementation
         for (trait_name, start) in self.parser.get_dummy_impl_traits_with_lines(&lines) {
@@ -248,13 +251,14 @@ impl DummyImportChecker {
         let lines: Vec<&str> = content.lines().collect();
         let lang = self.parser.get_language_from_path(file);
 
-        let _layer_name = analyzer
-            .detect_layer(
-                &FilePath::new(file.to_string()).unwrap_or_default(),
-                root_dir,
-            )
-            .map(|l| l.to_string())
-            .unwrap_or_else(|| "any".to_string());
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => FilePath::default(),
+        };
+        let _layer_name = match analyzer.detect_layer(&file_path, root_dir) {
+            Some(l) => l.to_string(),
+            None => "any".to_string(),
+        };
 
         // Step 2: Check if file has a dummy function — essential precondition
         let mut has_dummy_function = false;

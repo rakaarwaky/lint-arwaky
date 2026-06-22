@@ -23,13 +23,15 @@ use std::path::Path;
 use std::sync::Arc;
 
 fn is_bun_available() -> bool {
-    std::process::Command::new("bun")
+    match std::process::Command::new("bun")
         .arg("--version")
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
+    {
+        Ok(s) => s.success(),
+        Err(_) => false,
+    }
 }
 
 fn resolve_js_cmd(executable: &str, args: Vec<String>, working_dir: &str) -> Vec<String> {
@@ -56,10 +58,10 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
         let mut current = if abs_path.is_file() {
             match abs_path.parent() {
                 Some(p) => p.to_path_buf(),
-                None => return FilePath::new(".".to_string()).unwrap_or_default(),
+                None => std::path::PathBuf::from("."),
             }
         } else {
-            abs_path
+            abs_path.clone()
         };
 
         for _ in 0..10 {
@@ -68,15 +70,25 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
                 || current.join("package.json").is_file()
                 || current.join(".git").is_dir()
             {
-                return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
+                return match FilePath::new(current.to_string_lossy().to_string()) {
+                    Ok(fp) => fp,
+                    Err(_) => FilePath::default(),
+                };
             }
             match current.parent() {
                 Some(parent) => current = parent.to_path_buf(),
                 None => break,
             }
         }
+        return match FilePath::new(current.to_string_lossy().to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        };
     }
-    FilePath::new(".".to_string()).unwrap_or_default()
+    match FilePath::new(".".to_string()) {
+        Ok(fp) => fp,
+        Err(_) => FilePath::default(),
+    }
 }
 
 pub struct ESLintAdapter {
@@ -167,19 +179,40 @@ impl ILinterAdapterPort for ESLintAdapter {
         let mut results = Vec::new();
         if let Some(files) = parsed.as_array() {
             for file_data in files {
-                let filename = file_data["filePath"].as_str().unwrap_or("").to_string();
+                let filename = match file_data["filePath"].as_str() {
+                    Some(s) => s.to_string(),
+                    None => String::new(),
+                };
                 let filename_vo = self.path_norm.resolve_infrastructure_path(
-                    FilePath::new(filename).unwrap_or_default(),
+                    match FilePath::new(filename) {
+                        Ok(fp) => fp,
+                        Err(_) => FilePath::default(),
+                    },
                     Some(path.clone()),
                 );
 
                 if let Some(messages) = file_data["messages"].as_array() {
                     for msg in messages {
-                        let line_num = msg["line"].as_u64().unwrap_or(1) as usize;
-                        let col_num = msg["column"].as_u64().unwrap_or(0) as usize;
-                        let rule_id = msg["ruleId"].as_str().unwrap_or("ESLINT").to_string();
-                        let message_text = msg["message"].as_str().unwrap_or("").to_string();
-                        let sev_code = msg["severity"].as_u64().unwrap_or(1);
+                        let line_num = match msg["line"].as_u64() {
+                            Some(v) => v as usize,
+                            None => 1,
+                        };
+                        let col_num = match msg["column"].as_u64() {
+                            Some(v) => v as usize,
+                            None => 0,
+                        };
+                        let rule_id = match msg["ruleId"].as_str() {
+                            Some(s) => s.to_string(),
+                            None => "ESLINT".to_string(),
+                        };
+                        let message_text = match msg["message"].as_str() {
+                            Some(s) => s.to_string(),
+                            None => String::new(),
+                        };
+                        let sev_code = match msg["severity"].as_u64() {
+                            Some(v) => v,
+                            None => 1,
+                        };
 
                         let severity = if sev_code == 2 {
                             Severity::HIGH

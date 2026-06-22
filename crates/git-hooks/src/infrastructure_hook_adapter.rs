@@ -1,5 +1,6 @@
 // PURPOSE: HookAdapter — IHookManagerPort implementation for installing/uninstalling git hook scripts
 
+use shared::common::taxonomy_message_vo::LintMessage;
 use shared::git_hooks::contract_manager_port::IHookManagerPort;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
@@ -59,7 +60,7 @@ exit 0
         );
         std::fs::write(&hook_path, &hook_content).map_err(|e| {
             shared::git_hooks::taxonomy_hook_error::GitHookError::new(
-                shared::taxonomy_common_error::ErrorMessage::new(format!(
+                LintMessage::new(format!(
                     "Failed to write hook: {}",
                     e
                 )),
@@ -70,7 +71,7 @@ exit 0
             let mut perms = std::fs::metadata(&hook_path)
                 .map_err(|e| {
                     shared::git_hooks::taxonomy_hook_error::GitHookError::new(
-                        shared::taxonomy_common_error::ErrorMessage::new(format!(
+                        LintMessage::new(format!(
                             "Failed to get metadata: {}",
                             e
                         )),
@@ -80,7 +81,7 @@ exit 0
             perms.set_mode(0o755);
             std::fs::set_permissions(&hook_path, perms).map_err(|e| {
                 shared::git_hooks::taxonomy_hook_error::GitHookError::new(
-                    shared::taxonomy_common_error::ErrorMessage::new(format!(
+                    LintMessage::new(format!(
                         "Failed to set permissions: {}",
                         e
                     )),
@@ -100,7 +101,7 @@ exit 0
         if hook_path.exists() {
             std::fs::remove_file(&hook_path).map_err(|e| {
                 shared::git_hooks::taxonomy_hook_error::GitHookError::new(
-                    shared::taxonomy_common_error::ErrorMessage::new(format!(
+                    LintMessage::new(format!(
                         "Failed to remove hook: {}",
                         e
                     )),

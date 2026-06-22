@@ -100,7 +100,7 @@ pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]
             }
             if p.is_dir() {
                 walk_rs_files(&p, cb, ignored);
-            } else if p.extension().map(|x| x == "rs").unwrap_or(false) {
+            } else if matches!(p.extension().and_then(|e| e.to_str()), Some("rs")) {
                 cb(p);
             }
         }

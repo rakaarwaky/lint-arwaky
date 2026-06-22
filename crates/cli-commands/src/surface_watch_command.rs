@@ -21,7 +21,10 @@ impl WatchCommandsSurface {
 }
 
 pub fn handle_watch(watch_aggregate: Arc<dyn IWatchAggregate>, path: Option<String>) -> ExitCode {
-    let root = path.unwrap_or_else(|| ".".to_string());
+    let root = match path {
+        Some(p) => p,
+        None => ".".to_string(),
+    };
     let config = WatchConfig::from_path(root);
 
     let running = Arc::new(AtomicBool::new(true));

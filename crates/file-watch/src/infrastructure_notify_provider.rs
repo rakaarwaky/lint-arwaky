@@ -9,7 +9,7 @@ use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::taxonomy_service_error::WatchServiceError;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
-use shared::taxonomy_common_error::ErrorMessage;
+use shared::common::taxonomy_message_vo::LintMessage;
 use tokio::sync::broadcast;
 
 pub struct NotifyWatchProvider {
@@ -41,16 +41,19 @@ impl IWatchProviderPort for NotifyWatchProvider {
         let path_str = config.path.value.clone();
         let path = std::path::Path::new(&path_str);
         if !path.exists() {
-            return Err(WatchServiceError::new(ErrorMessage::new(format!(
+            return Err(WatchServiceError::new(LintMessage::new(format!(
                 "Path does not exist: {}",
                 path_str
             ))));
         }
 
-        *self
-            .ignore_patterns
-            .lock()
-            .unwrap_or_else(|e| e.into_inner()) = config.ignore_patterns.clone();
+        {
+            let mut patterns = match self.ignore_patterns.lock() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
+            *patterns = config.ignore_patterns.clone();
+        }
 
         let tx = self.tx.clone();
         let ignore = config.ignore_patterns.clone();
@@ -80,7 +83,7 @@ impl IWatchProviderPort for NotifyWatchProvider {
             },
         )
         .map_err(|e| {
-            WatchServiceError::new(ErrorMessage::new(format!(
+            WatchServiceError::new(LintMessage::new(format!(
                 "Failed to create debouncer: {}",
                 e
             )))
@@ -93,15 +96,24 @@ impl IWatchProviderPort for NotifyWatchProvider {
         };
 
         debouncer.watcher().watch(path, recursive).map_err(|e| {
-            WatchServiceError::new(ErrorMessage::new(format!("Failed to watch path: {}", e)))
+            WatchServiceError::new(LintMessage::new(format!("Failed to watch path: {}", e)))
         })?;
 
-        *self.watcher.lock().unwrap_or_else(|e| e.into_inner()) = Some(debouncer);
+        {
+            let mut watcher_guard = match self.watcher.lock() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
+            *watcher_guard = Some(debouncer);
+        }
         Ok(())
     }
 
     async fn stop(&self) -> Result<(), WatchServiceError> {
-        let mut guard = self.watcher.lock().unwrap_or_else(|e| e.into_inner());
+        let mut guard = match self.watcher.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         if let Some(debouncer) = guard.take() {
             drop(debouncer);
         }

@@ -32,7 +32,10 @@ impl OSFileSystemAdapter {
         if let Ok(entries) = fs::read_dir(dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let name = match path.file_name().and_then(|n| n.to_str()) {
+                    Some(s) => s,
+                    None => "",
+                };
                 if ignored.contains(&name.to_string()) {
                     continue;
                 }

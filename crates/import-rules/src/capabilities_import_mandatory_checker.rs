@@ -65,7 +65,10 @@ impl ArchImportMandatoryChecker {
         }
 
         // Step 2-3: Skip special files and exceptions
-        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => FilePath::default(),
+        };
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
         if basename == "__init__.py" {
@@ -83,8 +86,14 @@ impl ArchImportMandatoryChecker {
         let import_lines = self.parser.parse_import_lines(&file_content);
 
         // Step 5: Derive source layer from filename (first prefix segment)
-        let stem = basename.rsplit('.').next_back().unwrap_or(basename);
-        let source_layer = stem.split('_').next().unwrap_or("unknown");
+        let stem = match basename.rsplit('.').next_back() {
+            Some(s) => s,
+            None => basename,
+        };
+        let source_layer = match stem.split('_').next() {
+            Some(s) => s,
+            None => "unknown",
+        };
 
         // Step 6: Check each required scope against actual imports
         for required in &definition.mandatory.values {
@@ -143,15 +152,24 @@ impl ArchImportMandatoryChecker {
         violations: &mut Vec<LintResult>,
     ) {
         // Step 1: Extract file stem and suffix
-        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => FilePath::default(),
+        };
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
         // Step 2: Skip Rust entry files
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
-        let stem = basename.rsplit('.').next_back().unwrap_or(basename);
-        let suffix = stem.rsplit('_').next().unwrap_or("");
+        let stem = match basename.rsplit('.').next_back() {
+            Some(s) => s,
+            None => basename,
+        };
+        let suffix = match stem.rsplit('_').next_back() {
+            Some(s) => s,
+            None => "",
+        };
 
         // Step 3: Parse import lines
         let import_lines = self.parser.read_import_lines(&file_path);

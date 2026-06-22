@@ -47,7 +47,6 @@ pub struct CheckCommandsSurface {
 }
 
 impl CheckCommandsSurface {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         external_lint: Arc<dyn IExternalLintAggregate>,
         arch_linter: Arc<dyn IArchLintAggregate>,
@@ -73,7 +72,6 @@ impl CheckCommandsSurface {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub fn new_with_factory(
         external_lint: Arc<dyn IExternalLintAggregate>,
         arch_linter: Arc<dyn IArchLintAggregate>,
@@ -102,8 +100,13 @@ impl CheckCommandsSurface {
 
     /// Run AES analysis + external adapters on a target path.
     pub fn scan(&self, path: &str, filter: Option<&str>) {
-        let path_obj = FilePath::new(path.to_string())
-            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
+        let path_obj = match FilePath::new(path.to_string()) {
+            Ok(fp) => fp,
+            Err(_) => match FilePath::new(".".to_string()) {
+                Ok(fp) => fp,
+                Err(_) => FilePath::default(),
+            },
+        };
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
             Err(_) => {
@@ -162,8 +165,13 @@ impl CheckCommandsSurface {
         all_results.extend(import_results);
 
         // 4. Run external linter adapters via aggregate
-        let path_obj2 = FilePath::new(path.to_string())
-            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
+        let path_obj2 = match FilePath::new(path.to_string()) {
+            Ok(fp) => fp,
+            Err(_) => match FilePath::new(".".to_string()) {
+                Ok(fp) => fp,
+                Err(_) => FilePath::default(),
+            },
+        };
         let external_results = rt.block_on(self.external_lint.scan_all(&path_obj2));
         all_results.extend(external_results.values);
 
@@ -177,12 +185,18 @@ impl CheckCommandsSurface {
                 ignored_paths.clone(),
             );
         // Use workspace root (.) for orphan detection — captures crates/, packages/, modules/
-        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
-        let source_files = self
+        let dir_path = match DirectoryPath::new(".".to_string()) {
+            Ok(dp) => dp,
+            Err(_) => DirectoryPath::default(),
+        };
+        let source_files = match self
             .scanner_provider
             .scan_directory(&dir_path)
             .map(|list| list.values)
-            .unwrap_or_default();
+        {
+            Ok(files) => files,
+            Err(_) => Vec::new(),
+        };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         let orphan_results = self.orphan_orchestrator.check_orphans(
             orphan_container.layer_detector().as_ref(),
@@ -208,16 +222,19 @@ impl CheckCommandsSurface {
     pub fn check_orphan_single_file(&self, file_path: &str) {
         let path_obj = std::path::Path::new(file_path);
         let root_dir = if path_obj.is_file() {
-            path_obj
-                .parent()
-                .unwrap_or(path_obj)
-                .to_string_lossy()
-                .to_string()
+            let parent = match path_obj.parent() {
+                Some(p) => p,
+                None => path_obj,
+            };
+            parent.to_string_lossy().to_string()
         } else {
             file_path.to_string()
         };
 
-        let path_obj_fp = FilePath::new(root_dir.clone()).unwrap_or_default();
+        let path_obj_fp = match FilePath::new(root_dir.clone()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        };
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
             Err(_) => {
@@ -241,19 +258,28 @@ impl CheckCommandsSurface {
             .collect();
 
         // Collect all source files from workspace root for cross-folder graph building
-        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
-        let source_files = self
+        let dir_path = match DirectoryPath::new(".".to_string()) {
+            Ok(dp) => dp,
+            Err(_) => DirectoryPath::default(),
+        };
+        let source_files = match self
             .scanner_provider
             .scan_directory(&dir_path)
             .map(|list| list.values)
-            .unwrap_or_default();
+        {
+            Ok(files) => files,
+            Err(_) => Vec::new(),
+        };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
         // Normalize the target file path
         let target_path = if path_obj.is_absolute() {
             file_path.to_string()
         } else {
-            let cwd = std::env::current_dir().unwrap_or_default();
+            let cwd = match std::env::current_dir() {
+                Ok(p) => p,
+                Err(_) => std::path::PathBuf::default(),
+            };
             cwd.join(file_path).to_string_lossy().to_string()
         };
 
@@ -325,10 +351,10 @@ impl CheckCommandsSurface {
         let mut global_all_results = Vec::new();
 
         for ws in &workspaces {
-            let ws_name = std::path::Path::new(&ws.path.value)
-                .file_name()
-                .unwrap_or_default()
-                .to_string_lossy();
+            let ws_name = match std::path::Path::new(&ws.path.value).file_name() {
+                Some(name) => name.to_string_lossy(),
+                None => std::borrow::Cow::Borrowed(""),
+            };
             let ws_type = &ws.workspace_type;
 
             let mut all_results = Vec::new();
@@ -464,10 +490,16 @@ pub fn handle_check(
     if git_diff {
         let git_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
         let git_aggregate = git_container.aggregate();
-        let rt = tokio::runtime::Builder::new_current_thread()
+        let rt = match tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
-            .unwrap();
+        {
+            Ok(r) => r,
+            Err(_) => {
+                eprintln!("[error] failed to create tokio runtime");
+                return ExitCode::FAILURE;
+            }
+        };
         rt.block_on(crate::surface_git_command::handle_git_diff(
             git_aggregate,
             ctx.arch_linter.clone(),

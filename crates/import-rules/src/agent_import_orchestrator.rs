@@ -49,17 +49,17 @@ impl ImportOrchestrator {
 
     fn is_ignored(&self, p: &Path) -> bool {
         let s = p.to_string_lossy();
-        let dir_name = p
-            .file_name()
-            .map(|n| n.to_string_lossy())
-            .unwrap_or_default();
+        let dir_name = match p.file_name() {
+            Some(n) => n.to_string_lossy().to_string(),
+            None => String::new(),
+        };
         shared::source_parsing::taxonomy_file_collector_helper::is_path_ignored(
             &s,
             &self.ignored_paths,
-        ) || dir_name
-            .strip_prefix('.')
-            .map(|n| self.ignored_paths.iter().any(|i| i.contains(n)))
-            .unwrap_or(false)
+        ) || match dir_name.strip_prefix('.') {
+            Some(n) => self.ignored_paths.iter().any(|i| i.contains(n)),
+            None => false,
+        }
     }
 
     fn collect_files(&self, target: &FilePath) -> FilePathList {
@@ -68,7 +68,9 @@ impl ImportOrchestrator {
         if path.is_dir() {
             self.walk_dir(path, &mut files, true);
         } else if path.is_file() {
-            files.push(FilePath::new(path.to_string_lossy().to_string()).unwrap_or_default());
+            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
+                files.push(fp);
+            }
         }
         FilePathList::new(files)
     }
@@ -88,10 +90,9 @@ impl ImportOrchestrator {
                             ext.to_str(),
                             Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
                         ) {
-                            files.push(
-                                FilePath::new(path.to_string_lossy().to_string())
-                                    .unwrap_or_default(),
-                            );
+                            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
+                                files.push(fp);
+                            }
                         }
                     }
                 }
@@ -105,8 +106,14 @@ impl IImportRunnerAggregate for ImportOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
         let mut results = LintResultList::new(Vec::new());
         let files = self.collect_files(target);
-        let root_dir = FilePath::new(target.value().split('/').next().unwrap_or(".").to_string())
-            .unwrap_or_default();
+        let first_component = match target.value().split('/').next() {
+            Some(s) => s,
+            None => ".",
+        };
+        let root_dir = match FilePath::new(first_component.to_string()) {
+            Ok(p) => p,
+            Err(_) => FilePath::default(),
+        };
 
         self.mandatory
             .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)

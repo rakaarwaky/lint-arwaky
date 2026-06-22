@@ -43,10 +43,10 @@ impl BanditAdapter {
     }
 
     fn resolve_executable(&self) -> String {
-        self.bin_path
-            .as_ref()
-            .map(|p| p.value.clone())
-            .unwrap_or_else(|| "bandit".to_string())
+        match self.bin_path.as_ref() {
+            Some(p) => p.value.clone(),
+            None => "bandit".to_string(),
+        }
     }
 
     fn map_severity(&self, severity: &str) -> Severity {
@@ -76,7 +76,10 @@ impl ILinterAdapterPort for BanditAdapter {
             "--exit-zero".to_string(),
         ];
         let command = PatternList::new(cmd);
-        let working_dir = FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone());
+        let working_dir = match FilePath::new(".".to_string()) {
+            Ok(fp) => fp,
+            Err(_) => path.clone(),
+        };
 
         match self
             .executor
@@ -89,33 +92,52 @@ impl ILinterAdapterPort for BanditAdapter {
         {
             Ok(response) => {
                 let stdout = &response.stdout;
-                let parsed: Value =
-                    serde_json::from_str(stdout).unwrap_or(Value::Object(serde_json::Map::new()));
-                let findings = parsed
-                    .get("results")
-                    .and_then(|v| v.as_array())
-                    .cloned()
-                    .unwrap_or_default();
+                let parsed: Value = match serde_json::from_str(stdout) {
+                    Ok(v) => v,
+                    Err(_) => Value::Object(serde_json::Map::new()),
+                };
+                let findings = match parsed.get("results").and_then(|v| v.as_array()) {
+                    Some(arr) => arr.clone(),
+                    None => Vec::new(),
+                };
                 let mut results = Vec::new();
 
                 for f in findings {
-                    let filename = f.get("filename").and_then(|v| v.as_str()).unwrap_or("");
-                    let line_number = f.get("line_number").and_then(|v| v.as_i64()).unwrap_or(0);
-                    let line_range = f
+                    let filename = match f.get("filename").and_then(|v| v.as_str()) {
+                        Some(s) => s,
+                        None => "",
+                    };
+                    let line_number = match f.get("line_number").and_then(|v| v.as_i64()) {
+                        Some(v) => v,
+                        None => 0,
+                    };
+                    let line_range = match f
                         .get("line_range")
                         .and_then(|v| v.as_array())
                         .and_then(|a| a.first())
                         .and_then(|v| v.as_i64())
-                        .unwrap_or(0);
-                    let test_id = f.get("test_id").and_then(|v| v.as_str()).unwrap_or("B000");
-                    let issue_text = f.get("issue_text").and_then(|v| v.as_str()).unwrap_or("");
-                    let issue_severity = f
-                        .get("issue_severity")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("MEDIUM");
+                    {
+                        Some(v) => v,
+                        None => 0,
+                    };
+                    let test_id = match f.get("test_id").and_then(|v| v.as_str()) {
+                        Some(s) => s,
+                        None => "B000",
+                    };
+                    let issue_text = match f.get("issue_text").and_then(|v| v.as_str()) {
+                        Some(s) => s,
+                        None => "",
+                    };
+                    let issue_severity = match f.get("issue_severity").and_then(|v| v.as_str()) {
+                        Some(s) => s,
+                        None => "MEDIUM",
+                    };
 
                     let resolved = self.path_norm.resolve_infrastructure_path(
-                        FilePath::new(filename.to_string()).unwrap_or_else(|_| path.clone()),
+                        match FilePath::new(filename.to_string()) {
+                            Ok(fp) => fp,
+                            Err(_) => path.clone(),
+                        },
                         Some(path.clone()),
                     );
 

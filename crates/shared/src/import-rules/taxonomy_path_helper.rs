@@ -2,10 +2,13 @@
 use std::path::Path;
 
 pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
-    let stem = Path::new(filename)
+    let stem = match Path::new(filename)
         .file_stem()
         .and_then(|s| s.to_str())
-        .unwrap_or("");
+    {
+        Some(s) => s,
+        None => "",
+    };
 
     const PREFIX_MAP: &[(&str, &str)] = &[
         ("taxonomy_", "taxonomy"),
@@ -27,14 +30,20 @@ pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
 }
 
 pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
-    let normalized_file = Path::new(file_path)
+    let normalized_file = match Path::new(file_path)
         .canonicalize()
         .map(|p| p.to_string_lossy().replace('\\', "/"))
-        .unwrap_or_else(|_| file_path.replace('\\', "/"));
-    let normalized_root = Path::new(root_dir)
+    {
+        Ok(p) => p,
+        Err(_) => file_path.replace('\\', "/"),
+    };
+    let normalized_root = match Path::new(root_dir)
         .canonicalize()
         .map(|p| p.to_string_lossy().replace('\\', "/"))
-        .unwrap_or_else(|_| root_dir.trim_end_matches('/').replace('\\', "/"));
+    {
+        Ok(p) => p,
+        Err(_) => root_dir.trim_end_matches('/').replace('\\', "/"),
+    };
     if normalized_file.starts_with(&normalized_root) {
         normalized_file[normalized_root.len()..]
             .trim_start_matches('/')

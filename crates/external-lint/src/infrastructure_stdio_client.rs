@@ -28,9 +28,10 @@ impl ICommandExecutorPort for StdioClient {
         working_dir: FilePath,
         timeout: Option<Timeout>,
     ) -> anyhow::Result<ResponseData> {
-        let timeout_val = timeout
-            .map(|d| Duration::from_secs(d.value() as u64))
-            .unwrap_or(self.timeout);
+        let timeout_val = match timeout {
+            Some(d) => Duration::from_secs(d.value() as u64),
+            None => self.timeout,
+        };
         let cmd_list: Vec<&str> = command.values.iter().map(|s| s.as_str()).collect();
         if cmd_list.is_empty() {
             anyhow::bail!("Empty command");
@@ -55,7 +56,10 @@ impl ICommandExecutorPort for StdioClient {
                     value: Some(serde_json::Value::Null),
                     stdout: String::from_utf8_lossy(&output.stdout).to_string(),
                     stderr: String::from_utf8_lossy(&output.stderr).to_string(),
-                    returncode: output.status.code().unwrap_or(-1) as i64,
+                    returncode: match output.status.code() {
+                        Some(c) => c as i64,
+                        None => -1,
+                    },
                     metadata: meta_map,
                 })
             }

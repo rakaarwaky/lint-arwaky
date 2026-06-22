@@ -24,45 +24,41 @@ impl MultiProjectOrchestrator {
         }
     }
 
-    fn scan_workspace_dirs(root: &std::path::Path) -> Vec<FilePath> {
-        let workspace_dirs = ["crates", "packages", "modules"];
+    fn collect_subdirs(dir: &std::path::Path) -> Vec<FilePath> {
         let mut results = Vec::new();
-
-        let is_root_workspace_dir = root
-            .file_name()
-            .map(|name| {
-                let name_str = name.to_string_lossy();
-                workspace_dirs.contains(&name_str.as_ref())
-            })
-            .unwrap_or(false);
-
-        if is_root_workspace_dir {
-            if let Ok(entries) = std::fs::read_dir(root) {
-                for entry in entries.flatten() {
-                    let sub = entry.path();
-                    if sub.is_dir() {
-                        if let Ok(fp) = FilePath::new(sub.to_string_lossy().to_string()) {
-                            results.push(fp);
-                        }
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let sub = entry.path();
+                if sub.is_dir() {
+                    if let Ok(fp) = FilePath::new(sub.to_string_lossy().to_string()) {
+                        results.push(fp);
                     }
                 }
             }
-            return results;
+        }
+        results
+    }
+
+    fn scan_workspace_dirs(root: &std::path::Path) -> Vec<FilePath> {
+        let workspace_dirs = ["crates", "packages", "modules"];
+
+        let is_root_workspace_dir = match root.file_name() {
+            Some(name) => {
+                let name_str = name.to_string_lossy();
+                workspace_dirs.contains(&name_str.as_ref())
+            }
+            None => false,
+        };
+
+        if is_root_workspace_dir {
+            return Self::collect_subdirs(root);
         }
 
+        let mut results = Vec::new();
         for dir in &workspace_dirs {
             let dir_path = root.join(dir);
             if dir_path.is_dir() {
-                if let Ok(entries) = std::fs::read_dir(&dir_path) {
-                    for entry in entries.flatten() {
-                        let sub = entry.path();
-                        if sub.is_dir() {
-                            if let Ok(fp) = FilePath::new(sub.to_string_lossy().to_string()) {
-                                results.push(fp);
-                            }
-                        }
-                    }
-                }
+                results.extend(Self::collect_subdirs(&dir_path));
             }
         }
         results

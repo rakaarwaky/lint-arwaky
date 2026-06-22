@@ -29,10 +29,10 @@ impl ConfigKey {
         }
     }
     pub fn leaf(&self) -> String {
-        self.parts()
-            .last()
-            .cloned()
-            .unwrap_or_else(|| self.value.clone())
+        match self.parts().last() {
+            Some(part) => part.clone(),
+            None => self.value.clone(),
+        }
     }
 }
 

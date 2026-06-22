@@ -175,28 +175,30 @@ impl ASTJSParserAdapter {
             if let Some(class_cap) = CLASS_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
                 let name = class_cap
                     .get(1)
-                    .map(|m| m.as_str())
-                    .unwrap_or("")
+                    .map_or("", |m| m.as_str())
                     .to_string();
                 data.defined.insert(name.clone());
 
                 let base = class_cap.get(2).map(|m| m.as_str().to_string());
-                let resolved_base = base
-                    .as_ref()
-                    .map(|b| data.imported_aliases.get(b).cloned().unwrap_or(b.clone()));
+                let resolved_base = base.as_ref().map(|b| {
+                    data.imported_aliases
+                        .get(b)
+                        .cloned()
+                        .map_or(b.clone(), |v| v)
+                });
 
                 if let Some(ref b) = base {
                     data.class_bases.insert(name.clone(), vec![b.clone()]);
                 }
 
-                let col_pos = line.find(&name).unwrap_or(0) as i64;
+                let col_pos = line.find(&name).map_or(0, |x| x) as i64;
                 data.class_definitions.push(serde_json::json!({
                     "name": name.clone(),
                     "line": idx,
                     "column": col_pos,
                     "is_dead": false,
-                    "bases": base.clone().map(|b| vec![b]).unwrap_or_default(),
-                    "resolved_bases": resolved_base.clone().map(|rb| vec![rb]).unwrap_or_default(),
+                    "bases": base.clone().map_or(Vec::new(), |b| vec![b]),
+                    "resolved_bases": resolved_base.clone().map_or(Vec::new(), |rb| vec![rb]),
                 }));
 
                 current_class = Some(name);
@@ -213,7 +215,7 @@ impl ASTJSParserAdapter {
             if let Some(ref cname) = current_class {
                 if !class_match_found {
                     if let Some(m_cap) = METHOD_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
-                        let mname = m_cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
+                        let mname = m_cap.get(1).map_or("", |m| m.as_str()).to_string();
                         if !["if", "for", "while", "switch"].contains(&mname.as_ref()) {
                             data.class_methods
                                 .entry(cname.clone())
@@ -229,15 +231,15 @@ impl ASTJSParserAdapter {
             let mut module_path = "";
 
             if let Some(imp_cap) = IMPORT_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
-                raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
-                module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
+                raw_imports = imp_cap.get(1).map_or("", |m| m.as_str()).trim();
+                module_path = imp_cap.get(2).map_or("", |m| m.as_str()).trim();
                 import_found = true;
             } else if let Some(imp_cap) = IMPORT_DOUBLE_REGEX
                 .as_ref()
                 .and_then(|r| r.captures(stripped))
             {
-                raw_imports = imp_cap.get(1).map(|m| m.as_str()).unwrap_or("").trim();
-                module_path = imp_cap.get(2).map(|m| m.as_str()).unwrap_or("").trim();
+                raw_imports = imp_cap.get(1).map_or("", |m| m.as_str()).trim();
+                module_path = imp_cap.get(2).map_or("", |m| m.as_str()).trim();
                 import_found = true;
             }
 

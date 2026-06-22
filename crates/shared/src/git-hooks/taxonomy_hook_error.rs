@@ -1,17 +1,18 @@
 // PURPOSE: GitHookError — structured error type for git hook operation failures
+use crate::common::taxonomy_message_vo::LintMessage;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone)]
 pub struct GitHookError {
     pub path: FilePath,
-    pub message: String,
+    pub message: LintMessage,
 }
 
 impl GitHookError {
-    pub fn new(message: crate::taxonomy_common_error::ErrorMessage) -> Self {
+    pub fn new(message: LintMessage) -> Self {
         Self {
             path: FilePath::default(),
-            message: message.value,
+            message,
         }
     }
 }

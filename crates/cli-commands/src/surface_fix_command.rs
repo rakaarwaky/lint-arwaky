@@ -26,12 +26,12 @@ impl FixCommandsSurface {
     }
 
     pub fn fix(&self, path: &str) {
+        let canonical = match PathBuf::from(path).canonicalize() {
+            Ok(p) => p,
+            Err(_) => PathBuf::from(path),
+        };
         let project_path = FilePath {
-            value: PathBuf::from(path)
-                .canonicalize()
-                .unwrap_or_else(|_| PathBuf::from(path))
-                .to_string_lossy()
-                .to_string(),
+            value: canonical.to_string_lossy().to_string(),
         };
         self.run_fix(project_path, false);
     }
@@ -74,8 +74,15 @@ pub fn handle_fix(
         dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync,
     >,
 ) -> ExitCode {
-    let root = path.unwrap_or_else(|| ".".to_string());
+    let root = match path {
+        Some(p) => p,
+        None => ".".to_string(),
+    };
     let fix_surface = FixCommandsSurface::new(arch_linter, fix_orchestrator_factory);
-    fix_surface.run_fix(FilePath::new(root).unwrap_or_default(), dry_run);
+    let fp = match FilePath::new(root) {
+        Ok(fp) => fp,
+        Err(_) => FilePath::default(),
+    };
+    fix_surface.run_fix(fp, dry_run);
     ExitCode::SUCCESS
 }

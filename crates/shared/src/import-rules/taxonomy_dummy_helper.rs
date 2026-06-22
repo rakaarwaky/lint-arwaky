@@ -51,7 +51,7 @@ pub fn symbol_used_real(
 ) -> bool {
     if (symbol.starts_with('I')
         && symbol.len() > 1
-        && symbol.chars().nth(1).unwrap_or(' ').is_uppercase())
+        && matches!(symbol.chars().nth(1), Some(c) if c.is_uppercase()))
         || symbol.ends_with("Protocol")
         || symbol.ends_with("Port")
         || symbol.ends_with("Trait")
@@ -287,7 +287,10 @@ fn rust_imported_symbol_from_part(part: &str) -> Option<String> {
         return Some(alias.trim().to_string());
     }
 
-    let name = part.split("::").last().unwrap_or(part).trim();
+    let name = match part.split("::").last() {
+        Some(n) => n.trim(),
+        None => part.trim(),
+    };
     if name.is_empty() || name.contains('{') || name.contains('}') {
         return None;
     }
@@ -304,7 +307,10 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
         if trimmed.starts_with("from ") && trimmed.contains(" import ") {
             if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
                 for name in import_part.split(',') {
-                    let name = name.split_whitespace().next().unwrap_or("");
+                    let name = match name.split_whitespace().next() {
+                        Some(n) => n,
+                        None => "",
+                    };
                     if !name.is_empty() && name != "*" {
                         symbols.push((name.to_string(), idx + 1));
                     }
@@ -314,13 +320,19 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
         }
 
         if trimmed.starts_with("import ") {
-            let module = trimmed
+            let module = match trimmed
                 .trim_start_matches("import ")
                 .split_whitespace()
                 .next()
-                .unwrap_or("");
+            {
+                Some(m) => m,
+                None => "",
+            };
             if !module.is_empty() {
-                let name = module.rsplit('.').next().unwrap_or(module);
+                let name = match module.rsplit('.').next() {
+                    Some(n) => n,
+                    None => module,
+                };
                 symbols.push((name.to_string(), idx + 1));
             }
         }
@@ -340,7 +352,10 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name = part.split_whitespace().next().unwrap_or("");
+                        let name = match part.split_whitespace().next() {
+                            Some(n) => n,
+                            None => "",
+                        };
                         if !name.is_empty() && name != "type" {
                             symbols.push((name.to_string(), idx + 1));
                         }
@@ -352,10 +367,13 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
 
         if trimmed.starts_with("import ") && trimmed.contains(" from ") {
             if let Some(import_part) = trimmed.split_once("import ").map(|(_, p)| p) {
-                let name = import_part
+                let name = match import_part
                     .split_once(" from ")
                     .map(|(n, _)| n)
-                    .unwrap_or("");
+                {
+                    Some(n) => n,
+                    None => "",
+                };
                 let name = name.trim();
                 if !name.is_empty() && name != "default" {
                     symbols.push((name.to_string(), idx + 1));
@@ -369,7 +387,10 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name = part.trim().split(':').next().unwrap_or("").trim();
+                        let name = match part.trim().split(':').next() {
+                            Some(n) => n.trim(),
+                            None => "",
+                        };
                         if !name.is_empty() {
                             symbols.push((name.to_string(), idx + 1));
                         }
@@ -391,7 +412,10 @@ fn in_dummy_range(line_no: usize, ranges: &[(usize, usize)]) -> bool {
 fn impl_trait_name(line: &str) -> Option<String> {
     let after_impl = line.strip_prefix("impl ")?.trim();
     let (trait_part, _) = after_impl.split_once(" for ")?;
-    let trait_name = trait_part.split("::").last().unwrap_or(trait_part).trim();
+    let trait_name = match trait_part.split("::").last() {
+        Some(n) => n.trim(),
+        None => trait_part.trim(),
+    };
     if trait_name.is_empty() {
         return None;
     }

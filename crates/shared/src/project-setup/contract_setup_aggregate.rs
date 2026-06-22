@@ -6,10 +6,9 @@ use crate::mcp_server::taxonomy_job_vo::McpConfigVO;
 use crate::mcp_server::taxonomy_job_vo::SuccessStatus;
 use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use crate::project_setup::taxonomy_setup_contract_vo::{
-    CreateConfigDirResult, ProjectLanguageVO, SetupError, WriteConfigResult,
+    CreateConfigDirResult, ProjectLanguageVO, WriteConfigResult,
 };
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use crate::taxonomy_suggestion_vo::DescriptionVO;
 use async_trait::async_trait;
 
 pub type SetupMgmtProtocol = Box<dyn ISetupManagementProtocol>;

@@ -43,10 +43,10 @@ impl MyPyAdapter {
     }
 
     fn resolve_executable(&self) -> String {
-        self.bin_path
-            .as_ref()
-            .map(|p| p.value.clone())
-            .unwrap_or_else(|| "mypy".to_string())
+        match self.bin_path.as_ref() {
+            Some(p) => p.value.clone(),
+            None => "mypy".to_string(),
+        }
     }
 
     fn map_severity(msg_type: &str, msg: &str) -> Severity {
@@ -80,7 +80,10 @@ impl ILinterAdapterPort for MyPyAdapter {
             "false".to_string(),
         ];
         let command = PatternList::new(cmd);
-        let working_dir = FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone());
+        let working_dir = match FilePath::new(".".to_string()) {
+            Ok(fp) => fp,
+            Err(_) => path.clone(),
+        };
 
         match self
             .executor
@@ -113,21 +116,36 @@ impl ILinterAdapterPort for MyPyAdapter {
                     }
 
                     if let Some(caps) = re.captures(line) {
-                        let filename = caps.get(1).map(|m| m.as_str()).unwrap_or("");
-                        let line_number: i64 = caps
-                            .get(2)
-                            .and_then(|m| m.as_str().parse().ok())
-                            .unwrap_or(0);
-                        let column: i64 = caps
-                            .get(3)
-                            .and_then(|m| m.as_str().parse().ok())
-                            .unwrap_or(0);
-                        let msg_type = caps.get(4).map(|m| m.as_str()).unwrap_or("error");
-                        let message = caps.get(5).map(|m| m.as_str()).unwrap_or("");
-                        let code = caps.get(6).map(|m| m.as_str()).unwrap_or("");
+                        let filename = match caps.get(1) {
+                            Some(m) => m.as_str(),
+                            None => "",
+                        };
+                        let line_number: i64 = match caps.get(2).and_then(|m| m.as_str().parse().ok()) {
+                            Some(v) => v,
+                            None => 0,
+                        };
+                        let column: i64 = match caps.get(3).and_then(|m| m.as_str().parse().ok()) {
+                            Some(v) => v,
+                            None => 0,
+                        };
+                        let msg_type = match caps.get(4) {
+                            Some(m) => m.as_str(),
+                            None => "error",
+                        };
+                        let message = match caps.get(5) {
+                            Some(m) => m.as_str(),
+                            None => "",
+                        };
+                        let code = match caps.get(6) {
+                            Some(m) => m.as_str(),
+                            None => "",
+                        };
 
                         let resolved = self.path_norm.resolve_infrastructure_path(
-                            FilePath::new(filename.to_string()).unwrap_or_else(|_| path.clone()),
+                            match FilePath::new(filename.to_string()) {
+                                Ok(fp) => fp,
+                                Err(_) => path.clone(),
+                            },
                             Some(path.clone()),
                         );
 
@@ -143,17 +161,32 @@ impl ILinterAdapterPort for MyPyAdapter {
                             related_locations: LocationList::new(),
                         });
                     } else if let Some(caps) = re_simple.captures(line) {
-                        let filename = caps.get(1).map(|m| m.as_str()).unwrap_or("");
-                        let line_number: i64 = caps
-                            .get(2)
-                            .and_then(|m| m.as_str().parse().ok())
-                            .unwrap_or(0);
-                        let msg_type = caps.get(3).map(|m| m.as_str()).unwrap_or("error");
-                        let message = caps.get(4).map(|m| m.as_str()).unwrap_or("");
-                        let code = caps.get(5).map(|m| m.as_str()).unwrap_or("");
+                        let filename = match caps.get(1) {
+                            Some(m) => m.as_str(),
+                            None => "",
+                        };
+                        let line_number: i64 = match caps.get(2).and_then(|m| m.as_str().parse().ok()) {
+                            Some(v) => v,
+                            None => 0,
+                        };
+                        let msg_type = match caps.get(3) {
+                            Some(m) => m.as_str(),
+                            None => "error",
+                        };
+                        let message = match caps.get(4) {
+                            Some(m) => m.as_str(),
+                            None => "",
+                        };
+                        let code = match caps.get(5) {
+                            Some(m) => m.as_str(),
+                            None => "",
+                        };
 
                         let resolved = self.path_norm.resolve_infrastructure_path(
-                            FilePath::new(filename.to_string()).unwrap_or_else(|_| path.clone()),
+                            match FilePath::new(filename.to_string()) {
+                                Ok(fp) => fp,
+                                Err(_) => path.clone(),
+                            },
                             Some(path.clone()),
                         );
 

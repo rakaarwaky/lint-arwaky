@@ -50,11 +50,14 @@ fn print_header(term: &Term) {
 }
 
 fn ask_path(prompt: &str, default: &str) -> String {
-    Input::<String>::with_theme(&ColorfulTheme::default())
+    match Input::<String>::with_theme(&ColorfulTheme::default())
         .with_prompt(prompt)
         .default(default.to_string())
         .interact_text()
-        .unwrap_or_else(|_| default.to_string())
+    {
+        Ok(input) => input,
+        Err(_) => default.to_string(),
+    }
 }
 
 fn run_cmd(args: &[&str]) {
@@ -74,11 +77,17 @@ fn run_cmd(args: &[&str]) {
                 style("Done.").green()
             )
         }
-        Ok(s) => println!(
-            "\n{} Exit code: {}",
-            style("FAIL").red().bold(),
-            s.code().unwrap_or(-1)
-        ),
+        Ok(s) => {
+            let code = match s.code() {
+                Some(c) => c,
+                None => -1,
+            };
+            println!(
+                "\n{} Exit code: {}",
+                style("FAIL").red().bold(),
+                code
+            )
+        }
         Err(e) => println!("\n{} Failed to run binary: {e}", style("FAIL").red().bold()),
     }
 }
@@ -278,11 +287,14 @@ pub fn run_tui_loop() -> ExitCode {
             }
             "ci" => {
                 let p = ask_path("Path", ".");
-                let t: String = Input::with_theme(&ColorfulTheme::default())
+                let t: String = match Input::with_theme(&ColorfulTheme::default())
                     .with_prompt("Threshold")
                     .default("80".to_string())
                     .interact_text()
-                    .unwrap_or_else(|_| "80".to_string());
+                {
+                    Ok(input) => input,
+                    Err(_) => "80".to_string(),
+                };
                 run_cmd(&["ci", &p, "--threshold", &t]);
                 pause();
             }

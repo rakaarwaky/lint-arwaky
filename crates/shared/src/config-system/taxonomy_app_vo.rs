@@ -27,16 +27,24 @@ impl AppConfig {
         project_root: Option<String>,
         project: Option<ProjectConfig>,
     ) -> Self {
-        let p_root = phantom_root
+        let p_root = match phantom_root
             .or_else(|| env::var("PHANTOM_ROOT").ok())
-            .unwrap_or_else(|| env::var("HOME").unwrap_or_else(|_| ".".to_string()));
-        let _proj_root = project_root
+        {
+            Some(r) => r,
+            None => match env::var("HOME") {
+                Ok(h) => h,
+                Err(_) => ".".to_string(),
+            },
+        };
+        let _proj_root = match project_root
             .or_else(|| env::var("PROJECT_ROOT").ok())
-            .unwrap_or_else(|| {
-                env::current_dir()
-                    .map(|d| d.to_string_lossy().to_string())
-                    .unwrap_or_else(|_| ".".to_string())
-            });
+        {
+            Some(r) => r,
+            None => match env::current_dir() {
+                Ok(d) => d.to_string_lossy().to_string(),
+                Err(_) => ".".to_string(),
+            },
+        };
         let proj = project.unwrap_or_default();
 
         Self {

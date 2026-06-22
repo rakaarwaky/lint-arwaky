@@ -22,13 +22,15 @@ use std::path::Path;
 use std::sync::Arc;
 
 fn is_bun_available() -> bool {
-    std::process::Command::new("bun")
+    match std::process::Command::new("bun")
         .arg("--version")
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
+    {
+        Ok(s) => s.success(),
+        Err(_) => false,
+    }
 }
 
 fn resolve_js_cmd(executable: &str, args: Vec<String>, working_dir: &str) -> Vec<String> {
@@ -55,10 +57,10 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
         let mut current = if abs_path.is_file() {
             match abs_path.parent() {
                 Some(p) => p.to_path_buf(),
-                None => return FilePath::new(".".to_string()).unwrap_or_default(),
+                None => std::path::PathBuf::from("."),
             }
         } else {
-            abs_path
+            abs_path.clone()
         };
 
         for _ in 0..10 {
@@ -67,15 +69,25 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
                 || current.join("package.json").is_file()
                 || current.join(".git").is_dir()
             {
-                return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
+                return match FilePath::new(current.to_string_lossy().to_string()) {
+                    Ok(fp) => fp,
+                    Err(_) => FilePath::default(),
+                };
             }
             match current.parent() {
                 Some(parent) => current = parent.to_path_buf(),
                 None => break,
             }
         }
+        return match FilePath::new(current.to_string_lossy().to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        };
     }
-    FilePath::new(".".to_string()).unwrap_or_default()
+    match FilePath::new(".".to_string()) {
+        Ok(fp) => fp,
+        Err(_) => FilePath::default(),
+    }
 }
 
 pub struct PrettierAdapter {

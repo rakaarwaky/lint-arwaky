@@ -41,18 +41,25 @@ impl CargoAuditAdapter {
             }
         } else if let Some(parent) = current.parent() {
             if parent.join("Cargo.lock").exists() {
-                return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
-                    .unwrap_or_else(|_| path.clone());
+                return match FilePath::new(parent.to_string_lossy().replace('\\', "/")) {
+                    Ok(fp) => fp,
+                    Err(_) => path.clone(),
+                };
             }
             if let Some(grandparent) = parent.parent() {
                 if grandparent.join("Cargo.lock").exists() {
-                    return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
-                        .unwrap_or_else(|_| path.clone());
+                    return match FilePath::new(grandparent.to_string_lossy().replace('\\', "/")) {
+                        Ok(fp) => fp,
+                        Err(_) => path.clone(),
+                    };
                 }
             }
         }
 
-        FilePath::new("nonexistent_directory_for_cargo_lock".to_string()).unwrap_or_default()
+        match FilePath::new("nonexistent_directory_for_cargo_lock".to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        }
     }
 }
 
@@ -84,10 +91,12 @@ impl ILinterAdapterPort for CargoAuditAdapter {
             }
         };
 
-        let db_dir = dirs::home_dir()
-            .unwrap_or_else(|| std::path::PathBuf::from("."))
-            .join(".cargo")
-            .join("advisory-db");
+        let db_dir = match dirs::home_dir() {
+            Some(p) => p,
+            None => std::path::PathBuf::from("."),
+        }
+        .join(".cargo")
+        .join("advisory-db");
         let db = if db_dir.exists() {
             match rustsec::Database::open(&db_dir) {
                 Ok(db) => db,

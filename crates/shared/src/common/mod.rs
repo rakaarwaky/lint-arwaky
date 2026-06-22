@@ -16,3 +16,4 @@ pub mod taxonomy_response_data_vo;
 pub mod taxonomy_severity_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_suggestion_vo;
+pub mod taxonomy_value_object_macro;

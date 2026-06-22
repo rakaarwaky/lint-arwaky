@@ -73,7 +73,10 @@ impl LayerDetectionAnalyzer {
             let base_key = if scope.is_empty() {
                 String::new()
             } else {
-                scope.split('(').next().unwrap_or(&scope).to_string()
+                match scope.split('(').next() {
+                    Some(s) => s.to_string(),
+                    None => scope.to_string(),
+                }
             };
             rules_by_layer.entry(base_key).or_default().push(rule);
             // Also index by full scope (e.g. "agent(container|registry|mixin)")
@@ -86,7 +89,10 @@ impl LayerDetectionAnalyzer {
         let mut new_layers: HashMap<LayerNameVO, LayerDefinition> = HashMap::new();
         for (lname, mut ldef) in config.layers {
             let lstr = lname.to_string();
-            let base_name = lstr.split('(').next().unwrap_or(&lstr).to_string();
+            let base_name = match lstr.split('(').next() {
+                Some(s) => s.to_string(),
+                None => lstr.to_string(),
+            };
             // Apply: global rules (key="") + base-layer rules (key=base_name)
             for key in &[String::new(), base_name.clone()] {
                 if let Some(rules) = rules_by_layer.get(key.as_str()) {
@@ -213,10 +219,13 @@ impl LayerDetectionAnalyzer {
     /// corresponds to a specialised sub-layer (e.g., `capabilities_command.rs` with a defined
     /// `capabilities(command)` layer → returns `capabilities(command)` instead of `capabilities`).
     pub fn detect_layer(&self, file_path: &str, _root_dir: &str) -> Option<String> {
-        let filename = Path::new(file_path)
+        let filename = match Path::new(file_path)
             .file_name()
             .and_then(|s| s.to_str())
-            .unwrap_or("");
+        {
+            Some(s) => s,
+            None => "",
+        };
 
         // PREFIX-BASED DETECTION (FRD v1.1)
         // All valid files must carry a layer prefix — enforced by AES101/AES102 naming rules.
@@ -262,7 +271,10 @@ impl LayerDetectionAnalyzer {
 
         // Strategy 1: Direct match with layer names (ignoring specialisation suffix)
         for name in self.config.layers.keys() {
-            let base_name = name.value.split('(').next().unwrap_or(&name.value);
+            let base_name = match name.value.split('(').next() {
+                Some(s) => s,
+                None => &name.value,
+            };
             if meaningful_parts.contains(&base_name) {
                 return Some(self.refine_module_layer(base_name, &meaningful_parts));
             }
@@ -293,10 +305,13 @@ impl LayerDetectionAnalyzer {
     ///   5. Return the specialised name if found, otherwise the base layer unchanged.
     fn resolve_specialized_layer(&self, base_layer: &str, file_path: &str) -> String {
         // Step 1: Get file stem
-        let basename = Path::new(file_path)
+        let basename = match Path::new(file_path)
             .file_stem()
             .and_then(|s| s.to_str())
-            .unwrap_or("");
+        {
+            Some(s) => s,
+            None => "",
+        };
 
         // Step 2-5: Check if last underscore suffix matches a specialised sub-layer
         if let Some(underscore_pos) = basename.rfind('_') {
@@ -359,7 +374,10 @@ impl LayerDetectionAnalyzer {
             .layers
             .get(&LayerNameVO::new(layer))
             .or_else(|| {
-                let base = layer.split('(').next().unwrap_or(layer);
+                let base = match layer.split('(').next() {
+                    Some(s) => s,
+                    None => layer,
+                };
                 self.config.layers.get(&LayerNameVO::new(base))
             })
     }

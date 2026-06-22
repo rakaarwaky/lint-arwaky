@@ -43,10 +43,10 @@ impl RuffAdapter {
     }
 
     fn resolve_executable(&self) -> String {
-        self.bin_path
-            .as_ref()
-            .map(|p| p.value.clone())
-            .unwrap_or_else(|| "ruff".to_string())
+        match self.bin_path.as_ref() {
+            Some(p) => p.value.clone(),
+            None => "ruff".to_string(),
+        }
     }
 
     fn map_severity(&self, severity: &str, _code: &str) -> Severity {
@@ -76,7 +76,10 @@ impl ILinterAdapterPort for RuffAdapter {
             "--no-cache".to_string(),
         ];
         let command = PatternList::new(cmd);
-        let working_dir = FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone());
+        let working_dir = match FilePath::new(".".to_string()) {
+            Ok(fp) => fp,
+            Err(_) => path.clone(),
+        };
 
         match self
             .executor
@@ -89,27 +92,51 @@ impl ILinterAdapterPort for RuffAdapter {
         {
             Ok(response) => {
                 let stdout = &response.stdout;
-                let findings: Vec<Value> = serde_json::from_str(stdout).unwrap_or_default();
+                let findings: Vec<Value> = match serde_json::from_str(stdout) {
+                    Ok(v) => v,
+                    Err(_) => Vec::new(),
+                };
                 let mut results = Vec::new();
 
                 for f in findings {
-                    let filename = f.get("filename").and_then(|v| v.as_str()).unwrap_or("");
-                    let row = f
+                    let filename = match f.get("filename").and_then(|v| v.as_str()) {
+                        Some(s) => s,
+                        None => "",
+                    };
+                    let row = match f
                         .get("location")
                         .and_then(|l| l.get("row"))
                         .and_then(|v| v.as_i64())
-                        .unwrap_or(0);
-                    let col = f
+                    {
+                        Some(v) => v,
+                        None => 0,
+                    };
+                    let col = match f
                         .get("location")
                         .and_then(|l| l.get("column"))
                         .and_then(|v| v.as_i64())
-                        .unwrap_or(0);
-                    let code = f.get("code").and_then(|v| v.as_str()).unwrap_or("UNKNOWN");
-                    let message = f.get("message").and_then(|v| v.as_str()).unwrap_or("");
-                    let severity_str = f.get("severity").and_then(|v| v.as_str()).unwrap_or("");
+                    {
+                        Some(v) => v,
+                        None => 0,
+                    };
+                    let code = match f.get("code").and_then(|v| v.as_str()) {
+                        Some(s) => s,
+                        None => "UNKNOWN",
+                    };
+                    let message = match f.get("message").and_then(|v| v.as_str()) {
+                        Some(s) => s,
+                        None => "",
+                    };
+                    let severity_str = match f.get("severity").and_then(|v| v.as_str()) {
+                        Some(s) => s,
+                        None => "",
+                    };
 
                     let resolved = self.path_norm.resolve_infrastructure_path(
-                        FilePath::new(filename).unwrap_or_else(|_| path.clone()),
+                        match FilePath::new(filename) {
+                            Ok(fp) => fp,
+                            Err(_) => path.clone(),
+                        },
                         Some(path.clone()),
                     );
 
@@ -144,7 +171,10 @@ impl ILinterAdapterPort for RuffAdapter {
             "--exit-zero".to_string(),
         ];
         let command = PatternList::new(cmd);
-        let working_dir = FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone());
+        let working_dir = match FilePath::new(".".to_string()) {
+            Ok(fp) => fp,
+            Err(_) => path.clone(),
+        };
 
         match self
             .executor
