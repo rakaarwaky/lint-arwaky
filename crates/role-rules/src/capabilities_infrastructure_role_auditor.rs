@@ -36,9 +36,22 @@ impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
     ) {
         let file = source.file_path.value();
         let content = source.content.value();
+        let detector =
+            shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
+        let lang = detector.detect(&source.file_path);
+        let is_rs = lang == shared::source_parsing::contract_language_detector_port::Language::Rust;
+        let is_py = lang == shared::source_parsing::contract_language_detector_port::Language::Python;
 
-        // Infrastructure files should contain an `impl ... for ...` that references a port
-        // Check if file imports any port/protocol but has no implementation
+        if is_rs {
+            self._check_rust(file, content, violations);
+        } else if is_py {
+            self._check_python(file, content, violations);
+        }
+    }
+}
+
+impl InfrastructureRoleChecker {
+    fn _check_rust(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let has_import = content.contains("use ")
             && (content.contains("_port::") || content.contains("_protocol::"));
         if !has_import {
@@ -49,6 +62,25 @@ impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
                 || content.contains(" for")
                 || content.contains("impl<T")
                 || content.contains("impl<"));
+        if !has_impl {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES404",
+                Severity::HIGH,
+                AesRoleViolation::InfrastructureNoPort { reason: None }.to_string(),
+            ));
+        }
+    }
+
+    fn _check_python(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let has_import = (content.contains("import ") || content.contains("from "))
+            && (content.contains("_port") || content.contains("_protocol"));
+        if !has_import {
+            return;
+        }
+        let has_impl = content.contains("class ")
+            && (content.contains("(_port") || content.contains("(_protocol"));
         if !has_impl {
             violations.push(LintResult::new_arch(
                 file,
