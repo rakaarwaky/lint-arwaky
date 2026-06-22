@@ -40,9 +40,12 @@ impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
             shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
         let lang = detector.detect(&source.file_path);
         let is_rs = lang == shared::source_parsing::contract_language_detector_port::Language::Rust;
-        let is_py = lang == shared::source_parsing::contract_language_detector_port::Language::Python;
-        let is_js = lang == shared::source_parsing::contract_language_detector_port::Language::JavaScript
-            || lang == shared::source_parsing::contract_language_detector_port::Language::TypeScript;
+        let is_py =
+            lang == shared::source_parsing::contract_language_detector_port::Language::Python;
+        let is_js = lang
+            == shared::source_parsing::contract_language_detector_port::Language::JavaScript
+            || lang
+                == shared::source_parsing::contract_language_detector_port::Language::TypeScript;
 
         if is_rs {
             self._check_rust(file, content, violations);

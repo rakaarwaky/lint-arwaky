@@ -98,7 +98,11 @@ pub fn check_taxonomy_orphan(
     files: &[String],
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
 ) {
-    let stem = basename.replace(".rs", "").replace(".py", "").replace(".ts", "").replace(".js", "");
+    let stem = basename
+        .replace(".rs", "")
+        .replace(".py", "")
+        .replace(".ts", "")
+        .replace(".js", "");
     let suffix = stem.rfind('_').map(|pos| &stem[pos + 1..]).unwrap_or("");
 
     let is_utility_or_helper = matches!(suffix, "utility" | "helper");

@@ -112,7 +112,12 @@ impl DependencyCycleAnalyzer {
             for module in modules {
                 let module_fp = FilePath::new(module.clone()).unwrap_or_default();
                 if let Some(target_layer) = analyzer.detect_module_layer(&module_fp) {
-                    let target_layer_str = target_layer.value().split('(').next().unwrap_or(target_layer.value()).to_string();
+                    let target_layer_str = target_layer
+                        .value()
+                        .split('(')
+                        .next()
+                        .unwrap_or(target_layer.value())
+                        .to_string();
                     // Step 3g: Only record cross-layer edges (same-layer edges cannot cause cycles)
                     if target_layer_str != file_layer {
                         edges.push(DependencyEdge::new(file_layer.clone(), target_layer_str));

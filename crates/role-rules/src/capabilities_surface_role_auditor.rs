@@ -99,9 +99,13 @@ impl SurfaceRoleChecker {
         let detector =
             shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
         let lang = detector.detect(&source.file_path);
-        let fn_keyword = if lang == DetLang::Python { "def " }
-            else if lang == DetLang::JavaScript || lang == DetLang::TypeScript { "function " }
-            else { "fn " };
+        let fn_keyword = if lang == DetLang::Python {
+            "def "
+        } else if lang == DetLang::JavaScript || lang == DetLang::TypeScript {
+            "function "
+        } else {
+            "fn "
+        };
         if content.matches(fn_keyword).count() > 15 {
             violations.push(LintResult::new_arch(
                 file,

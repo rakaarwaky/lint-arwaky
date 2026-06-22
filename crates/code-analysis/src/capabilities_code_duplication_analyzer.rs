@@ -35,7 +35,11 @@ impl Default for CodeDuplicationAnalyzer {
 }
 
 impl CodeDuplicationAnalyzer {
-    pub fn check_duplicates(&self, files: &[String], min_dup_lines: usize) -> Vec<AesCodeAnalysisViolation> {
+    pub fn check_duplicates(
+        &self,
+        files: &[String],
+        min_dup_lines: usize,
+    ) -> Vec<AesCodeAnalysisViolation> {
         let mut blocks: HashMap<String, Vec<(PathBuf, usize)>> = HashMap::new();
         let detector = LanguageDetector::new();
         let mut total_loc: usize = 0;
@@ -81,7 +85,9 @@ impl CodeDuplicationAnalyzer {
             let msg = format!(
                 "Duplicate block found across {} files (similarity ~{}%). Locations: {}",
                 locations.len(),
-                100usize.saturating_sub(locations.len().saturating_sub(1) * 5).min(100),
+                100usize
+                    .saturating_sub(locations.len().saturating_sub(1) * 5)
+                    .min(100),
                 locations
                     .iter()
                     .take(3)
@@ -104,7 +110,10 @@ impl CodeDuplicationAnalyzer {
             violations.push(AesCodeAnalysisViolation::CodeDuplication {
                 reason: Some(LintMessage::new(format!(
                     "Summary: {} duplicate blocks ({} lines) out of {} total LOC ({:.1}%)",
-                    duplicates.len(), total_dup_lines, total_loc, pct,
+                    duplicates.len(),
+                    total_dup_lines,
+                    total_loc,
+                    pct,
                 ))),
             });
         }

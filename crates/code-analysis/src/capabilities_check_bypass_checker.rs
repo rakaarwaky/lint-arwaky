@@ -98,7 +98,9 @@ impl IBypassCheckerProtocol for BypassChecker {
                     break;
                 }
             }
-            if matched { continue; }
+            if matched {
+                continue;
+            }
             // Skip comment lines and string literals (prevent false positives on algorithm docs and pattern defs)
             if t.starts_with("//") || t.starts_with('#') || t.starts_with('"') {
                 continue;
