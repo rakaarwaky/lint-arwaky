@@ -1,6 +1,5 @@
 // PURPOSE: Score, FileFormat, ScoreMap — value objects for compliance scoring and file format enums
 use crate::string_value_object;
-use serde::Serialize;
 
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 

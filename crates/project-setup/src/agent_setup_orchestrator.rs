@@ -84,7 +84,11 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
         self.protocol.get_config_template(language)
     }
 
-    fn write_config_file(&self, filename: &str, content: &str) -> shared::project_setup::WriteConfigResult {
+    fn write_config_file(
+        &self,
+        filename: &str,
+        content: &str,
+    ) -> shared::project_setup::WriteConfigResult {
         self.protocol.write_config_file(filename, content)
     }
 

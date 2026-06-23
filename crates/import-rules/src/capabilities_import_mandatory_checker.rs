@@ -65,10 +65,7 @@ impl ArchImportMandatoryChecker {
         }
 
         // Step 2-3: Skip special files and exceptions
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => FilePath::default(),
-        };
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
         if basename == "__init__.py" {
@@ -153,10 +150,7 @@ impl ArchImportMandatoryChecker {
         violations: &mut Vec<LintResult>,
     ) {
         // Step 1: Extract file stem and suffix
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => FilePath::default(),
-        };
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
         // Step 2: Skip Rust entry files

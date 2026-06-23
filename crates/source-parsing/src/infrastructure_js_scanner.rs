@@ -173,10 +173,7 @@ impl ASTJSParserAdapter {
 
             let mut class_match_found = false;
             if let Some(class_cap) = CLASS_REGEX.as_ref().and_then(|r| r.captures(stripped)) {
-                let name = class_cap
-                    .get(1)
-                    .map_or("", |m| m.as_str())
-                    .to_string();
+                let name = class_cap.get(1).map_or("", |m| m.as_str()).to_string();
                 data.defined.insert(name.clone());
 
                 let base = class_cap.get(2).map(|m| m.as_str().to_string());

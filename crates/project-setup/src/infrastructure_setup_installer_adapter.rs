@@ -21,10 +21,7 @@ impl SetupInstallerAdapter {
 
 #[async_trait]
 impl ISetupInstallerPort for SetupInstallerAdapter {
-    async fn install_python_packages(
-        &self,
-        packages: &[String],
-    ) -> Result<(), SetupError> {
+    async fn install_python_packages(&self, packages: &[String]) -> Result<(), SetupError> {
         let status = tokio::process::Command::new("pip")
             .args(["install", "--user"])
             .args(packages)

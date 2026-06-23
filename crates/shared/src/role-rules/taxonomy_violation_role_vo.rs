@@ -362,7 +362,10 @@ mod tests {
         let v = AesRoleViolation::CoordinatesMultiple {
             reason: Some(LintMessage::new("custom".to_string())),
         };
-        assert_eq!(v.to_string(), labeled(v.clone(), Language::Rust).to_string());
+        assert_eq!(
+            v.to_string(),
+            labeled(v.clone(), Language::Rust).to_string()
+        );
     }
 
     /// `LabeledRoleViolation` with a non-Rust language must swap language-
@@ -378,7 +381,10 @@ mod tests {
             out.contains("Protocol"),
             "expected Protocol token in: {out}"
         );
-        assert!(!out.contains("trait"), "must not contain Rust trait in: {out}");
+        assert!(
+            !out.contains("trait"),
+            "must not contain Rust trait in: {out}"
+        );
     }
 
     /// When `reason` is `None`, the per-variant default WHY message must be
@@ -402,7 +408,10 @@ mod tests {
             reason: Some(LintMessage::new("auditor-custom".to_string())),
         };
         let out = v.to_string();
-        assert!(out.contains("auditor-custom"), "custom WHY missing in: {out}");
+        assert!(
+            out.contains("auditor-custom"),
+            "custom WHY missing in: {out}"
+        );
     }
 
     /// `AgentFileSizeLimit` carries no `reason`; its display must embed the
@@ -414,4 +423,3 @@ mod tests {
         assert!(out.contains("250"), "max_lines not in output: {out}");
     }
 }
-

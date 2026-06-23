@@ -1,6 +1,7 @@
 // PURPOSE: GitCommandsSurface — CLI surface for git integration
 use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::process::ExitCode;
 use std::sync::Arc;
 
@@ -28,10 +29,7 @@ pub async fn handle_git_diff(
 ) -> ExitCode {
     println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
 
-    let project_path = match shared::source_parsing::taxonomy_path_vo::FilePath::new(".".to_string()) {
-        Ok(fp) => fp,
-        Err(_) => shared::source_parsing::taxonomy_path_vo::FilePath::default(),
-    };
+    let project_path = FilePath::new(".".to_string()).unwrap_or_default();
 
     let changed_files = git_aggregate
         .diff_protocol()

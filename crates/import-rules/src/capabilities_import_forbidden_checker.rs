@@ -61,10 +61,7 @@ impl ArchImportForbiddenChecker {
         violations: &mut Vec<LintResult>,
     ) {
         // Step 1: Skip files in the exception list
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => FilePath::default(),
-        };
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         let basename = file_path.basename();
         if definition.exceptions.values.contains(&basename.to_string()) {
             return;
@@ -107,15 +104,13 @@ impl ArchImportForbiddenChecker {
                     let is_forbidden = if suffixes.is_empty() {
                         // Exact layer match: check if any segment IS the forbidden layer
                         segments.iter().any(|seg| {
-                                let cleaned = seg.trim_end_matches(';').trim();
-                                let cleaned_identity = Identity::new(cleaned);
-                                match self.parser
-                                    .extract_layer_from_import(&cleaned_identity)
-                                {
-                                    Some(l) => l == layer,
-                                    None => false,
-                                }
-                            })
+                            let cleaned = seg.trim_end_matches(';').trim();
+                            let cleaned_identity = Identity::new(cleaned);
+                            match self.parser.extract_layer_from_import(&cleaned_identity) {
+                                Some(l) => l == layer,
+                                None => false,
+                            }
+                        })
                     } else {
                         // Suffix-based match: check import scope (e.g., "infrastructure(adapter)")
                         self.parser.import_matches_scope(line, &layer, &suffixes)
@@ -175,10 +170,7 @@ impl ArchImportForbiddenChecker {
         violations: &mut Vec<LintResult>,
     ) {
         // Step 1: Extract file stem and its last underscore suffix
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => FilePath::default(),
-        };
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
         // Step 2: Skip Rust entry files
@@ -239,9 +231,7 @@ impl ArchImportForbiddenChecker {
                             segments.iter().any(|seg| {
                                 let cleaned = seg.trim_end_matches(';').trim();
                                 let cleaned_identity = Identity::new(cleaned);
-                                match self.parser
-                                    .extract_layer_from_import(&cleaned_identity)
-                                {
+                                match self.parser.extract_layer_from_import(&cleaned_identity) {
                                     Some(l) => l == forbidden_layer,
                                     None => false,
                                 }

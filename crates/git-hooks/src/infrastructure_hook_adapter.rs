@@ -59,33 +59,25 @@ exit 0
             exe_str
         );
         std::fs::write(&hook_path, &hook_content).map_err(|e| {
-            shared::git_hooks::taxonomy_hook_error::GitHookError::new(
-                LintMessage::new(format!(
-                    "Failed to write hook: {}",
-                    e
-                )),
-            )
+            shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(format!(
+                "Failed to write hook: {}",
+                e
+            )))
         })?;
         #[cfg(unix)]
         {
             let mut perms = std::fs::metadata(&hook_path)
                 .map_err(|e| {
-                    shared::git_hooks::taxonomy_hook_error::GitHookError::new(
-                        LintMessage::new(format!(
-                            "Failed to get metadata: {}",
-                            e
-                        )),
-                    )
+                    shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
+                        format!("Failed to get metadata: {}", e),
+                    ))
                 })?
                 .permissions();
             perms.set_mode(0o755);
             std::fs::set_permissions(&hook_path, perms).map_err(|e| {
-                shared::git_hooks::taxonomy_hook_error::GitHookError::new(
-                    LintMessage::new(format!(
-                        "Failed to set permissions: {}",
-                        e
-                    )),
-                )
+                shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
+                    format!("Failed to set permissions: {}", e),
+                ))
             })?;
         }
         Ok(SuccessStatus::new(true))
@@ -100,12 +92,9 @@ exit 0
         let hook_path = self.git_dir().join("hooks").join("pre-commit");
         if hook_path.exists() {
             std::fs::remove_file(&hook_path).map_err(|e| {
-                shared::git_hooks::taxonomy_hook_error::GitHookError::new(
-                    LintMessage::new(format!(
-                        "Failed to remove hook: {}",
-                        e
-                    )),
-                )
+                shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
+                    format!("Failed to remove hook: {}", e),
+                ))
             })?;
         }
         Ok(SuccessStatus::new(true))

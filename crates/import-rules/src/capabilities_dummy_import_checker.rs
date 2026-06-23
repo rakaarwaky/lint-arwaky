@@ -75,10 +75,7 @@ impl DummyImportChecker {
             .collect();
 
         // Step 4: Detect the architectural layer for this file
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => FilePath::default(),
-        };
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),
@@ -88,10 +85,12 @@ impl DummyImportChecker {
         for (symbol, line_no) in self.parser.get_imported_symbols(&lines, lang) {
             // Step 6: Skip symbols that are actually used outside dummy/stub contexts
             let symbol_str = symbol.value().to_string();
-            if self
-                .parser
-                .is_symbol_used_real(&lines, &symbol_str, &dummy_ranges, &dummy_impl_traits)
-            {
+            if self.parser.is_symbol_used_real(
+                &lines,
+                &symbol_str,
+                &dummy_ranges,
+                &dummy_impl_traits,
+            ) {
                 continue;
             }
 
@@ -141,10 +140,7 @@ impl DummyImportChecker {
         let lang = self.parser.get_language_from_path(file);
 
         // Step 2: Detect file layer
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => FilePath::default(),
-        };
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),
@@ -153,7 +149,7 @@ impl DummyImportChecker {
         // Step 3-4: Flag each dummy function as violation
         for (start, end) in self.parser.get_dummy_function_ranges(&lines, lang) {
             let start_us = start.value() as usize;
-            let end_us = end.value() as usize;
+            let _end_us = end.value() as usize;
             violations.push(LintResult::new_arch(
                 file,
                 start_us,
@@ -195,10 +191,7 @@ impl DummyImportChecker {
         let lines: Vec<&str> = content.lines().collect();
 
         // Step 2: Detect file layer
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => FilePath::default(),
-        };
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),
@@ -256,10 +249,7 @@ impl DummyImportChecker {
         let lines: Vec<&str> = content.lines().collect();
         let lang = self.parser.get_language_from_path(file);
 
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => FilePath::default(),
-        };
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         let _layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),
@@ -302,24 +292,26 @@ impl DummyImportChecker {
 
         let imported = self.parser.get_imported_symbols(&lines, lang);
         let has_real_usage = imported.iter().any(|(symbol, line_no)| {
-            let is_taxonomy = lines.get(line_no.value().saturating_sub(1) as usize).is_some_and(|line| {
-                let t = line.trim();
-                match lang {
-                    LanguageVO::Rust => {
-                        t.contains("use shared::taxonomy_")
-                            || t.contains("use output_report::taxonomy_")
-                            || t.contains("use crate::common::taxonomy_")
-                            || t.contains("use crate::taxonomy_")
+            let is_taxonomy = lines
+                .get(line_no.value().saturating_sub(1) as usize)
+                .is_some_and(|line| {
+                    let t = line.trim();
+                    match lang {
+                        LanguageVO::Rust => {
+                            t.contains("use shared::taxonomy_")
+                                || t.contains("use output_report::taxonomy_")
+                                || t.contains("use crate::common::taxonomy_")
+                                || t.contains("use crate::taxonomy_")
+                        }
+                        LanguageVO::Python => {
+                            t.contains("from taxonomy_") || t.contains("from shared.taxonomy_")
+                        }
+                        LanguageVO::JavaScript => {
+                            t.contains("from 'taxonomy_") || t.contains("from \"taxonomy_")
+                        }
+                        LanguageVO::Unknown => false,
                     }
-                    LanguageVO::Python => {
-                        t.contains("from taxonomy_") || t.contains("from shared.taxonomy_")
-                    }
-                    LanguageVO::JavaScript => {
-                        t.contains("from 'taxonomy_") || t.contains("from \"taxonomy_")
-                    }
-                    LanguageVO::Unknown => false,
-                }
-            });
+                });
             if !is_taxonomy {
                 return false;
             }

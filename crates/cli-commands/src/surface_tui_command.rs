@@ -82,11 +82,7 @@ fn run_cmd(args: &[&str]) {
                 Some(c) => c,
                 None => -1,
             };
-            println!(
-                "\n{} Exit code: {}",
-                style("FAIL").red().bold(),
-                code
-            )
+            println!("\n{} Exit code: {}", style("FAIL").red().bold(), code)
         }
         Err(e) => println!("\n{} Failed to run binary: {e}", style("FAIL").red().bold()),
     }

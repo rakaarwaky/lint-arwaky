@@ -25,8 +25,8 @@ ignored_paths:
   - "/.jj"
   - "/test-workspaces"
   - "/scripts"
-  - ".min.js"          # vendor minified libraries (e.g. cytoscape.min.js) — not our code
-  - ".min.css"         # vendor minified stylesheets
+  - ".min.js"          
+  - ".min.css"         
   - "/.dsc_cache"
 
 architecture:

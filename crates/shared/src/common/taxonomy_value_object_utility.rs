@@ -86,10 +86,7 @@ macro_rules! string_value_object {
                 struct V {}
                 impl<'de> serde::de::Visitor<'de> for V {
                     type Value = $name;
-                    fn expecting(
-                        &self,
-                        formatter: &mut std::fmt::Formatter,
-                    ) -> std::fmt::Result {
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                         formatter.write_str("primitive or map with 'value' key")
                     }
                     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
@@ -118,8 +115,7 @@ macro_rules! string_value_object {
                                 let _: serde::de::IgnoredAny = map.next_value()?;
                             }
                         }
-                        let val = value
-                            .ok_or_else(|| serde::de::Error::missing_field("value"))?;
+                        let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
                         Ok($name { value: val })
                     }
                 }
@@ -186,10 +182,7 @@ macro_rules! primitive_value_object {
                 struct V {}
                 impl<'de> serde::de::Visitor<'de> for V {
                     type Value = $name;
-                    fn expecting(
-                        &self,
-                        formatter: &mut std::fmt::Formatter,
-                    ) -> std::fmt::Result {
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                         formatter.write_str(concat!(
                             "primitive or map with 'value' key (",
                             stringify!($inner),
@@ -232,8 +225,7 @@ macro_rules! primitive_value_object {
                                 let _: serde::de::IgnoredAny = map.next_value()?;
                             }
                         }
-                        let val = value
-                            .ok_or_else(|| serde::de::Error::missing_field("value"))?;
+                        let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
                         Ok($name { value: val })
                     }
                 }
@@ -242,7 +234,6 @@ macro_rules! primitive_value_object {
         }
     };
 }
-
 
 #[cfg(test)]
 mod macro_tests {

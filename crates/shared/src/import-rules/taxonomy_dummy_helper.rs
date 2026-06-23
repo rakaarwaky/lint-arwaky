@@ -148,7 +148,11 @@ pub fn symbol_used_real(
 ///
 /// The two language-specific differences (Rust/JS brace-counting vs. Python
 /// indent-based termination) live in the closures passed in.
-fn collect_ranges<F, G>(lines: &[&str], is_header: F, body_extent: G) -> Vec<(LineNumber, LineNumber)>
+fn collect_ranges<F, G>(
+    lines: &[&str],
+    is_header: F,
+    body_extent: G,
+) -> Vec<(LineNumber, LineNumber)>
 where
     F: Fn(&str) -> bool,
     G: Fn(usize, &[&str]) -> usize,
@@ -257,7 +261,8 @@ fn rust_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                     let inside = &body[open + 1..close];
                     for part in inside.split(',') {
                         if let Some(symbol) = rust_imported_symbol_from_part(part.trim()) {
-                            symbols.push((SymbolName::new(symbol), LineNumber::new(idx as i64 + 1)));
+                            symbols
+                                .push((SymbolName::new(symbol), LineNumber::new(idx as i64 + 1)));
                         }
                     }
                 }
@@ -303,10 +308,7 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
         if trimmed.starts_with("from ") && trimmed.contains(" import ") {
             if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
                 for name in import_part.split(',') {
-                    let name = match name.split_whitespace().next() {
-                        Some(n) => n,
-                        None => "",
-                    };
+                    let name: &str = name.split_whitespace().next().unwrap_or_default();
                     if !name.is_empty() && name != "*" {
                         symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                     }
@@ -316,19 +318,13 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
         }
 
         if trimmed.starts_with("import ") {
-            let module = match trimmed
+            let module: &str = trimmed
                 .trim_start_matches("import ")
                 .split_whitespace()
                 .next()
-            {
-                Some(m) => m,
-                None => "",
-            };
+                .unwrap_or_default();
             if !module.is_empty() {
-                let name = match module.rsplit('.').next() {
-                    Some(n) => n,
-                    None => module,
-                };
+                let name: &str = module.rsplit('.').next().unwrap_or(module);
                 symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
             }
         }
@@ -348,10 +344,7 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name = match part.split_whitespace().next() {
-                            Some(n) => n,
-                            None => "",
-                        };
+                        let name: &str = part.split_whitespace().next().unwrap_or_default();
                         if !name.is_empty() && name != "type" {
                             symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }
@@ -363,10 +356,7 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
 
         if trimmed.starts_with("import ") && trimmed.contains(" from ") {
             if let Some(import_part) = trimmed.split_once("import ").map(|(_, p)| p) {
-                let name = match import_part
-                    .split_once(" from ")
-                    .map(|(n, _)| n)
-                {
+                let name = match import_part.split_once(" from ").map(|(n, _)| n) {
                     Some(n) => n,
                     None => "",
                 };

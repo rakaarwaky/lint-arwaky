@@ -39,7 +39,10 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
                             Identity::new(format!("{}.{}", module, sym.trim())),
                         );
                     } else {
-                        aliases.insert(Identity::new(name), Identity::new(format!("{}.{}", module, name)));
+                        aliases.insert(
+                            Identity::new(name),
+                            Identity::new(format!("{}.{}", module, name)),
+                        );
                     }
                 }
             }
@@ -142,7 +145,14 @@ pub fn extract_rust_js_imports(content: &str) -> Vec<(SymbolName, LineNumber)> {
                 let inner = target[brace_pos + 3..].trim_end_matches('}').trim();
                 inner
                     .split(',')
-                    .map(|s| s.trim().split(" as ").last().unwrap_or("").trim().to_string())
+                    .map(|s| {
+                        s.trim()
+                            .split(" as ")
+                            .last()
+                            .unwrap_or("")
+                            .trim()
+                            .to_string()
+                    })
                     .filter(|n| !n.is_empty() && n != "_" && n != "*")
                     .map(SymbolName::new)
                     .collect()
@@ -167,7 +177,14 @@ pub fn extract_rust_js_imports(content: &str) -> Vec<(SymbolName, LineNumber)> {
                 let names: Vec<SymbolName> = if import_part.starts_with('{') {
                     import_part[1..import_part.len() - 1]
                         .split(',')
-                        .map(|s| s.trim().split(" as ").last().unwrap_or("").trim().to_string())
+                        .map(|s| {
+                            s.trim()
+                                .split(" as ")
+                                .last()
+                                .unwrap_or("")
+                                .trim()
+                                .to_string()
+                        })
                         .filter(|n| !n.is_empty())
                         .map(SymbolName::new)
                         .collect()
@@ -184,9 +201,7 @@ pub fn extract_rust_js_imports(content: &str) -> Vec<(SymbolName, LineNumber)> {
 
         for name in names {
             let s = name.value();
-            if (s.starts_with('I')
-                && s.len() > 1
-                && s.chars().nth(1).unwrap_or(' ').is_uppercase())
+            if (s.starts_with('I') && s.len() > 1 && s.chars().nth(1).unwrap_or(' ').is_uppercase())
                 || s.ends_with("Protocol")
                 || s.ends_with("Port")
                 || s.ends_with("Trait")

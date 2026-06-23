@@ -157,10 +157,7 @@ fn scan_duplicate_blocks(entries: Vec<FileEntry>, min_lines: usize) -> Vec<Vec<(
                 })
                 .collect::<Vec<_>>()
                 .join("|");
-            blocks
-                .entry(key)
-                .or_default()
-                .push((path.clone(), idx + 1));
+            blocks.entry(key).or_default().push((path.clone(), idx + 1));
         }
     }
     blocks.into_values().filter(|v| v.len() > 1).collect()
@@ -247,8 +244,7 @@ mod tests {
         writeln!(f, "dup gamma").unwrap();
 
         let analyzer = CodeDuplicationAnalyzer::new();
-        let violations =
-            analyzer.check_duplicates(&[file_path.to_string_lossy().to_string()], 3);
+        let violations = analyzer.check_duplicates(&[file_path.to_string_lossy().to_string()], 3);
 
         let dup_msg = violations
             .iter()
@@ -309,7 +305,10 @@ mod tests {
             writeln!(f, "shared four").unwrap();
         }
         let violations = CodeDuplicationAnalyzer::new().check_duplicates(
-            &[a.to_string_lossy().to_string(), b.to_string_lossy().to_string()],
+            &[
+                a.to_string_lossy().to_string(),
+                b.to_string_lossy().to_string(),
+            ],
             4,
         );
         let dup = violations

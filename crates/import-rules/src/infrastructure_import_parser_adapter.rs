@@ -1,5 +1,6 @@
 // PURPOSE: ImportParserAdapter — infrastructure implementation of IImportParserPort using standard filesystem and string search utilities
 
+use shared::common::taxonomy_message_vo::LintMessage;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
@@ -8,7 +9,6 @@ use shared::import_rules::{
     taxonomy_cycle_helper, taxonomy_dummy_helper, taxonomy_parser_helper, taxonomy_unused_helper,
 };
 use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::taxonomy_name_vo::SymbolName;
@@ -223,10 +223,7 @@ impl IImportParserPort for ImportParserAdapter {
         taxonomy_dummy_helper::imported_symbols(lines, lang)
     }
 
-    fn get_dummy_impl_traits_with_lines(
-        &self,
-        lines: &[&str],
-    ) -> Vec<(SymbolName, LineNumber)> {
+    fn get_dummy_impl_traits_with_lines(&self, lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
         taxonomy_dummy_helper::dummy_impl_traits_with_lines(lines)
     }
 

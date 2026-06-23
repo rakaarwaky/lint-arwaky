@@ -9,7 +9,6 @@ use crate::project_setup::taxonomy_setup_contract_vo::{
     CreateConfigDirResult, ProjectLanguageVO, WriteConfigResult,
 };
 use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use async_trait::async_trait;
 
 pub type SetupMgmtProtocol = Box<dyn ISetupManagementProtocol>;
 

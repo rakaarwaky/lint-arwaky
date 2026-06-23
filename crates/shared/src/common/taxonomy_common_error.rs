@@ -19,7 +19,9 @@ pub struct ExitCode {
 
 impl ExitCode {
     pub fn new(value: impl Into<crate::common::taxonomy_common_vo::LineNumber>) -> Self {
-        Self { value: value.into() }
+        Self {
+            value: value.into(),
+        }
     }
     pub fn value(&self) -> i64 {
         self.value.value()
@@ -34,7 +36,9 @@ impl std::fmt::Display for ExitCode {
 
 impl From<i64> for ExitCode {
     fn from(v: i64) -> Self {
-        Self { value: crate::common::taxonomy_common_vo::LineNumber::new(v) }
+        Self {
+            value: crate::common::taxonomy_common_vo::LineNumber::new(v),
+        }
     }
 }
 

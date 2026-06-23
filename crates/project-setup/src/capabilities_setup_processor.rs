@@ -162,9 +162,12 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         }
     }
 
-    fn write_config_file(&self, filename: &str, content: &str) -> Result<DescriptionVO, SetupError> {
-        std::fs::write(filename, content)
-            .map_err(|e| SetupError::io(e.to_string()))?;
+    fn write_config_file(
+        &self,
+        filename: &str,
+        content: &str,
+    ) -> Result<DescriptionVO, SetupError> {
+        std::fs::write(filename, content).map_err(|e| SetupError::io(e.to_string()))?;
         Ok(DescriptionVO::new(format!(
             "wrote {} ({} bytes)",
             filename,
@@ -175,9 +178,7 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     fn create_global_config_dir(&self) -> Result<std::path::PathBuf, SetupError> {
         let config_dir = dirs::config_dir()
             .map(|d| d.join("lint-arwaky"))
-            .ok_or_else(|| {
-                SetupError::invalid_state("Could not determine XDG config directory")
-            })?;
+            .ok_or_else(|| SetupError::invalid_state("Could not determine XDG config directory"))?;
         std::fs::create_dir_all(&config_dir).map_err(|e| SetupError::io(e.to_string()))?;
         Ok(config_dir)
     }

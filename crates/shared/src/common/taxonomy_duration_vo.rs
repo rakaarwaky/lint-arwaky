@@ -46,7 +46,9 @@ macro_rules! clamped_f64_vo {
                     value: f64,
                 }
                 let w = W::deserialize(deserializer)?;
-                Ok(Self { value: w.value.max($min) })
+                Ok(Self {
+                    value: w.value.max($min),
+                })
             }
         }
     };

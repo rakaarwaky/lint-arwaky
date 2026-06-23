@@ -5,11 +5,11 @@ use std::time::Duration;
 use notify::{RecommendedWatcher, RecursiveMode};
 use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
 use shared::common::taxonomy_common_vo::BooleanVO;
+use shared::common::taxonomy_message_vo::LintMessage;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::taxonomy_service_error::WatchServiceError;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
-use shared::common::taxonomy_message_vo::LintMessage;
 use tokio::sync::broadcast;
 
 pub struct NotifyWatchProvider {
