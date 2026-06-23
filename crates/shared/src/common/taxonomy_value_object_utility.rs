@@ -83,7 +83,7 @@ macro_rules! string_value_object {
             where
                 D: serde::Deserializer<'de>,
             {
-                struct V;
+                struct V {}
                 impl<'de> serde::de::Visitor<'de> for V {
                     type Value = $name;
                     fn expecting(
@@ -123,7 +123,7 @@ macro_rules! string_value_object {
                         Ok($name { value: val })
                     }
                 }
-                deserializer.deserialize_any(V)
+                deserializer.deserialize_any(V {})
             }
         }
     };
@@ -183,7 +183,7 @@ macro_rules! primitive_value_object {
             where
                 D: serde::Deserializer<'de>,
             {
-                struct V;
+                struct V {}
                 impl<'de> serde::de::Visitor<'de> for V {
                     type Value = $name;
                     fn expecting(
@@ -237,7 +237,7 @@ macro_rules! primitive_value_object {
                         Ok($name { value: val })
                     }
                 }
-                deserializer.deserialize_any(V)
+                deserializer.deserialize_any(V {})
             }
         }
     };

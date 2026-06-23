@@ -541,7 +541,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
             "classes".to_string(),
             serde_json::json!(data.class_definitions),
         );
-        Ok(MetadataVO { value: map })
+        Ok(MetadataVO { values: map })
     }
 
     fn get_function_definitions(&self, path: &FilePath) -> MetadataVO {
@@ -557,7 +557,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
                 serde_json::json!(Vec::<serde_json::Value>::new()),
             );
         }
-        MetadataVO { value: map }
+        MetadataVO { values: map }
     }
 
     fn is_symbol_exported(&self, path: &FilePath, symbol: &SymbolName) -> SuccessStatus {
@@ -577,7 +577,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
                 map.insert(cname, serde_json::json!(methods));
             }
         }
-        MetadataVO { value: map }
+        MetadataVO { values: map }
     }
 
     fn get_class_bases_map(&self, path: &FilePath) -> MetadataVO {
@@ -587,7 +587,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
                 map.insert(cname, serde_json::json!(bases));
             }
         }
-        MetadataVO { value: map }
+        MetadataVO { values: map }
     }
 
     fn get_assignment_targets(&self, path: &FilePath) -> MetadataVO {
@@ -603,7 +603,7 @@ impl ISourceParserPort for ASTRustParserAdapter {
                 serde_json::json!(Vec::<serde_json::Value>::new()),
             );
         }
-        MetadataVO { value: map }
+        MetadataVO { values: map }
     }
 
     fn get_control_flow_count(&self, path: &FilePath) -> Count {

@@ -79,9 +79,10 @@ impl ArchImportMandatoryChecker {
         }
 
         // Step 4: Read file and parse import lines
-        let Ok(content) = self.parser.read_file_to_string(&file_path) else {
+        let Ok(content_msg) = self.parser.read_file_to_message(&file_path) else {
             return;
         };
+        let content = content_msg.value().to_string();
         let file_content = FileContentVO::new(content);
         let import_lines = self.parser.parse_import_lines(&file_content);
 

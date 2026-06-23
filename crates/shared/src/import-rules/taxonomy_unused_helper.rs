@@ -1,11 +1,14 @@
 // PURPOSE: taxonomy_unused_helper — pure utility functions for unused import detection
+use crate::common::taxonomy_common_vo::LineNumber;
+use crate::common::taxonomy_name_vo::SymbolName;
+use crate::taxonomy_layer_vo::Identity;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 
 static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
 
-pub fn extract_imported_aliases(content: &str) -> HashMap<String, String> {
+pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
     let mut aliases = HashMap::new();
     let mut in_cfg_test = false;
     for line in content.lines() {
@@ -32,11 +35,11 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<String, String> {
                     }
                     if let Some((sym, alias)) = name.split_once(" as ") {
                         aliases.insert(
-                            alias.trim().to_string(),
-                            format!("{}.{}", module, sym.trim()),
+                            Identity::new(alias.trim()),
+                            Identity::new(format!("{}.{}", module, sym.trim())),
                         );
                     } else {
-                        aliases.insert(name.to_string(), format!("{}.{}", module, name));
+                        aliases.insert(Identity::new(name), Identity::new(format!("{}.{}", module, name)));
                     }
                 }
             }
@@ -50,10 +53,10 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<String, String> {
                     continue;
                 }
                 if let Some((sym, alias)) = name.split_once(" as ") {
-                    aliases.insert(alias.trim().to_string(), sym.trim().to_string());
+                    aliases.insert(Identity::new(alias.trim()), Identity::new(sym.trim()));
                 } else {
                     let alias = name.rsplit('.').next().unwrap_or(name);
-                    aliases.insert(alias.to_string(), name.to_string());
+                    aliases.insert(Identity::new(alias), Identity::new(name));
                 }
             }
         }
@@ -61,7 +64,7 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<String, String> {
     aliases
 }
 
-pub fn extract_exported_symbols(content: &str) -> HashSet<String> {
+pub fn extract_exported_symbols(content: &str) -> HashSet<Identity> {
     let mut exported = HashSet::new();
     let code_lines = content
         .lines()
@@ -75,7 +78,7 @@ pub fn extract_exported_symbols(content: &str) -> HashSet<String> {
                 for item in matched.as_str().split(',') {
                     let item = item.trim().trim_matches(|c| c == '\'' || c == '"');
                     if !item.is_empty() {
-                        exported.insert(item.to_string());
+                        exported.insert(Identity::new(item));
                     }
                 }
             }
@@ -86,8 +89,8 @@ pub fn extract_exported_symbols(content: &str) -> HashSet<String> {
 
 pub fn extract_used_symbols(
     content: &str,
-    imported_aliases: &HashMap<String, String>,
-) -> HashSet<String> {
+    imported_aliases: &HashMap<Identity, Identity>,
+) -> HashSet<Identity> {
     let mut used = HashSet::new();
     let code_lines = content
         .lines()
@@ -99,10 +102,11 @@ pub fn extract_used_symbols(
         .join("\n");
 
     for alias in imported_aliases.keys() {
-        let pattern = format!(r"\b{}\b", regex::escape(alias));
+        let alias_str = alias.value();
+        let pattern = format!(r"\b{}\b", regex::escape(alias_str));
         if let Ok(re) = Regex::new(&pattern) {
             if re.is_match(&code_lines) {
-                used.insert(alias.clone());
+                used.insert(Identity::new(alias_str));
             }
         }
     }
@@ -110,7 +114,7 @@ pub fn extract_used_symbols(
     used
 }
 
-pub fn extract_rust_js_imports(content: &str) -> Vec<(String, usize)> {
+pub fn extract_rust_js_imports(content: &str) -> Vec<(SymbolName, LineNumber)> {
     let mut imports = Vec::new();
     let mut in_cfg_test = false;
     for (i, line) in content.lines().enumerate() {
@@ -126,7 +130,7 @@ pub fn extract_rust_js_imports(content: &str) -> Vec<(String, usize)> {
             continue;
         }
 
-        let names: Vec<String> = if t.starts_with("use ") {
+        let names: Vec<SymbolName> = if t.starts_with("use ") {
             let target = t.trim_end_matches(';').trim_start_matches("use ").trim();
             if target.starts_with("std::")
                 || target.starts_with("core::")
@@ -138,15 +142,9 @@ pub fn extract_rust_js_imports(content: &str) -> Vec<(String, usize)> {
                 let inner = target[brace_pos + 3..].trim_end_matches('}').trim();
                 inner
                     .split(',')
-                    .map(|s| {
-                        s.trim()
-                            .split(" as ")
-                            .last()
-                            .unwrap_or("")
-                            .trim()
-                            .to_string()
-                    })
+                    .map(|s| s.trim().split(" as ").last().unwrap_or("").trim().to_string())
                     .filter(|n| !n.is_empty() && n != "_" && n != "*")
+                    .map(SymbolName::new)
                     .collect()
             } else {
                 let name = target
@@ -161,26 +159,20 @@ pub fn extract_rust_js_imports(content: &str) -> Vec<(String, usize)> {
                 if name.is_empty() || name == "_" || name == "*" {
                     continue;
                 }
-                vec![name]
+                vec![SymbolName::new(name)]
             }
         } else if t.starts_with("import ") {
             if let Some(from_idx) = t.find(" from ") {
                 let import_part = t[7..from_idx].trim();
-                let names: Vec<String> = if import_part.starts_with('{') {
+                let names: Vec<SymbolName> = if import_part.starts_with('{') {
                     import_part[1..import_part.len() - 1]
                         .split(',')
-                        .map(|s| {
-                            s.trim()
-                                .split(" as ")
-                                .last()
-                                .unwrap_or("")
-                                .trim()
-                                .to_string()
-                        })
+                        .map(|s| s.trim().split(" as ").last().unwrap_or("").trim().to_string())
                         .filter(|n| !n.is_empty())
+                        .map(SymbolName::new)
                         .collect()
                 } else {
-                    vec![import_part.trim().to_string()]
+                    vec![SymbolName::new(import_part.trim())]
                 };
                 names
             } else {
@@ -191,18 +183,19 @@ pub fn extract_rust_js_imports(content: &str) -> Vec<(String, usize)> {
         };
 
         for name in names {
-            if (name.starts_with('I')
-                && name.len() > 1
-                && name.chars().nth(1).unwrap_or(' ').is_uppercase())
-                || name.ends_with("Protocol")
-                || name.ends_with("Port")
-                || name.ends_with("Trait")
-                || name.ends_with("Aggregate")
-                || name == "Parser"
+            let s = name.value();
+            if (s.starts_with('I')
+                && s.len() > 1
+                && s.chars().nth(1).unwrap_or(' ').is_uppercase())
+                || s.ends_with("Protocol")
+                || s.ends_with("Port")
+                || s.ends_with("Trait")
+                || s.ends_with("Aggregate")
+                || s == "Parser"
             {
                 continue;
             }
-            imports.push((name, i));
+            imports.push((name, LineNumber::new(i as i64 + 1)));
         }
     }
     imports

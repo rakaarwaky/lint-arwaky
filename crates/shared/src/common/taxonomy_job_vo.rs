@@ -1,9 +1,9 @@
 // PURPOSE: PipelineJob, SuccessStatus, EnvContentVO, McpConfigVO — value objects for pipeline job lifecycle tracking
 // ResponseData is re-exported from common for backward compatibility
+use crate::common::taxonomy_adapter_name_vo::AdapterName;
+use crate::string_value_object;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
 
 pub use crate::common::taxonomy_response_data_vo::ResponseData;
 
@@ -30,9 +30,18 @@ impl std::fmt::Display for JobStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+// Manual impl: `SuccessStatus` overrides `Display` to render "SUCCESS"/"FAILURE"
+// instead of `true`/`false`, and the macro does not currently support a clean
+// `bool` cast (Rust forbids `i64 as bool`). Kept as a hand-rolled VO.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct SuccessStatus {
     pub value: bool,
+}
+
+impl Default for SuccessStatus {
+    fn default() -> Self {
+        Self::new(false)
+    }
 }
 
 impl SuccessStatus {
@@ -61,6 +70,8 @@ impl std::ops::Deref for SuccessStatus {
     }
 }
 
+/// `HashMap<String, serde_json::Value>` payload VOs. Wrapped via macro so they
+/// pick up the standard `new`/`value`/`Default`/serde impls.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LintStatusActionArgs {
     #[serde(default)]
@@ -105,27 +116,7 @@ impl AdapterMetadata {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct EnvContentVO {
-    pub value: String,
-}
-
-impl EnvContentVO {
-    pub fn new(value: impl Into<String>) -> Self {
-        Self {
-            value: value.into(),
-        }
-    }
-    pub fn value(&self) -> &str {
-        &self.value
-    }
-}
-
-impl std::fmt::Display for EnvContentVO {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
+string_value_object!(EnvContentVO);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct McpConfigVO {

@@ -1,25 +1,16 @@
 // PURPOSE: ConfigIdentifier — value object for named configuration identifiers
-use serde::Serialize;
+use crate::string_value_object;
 
-#[derive(Debug, Clone, Serialize, Eq)]
-#[serde(transparent)]
-#[derive(Default)]
-pub struct ConfigKey {
-    pub value: String,
-}
+string_value_object!(ConfigKey);
 
 impl ConfigKey {
-    pub fn new(value: impl Into<String>) -> Self {
-        Self {
-            value: value.into(),
-        }
-    }
-    pub fn value(&self) -> &str {
-        &self.value
-    }
+    /// Returns each dot-separated segment of the key.
     pub fn parts(&self) -> Vec<String> {
         self.value.split('.').map(|s| s.to_string()).collect()
     }
+
+    /// Returns the parent key, dropping the last segment. Empty when the
+    /// key has no parent (single segment).
     pub fn parent(&self) -> String {
         let parts = self.parts();
         if parts.len() > 1 {
@@ -28,87 +19,13 @@ impl ConfigKey {
             String::new()
         }
     }
+
+    /// Returns the last segment of the key, or the full value when the
+    /// key has no `.` separators.
     pub fn leaf(&self) -> String {
         match self.parts().last() {
             Some(part) => part.clone(),
             None => self.value.clone(),
         }
-    }
-}
-
-impl std::fmt::Display for ConfigKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
-
-impl std::hash::Hash for ConfigKey {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.value.hash(state);
-    }
-}
-
-impl PartialEq for ConfigKey {
-    fn eq(&self, other: &Self) -> bool {
-        self.value == other.value
-    }
-}
-
-impl From<&str> for ConfigKey {
-    fn from(s: &str) -> Self {
-        Self {
-            value: s.to_string(),
-        }
-    }
-}
-
-impl From<String> for ConfigKey {
-    fn from(s: String) -> Self {
-        Self { value: s }
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for ConfigKey {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct ConfigKeyVisitor {}
-        impl<'de> serde::de::Visitor<'de> for ConfigKeyVisitor {
-            type Value = ConfigKey;
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("primitive or map with 'value' key")
-            }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(ConfigKey {
-                    value: v.to_string(),
-                })
-            }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(ConfigKey { value: v })
-            }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-            where
-                A: serde::de::MapAccess<'de>,
-            {
-                let mut value = None;
-                while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" {
-                        value = Some(map.next_value::<String>()?);
-                    } else {
-                        let _: serde::de::IgnoredAny = map.next_value()?;
-                    }
-                }
-                let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
-                Ok(ConfigKey { value: val })
-            }
-        }
-        deserializer.deserialize_any(ConfigKeyVisitor {})
     }
 }

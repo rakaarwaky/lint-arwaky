@@ -38,56 +38,38 @@ impl PrimitiveViolation {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ImportInfoList {
-    #[serde(default)]
-    pub values: Vec<ImportInfo>,
+/// Emit a `Vec<T>`-backed newtype plus `Default`, `new`, `push`, `len`,
+/// and `is_empty`. Used for the two list wrappers below.
+macro_rules! list_wrapper {
+    ($name:ident, $item:ty) => {
+        #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+        pub struct $name {
+            #[serde(default)]
+            pub values: Vec<$item>,
+        }
+
+        impl Default for $name {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
+
+        impl $name {
+            pub fn new() -> Self {
+                Self { values: Vec::new() }
+            }
+            pub fn push(&mut self, item: $item) {
+                self.values.push(item);
+            }
+            pub fn len(&self) -> usize {
+                self.values.len()
+            }
+            pub fn is_empty(&self) -> bool {
+                self.values.is_empty()
+            }
+        }
+    };
 }
 
-impl Default for ImportInfoList {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ImportInfoList {
-    pub fn new() -> Self {
-        Self { values: Vec::new() }
-    }
-    pub fn push(&mut self, item: ImportInfo) {
-        self.values.push(item);
-    }
-    pub fn len(&self) -> usize {
-        self.values.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct PrimitiveViolationList {
-    #[serde(default)]
-    pub values: Vec<PrimitiveViolation>,
-}
-
-impl Default for PrimitiveViolationList {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl PrimitiveViolationList {
-    pub fn new() -> Self {
-        Self { values: Vec::new() }
-    }
-    pub fn push(&mut self, item: PrimitiveViolation) {
-        self.values.push(item);
-    }
-    pub fn len(&self) -> usize {
-        self.values.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-}
+list_wrapper!(ImportInfoList, ImportInfo);
+list_wrapper!(PrimitiveViolationList, PrimitiveViolation);

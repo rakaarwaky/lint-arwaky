@@ -86,9 +86,10 @@ impl DependencyCycleAnalyzer {
             }
 
             // Step 3b: Read the raw file content
-            let Ok(content) = self.parser.read_file_to_string(&file_fp) else {
+            let Ok(content_msg) = self.parser.read_file_to_message(&file_fp) else {
                 continue;
             };
+            let content = content_msg.value().to_string();
 
             // Step 3c: Detect the file's architectural layer (strip scoped suffix)
             let file_fp = FilePath::new(file.clone()).unwrap_or_default();
@@ -108,7 +109,7 @@ impl DependencyCycleAnalyzer {
             let modules = self.parser.extract_import_modules(&content);
             // Step 3f: For each import, resolve its target layer (strip scoped suffix)
             for module in modules {
-                let module_fp = FilePath::new(module.clone()).unwrap_or_default();
+                let module_fp = FilePath::new(module.value().to_string()).unwrap_or_default();
                 if let Some(target_layer) = analyzer.detect_module_layer(&module_fp) {
                     let target_layer_str = target_layer
                         .value()

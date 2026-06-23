@@ -1,10 +1,28 @@
 // PURPOSE: LayerDefinition, LayerMapVO, NamingConfig — VOs for AES layer definitions and naming policies
-use serde::{Deserialize, Serialize};
-
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
+use serde::{Deserialize, Serialize};
+
+/// Wrap a single-field VO that exposes a `new(value)` constructor plus the
+/// default `derive`s needed by the codebase. Used to keep the boilerplate
+/// for `LayerMapVO`/`NamingConfig` uniform without introducing a new linter
+/// violation cluster.
+macro_rules! single_field_vo {
+    ($name:ident, $field:ident: $field_ty:ty) => {
+        #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+        pub struct $name {
+            pub $field: $field_ty,
+        }
+
+        impl $name {
+            pub fn new($field: $field_ty) -> Self {
+                Self { $field }
+            }
+        }
+    };
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LayerDefinition {
@@ -31,24 +49,5 @@ pub struct LayerDefinition {
     pub orphan: crate::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct LayerMapVO {
-    pub values: std::collections::HashMap<LayerNameVO, LayerDefinition>,
-}
-
-impl LayerMapVO {
-    pub fn new(value: std::collections::HashMap<LayerNameVO, LayerDefinition>) -> Self {
-        Self { values: value }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct NamingConfig {
-    pub word_count: Count,
-}
-
-impl NamingConfig {
-    pub fn new(word_count: Count) -> Self {
-        Self { word_count }
-    }
-}
+single_field_vo!(LayerMapVO, values: std::collections::HashMap<LayerNameVO, LayerDefinition>);
+single_field_vo!(NamingConfig, word_count: Count);

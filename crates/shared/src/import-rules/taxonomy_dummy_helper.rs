@@ -1,7 +1,9 @@
 // PURPOSE: taxonomy_dummy_helper — pure utility functions for dummy function, block, and trait detection
+use crate::common::taxonomy_common_vo::LineNumber;
+use crate::common::taxonomy_name_vo::SymbolName;
 use crate::import_rules::taxonomy_language_vo::LanguageVO;
 
-pub fn dummy_function_ranges(lines: &[&str], lang: LanguageVO) -> Vec<(usize, usize)> {
+pub fn dummy_function_ranges(lines: &[&str], lang: LanguageVO) -> Vec<(LineNumber, LineNumber)> {
     match lang {
         LanguageVO::Rust => rust_dummy_function_ranges(lines),
         LanguageVO::Python => python_dummy_function_ranges(lines),
@@ -10,7 +12,7 @@ pub fn dummy_function_ranges(lines: &[&str], lang: LanguageVO) -> Vec<(usize, us
     }
 }
 
-pub fn imported_symbols(lines: &[&str], lang: LanguageVO) -> Vec<(String, usize)> {
+pub fn imported_symbols(lines: &[&str], lang: LanguageVO) -> Vec<(SymbolName, LineNumber)> {
     match lang {
         LanguageVO::Rust => rust_imported_symbols(lines),
         LanguageVO::Python => python_imported_symbols(lines),
@@ -19,7 +21,7 @@ pub fn imported_symbols(lines: &[&str], lang: LanguageVO) -> Vec<(String, usize)
     }
 }
 
-pub fn dummy_impl_traits_with_lines(lines: &[&str]) -> Vec<(String, usize)> {
+pub fn dummy_impl_traits_with_lines(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     let mut traits = Vec::new();
     let mut i = 0usize;
 
@@ -29,7 +31,7 @@ pub fn dummy_impl_traits_with_lines(lines: &[&str]) -> Vec<(String, usize)> {
             if let Some(trait_name) = impl_trait_name(trimmed) {
                 let (end, body_lines) = impl_block(lines, i);
                 if trait_impl_is_dummy(&body_lines) {
-                    traits.push((trait_name, i + 1));
+                    traits.push((SymbolName::new(trait_name), LineNumber::new(i as i64 + 1)));
                 }
                 i = end;
             } else {
@@ -140,104 +142,98 @@ pub fn symbol_used_real(
 
 // ─── Private Helpers ───
 
-fn rust_dummy_function_ranges(lines: &[&str]) -> Vec<(usize, usize)> {
+/// Iterate `lines`, invoking `is_header(trimmed_line)` to identify function
+/// definitions and `body_extent(start, lines)` to compute the body end line
+/// for that definition. Returns `[(start_line, end_line), ...]` of all ranges.
+///
+/// The two language-specific differences (Rust/JS brace-counting vs. Python
+/// indent-based termination) live in the closures passed in.
+fn collect_ranges<F, G>(lines: &[&str], is_header: F, body_extent: G) -> Vec<(LineNumber, LineNumber)>
+where
+    F: Fn(&str) -> bool,
+    G: Fn(usize, &[&str]) -> usize,
+{
     let mut ranges = Vec::new();
     let mut i = 0;
-
     while i < lines.len() {
-        let trimmed = lines[i].trim();
-        if trimmed.starts_with("fn _use_") || trimmed.starts_with("fn dummy_") {
+        if is_header(lines[i].trim()) {
             let start = i + 1;
-            let mut depth = 0usize;
-            let mut end = i + 1;
-
-            for (idx, line) in lines.iter().enumerate().skip(i) {
-                let t = line.trim();
-                depth = depth.saturating_add(t.matches('{').count());
-                depth = depth.saturating_sub(t.matches('}').count());
-                end = idx + 1;
-                if depth == 0 && t.contains('}') {
-                    break;
-                }
-            }
-
-            ranges.push((start, end));
+            let end = body_extent(i, lines);
+            ranges.push((LineNumber::new(start as i64), LineNumber::new(end as i64)));
             i = end;
         }
         i += 1;
     }
-
     ranges
 }
 
-fn python_dummy_function_ranges(lines: &[&str]) -> Vec<(usize, usize)> {
-    let mut ranges = Vec::new();
-    let mut i = 0;
-
-    while i < lines.len() {
-        let trimmed = lines[i].trim();
-        if trimmed.starts_with("def _use_") || trimmed.starts_with("def dummy_") {
-            let start = i + 1;
-            let mut end = i + 1;
-            let indent = lines[i].len() - lines[i].trim_start().len();
-
-            for (idx, line) in lines.iter().enumerate().skip(i + 1) {
-                let t = line.trim();
-                if t.is_empty() || t.starts_with('#') {
-                    end = idx + 1;
-                    continue;
-                }
-                let line_indent = line.len() - line.trim_start().len();
-                if line_indent <= indent && !t.is_empty() {
-                    break;
-                }
-                end = idx + 1;
-            }
-
-            ranges.push((start, end));
-            i = end;
+/// Brace-counting body extenter for Rust/JS-like brace-delimited languages.
+fn brace_extent(start: usize, lines: &[&str]) -> usize {
+    let mut depth = 0usize;
+    let mut end = start + 1;
+    for (idx, line) in lines.iter().enumerate().skip(start) {
+        let t = line.trim();
+        depth = depth.saturating_add(t.matches('{').count());
+        depth = depth.saturating_sub(t.matches('}').count());
+        end = idx + 1;
+        if depth == 0 && t.contains('}') {
+            break;
         }
-        i += 1;
     }
-
-    ranges
+    end
 }
 
-fn js_dummy_function_ranges(lines: &[&str]) -> Vec<(usize, usize)> {
-    let mut ranges = Vec::new();
-    let mut i = 0;
-
-    while i < lines.len() {
-        let trimmed = lines[i].trim();
-        if trimmed.starts_with("function _use")
-            || trimmed.starts_with("function dummy")
-            || trimmed.starts_with("const _use")
-            || trimmed.starts_with("const dummy")
-        {
-            let start = i + 1;
-            let mut depth = 0usize;
-            let mut end = i + 1;
-
-            for (idx, line) in lines.iter().enumerate().skip(i) {
-                let t = line.trim();
-                depth = depth.saturating_add(t.matches('{').count());
-                depth = depth.saturating_sub(t.matches('}').count());
-                end = idx + 1;
-                if depth == 0 && t.contains('}') {
-                    break;
-                }
-            }
-
-            ranges.push((start, end));
-            i = end;
+/// Indent-based body extenter for Python. Returns the line *after* the
+/// `def` block ends (the next non-empty, non-comment line at the same or
+/// shallower indent).
+fn indent_extent(start: usize, lines: &[&str]) -> usize {
+    let mut end = start + 1;
+    let indent = lines[start].len() - lines[start].trim_start().len();
+    for (idx, line) in lines.iter().enumerate().skip(start + 1) {
+        let t = line.trim();
+        if t.is_empty() || t.starts_with('#') {
+            end = idx + 1;
+            continue;
         }
-        i += 1;
+        let line_indent = line.len() - line.trim_start().len();
+        if line_indent <= indent && !t.is_empty() {
+            break;
+        }
+        end = idx + 1;
     }
-
-    ranges
+    end
 }
 
-fn rust_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
+fn rust_dummy_function_ranges(lines: &[&str]) -> Vec<(LineNumber, LineNumber)> {
+    collect_ranges(
+        lines,
+        |t| t.starts_with("fn _use_") || t.starts_with("fn dummy_"),
+        brace_extent,
+    )
+}
+
+fn python_dummy_function_ranges(lines: &[&str]) -> Vec<(LineNumber, LineNumber)> {
+    collect_ranges(
+        lines,
+        |t| t.starts_with("def _use_") || t.starts_with("def dummy_"),
+        indent_extent,
+    )
+}
+
+fn js_dummy_function_ranges(lines: &[&str]) -> Vec<(LineNumber, LineNumber)> {
+    collect_ranges(
+        lines,
+        |t| {
+            t.starts_with("function _use")
+                || t.starts_with("function dummy")
+                || t.starts_with("const _use")
+                || t.starts_with("const dummy")
+        },
+        brace_extent,
+    )
+}
+
+fn rust_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     let mut symbols = Vec::new();
 
     for (idx, line) in lines.iter().enumerate() {
@@ -261,7 +257,7 @@ fn rust_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
                     let inside = &body[open + 1..close];
                     for part in inside.split(',') {
                         if let Some(symbol) = rust_imported_symbol_from_part(part.trim()) {
-                            symbols.push((symbol, idx + 1));
+                            symbols.push((SymbolName::new(symbol), LineNumber::new(idx as i64 + 1)));
                         }
                     }
                 }
@@ -270,7 +266,7 @@ fn rust_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
         }
 
         if let Some(symbol) = rust_imported_symbol_from_part(body) {
-            symbols.push((symbol, idx + 1));
+            symbols.push((SymbolName::new(symbol), LineNumber::new(idx as i64 + 1)));
         }
     }
 
@@ -298,7 +294,7 @@ fn rust_imported_symbol_from_part(part: &str) -> Option<String> {
     Some(name.to_string())
 }
 
-fn python_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
+fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     let mut symbols = Vec::new();
 
     for (idx, line) in lines.iter().enumerate() {
@@ -312,7 +308,7 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
                         None => "",
                     };
                     if !name.is_empty() && name != "*" {
-                        symbols.push((name.to_string(), idx + 1));
+                        symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                     }
                 }
             }
@@ -333,7 +329,7 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
                     Some(n) => n,
                     None => module,
                 };
-                symbols.push((name.to_string(), idx + 1));
+                symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
             }
         }
     }
@@ -341,7 +337,7 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
     symbols
 }
 
-fn js_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
+fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     let mut symbols = Vec::new();
 
     for (idx, line) in lines.iter().enumerate() {
@@ -357,7 +353,7 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
                             None => "",
                         };
                         if !name.is_empty() && name != "type" {
-                            symbols.push((name.to_string(), idx + 1));
+                            symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }
                     }
                 }
@@ -376,7 +372,7 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
                 };
                 let name = name.trim();
                 if !name.is_empty() && name != "default" {
-                    symbols.push((name.to_string(), idx + 1));
+                    symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                 }
             }
             continue;
@@ -392,7 +388,7 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(String, usize)> {
                             None => "",
                         };
                         if !name.is_empty() {
-                            symbols.push((name.to_string(), idx + 1));
+                            symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }
                     }
                 }

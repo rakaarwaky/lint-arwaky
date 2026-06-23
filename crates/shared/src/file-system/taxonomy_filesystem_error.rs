@@ -31,13 +31,10 @@ impl FileSystemError {
 
 impl std::fmt::Display for FileSystemError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let code = {
-            let c: &str = &self.error_code;
-            if c.is_empty() {
-                String::new()
-            } else {
-                format!(" [{}]", c)
-            }
+        let code = if self.error_code.code().is_empty() {
+            String::new()
+        } else {
+            format!(" [{}]", self.error_code.code())
         };
         write!(
             f,
@@ -47,50 +44,37 @@ impl std::fmt::Display for FileSystemError {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
-pub struct PathNotFoundError {
-    #[serde(flatten)]
-    pub base: FileSystemError,
-}
-
-impl PathNotFoundError {
-    pub fn new(path: FilePath, message: ErrorMessage) -> Self {
-        Self {
-            base: FileSystemError::new(path, message, ActionName::new("read")),
+/// Wrap a `FileSystemError` in a newtype variant and forward its `Display`.
+/// Use `[$name, $op, $msg_prefix]` form when the newtype should override the
+/// operation label (e.g. `read`/`access`) and produce a custom prefix when
+/// displayed (e.g. `"Path not found: "`/`"Access denied: "`).
+macro_rules! fs_error_newtype {
+    ($name:ident, $op:expr, $msg_prefix:literal) => {
+        #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
+        pub struct $name {
+            #[serde(flatten)]
+            pub base: FileSystemError,
         }
-    }
-}
 
-impl std::fmt::Display for PathNotFoundError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Path not found: {} ({})",
-            self.base.path, self.base.message
-        )
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
-pub struct AccessDeniedError {
-    #[serde(flatten)]
-    pub base: FileSystemError,
-}
-
-impl AccessDeniedError {
-    pub fn new(path: FilePath, message: ErrorMessage) -> Self {
-        Self {
-            base: FileSystemError::new(path, message, ActionName::new("access")),
+        impl $name {
+            pub fn new(path: FilePath, message: ErrorMessage) -> Self {
+                Self {
+                    base: FileSystemError::new(path, message, ActionName::new($op)),
+                }
+            }
         }
-    }
+
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(
+                    f,
+                    "{}{} ({})",
+                    $msg_prefix, self.base.path, self.base.message
+                )
+            }
+        }
+    };
 }
 
-impl std::fmt::Display for AccessDeniedError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Access denied: {} ({})",
-            self.base.path, self.base.message
-        )
-    }
-}
+fs_error_newtype!(PathNotFoundError, "read", "Path not found: ");
+fs_error_newtype!(AccessDeniedError, "access", "Access denied: ");

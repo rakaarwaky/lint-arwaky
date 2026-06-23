@@ -69,28 +69,38 @@ impl LintResult {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct LintResultList {
-    pub values: Vec<LintResult>,
+/// Generate a `Vec<T>`-backed newtype with `Default`, `new`, `iter`,
+/// `len`, `is_empty`, `push`, and `append`. Used for the `LintResultList`
+/// wrapper below; siblings `ImportInfoList`/`PrimitiveViolationList` in
+/// `taxonomy_import_source_vo.rs` carry the same surface.
+macro_rules! lint_result_list_wrapper {
+    ($name:ident, $item:ty) => {
+        #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+        pub struct $name {
+            pub values: Vec<$item>,
+        }
+
+        impl $name {
+            pub fn new(value: Vec<$item>) -> Self {
+                Self { values: value }
+            }
+            pub fn iter(&self) -> std::slice::Iter<'_, $item> {
+                self.values.iter()
+            }
+            pub fn len(&self) -> usize {
+                self.values.len()
+            }
+            pub fn is_empty(&self) -> bool {
+                self.values.is_empty()
+            }
+            pub fn push(&mut self, item: $item) {
+                self.values.push(item);
+            }
+            pub fn append(&mut self, item: $item) {
+                self.values.push(item);
+            }
+        }
+    };
 }
 
-impl LintResultList {
-    pub fn new(value: Vec<LintResult>) -> Self {
-        Self { values: value }
-    }
-    pub fn iter(&self) -> std::slice::Iter<'_, LintResult> {
-        self.values.iter()
-    }
-    pub fn len(&self) -> usize {
-        self.values.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-    pub fn push(&mut self, item: LintResult) {
-        self.values.push(item);
-    }
-    pub fn append(&mut self, item: LintResult) {
-        self.values.push(item);
-    }
-}
+lint_result_list_wrapper!(LintResultList, LintResult);

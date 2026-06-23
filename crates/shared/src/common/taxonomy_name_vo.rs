@@ -1,4 +1,5 @@
 // PURPOSE: NameVariants, SymbolName — value objects for symbol naming and naming convention variants
+use crate::string_value_object;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -24,96 +25,4 @@ impl NameVariants {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Eq)]
-#[serde(transparent)]
-pub struct SymbolName {
-    pub value: String,
-}
-
-impl SymbolName {
-    pub fn value(&self) -> &str {
-        &self.value
-    }
-    pub fn new(value: impl Into<String>) -> Self {
-        Self {
-            value: value.into(),
-        }
-    }
-}
-
-impl std::fmt::Display for SymbolName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
-
-impl std::hash::Hash for SymbolName {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.value.hash(state);
-    }
-}
-
-impl PartialEq for SymbolName {
-    fn eq(&self, other: &Self) -> bool {
-        self.value == other.value
-    }
-}
-
-impl From<&str> for SymbolName {
-    fn from(s: &str) -> Self {
-        Self {
-            value: s.to_string(),
-        }
-    }
-}
-
-impl From<String> for SymbolName {
-    fn from(s: String) -> Self {
-        Self { value: s }
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for SymbolName {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct SymbolNameVisitor {}
-        impl<'de> serde::de::Visitor<'de> for SymbolNameVisitor {
-            type Value = SymbolName;
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("primitive or map with 'value' key")
-            }
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(SymbolName {
-                    value: v.to_string(),
-                })
-            }
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Ok(SymbolName { value: v })
-            }
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-            where
-                A: serde::de::MapAccess<'de>,
-            {
-                let mut value = None;
-                while let Some(k) = map.next_key::<String>()? {
-                    if k == "value" {
-                        value = Some(map.next_value::<String>()?);
-                    } else {
-                        let _: serde::de::IgnoredAny = map.next_value()?;
-                    }
-                }
-                let val = value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
-                Ok(SymbolName { value: val })
-            }
-        }
-        deserializer.deserialize_any(SymbolNameVisitor {})
-    }
-}
+string_value_object!(SymbolName);

@@ -71,7 +71,7 @@ impl DummyImportChecker {
             .parser
             .get_dummy_impl_traits_with_lines(&lines)
             .into_iter()
-            .map(|(trait_name, _)| trait_name)
+            .map(|(trait_name, _)| trait_name.value().to_string())
             .collect();
 
         // Step 4: Detect the architectural layer for this file
@@ -87,9 +87,10 @@ impl DummyImportChecker {
         // Step 5-7: Iterate imported symbols and check if they have real usage
         for (symbol, line_no) in self.parser.get_imported_symbols(&lines, lang) {
             // Step 6: Skip symbols that are actually used outside dummy/stub contexts
+            let symbol_str = symbol.value().to_string();
             if self
                 .parser
-                .is_symbol_used_real(&lines, &symbol, &dummy_ranges, &dummy_impl_traits)
+                .is_symbol_used_real(&lines, &symbol_str, &dummy_ranges, &dummy_impl_traits)
             {
                 continue;
             }
@@ -97,12 +98,12 @@ impl DummyImportChecker {
             // Step 7: Symbol is only used in dummy/stub — flag as violation
             violations.push(LintResult::new_arch(
                 file,
-                line_no,
+                line_no.value() as usize,
                 "AES204",
                 Severity::HIGH,
                 AesImportViolation::ImportIntentViolation {
                     source_layer: LayerNameVO::new(layer_name.clone()),
-                    import_type: SymbolName::new(symbol),
+                    import_type: SymbolName::new(symbol_str),
                     intent: SymbolName::new(
                         "Use imported symbols in real logic, not only in dummy functions or stubs"
                             .to_string(),
@@ -151,9 +152,11 @@ impl DummyImportChecker {
 
         // Step 3-4: Flag each dummy function as violation
         for (start, end) in self.parser.get_dummy_function_ranges(&lines, lang) {
+            let start_us = start.value() as usize;
+            let end_us = end.value() as usize;
             violations.push(LintResult::new_arch(
                 file,
-                start,
+                start_us,
                 "AES204",
                 Severity::HIGH,
                 AesImportViolation::ImportIntentViolation {
@@ -203,14 +206,16 @@ impl DummyImportChecker {
 
         // Step 3-4: Flag each dummy/stub trait implementation
         for (trait_name, start) in self.parser.get_dummy_impl_traits_with_lines(&lines) {
+            let trait_name_str = trait_name.value().to_string();
+            let start_us = start.value() as usize;
             violations.push(LintResult::new_arch(
                 file,
-                start,
+                start_us,
                 "AES204",
                 Severity::HIGH,
                 AesImportViolation::ImportIntentViolation {
                     source_layer: LayerNameVO::new(layer_name.clone()),
-                    import_type: SymbolName::new(trait_name),
+                    import_type: SymbolName::new(trait_name_str),
                     intent: SymbolName::new(
                         "Implement contract methods with real behavior instead of empty/todo stubs"
                             .to_string(),
@@ -292,12 +297,12 @@ impl DummyImportChecker {
             .parser
             .get_dummy_impl_traits_with_lines(&lines)
             .into_iter()
-            .map(|(trait_name, _)| trait_name)
+            .map(|(trait_name, _)| trait_name.value().to_string())
             .collect();
 
         let imported = self.parser.get_imported_symbols(&lines, lang);
         let has_real_usage = imported.iter().any(|(symbol, line_no)| {
-            let is_taxonomy = lines.get(line_no.saturating_sub(1)).is_some_and(|line| {
+            let is_taxonomy = lines.get(line_no.value().saturating_sub(1) as usize).is_some_and(|line| {
                 let t = line.trim();
                 match lang {
                     LanguageVO::Rust => {
@@ -318,8 +323,9 @@ impl DummyImportChecker {
             if !is_taxonomy {
                 return false;
             }
+            let symbol_str = symbol.value();
             self.parser
-                .is_symbol_used_real(&lines, symbol, &dummy_ranges, &dummy_impl_traits)
+                .is_symbol_used_real(&lines, &symbol_str, &dummy_ranges, &dummy_impl_traits)
         });
 
         // Step 5: If no real function uses taxonomy primitives but taxonomy imports exist → violation
@@ -386,8 +392,8 @@ impl DummyImportChecker {
         let imported = self.parser.get_imported_symbols(&lines, lang);
         let aggregate_types: Vec<String> = imported
             .into_iter()
-            .filter(|(symbol, _)| symbol.ends_with("Aggregate"))
-            .map(|(symbol, _)| symbol)
+            .filter(|(symbol, _)| symbol.value().ends_with("Aggregate"))
+            .map(|(symbol, _)| symbol.value().to_string())
             .collect();
 
         // Step 3-5: Scan lines for phantom + aggregate type combinations
@@ -551,9 +557,10 @@ impl shared::import_rules::contract_rule_protocol::IArchImportProtocol for Dummy
             }
 
             // Step 3: Read file content
-            let Ok(content) = self.parser.read_file_to_string(f) else {
+            let Ok(content_msg) = self.parser.read_file_to_message(f) else {
                 continue;
             };
+            let content = content_msg.value().to_string();
 
             // Step 4: Run universal sub-checks (every file type)
             self.check_dummy_imports(&f_str, &content, &mut results.values, analyzer, root_dir);
