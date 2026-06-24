@@ -13,15 +13,14 @@ use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, Rea
 
 #[derive(Clone)]
 pub struct LintArwakyMcpServer {
-    #[allow(dead_code)]
-    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    _code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     tool_router: ToolRouter<Self>,
 }
 
 impl LintArwakyMcpServer {
-    pub fn new(code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+    pub fn new(_code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
         Self {
-            code_analysis_linter,
+            _code_analysis_linter,
             tool_router: Self::tool_router(),
         }
     }
@@ -51,7 +50,7 @@ impl LintArwakyMcpServer {
     #[tool(description = "Execute any CLI command. This is the primary tool.")]
     async fn execute_command(&self, Parameters(args): Parameters<ExecuteCommandArgs>) -> String {
         // Clone Arc so spawn_blocking owns a 'static reference to the linter
-        let linter = self.code_analysis_linter.clone();
+        let linter = self._code_analysis_linter.clone();
         let action = args.action.clone();
         let arg_path = args
             .args
@@ -73,7 +72,10 @@ impl LintArwakyMcpServer {
             .map(String::from);
         let result = match action.as_str() {
             "check" | "scan" => {
-                let path = arg_path.unwrap_or_else(|| ".".to_string());
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
                 // spawn_blocking: arch_linter.run_lint internally creates a
                 // tokio runtime, which would panic if called from within
                 // rmcp's async context. Off-load to blocking thread pool.
@@ -102,7 +104,10 @@ impl LintArwakyMcpServer {
                 }
             }
             "fix" => {
-                let path = arg_path.unwrap_or_else(|| ".".to_string());
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
                 serde_json::json!({
                     "status": "success",
                     "action": "fix",
@@ -111,8 +116,14 @@ impl LintArwakyMcpServer {
                 })
             }
             "ci" => {
-                let path = arg_path.unwrap_or_else(|| ".".to_string());
-                let threshold = arg_threshold.unwrap_or(80);
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let threshold = match arg_threshold {
+                    Some(t) => t,
+                    None => 80,
+                };
                 let linter_for_blocking = linter.clone();
                 let path_for_blocking = path.clone();
                 let join_result = tokio::task::spawn_blocking(move || {
@@ -136,11 +147,10 @@ impl LintArwakyMcpServer {
             "doctor" => {
                 let mut checks = Vec::new();
                 for tool in &["cargo", "python3", "ruff", "mypy", "bandit", "node", "git"] {
-                    let found = std::process::Command::new("which")
-                        .arg(tool)
-                        .output()
-                        .map(|o| o.status.success())
-                        .unwrap_or(false);
+                    let found = match std::process::Command::new("which").arg(tool).output() {
+                        Ok(o) => o.status.success(),
+                        Err(_) => false,
+                    };
                     checks.push(serde_json::json!({
                         "tool": tool,
                         "status": if found { "ok" } else { "not_found" }
@@ -149,7 +159,10 @@ impl LintArwakyMcpServer {
                 serde_json::json!({"status": "success", "action": "doctor", "checks": checks})
             }
             "orphan" | "security" | "duplicates" | "dependencies" => {
-                let path = arg_path.unwrap_or_else(|| ".".to_string());
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
                 serde_json::json!({"status": "success", "action": action, "path": path})
             }
             "version" => {
@@ -164,11 +177,10 @@ impl LintArwakyMcpServer {
                     ("clippy", "rust"),
                     ("eslint", "javascript"),
                 ] {
-                    let found = std::process::Command::new("which")
-                        .arg(name)
-                        .output()
-                        .map(|o| o.status.success())
-                        .unwrap_or(false);
+                    let found = match std::process::Command::new("which").arg(name).output() {
+                        Ok(o) => o.status.success(),
+                        Err(_) => false,
+                    };
                     adapters.push(
                         serde_json::json!({"name": name, "language": lang, "enabled": found}),
                     );
@@ -184,13 +196,19 @@ impl LintArwakyMcpServer {
             "init" => serde_json::json!({"status": "success", "action": "init"}),
             "install" => serde_json::json!({"status": "success", "action": "install"}),
             "mcp-config" => {
-                let client = arg_client.unwrap_or_else(|| "all".to_string());
+                let client = match arg_client {
+                    Some(c) => c,
+                    None => "all".to_string(),
+                };
                 serde_json::json!({"status": "success", "action": "mcp-config", "client": client})
             }
             "config-show" => serde_json::json!({"status": "success", "action": "config-show"}),
             _ => serde_json::json!({"error": format!("Unknown action: {}", action)}),
         };
-        serde_json::to_string_pretty(&result).unwrap_or_default()
+        match serde_json::to_string_pretty(&result) {
+            Ok(s) => s,
+            Err(_) => String::new(),
+        }
     }
 
     #[tool(
@@ -213,7 +231,10 @@ impl LintArwakyMcpServer {
             })
             .collect();
         let result = serde_json::json!({ "commands": commands, "total": commands.len() });
-        serde_json::to_string_pretty(&result).unwrap_or_default()
+        match serde_json::to_string_pretty(&result) {
+            Ok(s) => s,
+            Err(_) => String::new(),
+        }
     }
 
     #[tool(
@@ -246,10 +267,10 @@ impl LintArwakyMcpServer {
                 let header = format!("## {}", s);
                 if let Some(start) = content.find(&header) {
                     let remaining = &content[start..];
-                    let end = remaining[1..]
-                        .find("\n## ")
-                        .map(|i| i + 1)
-                        .unwrap_or(remaining.len());
+                    let end = match remaining[1..].find("\n## ") {
+                        Some(i) => i + 1,
+                        None => remaining.len(),
+                    };
                     serde_json::json!({"section": s, "content": &remaining[..end]}).to_string()
                 } else {
                     serde_json::json!({"error": format!("Section '{}' not found", s)}).to_string()
@@ -269,11 +290,10 @@ impl LintArwakyMcpServer {
             ("clippy", "rust"),
             ("eslint", "javascript"),
         ] {
-            let found = std::process::Command::new("which")
-                .arg(name)
-                .output()
-                .map(|o| o.status.success())
-                .unwrap_or(false);
+            let found = match std::process::Command::new("which").arg(name).output() {
+                Ok(o) => o.status.success(),
+                Err(_) => false,
+            };
             adapters.push(serde_json::json!({
                 "name": name,
                 "language": lang,
@@ -290,6 +310,9 @@ impl LintArwakyMcpServer {
             "adapters_total": adapters.len(),
             "adapters": adapters
         });
-        serde_json::to_string_pretty(&result).unwrap_or_default()
+        match serde_json::to_string_pretty(&result) {
+            Ok(s) => s,
+            Err(_) => String::new(),
+        }
     }
 }
