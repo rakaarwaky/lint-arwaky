@@ -10,7 +10,5 @@ pub use import_rules;
 pub use mcp_server;
 pub use naming_rules;
 pub use orphan_detector;
-
 pub use project_setup;
 pub use role_rules;
-pub use source_parsing;

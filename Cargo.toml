@@ -19,7 +19,6 @@ needless_lifetimes = "allow"
 [workspace.dependencies]
 # Workspace member crates
 shared = { package = "shared-lint-arwaky", path = "crates/shared" }
-source_parsing = { package = "source_parsing-lint-arwaky", path = "crates/source-parsing" }
 naming_rules = { package = "naming_rules-lint-arwaky", path = "crates/naming-rules" }
 import_rules = { package = "import_rules-lint-arwaky", path = "crates/import-rules" }
 code_analysis = { package = "code_analysis-lint-arwaky", path = "crates/code-analysis" }
@@ -64,7 +63,7 @@ futures = "0.3"
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "1.10.43"
+version = "1.10.45"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
 license = "MIT"
@@ -91,7 +90,6 @@ path = "crates/root_tui_main_entry.rs"
 
 [dependencies]
 shared.workspace = true
-source_parsing.workspace = true
 naming_rules.workspace = true
 import_rules.workspace = true
 code_analysis.workspace = true

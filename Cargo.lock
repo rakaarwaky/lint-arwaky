@@ -2368,7 +2368,7 @@ dependencies = [
 
 [[package]]
 name = "lint_arwaky-arwaky"
-version = "1.10.43"
+version = "1.10.45"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2403,7 +2403,6 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
  "thiserror 1.0.69",
  "tokio",
  "toml 1.1.2+spec-1.1.0",
@@ -3540,16 +3539,6 @@ checksum = "52d1cfed4120b4d927bf7c0f86d2087a4a7d6027c906d9f9d525a80573b9be51"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "source_parsing-lint-arwaky"
-version = "1.10.14"
-dependencies = [
- "regex",
- "serde",
- "serde_json",
- "shared-lint-arwaky",
 ]
 
 [[package]]

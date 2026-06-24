@@ -10,6 +10,7 @@ use cli_commands::surface_watch_command;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
 use code_analysis::{has_critical, lint_path, CodeDuplicationAnalyzer};
 use import_rules::root_import_rules_container::ImportContainer;
+use import_rules::root_import_rules_container::NullSourceParser;
 use role_rules::root_role_rules_container::RoleContainer;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
@@ -55,17 +56,8 @@ fn main() -> ExitCode {
     let external_lint_aggregate_clone = external_lint_aggregate.clone();
     let layer_detector_clone = layer_detector.clone();
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
-        let source_parser: Arc<
-            dyn shared::source_parsing::contract_parser_port::ISourceParserPort,
-        > = Arc::new(
-            import_rules::infrastructure_parser_adapter::SourceParserOrchestrator::new(
-                Box::new(import_rules::infrastructure_py_scanner::ASTPythonParserAdapter::new()),
-                Box::new(import_rules::infrastructure_rust_scanner::ASTRustParserAdapter::new()),
-                Box::new(import_rules::infrastructure_js_scanner::ASTJSParserAdapter::new()),
-                Box::new(import_rules::infrastructure_language_detector::LanguageDetector::new()),
-            ),
-        );
-        let import_container = ImportContainer::new_with_config(config.clone(), source_parser);
+        let import_container =
+            ImportContainer::new_with_config(config.clone(), Arc::new(NullSourceParser));
         let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
             import_container.analyzer(),
         );
