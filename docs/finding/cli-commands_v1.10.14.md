@@ -11,58 +11,7 @@ The following issues were detected by `lint-arwaky-cli scan`:
   AES Architecture Compliance Report
 ============================================================
   Project: /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands
-  Violations: 17
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_config_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_fix_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_git_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_tui_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_maintenance_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_maintenance_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
+  Violations: 0
 ```
 
 ---
@@ -70,6 +19,9 @@ FIX: Replace the unwrap/expect call with structured error handling (Option/Resul
 ## File List
 
 - [crates/cli-commands/Cargo.toml](file:///home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/Cargo.toml)
+- [crates/cli-commands/src/infrastructure_language_detector.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/infrastructure_language_detector.rs)
+- [crates/cli-commands/src/infrastructure_path_normalization.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/infrastructure_path_normalization.rs)
+- [crates/cli-commands/src/infrastructure_scanner_provider.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/infrastructure_scanner_provider.rs)
 - [crates/cli-commands/src/lib.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/lib.rs)
 - [crates/cli-commands/src/surface_check_command.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs)
 - [crates/cli-commands/src/surface_config_command.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_config_command.rs)
@@ -121,6 +73,7 @@ FIX: Replace the unwrap/expect call with structured error handling (Option/Resul
 - [crates/shared/src/role-rules/contract_role_runner_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_role_runner_aggregate.rs)
 - [crates/shared/src/role-rules/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/mod.rs)
 - [crates/shared/src/source-parsing/contract_language_detector_port.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/source-parsing/contract_language_detector_port.rs)
+- [crates/shared/src/source-parsing/contract_path_normalization_port.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/source-parsing/contract_path_normalization_port.rs)
 - [crates/shared/src/source-parsing/contract_scanner_provider_port.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/source-parsing/contract_scanner_provider_port.rs)
 - [crates/shared/src/source-parsing/infrastructure_file_collector_provider.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/source-parsing/infrastructure_file_collector_provider.rs)
 - [crates/shared/src/source-parsing/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/source-parsing/mod.rs)
@@ -166,6 +119,100 @@ ctrlc.workspace = true
 tokio.workspace = true
 shared.workspace = true
 dirs.workspace = true
+import_rules.workspace = true
+naming_rules.workspace = true
+role_rules.workspace = true
+code_analysis.workspace = true
+external_lint.workspace = true
+orphan_detector.workspace = true
+auto_fix.workspace = true
+config_system.workspace = true
+git_hooks.workspace = true
+```
+
+---
+
+## File: crates/cli-commands/src/infrastructure_language_detector.rs
+
+```rust
+use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
+use shared::source_parsing::contract_language_detector_port::Language;
+use shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+
+pub struct CliLanguageDetector {
+    inner: LanguageDetector,
+}
+
+impl CliLanguageDetector {
+    pub fn new() -> Self {
+        Self {
+            inner: LanguageDetector::new(),
+        }
+    }
+}
+
+impl Default for CliLanguageDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ILanguageDetectorPort for CliLanguageDetector {
+    fn detect(&self, path: &FilePath) -> Language {
+        self.inner.detect(path)
+    }
+
+    fn is_lintable(&self, path: &FilePath) -> bool {
+        self.inner.is_lintable(path)
+    }
+}
+```
+
+---
+
+## File: crates/cli-commands/src/infrastructure_path_normalization.rs
+
+```rust
+use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
+
+pub struct CliPathNormalizationProvider;
+
+impl CliPathNormalizationProvider {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for CliPathNormalizationProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl IPathNormalizationPort for CliPathNormalizationProvider {
+    fn normalize_path(&self, path: FilePath) -> FilePath {
+        path
+    }
+
+    fn resolve_infrastructure_path(
+        &self,
+        path: FilePath,
+        _context_path: Option<FilePath>,
+    ) -> FilePath {
+        path
+    }
+}
+```
+
+---
+
+## File: crates/cli-commands/src/infrastructure_scanner_provider.rs
+
+```rust
+// Re-export FileCollectorProvider from shared so cli-commands has a local alias
+pub use shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider as CliScannerProvider;
 ```
 
 ---
@@ -192,6 +239,9 @@ pub mod surface_tui_command;
 pub use surface_tui_command::TuiCommandSurface;
 pub mod surface_watch_command;
 pub use surface_watch_command::WatchCommandsSurface;
+pub mod infrastructure_language_detector;
+pub mod infrastructure_path_normalization;
+pub mod infrastructure_scanner_provider;
 pub mod surface_config_command;
 ```
 
@@ -237,6 +287,56 @@ pub struct CheckContext {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub language_detector: Arc<dyn ILanguageDetectorPort>,
+}
+
+impl CheckContext {
+    pub fn new_default() -> Self {
+        let import_container =
+            import_rules::root_import_rules_container::ImportContainer::new_default();
+        let analyzer = import_container.analyzer();
+        let import_orchestrator = import_container.orchestrator();
+
+        let checker_container =
+            code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(
+                analyzer.clone(),
+            );
+        code_analysis::agent_code_analysis_orchestrator::init_global_checker(Arc::new(
+            checker_container,
+        ));
+
+        let naming_container =
+            naming_rules::root_naming_rules_container::NamingContainer::new(analyzer.clone());
+        let naming_orchestrator = naming_container.orchestrator();
+        let role_container = role_rules::root_role_rules_container::RoleContainer::new();
+        let role_orchestrator = role_container.orchestrator();
+        let code_analysis_container =
+            code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_analyzer(
+                analyzer,
+            );
+        let code_analysis_linter = code_analysis_container.code_analysis_linter();
+        let external_lint_container =
+            external_lint::root_external_lint_container::ExternalLintContainer::new_default();
+        let external_lint = external_lint_container.aggregate();
+        let orphan_container =
+            orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+        let orphan_orchestrator = orphan_container.analyzer();
+        let layer_detector = orphan_container.layer_detector();
+        let scanner_provider: Arc<dyn IScannerProviderPort> =
+            Arc::new(crate::infrastructure_scanner_provider::CliScannerProvider::new());
+        let language_detector: Arc<dyn ILanguageDetectorPort> =
+            Arc::new(crate::infrastructure_language_detector::CliLanguageDetector::new());
+        Self {
+            code_analysis_linter,
+            import_orchestrator,
+            naming_orchestrator,
+            external_lint,
+            role_orchestrator,
+            scanner_provider,
+            orphan_orchestrator,
+            layer_detector,
+            language_detector,
+        }
+    }
 }
 
 pub struct CheckCommandsSurface {
@@ -291,7 +391,7 @@ impl CheckCommandsSurface {
     pub fn scan(&self, path: &str, filter: Option<&str>, config: ArchitectureConfig) {
         let path_obj = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
-            Err(_) => FilePath::new(".".to_string()).unwrap_or_default(),
+            Err(_) => FilePath::default(),
         };
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
@@ -337,7 +437,7 @@ impl CheckCommandsSurface {
         // 4. Run external linter adapters via aggregate
         let path_obj2 = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
-            Err(_) => FilePath::new(".".to_string()).unwrap_or_default(),
+            Err(_) => FilePath::default(),
         };
         let external_results = rt.block_on(self.external_lint.scan_all(&path_obj2));
         all_results.extend(external_results.values);
@@ -347,23 +447,26 @@ impl CheckCommandsSurface {
         all_results.extend(role_results);
 
         // 5. Run orphan detection — always scan entire workspace for cross-folder import graph
-        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
-        let source_files = self
-            .scanner_provider
-            .scan_directory(&dir_path)
-            .map(|list| list.values)
-            .unwrap_or_default();
+        let dir_path = match DirectoryPath::new(".".to_string()) {
+            Ok(dp) => dp,
+            Err(_) => DirectoryPath::default(),
+        };
+        let source_files = match self.scanner_provider.scan_directory(&dir_path) {
+            Ok(list) => list.values,
+            Err(_) => Vec::new(),
+        };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         let orphan_results =
             self.orphan_orchestrator
                 .check_orphans(self.layer_detector.as_ref(), &file_strs, ".");
         all_results.extend(orphan_results);
 
-        let canonical_scan_path = std::path::Path::new(path)
-            .canonicalize()
-            .unwrap_or_else(|_| std::path::PathBuf::from(path))
-            .to_string_lossy()
-            .to_string();
+        let canonical_scan_path = match std::path::Path::new(path).canonicalize() {
+            Ok(p) => p,
+            Err(_) => std::path::PathBuf::from(path),
+        }
+        .to_string_lossy()
+        .to_string();
         let filtered_results: Vec<_> = if let Some(code) = filter {
             all_results
                 .into_iter()
@@ -391,19 +494,24 @@ impl CheckCommandsSurface {
         let path_obj = std::path::Path::new(file_path);
 
         // Collect all source files from workspace root for cross-folder graph building
-        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
-        let source_files = self
-            .scanner_provider
-            .scan_directory(&dir_path)
-            .map(|list| list.values)
-            .unwrap_or_default();
+        let dir_path = match DirectoryPath::new(".".to_string()) {
+            Ok(dp) => dp,
+            Err(_) => DirectoryPath::default(),
+        };
+        let source_files = match self.scanner_provider.scan_directory(&dir_path) {
+            Ok(list) => list.values,
+            Err(_) => Vec::new(),
+        };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
         // Normalize the target file path
         let target_path = if path_obj.is_absolute() {
             file_path.to_string()
         } else {
-            let cwd = std::env::current_dir().unwrap_or_default();
+            let cwd = match std::env::current_dir() {
+                Ok(d) => d,
+                Err(_) => std::path::PathBuf::new(),
+            };
             cwd.join(file_path).to_string_lossy().to_string()
         };
 
@@ -605,7 +713,10 @@ pub fn handle_check(
     git_aggregate: Option<Arc<dyn GitHooksAggregate>>,
     config: ArchitectureConfig,
 ) -> ExitCode {
-    let root = path.unwrap_or_else(|| ".".to_string());
+    let root = match path {
+        Some(p) => p,
+        None => ".".to_string(),
+    };
     if git_diff {
         let git_agg = match git_aggregate {
             Some(g) => g,
@@ -645,7 +756,10 @@ pub fn handle_scan(
     factory: OrchestratorFactory,
     filter: Option<String>,
 ) -> ExitCode {
-    let root = path.unwrap_or_else(|| ".".to_string());
+    let root = match path {
+        Some(p) => p,
+        None => ".".to_string(),
+    };
     let surface = CheckCommandsSurface::new_with_factory(ctx, multi_project_orchestrator, factory);
     surface.scan_with_discovery(&root, filter.as_deref());
     ExitCode::SUCCESS
@@ -657,7 +771,10 @@ pub fn handle_ci(
     threshold: u32,
 ) -> ExitCode {
     use shared::cli_commands::taxonomy_severity_vo::Severity;
-    let root = path.unwrap_or_else(|| ".".to_string());
+    let root = match path {
+        Some(p) => p,
+        None => ".".to_string(),
+    };
     let results = code_analysis_linter.run_code_analysis_path(&root);
     let score = code_analysis_linter.calc_score(&results);
     let effective_threshold = if threshold == 80 { 70 } else { threshold };
@@ -730,8 +847,11 @@ use std::sync::Arc;
 pub async fn handle_config_show(
     config_orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
 ) -> ExitCode {
-    let project_root = shared::source_parsing::taxonomy_path_vo::FilePath::new(".".to_string())
-        .unwrap_or_default();
+    let project_root =
+        match shared::source_parsing::taxonomy_path_vo::FilePath::new(".".to_string()) {
+            Ok(fp) => fp,
+            Err(_) => shared::source_parsing::taxonomy_path_vo::FilePath::default(),
+        };
 
     let config_reader = config_orchestrator.config_reader();
     let config_files = config_reader.list_config_files(&project_root).await;
@@ -840,7 +960,10 @@ pub fn handle_fix(
         None => ".".to_string(),
     };
     let fix_surface = FixCommandsSurface::new(code_analysis_linter, fix_orchestrator_factory);
-    let fp = FilePath::new(root).unwrap_or_default();
+    let fp = match FilePath::new(root) {
+        Ok(fp) => fp,
+        Err(_) => FilePath::default(),
+    };
     fix_surface.run_fix(fp, dry_run);
     ExitCode::SUCCESS
 }
@@ -882,7 +1005,10 @@ pub async fn handle_git_diff(
 ) -> ExitCode {
     println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
 
-    let project_path = FilePath::new(".".to_string()).unwrap_or_default();
+    let project_path = match FilePath::new(".".to_string()) {
+        Ok(fp) => fp,
+        Err(_) => FilePath::default(),
+    };
 
     let changed_files = git_aggregate
         .diff_protocol()
@@ -1013,8 +1139,10 @@ pub async fn handle_security(
         Some(p) => p,
         None => ".".to_string(),
     };
-    let fp =
-        shared::source_parsing::taxonomy_path_vo::FilePath::new(target.clone()).unwrap_or_default();
+    let fp = match shared::source_parsing::taxonomy_path_vo::FilePath::new(target.clone()) {
+        Ok(fp) => fp,
+        Err(_) => shared::source_parsing::taxonomy_path_vo::FilePath::default(),
+    };
     println!("Security Vulnerability Scan — {}", target);
     println!();
 
@@ -1051,8 +1179,10 @@ pub async fn handle_dependencies(
         Some(p) => p,
         None => ".".to_string(),
     };
-    let fp =
-        shared::source_parsing::taxonomy_path_vo::FilePath::new(target.clone()).unwrap_or_default();
+    let fp = match shared::source_parsing::taxonomy_path_vo::FilePath::new(target.clone()) {
+        Ok(fp) => fp,
+        Err(_) => shared::source_parsing::taxonomy_path_vo::FilePath::default(),
+    };
     println!("Dependency Report — {}", target);
     println!();
 
@@ -1369,7 +1499,10 @@ fn run_cmd(args: &[&str]) {
             )
         }
         Ok(s) => {
-            let code = s.code().unwrap_or(-1);
+            let code = match s.code() {
+                Some(c) => c,
+                None => -1,
+            };
             println!("\n{} Exit code: {}", style("FAIL").red().bold(), code)
         }
         Err(e) => println!("\n{} Failed to run binary: {e}", style("FAIL").red().bold()),
@@ -3411,6 +3544,24 @@ pub trait ILanguageDetectorPort: Send + Sync {
             Language::Python | Language::JavaScript | Language::TypeScript | Language::Rust
         )
     }
+}
+```
+
+---
+
+## File: crates/shared/src/source-parsing/contract_path_normalization_port.rs
+
+```rust
+// PURPOSE: IPathNormalizationPort — port trait for file path normalization across platforms
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+
+pub trait IPathNormalizationPort: Send + Sync {
+    fn normalize_path(&self, path: FilePath) -> FilePath;
+    fn resolve_infrastructure_path(
+        &self,
+        path: FilePath,
+        context_path: Option<FilePath>,
+    ) -> FilePath;
 }
 ```
 

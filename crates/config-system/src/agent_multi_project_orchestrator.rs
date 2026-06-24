@@ -42,6 +42,7 @@ impl MultiProjectOrchestrator {
     fn scan_workspace_dirs(root: &std::path::Path) -> Vec<FilePath> {
         let workspace_dirs = ["crates", "packages", "modules"];
 
+        // Case 1: root itself is a workspace-member root (e.g. "crates/")
         let is_root_workspace_dir = match root.file_name() {
             Some(name) => {
                 let name_str = name.to_string_lossy();
@@ -54,6 +55,19 @@ impl MultiProjectOrchestrator {
             return Self::collect_subdirs(root);
         }
 
+        // Case 2: root is itself a single member (e.g. "crates/import-rules/")
+        if let Some(parent) = root.parent() {
+            if let Some(parent_name) = parent.file_name() {
+                let parent_str = parent_name.to_string_lossy();
+                if workspace_dirs.contains(&parent_str.as_ref()) && root.is_dir() {
+                    if let Ok(fp) = FilePath::new(root.to_string_lossy().to_string()) {
+                        return vec![fp];
+                    }
+                }
+            }
+        }
+
+        // Case 3: collect all members under workspace directories
         let mut results = Vec::new();
         for dir in &workspace_dirs {
             let dir_path = root.join(dir);

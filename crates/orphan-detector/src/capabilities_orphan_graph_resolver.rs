@@ -68,7 +68,7 @@ impl OrphanGraphResolver {
         Self {}
     }
 
-    fn build_graph_context_inner(&self, files: &[String], _root_dir: &str) -> GraphAnalysisContext {
+    fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         use std::collections::HashMap;
         let mut import_graph: HashMap<String, Vec<String>> = HashMap::new();
         let mut inbound_links: HashMap<String, Vec<String>> = HashMap::new();
@@ -99,8 +99,10 @@ impl OrphanGraphResolver {
         // Build set of known workspace crate dirs for external dep detection
         let mut workspace_modules: std::collections::HashSet<String> =
             std::collections::HashSet::new();
+        let root_path = std::path::Path::new(root_dir);
         for ws_dir in &["crates", "packages", "modules"] {
-            if let Ok(entries) = std::fs::read_dir(ws_dir) {
+            let ws_path = root_path.join(ws_dir);
+            if let Ok(entries) = std::fs::read_dir(&ws_path) {
                 for entry in entries.flatten() {
                     if entry.path().is_dir() {
                         if let Some(name) = entry.file_name().to_str().map(|s| s.to_string()) {
@@ -249,15 +251,15 @@ impl OrphanGraphResolver {
                                 let member_roots = ["crates", "packages", "modules"];
                                 let mut member_dirs = Vec::new();
                                 for root in &member_roots {
+                                    let base = root_path.join(root).to_string_lossy().to_string();
+                                    let cn = crate_name.replace('_', "-");
                                     for path in &[
-                                        format!("./{}/{}/src", root, crate_name.replace('_', "-")),
-                                        format!("{}/{}/src", root, crate_name.replace('_', "-")),
-                                        format!("./{}/{}/src", root, crate_name),
-                                        format!("{}/{}/src", root, crate_name),
-                                        format!("./{}/{}", root, crate_name.replace('_', "-")),
-                                        format!("{}/{}", root, crate_name.replace('_', "-")),
-                                        format!("./{}/{}", root, crate_name),
-                                        format!("{}/{}", root, crate_name),
+                                        format!("{}/{}/src", base, cn),
+                                        format!("{}/{}/src", base, crate_name),
+                                        format!("{}/{}", base, cn),
+                                        format!("{}/{}", base, crate_name),
+                                        format!("./{}/{}/src", root, cn),
+                                        format!("{}/{}/src", root, cn),
                                     ] {
                                         member_dirs.push(path.clone());
                                     }
