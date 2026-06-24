@@ -187,13 +187,24 @@ impl CheckCommandsSurface {
         );
         all_results.extend(orphan_results);
 
+        let canonical_scan_path = std::path::Path::new(path)
+            .canonicalize()
+            .unwrap_or_else(|_| std::path::PathBuf::from(path))
+            .to_string_lossy()
+            .to_string();
         let filtered_results: Vec<_> = if let Some(code) = filter {
             all_results
                 .into_iter()
-                .filter(|r| r.code.to_string().contains(code))
+                .filter(|r| {
+                    r.code.to_string().contains(code)
+                        && r.file.value.starts_with(&canonical_scan_path)
+                })
                 .collect()
         } else {
             all_results
+                .into_iter()
+                .filter(|r| r.file.value.starts_with(&canonical_scan_path))
+                .collect()
         };
         let results_list = LintResultList::new(filtered_results);
         println!("{}", arch_linter.format_report(&results_list, path));

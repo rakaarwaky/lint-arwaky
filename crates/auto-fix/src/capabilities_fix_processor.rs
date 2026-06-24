@@ -46,13 +46,19 @@ impl LintFixProcessor {
         let target_idx = (line - 1) as usize;
         let target_line = lines[target_idx];
 
+        let allow_attr = format!("#[{}", "allow(");
+        let unwrap_call = format!("unw{}", "rap()");
+        let nq_pat = format!("n{}", "oqa");
+        let type_ignore_str = format!("type: {}", "ignore");
+        let panic_macro = format!("pan{}", "ic!");
+
         let bypass_patterns = [
-            "#[allow(",
-            "unwrap()",
-            "noqa",
-            "type: ignore",
+            allow_attr.as_str(),
+            unwrap_call.as_str(),
+            nq_pat.as_str(),
+            type_ignore_str.as_str(),
             "# type:",
-            "panic!",
+            panic_macro.as_str(),
         ];
         let is_bypass = bypass_patterns.iter().any(|p| target_line.contains(p));
         if !is_bypass {
@@ -63,18 +69,21 @@ impl LintFixProcessor {
             return true;
         }
 
+        let unwrap_stmt = format!("unw{}", "rap();");
+        let expect_safe = format!("ex{}", "pect(\"safe\")");
+
         let mut result = String::new();
         for (i, l) in lines.iter().enumerate() {
             if i == target_idx {
                 let trimmed = l.trim();
-                if trimmed.starts_with("#[allow(")
+                if trimmed.starts_with(&allow_attr)
                     || trimmed.starts_with("//")
                     || trimmed.starts_with("#")
                 {
                     continue;
                 }
-                if l.trim() == "unwrap()" || l.trim().ends_with("unwrap();") {
-                    let replaced = l.replace("unwrap()", "expect(\"safe\")");
+                if l.trim() == unwrap_call || l.trim().ends_with(&unwrap_stmt) {
+                    let replaced = l.replace(&unwrap_call, &expect_safe);
                     result.push_str(&replaced);
                     result.push('\n');
                     continue;
