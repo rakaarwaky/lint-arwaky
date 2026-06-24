@@ -281,15 +281,29 @@ architecture:
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy"]
+          mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
             ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
+              purpose: "call"
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy"]
+          mandatory: ["taxonomy", "contract(port)"]
           forbidden:
             ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
+              purpose: "call"
 
         - scope: "agent(orchestrator)"
           allowed:
@@ -359,6 +373,30 @@ architecture:
           "__main__.py",
           "main.py"
         ]
+      conditions:
+        - scope: "capabilities"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy", "contract(protocol)"]
+          forbidden: ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
+              purpose: "call"
+
+        - scope: "infrastructure"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy", "contract(port)"]
+          forbidden: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
+              purpose: "call"
 
     AES205:
       enabled: true

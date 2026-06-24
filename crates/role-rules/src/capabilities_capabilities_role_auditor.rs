@@ -57,6 +57,18 @@ impl CapabilitiesRoleChecker {
     }
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let has_proto_import = content.contains("use ")
+            && (content.contains("_protocol::") || content.contains("_port::"));
+        if !has_proto_import {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES403",
+                Severity::MEDIUM,
+                AesRoleViolation::CapabilityNoProtocol { reason: None },
+            ));
+            return;
+        }
         let mut in_cfg_test = false;
         let structs: Vec<&str> = content
             .lines()
@@ -111,6 +123,18 @@ impl CapabilitiesRoleChecker {
     }
 
     fn _check_js_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let has_proto_import = content.contains("import ")
+            && (content.contains("_protocol") || content.contains("_port"));
+        if !has_proto_import {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES403",
+                Severity::MEDIUM,
+                AesRoleViolation::CapabilityNoProtocol { reason: None },
+            ));
+            return;
+        }
         let lines: Vec<&str> = content.lines().collect();
         let mut classes: Vec<(&str, usize)> = Vec::new();
         for (i, l) in lines.iter().enumerate() {
@@ -172,6 +196,18 @@ impl CapabilitiesRoleChecker {
     }
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let has_proto_import = (content.contains("import ") || content.contains("from "))
+            && (content.contains("_protocol") || content.contains("_port"));
+        if !has_proto_import {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES403",
+                Severity::MEDIUM,
+                AesRoleViolation::CapabilityNoProtocol { reason: None },
+            ));
+            return;
+        }
         let lines: Vec<&str> = content.lines().collect();
         let mut classes: Vec<(&str, usize)> = Vec::new();
         for (i, l) in lines.iter().enumerate() {

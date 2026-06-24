@@ -71,7 +71,7 @@ impl CheckContext {
         let layer_detector = orphan_container.layer_detector();
         let scanner_provider: Arc<
             dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort,
-        > = Arc::new(crate::infrastructure_scanner_provider::CliScannerProvider::new());
+        > = Arc::new(shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new());
         let language_detector: Arc<
             dyn shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort,
         > = Arc::new(crate::infrastructure_language_detector::CliLanguageDetector::new());

@@ -2,9 +2,13 @@
 //
 // ALGORITHM:
 //   1. check_port_implementation checks if the file imports a port/protocol
-//      (contains `_port::` or `_protocol::` after `use `) but has no `impl ... for ...`
-//      block. If an import exists without a corresponding impl, emits
-//      InfrastructureNoPort violation.
+//      (contains `_port::` or `_protocol::` after `use `). If the file has an
+//      `infrastructure_` prefix but does NOT import any port, emits an
+//      InfrastructureNoPort violation — the file is either not real infrastructure
+//      or is missing a contract port.
+//   2. If the file DOES import a port/protocol but has no `impl ... for ...`
+//      block, emits InfrastructureNoPort violation — the port is declared
+//      but not implemented.
 //
 // NOTE: This is a simple keyword-based heuristic. It may miss cases where the
 //      implementation is in a different file or uses a different pattern.
@@ -62,6 +66,13 @@ impl InfrastructureRoleChecker {
         let has_import = content.contains("use ")
             && (content.contains("_port::") || content.contains("_protocol::"));
         if !has_import {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES404",
+                Severity::HIGH,
+                AesRoleViolation::InfrastructureNoPort { reason: None }.to_string(),
+            ));
             return;
         }
         let has_impl = content.contains("impl ")
@@ -84,6 +95,13 @@ impl InfrastructureRoleChecker {
         let has_import = (content.contains("import ") || content.contains("from "))
             && (content.contains("_port") || content.contains("_protocol"));
         if !has_import {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES404",
+                Severity::HIGH,
+                AesRoleViolation::InfrastructureNoPort { reason: None }.to_string(),
+            ));
             return;
         }
         let has_impl = content.contains("class ")
@@ -103,6 +121,13 @@ impl InfrastructureRoleChecker {
         let has_import = content.contains("import ")
             && (content.contains("_port") || content.contains("_protocol"));
         if !has_import {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES404",
+                Severity::HIGH,
+                AesRoleViolation::InfrastructureNoPort { reason: None }.to_string(),
+            ));
             return;
         }
         let has_impl = content.contains("implements");

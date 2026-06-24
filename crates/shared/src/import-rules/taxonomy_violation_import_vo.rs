@@ -136,9 +136,9 @@ impl fmt::Display for AesImportViolation {
                     } else if src == "contract(aggregate)" {
                         "Contract aggregates orchestrate cross-layer collaboration — they must import all relevant port/protocol contracts.".to_string()
                     } else if src == "capabilities" {
-                        "Capabilities implement business rules — they must import contract ports to honor interface contracts and enable dependency injection.".to_string()
+                        "Capabilities implement business rules — they MUST import contract protocols to know what interface to honor. Missing contract protocol means broken/useless capability or missing requirement.".to_string()
                     } else if src == "infrastructure" {
-                        "Infrastructure adapters bridge technology and domain — they must import contract ports to implement the required protocols.".to_string()
+                        "Infrastructure adapters MUST import contract ports — without a port reference this file is broken/useless. Either rename/delete if not real infrastructure, or create the required contract port first.".to_string()
                     } else if src == "agent(container)" {
                         "Agent containers wire dependencies at startup — they must import service contracts to register all concrete implementations.".to_string()
                     } else if src == "agent(orchestrator)" {

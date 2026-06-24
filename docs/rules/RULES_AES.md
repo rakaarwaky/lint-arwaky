@@ -264,7 +264,7 @@ Capability routing and protocol enforcement. Two sub-checks:
 
 **Severity:** HIGH
 
-Infrastructure role boundary violation. Infrastructure files must only implement `_port` contracts and must not contain business logic, routing, or orchestration.
+Infrastructure role boundary violation. Infrastructure files must reference at least one `_port` contract — missing a port import means the file is broken/useless (no external dependency to adapt). Additionally, infrastructure files must only implement `_port` contracts and must not contain business logic, routing, or orchestration.
 
 ---
 

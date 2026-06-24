@@ -97,6 +97,23 @@ fn write_violation(
                 lang.interface_kw()
             )
         }
+        AesRoleViolation::CapabilityNoProtocol { reason } => {
+            let why = resolve_why(
+                reason,
+                "file has 'capabilities_' prefix but no protocol/port import — this file is \
+                 broken/useless. Either it is not a real capability (rename or delete), or \
+                 a proper contract protocol requirement has not been created yet (create the \
+                 protocol first, then implement it here)",
+            );
+            write!(
+                f,
+                "AES403 CAPABILITY_ROLE: Capabilities file has no protocol trait/interface \
+                        implementation.\n\
+                        WHY? {why}\n\
+                        FIX: Rename the file if it is not a capability, delete if obsolete, \
+                        or create the required contract protocol first then implement it here."
+            )
+        }
         AesRoleViolation::SingleBottleneck { reason } => {
             let why = resolve_why(
                 reason,
@@ -114,15 +131,19 @@ fn write_violation(
         AesRoleViolation::InfrastructureNoPort { reason } => {
             let why = resolve_why(
                 reason,
-                "Infrastructure adapters must implement their corresponding port interfaces.",
+                "file has 'infrastructure_' prefix but no port/protocol import — this file is \
+                 broken/useless. Either it is not real infrastructure (rename or delete), or \
+                 a proper contract port requirement has not been created yet (create the port \
+                 first, then implement it here)",
             );
             write!(
                 f,
                 "AES404 INFRASTRUCTURE_ROLE: Infrastructure file has no port trait/protocol \
                         implementation.\n\
                         WHY? {why}\n\
-                        FIX: Implement the corresponding port or protocol interface in this \
-                        infrastructure adapter."
+                        FIX: Rename the file if it is not infrastructure, delete if obsolete, \
+                        or create the required contract port/protocol first then implement it \
+                        here."
             )
         }
         AesRoleViolation::StatelessExecution { reason } => {
@@ -284,6 +305,9 @@ pub enum AesRoleViolation {
     // AES403 — Capability role
     CapabilityRouting {
         struct_name: SymbolName,
+        reason: Option<LintMessage>,
+    },
+    CapabilityNoProtocol {
         reason: Option<LintMessage>,
     },
     SingleBottleneck {

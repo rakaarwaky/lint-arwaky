@@ -25,8 +25,8 @@ ignored_paths:
   - "/.jj"
   - "/test-workspaces"
   - "/scripts"
-  - ".min.js"          
-  - ".min.css"         
+  - ".min.js"
+  - ".min.css"
   - "/.dsc_cache"
 
 architecture:
@@ -45,12 +45,7 @@ architecture:
           "surfaces",
           "root",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES102:
       enabled: true
@@ -64,16 +59,20 @@ architecture:
           "surfaces",
           "root",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       layers:
         taxonomy:
           suffix:
-            - strict: ["vo", "entity", "error", "event", "constant", "utility", "helper"]
+            - strict:
+                [
+                  "vo",
+                  "entity",
+                  "error",
+                  "event",
+                  "constant",
+                  "utility",
+                  "helper",
+                ]
         contract:
           suffix:
             - strict: ["port", "protocol", "aggregate"]
@@ -210,12 +209,7 @@ architecture:
           "surfaces",
           "root",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -278,28 +272,28 @@ architecture:
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy"]
+          mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
             ["infrastructure", "surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
-            - layer: "contract"
-              purpose: "call"
-            - layer: "contract(port|protocol|aggregate)"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
               purpose: "call"
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy"]
+          mandatory: ["taxonomy", "contract(port)"]
           forbidden:
             ["surfaces", "capabilities", "agent", "infrastructure", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
-            - layer: "contract"
-              purpose: "call"
-            - layer: "contract(port|protocol|aggregate)"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
               purpose: "call"
 
         - scope: "agent(orchestrator)"
@@ -411,8 +405,7 @@ architecture:
           "surfaces",
           "root",
         ]
-      exceptions:
-        ["main.rs", "lib.rs", "mod.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -493,7 +486,7 @@ architecture:
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy"]
+          mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
             ["infrastructure", "surfaces", "agent", "capabilities", "root"]
           allowed_imports:
@@ -506,7 +499,7 @@ architecture:
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy"]
+          mandatory: ["taxonomy", "contract(port)"]
           forbidden:
             ["surfaces", "capabilities", "agent", "infrastructure", "root"]
           allowed_imports:
@@ -646,21 +639,11 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES205:
       enabled: true
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-        ]    
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       scope:
         [
           "taxonomy",
@@ -684,12 +667,7 @@ architecture:
           "surfaces",
         ]
       max_lines: 1000
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES302:
       enabled: true
@@ -703,12 +681,7 @@ architecture:
           "surfaces",
         ]
       min_lines: 5
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES303:
       enabled: true
@@ -721,12 +694,7 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES304:
       enabled: true
@@ -756,8 +724,7 @@ architecture:
           "ts-expect-error",
           "pylint: disable",
         ]
-      exceptions:
-        ["main.rs", "lib.rs", "mod.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES305:
       enabled: true
@@ -770,12 +737,7 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     # ─── AES400: Role ───
     AES401:
@@ -786,45 +748,25 @@ architecture:
     AES402:
       enabled: true
       scope: ["contract(aggregate)", "contract(port|protocol)"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES403:
       enabled: true
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES404:
       enabled: true
       scope: ["infrastructure"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES405:
       enabled: true
       scope: ["agent(orchestrator)"]
       max_lines: 1000
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES406:
       enabled: true
@@ -835,12 +777,7 @@ architecture:
           "surfaces(component|view|layout)",
         ]
       max_functions: 15
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     # ─── AES500: Orphan ───
     AES501:

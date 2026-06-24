@@ -60,17 +60,15 @@ crates/
   code-analysis/        — Code quality: file limits, bypasses, mandatory defs (AES301–AES305)
   auto-fix/             — Auto-fix processor
   config-system/        — Config loading & parsing
-  source-parsing/       — Source code parsing (scanners, parsers)
   external-lint/        — Python, JS, Rust external linter adapters
   file-watch/           — File watching
   git-hooks/            — Git hooks management
   maintenance/          — Maintenance operations
   multi-project/        — Multi-project governance
   project-setup/        — Project init, doctor, mcp-config
-  vscode-extension/     — VS Code graph bridge
   cli-commands/         — CLI surfaces (_command) + transport
   mcp-server/           — MCP server surfaces
-  root_cli_main_entry.rs       — CLI binary entry (root_entry, inline DI composition)
+  root_cli_main_entry.rs       — CLI binary entry (root_entry)
   root_mcp_main_entry.rs       — MCP binary entry (root_entry)
   root_tui_main_entry.rs       — TUI binary entry (root_entry)
 ```

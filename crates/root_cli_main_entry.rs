@@ -80,7 +80,7 @@ fn main() -> ExitCode {
             external_lint: external_lint_aggregate_clone.clone(),
             role_orchestrator: role_container.orchestrator(),
             scanner_provider: Arc::new(
-                cli_commands::infrastructure_scanner_provider::CliScannerProvider::new(),
+                shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new(),
             ),
             orphan_orchestrator: orphan_container.analyzer(),
             layer_detector: layer_detector_clone.clone(),
@@ -122,7 +122,7 @@ fn main() -> ExitCode {
                 external_lint: external_lint_aggregate.clone(),
                 role_orchestrator: role_orchestrator.clone(),
                 scanner_provider: Arc::new(
-                    cli_commands::infrastructure_scanner_provider::CliScannerProvider::new(),
+                    shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new(),
                 ),
                 orphan_orchestrator: orphan_container.analyzer(),
                 layer_detector: layer_detector.clone(),
@@ -143,7 +143,7 @@ fn main() -> ExitCode {
                 external_lint: external_lint_aggregate.clone(),
                 role_orchestrator: role_orchestrator.clone(),
                 scanner_provider: Arc::new(
-                    cli_commands::infrastructure_scanner_provider::CliScannerProvider::new(),
+                    shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new(),
                 ),
                 orphan_orchestrator: orphan_container.analyzer(),
                 layer_detector: layer_detector.clone(),
@@ -213,7 +213,7 @@ fn main() -> ExitCode {
                     external_lint: external_lint_aggregate.clone(),
                     role_orchestrator: role_orchestrator.clone(),
                     scanner_provider: Arc::new(
-                        cli_commands::infrastructure_scanner_provider::CliScannerProvider::new(),
+                        shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new(),
                     ),
                     orphan_orchestrator: orphan_container.analyzer(),
                     layer_detector: layer_detector.clone(),
