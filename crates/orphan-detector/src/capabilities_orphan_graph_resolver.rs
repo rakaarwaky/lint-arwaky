@@ -87,13 +87,14 @@ impl OrphanGraphResolver {
                 .replace(".py", "")
                 .replace(".ts", "")
                 .replace(".js", "");
-            // Map module stem to file path
-            module_to_file.insert(stem.clone(), f.clone());
-            // Also map with parent dir prefix for disambiguation
-            if let Some(parent) = f.rsplit('/').nth(1) {
-                let module_path = format!("{}/{}", parent, stem);
-                module_to_file.insert(module_path, f.clone());
-            }
+        // Map module stem to file path
+        module_to_file.insert(stem.clone(), f.clone());
+        // Also map with parent dir prefix for disambiguation
+        if let Some(parent) = f.rsplit('/').nth(1) {
+            let module_path = format!("{}/{}", parent, stem);
+            module_to_file.insert(module_path, f.clone());
+        }
+    }
         }
 
         // DEBUG: check if taxonomy_path_vo is in module_to_file

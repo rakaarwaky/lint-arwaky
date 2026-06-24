@@ -134,8 +134,16 @@ impl LayerDetectionAnalyzer {
                         }
                         if !rule.code_analysis.forbidden_inheritance.values.is_empty() {
                             for val in &rule.code_analysis.forbidden_inheritance.values {
-                                if !ldef.code_analysis.forbidden_inheritance.values.contains(val) {
-                                    ldef.code_analysis.forbidden_inheritance.values.push(val.clone());
+                                if !ldef
+                                    .code_analysis
+                                    .forbidden_inheritance
+                                    .values
+                                    .contains(val)
+                                {
+                                    ldef.code_analysis
+                                        .forbidden_inheritance
+                                        .values
+                                        .push(val.clone());
                                 }
                             }
                         }
@@ -218,8 +226,17 @@ impl LayerDetectionAnalyzer {
                                 }
                                 if !r.code_analysis.forbidden_inheritance.values.is_empty() {
                                     for val in &r.code_analysis.forbidden_inheritance.values {
-                                        if !spec_def.code_analysis.forbidden_inheritance.values.contains(val) {
-                                            spec_def.code_analysis.forbidden_inheritance.values.push(val.clone());
+                                        if !spec_def
+                                            .code_analysis
+                                            .forbidden_inheritance
+                                            .values
+                                            .contains(val)
+                                        {
+                                            spec_def
+                                                .code_analysis
+                                                .forbidden_inheritance
+                                                .values
+                                                .push(val.clone());
                                         }
                                     }
                                 }
@@ -445,12 +462,17 @@ impl IAnalyzer for LayerDetectionAnalyzer {
     }
 }
 
-impl shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate for LayerDetectionAnalyzer {
+impl shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate
+    for LayerDetectionAnalyzer
+{
     fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String> {
         self.detect_layer(file_path, root_dir)
     }
 
-    fn get_layer_def(&self, layer: &str) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
+    fn get_layer_def(
+        &self,
+        layer: &str,
+    ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
         self.get_layer_def(layer).cloned()
     }
 
