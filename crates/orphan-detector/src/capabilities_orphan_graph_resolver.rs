@@ -89,11 +89,24 @@ impl OrphanGraphResolver {
                 .replace(".js", "");
             // Map module stem to file path
             module_to_file.insert(stem.clone(), f.clone());
-            // Also map with underscores replaced (for mod.rs references)
+            // Also map with parent dir prefix for disambiguation
             if let Some(parent) = f.rsplit('/').nth(1) {
                 let module_path = format!("{}/{}", parent, stem);
                 module_to_file.insert(module_path, f.clone());
             }
+        }
+
+        // DEBUG: check if taxonomy_path_vo is in module_to_file
+        if let Some(debug_file) = module_to_file.get("taxonomy_path_vo") {
+            eprintln!(
+                "[DEBUG graph] module_to_file has taxonomy_path_vo -> {}",
+                debug_file
+            );
+        } else {
+            eprintln!(
+                "[DEBUG graph] module_to_file MISSING taxonomy_path_vo (total entries: {})",
+                module_to_file.len()
+            );
         }
 
         // Build set of known workspace crate dirs for external dep detection
@@ -182,19 +195,46 @@ impl OrphanGraphResolver {
                             };
                         let full_import = &normalized;
                         if let Some(path_part) = full_import.strip_prefix("crate::") {
-                            // Extract module segments: capabilities_agent_role_auditor::AgentRoleChecker
-                            // → try to find file matching capabilities_agent_role_auditor
+                            // Extract module segments: source_parsing::taxonomy_path_vo::FilePath
+                            // Module path is all segments except the last (item name)
+                            // e.g. ["source_parsing", "taxonomy_path_vo", "FilePath"]
+                            //   → module segments: ["source_parsing", "taxonomy_path_vo"]
+                            //   → try "taxonomy_path_vo" first, then "source_parsing"
                             let segments: Vec<&str> = path_part.split("::").collect();
-                            if !segments.is_empty() {
-                                let module_name = segments[0];
-                                if let Some(resolved) = module_to_file.get(module_name) {
-                                    if resolved != f {
+                            if segments.len() >= 2 {
+                                // Try module segments from most specific to least
+                                // Skip the last segment (item name like FilePath, LintResult)
+                                let mut resolved = false;
+                                for seg in segments[..segments.len() - 1].iter().rev() {
+                                    if let Some(file_path) = module_to_file.get(*seg) {
+                                        if file_path != f {
+                                            import_graph
+                                                .entry(f.clone())
+                                                .or_default()
+                                                .push(file_path.clone());
+                                            inbound_links
+                                                .entry(file_path.clone())
+                                                .or_default()
+                                                .push(f.clone());
+                                            resolved = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if resolved {
+                                    continue;
+                                }
+                            }
+                            // Fallback: single-segment import like use crate::taxonomy_foo
+                            if let Some(seg) = segments.first() {
+                                if let Some(file_path) = module_to_file.get(*seg) {
+                                    if file_path != f {
                                         import_graph
                                             .entry(f.clone())
                                             .or_default()
-                                            .push(resolved.clone());
+                                            .push(file_path.clone());
                                         inbound_links
-                                            .entry(resolved.clone())
+                                            .entry(file_path.clone())
                                             .or_default()
                                             .push(f.clone());
                                         continue;
@@ -206,11 +246,25 @@ impl OrphanGraphResolver {
 
                         // Handle super:: imports
                         if let Some(path_part) = full_import.strip_prefix("super::") {
-                            // Resolve relative to parent module
                             let segments: Vec<&str> = path_part.split("::").collect();
-                            if !segments.is_empty() {
-                                let module_name = segments[0];
-                                if let Some(resolved) = module_to_file.get(module_name) {
+                            if segments.len() >= 2 {
+                                for seg in segments[..segments.len() - 1].iter().rev() {
+                                    if let Some(resolved) = module_to_file.get(*seg) {
+                                        if resolved != f {
+                                            import_graph
+                                                .entry(f.clone())
+                                                .or_default()
+                                                .push(resolved.clone());
+                                            inbound_links
+                                                .entry(resolved.clone())
+                                                .or_default()
+                                                .push(f.clone());
+                                            break;
+                                        }
+                                    }
+                                }
+                            } else if let Some(seg) = segments.first() {
+                                if let Some(resolved) = module_to_file.get(*seg) {
                                     if resolved != f {
                                         import_graph
                                             .entry(f.clone())

@@ -1,5 +1,5 @@
 // PURPOSE: LanguageDetector — Helper for detecting programming languages from file paths
-use crate::source_parsing::contract_language_detector_port::Language;
+use crate::source_parsing::taxonomy_language_vo::Language;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Copy, Default)]

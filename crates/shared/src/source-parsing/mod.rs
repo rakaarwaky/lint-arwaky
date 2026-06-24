@@ -7,6 +7,7 @@ pub mod infrastructure_file_collector_provider;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_file_collector_helper;
 pub mod taxonomy_language_detector_helper;
+pub mod taxonomy_language_vo;
 pub mod taxonomy_naming_list_vo;
 pub mod taxonomy_parser_error;
 pub mod taxonomy_path_vo;

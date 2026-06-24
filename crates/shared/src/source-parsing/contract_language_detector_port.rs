@@ -1,32 +1,7 @@
 // PURPOSE: ILanguageDetectorPort — contract for detecting programming language from file path
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Language {
-    Python,
-    JavaScript,
-    TypeScript,
-    Rust,
-    Unknown,
-}
-
-impl Language {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Language::Python => "python",
-            Language::JavaScript => "javascript",
-            Language::TypeScript => "typescript",
-            Language::Rust => "rust",
-            Language::Unknown => "unknown",
-        }
-    }
-}
-
-impl std::fmt::Display for Language {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
+pub use crate::source_parsing::taxonomy_language_vo::Language;
 
 pub trait ILanguageDetectorPort: Send + Sync {
     /// Detect language from a file path based on extension.

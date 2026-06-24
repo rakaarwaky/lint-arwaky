@@ -102,13 +102,25 @@ impl LayerDetectionAnalyzer {
                             continue;
                         }
                         if !rule.exceptions.values.is_empty() {
-                            ldef.exceptions = rule.exceptions.clone();
+                            for val in &rule.exceptions.values {
+                                if !ldef.exceptions.values.contains(val) {
+                                    ldef.exceptions.values.push(val.clone());
+                                }
+                            }
                         }
                         if !rule.mandatory.values.is_empty() {
-                            ldef.mandatory = rule.mandatory.clone();
+                            for val in &rule.mandatory.values {
+                                if !ldef.mandatory.values.contains(val) {
+                                    ldef.mandatory.values.push(val.clone());
+                                }
+                            }
                         }
                         if !rule.forbidden.values.is_empty() {
-                            ldef.forbidden = rule.forbidden.clone();
+                            for val in &rule.forbidden.values {
+                                if !ldef.forbidden.values.contains(val) {
+                                    ldef.forbidden.values.push(val.clone());
+                                }
+                            }
                         }
                         if rule.code_analysis.min_lines.value > 0 {
                             ldef.code_analysis.min_lines = rule.code_analysis.min_lines.clone();
@@ -121,8 +133,11 @@ impl LayerDetectionAnalyzer {
                                 rule.code_analysis.mandatory_class_definition.clone();
                         }
                         if !rule.code_analysis.forbidden_inheritance.values.is_empty() {
-                            ldef.code_analysis.forbidden_inheritance =
-                                rule.code_analysis.forbidden_inheritance.clone();
+                            for val in &rule.code_analysis.forbidden_inheritance.values {
+                                if !ldef.code_analysis.forbidden_inheritance.values.contains(val) {
+                                    ldef.code_analysis.forbidden_inheritance.values.push(val.clone());
+                                }
+                            }
                         }
                     }
                 }
@@ -174,20 +189,39 @@ impl LayerDetectionAnalyzer {
                         if let Some(rules) = rules_by_layer.get(&scope) {
                             for r in rules {
                                 if !r.exceptions.values.is_empty() {
-                                    spec_def.exceptions = r.exceptions.clone();
+                                    for val in &r.exceptions.values {
+                                        if !spec_def.exceptions.values.contains(val) {
+                                            spec_def.exceptions.values.push(val.clone());
+                                        }
+                                    }
                                 }
                                 if !r.forbidden.values.is_empty() {
-                                    spec_def.forbidden = r.forbidden.clone();
+                                    for val in &r.forbidden.values {
+                                        if !spec_def.forbidden.values.contains(val) {
+                                            spec_def.forbidden.values.push(val.clone());
+                                        }
+                                    }
                                 }
                                 if !r.mandatory.values.is_empty() {
-                                    spec_def.mandatory = r.mandatory.clone();
+                                    for val in &r.mandatory.values {
+                                        if !spec_def.mandatory.values.contains(val) {
+                                            spec_def.mandatory.values.push(val.clone());
+                                        }
+                                    }
                                 }
                                 if !r.allowed.values.is_empty() {
-                                    spec_def.allowed = r.allowed.clone();
+                                    for val in &r.allowed.values {
+                                        if !spec_def.allowed.values.contains(val) {
+                                            spec_def.allowed.values.push(val.clone());
+                                        }
+                                    }
                                 }
                                 if !r.code_analysis.forbidden_inheritance.values.is_empty() {
-                                    spec_def.code_analysis.forbidden_inheritance =
-                                        r.code_analysis.forbidden_inheritance.clone();
+                                    for val in &r.code_analysis.forbidden_inheritance.values {
+                                        if !spec_def.code_analysis.forbidden_inheritance.values.contains(val) {
+                                            spec_def.code_analysis.forbidden_inheritance.values.push(val.clone());
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -408,5 +442,35 @@ impl IAnalyzer for LayerDetectionAnalyzer {
     fn detect_module_layer(&self, module_path: &FilePath) -> Option<LayerNameVO> {
         self.detect_module_layer(&module_path.value)
             .map(|s| LayerNameVO::new(s.as_str()))
+    }
+}
+
+impl shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate for LayerDetectionAnalyzer {
+    fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String> {
+        self.detect_layer(file_path, root_dir)
+    }
+
+    fn get_layer_def(&self, layer: &str) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
+        self.get_layer_def(layer).cloned()
+    }
+
+    fn get_orphan_entry_points(&self) -> Vec<String> {
+        vec![
+            "_container.rs".to_string(),
+            "_container.py".to_string(),
+            "_container.ts".to_string(),
+            "_container.js".to_string(),
+            "_entry.rs".to_string(),
+            "_entry.py".to_string(),
+            "_entry.ts".to_string(),
+            "_entry.js".to_string(),
+            "main.rs".to_string(),
+            "lib.rs".to_string(),
+            "main.py".to_string(),
+            "main.ts".to_string(),
+            "main.js".to_string(),
+            "index.ts".to_string(),
+            "index.js".to_string(),
+        ]
     }
 }

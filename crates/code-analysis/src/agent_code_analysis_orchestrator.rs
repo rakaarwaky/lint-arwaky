@@ -26,6 +26,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_score_vo::compute_score;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
@@ -272,5 +273,9 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
 
     fn format_report(&self, results: &LintResultList, project_root: &str) -> String {
         self.format_report(&results.values, project_root)
+    }
+
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        Vec::new()
     }
 }
