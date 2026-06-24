@@ -33,10 +33,7 @@ impl SuffixPrefixChecker {
     }
 
     fn make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(fp) => fp,
-            Err(_) => FilePath::default(),
-        };
+        let file_path = Result::unwrap_or_default(FilePath::new(file.to_string()));
         LintResult {
             file: file_path,
             line: LineNumber::new(1),
@@ -161,10 +158,7 @@ impl SuffixPrefixChecker {
             if !valid {
                 let allowed_list = def.naming.allowed_suffix.values.clone();
                 let layer_display = Option::unwrap_or(_layer_name.as_deref(), "unknown").to_string();
-                let suffix_display = match suffix.as_deref() {
-                    Some(s) => s,
-                    None => "(none)",
-                };
+                let suffix_display = Option::unwrap_or(suffix.as_deref(), "(none)");
                 violations.push(Self::make_result(
                     file,
                     "AES102",
