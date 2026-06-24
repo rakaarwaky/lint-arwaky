@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 
-use crate::cli_commands::taxonomy_result_vo::LintResultList;
+use crate::code_analysis::taxonomy_analysis_vo::LintResultList;
 use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
