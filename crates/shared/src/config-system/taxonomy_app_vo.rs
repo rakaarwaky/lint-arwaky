@@ -41,10 +41,16 @@ impl AppConfig {
                 Err(_) => ".".to_string(),
             },
         };
-        let proj = project.unwrap_or_default();
+        let proj = match project {
+            Some(p) => p,
+            None => ProjectConfig::default(),
+        };
 
         Self {
-            phantom_root: DirectoryPath::new(p_root).unwrap_or_default(),
+            phantom_root: match DirectoryPath::new(p_root) {
+                Ok(dp) => dp,
+                Err(_) => DirectoryPath::default(),
+            },
             project: proj,
         }
     }

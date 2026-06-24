@@ -341,12 +341,15 @@ impl ICycleAnalysisProtocol for DefaultCycleAnalysisProtocol {
                 let mut unique_nodes = cycle[..cycle.len() - 1].to_vec();
 
                 if !unique_nodes.is_empty() {
-                    let min_idx = unique_nodes
+                    let min_idx = match unique_nodes
                         .iter()
                         .enumerate()
                         .min_by_key(|&(_, val)| val)
                         .map(|(idx, _)| idx)
-                        .unwrap_or(0);
+                    {
+                        Some(idx) => idx,
+                        None => 0,
+                    };
 
                     unique_nodes.rotate_left(min_idx);
                     unique_nodes.push(unique_nodes[0].clone());

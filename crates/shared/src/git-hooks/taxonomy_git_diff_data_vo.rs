@@ -95,5 +95,4 @@ impl HookIgnoreUpdateVO {
 }
 
 /// Diff statistics reported as a count, not a raw float.
-#[allow(dead_code)]
 pub type DiffLineCount = Count;

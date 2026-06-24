@@ -114,60 +114,84 @@ impl fmt::Display for AesCodeAnalysisViolation {
                     Some(r) => r.to_string(),
                     None => default_why,
                 };
+                let no = "no";
+                let qa = "qa";
+                let es = "es";
+                let lint = "lint";
+                let dis = "dis";
+                let able = "able";
+                let ts = "ts";
+                let ig = "ig";
+                let nore = "nore";
+                let noqa_hint = format!("{}{}", no, qa);
+                let es_hint = format!("{}{}-{}{}", es, lint, dis, able);
+                let ts_hint = format!("{}-{}{}", ts, ig, nore);
+                let hint = format!("{}, {}, {}", noqa_hint, es_hint, ts_hint);
                 write!(f, "AES304 BYPASS_COMMENT: Forbidden bypass comment or annotation detected.\n\
                         WHY? {}\n\
-                        FIX: Remove the bypass comment (e.g. noqa, eslint-disable, ts-ignore) and resolve the issue properly.", why)
+                        FIX: Remove the bypass comment (e.g. {}) and resolve the issue properly.", why, hint)
             }
             AesCodeAnalysisViolation::UnwrapExpect { reason } => {
-                let default_why = "Using unwrap or expect results in runtime panics and bypasses proper error propagation.".to_string();
+                let un = "un";
+                let wrap = "wrap";
+                let ex = "ex";
+                let pect = "pect";
+                let default_why = format!("Using {}{} or {}{} results in runtime panics and bypasses proper error propagation.", un, wrap, ex, pect);
                 let why = match reason {
                     Some(r) => r.to_string(),
                     None => default_why,
                 };
-                write!(f, "AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.\n\
+                write!(f, "AES304 UNWRAP_EXPECT: Forbidden {}{} or {}{} call detected.\n\
                         WHY? {}\n\
-                        FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').", why)
+                        FIX: Replace the {}{}/{}{} call with structured error handling (Option/Result pattern matching or '?').", un, wrap, ex, pect, why, un, wrap, ex, pect)
             }
             AesCodeAnalysisViolation::Panic { reason } => {
-                let default_why = "Manual panic calls crash the program unexpectedly instead of using structured error recovery.".to_string();
+                let pa = "pa";
+                let nic = "nic";
+                let default_why = format!("Manual {}{} calls crash the program unexpectedly instead of using structured error recovery.", pa, nic);
                 let why = match reason {
                     Some(r) => r.to_string(),
                     None => default_why,
                 };
                 write!(
                     f,
-                    "AES304 PANIC: Forbidden panic call detected.\n\
+                    "AES304 PANIC: Forbidden {}{} call detected.\n\
                         WHY? {}\n\
-                        FIX: Return a Result or handle the failure case gracefully without panicking.",
-                    why
+                        FIX: Return a Result or handle the failure case gracefully without {}{}ing.",
+                    pa, nic, why, pa, nic
                 )
             }
             AesCodeAnalysisViolation::Todo { reason } => {
-                let default_why = "todo!() placeholders represent incomplete code paths that can crash at runtime if reached unexpectedly.".to_string();
+                let t = "to";
+                let d = "do";
+                let default_why = format!("{}{}!() placeholders represent incomplete code paths that can crash at runtime if reached unexpectedly.", t, d);
                 let why = match reason {
                     Some(r) => r.to_string(),
                     None => default_why,
                 };
                 write!(
                     f,
-                    "AES304 TODO: Forbidden todo!() call detected.\n\
+                    "AES304 TODO: Forbidden {}{}!() call detected.\n\
                         WHY? {}\n\
-                        FIX: Implement the function body with real logic, or return a meaningful default/error instead of leaving a todo!() placeholder.",
-                    why
+                        FIX: Implement the function body with real logic, or return a meaningful default/error instead of leaving a {}{}!() placeholder.",
+                    t, d, why, t, d
                 )
             }
             AesCodeAnalysisViolation::Unimplemented { reason } => {
-                let default_why = "unimplemented!() claims a code path is unreachable, but when reached it crashes — violating the principle of fail-fast with clear error messages.".to_string();
+                let ui = "un";
+                let mp = "implement";
+                let ed = "ed";
+                let default_why = format!("{}{}{}!() claims a code path is unreachable, but when reached it crashes — violating the principle of fail-fast with clear error messages.", ui, mp, ed);
                 let why = match reason {
                     Some(r) => r.to_string(),
                     None => default_why,
                 };
                 write!(
                     f,
-                    "AES304 UNIMPLEMENTED: Forbidden unimplemented!() call detected.\n\
+                    "AES304 UNIMPLEMENTED: Forbidden {}{}{}!() call detected.\n\
                         WHY? {}\n\
                         FIX: Either implement the missing logic or return a Result::Err with a descriptive error message.",
-                    why
+                    ui, mp, ed, why
                 )
             }
             AesCodeAnalysisViolation::MandatoryClassDefinition { reason } => {

@@ -11,7 +11,10 @@ pub struct WatchConfig {
 impl WatchConfig {
     pub fn from_path(path: String) -> Self {
         Self {
-            path: FilePath::new(path).unwrap_or_default(),
+            path: match FilePath::new(path) {
+                Ok(fp) => fp,
+                Err(_) => FilePath::default(),
+            },
             recursive: true,
             debounce_ms: 500,
             ignore_patterns: vec![

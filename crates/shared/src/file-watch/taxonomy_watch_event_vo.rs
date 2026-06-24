@@ -17,10 +17,12 @@ pub struct WatchEvent {
 
 impl WatchEvent {
     pub fn new(path: String, kind: WatchEventKind) -> Self {
-        let timestamp_ms = std::time::SystemTime::now()
+        let timestamp_ms = match std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis() as u64)
-            .unwrap_or(0);
+        {
+            Ok(d) => d.as_millis() as u64,
+            Err(_) => 0,
+        };
         Self {
             path,
             kind,

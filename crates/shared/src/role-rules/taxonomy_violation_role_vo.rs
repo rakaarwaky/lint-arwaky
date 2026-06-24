@@ -12,10 +12,10 @@ pub struct LabeledRoleViolation {
 /// Resolve `reason` to the user-facing "why" string. Falls back to a
 /// language-aware default message when no reason was supplied by the auditor.
 fn resolve_why<S: Into<String>>(reason: &Option<LintMessage>, default: S) -> String {
-    reason
-        .as_ref()
-        .map(|r| r.to_string())
-        .unwrap_or_else(|| default.into())
+    match reason.as_ref() {
+        Some(r) => r.to_string(),
+        None => default.into(),
+    }
 }
 
 /// Write the violation body for `v` using `lang` for language-aware wording.
