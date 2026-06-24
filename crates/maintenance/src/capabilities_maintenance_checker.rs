@@ -1,6 +1,5 @@
 // PURPOSE: MaintenanceChecker — business logic capabilities for running audits and checking toolchains
-#[allow(unused_imports)]
-use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::project_setup::taxonomy_doctor_vo::{
     DependencyInfo, DependencyReport, SecurityFinding, SecurityScanReport, ToolStatus,
     ToolchainDiagnostics,
@@ -374,5 +373,23 @@ impl MaintenanceChecker {
                 }
             }
         }
+    }
+}
+
+#[async_trait::async_trait]
+impl IMaintenanceCheckerProtocol for MaintenanceChecker {
+    async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
+        MaintenanceChecker::diagnose_toolchain(self).await
+    }
+
+    async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
+        MaintenanceChecker::run_security_scan(self, project_path).await
+    }
+
+    async fn run_dependency_report(
+        &self,
+        project_path: &FilePath,
+    ) -> Result<DependencyReport, String> {
+        MaintenanceChecker::run_dependency_report(self, project_path).await
     }
 }

@@ -1,4 +1,5 @@
 // file-watch — taxonomy and contract types
+pub mod contract_change_analyzer_protocol;
 pub mod contract_provider_port;
 pub mod contract_watch_aggregate;
 pub mod taxonomy_diff_result_vo;

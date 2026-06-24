@@ -1,4 +1,5 @@
 pub mod contract_maintenance_aggregate;
+pub mod contract_maintenance_protocol;
 pub mod contract_setup_aggregate;
 pub mod contract_setup_protocol;
 pub mod taxonomy_doctor_vo;
