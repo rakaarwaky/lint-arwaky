@@ -89,7 +89,7 @@ impl CheckCommandsSurface {
     pub fn scan(&self, path: &str, filter: Option<&str>, config: ArchitectureConfig) {
         let path_obj = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
-            Err(_) => FilePath::new(".".to_string()).unwrap_or_default(),
+            Err(_) => FilePath::default(),
         };
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
@@ -135,7 +135,7 @@ impl CheckCommandsSurface {
         // 4. Run external linter adapters via aggregate
         let path_obj2 = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
-            Err(_) => FilePath::new(".".to_string()).unwrap_or_default(),
+            Err(_) => FilePath::default(),
         };
         let external_results = rt.block_on(self.external_lint.scan_all(&path_obj2));
         all_results.extend(external_results.values);
@@ -145,23 +145,26 @@ impl CheckCommandsSurface {
         all_results.extend(role_results);
 
         // 5. Run orphan detection — always scan entire workspace for cross-folder import graph
-        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
-        let source_files = self
-            .scanner_provider
-            .scan_directory(&dir_path)
-            .map(|list| list.values)
-            .unwrap_or_default();
+        let dir_path = match DirectoryPath::new(".".to_string()) {
+            Ok(dp) => dp,
+            Err(_) => DirectoryPath::default(),
+        };
+        let source_files = match self.scanner_provider.scan_directory(&dir_path) {
+            Ok(list) => list.values,
+            Err(_) => Vec::new(),
+        };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         let orphan_results =
             self.orphan_orchestrator
                 .check_orphans(self.layer_detector.as_ref(), &file_strs, ".");
         all_results.extend(orphan_results);
 
-        let canonical_scan_path = std::path::Path::new(path)
-            .canonicalize()
-            .unwrap_or_else(|_| std::path::PathBuf::from(path))
-            .to_string_lossy()
-            .to_string();
+        let canonical_scan_path = match std::path::Path::new(path).canonicalize() {
+            Ok(p) => p,
+            Err(_) => std::path::PathBuf::from(path),
+        }
+        .to_string_lossy()
+        .to_string();
         let filtered_results: Vec<_> = if let Some(code) = filter {
             all_results
                 .into_iter()
@@ -189,19 +192,24 @@ impl CheckCommandsSurface {
         let path_obj = std::path::Path::new(file_path);
 
         // Collect all source files from workspace root for cross-folder graph building
-        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
-        let source_files = self
-            .scanner_provider
-            .scan_directory(&dir_path)
-            .map(|list| list.values)
-            .unwrap_or_default();
+        let dir_path = match DirectoryPath::new(".".to_string()) {
+            Ok(dp) => dp,
+            Err(_) => DirectoryPath::default(),
+        };
+        let source_files = match self.scanner_provider.scan_directory(&dir_path) {
+            Ok(list) => list.values,
+            Err(_) => Vec::new(),
+        };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
         // Normalize the target file path
         let target_path = if path_obj.is_absolute() {
             file_path.to_string()
         } else {
-            let cwd = std::env::current_dir().unwrap_or_default();
+            let cwd = match std::env::current_dir() {
+                Ok(d) => d,
+                Err(_) => std::path::PathBuf::new(),
+            };
             cwd.join(file_path).to_string_lossy().to_string()
         };
 
@@ -403,7 +411,10 @@ pub fn handle_check(
     git_aggregate: Option<Arc<dyn GitHooksAggregate>>,
     config: ArchitectureConfig,
 ) -> ExitCode {
-    let root = path.unwrap_or_else(|| ".".to_string());
+    let root = match path {
+        Some(p) => p,
+        None => ".".to_string(),
+    };
     if git_diff {
         let git_agg = match git_aggregate {
             Some(g) => g,
@@ -443,7 +454,10 @@ pub fn handle_scan(
     factory: OrchestratorFactory,
     filter: Option<String>,
 ) -> ExitCode {
-    let root = path.unwrap_or_else(|| ".".to_string());
+    let root = match path {
+        Some(p) => p,
+        None => ".".to_string(),
+    };
     let surface = CheckCommandsSurface::new_with_factory(ctx, multi_project_orchestrator, factory);
     surface.scan_with_discovery(&root, filter.as_deref());
     ExitCode::SUCCESS
@@ -455,7 +469,10 @@ pub fn handle_ci(
     threshold: u32,
 ) -> ExitCode {
     use shared::cli_commands::taxonomy_severity_vo::Severity;
-    let root = path.unwrap_or_else(|| ".".to_string());
+    let root = match path {
+        Some(p) => p,
+        None => ".".to_string(),
+    };
     let results = code_analysis_linter.run_code_analysis_path(&root);
     let score = code_analysis_linter.calc_score(&results);
     let effective_threshold = if threshold == 80 { 70 } else { threshold };

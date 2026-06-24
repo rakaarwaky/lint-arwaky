@@ -6,8 +6,12 @@ use std::sync::Arc;
 pub async fn handle_config_show(
     config_orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
 ) -> ExitCode {
-    let project_root = shared::source_parsing::taxonomy_path_vo::FilePath::new(".".to_string())
-        .unwrap_or_default();
+    let project_root = match shared::source_parsing::taxonomy_path_vo::FilePath::new(
+        ".".to_string(),
+    ) {
+        Ok(fp) => fp,
+        Err(_) => shared::source_parsing::taxonomy_path_vo::FilePath::default(),
+    };
 
     let config_reader = config_orchestrator.config_reader();
     let config_files = config_reader.list_config_files(&project_root).await;

@@ -78,7 +78,10 @@ fn run_cmd(args: &[&str]) {
             )
         }
         Ok(s) => {
-            let code = s.code().unwrap_or(-1);
+            let code = match s.code() {
+                Some(c) => c,
+                None => -1,
+            };
             println!("\n{} Exit code: {}", style("FAIL").red().bold(), code)
         }
         Err(e) => println!("\n{} Failed to run binary: {e}", style("FAIL").red().bold()),
