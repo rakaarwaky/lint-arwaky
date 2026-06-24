@@ -74,12 +74,15 @@ impl CapabilitiesRoleChecker {
                 }
                 let words: Vec<&str> = t.split_whitespace().collect();
                 if (t.starts_with("pub struct ") || t.starts_with("struct ")) && words.len() >= 2 {
-                    let struct_idx = words.iter().position(|w| *w == "struct").unwrap_or(0);
+                    let struct_idx = match words.iter().position(|w| *w == "struct") {
+                        Some(i) => i,
+                        None => 0,
+                    };
                     Some(
-                        words
-                            .get(struct_idx + 1)
-                            .unwrap_or(&"")
-                            .trim_end_matches(';'),
+                        match words.get(struct_idx + 1) {
+                            Some(w) => w.trim_end_matches(';'),
+                            None => "",
+                        },
                     )
                 } else {
                     None
@@ -115,19 +118,19 @@ impl CapabilitiesRoleChecker {
         for (i, l) in lines.iter().enumerate() {
             let t = l.trim();
             if t.starts_with("class ") {
-                let name = t
-                    .split_whitespace()
-                    .nth(1)
-                    .unwrap_or("")
-                    .split('{')
-                    .next()
-                    .unwrap_or("")
-                    .split(':')
-                    .next()
-                    .unwrap_or("")
-                    .split_whitespace()
-                    .next()
-                    .unwrap_or("");
+                let name = match t.split_whitespace().nth(1) {
+                    Some(n) => match n.split('{').next() {
+                        Some(n) => match n.split(':').next() {
+                            Some(n) => match n.split_whitespace().next() {
+                                Some(n) => n,
+                                None => "",
+                            },
+                            None => "",
+                        },
+                        None => "",
+                    },
+                    None => "",
+                };
                 if !name.is_empty() && !name.starts_with('_') {
                     classes.push((name, i));
                 }
@@ -176,11 +179,10 @@ impl CapabilitiesRoleChecker {
         for (i, l) in lines.iter().enumerate() {
             let t = l.trim();
             if t.starts_with("class ") {
-                let name = t
-                    .split_whitespace()
-                    .nth(1)
-                    .unwrap_or("")
-                    .trim_end_matches(':');
+                let name = match t.split_whitespace().nth(1) {
+                    Some(n) => n.trim_end_matches(':'),
+                    None => "",
+                };
                 if !name.is_empty() && !name.starts_with('_') {
                     classes.push((name, i));
                 }

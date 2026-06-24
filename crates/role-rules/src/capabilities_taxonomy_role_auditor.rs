@@ -146,9 +146,10 @@ impl TaxonomyRoleChecker {
                 // For generic wrappers like Option<X>, Vec<X>, check if X is a primitive
                 if p.ends_with('<') {
                     if type_candidate.starts_with(p) {
-                        let inner = type_candidate
-                            .strip_prefix(p)
-                            .unwrap_or(type_candidate)
+                            let inner = match type_candidate.strip_prefix(p) {
+                                Some(s) => s,
+                                None => type_candidate,
+                            }
                             .trim_end_matches('>');
                         let inner_trimmed = inner.trim();
                         if primitives.iter().any(|prim| {
@@ -239,10 +240,10 @@ impl TaxonomyRoleChecker {
 
     pub fn check_constant(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
-        let basename = Path::new(file)
-            .file_name()
-            .and_then(|f| f.to_str())
-            .unwrap_or("");
+        let basename = match Path::new(file).file_name().and_then(|f| f.to_str()) {
+            Some(f) => f,
+            None => "",
+        };
         if !basename.ends_with("_constant.rs") && !basename.ends_with("_constant.py") {
             return;
         }

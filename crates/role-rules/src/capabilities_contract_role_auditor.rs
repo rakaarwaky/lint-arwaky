@@ -122,10 +122,10 @@ fn signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
     let ret_type: String = if let Some(arrow_idx) = line.find("->") {
         let after = &line[arrow_idx + 2..];
         // Trim at the first `;` (single-line sig) or `{` (rare, multiline).
-        let end = after
-            .find(';')
-            .or_else(|| after.find('{'))
-            .unwrap_or(after.len());
+        let end = match after.find(';').or_else(|| after.find('{')) {
+            Some(idx) => idx,
+            None => after.len(),
+        };
         after[..end].trim().to_string()
     } else {
         String::new()
@@ -279,16 +279,17 @@ impl ContractRoleChecker {
                     continue;
                 }
                 if let Some(name) = t.split("::").last() {
-                    let tn = name
+                    let tn = match name
                         .trim_end_matches(';')
                         .trim()
                         .trim_start_matches('{')
                         .trim_end_matches('}')
                         .split(',')
                         .next()
-                        .unwrap_or("")
-                        .trim()
-                        .to_string();
+                    {
+                        Some(s) => s.trim().to_string(),
+                        None => String::new(),
+                    };
                     if !tn.is_empty() {
                         forbidden_traits.push(tn);
                     }

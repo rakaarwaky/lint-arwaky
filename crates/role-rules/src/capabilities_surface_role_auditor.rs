@@ -146,10 +146,13 @@ impl SurfaceRoleChecker {
             };
 
             if definition.role.no_domain_logic.value {
-                let basename = std::path::Path::new(&f.value)
+                let basename = match std::path::Path::new(&f.value)
                     .file_stem()
                     .and_then(|s| s.to_str())
-                    .unwrap_or("");
+                {
+                    Some(s) => s,
+                    None => "",
+                };
                 let is_smart = basename.ends_with("_command")
                     || basename.ends_with("_controller")
                     || basename.ends_with("_page")
@@ -212,10 +215,13 @@ impl SurfaceRoleChecker {
     /// — they are expected to contain orchestration logic.
     fn _check_passive(&self, f: &FilePath, results: &mut LintResultList) {
         let f_str = f.to_string();
-        let basename = std::path::Path::new(&f_str)
+        let basename = match std::path::Path::new(&f_str)
             .file_stem()
             .and_then(|s| s.to_str())
-            .unwrap_or("");
+        {
+            Some(s) => s,
+            None => "",
+        };
         if basename.ends_with("_command")
             || basename.ends_with("_controller")
             || basename.ends_with("_page")
@@ -289,7 +295,10 @@ impl SurfaceRoleChecker {
             }
 
             if let (Some((name, _start)), Some(cap)) = (&current_impl, fn_re.captures(trimmed)) {
-                let method_name = cap.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
+                let method_name = match cap.get(1).map(|m| m.as_str()) {
+                    Some(s) => s.to_string(),
+                    None => String::new(),
+                };
                 if !method_name.starts_with('_')
                     && !name.contains("Drop")
                     && !name.contains("Clone")
@@ -360,7 +369,10 @@ impl SurfaceRoleChecker {
                 None => continue,
             };
             if let Some(cap) = class_re.captures(stripped) {
-                let class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                let class_name = match cap.get(1).map(|m| m.as_str()) {
+                    Some(s) => s,
+                    None => continue,
+                };
                 let indent = raw_line.len() - raw_line.trim_start().len();
 
                 let mut pub_methods: Vec<(String, usize, Option<usize>)> = Vec::new();
@@ -381,7 +393,10 @@ impl SurfaceRoleChecker {
                         None => break,
                     };
                     if let Some(mcap) = method_re.captures(method_line.trim()) {
-                        let method_name = mcap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let method_name = match mcap.get(1).map(|m| m.as_str()) {
+                            Some(s) => s,
+                            None => continue,
+                        };
                         if !method_name.starts_with('_') {
                             let mut end_line = lines.len();
                             for (k, next) in lines.iter().enumerate().skip(j + 1) {
@@ -424,7 +439,10 @@ impl SurfaceRoleChecker {
         for (i, raw_line) in lines.iter().enumerate() {
             let stripped = raw_line.trim();
             if let Some(cap) = class_re.captures(stripped) {
-                let class_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
+                let class_name = match cap.get(1).map(|m| m.as_str()) {
+                    Some(s) => s,
+                    None => continue,
+                };
                 let indent = raw_line.len() - raw_line.trim_start().len();
 
                 let mut pub_methods: Vec<(String, usize, Option<usize>)> = Vec::new();
@@ -441,7 +459,10 @@ impl SurfaceRoleChecker {
                     }
 
                     if let Some(mcap) = method_re.captures(method_line.trim()) {
-                        let method_name = mcap.get(1).map(|m| m.as_str()).unwrap_or("");
+                        let method_name = match mcap.get(1).map(|m| m.as_str()) {
+                            Some(s) => s,
+                            None => continue,
+                        };
                         if !method_name.starts_with('_') {
                             let mut end_line = lines.len();
                             for (k, next) in lines.iter().enumerate().skip(j + 1) {
@@ -514,7 +535,10 @@ impl SurfaceRoleChecker {
         violations: &mut Vec<String>,
     ) {
         for (method_name, start, end) in pub_methods {
-            let end_line = end.unwrap_or(lines.len());
+            let end_line = match end {
+                Some(e) => *e,
+                None => lines.len(),
+            };
             let mut max_depth: usize = 0;
 
             for i in *start..end_line {
@@ -569,8 +593,14 @@ impl SurfaceRoleChecker {
 /// Check if the file is a surface file by filename prefix `surface_` or `surfaces_` or directory `surfaces/`.
 fn is_in_surfaces(f: &FilePath) -> bool {
     let path_str = f.to_string();
-    let basename = path_str.rsplit('/').next().unwrap_or(&path_str);
-    let stem = basename.split('.').next().unwrap_or(basename);
+    let basename = match path_str.rsplit('/').next() {
+        Some(s) => s,
+        None => &path_str,
+    };
+    let stem = match basename.split('.').next() {
+        Some(s) => s,
+        None => basename,
+    };
     if stem.starts_with("surface_") || stem.starts_with("surfaces_") {
         return true;
     }

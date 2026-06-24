@@ -52,10 +52,10 @@ impl RoleOrchestrator {
 
     fn is_ignored(&self, p: &Path) -> bool {
         let s = p.to_string_lossy();
-        let dir_name = p
-            .file_name()
-            .map(|n| n.to_string_lossy())
-            .unwrap_or_default();
+        let dir_name = match p.file_name() {
+            Some(n) => n.to_string_lossy(),
+            None => std::borrow::Cow::Borrowed(""),
+        };
         self.ignored_paths.iter().any(|ignored| {
             s.contains(ignored.as_str()) || dir_name.contains(ignored.trim_start_matches('/'))
         })
@@ -68,19 +68,28 @@ impl RoleOrchestrator {
         violations: &mut Vec<LintResult>,
     ) {
         for file in files {
-            let content = std::fs::read_to_string(file).unwrap_or_default();
-            let filename = Path::new(file)
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("");
+            let content = match std::fs::read_to_string(file) {
+                Ok(c) => c,
+                Err(_) => String::new(),
+            };
+            let filename = match Path::new(file).file_name().and_then(|n| n.to_str()) {
+                Some(n) => n,
+                None => "",
+            };
 
-            let stem = Path::new(filename)
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("");
-            let prefix = stem.split('_').next().unwrap_or("");
+            let stem = match Path::new(filename).file_stem().and_then(|s| s.to_str()) {
+                Some(s) => s,
+                None => "",
+            };
+            let prefix = match stem.split('_').next() {
+                Some(p) => p,
+                None => "",
+            };
 
-            let fp = FilePath::new(file.to_string()).unwrap_or_default();
+            let fp = match FilePath::new(file.to_string()) {
+                Ok(f) => f,
+                Err(_) => continue,
+            };
             let content_vo = ContentString::new(content);
             let detector =
                 shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
@@ -155,7 +164,9 @@ impl RoleOrchestrator {
         if path.is_dir() {
             self.walk_dir(path, &mut files, true);
         } else if path.is_file() {
-            files.push(FilePath::new(path.to_string_lossy().to_string()).unwrap_or_default());
+            if let Ok(p) = FilePath::new(path.to_string_lossy().to_string()) {
+                files.push(p);
+            }
         }
         FilePathList::new(files)
     }
@@ -175,10 +186,9 @@ impl RoleOrchestrator {
                             ext.to_str(),
                             Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
                         ) {
-                            files.push(
-                                FilePath::new(path.to_string_lossy().to_string())
-                                    .unwrap_or_default(),
-                            );
+                            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
+                                files.push(fp);
+                            }
                         }
                     }
                 }
