@@ -10,7 +10,7 @@ publish = false
 [lints]
 workspace = true
 
-[dependencies]  # (unchanged)
+[dependencies]
 serde.workspace = true
 serde_json.workspace = true
 async-trait.workspace = true
@@ -22,3 +22,9 @@ rmcp.workspace = true
 schemars = "1.2"
 tokio.workspace = true
 anyhow.workspace = true
+import_rules.workspace = true
+naming_rules.workspace = true
+orphan_detector.workspace = true
+external_lint.workspace = true
+role_rules.workspace = true
+code_analysis.workspace = true

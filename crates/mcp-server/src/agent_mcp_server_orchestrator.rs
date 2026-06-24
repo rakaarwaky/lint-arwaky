@@ -3,16 +3,47 @@ use crate::contract_mcp_server_aggregate::IMcpServerAggregate;
 use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
+use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
+use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 use std::sync::Arc;
 
 pub struct McpServerOrchestrator {
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+    naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+    orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    layer_detector: Arc<dyn ILayerDetectionAggregate>,
+    scanner_provider: Arc<dyn IScannerProviderPort>,
+    external_lint: Arc<dyn IExternalLintAggregate>,
+    role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
 }
 
 impl McpServerOrchestrator {
-    pub fn new(code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+    pub fn new(
+        code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+        layer_detector: Arc<dyn ILayerDetectionAggregate>,
+        scanner_provider: Arc<dyn IScannerProviderPort>,
+        external_lint: Arc<dyn IExternalLintAggregate>,
+        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    ) -> Self {
         Self {
             code_analysis_linter,
+            import_orchestrator,
+            naming_orchestrator,
+            orphan_orchestrator,
+            layer_detector,
+            scanner_provider,
+            external_lint,
+            role_orchestrator,
         }
     }
 }
@@ -20,7 +51,6 @@ impl McpServerOrchestrator {
 #[async_trait::async_trait]
 impl IMcpServerAggregate for McpServerOrchestrator {
     async fn execute_command(&self, Parameters(args): Parameters<ExecuteCommandArgs>) -> String {
-        let linter = self.code_analysis_linter.clone();
         let action = args.action.clone();
         let arg_path = args
             .args
@@ -47,11 +77,77 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
+                let linter = self.code_analysis_linter.clone();
+                let import_orch = self.import_orchestrator.clone();
+                let naming_orch = self.naming_orchestrator.clone();
+                let role_orch = self.role_orchestrator.clone();
+                let ext_lint = self.external_lint.clone();
+                let orphan_orch = self.orphan_orchestrator.clone();
+                let layer_det = self.layer_detector.clone();
+                let scanner = self.scanner_provider.clone();
+
                 let join_result = tokio::task::spawn_blocking(move || {
-                    let results = linter.run_code_analysis_path(&path);
+                    let mut all_results = Vec::new();
+
+                    // 1. AES analysis (sync, code-analysis)
+                    let aes_results = linter.run_code_analysis_path(&path);
+                    all_results.extend(aes_results);
+
+                    // Build FilePath for async aggregates
+                    let path_obj = match FilePath::new(path.clone()) {
+                        Ok(fp) => fp,
+                        Err(_) => FilePath::default(),
+                    };
+                    let rt = match tokio::runtime::Runtime::new() {
+                        Ok(r) => r,
+                        Err(_) => {
+                            return serde_json::json!({"error": "failed to create runtime"});
+                        }
+                    };
+
+                    // 2. Naming rules (AES101, AES102)
+                    let naming_results = rt.block_on(naming_orch.run_audit(&path_obj));
+                    all_results.extend(naming_results);
+
+                    // 3. Import rules (AES201–AES205)
+                    let import_results = rt.block_on(import_orch.run_audit(&path_obj));
+                    all_results.extend(import_results);
+
+                    // 4. External linters (ruff, mypy, bandit, eslint, clippy)
+                    let external_results = rt.block_on(ext_lint.scan_all(&path_obj));
+                    all_results.extend(external_results.values);
+
+                    // 5. Role rules (AES401–AES406)
+                    let role_results = rt.block_on(role_orch.run_audit(&path_obj));
+                    all_results.extend(role_results);
+
+                    // 6. Orphan detection (AES501–AES506)
+                    let scan_root = find_workspace_root(&path);
+                    let orphan_scan_root = match scan_root.as_ref().and_then(|r| r.to_str()) {
+                        Some(s) => s.to_string(),
+                        None => ".".to_string(),
+                    };
+                    let dir_path = match DirectoryPath::new(orphan_scan_root.clone()) {
+                        Ok(dp) => dp,
+                        Err(_) => DirectoryPath::default(),
+                    };
+                    let source_files = match scanner.scan_directory(&dir_path) {
+                        Ok(list) => list.values,
+                        Err(_) => Vec::new(),
+                    };
+                    let file_strs: Vec<String> =
+                        source_files.iter().map(|f| f.value.clone()).collect();
+                    let orphan_results = orphan_orch.check_orphans(
+                        layer_det.as_ref(),
+                        &file_strs,
+                        &orphan_scan_root,
+                    );
+                    all_results.extend(orphan_results);
+
+                    // Format report
                     let report = linter.format_report(
                         &shared::cli_commands::taxonomy_result_vo::LintResultList::new(
-                            results.clone(),
+                            all_results.clone(),
                         ),
                         &path,
                     );
@@ -59,7 +155,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         "status": "success",
                         "action": action,
                         "path": path,
-                        "total_violations": results.len(),
+                        "total_violations": all_results.len(),
                         "report": report
                     })
                 })
@@ -90,16 +186,74 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(t) => t,
                     None => 80,
                 };
+                let linter = self.code_analysis_linter.clone();
+                let import_orch = self.import_orchestrator.clone();
+                let naming_orch = self.naming_orchestrator.clone();
+                let role_orch = self.role_orchestrator.clone();
+                let ext_lint = self.external_lint.clone();
+                let orphan_orch = self.orphan_orchestrator.clone();
+                let layer_det = self.layer_detector.clone();
+                let scanner = self.scanner_provider.clone();
+
                 let join_result = tokio::task::spawn_blocking(move || {
-                    let results = linter.run_code_analysis_path(&path);
-                    let score = linter.calc_score(&results);
+                    let mut all_results = Vec::new();
+
+                    let aes_results = linter.run_code_analysis_path(&path);
+                    all_results.extend(aes_results);
+
+                    let path_obj = match FilePath::new(path.clone()) {
+                        Ok(fp) => fp,
+                        Err(_) => FilePath::default(),
+                    };
+                    let rt = match tokio::runtime::Runtime::new() {
+                        Ok(r) => r,
+                        Err(_) => {
+                            return serde_json::json!({"error": "failed to create runtime"});
+                        }
+                    };
+
+                    let naming_results = rt.block_on(naming_orch.run_audit(&path_obj));
+                    all_results.extend(naming_results);
+
+                    let import_results = rt.block_on(import_orch.run_audit(&path_obj));
+                    all_results.extend(import_results);
+
+                    let external_results = rt.block_on(ext_lint.scan_all(&path_obj));
+                    all_results.extend(external_results.values);
+
+                    let role_results = rt.block_on(role_orch.run_audit(&path_obj));
+                    all_results.extend(role_results);
+
+                    let scan_root = find_workspace_root(&path);
+                    let orphan_scan_root = match scan_root.as_ref().and_then(|r| r.to_str()) {
+                        Some(s) => s.to_string(),
+                        None => ".".to_string(),
+                    };
+                    let dir_path = match DirectoryPath::new(orphan_scan_root.clone()) {
+                        Ok(dp) => dp,
+                        Err(_) => DirectoryPath::default(),
+                    };
+                    let source_files = match scanner.scan_directory(&dir_path) {
+                        Ok(list) => list.values,
+                        Err(_) => Vec::new(),
+                    };
+                    let file_strs: Vec<String> =
+                        source_files.iter().map(|f| f.value.clone()).collect();
+                    let orphan_results = orphan_orch.check_orphans(
+                        layer_det.as_ref(),
+                        &file_strs,
+                        &orphan_scan_root,
+                    );
+                    all_results.extend(orphan_results);
+
+                    let score = linter.calc_score(&all_results);
                     let pass = score >= threshold as f64;
                     serde_json::json!({
                         "status": if pass { "pass" } else { "fail" },
                         "action": "ci",
                         "score": score,
                         "threshold": threshold,
-                        "violations": results.len()
+                        "violations": all_results.len()
                     })
                 })
                 .await;
@@ -133,21 +287,15 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "name": "lint-arwaky"})
             }
             "adapters" => {
+                let ext = self.external_lint.clone();
+                let adapter_names = ext.adapter_names();
                 let mut adapters = Vec::new();
-                for (name, lang) in &[
-                    ("ruff", "python"),
-                    ("mypy", "python"),
-                    ("bandit", "python"),
-                    ("clippy", "rust"),
-                    ("eslint", "javascript"),
-                ] {
+                for name in &adapter_names {
                     let found = match std::process::Command::new("which").arg(name).output() {
                         Ok(o) => o.status.success(),
                         Err(_) => false,
                     };
-                    adapters.push(
-                        serde_json::json!({"name": name, "language": lang, "enabled": found}),
-                    );
+                    adapters.push(serde_json::json!({"name": name, "enabled": found}));
                 }
                 serde_json::json!({"adapters": adapters})
             }
@@ -235,6 +383,25 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 }
             }
             _ => serde_json::json!({"content": content}).to_string(),
+        }
+    }
+}
+
+fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
+    let mut dir = std::path::Path::new(path).to_path_buf();
+    if !dir.is_absolute() {
+        dir = std::env::current_dir().ok()?.join(&dir);
+    }
+    loop {
+        if dir.join("Cargo.toml").exists()
+            || dir.join("crates").is_dir()
+            || dir.join("packages").is_dir()
+            || dir.join("modules").is_dir()
+        {
+            return Some(dir);
+        }
+        if !dir.pop() {
+            return None;
         }
     }
 }
