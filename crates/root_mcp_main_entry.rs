@@ -15,7 +15,16 @@ async fn main() -> anyhow::Result<()> {
 
     let container = McpContainer::new_default();
 
-    let agent = McpServerOrchestrator::from_container(container);
+    let agent = McpServerOrchestrator::new(
+        container.code_analysis_linter,
+        container.import_orchestrator,
+        container.naming_orchestrator,
+        container.orphan_orchestrator,
+        container.layer_detector,
+        container.scanner_provider,
+        container.external_lint,
+        container.role_orchestrator,
+    );
 
     let server = LintArwakyMcpServer::new(Arc::new(agent));
     let service = server.serve(rmcp::transport::stdio()).await?;

@@ -470,6 +470,14 @@ impl CheckCommandsSurface {
                     println!("   (clean)");
                 }
                 println!();
+
+                if ws_name == "shared" && !filtered_results.is_empty() {
+                    let results_list = LintResultList::new(filtered_results);
+                    print!(
+                        "{}",
+                        code_analysis_linter.format_report(&results_list, &ws.path.value)
+                    );
+                }
             } else {
                 // Single workspace — print full violation detail
                 let results_list = LintResultList::new(filtered_results);

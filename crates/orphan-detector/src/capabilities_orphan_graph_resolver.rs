@@ -87,14 +87,15 @@ impl OrphanGraphResolver {
                 .replace(".py", "")
                 .replace(".ts", "")
                 .replace(".js", "");
-        // Map module stem to file path
-        module_to_file.insert(stem.clone(), f.clone());
-        // Also map with parent dir prefix for disambiguation
-        if let Some(parent) = f.rsplit('/').nth(1) {
-            let module_path = format!("{}/{}", parent, stem);
-            module_to_file.insert(module_path, f.clone());
-        }
-    }
+            module_to_file.insert(stem.clone(), f.clone());
+            if let Some(parent) = f.rsplit('/').nth(1) {
+                let module_path = format!("{}/{}", parent, stem);
+                module_to_file.insert(module_path.clone(), f.clone());
+                let normalized_path = module_path.replace('-', "_");
+                if normalized_path != module_path {
+                    module_to_file.insert(normalized_path, f.clone());
+                }
+            }
         }
 
         // DEBUG: check if taxonomy_path_vo is in module_to_file
@@ -200,12 +201,30 @@ impl OrphanGraphResolver {
                             // Module path is all segments except the last (item name)
                             // e.g. ["source_parsing", "taxonomy_path_vo", "FilePath"]
                             //   → module segments: ["source_parsing", "taxonomy_path_vo"]
-                            //   → try "taxonomy_path_vo" first, then "source_parsing"
+                            //   → try composite keys first (parent/segment), then plain segments
                             let segments: Vec<&str> = path_part.split("::").collect();
                             if segments.len() >= 2 {
-                                // Try module segments from most specific to least
-                                // Skip the last segment (item name like FilePath, LintResult)
                                 let mut resolved = false;
+                                for i in (1..segments.len()).rev() {
+                                    let composite = segments[..i].join("/");
+                                    if let Some(file_path) = module_to_file.get(composite.as_str()) {
+                                        if file_path != f {
+                                            import_graph
+                                                .entry(f.clone())
+                                                .or_default()
+                                                .push(file_path.clone());
+                                            inbound_links
+                                                .entry(file_path.clone())
+                                                .or_default()
+                                                .push(f.clone());
+                                            resolved = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if resolved {
+                                    continue;
+                                }
                                 for seg in segments[..segments.len() - 1].iter().rev() {
                                     if let Some(file_path) = module_to_file.get(*seg) {
                                         if file_path != f {
@@ -249,6 +268,27 @@ impl OrphanGraphResolver {
                         if let Some(path_part) = full_import.strip_prefix("super::") {
                             let segments: Vec<&str> = path_part.split("::").collect();
                             if segments.len() >= 2 {
+                                let mut found = false;
+                                for i in (1..segments.len()).rev() {
+                                    let composite = segments[..i].join("/");
+                                    if let Some(file_path) = module_to_file.get(composite.as_str()) {
+                                        if file_path != f {
+                                            import_graph
+                                                .entry(f.clone())
+                                                .or_default()
+                                                .push(file_path.clone());
+                                            inbound_links
+                                                .entry(file_path.clone())
+                                                .or_default()
+                                                .push(f.clone());
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if found {
+                                    continue;
+                                }
                                 for seg in segments[..segments.len() - 1].iter().rev() {
                                     if let Some(resolved) = module_to_file.get(*seg) {
                                         if resolved != f {
