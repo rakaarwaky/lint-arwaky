@@ -1,5 +1,6 @@
 // PURPOSE: McpServerOrchestrator — agent that implements IMcpServerAggregate
 use crate::contract_mcp_server_aggregate::IMcpServerAggregate;
+use crate::root_mcp_container::McpContainer;
 use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -25,25 +26,16 @@ pub struct McpServerOrchestrator {
 }
 
 impl McpServerOrchestrator {
-    pub fn new(
-        code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-        layer_detector: Arc<dyn ILayerDetectionAggregate>,
-        scanner_provider: Arc<dyn IScannerProviderPort>,
-        external_lint: Arc<dyn IExternalLintAggregate>,
-        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    ) -> Self {
+    pub fn from_container(c: McpContainer) -> Self {
         Self {
-            code_analysis_linter,
-            import_orchestrator,
-            naming_orchestrator,
-            orphan_orchestrator,
-            layer_detector,
-            scanner_provider,
-            external_lint,
-            role_orchestrator,
+            code_analysis_linter: c.code_analysis_linter,
+            import_orchestrator: c.import_orchestrator,
+            naming_orchestrator: c.naming_orchestrator,
+            orphan_orchestrator: c.orphan_orchestrator,
+            layer_detector: c.layer_detector,
+            scanner_provider: c.scanner_provider,
+            external_lint: c.external_lint,
+            role_orchestrator: c.role_orchestrator,
         }
     }
 }

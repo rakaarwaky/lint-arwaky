@@ -9,4 +9,3 @@ pub mod taxonomy_protocol_vo;
 pub mod taxonomy_result_vo;
 pub mod taxonomy_score_vo;
 pub mod taxonomy_severity_vo;
-pub mod taxonomy_transport_error;
