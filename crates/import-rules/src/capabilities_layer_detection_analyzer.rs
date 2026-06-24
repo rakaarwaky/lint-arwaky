@@ -371,7 +371,7 @@ impl LayerDetectionAnalyzer {
     }
 }
 
-impl shared::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort for LayerDetectionAnalyzer {
+impl shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol for LayerDetectionAnalyzer {
     /// Return the merged architecture configuration.
     fn config(&self) -> &ArchitectureConfig {
         &self.config

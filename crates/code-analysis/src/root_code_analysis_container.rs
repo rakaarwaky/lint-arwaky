@@ -349,7 +349,7 @@ impl shared::source_parsing::contract_parser_port::ISourceParserPort for NullSou
 }
 
 struct PlaceholderAnalyzer;
-impl shared::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort for PlaceholderAnalyzer {
+impl shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol for PlaceholderAnalyzer {
     fn config(&self) -> &ArchitectureConfig {
         static CONFIG: std::sync::OnceLock<ArchitectureConfig> = std::sync::OnceLock::new();
         CONFIG.get_or_init(ArchitectureConfig::default)

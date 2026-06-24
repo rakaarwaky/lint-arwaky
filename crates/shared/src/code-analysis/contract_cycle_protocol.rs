@@ -579,7 +579,7 @@ mod tests {
         fs: MockFileSystemPort,
     }
 
-    impl crate::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort for MockAnalyzer {
+    impl crate::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol for MockAnalyzer {
         fn config(&self) -> &ArchitectureConfig {
             &self.config
         }
@@ -774,7 +774,7 @@ mod tests {
         parser: MockParserForCycle,
     }
 
-    impl crate::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort for MockAnalyzerForCycle {
+    impl crate::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol for MockAnalyzerForCycle {
         fn config(&self) -> &ArchitectureConfig {
             todo!()
         }

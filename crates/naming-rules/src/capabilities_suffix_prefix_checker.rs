@@ -2,7 +2,7 @@
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort;
+use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
@@ -199,7 +199,7 @@ impl SuffixPrefixChecker {
 impl INamingCheckerProtocol for SuffixPrefixChecker {
     async fn check_file_naming(
         &self,
-        _analyzer: &dyn INamingAnalyzerPort,
+        _analyzer: &dyn INamingAnalyzerProtocol,
         _files: &FilePathList,
         _root_dir: &FilePath,
         _results: &mut LintResultList,
@@ -210,7 +210,7 @@ impl INamingCheckerProtocol for SuffixPrefixChecker {
     // Implement check_domain_suffixes from INamingCheckerProtocol trait to perform checks on multiple files.
     async fn check_domain_suffixes(
         &self,
-        analyzer: &dyn INamingAnalyzerPort,
+        analyzer: &dyn INamingAnalyzerProtocol,
         files: &FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
