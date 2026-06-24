@@ -23,7 +23,10 @@ use std::sync::Arc;
 /// Returns `fp` if `result` is `Ok`, otherwise returns `FilePath::default()`.
 /// Private helper — uses `Result::match` to avoid inline match patterns.
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    match result { Ok(fp) => fp, Err(_) => FilePath::default() }
+    match result {
+        Ok(fp) => fp,
+        Err(_) => FilePath::default(),
+    }
 }
 
 /// Detects circular imports and dependency cycles (Capability) — AES205.
@@ -100,10 +103,7 @@ impl DependencyCycleAnalyzer {
             // Step 3c: Detect the file's architectural layer (strip scoped suffix)
             let file_fp = filepath_or_default(FilePath::new(file.clone()));
             let root_dir_fp = filepath_or_default(FilePath::new(root_dir.to_string()));
-            let file_layer = match analyzer.detect_layer(
-                &file_fp,
-                &root_dir_fp,
-            ) {
+            let file_layer = match analyzer.detect_layer(&file_fp, &root_dir_fp) {
                 Some(l) => {
                     let val = l.value();
                     let s = match val.split('(').next() {

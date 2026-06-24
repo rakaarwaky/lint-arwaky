@@ -5,6 +5,7 @@ use std::sync::Arc;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct ExternalLintContainer {
     aggregate: Arc<dyn IExternalLintAggregate>,
@@ -96,7 +97,25 @@ impl ExternalLintContainer {
         }
     }
 
+    pub fn new_default() -> Self {
+        Self::new(Arc::new(DefaultPathNormalization))
+    }
+
     pub fn aggregate(&self) -> Arc<dyn IExternalLintAggregate> {
         self.aggregate.clone()
+    }
+}
+
+struct DefaultPathNormalization;
+impl IPathNormalizationPort for DefaultPathNormalization {
+    fn normalize_path(&self, path: FilePath) -> FilePath {
+        path
+    }
+    fn resolve_infrastructure_path(
+        &self,
+        path: FilePath,
+        _context_path: Option<FilePath>,
+    ) -> FilePath {
+        path
     }
 }

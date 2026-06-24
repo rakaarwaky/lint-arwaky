@@ -78,12 +78,10 @@ impl CapabilitiesRoleChecker {
                         Some(i) => i,
                         None => 0,
                     };
-                    Some(
-                        match words.get(struct_idx + 1) {
-                            Some(w) => w.trim_end_matches(';'),
-                            None => "",
-                        },
-                    )
+                    Some(match words.get(struct_idx + 1) {
+                        Some(w) => w.trim_end_matches(';'),
+                        None => "",
+                    })
                 } else {
                     None
                 }

@@ -130,15 +130,47 @@ enum ViolationKind {
 /// false positive can add an `# noqa`-style allow in the YAML config.
 const LANGUAGE_PHRASE_PATTERNS: &[PhrasePattern] = &[
     // ─── Python: panic-equivalent idioms ───────────────────────────────────
-    ("raise notimplementederror", ViolationKind::Unimplemented, &[SourceLanguage::Python]),
-    ("raise notimplemented", ViolationKind::Unimplemented, &[SourceLanguage::Python]),
-    ("assert false", ViolationKind::Panic, &[SourceLanguage::Python]),
+    (
+        "raise notimplementederror",
+        ViolationKind::Unimplemented,
+        &[SourceLanguage::Python],
+    ),
+    (
+        "raise notimplemented",
+        ViolationKind::Unimplemented,
+        &[SourceLanguage::Python],
+    ),
+    (
+        "assert false",
+        ViolationKind::Panic,
+        &[SourceLanguage::Python],
+    ),
     // ─── JavaScript / TypeScript: panic-equivalent idioms ──────────────────
-    ("throw new error", ViolationKind::Panic, &[SourceLanguage::JavaScript, SourceLanguage::TypeScript]),
-    ("throw new typeerror", ViolationKind::Panic, &[SourceLanguage::JavaScript, SourceLanguage::TypeScript]),
-    ("throw new rangeerror", ViolationKind::Panic, &[SourceLanguage::JavaScript, SourceLanguage::TypeScript]),
-    ("throw new referenceerror", ViolationKind::Panic, &[SourceLanguage::JavaScript, SourceLanguage::TypeScript]),
-    ("throw new syntaxerror", ViolationKind::Panic, &[SourceLanguage::JavaScript, SourceLanguage::TypeScript]),
+    (
+        "throw new error",
+        ViolationKind::Panic,
+        &[SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+    ),
+    (
+        "throw new typeerror",
+        ViolationKind::Panic,
+        &[SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+    ),
+    (
+        "throw new rangeerror",
+        ViolationKind::Panic,
+        &[SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+    ),
+    (
+        "throw new referenceerror",
+        ViolationKind::Panic,
+        &[SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+    ),
+    (
+        "throw new syntaxerror",
+        ViolationKind::Panic,
+        &[SourceLanguage::JavaScript, SourceLanguage::TypeScript],
+    ),
 ];
 
 pub struct BypassChecker {
@@ -277,7 +309,9 @@ fn starts_with_allow_attr(line: &str) -> bool {
     static PREFIXES: std::sync::OnceLock<[String; 2]> = std::sync::OnceLock::new();
     let prefixes = PREFIXES.get_or_init(|| {
         let a: String = ['#', '[', 'a', 'l', 'l', 'o', 'w', '('].iter().collect();
-        let e: String = ['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '('].iter().collect();
+        let e: String = ['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']
+            .iter()
+            .collect();
         [a, e]
     });
     line.starts_with(&prefixes[0]) || line.starts_with(&prefixes[1])

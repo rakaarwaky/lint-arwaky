@@ -146,10 +146,7 @@ impl MaintenanceChecker {
                                     Some(s) => s.to_string(),
                                     None => "unknown".to_string(),
                                 };
-                                let severity = match adv
-                                    .get("severity")
-                                    .and_then(|s| s.as_str())
-                                {
+                                let severity = match adv.get("severity").and_then(|s| s.as_str()) {
                                     Some(s) => s.to_string(),
                                     None => "unknown".to_string(),
                                 };
@@ -196,31 +193,20 @@ impl MaintenanceChecker {
                     if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s) {
                         if let Some(results) = json.get("results").and_then(|r| r.as_array()) {
                             for r in results {
-                                let test_id = match r
-                                    .get("test_id")
-                                    .and_then(|t| t.as_str())
-                                {
+                                let test_id = match r.get("test_id").and_then(|t| t.as_str()) {
                                     Some(s) => s.to_string(),
                                     None => String::new(),
                                 };
-                                let issue = match r
-                                    .get("issue_text")
-                                    .and_then(|t| t.as_str())
-                                {
+                                let issue = match r.get("issue_text").and_then(|t| t.as_str()) {
                                     Some(s) => s.to_string(),
                                     None => String::new(),
                                 };
-                                let severity = match r
-                                    .get("issue_severity")
-                                    .and_then(|s| s.as_str())
-                                {
-                                    Some(s) => s.to_string(),
-                                    None => String::new(),
-                                };
-                                let fname = match r
-                                    .get("filename")
-                                    .and_then(|f| f.as_str())
-                                {
+                                let severity =
+                                    match r.get("issue_severity").and_then(|s| s.as_str()) {
+                                        Some(s) => s.to_string(),
+                                        None => String::new(),
+                                    };
+                                let fname = match r.get("filename").and_then(|f| f.as_str()) {
                                     Some(s) => s.to_string(),
                                     None => String::new(),
                                 };

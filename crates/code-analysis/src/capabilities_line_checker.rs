@@ -36,10 +36,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
         content: &str,
         violations: &mut Vec<LintResult>,
     ) {
-        let basename = match Path::new(file)
-            .file_name()
-            .and_then(|f| f.to_str())
-        {
+        let basename = match Path::new(file).file_name().and_then(|f| f.to_str()) {
             Some(name) => name.to_string(),
             None => return,
         };

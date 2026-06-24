@@ -18,12 +18,21 @@ use shared::taxonomy_source_vo::ContentString;
 /// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
 /// Private helper — uses `Result::match` to avoid inline match patterns.
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    match result { Ok(fp) => fp, Err(_) => FilePath::default() }
+    match result {
+        Ok(fp) => fp,
+        Err(_) => FilePath::default(),
+    }
 }
 
 /// Returns the inner `FilePath` if `result` is `Ok`, otherwise clones `fallback`.
-fn filepath_or_clone(result: Result<FilePath, impl std::fmt::Debug>, fallback: &FilePath) -> FilePath {
-    match result { Ok(fp) => fp, Err(_) => fallback.clone() }
+fn filepath_or_clone(
+    result: Result<FilePath, impl std::fmt::Debug>,
+    fallback: &FilePath,
+) -> FilePath {
+    match result {
+        Ok(fp) => fp,
+        Err(_) => fallback.clone(),
+    }
 }
 
 /// Returns the `&str` slice from an `OsStr` option, falling back to `""`.
@@ -92,9 +101,10 @@ impl IFileSystemPort for OSFileSystemAdapter {
     async fn get_relative_path(&self, path: &FilePath, start: &FilePath) -> FilePath {
         let p = Path::new(&path.value);
         let s = Path::new(&start.value);
-        p.strip_prefix(s)
-            .ok()
-            .map_or_else(|| path.clone(), |rel| filepath_or_clone(FilePath::new(rel.to_string_lossy().to_string()), path))
+        p.strip_prefix(s).ok().map_or_else(
+            || path.clone(),
+            |rel| filepath_or_clone(FilePath::new(rel.to_string_lossy().to_string()), path),
+        )
     }
 
     async fn read_text(&self, path: &FilePath) -> Result<ContentString, FileSystemError> {
@@ -115,8 +125,10 @@ impl IFileSystemPort for OSFileSystemAdapter {
 
     async fn get_parent(&self, path: &FilePath) -> FilePath {
         let p = Path::new(&path.value);
-        p.parent()
-            .map_or_else(|| path.clone(), |parent| filepath_or_clone(FilePath::new(parent.to_string_lossy().to_string()), path))
+        p.parent().map_or_else(
+            || path.clone(),
+            |parent| filepath_or_clone(FilePath::new(parent.to_string_lossy().to_string()), path),
+        )
     }
 
     async fn write_text(
@@ -140,7 +152,10 @@ impl IFileSystemPort for OSFileSystemAdapter {
     }
 
     async fn get_cwd(&self) -> FilePath {
-        let cwd = match std::env::current_dir() { Ok(p) => p, Err(_) => PathBuf::from(".") };
+        let cwd = match std::env::current_dir() {
+            Ok(p) => p,
+            Err(_) => PathBuf::from("."),
+        };
         let primary = filepath_or_default(FilePath::new(cwd.to_string_lossy().to_string()));
         if primary != FilePath::default() {
             primary

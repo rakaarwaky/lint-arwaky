@@ -128,7 +128,8 @@ impl SuffixPrefixChecker {
         // Step 5: Check if the suffix is explicitly forbidden for the current layer.
         if let Some(ref suf) = suffix {
             if def.naming.forbidden_suffix.values.contains(suf) {
-                let layer_display = Option::unwrap_or(_layer_name.as_deref(), "unknown").to_string();
+                let layer_display =
+                    Option::unwrap_or(_layer_name.as_deref(), "unknown").to_string();
                 violations.push(Self::make_result(
                     file,
                     "AES102",
@@ -157,7 +158,8 @@ impl SuffixPrefixChecker {
             };
             if !valid {
                 let allowed_list = def.naming.allowed_suffix.values.clone();
-                let layer_display = Option::unwrap_or(_layer_name.as_deref(), "unknown").to_string();
+                let layer_display =
+                    Option::unwrap_or(_layer_name.as_deref(), "unknown").to_string();
                 let suffix_display = Option::unwrap_or(suffix.as_deref(), "(none)");
                 violations.push(Self::make_result(
                     file,

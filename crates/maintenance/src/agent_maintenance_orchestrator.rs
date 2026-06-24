@@ -29,7 +29,10 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         let test_count = py_files
             .iter()
             .filter(|f| {
-                match f.file_name().map(|n| n.to_string_lossy().starts_with("test_")) {
+                match f
+                    .file_name()
+                    .map(|n| n.to_string_lossy().starts_with("test_"))
+                {
                     Some(b) => b,
                     None => false,
                 }
@@ -109,10 +112,7 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         }
 
         for adapter in &["ruff", "mypy", "bandit", "radon"] {
-            let found = match std::process::Command::new("which")
-                .arg(adapter)
-                .output()
-            {
+            let found = match std::process::Command::new("which").arg(adapter).output() {
                 Ok(o) => o.status.success(),
                 Err(_) => false,
             };

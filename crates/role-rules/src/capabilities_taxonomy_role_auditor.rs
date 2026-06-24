@@ -146,11 +146,11 @@ impl TaxonomyRoleChecker {
                 // For generic wrappers like Option<X>, Vec<X>, check if X is a primitive
                 if p.ends_with('<') {
                     if type_candidate.starts_with(p) {
-                            let inner = match type_candidate.strip_prefix(p) {
-                                Some(s) => s,
-                                None => type_candidate,
-                            }
-                            .trim_end_matches('>');
+                        let inner = match type_candidate.strip_prefix(p) {
+                            Some(s) => s,
+                            None => type_candidate,
+                        }
+                        .trim_end_matches('>');
                         let inner_trimmed = inner.trim();
                         if primitives.iter().any(|prim| {
                             let prim_clean = prim.trim_end_matches('<');

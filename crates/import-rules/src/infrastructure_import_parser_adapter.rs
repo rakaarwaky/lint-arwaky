@@ -269,16 +269,11 @@ impl IImportParserPort for ImportParserAdapter {
     }
 
     fn find_import_line_number(&self, content: &str, alias: &str) -> LineNumber {
-        let pos_opt = content
-            .lines()
-            .position(|l| {
-                let first_part = str_or_empty(alias.split('.').next());
-                l.trim().contains(&format!("import {}", alias))
-                    || l.trim().contains(&format!(
-                        "from {} import",
-                        first_part
-                    ))
-            });
+        let pos_opt = content.lines().position(|l| {
+            let first_part = str_or_empty(alias.split('.').next());
+            l.trim().contains(&format!("import {}", alias))
+                || l.trim().contains(&format!("from {} import", first_part))
+        });
         let line = match pos_opt {
             Some(p) => p + 1,
             None => 1,

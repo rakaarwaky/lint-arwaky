@@ -333,10 +333,7 @@ pub fn check_surfaces_orphan(
         Ok(p) => p,
         Err(_) => return,
     };
-    let result = is_surface_orphan_raw(
-        &fp_vo,
-        all_files,
-    );
+    let result = is_surface_orphan_raw(&fp_vo, all_files);
     if result.is_orphan {
         violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
             fp,

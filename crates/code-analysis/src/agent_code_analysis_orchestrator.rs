@@ -164,10 +164,7 @@ impl CodeAnalysisOrchestrator {
         let mut violations: Vec<LintResult> = Vec::new();
 
         for file in files {
-            let filename = match Path::new(file)
-                .file_name()
-                .and_then(|n| n.to_str())
-            {
+            let filename = match Path::new(file).file_name().and_then(|n| n.to_str()) {
                 Some(n) => n,
                 None => "",
             };

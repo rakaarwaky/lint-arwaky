@@ -11,12 +11,8 @@ async fn main() -> anyhow::Result<()> {
     eprintln!("Lint Arwaky MCP Server v{}", env!("CARGO_PKG_VERSION"));
     eprintln!("Listening on stdin/stdout (JSON-RPC 2.0 via rmcp)");
 
-    // Inline DI composition
-    let source_parsing_container =
-        source_parsing::root_source_parsing_container::SourceParsingContainer::new();
-    let source_parser = source_parsing_container.source_parser();
     let import_container =
-        import_rules::root_import_rules_container::ImportContainer::new(source_parser);
+        import_rules::root_import_rules_container::ImportContainer::new_default();
     let analyzer = import_container.analyzer();
     let checker_container =
         code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(analyzer);

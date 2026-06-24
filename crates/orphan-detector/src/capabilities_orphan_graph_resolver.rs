@@ -267,10 +267,12 @@ impl OrphanGraphResolver {
                                         for entry in entries.flatten() {
                                             let path = entry.path();
                                             if let Some(path_str) = path.to_str() {
-                                                let stem = match path.file_stem().and_then(|s| s.to_str()) {
-                                                    Some(s) => s,
-                                                    None => "",
-                                                };
+                                                let stem =
+                                                    match path.file_stem().and_then(|s| s.to_str())
+                                                    {
+                                                        Some(s) => s,
+                                                        None => "",
+                                                    };
                                                 if stem == module_name && path_str != *f {
                                                     import_graph
                                                         .entry(f.clone())

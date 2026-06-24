@@ -356,7 +356,8 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
 
         if trimmed.starts_with("import ") && trimmed.contains(" from ") {
             if let Some(import_part) = trimmed.split_once("import ").map(|(_, p)| p) {
-                let name = Option::unwrap_or_default(import_part.split_once(" from ").map(|(n, _)| n));
+                let name =
+                    Option::unwrap_or_default(import_part.split_once(" from ").map(|(n, _)| n));
                 let name = name.trim();
                 if !name.is_empty() && name != "default" {
                     symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));

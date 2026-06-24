@@ -19,7 +19,10 @@ use std::sync::Arc;
 /// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
 /// Private helper — uses `Result::match` to avoid inline match patterns.
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    match result { Ok(fp) => fp, Err(_) => FilePath::default() }
+    match result {
+        Ok(fp) => fp,
+        Err(_) => FilePath::default(),
+    }
 }
 
 /// Returns the `&str` slice from an `OsStr` option, falling back to `""`.
@@ -221,16 +224,26 @@ impl DummyImportChecker {
                     source_layer: LayerNameVO::new(layer_name.clone()),
                     import_type: SymbolName::new(trait_name_str),
                     intent: SymbolName::new(
-                        concat!("Implement contract methods with real behavior instead of empty/", "todo", " stubs")
-                            .to_string(),
+                        concat!(
+                            "Implement contract methods with real behavior instead of empty/",
+                            "todo",
+                            " stubs"
+                        )
+                        .to_string(),
                     ),
                     reason: Some(shared::taxonomy_message_vo::LintMessage::new(
-                        concat!("Trait implementations with empty bodies, ", "todo", "!(), or ", "unimplemented", "!() \
+                        concat!(
+                            "Trait implementations with empty bodies, ",
+                            "todo",
+                            "!(), or ",
+                            "unimplemented",
+                            "!() \
                          violate the contract abstraction — the import exists to fulfill a \
                          dependency, but no real behavior is provided. Every method must have \
                          meaningful logic; otherwise the contract becomes untestable and masks \
-                         missing functionality.")
-                            .to_string(),
+                         missing functionality."
+                        )
+                        .to_string(),
                     )),
                 }
                 .to_string(),
@@ -407,7 +420,8 @@ impl DummyImportChecker {
                 LanguageVO::Rust => trimmed.contains("PhantomData"),
                 LanguageVO::Python => trimmed.contains("TYPE_CHECKING"),
                 LanguageVO::JavaScript => {
-                    trimmed.contains(concat!("@ts-", "ignore")) || trimmed.contains(concat!("@ts-", "expect"))
+                    trimmed.contains(concat!("@ts-", "ignore"))
+                        || trimmed.contains(concat!("@ts-", "expect"))
                 }
                 LanguageVO::Unknown => false,
             };

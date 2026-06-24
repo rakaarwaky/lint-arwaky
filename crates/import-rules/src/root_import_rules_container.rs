@@ -74,6 +74,18 @@ impl ImportContainer {
         }
     }
 
+    pub fn new_default() -> Self {
+        let source_parser: Arc<dyn ISourceParserPort> = Arc::new(
+            crate::infrastructure_parser_adapter::SourceParserOrchestrator::new(
+                Box::new(crate::infrastructure_py_scanner::ASTPythonParserAdapter::new()),
+                Box::new(crate::infrastructure_rust_scanner::ASTRustParserAdapter::new()),
+                Box::new(crate::infrastructure_js_scanner::ASTJSParserAdapter::new()),
+                Box::new(crate::infrastructure_language_detector::LanguageDetector::new()),
+            ),
+        );
+        Self::new(source_parser)
+    }
+
     pub fn mandatory_checker(&self) -> &dyn IArchImportProtocol {
         &*self.mandatory
     }

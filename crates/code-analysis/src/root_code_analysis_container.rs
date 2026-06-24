@@ -79,11 +79,11 @@ impl CodeAnalysisCheckerContainer {
             Ok(fp) => fp,
             Err(_) => return None,
         };
-        let rd =
-            match shared::source_parsing::taxonomy_path_vo::FilePath::new(root_dir.to_string()) {
-                Ok(fp) => fp,
-                Err(_) => return None,
-            };
+        let rd = match shared::source_parsing::taxonomy_path_vo::FilePath::new(root_dir.to_string())
+        {
+            Ok(fp) => fp,
+            Err(_) => return None,
+        };
         self.analyzer.detect_layer(&f, &rd)
     }
 

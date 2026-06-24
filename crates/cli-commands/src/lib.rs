@@ -17,4 +17,7 @@ pub mod surface_tui_command;
 pub use surface_tui_command::TuiCommandSurface;
 pub mod surface_watch_command;
 pub use surface_watch_command::WatchCommandsSurface;
+pub mod infrastructure_language_detector;
+pub mod infrastructure_path_normalization;
+pub mod infrastructure_scanner_provider;
 pub mod surface_config_command;

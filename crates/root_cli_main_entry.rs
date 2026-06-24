@@ -17,11 +17,7 @@ use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAn
 pub struct CliMainEntry {}
 
 fn main() -> ExitCode {
-    let source_parsing_container =
-        source_parsing::root_source_parsing_container::SourceParsingContainer::new();
-    let source_parser = source_parsing_container.source_parser();
-
-    let import_container = ImportContainer::new(source_parser.clone());
+    let import_container = ImportContainer::new_default();
     let analyzer = import_container.analyzer();
     let checker_container =
         code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(
@@ -45,9 +41,7 @@ fn main() -> ExitCode {
         auto_fix::root_auto_fix_container::AutoFixContainer::new(arch_linter.clone());
 
     let external_lint_container =
-        external_lint::root_external_lint_container::ExternalLintContainer::new(
-            source_parsing_container.path_normalization(),
-        );
+        external_lint::root_external_lint_container::ExternalLintContainer::new_default();
     let external_lint_aggregate = external_lint_container.aggregate();
 
     let config_container = config_system::root_config_system_container::ConfigContainer::new();
@@ -59,11 +53,19 @@ fn main() -> ExitCode {
     let multi_project_orchestrator = config_container.multi_project_orchestrator();
 
     let external_lint_aggregate_clone = external_lint_aggregate.clone();
-    let source_parser_clone = source_parser.clone();
     let layer_detector_clone = layer_detector.clone();
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
-        let import_container =
-            ImportContainer::new_with_config(config.clone(), source_parser_clone.clone());
+        let source_parser: Arc<
+            dyn shared::source_parsing::contract_parser_port::ISourceParserPort,
+        > = Arc::new(
+            import_rules::infrastructure_parser_adapter::SourceParserOrchestrator::new(
+                Box::new(import_rules::infrastructure_py_scanner::ASTPythonParserAdapter::new()),
+                Box::new(import_rules::infrastructure_rust_scanner::ASTRustParserAdapter::new()),
+                Box::new(import_rules::infrastructure_js_scanner::ASTJSParserAdapter::new()),
+                Box::new(import_rules::infrastructure_language_detector::LanguageDetector::new()),
+            ),
+        );
+        let import_container = ImportContainer::new_with_config(config.clone(), source_parser);
         let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
             import_container.analyzer(),
         );
@@ -76,8 +78,6 @@ fn main() -> ExitCode {
             )
             .code_analysis_linter();
 
-        let source_parsing_container =
-            source_parsing::root_source_parsing_container::SourceParsingContainer::new();
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
 
@@ -87,10 +87,14 @@ fn main() -> ExitCode {
             naming_orchestrator: naming_container.orchestrator(),
             external_lint: external_lint_aggregate_clone.clone(),
             role_orchestrator: role_container.orchestrator(),
-            scanner_provider: source_parsing_container.scanner_provider(),
+            scanner_provider: Arc::new(
+                cli_commands::infrastructure_scanner_provider::CliScannerProvider::new(),
+            ),
             orphan_orchestrator: orphan_container.analyzer(),
             layer_detector: layer_detector_clone.clone(),
-            language_detector: source_parsing_container.language_detector(),
+            language_detector: Arc::new(
+                cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
+            ),
         }
     });
 
@@ -125,10 +129,14 @@ fn main() -> ExitCode {
                 naming_orchestrator: naming_orchestrator.clone(),
                 external_lint: external_lint_aggregate.clone(),
                 role_orchestrator: role_orchestrator.clone(),
-                scanner_provider: source_parsing_container.scanner_provider(),
+                scanner_provider: Arc::new(
+                    cli_commands::infrastructure_scanner_provider::CliScannerProvider::new(),
+                ),
                 orphan_orchestrator: orphan_container.analyzer(),
                 layer_detector: layer_detector.clone(),
-                language_detector: source_parsing_container.language_detector(),
+                language_detector: Arc::new(
+                    cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
+                ),
             },
             filter,
             Some(git_aggregate.clone()),
@@ -142,10 +150,14 @@ fn main() -> ExitCode {
                 naming_orchestrator: naming_orchestrator.clone(),
                 external_lint: external_lint_aggregate.clone(),
                 role_orchestrator: role_orchestrator.clone(),
-                scanner_provider: source_parsing_container.scanner_provider(),
+                scanner_provider: Arc::new(
+                    cli_commands::infrastructure_scanner_provider::CliScannerProvider::new(),
+                ),
                 orphan_orchestrator: orphan_container.analyzer(),
                 layer_detector: layer_detector.clone(),
-                language_detector: source_parsing_container.language_detector(),
+                language_detector: Arc::new(
+                    cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
+                ),
             },
             Some(multi_project_orchestrator.clone()),
             factory,
@@ -204,10 +216,14 @@ fn main() -> ExitCode {
                     naming_orchestrator: naming_orchestrator.clone(),
                     external_lint: external_lint_aggregate.clone(),
                     role_orchestrator: role_orchestrator.clone(),
-                    scanner_provider: source_parsing_container.scanner_provider(),
+                    scanner_provider: Arc::new(
+                        cli_commands::infrastructure_scanner_provider::CliScannerProvider::new(),
+                    ),
                     orphan_orchestrator: orphan_container.analyzer(),
                     layer_detector: layer_detector.clone(),
-                    language_detector: source_parsing_container.language_detector(),
+                    language_detector: Arc::new(
+                        cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
+                    ),
                 },
             );
             surface.check_orphan_single_file(&path);

@@ -41,12 +41,9 @@ impl fmt::Display for NamingViolation {
                 separator,
                 reason,
             } => {
-                let why = Option::unwrap_or_else(
-                    reason.as_ref().map(|r| r.to_string()),
-                    || {
-                        format!("The AES layer naming convention requires filenames to contain at least {} words separated by '{}' (e.g., prefix{}suffix). Each word must be lowercase alphanumeric. This pattern ensures every file's architectural layer (prefix) and role (suffix) is immediately identifiable — both for human readers and automated tooling.", min_words, separator, separator)
-                    }
-                );
+                let why = Option::unwrap_or_else(reason.as_ref().map(|r| r.to_string()), || {
+                    format!("The AES layer naming convention requires filenames to contain at least {} words separated by '{}' (e.g., prefix{}suffix). Each word must be lowercase alphanumeric. This pattern ensures every file's architectural layer (prefix) and role (suffix) is immediately identifiable — both for human readers and automated tooling.", min_words, separator, separator)
+                });
                 write!(
                     f,
                     "AES101 NAMING_CONVENTION: Filename must contain at least {} words separated by '{}'.\n\
@@ -65,10 +62,7 @@ impl fmt::Display for NamingViolation {
                     "Every source file must begin with one of the recognised layer prefixes ({}) so that its architectural layer can be determined automatically. The prefix '{}' does not correspond to any known layer.",
                     allowed_str, prefix
                 );
-                let why = Option::unwrap_or(
-                    reason.as_ref().map(|r| r.to_string()),
-                    default_why,
-                );
+                let why = Option::unwrap_or(reason.as_ref().map(|r| r.to_string()), default_why);
                 write!(
                     f,
                     "AES102 UNKNOWN_PREFIX: File uses prefix '{}' which is not a recognised layer.\n\
@@ -86,10 +80,7 @@ impl fmt::Display for NamingViolation {
                     "The suffix '{}' belongs to a different architectural role and is not allowed in the '{}' layer. Mixing role suffixes across layers breaks the strict layer-to-suffix mapping that tooling depends on for automatic validation.",
                     forbidden_suffix, layer_name
                 );
-                let why = Option::unwrap_or(
-                    reason.as_ref().map(|r| r.to_string()),
-                    default_why,
-                );
+                let why = Option::unwrap_or(reason.as_ref().map(|r| r.to_string()), default_why);
                 write!(
                     f,
                     "AES102 SUFFIX_FORBIDDEN: File in layer '{}' uses suffix '{}' which is forbidden.\n\
@@ -108,10 +99,7 @@ impl fmt::Display for NamingViolation {
                     "Files in the '{}' layer must end with a recognised role suffix ({}) so that their architectural intent is clear and automated boundary checks can verify that each file belongs exactly where it is. A missing or unrecognised suffix bypasses this safeguard.",
                     layer_name, allowed_str
                 );
-                let why = Option::unwrap_or(
-                    reason.as_ref().map(|r| r.to_string()),
-                    default_why,
-                );
+                let why = Option::unwrap_or(reason.as_ref().map(|r| r.to_string()), default_why);
                 write!(
                     f,
                     "AES102 SUFFIX_MISMATCH: File in layer '{}' is missing a required strict suffix.\n\

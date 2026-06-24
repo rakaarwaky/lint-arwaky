@@ -61,8 +61,7 @@ impl RustFmtAdapter {
             }
             if let Some(grandparent) = parent.parent() {
                 if grandparent.join("Cargo.toml").exists() {
-                    return match FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
-                    {
+                    return match FilePath::new(grandparent.to_string_lossy().replace('\\', "/")) {
                         Ok(fp) => fp,
                         Err(_) => path.clone(),
                     };
