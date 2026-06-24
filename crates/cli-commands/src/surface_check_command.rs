@@ -15,8 +15,6 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
-use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 pub type OrchestratorFactory = Arc<
@@ -31,10 +29,12 @@ pub struct CheckContext {
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    pub scanner_provider: Arc<dyn IScannerProviderPort>,
+    pub scanner_provider:
+        Arc<dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
-    pub language_detector: Arc<dyn ILanguageDetectorPort>,
+    pub language_detector:
+        Arc<dyn shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort>,
 }
 
 impl CheckContext {
@@ -69,10 +69,12 @@ impl CheckContext {
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
         let orphan_orchestrator = orphan_container.analyzer();
         let layer_detector = orphan_container.layer_detector();
-        let scanner_provider: Arc<dyn IScannerProviderPort> =
-            Arc::new(crate::infrastructure_scanner_provider::CliScannerProvider::new());
-        let language_detector: Arc<dyn ILanguageDetectorPort> =
-            Arc::new(crate::infrastructure_language_detector::CliLanguageDetector::new());
+        let scanner_provider: Arc<
+            dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort,
+        > = Arc::new(crate::infrastructure_scanner_provider::CliScannerProvider::new());
+        let language_detector: Arc<
+            dyn shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort,
+        > = Arc::new(crate::infrastructure_language_detector::CliLanguageDetector::new());
         Self {
             code_analysis_linter,
             import_orchestrator,
@@ -93,7 +95,8 @@ pub struct CheckCommandsSurface {
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    pub scanner_provider: Arc<dyn IScannerProviderPort>,
+    pub scanner_provider:
+        Arc<dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,

@@ -132,8 +132,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             }
 
             let layer_vo = LayerNameVO::new(&layer_str);
-            let res =
-                self._evaluate_layer(f, &definition, &context, &alive_files_set, &layer_vo, files);
+            let res = self._evaluate_layer(f, &definition, &context, &alive_files_set, &layer_vo, files, root_dir);
 
             if res.is_orphan {
                 let code = match layer_str.to_lowercase() {
@@ -206,6 +205,7 @@ impl ArchOrphanAnalyzer {
         alive_files_set: &[String],
         layer_vo: &LayerNameVO,
         all_files: &[String],
+        root_dir: &str,
     ) -> OrphanIndicatorResult {
         if f.ends_with("__init__.py") {
             return shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
@@ -223,7 +223,7 @@ impl ArchOrphanAnalyzer {
                 return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
             }
         };
-        let root = match FilePath::new(String::new()) {
+        let root = match FilePath::new(root_dir.to_string()) {
             Ok(r) => r,
             Err(_) => FilePath::default(),
         };

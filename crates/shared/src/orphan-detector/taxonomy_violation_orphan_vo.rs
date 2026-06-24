@@ -92,14 +92,14 @@ impl fmt::Display for AesOrphanViolation {
                         stem
                     )
                 });
-                write!(f, "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in the appropriate root_*_container.rs, or ensure it is reachable from an entry point.", stem, why, stem)
+                write!(f, "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs, or remove the file if it is obsolete.", stem, why, stem)
             }
             AesOrphanViolation::InfrastructureOrphan { stem, reason } => {
                 let why = reason
                     .as_ref()
                     .map(|r| r.to_string())
                     .unwrap_or_else(|| format!("Infrastructure file '{}' is not wired in any container and unreachable from any entry point.", stem));
-                write!(f, "AES504 INFRASTRUCTURE_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in the appropriate root_*_container.rs, or ensure it is imported by a capabilities_* file.", stem, why, stem)
+                write!(f, "AES504 INFRASTRUCTURE_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs, or remove the file if it is obsolete.", stem, why, stem)
             }
             AesOrphanViolation::AgentOrphan { agg_name, reason } => {
                 let why = reason.as_ref().map(|r| r.to_string()).unwrap_or_else(|| {

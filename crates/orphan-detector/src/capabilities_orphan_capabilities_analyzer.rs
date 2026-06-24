@@ -147,6 +147,10 @@ fn check_dir_containers(
                     || name.ends_with("_container.py")
                     || name.ends_with("_container.ts")
                     || name.ends_with("_container.js")
+                    || name.ends_with("_entry.rs")
+                    || name.ends_with("_entry.py")
+                    || name.ends_with("_entry.ts")
+                    || name.ends_with("_entry.js")
                 {
                     if let Ok(content) = std::fs::read_to_string(&path) {
                         for id in identifiers {
