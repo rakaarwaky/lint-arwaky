@@ -1,4 +1,4 @@
-// PURPOSE: CodeAnalysisOrchestrator — single agent that orchestrates ALL AES checks, file collection, and reporting
+// PURPOSE: CodeAnalysisOrchestrator — agent that orchestrates Code Quality (AES301–AES305) checks, file collection, and reporting
 // ALGORITHM (run_lint_at):
 //   1. Load config; build ignored-patterns list
 //   2. Recursively collect all lintable source files from src_dir (via detect_source_dir + collect_source_files)
@@ -25,7 +25,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_score_vo::compute_score;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
@@ -58,7 +58,7 @@ pub fn collect_source_files(
     )
 }
 
-/// Unified code-analysis orchestrator — collects files, runs ALL AES checks, formats reports.
+/// Code-analysis orchestrator — collects files, runs Code Quality checks (AES301–AES305), formats reports.
 pub struct CodeAnalysisOrchestrator {
     container: Arc<CodeAnalysisCheckerContainer>,
 }
@@ -235,16 +235,16 @@ impl CodeAnalysisOrchestrator {
     }
 }
 
-impl IArchLintAggregate for CodeAnalysisOrchestrator {
-    fn run_self_lint(&self, project_root: &str) -> LintResultList {
+impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
+    fn run_code_analysis(&self, project_root: &str) -> LintResultList {
         LintResultList::new(self.run_self_lint(project_root))
     }
 
-    fn run_self_lint_dir(&self, src_dir: &str) -> LintResultList {
+    fn run_code_analysis_dir(&self, src_dir: &str) -> LintResultList {
         LintResultList::new(self.run_scan(src_dir))
     }
 
-    fn run_lint(&self, path: &str) -> Vec<LintResult> {
+    fn run_code_analysis_path(&self, path: &str) -> Vec<LintResult> {
         self.run_self_lint(path)
     }
 

@@ -25,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
     ));
 
     let arch_linter = code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
-        .architecture_linter();
+        .code_analysis_linter();
 
     let server = LintArwakyMcpServer::new(arch_linter);
     let service = server.serve(rmcp::transport::stdio()).await?;

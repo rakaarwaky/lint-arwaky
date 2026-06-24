@@ -6,7 +6,7 @@ use std::process::ExitCode;
 
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -26,7 +26,7 @@ pub type OrchestratorFactory = Arc<
 >;
 
 pub struct CheckContext {
-    pub arch_linter: Arc<dyn IArchLintAggregate>,
+    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
@@ -39,7 +39,7 @@ pub struct CheckContext {
 
 pub struct CheckCommandsSurface {
     pub external_lint: Arc<dyn IExternalLintAggregate>,
-    pub arch_linter: Arc<dyn IArchLintAggregate>,
+    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
@@ -54,7 +54,7 @@ impl CheckCommandsSurface {
     pub fn new(ctx: CheckContext) -> Self {
         Self {
             external_lint: ctx.external_lint,
-            arch_linter: ctx.arch_linter,
+            code_analysis_linter: ctx.code_analysis_linter,
             import_orchestrator: ctx.import_orchestrator,
             naming_orchestrator: ctx.naming_orchestrator,
             role_orchestrator: ctx.role_orchestrator,
@@ -73,7 +73,7 @@ impl CheckCommandsSurface {
     ) -> Self {
         Self {
             external_lint: ctx.external_lint,
-            arch_linter: ctx.arch_linter,
+            code_analysis_linter: ctx.code_analysis_linter,
             import_orchestrator: ctx.import_orchestrator,
             naming_orchestrator: ctx.naming_orchestrator,
             role_orchestrator: ctx.role_orchestrator,
@@ -100,18 +100,18 @@ impl CheckCommandsSurface {
         };
 
         // Determine dynamic orchestrators based on detected language config
-        let (arch_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
+        let (code_analysis_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
             if let Some(ref factory) = self.factory {
                 let ctx = factory(config.clone());
                 (
-                    ctx.arch_linter,
+                    ctx.code_analysis_linter,
                     ctx.naming_orchestrator,
                     ctx.import_orchestrator,
                     ctx.role_orchestrator,
                 )
             } else {
                 (
-                    self.arch_linter.clone(),
+                    self.code_analysis_linter.clone(),
                     self.naming_orchestrator.clone(),
                     self.import_orchestrator.clone(),
                     self.role_orchestrator.clone(),
@@ -121,7 +121,7 @@ impl CheckCommandsSurface {
         let mut all_results = Vec::new();
 
         // 1. Run AES analysis (same algorithm for check and scan)
-        let aes_results = arch_linter.run_self_lint(path);
+        let aes_results = code_analysis_linter.run_code_analysis(path);
         all_results.extend(aes_results.values);
 
         // 2. Run naming-rules audit (AES101, AES102)
@@ -179,7 +179,7 @@ impl CheckCommandsSurface {
                 .collect()
         };
         let results_list = LintResultList::new(filtered_results);
-        println!("{}", arch_linter.format_report(&results_list, path));
+        println!("{}", code_analysis_linter.format_report(&results_list, path));
     }
 
     /// Check if a single file is an orphan.
@@ -290,25 +290,25 @@ impl CheckCommandsSurface {
             let mut all_results = Vec::new();
 
             // Determine dynamic orchestrators based on detected language config
-            let (arch_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
+            let (code_analysis_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
                 if let Some(ref factory) = self.factory {
                     let ctx = factory(ws.config.clone());
                     (
-                        ctx.arch_linter,
+                        ctx.code_analysis_linter,
                         ctx.naming_orchestrator,
                         ctx.import_orchestrator,
                         ctx.role_orchestrator,
                     )
                 } else {
                     (
-                        self.arch_linter.clone(),
+                        self.code_analysis_linter.clone(),
                         self.naming_orchestrator.clone(),
                         self.import_orchestrator.clone(),
                         self.role_orchestrator.clone(),
                     )
                 };
 
-            let aes_results = arch_linter.run_self_lint(&ws.path.value);
+            let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
             all_results.extend(aes_results.values);
 
             let naming_results = rt.block_on(naming_orchestrator.run_audit(&ws.path));
@@ -425,7 +425,7 @@ pub fn handle_check(
         };
         rt.block_on(crate::surface_git_command::handle_git_diff(
             git_agg,
-            ctx.arch_linter.clone(),
+            ctx.code_analysis_linter.clone(),
             ctx.language_detector.clone(),
             "HEAD".to_string(),
         ))
@@ -455,17 +455,17 @@ pub fn handle_scan(
 }
 
 pub fn handle_ci(
-    arch_linter: Arc<dyn IArchLintAggregate>,
+    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     path: Option<String>,
     threshold: u32,
 ) -> ExitCode {
     use shared::cli_commands::taxonomy_severity_vo::Severity;
     let root = path.unwrap_or_else(|| ".".to_string());
-    let results = arch_linter.run_lint(&root);
-    let score = arch_linter.calc_score(&results);
+    let results = code_analysis_linter.run_code_analysis_path(&root);
+    let score = code_analysis_linter.calc_score(&results);
     let effective_threshold = if threshold == 80 { 70 } else { threshold };
 
-    let has_crit = arch_linter.check_critical(&results);
+    let has_crit = code_analysis_linter.check_critical(&results);
     let below_threshold = (score as u32) < effective_threshold;
 
     println!("Architecture Compliance CI");

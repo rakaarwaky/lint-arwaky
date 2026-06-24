@@ -3,18 +3,18 @@ use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 
 pub struct WatchOrchestrator {
     provider: Arc<dyn IWatchProviderPort>,
-    linter: Arc<dyn IArchLintAggregate>,
+    linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
 impl WatchOrchestrator {
-    pub fn new(provider: Arc<dyn IWatchProviderPort>, linter: Arc<dyn IArchLintAggregate>) -> Self {
+    pub fn new(provider: Arc<dyn IWatchProviderPort>, linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
         Self { provider, linter }
     }
 
@@ -26,7 +26,7 @@ impl WatchOrchestrator {
         println!();
 
         // Initial full lint
-        let results = self.linter.run_lint(&path);
+        let results = self.linter.run_code_analysis_path(&path);
         let score = self.linter.calc_score(&results);
         println!("[initial] {} violations, score {:.1}", results.len(), score);
 
@@ -42,7 +42,7 @@ impl WatchOrchestrator {
             tokio::select! {
                 Ok(event) = rx.recv() => {
                     if crate::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(&event.path) {
-                        let lint_results = self.linter.run_lint(&event.path);
+                        let lint_results = self.linter.run_code_analysis_path(&event.path);
                         let lint_score = self.linter.calc_score(&lint_results);
                         println!(
                             "[change] {} | {} violations, score {:.1}",

@@ -3,7 +3,7 @@ use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::Count;
@@ -15,18 +15,18 @@ use std::sync::Arc;
 
 pub struct LintFixProcessor {
     dry_run: bool,
-    linter: Arc<dyn IArchLintAggregate>,
+    linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
 impl LintFixProcessor {
-    pub fn new(linter: Arc<dyn IArchLintAggregate>) -> Self {
+    pub fn new(linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
         Self {
             dry_run: false,
             linter,
         }
     }
 
-    pub fn with_dry_run(dry_run: bool, linter: Arc<dyn IArchLintAggregate>) -> Self {
+    pub fn with_dry_run(dry_run: bool, linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
         Self { dry_run, linter }
     }
 
@@ -144,7 +144,7 @@ impl LintFixProcessor {
 
 impl IFixProtocol for LintFixProcessor {
     fn execute(&self, path: &FilePath) -> FixResult {
-        let results = self.linter.run_self_lint(&path.value).values;
+        let results = self.linter.run_code_analysis(&path.value).values;
 
         let naming_violations: Vec<_> = results
             .iter()
@@ -226,7 +226,7 @@ impl IFixProtocol for LintFixProcessor {
                     .join("\n")
             )
         } else if fixed_count > 0 {
-            let after_results = self.linter.run_self_lint(&path.value).values;
+            let after_results = self.linter.run_code_analysis(&path.value).values;
             let remaining = after_results.len();
             format!(
                 "Fixed {} violations automatically ({} remaining)\nManual violations requiring attention:\n{}",

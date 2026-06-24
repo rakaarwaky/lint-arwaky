@@ -4,20 +4,20 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AutoFixContainer {
-    arch_linter: Arc<dyn shared::code_analysis::contract_lint_aggregate::IArchLintAggregate>,
+    code_analysis_linter: Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
 }
 
 impl AutoFixContainer {
     pub fn new(
-        arch_linter: Arc<dyn shared::code_analysis::contract_lint_aggregate::IArchLintAggregate>,
+        code_analysis_linter: Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
     ) -> Self {
-        Self { arch_linter }
+        Self { code_analysis_linter }
     }
 
     pub fn orchestrator(&self, dry_run: bool) -> Arc<dyn LintFixOrchestratorAggregate> {
         let fix_protocol = crate::capabilities_fix_processor::LintFixProcessor::with_dry_run(
             dry_run,
-            self.arch_linter.clone(),
+            self.code_analysis_linter.clone(),
         );
         Arc::new(crate::agent_fix_orchestrator::FixOrchestrator::new(
             Arc::new(fix_protocol),

@@ -750,7 +750,7 @@ fn private_func() {
 
         // Test class definition bases
         let class_defs = adapter.get_class_definitions(&path).unwrap();
-        let classes = class_defs.value.get("classes").unwrap().as_array().unwrap();
+        let classes = class_defs.values.get("classes").unwrap().as_array().unwrap();
         let mystruct_def = classes
             .iter()
             .find(|c| c.get("name").unwrap().as_str().unwrap() == "MyStruct")

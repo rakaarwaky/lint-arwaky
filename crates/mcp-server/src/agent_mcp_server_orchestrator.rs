@@ -7,21 +7,21 @@ use rmcp::model::{
 use rmcp::{tool, tool_handler, tool_router, ServerHandler};
 use std::sync::Arc;
 
-use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 
 use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 
 #[derive(Clone)]
 pub struct LintArwakyMcpServer {
     #[allow(dead_code)]
-    arch_linter: Arc<dyn IArchLintAggregate>,
+    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     tool_router: ToolRouter<Self>,
 }
 
 impl LintArwakyMcpServer {
-    pub fn new(arch_linter: Arc<dyn IArchLintAggregate>) -> Self {
+    pub fn new(code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
         Self {
-            arch_linter,
+            code_analysis_linter,
             tool_router: Self::tool_router(),
         }
     }
@@ -51,7 +51,7 @@ impl LintArwakyMcpServer {
     #[tool(description = "Execute any CLI command. This is the primary tool.")]
     async fn execute_command(&self, Parameters(args): Parameters<ExecuteCommandArgs>) -> String {
         // Clone Arc so spawn_blocking owns a 'static reference to the linter
-        let linter = self.arch_linter.clone();
+        let linter = self.code_analysis_linter.clone();
         let action = args.action.clone();
         let arg_path = args
             .args
@@ -80,7 +80,7 @@ impl LintArwakyMcpServer {
                 let linter_for_blocking = linter.clone();
                 let path_for_blocking = path.clone();
                 let join_result = tokio::task::spawn_blocking(move || {
-                    let results = linter_for_blocking.run_lint(&path_for_blocking);
+                    let results = linter_for_blocking.run_code_analysis_path(&path_for_blocking);
                     let report = linter_for_blocking.format_report(
                         &shared::cli_commands::taxonomy_result_vo::LintResultList::new(
                             results.clone(),
@@ -116,7 +116,7 @@ impl LintArwakyMcpServer {
                 let linter_for_blocking = linter.clone();
                 let path_for_blocking = path.clone();
                 let join_result = tokio::task::spawn_blocking(move || {
-                    let results = linter_for_blocking.run_lint(&path_for_blocking);
+                    let results = linter_for_blocking.run_code_analysis_path(&path_for_blocking);
                     let score = linter_for_blocking.calc_score(&results);
                     let pass = score >= threshold as f64;
                     serde_json::json!({

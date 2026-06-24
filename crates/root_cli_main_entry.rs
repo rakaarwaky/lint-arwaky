@@ -30,7 +30,7 @@ fn main() -> ExitCode {
     init_global_checker(Arc::new(checker_container));
 
     let arch_linter = code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
-        .architecture_linter();
+        .code_analysis_linter();
     let import_orchestrator = import_container.orchestrator();
 
     let role_container = RoleContainer::new();
@@ -77,7 +77,7 @@ fn main() -> ExitCode {
             code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_analyzer(
                 analyzer,
             )
-            .architecture_linter();
+            .code_analysis_linter();
 
         let source_parsing_container =
             source_parsing::root_source_parsing_container::SourceParsingContainer::new();
@@ -85,7 +85,7 @@ fn main() -> ExitCode {
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
 
         surface_check_command::CheckContext {
-            arch_linter,
+            code_analysis_linter: arch_linter,
             import_orchestrator: import_container.orchestrator(),
             naming_orchestrator: naming_container.orchestrator(),
             external_lint: external_lint_aggregate_clone.clone(),
@@ -123,7 +123,7 @@ fn main() -> ExitCode {
             path,
             git_diff,
             surface_check_command::CheckContext {
-                arch_linter: arch_linter.clone(),
+                code_analysis_linter: arch_linter.clone(),
                 import_orchestrator: import_orchestrator.clone(),
                 naming_orchestrator: naming_orchestrator.clone(),
                 external_lint: external_lint_aggregate.clone(),
@@ -140,7 +140,7 @@ fn main() -> ExitCode {
         Commands::Scan { path } => surface_check_command::handle_scan(
             path,
             surface_check_command::CheckContext {
-                arch_linter,
+                code_analysis_linter: arch_linter,
                 import_orchestrator,
                 naming_orchestrator: naming_orchestrator.clone(),
                 external_lint: external_lint_aggregate.clone(),
@@ -202,7 +202,7 @@ fn main() -> ExitCode {
         Commands::Orphan { path } => {
             let surface = surface_check_command::CheckCommandsSurface::new(
                 surface_check_command::CheckContext {
-                    arch_linter: arch_linter.clone(),
+                    code_analysis_linter: arch_linter.clone(),
                     import_orchestrator: import_orchestrator.clone(),
                     naming_orchestrator: naming_orchestrator.clone(),
                     external_lint: external_lint_aggregate.clone(),

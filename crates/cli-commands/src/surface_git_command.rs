@@ -1,5 +1,5 @@
 // PURPOSE: GitCommandsSurface — CLI surface for git integration
-use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::process::ExitCode;
@@ -21,7 +21,7 @@ impl GitCommandsSurface {
 
 pub async fn handle_git_diff(
     git_aggregate: Arc<dyn GitHooksAggregate>,
-    arch_linter: Arc<dyn IArchLintAggregate>,
+    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     language_detector: Arc<
         dyn shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort,
     >,
@@ -50,7 +50,7 @@ pub async fn handle_git_diff(
 
     let mut total_violations = 0;
     for f in &files {
-        let results = arch_linter.run_lint(&f.value);
+        let results = code_analysis_linter.run_code_analysis_path(&f.value);
         let fv = results.len();
         total_violations += fv;
         if fv > 0 {

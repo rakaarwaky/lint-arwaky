@@ -820,7 +820,7 @@ export { Dog };
 
         // Test class bases
         let bases_map = adapter.get_class_bases_map(&path);
-        let bases = bases_map.value.get("bases").unwrap().as_object().unwrap();
+        let bases = bases_map.values.get("bases").unwrap().as_object().unwrap();
         let dog_bases = bases.get("Dog").unwrap().as_array().unwrap();
         assert_eq!(dog_bases[0].as_str().unwrap(), "Animal");
 
