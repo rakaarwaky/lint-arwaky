@@ -39,11 +39,10 @@ impl AdapterError {
 
 impl std::fmt::Display for AdapterError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let code = self
-            .error_code
-            .as_ref()
-            .map(|c| format!(" [{}]", c))
-            .unwrap_or_default();
+        let code = match self.error_code.as_ref() {
+            Some(c) => format!(" [{}]", c),
+            None => String::new(),
+        };
         write!(f, "[{}]{} {}", self.adapter_name, code, self.message)
     }
 }
@@ -74,16 +73,14 @@ impl ScanError {
 
 impl std::fmt::Display for ScanError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let adapter = self
-            .adapter_name
-            .as_ref()
-            .map(|a| format!(" ({})", a))
-            .unwrap_or_default();
-        let code = self
-            .error_code
-            .as_ref()
-            .map(|c| format!(" [{}]", c))
-            .unwrap_or_default();
+        let adapter = match self.adapter_name.as_ref() {
+            Some(a) => format!(" ({})", a),
+            None => String::new(),
+        };
+        let code = match self.error_code.as_ref() {
+            Some(c) => format!(" [{}]", c),
+            None => String::new(),
+        };
         write!(
             f,
             "Scan failed{}{}: {} — {}",

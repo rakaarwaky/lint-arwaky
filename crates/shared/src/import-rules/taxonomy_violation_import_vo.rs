@@ -165,10 +165,10 @@ impl fmt::Display for AesImportViolation {
                         format!("Layer '{}' must import '{}' to satisfy architectural contract requirements.", src, required)
                     }
                 };
-                let supplement = reason
-                    .as_ref()
-                    .map(|r| format!("\n  Context: {}", r))
-                    .unwrap_or_default();
+                let supplement = match reason.as_ref() {
+                    Some(r) => format!("\n  Context: {}", r),
+                    None => String::new(),
+                };
                 write!(
                     f,
                     "AES202 MANDATORY_IMPORT: Layer '{}' is missing required import '{}'.\n\
@@ -187,10 +187,10 @@ impl fmt::Display for AesImportViolation {
                     "Import '{}' in layer '{}' is not used according to its intended purpose.",
                     import_type, source_layer
                 );
-                let why = reason
-                    .as_ref()
-                    .map(|r| r.to_string())
-                    .unwrap_or(default_why);
+                let why = match reason.as_ref() {
+                    Some(r) => r.to_string(),
+                    None => default_why,
+                };
                 write!(
                     f,
                     "AES204 IMPORT_INTENT: '{}' import in layer '{}' violates its intended purpose.\n\
@@ -201,10 +201,10 @@ impl fmt::Display for AesImportViolation {
             }
             AesImportViolation::CircularImport { reason } => {
                 let default_why = "Circular dependencies couple components together and break unidirectional data/import flow.".to_string();
-                let why = reason
-                    .as_ref()
-                    .map(|r| r.to_string())
-                    .unwrap_or(default_why);
+                let why = match reason.as_ref() {
+                    Some(r) => r.to_string(),
+                    None => default_why,
+                };
                 write!(
                     f,
                     "AES205 CIRCULAR_IMPORT: Circular dependency detected.\n\
@@ -217,10 +217,10 @@ impl fmt::Display for AesImportViolation {
                 let default_why =
                     "Unused imports clutter the codebase and increase compilation/dependency overhead."
                         .to_string();
-                let supplement = reason
-                    .as_ref()
-                    .map(|r| format!("\n  Context: {}", r))
-                    .unwrap_or_default();
+                let supplement = match reason.as_ref() {
+                    Some(r) => format!("\n  Context: {}", r),
+                    None => String::new(),
+                };
                 write!(f, "AES203 UNUSED_IMPORT: Unused import detected.\n\
                         WHY? {}{}\n\
                         FIX: Remove the unused import statement or use the imported symbol in this file.", default_why, supplement)

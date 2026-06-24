@@ -73,7 +73,10 @@ pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
             if suffix.is_empty() {
                 continue;
             }
-            let basename = segments.last().copied().unwrap_or("");
+            let basename = match segments.last().copied() {
+                Some(b) => b,
+                None => "",
+            };
             if basename.ends_with(suffix) {
                 return true;
             }
@@ -97,14 +100,19 @@ pub fn collect_source_files(
     if let Ok(entries) = std::fs::read_dir(&dir_path.value) {
         for entry in entries.flatten() {
             let path = entry.path();
-            let relative_path = path.strip_prefix(root_dir).unwrap_or(&path);
+            let relative_path = match path.strip_prefix(root_dir) {
+                Ok(p) => p,
+                Err(_) => &path,
+            };
             let rel_str = relative_path.to_string_lossy();
             if is_path_ignored(&rel_str, ignored) {
                 continue;
             }
             if path.is_dir() {
-                let sub_dir =
-                    DirectoryPath::new(path.to_string_lossy().to_string()).unwrap_or_default();
+                let sub_dir = match DirectoryPath::new(path.to_string_lossy().to_string()) {
+                    Ok(d) => d,
+                    Err(_) => DirectoryPath::default(),
+                };
                 files.extend(collect_source_files(root_dir, &sub_dir, ignored));
             } else if let Some(path_str) = path.to_str() {
                 if let Ok(fp) = FilePath::new(path_str.to_string()) {

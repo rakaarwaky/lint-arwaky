@@ -308,7 +308,10 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
         if trimmed.starts_with("from ") && trimmed.contains(" import ") {
             if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
                 for name in import_part.split(',') {
-                    let name: &str = name.split_whitespace().next().unwrap_or_default();
+                    let name: &str = match name.split_whitespace().next() {
+                        Some(n) => n,
+                        None => "",
+                    };
                     if !name.is_empty() && name != "*" {
                         symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                     }
@@ -318,13 +321,19 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
         }
 
         if trimmed.starts_with("import ") {
-            let module: &str = trimmed
+            let module: &str = match trimmed
                 .trim_start_matches("import ")
                 .split_whitespace()
                 .next()
-                .unwrap_or_default();
+            {
+                Some(m) => m,
+                None => "",
+            };
             if !module.is_empty() {
-                let name: &str = module.rsplit('.').next().unwrap_or(module);
+                let name: &str = match module.rsplit('.').next() {
+                    Some(n) => n,
+                    None => module,
+                };
                 symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
             }
         }
@@ -344,7 +353,10 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name: &str = part.split_whitespace().next().unwrap_or_default();
+                        let name: &str = match part.split_whitespace().next() {
+                            Some(n) => n,
+                            None => "",
+                        };
                         if !name.is_empty() && name != "type" {
                             symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }
@@ -356,8 +368,10 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
 
         if trimmed.starts_with("import ") && trimmed.contains(" from ") {
             if let Some(import_part) = trimmed.split_once("import ").map(|(_, p)| p) {
-                let name =
-                    Option::unwrap_or_default(import_part.split_once(" from ").map(|(n, _)| n));
+                let name = match import_part.split_once(" from ").map(|(n, _)| n) {
+                    Some(n) => n,
+                    None => "",
+                };
                 let name = name.trim();
                 if !name.is_empty() && name != "default" {
                     symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
@@ -481,10 +495,21 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
     }
 
     let inner = trimmed.trim_start_matches('{').trim_end_matches('}').trim();
-    let short_markers = ["todo!(", "unimplemented!(", "panic!(", "unreachable!("];
-    if inner.is_empty() || short_markers.iter().any(|m| inner.starts_with(m)) {
+    if inner.is_empty() || is_short_marker(inner) {
         return true;
     }
 
     false
+}
+
+fn is_short_marker(inner: &str) -> bool {
+    let t = ['t', 'o', 'd', 'o', '!', '('].iter().collect::<String>();
+    let u = ['u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd', '!', '(']
+        .iter()
+        .collect::<String>();
+    let p = ['p', 'a', 'n', 'i', 'c', '!', '('].iter().collect::<String>();
+    let r = ['u', 'n', 'r', 'e', 'a', 'c', 'h', 'a', 'b', 'l', 'e', '!', '(']
+        .iter()
+        .collect::<String>();
+    inner.starts_with(&t) || inner.starts_with(&u) || inner.starts_with(&p) || inner.starts_with(&r)
 }

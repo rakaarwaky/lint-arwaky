@@ -32,8 +32,9 @@ impl SymbolRenamer {
         if !path.exists() || !path.is_file() {
             return false;
         }
-        std::fs::read_to_string(path)
-            .map(|c| c.contains(symbol))
-            .unwrap_or(false)
+        match std::fs::read_to_string(path) {
+            Ok(c) => c.contains(symbol),
+            Err(_) => false,
+        }
     }
 }

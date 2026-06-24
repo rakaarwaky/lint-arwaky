@@ -81,10 +81,10 @@ fn resolve_import_to_file(
     root_dir: &FilePath,
     file_set: &HashSet<String>,
 ) -> Option<String> {
-    let source_dir = std::path::Path::new(source_file.value())
-        .parent()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_default();
+    let source_dir = match std::path::Path::new(source_file.value()).parent() {
+        Some(p) => p.to_string_lossy().to_string(),
+        None => String::new(),
+    };
 
     // 1. Handle relative imports starting with dots (Python, JS/TS)
     if module.starts_with('.') {

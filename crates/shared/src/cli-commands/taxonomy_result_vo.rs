@@ -37,7 +37,10 @@ impl LintResult {
         msg: impl Into<String>,
     ) -> Self {
         Self {
-            file: FilePath::new(file.to_string()).unwrap_or_default(),
+            file: match FilePath::new(file.to_string()) {
+                Ok(f) => f,
+                Err(_) => FilePath::default(),
+            },
             line: LineNumber::new(line as i64),
             column: ColumnNumber::new(0),
             code: ErrorCode::raw(code),

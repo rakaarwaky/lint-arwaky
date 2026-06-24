@@ -24,7 +24,10 @@ impl BarrelImportResolver {
         let stem_map = Self::build_stem_map(files);
 
         for f in files {
-            let basename = f.split('/').next_back().unwrap_or("");
+            let basename = match f.split('/').next_back() {
+                Some(s) => s,
+                None => "",
+            };
             if basename != "mod.rs" && basename != "lib.rs" {
                 continue;
             }
@@ -52,13 +55,14 @@ impl BarrelImportResolver {
                     }
                     // pub use xxx::*; → resolve all files in xxx/ or xxx.rs
                     if t.contains("pub use ") && t.contains("::*") {
-                        let prefix = t
-                            .strip_prefix("pub use ")
-                            .unwrap_or(t)
-                            .split("::*")
-                            .next()
-                            .unwrap_or("")
-                            .trim();
+                        let prefix = match t.strip_prefix("pub use ") {
+                            Some(s) => s,
+                            None => t,
+                        };
+                        let prefix = match prefix.split("::*").next() {
+                            Some(s) => s.trim(),
+                            None => "",
+                        };
                         // Normalize hyphens to underscores for module name matching
                         let normalized = prefix.replace('-', "_");
                         if let Some(resolved) =
@@ -72,11 +76,12 @@ impl BarrelImportResolver {
                     }
                     // pub use crate::xxx::SomeType; AND pub use crate::xxx::{A, B, C};
                     if t.starts_with("pub use ") && !t.contains("::*") {
-                        let import_path = t
-                            .strip_prefix("pub use ")
-                            .unwrap_or(t)
-                            .trim_end_matches(';')
-                            .trim();
+                        let import_path = match t.strip_prefix("pub use ") {
+                            Some(s) => s,
+                            None => t,
+                        }
+                        .trim_end_matches(';')
+                        .trim();
                         // Handle braced multi-import: crate::module::{A, B}
                         if let Some(brace_pos) = import_path.find("::{") {
                             let module_part = &import_path[..brace_pos];
@@ -113,8 +118,15 @@ impl BarrelImportResolver {
     fn build_stem_map(files: &[String]) -> HashMap<String, Vec<String>> {
         let mut map: HashMap<String, Vec<String>> = HashMap::new();
         for f in files {
-            let basename = f.split('/').next_back().unwrap_or("");
-            let stem_val = basename.split('.').next().unwrap_or("").to_string();
+            let basename = match f.split('/').next_back() {
+                Some(s) => s,
+                None => "",
+            };
+            let stem_val = match basename.split('.').next() {
+                Some(s) => s,
+                None => "",
+            }
+            .to_string();
             map.entry(stem_val.clone()).or_default().push(f.clone());
             let dir = f.trim_end_matches(basename).trim_end_matches('/');
             let dirstem = format!("{}/{}", dir, stem_val);
@@ -135,27 +147,38 @@ impl BarrelImportResolver {
             for line in content.lines() {
                 let t = line.trim();
                 if t.starts_with("use ") {
-                    let path = t
-                        .strip_prefix("use ")
-                        .unwrap_or(t)
-                        .split(" as ")
-                        .next()
-                        .unwrap_or("")
-                        .split("::")
+                    let path = match t.strip_prefix("use ") {
+                        Some(s) => s,
+                        None => t,
+                    };
+                    let path = match path.split(" as ").next() {
+                        Some(s) => s,
+                        None => "",
+                    };
+                    let path = path.split("::")
                         .collect::<Vec<_>>();
                     if path.len() >= 2 && path[0] == "crate" {
                         let module_name = path[1].replace('-', "_");
                         // Check if this module has a barrel
                         for (barrel_file, sources) in barrel_map {
-                            let barrel_stem = barrel_file.split('/').next_back().unwrap_or("");
+                            let barrel_stem = match barrel_file.split('/').next_back() {
+                                Some(s) => s,
+                                None => "",
+                            };
                             let barrel_name = if barrel_stem == "mod.rs" || barrel_stem == "lib.rs"
                             {
                                 let dir = barrel_file
                                     .trim_end_matches(barrel_stem)
                                     .trim_end_matches('/');
-                                dir.split('/').next_back().unwrap_or("")
+                                match dir.split('/').next_back() {
+                                    Some(s) => s,
+                                    None => "",
+                                }
                             } else {
-                                barrel_stem.split('.').next().unwrap_or("")
+                                match barrel_stem.split('.').next() {
+                                    Some(s) => s,
+                                    None => "",
+                                }
                             };
                             if module_name == barrel_name
                                 || barrel_file.contains(&format!("/{}/", module_name))
@@ -165,7 +188,10 @@ impl BarrelImportResolver {
                         }
                         // Also add any direct file match
                         for pf in project_files {
-                            let pb = pf.split('/').next_back().unwrap_or("");
+                            let pb = match pf.split('/').next_back() {
+                                Some(s) => s,
+                                None => "",
+                            };
                             if pb.starts_with(&format!("{}_", module_name)) {
                                 resolved.push(pf.clone());
                             }
@@ -185,25 +211,30 @@ impl BarrelImportResolver {
         barrel_map: &HashMap<String, Vec<String>>,
         project_files: &[String],
     ) -> bool {
-        let target_stem = target_file
-            .split('/')
-            .next_back()
-            .unwrap_or("")
-            .split('.')
-            .next()
-            .unwrap_or("")
-            .to_string();
+        let target_stem = match target_file.split('/').next_back() {
+            Some(s) => s,
+            None => "",
+        };
+        let target_stem = match target_stem.split('.').next() {
+            Some(s) => s,
+            None => "",
+        }
+        .to_string();
         for cf in project_files {
-            let cb = cf.split('/').next_back().unwrap_or("");
+            let cb = match cf.split('/').next_back() {
+                Some(s) => s,
+                None => "",
+            };
             if !cb.starts_with("contract_") {
                 continue;
             }
             let resolved = Self::resolve_imports_for_file(cf, barrel_map, project_files);
             if resolved.iter().any(|r| {
-                r.split('/')
-                    .next_back()
-                    .unwrap_or("")
-                    .contains(&target_stem)
+                match r.split('/').next_back() {
+                    Some(s) => s,
+                    None => "",
+                }
+                .contains(&target_stem)
             }) {
                 return true;
             }
