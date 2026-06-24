@@ -77,18 +77,20 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
 
     /// Resolve the path to the lint-arwaky-mcp binary.
     fn which_mcp_binary(&self) -> McpBinaryNameVO {
+        let exe_candidate = match std::env::current_exe().ok().and_then(|p| {
+            p.parent()
+                .map(|d| d.join("lint-arwaky-mcp").to_string_lossy().to_string())
+        }) {
+            Some(path) => path,
+            None => String::new(),
+        };
+        let cargo_home = match std::env::var("CARGO_HOME") {
+            Ok(home) => home,
+            Err(_) => "~/.cargo".to_string(),
+        };
         let candidates = [
-            std::env::current_exe()
-                .ok()
-                .and_then(|p| {
-                    p.parent()
-                        .map(|d| d.join("lint-arwaky-mcp").to_string_lossy().to_string())
-                })
-                .unwrap_or_default(),
-            format!(
-                "{}/bin/lint-arwaky-mcp",
-                std::env::var("CARGO_HOME").unwrap_or_else(|_| "~/.cargo".to_string())
-            ),
+            exe_candidate,
+            format!("{}/bin/lint-arwaky-mcp", cargo_home),
             "lint-arwaky-mcp".to_string(),
         ];
         for c in &candidates {
@@ -96,7 +98,7 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
                 return McpBinaryNameVO::new(c.clone());
             }
         }
-        let which_output = std::process::Command::new("which")
+        let which_output = match std::process::Command::new("which")
             .arg("lint-arwaky-mcp")
             .output()
             .ok()
@@ -106,8 +108,10 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
                 } else {
                     None
                 }
-            })
-            .unwrap_or_else(|| "lint-arwaky-mcp".to_string());
+            }) {
+            Some(output) => output,
+            None => "lint-arwaky-mcp".to_string(),
+        };
         McpBinaryNameVO::new(which_output)
     }
 
