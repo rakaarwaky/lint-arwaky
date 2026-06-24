@@ -29,9 +29,10 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         let test_count = py_files
             .iter()
             .filter(|f| {
-                f.file_name()
-                    .map(|n| n.to_string_lossy().starts_with("test_"))
-                    .unwrap_or(false)
+                match f.file_name().map(|n| n.to_string_lossy().starts_with("test_")) {
+                    Some(b) => b,
+                    None => false,
+                }
             })
             .count() as i64;
         let ratio = if py_count > 0 {
@@ -82,11 +83,13 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
 
         let py_ver = DescriptionVO::new("3.12");
 
-        let is_installed = std::process::Command::new("pip")
+        let is_installed = match std::process::Command::new("pip")
             .args(["show", "lint-arwaky"])
             .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false);
+        {
+            Ok(o) => o.status.success(),
+            Err(_) => false,
+        };
 
         let mut config_found_paths = Vec::new();
         for cfg in &[
@@ -106,11 +109,13 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         }
 
         for adapter in &["ruff", "mypy", "bandit", "radon"] {
-            let found = std::process::Command::new("which")
+            let found = match std::process::Command::new("which")
                 .arg(adapter)
                 .output()
-                .map(|o| o.status.success())
-                .unwrap_or(false);
+            {
+                Ok(o) => o.status.success(),
+                Err(_) => false,
+            };
             if let Ok(name) = AdapterName::new(adapter.to_string()) {
                 adapter_statuses.insert(
                     name.clone(),
@@ -167,7 +172,10 @@ fn walk_dir(dir: &Path, py_files: &mut Vec<PathBuf>) {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let name = match path.file_name().and_then(|n| n.to_str()) {
+                    Some(n) => n,
+                    None => "",
+                };
                 if name != "target" && name != ".git" && name != "node_modules" && name != ".venv" {
                     walk_dir(&path, py_files);
                 }
@@ -183,7 +191,10 @@ fn find_cache_dirs(dir: &Path, cache_names: &[&str], found_dirs: &mut Vec<PathBu
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let name = match path.file_name().and_then(|n| n.to_str()) {
+                    Some(n) => n,
+                    None => "",
+                };
                 if cache_names.contains(&name) {
                     found_dirs.push(path.clone());
                 } else if name != "target" && name != ".git" && name != "node_modules" {

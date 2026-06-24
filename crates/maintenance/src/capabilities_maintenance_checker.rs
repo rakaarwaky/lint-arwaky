@@ -23,12 +23,10 @@ impl MaintenanceChecker {
             let output = std::process::Command::new(name).args(args).output();
             let (status, version) = match output {
                 Ok(o) if o.status.success() => {
-                    let ver = String::from_utf8_lossy(&o.stdout)
-                        .lines()
-                        .next()
-                        .unwrap_or("")
-                        .trim()
-                        .to_string();
+                    let ver = match String::from_utf8_lossy(&o.stdout).lines().next() {
+                        Some(v) => v.trim().to_string(),
+                        None => String::new(),
+                    };
                     ("OK".to_string(), ver)
                 }
                 _ => {
@@ -107,9 +105,10 @@ impl MaintenanceChecker {
             check_tool("jj", &["--version"], false),
         ];
 
-        let binary_path = std::env::current_exe()
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or_default();
+        let binary_path = match std::env::current_exe() {
+            Ok(p) => p.to_string_lossy().to_string(),
+            Err(_) => String::new(),
+        };
 
         ToolchainDiagnostics {
             rust_tools,
@@ -139,23 +138,29 @@ impl MaintenanceChecker {
                             .and_then(|l| l.as_array())
                         {
                             for adv in list {
-                                let pkg = adv
+                                let pkg = match adv
                                     .get("package")
                                     .and_then(|p| p.get("name"))
                                     .and_then(|n| n.as_str())
-                                    .unwrap_or("unknown")
-                                    .to_string();
-                                let severity = adv
+                                {
+                                    Some(s) => s.to_string(),
+                                    None => "unknown".to_string(),
+                                };
+                                let severity = match adv
                                     .get("severity")
                                     .and_then(|s| s.as_str())
-                                    .unwrap_or("unknown")
-                                    .to_string();
-                                let cve = adv
+                                {
+                                    Some(s) => s.to_string(),
+                                    None => "unknown".to_string(),
+                                };
+                                let cve = match adv
                                     .get("advisory")
                                     .and_then(|a| a.get("id"))
                                     .and_then(|i| i.as_str())
-                                    .unwrap_or("unknown")
-                                    .to_string();
+                                {
+                                    Some(s) => s.to_string(),
+                                    None => "unknown".to_string(),
+                                };
                                 findings.push(SecurityFinding {
                                     severity,
                                     test_id: cve,
@@ -191,28 +196,38 @@ impl MaintenanceChecker {
                     if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s) {
                         if let Some(results) = json.get("results").and_then(|r| r.as_array()) {
                             for r in results {
-                                let test_id = r
+                                let test_id = match r
                                     .get("test_id")
                                     .and_then(|t| t.as_str())
-                                    .unwrap_or("")
-                                    .to_string();
-                                let issue = r
+                                {
+                                    Some(s) => s.to_string(),
+                                    None => String::new(),
+                                };
+                                let issue = match r
                                     .get("issue_text")
                                     .and_then(|t| t.as_str())
-                                    .unwrap_or("")
-                                    .to_string();
-                                let severity = r
+                                {
+                                    Some(s) => s.to_string(),
+                                    None => String::new(),
+                                };
+                                let severity = match r
                                     .get("issue_severity")
                                     .and_then(|s| s.as_str())
-                                    .unwrap_or("")
-                                    .to_string();
-                                let fname = r
+                                {
+                                    Some(s) => s.to_string(),
+                                    None => String::new(),
+                                };
+                                let fname = match r
                                     .get("filename")
                                     .and_then(|f| f.as_str())
-                                    .unwrap_or("")
-                                    .to_string();
-                                let line =
-                                    r.get("line_number").and_then(|l| l.as_u64()).unwrap_or(0);
+                                {
+                                    Some(s) => s.to_string(),
+                                    None => String::new(),
+                                };
+                                let line = match r.get("line_number").and_then(|l| l.as_u64()) {
+                                    Some(l) => l,
+                                    None => 0,
+                                };
                                 findings.push(SecurityFinding {
                                     severity,
                                     test_id,
