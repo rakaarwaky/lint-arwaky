@@ -101,8 +101,20 @@ impl IConfigParserPort for ConfigParserProvider {
                     }));
                 }
             };
-            let config: ProjectConfig =
-                serde_json::from_value(json_value).unwrap_or_else(|_| ProjectConfig::defaults());
+            let config: ProjectConfig = match serde_json::from_value(json_value) {
+                Ok(c) => c,
+                Err(e) => {
+                    return Some(Err(ConfigError {
+                        key: ConfigKey::new("toml.parse"),
+                        message: ErrorMessage::new(format!(
+                            "Failed to deserialize TOML config: {}",
+                            e
+                        )),
+                        config_file: path.clone(),
+                        ..Default::default()
+                    }));
+                }
+            };
             Some(Ok(config))
         } else {
             None

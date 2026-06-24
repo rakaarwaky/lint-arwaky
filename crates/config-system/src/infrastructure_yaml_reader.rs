@@ -49,8 +49,10 @@ impl ConfigYamlReader {
 
         // Priority 2: XDG system config dirs — $XDG_CONFIG_DIRS (default /etc/xdg)
         // dirs crate doesn't expose config_dirs(), so parse env var manually
-        let system_dirs =
-            std::env::var("XDG_CONFIG_DIRS").unwrap_or_else(|_| "/etc/xdg".to_string());
+        let system_dirs = match std::env::var("XDG_CONFIG_DIRS") {
+            Ok(dirs) => dirs,
+            Err(_) => "/etc/xdg".to_string(),
+        };
         for dir in system_dirs.split(':').filter(|s| !s.is_empty()) {
             candidates.push(
                 std::path::PathBuf::from(dir)
