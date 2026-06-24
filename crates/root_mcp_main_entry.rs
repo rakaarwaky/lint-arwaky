@@ -2,7 +2,7 @@
 use rmcp::ServiceExt;
 use std::sync::Arc;
 
-use mcp_server::agent_mcp_server_orchestrator::LintArwakyMcpServer;
+use mcp_server::surface_mcp_command::LintArwakyMcpServer;
 
 pub struct McpMainEntry {}
 
