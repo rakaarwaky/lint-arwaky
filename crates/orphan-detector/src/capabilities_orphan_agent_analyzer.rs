@@ -123,7 +123,10 @@ pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicato
     for agg_name in &aggregate_traits {
         let mut called_by_surface_or_container = false;
         for cf in all_files {
-            let cb = cf.split('/').next_back().unwrap_or("");
+            let cb = match cf.split('/').next_back() {
+                Some(b) => b,
+                None => continue,
+            };
             // Check surface files
             let is_surface = cb.starts_with("surface_");
             // Check container files (DI wiring)
@@ -170,7 +173,11 @@ pub fn check_agent_orphan(
     files: &[String],
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
 ) {
-    let result = is_agent_orphan_raw(&FilePath::new(fp.to_string()).unwrap_or_default(), files);
+    let fp_vo = match FilePath::new(fp.to_string()) {
+        Ok(p) => p,
+        Err(_) => return,
+    };
+    let result = is_agent_orphan_raw(&fp_vo, files);
     if result.is_orphan {
         violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
             fp,

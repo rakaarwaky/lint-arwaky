@@ -44,10 +44,13 @@ pub fn is_infra_cap_orphan(
 
     // Check if wired in any container
     let fp = f.value();
-    let basename = std::path::Path::new(fp)
+    let basename = match std::path::Path::new(fp)
         .file_name()
         .and_then(|n| n.to_str())
-        .unwrap_or("");
+    {
+        Some(n) => n,
+        None => "",
+    };
     let stem = basename.replace(".rs", "").replace(".py", "");
 
     if let Ok(content) = std::fs::read_to_string(fp) {
@@ -61,9 +64,10 @@ pub fn is_infra_cap_orphan(
             .filter(|s| !s.is_empty())
             .map(|s| {
                 let mut c = s.chars();
-                c.next()
-                    .map(|f| f.to_uppercase().to_string() + c.as_str())
-                    .unwrap_or_default()
+                match c.next() {
+                    Some(f) => f.to_uppercase().to_string() + c.as_str(),
+                    None => String::new(),
+                }
             })
             .collect();
         identifiers.push(pascal_stem);
@@ -174,10 +178,16 @@ pub fn is_infra_cap_orphan_raw(
     is_reachable: bool,
 ) -> OrphanIndicatorResult {
     let fp = f.value();
-    let basename = fp.split('/').next_back().unwrap_or("");
+    let basename = match fp.split('/').next_back() {
+        Some(b) => b,
+        None => "",
+    };
     let stem = basename.replace(".rs", "").replace(".py", "");
 
-    let content = std::fs::read_to_string(fp).unwrap_or_default();
+    let content = match std::fs::read_to_string(fp) {
+        Ok(c) => c,
+        Err(_) => String::new(),
+    };
     let mut identifiers: Vec<String> = Vec::new();
     identifiers.extend(extract_struct_names(&content));
     identifiers.extend(extract_trait_names(&content));
@@ -188,22 +198,26 @@ pub fn is_infra_cap_orphan_raw(
         .filter(|s| !s.is_empty())
         .map(|s| {
             let mut c = s.chars();
-            c.next()
-                .map(|f| f.to_uppercase().to_string() + c.as_str())
-                .unwrap_or_default()
+            match c.next() {
+                Some(f) => f.to_uppercase().to_string() + c.as_str(),
+                None => String::new(),
+            }
         })
         .collect();
     identifiers.push(pascal_stem);
 
     let mut is_wired = false;
     for cf in all_files {
-        let cb = cf.split('/').next_back().unwrap_or("");
-        let csuffix = cb
-            .rsplit('_')
-            .next()
-            .unwrap_or("")
-            .replace(".rs", "")
-            .replace(".py", "");
+        let cb = match cf.split('/').next_back() {
+            Some(b) => b,
+            None => "",
+        };
+        let csuffix = match cb.rsplit('_').next() {
+            Some(s) => s,
+            None => "",
+        }
+        .replace(".rs", "")
+        .replace(".py", "");
         if csuffix != "container" {
             continue;
         }
@@ -230,7 +244,10 @@ pub fn check_capabilities_orphan(
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
 ) {
     let stem = basename.replace(".rs", "").replace(".py", "");
-    let content = std::fs::read_to_string(fp).unwrap_or_default();
+    let content = match std::fs::read_to_string(fp) {
+        Ok(c) => c,
+        Err(_) => String::new(),
+    };
 
     let mut identifiers: Vec<String> = Vec::new();
     identifiers.extend(extract_struct_names(&content));
@@ -242,22 +259,26 @@ pub fn check_capabilities_orphan(
         .filter(|s| !s.is_empty())
         .map(|s| {
             let mut c = s.chars();
-            c.next()
-                .map(|f| f.to_uppercase().to_string() + c.as_str())
-                .unwrap_or_default()
+            match c.next() {
+                Some(f) => f.to_uppercase().to_string() + c.as_str(),
+                None => String::new(),
+            }
         })
         .collect();
     identifiers.push(pascal_stem);
 
     let mut wired = false;
     for cf in files {
-        let cb = cf.split('/').next_back().unwrap_or("");
-        let csuffix = cb
-            .rsplit('_')
-            .next()
-            .unwrap_or("")
-            .replace(".rs", "")
-            .replace(".py", "");
+        let cb = match cf.split('/').next_back() {
+            Some(b) => b,
+            None => "",
+        };
+        let csuffix = match cb.rsplit('_').next() {
+            Some(s) => s,
+            None => "",
+        }
+        .replace(".rs", "")
+        .replace(".py", "");
         if csuffix != "container" {
             continue;
         }

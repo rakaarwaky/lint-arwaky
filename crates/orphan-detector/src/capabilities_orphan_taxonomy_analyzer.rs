@@ -39,19 +39,21 @@ pub fn is_taxonomy_orphan(
     _def: Option<&LayerDefinition>,
     inbound: &InboundLinkMap,
 ) -> OrphanIndicatorResult {
-    let stem = f
-        .value()
-        .split('/')
-        .next_back()
-        .unwrap_or("")
-        .replace(".rs", "")
-        .replace(".py", "")
-        .replace(".ts", "")
-        .replace(".js", "")
-        .replace(".tsx", "")
-        .replace(".jsx", "");
+    let stem = match f.value().split('/').next_back() {
+        Some(s) => s.to_string(),
+        None => String::new(),
+    }
+    .replace(".rs", "")
+    .replace(".py", "")
+    .replace(".ts", "")
+    .replace(".js", "")
+    .replace(".tsx", "")
+    .replace(".jsx", "");
 
-    let suffix = stem.rfind('_').map(|pos| &stem[pos + 1..]).unwrap_or("");
+    let suffix = match stem.rfind('_') {
+        Some(pos) => &stem[pos + 1..],
+        None => "",
+    };
 
     let is_utility_or_helper = matches!(suffix, "utility" | "helper");
 
@@ -103,13 +105,19 @@ pub fn check_taxonomy_orphan(
         .replace(".py", "")
         .replace(".ts", "")
         .replace(".js", "");
-    let suffix = stem.rfind('_').map(|pos| &stem[pos + 1..]).unwrap_or("");
+    let suffix = match stem.rfind('_') {
+        Some(pos) => &stem[pos + 1..],
+        None => "",
+    };
 
     let is_utility_or_helper = matches!(suffix, "utility" | "helper");
 
     let mut imported = false;
     for cf in files {
-        let cb = cf.split('/').next_back().unwrap_or("");
+        let cb = match cf.split('/').next_back() {
+            Some(b) => b,
+            None => continue,
+        };
 
         if is_utility_or_helper {
             // utility/helper: can be imported directly by any layer, no contract needed

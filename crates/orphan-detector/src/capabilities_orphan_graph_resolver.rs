@@ -78,7 +78,10 @@ impl OrphanGraphResolver {
         // Build a lookup: module_name -> file_path for crate:: resolution
         let mut module_to_file: HashMap<String, String> = HashMap::new();
         for f in files {
-            let basename = f.split('/').next_back().unwrap_or("");
+            let basename = match f.split('/').next_back() {
+                Some(b) => b,
+                None => "",
+            };
             let stem = basename
                 .replace(".rs", "")
                 .replace(".py", "")
@@ -120,11 +123,10 @@ impl OrphanGraphResolver {
                         let _mod_name = cap[2].to_string();
                         // Resolve: lib.rs has #[path = "layer-rules/mod.rs"] pub mod layer_rules
                         // → find files in layer-rules/ directory
-                        let base_dir = std::path::Path::new(f)
-                            .parent()
-                            .unwrap_or(std::path::Path::new("."))
-                            .to_string_lossy()
-                            .to_string();
+                        let base_dir = match std::path::Path::new(f).parent() {
+                            Some(p) => p.to_string_lossy().to_string(),
+                            None => String::from("."),
+                        };
                         let resolved_dir = format!(
                             "{}/{}",
                             base_dir,
@@ -265,10 +267,10 @@ impl OrphanGraphResolver {
                                         for entry in entries.flatten() {
                                             let path = entry.path();
                                             if let Some(path_str) = path.to_str() {
-                                                let stem = path
-                                                    .file_stem()
-                                                    .and_then(|s| s.to_str())
-                                                    .unwrap_or("");
+                                                let stem = match path.file_stem().and_then(|s| s.to_str()) {
+                                                    Some(s) => s,
+                                                    None => "",
+                                                };
                                                 if stem == module_name && path_str != *f {
                                                     import_graph
                                                         .entry(f.clone())

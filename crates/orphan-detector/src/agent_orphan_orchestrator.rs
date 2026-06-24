@@ -91,8 +91,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         root_dir: &str,
     ) -> Vec<LintResult> {
         let mut results: Vec<LintResult> = Vec::new();
-        let _root_fp = FilePath::new(root_dir).unwrap_or_default();
-
         // Build comprehensive context — bridge &[String] -> &[OrphanFileListVO].
         let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
         let context: GraphAnalysisContext = self
@@ -110,7 +108,10 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 
         // Evaluate each file
         for f in files {
-            let file_fp = FilePath::new(f.clone()).unwrap_or_default();
+            let file_fp = match FilePath::new(f.clone()) {
+                Ok(fp) => fp,
+                Err(_) => continue,
+            };
             let layer_str = match layer_detector.detect_layer(f, root_dir) {
                 Some(l) => l,
                 None => continue,
@@ -156,7 +157,10 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 impl ArchOrphanAnalyzer {
     fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap_or_default(),
+            file: match FilePath::new(file.to_string()) {
+                Ok(p) => p,
+                Err(_) => FilePath::default(),
+            },
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),
             code: ErrorCode::raw(code),
@@ -213,8 +217,16 @@ impl ArchOrphanAnalyzer {
 
         let _ = definition;
         let layer_str = layer_vo.value.to_lowercase();
-        let fp = FilePath::new(f.to_string()).unwrap_or_default();
-        let root = FilePath::new(String::new()).unwrap_or_default();
+        let fp = match FilePath::new(f.to_string()) {
+            Ok(fp) => fp,
+            Err(_) => {
+                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            }
+        };
+        let root = match FilePath::new(String::new()) {
+            Ok(r) => r,
+            Err(_) => FilePath::default(),
+        };
 
         if layer_str.contains(LAYER_TAXONOMY) {
             return self.taxonomy_analyzer.is_taxonomy_orphan(
@@ -284,7 +296,10 @@ impl ArchOrphanAnalyzer {
             .collect();
         let orphan = !alive.contains(&f.value().to_string())
             && !inbound_links.mapping.contains_key(f.value());
-        let stem = f.value().split('/').next_back().unwrap_or("").to_string();
+        let stem = match f.value().split('/').next_back() {
+            Some(s) => s.to_string(),
+            None => String::new(),
+        };
         OrphanIndicatorResult::new(
             orphan,
             AesOrphanViolation::OrphanCode {
@@ -351,7 +366,10 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
 
 pub fn mk_orphan_result(file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
     LintResult {
-        file: FilePath::new(file.to_string()).unwrap_or_default(),
+        file: match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => FilePath::default(),
+        },
         line: LineNumber::new(0),
         column: ColumnNumber::new(0),
         code: ErrorCode::raw(code),

@@ -35,10 +35,13 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
 
         // Check if wired in any container
         let fp = f.value();
-        let basename = std::path::Path::new(fp)
+        let basename = match std::path::Path::new(fp)
             .file_name()
             .and_then(|n| n.to_str())
-            .unwrap_or("");
+        {
+            Some(n) => n,
+            None => "",
+        };
         let stem = basename.replace(".rs", "").replace(".py", "");
 
         if let Ok(content) = std::fs::read_to_string(fp) {
@@ -52,9 +55,10 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
                 .filter(|s| !s.is_empty())
                 .map(|s| {
                     let mut c = s.chars();
-                    c.next()
-                        .map(|f| f.to_uppercase().to_string() + c.as_str())
-                        .unwrap_or_default()
+                    match c.next() {
+                        Some(f) => f.to_uppercase().to_string() + c.as_str(),
+                        None => String::new(),
+                    }
                 })
                 .collect();
             identifiers.push(pascal_stem);
