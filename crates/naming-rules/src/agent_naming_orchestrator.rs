@@ -1,7 +1,8 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks via contract ports
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::import_rules::contract_rule_protocol::{IAnalyzer, INamingCheckerProtocol};
+use shared::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort;
+use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
@@ -12,7 +13,7 @@ use std::sync::Arc;
 pub struct NamingOrchestrator {
     naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
     suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
-    analyzer: Arc<dyn IAnalyzer>,
+    analyzer: Arc<dyn INamingAnalyzerPort>,
     fs: Arc<dyn INamingFileSystemPort>,
     ignored_patterns: PatternList,
 }
@@ -21,7 +22,7 @@ impl NamingOrchestrator {
     pub fn new(
         naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
         suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
-        analyzer: Arc<dyn IAnalyzer>,
+        analyzer: Arc<dyn INamingAnalyzerPort>,
         fs: Arc<dyn INamingFileSystemPort>,
     ) -> Self {
         let config = analyzer.config();

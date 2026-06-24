@@ -371,7 +371,7 @@ impl LayerDetectionAnalyzer {
     }
 }
 
-impl IAnalyzer for LayerDetectionAnalyzer {
+impl shared::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort for LayerDetectionAnalyzer {
     /// Return the merged architecture configuration.
     fn config(&self) -> &ArchitectureConfig {
         &self.config
@@ -380,6 +380,14 @@ impl IAnalyzer for LayerDetectionAnalyzer {
     fn layer_map(&self) -> &LayerMapVO {
         &self.layer_map
     }
+    /// Adapter: delegates to internal `detect_layer` and wraps result in LayerNameVO.
+    fn detect_layer(&self, f: &FilePath, root_dir: &FilePath) -> Option<LayerNameVO> {
+        self.detect_layer(&f.value, &root_dir.value)
+            .map(|s| LayerNameVO::new(s.as_str()))
+    }
+}
+
+impl IAnalyzer for LayerDetectionAnalyzer {
     /// Return the filesystem port for file I/O.
     fn fs(&self) -> &dyn IFileSystemPort {
         &*self.fs
@@ -387,11 +395,6 @@ impl IAnalyzer for LayerDetectionAnalyzer {
     /// Return the source parser port for code analysis.
     fn parser(&self) -> &dyn ISourceParserPort {
         &*self.parser
-    }
-    /// Adapter: delegates to internal `detect_layer` and wraps result in LayerNameVO.
-    fn detect_layer(&self, f: &FilePath, root_dir: &FilePath) -> Option<LayerNameVO> {
-        self.detect_layer(&f.value, &root_dir.value)
-            .map(|s| LayerNameVO::new(s.as_str()))
     }
     /// Adapter: delegates to internal `detect_module_layer` and wraps result in LayerNameVO.
     fn detect_module_layer(&self, module_path: &FilePath) -> Option<LayerNameVO> {

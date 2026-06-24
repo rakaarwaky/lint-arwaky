@@ -349,7 +349,7 @@ impl shared::source_parsing::contract_parser_port::ISourceParserPort for NullSou
 }
 
 struct PlaceholderAnalyzer;
-impl IAnalyzer for PlaceholderAnalyzer {
+impl shared::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort for PlaceholderAnalyzer {
     fn config(&self) -> &ArchitectureConfig {
         static CONFIG: std::sync::OnceLock<ArchitectureConfig> = std::sync::OnceLock::new();
         CONFIG.get_or_init(ArchitectureConfig::default)
@@ -361,6 +361,16 @@ impl IAnalyzer for PlaceholderAnalyzer {
             shared::taxonomy_definition_vo::LayerMapVO::new(std::collections::HashMap::new())
         })
     }
+    fn detect_layer(
+        &self,
+        _f: &FilePath,
+        _root_dir: &FilePath,
+    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
+        None
+    }
+}
+
+impl IAnalyzer for PlaceholderAnalyzer {
     fn fs(&self) -> &dyn shared::file_system::contract_system_port::IFileSystemPort {
         static FS: std::sync::OnceLock<NullFileSystem> = std::sync::OnceLock::new();
         FS.get_or_init(|| NullFileSystem)
@@ -368,13 +378,6 @@ impl IAnalyzer for PlaceholderAnalyzer {
     fn parser(&self) -> &dyn shared::source_parsing::contract_parser_port::ISourceParserPort {
         static PARSER: std::sync::OnceLock<NullSourceParser> = std::sync::OnceLock::new();
         PARSER.get_or_init(|| NullSourceParser)
-    }
-    fn detect_layer(
-        &self,
-        _f: &FilePath,
-        _root_dir: &FilePath,
-    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
-        None
     }
     fn detect_module_layer(
         &self,

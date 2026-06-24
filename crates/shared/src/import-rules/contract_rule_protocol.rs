@@ -1,6 +1,5 @@
 // PURPOSE: IAnalyzer trait — core analyzer interface for import checks
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::file_system::contract_system_port::IFileSystemPort;
 use crate::source_parsing::contract_parser_port::ISourceParserPort;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
@@ -12,12 +11,9 @@ use crate::taxonomy_definition_vo::LayerMapVO;
 use crate::taxonomy_layer_vo::Identity;
 use crate::taxonomy_layer_vo::LayerNameVO;
 
-pub trait IAnalyzer: Send + Sync {
-    fn config(&self) -> &ArchitectureConfig;
-    fn layer_map(&self) -> &LayerMapVO;
+pub trait IAnalyzer: crate::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort + Send + Sync {
     fn fs(&self) -> &dyn IFileSystemPort;
     fn parser(&self) -> &dyn ISourceParserPort;
-    fn detect_layer(&self, f: &FilePath, root_dir: &FilePath) -> Option<LayerNameVO>;
     fn detect_module_layer(&self, module_path: &FilePath) -> Option<LayerNameVO>;
 }
 
@@ -25,23 +21,6 @@ pub trait IArchRuleProtocol {
     fn rule_name(&self) -> Identity;
 }
 
-#[async_trait::async_trait]
-pub trait INamingCheckerProtocol: Send + Sync {
-    async fn check_file_naming(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    );
-    async fn check_domain_suffixes(
-        &self,
-        analyzer: &dyn IAnalyzer,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    );
-}
 
 pub trait IInternalCheckerProtocol: Send + Sync {
     fn check_layer_internal_rules(

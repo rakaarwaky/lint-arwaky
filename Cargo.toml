@@ -74,15 +74,6 @@ path = "crates/root_mcp_main_entry.rs"
 name = "lint-arwaky-tui"
 path = "crates/root_tui_main_entry.rs"
 
-[features]
-default = ["check_surfaces"]
-watch = ["file_watch/watch"]
-check_taxonomy = []
-check_contract = ["check_taxonomy"]
-check_capabilities = ["check_contract"]
-check_infrastructure = ["check_contract"]
-check_agent = ["check_capabilities", "check_infrastructure"]
-check_surfaces = ["check_agent"]
 
 [dependencies]
 shared.workspace = true

@@ -579,21 +579,24 @@ mod tests {
         fs: MockFileSystemPort,
     }
 
-    impl IAnalyzer for MockAnalyzer {
+    impl crate::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort for MockAnalyzer {
         fn config(&self) -> &ArchitectureConfig {
             &self.config
         }
         fn layer_map(&self) -> &LayerMapVO {
             &self.layer_map
         }
+        fn detect_layer(&self, _f: &FilePath, _root_dir: &FilePath) -> Option<LayerNameVO> {
+            None
+        }
+    }
+
+    impl IAnalyzer for MockAnalyzer {
         fn fs(&self) -> &dyn IFileSystemPort {
             &self.fs
         }
         fn parser(&self) -> &dyn ISourceParserPort {
             &self.parser
-        }
-        fn detect_layer(&self, _f: &FilePath, _root_dir: &FilePath) -> Option<LayerNameVO> {
-            None
         }
         fn detect_module_layer(&self, _module_path: &FilePath) -> Option<LayerNameVO> {
             None
@@ -771,21 +774,24 @@ mod tests {
         parser: MockParserForCycle,
     }
 
-    impl IAnalyzer for MockAnalyzerForCycle {
+    impl crate::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort for MockAnalyzerForCycle {
         fn config(&self) -> &ArchitectureConfig {
             todo!()
         }
         fn layer_map(&self) -> &LayerMapVO {
             todo!()
         }
+        fn detect_layer(&self, _f: &FilePath, _root_dir: &FilePath) -> Option<LayerNameVO> {
+            todo!()
+        }
+    }
+
+    impl IAnalyzer for MockAnalyzerForCycle {
         fn fs(&self) -> &dyn IFileSystemPort {
             todo!()
         }
         fn parser(&self) -> &dyn ISourceParserPort {
             &self.parser
-        }
-        fn detect_layer(&self, _f: &FilePath, _root_dir: &FilePath) -> Option<LayerNameVO> {
-            todo!()
         }
         fn detect_module_layer(&self, _module_path: &FilePath) -> Option<LayerNameVO> {
             todo!()
