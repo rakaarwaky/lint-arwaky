@@ -2,6 +2,7 @@
 use rmcp::ServiceExt;
 use std::sync::Arc;
 
+use mcp_server::agent_mcp_server_orchestrator::McpServerOrchestrator;
 use mcp_server::surface_mcp_command::LintArwakyMcpServer;
 
 pub struct McpMainEntry {}
@@ -23,7 +24,7 @@ async fn main() -> anyhow::Result<()> {
     let arch_linter = code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
         .code_analysis_linter();
 
-    let server = LintArwakyMcpServer::new(arch_linter);
+    let server = LintArwakyMcpServer::new(Arc::new(McpServerOrchestrator::new(arch_linter)));
     let service = server.serve(rmcp::transport::stdio()).await?;
     service.waiting().await?;
 

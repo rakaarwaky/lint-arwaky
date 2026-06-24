@@ -19,7 +19,7 @@ impl McpServerOrchestrator {
 
 #[async_trait::async_trait]
 impl IMcpServerAggregate for McpServerOrchestrator {
-    async fn execute_command(&self, args: Parameters<ExecuteCommandArgs>) -> String {
+    async fn execute_command(&self, Parameters(args): Parameters<ExecuteCommandArgs>) -> String {
         let linter = self.code_analysis_linter.clone();
         let action = args.action.clone();
         let arg_path = args
@@ -43,7 +43,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
         let result = match action.as_str() {
             "check" | "scan" => {
-                let path = arg_path.unwrap_or_else(|| ".".to_string());
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
                 let join_result = tokio::task::spawn_blocking(move || {
                     let results = linter.run_code_analysis_path(&path);
                     let report = linter.format_report(
@@ -67,7 +70,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 }
             }
             "fix" => {
-                let path = arg_path.unwrap_or_else(|| ".".to_string());
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
                 serde_json::json!({
                     "status": "success",
                     "action": "fix",
@@ -76,8 +82,14 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 })
             }
             "ci" => {
-                let path = arg_path.unwrap_or_else(|| ".".to_string());
-                let threshold = arg_threshold.unwrap_or(80);
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let threshold = match arg_threshold {
+                    Some(t) => t,
+                    None => 80,
+                };
                 let join_result = tokio::task::spawn_blocking(move || {
                     let results = linter.run_code_analysis_path(&path);
                     let score = linter.calc_score(&results);
@@ -111,7 +123,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 serde_json::json!({"status": "success", "action": "doctor", "checks": checks})
             }
             "orphan" | "security" | "duplicates" | "dependencies" => {
-                let path = arg_path.unwrap_or_else(|| ".".to_string());
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
                 serde_json::json!({"status": "success", "action": action, "path": path})
             }
             "version" => {
@@ -145,7 +160,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             "init" => serde_json::json!({"status": "success", "action": "init"}),
             "install" => serde_json::json!({"status": "success", "action": "install"}),
             "mcp-config" => {
-                let client = arg_client.unwrap_or_else(|| "all".to_string());
+                let client = match arg_client {
+                    Some(c) => c,
+                    None => "all".to_string(),
+                };
                 serde_json::json!({"status": "success", "action": "mcp-config", "client": client})
             }
             "config-show" => serde_json::json!({"status": "success", "action": "config-show"}),
@@ -157,7 +175,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
         }
     }
 
-    async fn list_commands(&self, args: Parameters<ListCommandsArgs>) -> String {
+    async fn list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {
         let catalog = shared::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
         let commands: Vec<serde_json::Value> = catalog
             .iter()
@@ -180,7 +198,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
         }
     }
 
-    async fn read_skill(&self, args: Parameters<ReadSkillArgs>) -> String {
+    async fn read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {
         let candidates = [
             env!("CARGO_MANIFEST_DIR").to_string() + "/../SKILL.md",
             env!("CARGO_MANIFEST_DIR").to_string() + "/SKILL.md",

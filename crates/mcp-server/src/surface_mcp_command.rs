@@ -7,23 +7,17 @@ use rmcp::model::{
 use rmcp::{tool, tool_handler, tool_router, ServerHandler};
 use std::sync::Arc;
 
-use crate::agent_mcp_server_orchestrator::McpServerOrchestrator;
 use crate::contract_mcp_server_aggregate::IMcpServerAggregate;
 use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 
 #[derive(Clone)]
 pub struct LintArwakyMcpServer {
-    agent: Arc<McpServerOrchestrator>,
+    agent: Arc<dyn IMcpServerAggregate>,
     tool_router: ToolRouter<Self>,
 }
 
 impl LintArwakyMcpServer {
-    pub fn new(
-        code_analysis_linter: Arc<
-            dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate,
-        >,
-    ) -> Self {
-        let agent = Arc::new(McpServerOrchestrator::new(code_analysis_linter));
+    pub fn new(agent: Arc<dyn IMcpServerAggregate>) -> Self {
         Self {
             agent,
             tool_router: Self::tool_router(),
