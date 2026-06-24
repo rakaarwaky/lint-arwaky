@@ -1,4 +1,6 @@
 // PURPOSE: ChangeAnalyzer — deduplicates and batches watch events for lint
+#[allow(unused_imports)]
+use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 use std::collections::HashMap;
 

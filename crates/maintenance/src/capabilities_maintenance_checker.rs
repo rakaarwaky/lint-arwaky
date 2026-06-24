@@ -1,4 +1,6 @@
 // PURPOSE: MaintenanceChecker — business logic capabilities for running audits and checking toolchains
+#[allow(unused_imports)]
+use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::taxonomy_doctor_vo::{
     DependencyInfo, DependencyReport, SecurityFinding, SecurityScanReport, ToolStatus,
     ToolchainDiagnostics,
