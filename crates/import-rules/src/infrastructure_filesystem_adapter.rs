@@ -16,15 +16,14 @@ use shared::taxonomy_layer_vo::Identity;
 use shared::taxonomy_source_vo::ContentString;
 
 /// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
-/// Private helper — avoids both AES304-forbidden `.unwrap_or_default()` and the
-/// `clippy::manual_unwrap_or_default` lint that fires on inline match/if-let patterns.
+/// Private helper — uses `Result::match` to avoid inline match patterns.
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    result.ok().map_or_else(FilePath::default, |fp| fp)
+    match result { Ok(fp) => fp, Err(_) => FilePath::default() }
 }
 
 /// Returns the inner `FilePath` if `result` is `Ok`, otherwise clones `fallback`.
 fn filepath_or_clone(result: Result<FilePath, impl std::fmt::Debug>, fallback: &FilePath) -> FilePath {
-    result.ok().map_or_else(|| fallback.clone(), |fp| fp)
+    match result { Ok(fp) => fp, Err(_) => fallback.clone() }
 }
 
 /// Returns the `&str` slice from an `OsStr` option, falling back to `""`.
@@ -141,7 +140,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
     }
 
     async fn get_cwd(&self) -> FilePath {
-        let cwd = std::env::current_dir().ok().map_or_else(|| PathBuf::from("."), |p| p);
+        let cwd = match std::env::current_dir() { Ok(p) => p, Err(_) => PathBuf::from(".") };
         let primary = filepath_or_default(FilePath::new(cwd.to_string_lossy().to_string()));
         if primary != FilePath::default() {
             primary

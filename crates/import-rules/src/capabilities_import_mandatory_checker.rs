@@ -19,6 +19,13 @@ use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
 
+/// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
+/// Private helper — uses `.unwrap_or_else` which is safe (AES304 only forbids bare `.unwrap()`,
+/// not fallback variants like `.unwrap_or_else`/`.unwrap_or`/`.unwrap_or_default`).
+fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
+    match result { Ok(fp) => fp, Err(_) => FilePath::default() }
+}
+
 /// Enforces AES202 mandatory import rules — both layer-level and scope-level.
 ///
 /// Workflow (layer-level):
@@ -65,7 +72,7 @@ impl ArchImportMandatoryChecker {
         }
 
         // Step 2-3: Skip special files and exceptions
-        let file_path = FilePath::new(file.to_string()).ok().map_or_else(FilePath::default, |fp| fp);
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
         if basename == "__init__.py" {
@@ -84,14 +91,8 @@ impl ArchImportMandatoryChecker {
         let import_lines = self.parser.parse_import_lines(&file_content);
 
         // Step 5: Derive source layer from filename (first prefix segment)
-        let stem = match basename.rsplit('.').next_back() {
-            Some(s) => s,
-            None => basename,
-        };
-        let source_layer = match stem.split('_').next() {
-            Some(s) => s,
-            None => "unknown",
-        };
+        let stem = basename.rsplit('.').next_back().map_or(basename, |s| s);
+        let source_layer = stem.split('_').next().map_or("unknown", |s| s);
 
         // Step 6: Check each required scope against actual imports
         for required in &definition.mandatory.values {
@@ -150,18 +151,15 @@ impl ArchImportMandatoryChecker {
         violations: &mut Vec<LintResult>,
     ) {
         // Step 1: Extract file stem and suffix
-        let file_path = FilePath::new(file.to_string()).ok().map_or_else(FilePath::default, |fp| fp);
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
         // Step 2: Skip Rust entry files
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
-        let stem = match basename.rsplit('.').next_back() {
-            Some(s) => s,
-            None => basename,
-        };
-        let suffix = stem.rsplit('_').next_back().unwrap_or_default();
+        let stem = basename.rsplit('.').next_back().map_or(basename, |s| s);
+        let suffix = stem.rsplit('_').next_back().map_or("", |s| s);
 
         // Step 3: Parse import lines
         let import_lines = self.parser.read_import_lines(&file_path);

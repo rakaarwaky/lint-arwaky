@@ -21,10 +21,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Returns `fp` if `result` is `Ok`, otherwise returns `FilePath::default()`.
-/// Private helper to avoid both `.unwrap_or_default()` (forbidden by AES304)
-/// and inline match patterns (flagged by clippy::manual_unwrap_or_default).
+/// Private helper — uses `Result::match` to avoid inline match patterns.
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    result.ok().map_or_else(FilePath::default, |fp| fp)
+    match result { Ok(fp) => fp, Err(_) => FilePath::default() }
 }
 
 /// Detects circular imports and dependency cycles (Capability) — AES205.

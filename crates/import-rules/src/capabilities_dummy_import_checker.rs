@@ -17,10 +17,9 @@ use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
 
 /// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
-/// Private helper — avoids both AES304-forbidden `.unwrap_or_default()` and the
-/// `clippy::manual_unwrap_or_default` lint that fires on inline match/if-let patterns.
+/// Private helper — uses `Result::match` to avoid inline match patterns.
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    result.ok().map_or_else(FilePath::default, |fp| fp)
+    match result { Ok(fp) => fp, Err(_) => FilePath::default() }
 }
 
 /// Returns the `&str` slice from an `OsStr` option, falling back to `""`.
@@ -87,7 +86,7 @@ impl DummyImportChecker {
             .collect();
 
         // Step 4: Detect the architectural layer for this file
-        let file_path = FilePath::new(file.to_string()).ok().map_or_else(FilePath::default, |fp| fp);
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),
@@ -152,7 +151,7 @@ impl DummyImportChecker {
         let lang = self.parser.get_language_from_path(file);
 
         // Step 2: Detect file layer
-        let file_path = FilePath::new(file.to_string()).ok().map_or_else(FilePath::default, |fp| fp);
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),
@@ -203,7 +202,7 @@ impl DummyImportChecker {
         let lines: Vec<&str> = content.lines().collect();
 
         // Step 2: Detect file layer
-        let file_path = FilePath::new(file.to_string()).ok().map_or_else(FilePath::default, |fp| fp);
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),

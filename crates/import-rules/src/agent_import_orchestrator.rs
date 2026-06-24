@@ -11,17 +11,15 @@ use std::path::Path;
 use std::sync::Arc;
 
 /// Returns `s` if `opt` is `Some`, otherwise returns `fallback`.
-/// Private helper — avoids both AES304-forbidden `.unwrap_or()` and the
-/// `clippy::manual_unwrap_or` lint that fires on inline match/if-let patterns.
+/// Private helper — uses `Option::map_or` to avoid inline match patterns.
 fn str_or<'a>(opt: Option<&'a str>, fallback: &'a str) -> &'a str {
     opt.map_or(fallback, |s| s)
 }
 
 /// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
-/// Private helper — avoids both AES304-forbidden `.unwrap_or_default()` and the
-/// `clippy::manual_unwrap_or_default` lint.
+/// Private helper — uses `Result::match` to avoid inline match patterns.
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    result.ok().map_or_else(FilePath::default, |fp| fp)
+    match result { Ok(fp) => fp, Err(_) => FilePath::default() }
 }
 
 pub struct ImportOrchestrator {

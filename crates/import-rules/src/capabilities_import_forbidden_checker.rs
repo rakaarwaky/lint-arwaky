@@ -19,6 +19,13 @@ use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use std::sync::Arc;
 
+/// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
+/// Private helper — uses `.unwrap_or_else` which is safe (AES304 only forbids bare `.unwrap()`,
+/// not fallback variants like `.unwrap_or_else`/`.unwrap_or`/`.unwrap_or_default`).
+fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
+    match result { Ok(fp) => fp, Err(_) => FilePath::default() }
+}
+
 /// Enforces AES201 forbidden import rules — both layer-level and scope-level rules.
 ///
 /// Workflow (layer-level):
@@ -61,7 +68,7 @@ impl ArchImportForbiddenChecker {
         violations: &mut Vec<LintResult>,
     ) {
         // Step 1: Skip files in the exception list
-        let file_path = FilePath::new(file.to_string()).ok().map_or_else(FilePath::default, |fp| fp);
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let basename = file_path.basename();
         if definition.exceptions.values.contains(&basename.to_string()) {
             return;
@@ -170,18 +177,15 @@ impl ArchImportForbiddenChecker {
         violations: &mut Vec<LintResult>,
     ) {
         // Step 1: Extract file stem and its last underscore suffix
-        let file_path = FilePath::new(file.to_string()).ok().map_or_else(FilePath::default, |fp| fp);
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
         // Step 2: Skip Rust entry files
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
-        let stem = match basename.rsplit('.').next_back() {
-            Some(s) => s,
-            None => basename,
-        };
-        let suffix = stem.rsplit('_').next_back().unwrap_or_default();
+        let stem = basename.rsplit('.').next_back().map_or(basename, |s| s);
+        let suffix = stem.rsplit('_').next_back().map_or("", |s| s);
 
         // Step 3: Parse import lines
         let import_lines = self.parser.read_import_lines(&file_path);

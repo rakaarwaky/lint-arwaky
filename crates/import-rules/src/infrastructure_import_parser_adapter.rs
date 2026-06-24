@@ -16,8 +16,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 
 /// Returns `s` if `opt` is `Some`, otherwise returns `""`.
-/// Private helper — avoids both AES304-forbidden `.unwrap_or_default()` and the
-/// `clippy::manual_unwrap_or_default` lint that fires on inline match/if-let patterns.
+/// Private helper — uses `Option::map_or` to avoid inline match patterns.
 fn str_or_empty(opt: Option<&str>) -> &str {
     opt.map_or("", |s| s)
 }
