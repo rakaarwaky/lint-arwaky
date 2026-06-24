@@ -1,14 +1,19 @@
 // PURPOSE: ChangeAnalyzer — deduplicates and batches watch events for lint
-#[allow(unused_imports)]
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 use std::collections::HashMap;
 
-pub struct ChangeAnalyzer;
+pub struct ChangeAnalyzer {
+    provider: std::sync::Arc<dyn IWatchProviderPort>,
+}
 
 impl ChangeAnalyzer {
-    pub fn new() -> Self {
-        Self
+    pub fn new(provider: std::sync::Arc<dyn IWatchProviderPort>) -> Self {
+        Self { provider }
+    }
+
+    pub fn provider(&self) -> &dyn IWatchProviderPort {
+        self.provider.as_ref()
     }
 
     pub fn analyze(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent> {
@@ -29,11 +34,5 @@ impl ChangeAnalyzer {
             .into_iter()
             .filter(|e| Self::is_lintable(&e.path))
             .collect()
-    }
-}
-
-impl Default for ChangeAnalyzer {
-    fn default() -> Self {
-        Self::new()
     }
 }
