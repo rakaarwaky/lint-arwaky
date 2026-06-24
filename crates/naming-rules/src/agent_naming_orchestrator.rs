@@ -1,7 +1,7 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks via contract ports
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::naming_rules::contract_naming_analyzer_port::INamingAnalyzerPort;
+use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
@@ -13,7 +13,7 @@ use std::sync::Arc;
 pub struct NamingOrchestrator {
     naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
     suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
-    analyzer: Arc<dyn INamingAnalyzerPort>,
+    analyzer: Arc<dyn INamingAnalyzerProtocol>,
     fs: Arc<dyn INamingFileSystemPort>,
     ignored_patterns: PatternList,
 }
@@ -22,7 +22,7 @@ impl NamingOrchestrator {
     pub fn new(
         naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
         suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
-        analyzer: Arc<dyn INamingAnalyzerPort>,
+        analyzer: Arc<dyn INamingAnalyzerProtocol>,
         fs: Arc<dyn INamingFileSystemPort>,
     ) -> Self {
         let config = analyzer.config();
@@ -55,11 +55,10 @@ impl NamingOrchestrator {
             .values
             .iter()
             .filter(|f| {
-                f.value
-                    .rsplit('.')
-                    .next()
-                    .map(|ext| source_exts.contains(&ext))
-                    .unwrap_or(false)
+                match f.value.rsplit('.').next() {
+                    Some(ext) => source_exts.contains(&ext),
+                    None => false,
+                }
             })
             .cloned()
             .collect();

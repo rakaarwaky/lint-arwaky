@@ -35,8 +35,12 @@ impl NamingConventionChecker {
     }
 
     fn make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        };
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap_or_default(),
+            file: file_path,
             line: LineNumber::new(1),
             column: ColumnNumber::new(0),
             code: ErrorCode::raw(code),
@@ -109,8 +113,14 @@ impl NamingConventionChecker {
 
         // Step 2: Handle cases where the layer could not be determined.
         if layer_name.is_none() {
-            let stem = filename.split('.').next().unwrap_or(filename);
-            let actual_prefix = stem.split('_').next().unwrap_or("").to_string();
+            let stem = match filename.split('.').next() {
+                Some(s) => s,
+                None => filename,
+            };
+            let actual_prefix = match stem.split('_').next() {
+                Some(p) => p,
+                None => "",
+            }.to_string();
 
             // Check if the file starts with an unrecognized/invalid prefix (not corresponding to a standard AES layer).
             if !actual_prefix.is_empty() && !LAYER_PREFIXES.iter().any(|p| stem.starts_with(p)) {
@@ -138,7 +148,10 @@ impl NamingConventionChecker {
             }
 
             // If the prefix is recognized or is empty, but there is no underscore or does not meet basic naming requirements.
-            let stem = filename.split('.').next().unwrap_or(filename);
+            let stem = match filename.split('.').next() {
+                Some(s) => s,
+                None => filename,
+            };
             violations.push(Self::make_result(
                 file,
                 "AES101",
@@ -171,7 +184,10 @@ impl NamingConventionChecker {
 
         // Step 5: Validate the file stem pattern using a regular expression.
         // It must consist of lowercase letters and digits separated by underscores (e.g., prefix_concept_suffix).
-        let stem = filename.split('.').next().unwrap_or("");
+        let stem = match filename.split('.').next() {
+            Some(s) => s,
+            None => "",
+        };
         let naming_regex = r"^[a-z0-9]+(_[a-z0-9]+)+$";
 
         if let Ok(re) = Regex::new(naming_regex) {
@@ -212,7 +228,10 @@ impl INamingCheckerProtocol for NamingConventionChecker {
         for f in &files.values {
             let f_str = f.to_string();
             // Step 2: Extract the raw filename from the path.
-            let filename = f.rsplit('/').next().unwrap_or(&f_str);
+            let filename = match f.rsplit('/').next() {
+                Some(name) => name,
+                None => &f_str,
+            };
             // Step 3: Determine the architectural layer for the file.
             let layer = analyzer
                 .detect_layer(f, root_dir)

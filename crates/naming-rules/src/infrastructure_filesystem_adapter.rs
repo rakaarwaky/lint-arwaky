@@ -25,7 +25,10 @@ impl OSFileSystemAdapter {
         if let Ok(entries) = fs::read_dir(dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let name = match path.file_name().and_then(|n| n.to_str()) {
+                    Some(n) => n,
+                    None => "",
+                };
                 if ignored.contains(&name.to_string()) {
                     continue;
                 }
@@ -49,9 +52,10 @@ impl Default for OSFileSystemAdapter {
 impl INamingFileSystemPort for OSFileSystemAdapter {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
         let root = Path::new(&path.value);
-        let ignored = ignored_patterns
-            .map(|p| p.values.clone())
-            .unwrap_or_default();
+        let ignored = match ignored_patterns {
+            Some(p) => p.values.clone(),
+            None => Vec::new(),
+        };
         let mut results = Vec::new();
         self.walk_recursive(root, &ignored, &mut results);
         FilePathList { values: results }

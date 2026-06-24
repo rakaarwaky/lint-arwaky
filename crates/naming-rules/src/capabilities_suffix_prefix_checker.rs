@@ -33,8 +33,12 @@ impl SuffixPrefixChecker {
     }
 
     fn make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        };
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap_or_default(),
+            file: file_path,
             line: LineNumber::new(1),
             column: ColumnNumber::new(0),
             code: ErrorCode::raw(code),
@@ -127,10 +131,10 @@ impl SuffixPrefixChecker {
         // Step 5: Check if the suffix is explicitly forbidden for the current layer.
         if let Some(ref suf) = suffix {
             if def.naming.forbidden_suffix.values.contains(suf) {
-                let layer_display = _layer_name
-                    .as_ref()
-                    .map(|l| l.as_str().to_string())
-                    .unwrap_or_else(|| "unknown".to_string());
+                let layer_display = match _layer_name {
+                    Some(l) => l.as_str().to_string(),
+                    None => "unknown".to_string(),
+                };
                 violations.push(Self::make_result(
                     file,
                     "AES102",
@@ -153,16 +157,20 @@ impl SuffixPrefixChecker {
 
         // Step 6: If the layer configuration enforces a strict suffix policy, ensure the suffix matches the allowed list.
         if def.naming.suffix_policy.value == "strict" {
-            let valid = suffix
-                .as_ref()
-                .map(|s| def.naming.allowed_suffix.values.contains(s))
-                .unwrap_or(false);
+            let valid = match &suffix {
+                Some(s) => def.naming.allowed_suffix.values.contains(s),
+                None => false,
+            };
             if !valid {
                 let allowed_list = def.naming.allowed_suffix.values.clone();
-                let layer_display = _layer_name
-                    .as_ref()
-                    .map(|l| l.as_str().to_string())
-                    .unwrap_or_else(|| "unknown".to_string());
+                let layer_display = match _layer_name {
+                    Some(l) => l.as_str().to_string(),
+                    None => "unknown".to_string(),
+                };
+                let suffix_display = match suffix.as_deref() {
+                    Some(s) => s,
+                    None => "(none)",
+                };
                 violations.push(Self::make_result(
                     file,
                     "AES102",
@@ -175,7 +183,7 @@ impl SuffixPrefixChecker {
                              The suffix determines the file's architectural role — a missing or incorrect suffix \
                              breaks the layer-to-role mapping that automated checks depend on.",
                             layer_display,
-                            suffix.as_deref().unwrap_or("(none)"),
+                            suffix_display,
                             allowed_list.join(", ")
                         ))),
                     }
@@ -211,7 +219,10 @@ impl INamingCheckerProtocol for SuffixPrefixChecker {
         for f in &files.values {
             let f_str = f.to_string();
             // Step 2: Extract the raw filename from the path.
-            let filename = f.rsplit('/').next().unwrap_or(&f_str);
+            let filename = match f.rsplit('/').next() {
+                Some(name) => name,
+                None => &f_str,
+            };
             // Step 3: Determine the architectural layer for the file.
             let layer = analyzer
                 .detect_layer(f, root_dir)
