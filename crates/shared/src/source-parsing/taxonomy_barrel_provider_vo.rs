@@ -155,8 +155,7 @@ impl BarrelImportResolver {
                         Some(s) => s,
                         None => "",
                     };
-                    let path = path.split("::")
-                        .collect::<Vec<_>>();
+                    let path = path.split("::").collect::<Vec<_>>();
                     if path.len() >= 2 && path[0] == "crate" {
                         let module_name = path[1].replace('-', "_");
                         // Check if this module has a barrel

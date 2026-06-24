@@ -17,8 +17,7 @@ pub struct WatchEvent {
 
 impl WatchEvent {
     pub fn new(path: String, kind: WatchEventKind) -> Self {
-        let timestamp_ms = match std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
+        let timestamp_ms = match std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
         {
             Ok(d) => d.as_millis() as u64,
             Err(_) => 0,

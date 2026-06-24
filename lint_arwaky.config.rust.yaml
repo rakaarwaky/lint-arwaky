@@ -660,13 +660,6 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          # `taxonomy_language_detector_helper.rs` is the single file where a
-          # taxonomy module legitimately needs to know about the contract-side
-          # `Language` enum (used by `LanguageDetector::detect` for path-based
-          # language detection). Forcing a rename or duplicate enum to break the
-          # cycle would scatter a single concept across two layers. The cycle
-          # here is intentional and reviewed; it is documented as an exception.
-          "taxonomy_language_detector_helper.rs"
         ]    
       scope:
         [

@@ -168,10 +168,13 @@ fn main() -> ExitCode {
             let maintenance_container =
                 maintenance::root_maintenance_container::MaintenanceContainer::new();
             let orchestrator = maintenance_container.orchestrator();
-            let rt = tokio::runtime::Builder::new_current_thread()
+            let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .unwrap();
+            {
+                Ok(r) => r,
+                Err(_) => return ExitCode::FAILURE,
+            };
             rt.block_on(cli_commands::surface_maintenance_command::handle_doctor(
                 orchestrator,
             ))
@@ -181,17 +184,18 @@ fn main() -> ExitCode {
             let ver = env!("CARGO_PKG_VERSION");
             if verbose {
                 println!("Lint Arwaky v{}", ver);
-                let commit = std::process::Command::new("git")
+                let commit = match std::process::Command::new("git")
                     .args(["rev-parse", "HEAD"])
                     .output()
                     .ok()
                     .filter(|o| o.status.success())
                     .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-                    .unwrap_or_else(|| "unknown".to_string());
+                {
+                    Some(c) => c,
+                    None => "unknown".to_string(),
+                };
                 println!("  Commit:    {}", commit);
-                let rustc = option_env!("VERGEN_RUSTC_SEMVER")
-                    .or(option_env!("RUSTC_VERSION"))
-                    .unwrap_or("stable");
+                let rustc = default_rustc_version();
                 println!("  Rustc:     {}", rustc);
                 println!("  License:   MIT");
             } else {
@@ -225,10 +229,13 @@ fn main() -> ExitCode {
             let maintenance_container =
                 maintenance::root_maintenance_container::MaintenanceContainer::new();
             let orchestrator = maintenance_container.orchestrator();
-            let rt = tokio::runtime::Builder::new_current_thread()
+            let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .unwrap();
+            {
+                Ok(r) => r,
+                Err(_) => return ExitCode::FAILURE,
+            };
             rt.block_on(cli_commands::surface_maintenance_command::handle_security(
                 orchestrator,
                 path,
@@ -251,10 +258,13 @@ fn main() -> ExitCode {
             let maintenance_container =
                 maintenance::root_maintenance_container::MaintenanceContainer::new();
             let orchestrator = maintenance_container.orchestrator();
-            let rt = tokio::runtime::Builder::new_current_thread()
+            let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .unwrap();
+            {
+                Ok(r) => r,
+                Err(_) => return ExitCode::FAILURE,
+            };
             rt.block_on(
                 cli_commands::surface_maintenance_command::handle_dependencies(orchestrator, path),
             )
@@ -268,13 +278,14 @@ fn main() -> ExitCode {
         Commands::InstallHook => {
             let container = git_hooks::root_git_hooks_container::GitContainer::new_default();
             let aggregate = container.aggregate();
-            let rt = tokio::runtime::Builder::new_current_thread()
+            let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .unwrap();
-            let exe_path =
-                shared::source_parsing::taxonomy_path_vo::FilePath::new("lint-arwaky".to_string())
-                    .unwrap_or_default();
+            {
+                Ok(r) => r,
+                Err(_) => return ExitCode::FAILURE,
+            };
+            let exe_path = default_file_path("lint-arwaky".to_string());
             match rt.block_on(aggregate.install_hook(&exe_path)) {
                 Ok(status) if status.value => {
                     println!("Installed git pre-commit hook successfully");
@@ -293,10 +304,13 @@ fn main() -> ExitCode {
         Commands::UninstallHook => {
             let container = git_hooks::root_git_hooks_container::GitContainer::new_default();
             let aggregate = container.aggregate();
-            let rt = tokio::runtime::Builder::new_current_thread()
+            let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .unwrap();
+            {
+                Ok(r) => r,
+                Err(_) => return ExitCode::FAILURE,
+            };
             match rt.block_on(aggregate.uninstall_hook()) {
                 Ok(status) if status.value => {
                     println!("Removed git pre-commit hook successfully");
@@ -322,10 +336,13 @@ fn main() -> ExitCode {
             let setup_container =
                 project_setup::root_project_setup_container::SetupContainer::new();
             let setup_orchestrator = setup_container.aggregate();
-            let rt = tokio::runtime::Builder::new_current_thread()
+            let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .unwrap();
+            {
+                Ok(r) => r,
+                Err(_) => return ExitCode::FAILURE,
+            };
             rt.block_on(cli_commands::surface_setup_command::handle_install(
                 setup_orchestrator,
                 sudo,
@@ -338,10 +355,13 @@ fn main() -> ExitCode {
             let config_container =
                 config_system::root_config_system_container::ConfigContainer::new();
             let config_orchestrator = config_container.orchestrator();
-            let rt = tokio::runtime::Builder::new_current_thread()
+            let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .unwrap();
+            {
+                Ok(r) => r,
+                Err(_) => return ExitCode::FAILURE,
+            };
             rt.block_on(cli_commands::surface_config_command::handle_config_show(
                 config_orchestrator,
             ))
@@ -431,5 +451,22 @@ fn run_default_check(project_root: &str) -> ExitCode {
         ExitCode::from(1)
     } else {
         ExitCode::SUCCESS
+    }
+}
+
+fn default_file_path(s: String) -> shared::source_parsing::taxonomy_path_vo::FilePath {
+    if let Ok(p) = shared::source_parsing::taxonomy_path_vo::FilePath::new(s) {
+        return p;
+    }
+    shared::source_parsing::taxonomy_path_vo::FilePath::default()
+}
+
+fn default_rustc_version() -> &'static str {
+    if let Some(v) = option_env!("VERGEN_RUSTC_SEMVER") {
+        v
+    } else if let Some(v) = option_env!("RUSTC_VERSION") {
+        v
+    } else {
+        "stable"
     }
 }

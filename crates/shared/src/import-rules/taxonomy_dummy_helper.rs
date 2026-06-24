@@ -504,12 +504,18 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
 
 fn is_short_marker(inner: &str) -> bool {
     let t = ['t', 'o', 'd', 'o', '!', '('].iter().collect::<String>();
-    let u = ['u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd', '!', '(']
+    let u = [
+        'u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd', '!', '(',
+    ]
+    .iter()
+    .collect::<String>();
+    let p = ['p', 'a', 'n', 'i', 'c', '!', '(']
         .iter()
         .collect::<String>();
-    let p = ['p', 'a', 'n', 'i', 'c', '!', '('].iter().collect::<String>();
-    let r = ['u', 'n', 'r', 'e', 'a', 'c', 'h', 'a', 'b', 'l', 'e', '!', '(']
-        .iter()
-        .collect::<String>();
+    let r = [
+        'u', 'n', 'r', 'e', 'a', 'c', 'h', 'a', 'b', 'l', 'e', '!', '(',
+    ]
+    .iter()
+    .collect::<String>();
     inner.starts_with(&t) || inner.starts_with(&u) || inner.starts_with(&p) || inner.starts_with(&r)
 }

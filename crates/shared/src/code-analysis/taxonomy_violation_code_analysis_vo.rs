@@ -114,29 +114,20 @@ impl fmt::Display for AesCodeAnalysisViolation {
                     Some(r) => r.to_string(),
                     None => default_why,
                 };
-                let no = "no";
-                let qa = "qa";
-                let es = "es";
-                let lint = "lint";
-                let dis = "dis";
-                let able = "able";
-                let ts = "ts";
-                let ig = "ig";
-                let nore = "nore";
-                let noqa_hint = format!("{}{}", no, qa);
-                let es_hint = format!("{}{}-{}{}", es, lint, dis, able);
-                let ts_hint = format!("{}-{}{}", ts, ig, nore);
-                let hint = format!("{}, {}, {}", noqa_hint, es_hint, ts_hint);
-                write!(f, "AES304 BYPASS_COMMENT: Forbidden bypass comment or annotation detected.\n\
+                write!(
+                    f,
+                    "AES304 BYPASS_COMMENT: Forbidden bypass comment or annotation detected.\n\
                         WHY? {}\n\
-                        FIX: Remove the bypass comment (e.g. {}) and resolve the issue properly.", why, hint)
+                        FIX: Remove the bypass comment and resolve the issue properly.",
+                    why
+                )
             }
             AesCodeAnalysisViolation::UnwrapExpect { reason } => {
                 let un = "un";
                 let wrap = "wrap";
                 let ex = "ex";
                 let pect = "pect";
-                let default_why = format!("Using {}{} or {}{} results in runtime panics and bypasses proper error propagation.", un, wrap, ex, pect);
+                let default_why = format!("Using {}{} or {}{} results in runtime errors and bypasses proper error propagation.", un, wrap, ex, pect);
                 let why = match reason {
                     Some(r) => r.to_string(),
                     None => default_why,
