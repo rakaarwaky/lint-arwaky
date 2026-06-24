@@ -196,12 +196,13 @@ impl CodeAnalysisOrchestrator {
                 .check_mandatory_class_definition(file, Some(def), &c, &mut violations);
         }
 
-        // AES305: Code duplication (run once across all files)
+        // AES305: File-level similarity check (run once across all files)
         let min_dup_lines: usize = 5;
+        let threshold_pct: f64 = 50.0;
         let dup_violations = self
             .container
             .duplication_checker()
-            .check_duplicates(files, min_dup_lines);
+            .check_file_similarity(files, min_dup_lines, threshold_pct);
         for dv in dup_violations {
             violations.push(LintResult::new_arch(
                 "",

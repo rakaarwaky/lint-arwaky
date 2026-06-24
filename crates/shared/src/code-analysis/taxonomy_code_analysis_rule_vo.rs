@@ -25,4 +25,6 @@ pub struct CodeAnalysisRuleVO {
     pub forbid_any_type: BooleanVO,
     #[serde(default)]
     pub mandatory_imports: Vec<MandatoryImportRuleVO>,
+    #[serde(default)]
+    pub duplication_threshold: Option<f64>,
 }
