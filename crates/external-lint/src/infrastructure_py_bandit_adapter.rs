@@ -120,15 +120,18 @@ impl ILinterAdapterPort for BanditAdapter {
                         Some(v) => v,
                         None => 0,
                     };
-                    let test_id = f.get("test_id").and_then(|v| v.as_str()).unwrap_or("B000");
+                    let test_id = match f.get("test_id").and_then(|v| v.as_str()) {
+                        Some(v) => v,
+                        None => "B000",
+                    };
                     let issue_text = match f.get("issue_text").and_then(|v| v.as_str()) {
                         Some(s) => s,
                         None => "",
                     };
-                    let issue_severity = f
-                        .get("issue_severity")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("MEDIUM");
+                    let issue_severity = match f.get("issue_severity").and_then(|v| v.as_str()) {
+                        Some(v) => v,
+                        None => "MEDIUM",
+                    };
 
                     let resolved = self.path_norm.resolve_infrastructure_path(
                         match FilePath::new(filename.to_string()) {

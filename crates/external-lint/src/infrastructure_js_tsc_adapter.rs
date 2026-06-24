@@ -69,16 +69,25 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
                 || current.join("package.json").is_file()
                 || current.join(".git").is_dir()
             {
-                return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
+                return match FilePath::new(current.to_string_lossy().to_string()) {
+                    Ok(fp) => fp,
+                    Err(_) => FilePath::default(),
+                };
             }
             match current.parent() {
                 Some(parent) => current = parent.to_path_buf(),
                 None => break,
             }
         }
-        return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
+        return match FilePath::new(current.to_string_lossy().to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        };
     }
-    FilePath::new(".".to_string()).unwrap_or_default()
+    match FilePath::new(".".to_string()) {
+        Ok(fp) => fp,
+        Err(_) => FilePath::default(),
+    }
 }
 
 pub struct TSCAdapter {
@@ -170,10 +179,13 @@ impl ILinterAdapterPort for TSCAdapter {
                     Some(m) => m.as_str().to_string(),
                     None => String::new(),
                 };
-                let line_num = caps
+                let line_num = match caps
                     .get(2)
                     .and_then(|m| m.as_str().parse::<usize>().ok())
-                    .unwrap_or(1);
+                {
+                    Some(v) => v,
+                    None => 1,
+                };
                 let col_num = match caps.get(3).and_then(|m| m.as_str().parse::<usize>().ok()) {
                     Some(v) => v,
                     None => 0,
@@ -188,7 +200,10 @@ impl ILinterAdapterPort for TSCAdapter {
                 };
 
                 let filename_vo = self.path_norm.resolve_infrastructure_path(
-                    FilePath::new(filename).unwrap_or_default(),
+                    match FilePath::new(filename) {
+                        Ok(fp) => fp,
+                        Err(_) => FilePath::default(),
+                    },
                     Some(path.clone()),
                 );
 

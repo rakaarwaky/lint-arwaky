@@ -56,7 +56,10 @@ impl CargoAuditAdapter {
             }
         }
 
-        FilePath::new("nonexistent_directory_for_cargo_lock".to_string()).unwrap_or_default()
+        match FilePath::new("nonexistent_directory_for_cargo_lock".to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        }
     }
 }
 
@@ -124,12 +127,10 @@ impl ILinterAdapterPort for CargoAuditAdapter {
         for vuln in &report.vulnerabilities.list {
             let id = vuln.advisory.id.to_string();
             let title = &vuln.advisory.title;
-            let severity_str = vuln
-                .advisory
-                .cvss
-                .as_ref()
-                .map(|c| c.severity().to_string().to_lowercase())
-                .unwrap_or_else(|| "moderate".to_string());
+            let severity_str = match vuln.advisory.cvss.as_ref() {
+                Some(c) => c.severity().to_string().to_lowercase(),
+                None => "moderate".to_string(),
+            };
 
             let severity = match severity_str.as_str() {
                 "critical" => Severity::CRITICAL,
@@ -139,7 +140,10 @@ impl ILinterAdapterPort for CargoAuditAdapter {
             };
 
             let resolved = self.path_norm.resolve_infrastructure_path(
-                FilePath::new("Cargo.lock".to_string()).unwrap_or_else(|_| path.clone()),
+                match FilePath::new("Cargo.lock".to_string()) {
+                    Ok(fp) => fp,
+                    Err(_) => path.clone(),
+                },
                 Some(path.clone()),
             );
             results.push(LintResult {

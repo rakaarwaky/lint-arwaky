@@ -57,18 +57,26 @@ impl RustLinterAdapter {
             }
         } else if let Some(parent) = current.parent() {
             if parent.join("Cargo.toml").exists() {
-                return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
-                    .unwrap_or_else(|_| path.clone());
+                return match FilePath::new(parent.to_string_lossy().replace('\\', "/")) {
+                    Ok(fp) => fp,
+                    Err(_) => path.clone(),
+                };
             }
             if let Some(grandparent) = parent.parent() {
                 if grandparent.join("Cargo.toml").exists() {
-                    return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
-                        .unwrap_or_else(|_| path.clone());
+                    return match FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
+                    {
+                        Ok(fp) => fp,
+                        Err(_) => path.clone(),
+                    };
                 }
             }
         }
 
-        FilePath::new("nonexistent_directory_for_cargo_toml".to_string()).unwrap_or_default()
+        match FilePath::new("nonexistent_directory_for_cargo_toml".to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        }
     }
 }
 
@@ -132,33 +140,32 @@ impl ILinterAdapterPort for RustLinterAdapter {
                         Some(m) => m,
                         None => continue,
                     };
-                    let level = msg
-                        .get("level")
-                        .and_then(|l| l.as_str())
-                        .unwrap_or("warning")
-                        .to_lowercase();
-                    let code = msg
+                    let level = match msg.get("level").and_then(|l| l.as_str()) {
+                        Some(l) => l.to_lowercase(),
+                        None => "warning".to_string(),
+                    };
+                    let code = match msg
                         .get("code")
                         .and_then(|c| c.get("code"))
                         .and_then(|c| c.as_str())
-                        .unwrap_or("clippy::warning")
-                        .to_string();
-                    let message_text = msg
-                        .get("message")
-                        .and_then(|m| m.as_str())
-                        .unwrap_or("Clippy finding")
-                        .to_string();
-                    let spans: Vec<Value> = msg
-                        .get("spans")
-                        .and_then(|s| s.as_array())
-                        .cloned()
-                        .unwrap_or_default();
+                    {
+                        Some(c) => c.to_string(),
+                        None => "clippy::warning".to_string(),
+                    };
+                    let message_text = match msg.get("message").and_then(|m| m.as_str()) {
+                        Some(m) => m.to_string(),
+                        None => "Clippy finding".to_string(),
+                    };
+                    let spans: Vec<Value> = match msg.get("spans").and_then(|s| s.as_array()) {
+                        Some(s) => s.clone(),
+                        None => Vec::new(),
+                    };
 
                     for span in &spans {
-                        let is_primary = span
-                            .get("is_primary")
-                            .and_then(|v| v.as_bool())
-                            .unwrap_or(false);
+                        let is_primary = match span.get("is_primary").and_then(|v| v.as_bool()) {
+                            Some(v) => v,
+                            None => false,
+                        };
                         if !is_primary {
                             continue;
                         }
@@ -167,15 +174,20 @@ impl ILinterAdapterPort for RustLinterAdapter {
                             _ => continue,
                         };
                         let resolved_file = self.path_norm.resolve_infrastructure_path(
-                            FilePath::new(filename.to_string()).unwrap_or_else(|_| path.clone()),
+                            match FilePath::new(filename.to_string()) {
+                                Ok(fp) => fp,
+                                Err(_) => path.clone(),
+                            },
                             Some(path.clone()),
                         );
-                        let line_num =
-                            span.get("line_start").and_then(|v| v.as_u64()).unwrap_or(1) as i64;
-                        let column_num = span
-                            .get("column_start")
-                            .and_then(|v| v.as_u64())
-                            .unwrap_or(1) as i64;
+                        let line_num = match span.get("line_start").and_then(|v| v.as_u64()) {
+                            Some(v) => v as i64,
+                            None => 1,
+                        };
+                        let column_num = match span.get("column_start").and_then(|v| v.as_u64()) {
+                            Some(v) => v as i64,
+                            None => 1,
+                        };
                         let severity = if level == "error" {
                             Severity::HIGH
                         } else {

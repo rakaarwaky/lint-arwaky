@@ -70,16 +70,25 @@ fn resolve_working_dir(path: &FilePath) -> FilePath {
                 || current.join("package.json").is_file()
                 || current.join(".git").is_dir()
             {
-                return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
+                return match FilePath::new(current.to_string_lossy().to_string()) {
+                    Ok(fp) => fp,
+                    Err(_) => FilePath::default(),
+                };
             }
             match current.parent() {
                 Some(parent) => current = parent.to_path_buf(),
                 None => break,
             }
         }
-        return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
+        return match FilePath::new(current.to_string_lossy().to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        };
     }
-    FilePath::new(".".to_string()).unwrap_or_default()
+    match FilePath::new(".".to_string()) {
+        Ok(fp) => fp,
+        Err(_) => FilePath::default(),
+    }
 }
 
 pub struct ESLintAdapter {
@@ -175,7 +184,10 @@ impl ILinterAdapterPort for ESLintAdapter {
                     None => String::new(),
                 };
                 let filename_vo = self.path_norm.resolve_infrastructure_path(
-                    FilePath::new(filename).unwrap_or_default(),
+                    match FilePath::new(filename) {
+                        Ok(fp) => fp,
+                        Err(_) => FilePath::default(),
+                    },
                     Some(path.clone()),
                 );
 
@@ -197,7 +209,10 @@ impl ILinterAdapterPort for ESLintAdapter {
                             Some(s) => s.to_string(),
                             None => String::new(),
                         };
-                        let sev_code = msg["severity"].as_u64().unwrap_or(1);
+                        let sev_code = match msg["severity"].as_u64() {
+                            Some(v) => v,
+                            None => 1,
+                        };
 
                         let severity = if sev_code == 2 {
                             Severity::HIGH

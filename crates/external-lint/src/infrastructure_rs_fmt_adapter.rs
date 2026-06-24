@@ -54,17 +54,25 @@ impl RustFmtAdapter {
             }
         } else if let Some(parent) = current.parent() {
             if parent.join("Cargo.toml").exists() {
-                return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
-                    .unwrap_or_else(|_| path.clone());
+                return match FilePath::new(parent.to_string_lossy().replace('\\', "/")) {
+                    Ok(fp) => fp,
+                    Err(_) => path.clone(),
+                };
             }
             if let Some(grandparent) = parent.parent() {
                 if grandparent.join("Cargo.toml").exists() {
-                    return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
-                        .unwrap_or_else(|_| path.clone());
+                    return match FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
+                    {
+                        Ok(fp) => fp,
+                        Err(_) => path.clone(),
+                    };
                 }
             }
         }
-        FilePath::new("nonexistent_directory_for_cargo_toml".to_string()).unwrap_or_default()
+        match FilePath::new("nonexistent_directory_for_cargo_toml".to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        }
     }
 }
 
@@ -124,7 +132,10 @@ impl ILinterAdapterPort for RustFmtAdapter {
 
             if line.starts_with('+') && !line.starts_with("+++") {
                 let resolved = self.path_norm.resolve_infrastructure_path(
-                    FilePath::new(current_file.clone()).unwrap_or_else(|_| path.clone()),
+                    match FilePath::new(current_file.clone()) {
+                        Ok(fp) => fp,
+                        Err(_) => path.clone(),
+                    },
                     Some(path.clone()),
                 );
                 results.push(LintResult {
@@ -143,7 +154,10 @@ impl ILinterAdapterPort for RustFmtAdapter {
 
         if results.is_empty() {
             results.push(LintResult {
-                file: FilePath::new("Cargo.toml".to_string()).unwrap_or_default(),
+                file: match FilePath::new("Cargo.toml".to_string()) {
+                    Ok(fp) => fp,
+                    Err(_) => FilePath::default(),
+                },
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw("rustfmt::unformatted"),
