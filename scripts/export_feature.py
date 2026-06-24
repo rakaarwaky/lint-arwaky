@@ -35,10 +35,10 @@ def resolve_workspace() -> tuple[Path, Path, Path]:
 
 
 def list_feature_crates(crates_dir: Path) -> list[str]:
-    """Sorted list of crate directory names that contain a Cargo.toml, excluding 'shared'."""
+    """Sorted list of crate directory names that contain a Cargo.toml."""
     feature_crates = []
     for entry in crates_dir.iterdir():
-        if entry.is_dir() and entry.name != "shared" and (entry / CARGO_TOML).exists():
+        if entry.is_dir() and (entry / CARGO_TOML).exists():
             feature_crates.append(entry.name)
     return sorted(feature_crates)
 
