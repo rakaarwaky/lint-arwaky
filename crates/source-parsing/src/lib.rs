@@ -1,7 +1,6 @@
 // PURPOSE: Module declarations for source-parsing (scanners, parsers, collectors, providers)
 
-pub mod infrastructure_file_collector;
-pub use infrastructure_file_collector::{
+pub use shared::source_parsing::{
     collect_all_source_files, count_loc, walk_rs_files, FileCollectorProvider,
 };
 pub mod infrastructure_language_detector;

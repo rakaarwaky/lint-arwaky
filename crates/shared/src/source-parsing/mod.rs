@@ -13,3 +13,7 @@ pub mod taxonomy_parser_error;
 pub mod taxonomy_path_vo;
 pub mod taxonomy_paths_vo;
 pub mod taxonomy_semantic_error;
+pub mod infrastructure_file_collector_provider;
+pub use infrastructure_file_collector_provider::{
+    collect_all_source_files, count_loc, walk_rs_files, FileCollectorProvider,
+};

@@ -136,11 +136,9 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 name = "auto_fix-lint-arwaky"
 version = "1.10.14"
 dependencies = [
- "code_analysis-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
 ]
 
 [[package]]
@@ -359,26 +357,16 @@ version = "1.10.14"
 dependencies = [
  "anyhow",
  "async-trait",
- "auto_fix-lint-arwaky",
  "clap",
- "code_analysis-lint-arwaky",
- "config_system-lint-arwaky",
  "console",
  "ctrlc",
  "dialoguer",
  "dirs",
- "external_lint-lint-arwaky",
- "file_watch-lint-arwaky",
  "futures",
- "git_hooks-lint-arwaky",
- "import_rules-lint-arwaky",
- "orphan_detector-lint-arwaky",
- "project_setup-lint-arwaky",
  "serde",
  "serde_json",
  "serde_yaml",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -454,12 +442,10 @@ version = "1.10.14"
 dependencies = [
  "async-trait",
  "dirs",
- "import_rules-lint-arwaky",
  "serde",
  "serde_json",
  "serde_yaml",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
  "toml 1.1.2+spec-1.1.0",
 ]
 
@@ -759,7 +745,6 @@ version = "1.10.14"
 dependencies = [
  "anyhow",
  "async-trait",
- "code_analysis-lint-arwaky",
  "dirs",
  "futures",
  "regex",
@@ -767,7 +752,6 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
  "tokio",
  "tracing",
 ]
@@ -798,7 +782,6 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
  "tokio",
 ]
 
@@ -1026,7 +1009,6 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
 ]
 
 [[package]]
@@ -2489,9 +2471,6 @@ version = "1.10.14"
 dependencies = [
  "anyhow",
  "async-trait",
- "cli_commands-lint-arwaky",
- "code_analysis-lint-arwaky",
- "external_lint-lint-arwaky",
  "once_cell",
  "regex",
  "rmcp",
@@ -2499,7 +2478,6 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
  "tokio",
  "tracing",
 ]

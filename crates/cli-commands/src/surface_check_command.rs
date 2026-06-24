@@ -4,13 +4,19 @@ use std::sync::Arc;
 
 use std::process::ExitCode;
 
-use code_analysis::resolve_target;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::code_analysis::contract_lint_aggregate::IArchLintAggregate;
+use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
+use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 pub type OrchestratorFactory = Arc<
@@ -25,12 +31,10 @@ pub struct CheckContext {
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    pub scanner_provider:
-        Arc<dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort>,
-    pub orphan_orchestrator:
-        Arc<dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate>,
-    pub language_detector:
-        Arc<dyn shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort>,
+    pub scanner_provider: Arc<dyn IScannerProviderPort>,
+    pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
+    pub language_detector: Arc<dyn ILanguageDetectorPort>,
 }
 
 pub struct CheckCommandsSurface {
@@ -39,10 +43,10 @@ pub struct CheckCommandsSurface {
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    pub scanner_provider:
-        Arc<dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort>,
-    pub orphan_orchestrator:
-        Arc<dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate>,
+    pub scanner_provider: Arc<dyn IScannerProviderPort>,
+    pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
+    pub multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
     pub factory: Option<OrchestratorFactory>,
 }
 
@@ -53,12 +57,9 @@ impl CheckCommandsSurface {
         import_orchestrator: Arc<dyn IImportRunnerAggregate>,
         naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
         role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-        scanner_provider: Arc<
-            dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort,
-        >,
-        orphan_orchestrator: Arc<
-            dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate,
-        >,
+        scanner_provider: Arc<dyn IScannerProviderPort>,
+        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+        layer_detector: Arc<dyn ILayerDetectionAggregate>,
     ) -> Self {
         Self {
             external_lint,
@@ -68,6 +69,8 @@ impl CheckCommandsSurface {
             role_orchestrator,
             scanner_provider,
             orphan_orchestrator,
+            layer_detector,
+            multi_project_orchestrator: None,
             factory: None,
         }
     }
@@ -78,12 +81,10 @@ impl CheckCommandsSurface {
         import_orchestrator: Arc<dyn IImportRunnerAggregate>,
         naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
         role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-        scanner_provider: Arc<
-            dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort,
-        >,
-        orphan_orchestrator: Arc<
-            dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate,
-        >,
+        scanner_provider: Arc<dyn IScannerProviderPort>,
+        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+        layer_detector: Arc<dyn ILayerDetectionAggregate>,
+        multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
         factory: OrchestratorFactory,
     ) -> Self {
         Self {
@@ -94,12 +95,14 @@ impl CheckCommandsSurface {
             role_orchestrator,
             scanner_provider,
             orphan_orchestrator,
+            layer_detector,
+            multi_project_orchestrator,
             factory: Some(factory),
         }
     }
 
     /// Run AES analysis + external adapters on a target path.
-    pub fn scan(&self, path: &str, filter: Option<&str>) {
+    pub fn scan(&self, path: &str, filter: Option<&str>, config: ArchitectureConfig) {
         let path_obj = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
             Err(_) => match FilePath::new(".".to_string()) {
@@ -114,22 +117,6 @@ impl CheckCommandsSurface {
                 return;
             }
         };
-
-        // Load config from project root
-        let config_container = config_system::root_config_system_container::ConfigContainer::new();
-        let config = rt
-            .block_on(
-                config_container
-                    .orchestrator()
-                    .load_project_config(&path_obj),
-            )
-            .config;
-        let ignored_paths: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.clone())
-            .collect();
 
         // Determine dynamic orchestrators based on detected language config
         let (arch_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
@@ -180,11 +167,6 @@ impl CheckCommandsSurface {
         all_results.extend(role_results);
 
         // 5. Run orphan detection — always scan entire workspace for cross-folder import graph
-        let orphan_container =
-            orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_ignored(
-                ignored_paths.clone(),
-            );
-        // Use workspace root (.) for orphan detection — captures crates/, packages/, modules/
         let dir_path = match DirectoryPath::new(".".to_string()) {
             Ok(dp) => dp,
             Err(_) => DirectoryPath::default(),
@@ -199,7 +181,7 @@ impl CheckCommandsSurface {
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         let orphan_results = self.orphan_orchestrator.check_orphans(
-            orphan_container.layer_detector().as_ref(),
+            self.layer_detector.as_ref(),
             &file_strs,
             ".",
         );
@@ -221,41 +203,6 @@ impl CheckCommandsSurface {
     /// Still needs to scan all files to build import graph for reachability analysis.
     pub fn check_orphan_single_file(&self, file_path: &str) {
         let path_obj = std::path::Path::new(file_path);
-        let root_dir = if path_obj.is_file() {
-            let parent = match path_obj.parent() {
-                Some(p) => p,
-                None => path_obj,
-            };
-            parent.to_string_lossy().to_string()
-        } else {
-            file_path.to_string()
-        };
-
-        let path_obj_fp = match FilePath::new(root_dir.clone()) {
-            Ok(fp) => fp,
-            Err(_) => FilePath::default(),
-        };
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(r) => r,
-            Err(_) => {
-                eprintln!("[error] failed to create tokio runtime");
-                return;
-            }
-        };
-        let config_container = config_system::root_config_system_container::ConfigContainer::new();
-        let config = rt
-            .block_on(
-                config_container
-                    .orchestrator()
-                    .load_project_config(&path_obj_fp),
-            )
-            .config;
-        let ignored_paths: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.clone())
-            .collect();
 
         // Collect all source files from workspace root for cross-folder graph building
         let dir_path = match DirectoryPath::new(".".to_string()) {
@@ -284,12 +231,8 @@ impl CheckCommandsSurface {
         };
 
         // Run orphan detection
-        let orphan_container =
-            orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_ignored(
-                ignored_paths,
-            );
         let all_results = self.orphan_orchestrator.check_orphans(
-            orphan_container.layer_detector().as_ref(),
+            self.layer_detector.as_ref(),
             &file_strs,
             ".",
         );
@@ -324,8 +267,13 @@ impl CheckCommandsSurface {
             }
         };
 
-        let container = config_system::root_config_system_container::ConfigContainer::new();
-        let orchestrator = container.multi_project_orchestrator();
+        let orchestrator = match self.multi_project_orchestrator.as_ref() {
+            Some(o) => o.clone(),
+            None => {
+                eprintln!("[error] multi-project orchestrator not available");
+                return;
+            }
+        };
 
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
@@ -337,7 +285,8 @@ impl CheckCommandsSurface {
         let workspaces = rt.block_on(orchestrator.discover_workspaces(&path_obj));
 
         if workspaces.len() <= 1 {
-            self.scan(path, filter);
+            let default_config = ArchitectureConfig::default();
+            self.scan(path, filter, default_config);
             return;
         }
 
@@ -352,7 +301,7 @@ impl CheckCommandsSurface {
 
         // Collect ALL source files from scan root for cross-workspace orphan detection
         let all_source_files: Vec<String> =
-            source_parsing::collect_all_source_files(std::path::Path::new(path))
+            shared::source_parsing::collect_all_source_files(std::path::Path::new(path))
                 .iter()
                 .map(|f| f.value.clone())
                 .collect();
@@ -401,22 +350,10 @@ impl CheckCommandsSurface {
             let role_results = rt.block_on(role_orchestrator.run_audit(&ws.path));
             all_results.extend(role_results);
 
-            let ignored_paths: Vec<String> = ws
-                .config
-                .ignored_paths
-                .values
-                .iter()
-                .map(|fp| fp.value.clone())
-                .collect();
-
             // Orphan detection — scan across ALL workspaces so contracts in shared/
             // can find their implementations in other crates
-            let orphan_container =
-                orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_ignored(
-                    ignored_paths.clone(),
-                );
             let orphan_results = self.orphan_orchestrator.check_orphans(
-                orphan_container.layer_detector().as_ref(),
+                self.layer_detector.as_ref(),
                 &all_source_files,
                 &ws.path.value,
             );
@@ -490,11 +427,18 @@ pub fn handle_check(
     git_diff: bool,
     ctx: CheckContext,
     filter: Option<String>,
+    git_aggregate: Option<Arc<dyn GitHooksAggregate>>,
+    config: ArchitectureConfig,
 ) -> ExitCode {
-    let root = resolve_target(path);
+    let root = path.unwrap_or_else(|| ".".to_string());
     if git_diff {
-        let git_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
-        let git_aggregate = git_container.aggregate();
+        let git_agg = match git_aggregate {
+            Some(g) => g,
+            None => {
+                eprintln!("[error] git hooks not available");
+                return ExitCode::FAILURE;
+            }
+        };
         let rt = match tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
@@ -506,7 +450,7 @@ pub fn handle_check(
             }
         };
         rt.block_on(crate::surface_git_command::handle_git_diff(
-            git_aggregate,
+            git_agg,
             ctx.arch_linter.clone(),
             ctx.language_detector.clone(),
             "HEAD".to_string(),
@@ -520,8 +464,9 @@ pub fn handle_check(
             ctx.role_orchestrator,
             ctx.scanner_provider,
             ctx.orphan_orchestrator,
+            ctx.layer_detector,
         );
-        surface.scan(&root, filter.as_deref());
+        surface.scan(&root, filter.as_deref(), config);
         ExitCode::SUCCESS
     }
 }
@@ -535,16 +480,14 @@ pub fn handle_scan(
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     external_lint: Arc<dyn IExternalLintAggregate>,
     role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    scanner_provider: Arc<
-        dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort,
-    >,
-    orphan_orchestrator: Arc<
-        dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate,
-    >,
+    scanner_provider: Arc<dyn IScannerProviderPort>,
+    orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    layer_detector: Arc<dyn ILayerDetectionAggregate>,
+    multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
     factory: OrchestratorFactory,
     filter: Option<String>,
 ) -> ExitCode {
-    let root = resolve_target(path);
+    let root = path.unwrap_or_else(|| ".".to_string());
     let surface = CheckCommandsSurface::new_with_factory(
         external_lint,
         arch_linter,
@@ -553,6 +496,8 @@ pub fn handle_scan(
         role_orchestrator,
         scanner_provider,
         orphan_orchestrator,
+        layer_detector,
+        multi_project_orchestrator,
         factory,
     );
     surface.scan_with_discovery(&root, filter.as_deref());
@@ -565,7 +510,7 @@ pub fn handle_ci(
     threshold: u32,
 ) -> ExitCode {
     use shared::cli_commands::taxonomy_severity_vo::Severity;
-    let root = resolve_target(path);
+    let root = path.unwrap_or_else(|| ".".to_string());
     let results = arch_linter.run_lint(&root);
     let score = arch_linter.calc_score(&results);
     let effective_threshold = if threshold == 80 { 70 } else { threshold };

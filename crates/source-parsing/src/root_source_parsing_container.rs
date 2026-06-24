@@ -30,7 +30,7 @@ impl SourceParsingContainer {
             source_parser,
             path_normalization: path_norm.clone(),
             scanner_provider: Arc::new(
-                crate::infrastructure_file_collector::FileCollectorProvider::new(),
+                shared::source_parsing::FileCollectorProvider::new(),
             ),
             language_detector: lang_detector,
         }

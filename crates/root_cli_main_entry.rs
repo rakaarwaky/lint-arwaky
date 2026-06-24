@@ -50,8 +50,20 @@ fn main() -> ExitCode {
         );
     let external_lint_aggregate = external_lint_container.aggregate();
 
+    let config_container =
+        config_system::root_config_system_container::ConfigContainer::new();
+    let orphan_container =
+        orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+    let git_container =
+        git_hooks::root_git_hooks_container::GitContainer::new_default();
+
+    let layer_detector = orphan_container.layer_detector();
+    let git_aggregate = git_container.aggregate();
+    let multi_project_orchestrator = config_container.multi_project_orchestrator();
+
     let external_lint_aggregate_clone = external_lint_aggregate.clone();
     let source_parser_clone = source_parser.clone();
+    let layer_detector_clone = layer_detector.clone();
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
         let import_container =
             ImportContainer::new_with_config(config.clone(), source_parser_clone.clone());
@@ -80,6 +92,7 @@ fn main() -> ExitCode {
             role_orchestrator: role_container.orchestrator(),
             scanner_provider: source_parsing_container.scanner_provider(),
             orphan_orchestrator: orphan_container.analyzer(),
+            layer_detector: layer_detector_clone.clone(),
             language_detector: source_parsing_container.language_detector(),
         }
     });
@@ -116,12 +129,13 @@ fn main() -> ExitCode {
                 external_lint: external_lint_aggregate.clone(),
                 role_orchestrator: role_orchestrator.clone(),
                 scanner_provider: source_parsing_container.scanner_provider(),
-                orphan_orchestrator:
-                    orphan_detector::root_orphan_detector_container::OrphanContainer::new()
-                        .analyzer(),
+                orphan_orchestrator: orphan_container.analyzer(),
+                layer_detector: layer_detector.clone(),
                 language_detector: source_parsing_container.language_detector(),
             },
             filter,
+            Some(git_aggregate.clone()),
+            shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
         ),
         Commands::Scan { path } => surface_check_command::handle_scan(
             path,
@@ -131,7 +145,9 @@ fn main() -> ExitCode {
             external_lint_aggregate.clone(),
             role_orchestrator.clone(),
             source_parsing_container.scanner_provider(),
-            orphan_detector::root_orphan_detector_container::OrphanContainer::new().analyzer(),
+            orphan_container.analyzer(),
+            layer_detector.clone(),
+            Some(multi_project_orchestrator.clone()),
             factory,
             filter,
         ),
@@ -188,7 +204,8 @@ fn main() -> ExitCode {
                 naming_orchestrator.clone(),
                 role_orchestrator.clone(),
                 source_parsing_container.scanner_provider(),
-                orphan_detector::root_orphan_detector_container::OrphanContainer::new().analyzer(),
+                orphan_container.analyzer(),
+                layer_detector.clone(),
             );
             surface.check_orphan_single_file(&path);
             ExitCode::SUCCESS

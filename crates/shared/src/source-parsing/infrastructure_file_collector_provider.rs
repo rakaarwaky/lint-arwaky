@@ -1,14 +1,13 @@
-// PURPOSE: FileCollector — collects source files recursively with directory exclusion support
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use shared::config_system::taxonomy_config_vo::default_aes_config;
-use shared::file_system::taxonomy_filesystem_error::FileSystemError;
-use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
-use shared::source_parsing::taxonomy_file_collector_helper::is_path_ignored;
-use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::config_system::taxonomy_config_vo::default_aes_config;
+use crate::file_system::taxonomy_filesystem_error::FileSystemError;
+use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
+use crate::source_parsing::taxonomy_file_collector_helper::is_path_ignored;
+use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 
 pub struct FileCollectorProvider {}
 
@@ -90,7 +89,6 @@ fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) 
     }
 }
 
-/// Walk only .rs files recursively, calling `cb` for each.
 pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
@@ -107,7 +105,6 @@ pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]
     }
 }
 
-/// Count total lines in all .rs files under a directory.
 pub fn count_loc(path: &str) -> usize {
     let src = Path::new(path);
     let ignored = default_ignored_paths();
