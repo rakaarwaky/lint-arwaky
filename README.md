@@ -30,24 +30,24 @@ The project is its own first customer: running `lint-arwaky-cli check .` on the 
 
 ### What it does
 
-| Feature                | Description                                                                                            |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| **Multi-Language**     | Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon), JavaScript/TypeScript (ESLint, Prettier, TSC) |
-| **Architecture Audit** | 24 AES rules enforce clean architecture layer boundaries, naming, type safety, and dead code           |
-| **MCP Server**         | 5 tools for autonomous AI-agent integration over JSON-RPC 2.0                                          |
-| **Zero Bypass**        | `noqa`, `type: ignore`, and `#[allow(...)]` suppressions are detected and flagged (**AES304**)         |
-| **CI Ready**           | SARIF 2.1.0, JUnit XML, and JSON reports with proper exit codes                                        |
-| **Self-Auditing**      | The project lints itself under its own rule engine                                                     |
+| Feature                      | Description                                                                                                |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Multi-Language**     | Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon), JavaScript/TypeScript (ESLint, Prettier, TSC)     |
+| **Architecture Audit** | 24 AES rules enforce clean architecture layer boundaries, naming, type safety, and dead code               |
+| **MCP Server**         | 5 tools for autonomous AI-agent integration over JSON-RPC 2.0                                              |
+| **Zero Bypass**        | `noqa`, `type: ignore`, and `#[allow(...)]` suppressions are detected and flagged (**AES304**) |
+| **CI Ready**           | SARIF 2.1.0, JUnit XML, and JSON reports with proper exit codes                                            |
+| **Self-Auditing**      | The project lints itself under its own rule engine                                                         |
 
 ### Who it's for
 
-| Persona         | Use Case                                       | Start Here                         |
-| --------------- | ---------------------------------------------- | ---------------------------------- |
+| Persona               | Use Case                                       | Start Here                      |
+| --------------------- | ---------------------------------------------- | ------------------------------- |
 | **AI Agent**    | Autonomous linting, self-healing, code review  | [SKILL.md](SKILL.md)               |
 | **Developer**   | Lint codebases, enforce architecture           | [Quick Start](#usage) below        |
-| **DevOps / CI** | Quality gates, trend reports, dependency scans | `ci`, `check`                      |
+| **DevOps / CI** | Quality gates, trend reports, dependency scans | `ci`, `check`               |
 | **Contributor** | Extend adapters, add CLI commands              | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| **Reviewer**    | Architecture audit, code quality analysis      | `check`, `orphan`                  |
+| **Reviewer**    | Architecture audit, code quality analysis      | `check`, `orphan`           |
 
 ---
 
@@ -124,13 +124,13 @@ Lint Arwaky follows its own AES (Agentic Engineering System) specification — a
 
 Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[suffix].rs`
 
-| Layer (prefix)    | Allowed suffixes                                                                                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`, `_utility`, `_helper`                                                 |
-| `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                       |
-| `capabilities_`   | `_analyzer`, `_checker`, `_processor`, etc.                                                                              |
-| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.                                                                                |
-| `agent_`          | `_orchestrator`                                                                                                          |
+| Layer (prefix)      | Allowed suffixes                                                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`, `_utility`, `_helper`                                                         |
+| `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                                       |
+| `capabilities_`   | `_analyzer`, `_checker`, `_processor`, etc.                                                                                              |
+| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.                                                                                                |
+| `agent_`          | `_orchestrator`                                                                                                                              |
 | `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` |
 
 ### Feature folders (vertical slicing)
@@ -143,15 +143,15 @@ crates/
   file-watch/        auto-fix/
   maintenance/       mcp-server/           file-system/
   code-analysis/     source-parsing/
-  shared/            vscode-extension/
+  shared/          
 ```
 
 Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
 
 ### Adapters
 
-| Adapter                     | What it checks                    | Layer          |
-| --------------------------- | --------------------------------- | -------------- |
+| Adapter                       | What it checks                    | Layer          |
+| ----------------------------- | --------------------------------- | -------------- |
 | `ast_rust_scanner`          | Rust AST parsing                  | infrastructure |
 | `ast_py_scanner`            | Python AST parsing                | infrastructure |
 | `ast_js_scanner`            | JavaScript/TypeScript AST parsing | infrastructure |
@@ -174,8 +174,8 @@ The MCP server is bootstrapped by `crates/root_mcp_main_entry.rs`:
 
 ### MCP tools
 
-| Tool                            | Description                                                       |
-| ------------------------------- | ----------------------------------------------------------------- |
+| Tool                              | Description                                                       |
+| --------------------------------- | ----------------------------------------------------------------- |
 | `execute_command(action, args)` | Execute any CLI command with arguments. This is the primary tool. |
 | `list_commands(domain)`         | List all available CLI commands with descriptions.                |
 | `command_schema(tool_name)`     | Retrieve the JSON Schema for a registered MCP tool.               |
@@ -213,48 +213,48 @@ The CLI is implemented in `crates/cli-commands/src/surface_core_command.rs` (wit
 
 ### Core
 
-| Command                                                  | Description                                        |
-| -------------------------------------------------------- | -------------------------------------------------- |
-| `lint-arwaky-cli check [path] [--git-diff]`              | Run full architecture compliance analysis          |
-| `lint-arwaky-cli scan [path]`                            | Alias for `check` (CI-friendly)                    |
-| `lint-arwaky-cli fix [path]`                             | Apply safe fixes automatically                     |
-| `lint-arwaky-cli ci [path] --threshold <N>`              | CI mode with exit codes                            |
-| `lint-arwaky-cli orphan <path>`                          | Check if file is dead/unreachable code             |
+| Command                                       | Description                               |
+| --------------------------------------------- | ----------------------------------------- |
+| `lint-arwaky-cli check [path] [--git-diff]` | Run full architecture compliance analysis |
+| `lint-arwaky-cli scan [path]`               | Alias for`check` (CI-friendly)          |
+| `lint-arwaky-cli fix [path]`                | Apply safe fixes automatically            |
+| `lint-arwaky-cli ci [path] --threshold <N>` | CI mode with exit codes                   |
+| `lint-arwaky-cli orphan <path>`             | Check if file is dead/unreachable code    |
 
 ### Scans
 
-| Command                                 | Description                                  |
-| --------------------------------------- | -------------------------------------------- |
-| `lint-arwaky-cli security [path]`       | Bandit-style vulnerability scan              |
-| `lint-arwaky-cli duplicates [path]`     | 5-line block duplication detection           |
-| `lint-arwaky-cli dependencies [path]`   | Parse and list `Cargo.toml` dependencies     |
+| Command                                 | Description                               |
+| --------------------------------------- | ----------------------------------------- |
+| `lint-arwaky-cli security [path]`     | Bandit-style vulnerability scan           |
+| `lint-arwaky-cli duplicates [path]`   | 5-line block duplication detection        |
+| `lint-arwaky-cli dependencies [path]` | Parse and list`Cargo.toml` dependencies |
 
 ### Maintenance
 
-| Command                                | Description                                  |
-| -------------------------------------- | -------------------------------------------- |
-| `lint-arwaky-cli maintenance doctor`   | Environment diagnostics (Rust toolchain)     |
+| Command                                | Description                              |
+| -------------------------------------- | ---------------------------------------- |
+| `lint-arwaky-cli maintenance doctor` | Environment diagnostics (Rust toolchain) |
 
 ### Setup
 
-| Command                                                                   | Description                                           |
-| ------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `lint-arwaky-cli setup init`                                              | Create a default `lint_arwaky.config.yaml`            |
-| `lint-arwaky-cli setup install [--sudo]`                                  | Install linter adapter dependencies                   |
+| Command                                                                  | Description                                           |
+| ------------------------------------------------------------------------ | ----------------------------------------------------- |
+| `lint-arwaky-cli setup init`                                           | Create a default`lint_arwaky.config.yaml`           |
+| `lint-arwaky-cli setup install [--sudo]`                               | Install linter adapter dependencies                   |
 | `lint-arwaky-cli setup mcp-config --client <claude\|vscode\|hermes\|all>` | Print MCP config for AI clients                       |
-| `lint-arwaky-cli setup hermes [--remove]`                                 | Add/remove the `[mcp.lint-arwaky]` section in Hermes  |
+| `lint-arwaky-cli setup hermes [--remove]`                              | Add/remove the`[mcp.lint-arwaky]` section in Hermes |
 
 ### Dev & Info
 
-| Command                                       | Description                                                |
-| --------------------------------------------- | ---------------------------------------------------------- |
-| `lint-arwaky-cli git-diff [--base <ref>]`     | List files changed since base ref (default `HEAD`)         |
-| `lint-arwaky-cli watch [path]`                | Watch path for changes and re-lint (inotify-based)         |
-| `lint-arwaky-cli install-hook`                | Install `lint-arwaky-cli check .` as a git pre-commit hook |
-| `lint-arwaky-cli uninstall-hook`              | Remove the installed git pre-commit hook                   |
-| `lint-arwaky-cli adapters`                    | List active linter adapters                                |
-| `lint-arwaky-cli config show`                 | Show active configuration                                  |
-| `lint-arwaky-cli version`                     | Show version                                               |
+| Command                                     | Description                                                 |
+| ------------------------------------------- | ----------------------------------------------------------- |
+| `lint-arwaky-cli git-diff [--base <ref>]` | List files changed since base ref (default`HEAD`)         |
+| `lint-arwaky-cli watch [path]`            | Watch path for changes and re-lint (inotify-based)          |
+| `lint-arwaky-cli install-hook`            | Install`lint-arwaky-cli check .` as a git pre-commit hook |
+| `lint-arwaky-cli uninstall-hook`          | Remove the installed git pre-commit hook                    |
+| `lint-arwaky-cli adapters`                | List active linter adapters                                 |
+| `lint-arwaky-cli config show`             | Show active configuration                                   |
+| `lint-arwaky-cli version`                 | Show version                                                |
 
 ---
 
@@ -287,11 +287,11 @@ Path project dimasukkan sekali di startup, lalu navigasi folder dan jalanin peri
 
 ### Panels
 
-| Panel | Isi |
-|-------|-----|
-| Kiri | Directory tree |
+| Panel  | Isi                                        |
+| ------ | ------------------------------------------ |
+| Kiri   | Directory tree                             |
 | Tengah | File list + layer AES badges (warna-coded) |
-| Kanan | File preview / hasil lint |
+| Kanan  | File preview / hasil lint                  |
 
 Setiap file dikasih **layer badge** warna:
 `[taxonomy]` cyan, `[contract]` blue, `[capabilities]` magenta, `[infra]` yellow, `[agent]` green, `[surface]` red, `[root]` white.
@@ -299,42 +299,45 @@ Setiap file dikasih **layer badge** warna:
 ### Shortcuts (always visible at bottom bar)
 
 #### Navigation
-| Key | Action |
-|-----|--------|
-| `j`/`k` | Gerak atas/bawah |
-| `h` | Back (parent dir) |
-| `l` / `Enter` | Buka folder / preview |
-| `gg` / `G` | Lompat awal/akhir |
-| `/` | Cari file |
-| Tab | Cycle panel focus |
-| Mouse click | Pilih item / fokus panel |
-| Scroll wheel | Scroll panel |
+
+| Key               | Action                   |
+| ----------------- | ------------------------ |
+| `j`/`k`       | Gerak atas/bawah         |
+| `h`             | Back (parent dir)        |
+| `l` / `Enter` | Buka folder / preview    |
+| `gg` / `G`    | Lompat awal/akhir        |
+| `/`             | Cari file                |
+| Tab               | Cycle panel focus        |
+| Mouse click       | Pilih item / fokus panel |
+| Scroll wheel      | Scroll panel             |
 
 #### Actions (on selected file/folder)
-| Key | Action | CLI Equivalent |
-|-----|--------|----------------|
-| `c` | **check** — full AES compliance | `check [path]` |
-| `s` | **scan** — multi-adapter scan | `scan [path]` |
-| `f` | **fix** — auto-fix (toggle dry-run) | `fix [path]` |
-| `t` | **ci** — CI mode (input threshold) | `ci [path] --threshold N` |
-| `w` | **watch** — real-time file watch | `watch [path]` |
-| `o` | **orphan** — dead code check | `orphan [path]` |
-| `^S` | **security** — vulnerability scan | `security [path]` |
-| `^D` | **duplicates** — duplication detection | `duplicates [path]` |
-| `^P` | **dependencies** — library vulnerability | `dependencies [path]` |
-| `d` | **doctor** — environment diagnosis | `maintenance doctor` |
-| `i` | **init** — create default config | `setup init` |
-| `I` | **install** — install adapter deps | `setup install` |
-| `m` | **mcp-config** — print MCP config | `setup mcp-config` |
-| `C` | **config-show** — show active config | `config show` |
-| `H` | **install-hook** — git hook install | `install-hook` |
-| `U` | **uninstall-hook** — git hook remove | `uninstall-hook` |
-| `a` | **adapters** — list active adapters | `adapters` |
-| `v` | **version** — show version | `version` |
-| `?` | Help overlay | — |
-| `q` | Quit | — |
+
+| Key    | Action                                          | CLI Equivalent              |
+| ------ | ----------------------------------------------- | --------------------------- |
+| `c`  | **check** — full AES compliance          | `check [path]`            |
+| `s`  | **scan** — multi-adapter scan            | `scan [path]`             |
+| `f`  | **fix** — auto-fix (toggle dry-run)      | `fix [path]`              |
+| `t`  | **ci** — CI mode (input threshold)       | `ci [path] --threshold N` |
+| `w`  | **watch** — real-time file watch         | `watch [path]`            |
+| `o`  | **orphan** — dead code check             | `orphan [path]`           |
+| `^S` | **security** — vulnerability scan        | `security [path]`         |
+| `^D` | **duplicates** — duplication detection   | `duplicates [path]`       |
+| `^P` | **dependencies** — library vulnerability | `dependencies [path]`     |
+| `d`  | **doctor** — environment diagnosis       | `maintenance doctor`      |
+| `i`  | **init** — create default config         | `setup init`              |
+| `I`  | **install** — install adapter deps       | `setup install`           |
+| `m`  | **mcp-config** — print MCP config        | `setup mcp-config`        |
+| `C`  | **config-show** — show active config     | `config show`             |
+| `H`  | **install-hook** — git hook install      | `install-hook`            |
+| `U`  | **uninstall-hook** — git hook remove     | `uninstall-hook`          |
+| `a`  | **adapters** — list active adapters      | `adapters`                |
+| `v`  | **version** — show version               | `version`                 |
+| `?`  | Help overlay                                    | —                          |
+| `q`  | Quit                                            | —                          |
 
 #### Mouse support
+
 Semua elemen bisa diklik: file list, action buttons, panel focus. Scroll wheel untuk scroll.
 
 ### Run
@@ -352,13 +355,13 @@ cargo run --bin lint-arwaky-tui
 | Metric             | Value                                                                                               |
 | ------------------ | --------------------------------------------------------------------------------------------------- |
 | Language           | Rust 2021 edition                                                                                   |
-| Crate              | `lint_arwaky` (library)                                                                             |
-| Binaries           | `lint-arwaky-cli`, `lint-arwaky-mcp`, `lint-arwaky-tui`                                             |
-| Source files       | 270+ (across 6 layers + 3 entry points + `lib.rs`)                                                  |
+| Crate              | `lint_arwaky` (library)                                                                           |
+| Binaries           | `lint-arwaky-cli`, `lint-arwaky-mcp`, `lint-arwaky-tui`                                       |
+| Source files       | 270+ (across 6 layers + 3 entry points +`lib.rs`)                                                 |
 | Layers             | 7 (taxonomy, contract, capabilities, infrastructure, agent, surfaces, root)                         |
 | AES rules enforced | 24 (5 groups: Naming, Import, Quality, Role, Orphan)                                                |
 | Linter adapters    | 9 (Rust AST + Clippy, Python AST + Ruff + MyPy + Bandit + Metrics, JS/TS AST + ESLint/Prettier/TSC) |
 | MCP tools          | 5 (execute_command, list_commands, commands_schema, read_skill_context, health_check)               |
-| CLI subcommands    | 15+ across core/scans/maintenance/setup/dev               |
-| Report formats     | `text`, `json`, `sarif` 2.1.0, `junit` XML                                                          |
-| Self-lint target   | `crates/` scanned under the same rules the project enforces                                         |
+| CLI subcommands    | 15+ across core/scans/maintenance/setup/dev                                                         |
+| Report formats     | `text`, `json`, `sarif` 2.1.0, `junit` XML                                                  |
+| Self-lint target   | `crates/` scanned under the same rules the project enforces                                       |
