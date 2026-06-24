@@ -4,14 +4,14 @@
 The output includes the crate's own source, its Cargo.toml, and any shared
 crate modules transitively reachable through `shared::...` import paths.
 """
-import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
-# Reused literals (S1192)
 CARGO_TOML = "Cargo.toml"
-VERSION_PATTERN = re.compile(r'(?m)^version\s*=\s*"([^"]+)"')
+VERSION_PATTERN = re.compile(r'(?m)^\[package\].*?^version\s*=\s*"([^"]+)"', re.MULTILINE | re.DOTALL)
+WORKSPACE_VERSION_PATTERN = re.compile(r'(?m)^\[package\].*?version\.workspace\s*=\s*true', re.MULTILINE | re.DOTALL)
 DECL_PATTERN = re.compile(
     r'\bpub(?:\([^)]+\))?\s+(struct|enum|trait|type|fn|const|static|mod)\s+(\w+)'
 )
@@ -75,19 +75,35 @@ def prompt_crate(feature_crates: list[str]) -> str:
 
 
 def read_crate_version(crate_path: Path, fallback: str = "0.1.0") -> str:
-    """Parse the `version = "..."` line from Cargo.toml, falling back on error."""
     cargo_toml_path = crate_path / CARGO_TOML
     if not cargo_toml_path.exists():
         return fallback
 
     try:
-        content = cargo_toml_path.read_text(errors="ignore")
+        content = cargo_toml_path.read_text(encoding="utf-8", errors="replace")
     except OSError as e:
         print(f"Warning: Could not read {cargo_toml_path} ({e}). Defaulting to {fallback}.")
         return fallback
 
-    match = VERSION_PATTERN.search(content)
-    return match.group(1) if match else fallback
+    if WORKSPACE_VERSION_PATTERN.search(content):
+        print(f"Note: Using workspace version for {crate_path.name}")
+        return "workspace"
+
+    in_package = False
+    for line in content.splitlines():
+        stripped = line.strip()
+        if stripped == "[package]":
+            in_package = True
+            continue
+        if stripped.startswith("[") and in_package:
+            in_package = False
+            continue
+        if in_package:
+            match = re.match(r'^version\s*=\s*"([^"]+)"', stripped)
+            if match:
+                return match.group(1)
+
+    return fallback
 
 
 def sanitize_version(version: str) -> str:
@@ -97,7 +113,6 @@ def sanitize_version(version: str) -> str:
 
 
 def index_shared_module(shared_src_dir: Path) -> tuple[dict[str, list[Path]], dict[str, list[Path]]]:
-    """Walk shared/src and return (module_to_files, symbol_to_files) indices."""
     module_to_files: dict[str, list[Path]] = {}
     symbol_to_files: dict[str, list[Path]] = {}
 
@@ -114,7 +129,7 @@ def index_shared_module(shared_src_dir: Path) -> tuple[dict[str, list[Path]], di
         module_to_files.setdefault(mod_name, []).append(f)
 
         try:
-            content = f.read_text(errors="ignore")
+            content = f.read_text(encoding="utf-8", errors="replace")
         except OSError as e:
             print(f"Warning: Failed to index file {f} ({e})")
             continue
@@ -137,47 +152,62 @@ def resolve_dependency_files(
     module_to_files: dict[str, list[Path]],
     symbol_to_files: dict[str, list[Path]],
 ) -> set[Path]:
-    """Resolve a `shared::a::b` path to a set of .rs files (best-match scoring)."""
     resolved: set[Path] = set()
     for comp in components:
         if comp in module_to_files:
-            resolved.update(module_to_files[comp])
+            files = module_to_files[comp]
+            if len(files) == 1:
+                resolved.add(files[0])
+            else:
+                scored = _score_files(files, components)
+                scored.sort(key=lambda item: item[0], reverse=True)
+                if scored and scored[0][0] > 0:
+                    best_score = scored[0][0]
+                    resolved.update(f for score, f in scored if score == best_score)
+                else:
+                    resolved.add(files[0])
 
         if comp in symbol_to_files:
             files = symbol_to_files[comp]
             if len(files) == 1:
                 resolved.add(files[0])
-            elif len(files) > 1:
+            else:
                 scored = _score_files(files, components)
                 scored.sort(key=lambda item: item[0], reverse=True)
-                best_score = scored[0][0]
-                if best_score > 0:
+                if scored and scored[0][0] > 0:
+                    best_score = scored[0][0]
                     resolved.update(f for score, f in scored if score == best_score)
                 else:
-                    resolved.update(files)
+                    resolved.add(files[0])
     return resolved
 
 
 def _score_files(files: list[Path], components: list[str]) -> list[tuple[int, Path]]:
-    """Return (path-component-match-count, file) pairs for ranking candidates."""
     scored: list[tuple[int, Path]] = []
     for f in files:
         f_parts = [p.replace("-", "_") for p in f.parts]
-        score = sum(1 for c in components if c in f_parts)
+        score = 0
+        for i, c in enumerate(components):
+            if c in f_parts:
+                score += len(components) - i
         scored.append((score, f))
     return scored
 
 
 def collect_crate_files(crate_path: Path) -> set[Path]:
-    """Return Cargo.toml plus every file under the crate's src/ tree."""
     files: set[Path] = set()
     src_dir = crate_path / "src"
-    all_files_pattern = "*"  # rglob pattern: match every entry
-    for f in crate_path.rglob(all_files_pattern):
-        if not f.is_file():
-            continue
-        if f.name == CARGO_TOML or src_dir in f.parents:
+    important_files = {CARGO_TOML, "build.rs", "README.md", "LICENSE", "LICENSE-MIT", "LICENSE-APACHE"}
+    
+    for f in crate_path.iterdir():
+        if f.is_file() and f.name in important_files:
             files.add(f)
+    
+    if src_dir.exists():
+        for f in src_dir.rglob("*"):
+            if f.is_file():
+                files.add(f)
+    
     return files
 
 
@@ -200,14 +230,16 @@ def scan_shared_imports(
     module_to_files: dict[str, list[Path]],
     symbol_to_files: dict[str, list[Path]],
 ) -> set[Path]:
-    """Find `shared::...` references inside the crate's source and resolve them."""
     print("Scanning source files for imported shared dependencies...")
     extra: set[Path] = set()
+    scanned: set[Path] = set()
+    
     for f in files:
-        if f.suffix != ".rs":
+        if f.suffix != ".rs" or f in scanned:
             continue
+        scanned.add(f)
         try:
-            content = f.read_text(errors="ignore")
+            content = f.read_text(encoding="utf-8", errors="replace")
         except OSError as e:
             print(f"Warning: Failed to read file {f} for dependency analysis ({e})")
             continue
@@ -217,20 +249,65 @@ def scan_shared_imports(
     return extra
 
 
+def run_lint_scan(workspace_root: Path, crate_path: Path) -> str:
+    import shutil
+    cli_bin = shutil.which("lint-arwaky-cli")
+    if not cli_bin:
+        cli_bin_candidate = workspace_root / "target" / "release" / "lint-arwaky-cli"
+        if cli_bin_candidate.exists():
+            cli_bin = str(cli_bin_candidate)
+        else:
+            cli_bin_candidate = workspace_root / "target" / "debug" / "lint-arwaky-cli"
+            if cli_bin_candidate.exists():
+                cli_bin = str(cli_bin_candidate)
+    
+    if not cli_bin:
+        print("Warning: lint-arwaky-cli not found. Run install.local.sh first.")
+        return ""
+
+    try:
+        result = subprocess.run(
+            [cli_bin, "scan", str(crate_path)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=str(workspace_root),
+        )
+        output = result.stdout + result.stderr
+        lines = [line.rstrip() for line in output.splitlines() if line.strip()]
+        return "\n".join(lines) if lines else ""
+    except subprocess.TimeoutExpired:
+        print("Warning: lint scan timed out after 120s.")
+        return ""
+    except OSError as e:
+        print(f"Warning: Failed to run lint scan ({e}).")
+        return ""
+
+
 def write_markdown(
     output_path: Path,
     sorted_files: list[Path],
     workspace_root: Path,
     selected_crate: str,
     safe_version: str,
+    lint_output: str,
 ) -> None:
-    """Write the consolidated Markdown header, file index, and code blocks."""
     with open(output_path, "w", encoding="utf-8") as out:
         out.write(f"# Crate: {selected_crate} (v{safe_version})\n\n")
         out.write(
             f"This document contains the source code for feature crate `{selected_crate}` "
         )
         out.write("along with its corresponding and imported definitions from the `shared` crate.\n\n")
+
+        if lint_output:
+            out.write("## Problem Statement\n\n")
+            out.write("The following issues were detected by `lint-arwaky-cli scan`:\n\n")
+            out.write("```\n")
+            out.write(lint_output)
+            if not lint_output.endswith("\n"):
+                out.write("\n")
+            out.write("```\n\n")
+            out.write("---\n\n")
 
         out.write("## File List\n\n")
         for f in sorted_files:
@@ -241,10 +318,12 @@ def write_markdown(
         for f in sorted_files:
             rel = f.relative_to(workspace_root)
             out.write(f"## File: {rel}\n\n")
-            out.write(f"```{_language_for(f)}\n")
+            lang = _language_for(f)
+            out.write(f"```{lang}\n")
             try:
-                content = f.read_text(errors="ignore")
-                out.write(content)
+                content = f.read_text(encoding="utf-8", errors="replace")
+                escaped = content.replace("```", "``` `")
+                out.write(escaped)
                 if not content.endswith("\n"):
                     out.write("\n")
             except OSError as e:
@@ -291,13 +370,20 @@ def main() -> None:
         scan_shared_imports(files_to_export, module_to_files, symbol_to_files)
     )
 
+    print("Running lint-arwaky-cli scan...")
+    lint_output = run_lint_scan(workspace_root, crate_path)
+    if lint_output:
+        print("Lint scan completed.")
+    else:
+        print("No lint output (clean or scan failed).")
+
     docs_finding_dir.mkdir(parents=True, exist_ok=True)
     output_filename = f"{selected_crate}_v{safe_version}.md"
     output_path = docs_finding_dir / output_filename
 
     print(f"Writing export to {output_path}...")
     sorted_files = sorted(files_to_export)
-    write_markdown(output_path, sorted_files, workspace_root, selected_crate, safe_version)
+    write_markdown(output_path, sorted_files, workspace_root, selected_crate, safe_version, lint_output)
 
     print(f"Success! Consolidate markdown file created: {output_path}")
 

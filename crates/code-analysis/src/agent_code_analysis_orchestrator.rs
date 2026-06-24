@@ -71,13 +71,21 @@ impl Default for CodeAnalysisOrchestrator {
 
 /// Resolve target path: normalize "crates" → parent, keep "." as-is, etc.
 pub fn resolve_target(path: Option<String>) -> String {
-    path.unwrap_or_else(|| ".".to_string())
+    match path {
+        Some(p) => p,
+        None => ".".to_string(),
+    }
 }
 
 /// Run a full AES self-lint on a path.
 pub fn lint_path(path: &str) -> Vec<LintResult> {
-    let root =
-        FilePath::new(path.to_string()).unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
+    let root = match FilePath::new(path.to_string()) {
+        Ok(fp) => fp,
+        Err(_) => match FilePath::new(".".to_string()) {
+            Ok(fp) => fp,
+            Err(_) => return Vec::new(),
+        },
+    };
     let orchestrator = CodeAnalysisOrchestrator::new();
     orchestrator.run_self_lint(&root.value)
 }
@@ -91,10 +99,10 @@ impl CodeAnalysisOrchestrator {
     /// Create a new orchestrator. Falls back to a default container if init_global_checker not called.
     pub fn new() -> Self {
         Self {
-            container: GLOBAL_CONTAINER
-                .get()
-                .cloned()
-                .unwrap_or_else(|| Arc::new(CodeAnalysisCheckerContainer::default())),
+            container: match GLOBAL_CONTAINER.get().cloned() {
+                Some(c) => c,
+                None => Arc::new(CodeAnalysisCheckerContainer::default()),
+            },
         }
     }
 
@@ -123,8 +131,10 @@ impl CodeAnalysisOrchestrator {
             .iter()
             .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
             .collect();
-        let dir_path =
-            DirectoryPath::new(src_dir.to_string_lossy().to_string()).unwrap_or_default();
+        let dir_path = match DirectoryPath::new(src_dir.to_string_lossy().to_string()) {
+            Ok(dp) => dp,
+            Err(_) => return Vec::new(),
+        };
         let files = collect_source_files(src_dir, &dir_path, &ignored);
         if files.is_empty() {
             return Vec::new();
@@ -154,11 +164,17 @@ impl CodeAnalysisOrchestrator {
         let mut violations: Vec<LintResult> = Vec::new();
 
         for file in files {
-            let filename = Path::new(file)
+            let filename = match Path::new(file)
                 .file_name()
                 .and_then(|n| n.to_str())
-                .unwrap_or("");
-            let c = std::fs::read_to_string(file).unwrap_or_default();
+            {
+                Some(n) => n,
+                None => "",
+            };
+            let c = match std::fs::read_to_string(file) {
+                Ok(content) => content,
+                Err(_) => String::new(),
+            };
 
             // Layer-independent checks (run on ALL files)
             self.container

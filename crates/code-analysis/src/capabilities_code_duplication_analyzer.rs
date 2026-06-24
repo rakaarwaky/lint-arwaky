@@ -166,18 +166,19 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
                 .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
                 .collect(),
         };
-        let min_lines = config
+        let min_lines = match config
             .rules
             .first()
             .map(|r| r.code_analysis.min_lines.value)
             .filter(|&v| v > 0)
-            .map(|v| v as usize)
-            .unwrap_or(10);
+        {
+            Some(v) => v as usize,
+            None => 10,
+        };
         let threshold_pct = config
             .rules
             .first()
             .and_then(|r| r.code_analysis.duplication_threshold)
-            .map(|v| v)
             .unwrap_or(50.0);
 
         let src_fp = match FilePath::new(src.to_string_lossy().to_string()) {

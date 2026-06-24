@@ -35,13 +35,16 @@ impl CodeAnalysisCheckerContainer {
         let mandatory = Arc::new(MandatoryDefinitionChecker::new());
         // Honor AES304 forbidden_bypass from config when the analyzer exposes one;
         // fall back to the in-code default list otherwise.
-        let bypass = analyzer
+        let bypass = match analyzer
             .config()
             .rules
             .iter()
             .find(|r| r.name.value == "AES304")
             .map(|r| BypassChecker::from_patterns(&r.code_analysis.forbidden_bypass))
-            .unwrap_or_else(BypassChecker::new);
+        {
+            Some(checker) => checker,
+            None => BypassChecker::new(),
+        };
         Self {
             analyzer,
             bypass_checker: Arc::new(bypass),
@@ -72,12 +75,16 @@ impl CodeAnalysisCheckerContainer {
         file: &str,
         root_dir: &str,
     ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
-        self.analyzer.detect_layer(
-            &shared::source_parsing::taxonomy_path_vo::FilePath::new(file.to_string())
-                .unwrap_or_default(),
-            &shared::source_parsing::taxonomy_path_vo::FilePath::new(root_dir.to_string())
-                .unwrap_or_default(),
-        )
+        let f = match shared::source_parsing::taxonomy_path_vo::FilePath::new(file.to_string()) {
+            Ok(fp) => fp,
+            Err(_) => return None,
+        };
+        let rd =
+            match shared::source_parsing::taxonomy_path_vo::FilePath::new(root_dir.to_string()) {
+                Ok(fp) => fp,
+                Err(_) => return None,
+            };
+        self.analyzer.detect_layer(&f, &rd)
     }
 
     pub fn get_layer_def(

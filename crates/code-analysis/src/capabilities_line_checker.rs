@@ -36,11 +36,13 @@ impl ILineCheckerProtocol for ArchLineChecker {
         content: &str,
         violations: &mut Vec<LintResult>,
     ) {
-        let basename = Path::new(file)
+        let basename = match Path::new(file)
             .file_name()
             .and_then(|f| f.to_str())
-            .unwrap_or("")
-            .to_string();
+        {
+            Some(name) => name.to_string(),
+            None => return,
+        };
 
         if basename == "__init__.py" || basename == "mod.rs" {
             return;

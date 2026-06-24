@@ -44,11 +44,13 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
         content: &str,
         violations: &mut Vec<LintResult>,
     ) {
-        let basename = Path::new(file)
+        let basename = match Path::new(file)
             .file_name()
             .and_then(|f| f.to_str())
-            .unwrap_or("")
-            .to_string();
+        {
+            Some(name) => name.to_string(),
+            None => return,
+        };
 
         if matches!(
             basename.as_str(),
@@ -130,10 +132,10 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         break;
                     }
                 }
-                let next_is_impl = lines
-                    .get(next_idx)
-                    .map(|l| l.trim().starts_with("impl "))
-                    .unwrap_or(false);
+                let next_is_impl = match lines.get(next_idx) {
+                    Some(l) => l.trim().starts_with("impl "),
+                    None => false,
+                };
                 if !next_is_impl {
                     violations.push(LintResult::new_arch(
                         file,
