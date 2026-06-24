@@ -197,7 +197,10 @@ impl CheckCommandsSurface {
         // 5. Run orphan detection — always scan entire workspace for cross-folder import graph.
         // Scan from workspace root so cross-crate imports can be resolved.
         let scan_root = find_workspace_root(path);
-        let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
+        let orphan_scan_root = match scan_root.as_ref().and_then(|r| r.to_str()) {
+            Some(s) => s,
+            None => ".",
+        };
         let dir_path = match DirectoryPath::new(orphan_scan_root.to_string()) {
             Ok(dp) => dp,
             Err(_) => DirectoryPath::default(),
@@ -220,7 +223,10 @@ impl CheckCommandsSurface {
         }
         .to_string_lossy()
         .to_string();
-        let cwd = std::env::current_dir().unwrap_or_default();
+        let cwd = match std::env::current_dir() {
+            Ok(d) => d,
+            Err(_) => std::path::PathBuf::new(),
+        };
         let filtered_results: Vec<_> = if let Some(code) = filter {
             all_results
                 .into_iter()
@@ -333,7 +339,10 @@ impl CheckCommandsSurface {
         }
 
         // Collect ALL source files from workspace root for cross-workspace orphan detection
-        let scan_root = find_workspace_root(path).unwrap_or_else(|| std::path::PathBuf::from(path));
+        let scan_root = match find_workspace_root(path) {
+            Some(r) => r,
+            None => std::path::PathBuf::from(path),
+        };
         let all_source_files: Vec<String> =
             shared::source_parsing::collect_all_source_files(&scan_root)
                 .iter()
@@ -407,7 +416,10 @@ impl CheckCommandsSurface {
 
             // Filter results to only those in this workspace member's path
             let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
-            let cwd_for_ws = std::env::current_dir().unwrap_or_default();
+            let cwd_for_ws = match std::env::current_dir() {
+                Ok(d) => d,
+                Err(_) => std::path::PathBuf::new(),
+            };
             let filtered_results: Vec<_> = if let Some(code) = filter {
                 all_results
                     .into_iter()

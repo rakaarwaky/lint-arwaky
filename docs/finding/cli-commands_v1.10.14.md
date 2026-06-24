@@ -11,7 +11,46 @@ The following issues were detected by `lint-arwaky-cli scan`:
   AES Architecture Compliance Report
 ============================================================
   Project: /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands
-  Violations: 0
+  Violations: 13
+  [AES302] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/infrastructure_scanner_provider.rs - AES302 FILE_TOO_SHORT: File contains fewer than the required minimum lines.
+WHY? Excessively small files clutter the project structure.
+FIX: Expand the component or merge this logic into a related module. (min: 5).
+  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
+WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
+FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
+  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
+WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
+FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
+  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
+WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
+FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
+  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
+WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
+FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
+  [AES202] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/infrastructure_scanner_provider.rs - AES202 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'taxonomy'.
+WHY? Infrastructure adapters bridge technology and domain — they must import contract ports to implement the required protocols.
+FIX: Add the required import statement for 'taxonomy' in this file.
+  [AES202] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/infrastructure_scanner_provider.rs - AES202 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'taxonomy'.
+WHY? Infrastructure adapters bridge technology and domain — they must import contract ports to implement the required protocols.
+FIX: Add the required import statement for 'taxonomy' in this file.
+  [AES202] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/infrastructure_scanner_provider.rs - AES202 MANDATORY_IMPORT: Layer 'infrastructure' is missing required import 'taxonomy'.
+WHY? Infrastructure adapters bridge technology and domain — they must import contract ports to implement the required protocols.
+FIX: Add the required import statement for 'taxonomy' in this file.
+  [AES201] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES201 FORBIDDEN_IMPORT: Layer 'surfaces(command)' is importing from forbidden layer 'contract(port)'.
+WHY? Smart Surfaces act as user/CLI entry points and must never import agents, infrastructure, capabilities, or ports/protocols directly (must use ServiceContainerAggregate).
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES201] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/surface_check_command.rs - AES201 FORBIDDEN_IMPORT: Layer 'surfaces(command)' is importing from forbidden layer 'contract(port)'.
+WHY? Smart Surfaces act as user/CLI entry points and must never import agents, infrastructure, capabilities, or ports/protocols directly (must use ServiceContainerAggregate).
+FIX: Remove the import or refactor to use one of the allowed layers: [taxonomy, contract].
+  [AES504] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/infrastructure_language_detector.rs - AES504 INFRASTRUCTURE_ORPHAN: 'infrastructure_language_detector' is not wired.
+WHY? Not reachable from any entry point and not wired in any container.
+FIX: Register 'infrastructure_language_detector' in the appropriate root_*_container.rs, or ensure it is imported by a capabilities_* file.
+  [AES504] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/infrastructure_scanner_provider.rs - AES504 INFRASTRUCTURE_ORPHAN: 'infrastructure_scanner_provider' is not wired.
+WHY? Not reachable from any entry point and not wired in any container.
+FIX: Register 'infrastructure_scanner_provider' in the appropriate root_*_container.rs, or ensure it is imported by a capabilities_* file.
+  [AES504] /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/src/infrastructure_path_normalization.rs - AES504 INFRASTRUCTURE_ORPHAN: 'infrastructure_path_normalization' is not wired.
+WHY? Not reachable from any entry point and not wired in any container.
+FIX: Register 'infrastructure_path_normalization' in the appropriate root_*_container.rs, or ensure it is imported by a capabilities_* file.
 ```
 
 ---
@@ -446,8 +485,11 @@ impl CheckCommandsSurface {
         let role_results = rt.block_on(role_orchestrator.run_audit(&path_obj));
         all_results.extend(role_results);
 
-        // 5. Run orphan detection — always scan entire workspace for cross-folder import graph
-        let dir_path = match DirectoryPath::new(".".to_string()) {
+        // 5. Run orphan detection — always scan entire workspace for cross-folder import graph.
+        // Scan from workspace root so cross-crate imports can be resolved.
+        let scan_root = find_workspace_root(path);
+        let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
+        let dir_path = match DirectoryPath::new(orphan_scan_root.to_string()) {
             Ok(dp) => dp,
             Err(_) => DirectoryPath::default(),
         };
@@ -456,9 +498,11 @@ impl CheckCommandsSurface {
             Err(_) => Vec::new(),
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-        let orphan_results =
-            self.orphan_orchestrator
-                .check_orphans(self.layer_detector.as_ref(), &file_strs, ".");
+        let orphan_results = self.orphan_orchestrator.check_orphans(
+            self.layer_detector.as_ref(),
+            &file_strs,
+            orphan_scan_root,
+        );
         all_results.extend(orphan_results);
 
         let canonical_scan_path = match std::path::Path::new(path).canonicalize() {
@@ -467,18 +511,23 @@ impl CheckCommandsSurface {
         }
         .to_string_lossy()
         .to_string();
+        let cwd = std::env::current_dir().unwrap_or_default();
         let filtered_results: Vec<_> = if let Some(code) = filter {
             all_results
                 .into_iter()
                 .filter(|r| {
+                    let abs_path = cwd.join(&r.file.value);
                     r.code.to_string().contains(code)
-                        && r.file.value.starts_with(&canonical_scan_path)
+                        && abs_path.to_string_lossy().starts_with(&canonical_scan_path)
                 })
                 .collect()
         } else {
             all_results
                 .into_iter()
-                .filter(|r| r.file.value.starts_with(&canonical_scan_path))
+                .filter(|r| {
+                    let abs_path = cwd.join(&r.file.value);
+                    abs_path.to_string_lossy().starts_with(&canonical_scan_path)
+                })
                 .collect()
         };
         let results_list = LintResultList::new(filtered_results);
@@ -567,27 +616,32 @@ impl CheckCommandsSurface {
         };
         let workspaces = rt.block_on(orchestrator.discover_workspaces(&path_obj));
 
-        if workspaces.len() <= 1 {
+        if workspaces.is_empty() {
+            // No workspaces discovered — treat path as a standalone scan
             let default_config = ArchitectureConfig::default();
             self.scan(path, filter, default_config);
             return;
         }
 
-        println!(
-            "Lint Arwaky v{} (Multi-Workspace Mode)",
-            env!("CARGO_PKG_VERSION")
-        );
-        println!("Found {} workspaces in {path}", workspaces.len());
-        println!();
-
-        let mut global_all_results = Vec::new();
-
-        // Collect ALL source files from scan root for cross-workspace orphan detection
+        // Collect ALL source files from workspace root for cross-workspace orphan detection
+        let scan_root = find_workspace_root(path).unwrap_or_else(|| std::path::PathBuf::from(path));
         let all_source_files: Vec<String> =
-            shared::source_parsing::collect_all_source_files(std::path::Path::new(path))
+            shared::source_parsing::collect_all_source_files(&scan_root)
                 .iter()
                 .map(|f| f.value.clone())
                 .collect();
+
+        let multi = workspaces.len() > 1;
+        if multi {
+            println!(
+                "Lint Arwaky v{} (Multi-Workspace Mode)",
+                env!("CARGO_PKG_VERSION")
+            );
+            println!("Found {} workspaces in {path}", workspaces.len());
+            println!();
+        }
+
+        let mut global_all_results = Vec::new();
 
         for ws in &workspaces {
             let ws_name = match std::path::Path::new(&ws.path.value).file_name() {
@@ -642,10 +696,31 @@ impl CheckCommandsSurface {
             );
             all_results.extend(orphan_results);
 
+            // Filter results to only those in this workspace member's path
+            let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
+            let cwd_for_ws = std::env::current_dir().unwrap_or_default();
             let filtered_results: Vec<_> = if let Some(code) = filter {
                 all_results
                     .into_iter()
-                    .filter(|r| r.code.to_string().contains(code))
+                    .filter(|r| {
+                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        let matches_path = ws_canonical.as_ref().is_none_or(|c| {
+                            abs_path
+                                .to_string_lossy()
+                                .starts_with(c.to_string_lossy().as_ref())
+                        });
+                        r.code.to_string().contains(code) && matches_path
+                    })
+                    .collect()
+            } else if let Some(ref canonical) = ws_canonical {
+                all_results
+                    .into_iter()
+                    .filter(|r| {
+                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        abs_path
+                            .to_string_lossy()
+                            .starts_with(canonical.to_string_lossy().as_ref())
+                    })
                     .collect()
             } else {
                 all_results
@@ -653,53 +728,84 @@ impl CheckCommandsSurface {
 
             global_all_results.extend(filtered_results.clone());
 
-            let mut code_counts: HashMap<String, usize> = HashMap::new();
-            for r in &filtered_results {
-                *code_counts.entry(r.code.to_string()).or_insert(0) += 1;
-            }
-            let total = filtered_results.len();
+            if multi {
+                let mut code_counts: HashMap<String, usize> = HashMap::new();
+                for r in &filtered_results {
+                    *code_counts.entry(r.code.to_string()).or_insert(0) += 1;
+                }
+                let total = filtered_results.len();
 
-            println!("── [{ws_type}] {ws_name} — {total} violations ──");
-            if !code_counts.is_empty() {
-                let mut sorted: Vec<_> = code_counts.into_iter().collect();
+                println!("── [{ws_type}] {ws_name} — {total} violations ──");
+                if !code_counts.is_empty() {
+                    let mut sorted: Vec<_> = code_counts.into_iter().collect();
+                    sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
+                    for (code, count) in &sorted {
+                        println!("   {code}: {count}");
+                    }
+                } else {
+                    println!("   (clean)");
+                }
+                println!();
+            } else {
+                // Single workspace — print full violation detail
+                let results_list = LintResultList::new(filtered_results);
+                print!(
+                    "{}",
+                    code_analysis_linter.format_report(&results_list, &ws.path.value)
+                );
+            }
+        }
+
+        if multi {
+            // Print combined summary
+            let mut global_code_counts: HashMap<String, usize> = HashMap::new();
+            for r in &global_all_results {
+                *global_code_counts.entry(r.code.to_string()).or_insert(0) += 1;
+            }
+            let global_total = global_all_results.len();
+            let global_unique_codes = global_code_counts.len();
+
+            println!("============================================================");
+            println!("  Combined Multi-Workspace Report Summary");
+            println!("============================================================");
+            println!("  Total Workspace Members: {}", workspaces.len());
+            println!("  Total Unique AES Codes: {}", global_unique_codes);
+            println!("  Total Violations: {}", global_total);
+            if !global_code_counts.is_empty() {
+                println!("------------------------------------------------------------");
+                let mut sorted: Vec<_> = global_code_counts.into_iter().collect();
                 sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
                 for (code, count) in &sorted {
-                    println!("   {code}: {count}");
+                    println!("  {code}: {count}");
                 }
-            } else {
-                println!("   (clean)");
             }
+            println!("============================================================");
             println!();
-        }
 
-        // Print combined summary
-        let mut global_code_counts: HashMap<String, usize> = HashMap::new();
-        for r in &global_all_results {
-            *global_code_counts.entry(r.code.to_string()).or_insert(0) += 1;
-        }
-        let global_total = global_all_results.len();
-        let global_unique_codes = global_code_counts.len();
-
-        println!("============================================================");
-        println!("  Combined Multi-Workspace Report Summary");
-        println!("============================================================");
-        println!("  Total Workspace Members: {}", workspaces.len());
-        println!("  Total Unique AES Codes: {}", global_unique_codes);
-        println!("  Total Violations: {}", global_total);
-        if !global_code_counts.is_empty() {
-            println!("------------------------------------------------------------");
-            let mut sorted: Vec<_> = global_code_counts.into_iter().collect();
-            sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
-            for (code, count) in &sorted {
-                println!("  {code}: {count}");
+            println!("To scan a specific workspace:");
+            for ws in &workspaces {
+                println!("  scan {}", ws.path.value);
             }
         }
-        println!("============================================================");
-        println!();
+    }
+}
 
-        println!("To scan a specific workspace:");
-        for ws in &workspaces {
-            println!("  scan {}", ws.path.value);
+/// Walk up from `path` to find the workspace root (parent of `crates/`, `packages/`, or `modules/`).
+fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
+    let mut dir = std::path::Path::new(path).to_path_buf();
+    if !dir.is_absolute() {
+        dir = std::env::current_dir().ok()?.join(&dir);
+    }
+    loop {
+        if dir.join("Cargo.toml").exists()
+            || dir.join("crates").is_dir()
+            || dir.join("packages").is_dir()
+            || dir.join("modules").is_dir()
+        {
+            return Some(dir);
+        }
+        if !dir.pop() {
+            return None;
         }
     }
 }
