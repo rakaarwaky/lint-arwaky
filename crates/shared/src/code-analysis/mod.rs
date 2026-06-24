@@ -10,7 +10,6 @@ pub mod contract_layer_detection_aggregate;
 pub mod contract_line_protocol;
 pub mod taxonomy_analysis_vo;
 pub mod taxonomy_code_analysis_rule_vo;
-pub mod taxonomy_governance_entity;
 pub mod taxonomy_import_source_vo;
 pub mod taxonomy_operation_error;
 pub mod taxonomy_violation_code_analysis_vo;

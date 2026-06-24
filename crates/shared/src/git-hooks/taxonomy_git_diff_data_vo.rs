@@ -1,5 +1,4 @@
 // PURPOSE: GitDiffDataVO — value object representing semantic diff data between two file versions
-use crate::common::taxonomy_common_vo::Count;
 use serde::{Deserialize, Serialize};
 
 /// Semantic status of the diff between two file versions.
@@ -93,6 +92,3 @@ impl HookIgnoreUpdateVO {
         }
     }
 }
-
-/// Diff statistics reported as a count, not a raw float.
-pub type DiffLineCount = Count;

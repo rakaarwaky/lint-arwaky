@@ -24,9 +24,3 @@ impl std::fmt::Display for WatchServiceError {
 }
 
 impl std::error::Error for WatchServiceError {}
-
-#[derive(Debug, Clone)]
-pub struct WatchSubscriptionError(pub WatchServiceError);
-
-#[derive(Debug, Clone)]
-pub struct WatchEventError(pub WatchServiceError);

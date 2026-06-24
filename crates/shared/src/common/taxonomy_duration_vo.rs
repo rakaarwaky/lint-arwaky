@@ -54,5 +54,4 @@ macro_rules! clamped_f64_vo {
     };
 }
 
-clamped_f64_vo!(Duration, 0.0, "{:.2}ms");
 clamped_f64_vo!(Timeout, 0.001, "{}s");

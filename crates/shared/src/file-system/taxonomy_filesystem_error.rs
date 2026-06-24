@@ -43,38 +43,3 @@ impl std::fmt::Display for FileSystemError {
         )
     }
 }
-
-/// Wrap a `FileSystemError` in a newtype variant and forward its `Display`.
-/// Use `[$name, $op, $msg_prefix]` form when the newtype should override the
-/// operation label (e.g. `read`/`access`) and produce a custom prefix when
-/// displayed (e.g. `"Path not found: "`/`"Access denied: "`).
-macro_rules! fs_error_newtype {
-    ($name:ident, $op:expr, $msg_prefix:literal) => {
-        #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
-        pub struct $name {
-            #[serde(flatten)]
-            pub base: FileSystemError,
-        }
-
-        impl $name {
-            pub fn new(path: FilePath, message: ErrorMessage) -> Self {
-                Self {
-                    base: FileSystemError::new(path, message, ActionName::new($op)),
-                }
-            }
-        }
-
-        impl std::fmt::Display for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(
-                    f,
-                    "{}{} ({})",
-                    $msg_prefix, self.base.path, self.base.message
-                )
-            }
-        }
-    };
-}
-
-fs_error_newtype!(PathNotFoundError, "read", "Path not found: ");
-fs_error_newtype!(AccessDeniedError, "access", "Access denied: ");

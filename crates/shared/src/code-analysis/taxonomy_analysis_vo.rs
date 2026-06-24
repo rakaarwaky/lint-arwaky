@@ -60,17 +60,6 @@ impl InheritanceMap {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct ModuleToFileMap {
-    pub mapping: std::collections::HashMap<String, String>,
-}
-
-impl ModuleToFileMap {
-    pub fn new(value: std::collections::HashMap<String, String>) -> Self {
-        Self { mapping: value }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct OrphanIndicatorResult {
     pub is_orphan: bool,
     pub reason: String,

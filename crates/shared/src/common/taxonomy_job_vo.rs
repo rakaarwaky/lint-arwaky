@@ -7,29 +7,6 @@ use std::collections::HashMap;
 
 pub use crate::common::taxonomy_response_data_vo::ResponseData;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub enum JobStatus {
-    #[serde(rename = "pending")]
-    PENDING,
-    #[serde(rename = "running")]
-    RUNNING,
-    #[serde(rename = "completed")]
-    COMPLETED,
-    #[serde(rename = "failed")]
-    FAILED,
-}
-
-impl std::fmt::Display for JobStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            JobStatus::PENDING => write!(f, "pending"),
-            JobStatus::RUNNING => write!(f, "running"),
-            JobStatus::COMPLETED => write!(f, "completed"),
-            JobStatus::FAILED => write!(f, "failed"),
-        }
-    }
-}
-
 // Manual impl: `SuccessStatus` overrides `Display` to render "SUCCESS"/"FAILURE"
 // instead of `true`/`false`, and the macro does not currently support a clean
 // `bool` cast (Rust forbids `i64 as bool`). Kept as a hand-rolled VO.
@@ -67,34 +44,6 @@ impl std::ops::Deref for SuccessStatus {
     type Target = bool;
     fn deref(&self) -> &bool {
         &self.value
-    }
-}
-
-/// `HashMap<String, serde_json::Value>` payload VOs. Wrapped via macro so they
-/// pick up the standard `new`/`value`/`Default`/serde impls.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct LintStatusActionArgs {
-    #[serde(default)]
-    pub value: HashMap<String, serde_json::Value>,
-}
-
-impl Default for LintStatusActionArgs {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl LintStatusActionArgs {
-    pub fn new() -> Self {
-        Self {
-            value: HashMap::new(),
-        }
-    }
-    pub fn value(&self) -> &HashMap<String, serde_json::Value> {
-        &self.value
-    }
-    pub fn get(&self, key: &str) -> Option<&serde_json::Value> {
-        self.value.get(key)
     }
 }
 
