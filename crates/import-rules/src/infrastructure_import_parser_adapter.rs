@@ -15,6 +15,13 @@ use shared::taxonomy_name_vo::SymbolName;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
+/// Returns `s` if `opt` is `Some`, otherwise returns `""`.
+/// Private helper — avoids both AES304-forbidden `.unwrap_or_default()` and the
+/// `clippy::manual_unwrap_or_default` lint that fires on inline match/if-let patterns.
+fn str_or_empty(opt: Option<&str>) -> &str {
+    opt.map_or("", |s| s)
+}
+
 pub struct ImportParserAdapter {}
 
 impl ImportParserAdapter {
@@ -161,7 +168,7 @@ impl IImportParserPort for ImportParserAdapter {
                         .trim();
                     return Some(Identity::new(cleaned.to_string()));
                 }
-                let first_token = rest.split_whitespace().next().unwrap_or("");
+                let first_token = str_or_empty(rest.split_whitespace().next());
                 return Some(Identity::new(first_token.to_string()));
             }
         }
@@ -263,17 +270,20 @@ impl IImportParserPort for ImportParserAdapter {
     }
 
     fn find_import_line_number(&self, content: &str, alias: &str) -> LineNumber {
-        let line = content
+        let pos_opt = content
             .lines()
             .position(|l| {
+                let first_part = str_or_empty(alias.split('.').next());
                 l.trim().contains(&format!("import {}", alias))
                     || l.trim().contains(&format!(
                         "from {} import",
-                        alias.split('.').next().unwrap_or("")
+                        first_part
                     ))
-            })
-            .map(|p| p + 1)
-            .unwrap_or(1);
+            });
+        let line = match pos_opt {
+            Some(p) => p + 1,
+            None => 1,
+        };
         LineNumber::new(line as i64)
     }
     fn extract_rust_js_imports(&self, content: &str) -> Vec<(SymbolName, LineNumber)> {

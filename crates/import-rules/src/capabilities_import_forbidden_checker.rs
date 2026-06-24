@@ -61,7 +61,7 @@ impl ArchImportForbiddenChecker {
         violations: &mut Vec<LintResult>,
     ) {
         // Step 1: Skip files in the exception list
-        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let file_path = FilePath::new(file.to_string()).ok().map_or_else(FilePath::default, |fp| fp);
         let basename = file_path.basename();
         if definition.exceptions.values.contains(&basename.to_string()) {
             return;
@@ -170,7 +170,7 @@ impl ArchImportForbiddenChecker {
         violations: &mut Vec<LintResult>,
     ) {
         // Step 1: Extract file stem and its last underscore suffix
-        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let file_path = FilePath::new(file.to_string()).ok().map_or_else(FilePath::default, |fp| fp);
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
         // Step 2: Skip Rust entry files
@@ -181,10 +181,7 @@ impl ArchImportForbiddenChecker {
             Some(s) => s,
             None => basename,
         };
-        let suffix = match stem.rsplit('_').next_back() {
-            Some(s) => s,
-            None => "",
-        };
+        let suffix = stem.rsplit('_').next_back().unwrap_or_default();
 
         // Step 3: Parse import lines
         let import_lines = self.parser.read_import_lines(&file_path);

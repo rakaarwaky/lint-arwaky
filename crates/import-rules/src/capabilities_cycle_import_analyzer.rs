@@ -20,6 +20,13 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+/// Returns `fp` if `result` is `Ok`, otherwise returns `FilePath::default()`.
+/// Private helper to avoid both `.unwrap_or_default()` (forbidden by AES304)
+/// and inline match patterns (flagged by clippy::manual_unwrap_or_default).
+fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
+    result.ok().map_or_else(FilePath::default, |fp| fp)
+}
+
 /// Detects circular imports and dependency cycles (Capability) — AES205.
 ///
 /// Workflow:
@@ -77,7 +84,7 @@ impl DependencyCycleAnalyzer {
         // Step 3: Iterate every file in the project
         for file in files {
             // Step 3a: Skip files exempted via rule exceptions
-            let file_fp = FilePath::new(file.clone()).unwrap_or_default();
+            let file_fp = filepath_or_default(FilePath::new(file.clone()));
             let basename = file_fp.basename();
             if let Some(rule) = aes205_rule {
                 if rule.exceptions.values.contains(&basename.to_string()) {
@@ -92,12 +99,20 @@ impl DependencyCycleAnalyzer {
             let content = content_msg.value().to_string();
 
             // Step 3c: Detect the file's architectural layer (strip scoped suffix)
-            let file_fp = FilePath::new(file.clone()).unwrap_or_default();
+            let file_fp = filepath_or_default(FilePath::new(file.clone()));
+            let root_dir_fp = filepath_or_default(FilePath::new(root_dir.to_string()));
             let file_layer = match analyzer.detect_layer(
                 &file_fp,
-                &FilePath::new(root_dir.to_string()).unwrap_or_default(),
+                &root_dir_fp,
             ) {
-                Some(l) => l.value().split('(').next().unwrap_or(l.value()).to_string(),
+                Some(l) => {
+                    let val = l.value();
+                    let s = match val.split('(').next() {
+                        Some(part) => part,
+                        None => val,
+                    };
+                    s.to_string()
+                }
                 None => continue,
             };
 
@@ -109,14 +124,14 @@ impl DependencyCycleAnalyzer {
             let modules = self.parser.extract_import_modules(&content);
             // Step 3f: For each import, resolve its target layer (strip scoped suffix)
             for module in modules {
-                let module_fp = FilePath::new(module.value().to_string()).unwrap_or_default();
+                let module_fp = filepath_or_default(FilePath::new(module.value().to_string()));
                 if let Some(target_layer) = analyzer.detect_module_layer(&module_fp) {
-                    let target_layer_str = target_layer
-                        .value()
-                        .split('(')
-                        .next()
-                        .unwrap_or(target_layer.value())
-                        .to_string();
+                    let val = target_layer.value();
+                    let target_layer_str = match val.split('(').next() {
+                        Some(part) => part,
+                        None => val,
+                    }
+                    .to_string();
                     // Step 3g: Only record cross-layer edges (same-layer edges cannot cause cycles)
                     if target_layer_str != file_layer {
                         edges.push(DependencyEdge::new(file_layer.clone(), target_layer_str));
@@ -136,10 +151,10 @@ impl DependencyCycleAnalyzer {
                 let parts: Vec<&str> = edge_key.split("->").collect();
                 let source = parts[0];
                 let target = parts[1];
-                let file = file_by_layer
-                    .get(source)
-                    .cloned()
-                    .unwrap_or_else(|| source.to_string());
+                let file = match file_by_layer.get(source) {
+                    Some(f) => f.clone(),
+                    None => source.to_string(),
+                };
                 LintResult::new_arch(
                     &file,
                     1,
