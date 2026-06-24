@@ -40,7 +40,6 @@ impl NamingContainer {
         self.analyzer.clone()
     }
 
-
     pub fn orchestrator(&self) -> Arc<dyn INamingRunnerAggregate> {
         Arc::new(crate::agent_naming_orchestrator::NamingOrchestrator::new(
             self.naming_convention_checker.clone(),

@@ -237,7 +237,7 @@ macro_rules! primitive_value_object {
 
 #[cfg(test)]
 mod macro_tests {
-    
+
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
 

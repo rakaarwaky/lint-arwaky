@@ -19,9 +19,8 @@ impl Default for ConfigContainer {
 
 impl ConfigContainer {
     pub fn new() -> Self {
-        let workspace_detector = Arc::new(
-            crate::infrastructure_workspace_detector_provider::WorkspaceDetector::new(),
-        );
+        let workspace_detector =
+            Arc::new(crate::infrastructure_workspace_detector_provider::WorkspaceDetector::new());
         let yaml_reader = Arc::new(crate::infrastructure_yaml_reader::ConfigYamlReader::new());
 
         Self {
@@ -58,9 +57,7 @@ impl ConfigContainer {
         self.validator.clone()
     }
 
-    pub fn multi_project_orchestrator(
-        &self,
-    ) -> Arc<dyn MultiProjectOrchestratorAggregate> {
+    pub fn multi_project_orchestrator(&self) -> Arc<dyn MultiProjectOrchestratorAggregate> {
         self.multi_project_orchestrator.clone()
     }
 }

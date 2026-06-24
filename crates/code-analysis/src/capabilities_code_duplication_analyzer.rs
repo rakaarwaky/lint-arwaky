@@ -112,9 +112,9 @@ impl CodeDuplicationAnalyzer {
                     }
                     if lines.windows(min_dup_lines).any(|w| {
                         let key = normalize_window(w);
-                        global.get(&key).is_some_and(|locs| {
-                            locs.iter().any(|(ofi, _)| *ofi == other_fi)
-                        })
+                        global
+                            .get(&key)
+                            .is_some_and(|locs| locs.iter().any(|(ofi, _)| *ofi == other_fi))
                     }) {
                         other_files.push(other_path.display().to_string());
                     }
@@ -130,7 +130,12 @@ impl CodeDuplicationAnalyzer {
                     msg.push_str(&format!(
                         " Similar files ({}): {}",
                         other_files.len(),
-                        other_files.iter().take(5).map(|s| s.as_str()).collect::<Vec<_>>().join(", ")
+                        other_files
+                            .iter()
+                            .take(5)
+                            .map(|s| s.as_str())
+                            .collect::<Vec<_>>()
+                            .join(", ")
                     ));
                 }
 
@@ -186,11 +191,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
         };
 
         let all_files = rt.block_on(fs.walk(&src_fp, Some(&ignored)));
-        let file_strs: Vec<String> = all_files
-            .values
-            .iter()
-            .map(|fp| fp.value.clone())
-            .collect();
+        let file_strs: Vec<String> = all_files.values.iter().map(|fp| fp.value.clone()).collect();
         self.check_file_similarity(&file_strs, min_lines, threshold_pct)
     }
 }

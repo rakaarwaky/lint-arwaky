@@ -43,7 +43,9 @@ impl FixCommandsSurface {
             println!("Applying safe fixes to {}...", project_path.value);
         }
 
-        let results = self.code_analysis_linter.run_code_analysis(&project_path.value);
+        let results = self
+            .code_analysis_linter
+            .run_code_analysis(&project_path.value);
         println!("Found {} violations before fix", results.len());
 
         let fix_orch = (self.fix_orchestrator_factory)(dry_run);
@@ -52,7 +54,9 @@ impl FixCommandsSurface {
         println!("{}", fix_result.output.value);
 
         if !dry_run {
-            let after_results = self.code_analysis_linter.run_code_analysis(&project_path.value);
+            let after_results = self
+                .code_analysis_linter
+                .run_code_analysis(&project_path.value);
             let fixed_count = results.len().saturating_sub(after_results.len());
             println!(
                 "Fixed {} violations ({} remaining)",

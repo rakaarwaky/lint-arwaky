@@ -4,14 +4,19 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AutoFixContainer {
-    code_analysis_linter: Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
+    code_analysis_linter:
+        Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
 }
 
 impl AutoFixContainer {
     pub fn new(
-        code_analysis_linter: Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
+        code_analysis_linter: Arc<
+            dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate,
+        >,
     ) -> Self {
-        Self { code_analysis_linter }
+        Self {
+            code_analysis_linter,
+        }
     }
 
     pub fn orchestrator(&self, dry_run: bool) -> Arc<dyn LintFixOrchestratorAggregate> {

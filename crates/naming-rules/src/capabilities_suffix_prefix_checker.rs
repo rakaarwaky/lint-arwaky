@@ -131,10 +131,7 @@ impl SuffixPrefixChecker {
         // Step 5: Check if the suffix is explicitly forbidden for the current layer.
         if let Some(ref suf) = suffix {
             if def.naming.forbidden_suffix.values.contains(suf) {
-                let layer_display = match _layer_name {
-                    Some(l) => l.as_str().to_string(),
-                    None => "unknown".to_string(),
-                };
+                let layer_display = Option::unwrap_or(_layer_name.as_deref(), "unknown").to_string();
                 violations.push(Self::make_result(
                     file,
                     "AES102",
@@ -163,10 +160,7 @@ impl SuffixPrefixChecker {
             };
             if !valid {
                 let allowed_list = def.naming.allowed_suffix.values.clone();
-                let layer_display = match _layer_name {
-                    Some(l) => l.as_str().to_string(),
-                    None => "unknown".to_string(),
-                };
+                let layer_display = Option::unwrap_or(_layer_name.as_deref(), "unknown").to_string();
                 let suffix_display = match suffix.as_deref() {
                     Some(s) => s,
                     None => "(none)",
@@ -219,10 +213,7 @@ impl INamingCheckerProtocol for SuffixPrefixChecker {
         for f in &files.values {
             let f_str = f.to_string();
             // Step 2: Extract the raw filename from the path.
-            let filename = match f.rsplit('/').next() {
-                Some(name) => name,
-                None => &f_str,
-            };
+            let filename = Option::unwrap_or(f.rsplit('/').next(), &f_str);
             // Step 3: Determine the architectural layer for the file.
             let layer = analyzer
                 .detect_layer(f, root_dir)

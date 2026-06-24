@@ -14,7 +14,10 @@ pub struct WatchOrchestrator {
 }
 
 impl WatchOrchestrator {
-    pub fn new(provider: Arc<dyn IWatchProviderPort>, linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+    pub fn new(
+        provider: Arc<dyn IWatchProviderPort>,
+        linter: Arc<dyn ICodeAnalysisAggregate>,
+    ) -> Self {
         Self { provider, linter }
     }
 

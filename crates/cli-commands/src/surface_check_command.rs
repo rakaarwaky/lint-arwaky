@@ -5,8 +5,8 @@ use std::sync::Arc;
 use std::process::ExitCode;
 
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -15,8 +15,8 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
+use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 pub type OrchestratorFactory = Arc<
@@ -152,11 +152,9 @@ impl CheckCommandsSurface {
             .map(|list| list.values)
             .unwrap_or_default();
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-        let orphan_results = self.orphan_orchestrator.check_orphans(
-            self.layer_detector.as_ref(),
-            &file_strs,
-            ".",
-        );
+        let orphan_results =
+            self.orphan_orchestrator
+                .check_orphans(self.layer_detector.as_ref(), &file_strs, ".");
         all_results.extend(orphan_results);
 
         let canonical_scan_path = std::path::Path::new(path)
@@ -179,7 +177,10 @@ impl CheckCommandsSurface {
                 .collect()
         };
         let results_list = LintResultList::new(filtered_results);
-        println!("{}", code_analysis_linter.format_report(&results_list, path));
+        println!(
+            "{}",
+            code_analysis_linter.format_report(&results_list, path)
+        );
     }
 
     /// Check if a single file is an orphan.
@@ -205,11 +206,9 @@ impl CheckCommandsSurface {
         };
 
         // Run orphan detection
-        let all_results = self.orphan_orchestrator.check_orphans(
-            self.layer_detector.as_ref(),
-            &file_strs,
-            ".",
-        );
+        let all_results =
+            self.orphan_orchestrator
+                .check_orphans(self.layer_detector.as_ref(), &file_strs, ".");
 
         // Filter results for the specific file
         let file_results: Vec<_> = all_results
@@ -445,11 +444,7 @@ pub fn handle_scan(
     filter: Option<String>,
 ) -> ExitCode {
     let root = path.unwrap_or_else(|| ".".to_string());
-    let surface = CheckCommandsSurface::new_with_factory(
-        ctx,
-        multi_project_orchestrator,
-        factory,
-    );
+    let surface = CheckCommandsSurface::new_with_factory(ctx, multi_project_orchestrator, factory);
     surface.scan_with_discovery(&root, filter.as_deref());
     ExitCode::SUCCESS
 }

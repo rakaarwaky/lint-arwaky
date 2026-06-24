@@ -11,7 +11,9 @@ use crate::taxonomy_definition_vo::LayerMapVO;
 use crate::taxonomy_layer_vo::Identity;
 use crate::taxonomy_layer_vo::LayerNameVO;
 
-pub trait IAnalyzer: crate::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol + Send + Sync {
+pub trait IAnalyzer:
+    crate::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol + Send + Sync
+{
     fn fs(&self) -> &dyn IFileSystemPort;
     fn parser(&self) -> &dyn ISourceParserPort;
     fn detect_module_layer(&self, module_path: &FilePath) -> Option<LayerNameVO>;
@@ -20,7 +22,6 @@ pub trait IAnalyzer: crate::naming_rules::contract_naming_analyzer_protocol::INa
 pub trait IArchRuleProtocol {
     fn rule_name(&self) -> Identity;
 }
-
 
 pub trait IInternalCheckerProtocol: Send + Sync {
     fn check_layer_internal_rules(

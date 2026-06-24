@@ -170,7 +170,10 @@ impl ILinterAdapterPort for TSCAdapter {
                     Some(m) => m.as_str().to_string(),
                     None => String::new(),
                 };
-                let line_num = caps.get(2).and_then(|m| m.as_str().parse::<usize>().ok()).unwrap_or(1);
+                let line_num = caps
+                    .get(2)
+                    .and_then(|m| m.as_str().parse::<usize>().ok())
+                    .unwrap_or(1);
                 let col_num = match caps.get(3).and_then(|m| m.as_str().parse::<usize>().ok()) {
                     Some(v) => v,
                     None => 0,

@@ -50,12 +50,9 @@ fn main() -> ExitCode {
         );
     let external_lint_aggregate = external_lint_container.aggregate();
 
-    let config_container =
-        config_system::root_config_system_container::ConfigContainer::new();
-    let orphan_container =
-        orphan_detector::root_orphan_detector_container::OrphanContainer::new();
-    let git_container =
-        git_hooks::root_git_hooks_container::GitContainer::new_default();
+    let config_container = config_system::root_config_system_container::ConfigContainer::new();
+    let orphan_container = orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+    let git_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
 
     let layer_detector = orphan_container.layer_detector();
     let git_aggregate = git_container.aggregate();

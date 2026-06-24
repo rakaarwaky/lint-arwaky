@@ -1,9 +1,9 @@
 // PURPOSE: INamingCheckerProtocol — protocol trait for naming check capabilities
-use async_trait::async_trait;
+use super::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use super::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
+use async_trait::async_trait;
 
 #[async_trait]
 pub trait INamingCheckerProtocol: Send + Sync {

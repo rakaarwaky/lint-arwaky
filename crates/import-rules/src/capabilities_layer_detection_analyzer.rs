@@ -219,7 +219,10 @@ impl LayerDetectionAnalyzer {
     /// corresponds to a specialised sub-layer (e.g., `capabilities_command.rs` with a defined
     /// `capabilities(command)` layer → returns `capabilities(command)` instead of `capabilities`).
     pub fn detect_layer(&self, file_path: &str, _root_dir: &str) -> Option<String> {
-        let filename = Path::new(file_path).file_name().and_then(|s| s.to_str()).unwrap_or_default();
+        let filename = Path::new(file_path)
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or_default();
 
         // PREFIX-BASED DETECTION (FRD v1.1)
         // All valid files must carry a layer prefix — enforced by AES101/AES102 naming rules.
@@ -299,7 +302,10 @@ impl LayerDetectionAnalyzer {
     ///   5. Return the specialised name if found, otherwise the base layer unchanged.
     fn resolve_specialized_layer(&self, base_layer: &str, file_path: &str) -> String {
         // Step 1: Get file stem
-        let basename = Path::new(file_path).file_stem().and_then(|s| s.to_str()).unwrap_or_default();
+        let basename = Path::new(file_path)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or_default();
 
         // Step 2-5: Check if last underscore suffix matches a specialised sub-layer
         if let Some(underscore_pos) = basename.rfind('_') {
@@ -371,7 +377,9 @@ impl LayerDetectionAnalyzer {
     }
 }
 
-impl shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol for LayerDetectionAnalyzer {
+impl shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol
+    for LayerDetectionAnalyzer
+{
     /// Return the merged architecture configuration.
     fn config(&self) -> &ArchitectureConfig {
         &self.config

@@ -54,11 +54,9 @@ impl NamingOrchestrator {
         let filtered: Vec<FilePath> = files
             .values
             .iter()
-            .filter(|f| {
-                match f.value.rsplit('.').next() {
-                    Some(ext) => source_exts.contains(&ext),
-                    None => false,
-                }
+            .filter(|f| match f.value.rsplit('.').next() {
+                Some(ext) => source_exts.contains(&ext),
+                None => false,
             })
             .cloned()
             .collect();
