@@ -3,10 +3,6 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum AesOrphanViolation {
-    OrphanCode {
-        stem: String,
-        reason: Option<LintMessage>,
-    },
     TaxonomyOrphan {
         stem: String,
         category: &'static str,
@@ -40,13 +36,6 @@ pub enum AesOrphanViolation {
 impl fmt::Display for AesOrphanViolation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AesOrphanViolation::OrphanCode { stem, reason } => {
-                let why = reason
-                    .as_ref()
-                    .map(|r| r.to_string())
-                    .unwrap_or_else(|| format!("File '{}' matches no known layer prefix and is not referenced by any other file.", stem));
-                write!(f, "AES500 ORPHAN_CODE: '{}' is unreachable.\nWHY? {}\nFIX: Rename the file with a valid layer prefix (taxonomy_, contract_, capabilities_, infrastructure_, agent_, surface_, root_) or import it from another file.", stem, why)
-            }
             AesOrphanViolation::TaxonomyOrphan {
                 stem,
                 category,

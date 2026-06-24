@@ -4,7 +4,6 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
-use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
@@ -26,10 +25,9 @@ use shared::orphan_detector::contract_orphan_protocol::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     IInfrastructureOrphanProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
 };
-use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::role_rules::taxonomy_layer_names_constant::{
-    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_ROOT,
-    LAYER_SURFACES, LAYER_TAXONOMY,
+    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_SURFACES,
+    LAYER_TAXONOMY,
 };
 
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
@@ -132,7 +130,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             }
 
             let layer_vo = LayerNameVO::new(&layer_str);
-            let res = self._evaluate_layer(f, &definition, &context, &alive_files_set, &layer_vo, files, root_dir);
+            let res =
+                self._evaluate_layer(f, &context, &alive_files_set, &layer_vo, files, root_dir);
 
             if res.is_orphan {
                 let code = match layer_str.to_lowercase() {
@@ -142,7 +141,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                     s if s.contains(LAYER_INFRASTRUCTURE) => "AES504",
                     s if s.contains(LAYER_AGENT) => "AES505",
                     s if s.contains(LAYER_SURFACES) => "AES506",
-                    s if s.contains(LAYER_ROOT) => "AES507",
                     _ => continue,
                 };
                 results.push(self._make_result(f, &res.reason, res.severity, code));
@@ -200,7 +198,6 @@ impl ArchOrphanAnalyzer {
     fn _evaluate_layer(
         &self,
         f: &str,
-        definition: &LayerDefinition,
         context: &GraphAnalysisContext,
         alive_files_set: &[String],
         layer_vo: &LayerNameVO,
@@ -215,7 +212,6 @@ impl ArchOrphanAnalyzer {
             );
         }
 
-        let _ = definition;
         let layer_str = layer_vo.value.to_lowercase();
         let fp = match FilePath::new(f.to_string()) {
             Ok(fp) => fp,
@@ -276,39 +272,7 @@ impl ArchOrphanAnalyzer {
                 .is_surface_orphan(&fp, &alive_set, None);
         }
 
-        if layer_str.contains(LAYER_ROOT) {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::MEDIUM);
-        }
-
-        self._is_generic_orphan_helper(&fp, &alive_set, &context.inbound_links)
-    }
-
-    fn _is_generic_orphan_helper(
-        &self,
-        f: &FilePath,
-        alive_files: &ReachabilityResult,
-        inbound_links: &InboundLinkMap,
-    ) -> OrphanIndicatorResult {
-        let alive: Vec<String> = alive_files
-            .paths
-            .iter()
-            .map(|fp| fp.value().to_string())
-            .collect();
-        let orphan = !alive.contains(&f.value().to_string())
-            && !inbound_links.mapping.contains_key(f.value());
-        let stem = match f.value().split('/').next_back() {
-            Some(s) => s.to_string(),
-            None => String::new(),
-        };
-        OrphanIndicatorResult::new(
-            orphan,
-            AesOrphanViolation::OrphanCode {
-                stem,
-                reason: Some("File is unreachable and has no inbound imports.".into()),
-            }
-            .to_string(),
-            Severity::MEDIUM,
-        )
+        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
     }
 }
 

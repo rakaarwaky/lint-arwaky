@@ -32,24 +32,6 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
     }
 }
 
-pub fn is_agent_orphan(_f: &FilePath, _root_dir: &FilePath) -> OrphanIndicatorResult {
-    is_agent_orphan_raw_wired(false)
-}
-
-pub fn is_agent_orphan_raw_wired(is_wired: bool) -> OrphanIndicatorResult {
-    OrphanIndicatorResult::new(
-        !is_wired,
-        AesOrphanViolation::AgentOrphan {
-            agg_name: String::new(),
-            reason: Some(
-                "Agent orphan: contract aggregate not called by any surface or container.".into(),
-            ),
-        }
-        .to_string(),
-        Severity::HIGH,
-    )
-}
-
 /// Extract aggregate trait names from agent file content.
 /// Looks for: impl IAggregateTrait for Struct, Box<dyn IAggregateTrait>, Arc<dyn IAggregateTrait>
 fn extract_aggregate_traits(content: &str) -> Vec<String> {

@@ -58,13 +58,52 @@ pub fn is_taxonomy_orphan(
     let is_utility_or_helper = matches!(suffix, "utility" | "helper");
 
     let is_orphan = if is_utility_or_helper {
-        // utility/helper: can be imported by ANY layer (taxonomy, contract, capabilities, infrastructure)
-        // check if file has ANY inbound links at all
-        !inbound.mapping.contains_key(f.value())
+        // utility/helper: must be imported by file outside taxonomy
+        let importers = match inbound.mapping.get(f.value()) {
+            Some(v) => v,
+            None => return OrphanIndicatorResult::new(
+                true,
+                AesOrphanViolation::TaxonomyOrphan {
+                    stem: stem.clone(),
+                    category: "utility",
+                    reason: Some(format!("Taxonomy '{}' (utility/helper) is not imported by any file outside taxonomy.", stem).into()),
+                }.to_string(),
+                Severity::LOW,
+            ),
+        };
+        let has_outside_taxonomy = importers.iter().any(|importer| {
+            importer
+                .split('/')
+                .next_back()
+                .is_some_and(|b| !b.starts_with("taxonomy_"))
+        });
+        !has_outside_taxonomy
     } else {
         // vo, entity, error, event, constant: must be imported by contract layer
-        // check if file has inbound links from contract files
-        !inbound.mapping.contains_key(f.value())
+        let importers = match inbound.mapping.get(f.value()) {
+            Some(v) => v,
+            None => {
+                return OrphanIndicatorResult::new(
+                    true,
+                    AesOrphanViolation::TaxonomyOrphan {
+                        stem: stem.clone(),
+                        category: "taxonomy",
+                        reason: Some(
+                            format!("Taxonomy '{}' is not imported by any contract.", stem).into(),
+                        ),
+                    }
+                    .to_string(),
+                    Severity::LOW,
+                )
+            }
+        };
+        let has_contract_importer = importers.iter().any(|importer| {
+            importer
+                .split('/')
+                .next_back()
+                .is_some_and(|b| b.starts_with("contract_"))
+        });
+        !has_contract_importer
     };
 
     let category = if is_utility_or_helper {
@@ -73,21 +112,12 @@ pub fn is_taxonomy_orphan(
         "taxonomy"
     };
 
-    let reason = if is_utility_or_helper {
-        format!(
-            "Taxonomy '{}' (utility/helper) is not imported by any file.",
-            stem
-        )
-    } else {
-        format!("Taxonomy '{}' is not imported by any contract.", stem)
-    };
-
     OrphanIndicatorResult::new(
         is_orphan,
         AesOrphanViolation::TaxonomyOrphan {
             stem,
             category,
-            reason: Some(reason.into()),
+            reason: None,
         }
         .to_string(),
         Severity::LOW,
