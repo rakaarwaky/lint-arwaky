@@ -317,7 +317,7 @@ impl DummyImportChecker {
             }
             let symbol_str = symbol.value();
             self.parser
-                .is_symbol_used_real(&lines, &symbol_str, &dummy_ranges, &dummy_impl_traits)
+                .is_symbol_used_real(&lines, symbol_str, &dummy_ranges, &dummy_impl_traits)
         });
 
         // Step 5: If no real function uses taxonomy primitives but taxonomy imports exist → violation

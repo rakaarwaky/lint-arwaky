@@ -9,4 +9,6 @@ pub mod infrastructure_parser_provider;
 pub use infrastructure_parser_provider::ConfigParserProvider;
 pub mod infrastructure_yaml_reader;
 pub use infrastructure_yaml_reader::ConfigYamlReader;
+pub mod agent_multi_project_orchestrator;
+pub use agent_multi_project_orchestrator::MultiProjectOrchestrator;
 pub mod root_config_system_container;

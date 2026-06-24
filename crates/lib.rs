@@ -8,7 +8,6 @@ pub use file_watch;
 pub use git_hooks;
 pub use import_rules;
 pub use mcp_server;
-pub use multi_project;
 pub use naming_rules;
 pub use orphan_detector;
 

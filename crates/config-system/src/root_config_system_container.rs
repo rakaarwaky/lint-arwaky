@@ -1,4 +1,4 @@
-// PURPOSE: ConfigContainer — wiring for config-system feature (root layer, wiring only)
+use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::config_system::contract_parser_port::IConfigParserPort;
 use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
@@ -8,6 +8,7 @@ pub struct ConfigContainer {
     orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
     parser: Arc<dyn IConfigParserPort>,
     validator: Arc<dyn IConfigValidatorProtocol>,
+    multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
 }
 
 impl Default for ConfigContainer {
@@ -18,19 +19,28 @@ impl Default for ConfigContainer {
 
 impl ConfigContainer {
     pub fn new() -> Self {
+        let workspace_detector = Arc::new(
+            crate::infrastructure_workspace_detector_provider::WorkspaceDetector::new(),
+        );
+        let yaml_reader = Arc::new(crate::infrastructure_yaml_reader::ConfigYamlReader::new());
+
         Self {
             orchestrator: Arc::new(
                 crate::agent_config_loading_orchestrator::ConfigLoadingOrchestrator::new(
-                    Arc::new(
-                        crate::infrastructure_workspace_detector_provider::WorkspaceDetector::new(),
-                    ),
-                    Arc::new(crate::infrastructure_yaml_reader::ConfigYamlReader::new()),
+                    workspace_detector.clone(),
+                    yaml_reader.clone(),
                 ),
             ),
             parser: Arc::new(crate::infrastructure_parser_provider::ConfigParserProvider::new()),
             validator: Arc::new(
                 crate::capabilities_rules_validator::ConfigRulesValidator::new(
                     shared::config_system::taxonomy_setting_vo::ProjectConfig::defaults(),
+                ),
+            ),
+            multi_project_orchestrator: Arc::new(
+                crate::agent_multi_project_orchestrator::MultiProjectOrchestrator::new(
+                    workspace_detector,
+                    yaml_reader,
                 ),
             ),
         }
@@ -46,5 +56,11 @@ impl ConfigContainer {
 
     pub fn validator(&self) -> Arc<dyn IConfigValidatorProtocol> {
         self.validator.clone()
+    }
+
+    pub fn multi_project_orchestrator(
+        &self,
+    ) -> Arc<dyn MultiProjectOrchestratorAggregate> {
+        self.multi_project_orchestrator.clone()
     }
 }

@@ -12,3 +12,7 @@ pub mod taxonomy_identifier_vo;
 pub mod taxonomy_setting_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_validation_vo;
+pub mod contract_multi_project_orchestrator_aggregate;
+pub mod taxonomy_multi_project_vo;
+pub mod taxonomy_multi_project_summary_vo;
+pub mod taxonomy_multi_project_workspace_info_vo;

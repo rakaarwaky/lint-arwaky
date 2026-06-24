@@ -324,8 +324,8 @@ impl CheckCommandsSurface {
             }
         };
 
-        let container = multi_project::root_multi_project_container::MultiProjectContainer::new();
-        let orchestrator = container.aggregate();
+        let container = config_system::root_config_system_container::ConfigContainer::new();
+        let orchestrator = container.multi_project_orchestrator();
 
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
@@ -349,6 +349,13 @@ impl CheckCommandsSurface {
         println!();
 
         let mut global_all_results = Vec::new();
+
+        // Collect ALL source files from scan root for cross-workspace orphan detection
+        let all_source_files: Vec<String> =
+            source_parsing::collect_all_source_files(std::path::Path::new(path))
+                .iter()
+                .map(|f| f.value.clone())
+                .collect();
 
         for ws in &workspaces {
             let ws_name = match std::path::Path::new(&ws.path.value).file_name() {
@@ -402,17 +409,15 @@ impl CheckCommandsSurface {
                 .map(|fp| fp.value.clone())
                 .collect();
 
-            // Orphan detection per workspace
+            // Orphan detection — scan across ALL workspaces so contracts in shared/
+            // can find their implementations in other crates
             let orphan_container =
                 orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_ignored(
                     ignored_paths.clone(),
                 );
-            let source_files =
-                source_parsing::collect_all_source_files(std::path::Path::new(&ws.path.value));
-            let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
             let orphan_results = self.orphan_orchestrator.check_orphans(
                 orphan_container.layer_detector().as_ref(),
-                &file_strs,
+                &all_source_files,
                 &ws.path.value,
             );
             all_results.extend(orphan_results);

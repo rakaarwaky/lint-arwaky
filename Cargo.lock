@@ -372,7 +372,6 @@ dependencies = [
  "futures",
  "git_hooks-lint-arwaky",
  "import_rules-lint-arwaky",
- "multi_project-lint-arwaky",
  "orphan_detector-lint-arwaky",
  "project_setup-lint-arwaky",
  "serde",
@@ -2399,7 +2398,6 @@ dependencies = [
  "import_rules-lint-arwaky",
  "maintenance-lint-arwaky",
  "mcp_server-lint-arwaky",
- "multi_project-lint-arwaky",
  "naming_rules-lint-arwaky",
  "once_cell",
  "orphan_detector-lint-arwaky",
@@ -2558,18 +2556,6 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "multi_project-lint-arwaky"
-version = "1.10.14"
-dependencies = [
- "async-trait",
- "config_system-lint-arwaky",
- "serde",
- "serde_json",
- "shared-lint-arwaky",
- "source_parsing-lint-arwaky",
 ]
 
 [[package]]

@@ -106,14 +106,8 @@ impl IImportRunnerAggregate for ImportOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
         let mut results = LintResultList::new(Vec::new());
         let files = self.collect_files(target);
-        let first_component = match target.value().split('/').next() {
-            Some(s) => s,
-            None => ".",
-        };
-        let root_dir = match FilePath::new(first_component.to_string()) {
-            Ok(p) => p,
-            Err(_) => FilePath::default(),
-        };
+        let first_component = target.value().split('/').next().unwrap_or(".");
+        let root_dir = FilePath::new(first_component.to_string()).unwrap_or_default();
 
         self.mandatory
             .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)

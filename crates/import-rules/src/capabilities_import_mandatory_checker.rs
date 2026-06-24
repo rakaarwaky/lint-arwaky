@@ -88,10 +88,7 @@ impl ArchImportMandatoryChecker {
             Some(s) => s,
             None => basename,
         };
-        let source_layer = match stem.split('_').next() {
-            Some(s) => s,
-            None => "unknown",
-        };
+        let source_layer = stem.split('_').next().unwrap_or("unknown");
 
         // Step 6: Check each required scope against actual imports
         for required in &definition.mandatory.values {

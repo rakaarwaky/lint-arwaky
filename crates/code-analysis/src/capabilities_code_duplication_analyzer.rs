@@ -110,9 +110,9 @@ impl CodeDuplicationAnalyzer {
                     if other_fi == fi {
                         continue;
                     }
-                    if lines.windows(min_dup_lines).enumerate().any(|(_, w)| {
+                    if lines.windows(min_dup_lines).any(|w| {
                         let key = normalize_window(w);
-                        global.get(&key).map_or(false, |locs| {
+                        global.get(&key).is_some_and(|locs| {
                             locs.iter().any(|(ofi, _)| *ofi == other_fi)
                         })
                     }) {
@@ -172,7 +172,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             .rules
             .first()
             .and_then(|r| r.code_analysis.duplication_threshold)
-            .map(|v| v as f64)
+            .map(|v| v)
             .unwrap_or(50.0);
 
         let src_fp = match FilePath::new(src.to_string_lossy().to_string()) {

@@ -76,7 +76,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         let rust_js_imports = self.parser.extract_rust_js_imports(&content);
         for (name, line_idx) in rust_js_imports {
             let name_str = name.value();
-            if !self.parser.is_name_used(&name_str, &content, line_idx) {
+            if !self.parser.is_name_used(name_str, &content, line_idx) {
                 unused.push(name_str.to_string());
             }
         }
@@ -111,7 +111,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
                 let line_num = self
                     .parser
-                    .find_import_line_number(content, &alias.value())
+                    .find_import_line_number(content, alias.value())
                     .value() as usize;
                 violations.push(LintResult::new_arch(
                     file,

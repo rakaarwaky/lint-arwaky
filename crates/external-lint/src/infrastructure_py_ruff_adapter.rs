@@ -119,10 +119,7 @@ impl ILinterAdapterPort for RuffAdapter {
                         Some(v) => v,
                         None => 0,
                     };
-                    let code = match f.get("code").and_then(|v| v.as_str()) {
-                        Some(s) => s,
-                        None => "UNKNOWN",
-                    };
+                    let code = f.get("code").and_then(|v| v.as_str()).unwrap_or("UNKNOWN");
                     let message = match f.get("message").and_then(|v| v.as_str()) {
                         Some(s) => s,
                         None => "",

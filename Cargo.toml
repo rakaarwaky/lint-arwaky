@@ -16,7 +16,6 @@ file_watch = { package = "file_watch-lint-arwaky", path = "crates/file-watch" }
 git_hooks = { package = "git_hooks-lint-arwaky", path = "crates/git-hooks" }
 external_lint = { package = "external_lint-lint-arwaky", path = "crates/external-lint" }
 mcp_server = { package = "mcp_server-lint-arwaky", path = "crates/mcp-server" }
-multi_project = { package = "multi_project-lint-arwaky", path = "crates/multi-project" }
 orphan_detector = { package = "orphan_detector-lint-arwaky", path = "crates/orphan-detector" }
 project_setup = { package = "project_setup-lint-arwaky", path = "crates/project-setup" }
 maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance" }
@@ -98,7 +97,6 @@ file_watch.workspace = true
 git_hooks.workspace = true
 external_lint.workspace = true
 mcp_server.workspace = true
-multi_project.workspace = true
 orphan_detector.workspace = true
 project_setup.workspace = true
 maintenance.workspace = true

@@ -28,8 +28,7 @@ pub mod git_hooks;
 pub mod import_rules;
 #[path = "mcp-server/mod.rs"]
 pub mod mcp_server;
-#[path = "multi-project/mod.rs"]
-pub mod multi_project;
+
 #[path = "naming-rules/mod.rs"]
 pub mod naming_rules;
 #[path = "orphan-detector/mod.rs"]
