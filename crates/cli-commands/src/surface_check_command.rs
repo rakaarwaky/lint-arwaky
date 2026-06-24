@@ -51,51 +51,35 @@ pub struct CheckCommandsSurface {
 }
 
 impl CheckCommandsSurface {
-    pub fn new(
-        external_lint: Arc<dyn IExternalLintAggregate>,
-        arch_linter: Arc<dyn IArchLintAggregate>,
-        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-        scanner_provider: Arc<dyn IScannerProviderPort>,
-        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-        layer_detector: Arc<dyn ILayerDetectionAggregate>,
-    ) -> Self {
+    pub fn new(ctx: CheckContext) -> Self {
         Self {
-            external_lint,
-            arch_linter,
-            import_orchestrator,
-            naming_orchestrator,
-            role_orchestrator,
-            scanner_provider,
-            orphan_orchestrator,
-            layer_detector,
+            external_lint: ctx.external_lint,
+            arch_linter: ctx.arch_linter,
+            import_orchestrator: ctx.import_orchestrator,
+            naming_orchestrator: ctx.naming_orchestrator,
+            role_orchestrator: ctx.role_orchestrator,
+            scanner_provider: ctx.scanner_provider,
+            orphan_orchestrator: ctx.orphan_orchestrator,
+            layer_detector: ctx.layer_detector,
             multi_project_orchestrator: None,
             factory: None,
         }
     }
 
     pub fn new_with_factory(
-        external_lint: Arc<dyn IExternalLintAggregate>,
-        arch_linter: Arc<dyn IArchLintAggregate>,
-        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-        scanner_provider: Arc<dyn IScannerProviderPort>,
-        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-        layer_detector: Arc<dyn ILayerDetectionAggregate>,
+        ctx: CheckContext,
         multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
         factory: OrchestratorFactory,
     ) -> Self {
         Self {
-            external_lint,
-            arch_linter,
-            import_orchestrator,
-            naming_orchestrator,
-            role_orchestrator,
-            scanner_provider,
-            orphan_orchestrator,
-            layer_detector,
+            external_lint: ctx.external_lint,
+            arch_linter: ctx.arch_linter,
+            import_orchestrator: ctx.import_orchestrator,
+            naming_orchestrator: ctx.naming_orchestrator,
+            role_orchestrator: ctx.role_orchestrator,
+            scanner_provider: ctx.scanner_provider,
+            orphan_orchestrator: ctx.orphan_orchestrator,
+            layer_detector: ctx.layer_detector,
             multi_project_orchestrator,
             factory: Some(factory),
         }
@@ -105,10 +89,7 @@ impl CheckCommandsSurface {
     pub fn scan(&self, path: &str, filter: Option<&str>, config: ArchitectureConfig) {
         let path_obj = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
-            Err(_) => match FilePath::new(".".to_string()) {
-                Ok(fp) => fp,
-                Err(_) => FilePath::default(),
-            },
+            Err(_) => FilePath::new(".".to_string()).unwrap_or_default(),
         };
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
@@ -154,10 +135,7 @@ impl CheckCommandsSurface {
         // 4. Run external linter adapters via aggregate
         let path_obj2 = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
-            Err(_) => match FilePath::new(".".to_string()) {
-                Ok(fp) => fp,
-                Err(_) => FilePath::default(),
-            },
+            Err(_) => FilePath::new(".".to_string()).unwrap_or_default(),
         };
         let external_results = rt.block_on(self.external_lint.scan_all(&path_obj2));
         all_results.extend(external_results.values);
@@ -167,18 +145,12 @@ impl CheckCommandsSurface {
         all_results.extend(role_results);
 
         // 5. Run orphan detection — always scan entire workspace for cross-folder import graph
-        let dir_path = match DirectoryPath::new(".".to_string()) {
-            Ok(dp) => dp,
-            Err(_) => DirectoryPath::default(),
-        };
-        let source_files = match self
+        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
+        let source_files = self
             .scanner_provider
             .scan_directory(&dir_path)
             .map(|list| list.values)
-        {
-            Ok(files) => files,
-            Err(_) => Vec::new(),
-        };
+            .unwrap_or_default();
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         let orphan_results = self.orphan_orchestrator.check_orphans(
             self.layer_detector.as_ref(),
@@ -216,28 +188,19 @@ impl CheckCommandsSurface {
         let path_obj = std::path::Path::new(file_path);
 
         // Collect all source files from workspace root for cross-folder graph building
-        let dir_path = match DirectoryPath::new(".".to_string()) {
-            Ok(dp) => dp,
-            Err(_) => DirectoryPath::default(),
-        };
-        let source_files = match self
+        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
+        let source_files = self
             .scanner_provider
             .scan_directory(&dir_path)
             .map(|list| list.values)
-        {
-            Ok(files) => files,
-            Err(_) => Vec::new(),
-        };
+            .unwrap_or_default();
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
         // Normalize the target file path
         let target_path = if path_obj.is_absolute() {
             file_path.to_string()
         } else {
-            let cwd = match std::env::current_dir() {
-                Ok(p) => p,
-                Err(_) => std::path::PathBuf::default(),
-            };
+            let cwd = std::env::current_dir().unwrap_or_default();
             cwd.join(file_path).to_string_lossy().to_string()
         };
 
@@ -467,47 +430,23 @@ pub fn handle_check(
             "HEAD".to_string(),
         ))
     } else {
-        let surface = CheckCommandsSurface::new(
-            ctx.external_lint,
-            ctx.arch_linter,
-            ctx.import_orchestrator,
-            ctx.naming_orchestrator,
-            ctx.role_orchestrator,
-            ctx.scanner_provider,
-            ctx.orphan_orchestrator,
-            ctx.layer_detector,
-        );
+        let surface = CheckCommandsSurface::new(ctx);
         surface.scan(&root, filter.as_deref(), config);
         ExitCode::SUCCESS
     }
 }
 
 /// scan = AES analysis on external project + external adapters
-#[allow(clippy::too_many_arguments)]
 pub fn handle_scan(
     path: Option<String>,
-    arch_linter: Arc<dyn IArchLintAggregate>,
-    import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-    naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-    external_lint: Arc<dyn IExternalLintAggregate>,
-    role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    scanner_provider: Arc<dyn IScannerProviderPort>,
-    orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    layer_detector: Arc<dyn ILayerDetectionAggregate>,
+    ctx: CheckContext,
     multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
     factory: OrchestratorFactory,
     filter: Option<String>,
 ) -> ExitCode {
     let root = path.unwrap_or_else(|| ".".to_string());
     let surface = CheckCommandsSurface::new_with_factory(
-        external_lint,
-        arch_linter,
-        import_orchestrator,
-        naming_orchestrator,
-        role_orchestrator,
-        scanner_provider,
-        orphan_orchestrator,
-        layer_detector,
+        ctx,
         multi_project_orchestrator,
         factory,
     );

@@ -139,14 +139,17 @@ fn main() -> ExitCode {
         ),
         Commands::Scan { path } => surface_check_command::handle_scan(
             path,
-            arch_linter,
-            import_orchestrator,
-            naming_orchestrator.clone(),
-            external_lint_aggregate.clone(),
-            role_orchestrator.clone(),
-            source_parsing_container.scanner_provider(),
-            orphan_container.analyzer(),
-            layer_detector.clone(),
+            surface_check_command::CheckContext {
+                arch_linter,
+                import_orchestrator,
+                naming_orchestrator: naming_orchestrator.clone(),
+                external_lint: external_lint_aggregate.clone(),
+                role_orchestrator: role_orchestrator.clone(),
+                scanner_provider: source_parsing_container.scanner_provider(),
+                orphan_orchestrator: orphan_container.analyzer(),
+                layer_detector: layer_detector.clone(),
+                language_detector: source_parsing_container.language_detector(),
+            },
             Some(multi_project_orchestrator.clone()),
             factory,
             filter,
@@ -198,14 +201,17 @@ fn main() -> ExitCode {
         Commands::Adapters => surface_plugin_command::handle_adapters(external_lint_aggregate),
         Commands::Orphan { path } => {
             let surface = surface_check_command::CheckCommandsSurface::new(
-                external_lint_aggregate.clone(),
-                arch_linter.clone(),
-                import_orchestrator.clone(),
-                naming_orchestrator.clone(),
-                role_orchestrator.clone(),
-                source_parsing_container.scanner_provider(),
-                orphan_container.analyzer(),
-                layer_detector.clone(),
+                surface_check_command::CheckContext {
+                    arch_linter: arch_linter.clone(),
+                    import_orchestrator: import_orchestrator.clone(),
+                    naming_orchestrator: naming_orchestrator.clone(),
+                    external_lint: external_lint_aggregate.clone(),
+                    role_orchestrator: role_orchestrator.clone(),
+                    scanner_provider: source_parsing_container.scanner_provider(),
+                    orphan_orchestrator: orphan_container.analyzer(),
+                    layer_detector: layer_detector.clone(),
+                    language_detector: source_parsing_container.language_detector(),
+                },
             );
             surface.check_orphan_single_file(&path);
             ExitCode::SUCCESS
