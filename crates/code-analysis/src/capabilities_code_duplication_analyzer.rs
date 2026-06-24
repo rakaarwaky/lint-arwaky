@@ -175,11 +175,14 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             Some(v) => v as usize,
             None => 10,
         };
-        let threshold_pct = config
+        let threshold_pct = match config
             .rules
             .first()
             .and_then(|r| r.code_analysis.duplication_threshold)
-            .unwrap_or(50.0);
+        {
+            Some(v) => v,
+            None => 50.0,
+        };
 
         let src_fp = match FilePath::new(src.to_string_lossy().to_string()) {
             Ok(fp) => fp,
