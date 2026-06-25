@@ -496,3 +496,240 @@ impl shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionA
         ]
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shared::common::taxonomy_path_vo::FilePath;
+    use shared::common::contract_system_port::IFileSystemPort;
+    use shared::common::contract_parser_port::ISourceParserPort;
+    use shared::common::taxonomy_path_vo::SuccessStatus;
+    use shared::config_system::taxonomy_config_vo::{ArchitectureRule, RuleConfig};
+    use shared::import_rules::taxonomy_constant_vo::SymbolName;
+    use shared::taxonomy_definition_vo::LayerCodeAnalysisConfig;
+    use shared::taxonomy_definition_vo::LayerNamePatternList;
+    use std::collections::HashMap;
+    use std::sync::Arc;
+
+    struct MockFs;
+    impl IFileSystemPort for MockFs {
+        fn file_exists(&self, _path: &FilePath) -> bool { true }
+        fn read_file(&self, _path: &FilePath) -> Result<String, String> { Ok(String::new()) }
+        fn write_file(&self, _path: &FilePath, _content: &str) -> Result<(), String> { Ok(()) }
+        fn delete_file(&self, _path: &FilePath) -> Result<(), String> { Ok(()) }
+        fn exists(&self, _path: &str) -> bool { true }
+        fn cwd(&self) -> Result<FilePath, String> { FilePath::new(".".to_string()).map_err(|e| e.to_string()) }
+        fn is_file(&self, _path: &FilePath) -> bool { false }
+        fn is_dir(&self, _path: &FilePath) -> bool { false }
+        fn create_dir_all(&self, _path: &FilePath) -> Result<(), String> { Ok(()) }
+        fn canonicalize(&self, _path: &FilePath) -> Result<FilePath, String> { Ok(_path.clone()) }
+        fn basename(&self, path: &FilePath) -> Option<String> {
+            std::path::Path::new(&path.value).file_name().map(|s| s.to_string_lossy().to_string())
+        }
+        fn path_join(&self, _base: &FilePath, _leaf: &str) -> FilePath {
+            FilePath::new(format!("{}/{}", _base.value, _leaf)).unwrap_or_default()
+        }
+        fn to_absolute(&self, path: &FilePath) -> FilePath { path.clone() }
+        fn read_to_string(&self, _path: &str) -> Result<String, String> { Ok(String::new()) }
+        fn walk_dir(&self, _path: &FilePath) -> Result<Vec<FilePath>, String> { Ok(Vec::new()) }
+        fn glob(&self, _pattern: &str) -> Result<Vec<FilePath>, String> { Ok(Vec::new()) }
+        fn extension(&self, path: &FilePath) -> Option<String> {
+            std::path::Path::new(&path.value).extension().map(|s| s.to_string_lossy().to_string())
+        }
+        fn file_stem(&self, path: &FilePath) -> Option<String> {
+            std::path::Path::new(&path.value).file_stem().map(|s| s.to_string_lossy().to_string())
+        }
+    }
+
+    struct MockParser;
+    impl ISourceParserPort for MockParser {
+        fn extract_imports(&self, _path: &FilePath) -> Result<Vec<String>, String> { Ok(Vec::new()) }
+        fn get_raw_symbols(&self, _path: &FilePath) -> Result<Vec<String>, String> { Ok(vec!["MockSymbol".to_string()]) }
+        fn get_class_attributes(&self, _path: &FilePath, _class_name: &str) -> Vec<String> { Vec::new() }
+        fn has_all_export(&self, _path: &FilePath) -> SuccessStatus { SuccessStatus::new(false) }
+        fn find_primitive_violations(&self, _path: &FilePath, _file_content: &str) -> Vec<String> { Vec::new() }
+        fn find_unused_imports(&self, _path: &FilePath, _file_content: &str) -> Vec<String> { Vec::new() }
+        fn get_class_definitions(&self, _path: &FilePath) -> Result<Vec<String>, String> { Ok(Vec::new()) }
+        fn get_function_definitions(&self, _path: &FilePath) -> Vec<String> { Vec::new() }
+        fn is_symbol_exported(&self, _path: &FilePath, _symbol_name: &str) -> SuccessStatus { SuccessStatus::new(false) }
+        fn get_class_methods(&self, _path: &FilePath, _class_name: &str) -> Vec<String> { Vec::new() }
+        fn get_class_bases_map(&self, _path: &FilePath) -> HashMap<String, Vec<String>> { HashMap::new() }
+        fn get_assignment_targets(&self, _path: &FilePath) -> Vec<String> { Vec::new() }
+        fn get_control_flow_count(&self, _path: &FilePath) -> u32 { 0 }
+        fn is_barrel_file(&self, _path: &FilePath) -> bool { false }
+        fn get_stem(&self, _path: &FilePath) -> SymbolName { SymbolName::new("") }
+        fn is_entry_point(&self, _path: &FilePath) -> bool { false }
+        fn get_supported_extensions(&self) -> Vec<String> { vec![".rs".to_string()] }
+    }
+
+    fn make_config() -> ArchitectureConfig {
+        let mut layers = HashMap::new();
+        layers.insert(
+            LayerNameVO::new("taxonomy"),
+            LayerDefinition {
+                prefixes: LayerNamePatternList::new(vec!["taxonomy_".to_string()]),
+                suffixes: LayerNamePatternList::new(vec!["_vo".to_string(), "_entity".to_string()]),
+                mandatory: LayerNamePatternList::new(vec![]),
+                forbidden: LayerNamePatternList::new(vec![]),
+                allowed: LayerNamePatternList::new(vec!["shared".to_string()]),
+                exceptions: LayerNamePatternList::new(vec![]),
+                code_analysis: LayerCodeAnalysisConfig::default(),
+            },
+        );
+        layers.insert(
+            LayerNameVO::new("capabilities"),
+            LayerDefinition {
+                prefixes: LayerNamePatternList::new(vec!["capabilities_".to_string()]),
+                suffixes: LayerNamePatternList::new(vec!["_checker".to_string(), "_analyzer".to_string()]),
+                mandatory: LayerNamePatternList::new(vec![]),
+                forbidden: LayerNamePatternList::new(vec![]),
+                allowed: LayerNamePatternList::new(vec![]),
+                exceptions: LayerNamePatternList::new(vec![]),
+                code_analysis: LayerCodeAnalysisConfig::default(),
+            },
+        );
+        layers.insert(
+            LayerNameVO::new("surface"),
+            LayerDefinition {
+                prefixes: LayerNamePatternList::new(vec!["surface_".to_string()]),
+                suffixes: LayerNamePatternList::new(vec!["_command".to_string()]),
+                mandatory: LayerNamePatternList::new(vec![]),
+                forbidden: LayerNamePatternList::new(vec!["agent".to_string(), "infrastructure".to_string()]),
+                allowed: LayerNamePatternList::new(vec![]),
+                exceptions: LayerNamePatternList::new(vec![]),
+                code_analysis: LayerCodeAnalysisConfig::default(),
+            },
+        );
+        ArchitectureConfig {
+            layers,
+            rules: vec![],
+            code_analysis: LayerCodeAnalysisConfig::default(),
+        }
+    }
+
+    #[test]
+    fn test_detect_layer_by_prefix_taxonomy() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_layer("src/taxonomy_config_vo.rs", ".");
+        assert_eq!(result, Some("taxonomy".to_string()));
+    }
+
+    #[test]
+    fn test_detect_layer_by_prefix_capabilities() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_layer("src/capabilities_import_checker.rs", ".");
+        assert_eq!(result, Some("capabilities".to_string()));
+    }
+
+    #[test]
+    fn test_detect_layer_no_prefix_returns_none() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_layer("src/main.rs", ".");
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_detect_layer_unknown_prefix_returns_none() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_layer("src/random_file.rs", ".");
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_detect_module_layer_direct_match() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_module_layer("shared::taxonomy::taxonomy_config_vo");
+        assert_eq!(result, Some("taxonomy".to_string()));
+    }
+
+    #[test]
+    fn test_detect_module_layer_prefix_match() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_module_layer("crate::taxonomy_config_vo::Config");
+        assert_eq!(result, Some("taxonomy".to_string()));
+    }
+
+    #[test]
+    fn test_resolve_specialized_layer_with_scoped_rule() {
+        let mut config = make_config();
+        let spec_key = LayerNameVO::new("capabilities(checker)");
+        let spec_def = config.layers.get(&LayerNameVO::new("capabilities")).cloned().unwrap();
+        config.layers.insert(spec_key, spec_def);
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_layer("src/capabilities_import_checker.rs", ".");
+        assert_eq!(result, Some("capabilities".to_string()));
+    }
+
+    #[test]
+    fn test_detect_layer_empty_path() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_layer("", ".");
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_get_layer_def_exists() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.get_layer_def("taxonomy");
+        assert!(result.is_some());
+        assert!(result.unwrap().prefixes.values.contains(&"taxonomy_".to_string()));
+    }
+
+    #[test]
+    fn test_get_layer_def_not_found() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.get_layer_def("nonexistent");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_detect_empty_module_path() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_module_layer("");
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_new_merges_global_rules() {
+        let mut config = make_config();
+        config.rules.push(ArchitectureRule {
+            name: "global-mandatory".to_string().into(),
+            scope: "".to_string().into(),
+            enabled: true.into(),
+            mandatory: LayerNamePatternList::new(vec!["shared::contract".to_string()]),
+            forbidden: LayerNamePatternList::new(vec![]),
+            allowed: LayerNamePatternList::new(vec![]),
+            exceptions: LayerNamePatternList::new(vec![]),
+            code_analysis: RuleConfig::default(),
+        });
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let taxonomy_def = analyzer.get_layer_def("taxonomy").unwrap();
+        assert!(taxonomy_def.mandatory.values.contains(&"shared::contract".to_string()));
+    }
+
+    #[test]
+    fn test_detect_module_layer_prefix_fallback() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_module_layer("some_module::taxonomy_random_thing");
+        assert_eq!(result, Some("taxonomy".to_string()));
+    }
+
+    #[test]
+    fn test_layer_detection_case_sensitive() {
+        let config = make_config();
+        let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+        let result = analyzer.detect_layer("src/Taxonomy_Config.rs", ".");
+        assert_eq!(result, None);
+    }
+}

@@ -61,3 +61,33 @@ pub fn resolve_working_dir(path: &FilePath) -> FilePath {
     }
     FilePath::new(".".to_string()).unwrap_or_default()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_resolve_working_dir_returns_valid_path() {
+        let path = FilePath::new(std::env::current_dir()
+            .unwrap()
+            .to_string_lossy()
+            .to_string())
+        .unwrap_or_default();
+        let result = resolve_working_dir(&path);
+        assert!(!result.value.is_empty());
+    }
+
+    #[test]
+    fn test_resolve_working_dir_nonexistent() {
+        let path = FilePath::new("/nonexistent_path_xyz".to_string()).unwrap_or_default();
+        let result = resolve_working_dir(&path);
+        assert_eq!(result.value, ".");
+    }
+
+    #[test]
+    fn test_resolve_js_cmd_nonexistent_local() {
+        let cmd = resolve_js_cmd("eslint", vec!["--version".to_string()], "/nonexistent_dir");
+        assert!(cmd.len() >= 3);
+        assert!(cmd[1] == "eslint" || cmd[0].contains("eslint"));
+    }
+}
