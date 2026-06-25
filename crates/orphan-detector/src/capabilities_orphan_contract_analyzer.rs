@@ -68,7 +68,7 @@ pub fn is_contract_orphan(
     };
 
     // Build search_files: combine scan-directory files with all workspace .rs files
-    let mut search_files: Vec<&str> = all_files.iter().map(|s| s.as_str()).collect();
+    let mut search_files: Vec<String> = all_files.to_vec();
     let root_path = std::path::Path::new(root_dir.value());
     for ws_dir in &["crates", "packages", "modules"] {
         let ws_path = root_path.join(ws_dir);
@@ -86,7 +86,7 @@ pub fn is_contract_orphan(
     };
 
     let mut has_impl = false;
-    for cf in search_files {
+    for cf in &search_files {
         let cb = match cf.split('/').next_back() {
             Some(b) => b,
             None => continue,
@@ -133,7 +133,7 @@ pub fn is_contract_orphan(
     // Check 2: port/protocol not called by any orchestrator OR container
     if suffix == "port" || suffix == "protocol" {
         let mut called_by_orchestrator_or_container = false;
-        for cf in search_files {
+        for cf in &search_files {
             let cb = match cf.split('/').next_back() {
                 Some(b) => b,
                 None => continue,
@@ -181,7 +181,7 @@ pub fn is_contract_orphan(
     // Check 3: aggregate not called by any surface OR container
     if suffix == "aggregate" {
         let mut called_by_surface_or_container = false;
-        for cf in search_files {
+        for cf in &search_files {
             let cb = match cf.split('/').next_back() {
                 Some(b) => b,
                 None => continue,
@@ -241,4 +241,23 @@ fn extract_contract_trait_name(content: &str) -> Option<String> {
         return Some(caps[1].to_string());
     }
     re_py.captures(content).map(|caps| caps[1].to_string())
+}
+
+fn collect_rs_files(dir: &std::path::Path, files: &mut Vec<String>) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = entry.file_name().to_string_lossy().to_string();
+                if name == "target" || name == ".git" || name == "node_modules" {
+                    continue;
+                }
+                collect_rs_files(&path, files);
+            } else if path.extension().is_some_and(|e| e == "rs") {
+                if let Some(s) = path.to_str() {
+                    files.push(s.to_string());
+                }
+            }
+        }
+    }
 }

@@ -25,6 +25,7 @@ pub struct McpServerOrchestrator {
 }
 
 impl McpServerOrchestrator {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
         import_orchestrator: Arc<dyn IImportRunnerAggregate>,
