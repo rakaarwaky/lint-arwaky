@@ -22,10 +22,7 @@ impl ConfigSource {
     ) -> Self {
         Self {
             language: language.into(),
-            path: match FilePath::new(path.into()) {
-                Ok(fp) => fp,
-                Err(_) => FilePath::default(),
-            },
+            path: FilePath::new(path.into()).unwrap_or_default(),
             raw_content: raw_content.into(),
         }
     }

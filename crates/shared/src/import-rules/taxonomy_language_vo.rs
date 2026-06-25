@@ -11,10 +11,7 @@ pub enum LanguageVO {
 
 impl LanguageVO {
     pub fn from_path(path: &str) -> Self {
-        let ext = match Path::new(path).extension().and_then(|e| e.to_str()) {
-            Some(e) => e,
-            None => "",
-        };
+        let ext = Path::new(path).extension().and_then(|e| e.to_str()).unwrap_or_default();
         match ext {
             "rs" => LanguageVO::Rust,
             "py" => LanguageVO::Python,

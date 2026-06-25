@@ -68,23 +68,11 @@ impl RoleOrchestrator {
         violations: &mut Vec<LintResult>,
     ) {
         for file in files {
-            let content = match std::fs::read_to_string(file) {
-                Ok(c) => c,
-                Err(_) => String::new(),
-            };
-            let filename = match Path::new(file).file_name().and_then(|n| n.to_str()) {
-                Some(n) => n,
-                None => "",
-            };
+            let content = std::fs::read_to_string(file).unwrap_or_default();
+            let filename = Path::new(file).file_name().and_then(|n| n.to_str()).unwrap_or_default();
 
-            let stem = match Path::new(filename).file_stem().and_then(|s| s.to_str()) {
-                Some(s) => s,
-                None => "",
-            };
-            let prefix = match stem.split('_').next() {
-                Some(p) => p,
-                None => "",
-            };
+            let stem = Path::new(filename).file_stem().and_then(|s| s.to_str()).unwrap_or_default();
+            let prefix = stem.split('_').next().unwrap_or_default();
 
             let fp = match FilePath::new(file.to_string()) {
                 Ok(f) => f,

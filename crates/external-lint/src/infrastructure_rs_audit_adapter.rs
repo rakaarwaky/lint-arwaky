@@ -56,10 +56,7 @@ impl CargoAuditAdapter {
             }
         }
 
-        match FilePath::new("nonexistent_directory_for_cargo_lock".to_string()) {
-            Ok(fp) => fp,
-            Err(_) => FilePath::default(),
-        }
+        FilePath::new("nonexistent_directory_for_cargo_lock".to_string()).unwrap_or_default()
     }
 }
 

@@ -308,10 +308,7 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
         if trimmed.starts_with("from ") && trimmed.contains(" import ") {
             if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
                 for name in import_part.split(',') {
-                    let name: &str = match name.split_whitespace().next() {
-                        Some(n) => n,
-                        None => "",
-                    };
+                    let name: &str = name.split_whitespace().next().unwrap_or_default();
                     if !name.is_empty() && name != "*" {
                         symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                     }
@@ -321,14 +318,11 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
         }
 
         if trimmed.starts_with("import ") {
-            let module: &str = match trimmed
+            let module: &str = trimmed
                 .trim_start_matches("import ")
                 .split_whitespace()
                 .next()
-            {
-                Some(m) => m,
-                None => "",
-            };
+                .unwrap_or_default();
             if !module.is_empty() {
                 let name: &str = match module.rsplit('.').next() {
                     Some(n) => n,
@@ -353,10 +347,7 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name: &str = match part.split_whitespace().next() {
-                            Some(n) => n,
-                            None => "",
-                        };
+                        let name: &str = part.split_whitespace().next().unwrap_or_default();
                         if !name.is_empty() && name != "type" {
                             symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }
@@ -368,10 +359,7 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
 
         if trimmed.starts_with("import ") && trimmed.contains(" from ") {
             if let Some(import_part) = trimmed.split_once("import ").map(|(_, p)| p) {
-                let name = match import_part.split_once(" from ").map(|(n, _)| n) {
-                    Some(n) => n,
-                    None => "",
-                };
+                let name = import_part.split_once(" from ").map(|(n, _)| n).unwrap_or_default();
                 let name = name.trim();
                 if !name.is_empty() && name != "default" {
                     symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));

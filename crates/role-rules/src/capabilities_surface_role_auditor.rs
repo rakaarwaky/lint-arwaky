@@ -146,13 +146,10 @@ impl SurfaceRoleChecker {
             };
 
             if definition.role.no_domain_logic.value {
-                let basename = match std::path::Path::new(&f.value)
+                let basename = std::path::Path::new(&f.value)
                     .file_stem()
                     .and_then(|s| s.to_str())
-                {
-                    Some(s) => s,
-                    None => "",
-                };
+                    .unwrap_or_default();
                 let is_smart = basename.ends_with("_command")
                     || basename.ends_with("_controller")
                     || basename.ends_with("_page")
@@ -215,13 +212,10 @@ impl SurfaceRoleChecker {
     /// — they are expected to contain orchestration logic.
     fn _check_passive(&self, f: &FilePath, results: &mut LintResultList) {
         let f_str = f.to_string();
-        let basename = match std::path::Path::new(&f_str)
+        let basename = std::path::Path::new(&f_str)
             .file_stem()
             .and_then(|s| s.to_str())
-        {
-            Some(s) => s,
-            None => "",
-        };
+            .unwrap_or_default();
         if basename.ends_with("_command")
             || basename.ends_with("_controller")
             || basename.ends_with("_page")

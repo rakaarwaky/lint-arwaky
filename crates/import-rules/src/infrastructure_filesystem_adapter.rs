@@ -18,10 +18,7 @@ use shared::taxonomy_source_vo::ContentString;
 /// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
 /// Private helper — uses `Result::match` to avoid inline match patterns.
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    match result {
-        Ok(fp) => fp,
-        Err(_) => FilePath::default(),
-    }
+    result.unwrap_or_default()
 }
 
 /// Returns the inner `FilePath` if `result` is `Ok`, otherwise clones `fallback`.

@@ -80,10 +80,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     all_results.extend(aes_results);
 
                     // Build FilePath for async aggregates
-                    let path_obj = match FilePath::new(path.clone()) {
-                        Ok(fp) => fp,
-                        Err(_) => FilePath::default(),
-                    };
+                    let path_obj = FilePath::new(path.clone()).unwrap_or_default();
                     let rt = match tokio::runtime::Runtime::new() {
                         Ok(r) => r,
                         Err(_) => {
@@ -113,10 +110,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         Some(s) => s.to_string(),
                         None => ".".to_string(),
                     };
-                    let dir_path = match DirectoryPath::new(orphan_scan_root.clone()) {
-                        Ok(dp) => dp,
-                        Err(_) => DirectoryPath::default(),
-                    };
+                    let dir_path = DirectoryPath::new(orphan_scan_root.clone()).unwrap_or_default();
                     let source_files = match scanner.scan_directory(&dir_path) {
                         Ok(list) => list.values,
                         Err(_) => Vec::new(),
@@ -168,10 +162,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let threshold = match arg_threshold {
-                    Some(t) => t,
-                    None => 80,
-                };
+                let threshold = arg_threshold.unwrap_or(80);
                 let linter = self.deps.code_analysis_linter.clone();
                 let import_orch = self.deps.import_orchestrator.clone();
                 let naming_orch = self.deps.naming_orchestrator.clone();
@@ -187,10 +178,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     let aes_results = linter.run_code_analysis_path(&path);
                     all_results.extend(aes_results);
 
-                    let path_obj = match FilePath::new(path.clone()) {
-                        Ok(fp) => fp,
-                        Err(_) => FilePath::default(),
-                    };
+                    let path_obj = FilePath::new(path.clone()).unwrap_or_default();
                     let rt = match tokio::runtime::Runtime::new() {
                         Ok(r) => r,
                         Err(_) => {
@@ -215,10 +203,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         Some(s) => s.to_string(),
                         None => ".".to_string(),
                     };
-                    let dir_path = match DirectoryPath::new(orphan_scan_root.clone()) {
-                        Ok(dp) => dp,
-                        Err(_) => DirectoryPath::default(),
-                    };
+                    let dir_path = DirectoryPath::new(orphan_scan_root.clone()).unwrap_or_default();
                     let source_files = match scanner.scan_directory(&dir_path) {
                         Ok(list) => list.values,
                         Err(_) => Vec::new(),
@@ -303,10 +288,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             "config-show" => serde_json::json!({"status": "success", "action": "config-show"}),
             _ => serde_json::json!({"error": format!("Unknown action: {}", action)}),
         };
-        match serde_json::to_string_pretty(&result) {
-            Ok(s) => s,
-            Err(_) => String::new(),
-        }
+        serde_json::to_string_pretty(&result).unwrap_or_default()
     }
 
     async fn list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {
@@ -326,10 +308,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             })
             .collect();
         let result = serde_json::json!({ "commands": commands, "total": commands.len() });
-        match serde_json::to_string_pretty(&result) {
-            Ok(s) => s,
-            Err(_) => String::new(),
-        }
+        serde_json::to_string_pretty(&result).unwrap_or_default()
     }
 
     async fn read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {

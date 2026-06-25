@@ -83,10 +83,7 @@ pub fn handle_fix(
         None => ".".to_string(),
     };
     let fix_surface = FixCommandsSurface::new(code_analysis_linter, fix_orchestrator_factory);
-    let fp = match FilePath::new(root) {
-        Ok(fp) => fp,
-        Err(_) => FilePath::default(),
-    };
+    let fp = FilePath::new(root).unwrap_or_default();
     fix_surface.run_fix(fp, dry_run);
     ExitCode::SUCCESS
 }

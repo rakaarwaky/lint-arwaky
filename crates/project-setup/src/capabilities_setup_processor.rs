@@ -77,13 +77,13 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
 
     /// Resolve the path to the lint-arwaky-mcp binary.
     fn which_mcp_binary(&self) -> McpBinaryNameVO {
-        let exe_candidate = match std::env::current_exe().ok().and_then(|p| {
-            p.parent()
-                .map(|d| d.join("lint-arwaky-mcp").to_string_lossy().to_string())
-        }) {
-            Some(path) => path,
-            None => String::new(),
-        };
+        let exe_candidate = std::env::current_exe()
+            .ok()
+            .and_then(|p| {
+                p.parent()
+                    .map(|d| d.join("lint-arwaky-mcp").to_string_lossy().to_string())
+            })
+            .unwrap_or_default();
         let cargo_home = match std::env::var("CARGO_HOME") {
             Ok(home) => home,
             Err(_) => "~/.cargo".to_string(),

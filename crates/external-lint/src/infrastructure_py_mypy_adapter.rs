@@ -121,14 +121,8 @@ impl ILinterAdapterPort for MyPyAdapter {
                             None => "",
                         };
                         let line_number: i64 =
-                            match caps.get(2).and_then(|m| m.as_str().parse().ok()) {
-                                Some(v) => v,
-                                None => 0,
-                            };
-                        let column: i64 = match caps.get(3).and_then(|m| m.as_str().parse().ok()) {
-                            Some(v) => v,
-                            None => 0,
-                        };
+                            caps.get(2).and_then(|m| m.as_str().parse().ok()).unwrap_or_default();
+                        let column: i64 = caps.get(3).and_then(|m| m.as_str().parse().ok()).unwrap_or_default();
                         let msg_type = match caps.get(4) {
                             Some(m) => m.as_str(),
                             None => "error",
@@ -167,10 +161,7 @@ impl ILinterAdapterPort for MyPyAdapter {
                             None => "",
                         };
                         let line_number: i64 =
-                            match caps.get(2).and_then(|m| m.as_str().parse().ok()) {
-                                Some(v) => v,
-                                None => 0,
-                            };
+                            caps.get(2).and_then(|m| m.as_str().parse().ok()).unwrap_or_default();
                         let msg_type = match caps.get(3) {
                             Some(m) => m.as_str(),
                             None => "error",

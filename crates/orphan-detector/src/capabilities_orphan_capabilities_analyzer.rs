@@ -44,13 +44,10 @@ pub fn is_infra_cap_orphan(
 
     // Check if wired in any container
     let fp = f.value();
-    let basename = match std::path::Path::new(fp)
+    let basename = std::path::Path::new(fp)
         .file_name()
         .and_then(|n| n.to_str())
-    {
-        Some(n) => n,
-        None => "",
-    };
+        .unwrap_or_default();
     let stem = basename.replace(".rs", "").replace(".py", "");
 
     if let Ok(content) = std::fs::read_to_string(fp) {
@@ -182,16 +179,10 @@ pub fn is_infra_cap_orphan_raw(
     is_reachable: bool,
 ) -> OrphanIndicatorResult {
     let fp = f.value();
-    let basename = match fp.split('/').next_back() {
-        Some(b) => b,
-        None => "",
-    };
+    let basename = fp.split('/').next_back().unwrap_or_default();
     let stem = basename.replace(".rs", "").replace(".py", "");
 
-    let content = match std::fs::read_to_string(fp) {
-        Ok(c) => c,
-        Err(_) => String::new(),
-    };
+    let content = std::fs::read_to_string(fp).unwrap_or_default();
     let mut identifiers: Vec<String> = Vec::new();
     identifiers.extend(extract_struct_names(&content));
     identifiers.extend(extract_trait_names(&content));
@@ -212,14 +203,8 @@ pub fn is_infra_cap_orphan_raw(
 
     let mut is_wired = false;
     for cf in all_files {
-        let cb = match cf.split('/').next_back() {
-            Some(b) => b,
-            None => "",
-        };
-        let csuffix = match cb.rsplit('_').next() {
-            Some(s) => s,
-            None => "",
-        }
+        let cb = cf.split('/').next_back().unwrap_or_default();
+        let csuffix = cb.rsplit('_').next().unwrap_or_default()
         .replace(".rs", "")
         .replace(".py", "");
         if csuffix != "container" {
@@ -248,10 +233,7 @@ pub fn check_capabilities_orphan(
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
 ) {
     let stem = basename.replace(".rs", "").replace(".py", "");
-    let content = match std::fs::read_to_string(fp) {
-        Ok(c) => c,
-        Err(_) => String::new(),
-    };
+    let content = std::fs::read_to_string(fp).unwrap_or_default();
 
     let mut identifiers: Vec<String> = Vec::new();
     identifiers.extend(extract_struct_names(&content));
@@ -273,14 +255,8 @@ pub fn check_capabilities_orphan(
 
     let mut wired = false;
     for cf in files {
-        let cb = match cf.split('/').next_back() {
-            Some(b) => b,
-            None => "",
-        };
-        let csuffix = match cb.rsplit('_').next() {
-            Some(s) => s,
-            None => "",
-        }
+        let cb = cf.split('/').next_back().unwrap_or_default();
+        let csuffix = cb.rsplit('_').next().unwrap_or_default()
         .replace(".rs", "")
         .replace(".py", "");
         if csuffix != "container" {

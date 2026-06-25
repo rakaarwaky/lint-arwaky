@@ -92,45 +92,24 @@ impl ILinterAdapterPort for RuffAdapter {
         {
             Ok(response) => {
                 let stdout = &response.stdout;
-                let findings: Vec<Value> = match serde_json::from_str(stdout) {
-                    Ok(v) => v,
-                    Err(_) => Vec::new(),
-                };
+                let findings: Vec<Value> = serde_json::from_str(stdout).unwrap_or_default();
                 let mut results = Vec::new();
 
                 for f in findings {
-                    let filename = match f.get("filename").and_then(|v| v.as_str()) {
-                        Some(s) => s,
-                        None => "",
-                    };
-                    let row = match f
+                    let filename = f.get("filename").and_then(|v| v.as_str()).unwrap_or_default();
+                    let row = f
                         .get("location")
                         .and_then(|l| l.get("row"))
                         .and_then(|v| v.as_i64())
-                    {
-                        Some(v) => v,
-                        None => 0,
-                    };
-                    let col = match f
+                        .unwrap_or_default();
+                    let col = f
                         .get("location")
                         .and_then(|l| l.get("column"))
                         .and_then(|v| v.as_i64())
-                    {
-                        Some(v) => v,
-                        None => 0,
-                    };
-                    let code = match f.get("code").and_then(|v| v.as_str()) {
-                        Some(v) => v,
-                        None => "UNKNOWN",
-                    };
-                    let message = match f.get("message").and_then(|v| v.as_str()) {
-                        Some(s) => s,
-                        None => "",
-                    };
-                    let severity_str = match f.get("severity").and_then(|v| v.as_str()) {
-                        Some(s) => s,
-                        None => "",
-                    };
+                        .unwrap_or_default();
+                    let code = f.get("code").and_then(|v| v.as_str()).unwrap_or("UNKNOWN");
+                    let message = f.get("message").and_then(|v| v.as_str()).unwrap_or_default();
+                    let severity_str = f.get("severity").and_then(|v| v.as_str()).unwrap_or_default();
 
                     let resolved = self.path_norm.resolve_infrastructure_path(
                         match FilePath::new(filename) {

@@ -83,15 +83,9 @@ impl Default for ArchitectureConfig {
 }
 
 pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
-    let raw: serde_yaml::Value = match serde_yaml::from_str(yaml_str) {
-        Ok(v) => v,
-        Err(_) => serde_yaml::Value::default(),
-    };
+    let raw: serde_yaml::Value = serde_yaml::from_str(yaml_str).unwrap_or_default();
     if let Some(arch_val) = raw.get("architecture") {
-        let mut arch_json = match serde_json::to_value(arch_val) {
-            Ok(v) => v,
-            Err(_) => serde_json::Value::default(),
-        };
+        let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
         // Extract layers from rules.AES102.layers if not at top-level layers
         if arch_json
             .get("rules")
@@ -251,11 +245,8 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
                 let paths: Vec<_> = arr
                     .iter()
                     .filter_map(|v| v.as_str())
-                    .map(|s| match FilePath::new(s.to_string()) {
-                        Ok(p) => p,
-                        Err(_) => FilePath::default(),
-                    })
-                    .collect();
+                .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
+                .collect();
                 if !paths.is_empty() {
                     config.ignored_paths = FilePathList::new(paths);
                 }
@@ -268,10 +259,7 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
             let paths: Vec<_> = arr
                 .iter()
                 .filter_map(|v| v.as_str())
-                .map(|s| match FilePath::new(s.to_string()) {
-                    Ok(p) => p,
-                    Err(_) => FilePath::default(),
-                })
+                .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
                 .collect();
             if !paths.is_empty() {
                 config.ignored_paths = FilePathList::new(paths);

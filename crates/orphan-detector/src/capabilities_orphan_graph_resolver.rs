@@ -78,10 +78,7 @@ impl OrphanGraphResolver {
         // Build a lookup: module_name -> file_path for crate:: resolution
         let mut module_to_file: HashMap<String, String> = HashMap::new();
         for f in files {
-            let basename = match f.split('/').next_back() {
-                Some(b) => b,
-                None => "",
-            };
+            let basename = f.split('/').next_back().unwrap_or_default();
             let stem = basename
                 .replace(".rs", "")
                 .replace(".py", "")
@@ -354,11 +351,8 @@ impl OrphanGraphResolver {
                                             let path = entry.path();
                                             if let Some(path_str) = path.to_str() {
                                                 let stem =
-                                                    match path.file_stem().and_then(|s| s.to_str())
-                                                    {
-                                                        Some(s) => s,
-                                                        None => "",
-                                                    };
+                                                    path.file_stem().and_then(|s| s.to_str())
+                                                    .unwrap_or_default();
                                                 if stem == module_name && path_str != *f {
                                                     import_graph
                                                         .entry(f.clone())

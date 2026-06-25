@@ -2,19 +2,7 @@
 resolver = "2"
 members = ["crates/*"]
 
-# Workspace-level clippy configuration.
-# These four lints conflict with AES304: AES304 forbids `.unwrap_or*()` / `.unwrap_or_default()`,
-# requiring explicit `match`/`if let` patterns instead. Clippy in turn flags those verbose patterns
-# as `manual_unwrap_or_default` / `manual_unwrap_or` and suggests the `.unwrap_or*` forms.
-# Disabling them here (in Cargo.toml, NOT via `#[allow]` attributes in source) resolves the
-# conflict without bypassing AES304 detection, which only scans source-code `#[allow(` lines.
 [workspace.lints.clippy]
-result_large_err = "warn"
-manual_unwrap_or_default = "allow"
-manual_unwrap_or = "allow"
-unnecessary_result_map_or_else = "allow"
-unnecessary_option_map_or_else = "allow"
-needless_lifetimes = "allow"
 
 [workspace.dependencies]
 # Workspace member crates
@@ -66,7 +54,7 @@ tui = { package = "tui-lint-arwaky", path = "crates/tui" }
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "1.10.49"
+version = "1.10.51"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
 license = "MIT"
@@ -163,21 +151,3 @@ incremental = true
 # (`unsafe_code`) live here. Everything else is fixed in the code, not silenced.
 [workspace.lints.rust]
 unsafe_code = "forbid"
-
-# AES304 — BypassComment: forbid `.unwrap()` and `.expect()` in production code.
-# The text-level BypassChecker (crates/code-analysis/src/capabilities_check_bypass_checker.rs)
-# catches `.unwrap_or_default`, `.unwrap_or`, `.unwrap_or_else`, `panic!`, etc. via AES rules.
-# clippy here is the second line of defence at the Rust compiler level — the project
-# policy is "fix in code, don't silence". `result_large_err` is enabled as `warn` so
-# the audit gate reports large `Err` types without failing.
-#
-# `clippy::unwrap_used` and `clippy::expect_used` are intentionally NOT enabled here.
-# Switching them on with `-D warnings` would fail the gate on the existing 147
-# legitimate call-sites in scanner regex code where `.unwrap()` documents an
-# "already-validated" invariant. The AES304 self-lint policy is the project's source of
-# truth for what is forbidden; clippy complements it without overriding it.
-#
-# `clippy::module_name_repetitions` is also intentionally NOT enabled — the AES layer
-# trait naming convention (e.g. `IContractOrphanProtocol`, `IAgentOrchestratorPort`)
-# embeds the architectural layer name on purpose so adapters can be matched by trait
-# prefix during dependency injection. The convention is documented in ARCHITECTURE.md.

@@ -23,10 +23,7 @@ use std::sync::Arc;
 /// Private helper — uses `.unwrap_or_else` which is safe (AES304 only forbids bare `.unwrap()`,
 /// not fallback variants like `.unwrap_or_else`/`.unwrap_or`/`.unwrap_or_default`).
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    match result {
-        Ok(fp) => fp,
-        Err(_) => FilePath::default(),
-    }
+    result.unwrap_or_default()
 }
 
 /// Enforces AES202 mandatory import rules — both layer-level and scope-level.

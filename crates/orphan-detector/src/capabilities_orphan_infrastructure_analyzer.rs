@@ -35,13 +35,10 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
 
         // Check if wired in any container
         let fp = f.value();
-        let basename = match std::path::Path::new(fp)
+        let basename = std::path::Path::new(fp)
             .file_name()
             .and_then(|n| n.to_str())
-        {
-            Some(n) => n,
-            None => "",
-        };
+            .unwrap_or_default();
         let stem = basename.replace(".rs", "").replace(".py", "");
 
         if let Ok(content) = std::fs::read_to_string(fp) {

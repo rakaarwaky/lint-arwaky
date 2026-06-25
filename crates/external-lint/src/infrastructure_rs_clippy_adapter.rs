@@ -72,10 +72,7 @@ impl RustLinterAdapter {
             }
         }
 
-        match FilePath::new("nonexistent_directory_for_cargo_toml".to_string()) {
-            Ok(fp) => fp,
-            Err(_) => FilePath::default(),
-        }
+        FilePath::new("nonexistent_directory_for_cargo_toml".to_string()).unwrap_or_default()
     }
 }
 
@@ -161,10 +158,7 @@ impl ILinterAdapterPort for RustLinterAdapter {
                     };
 
                     for span in &spans {
-                        let is_primary = match span.get("is_primary").and_then(|v| v.as_bool()) {
-                            Some(v) => v,
-                            None => false,
-                        };
+                        let is_primary = span.get("is_primary").and_then(|v| v.as_bool()).unwrap_or_default();
                         if !is_primary {
                             continue;
                         }

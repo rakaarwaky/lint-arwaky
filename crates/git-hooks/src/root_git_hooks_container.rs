@@ -38,10 +38,7 @@ impl GitContainer {
     pub fn new_default() -> Self {
         let hook_adapter: Arc<dyn IHookManagerPort> =
             Arc::new(crate::infrastructure_hook_adapter::GitHookAdapter::new(
-                match shared::source_parsing::taxonomy_path_vo::FilePath::new(".".to_string()) {
-                    Ok(path) => path,
-                    Err(_) => shared::source_parsing::taxonomy_path_vo::FilePath::default(),
-                },
+                shared::source_parsing::taxonomy_path_vo::FilePath::new(".".to_string()).unwrap_or_default(),
             ));
         let scanner: Arc<dyn IScannerProviderPort> =
             Arc::new(shared::source_parsing::FileCollectorProvider::new());

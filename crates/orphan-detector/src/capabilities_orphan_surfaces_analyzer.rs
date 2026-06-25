@@ -78,13 +78,10 @@ pub fn is_surface_orphan(
 
     // Check if imported by entry or router
     let fp_val = f.value();
-    let basename = match std::path::Path::new(fp_val)
+    let basename = std::path::Path::new(fp_val)
         .file_name()
         .and_then(|n| n.to_str())
-    {
-        Some(n) => n,
-        None => "",
-    };
+        .unwrap_or_default();
     let stem = basename
         .replace(".rs", "")
         .replace(".py", "")
@@ -196,10 +193,7 @@ fn check_dir_imports(dir: &std::path::Path, stem: &str) -> Result<bool, std::io:
 
 pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicatorResult {
     let fp = f.value();
-    let basename = match fp.split('/').next_back() {
-        Some(b) => b,
-        None => "",
-    };
+    let basename = fp.split('/').next_back().unwrap_or_default();
     let suffix = get_surface_suffix(basename);
     let category = surface_category(&suffix);
     let stem = basename
@@ -213,10 +207,7 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
         "smart" => {
             let mut imported_by_entry_or_router = false;
             for cf in all_files {
-                let cb = match cf.split('/').next_back() {
-                    Some(b) => b,
-                    None => "",
-                };
+                let cb = cf.split('/').next_back().unwrap_or_default();
                 let cf_suffix = get_surface_suffix(cb);
                 // Entry point or router
                 if cb.starts_with("cli_")
@@ -253,10 +244,7 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
         "utility" => {
             let mut imported_by_smart = false;
             for cf in all_files {
-                let cb = match cf.split('/').next_back() {
-                    Some(b) => b,
-                    None => "",
-                };
+                let cb = cf.split('/').next_back().unwrap_or_default();
                 let cf_suffix = get_surface_suffix(cb);
                 if surface_category(&cf_suffix) == "smart" {
                     if let Ok(c) = std::fs::read_to_string(cf) {
@@ -288,10 +276,7 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
         "passive" => {
             let mut imported = false;
             for cf in all_files {
-                let cb = match cf.split('/').next_back() {
-                    Some(b) => b,
-                    None => "",
-                };
+                let cb = cf.split('/').next_back().unwrap_or_default();
                 let cf_suffix = get_surface_suffix(cb);
                 let cat = surface_category(&cf_suffix);
                 if cat == "smart" || cat == "utility" {

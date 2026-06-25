@@ -95,9 +95,6 @@ impl LintArwakyMcpServer {
             "adapters_total": adapters.len(),
             "adapters": adapters
         });
-        match serde_json::to_string_pretty(&result) {
-            Ok(s) => s,
-            Err(_) => String::new(),
-        }
+        serde_json::to_string_pretty(&result).unwrap_or_default()
     }
 }

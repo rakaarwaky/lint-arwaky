@@ -29,13 +29,10 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         let test_count = py_files
             .iter()
             .filter(|f| {
-                match f
+                f
                     .file_name()
                     .map(|n| n.to_string_lossy().starts_with("test_"))
-                {
-                    Some(b) => b,
-                    None => false,
-                }
+                    .unwrap_or_default()
             })
             .count() as i64;
         let ratio = if py_count > 0 {
@@ -172,10 +169,7 @@ fn walk_dir(dir: &Path, py_files: &mut Vec<PathBuf>) {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                let name = match path.file_name().and_then(|n| n.to_str()) {
-                    Some(n) => n,
-                    None => "",
-                };
+                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default();
                 if name != "target" && name != ".git" && name != "node_modules" && name != ".venv" {
                     walk_dir(&path, py_files);
                 }
@@ -191,10 +185,7 @@ fn find_cache_dirs(dir: &Path, cache_names: &[&str], found_dirs: &mut Vec<PathBu
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                let name = match path.file_name().and_then(|n| n.to_str()) {
-                    Some(n) => n,
-                    None => "",
-                };
+                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default();
                 if cache_names.contains(&name) {
                     found_dirs.push(path.clone());
                 } else if name != "target" && name != ".git" && name != "node_modules" {

@@ -86,10 +86,7 @@ impl CapabilitiesRoleChecker {
                 }
                 let words: Vec<&str> = t.split_whitespace().collect();
                 if (t.starts_with("pub struct ") || t.starts_with("struct ")) && words.len() >= 2 {
-                    let struct_idx = match words.iter().position(|w| *w == "struct") {
-                        Some(i) => i,
-                        None => 0,
-                    };
+                    let struct_idx = words.iter().position(|w| *w == "struct").unwrap_or(0);
                     Some(match words.get(struct_idx + 1) {
                         Some(w) => w.trim_end_matches(';'),
                         None => "",
@@ -143,10 +140,7 @@ impl CapabilitiesRoleChecker {
                 let name = match t.split_whitespace().nth(1) {
                     Some(n) => match n.split('{').next() {
                         Some(n) => match n.split(':').next() {
-                            Some(n) => match n.split_whitespace().next() {
-                                Some(n) => n,
-                                None => "",
-                            },
+                            Some(n) => n.split_whitespace().next().unwrap_or_default(),
                             None => "",
                         },
                         None => "",

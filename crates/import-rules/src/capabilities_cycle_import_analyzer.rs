@@ -23,10 +23,7 @@ use std::sync::Arc;
 /// Returns `fp` if `result` is `Ok`, otherwise returns `FilePath::default()`.
 /// Private helper — uses `Result::match` to avoid inline match patterns.
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    match result {
-        Ok(fp) => fp,
-        Err(_) => FilePath::default(),
-    }
+    result.unwrap_or_default()
 }
 
 /// Detects circular imports and dependency cycles (Capability) — AES205.

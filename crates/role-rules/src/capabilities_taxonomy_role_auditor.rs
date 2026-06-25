@@ -240,10 +240,7 @@ impl TaxonomyRoleChecker {
 
     pub fn check_constant(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
-        let basename = match Path::new(file).file_name().and_then(|f| f.to_str()) {
-            Some(f) => f,
-            None => "",
-        };
+        let basename = Path::new(file).file_name().and_then(|f| f.to_str()).unwrap_or_default();
         if !basename.ends_with("_constant.rs") && !basename.ends_with("_constant.py") {
             return;
         }

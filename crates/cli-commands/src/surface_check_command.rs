@@ -149,10 +149,7 @@ impl CheckCommandsSurface {
 
     /// Run AES analysis + external adapters on a target path.
     pub fn scan(&self, path: &str, filter: Option<&str>, config: ArchitectureConfig) {
-        let path_obj = match FilePath::new(path.to_string()) {
-            Ok(fp) => fp,
-            Err(_) => FilePath::default(),
-        };
+        let path_obj = FilePath::new(path.to_string()).unwrap_or_default();
         let rt = match tokio::runtime::Runtime::new() {
             Ok(r) => r,
             Err(_) => {
@@ -195,10 +192,7 @@ impl CheckCommandsSurface {
         all_results.extend(import_results);
 
         // 4. Run external linter adapters via aggregate
-        let path_obj2 = match FilePath::new(path.to_string()) {
-            Ok(fp) => fp,
-            Err(_) => FilePath::default(),
-        };
+        let path_obj2 = FilePath::new(path.to_string()).unwrap_or_default();
         let external_results = rt.block_on(self.external_lint.scan_all(&path_obj2));
         all_results.extend(external_results.values);
 
@@ -209,14 +203,8 @@ impl CheckCommandsSurface {
         // 5. Run orphan detection — always scan entire workspace for cross-folder import graph.
         // Scan from workspace root so cross-crate imports can be resolved.
         let scan_root = find_workspace_root(path);
-        let orphan_scan_root = match scan_root.as_ref().and_then(|r| r.to_str()) {
-            Some(s) => s,
-            None => ".",
-        };
-        let dir_path = match DirectoryPath::new(orphan_scan_root.to_string()) {
-            Ok(dp) => dp,
-            Err(_) => DirectoryPath::default(),
-        };
+        let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
+        let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
         let source_files = match self.scanner_provider.scan_directory(&dir_path) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
@@ -270,10 +258,7 @@ impl CheckCommandsSurface {
         let path_obj = std::path::Path::new(file_path);
 
         // Collect all source files from workspace root for cross-folder graph building
-        let dir_path = match DirectoryPath::new(".".to_string()) {
-            Ok(dp) => dp,
-            Err(_) => DirectoryPath::default(),
-        };
+        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
         let source_files = match self.scanner_provider.scan_directory(&dir_path) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),

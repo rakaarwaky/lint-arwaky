@@ -151,10 +151,7 @@ pub fn handle_mcp_config(client: &str) -> ExitCode {
             }
         }),
     };
-    let json_str = match serde_json::to_string_pretty(&config) {
-        Ok(s) => s,
-        Err(_) => String::new(),
-    };
+    let json_str = serde_json::to_string_pretty(&config).unwrap_or_default();
     println!("MCP Client Configuration for: {}", client);
     println!("Binary: {}", binary);
     println!();

@@ -43,14 +43,8 @@ pub fn is_contract_orphan(
     all_files: &[String],
 ) -> OrphanIndicatorResult {
     let fp = f.value();
-    let basename = match fp.split('/').next_back() {
-        Some(b) => b,
-        None => "",
-    };
-    let suffix = match basename.rsplit('_').next() {
-        Some(s) => s,
-        None => "",
-    }
+    let basename = fp.split('/').next_back().unwrap_or_default();
+    let suffix = basename.rsplit('_').next().unwrap_or_default()
     .replace(".rs", "")
     .replace(".py", "")
     .replace(".ts", "")

@@ -35,16 +35,13 @@ impl CodeAnalysisCheckerContainer {
         let mandatory = Arc::new(MandatoryDefinitionChecker::new());
         // Honor AES304 forbidden_bypass from config when the analyzer exposes one;
         // fall back to the in-code default list otherwise.
-        let bypass = match analyzer
+        let bypass = analyzer
             .config()
             .rules
             .iter()
             .find(|r| r.name.value == "AES304")
             .map(|r| BypassChecker::from_patterns(&r.code_analysis.forbidden_bypass))
-        {
-            Some(checker) => checker,
-            None => BypassChecker::new(),
-        };
+            .unwrap_or_default();
         Self {
             analyzer,
             bypass_checker: Arc::new(bypass),

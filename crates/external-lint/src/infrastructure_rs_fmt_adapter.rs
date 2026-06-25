@@ -68,10 +68,7 @@ impl RustFmtAdapter {
                 }
             }
         }
-        match FilePath::new("nonexistent_directory_for_cargo_toml".to_string()) {
-            Ok(fp) => fp,
-            Err(_) => FilePath::default(),
-        }
+        FilePath::new("nonexistent_directory_for_cargo_toml".to_string()).unwrap_or_default()
     }
 }
 
@@ -153,10 +150,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
 
         if results.is_empty() {
             results.push(LintResult {
-                file: match FilePath::new("Cargo.toml".to_string()) {
-                    Ok(fp) => fp,
-                    Err(_) => FilePath::default(),
-                },
+                file: FilePath::new("Cargo.toml".to_string()).unwrap_or_default(),
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw("rustfmt::unformatted"),
