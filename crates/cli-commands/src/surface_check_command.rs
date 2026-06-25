@@ -151,13 +151,10 @@ impl CheckCommandsSurface {
 
     /// Run AES analysis + external adapters on a target path.
     pub fn scan(&self, path: &str, filter: Option<&str>, config: ArchitectureConfig) {
-        let path_obj = FilePath::new(path.to_string()).unwrap_or_default();
-        let rt = match tokio::runtime::Runtime::new() {
+        let path_obj = crate::surface_common_command::resolve_file_path(path);
+        let rt = match crate::surface_common_command::create_runtime() {
             Ok(r) => r,
-            Err(_) => {
-                eprintln!("[error] failed to create tokio runtime");
-                return;
-            }
+            Err(_) => return,
         };
 
         // Determine dynamic orchestrators based on detected language config
@@ -219,16 +216,8 @@ impl CheckCommandsSurface {
         );
         all_results.extend(orphan_results);
 
-        let canonical_scan_path = match std::path::Path::new(path).canonicalize() {
-            Ok(p) => p,
-            Err(_) => std::path::PathBuf::from(path),
-        }
-        .to_string_lossy()
-        .to_string();
-        let cwd = match std::env::current_dir() {
-            Ok(d) => d,
-            Err(_) => std::path::PathBuf::new(),
-        };
+        let canonical_scan_path = crate::surface_common_command::canonicalize_path(path);
+        let cwd = crate::surface_common_command::current_dir();
         let filtered_results: Vec<_> = if let Some(code) = filter {
             all_results
                 .into_iter()
@@ -271,10 +260,7 @@ impl CheckCommandsSurface {
         let target_path = if path_obj.is_absolute() {
             file_path.to_string()
         } else {
-            let cwd = match std::env::current_dir() {
-                Ok(d) => d,
-                Err(_) => std::path::PathBuf::new(),
-            };
+            let cwd = crate::surface_common_command::current_dir();
             cwd.join(file_path).to_string_lossy().to_string()
         };
 
@@ -321,12 +307,9 @@ impl CheckCommandsSurface {
             }
         };
 
-        let rt = match tokio::runtime::Runtime::new() {
+        let rt = match crate::surface_common_command::create_runtime() {
             Ok(r) => r,
-            Err(_) => {
-                eprintln!("[error] failed to create tokio runtime");
-                return;
-            }
+            Err(_) => return,
         };
         let workspaces = rt.block_on(orchestrator.discover_workspaces(&path_obj));
 
@@ -549,15 +532,9 @@ pub fn handle_check(
                 return ExitCode::FAILURE;
             }
         };
-        let rt = match tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-        {
+        let rt = match crate::surface_common_command::create_current_thread_runtime() {
             Ok(r) => r,
-            Err(_) => {
-                eprintln!("[error] failed to create tokio runtime");
-                return ExitCode::FAILURE;
-            }
+            Err(_) => return ExitCode::FAILURE,
         };
         rt.block_on(crate::surface_git_command::handle_git_diff(
             git_agg,
@@ -594,65 +571,5 @@ pub fn handle_ci(
     path: Option<String>,
     threshold: u32,
 ) -> ExitCode {
-    use shared::cli_commands::taxonomy_severity_vo::Severity;
-    let root = match path {
-        Some(p) => p,
-        None => ".".to_string(),
-    };
-    let results = code_analysis_linter.run_code_analysis_path(&root);
-    let score = code_analysis_linter.calc_score(&results);
-    let effective_threshold = if threshold == 80 { 70 } else { threshold };
-
-    let has_crit = code_analysis_linter.check_critical(&results);
-    let below_threshold = (score as u32) < effective_threshold;
-
-    println!("Architecture Compliance CI");
-    println!("Score: {:.1} / 100", score);
-    println!("Threshold: {}", effective_threshold);
-    println!();
-
-    let mut reasons: Vec<String> = Vec::new();
-    if has_crit {
-        reasons.push("CRITICAL violation(s) detected — auto-fail triggered".to_string());
-    }
-    if below_threshold {
-        reasons.push(format!(
-            "Score below threshold ({:.1} < {})",
-            score, effective_threshold
-        ));
-    }
-
-    let critical_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::CRITICAL)
-        .count();
-    let high_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::HIGH)
-        .count();
-    let medium_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::MEDIUM)
-        .count();
-    let low_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::LOW)
-        .count();
-
-    println!(
-        "CRITICAL: {} | HIGH: {} | MEDIUM: {} | LOW: {}",
-        critical_count, high_count, medium_count, low_count
-    );
-    println!();
-
-    if reasons.is_empty() {
-        println!("Result: PASS (exit code 0)");
-        ExitCode::SUCCESS
-    } else {
-        for r in &reasons {
-            println!("  {}", r);
-        }
-        println!("Result: FAIL (exit code 1)");
-        ExitCode::from(1)
-    }
+    crate::surface_common_command::run_ci_analysis(code_analysis_linter, path, threshold)
 }

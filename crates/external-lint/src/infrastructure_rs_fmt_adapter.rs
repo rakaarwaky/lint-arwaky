@@ -23,6 +23,8 @@ use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 use tracing::debug;
 
+use crate::infrastructure_rs_common::resolve_cargo_working_dir;
+
 pub struct RustFmtAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
@@ -41,35 +43,6 @@ impl RustFmtAdapter {
             _bin_path: bin_path,
         }
     }
-
-    fn _resolve_working_dir(&self, path: &FilePath) -> FilePath {
-        let path_str = &path.value;
-        if path_str.is_empty() {
-            return path.clone();
-        }
-        let current = std::path::Path::new(path_str);
-        if current.is_dir() {
-            if current.join("Cargo.toml").exists() {
-                return path.clone();
-            }
-        } else if let Some(parent) = current.parent() {
-            if parent.join("Cargo.toml").exists() {
-                return match FilePath::new(parent.to_string_lossy().replace('\\', "/")) {
-                    Ok(fp) => fp,
-                    Err(_) => path.clone(),
-                };
-            }
-            if let Some(grandparent) = parent.parent() {
-                if grandparent.join("Cargo.toml").exists() {
-                    return match FilePath::new(grandparent.to_string_lossy().replace('\\', "/")) {
-                        Ok(fp) => fp,
-                        Err(_) => path.clone(),
-                    };
-                }
-            }
-        }
-        FilePath::new("nonexistent_directory_for_cargo_toml".to_string()).unwrap_or_default()
-    }
 }
 
 #[async_trait]
@@ -80,7 +53,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
-        let working_dir = self._resolve_working_dir(path);
+        let working_dir = resolve_cargo_working_dir(path);
         let working_dir_str = &working_dir.value;
 
         let cargo_toml = Path::new(working_dir_str).join("Cargo.toml");
@@ -166,7 +139,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        let working_dir = self._resolve_working_dir(path);
+        let working_dir = resolve_cargo_working_dir(path);
         let cmd = vec!["cargo".to_string(), "fmt".to_string()];
         let _ = self
             .executor

@@ -5,6 +5,7 @@ pub use shared::cli_commands::taxonomy_command_catalog_vo::{command_catalog, Com
 pub use shared::cli_commands::taxonomy_metadata_vo::CommandMetadataVO;
 
 pub mod surface_check_command;
+pub mod surface_common_command;
 pub use surface_check_command::CheckCommandsSurface;
 pub mod surface_fix_command;
 pub use surface_fix_command::FixCommandsSurface;

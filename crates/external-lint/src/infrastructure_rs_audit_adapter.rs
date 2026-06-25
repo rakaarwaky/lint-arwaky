@@ -19,6 +19,8 @@ use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 use tracing::debug;
 
+use crate::infrastructure_rs_common::resolve_cargo_lock_working_dir;
+
 pub struct CargoAuditAdapter {
     path_norm: Arc<dyn IPathNormalizationPort>,
 }
@@ -26,37 +28,6 @@ pub struct CargoAuditAdapter {
 impl CargoAuditAdapter {
     pub fn new(path_norm: Arc<dyn IPathNormalizationPort>) -> Self {
         Self { path_norm }
-    }
-
-    fn _resolve_working_dir(&self, path: &FilePath) -> FilePath {
-        let path_str = &path.value;
-        if path_str.is_empty() {
-            return path.clone();
-        }
-
-        let current = std::path::Path::new(path_str);
-        if current.is_dir() {
-            if current.join("Cargo.lock").exists() {
-                return path.clone();
-            }
-        } else if let Some(parent) = current.parent() {
-            if parent.join("Cargo.lock").exists() {
-                return match FilePath::new(parent.to_string_lossy().replace('\\', "/")) {
-                    Ok(fp) => fp,
-                    Err(_) => path.clone(),
-                };
-            }
-            if let Some(grandparent) = parent.parent() {
-                if grandparent.join("Cargo.lock").exists() {
-                    return match FilePath::new(grandparent.to_string_lossy().replace('\\', "/")) {
-                        Ok(fp) => fp,
-                        Err(_) => path.clone(),
-                    };
-                }
-            }
-        }
-
-        FilePath::new("nonexistent_directory_for_cargo_lock".to_string()).unwrap_or_default()
     }
 }
 
@@ -68,7 +39,7 @@ impl ILinterAdapterPort for CargoAuditAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
-        let working_dir = self._resolve_working_dir(path);
+        let working_dir = resolve_cargo_lock_working_dir(path);
         let working_dir_str = &working_dir.value;
 
         let cargo_lock = Path::new(working_dir_str).join("Cargo.lock");
