@@ -1,31 +1,7 @@
 use crate::taxonomy_action_flags_vo::ActionFlags;
+use crate::taxonomy_lint_result_vo::LintExecutionResult;
 
-#[derive(Debug, Clone)]
-pub struct LintExecutionResult {
-    pub output: String,
-    pub violation_count: usize,
-    pub success: bool,
-}
-
-impl LintExecutionResult {
-    pub fn success(output: impl Into<String>, violations: usize) -> Self {
-        Self {
-            output: output.into(),
-            violation_count: violations,
-            success: true,
-        }
-    }
-
-    pub fn failure(output: impl Into<String>) -> Self {
-        Self {
-            output: output.into(),
-            violation_count: 0,
-            success: false,
-        }
-    }
-}
-
-pub trait ILintExecutorPort: Send + Sync {
+pub trait ILintExecutorProtocol: Send + Sync {
     fn check(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult;
     fn scan(&self, path: &str) -> LintExecutionResult;
     fn fix(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult;

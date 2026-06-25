@@ -1,5 +1,6 @@
-use crate::contract_lint_executor_port::{ILintExecutorPort, LintExecutionResult};
+use crate::contract_lint_executor_protocol::ILintExecutorProtocol;
 use crate::taxonomy_action_flags_vo::ActionFlags;
+use crate::taxonomy_lint_result_vo::LintExecutionResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::Arc;
@@ -38,7 +39,7 @@ impl LintExecutor {
     }
 }
 
-impl ILintExecutorPort for LintExecutor {
+impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
         let results = self.code_analysis.run_code_analysis(path);
         let output = self.format_results(&results);

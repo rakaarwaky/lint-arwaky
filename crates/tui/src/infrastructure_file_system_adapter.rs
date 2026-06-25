@@ -1,5 +1,9 @@
 use crate::contract_file_system_port::IFileSystemPort;
 use crate::taxonomy_file_entry_vo::FileEntry;
+use shared::common::taxonomy_byte_count_vo::ByteCount;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
+use shared::common::taxonomy_line_count_vo::LineCount;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
 
 pub struct FileSystemAdapter;
@@ -17,8 +21,8 @@ impl Default for FileSystemAdapter {
 }
 
 impl IFileSystemPort for FileSystemAdapter {
-    fn list_directory(&self, path: &str) -> Vec<FileEntry> {
-        let dir_path = Path::new(path);
+    fn list_directory(&self, path: &FilePath) -> Vec<FileEntry> {
+        let dir_path = Path::new(path.value());
         let read_dir = match dir_path.read_dir() {
             Ok(rd) => rd,
             Err(_) => return Vec::new(),
@@ -41,11 +45,12 @@ impl IFileSystemPort for FileSystemAdapter {
         entries
     }
 
-    fn read_file_preview(&self, path: &str, max_lines: usize) -> String {
-        let file_path = Path::new(path);
+    fn read_file_preview(&self, path: &FilePath, max_lines: &LineCount) -> DisplayContent {
+        let file_path = Path::new(path.value());
+        let max_lines = max_lines.value();
         let content = match std::fs::read_to_string(file_path) {
             Ok(c) => c,
-            Err(e) => return format!("Cannot read file: {e}"),
+            Err(e) => return DisplayContent::new(format!("Cannot read file: {e}")),
         };
 
         let lines: Vec<&str> = content.lines().take(max_lines).collect();
@@ -57,25 +62,26 @@ impl IFileSystemPort for FileSystemAdapter {
         if total_lines > max_lines {
             output.push_str(&format!("\n... ({} more lines)", total_lines - max_lines));
         }
-        output
+        DisplayContent::new(output)
     }
 
-    fn is_valid_directory(&self, path: &str) -> bool {
-        Path::new(path).is_dir()
+    fn is_valid_directory(&self, path: &FilePath) -> bool {
+        Path::new(path.value()).is_dir()
     }
 
-    fn parent_directory(&self, path: &str) -> Option<String> {
-        Path::new(path)
+    fn parent_directory(&self, path: &FilePath) -> Option<FilePath> {
+        Path::new(path.value())
             .parent()
-            .map(|p| p.to_string_lossy().to_string())
+            .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
     }
 
-    fn file_size_human(&self, bytes: u64) -> String {
+    fn file_size_human(&self, bytes: &ByteCount) -> DisplayContent {
+        let bytes = bytes.value();
         const KB: u64 = 1024;
         const MB: u64 = KB * 1024;
         const GB: u64 = MB * 1024;
 
-        if bytes >= GB {
+        DisplayContent::new(if bytes >= GB {
             format!("{:.1}G", bytes as f64 / GB as f64)
         } else if bytes >= MB {
             format!("{:.1}M", bytes as f64 / MB as f64)
@@ -83,13 +89,17 @@ impl IFileSystemPort for FileSystemAdapter {
             format!("{:.1}K", bytes as f64 / KB as f64)
         } else {
             format!("{}B", bytes)
-        }
+        })
     }
 
-    fn path_components(&self, path: &str) -> Vec<String> {
-        Path::new(path)
+    fn path_components(&self, path: &FilePath) -> Vec<FilePath> {
+        Path::new(path.value())
             .components()
-            .filter_map(|c| c.as_os_str().to_str().map(|s| s.to_string()))
+            .filter_map(|c| {
+                c.as_os_str()
+                    .to_str()
+                    .and_then(|s| FilePath::new(s.to_string()).ok())
+            })
             .collect()
     }
 }

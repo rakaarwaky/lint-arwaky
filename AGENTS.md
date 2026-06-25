@@ -52,19 +52,18 @@ The codebase uses **7 architectural layers** as **file prefixes**, organized int
 
 ```
 crates/
-  shared/               — Foundation: ALL taxonomy_* + contract_* (NO deps on feature crates)
-  import-rules/         — Import compliance checks (AES201–AES205)
-  naming-rules/         — Naming convention enforcement (AES101–AES102)
-  role-rules/           — Role-layer violation checks (AES401–AES406)
-  orphan-detector/      — Unreachable/dead component detection (AES501–AES506)
-  code-analysis/        — Code quality: file limits, bypasses, mandatory defs (AES301–AES305)
+  shared/               — Foundation: ALL taxonomy_ + contract_
+  import-rules/         — Import compliance checks 
+  naming-rules/         — Naming convention enforcement 
+  role-rules/           — Role-layer violation checks 
+  orphan-detector/      — Unreachable/dead component detection 
+  code-analysis/        — Code quality: file limits, bypasses, mandatory defs 
   auto-fix/             — Auto-fix processor
   config-system/        — Config loading & parsing
   external-lint/        — Python, JS, Rust external linter adapters
   file-watch/           — File watching
   git-hooks/            — Git hooks management
   maintenance/          — Maintenance operations
-  multi-project/        — Multi-project governance
   project-setup/        — Project init, doctor, mcp-config
   cli-commands/         — CLI surfaces (_command) + transport
   mcp-server/           — MCP server surfaces
@@ -95,12 +94,12 @@ Each contains intentional violations. See `TEST.md` for pass/fail criteria.
 
 | File                | Purpose                                  |
 | ------------------- | ---------------------------------------- |
-| `RULES_AES.md`    | Complete 24 AES rules catalog (v3.0)     |
+| `RULES_AES.md`    | Complete 24 AES rules catalog     |
 | `RULES_RUFF.md`   | Python Ruff rule mapping                 |
 | `RULES_MYPY.md`   | Python MyPy rule mapping                 |
 | `RULES_BANDIT.md` | Python Bandit rule mapping               |
 | `RULES_RADON.md`  | Python Radon complexity rules            |
-| `ARCHITECTURE.md` | AES architecture specification (6 layer) |
+| `ARCHITECTURE.md` | AES architecture specification (7 layer) |
 | `PRD.md`          | Product Requirements Document            |
 | `CHANGELOG.md`    | Release history                          |
 | `CONTRIBUTING.md` | Contribution guide                       |
@@ -123,6 +122,7 @@ Allowed branch naming:
 - `main`
 - `develop`
 - `features/<name>`
+- `fix/<name>`
 
 When merging a PR to develop:
 

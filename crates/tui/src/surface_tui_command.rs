@@ -11,13 +11,34 @@ use crossterm::event;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
-use crossterm::ExecutableCommand;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::Terminal;
 use std::io::stdout;
 use std::sync::Arc;
 use std::time::Duration;
+
+struct RenderViews {
+    file_list: FileListView,
+    preview: PreviewView,
+    tree: TreeView,
+    path_screen: PathScreen,
+    shortcuts: ShortcutComponent,
+    status: StatusComponent,
+}
+
+impl RenderViews {
+    fn new() -> Self {
+        Self {
+            file_list: FileListView::new(),
+            preview: PreviewView::new(),
+            tree: TreeView::new(),
+            path_screen: PathScreen::new(),
+            shortcuts: ShortcutComponent::new(),
+            status: StatusComponent::new(),
+        }
+    }
+}
 
 pub struct TuiCommandSurface {
     tui_aggregate: Arc<dyn ITuiAggregate>,
@@ -30,8 +51,8 @@ impl TuiCommandSurface {
 
     pub fn run(&self) -> anyhow::Result<()> {
         enable_raw_mode()?;
-        stdout().execute(EnterAlternateScreen)?;
-        stdout().execute(crossterm::event::EnableMouseCapture)?;
+        crossterm::execute!(stdout(), EnterAlternateScreen)?;
+        crossterm::execute!(stdout(), crossterm::event::EnableMouseCapture)?;
 
         let backend = CrosstermBackend::new(stdout());
         let mut terminal = Terminal::new(backend)?;
@@ -41,49 +62,28 @@ impl TuiCommandSurface {
             .unwrap_or_else(|_| ".".to_string());
         let mut state = AppState::new(cwd);
 
-        let file_list_view = FileListView::new();
-        let preview_view = PreviewView::new();
-        let tree_view = TreeView::new();
-        let path_screen = PathScreen::new();
-        let shortcut_bar = ShortcutComponent::new();
-        let status_bar = StatusComponent::new();
-
-        let result = self.event_loop(
-            &mut terminal,
-            &mut state,
-            &file_list_view,
-            &preview_view,
-            &tree_view,
-            &path_screen,
-            &shortcut_bar,
-            &status_bar,
-        );
+        let views = RenderViews::new();
+        let result = self.event_loop(&mut terminal, &mut state, &views);
 
         disable_raw_mode()?;
-        stdout().execute(LeaveAlternateScreen)?;
-        stdout().execute(crossterm::event::DisableMouseCapture)?;
+        crossterm::execute!(stdout(), LeaveAlternateScreen)?;
+        crossterm::execute!(stdout(), crossterm::event::DisableMouseCapture)?;
 
         result
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn event_loop(
         &self,
         terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
         state: &mut AppState,
-        file_list_view: &FileListView,
-        preview_view: &PreviewView,
-        tree_view: &TreeView,
-        path_screen: &PathScreen,
-        shortcut_bar: &ShortcutComponent,
-        status_bar: &StatusComponent,
+        views: &RenderViews,
     ) -> anyhow::Result<()> {
         loop {
             terminal.draw(|frame| {
                 let area = frame.area();
 
                 if state.show_path_dialog {
-                    path_screen.render(state, frame, area);
+                    views.path_screen.render(state, frame, area);
                     return;
                 }
 
@@ -108,12 +108,12 @@ impl TuiCommandSurface {
                     ])
                     .split(main_layout[1]);
 
-                tree_view.render(state, frame, panel_layout[0]);
-                file_list_view.render(state, frame, panel_layout[1]);
-                preview_view.render(state, frame, panel_layout[2]);
+                views.tree.render(state, frame, panel_layout[0]);
+                views.file_list.render(state, frame, panel_layout[1]);
+                views.preview.render(state, frame, panel_layout[2]);
 
-                shortcut_bar.render(state, frame, main_layout[2]);
-                status_bar.render(state, frame, main_layout[3]);
+                views.shortcuts.render(state, frame, main_layout[2]);
+                views.status.render(state, frame, main_layout[3]);
             })?;
 
             if event::poll(Duration::from_millis(50))? {

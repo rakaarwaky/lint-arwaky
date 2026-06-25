@@ -1,20 +1,16 @@
-use crate::capabilities_action_handler::ActionHandler;
-use crate::contract_file_system_port::IFileSystemPort;
-use crate::contract_lint_executor_port::ILintExecutorPort;
+use crate::contract_action_handler_protocol::IActionHandlerProtocol;
 use crate::contract_tui_aggregate::ITuiAggregate;
 use crate::taxonomy_state_vo::AppState;
 use crate::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
 
 pub struct TuiOrchestrator {
-    action_handler: ActionHandler,
+    action_handler: Arc<dyn IActionHandlerProtocol>,
 }
 
 impl TuiOrchestrator {
-    pub fn new(fs_port: Arc<dyn IFileSystemPort>, lint_port: Arc<dyn ILintExecutorPort>) -> Self {
-        Self {
-            action_handler: ActionHandler::new(fs_port, lint_port),
-        }
+    pub fn new(action_handler: Arc<dyn IActionHandlerProtocol>) -> Self {
+        Self { action_handler }
     }
 }
 

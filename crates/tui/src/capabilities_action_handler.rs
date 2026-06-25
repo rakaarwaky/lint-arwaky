@@ -1,16 +1,20 @@
+use crate::contract_action_handler_protocol::IActionHandlerProtocol;
 use crate::contract_file_system_port::IFileSystemPort;
-use crate::contract_lint_executor_port::{ILintExecutorPort, LintExecutionResult};
+use crate::contract_lint_executor_protocol::ILintExecutorProtocol;
+use crate::taxonomy_lint_result_vo::LintExecutionResult;
 use crate::taxonomy_state_vo::{AppState, PreviewMode};
 use crate::taxonomy_tui_event::TuiEvent;
+use shared::common::taxonomy_line_count_vo::LineCount;
+use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct ActionHandler {
     fs_port: Arc<dyn IFileSystemPort>,
-    lint_port: Arc<dyn ILintExecutorPort>,
+    lint_port: Arc<dyn ILintExecutorProtocol>,
 }
 
 impl ActionHandler {
-    pub fn new(fs_port: Arc<dyn IFileSystemPort>, lint_port: Arc<dyn ILintExecutorPort>) -> Self {
+    pub fn new(fs_port: Arc<dyn IFileSystemPort>, lint_port: Arc<dyn ILintExecutorProtocol>) -> Self {
         Self { fs_port, lint_port }
     }
 
@@ -83,7 +87,8 @@ impl ActionHandler {
                 state.path_input.pop();
             }
             TuiEvent::PathConfirm => {
-                if self.fs_port.is_valid_directory(&state.path_input) {
+                let path = FilePath::new(state.path_input.clone()).unwrap_or_default();
+                if self.fs_port.is_valid_directory(&path) {
                     state.project_root = state.path_input.clone();
                     state.current_dir = state.path_input.clone();
                     state.show_path_dialog = false;
@@ -115,9 +120,10 @@ impl ActionHandler {
     }
 
     fn navigate_back(&self, state: &mut AppState) {
-        if let Some(parent) = self.fs_port.parent_directory(&state.current_dir) {
+        let current = FilePath::new(state.current_dir.clone()).unwrap_or_default();
+        if let Some(parent) = self.fs_port.parent_directory(&current) {
             if parent.len() >= state.project_root.len() {
-                state.current_dir = parent;
+                state.current_dir = parent.value.clone();
                 self.load_directory(state, &state.current_dir.clone());
             }
         }
@@ -136,7 +142,8 @@ impl ActionHandler {
     }
 
     pub fn load_directory(&self, state: &mut AppState, path: &str) {
-        state.entries = self.fs_port.list_directory(path);
+        let fp = FilePath::new(path).unwrap_or_default();
+        state.entries = self.fs_port.list_directory(&fp);
         state.entries.sort_by(|a, b| match (a.is_dir, b.is_dir) {
             (true, false) => std::cmp::Ordering::Less,
             (false, true) => std::cmp::Ordering::Greater,
@@ -149,7 +156,9 @@ impl ActionHandler {
     }
 
     fn load_file_preview(&self, state: &mut AppState, path: &str) {
-        state.preview_text = self.fs_port.read_file_preview(path, 100);
+        let fp = FilePath::new(path).unwrap_or_default();
+        let max_lines = LineCount::new(100);
+        state.preview_text = self.fs_port.read_file_preview(&fp, &max_lines);
         state.preview_mode = PreviewMode::FileContent;
     }
 
@@ -164,7 +173,7 @@ impl ActionHandler {
     fn run_action<F>(&self, state: &mut AppState, action: F)
     where
         F: FnOnce(
-            &dyn ILintExecutorPort,
+            &dyn ILintExecutorProtocol,
             &str,
             &crate::taxonomy_action_flags_vo::ActionFlags,
         ) -> LintExecutionResult,
@@ -184,7 +193,7 @@ impl ActionHandler {
 
     fn run_action_no_path<F>(&self, state: &mut AppState, action: F)
     where
-        F: FnOnce(&dyn ILintExecutorPort) -> LintExecutionResult,
+        F: FnOnce(&dyn ILintExecutorProtocol) -> LintExecutionResult,
     {
         let result = action(self.lint_port.as_ref());
         state.preview_text = result.output;
@@ -192,5 +201,19 @@ impl ActionHandler {
         state.preview_mode = PreviewMode::ActionOutput;
         let status = if result.success { "Done" } else { "Error" };
         state.set_status(status);
+    }
+}
+
+impl IActionHandlerProtocol for ActionHandler {
+    fn handle(&self, state: &mut AppState, event: TuiEvent) {
+        ActionHandler::handle(self, state, event);
+    }
+
+    fn load_directory(&self, state: &mut AppState, path: &str) {
+        ActionHandler::load_directory(self, state, path);
+    }
+
+    fn load_preview(&self, state: &mut AppState) {
+        ActionHandler::load_preview(self, state);
     }
 }

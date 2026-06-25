@@ -1,4 +1,7 @@
+use crate::taxonomy_state_vo::PanelFocus;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
+
+pub const DEFAULT_FOCUS: PanelFocus = PanelFocus::FileList;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TuiEvent {
@@ -120,4 +123,5 @@ impl TuiEvent {
             _ => TuiEvent::None,
         }
     }
+
 }

@@ -2,6 +2,7 @@
 resolver = "2"
 members = ["crates/*"]
 
+#do not bypass with allow
 [workspace.lints.clippy]
 
 [workspace.dependencies]
