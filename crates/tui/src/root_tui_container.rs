@@ -1,10 +1,10 @@
 use crate::agent_tui_orchestrator::TuiOrchestrator;
 use crate::capabilities_action_handler::ActionHandler;
 use crate::capabilities_lint_executor::LintExecutor;
-use crate::contract_action_handler_protocol::IActionHandlerProtocol;
 use crate::contract_tui_aggregate::ITuiAggregate;
 use crate::infrastructure_file_system_adapter::FileSystemAdapter;
 use crate::surface_tui_command::TuiCommandSurface;
+use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use std::sync::Arc;
 
 pub struct TuiContainer;
@@ -22,8 +22,7 @@ impl TuiContainer {
         let action_handler: Arc<dyn IActionHandlerProtocol> =
             Arc::new(ActionHandler::new(fs_adapter, lint_executor));
 
-        let tui_aggregate: Arc<dyn ITuiAggregate> =
-            Arc::new(TuiOrchestrator::new(action_handler));
+        let tui_aggregate: Arc<dyn ITuiAggregate> = Arc::new(TuiOrchestrator::new(action_handler));
 
         let surface = TuiCommandSurface::new(tui_aggregate);
         surface.run()?;

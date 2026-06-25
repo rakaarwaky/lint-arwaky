@@ -1,8 +1,8 @@
-use crate::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 use ratatui::Frame;
+use shared::tui::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
 
 pub struct PreviewView;
 

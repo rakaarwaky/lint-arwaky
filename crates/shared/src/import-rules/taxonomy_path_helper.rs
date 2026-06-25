@@ -2,7 +2,10 @@
 use std::path::Path;
 
 pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
-    let stem = Path::new(filename).file_stem().and_then(|s| s.to_str()).unwrap_or_default();
+    let stem = Path::new(filename)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or_default();
 
     const PREFIX_MAP: &[(&str, &str)] = &[
         ("taxonomy_", "taxonomy"),

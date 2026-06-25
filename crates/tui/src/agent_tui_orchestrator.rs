@@ -1,7 +1,7 @@
-use crate::contract_action_handler_protocol::IActionHandlerProtocol;
 use crate::contract_tui_aggregate::ITuiAggregate;
-use crate::taxonomy_state_vo::AppState;
-use crate::taxonomy_tui_event::TuiEvent;
+use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
+use shared::tui::taxonomy_state_vo::AppState;
+use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
 
 pub struct TuiOrchestrator {

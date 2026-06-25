@@ -69,9 +69,15 @@ impl RoleOrchestrator {
     ) {
         for file in files {
             let content = std::fs::read_to_string(file).unwrap_or_default();
-            let filename = Path::new(file).file_name().and_then(|n| n.to_str()).unwrap_or_default();
+            let filename = Path::new(file)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or_default();
 
-            let stem = Path::new(filename).file_stem().and_then(|s| s.to_str()).unwrap_or_default();
+            let stem = Path::new(filename)
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or_default();
             let prefix = stem.split('_').next().unwrap_or_default();
 
             let fp = match FilePath::new(file.to_string()) {

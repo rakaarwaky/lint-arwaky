@@ -7,6 +7,9 @@ pub mod common;
 // Re-export all taxonomy_* and contract_* types from common
 pub use common::*;
 
+#[path = "tui/mod.rs"]
+pub mod tui;
+
 // Feature-specific types (in feature folders)
 #[path = "auto-fix/mod.rs"]
 pub mod auto_fix;

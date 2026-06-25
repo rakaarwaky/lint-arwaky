@@ -350,8 +350,9 @@ impl OrphanGraphResolver {
                                         for entry in entries.flatten() {
                                             let path = entry.path();
                                             if let Some(path_str) = path.to_str() {
-                                                let stem =
-                                                    path.file_stem().and_then(|s| s.to_str())
+                                                let stem = path
+                                                    .file_stem()
+                                                    .and_then(|s| s.to_str())
                                                     .unwrap_or_default();
                                                 if stem == module_name && path_str != *f {
                                                     import_graph

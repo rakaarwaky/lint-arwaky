@@ -182,7 +182,10 @@ impl CodeAnalysisOrchestrator {
         }
 
         for file in files {
-            let filename = Path::new(file).file_name().and_then(|n| n.to_str()).unwrap_or_default();
+            let filename = Path::new(file)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or_default();
             let c = std::fs::read_to_string(file).unwrap_or_default();
 
             // Layer-independent checks (run on ALL files)

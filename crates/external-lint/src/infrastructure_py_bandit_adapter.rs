@@ -103,8 +103,14 @@ impl ILinterAdapterPort for BanditAdapter {
                 let mut results = Vec::new();
 
                 for f in findings {
-                    let filename = f.get("filename").and_then(|v| v.as_str()).unwrap_or_default();
-                    let line_number = f.get("line_number").and_then(|v| v.as_i64()).unwrap_or_default();
+                    let filename = f
+                        .get("filename")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default();
+                    let line_number = f
+                        .get("line_number")
+                        .and_then(|v| v.as_i64())
+                        .unwrap_or_default();
                     let line_range = f
                         .get("line_range")
                         .and_then(|v| v.as_array())
@@ -112,8 +118,14 @@ impl ILinterAdapterPort for BanditAdapter {
                         .and_then(|v| v.as_i64())
                         .unwrap_or_default();
                     let test_id = f.get("test_id").and_then(|v| v.as_str()).unwrap_or("B000");
-                    let issue_text = f.get("issue_text").and_then(|v| v.as_str()).unwrap_or_default();
-                    let issue_severity = f.get("issue_severity").and_then(|v| v.as_str()).unwrap_or("MEDIUM");
+                    let issue_text = f
+                        .get("issue_text")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default();
+                    let issue_severity = f
+                        .get("issue_severity")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("MEDIUM");
 
                     let resolved = self.path_norm.resolve_infrastructure_path(
                         match FilePath::new(filename.to_string()) {

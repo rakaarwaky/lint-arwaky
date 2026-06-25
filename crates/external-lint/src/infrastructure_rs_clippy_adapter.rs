@@ -158,7 +158,10 @@ impl ILinterAdapterPort for RustLinterAdapter {
                     };
 
                     for span in &spans {
-                        let is_primary = span.get("is_primary").and_then(|v| v.as_bool()).unwrap_or_default();
+                        let is_primary = span
+                            .get("is_primary")
+                            .and_then(|v| v.as_bool())
+                            .unwrap_or_default();
                         if !is_primary {
                             continue;
                         }

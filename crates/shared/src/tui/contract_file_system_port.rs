@@ -1,8 +1,8 @@
-use crate::taxonomy_file_entry_vo::FileEntry;
-use shared::common::taxonomy_byte_count_vo::ByteCount;
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::common::taxonomy_line_count_vo::LineCount;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_byte_count_vo::ByteCount;
+use crate::common::taxonomy_display_content_vo::DisplayContent;
+use crate::common::taxonomy_line_count_vo::LineCount;
+use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::tui::taxonomy_file_entry_vo::FileEntry;
 
 pub trait IFileSystemPort: Send + Sync {
     fn list_directory(&self, path: &FilePath) -> Vec<FileEntry>;

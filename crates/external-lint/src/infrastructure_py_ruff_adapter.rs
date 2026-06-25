@@ -96,7 +96,10 @@ impl ILinterAdapterPort for RuffAdapter {
                 let mut results = Vec::new();
 
                 for f in findings {
-                    let filename = f.get("filename").and_then(|v| v.as_str()).unwrap_or_default();
+                    let filename = f
+                        .get("filename")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default();
                     let row = f
                         .get("location")
                         .and_then(|l| l.get("row"))
@@ -108,8 +111,14 @@ impl ILinterAdapterPort for RuffAdapter {
                         .and_then(|v| v.as_i64())
                         .unwrap_or_default();
                     let code = f.get("code").and_then(|v| v.as_str()).unwrap_or("UNKNOWN");
-                    let message = f.get("message").and_then(|v| v.as_str()).unwrap_or_default();
-                    let severity_str = f.get("severity").and_then(|v| v.as_str()).unwrap_or_default();
+                    let message = f
+                        .get("message")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default();
+                    let severity_str = f
+                        .get("severity")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default();
 
                     let resolved = self.path_norm.resolve_infrastructure_path(
                         match FilePath::new(filename) {

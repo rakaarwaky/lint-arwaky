@@ -1,5 +1,5 @@
-use crate::taxonomy_state_vo::AppState;
-use crate::taxonomy_tui_event::TuiEvent;
+use crate::tui::taxonomy_state_vo::AppState;
+use crate::tui::taxonomy_tui_event::TuiEvent;
 
 pub trait IActionHandlerProtocol: Send + Sync {
     fn handle(&self, state: &mut AppState, event: TuiEvent);

@@ -1,57 +1,10 @@
-use crate::taxonomy_state_vo::PanelFocus;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
+use shared::tui::taxonomy_tui_event::TuiEvent;
 
-pub const DEFAULT_FOCUS: PanelFocus = PanelFocus::FileList;
+pub struct EventAdapter;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum TuiEvent {
-    MoveUp,
-    MoveDown,
-    MoveTop,
-    MoveBottom,
-    NavigateBack,
-    NavigateForward,
-    FocusNext,
-    FocusPrev,
-    ActionCheck,
-    ActionScan,
-    ActionFix,
-    ActionCi,
-    ActionWatch,
-    ActionOrphan,
-    ActionSecurity,
-    ActionDuplicates,
-    ActionDependencies,
-    ActionDoctor,
-    ActionInit,
-    ActionInstall,
-    ActionMcpConfig,
-    ActionConfigShow,
-    ActionInstallHook,
-    ActionUninstallHook,
-    ActionAdapters,
-    ActionVersion,
-    ToggleHelp,
-    ToggleSearch,
-    SearchInput(char),
-    SearchBackspace,
-    SearchConfirm,
-    SearchCancel,
-    PathInput(char),
-    PathBackspace,
-    PathConfirm,
-    PathUseCurrent,
-    Quit,
-    Resize(u16, u16),
-    MouseClick(u16, u16),
-    MouseScrollUp,
-    MouseScrollDown,
-    Tick,
-    None,
-}
-
-impl TuiEvent {
-    pub fn from_crossterm_event(event: Event) -> Self {
+impl EventAdapter {
+    pub fn from_crossterm_event(event: Event) -> TuiEvent {
         match event {
             Event::Key(key) => Self::from_key_event(key),
             Event::Mouse(mouse) => Self::from_mouse_event(mouse),
@@ -60,7 +13,7 @@ impl TuiEvent {
         }
     }
 
-    fn from_key_event(key: KeyEvent) -> Self {
+    fn from_key_event(key: KeyEvent) -> TuiEvent {
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
 
         if ctrl {
@@ -113,7 +66,7 @@ impl TuiEvent {
         }
     }
 
-    fn from_mouse_event(mouse: MouseEvent) -> Self {
+    fn from_mouse_event(mouse: MouseEvent) -> TuiEvent {
         match mouse.kind {
             MouseEventKind::Down(crossterm::event::MouseButton::Left) => {
                 TuiEvent::MouseClick(mouse.column, mouse.row)
@@ -123,5 +76,4 @@ impl TuiEvent {
             _ => TuiEvent::None,
         }
     }
-
 }

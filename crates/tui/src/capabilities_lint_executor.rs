@@ -1,8 +1,8 @@
-use crate::contract_lint_executor_protocol::ILintExecutorProtocol;
-use crate::taxonomy_action_flags_vo::ActionFlags;
-use crate::taxonomy_lint_result_vo::LintExecutionResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
+use shared::tui::taxonomy_action_flags_vo::ActionFlags;
+use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use std::sync::Arc;
 
 pub struct LintExecutor {

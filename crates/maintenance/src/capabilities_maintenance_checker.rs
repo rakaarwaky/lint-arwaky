@@ -211,7 +211,10 @@ impl MaintenanceChecker {
                                     Some(s) => s.to_string(),
                                     None => String::new(),
                                 };
-                                let line = r.get("line_number").and_then(|l| l.as_u64()).unwrap_or_default();
+                                let line = r
+                                    .get("line_number")
+                                    .and_then(|l| l.as_u64())
+                                    .unwrap_or_default();
                                 findings.push(SecurityFinding {
                                     severity,
                                     test_id,

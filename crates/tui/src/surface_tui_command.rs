@@ -5,8 +5,6 @@ use crate::surface_preview_view::PreviewView;
 use crate::surface_shortcut_component::ShortcutComponent;
 use crate::surface_status_component::StatusComponent;
 use crate::surface_tree_view::TreeView;
-use crate::taxonomy_state_vo::AppState;
-use crate::taxonomy_tui_event::TuiEvent;
 use crossterm::event;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
@@ -14,6 +12,7 @@ use crossterm::terminal::{
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::Terminal;
+use shared::tui::taxonomy_state_vo::AppState;
 use std::io::stdout;
 use std::sync::Arc;
 use std::time::Duration;
@@ -118,7 +117,7 @@ impl TuiCommandSurface {
 
             if event::poll(Duration::from_millis(50))? {
                 let crossterm_event = event::read()?;
-                let tui_event = TuiEvent::from_crossterm_event(crossterm_event);
+                let tui_event = crate::infrastructure_crossterm_event_adapter::EventAdapter::from_crossterm_event(crossterm_event);
                 self.tui_aggregate.handle_event(state, tui_event);
             }
 

@@ -74,7 +74,8 @@ pub async fn handle_security(
         Some(p) => p,
         None => ".".to_string(),
     };
-    let fp = shared::source_parsing::taxonomy_path_vo::FilePath::new(target.clone()).unwrap_or_default();
+    let fp =
+        shared::source_parsing::taxonomy_path_vo::FilePath::new(target.clone()).unwrap_or_default();
     println!("Security Vulnerability Scan — {}", target);
     println!();
 
@@ -111,7 +112,8 @@ pub async fn handle_dependencies(
         Some(p) => p,
         None => ".".to_string(),
     };
-    let fp = shared::source_parsing::taxonomy_path_vo::FilePath::new(target.clone()).unwrap_or_default();
+    let fp =
+        shared::source_parsing::taxonomy_path_vo::FilePath::new(target.clone()).unwrap_or_default();
     println!("Dependency Report — {}", target);
     println!();
 

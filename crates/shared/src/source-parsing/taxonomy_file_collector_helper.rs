@@ -106,7 +106,8 @@ pub fn collect_source_files(
                 continue;
             }
             if path.is_dir() {
-                let sub_dir = DirectoryPath::new(path.to_string_lossy().to_string()).unwrap_or_default();
+                let sub_dir =
+                    DirectoryPath::new(path.to_string_lossy().to_string()).unwrap_or_default();
                 files.extend(collect_source_files(root_dir, &sub_dir, ignored));
             } else if let Some(path_str) = path.to_str() {
                 if let Ok(fp) = FilePath::new(path_str.to_string()) {

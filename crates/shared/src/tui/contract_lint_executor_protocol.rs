@@ -1,5 +1,5 @@
-use crate::taxonomy_action_flags_vo::ActionFlags;
-use crate::taxonomy_lint_result_vo::LintExecutionResult;
+use crate::tui::taxonomy_action_flags_vo::ActionFlags;
+use crate::tui::taxonomy_lint_result_vo::LintExecutionResult;
 
 pub trait ILintExecutorProtocol: Send + Sync {
     fn check(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult;

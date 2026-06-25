@@ -1,7 +1,7 @@
-use crate::contract_file_system_port::IFileSystemPort;
-use crate::contract_lint_executor_protocol::ILintExecutorProtocol;
-use crate::taxonomy_state_vo::AppState;
-use crate::taxonomy_tui_event::TuiEvent;
+use shared::tui::contract_file_system_port::IFileSystemPort;
+use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
+use shared::tui::taxonomy_state_vo::AppState;
+use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
 
 pub struct TuiDependencies {

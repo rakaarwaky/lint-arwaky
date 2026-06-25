@@ -1,9 +1,9 @@
-use crate::taxonomy_state_vo::{AppState, PreviewMode};
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Frame;
+use shared::tui::taxonomy_state_vo::{AppState, PreviewMode};
 
 type ShortcutRows = (
     Vec<(&'static str, &'static str)>,

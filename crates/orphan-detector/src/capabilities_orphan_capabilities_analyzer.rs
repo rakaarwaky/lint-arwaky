@@ -204,9 +204,12 @@ pub fn is_infra_cap_orphan_raw(
     let mut is_wired = false;
     for cf in all_files {
         let cb = cf.split('/').next_back().unwrap_or_default();
-        let csuffix = cb.rsplit('_').next().unwrap_or_default()
-        .replace(".rs", "")
-        .replace(".py", "");
+        let csuffix = cb
+            .rsplit('_')
+            .next()
+            .unwrap_or_default()
+            .replace(".rs", "")
+            .replace(".py", "");
         if csuffix != "container" {
             continue;
         }
@@ -256,9 +259,12 @@ pub fn check_capabilities_orphan(
     let mut wired = false;
     for cf in files {
         let cb = cf.split('/').next_back().unwrap_or_default();
-        let csuffix = cb.rsplit('_').next().unwrap_or_default()
-        .replace(".rs", "")
-        .replace(".py", "");
+        let csuffix = cb
+            .rsplit('_')
+            .next()
+            .unwrap_or_default()
+            .replace(".rs", "")
+            .replace(".py", "");
         if csuffix != "container" {
             continue;
         }

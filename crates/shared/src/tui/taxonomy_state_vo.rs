@@ -1,5 +1,5 @@
-use crate::taxonomy_action_flags_vo::ActionFlags;
-use crate::taxonomy_file_entry_vo::FileEntry;
+use crate::tui::taxonomy_action_flags_vo::ActionFlags;
+use crate::tui::taxonomy_file_entry_vo::FileEntry;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PanelFocus {

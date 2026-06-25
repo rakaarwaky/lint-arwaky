@@ -1,6 +1,6 @@
-use crate::taxonomy_state_vo::AppState;
 use ratatui::layout::Rect;
 use ratatui::Frame;
+use shared::tui::taxonomy_state_vo::AppState;
 
 pub struct HelpScreen;
 

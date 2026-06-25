@@ -1,9 +1,9 @@
-use crate::contract_file_system_port::IFileSystemPort;
-use crate::taxonomy_file_entry_vo::FileEntry;
 use shared::common::taxonomy_byte_count_vo::ByteCount;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_line_count_vo::LineCount;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::tui::contract_file_system_port::IFileSystemPort;
+use shared::tui::taxonomy_file_entry_vo::FileEntry;
 use std::path::Path;
 
 pub struct FileSystemAdapter;

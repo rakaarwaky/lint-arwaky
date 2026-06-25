@@ -44,11 +44,14 @@ pub fn is_contract_orphan(
 ) -> OrphanIndicatorResult {
     let fp = f.value();
     let basename = fp.split('/').next_back().unwrap_or_default();
-    let suffix = basename.rsplit('_').next().unwrap_or_default()
-    .replace(".rs", "")
-    .replace(".py", "")
-    .replace(".ts", "")
-    .replace(".js", "");
+    let suffix = basename
+        .rsplit('_')
+        .next()
+        .unwrap_or_default()
+        .replace(".rs", "")
+        .replace(".py", "")
+        .replace(".ts", "")
+        .replace(".js", "");
 
     let content = match std::fs::read_to_string(fp) {
         Ok(c) => c,

@@ -1,11 +1,11 @@
-use crate::contract_action_handler_protocol::IActionHandlerProtocol;
-use crate::contract_file_system_port::IFileSystemPort;
-use crate::contract_lint_executor_protocol::ILintExecutorProtocol;
-use crate::taxonomy_lint_result_vo::LintExecutionResult;
-use crate::taxonomy_state_vo::{AppState, PreviewMode};
-use crate::taxonomy_tui_event::TuiEvent;
 use shared::common::taxonomy_line_count_vo::LineCount;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
+use shared::tui::contract_file_system_port::IFileSystemPort;
+use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
+use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
+use shared::tui::taxonomy_state_vo::{AppState, PreviewMode};
+use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
 
 pub struct ActionHandler {
@@ -14,7 +14,10 @@ pub struct ActionHandler {
 }
 
 impl ActionHandler {
-    pub fn new(fs_port: Arc<dyn IFileSystemPort>, lint_port: Arc<dyn ILintExecutorProtocol>) -> Self {
+    pub fn new(
+        fs_port: Arc<dyn IFileSystemPort>,
+        lint_port: Arc<dyn ILintExecutorProtocol>,
+    ) -> Self {
         Self { fs_port, lint_port }
     }
 
@@ -158,7 +161,7 @@ impl ActionHandler {
     fn load_file_preview(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
         let max_lines = LineCount::new(100);
-        state.preview_text = self.fs_port.read_file_preview(&fp, &max_lines);
+        state.preview_text = self.fs_port.read_file_preview(&fp, &max_lines).to_string();
         state.preview_mode = PreviewMode::FileContent;
     }
 
@@ -175,7 +178,7 @@ impl ActionHandler {
         F: FnOnce(
             &dyn ILintExecutorProtocol,
             &str,
-            &crate::taxonomy_action_flags_vo::ActionFlags,
+            &shared::tui::taxonomy_action_flags_vo::ActionFlags,
         ) -> LintExecutionResult,
     {
         let path = state.selected_path();

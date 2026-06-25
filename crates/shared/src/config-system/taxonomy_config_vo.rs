@@ -245,8 +245,8 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
                 let paths: Vec<_> = arr
                     .iter()
                     .filter_map(|v| v.as_str())
-                .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                .collect();
+                    .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
+                    .collect();
                 if !paths.is_empty() {
                     config.ignored_paths = FilePathList::new(paths);
                 }
