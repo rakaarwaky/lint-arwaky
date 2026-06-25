@@ -68,7 +68,16 @@ impl CheckContext {
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
         let orphan_orchestrator = orphan_container.analyzer();
-        let layer_detector = orphan_container.layer_detector();
+        let aes_config = shared::config_system::taxonomy_config_vo::default_aes_config();
+        let fs: Arc<dyn shared::file_system::contract_system_port::IFileSystemPort> =
+            Arc::new(import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
+        let parser: Arc<dyn shared::source_parsing::contract_parser_port::ISourceParserPort> =
+            Arc::new(import_rules::root_import_rules_container::NullSourceParser);
+        let layer_detector: Arc<dyn ILayerDetectionAggregate> = Arc::new(
+            import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
+                aes_config, fs, parser,
+            ),
+        );
         let scanner_provider: Arc<
             dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort,
         > = Arc::new(shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new());
@@ -460,24 +469,16 @@ impl CheckCommandsSurface {
                 let total = filtered_results.len();
 
                 println!("── [{ws_type}] {ws_name} — {total} violations ──");
-                if !code_counts.is_empty() {
-                    let mut sorted: Vec<_> = code_counts.into_iter().collect();
-                    sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
-                    for (code, count) in &sorted {
-                        println!("   {code}: {count}");
-                    }
-                } else {
-                    println!("   (clean)");
-                }
-                println!();
-
-                if ws_name == "shared" && !filtered_results.is_empty() {
+                if !filtered_results.is_empty() {
                     let results_list = LintResultList::new(filtered_results);
                     print!(
                         "{}",
                         code_analysis_linter.format_report(&results_list, &ws.path.value)
                     );
+                } else {
+                    println!("   (clean)");
                 }
+                println!();
             } else {
                 // Single workspace — print full violation detail
                 let results_list = LintResultList::new(filtered_results);

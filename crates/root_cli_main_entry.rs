@@ -9,11 +9,17 @@ use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
 use code_analysis::{has_critical, lint_path, CodeDuplicationAnalyzer};
+use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
+use import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter;
 use import_rules::root_import_rules_container::ImportContainer;
 use import_rules::root_import_rules_container::NullSourceParser;
 use role_rules::root_role_rules_container::RoleContainer;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::config_system::taxonomy_config_vo::default_aes_config;
+use shared::file_system::contract_system_port::IFileSystemPort;
+use shared::source_parsing::contract_parser_port::ISourceParserPort;
 
 pub struct CliMainEntry {}
 
@@ -49,7 +55,11 @@ fn main() -> ExitCode {
     let orphan_container = orphan_detector::root_orphan_detector_container::OrphanContainer::new();
     let git_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
 
-    let layer_detector = orphan_container.layer_detector();
+    let aes_config = default_aes_config();
+    let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
+    let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
+    let layer_detector: Arc<dyn ILayerDetectionAggregate> =
+        Arc::new(LayerDetectionAnalyzer::new(aes_config, fs, parser));
     let git_aggregate = git_container.aggregate();
     let multi_project_orchestrator = config_container.multi_project_orchestrator();
 

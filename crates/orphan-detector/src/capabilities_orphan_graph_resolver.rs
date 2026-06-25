@@ -98,19 +98,6 @@ impl OrphanGraphResolver {
             }
         }
 
-        // DEBUG: check if taxonomy_path_vo is in module_to_file
-        if let Some(debug_file) = module_to_file.get("taxonomy_path_vo") {
-            eprintln!(
-                "[DEBUG graph] module_to_file has taxonomy_path_vo -> {}",
-                debug_file
-            );
-        } else {
-            eprintln!(
-                "[DEBUG graph] module_to_file MISSING taxonomy_path_vo (total entries: {})",
-                module_to_file.len()
-            );
-        }
-
         // Build set of known workspace crate dirs for external dep detection
         let mut workspace_modules: std::collections::HashSet<String> =
             std::collections::HashSet::new();

@@ -13,39 +13,24 @@ use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 use std::sync::Arc;
 
+pub struct McpServerDependencies {
+    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+    pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+    pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
+    pub scanner_provider: Arc<dyn IScannerProviderPort>,
+    pub external_lint: Arc<dyn IExternalLintAggregate>,
+    pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+}
+
 pub struct McpServerOrchestrator {
-    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-    naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-    orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    layer_detector: Arc<dyn ILayerDetectionAggregate>,
-    scanner_provider: Arc<dyn IScannerProviderPort>,
-    external_lint: Arc<dyn IExternalLintAggregate>,
-    role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    deps: McpServerDependencies,
 }
 
 impl McpServerOrchestrator {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-        layer_detector: Arc<dyn ILayerDetectionAggregate>,
-        scanner_provider: Arc<dyn IScannerProviderPort>,
-        external_lint: Arc<dyn IExternalLintAggregate>,
-        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    ) -> Self {
-        Self {
-            code_analysis_linter,
-            import_orchestrator,
-            naming_orchestrator,
-            orphan_orchestrator,
-            layer_detector,
-            scanner_provider,
-            external_lint,
-            role_orchestrator,
-        }
+    pub fn new(deps: McpServerDependencies) -> Self {
+        Self { deps }
     }
 }
 
@@ -78,14 +63,14 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let linter = self.code_analysis_linter.clone();
-                let import_orch = self.import_orchestrator.clone();
-                let naming_orch = self.naming_orchestrator.clone();
-                let role_orch = self.role_orchestrator.clone();
-                let ext_lint = self.external_lint.clone();
-                let orphan_orch = self.orphan_orchestrator.clone();
-                let layer_det = self.layer_detector.clone();
-                let scanner = self.scanner_provider.clone();
+                let linter = self.deps.code_analysis_linter.clone();
+                let import_orch = self.deps.import_orchestrator.clone();
+                let naming_orch = self.deps.naming_orchestrator.clone();
+                let role_orch = self.deps.role_orchestrator.clone();
+                let ext_lint = self.deps.external_lint.clone();
+                let orphan_orch = self.deps.orphan_orchestrator.clone();
+                let layer_det = self.deps.layer_detector.clone();
+                let scanner = self.deps.scanner_provider.clone();
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
@@ -187,14 +172,14 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(t) => t,
                     None => 80,
                 };
-                let linter = self.code_analysis_linter.clone();
-                let import_orch = self.import_orchestrator.clone();
-                let naming_orch = self.naming_orchestrator.clone();
-                let role_orch = self.role_orchestrator.clone();
-                let ext_lint = self.external_lint.clone();
-                let orphan_orch = self.orphan_orchestrator.clone();
-                let layer_det = self.layer_detector.clone();
-                let scanner = self.scanner_provider.clone();
+                let linter = self.deps.code_analysis_linter.clone();
+                let import_orch = self.deps.import_orchestrator.clone();
+                let naming_orch = self.deps.naming_orchestrator.clone();
+                let role_orch = self.deps.role_orchestrator.clone();
+                let ext_lint = self.deps.external_lint.clone();
+                let orphan_orch = self.deps.orphan_orchestrator.clone();
+                let layer_det = self.deps.layer_detector.clone();
+                let scanner = self.deps.scanner_provider.clone();
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
@@ -288,7 +273,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "name": "lint-arwaky"})
             }
             "adapters" => {
-                let ext = self.external_lint.clone();
+                let ext = self.deps.external_lint.clone();
                 let adapter_names = ext.adapter_names();
                 let mut adapters = Vec::new();
                 for name in &adapter_names {
