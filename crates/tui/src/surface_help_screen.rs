@@ -1,0 +1,26 @@
+use crate::taxonomy_state_vo::AppState;
+use ratatui::layout::Rect;
+use ratatui::Frame;
+
+pub struct HelpScreen;
+
+impl HelpScreen {
+    pub fn new() -> Self {
+        Self
+    }
+
+    pub fn is_active(state: &AppState) -> bool {
+        state.show_help
+    }
+
+    pub fn render_hint(frame: &mut Frame, area: Rect) {
+        let _ = frame;
+        let _ = area;
+    }
+}
+
+impl Default for HelpScreen {
+    fn default() -> Self {
+        Self::new()
+    }
+}

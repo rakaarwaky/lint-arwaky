@@ -60,6 +60,9 @@ dialoguer = "0.11"
 console = "0.15"
 ctrlc = "3.4"
 futures = "0.3"
+ratatui = "0.29"
+crossterm = "0.28"
+tui = { package = "tui-lint-arwaky", path = "crates/tui" }
 
 [package]
 name = "lint_arwaky-arwaky"
@@ -117,6 +120,7 @@ toml.workspace = true
 clap.workspace = true
 reqwest.workspace = true
 chrono.workspace = true
+tui.workspace = true
 rmcp.workspace = true
 rand.workspace = true
 tracing.workspace = true

@@ -1,10 +1,12 @@
-// PURPOSE: main entry point for lint-arwaky-tui — interactive TUI launcher
+// PURPOSE: main entry point for lint-arwaky-tui binary — bootstraps TUI container
 use std::process::ExitCode;
 
-use lint_arwaky::cli_commands::surface_tui_command::TuiCommandSurface;
-
-pub struct TuiMainEntry {}
-
 fn main() -> ExitCode {
-    TuiCommandSurface::run()
+    match tui::root_tui_container::TuiContainer::run() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("TUI error: {e}");
+            ExitCode::FAILURE
+        }
+    }
 }

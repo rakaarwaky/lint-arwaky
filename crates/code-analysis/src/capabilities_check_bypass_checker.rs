@@ -318,6 +318,29 @@ fn starts_with_allow_attr(line: &str) -> bool {
 }
 
 impl IBypassCheckerProtocol for BypassChecker {
+    fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>) {
+        for (i, line) in content.lines().enumerate() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("#[allow(") || trimmed == "#![allow()]" {
+                continue;
+            }
+            if trimmed == "[lints.clippy]" || trimmed.starts_with("clippy::") {
+                let msg = format!(
+                    "Cargo.toml clippy lint configuration at line {}: {}",
+                    i + 1,
+                    trimmed
+                );
+                violations.push(LintResult::new_arch(
+                    "Cargo.toml",
+                    i + 1,
+                    "AES304",
+                    Severity::INFO,
+                    msg,
+                ));
+            }
+        }
+    }
+
     fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let language = SourceLanguage::from_file(file);
         let mut in_test_module = false;

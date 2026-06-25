@@ -1,0 +1,25 @@
+[package]
+name = "tui-lint-arwaky"
+version = "1.10.43"
+edition = "2021"
+description = "Ratatui-based interactive 3-panel file browser TUI for lint-arwaky"
+license = "MIT"
+
+[dependencies]
+shared.workspace = true
+code_analysis.workspace = true
+import_rules.workspace = true
+naming_rules.workspace = true
+role_rules.workspace = true
+external_lint.workspace = true
+orphan_detector.workspace = true
+file_watch.workspace = true
+auto_fix.workspace = true
+config_system.workspace = true
+project_setup.workspace = true
+maintenance.workspace = true
+git_hooks.workspace = true
+ratatui.workspace = true
+crossterm.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
