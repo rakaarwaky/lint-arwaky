@@ -1,5 +1,5 @@
 use shared::common::taxonomy_line_count_vo::LineCount;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_file_system_port::IFileSystemPort;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;

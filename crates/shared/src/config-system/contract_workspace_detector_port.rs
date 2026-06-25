@@ -1,5 +1,5 @@
 // PURPOSE: IWorkspaceDetectorPort — port trait for detecting workspace type from directory structure
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorkspaceType {

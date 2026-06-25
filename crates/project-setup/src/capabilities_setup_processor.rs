@@ -2,12 +2,12 @@
 
 use std::collections::HashMap;
 
+use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::project_setup::taxonomy_setup_contract_vo::{
     McpBinaryNameVO, ProjectLanguageVO, SetupError,
 };
-use shared::source_parsing::taxonomy_path_vo::DirectoryPath;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;

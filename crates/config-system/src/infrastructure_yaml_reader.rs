@@ -1,9 +1,9 @@
 // PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk
 // XDG Base Directory Specification compliant config lookup
 use async_trait::async_trait;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_reader_port::IConfigReaderPort;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct ConfigYamlReader;
 

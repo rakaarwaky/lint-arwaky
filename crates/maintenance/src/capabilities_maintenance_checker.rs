@@ -1,10 +1,10 @@
 // PURPOSE: MaintenanceChecker — business logic capabilities for running audits and checking toolchains
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::project_setup::taxonomy_doctor_vo::{
     DependencyInfo, DependencyReport, SecurityFinding, SecurityScanReport, ToolStatus,
     ToolchainDiagnostics,
 };
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct MaintenanceChecker;
 

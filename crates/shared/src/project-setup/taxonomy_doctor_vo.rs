@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
+use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct DoctorResultVO {

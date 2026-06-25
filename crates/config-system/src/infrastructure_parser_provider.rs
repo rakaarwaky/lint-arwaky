@@ -1,9 +1,9 @@
 // PURPOSE: ConfigParserProvider — IConfigParserPort implementation for YAML and TOML config parsing
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_parser_port::IConfigParserPort;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_identifier_vo::ConfigKey;
 use shared::config_system::taxonomy_setting_vo::ProjectConfig;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_error::ErrorMessage;
 use std::path::Path;
 

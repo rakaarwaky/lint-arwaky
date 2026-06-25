@@ -1,6 +1,6 @@
 use crate::common::taxonomy_common_vo::BooleanVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
 
 #[derive(Debug, Clone, Default)]
 pub struct MultiProjectVO {

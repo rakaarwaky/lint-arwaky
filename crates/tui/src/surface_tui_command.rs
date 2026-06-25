@@ -1,4 +1,3 @@
-use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use crate::surface_file_list_view::FileListView;
 use crate::surface_path_screen::PathScreen;
 use crate::surface_preview_view::PreviewView;
@@ -13,6 +12,7 @@ use crossterm::terminal::{
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::Terminal;
+use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use shared::tui::taxonomy_state_vo::AppState;
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::io::stdout;

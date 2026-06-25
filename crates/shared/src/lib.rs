@@ -21,8 +21,6 @@ pub mod code_analysis;
 pub mod config_system;
 #[path = "external-lint/mod.rs"]
 pub mod external_lint;
-#[path = "file-system/mod.rs"]
-pub mod file_system;
 #[path = "file-watch/mod.rs"]
 pub mod file_watch;
 #[path = "git-hooks/mod.rs"]
@@ -40,5 +38,3 @@ pub mod orphan_detector;
 pub mod project_setup;
 #[path = "role-rules/mod.rs"]
 pub mod role_rules;
-#[path = "source-parsing/mod.rs"]
-pub mod source_parsing;

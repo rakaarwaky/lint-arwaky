@@ -8,10 +8,10 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 /// Identifies imports that are declared but never used in the file (AES203).

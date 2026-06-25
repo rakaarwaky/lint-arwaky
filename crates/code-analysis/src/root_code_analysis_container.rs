@@ -13,9 +13,9 @@ use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProto
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 /// CodeAnalysisCheckerContainer holds only code-analysis protocol implementations.
@@ -72,12 +72,11 @@ impl CodeAnalysisCheckerContainer {
         file: &str,
         root_dir: &str,
     ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
-        let f = match shared::source_parsing::taxonomy_path_vo::FilePath::new(file.to_string()) {
+        let f = match shared::common::taxonomy_path_vo::FilePath::new(file.to_string()) {
             Ok(fp) => fp,
             Err(_) => return None,
         };
-        let rd = match shared::source_parsing::taxonomy_path_vo::FilePath::new(root_dir.to_string())
-        {
+        let rd = match shared::common::taxonomy_path_vo::FilePath::new(root_dir.to_string()) {
             Ok(fp) => fp,
             Err(_) => return None,
         };
@@ -142,13 +141,13 @@ impl Default for CodeAnalysisCheckerContainer {
 struct NullFileSystem;
 
 #[async_trait::async_trait]
-impl shared::file_system::contract_system_port::IFileSystemPort for NullFileSystem {
+impl shared::common::contract_system_port::IFileSystemPort for NullFileSystem {
     async fn walk(
         &self,
         _path: &FilePath,
         _ignored_patterns: Option<&shared::common::taxonomy_common_vo::PatternList>,
-    ) -> shared::source_parsing::taxonomy_paths_vo::FilePathList {
-        shared::source_parsing::taxonomy_paths_vo::FilePathList::new(vec![])
+    ) -> shared::common::taxonomy_paths_vo::FilePathList {
+        shared::common::taxonomy_paths_vo::FilePathList::new(vec![])
     }
     async fn is_directory(
         &self,
@@ -170,10 +169,10 @@ impl shared::file_system::contract_system_port::IFileSystemPort for NullFileSyst
         _path: &FilePath,
     ) -> Result<
         shared::common::taxonomy_source_vo::ContentString,
-        shared::file_system::taxonomy_filesystem_error::FileSystemError,
+        shared::common::taxonomy_filesystem_error::FileSystemError,
     > {
         Err(
-            shared::file_system::taxonomy_filesystem_error::FileSystemError::new(
+            shared::common::taxonomy_filesystem_error::FileSystemError::new(
                 FilePath::default(),
                 shared::common::taxonomy_common_error::ErrorMessage::new(
                     "null filesystem: not initialized",
@@ -198,10 +197,10 @@ impl shared::file_system::contract_system_port::IFileSystemPort for NullFileSyst
         _mode: Option<&shared::common::taxonomy_layer_vo::Identity>,
     ) -> Result<
         shared::mcp_server::taxonomy_job_vo::SuccessStatus,
-        shared::file_system::taxonomy_filesystem_error::FileSystemError,
+        shared::common::taxonomy_filesystem_error::FileSystemError,
     > {
         Err(
-            shared::file_system::taxonomy_filesystem_error::FileSystemError::new(
+            shared::common::taxonomy_filesystem_error::FileSystemError::new(
                 FilePath::default(),
                 shared::common::taxonomy_common_error::ErrorMessage::new(
                     "null filesystem: not initialized",
@@ -213,8 +212,8 @@ impl shared::file_system::contract_system_port::IFileSystemPort for NullFileSyst
     async fn glob(
         &self,
         _pattern: &shared::common::taxonomy_layer_vo::Identity,
-    ) -> shared::source_parsing::taxonomy_paths_vo::FilePathList {
-        shared::source_parsing::taxonomy_paths_vo::FilePathList::new(vec![])
+    ) -> shared::common::taxonomy_paths_vo::FilePathList {
+        shared::common::taxonomy_paths_vo::FilePathList::new(vec![])
     }
     async fn get_cwd(&self) -> FilePath {
         FilePath::default()
@@ -230,10 +229,10 @@ impl shared::file_system::contract_system_port::IFileSystemPort for NullFileSyst
         _path: &FilePath,
     ) -> Result<
         shared::common::taxonomy_source_vo::ContentString,
-        shared::file_system::taxonomy_filesystem_error::FileSystemError,
+        shared::common::taxonomy_filesystem_error::FileSystemError,
     > {
         Err(
-            shared::file_system::taxonomy_filesystem_error::FileSystemError::new(
+            shared::common::taxonomy_filesystem_error::FileSystemError::new(
                 FilePath::default(),
                 shared::common::taxonomy_common_error::ErrorMessage::new(
                     "null filesystem: not initialized",
@@ -246,13 +245,13 @@ impl shared::file_system::contract_system_port::IFileSystemPort for NullFileSyst
 
 struct NullSourceParser;
 
-impl shared::source_parsing::contract_parser_port::ISourceParserPort for NullSourceParser {
+impl shared::common::contract_parser_port::ISourceParserPort for NullSourceParser {
     fn extract_imports(
         &self,
         _path: &FilePath,
     ) -> Result<
         shared::code_analysis::taxonomy_import_source_vo::ImportInfoList,
-        shared::source_parsing::taxonomy_parser_error::SourceParserError,
+        shared::common::taxonomy_parser_error::SourceParserError,
     > {
         Ok(shared::code_analysis::taxonomy_import_source_vo::ImportInfoList::default())
     }
@@ -261,7 +260,7 @@ impl shared::source_parsing::contract_parser_port::ISourceParserPort for NullSou
         _path: &FilePath,
     ) -> Result<
         shared::mcp_server::taxonomy_job_vo::ResponseData,
-        shared::source_parsing::taxonomy_parser_error::SourceParserError,
+        shared::common::taxonomy_parser_error::SourceParserError,
     > {
         Ok(shared::mcp_server::taxonomy_job_vo::ResponseData::default())
     }
@@ -280,7 +279,7 @@ impl shared::source_parsing::contract_parser_port::ISourceParserPort for NullSou
     fn find_primitive_violations(
         &self,
         _path: &FilePath,
-        _primitive_types: &shared::source_parsing::taxonomy_naming_list_vo::PrimitiveTypeList,
+        _primitive_types: &shared::common::taxonomy_naming_list_vo::PrimitiveTypeList,
     ) -> shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList {
         shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList::default()
     }
@@ -295,7 +294,7 @@ impl shared::source_parsing::contract_parser_port::ISourceParserPort for NullSou
         _path: &FilePath,
     ) -> Result<
         shared::common::taxonomy_suggestion_vo::MetadataVO,
-        shared::source_parsing::taxonomy_parser_error::SourceParserError,
+        shared::common::taxonomy_parser_error::SourceParserError,
     > {
         Ok(shared::common::taxonomy_suggestion_vo::MetadataVO::new(
             std::collections::HashMap::new(),
@@ -377,11 +376,11 @@ impl shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerPro
 }
 
 impl IAnalyzer for PlaceholderAnalyzer {
-    fn fs(&self) -> &dyn shared::file_system::contract_system_port::IFileSystemPort {
+    fn fs(&self) -> &dyn shared::common::contract_system_port::IFileSystemPort {
         static FS: std::sync::OnceLock<NullFileSystem> = std::sync::OnceLock::new();
         FS.get_or_init(|| NullFileSystem)
     }
-    fn parser(&self) -> &dyn shared::source_parsing::contract_parser_port::ISourceParserPort {
+    fn parser(&self) -> &dyn shared::common::contract_parser_port::ISourceParserPort {
         static PARSER: std::sync::OnceLock<NullSourceParser> = std::sync::OnceLock::new();
         PARSER.get_or_init(|| NullSourceParser)
     }

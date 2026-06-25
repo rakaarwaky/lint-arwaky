@@ -1,7 +1,7 @@
 // PURPOSE: ILanguageDetectorPort — contract for detecting programming language from file path
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 
-pub use crate::source_parsing::taxonomy_language_vo::Language;
+pub use crate::common::taxonomy_language_vo::Language;
 
 pub trait ILanguageDetectorPort: Send + Sync {
     /// Detect language from a file path based on extension.

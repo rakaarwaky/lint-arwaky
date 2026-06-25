@@ -1,6 +1,6 @@
 // PURPOSE: INamingFileSystemPort — Local contract trait for naming-rules filesystem operations
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::taxonomy_common_vo::PatternList;
 use async_trait::async_trait;
 

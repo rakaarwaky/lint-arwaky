@@ -6,11 +6,11 @@
 //   * `Result<PathBuf, String>` → `CreateConfigDirResult` (= `Result<PathBuf, SetupError>`)
 //   * `&str` parameters → kept (idiomatic borrow, AES402 allows)
 //   * `bool` parameters → kept (semantic toggle, AES402 allows)
+use crate::common::taxonomy_path_vo::DirectoryPath;
 use crate::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use crate::project_setup::taxonomy_setup_contract_vo::{
     CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, SetupError, WriteConfigResult,
 };
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
 
 #[async_trait::async_trait]
 pub trait ISetupManagementProtocol: Send + Sync {

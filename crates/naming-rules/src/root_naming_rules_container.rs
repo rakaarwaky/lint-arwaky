@@ -1,10 +1,10 @@
 // PURPOSE: NamingContainer — wiring for naming-rules feature (root layer, wiring only)
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 use std::sync::Arc;

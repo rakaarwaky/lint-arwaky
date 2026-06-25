@@ -2,8 +2,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::common::taxonomy_common_vo::Count;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
-use crate::source_parsing::taxonomy_paths_vo::RenamedFileList;
+use crate::common::taxonomy_paths_vo::FilePathList;
+use crate::common::taxonomy_paths_vo::RenamedFileList;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct GitDiffResultVO {

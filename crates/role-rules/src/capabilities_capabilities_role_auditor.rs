@@ -10,9 +10,9 @@
 //      This checker assumes Rust syntax; Python/JS support would need additional parsing.
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::contract_language_detector_port::Language as DetLang;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::source_parsing::contract_language_detector_port::Language as DetLang;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
 
@@ -40,8 +40,7 @@ impl CapabilitiesRoleChecker {
         }
         let file = source.file_path.value();
         let content = source.content.value();
-        let detector =
-            shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
+        let detector = shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
         let lang = detector.detect(&source.file_path);
         let is_rs = lang == DetLang::Rust;
         let is_py = lang == DetLang::Python;

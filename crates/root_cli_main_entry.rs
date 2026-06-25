@@ -17,9 +17,9 @@ use role_rules::root_role_rules_container::RoleContainer;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::common::contract_parser_port::ISourceParserPort;
+use shared::common::contract_system_port::IFileSystemPort;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
-use shared::file_system::contract_system_port::IFileSystemPort;
-use shared::source_parsing::contract_parser_port::ISourceParserPort;
 
 pub struct CliMainEntry {}
 
@@ -90,7 +90,8 @@ fn main() -> ExitCode {
             external_lint: external_lint_aggregate_clone.clone(),
             role_orchestrator: role_container.orchestrator(),
             scanner_provider: Arc::new(
-                shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new(),
+                shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(
+                ),
             ),
             orphan_orchestrator: orphan_container.analyzer(),
             layer_detector: layer_detector_clone.clone(),
@@ -132,7 +133,7 @@ fn main() -> ExitCode {
                 external_lint: external_lint_aggregate.clone(),
                 role_orchestrator: role_orchestrator.clone(),
                 scanner_provider: Arc::new(
-                    shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new(),
+                    shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
                 ),
                 orphan_orchestrator: orphan_container.analyzer(),
                 layer_detector: layer_detector.clone(),
@@ -153,7 +154,7 @@ fn main() -> ExitCode {
                 external_lint: external_lint_aggregate.clone(),
                 role_orchestrator: role_orchestrator.clone(),
                 scanner_provider: Arc::new(
-                    shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new(),
+                    shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
                 ),
                 orphan_orchestrator: orphan_container.analyzer(),
                 layer_detector: layer_detector.clone(),
@@ -223,7 +224,7 @@ fn main() -> ExitCode {
                     external_lint: external_lint_aggregate.clone(),
                     role_orchestrator: role_orchestrator.clone(),
                     scanner_provider: Arc::new(
-                        shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new(),
+                        shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
                     ),
                     orphan_orchestrator: orphan_container.analyzer(),
                     layer_detector: layer_detector.clone(),
@@ -464,11 +465,11 @@ fn run_default_check(project_root: &str) -> ExitCode {
     }
 }
 
-fn default_file_path(s: String) -> shared::source_parsing::taxonomy_path_vo::FilePath {
-    if let Ok(p) = shared::source_parsing::taxonomy_path_vo::FilePath::new(s) {
+fn default_file_path(s: String) -> shared::common::taxonomy_path_vo::FilePath {
+    if let Ok(p) = shared::common::taxonomy_path_vo::FilePath::new(s) {
         return p;
     }
-    shared::source_parsing::taxonomy_path_vo::FilePath::default()
+    shared::common::taxonomy_path_vo::FilePath::default()
 }
 
 fn default_rustc_version() -> &'static str {

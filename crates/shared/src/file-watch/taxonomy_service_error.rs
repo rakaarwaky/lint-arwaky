@@ -1,6 +1,6 @@
 // PURPOSE: WatchServiceError — structured error type for file watch service failures
 use crate::common::taxonomy_message_vo::LintMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct WatchServiceError {

@@ -1,9 +1,9 @@
 // PURPOSE: IConfigOrchestrationAggregate — aggregate contract for orchestrating configuration loading across languages
 
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::contract_reader_port::IConfigReaderPort;
 use crate::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
 use crate::config_system::taxonomy_source_vo::ConfigResult;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 use std::sync::Arc;
 

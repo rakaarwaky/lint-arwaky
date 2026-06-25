@@ -1,11 +1,11 @@
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::mcp_server::taxonomy_action_vo::JobId;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::taxonomy_doctor_vo::{
     DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
 };
 use shared::project_setup::taxonomy_stats_vo::MaintenanceStatsVO;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::Count;

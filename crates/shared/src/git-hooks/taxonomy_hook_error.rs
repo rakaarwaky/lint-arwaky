@@ -1,6 +1,6 @@
 // PURPOSE: GitHookError — structured error type for git hook operation failures
 use crate::common::taxonomy_message_vo::LintMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone)]
 pub struct GitHookError {

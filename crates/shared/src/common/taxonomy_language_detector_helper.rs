@@ -1,6 +1,6 @@
 // PURPOSE: LanguageDetector — Helper for detecting programming languages from file paths
-use crate::source_parsing::taxonomy_language_vo::Language;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_language_vo::Language;
+use crate::common::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct LanguageDetector;

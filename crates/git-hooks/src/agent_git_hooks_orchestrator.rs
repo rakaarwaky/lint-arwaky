@@ -1,5 +1,6 @@
 // PURPOSE: GitHooksOrchestrator — orchestrates git hooks operations by delegating to protocols/ports only (agent layer)
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
@@ -7,7 +8,6 @@ use shared::git_hooks::contract_manager_port::IHookManagerPort;
 use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct GitHooksOrchestrator {

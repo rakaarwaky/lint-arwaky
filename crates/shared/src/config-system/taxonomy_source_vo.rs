@@ -2,8 +2,8 @@
 pub use crate::common::taxonomy_source_vo::ContentString;
 pub use crate::common::taxonomy_source_vo::SourceContentVO;
 
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
 /// Represents a configuration source with its language, path, and raw content.

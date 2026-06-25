@@ -13,12 +13,12 @@ use std::path::{Path, PathBuf};
 
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_language_detector_helper::LanguageDetector;
 use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
-use shared::file_system::contract_system_port::IFileSystemPort;
-use shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct CodeDuplicationAnalyzer {}
 

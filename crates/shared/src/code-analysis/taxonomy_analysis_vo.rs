@@ -2,7 +2,7 @@
 // Re-export LintResultList so code_analysis contracts stay within their own domain.
 pub use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::cli_commands::taxonomy_severity_vo::Severity;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 

@@ -1,7 +1,7 @@
 // PURPOSE: WorkspaceDetector — IWorkspaceDetectorPort implementation for workspace type detection
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
 use shared::config_system::contract_workspace_detector_port::WorkspaceType;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct WorkspaceDetector;
 

@@ -1,8 +1,8 @@
 // PURPOSE: GitHooksAggregate — unified aggregate trait for git hooks orchestration
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::git_hooks::contract_diff_protocol::IDiffProtocol;
 use crate::git_hooks::contract_hook_protocol::IHookProtocol;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 #[async_trait]

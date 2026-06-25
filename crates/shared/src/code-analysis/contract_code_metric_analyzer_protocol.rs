@@ -1,6 +1,6 @@
 // PURPOSE: ICodeMetricAnalyzerProtocol — protocol for duplication detection (AES305)
 use crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use crate::file_system::contract_system_port::IFileSystemPort;
+use crate::common::contract_system_port::IFileSystemPort;
 
 pub trait ICodeMetricAnalyzerProtocol: Send + Sync {
     fn handle_duplicates(

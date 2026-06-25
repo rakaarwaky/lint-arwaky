@@ -4,13 +4,13 @@ use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, Rea
 use rmcp::handler::server::wrapper::Parameters;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::common::contract_scanner_provider_port::IScannerProviderPort;
+use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
-use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 use std::sync::Arc;
 
 pub struct McpServerDependencies {

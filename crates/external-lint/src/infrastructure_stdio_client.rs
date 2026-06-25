@@ -4,8 +4,8 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::mcp_server::taxonomy_job_vo::ResponseData;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_duration_vo::Timeout;
 use tokio::process::Command;

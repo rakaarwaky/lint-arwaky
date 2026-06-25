@@ -2,11 +2,11 @@
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -65,13 +65,11 @@ impl ImportOrchestrator {
             Some(n) => n.to_string_lossy().to_string(),
             None => String::new(),
         };
-        shared::source_parsing::taxonomy_file_collector_helper::is_path_ignored(
-            &s,
-            &self.ignored_paths,
-        ) || match dir_name.strip_prefix('.') {
-            Some(n) => self.ignored_paths.iter().any(|i| i.contains(n)),
-            None => false,
-        }
+        shared::common::taxonomy_file_collector_helper::is_path_ignored(&s, &self.ignored_paths)
+            || match dir_name.strip_prefix('.') {
+                Some(n) => self.ignored_paths.iter().any(|i| i.contains(n)),
+                None => false,
+            }
     }
 
     fn collect_files(&self, target: &FilePath) -> FilePathList {

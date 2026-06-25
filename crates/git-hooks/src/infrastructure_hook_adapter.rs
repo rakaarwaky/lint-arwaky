@@ -1,9 +1,9 @@
 // PURPOSE: HookAdapter — IHookManagerPort implementation for installing/uninstalling git hook scripts
 
 use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_manager_port::IHookManagerPort;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::path::Path;
 
 #[cfg(unix)]

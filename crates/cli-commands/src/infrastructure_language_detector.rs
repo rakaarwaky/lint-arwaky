@@ -1,7 +1,7 @@
-use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
-use shared::source_parsing::contract_language_detector_port::Language;
-use shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::common::contract_language_detector_port::ILanguageDetectorPort;
+use shared::common::contract_language_detector_port::Language;
+use shared::common::taxonomy_language_detector_helper::LanguageDetector;
+use shared::common::taxonomy_path_vo::FilePath;
 
 pub struct CliLanguageDetector {
     inner: LanguageDetector,

@@ -1,5 +1,5 @@
-use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
+use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use shared::tui::taxonomy_state_vo::AppState;
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;

@@ -22,12 +22,12 @@ use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::contract_language_detector_port::Language as DetLang;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::source_parsing::contract_language_detector_port::Language as DetLang;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared::taxonomy_definition_vo::LayerDefinition;
@@ -96,8 +96,7 @@ impl SurfaceRoleChecker {
     pub fn check_fn_count_limit(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let content = source.content.value();
         let file = source.file_path.value();
-        let detector =
-            shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
+        let detector = shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
         let lang = detector.detect(&source.file_path);
         let fn_keyword = if lang == DetLang::Python {
             "def "
@@ -122,7 +121,7 @@ impl SurfaceRoleChecker {
     pub async fn check_surface_roles(
         &self,
         analyzer: &dyn IAnalyzer,
-        files: &shared::source_parsing::taxonomy_paths_vo::FilePathList,
+        files: &shared::common::taxonomy_paths_vo::FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
@@ -231,8 +230,7 @@ impl SurfaceRoleChecker {
 
         let lines: Vec<&str> = content.lines().collect();
         let mut violations: Vec<String> = Vec::new();
-        let detector =
-            shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
+        let detector = shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
         let lang = detector.detect(f);
 
         match lang {

@@ -22,8 +22,8 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_language_detector_helper::LanguageDetector;
+use shared::common::taxonomy_path_vo::FilePath;
 
 /// Default forbidden-bypass patterns applied when config is empty or missing.
 /// These mirror the AES304 catalog (BypassComment, UnwrapExpect, Panic, Todo, Unimplemented).
@@ -73,7 +73,7 @@ const WORD_PATTERN_TOKENS: &[&str] = &[
 type PhrasePattern = (&'static str, ViolationKind, &'static [SourceLanguage]);
 
 /// Logical source languages recognised by the checker. Mirrors
-/// `shared::source_parsing::contract_language_detector_port::Language` but kept
+/// `shared::common::contract_language_detector_port::Language` but kept
 /// independent so the checker does not pull in the full detector trait surface.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum SourceLanguage {
@@ -89,19 +89,17 @@ impl SourceLanguage {
             return SourceLanguage::Rust;
         };
         match LanguageDetector::new().detect(&fp) {
-            shared::source_parsing::contract_language_detector_port::Language::Rust => {
-                SourceLanguage::Rust
-            }
-            shared::source_parsing::contract_language_detector_port::Language::Python => {
+            shared::common::contract_language_detector_port::Language::Rust => SourceLanguage::Rust,
+            shared::common::contract_language_detector_port::Language::Python => {
                 SourceLanguage::Python
             }
-            shared::source_parsing::contract_language_detector_port::Language::JavaScript => {
+            shared::common::contract_language_detector_port::Language::JavaScript => {
                 SourceLanguage::JavaScript
             }
-            shared::source_parsing::contract_language_detector_port::Language::TypeScript => {
+            shared::common::contract_language_detector_port::Language::TypeScript => {
                 SourceLanguage::TypeScript
             }
-            shared::source_parsing::contract_language_detector_port::Language::Unknown => {
+            shared::common::contract_language_detector_port::Language::Unknown => {
                 SourceLanguage::Rust
             }
         }

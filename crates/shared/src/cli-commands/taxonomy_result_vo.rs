@@ -11,8 +11,8 @@ use crate::common::taxonomy_layer_vo::Identity;
 use crate::common::taxonomy_lint_vo::LocationList;
 use crate::common::taxonomy_lint_vo::ScopeRef;
 use crate::common::taxonomy_message_vo::LintMessage;
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LintResult {

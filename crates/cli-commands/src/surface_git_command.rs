@@ -1,7 +1,7 @@
 // PURPOSE: GitCommandsSurface — CLI surface for git integration
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::process::ExitCode;
 use std::sync::Arc;
 
@@ -23,7 +23,7 @@ pub async fn handle_git_diff(
     git_aggregate: Arc<dyn GitHooksAggregate>,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     language_detector: Arc<
-        dyn shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort,
+        dyn shared::common::contract_language_detector_port::ILanguageDetectorPort,
     >,
     base: String,
 ) -> ExitCode {
@@ -36,11 +36,14 @@ pub async fn handle_git_diff(
         .get_changed_files(&project_path)
         .await;
 
-    let files: Vec<&shared::source_parsing::taxonomy_path_vo::FilePath> = changed_files
+    let files: Vec<&shared::common::taxonomy_path_vo::FilePath> = changed_files
         .values
         .iter()
         .filter(|fp| {
-            shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort::is_lintable(language_detector.as_ref(), fp)
+            shared::common::contract_language_detector_port::ILanguageDetectorPort::is_lintable(
+                language_detector.as_ref(),
+                fp,
+            )
         })
         .collect();
 

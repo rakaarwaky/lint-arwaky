@@ -10,13 +10,13 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use shared::common::contract_parser_port::ISourceParserPort;
+use shared::common::contract_system_port::IFileSystemPort;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_config_vo::ArchitectureRule;
-use shared::file_system::contract_system_port::IFileSystemPort;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::import_rules::taxonomy_path_helper;
-use shared::source_parsing::contract_parser_port::ISourceParserPort;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::taxonomy_layer_vo::LayerNameVO;
 use std::sync::Arc;

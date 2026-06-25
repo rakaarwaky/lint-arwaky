@@ -3,12 +3,12 @@ use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 
 pub struct McpContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
@@ -51,7 +51,7 @@ impl McpContainer {
         let layer_detector = orphan_container.layer_detector();
 
         let scanner_provider: Arc<dyn IScannerProviderPort> = Arc::new(
-            shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new(),
+            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
         );
 
         let ext_container =

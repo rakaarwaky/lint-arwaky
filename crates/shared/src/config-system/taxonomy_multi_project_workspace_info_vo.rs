@@ -1,5 +1,5 @@
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

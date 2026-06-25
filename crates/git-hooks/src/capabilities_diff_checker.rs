@@ -1,11 +1,11 @@
 // PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::common::contract_scanner_provider_port::IScannerProviderPort;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_paths_vo::RenamedFileList;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
-use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
-use shared::source_parsing::taxonomy_paths_vo::RenamedFileList;
 use std::collections::HashSet;
 use std::sync::Arc;
 

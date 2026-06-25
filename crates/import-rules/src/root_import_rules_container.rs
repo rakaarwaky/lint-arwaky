@@ -1,13 +1,13 @@
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
 use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
+use shared::common::contract_parser_port::ISourceParserPort;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::import_rules::contract_rule_protocol::IArchImportProtocol;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::source_parsing::contract_parser_port::ISourceParserPort;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct ImportContainer {
@@ -110,7 +110,7 @@ impl ISourceParserPort for NullSourceParser {
         _path: &FilePath,
     ) -> Result<
         shared::code_analysis::taxonomy_import_source_vo::ImportInfoList,
-        shared::source_parsing::taxonomy_parser_error::SourceParserError,
+        shared::common::taxonomy_parser_error::SourceParserError,
     > {
         Ok(shared::code_analysis::taxonomy_import_source_vo::ImportInfoList::default())
     }
@@ -119,7 +119,7 @@ impl ISourceParserPort for NullSourceParser {
         _path: &FilePath,
     ) -> Result<
         shared::mcp_server::taxonomy_job_vo::ResponseData,
-        shared::source_parsing::taxonomy_parser_error::SourceParserError,
+        shared::common::taxonomy_parser_error::SourceParserError,
     > {
         Ok(shared::mcp_server::taxonomy_job_vo::ResponseData::default())
     }
@@ -138,7 +138,7 @@ impl ISourceParserPort for NullSourceParser {
     fn find_primitive_violations(
         &self,
         _path: &FilePath,
-        _primitive_types: &shared::source_parsing::taxonomy_naming_list_vo::PrimitiveTypeList,
+        _primitive_types: &shared::common::taxonomy_naming_list_vo::PrimitiveTypeList,
     ) -> shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList {
         shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList::default()
     }
@@ -153,7 +153,7 @@ impl ISourceParserPort for NullSourceParser {
         _path: &FilePath,
     ) -> Result<
         shared::common::taxonomy_suggestion_vo::MetadataVO,
-        shared::source_parsing::taxonomy_parser_error::SourceParserError,
+        shared::common::taxonomy_parser_error::SourceParserError,
     > {
         Ok(shared::common::taxonomy_suggestion_vo::MetadataVO::new(
             std::collections::HashMap::new(),

@@ -5,11 +5,11 @@
 //   * `&str file_path` params → kept as `&str` (idiomatic borrow, AES402 allows)
 //   * `bool remove` → kept (semantic toggle, AES402 allows)
 use crate::common::taxonomy_layer_vo::Identity;
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::git_hooks::taxonomy_git_diff_data_vo::{GitDiffDataVO, HookIgnoreUpdateVO};
 use crate::git_hooks::taxonomy_hook_error::GitHookError;
 use crate::mcp_server::taxonomy_job_vo::SuccessStatus;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 #[async_trait]

@@ -3,12 +3,12 @@ use async_trait::async_trait;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use shared::file_system::contract_system_port::IFileSystemPort;
-use shared::file_system::taxonomy_filesystem_error::FileSystemError;
+use shared::common::contract_system_port::IFileSystemPort;
+use shared::common::taxonomy_filesystem_error::FileSystemError;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::mcp_server::taxonomy_action_vo::ActionName;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::PatternList;

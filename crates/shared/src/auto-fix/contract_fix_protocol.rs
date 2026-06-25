@@ -17,7 +17,7 @@ use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_message_vo::LintMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 
 pub trait IFixProtocol: Send + Sync {
     fn execute(&self, path: &FilePath) -> FixResult;

@@ -10,10 +10,12 @@ use crate::cli_commands::taxonomy_protocol_vo::{
 };
 use crate::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::cli_commands::taxonomy_score_vo::FileFormat;
+use crate::common::taxonomy_adapter_error::AdapterError;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_duration_vo::Timeout;
 use crate::common::taxonomy_job_id_vo::JobId;
 use crate::common::taxonomy_lint_vo::{LocationList, ScopeRef};
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_response_data_vo::ResponseData;
 use crate::common::taxonomy_severity_vo::Severity;
 use crate::config_system::taxonomy_identifier_vo::ConfigKey;
@@ -28,8 +30,6 @@ use crate::naming_rules::taxonomy_suffix_vo::SuffixPolicyVO;
 use crate::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO;
 use crate::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use crate::project_setup::taxonomy_language_vo::ProjectLanguage;
-use crate::source_parsing::taxonomy_adapter_error::AdapterError;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 // AES501 domain anchor — reference taxonomy types so they are not orphaned.
 pub fn anchor_taxonomy() {

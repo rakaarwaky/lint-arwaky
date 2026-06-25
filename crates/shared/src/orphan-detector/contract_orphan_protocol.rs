@@ -5,7 +5,7 @@ use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 
 pub trait ITaxonomyOrphanProtocol: Send + Sync {
     fn is_taxonomy_orphan(

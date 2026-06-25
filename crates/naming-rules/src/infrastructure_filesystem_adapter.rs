@@ -3,9 +3,9 @@ use async_trait::async_trait;
 use std::fs;
 use std::path::Path;
 
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_common_vo::PatternList;
 
 pub struct OSFileSystemAdapter {}

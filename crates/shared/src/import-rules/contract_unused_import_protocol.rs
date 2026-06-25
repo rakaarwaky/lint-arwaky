@@ -5,7 +5,7 @@
 //   * `&mut Vec<LintResult>` → kept (`LintResult` is itself a VO)
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_message_vo::LintMessage;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 
 pub trait IUnusedImportProtocol: Send + Sync {
     /// Find unused imports in a file by path (reads file internally).

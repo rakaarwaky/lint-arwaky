@@ -1,7 +1,7 @@
 // PURPOSE: FixCommandsSurface — CLI surface for auto-fix operations
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_path_vo::FilePath;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;

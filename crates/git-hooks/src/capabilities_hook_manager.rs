@@ -1,5 +1,6 @@
 // PURPOSE: HookManager — implements IHookProtocol for git hook management (capabilities layer)
 use shared::common::taxonomy_layer_vo::Identity;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_port::IHookManagerPort;
@@ -8,7 +9,6 @@ use shared::git_hooks::taxonomy_git_diff_data_vo::{
 };
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct HookManager {

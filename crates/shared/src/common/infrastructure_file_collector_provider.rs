@@ -1,13 +1,13 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::common::contract_scanner_provider_port::IScannerProviderPort;
+use crate::common::taxonomy_file_collector_helper::is_path_ignored;
+use crate::common::taxonomy_filesystem_error::FileSystemError;
+use crate::common::taxonomy_path_vo::DirectoryPath;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::config_system::taxonomy_config_vo::default_aes_config;
-use crate::file_system::taxonomy_filesystem_error::FileSystemError;
-use crate::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
-use crate::source_parsing::taxonomy_file_collector_helper::is_path_ignored;
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 
 pub struct FileCollectorProvider {}
 

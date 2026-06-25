@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::source_parsing::contract_path_normalization_port::IPathNormalizationPort;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct ExternalLintContainer {
     aggregate: Arc<dyn IExternalLintAggregate>,

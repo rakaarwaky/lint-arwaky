@@ -1,6 +1,7 @@
 // PURPOSE: ImportParserAdapter — infrastructure implementation of IImportParserPort using standard filesystem and string search utilities
 
 use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
@@ -8,7 +9,6 @@ use shared::import_rules::taxonomy_path_helper;
 use shared::import_rules::{
     taxonomy_cycle_helper, taxonomy_dummy_helper, taxonomy_parser_helper, taxonomy_unused_helper,
 };
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::taxonomy_name_vo::SymbolName;

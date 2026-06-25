@@ -1,9 +1,9 @@
 // PURPOSE: IAnalyzer trait — core analyzer interface for import checks
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
-use crate::file_system::contract_system_port::IFileSystemPort;
-use crate::source_parsing::contract_parser_port::ISourceParserPort;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::common::contract_parser_port::ISourceParserPort;
+use crate::common::contract_system_port::IFileSystemPort;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::taxonomy_common_error::ErrorMessage;
 use crate::taxonomy_common_vo::Count;
 use crate::taxonomy_common_vo::PatternList;

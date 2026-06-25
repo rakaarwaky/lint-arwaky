@@ -1,7 +1,7 @@
 // PURPOSE: IConfigReaderPort — port trait for reading configuration from external sources
 
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_source_vo::ConfigSource;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 #[async_trait]

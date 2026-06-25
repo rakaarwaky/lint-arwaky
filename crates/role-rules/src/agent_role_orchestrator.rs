@@ -14,9 +14,9 @@
 
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;
@@ -86,7 +86,7 @@ impl RoleOrchestrator {
             };
             let content_vo = ContentString::new(content);
             let detector =
-                shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector::new();
+                shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
             let language = detector.detect(&fp).as_str().to_string();
             let source_vo = SourceContentVO::new(fp, content_vo, &language);
 

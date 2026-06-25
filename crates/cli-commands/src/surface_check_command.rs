@@ -7,6 +7,7 @@ use std::process::ExitCode;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -15,7 +16,6 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 pub type OrchestratorFactory = Arc<
     dyn Fn(shared::config_system::taxonomy_config_vo::ArchitectureConfig) -> CheckContext
@@ -30,11 +30,11 @@ pub struct CheckContext {
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub scanner_provider:
-        Arc<dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort>,
+        Arc<dyn shared::common::contract_scanner_provider_port::IScannerProviderPort>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub language_detector:
-        Arc<dyn shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort>,
+        Arc<dyn shared::common::contract_language_detector_port::ILanguageDetectorPort>,
 }
 
 impl CheckContext {
@@ -69,9 +69,9 @@ impl CheckContext {
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
         let orphan_orchestrator = orphan_container.analyzer();
         let aes_config = shared::config_system::taxonomy_config_vo::default_aes_config();
-        let fs: Arc<dyn shared::file_system::contract_system_port::IFileSystemPort> =
+        let fs: Arc<dyn shared::common::contract_system_port::IFileSystemPort> =
             Arc::new(import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
-        let parser: Arc<dyn shared::source_parsing::contract_parser_port::ISourceParserPort> =
+        let parser: Arc<dyn shared::common::contract_parser_port::ISourceParserPort> =
             Arc::new(import_rules::root_import_rules_container::NullSourceParser);
         let layer_detector: Arc<dyn ILayerDetectionAggregate> = Arc::new(
             import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
@@ -79,10 +79,12 @@ impl CheckContext {
             ),
         );
         let scanner_provider: Arc<
-            dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort,
-        > = Arc::new(shared::source_parsing::infrastructure_file_collector_provider::FileCollectorProvider::new());
+            dyn shared::common::contract_scanner_provider_port::IScannerProviderPort,
+        > = Arc::new(
+            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
+        );
         let language_detector: Arc<
-            dyn shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort,
+            dyn shared::common::contract_language_detector_port::ILanguageDetectorPort,
         > = Arc::new(crate::infrastructure_language_detector::CliLanguageDetector::new());
         Self {
             code_analysis_linter,
@@ -105,7 +107,7 @@ pub struct CheckCommandsSurface {
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub scanner_provider:
-        Arc<dyn shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort>,
+        Arc<dyn shared::common::contract_scanner_provider_port::IScannerProviderPort>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
@@ -340,11 +342,10 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from(path),
         };
-        let all_source_files: Vec<String> =
-            shared::source_parsing::collect_all_source_files(&scan_root)
-                .iter()
-                .map(|f| f.value.clone())
-                .collect();
+        let all_source_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
+            .iter()
+            .map(|f| f.value.clone())
+            .collect();
 
         let multi = workspaces.len() > 1;
         if multi {

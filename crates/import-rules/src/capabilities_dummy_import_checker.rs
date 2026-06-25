@@ -6,12 +6,12 @@
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
-use shared::source_parsing::taxonomy_paths_vo::FilePathList;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;

@@ -1,7 +1,7 @@
 use crate::common::taxonomy_byte_count_vo::ByteCount;
 use crate::common::taxonomy_display_content_vo::DisplayContent;
 use crate::common::taxonomy_line_count_vo::LineCount;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::tui::taxonomy_file_entry_vo::FileEntry;
 
 pub trait IFileSystemPort: Send + Sync {

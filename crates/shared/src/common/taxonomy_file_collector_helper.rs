@@ -1,7 +1,7 @@
 // PURPOSE: FileCollector — taxonomy utility for collecting lintable source files from a directory tree
-use crate::source_parsing::taxonomy_language_detector_helper::LanguageDetector;
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_language_detector_helper::LanguageDetector;
+use crate::common::taxonomy_path_vo::DirectoryPath;
+use crate::common::taxonomy_path_vo::FilePath;
 
 /// Return true if `rel_path` should be skipped based on `ignored` patterns.
 ///

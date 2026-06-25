@@ -6,8 +6,8 @@ use async_trait::async_trait;
 use futures::future;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct ExternalLintOrchestrator {
     adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,

@@ -1,8 +1,8 @@
 // PURPOSE: IImportParserPort — contract port trait for import parsing utilities
 use crate::common::taxonomy_message_vo::LintMessage;
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use crate::import_rules::taxonomy_language_vo::LanguageVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use crate::taxonomy_common_vo::LineNumber;
 use crate::taxonomy_layer_vo::FileContentVO;
 use crate::taxonomy_layer_vo::Identity;

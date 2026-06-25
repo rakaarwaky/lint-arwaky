@@ -1,7 +1,5 @@
 // PURPOSE: Module declarations for external-lint (external linter adapters)
-pub use shared::source_parsing::taxonomy_adapter_error::{
-    AdapterError, ScanError, ValidationError,
-};
+pub use shared::common::taxonomy_adapter_error::{AdapterError, ScanError, ValidationError};
 
 pub mod agent_external_lint_orchestrator;
 pub mod infrastructure_stdio_client;

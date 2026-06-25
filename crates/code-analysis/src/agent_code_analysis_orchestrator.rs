@@ -27,8 +27,8 @@ use shared::cli_commands::taxonomy_score_vo::compute_score;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 
 static GLOBAL_CONTAINER: OnceLock<Arc<CodeAnalysisCheckerContainer>> = OnceLock::new();
 
@@ -54,7 +54,7 @@ pub fn collect_source_files(
     dir_path: &DirectoryPath,
     ignored: &[String],
 ) -> Vec<FilePath> {
-    shared::source_parsing::taxonomy_file_collector_helper::collect_source_files(
+    shared::common::taxonomy_file_collector_helper::collect_source_files(
         root_dir, dir_path, ignored,
     )
 }

@@ -4,12 +4,12 @@ use async_trait::async_trait;
 
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
+use crate::common::taxonomy_filesystem_error::FileSystemError;
 use crate::common::taxonomy_layer_vo::Identity;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_source_vo::ContentString;
-use crate::file_system::taxonomy_filesystem_error::FileSystemError;
 use crate::mcp_server::taxonomy_job_vo::SuccessStatus;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 
 /// Abstract interface for file system operations.
 /// Implemented by Infrastructure (e.g., OSFileSystemAdapter).

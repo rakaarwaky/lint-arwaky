@@ -1,5 +1,5 @@
 // PURPOSE: WatchConfig — value object for file watch configuration parameters
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 
 pub struct WatchConfig {
     pub path: FilePath,
