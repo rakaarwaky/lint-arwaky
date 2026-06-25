@@ -11,7 +11,8 @@ impl TuiContainer {
     pub fn run() -> anyhow::Result<()> {
         let fs_adapter = Arc::new(FileSystemAdapter::new());
 
-        let code_analysis_container = code_analysis::root_code_analysis_container::CodeAnalysisContainer::new();
+        let code_analysis_container =
+            code_analysis::root_code_analysis_container::CodeAnalysisContainer::new();
         let code_analysis_aggregate = code_analysis_container.code_analysis_linter();
 
         let lint_executor = Arc::new(LintExecutor::new(code_analysis_aggregate));

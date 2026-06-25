@@ -10,10 +10,7 @@ pub struct ActionHandler {
 }
 
 impl ActionHandler {
-    pub fn new(
-        fs_port: Arc<dyn IFileSystemPort>,
-        lint_port: Arc<dyn ILintExecutorPort>,
-    ) -> Self {
+    pub fn new(fs_port: Arc<dyn IFileSystemPort>, lint_port: Arc<dyn ILintExecutorPort>) -> Self {
         Self { fs_port, lint_port }
     }
 
@@ -60,9 +57,7 @@ impl ActionHandler {
             TuiEvent::ActionOrphan => self.run_action(state, |lp, p, _f| lp.orphan(p)),
             TuiEvent::ActionSecurity => self.run_action(state, |lp, p, _f| lp.security(p)),
             TuiEvent::ActionDuplicates => self.run_action(state, |lp, p, _f| lp.duplicates(p)),
-            TuiEvent::ActionDependencies => {
-                self.run_action(state, |lp, p, _f| lp.dependencies(p))
-            }
+            TuiEvent::ActionDependencies => self.run_action(state, |lp, p, _f| lp.dependencies(p)),
             TuiEvent::ActionDoctor => self.run_action_no_path(state, |lp| lp.doctor()),
             TuiEvent::ActionInit => {
                 let flags = state.action_flags.clone();
@@ -130,10 +125,7 @@ impl ActionHandler {
 
     fn navigate_forward(&self, state: &mut AppState) {
         let path = state.selected_path();
-        let is_dir = state
-            .selected_entry()
-            .map(|e| e.is_dir)
-            .unwrap_or(false);
+        let is_dir = state.selected_entry().map(|e| e.is_dir).unwrap_or(false);
 
         if is_dir {
             state.current_dir = path;
@@ -163,10 +155,7 @@ impl ActionHandler {
 
     pub fn load_preview(&self, state: &mut AppState) {
         let path = state.selected_path();
-        let is_dir = state
-            .selected_entry()
-            .map(|e| e.is_dir)
-            .unwrap_or(true);
+        let is_dir = state.selected_entry().map(|e| e.is_dir).unwrap_or(true);
         if !is_dir {
             self.load_file_preview(state, &path);
         }
@@ -174,7 +163,11 @@ impl ActionHandler {
 
     fn run_action<F>(&self, state: &mut AppState, action: F)
     where
-        F: FnOnce(&dyn ILintExecutorPort, &str, &crate::taxonomy_action_flags_vo::ActionFlags) -> LintExecutionResult,
+        F: FnOnce(
+            &dyn ILintExecutorPort,
+            &str,
+            &crate::taxonomy_action_flags_vo::ActionFlags,
+        ) -> LintExecutionResult,
     {
         let path = state.selected_path();
         state.set_status(format!("Running action on {}...", path));

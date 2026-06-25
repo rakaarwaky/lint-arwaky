@@ -16,7 +16,9 @@ impl FileListView {
     pub fn render(&self, state: &AppState, frame: &mut Frame, area: Rect) {
         let is_focused = state.panel_focus == PanelFocus::FileList;
         let border_style = if is_focused {
-            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD)
         } else {
             Style::default().fg(Color::DarkGray)
         };
@@ -36,7 +38,9 @@ impl FileListView {
                 let name = entry.display_name();
 
                 let name_style = if entry.is_dir {
-                    Style::default().fg(Color::Blue).add_modifier(Modifier::BOLD)
+                    Style::default()
+                        .fg(Color::Blue)
+                        .add_modifier(Modifier::BOLD)
                 } else {
                     Style::default().fg(Color::White)
                 };
@@ -61,13 +65,11 @@ impl FileListView {
         let mut list_state = ListState::default();
         list_state.select(Some(state.selected_index));
 
-        let list = List::new(items)
-            .block(block)
-            .highlight_style(
-                Style::default()
-                    .bg(Color::DarkGray)
-                    .add_modifier(Modifier::BOLD),
-            );
+        let list = List::new(items).block(block).highlight_style(
+            Style::default()
+                .bg(Color::DarkGray)
+                .add_modifier(Modifier::BOLD),
+        );
 
         frame.render_stateful_widget(list, area, &mut list_state);
     }

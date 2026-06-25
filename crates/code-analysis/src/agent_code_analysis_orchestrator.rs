@@ -164,6 +164,23 @@ impl CodeAnalysisOrchestrator {
         }
         let mut violations: Vec<LintResult> = Vec::new();
 
+        // Scan Cargo.toml for workspace clippy allow bypass (AES304)
+        let root_path = Path::new(root_dir);
+        let mut cargo_candidates: Vec<std::path::PathBuf> = Vec::new();
+        cargo_candidates.push(root_path.join("Cargo.toml"));
+        if let Some(parent) = root_path.parent() {
+            cargo_candidates.push(parent.join("Cargo.toml"));
+        }
+        for cargo_path in &cargo_candidates {
+            if cargo_path.exists() {
+                if let Ok(cargo_content) = std::fs::read_to_string(cargo_path) {
+                    self.container
+                        .bypass_checker()
+                        .check_cargo_toml(&cargo_content, &mut violations);
+                }
+            }
+        }
+
         for file in files {
             let filename = match Path::new(file).file_name().and_then(|n| n.to_str()) {
                 Some(n) => n,

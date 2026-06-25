@@ -130,26 +130,16 @@ impl TuiCommandSurface {
     }
 }
 
-fn render_header(
-    state: &AppState,
-    frame: &mut ratatui::Frame,
-    area: ratatui::layout::Rect,
-) {
+fn render_header(state: &AppState, frame: &mut ratatui::Frame, area: ratatui::layout::Rect) {
     use ratatui::style::{Color, Style};
     use ratatui::text::{Line, Span};
     use ratatui::widgets::Paragraph;
 
     let line = Line::from(vec![
-        Span::styled(
-            " lint-arwaky TUI ",
-            Style::default().fg(Color::Cyan),
-        ),
+        Span::styled(" lint-arwaky TUI ", Style::default().fg(Color::Cyan)),
         Span::styled("\u{2502} ", Style::default().fg(Color::DarkGray)),
         Span::styled("Path: ", Style::default().fg(Color::DarkGray)),
-        Span::styled(
-            &state.current_dir,
-            Style::default().fg(Color::White),
-        ),
+        Span::styled(&state.current_dir, Style::default().fg(Color::White)),
         Span::styled("  ", Style::default()),
         Span::styled("[q] Quit", Style::default().fg(Color::DarkGray)),
     ]);

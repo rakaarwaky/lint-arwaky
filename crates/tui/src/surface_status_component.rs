@@ -26,18 +26,12 @@ impl StatusComponent {
 
         let line = Line::from(vec![
             Span::styled(" Status: ", Style::default().fg(Color::DarkGray)),
-            Span::styled(
-                &state.status_message,
-                Style::default().fg(Color::White),
-            ),
+            Span::styled(&state.status_message, Style::default().fg(Color::White)),
             Span::styled(" \u{2502} ", Style::default().fg(Color::DarkGray)),
             Span::styled("Selected: ", Style::default().fg(Color::DarkGray)),
             Span::styled(selected_name, Style::default().fg(Color::Cyan)),
             Span::styled(" \u{2502} ", Style::default().fg(Color::DarkGray)),
-            Span::styled(
-                format!("{} viol.", state.violation_count),
-                violation_style,
-            ),
+            Span::styled(format!("{} viol.", state.violation_count), violation_style),
         ]);
 
         let paragraph = Paragraph::new(line).style(Style::default().bg(Color::Black));

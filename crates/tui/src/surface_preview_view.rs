@@ -30,7 +30,9 @@ impl PreviewView {
                 (title, state.preview_text.clone())
             }
             PreviewMode::LintResults => (" Lint Results ".to_string(), state.preview_text.clone()),
-            PreviewMode::ActionOutput => (" Action Output ".to_string(), state.preview_text.clone()),
+            PreviewMode::ActionOutput => {
+                (" Action Output ".to_string(), state.preview_text.clone())
+            }
             PreviewMode::HelpOverlay => (" Help ".to_string(), help_text()),
         };
 

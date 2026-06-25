@@ -141,17 +141,23 @@ impl ILintExecutorPort for LintExecutor {
     }
 
     fn config_show(&self) -> LintExecutionResult {
-        let output = "Active Configuration:\nUse CLI `lint-arwaky-cli config show` to display full config.".to_string();
+        let output =
+            "Active Configuration:\nUse CLI `lint-arwaky-cli config show` to display full config."
+                .to_string();
         LintExecutionResult::success(output, 0)
     }
 
     fn install_hook(&self) -> LintExecutionResult {
-        let output = "Git pre-commit hook installation.\nUse CLI `lint-arwaky-cli install-hook` to install.".to_string();
+        let output =
+            "Git pre-commit hook installation.\nUse CLI `lint-arwaky-cli install-hook` to install."
+                .to_string();
         LintExecutionResult::success(output, 0)
     }
 
     fn uninstall_hook(&self) -> LintExecutionResult {
-        let output = "Git pre-commit hook removal.\nUse CLI `lint-arwaky-cli uninstall-hook` to remove.".to_string();
+        let output =
+            "Git pre-commit hook removal.\nUse CLI `lint-arwaky-cli uninstall-hook` to remove."
+                .to_string();
         LintExecutionResult::success(output, 0)
     }
 
@@ -171,7 +177,10 @@ impl ILintExecutorPort for LintExecutor {
     }
 
     fn version(&self) -> LintExecutionResult {
-        let output = format!("Lint Arwaky v{} (AES Semantic Builder)", env!("CARGO_PKG_VERSION"));
+        let output = format!(
+            "Lint Arwaky v{} (AES Semantic Builder)",
+            env!("CARGO_PKG_VERSION")
+        );
         LintExecutionResult::success(output, 0)
     }
 }

@@ -319,24 +319,30 @@ fn starts_with_allow_attr(line: &str) -> bool {
 
 impl IBypassCheckerProtocol for BypassChecker {
     fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>) {
+        let mut in_clippy_section = false;
         for (i, line) in content.lines().enumerate() {
-            let trimmed = line.trim();
-            if trimmed.starts_with("#[allow(") || trimmed == "#![allow()]" {
+            let t = line.trim();
+            if t.starts_with("[workspace.lints.clippy]") {
+                in_clippy_section = true;
                 continue;
             }
-            if trimmed == "[lints.clippy]" || trimmed.starts_with("clippy::") {
-                let msg = format!(
-                    "Cargo.toml clippy lint configuration at line {}: {}",
-                    i + 1,
-                    trimmed
-                );
-                violations.push(LintResult::new_arch(
-                    "Cargo.toml",
-                    i + 1,
-                    "AES304",
-                    Severity::INFO,
-                    msg,
-                ));
+            if in_clippy_section {
+                if t.starts_with('[') {
+                    in_clippy_section = false;
+                    continue;
+                }
+                if let Some(eq_pos) = t.find('=') {
+                    let val = t[eq_pos + 1..].trim();
+                    if val == "\"allow\"" || val == "'allow'" {
+                        violations.push(LintResult::new_arch(
+                            "Cargo.toml",
+                            i + 1,
+                            "AES304",
+                            Severity::CRITICAL,
+                            format!("Cargo.toml clippy allow bypass: `{}`", t),
+                        ));
+                    }
+                }
             }
         }
     }
@@ -393,6 +399,10 @@ impl IBypassCheckerProtocol for BypassChecker {
                     // `!` suffix (caught below) or word-boundary match.
                     let requires_dot = matches!(p_str, "unwrap" | "expect");
                     if Self::matches_word_token(t, p_str, requires_dot) {
+                        // Safe .unwrap_or*() variants don't panic — skip.
+                        if p_str == "unwrap" && t.contains(".unwrap_or") {
+                            continue;
+                        }
                         bypass_hit = Some(classify_token(p_str));
                         break;
                     }
@@ -479,31 +489,31 @@ mod tests {
     }
 
     #[test]
-    fn detects_unwrap_or_default() {
+    fn does_not_detect_unwrap_or_default() {
         let checker = BypassChecker::new();
         let mut v = empty_violations();
         checker.check_bypass_comments("f.rs", "let x = fs::read(p).unwrap_or_default();\n", &mut v);
         assert_eq!(
             count_code(&v, "AES304"),
-            1,
-            ".unwrap_or_default must be detected"
+            0,
+            "safe .unwrap_or_default should NOT be detected"
         );
     }
 
     #[test]
-    fn detects_unwrap_or() {
+    fn does_not_detect_unwrap_or() {
         let checker = BypassChecker::new();
         let mut v = empty_violations();
         checker.check_bypass_comments("f.rs", "let x = opt.unwrap_or(0);\n", &mut v);
-        assert_eq!(count_code(&v, "AES304"), 1);
+        assert_eq!(count_code(&v, "AES304"), 0);
     }
 
     #[test]
-    fn detects_unwrap_or_else() {
+    fn does_not_detect_unwrap_or_else() {
         let checker = BypassChecker::new();
         let mut v = empty_violations();
         checker.check_bypass_comments("f.rs", "let x = opt.unwrap_or_else(|| 0);\n", &mut v);
-        assert_eq!(count_code(&v, "AES304"), 1);
+        assert_eq!(count_code(&v, "AES304"), 0);
     }
 
     #[test]
@@ -829,5 +839,48 @@ mod tests {
             &mut v,
         );
         assert_eq!(count_code(&v, "AES304"), 1);
+    }
+
+    // ─── Cargo.toml workspace clippy allow detection ──────────────────────
+
+    #[test]
+    fn detects_cargo_toml_clippy_allow() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        let cargo = r#"
+[workspace.lints.clippy]
+manual_unwrap_or_default = "allow"
+manual_unwrap_or = "allow"
+"#;
+        checker.check_cargo_toml(cargo, &mut v);
+        assert_eq!(v.len(), 2);
+    }
+
+    #[test]
+    fn skips_warn_or_deny_in_cargo_toml() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        let cargo = r#"
+[workspace.lints.clippy]
+result_large_err = "warn"
+unsafe_code = "deny"
+"#;
+        checker.check_cargo_toml(cargo, &mut v);
+        assert_eq!(v.len(), 0);
+    }
+
+    #[test]
+    fn skips_non_clippy_sections_in_cargo_toml() {
+        let checker = BypassChecker::new();
+        let mut v = empty_violations();
+        let cargo = r#"
+[workspace.dependencies]
+serde = "1.0"
+
+[profile.release]
+opt-level = 3
+"#;
+        checker.check_cargo_toml(cargo, &mut v);
+        assert_eq!(v.len(), 0);
     }
 }

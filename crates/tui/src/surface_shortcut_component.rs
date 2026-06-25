@@ -5,7 +5,11 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
-type ShortcutRows = (Vec<(&'static str, &'static str)>, Vec<(&'static str, &'static str)>, Vec<(&'static str, &'static str)>);
+type ShortcutRows = (
+    Vec<(&'static str, &'static str)>,
+    Vec<(&'static str, &'static str)>,
+    Vec<(&'static str, &'static str)>,
+);
 
 pub struct ShortcutComponent;
 

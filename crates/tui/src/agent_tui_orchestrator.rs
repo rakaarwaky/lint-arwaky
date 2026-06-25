@@ -11,10 +11,7 @@ pub struct TuiOrchestrator {
 }
 
 impl TuiOrchestrator {
-    pub fn new(
-        fs_port: Arc<dyn IFileSystemPort>,
-        lint_port: Arc<dyn ILintExecutorPort>,
-    ) -> Self {
+    pub fn new(fs_port: Arc<dyn IFileSystemPort>, lint_port: Arc<dyn ILintExecutorPort>) -> Self {
         Self {
             action_handler: ActionHandler::new(fs_port, lint_port),
         }

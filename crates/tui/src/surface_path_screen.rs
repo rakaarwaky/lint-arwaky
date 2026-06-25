@@ -61,9 +61,7 @@ impl PathScreen {
             )),
         ];
 
-        let paragraph = Paragraph::new(text)
-            .block(block)
-            .alignment(Alignment::Left);
+        let paragraph = Paragraph::new(text).block(block).alignment(Alignment::Left);
 
         frame.render_widget(paragraph, popup_area);
     }
