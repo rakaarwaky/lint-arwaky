@@ -1,9 +1,6 @@
-pub mod contract_tui_aggregate;
-
 pub mod capabilities_action_handler;
 pub mod capabilities_lint_executor;
 
-pub mod infrastructure_crossterm_event_adapter;
 pub mod infrastructure_file_system_adapter;
 
 pub mod agent_tui_orchestrator;

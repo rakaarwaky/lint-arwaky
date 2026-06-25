@@ -1,4 +1,4 @@
-use crate::contract_tui_aggregate::ITuiAggregate;
+use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use crate::surface_file_list_view::FileListView;
 use crate::surface_path_screen::PathScreen;
 use crate::surface_preview_view::PreviewView;
@@ -6,6 +6,7 @@ use crate::surface_shortcut_component::ShortcutComponent;
 use crate::surface_status_component::StatusComponent;
 use crate::surface_tree_view::TreeView;
 use crossterm::event;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
@@ -13,6 +14,7 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::Terminal;
 use shared::tui::taxonomy_state_vo::AppState;
+use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::io::stdout;
 use std::sync::Arc;
 use std::time::Duration;
@@ -117,7 +119,7 @@ impl TuiCommandSurface {
 
             if event::poll(Duration::from_millis(50))? {
                 let crossterm_event = event::read()?;
-                let tui_event = crate::infrastructure_crossterm_event_adapter::EventAdapter::from_crossterm_event(crossterm_event);
+                let tui_event = from_crossterm_event(crossterm_event);
                 self.tui_aggregate.handle_event(state, tui_event);
             }
 
@@ -126,6 +128,79 @@ impl TuiCommandSurface {
             }
         }
         Ok(())
+    }
+}
+
+fn from_crossterm_event(event: event::Event) -> TuiEvent {
+    match event {
+        event::Event::Key(key) => from_key_event(key),
+        event::Event::Mouse(mouse) => from_mouse_event(mouse),
+        event::Event::Resize(w, h) => TuiEvent::Resize(w, h),
+        _ => TuiEvent::None,
+    }
+}
+
+fn from_key_event(key: KeyEvent) -> TuiEvent {
+    let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+
+    if ctrl {
+        return match key.code {
+            KeyCode::Char('q') | KeyCode::Char('c') => TuiEvent::Quit,
+            KeyCode::Char('s') => TuiEvent::ActionSecurity,
+            KeyCode::Char('d') => TuiEvent::ActionDuplicates,
+            KeyCode::Char('p') => TuiEvent::ActionDependencies,
+            _ => TuiEvent::None,
+        };
+    }
+
+    match key.code {
+        KeyCode::Char('q') => TuiEvent::Quit,
+        KeyCode::Char('j') | KeyCode::Down => TuiEvent::MoveDown,
+        KeyCode::Char('k') | KeyCode::Up => TuiEvent::MoveUp,
+        KeyCode::Char('h') | KeyCode::Left => TuiEvent::NavigateBack,
+        KeyCode::Char('l') | KeyCode::Right | KeyCode::Enter => TuiEvent::NavigateForward,
+        KeyCode::Home => TuiEvent::MoveTop,
+        KeyCode::End => TuiEvent::MoveBottom,
+        KeyCode::Tab => TuiEvent::FocusNext,
+        KeyCode::BackTab => TuiEvent::FocusPrev,
+        KeyCode::Char('c') => TuiEvent::ActionCheck,
+        KeyCode::Char('s') => TuiEvent::ActionScan,
+        KeyCode::Char('f') => TuiEvent::ActionFix,
+        KeyCode::Char('t') => TuiEvent::ActionCi,
+        KeyCode::Char('w') => TuiEvent::ActionWatch,
+        KeyCode::Char('o') => TuiEvent::ActionOrphan,
+        KeyCode::Char('d') => TuiEvent::ActionDoctor,
+        KeyCode::Char('i') => TuiEvent::ActionInit,
+        KeyCode::Char('I') => TuiEvent::ActionInstall,
+        KeyCode::Char('m') => TuiEvent::ActionMcpConfig,
+        KeyCode::Char('C') => TuiEvent::ActionConfigShow,
+        KeyCode::Char('H') => TuiEvent::ActionInstallHook,
+        KeyCode::Char('U') => TuiEvent::ActionUninstallHook,
+        KeyCode::Char('a') => TuiEvent::ActionAdapters,
+        KeyCode::Char('v') => TuiEvent::ActionVersion,
+        KeyCode::Char('?') => TuiEvent::ToggleHelp,
+        KeyCode::Char('/') => TuiEvent::ToggleSearch,
+        KeyCode::Esc => TuiEvent::SearchCancel,
+        KeyCode::Char(ch) => {
+            if ch == '\n' {
+                TuiEvent::SearchConfirm
+            } else {
+                TuiEvent::SearchInput(ch)
+            }
+        }
+        KeyCode::Backspace => TuiEvent::SearchBackspace,
+        _ => TuiEvent::None,
+    }
+}
+
+fn from_mouse_event(mouse: MouseEvent) -> TuiEvent {
+    match mouse.kind {
+        MouseEventKind::Down(crossterm::event::MouseButton::Left) => {
+            TuiEvent::MouseClick(mouse.column, mouse.row)
+        }
+        MouseEventKind::ScrollUp => TuiEvent::MouseScrollUp,
+        MouseEventKind::ScrollDown => TuiEvent::MouseScrollDown,
+        _ => TuiEvent::None,
     }
 }
 
