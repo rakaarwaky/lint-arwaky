@@ -447,19 +447,18 @@ impl CheckCommandsSurface {
             global_all_results.extend(filtered_results.clone());
 
             if multi {
-                let mut code_counts: HashMap<String, usize> = HashMap::new();
-                for r in &filtered_results {
-                    *code_counts.entry(r.code.to_string()).or_insert(0) += 1;
-                }
                 let total = filtered_results.len();
-
                 println!("── [{ws_type}] {ws_name} — {total} violations ──");
                 if !filtered_results.is_empty() {
-                    let results_list = LintResultList::new(filtered_results);
-                    print!(
-                        "{}",
-                        code_analysis_linter.format_report(&results_list, &ws.path.value)
-                    );
+                    let mut code_counts: HashMap<String, usize> = HashMap::new();
+                    for r in &filtered_results {
+                        *code_counts.entry(r.code.to_string()).or_insert(0) += 1;
+                    }
+                    let mut sorted: Vec<_> = code_counts.into_iter().collect();
+                    sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
+                    for (code, count) in &sorted {
+                        println!("       {code}: {count}");
+                    }
                 } else {
                     println!("   (clean)");
                 }
