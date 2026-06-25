@@ -503,63 +503,144 @@ mod tests {
     use shared::common::taxonomy_path_vo::FilePath;
     use shared::common::contract_system_port::IFileSystemPort;
     use shared::common::contract_parser_port::ISourceParserPort;
-    use shared::common::taxonomy_path_vo::SuccessStatus;
-    use shared::config_system::taxonomy_config_vo::{ArchitectureRule, RuleConfig};
-    use shared::import_rules::taxonomy_constant_vo::SymbolName;
-    use shared::taxonomy_definition_vo::LayerCodeAnalysisConfig;
-    use shared::taxonomy_definition_vo::LayerNamePatternList;
+    use shared::config_system::taxonomy_config_vo::ArchitectureRule;
     use std::collections::HashMap;
     use std::sync::Arc;
 
+    use async_trait::async_trait;
+    use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+    use shared::common::taxonomy_definition_vo::LayerDefinition;
+    use shared::common::taxonomy_filesystem_error::FileSystemError;
+    use shared::common::taxonomy_layer_vo::Identity;
+    use shared::common::taxonomy_name_vo::SymbolName;
+    use shared::common::taxonomy_parser_error::SourceParserError;
+    use shared::common::taxonomy_paths_vo::FilePathList;
+    use shared::common::taxonomy_response_data_vo::ResponseData;
+    use shared::common::taxonomy_source_vo::ContentString;
+    use shared::code_analysis::taxonomy_import_source_vo::{ImportInfoList, PrimitiveViolationList};
+    use shared::common::taxonomy_naming_list_vo::PrimitiveTypeList;
+    use shared::common::taxonomy_suggestion_vo::MetadataVO;
+    use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
+
     struct MockFs;
+
+    #[async_trait]
     impl IFileSystemPort for MockFs {
-        fn file_exists(&self, _path: &FilePath) -> bool { true }
-        fn read_file(&self, _path: &FilePath) -> Result<String, String> { Ok(String::new()) }
-        fn write_file(&self, _path: &FilePath, _content: &str) -> Result<(), String> { Ok(()) }
-        fn delete_file(&self, _path: &FilePath) -> Result<(), String> { Ok(()) }
-        fn exists(&self, _path: &str) -> bool { true }
-        fn cwd(&self) -> Result<FilePath, String> { FilePath::new(".".to_string()).map_err(|e| e.to_string()) }
-        fn is_file(&self, _path: &FilePath) -> bool { false }
-        fn is_dir(&self, _path: &FilePath) -> bool { false }
-        fn create_dir_all(&self, _path: &FilePath) -> Result<(), String> { Ok(()) }
-        fn canonicalize(&self, _path: &FilePath) -> Result<FilePath, String> { Ok(_path.clone()) }
-        fn basename(&self, path: &FilePath) -> Option<String> {
-            std::path::Path::new(&path.value).file_name().map(|s| s.to_string_lossy().to_string())
+        async fn walk(&self, _path: &FilePath, _ignored_patterns: Option<&PatternList>) -> FilePathList {
+            FilePathList::new(vec![])
         }
-        fn path_join(&self, _base: &FilePath, _leaf: &str) -> FilePath {
-            FilePath::new(format!("{}/{}", _base.value, _leaf)).unwrap_or_default()
+        async fn is_directory(&self, _path: &FilePath) -> SuccessStatus {
+            SuccessStatus::new(false)
         }
-        fn to_absolute(&self, path: &FilePath) -> FilePath { path.clone() }
-        fn read_to_string(&self, _path: &str) -> Result<String, String> { Ok(String::new()) }
-        fn walk_dir(&self, _path: &FilePath) -> Result<Vec<FilePath>, String> { Ok(Vec::new()) }
-        fn glob(&self, _pattern: &str) -> Result<Vec<FilePath>, String> { Ok(Vec::new()) }
-        fn extension(&self, path: &FilePath) -> Option<String> {
-            std::path::Path::new(&path.value).extension().map(|s| s.to_string_lossy().to_string())
+        async fn is_file(&self, _path: &FilePath) -> SuccessStatus {
+            SuccessStatus::new(false)
         }
-        fn file_stem(&self, path: &FilePath) -> Option<String> {
-            std::path::Path::new(&path.value).file_stem().map(|s| s.to_string_lossy().to_string())
+        async fn get_relative_path(&self, path: &FilePath, _start: &FilePath) -> FilePath {
+            path.clone()
+        }
+        async fn read_text(&self, _path: &FilePath) -> Result<ContentString, FileSystemError> {
+            Ok(ContentString::new(""))
+        }
+        async fn get_line_count(&self, _path: &FilePath) -> Count {
+            Count::new(0)
+        }
+        async fn exists(&self, _path: &FilePath) -> SuccessStatus {
+            SuccessStatus::new(true)
+        }
+        async fn get_parent(&self, path: &FilePath) -> FilePath {
+            path.clone()
+        }
+        async fn write_text(
+            &self,
+            _path: &FilePath,
+            _content: &ContentString,
+            _mode: Option<&Identity>,
+        ) -> Result<SuccessStatus, FileSystemError> {
+            Ok(SuccessStatus::new(true))
+        }
+        async fn glob(&self, _pattern: &Identity) -> FilePathList {
+            FilePathList::new(vec![])
+        }
+        async fn get_cwd(&self) -> FilePath {
+            FilePath::new(".").unwrap_or_default()
+        }
+        async fn get_basename(&self, path: &FilePath) -> Identity {
+            Identity::new(
+                std::path::Path::new(&path.value)
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or(""),
+            )
+        }
+        async fn path_join(&self, parts: &[Identity]) -> FilePath {
+            FilePath::new(
+                parts.iter().map(|p| p.value.as_str()).collect::<Vec<_>>().join("/"),
+            )
+            .unwrap_or_default()
+        }
+        async fn read_file(&self, _path: &FilePath) -> Result<ContentString, FileSystemError> {
+            Ok(ContentString::new(""))
         }
     }
 
     struct MockParser;
+
     impl ISourceParserPort for MockParser {
-        fn extract_imports(&self, _path: &FilePath) -> Result<Vec<String>, String> { Ok(Vec::new()) }
-        fn get_raw_symbols(&self, _path: &FilePath) -> Result<Vec<String>, String> { Ok(vec!["MockSymbol".to_string()]) }
-        fn get_class_attributes(&self, _path: &FilePath, _class_name: &str) -> Vec<String> { Vec::new() }
-        fn has_all_export(&self, _path: &FilePath) -> SuccessStatus { SuccessStatus::new(false) }
-        fn find_primitive_violations(&self, _path: &FilePath, _file_content: &str) -> Vec<String> { Vec::new() }
-        fn find_unused_imports(&self, _path: &FilePath, _file_content: &str) -> Vec<String> { Vec::new() }
-        fn get_class_definitions(&self, _path: &FilePath) -> Result<Vec<String>, String> { Ok(Vec::new()) }
-        fn get_function_definitions(&self, _path: &FilePath) -> Vec<String> { Vec::new() }
-        fn is_symbol_exported(&self, _path: &FilePath, _symbol_name: &str) -> SuccessStatus { SuccessStatus::new(false) }
-        fn get_class_methods(&self, _path: &FilePath, _class_name: &str) -> Vec<String> { Vec::new() }
-        fn get_class_bases_map(&self, _path: &FilePath) -> HashMap<String, Vec<String>> { HashMap::new() }
-        fn get_assignment_targets(&self, _path: &FilePath) -> Vec<String> { Vec::new() }
-        fn get_control_flow_count(&self, _path: &FilePath) -> u32 { 0 }
-        fn is_barrel_file(&self, _path: &FilePath) -> bool { false }
-        fn get_stem(&self, _path: &FilePath) -> SymbolName { SymbolName::new("") }
-        fn is_entry_point(&self, _path: &FilePath) -> bool { false }
-        fn get_supported_extensions(&self) -> Vec<String> { vec![".rs".to_string()] }
+        fn extract_imports(&self, _path: &FilePath) -> Result<ImportInfoList, SourceParserError> {
+            Ok(ImportInfoList::new())
+        }
+        fn get_raw_symbols(&self, _path: &FilePath) -> Result<ResponseData, SourceParserError> {
+            Ok(ResponseData::new())
+        }
+        fn get_class_attributes(&self, _path: &FilePath) -> ResponseData {
+            ResponseData::new()
+        }
+        fn has_all_export(&self, _path: &FilePath) -> SuccessStatus {
+            SuccessStatus::new(false)
+        }
+        fn find_primitive_violations(
+            &self,
+            _path: &FilePath,
+            _primitive_types: &PrimitiveTypeList,
+        ) -> PrimitiveViolationList {
+            PrimitiveViolationList::new()
+        }
+        fn find_unused_imports(&self, _path: &FilePath) -> ImportInfoList {
+            ImportInfoList::new()
+        }
+        fn get_class_definitions(&self, _path: &FilePath) -> Result<MetadataVO, SourceParserError> {
+            Ok(MetadataVO::new(HashMap::new()))
+        }
+        fn get_function_definitions(&self, _path: &FilePath) -> MetadataVO {
+            MetadataVO::new(HashMap::new())
+        }
+        fn is_symbol_exported(&self, _path: &FilePath, _symbol: &SymbolName) -> SuccessStatus {
+            SuccessStatus::new(false)
+        }
+        fn get_class_methods(&self, _path: &FilePath) -> MetadataVO {
+            MetadataVO::new(HashMap::new())
+        }
+        fn get_class_bases_map(&self, _path: &FilePath) -> MetadataVO {
+            MetadataVO::new(HashMap::new())
+        }
+        fn get_assignment_targets(&self, _path: &FilePath) -> MetadataVO {
+            MetadataVO::new(HashMap::new())
+        }
+        fn get_control_flow_count(&self, _path: &FilePath) -> Count {
+            Count::new(0)
+        }
+        fn is_barrel_file(&self, _path: &FilePath) -> BooleanVO {
+            BooleanVO::new(false)
+        }
+        fn get_stem(&self, _path: &FilePath) -> SymbolName {
+            SymbolName::new("")
+        }
+        fn is_entry_point(&self, _path: &FilePath) -> BooleanVO {
+            BooleanVO::new(false)
+        }
+        fn get_supported_extensions(&self) -> PatternList {
+            PatternList::new(vec![".rs".to_string()])
+        }
     }
 
     fn make_config() -> ArchitectureConfig {
@@ -567,43 +648,25 @@ mod tests {
         layers.insert(
             LayerNameVO::new("taxonomy"),
             LayerDefinition {
-                prefixes: LayerNamePatternList::new(vec!["taxonomy_".to_string()]),
-                suffixes: LayerNamePatternList::new(vec!["_vo".to_string(), "_entity".to_string()]),
-                mandatory: LayerNamePatternList::new(vec![]),
-                forbidden: LayerNamePatternList::new(vec![]),
-                allowed: LayerNamePatternList::new(vec!["shared".to_string()]),
-                exceptions: LayerNamePatternList::new(vec![]),
-                code_analysis: LayerCodeAnalysisConfig::default(),
+                allowed: PatternList::new(vec!["shared".to_string()]),
+                ..LayerDefinition::default()
             },
         );
         layers.insert(
             LayerNameVO::new("capabilities"),
-            LayerDefinition {
-                prefixes: LayerNamePatternList::new(vec!["capabilities_".to_string()]),
-                suffixes: LayerNamePatternList::new(vec!["_checker".to_string(), "_analyzer".to_string()]),
-                mandatory: LayerNamePatternList::new(vec![]),
-                forbidden: LayerNamePatternList::new(vec![]),
-                allowed: LayerNamePatternList::new(vec![]),
-                exceptions: LayerNamePatternList::new(vec![]),
-                code_analysis: LayerCodeAnalysisConfig::default(),
-            },
+            LayerDefinition::default(),
         );
         layers.insert(
             LayerNameVO::new("surface"),
             LayerDefinition {
-                prefixes: LayerNamePatternList::new(vec!["surface_".to_string()]),
-                suffixes: LayerNamePatternList::new(vec!["_command".to_string()]),
-                mandatory: LayerNamePatternList::new(vec![]),
-                forbidden: LayerNamePatternList::new(vec!["agent".to_string(), "infrastructure".to_string()]),
-                allowed: LayerNamePatternList::new(vec![]),
-                exceptions: LayerNamePatternList::new(vec![]),
-                code_analysis: LayerCodeAnalysisConfig::default(),
+                forbidden: PatternList::new(vec!["agent".to_string(), "infrastructure".to_string()]),
+                ..LayerDefinition::default()
             },
         );
         ArchitectureConfig {
             layers,
             rules: vec![],
-            code_analysis: LayerCodeAnalysisConfig::default(),
+            ..ArchitectureConfig::default()
         }
     }
 
@@ -663,7 +726,8 @@ mod tests {
         config.layers.insert(spec_key, spec_def);
         let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
         let result = analyzer.detect_layer("src/capabilities_import_checker.rs", ".");
-        assert_eq!(result, Some("capabilities".to_string()));
+        // The file ends in "_checker" and "capabilities(checker)" is registered → specialized layer returned.
+        assert_eq!(result, Some("capabilities(checker)".to_string()));
     }
 
     #[test]
@@ -680,7 +744,7 @@ mod tests {
         let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
         let result = analyzer.get_layer_def("taxonomy");
         assert!(result.is_some());
-        assert!(result.unwrap().prefixes.values.contains(&"taxonomy_".to_string()));
+        assert!(result.unwrap().allowed.values.contains(&"shared".to_string()));
     }
 
     #[test]
@@ -705,12 +769,8 @@ mod tests {
         config.rules.push(ArchitectureRule {
             name: "global-mandatory".to_string().into(),
             scope: "".to_string().into(),
-            enabled: true.into(),
-            mandatory: LayerNamePatternList::new(vec!["shared::contract".to_string()]),
-            forbidden: LayerNamePatternList::new(vec![]),
-            allowed: LayerNamePatternList::new(vec![]),
-            exceptions: LayerNamePatternList::new(vec![]),
-            code_analysis: RuleConfig::default(),
+            mandatory: PatternList::new(vec!["shared::contract".to_string()]),
+            ..ArchitectureRule::default()
         });
         let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
         let taxonomy_def = analyzer.get_layer_def("taxonomy").unwrap();
