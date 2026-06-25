@@ -37,7 +37,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
 
 pub fn is_contract_orphan(
     f: &FilePath,
-    _root_dir: &FilePath,
+    root_dir: &FilePath,
     _file_definitions: &FileDefinitionMap,
     _inheritance_map: &InheritanceMap,
     all_files: &[String],
@@ -67,7 +67,15 @@ pub fn is_contract_orphan(
         None => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
     };
 
-    let search_files = all_files;
+    // Build search_files: combine scan-directory files with all workspace .rs files
+    let mut search_files: Vec<&str> = all_files.iter().map(|s| s.as_str()).collect();
+    let root_path = std::path::Path::new(root_dir.value());
+    for ws_dir in &["crates", "packages", "modules"] {
+        let ws_path = root_path.join(ws_dir);
+        if ws_path.exists() {
+            collect_rs_files(&ws_path, &mut search_files);
+        }
+    }
 
     // Check 1: contract not implemented by expected layer
     let target_prefix = match suffix.as_str() {

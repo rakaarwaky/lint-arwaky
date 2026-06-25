@@ -207,7 +207,8 @@ impl OrphanGraphResolver {
                                 let mut resolved = false;
                                 for i in (1..segments.len()).rev() {
                                     let composite = segments[..i].join("/");
-                                    if let Some(file_path) = module_to_file.get(composite.as_str()) {
+                                    if let Some(file_path) = module_to_file.get(composite.as_str())
+                                    {
                                         if file_path != f {
                                             import_graph
                                                 .entry(f.clone())
@@ -271,7 +272,8 @@ impl OrphanGraphResolver {
                                 let mut found = false;
                                 for i in (1..segments.len()).rev() {
                                     let composite = segments[..i].join("/");
-                                    if let Some(file_path) = module_to_file.get(composite.as_str()) {
+                                    if let Some(file_path) = module_to_file.get(composite.as_str())
+                                    {
                                         if file_path != f {
                                             import_graph
                                                 .entry(f.clone())
