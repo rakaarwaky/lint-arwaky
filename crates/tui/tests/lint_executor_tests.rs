@@ -1,6 +1,6 @@
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
-use tui_lint_arwaky::contract_lint_executor_protocol::ILintExecutorProtocol;
-use tui_lint_arwaky::taxonomy_action_flags_vo::ActionFlags;
+use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
+use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;

@@ -1,15 +1,15 @@
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;
-use shared_lint_arwaky::common::taxonomy_byte_count_vo::ByteCount;
-use shared_lint_arwaky::common::taxonomy_display_content_vo::DisplayContent;
-use shared_lint_arwaky::common::taxonomy_path_vo::FilePath;
-use shared_lint_arwaky::tui::contract_file_system_port::IFileSystemPort;
-use shared_lint_arwaky::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
-use shared_lint_arwaky::tui::taxonomy_action_flags_vo::ActionFlags;
-use shared_lint_arwaky::tui::taxonomy_file_entry_vo::{AesLayer, FileEntry};
-use shared_lint_arwaky::tui::taxonomy_lint_result_vo::LintExecutionResult;
-use shared_lint_arwaky::tui::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
-use shared_lint_arwaky::tui::taxonomy_tui_event::TuiEvent;
-use shared_lint_arwaky::common::taxonomy_line_count_vo::LineCount;
+use shared::common::taxonomy_byte_count_vo::ByteCount;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::tui::contract_file_system_port::IFileSystemPort;
+use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
+use shared::tui::taxonomy_action_flags_vo::ActionFlags;
+use shared::tui::taxonomy_file_entry_vo::{AesLayer, FileEntry};
+use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
+use shared::tui::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
+use shared::tui::taxonomy_tui_event::TuiEvent;
+use shared::common::taxonomy_line_count_vo::LineCount;
 use std::sync::Arc;
 
 struct MockFs;

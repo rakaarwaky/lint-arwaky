@@ -1,15 +1,16 @@
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
-use shared_lint_arwaky::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared_lint_arwaky::cli_commands::taxonomy_severity_vo::Severity;
-use shared_lint_arwaky::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared_lint_arwaky::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared_lint_arwaky::common::taxonomy_common_vo::LineNumber;
-use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;
-use shared_lint_arwaky::common::taxonomy_lint_vo::ScopeRef;
-use shared_lint_arwaky::common::taxonomy_message_vo::LintMessage;
-use shared_lint_arwaky::common::taxonomy_path_vo::FilePath;
-use shared_lint_arwaky::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared_lint_arwaky::tui::taxonomy_action_flags_vo::ActionFlags;
+use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use shared::common::taxonomy_common_vo::LineNumber;
+use shared::common::taxonomy_error_vo::ErrorCode;
+use shared::common::taxonomy_lint_vo::ScopeRef;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
+use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use std::sync::Arc;
 
 struct MockCodeAnalysis {

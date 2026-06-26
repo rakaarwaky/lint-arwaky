@@ -1,16 +1,18 @@
 use project_setup_lint_arwaky::agent_setup_orchestrator::SetupManagementOrchestrator;
-use shared::cli_commands::taxonomy_protocol_vo::{TransportProtocol, TransportUrlVO};
+use async_trait::async_trait;
+use shared::cli_commands::taxonomy_protocol_vo::TransportProtocol;
+use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::mcp_server::taxonomy_job_vo::EnvContentVO;
+use shared::mcp_server::taxonomy_job_vo::McpConfigVO;
+use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use shared::project_setup::taxonomy_setup_contract_vo::{McpBinaryNameVO, ProjectLanguageVO};
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 use std::sync::Arc;
 
 struct MockProtocol;
 
-#[async_trait::async_trait]
+#[async_trait]
 impl ISetupManagementProtocol for MockProtocol {
     fn generate_env(&self, _home: &DirectoryPath) -> EnvContentVO {
         EnvContentVO::new("MOCK=true\n")
@@ -32,8 +34,12 @@ impl ISetupManagementProtocol for MockProtocol {
     fn mcp_config_vscode(&self) -> McpConfigVO {
         self.generate_mcp_config()
     }
-    fn which_mcp_binary(&self) -> McpBinaryNameVO {
-        McpBinaryNameVO::new("mock-mcp".to_string())
+    fn which_mcp_binary(
+        &self,
+    ) -> shared::project_setup::taxonomy_setup_contract_vo::McpBinaryNameVO {
+        shared::project_setup::taxonomy_setup_contract_vo::McpBinaryNameVO::new(
+            "mock-mcp".to_string(),
+        )
     }
     async fn install_python_adapters(&self) -> SuccessStatus {
         SuccessStatus::new(true)
@@ -41,14 +47,20 @@ impl ISetupManagementProtocol for MockProtocol {
     async fn install_javascript_adapters(&self, _sudo: bool) -> SuccessStatus {
         SuccessStatus::new(true)
     }
-    fn detect_language(&self) -> ProjectLanguageVO {
-        ProjectLanguageVO::new("rust")
+    fn detect_language(
+        &self,
+    ) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO {
+        shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO::new("rust")
     }
     fn get_config_template(&self, _language: &str) -> &'static str {
         "mock template"
     }
-    fn write_config_file(&self, _filename: &str, _content: &str) -> shared::project_setup::WriteConfigResult {
-        Ok(DescriptionVO::new("ok"))
+    fn write_config_file(
+        &self,
+        _filename: &str,
+        _content: &str,
+    ) -> shared::project_setup::WriteConfigResult {
+        Ok(shared::taxonomy_suggestion_vo::DescriptionVO::new("ok"))
     }
     fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
         Ok(std::path::PathBuf::from("/tmp/mock"))
