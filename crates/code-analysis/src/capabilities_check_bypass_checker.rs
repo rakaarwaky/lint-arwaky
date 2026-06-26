@@ -464,14 +464,6 @@ fn classify_token(token: &str) -> ViolationKind {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn empty_violations() -> Vec<LintResult> {
-        Vec::new()
-    }
-
     fn count_code(violations: &[LintResult], code: &str) -> usize {
         violations.iter().filter(|v| v.code.code() == code).count()
     }
