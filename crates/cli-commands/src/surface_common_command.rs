@@ -1,4 +1,11 @@
 // PURPOSE: Shared utilities for CLI command surfaces
+//
+// Provides:
+//   - create_runtime / create_current_thread_runtime: tokio runtime factories
+//   - resolve_file_path / canonicalize_path / current_dir: path resolution helpers
+//   - run_ci_analysis: CI pipeline that runs code analysis, computes score, compares
+//     against threshold, and returns pass/fail exit code. Detects CRITICAL violations
+//     as auto-fail regardless of score.
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::process::ExitCode;

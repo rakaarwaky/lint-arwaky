@@ -1,3 +1,8 @@
+// PURPOSE: PathScreen — TUI surface component for the path input dialog (overlay)
+//
+// Renders a centered popup overlay when show_path_dialog is true.
+// User can type a path, confirm, or use current directory.
+// Uses centered_rect() helper to calculate popup dimensions.
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};

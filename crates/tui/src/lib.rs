@@ -1,3 +1,4 @@
+// PURPOSE: Module declarations for the TUI crate (ratatui-based terminal UI)
 pub mod capabilities_action_handler;
 pub mod capabilities_lint_executor;
 

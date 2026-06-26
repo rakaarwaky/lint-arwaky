@@ -1,3 +1,7 @@
+// PURPOSE: CliLanguageDetector — ILanguageDetectorPort implementation for CLI commands
+//
+// Thin wrapper around the shared LanguageDetector to adapt it for CLI use.
+// Delegates detect() and is_lintable() to the inner LanguageDetector.
 use shared::common::contract_language_detector_port::ILanguageDetectorPort;
 use shared::common::contract_language_detector_port::Language;
 use shared::common::taxonomy_language_detector_helper::LanguageDetector;

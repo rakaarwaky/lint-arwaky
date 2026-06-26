@@ -1,3 +1,10 @@
+// PURPOSE: FileListView — TUI surface component for the file listing panel (middle panel)
+//
+// Renders the list of files and directories in the current directory, with:
+//   - AES layer badge coloring (taxonomy=cyan, contract=blue, capabilities=magenta, etc.)
+//   - Directory names in blue bold
+//   - Selected item highlighted with dark gray background
+//   - Focus indicator on the panel border (cyan when focused, gray when not)
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};

@@ -1,3 +1,12 @@
+// PURPOSE: PreviewView — TUI surface component for the preview panel (right panel)
+//
+// Renders four content modes depending on PreviewMode:
+//   - FileContent: inline file preview (up to 100 lines)
+//   - LintResults: output from check/scan/fix/ci/orphan actions
+//   - ActionOutput: output from doctor/init/install/version/adapters actions
+//   - HelpOverlay: keyboard shortcut reference
+//
+// Help content is embedded as a static string in help_text().
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};

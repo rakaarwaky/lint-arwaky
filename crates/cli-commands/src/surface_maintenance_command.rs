@@ -1,4 +1,9 @@
 // PURPOSE: MaintenanceCommandsSurface — CLI surface for maintenance (doctor, security, dependencies)
+//
+// Three independent subcommands, all delegated to MaintenanceCommandsAggregate:
+//   - doctor:     toolchain diagnostics (cargo, python3, node, git, etc.)
+//   - security:   vulnerability scan via cargo-audit (Rust) or bandit (Python)
+//   - deps:       dependency report from Cargo.lock / pyproject.toml / requirements.txt
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;

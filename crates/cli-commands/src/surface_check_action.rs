@@ -1,4 +1,11 @@
 // PURPOSE: Check/scan/CI entry points — thin wrappers around CheckCommandsSurface
+//
+// Three commands, distinguished by scope:
+//   - check:  self-lint the lint-arwaky project itself (uses CheckCommandsSurface.scan)
+//   - scan:   full analysis on external project + external adapters (uses scan_with_discovery)
+//   - ci:     CI-mode with threshold comparison and critical-violation auto-fail
+//
+// find_workspace_root walks up from the given path looking for Cargo.toml/crates/packages/modules.
 use std::sync::Arc;
 
 use std::process::ExitCode;

@@ -167,7 +167,7 @@ impl CheckCommandsSurface {
         orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
         layer_detector: &Arc<dyn ILayerDetectionAggregate>,
     ) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
-        let scan_root = crate::surface_check_main::find_workspace_root(path);
+        let scan_root = crate::surface_check_action::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
         let source_files = match scanner_provider.scan_directory(&dir_path) {
@@ -299,7 +299,7 @@ impl CheckCommandsSurface {
         }
 
         // Collect ALL source files from workspace root for cross-workspace orphan detection
-        let scan_root = match crate::surface_check_main::find_workspace_root(path) {
+        let scan_root = match crate::surface_check_action::find_workspace_root(path) {
             Some(r) => r,
             None => std::path::PathBuf::from(path),
         };

@@ -1,5 +1,12 @@
 // PURPOSE: CheckContext — shared orchestrator context for check/scan commands
-// Provides a unified factory that wires all analysis subsystems together.
+//
+// DI container that wires all analysis subsystems together:
+//   - Creates ImportContainer, NamingContainer, RoleContainer, CodeAnalysisContainer
+//   - Wires ExternalLintContainer, OrphanContainer, LayerDetectionAnalyzer
+//   - Creates FileCollectorProvider (scanner), CliLanguageDetector
+//
+// This is the main wiring point for the CLI — all 9 analysis components are
+// assembled here and handed to CheckCommandsSurface for execution.
 use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;

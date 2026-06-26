@@ -1,4 +1,9 @@
 // PURPOSE: WatchCommandsSurface — CLI surface for file watching with auto-lint on changes
+//
+// Creates a WatchConfig from the given path, sets up Ctrl+C signal handling,
+// and delegates to IWatchAggregate.run() which blocks until interrupted.
+//
+// The atomic `running` flag coordinates graceful shutdown on Ctrl+C.
 use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;

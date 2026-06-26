@@ -1,3 +1,11 @@
+// PURPOSE: TuiContainer — DI container for the TUI crate (root layer)
+//
+// Assembles the full TUI dependency graph:
+//   FileSystemAdapter → ActionHandler → TuiOrchestrator → TuiCommandSurface
+//   CodeAnalysisContainer → LintExecutor → ActionHandler
+//
+// The TUI follows the same 7-layer architecture as the CLI, with the main
+// event loop in TuiCommandSurface driving ratatui rendering + crossterm input.
 use crate::agent_tui_orchestrator::TuiOrchestrator;
 use crate::capabilities_action_handler::ActionHandler;
 use crate::capabilities_lint_executor::LintExecutor;

@@ -1,4 +1,12 @@
 // PURPOSE: FixCommandsSurface — CLI surface for auto-fix operations
+//
+// Runs lint → apply auto-fixes → re-lint to measure improvement.
+// Supports dry-run mode (preview only) via the fix_orchestrator_factory closure.
+//
+// The factory pattern allows the DI container to control whether fixes are
+// actually applied (real mode) or just simulated (dry-run).
+//
+// Fixable violations: AES101 (naming), AES203 (unused imports), AES304 (bypass)
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;

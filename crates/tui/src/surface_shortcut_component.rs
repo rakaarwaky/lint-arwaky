@@ -1,3 +1,12 @@
+// PURPOSE: ShortcutComponent — TUI surface component for the keyboard shortcut bar (bottom area)
+//
+// Renders 3 rows of keyboard shortcuts with key:label pairs.
+// Has two modes:
+//   - default_rows: shows navigation/action shortcuts during normal browsing
+//   - context_sensitive_rows: shows context-appropriate shortcuts when viewing
+//     lint results or action output
+//
+// format_shortcuts() renders each row as colored spans (yellow keys, white labels).
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};

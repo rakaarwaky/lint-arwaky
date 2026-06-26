@@ -7,7 +7,7 @@ pub use shared::cli_commands::taxonomy_metadata_vo::CommandMetadataVO;
 pub mod infrastructure_check_context;
 pub mod surface_check_command;
 pub use surface_check_command::CheckCommandsSurface;
-pub mod surface_check_main;
+pub mod surface_check_action;
 pub mod surface_common_command;
 pub mod surface_fix_command;
 pub use surface_fix_command::FixCommandsSurface;

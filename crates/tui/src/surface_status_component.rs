@@ -1,3 +1,7 @@
+// PURPOSE: StatusComponent — TUI surface component for the status bar (bottom line)
+//
+// Displays current status message, selected file name, and violation count.
+// Violation count is colored red when > 0, green when 0.
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};

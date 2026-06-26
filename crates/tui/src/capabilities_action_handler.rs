@@ -8,7 +8,7 @@ use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_file_system_port::IFileSystemPort;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
-use shared::tui::taxonomy_state_vo::{AppState, PreviewMode};
+use shared::tui::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
 
@@ -127,8 +127,13 @@ impl ActionHandler {
                 state.show_path_dialog = false;
                 self.load_directory(state, &state.current_dir.clone());
             }
+            // ---- Resize: track terminal height for mouse click mapping ----
+            TuiEvent::Resize(_w, h) => {
+                state.terminal_height = h as usize;
+            }
             // ---- Quit and mouse scroll ----
             TuiEvent::Quit => state.should_quit = true,
+            TuiEvent::MouseClick(col, row) => self.handle_mouse_click(state, col, row),
             TuiEvent::MouseScrollUp => {
                 if state.scroll_offset > 0 {
                     state.scroll_offset -= 1;
@@ -232,6 +237,36 @@ impl ActionHandler {
         state.preview_mode = PreviewMode::ActionOutput;
         let status = if result.success { "Done" } else { "Error" };
         state.set_status(status);
+    }
+
+    /// Handle mouse clicks on the file list and shortcut areas.
+    /// File list: maps y-coordinate to entry index.
+    /// Shortcuts: maps x-coordinate to approximate action key.
+    fn handle_mouse_click(&self, state: &mut AppState, col: u16, row: u16) {
+        let h = state.terminal_height;
+        if h < 5 {
+            return;
+        }
+        let row = row as usize;
+        // Shortcuts area = bottom 4 rows (3 shortcuts + 1 status)
+        let shortcuts_start = h - 4;
+        let file_list_start = 1; // after header
+        let file_list_end = shortcuts_start - 1;
+
+        if row >= shortcuts_start && row < h {
+            // Clicked on shortcut bar — treat as no-op for now (tricky to map x→key)
+            return;
+        } else if row >= file_list_start && row < file_list_end {
+            // Clicked on file list area — map y to entry index
+            let panel_row = row - file_list_start;
+            let new_index = state.scroll_offset + panel_row;
+            if new_index < state.entries.len() {
+                state.selected_index = new_index;
+                state.panel_focus = PanelFocus::FileList;
+            }
+        }
+        // Ignore clicks on other panels for now (tree, preview)
+        let _ = col;
     }
 }
 

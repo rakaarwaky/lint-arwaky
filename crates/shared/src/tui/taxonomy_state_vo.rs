@@ -36,6 +36,7 @@ pub struct AppState {
     pub should_quit: bool,
     pub violation_count: usize,
     pub tree_scroll: usize,
+    pub terminal_height: usize,
 }
 
 impl AppState {
@@ -60,6 +61,7 @@ impl AppState {
             should_quit: false,
             violation_count: 0,
             tree_scroll: 0,
+            terminal_height: 0,
         }
     }
 

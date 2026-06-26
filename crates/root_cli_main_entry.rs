@@ -13,7 +13,7 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use cli_commands::surface_check_command;
-use cli_commands::surface_check_main;
+use cli_commands::surface_check_action;
 use cli_commands::infrastructure_check_context;
 use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
@@ -178,7 +178,7 @@ fn main() -> ExitCode {
     match cli.command {
         // CHECK: Full lint pipeline on a single project directory.
         // Supports --git-diff (only scan changed files) and --code (filter by code).
-        Commands::Check { path, git_diff } => surface_check_main::handle_check(
+        Commands::Check { path, git_diff } => surface_check_action::handle_check(
             path,
             git_diff,
             infrastructure_check_context::CheckContext {
@@ -203,7 +203,7 @@ fn main() -> ExitCode {
         // SCAN: Multi-project lint — discovers workspace members (Cargo.toml,
         // pyproject.toml, package.json) and runs all linters on each one.
         // Uses OrchestratorFactory to create per-project DI containers.
-        Commands::Scan { path } => surface_check_main::handle_scan(
+        Commands::Scan { path } => surface_check_action::handle_scan(
             path,
             infrastructure_check_context::CheckContext {
                 code_analysis_linter: arch_linter,
@@ -235,7 +235,7 @@ fn main() -> ExitCode {
         // CI: Lint + score calculation + exit code. Used for quality gates.
         // Exits with 1 if score < threshold.
         Commands::Ci { path, threshold } => {
-            surface_check_main::handle_ci(arch_linter.clone(), path, threshold)
+            surface_check_action::handle_ci(arch_linter.clone(), path, threshold)
         }
         // DOCTOR: Environment diagnostics — checks Rust, Python, Node.js tooling.
         Commands::Doctor => {

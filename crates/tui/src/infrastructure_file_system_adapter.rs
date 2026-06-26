@@ -1,3 +1,11 @@
+// PURPOSE: FileSystemAdapter — IFileSystemPort implementation for TUI filesystem operations
+//
+// Provides directory listing, file preview (line-numbered, with max-line truncation),
+// path validation, parent resolution, human-readable file sizes, and path splitting.
+//
+// Key behavior:
+//   - list_directory: skips hidden files (starting with '.')
+//   - read_file_preview: shows up to max_lines with line numbers, truncated with "more lines" note
 use shared::common::taxonomy_byte_count_vo::ByteCount;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_line_count_vo::LineCount;

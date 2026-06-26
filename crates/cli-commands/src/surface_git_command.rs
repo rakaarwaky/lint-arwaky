@@ -1,4 +1,9 @@
-// PURPOSE: GitCommandsSurface — CLI surface for git integration
+// PURPOSE: GitCommandsSurface — CLI surface for git-diff integration
+//
+// Runs AES analysis only on files changed since the specified git base (e.g. HEAD).
+// Filters changed files through the language detector to skip non-lintable files.
+//
+// Use-case: pre-commit hooks and CI workflows that want per-file diff analysis.
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;

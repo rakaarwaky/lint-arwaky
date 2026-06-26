@@ -1,3 +1,10 @@
+// PURPOSE: TreeView — TUI surface component for the directory tree panel (left panel)
+//
+// Renders the path from project_root to current_dir as a browsable tree.
+// The root is shortened to its basename. Each directory component is indented
+// by depth, with the current (leaf) component highlighted in cyan.
+//
+// Uses simple string-based rendering (no ratatui Tree widget) for compatibility.
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};

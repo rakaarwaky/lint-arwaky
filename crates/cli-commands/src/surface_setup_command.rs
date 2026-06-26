@@ -1,4 +1,11 @@
 // PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, install, mcp-config)
+//
+// Three subcommands:
+//   - init:        writes lint_arwaky.config.<lang>.yaml (local) or global XDG configs
+//   - install:     pip install Python adapters (ruff, mypy, bandit) + npm install JS adapters (eslint, prettier, typescript)
+//   - mcp-config:  prints MCP client config JSON for Claude/Cursor/Windsurf/Copilot
+//
+// Binary resolution for mcp-config: checks sibling of current exe first, falls back to PATH.
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
