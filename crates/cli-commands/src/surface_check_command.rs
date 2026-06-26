@@ -277,10 +277,11 @@ impl CheckCommandsSurface {
     ///   4. Filter results to that member's path
     ///   5. Aggregate into global results
     ///
+    /// If `member` is specified, only that workspace member is scanned.
     /// Cross-workspace orphan detection is important: contracts defined in
     /// `shared/` may be implemented in `import-rules/`, so the orphan graph
     /// must span all workspace members.
-    pub fn scan_with_discovery(&self, path: &str, filter: Option<&str>) {
+    pub fn scan_with_discovery(&self, path: &str, filter: Option<&str>, member: Option<&str>) {
         let path_obj = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
             Err(_) => {
@@ -309,6 +310,40 @@ impl CheckCommandsSurface {
             self.scan(path, filter, default_config);
             return;
         }
+
+        // Filter to specific member if requested
+        let workspaces = if let Some(member_name) = member {
+            let filtered: Vec<_> = workspaces
+                .into_iter()
+                .filter(|ws| {
+                    let ws_file = std::path::Path::new(&ws.path.value)
+                        .file_name()
+                        .map(|n| n.to_string_lossy())
+                        .unwrap_or_default();
+                    ws_file.contains(member_name)
+                        || ws.path.value.contains(member_name)
+                })
+                .collect();
+            if filtered.is_empty() {
+                eprintln!("[error] no workspace member matching '{member_name}'");
+                eprintln!();
+                eprintln!("Available members:");
+                let orig = rt.block_on(orchestrator.discover_workspaces(&path_obj));
+                for ws in &orig {
+                    let name = std::path::Path::new(&ws.path.value)
+                        .file_name()
+                        .map(|n| n.to_string_lossy())
+                        .unwrap_or_default();
+                    eprintln!("  - {} ({})", name, ws.workspace_type);
+                }
+                eprintln!();
+                eprintln!("Usage: lint-arwaky scan {path} --member <name>");
+                return;
+            }
+            filtered
+        } else {
+            workspaces
+        };
 
         // Collect ALL source files from workspace root for cross-workspace orphan detection
         let scan_root = match crate::surface_check_action::find_workspace_root(path) {
@@ -465,6 +500,28 @@ impl CheckCommandsSurface {
             sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
             for (code, count) in &sorted {
                 println!("  {code}: {count}");
+            }
+
+            // Print usage instructions for per-member scanning
+            if member.is_none() {
+                println!();
+                println!("============================================================");
+                println!("  Scan Individual Members");
+                println!("============================================================");
+                println!("  To scan a specific workspace member:");
+                println!("    lint-arwaky scan {path} --member <name>");
+                println!();
+                println!("  Available members:");
+                for ws in &workspaces {
+                    let name = std::path::Path::new(&ws.path.value)
+                        .file_name()
+                        .map(|n| n.to_string_lossy())
+                        .unwrap_or_default();
+                    println!("    - {} ({})", name, ws.workspace_type);
+                }
+                println!();
+                println!("  Filter by AES rule code:");
+                println!("    lint-arwaky scan {path} --filter AES204");
             }
         }
     }

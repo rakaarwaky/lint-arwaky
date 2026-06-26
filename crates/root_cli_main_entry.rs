@@ -202,7 +202,7 @@ fn main() -> ExitCode {
         // SCAN: Multi-project lint — discovers workspace members (Cargo.toml,
         // pyproject.toml, package.json) and runs all linters on each one.
         // Uses OrchestratorFactory to create per-project DI containers.
-        Commands::Scan { path } => surface_check_action::handle_scan(
+        Commands::Scan { path, member } => surface_check_action::handle_scan(
             path,
             surface_check_command::CheckContext {
                 code_analysis_linter: arch_linter,
@@ -222,6 +222,7 @@ fn main() -> ExitCode {
             Some(multi_project_orchestrator.clone()),
             factory,
             filter,
+            member,
         ),
         // FIX: Applies safe automatic fixes (removing unused/forbidden imports).
         // --dry-run previews changes without modifying files.

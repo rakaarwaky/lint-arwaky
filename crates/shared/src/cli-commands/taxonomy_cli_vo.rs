@@ -37,10 +37,14 @@ pub enum Commands {
         git_diff: bool,
     },
 
-    /// Alias for check (CI-friendly)
+    /// Alias for check (CI-friendly). Discovers workspace members and runs all linters.
+    /// Use `--member <name>` to scan a specific workspace member.
     Scan {
         /// Path to scan
         path: Option<String>,
+        /// Scan only a specific workspace member by name (e.g. "shared", "import-rules")
+        #[arg(long)]
+        member: Option<String>,
     },
 
     /// Apply safe automatic fixes

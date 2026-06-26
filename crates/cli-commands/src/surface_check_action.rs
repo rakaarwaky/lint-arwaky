@@ -67,13 +67,14 @@ pub fn handle_scan(
     multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
     factory: OrchestratorFactory,
     filter: Option<String>,
+    member: Option<String>,
 ) -> ExitCode {
     let root = match path {
         Some(p) => p,
         None => ".".to_string(),
     };
     let surface = CheckCommandsSurface::new_with_factory(ctx, multi_project_orchestrator, factory);
-    surface.scan_with_discovery(&root, filter.as_deref());
+    surface.scan_with_discovery(&root, filter.as_deref(), member.as_deref());
     ExitCode::SUCCESS
 }
 

@@ -2,12 +2,7 @@
 //
 // The MCP orchestrator is the AI-agent entry point. It mirrors the CLI
 // scan pipeline (surface_check_command::scan()) but accepts JSON parameters
-// and returns JSON responses. Key difference from CLI: the MCP orchestrator
-// receives structured arguments (action + path + options) instead of CLI flags.
-//
-// NOTE: This duplicates some logic from surface_check_command.rs. The scan
-// pipeline should ideally be extracted to a shared location, but the CLI
-// and MCP pipelines evolved independently.
+// and returns JSON responses.
 //
 // All async operations run inside tokio::task::spawn_blocking because the
 // lint pipeline is synchronous (file I/O, regex matching) while the MCP
@@ -38,7 +33,7 @@ pub struct McpServerDependencies {
 }
 
 pub struct McpServerOrchestrator {
-    deps: McpServerDependencies,
+    pub(crate) deps: McpServerDependencies,
 }
 
 impl McpServerOrchestrator {
@@ -47,13 +42,7 @@ impl McpServerOrchestrator {
     }
 }
 
-use shared::common::taxonomy_workspace_helper::find_workspace_root;
-// IMcpServerAggregate impl lives in capabilities_mcp_server_impl.rs
-mod capabilities_mcp_server_impl;
-
-}
-
-fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
+pub(crate) fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
     let mut dir = std::path::Path::new(path).to_path_buf();
     if !dir.is_absolute() {
         dir = std::env::current_dir().ok()?.join(&dir);
@@ -77,12 +66,9 @@ mod tests {
     use super::*;
     use crate::contract_mcp_server_aggregate::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
     use rmcp::handler::server::wrapper::Parameters;
-    use std::sync::Arc;
+    use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+    use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 
-    // ── Mock dependencies ──────────────────────────────────────────────────
-    // These implementations panic if called. The test paths below
-    // (version, doctor, unknown action, list_commands, read_skill) do NOT
-    // touch self.deps, so the mocks are never exercised.
     struct MockDeps;
 
     impl ICodeAnalysisAggregate for MockDeps {
@@ -136,8 +122,6 @@ mod tests {
         fn name(&self) -> &str { unreachable!() }
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────
-
     fn make_orchestrator() -> McpServerOrchestrator {
         let deps = McpServerDependencies {
             code_analysis_linter: Arc::new(MockDeps),
@@ -171,11 +155,8 @@ mod tests {
         })
     }
 
-    // ── find_workspace_root ────────────────────────────────────────────────
-
     #[test]
     fn find_workspace_root_finds_cargo_toml() {
-        // The project root has Cargo.toml — walk up from crates/mcp-server/
         let root = find_workspace_root("crates/mcp-server/src/lib.rs");
         assert!(root.is_some(), "should find workspace root from subpath");
         let path = root.unwrap();
@@ -185,8 +166,6 @@ mod tests {
     #[test]
     fn find_workspace_root_returns_none_for_empty() {
         let root = find_workspace_root("");
-        // current_dir() + "" might still resolve inside the workspace
-        // So just verify it doesn't crash and returns Some or None
         assert!(root.is_none() || root.is_some());
     }
 
@@ -204,10 +183,8 @@ mod tests {
         let _ = std::fs::remove_dir_all(&tmp);
         std::fs::create_dir_all(&tmp.join("sub/a/b")).unwrap();
         let root = find_workspace_root(tmp.join("sub/a/b").to_str().unwrap());
-        // without crates/ marker, should walk up but not find anything
         assert!(root.is_none(), "no marker dirs → should be None");
 
-        // Now add crates/ dir at tmp level
         std::fs::create_dir_all(&tmp.join("crates")).unwrap();
         let root2 = find_workspace_root(tmp.join("sub/a/b").to_str().unwrap());
         assert_eq!(root2.as_deref(), Some(tmp.as_path()), "should find crates/ dir");
@@ -239,22 +216,18 @@ mod tests {
     fn find_workspace_root_absolute_path_does_not_call_current_dir() {
         let tmp = std::env::temp_dir().join("test_find_root_abs");
         let _ = std::fs::remove_dir_all(&tmp);
-        // No markers at all — should return None for an absolute path
         std::fs::create_dir_all(&tmp).unwrap();
         let root = find_workspace_root(tmp.to_str().unwrap());
         assert!(root.is_none(), "absolute path without markers → None");
         let _ = std::fs::remove_dir_all(&tmp);
     }
 
-    // ── list_commands ─────────────────────────────────────────────────────
-
     #[tokio::test]
     async fn list_commands_returns_all_without_domain() {
         let orch = make_orchestrator();
         let params = make_list_params(None);
         let output = orch.list_commands(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         let total = parsed["total"].as_u64().unwrap();
         let commands = parsed["commands"].as_array().unwrap();
         assert_eq!(total as usize, commands.len());
@@ -266,8 +239,7 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_list_params(Some("check"));
         let output = orch.list_commands(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         let commands = parsed["commands"].as_array().unwrap();
         assert!(!commands.is_empty(), "\"check\" matches at least 'check' and 'scan'");
         for cmd in commands {
@@ -281,8 +253,7 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_list_params(Some("zzz_nonexistent_999"));
         let output = orch.list_commands(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert_eq!(parsed["total"].as_u64().unwrap(), 0);
         let commands = parsed["commands"].as_array().unwrap();
         assert!(commands.is_empty());
@@ -293,22 +264,14 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_list_params(Some(""));
         let output = orch.list_commands(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         let total = parsed["total"].as_u64().unwrap();
         assert!(total > 0, "empty domain should return all commands");
     }
 
-    // ── read_skill ─────────────────────────────────────────────────────────
-    // read_skill searches candidates including {CARGO_MANIFEST_DIR}/SKILL.md.
-    // We create a temporary file there and serialize tests with a mutex.
-
     static SKILL_LOCK: std::sync::OnceLock<std::sync::Mutex<()>> =
         std::sync::OnceLock::new();
 
-    /// RAII guard that creates a temp SKILL.md at the crate's manifest dir and
-    /// removes it on drop (even on panic). Acquires a module-level mutex to
-    /// prevent races between parallel tests.
     struct TempSkill {
         path: std::path::PathBuf,
         _guard: std::sync::MutexGuard<'static, ()>,
@@ -337,8 +300,7 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_read_params(None);
         let output = orch.read_skill(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         let content = parsed["content"].as_str().unwrap();
         assert!(content.contains("Test Skill"), "full content should contain title");
     }
@@ -351,8 +313,7 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_read_params(Some("my-section"));
         let output = orch.read_skill(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert_eq!(parsed["section"].as_str(), Some("my-section"));
         let section_content = parsed["content"].as_str().unwrap();
         assert!(section_content.contains("my-section"));
@@ -365,8 +326,7 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_read_params(Some("NonexistentSectionXYZ"));
         let output = orch.read_skill(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert!(
             parsed["error"].as_str().map_or(false, |s| s.contains("not found")),
             "should report section not found"
@@ -379,53 +339,42 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_read_params(Some(""));
         let output = orch.read_skill(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert!(
             parsed["content"].as_str().map_or(false, |s| s.contains("Title")),
             "empty section should fall back to full content"
         );
     }
 
-    // ── execute_command: version ───────────────────────────────────────────
-
     #[tokio::test]
     async fn execute_version_returns_pkg_version() {
         let orch = make_orchestrator();
         let params = make_exec_params("version", None);
         let output = orch.execute_command(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert_eq!(parsed["name"].as_str(), Some("lint-arwaky"));
         assert!(parsed["version"].as_str().map_or(false, |v| !v.is_empty()));
     }
-
-    // ── execute_command: unknown action ────────────────────────────────────
 
     #[tokio::test]
     async fn execute_unknown_action_returns_error() {
         let orch = make_orchestrator();
         let params = make_exec_params("__does_not_exist__", None);
         let output = orch.execute_command(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert!(parsed["error"].as_str().map_or(false, |s| s.contains("Unknown action")));
     }
-
-    // ── execute_command: doctor ────────────────────────────────────────────
 
     #[tokio::test]
     async fn execute_doctor_runs_which_checks() {
         let orch = make_orchestrator();
         let params = make_exec_params("doctor", None);
         let output = orch.execute_command(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert_eq!(parsed["status"].as_str(), Some("success"));
         assert_eq!(parsed["action"].as_str(), Some("doctor"));
         let checks = parsed["checks"].as_array().unwrap();
         assert!(!checks.is_empty(), "should have tool checks");
-        // cargo should be present in any Rust development environment
         let cargo_check = checks
             .iter()
             .find(|c| c["tool"].as_str() == Some("cargo"))
@@ -433,15 +382,12 @@ mod tests {
         assert_eq!(cargo_check["status"].as_str(), Some("ok"));
     }
 
-    // ── execute_command: common action paths (no deps needed) ──────────────
-
     #[tokio::test]
     async fn execute_init_returns_success() {
         let orch = make_orchestrator();
         let params = make_exec_params("init", None);
         let output = orch.execute_command(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert_eq!(parsed["status"].as_str(), Some("success"));
     }
 
@@ -450,8 +396,7 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_exec_params("install-hook", None);
         let output = orch.execute_command(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert_eq!(parsed["status"].as_str(), Some("success"));
     }
 
@@ -460,8 +405,7 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_exec_params("uninstall-hook", None);
         let output = orch.execute_command(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert_eq!(parsed["status"].as_str(), Some("success"));
     }
 
@@ -470,8 +414,7 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_exec_params("install", None);
         let output = orch.execute_command(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert_eq!(parsed["status"].as_str(), Some("success"));
     }
 
@@ -480,8 +423,7 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_exec_params("config-show", None);
         let output = orch.execute_command(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert_eq!(parsed["status"].as_str(), Some("success"));
     }
 
@@ -490,8 +432,7 @@ mod tests {
         let orch = make_orchestrator();
         let params = make_exec_params("orphan", Some("/some/path"));
         let output = orch.execute_command(params).await;
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("valid JSON");
+        let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
         assert_eq!(parsed["status"].as_str(), Some("success"));
         assert_eq!(parsed["action"].as_str(), Some("orphan"));
         assert_eq!(parsed["path"].as_str(), Some("/some/path"));
