@@ -389,7 +389,7 @@ dependencies = [
  "role_rules-lint-arwaky",
  "serde",
  "serde_json",
- "serde_yaml",
+ "serde_yml",
  "shared-lint-arwaky",
  "tokio",
  "tracing",
@@ -482,7 +482,7 @@ dependencies = [
  "dirs",
  "serde",
  "serde_json",
- "serde_yaml",
+ "serde_yml",
  "shared-lint-arwaky",
  "toml 1.1.2+spec-1.1.0",
 ]
@@ -2454,6 +2454,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "libyml"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3302702afa434ffa30847a83305f0a69d6abd74293b6554c18ec85c7ef30c980"
+dependencies = [
+ "anyhow",
+ "version_check",
+]
+
+[[package]]
 name = "lint_arwaky-arwaky"
 version = "1.10.53"
 dependencies = [
@@ -2488,7 +2498,7 @@ dependencies = [
  "rustsec",
  "serde",
  "serde_json",
- "serde_yaml",
+ "serde_yml",
  "shared-lint-arwaky",
  "thiserror 1.0.69",
  "tokio",
@@ -2942,9 +2952,9 @@ dependencies = [
 
 [[package]]
 name = "quinn-proto"
-version = "0.11.14"
+version = "0.11.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "434b42fec591c96ef50e21e886936e66d3cc3f737104fdb9b737c40ffb94c098"
+checksum = "4fcb935c5bec503c2f0e306bdd3e58bb9029dcb14fa8d9ac76e3a5256ac0763e"
 dependencies = [
  "aws-lc-rs",
  "bytes",
@@ -3557,16 +3567,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_yaml"
-version = "0.9.34+deprecated"
+name = "serde_yml"
+version = "0.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a8b1a1a2ebf674015cc02edccce75287f1a0130d394307b36743c2f5d504b47"
+checksum = "59e2dd588bf1597a252c3b920e0143eb99b0f76e4e082f4c92ce34fbc9e71ddd"
 dependencies = [
  "indexmap",
  "itoa",
+ "libyml",
+ "memchr",
  "ryu",
  "serde",
- "unsafe-libyaml",
+ "version_check",
 ]
 
 [[package]]
@@ -3611,7 +3623,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "serde_yaml",
+ "serde_yml",
  "thiserror 1.0.69",
  "tokio",
 ]
@@ -4292,12 +4304,6 @@ name = "unicode-xid"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
-
-[[package]]
-name = "unsafe-libyaml"
-version = "0.2.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "673aac59facbab8a9007c7f6108d11f63b603f7cabff99fabf650fea5c32b861"
 
 [[package]]
 name = "untrusted"

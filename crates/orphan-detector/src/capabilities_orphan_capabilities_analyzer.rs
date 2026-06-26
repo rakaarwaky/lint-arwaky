@@ -6,6 +6,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
 use shared::orphan_detector::taxonomy_orphan_utility::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use crate::taxonomy_orphan_filename_helper::{file_basename, file_suffix};
 
 pub struct CapabilitiesOrphanAnalyzer {}
 
@@ -179,7 +180,7 @@ pub fn is_infra_cap_orphan_raw(
     is_reachable: bool,
 ) -> OrphanIndicatorResult {
     let fp = f.value();
-    let basename = fp.split('/').next_back().unwrap_or_default();
+    let basename = file_basename(fp);
     let stem = basename.replace(".rs", "").replace(".py", "");
 
     let content = std::fs::read_to_string(fp).unwrap_or_default();
@@ -203,13 +204,8 @@ pub fn is_infra_cap_orphan_raw(
 
     let mut is_wired = false;
     for cf in all_files {
-        let cb = cf.split('/').next_back().unwrap_or_default();
-        let csuffix = cb
-            .rsplit('_')
-            .next()
-            .unwrap_or_default()
-            .replace(".rs", "")
-            .replace(".py", "");
+        let cb = file_basename(cf);
+        let csuffix = file_suffix(cb);
         if csuffix != "container" {
             continue;
         }
@@ -258,13 +254,8 @@ pub fn check_capabilities_orphan(
 
     let mut wired = false;
     for cf in files {
-        let cb = cf.split('/').next_back().unwrap_or_default();
-        let csuffix = cb
-            .rsplit('_')
-            .next()
-            .unwrap_or_default()
-            .replace(".rs", "")
-            .replace(".py", "");
+        let cb = file_basename(cf);
+        let csuffix = file_suffix(cb);
         if csuffix != "container" {
             continue;
         }

@@ -7,6 +7,7 @@ use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use crate::taxonomy_orphan_filename_helper::{file_basename, file_suffix};
 
 pub struct ContractOrphanAnalyzer {}
 
@@ -43,15 +44,7 @@ pub fn is_contract_orphan(
     all_files: &[String],
 ) -> OrphanIndicatorResult {
     let fp = f.value();
-    let basename = fp.split('/').next_back().unwrap_or_default();
-    let suffix = basename
-        .rsplit('_')
-        .next()
-        .unwrap_or_default()
-        .replace(".rs", "")
-        .replace(".py", "")
-        .replace(".ts", "")
-        .replace(".js", "");
+    let suffix = file_suffix(fp);
 
     let content = match std::fs::read_to_string(fp) {
         Ok(c) => c,
@@ -84,10 +77,7 @@ pub fn is_contract_orphan(
 
     let mut has_impl = false;
     for cf in &search_files {
-        let cb = match cf.split('/').next_back() {
-            Some(b) => b,
-            None => continue,
-        };
+        let cb = file_basename(cf);
         if !cb.starts_with(target_prefix) {
             continue;
         }
@@ -131,10 +121,7 @@ pub fn is_contract_orphan(
     if suffix == "port" || suffix == "protocol" {
         let mut called_by_orchestrator_or_container = false;
         for cf in &search_files {
-            let cb = match cf.split('/').next_back() {
-                Some(b) => b,
-                None => continue,
-            };
+            let cb = file_basename(cf);
             // Check orchestrator files
             let is_orchestrator = cb.starts_with("agent_")
                 && (cb.ends_with("_orchestrator.rs")
@@ -179,10 +166,7 @@ pub fn is_contract_orphan(
     if suffix == "aggregate" {
         let mut called_by_surface_or_container = false;
         for cf in &search_files {
-            let cb = match cf.split('/').next_back() {
-                Some(b) => b,
-                None => continue,
-            };
+            let cb = file_basename(cf);
             // Check surface files
             let is_surface = cb.starts_with("surface_");
             // Check container files (DI wiring)

@@ -33,7 +33,7 @@ impl SuffixPrefixChecker {
     }
 
     fn make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
-        let file_path = Result::unwrap_or_default(FilePath::new(file.to_string()));
+        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         LintResult {
             file: file_path,
             line: LineNumber::new(1),
@@ -129,7 +129,7 @@ impl SuffixPrefixChecker {
         if let Some(ref suf) = suffix {
             if def.naming.forbidden_suffix.values.contains(suf) {
                 let layer_display =
-                    Option::unwrap_or(_layer_name.as_deref(), "unknown").to_string();
+                    _layer_name.as_deref().unwrap_or("unknown").to_string();
                 violations.push(Self::make_result(
                     file,
                     "AES102",
@@ -159,8 +159,8 @@ impl SuffixPrefixChecker {
             if !valid {
                 let allowed_list = def.naming.allowed_suffix.values.clone();
                 let layer_display =
-                    Option::unwrap_or(_layer_name.as_deref(), "unknown").to_string();
-                let suffix_display = Option::unwrap_or(suffix.as_deref(), "(none)");
+                    _layer_name.as_deref().unwrap_or("unknown").to_string();
+                let suffix_display = suffix.as_deref().unwrap_or("(none)");
                 violations.push(Self::make_result(
                     file,
                     "AES102",
@@ -209,7 +209,7 @@ impl INamingCheckerProtocol for SuffixPrefixChecker {
         for f in &files.values {
             let f_str = f.to_string();
             // Step 2: Extract the raw filename from the path.
-            let filename = Option::unwrap_or(f.rsplit('/').next(), &f_str);
+            let filename = f.rsplit('/').next().unwrap_or(&f_str);
             // Step 3: Determine the architectural layer for the file.
             let layer = analyzer
                 .detect_layer(f, root_dir)

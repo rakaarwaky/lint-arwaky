@@ -92,7 +92,19 @@ impl ILinterAdapterPort for RuffAdapter {
         {
             Ok(response) => {
                 let stdout = &response.stdout;
-                let findings: Vec<Value> = serde_json::from_str(stdout).unwrap_or_default();
+                let findings: Vec<Value> = match serde_json::from_str(stdout) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        return Err(LinterOperationError::Adapter(AdapterError::new(
+                            self.name(),
+                            ErrorMessage::new(format!(
+                                "Failed to parse ruff JSON output: {}. Output was: {:?}",
+                                e,
+                                stdout.chars().take(200).collect::<String>()
+                            )),
+                        )));
+                    }
+                };
                 let mut results = Vec::new();
 
                 for f in findings {

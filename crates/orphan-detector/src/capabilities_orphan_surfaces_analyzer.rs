@@ -10,6 +10,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::ISurfacesOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
+use crate::taxonomy_orphan_filename_helper::file_basename;
 
 pub struct SurfacesOrphanAnalyzer {}
 
@@ -193,7 +194,7 @@ fn check_dir_imports(dir: &std::path::Path, stem: &str) -> Result<bool, std::io:
 
 pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicatorResult {
     let fp = f.value();
-    let basename = fp.split('/').next_back().unwrap_or_default();
+    let basename = file_basename(fp);
     let suffix = get_surface_suffix(basename);
     let category = surface_category(&suffix);
     let stem = basename
@@ -207,7 +208,7 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
         "smart" => {
             let mut imported_by_entry_or_router = false;
             for cf in all_files {
-                let cb = cf.split('/').next_back().unwrap_or_default();
+                let cb = file_basename(cf);
                 let cf_suffix = get_surface_suffix(cb);
                 // Entry point or router
                 if cb.starts_with("cli_")
@@ -244,7 +245,7 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
         "utility" => {
             let mut imported_by_smart = false;
             for cf in all_files {
-                let cb = cf.split('/').next_back().unwrap_or_default();
+                let cb = file_basename(cf);
                 let cf_suffix = get_surface_suffix(cb);
                 if surface_category(&cf_suffix) == "smart" {
                     if let Ok(c) = std::fs::read_to_string(cf) {
@@ -276,7 +277,7 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
         "passive" => {
             let mut imported = false;
             for cf in all_files {
-                let cb = cf.split('/').next_back().unwrap_or_default();
+                let cb = file_basename(cf);
                 let cf_suffix = get_surface_suffix(cb);
                 let cat = surface_category(&cf_suffix);
                 if cat == "smart" || cat == "utility" {

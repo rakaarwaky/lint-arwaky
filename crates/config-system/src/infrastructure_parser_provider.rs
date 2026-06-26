@@ -35,7 +35,7 @@ impl IConfigParserPort for ConfigParserProvider {
                 });
             }
         };
-        let raw: serde_yaml::Value = match serde_yaml::from_str(&content) {
+        let raw: serde_yml::Value = match serde_yml::from_str(&content) {
             Ok(v) => v,
             Err(e) => {
                 return Err(ConfigError {

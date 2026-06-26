@@ -105,18 +105,3 @@ pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]
     }
 }
 
-pub fn count_loc(path: &str) -> usize {
-    let src = Path::new(path);
-    let ignored = default_ignored_paths();
-    let mut count = 0usize;
-    walk_rs_files(
-        src,
-        &mut |p| {
-            if let Ok(c) = fs::read_to_string(&p) {
-                count += c.lines().count();
-            }
-        },
-        &ignored,
-    );
-    count.max(1)
-}
