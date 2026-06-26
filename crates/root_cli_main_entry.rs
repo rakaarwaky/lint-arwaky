@@ -14,7 +14,6 @@ use std::sync::Arc;
 
 use cli_commands::surface_check_command;
 use cli_commands::surface_check_action;
-use cli_commands::infrastructure_check_context;
 use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
@@ -125,7 +124,7 @@ fn main() -> ExitCode {
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
 
-        infrastructure_check_context::CheckContext {
+        surface_check_command::CheckContext {
             code_analysis_linter: arch_linter,
             import_orchestrator: import_container.orchestrator(),
             naming_orchestrator: naming_container.orchestrator(),
@@ -181,7 +180,7 @@ fn main() -> ExitCode {
         Commands::Check { path, git_diff } => surface_check_action::handle_check(
             path,
             git_diff,
-            infrastructure_check_context::CheckContext {
+            surface_check_command::CheckContext {
                 code_analysis_linter: arch_linter.clone(),
                 import_orchestrator: import_orchestrator.clone(),
                 naming_orchestrator: naming_orchestrator.clone(),
@@ -205,7 +204,7 @@ fn main() -> ExitCode {
         // Uses OrchestratorFactory to create per-project DI containers.
         Commands::Scan { path } => surface_check_action::handle_scan(
             path,
-            infrastructure_check_context::CheckContext {
+            surface_check_command::CheckContext {
                 code_analysis_linter: arch_linter,
                 import_orchestrator,
                 naming_orchestrator: naming_orchestrator.clone(),
@@ -284,7 +283,7 @@ fn main() -> ExitCode {
         // ORPHAN: Checks if a single file is unreachable/dead code (AES501-506).
         Commands::Orphan { path } => {
             let surface = surface_check_command::CheckCommandsSurface::new(
-                infrastructure_check_context::CheckContext {
+                surface_check_command::CheckContext {
                     code_analysis_linter: arch_linter.clone(),
                     import_orchestrator: import_orchestrator.clone(),
                     naming_orchestrator: naming_orchestrator.clone(),

@@ -4,7 +4,6 @@ pub use shared::cli_commands::taxonomy_cli_vo::{get_cli, Cli, Commands};
 pub use shared::cli_commands::taxonomy_command_catalog_vo::{command_catalog, CommandCatalogVO};
 pub use shared::cli_commands::taxonomy_metadata_vo::CommandMetadataVO;
 
-pub mod infrastructure_check_context;
 pub mod surface_check_command;
 pub use surface_check_command::CheckCommandsSurface;
 pub mod surface_check_action;

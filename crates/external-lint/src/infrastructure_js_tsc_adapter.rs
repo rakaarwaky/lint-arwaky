@@ -32,7 +32,7 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::infrastructure_js_common::{resolve_js_cmd, resolve_working_dir};
+use shared::external_lint::taxonomy_external_lint_helper::{resolve_js_cmd, resolve_js_working_dir as resolve_working_dir};
 
 pub struct TSCAdapter {
     executor: Arc<dyn ICommandExecutorPort>,

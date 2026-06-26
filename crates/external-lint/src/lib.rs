@@ -4,7 +4,6 @@ pub use shared::common::taxonomy_adapter_error::{AdapterError, ScanError, Valida
 pub mod agent_external_lint_orchestrator;
 pub mod infrastructure_stdio_client;
 pub use infrastructure_stdio_client::StdioClient;
-pub mod infrastructure_js_common;
 pub mod infrastructure_js_eslint_adapter;
 pub use infrastructure_js_eslint_adapter::ESLintAdapter;
 pub mod infrastructure_js_prettier_adapter;
@@ -12,7 +11,6 @@ pub use infrastructure_js_prettier_adapter::PrettierAdapter;
 pub mod infrastructure_js_tsc_adapter;
 pub use infrastructure_js_tsc_adapter::TSCAdapter;
 pub mod infrastructure_py_bandit_adapter;
-pub mod infrastructure_rs_common;
 pub use infrastructure_py_bandit_adapter::BanditAdapter;
 pub mod infrastructure_py_mypy_adapter;
 pub use infrastructure_py_mypy_adapter::MyPyAdapter;

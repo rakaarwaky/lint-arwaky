@@ -26,7 +26,19 @@ use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggrega
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
-use crate::infrastructure_check_context::CheckContext;
+/// CheckContext — DI container struct holding all analysis subsystems.
+/// Defined in the surfaces layer because surfaces are the primary consumers.
+pub struct CheckContext {
+    pub code_analysis_linter: Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
+    pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+    pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+    pub external_lint: Arc<dyn IExternalLintAggregate>,
+    pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    pub scanner_provider: Arc<dyn shared::common::contract_scanner_provider_port::IScannerProviderPort>,
+    pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
+    pub language_detector: Arc<dyn shared::common::contract_language_detector_port::ILanguageDetectorPort>,
+}
 
 pub type OrchestratorFactory = Arc<
     dyn Fn(shared::config_system::taxonomy_config_vo::ArchitectureConfig) -> CheckContext

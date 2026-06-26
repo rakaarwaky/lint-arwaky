@@ -41,7 +41,7 @@ pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
 pub fn handle_check(
     path: Option<String>,
     git_diff: bool,
-    ctx: crate::infrastructure_check_context::CheckContext,
+    ctx: crate::surface_check_command::CheckContext,
     filter: Option<String>,
     git_aggregate: Option<Arc<dyn GitHooksAggregate>>,
     config: ArchitectureConfig,
@@ -78,7 +78,7 @@ pub fn handle_check(
 /// scan = AES analysis on external project + external adapters
 pub fn handle_scan(
     path: Option<String>,
-    ctx: crate::infrastructure_check_context::CheckContext,
+    ctx: crate::surface_check_command::CheckContext,
     multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
     factory: OrchestratorFactory,
     filter: Option<String>,

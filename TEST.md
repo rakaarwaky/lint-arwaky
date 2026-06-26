@@ -40,14 +40,14 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 
 ## 3. Kriteria LULUS / GAGAL
 
-| Kriteria                      | LULUS                   | GAGAL         |
-| ----------------------------- | ----------------------- | ------------- |
-| Total discovered workspace members | 23 workspace members | < 23          |
-| Total violations (scan)       | >= 2000 violations      | < 2000 atau 0 |
-| Unique AES codes (Rust)       | >= 24 unique AES codes  | < 24          |
-| Unique AES codes (Python)     | >= 24 unique AES codes  | < 24          |
-| Unique AES codes (JS/TS)      | >= 24 unique AES codes  | < 24          |
-| Total unique AES codes (all)  | >= 24 unique AES codes  | < 24          |
+| Kriteria                           | LULUS                  | GAGAL         |
+| ---------------------------------- | ---------------------- | ------------- |
+| Total discovered workspace members | 23 workspace members   | < 23          |
+| Total violations (scan)            | >= 2000 violations     | < 2000 atau 0 |
+| Unique AES codes (Rust)            | >= 24 unique AES codes | < 24          |
+| Unique AES codes (Python)          | >= 24 unique AES codes | < 24          |
+| Unique AES codes (JS/TS)           | >= 24 unique AES codes | < 24          |
+| Total unique AES codes (all)       | >= 24 unique AES codes | < 24          |
 
 ## 4. Violations yang Diharapkan
 
@@ -84,21 +84,7 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 | MyPy   | Type annotation violations  |
 | Bandit | Security violations         |
 
-| AES Code | Type                |
-| -------- | ------------------- |
-| AES102   | Suffix convention   |
-| AES201   | Forbidden import    |
-| AES202   | Mandatory import    |
-| AES203   | Unused import       |
-| AES204   | Dummy import        |
-| AES303   | Bypass suppression  |
-| AES304   | Missing def         |
-| AES405   | Role violation      |
-| AES501   | Orphan taxonomy     |
-| AES503   | Orphan capabilities |
-| AES506   | Orphan surface      |
 
-### 4.3 JavaScript (Multi-Adapter — requires eslint, prettier, tsc installed)
 
 | Tool     | Expected Issues          |
 | -------- | ------------------------ |
@@ -106,31 +92,19 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 | Prettier | Formatting violations    |
 | TSC      | Type checking violations |
 
-| AES Code | Type                |
-| -------- | ------------------- |
-| AES102   | Suffix convention   |
-| AES201   | Forbidden import    |
-| AES202   | Mandatory import    |
-| AES203   | Unused import       |
-| AES204   | Dummy import        |
-| AES303   | Bypass suppression  |
-| AES405   | Role violation      |
-
-## 5. Baseline
-
 ```bash
 cargo run --bin lint-arwaky-cli -- scan test-workspaces/
 ```
 
 **Baseline v1.10.29** (22 Juni 2026):
 
-| Project                   | Command                     | Total Violations | Unique AES Codes | Status  |
-| ------------------------- | --------------------------- | ---------------- | ---------------- | ------- |
-| Self-lint (lint-arwaky)   | `check .`                   | 0                | 0                | ✅ PASS |
-| Rust (crates)             | `scan test-workspaces/crates` | 262             | 19               | ❌      |
-| Python (modules)          | `scan test-workspaces/modules` | 454            | 11               | ❌      |
-| JS/TS (packages)          | `scan test-workspaces/packages` | 1357           | 7                | ❌      |
-| **Combined**              | `scan test-workspaces/`     | 2073             | 81               | ❌      |
+| Project                 | Command                           | Total Violations | Unique AES Codes | Status  |
+| ----------------------- | --------------------------------- | ---------------- | ---------------- | ------- |
+| Self-lint (lint-arwaky) | `check .`                       | 0                | 0                | ✅ PASS |
+| Rust (crates)           | `scan test-workspaces/crates`   | 262              | 19               | ❌      |
+| Python (modules)        | `scan test-workspaces/modules`  | 454              | 11               | ❌      |
+| JS/TS (packages)        | `scan test-workspaces/packages` | 1357             | 7                | ❌      |
+| **Combined**      | `scan test-workspaces/`         | 2073             | 81               | ❌      |
 
 **Target: 24 unique AES codes per language.**
 
@@ -147,32 +121,32 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/
 
 ### All 24 AES Codes Target
 
-| Code | Group | Rust | Python | JS/TS |
-|------|-------|------|--------|-------|
-| AES101 | Naming — layer prefix | ❌ | ❌ | ❌ |
-| AES102 | Naming — suffix convention | ✅ | ✅ | ✅ |
-| AES201 | Import — forbidden layer | ✅ | ✅ | ✅ |
-| AES202 | Import — mandatory import | ✅ | ✅ | ✅ |
-| AES203 | Import — unused import | ✅ | ✅ | ✅ |
-| AES204 | Import — dummy/todo import | ✅ | ✅ | ✅ |
-| AES205 | Import — barrel re-export | ✅ | ❌ | ❌ |
-| AES301 | Quality — file max lines | ❌ | ❌ | ❌ |
-| AES302 | Quality — fn max lines | ❌ | ❌ | ❌ |
-| AES303 | Quality — bypass suppression | ✅ | ✅ | ✅ |
-| AES304 | Quality — mandatory def | ✅ | ✅ | ❌ |
-| AES305 | Quality — todo in non-test | ❌ | ❌ | ❌ |
-| AES401 | Role — layer-role suffix | ✅ | ❌ | ❌ |
-| AES402 | Role — bypass aggregate | ✅ | ❌ | ❌ |
-| AES403 | Role — capability bypasses agent | ✅ | ❌ | ❌ |
-| AES404 | Role — surface calls capability | ✅ | ❌ | ❌ |
-| AES405 | Role — infra no aggregate | ✅ | ✅ | ✅ |
-| AES406 | Role — duplicate container | ✅ | ❌ | ❌ |
-| AES501 | Orphan — unreachable file | ✅ | ✅ | ❌ |
-| AES502 | Orphan — unused contract | ✅ | ❌ | ❌ |
-| AES503 | Orphan — unused capability | ✅ | ✅ | ❌ |
-| AES504 | Orphan — dead dependency | ✅ | ❌ | ❌ |
-| AES505 | Orphan — circular dependency | ❌ | ❌ | ❌ |
-| AES506 | Orphan — barrel all-unused | ✅ | ✅ | ❌ |
+| Code   | Group                             | Rust | Python | JS/TS |
+| ------ | --------------------------------- | ---- | ------ | ----- |
+| AES101 | Naming — layer prefix            | ❌   | ❌     | ❌    |
+| AES102 | Naming — suffix convention       | ✅   | ✅     | ✅    |
+| AES201 | Import — forbidden layer         | ✅   | ✅     | ✅    |
+| AES202 | Import — mandatory import        | ✅   | ✅     | ✅    |
+| AES203 | Import — unused import           | ✅   | ✅     | ✅    |
+| AES204 | Import — dummy/todo import       | ✅   | ✅     | ✅    |
+| AES205 | Import — barrel re-export        | ✅   | ❌     | ❌    |
+| AES301 | Quality — file max lines         | ❌   | ❌     | ❌    |
+| AES302 | Quality — fn max lines           | ❌   | ❌     | ❌    |
+| AES303 | Quality — bypass suppression     | ✅   | ✅     | ✅    |
+| AES304 | Quality — mandatory def          | ✅   | ✅     | ❌    |
+| AES305 | Quality — todo in non-test       | ❌   | ❌     | ❌    |
+| AES401 | Role — layer-role suffix         | ✅   | ❌     | ❌    |
+| AES402 | Role — bypass aggregate          | ✅   | ❌     | ❌    |
+| AES403 | Role — capability bypasses agent | ✅   | ❌     | ❌    |
+| AES404 | Role — surface calls capability  | ✅   | ❌     | ❌    |
+| AES405 | Role — infra no aggregate        | ✅   | ✅     | ✅    |
+| AES406 | Role — duplicate container       | ✅   | ❌     | ❌    |
+| AES501 | Orphan — unreachable file        | ✅   | ✅     | ❌    |
+| AES502 | Orphan — unused contract         | ✅   | ❌     | ❌    |
+| AES503 | Orphan — unused capability       | ✅   | ✅     | ❌    |
+| AES504 | Orphan — dead dependency         | ✅   | ❌     | ❌    |
+| AES505 | Orphan — circular dependency     | ❌   | ❌     | ❌    |
+| AES506 | Orphan — barrel all-unused       | ✅   | ✅     | ❌    |
 
 ---
 
@@ -202,6 +176,7 @@ Ensure that layer boundaries are maintained and no dead code (_orphan code_) rem
 
 - [ ] **Circular Dependency Detection:**
   Verify random samples of files in each layer using the `cycles` tool:
+
   ```bash
   graph-it serve cycles crates/source-parsing/src/contract_parser_port.rs
   graph-it serve cycles crates/naming-rules/src/contract_naming_runner_aggregate.rs
@@ -210,6 +185,7 @@ Ensure that layer boundaries are maintained and no dead code (_orphan code_) rem
   _Criteria:_ Output shows **0 dependency cycles**.
 - [ ] **Layer Boundary Protection:**
   Ensure UI/Surfaces components do not import technical infrastructure or capabilities directly (must go through `ServiceContainerAggregate`):
+
   ```bash
   graph-it serve path-in crates/external-lint/src/infrastructure_js_naming.rs
   ```
@@ -217,6 +193,7 @@ Ensure that layer boundaries are maintained and no dead code (_orphan code_) rem
   _Criteria:_ Infrastructure files are only imported by `root/` (di-container) files.
 - [ ] **Orphan Code (Dead Code) Verification:**
   Ensure that no active logic files are isolated or unreferenced:
+
   ```bash
   graph-it serve path-in crates/orphan-detector/src/capabilities_orphan_capabilities_analyzer.rs
   ```
@@ -240,14 +217,17 @@ The multi-adapter scanner must be proven to successfully detect at least 18 uniq
 #### D. System & MCP Protocol Verification
 
 - [ ] Run workspace unit tests:
+
   ```bash
   cargo test --workspace
   ```
 - [ ] Run binary health diagnostics:
+
   ```bash
   lint-arwaky-cli maintenance doctor
   ```
 - [ ] Run JSON-RPC MCP protocol smoke-test:
+
   ```bash
   echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | lint-arwaky-mcp
   ```
