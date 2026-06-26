@@ -663,8 +663,11 @@ let path = FilePath::new(raw_path)?;  // Normalizes separators, validates
 
 | Topic | Document |
 |-------|----------|
+| Navigation hub (start here) | [DOCS.md](DOCS.md) |
+| End-to-end data flow | [DATA_FLOW.md](DATA_FLOW.md) |
+| Complete crate reference | [CRATE_INDEX.md](CRATE_INDEX.md) |
 | AES 7-layer architecture | [ARCHITECTURE.md](../ARCHITECTURE.md) |
-| 24 AES rules catalog | [docs/rules/RULES_AES.md](rules/RULES_AES.md) |
+| 24 AES rules catalog | [rules/RULES_AES.md](rules/RULES_AES.md) |
 | Product requirements | [PRD.md](../PRD.md) |
 | AI agent skill | [SKILL.md](../SKILL.md) |
 | Contributing guide | [CONTRIBUTING.md](../CONTRIBUTING.md) |

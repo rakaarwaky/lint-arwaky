@@ -4,6 +4,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use cli_commands::surface_check_command;
+use cli_commands::surface_check_main;
+use cli_commands::infrastructure_check_context;
 use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;

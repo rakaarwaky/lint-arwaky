@@ -375,3 +375,15 @@ filter (source file?)
 | `ci` | `FilePath` | Lint → score → reports | Exit code + files |
 | `watch` | `FilePath` | inotify → debounce → lint | Live terminal output |
 | MCP | JSON-RPC | Parse → dispatch → lint | JSON response |
+
+---
+
+## Further Reading
+
+| Topic | Document |
+|-------|----------|
+| Navigation hub (start here) | [DOCS.md](DOCS.md) |
+| Developer guide (patterns, how-to) | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) |
+| Complete crate reference | [CRATE_INDEX.md](CRATE_INDEX.md) |
+| AES 7-layer architecture | [ARCHITECTURE.md](../ARCHITECTURE.md) |
+| 24 AES rules catalog | [rules/RULES_AES.md](rules/RULES_AES.md) |

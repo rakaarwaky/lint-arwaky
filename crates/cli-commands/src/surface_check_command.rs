@@ -1,8 +1,5 @@
 // PURPOSE: CheckCommandsSurface — CLI surface for check/scan commands
-use std::collections::HashMap;
 use std::sync::Arc;
-
-use std::process::ExitCode;
 
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -11,7 +8,6 @@ use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
@@ -187,5 +183,207 @@ impl CheckCommandsSurface {
         };
         let results_list = LintResultList::new(filtered_results);
         println!("{}", reporter.format_report(&results_list, path));
+    }
+
+    /// Check if a single file is an orphan.
+    /// Still needs to scan all files to build import graph for reachability analysis.
+    pub fn check_orphan_single_file(&self, file_path: &str) {
+        let path_obj = std::path::Path::new(file_path);
+
+        // Collect all source files from workspace root for cross-folder graph building
+        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
+        let source_files = match self.scanner_provider.scan_directory(&dir_path) {
+            Ok(list) => list.values,
+            Err(_) => Vec::new(),
+        };
+        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+
+        // Normalize the target file path
+        let target_path = if path_obj.is_absolute() {
+            file_path.to_string()
+        } else {
+            let cwd = crate::surface_common_command::current_dir();
+            cwd.join(file_path).to_string_lossy().to_string()
+        };
+
+        // Run orphan detection
+        let all_results =
+            self.orphan_orchestrator
+                .check_orphans(self.layer_detector.as_ref(), &file_strs, ".");
+
+        // Filter results for the specific file
+        let file_results: Vec<_> = all_results
+            .into_iter()
+            .filter(|r| r.file.value == target_path || r.file.value == file_path)
+            .collect();
+
+        if file_results.is_empty() {
+            println!(
+                "  {} is NOT an orphan (reachable from entry point)",
+                file_path
+            );
+        } else {
+            println!("  {} is an ORPHAN:", file_path);
+            for r in &file_results {
+                println!("    [{}] {}", r.code, r.message);
+            }
+        }
+    }
+
+    /// Scan with multi-workspace discovery.
+    /// If >1 workspaces found, show summary per workspace with violations grouped by code.
+    pub fn scan_with_discovery(&self, path: &str, filter: Option<&str>) {
+        let path_obj = match FilePath::new(path.to_string()) {
+            Ok(fp) => fp,
+            Err(_) => {
+                eprintln!("[error] invalid path: {path}");
+                return;
+            }
+        };
+
+        let orchestrator = match self.multi_project_orchestrator.as_ref() {
+            Some(o) => o.clone(),
+            None => {
+                eprintln!("[error] multi-project orchestrator not available");
+                return;
+            }
+        };
+
+        let rt = match crate::surface_common_command::create_runtime() {
+            Ok(r) => r,
+            Err(_) => return,
+        };
+        let workspaces = rt.block_on(orchestrator.discover_workspaces(&path_obj));
+
+        if workspaces.is_empty() {
+            // No workspaces discovered — treat path as a standalone scan
+            let default_config = ArchitectureConfig::default();
+            self.scan(path, filter, default_config);
+            return;
+        }
+
+        // Collect ALL source files from workspace root for cross-workspace orphan detection
+        let scan_root = match crate::surface_check_main::find_workspace_root(path) {
+            Some(r) => r,
+            None => std::path::PathBuf::from(path),
+        };
+        let all_source_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
+            .iter()
+            .map(|f| f.value.clone())
+            .collect();
+
+        let multi = workspaces.len() > 1;
+        if multi {
+            println!(
+                "Lint Arwaky v{} (Multi-Workspace Mode)",
+                env!("CARGO_PKG_VERSION")
+            );
+            println!("Found {} workspaces in {path}", workspaces.len());
+            println!();
+        }
+
+        let mut global_all_results = Vec::new();
+
+        for ws in &workspaces {
+            let ws_name = match std::path::Path::new(&ws.path.value).file_name() {
+                Some(name) => name.to_string_lossy(),
+                None => std::borrow::Cow::Borrowed(""),
+            };
+            let ws_type = &ws.workspace_type;
+
+            let mut all_results = Vec::new();
+
+            // Determine dynamic orchestrators based on detected language config
+            let (code_analysis_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
+                if let Some(ref factory) = self.factory {
+                    let ctx = factory(ws.config.clone());
+                    (
+                        ctx.code_analysis_linter,
+                        ctx.naming_orchestrator,
+                        ctx.import_orchestrator,
+                        ctx.role_orchestrator,
+                    )
+                } else {
+                    (
+                        self.code_analysis_linter.clone(),
+                        self.naming_orchestrator.clone(),
+                        self.import_orchestrator.clone(),
+                        self.role_orchestrator.clone(),
+                    )
+                };
+
+            let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
+            all_results.extend(aes_results.values);
+
+            let naming_results = rt.block_on(naming_orchestrator.run_audit(&ws.path));
+            all_results.extend(naming_results);
+
+            let import_results = rt.block_on(import_orchestrator.run_audit(&ws.path));
+            all_results.extend(import_results);
+
+            let external_results = rt.block_on(self.external_lint.scan_all(&ws.path));
+            all_results.extend(external_results.values);
+
+            // Role-rules per workspace (AES401, AES402, AES403, AES404, AES405, AES406)
+            let role_results = rt.block_on(role_orchestrator.run_audit(&ws.path));
+            all_results.extend(role_results);
+
+            // Orphan detection — scan across ALL workspaces so contracts in shared/
+            // can find their implementations in other crates
+            let orphan_results = self.orphan_orchestrator.check_orphans(
+                self.layer_detector.as_ref(),
+                &all_source_files,
+                &ws.path.value,
+            );
+            all_results.extend(orphan_results);
+
+            // Filter results to only those in this workspace member's path
+            let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
+            let cwd_for_ws = match std::env::current_dir() {
+                Ok(d) => d,
+                Err(_) => std::path::PathBuf::new(),
+            };
+            let filtered_results: Vec<_> = if let Some(code) = filter {
+                all_results
+                    .into_iter()
+                    .filter(|r| {
+                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        r.code.to_string().contains(code)
+                            && ws_canonical
+                                .as_ref()
+                                .map_or(true, |c| abs_path.starts_with(c))
+                    })
+                    .collect()
+            } else {
+                all_results
+                    .into_iter()
+                    .filter(|r| {
+                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        ws_canonical
+                            .as_ref()
+                            .map_or(true, |c| abs_path.starts_with(c))
+                    })
+                    .collect()
+            };
+
+            global_all_results.extend(filtered_results);
+
+            if multi {
+                let result_list = LintResultList::new(global_all_results.clone());
+                let report = code_analysis_linter.format_report(&result_list, &ws.path.value);
+                println!("\n--- {} ({}) ---", ws_name, ws_type);
+                println!("{report}");
+            }
+        }
+
+        if workspaces.len() > 1 {
+            println!("\n=== Combined Summary ===");
+            let global_list = LintResultList::new(global_all_results);
+            println!(
+                "{}",
+                self.code_analysis_linter
+                    .format_report(&global_list, path)
+            );
+        }
     }
 }

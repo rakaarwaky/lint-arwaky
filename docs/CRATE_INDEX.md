@@ -571,3 +571,15 @@ Codebases need **regular maintenance**. This crate provides tools for ongoing he
 | Modify file watching | `file-watch/` |
 | Modify git hooks | `git-hooks/` |
 | Modify project setup | `project-setup/` |
+
+---
+
+## Further Reading
+
+| Topic | Document |
+|-------|----------|
+| Navigation hub (start here) | [DOCS.md](DOCS.md) |
+| Developer guide (patterns, how-to) | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) |
+| End-to-end data flow | [DATA_FLOW.md](DATA_FLOW.md) |
+| AES 7-layer architecture | [ARCHITECTURE.md](../ARCHITECTURE.md) |
+| 24 AES rules catalog | [rules/RULES_AES.md](rules/RULES_AES.md) |
