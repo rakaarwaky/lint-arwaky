@@ -1,4 +1,4 @@
-use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
+use shared_lint_arwaky::taxonomy_adapter_name_vo::AdapterName;
 
 #[test]
 fn test_adapter_name_new() {

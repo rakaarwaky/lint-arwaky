@@ -285,14 +285,3 @@ pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_default_config_parsing() {
-        let config = default_config_for_language("typescript");
-        println!("typescript layers: {:?}", config.layers.keys());
-        assert!(!config.layers.is_empty());
-    }
-}

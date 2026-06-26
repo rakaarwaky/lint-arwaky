@@ -56,28 +56,3 @@ impl Hash for AdapterName {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::AdapterName;
-
-    #[test]
-    fn test_adapter_name_new() {
-        let name = AdapterName::new("ruff").unwrap_or_default();
-        assert_eq!(name.value, "ruff");
-
-        // Test trimming
-        let name = AdapterName::new("  ruff  ").unwrap_or_default();
-        assert_eq!(name.value, "ruff");
-
-        // Test that internal spaces are preserved
-        let name = AdapterName::new("my adapter").unwrap_or_default();
-        assert_eq!(name.value, "my adapter");
-    }
-
-    #[test]
-    fn test_adapter_name_invalid() {
-        assert!(AdapterName::new("").is_err());
-        assert!(AdapterName::new("   ").is_err());
-        assert!(AdapterName::new("\t\n  ").is_err());
-    }
-}

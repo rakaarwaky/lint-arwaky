@@ -65,8 +65,7 @@ fn test_extension_hidden_basename() {
 
 #[test]
 fn test_extension_full_path() {
-    let fp =
-        FilePath::new("/tmp/bypass_test/capabilities_unwrap_checker.rs").unwrap_or_default();
+    let fp = FilePath::new("/tmp/bypass_test/capabilities_unwrap_checker.rs").unwrap_or_default();
     assert_eq!(fp.extension(), "rs");
     let fp = FilePath::new("crates/code-analysis/src/foo.rs").unwrap_or_default();
     assert_eq!(fp.extension(), "rs");
