@@ -416,24 +416,56 @@ impl CheckCommandsSurface {
                     .collect()
             };
 
-            global_all_results.extend(filtered_results);
+            global_all_results.extend(filtered_results.clone());
 
             if multi {
-                let result_list = LintResultList::new(global_all_results.clone());
-                let report = code_analysis_linter.format_report(&result_list, &ws.path.value);
-                println!("\n--- {} ({}) ---", ws_name, ws_type);
-                println!("{report}");
+                let total = filtered_results.len();
+                println!("── [{ws_type}] {ws_name} — {total} violations ──");
+                if !filtered_results.is_empty() {
+                    let mut code_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+                    for r in &filtered_results {
+                        *code_counts.entry(r.code.to_string()).or_insert(0) += 1;
+                    }
+                    let mut sorted: Vec<_> = code_counts.into_iter().collect();
+                    sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
+                    for (code, count) in &sorted {
+                        println!("       {code}: {count}");
+                    }
+                } else {
+                    println!("   (clean)");
+                }
+                println!();
+            } else {
+                // Single workspace — print full violation detail
+                let results_list = LintResultList::new(filtered_results);
+                print!(
+                    "{}",
+                    code_analysis_linter.format_report(&results_list, &ws.path.value)
+                );
             }
         }
 
-        if workspaces.len() > 1 {
-            println!("\n=== Combined Summary ===");
-            let global_list = LintResultList::new(global_all_results);
-            println!(
-                "{}",
-                self.code_analysis_linter
-                    .format_report(&global_list, path)
-            );
+        if multi {
+            // Print combined summary
+            let mut global_code_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+            for r in &global_all_results {
+                *global_code_counts.entry(r.code.to_string()).or_insert(0) += 1;
+            }
+            let global_total = global_all_results.len();
+            let global_unique_codes = global_code_counts.len();
+
+            println!("============================================================");
+            println!("  Combined Multi-Workspace Report Summary");
+            println!("============================================================");
+            println!("  Total Workspace Members: {}", workspaces.len());
+            println!("  Total Unique AES Codes: {global_unique_codes}");
+            println!("  Total Violations: {global_total}");
+            println!();
+            let mut sorted: Vec<_> = global_code_counts.into_iter().collect();
+            sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
+            for (code, count) in &sorted {
+                println!("  {code}: {count}");
+            }
         }
     }
 }
