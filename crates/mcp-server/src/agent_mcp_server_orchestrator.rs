@@ -42,7 +42,7 @@ impl McpServerOrchestrator {
     }
 }
 
-pub(crate) fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
+pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
     let mut dir = std::path::Path::new(path).to_path_buf();
     if !dir.is_absolute() {
         dir = std::env::current_dir().ok()?.join(&dir);

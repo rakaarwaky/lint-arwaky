@@ -79,27 +79,3 @@ impl IHookProtocol for HookManager {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn get_hook_manager_identity_returns_fixed() {
-        let manager = HookManager::new(Arc::new(MockAdapter));
-        let id = manager.get_hook_manager_identity();
-        assert_eq!(id.value(), "git_hook_manager");
-    }
-
-    struct MockAdapter;
-    impl IHookManagerPort for MockAdapter {
-        fn install_pre_commit(
-            &self, _executable_path: &FilePath,
-        ) -> Result<SuccessStatus, GitHookError> {
-            Ok(SuccessStatus::new(true))
-        }
-        fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> {
-            Ok(SuccessStatus::new(true))
-        }
-    }
-}

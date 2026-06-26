@@ -48,7 +48,7 @@ The codebase uses **7 architectural layers** as **file prefixes**, organized int
 | `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` |
 | `root_`           | `_container`, `_entry`                                                                                                                     |
 
-### Workspace Packages (feature folders → workspace members)
+### Workspace Packages Strcuture
 
 ```
 crates/
@@ -65,8 +65,9 @@ crates/
   git-hooks/            — Git hooks management
   maintenance/          — Maintenance operations
   project-setup/        — Project init, doctor, mcp-config
-  cli-commands/         — CLI surfaces (_command) + transport
+  cli-commands/         — CLI surfaces (_command) 
   mcp-server/           — MCP server surfaces
+  tui/                  — TUI Interface
   root_cli_main_entry.rs       — CLI binary entry (root_entry)
   root_mcp_main_entry.rs       — MCP binary entry (root_entry)
   root_tui_main_entry.rs       — TUI binary entry (root_entry)
@@ -94,7 +95,7 @@ Each contains intentional violations. See `TEST.md` for pass/fail criteria.
 
 | File                | Purpose                                  |
 | ------------------- | ---------------------------------------- |
-| `RULES_AES.md`    | Complete 24 AES rules catalog     |
+| `RULES_AES.md`    | Complete 24 AES rules catalog            |
 | `RULES_RUFF.md`   | Python Ruff rule mapping                 |
 | `RULES_MYPY.md`   | Python MyPy rule mapping                 |
 | `RULES_BANDIT.md` | Python Bandit rule mapping               |
