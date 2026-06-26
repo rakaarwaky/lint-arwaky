@@ -1,3 +1,15 @@
+// PURPOSE: MaintenanceCommandsOrchestrator — implements MaintenanceCommandsAggregate for env diagnostics, stats, cleanup
+//
+// The maintenance crate provides background health operations:
+//   - doctor: check environment for required tools (ruff, mypy, bandit, git, etc.)
+//   - stats: count and ratio of Python files vs test files in a project
+//   - clean: remove cache directories (.pytest_cache, __pycache__, etc.)
+//   - update: upgrade external linter tools via pip
+//   - security_scan: run dependency vulnerability scans
+//   - dependency_report: analyze project dependencies
+//   - diagnose_toolchain: check Rust/Python/Node.js toolchain versions
+//
+// This is the least "lint-like" crate — it handles ops, not code quality.
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::mcp_server::taxonomy_action_vo::JobId;
@@ -21,6 +33,7 @@ use async_trait::async_trait;
 
 #[async_trait]
 impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
+    /// Count Python files and test files in the project, compute test ratio.
     async fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
         let root = Path::new(&project_path.value);
         let mut py_files = Vec::new();
@@ -49,6 +62,7 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         }
     }
 
+    /// Delete cache dirs (.pytest_cache, .mypy_cache, .ruff_cache, __pycache__, .lint_arwaky_cache).
     async fn clean(&self) {
         let cwd = std::env::current_dir().ok();
         if let Some(cwd) = cwd {
@@ -67,6 +81,7 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         }
     }
 
+    /// Upgrade Python linter tools via pip (ruff, mypy, bandit, radon).
     async fn update(&self) {
         let adapters = ["ruff", "mypy", "bandit", "radon"];
         for adapter in &adapters {
@@ -76,6 +91,7 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         }
     }
 
+    /// Run health check: verify tool installations and config file presence.
     async fn doctor(&self) -> DoctorResultVO {
         let mut issues: Vec<ErrorMessage> = Vec::new();
         let mut adapter_statuses: HashMap<AdapterName, String> = HashMap::new();

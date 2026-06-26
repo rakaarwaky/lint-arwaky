@@ -1,4 +1,14 @@
 // PURPOSE: PrettierAdapter — ILinterAdapterPort implementation for Prettier integration
+//
+// Runs `prettier --check <path>` on JS/TS/JSON/CSS/Markdown files via
+// resolve_js_cmd (npx). Only files with recognized extensions are scanned.
+// apply_fix runs `prettier --write <path>` to auto-format.
+//
+// Key details:
+//   - Early-returns empty results for non-JS/TS/JSON/CSS/MD/YAML files
+//   - Uses canonical absolute paths for reliable prettier invocation
+//   - Detects warnings by checking for "[warn]" in combined stdout+stderr
+//   - Reports a single LintResult per file (not per-difference)
 
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::cli_commands::taxonomy_result_vo::LintResult;

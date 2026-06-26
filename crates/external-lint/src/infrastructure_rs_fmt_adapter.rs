@@ -1,4 +1,14 @@
 // PURPOSE: RsFmtAdapter — ILinterAdapterPort implementation for rustfmt integration
+//
+// Runs `cargo fmt --check` on Rust projects. Since rustfmt is a formatter
+// (not a linter), the adapter parses diff output lines to report each
+// formatting difference as an individual LintResult.
+//
+// Key design decisions:
+//   - Resolves Cargo.toml parent dir as working directory (via resolve_cargo_working_dir)
+//   - Uses ICommandExecutorPort for subprocess execution with 120s timeout
+//   - apply_fix runs `cargo fmt` (without --check) to auto-format
+//   - Only reports added lines (+ prefix) as violations, not context lines
 use std::path::Path;
 use std::sync::Arc;
 
@@ -25,6 +35,10 @@ use tracing::debug;
 
 use crate::infrastructure_rs_common::resolve_cargo_working_dir;
 
+/// Adapter that wraps `cargo fmt --check` as an ILinterAdapterPort.
+///
+/// Parses rustfmt's unified diff output to create per-difference LintResults.
+/// When no Cargo.toml is found, the scan is silently skipped.
 pub struct RustFmtAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
@@ -53,6 +67,8 @@ impl ILinterAdapterPort for RustFmtAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
+
+        // Find the Cargo.toml parent to use as working directory — resolves workspace roots
         let working_dir = resolve_cargo_working_dir(path);
         let working_dir_str = &working_dir.value;
 
@@ -62,6 +78,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
             return Ok(LintResultList::new(results));
         }
 
+        // Run `cargo fmt --check` — exits non-zero when formatting differs
         let cmd = vec![
             "cargo".to_string(),
             "fmt".to_string(),
@@ -86,9 +103,12 @@ impl ILinterAdapterPort for RustFmtAdapter {
             return Ok(LintResultList::new(results));
         }
 
+        // Parse rustfmt's unified diff output.
+        // Format: "Diff in <file> at line N:" followed by diff hunks
         let output = result.stdout + &result.stderr;
         let mut current_file = String::new();
         for line in output.lines() {
+            // Track which file the current diff hunk belongs to
             if line.starts_with("Diff in ") {
                 current_file = line
                     .trim_start_matches("Diff in ")
@@ -99,6 +119,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
                 continue;
             }
 
+            // Report added lines (+) as formatting violations
             if line.starts_with('+') && !line.starts_with("+++") {
                 let resolved = self.path_norm.resolve_infrastructure_path(
                     match FilePath::new(current_file.clone()) {

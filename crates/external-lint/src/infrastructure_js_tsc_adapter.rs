@@ -1,4 +1,15 @@
 // PURPOSE: TSCAdapter — ILinterAdapterPort implementation for TypeScript compiler integration
+//
+// Runs `tsc --noEmit --pretty false <path>` to type-check TypeScript files.
+// Parses compiler output with two regex patterns (parenthesized format and
+// colon-delimited format). apply_fix always returns false (tsc is a compiler).
+//
+// Key details:
+//   - `--noEmit` prevents output files, only runs type checking
+//   - `--pretty false` ensures machine-parseable output
+//   - Two regex patterns handle different tsc output formats across versions
+//   - Skips files that don't end in .ts or .tsx
+//   - All tsc errors are reported as HIGH severity
 
 use regex::Regex;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;

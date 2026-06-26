@@ -1,4 +1,12 @@
 // PURPOSE: Shared utilities for Rust external linter adapters
+//
+// Provides two walk-up directory resolvers:
+//   - resolve_cargo_working_dir: finds parent dir with Cargo.toml (for cargo fmt, cargo clippy)
+//   - resolve_cargo_lock_working_dir: finds parent dir with Cargo.lock (for cargo-audit)
+//
+// Both walk up to 2 levels from the given path. If no Cargo.toml/lock is found,
+// a sentinel path containing "nonexistent_directory_for_cargo_*" is returned so
+// callers can detect and skip gracefully.
 use shared::common::taxonomy_path_vo::FilePath;
 use std::path::Path;
 

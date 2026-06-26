@@ -1,4 +1,14 @@
 // PURPOSE: SetupProcessor — processes project setup steps (env, gitignore, config, hooks)
+//
+// Implements ISetupManagementProtocol — the capabilities layer for project initialization.
+// Handles:
+//   - Environment file generation (.env with PHANTOM_ROOT for JS tools)
+//   - MCP configuration generation in 3 formats (Claude, Hermes VS Code)
+//   - Binary discovery for lint-arwaky-mcp (current exe dir, CARGO_HOME, PATH)
+//   - Python and npm adapter installation (via ISetupInstallerPort with retry logic)
+//   - Language detection (rust crates/, python pyproject.toml, js package.json)
+//   - Config file template loading from embedded YAML files
+//   - XDG config directory creation
 
 use std::collections::HashMap;
 

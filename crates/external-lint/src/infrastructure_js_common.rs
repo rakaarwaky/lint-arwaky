@@ -1,4 +1,11 @@
 // PURPOSE: Shared utilities for JavaScript/TypeScript external linter adapters
+//
+// Provides:
+//   - resolve_js_cmd: resolves the executable path for JS tools (eslint, prettier, tsc).
+//     Prefers local node_modules/.bin/<tool> over npx/bunx, and bunx over npx when bun is available.
+//   - resolve_working_dir: walks up from the scanned path to find the project root
+//     (detected by lint_arwaky.config*.yaml, package.json, or .git directory).
+//     This ensures JS tools run from the correct project context.
 use shared::common::taxonomy_path_vo::FilePath;
 use std::path::Path;
 

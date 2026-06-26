@@ -1,4 +1,12 @@
 // PURPOSE: ExternalLintContainer — root layer, wires orchestrator with infrastructure adapters
+//
+// The DI container that assembles the external lint subsystem:
+//   1. Creates a StdioClient (ICommandExecutorPort) for subprocess execution
+//   2. Registers all 8 adapters (ruff, bandit, mypy, eslint, prettier, tsc, clippy, rustfmt, cargo-audit)
+//   3. Wraps them in a ExternalLintOrchestrator
+//   4. Provides a DefaultPathNormalization that passes paths through unchanged
+//
+// Each adapter follows the same pattern: Arc<dyn ILinterAdapterPort> in a HashMap keyed by name.
 use std::collections::HashMap;
 use std::sync::Arc;
 

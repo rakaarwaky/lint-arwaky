@@ -387,7 +387,8 @@ impl CheckCommandsSurface {
                         r.code.to_string().contains(code)
                             && ws_canonical
                                 .as_ref()
-                                .map_or(true, |c| abs_path.starts_with(c))
+                                .map(|c| abs_path.starts_with(c))
+                                .unwrap_or(true)
                     })
                     .collect()
             } else {
@@ -397,7 +398,8 @@ impl CheckCommandsSurface {
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         ws_canonical
                             .as_ref()
-                            .map_or(true, |c| abs_path.starts_with(c))
+                            .map(|c| abs_path.starts_with(c))
+                            .unwrap_or(true)
                     })
                     .collect()
             };

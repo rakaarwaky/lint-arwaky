@@ -1,4 +1,14 @@
 // PURPOSE: PyBanditAdapter — ILinterAdapterPort implementation for Bandit security scanner integration
+//
+// Runs `bandit -r <path> --format json --exit-zero` to scan Python files for
+// security vulnerabilities. Parses JSON output to extract findings (filename,
+// line_range, test_id, issue_text, severity).
+//
+// Key details:
+//   - `--exit-zero` ensures bandit always exits 0 regardless of findings
+//   - JSON output avoids fragile regex parsing
+//   - Severity is directly mapped: HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW
+//   - apply_fix always returns false (Bandit is a scanner, not a fixer)
 
 use async_trait::async_trait;
 use serde_json::Value;

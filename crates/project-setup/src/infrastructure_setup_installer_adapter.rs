@@ -1,4 +1,12 @@
 // PURPOSE: SetupInstallerAdapter — infrastructure adapter for executing npm/pip install commands
+//
+// Installs Python linters (ruff, mypy, bandit) via `pip install --user` and
+// JS linters (eslint, prettier, typescript) via `npm install -g`.
+//
+// The Python installer retries with `--break-system-packages` on failure to
+// handle PEP 668 (externally-managed environment) errors on modern Linux distros.
+// The npm installer supports `sudo` prefix for global installations that need
+// elevated permissions.
 use async_trait::async_trait;
 use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
 use shared::project_setup::taxonomy_language_vo::ProjectLanguage;

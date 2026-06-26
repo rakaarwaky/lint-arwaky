@@ -1,4 +1,14 @@
 // PURPOSE: SetupOrchestrator — orchestrates project initialization and setup operations
+//
+// Delegates all operations to ISetupManagementProtocol (capabilities layer).
+// This is a thin agent layer that passes through aggregate contract calls.
+//
+// Key operations:
+//   - MCP config generation for different AI clients (Claude, Hermes, VS Code)
+//   - .env file generation for JS/TS IDE integration
+//   - Adapter installation (pip for Python, npm for JS)
+//   - Language detection and config template loading
+//   - Config file writing and XDG config dir creation
 use shared::cli_commands::taxonomy_protocol_vo::TransportProtocol;
 use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
 use shared::common::taxonomy_path_vo::DirectoryPath;

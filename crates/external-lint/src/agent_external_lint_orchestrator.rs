@@ -1,4 +1,15 @@
 // PURPOSE: ExternalLintOrchestrator — agent layer, orchestrates external linter adapters
+//
+// The orchestrator dynamically selects which adapters to run based on the
+// languages detected in the project (Rust, Python, JavaScript/TypeScript).
+// It performs a file-system scan to detect language usage before running
+// any adapters — avoids running rustfmt on Python-only projects.
+//
+// Adapters are run concurrently via future::join_all. If an adapter's binary
+// is not installed, a warning is printed (not an error) — the scan continues
+// with the remaining adapters.
+//
+// Language detection is recursive but skips node_modules, target, .git, and .jj dirs.
 use std::collections::HashMap;
 use std::sync::Arc;
 

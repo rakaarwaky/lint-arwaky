@@ -1,4 +1,16 @@
 // PURPOSE: MaintenanceChecker — business logic capabilities for running audits and checking toolchains
+//
+// Implements IMaintenanceCheckerProtocol with three health-check operations:
+//
+//   1. diagnose_toolchain: checks for installation of Rust (cargo, clippy, rustfmt),
+//      Python (python3, ruff, mypy, bandit), JavaScript (node, eslint, prettier, tsc),
+//      and VCS (git, jj) tools. Local node_modules/.bin tools are preferred over global.
+//
+//   2. run_security_scan: runs cargo-audit (Rust) or bandit (Python) depending on
+//      project type, returning structured SecurityFinding results.
+//
+//   3. run_dependency_report: parses Cargo.lock (Rust), pyproject.toml, or
+//      requirements.txt to list direct and transitive dependencies.
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::project_setup::taxonomy_doctor_vo::{
@@ -20,6 +32,9 @@ impl MaintenanceChecker {
     }
 
     pub async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
+        // Check each tool by running `<tool> --version` and capturing output.
+        // Required tools (cargo, rustfmt, clippy, git) must be found — their
+        // status is "FAIL" if missing. Optional tools get "WARN" on failure.
         let check_tool = |name: &str, args: &[&str], required: bool| -> ToolStatus {
             let output = std::process::Command::new(name).args(args).output();
             let (status, version) = match output {
@@ -122,6 +137,7 @@ impl MaintenanceChecker {
 
     pub async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
         let root = &project_path.value;
+        // Rust project: use cargo-audit with JSON output, parse vulnerabilities
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
         if cargo_lock.exists() {
             let output = std::process::Command::new("cargo")
@@ -184,6 +200,7 @@ impl MaintenanceChecker {
                 },
             }
         } else {
+            // Python project: use bandit with JSON output, parse results array
             let output = std::process::Command::new("bandit")
                 .args(["-r", "--format", "json", root])
                 .output();
@@ -247,6 +264,7 @@ impl MaintenanceChecker {
         project_path: &FilePath,
     ) -> Result<DependencyReport, String> {
         let root = &project_path.value;
+        // Try Rust Cargo.lock first (most detailed), then pyproject.toml, then requirements.txt
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
         if cargo_lock.exists() {
             let content = std::fs::read_to_string(&cargo_lock).map_err(|e| e.to_string())?;
@@ -258,6 +276,7 @@ impl MaintenanceChecker {
             let cargo_toml = std::path::Path::new(root).join("Cargo.toml");
             let mut direct_deps = std::collections::HashSet::new();
             if let Ok(toml_content) = std::fs::read_to_string(&cargo_toml) {
+                // Parse [dependencies] section to identify direct dependencies
                 let mut in_deps = false;
                 for line in toml_content.lines() {
                     if line.trim().starts_with("[dependencies]") {

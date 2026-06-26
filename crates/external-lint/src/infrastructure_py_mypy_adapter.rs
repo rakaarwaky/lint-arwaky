@@ -1,4 +1,15 @@
 // PURPOSE: PyMypyAdapter — ILinterAdapterPort implementation for MyPy type checker integration
+//
+// Runs `mypy <path>` on Python files and parses its structured output with
+// two regex patterns (with/without column numbers). Severity is mapped
+// heuristically: notes → LOW, warnings → MEDIUM, errors → HIGH,
+// syntax/parse errors → CRITICAL.
+//
+// Key details:
+//   - `--no-error-summary` avoids summary lines, keeping output parseable
+//   - `--pretty false` ensures machine-parseable single-line output
+//   - Falls back to column-less regex if column-full regex doesn't match
+//   - apply_fix always returns false (mypy is a type checker, not a formatter)
 
 use async_trait::async_trait;
 use regex::Regex;

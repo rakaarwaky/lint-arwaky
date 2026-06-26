@@ -1,4 +1,16 @@
 // PURPOSE: RsAuditAdapter — ILinterAdapterPort implementation for cargo-audit security scanning
+//
+// Uses the `rustsec` crate directly (not subprocess) to parse Cargo.lock and
+// check against the RustSec Advisory Database. Reports vulnerabilities as
+// LintResults with CVE/RUSTSEC IDs as error codes.
+//
+// Key details:
+//   - Finds Cargo.lock via resolve_cargo_lock_working_dir (walks up from path)
+//   - Uses local advisory DB from ~/.cargo/advisory-db, or fetches if missing
+//   - No subprocess overhead — uses rustsec library API directly
+//   - CVSS severity is mapped: critical→CRITICAL, high→HIGH, medium→MEDIUM, else→LOW
+//   - apply_fix returns true (cargo-audit has no fix command; affected packages
+//     must be updated manually via cargo update)
 use std::path::Path;
 use std::sync::Arc;
 
