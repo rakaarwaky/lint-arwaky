@@ -6,7 +6,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
 use shared::orphan_detector::taxonomy_orphan_utility::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
-use crate::taxonomy_orphan_filename_helper::{file_basename, file_suffix};
+use crate::taxonomy_orphan_filename_helper::{file_basename, file_stem, file_suffix};
 
 pub struct CapabilitiesOrphanAnalyzer {}
 
@@ -45,11 +45,7 @@ pub fn is_infra_cap_orphan(
 
     // Check if wired in any container
     let fp = f.value();
-    let basename = std::path::Path::new(fp)
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or_default();
-    let stem = basename.replace(".rs", "").replace(".py", "");
+    let stem = file_stem(fp);
 
     if let Ok(content) = std::fs::read_to_string(fp) {
         let mut identifiers: Vec<String> = Vec::new();
@@ -180,8 +176,8 @@ pub fn is_infra_cap_orphan_raw(
     is_reachable: bool,
 ) -> OrphanIndicatorResult {
     let fp = f.value();
-    let basename = file_basename(fp);
-    let stem = basename.replace(".rs", "").replace(".py", "");
+    let _basename = file_basename(fp);
+    let stem = file_stem(fp);
 
     let content = std::fs::read_to_string(fp).unwrap_or_default();
     let mut identifiers: Vec<String> = Vec::new();
@@ -227,11 +223,11 @@ pub fn is_infra_cap_orphan_raw(
 
 pub fn check_capabilities_orphan(
     fp: &str,
-    basename: &str,
+    _basename: &str,
     files: &[String],
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
 ) {
-    let stem = basename.replace(".rs", "").replace(".py", "");
+    let stem = file_stem(fp);
     let content = std::fs::read_to_string(fp).unwrap_or_default();
 
     let mut identifiers: Vec<String> = Vec::new();

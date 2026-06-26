@@ -1,10 +1,26 @@
 // PURPOSE: taxonomy_orphan_filename_helper — shared filename parsing utilities for orphan analyzers
-// Extracts basename and suffix from file paths in a consistent way across all orphan layer analyzers.
+// Extracts basename, stem, and suffix from file paths in a consistent way across all orphan layer analyzers.
+
+/// All language extensions recognized by the orphan detector.
+const KNOWN_EXTENSIONS: &[&str] = &["rs", "py", "ts", "js", "tsx", "jsx"];
 
 /// Extract the basename (filename without directory) from a file path string.
 /// Handles both `/`-separated and OS paths gracefully.
 pub fn file_basename(fp: &str) -> &str {
     fp.split('/').next_back().unwrap_or(fp)
+}
+
+/// Extract the file stem (basename with all known language extensions stripped).
+///
+/// Example: `capabilities_import_checker.rs` → `capabilities_import_checker`
+pub fn file_stem(fp: &str) -> String {
+    let basename = file_basename(fp);
+    let mut stem = basename.to_string();
+    for ext in KNOWN_EXTENSIONS {
+        let dot_ext = format!(".{}", ext);
+        stem = stem.replace(&dot_ext, "");
+    }
+    stem
 }
 
 /// Extract the domain suffix from a file stem (the part after the last `_`, with
@@ -13,12 +29,7 @@ pub fn file_basename(fp: &str) -> &str {
 /// Example: `capabilities_import_checker.rs` → `checker`
 pub fn file_suffix(fp: &str) -> String {
     let basename = file_basename(fp);
-    basename
-        .rsplit('_')
-        .next()
-        .unwrap_or_default()
-        .replace(".rs", "")
-        .replace(".py", "")
-        .replace(".ts", "")
-        .replace(".js", "")
+    let stem = file_stem(fp);
+    let stem_str = if stem.is_empty() { basename } else { &stem };
+    stem_str.rsplit('_').next().unwrap_or_default().to_string()
 }

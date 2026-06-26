@@ -1,4 +1,5 @@
 // PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
+use crate::taxonomy_orphan_filename_helper::file_stem;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
@@ -78,12 +79,7 @@ impl OrphanGraphResolver {
         // Build a lookup: module_name -> file_path for crate:: resolution
         let mut module_to_file: HashMap<String, String> = HashMap::new();
         for f in files {
-            let basename = f.split('/').next_back().unwrap_or_default();
-            let stem = basename
-                .replace(".rs", "")
-                .replace(".py", "")
-                .replace(".ts", "")
-                .replace(".js", "");
+            let stem = file_stem(f);
             module_to_file.insert(stem.clone(), f.clone());
             if let Some(parent) = f.rsplit('/').nth(1) {
                 let module_path = format!("{}/{}", parent, stem);

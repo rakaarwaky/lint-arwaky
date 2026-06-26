@@ -93,16 +93,15 @@ impl TaxonomyRoleChecker {
     fn scan_primitives(source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let detector = shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
-        let lang = detector.detect(&source.file_path);
-        let primitives: &[&str] = match lang {
+        let li = crate::taxonomy_language_helper::detect_language(source);
+        let primitives: &[&str] = match li.lang {
             DetLang::Rust => Self::RUST_PRIMITIVES,
             DetLang::Python => Self::PY_PRIMITIVES,
             DetLang::JavaScript | DetLang::TypeScript => Self::JS_PRIMITIVES,
             _ => return,
         };
-        let is_rs = lang == DetLang::Rust;
-        let is_py = lang == DetLang::Python;
+        let is_rs = li.is_rs;
+        let is_py = li.is_py;
 
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();

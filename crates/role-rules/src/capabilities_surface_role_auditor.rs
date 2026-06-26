@@ -96,11 +96,10 @@ impl SurfaceRoleChecker {
     pub fn check_fn_count_limit(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let content = source.content.value();
         let file = source.file_path.value();
-        let detector = shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
-        let lang = detector.detect(&source.file_path);
-        let fn_keyword = if lang == DetLang::Python {
+        let li = crate::taxonomy_language_helper::detect_language(source);
+        let fn_keyword = if li.is_py {
             "def "
-        } else if lang == DetLang::JavaScript || lang == DetLang::TypeScript {
+        } else if li.is_js {
             "function "
         } else {
             "fn "
@@ -230,10 +229,9 @@ impl SurfaceRoleChecker {
 
         let lines: Vec<&str> = content.lines().collect();
         let mut violations: Vec<String> = Vec::new();
-        let detector = shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
-        let lang = detector.detect(f);
+        let li = crate::taxonomy_language_helper::detect_language_from_path(f);
 
-        match lang {
+        match li.lang {
             DetLang::Rust => self._check_rust_passive(f, &lines, &mut violations),
             DetLang::JavaScript | DetLang::TypeScript => {
                 self._check_javascript_passive(f, &lines, &mut violations)

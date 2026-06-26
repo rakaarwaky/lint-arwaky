@@ -10,7 +10,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::ISurfacesOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
-use crate::taxonomy_orphan_filename_helper::file_basename;
+use crate::taxonomy_orphan_filename_helper::{file_basename, file_stem, file_suffix};
 
 pub struct SurfacesOrphanAnalyzer {}
 
@@ -39,17 +39,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
 
 /// Get surface suffix from filename
 fn get_surface_suffix(basename: &str) -> String {
-    let stem = basename
-        .replace(".rs", "")
-        .replace(".py", "")
-        .replace(".ts", "")
-        .replace(".js", "");
-    let parts: Vec<&str> = stem.split('_').collect();
-    if parts.len() >= 2 {
-        parts[parts.len() - 1].to_string()
-    } else {
-        String::new()
-    }
+    file_suffix(basename)
 }
 
 /// Surface category
@@ -79,15 +69,8 @@ pub fn is_surface_orphan(
 
     // Check if imported by entry or router
     let fp_val = f.value();
-    let basename = std::path::Path::new(fp_val)
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or_default();
-    let stem = basename
-        .replace(".rs", "")
-        .replace(".py", "")
-        .replace(".ts", "")
-        .replace(".js", "");
+    let basename = file_basename(fp_val);
+    let stem = file_stem(fp_val);
 
     if let Ok(content) = std::fs::read_to_string(fp_val) {
         // Check if this surface is imported by any entry or router file
@@ -197,11 +180,7 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
     let basename = file_basename(fp);
     let suffix = get_surface_suffix(basename);
     let category = surface_category(&suffix);
-    let stem = basename
-        .replace(".rs", "")
-        .replace(".py", "")
-        .replace(".ts", "")
-        .replace(".js", "");
+    let stem = file_stem(fp);
 
     match category {
         // Smart surface: must be imported by entry point or router

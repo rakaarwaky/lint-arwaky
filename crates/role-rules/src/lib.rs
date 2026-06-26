@@ -10,6 +10,7 @@ pub use shared::role_rules::taxonomy_layer_names_vo::{
     layer_agent, layer_capabilities, layer_contract, layer_global, layer_infrastructure,
     layer_root, layer_surfaces, layer_taxonomy, LayerNames,
 };
+pub mod taxonomy_language_helper;
 pub mod agent_role_orchestrator;
 pub use agent_role_orchestrator::RoleOrchestrator;
 pub mod capabilities_agent_role_auditor;

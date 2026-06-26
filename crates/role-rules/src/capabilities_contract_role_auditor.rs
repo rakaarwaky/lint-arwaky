@@ -13,7 +13,6 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
-use shared::common::contract_language_detector_port::Language as DetLang;
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
@@ -349,11 +348,10 @@ impl ContractRoleChecker {
     fn check_contract_primitive(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let detector = shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
-        let det_lang = detector.detect(&source.file_path);
-        let is_rs = det_lang == DetLang::Rust;
-        let is_py = det_lang == DetLang::Python;
-        let is_js = det_lang == DetLang::JavaScript || det_lang == DetLang::TypeScript;
+        let li = crate::taxonomy_language_helper::detect_language(source);
+        let is_rs = li.is_rs;
+        let is_py = li.is_py;
+        let is_js = li.is_js;
         if !is_rs && !is_py && !is_js {
             return;
         }

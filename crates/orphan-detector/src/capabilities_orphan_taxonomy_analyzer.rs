@@ -1,4 +1,5 @@
 // PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection
+use crate::taxonomy_orphan_filename_helper::file_stem;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
@@ -39,16 +40,7 @@ pub fn is_taxonomy_orphan(
     _def: Option<&LayerDefinition>,
     inbound: &InboundLinkMap,
 ) -> OrphanIndicatorResult {
-    let stem = match f.value().split('/').next_back() {
-        Some(s) => s.to_string(),
-        None => String::new(),
-    }
-    .replace(".rs", "")
-    .replace(".py", "")
-    .replace(".ts", "")
-    .replace(".js", "")
-    .replace(".tsx", "")
-    .replace(".jsx", "");
+    let stem = file_stem(f.value());
 
     let suffix = match stem.rfind('_') {
         Some(pos) => &stem[pos + 1..],

@@ -1,4 +1,5 @@
 // PURPOSE: InfrastructureOrphanAnalyzer — IInfrastructureOrphanProtocol for orphan infrastructure detection
+use crate::taxonomy_orphan_filename_helper::file_stem;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
@@ -35,11 +36,7 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
 
         // Check if wired in any container
         let fp = f.value();
-        let basename = std::path::Path::new(fp)
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or_default();
-        let stem = basename.replace(".rs", "").replace(".py", "");
+        let stem = file_stem(fp);
 
         if let Ok(content) = std::fs::read_to_string(fp) {
             let mut identifiers: Vec<String> = Vec::new();

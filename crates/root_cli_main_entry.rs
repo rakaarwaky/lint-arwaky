@@ -83,7 +83,7 @@ fn main() -> ExitCode {
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
 
-        surface_check_command::CheckContext {
+        infrastructure_check_context::CheckContext {
             code_analysis_linter: arch_linter,
             import_orchestrator: import_container.orchestrator(),
             naming_orchestrator: naming_container.orchestrator(),
@@ -123,10 +123,10 @@ fn main() -> ExitCode {
 
     let filter = cli.filter.clone();
     match cli.command {
-        Commands::Check { path, git_diff } => surface_check_command::handle_check(
+        Commands::Check { path, git_diff } => surface_check_main::handle_check(
             path,
             git_diff,
-            surface_check_command::CheckContext {
+            infrastructure_check_context::CheckContext {
                 code_analysis_linter: arch_linter.clone(),
                 import_orchestrator: import_orchestrator.clone(),
                 naming_orchestrator: naming_orchestrator.clone(),
@@ -145,9 +145,9 @@ fn main() -> ExitCode {
             Some(git_aggregate.clone()),
             shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
         ),
-        Commands::Scan { path } => surface_check_command::handle_scan(
+        Commands::Scan { path } => surface_check_main::handle_scan(
             path,
-            surface_check_command::CheckContext {
+            infrastructure_check_context::CheckContext {
                 code_analysis_linter: arch_linter,
                 import_orchestrator,
                 naming_orchestrator: naming_orchestrator.clone(),
@@ -173,7 +173,7 @@ fn main() -> ExitCode {
             fix_orchestrator_factory,
         ),
         Commands::Ci { path, threshold } => {
-            surface_check_command::handle_ci(arch_linter.clone(), path, threshold)
+            surface_check_main::handle_ci(arch_linter.clone(), path, threshold)
         }
         Commands::Doctor => {
             let maintenance_container =
@@ -217,7 +217,7 @@ fn main() -> ExitCode {
         Commands::Adapters => surface_plugin_command::handle_adapters(external_lint_aggregate),
         Commands::Orphan { path } => {
             let surface = surface_check_command::CheckCommandsSurface::new(
-                surface_check_command::CheckContext {
+                infrastructure_check_context::CheckContext {
                     code_analysis_linter: arch_linter.clone(),
                     import_orchestrator: import_orchestrator.clone(),
                     naming_orchestrator: naming_orchestrator.clone(),

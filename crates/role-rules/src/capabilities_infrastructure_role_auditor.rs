@@ -40,18 +40,13 @@ impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
     ) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let detector = shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
-        let lang = detector.detect(&source.file_path);
-        let is_rs = lang == shared::common::contract_language_detector_port::Language::Rust;
-        let is_py = lang == shared::common::contract_language_detector_port::Language::Python;
-        let is_js = lang == shared::common::contract_language_detector_port::Language::JavaScript
-            || lang == shared::common::contract_language_detector_port::Language::TypeScript;
+        let li = crate::taxonomy_language_helper::detect_language(source);
 
-        if is_rs {
+        if li.is_rs {
             self._check_rust(file, content, violations);
-        } else if is_py {
+        } else if li.is_py {
             self._check_python(file, content, violations);
-        } else if is_js {
+        } else if li.is_js {
             self._check_js(file, content, violations);
         }
     }
