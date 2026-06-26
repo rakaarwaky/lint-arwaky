@@ -1,7 +1,7 @@
 // PURPOSE: taxonomy_unused_helper — pure utility functions for unused import detection
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_name_vo::SymbolName;
-use crate::taxonomy_layer_vo::Identity;
+use crate::common::taxonomy_layer_vo::Identity;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};

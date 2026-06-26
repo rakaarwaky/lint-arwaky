@@ -4,12 +4,12 @@ use crate::common::contract_parser_port::ISourceParserPort;
 use crate::common::contract_system_port::IFileSystemPort;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::taxonomy_common_error::ErrorMessage;
-use crate::taxonomy_common_vo::Count;
-use crate::taxonomy_common_vo::PatternList;
-use crate::taxonomy_definition_vo::LayerMapVO;
-use crate::taxonomy_layer_vo::Identity;
-use crate::taxonomy_layer_vo::LayerNameVO;
+use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_common_vo::Count;
+use crate::common::taxonomy_common_vo::PatternList;
+use crate::common::taxonomy_definition_vo::LayerMapVO;
+use crate::common::taxonomy_layer_vo::Identity;
+use crate::common::taxonomy_layer_vo::LayerNameVO;
 
 pub trait IAnalyzer:
     crate::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol + Send + Sync

@@ -5,6 +5,7 @@
 pub mod common;
 
 // Re-export all taxonomy_* and contract_* types from common
+// NOTE: widely used by downstream crates as shared::taxonomy_*. Do not remove.
 pub use common::*;
 
 #[path = "tui/mod.rs"]

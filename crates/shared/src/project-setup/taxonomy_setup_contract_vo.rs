@@ -10,7 +10,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use crate::taxonomy_suggestion_vo::DescriptionVO;
+use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 
 /// Name of the MCP binary as resolved on the host PATH (e.g. "lint-arwaky-cli").
 /// Replaces the previous `String` return type of
