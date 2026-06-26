@@ -126,8 +126,8 @@ futures.workspace = true
 # intermittent SIGSEGV in `rustc`/`lld` on large dep trees in constrained environments.
 # `thin` LTO is ~95% of `fat`'s gains and never segfaults in our CI.
 [profile.release]
-opt-level = 3
-lto = "thin"
+opt-level = "z"
+lto = true
 codegen-units = 1
 strip = "symbols"
 panic = "abort"

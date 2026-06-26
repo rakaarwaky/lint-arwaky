@@ -1,3 +1,7 @@
+// PURPOSE: Capabilities-layer action handler — the central state machine for TUI events.
+// Translates every TuiEvent into a state mutation or I/O operation (filesystem/lint).
+// This is the largest single file in the TUI crate; it owns all event→action mappings.
+
 use shared::common::taxonomy_line_count_vo::LineCount;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
@@ -8,6 +12,8 @@ use shared::tui::taxonomy_state_vo::{AppState, PreviewMode};
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
 
+/// ActionHandler — pure state machine for TUI interaction.
+/// Owns the filesystem adapter and lint executor, bridging UI events to backend operations.
 pub struct ActionHandler {
     fs_port: Arc<dyn IFileSystemPort>,
     lint_port: Arc<dyn ILintExecutorProtocol>,
@@ -21,16 +27,22 @@ impl ActionHandler {
         Self { fs_port, lint_port }
     }
 
+    /// Main event dispatch — maps every TuiEvent variant to a concrete action.
+    /// Categories: navigation, focus cycling, search, path dialog, lint actions, mouse.
     pub fn handle(&self, state: &mut AppState, event: TuiEvent) {
         match event {
+            // ---- Navigation: list selection ----
             TuiEvent::MoveDown => state.select_next(),
             TuiEvent::MoveUp => state.select_prev(),
             TuiEvent::MoveTop => state.select_first(),
             TuiEvent::MoveBottom => state.select_last(),
+            // ---- Focus cycling between panels (FileList / Preview / Tree) ----
             TuiEvent::FocusNext => state.cycle_focus_forward(),
             TuiEvent::FocusPrev => state.cycle_focus_backward(),
+            // ---- Directory navigation ----
             TuiEvent::NavigateBack => self.navigate_back(state),
             TuiEvent::NavigateForward => self.navigate_forward(state),
+            // ---- Help overlay toggle ----
             TuiEvent::ToggleHelp => {
                 state.show_help = !state.show_help;
                 if state.show_help {
@@ -39,6 +51,7 @@ impl ActionHandler {
                     state.preview_mode = PreviewMode::FileContent;
                 }
             }
+            // ---- Search mode: incremental file filtering ----
             TuiEvent::ToggleSearch => {
                 state.search_mode = !state.search_mode;
                 if !state.search_mode {
@@ -57,6 +70,7 @@ impl ActionHandler {
                 state.search_mode = false;
                 state.search_query.clear();
             }
+            // ---- Lint actions that operate on the selected file/directory ----
             TuiEvent::ActionCheck => self.run_action(state, |lp, p, f| lp.check(p, f)),
             TuiEvent::ActionScan => self.run_action(state, |lp, p, _f| lp.scan(p)),
             TuiEvent::ActionFix => self.run_action(state, |lp, p, f| lp.fix(p, f)),
@@ -65,6 +79,7 @@ impl ActionHandler {
             TuiEvent::ActionSecurity => self.run_action(state, |lp, p, _f| lp.security(p)),
             TuiEvent::ActionDuplicates => self.run_action(state, |lp, p, _f| lp.duplicates(p)),
             TuiEvent::ActionDependencies => self.run_action(state, |lp, p, _f| lp.dependencies(p)),
+            // ---- Setup/global actions that don't need a selected path ----
             TuiEvent::ActionDoctor => self.run_action_no_path(state, |lp| lp.doctor()),
             TuiEvent::ActionInit => {
                 let flags = state.action_flags.clone();
@@ -85,10 +100,12 @@ impl ActionHandler {
             }
             TuiEvent::ActionAdapters => self.run_action_no_path(state, |lp| lp.adapters()),
             TuiEvent::ActionVersion => self.run_action_no_path(state, |lp| lp.version()),
+            // ---- Path input dialog: character-by-character editing ----
             TuiEvent::PathInput(ch) => state.path_input.push(ch),
             TuiEvent::PathBackspace => {
                 state.path_input.pop();
             }
+            // ---- Path dialog: confirm typed path ----
             TuiEvent::PathConfirm => {
                 let path = FilePath::new(state.path_input.clone()).unwrap_or_default();
                 if self.fs_port.is_valid_directory(&path) {
@@ -100,6 +117,7 @@ impl ActionHandler {
                     state.set_status("Invalid path");
                 }
             }
+            // ---- Path dialog: use CWD as project root ----
             TuiEvent::PathUseCurrent => {
                 let cwd = std::env::current_dir()
                     .map(|p| p.to_string_lossy().to_string())
@@ -109,6 +127,7 @@ impl ActionHandler {
                 state.show_path_dialog = false;
                 self.load_directory(state, &state.current_dir.clone());
             }
+            // ---- Quit and mouse scroll ----
             TuiEvent::Quit => state.should_quit = true,
             TuiEvent::MouseScrollUp => {
                 if state.scroll_offset > 0 {
@@ -122,6 +141,7 @@ impl ActionHandler {
         }
     }
 
+    /// Navigate to the parent directory, clamped to the project root boundary.
     fn navigate_back(&self, state: &mut AppState) {
         let current = FilePath::new(state.current_dir.clone()).unwrap_or_default();
         if let Some(parent) = self.fs_port.parent_directory(&current) {
@@ -132,6 +152,7 @@ impl ActionHandler {
         }
     }
 
+    /// Navigate into a directory or load a file preview.
     fn navigate_forward(&self, state: &mut AppState) {
         let path = state.selected_path();
         let is_dir = state.selected_entry().map(|e| e.is_dir).unwrap_or(false);
@@ -144,6 +165,8 @@ impl ActionHandler {
         }
     }
 
+    /// Load and sort a directory listing: directories first, then alphabetically.
+    /// Resets selection and scroll position after loading.
     pub fn load_directory(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
         state.entries = self.fs_port.list_directory(&fp);
@@ -158,6 +181,7 @@ impl ActionHandler {
         state.set_status(format!("Dir: {}", path));
     }
 
+    /// Read up to 100 lines of a file for inline preview.
     fn load_file_preview(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
         let max_lines = LineCount::new(100);
@@ -165,6 +189,7 @@ impl ActionHandler {
         state.preview_mode = PreviewMode::FileContent;
     }
 
+    /// Load preview for the currently selected entry if it's a file.
     pub fn load_preview(&self, state: &mut AppState) {
         let path = state.selected_path();
         let is_dir = state.selected_entry().map(|e| e.is_dir).unwrap_or(true);
@@ -173,6 +198,8 @@ impl ActionHandler {
         }
     }
 
+    /// Run a lint action that requires a selected path.
+    /// Dispatches to the lint port and stores result output + violation count in state.
     fn run_action<F>(&self, state: &mut AppState, action: F)
     where
         F: FnOnce(
@@ -194,6 +221,7 @@ impl ActionHandler {
         ));
     }
 
+    /// Run a global lint action that has no path parameter (e.g. doctor, version).
     fn run_action_no_path<F>(&self, state: &mut AppState, action: F)
     where
         F: FnOnce(&dyn ILintExecutorProtocol) -> LintExecutionResult,

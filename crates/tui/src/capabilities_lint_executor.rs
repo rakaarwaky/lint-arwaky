@@ -1,3 +1,7 @@
+// PURPOSE: Capabilities-layer lint executor — wraps ICodeAnalysisAggregate for the TUI.
+// Implements ILintExecutorProtocol, providing all lint action methods (check, scan, fix, ci, etc.)
+// with user-facing output formatting. Many actions delegate to the CLI for full pipeline execution.
+
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
@@ -5,6 +9,8 @@ use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use std::sync::Arc;
 
+/// LintExecutor — TUI-facing lint action provider.
+/// Delegates code analysis to ICodeAnalysisAggregate and formats results for display.
 pub struct LintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
 }
@@ -14,6 +20,7 @@ impl LintExecutor {
         Self { code_analysis }
     }
 
+    /// Format lint results into a human-readable numbered list for TUI preview panel.
     fn format_results(&self, results: &LintResultList) -> String {
         if results.is_empty() {
             return "No violations found.".to_string();
@@ -39,6 +46,8 @@ impl LintExecutor {
     }
 }
 
+/// ILintExecutorProtocol implementation — each method calls code_analysis then formats output.
+/// Methods like orphan/security/duplicates that require specialized analysis delegate to CLI.
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
         let results = self.code_analysis.run_code_analysis(path);
