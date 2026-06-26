@@ -29,6 +29,7 @@ ignored_paths:
   - "/.next"
   - "/coverage"
   - "/test-workspaces"
+  - "/tests"
 
 architecture:
   enabled: true

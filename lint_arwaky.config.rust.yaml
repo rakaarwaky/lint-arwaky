@@ -28,6 +28,7 @@ ignored_paths:
   - ".min.js"
   - ".min.css"
   - "/.dsc_cache"
+  - "/tests"
 
 architecture:
   enabled: true
