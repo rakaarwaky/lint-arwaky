@@ -79,3 +79,55 @@ impl IHookProtocol for HookManager {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_diff_data_both_missing_returns_missing_first() {
+        let manager = HookManager::new(Arc::new(MockAdapter));
+        let result = manager.get_diff_data("/nonexistent/a.rs", "/nonexistent/b.rs");
+        assert_eq!(result.status, GitDiffStatus::MissingFirst);
+    }
+
+    #[test]
+    fn get_diff_data_first_missing_second_exists() {
+        let manager = HookManager::new(Arc::new(MockAdapter));
+        if std::path::Path::new("Cargo.toml").exists() {
+            let result = manager.get_diff_data("/nonexistent/x.rs", "Cargo.toml");
+            assert_eq!(result.status, GitDiffStatus::MissingFirst);
+        }
+    }
+
+    #[test]
+    fn get_diff_data_both_exist_but_not_files() {
+        let manager = HookManager::new(Arc::new(MockAdapter));
+        let dir = std::env::temp_dir();
+        let result = manager.get_diff_data(
+            &dir.to_string_lossy(),
+            &dir.to_string_lossy(),
+        );
+        assert_eq!(result.status, GitDiffStatus::NotAFile);
+    }
+
+    #[test]
+    fn get_hook_manager_identity_returns_fixed() {
+        let manager = HookManager::new(Arc::new(MockAdapter));
+        let id = manager.get_hook_manager_identity();
+        assert_eq!(id.value(), "git_hook_manager");
+    }
+
+    struct MockAdapter;
+    #[async_trait::async_trait]
+    impl IHookManagerPort for MockAdapter {
+        async fn install_pre_commit(
+            &self, _executable_path: &FilePath,
+        ) -> Result<SuccessStatus, GitHookError> {
+            Ok(SuccessStatus::new(true))
+        }
+        async fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> {
+            Ok(SuccessStatus::new(true))
+        }
+    }
+}
