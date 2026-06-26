@@ -3,7 +3,7 @@ use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;
 #[test]
 fn test_error_code_new() {
     let ec = ErrorCode::new("E123").unwrap_or_default();
-    assert_eq!(ec.code, "E123");
+    assert_eq!(ec.code(), "E123");
     assert!(ec.is_style());
     assert!(!ec.is_logic());
     assert!(!ec.is_security());

@@ -1,4 +1,5 @@
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
+use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;

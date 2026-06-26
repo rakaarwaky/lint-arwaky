@@ -1,5 +1,5 @@
 use shared_lint_arwaky::role_rules::taxonomy_violation_role_vo::{AesRoleViolation, LabeledRoleViolation};
-use shared_lint_arwaky::taxonomy_language_vo::Language;
+use shared_lint_arwaky::code_analysis::taxonomy_violation_code_analysis_vo::Language;
 use shared_lint_arwaky::taxonomy_message_vo::LintMessage;
 
 fn labeled(v: AesRoleViolation, lang: Language) -> LabeledRoleViolation {

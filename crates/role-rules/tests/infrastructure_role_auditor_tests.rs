@@ -1,4 +1,5 @@
 use role_rules_lint_arwaky::capabilities_infrastructure_role_auditor::InfrastructureRoleChecker;
+use shared::role_rules::contract_infrastructure_role_protocol::IInfrastructureRoleChecker;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 

@@ -1,4 +1,4 @@
-use config_system_lint_arwaky::infrastructure_workspace_detector_provider::{WorkspaceType};
+use shared::config_system::contract_workspace_detector_port::WorkspaceType;
 
 #[test]
 fn test_workspace_detection_concept() {

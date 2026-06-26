@@ -1,7 +1,7 @@
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
 use async_trait::async_trait;
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
+use shared::project_setup::contract_setup_protocol::{ISetupInstallerPort, ISetupManagementProtocol};
 use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
 use std::sync::Arc;
 

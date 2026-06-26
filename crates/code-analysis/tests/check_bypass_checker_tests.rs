@@ -1,4 +1,5 @@
 use code_analysis_lint_arwaky::capabilities_check_bypass_checker::BypassChecker;
+use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::common::taxonomy_common_vo::PatternList;
 
 fn empty_violations() -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
