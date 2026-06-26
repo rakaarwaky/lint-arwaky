@@ -31,6 +31,27 @@ fn str_or<'a>(opt: Option<&'a str>, fallback: &'a str) -> &'a str {
     opt.map_or(fallback, |s| s)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn str_or_returns_value_when_some() {
+        assert_eq!(str_or(Some("hello"), "fallback"), "hello");
+    }
+
+    #[test]
+    fn str_or_returns_fallback_when_none() {
+        assert_eq!(str_or(None, "fallback"), "fallback");
+    }
+
+    #[test]
+    fn str_or_works_with_empty_strings() {
+        assert_eq!(str_or(Some(""), "fallback"), "");
+        assert_eq!(str_or(None, ""), "");
+    }
+}
+
 /// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
 /// Private helper — uses `Result::match` to avoid inline match patterns.
 fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
