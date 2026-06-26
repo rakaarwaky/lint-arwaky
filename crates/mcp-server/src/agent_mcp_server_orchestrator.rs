@@ -13,7 +13,7 @@
 // lint pipeline is synchronous (file I/O, regex matching) while the MCP
 // server event loop is async. spawn_blocking bridges the two worlds.
 use crate::contract_mcp_server_aggregate::IMcpServerAggregate;
-use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
+use crate::contract_mcp_server_aggregate::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
@@ -387,7 +387,7 @@ fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
+    use crate::contract_mcp_server_aggregate::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
     use rmcp::handler::server::wrapper::Parameters;
     use std::sync::Arc;
 
