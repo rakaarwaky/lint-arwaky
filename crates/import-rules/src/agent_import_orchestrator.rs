@@ -27,7 +27,7 @@ use std::sync::Arc;
 
 /// Returns `s` if `opt` is `Some`, otherwise returns `fallback`.
 /// Private helper — uses `Option::map_or` to avoid inline match patterns.
-pub(crate) fn str_or<'a>(opt: Option<&'a str>, fallback: &'a str) -> &'a str {
+pub fn str_or<'a>(opt: Option<&'a str>, fallback: &'a str) -> &'a str {
     opt.map_or(fallback, |s| s)
 }
 

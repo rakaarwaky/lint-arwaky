@@ -32,7 +32,7 @@ impl SuffixPrefixChecker {
         Self {}
     }
 
-    pub(crate) fn make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
+    pub fn make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
         let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         LintResult {
             file: file_path,
@@ -53,14 +53,14 @@ impl SuffixPrefixChecker {
         }
     }
 
-    pub(crate) fn is_barrel_file(filename: &str) -> bool {
+    pub fn is_barrel_file(filename: &str) -> bool {
         matches!(
             filename,
             "__init__.py" | "mod.rs" | "index.ts" | "index.js" | "index.tsx" | "index.jsx"
         )
     }
 
-    pub(crate) fn is_entry_point(filename: &str) -> bool {
+    pub fn is_entry_point(filename: &str) -> bool {
         matches!(
             filename,
             "__init__.py"
@@ -80,7 +80,7 @@ impl SuffixPrefixChecker {
         )
     }
 
-    pub(crate) fn get_stem(filename: &str) -> Option<String> {
+    pub fn get_stem(filename: &str) -> Option<String> {
         if let Some(pos) = filename.rfind('.') {
             Some(filename[..pos].to_string())
         } else {
@@ -88,7 +88,7 @@ impl SuffixPrefixChecker {
         }
     }
 
-    pub(crate) fn get_suffix(stem: &str) -> Option<String> {
+    pub fn get_suffix(stem: &str) -> Option<String> {
         stem.rfind('_').map(|pos| stem[pos + 1..].to_string())
     }
 
