@@ -1,4 +1,17 @@
 // PURPOSE: CheckCommandsSurface — CLI surface for check/scan commands
+//
+// This is the primary surface that coordinates the full lint pipeline.
+// The scan() method runs ALL linters in sequence:
+//   1. Code analysis (AES301-305)
+//   2. Naming rules (AES101-102)
+//   3. Import rules (AES201-205)
+//   4. External linters (Clippy, Ruff, ESLint, etc.)
+//   5. Role rules (AES401-406)
+//   6. Orphan detection (AES501-506)
+//
+// The OrchestratorFactory type enables the `scan` command to create
+// fresh per-project DI containers for each workspace member, so that
+// each member gets its own language-specific configuration.
 use std::sync::Arc;
 
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -71,6 +84,18 @@ impl CheckCommandsSurface {
     }
 
     /// Run AES analysis + external adapters on a target path.
+    ///
+    /// This is the core scan pipeline. It runs all 6 linter groups in the
+    /// same order every time:
+    ///   1. code-analysis (AES301-305) — file lines, bypass, mandatory defs
+    ///   2. naming (AES101-102) — suffix/prefix conventions
+    ///   3. imports (AES201-205) — mandatory, forbidden, unused, cycles
+    ///   4. external (Clippy, Ruff, ESLint) — subprocess-based linting
+    ///   5. roles (AES401-406) — layer-role violations
+    ///   6. orphans (AES501-506) — dead code detection via import graph
+    ///
+    /// If a factory is provided, per-project containers are created for
+    /// each workspace member (used by scan, not check).
     pub fn scan(&self, path: &str, filter: Option<&str>, config: ArchitectureConfig) {
         let path_obj = crate::surface_common_command::resolve_file_path(path);
         let rt = match crate::surface_common_command::create_runtime() {
@@ -116,11 +141,11 @@ impl CheckCommandsSurface {
         let external_results = rt.block_on(self.external_lint.scan_all(&path_obj2));
         all_results.extend(external_results.values);
 
-        // 4. Run role-rules audit (AES401, AES402, AES403, AES404, AES405, AES406)
+        // 5. Run role-rules audit (AES401-406: layer-role violations)
         let role_results = rt.block_on(role_orchestrator.run_audit(&path_obj));
         all_results.extend(role_results);
 
-        // 5. Run orphan detection
+        // 6. Run orphan detection (AES501-506: dead code via import graph)
         let orphan_results = self.run_orphan_detection_pass(
             path,
             &self.scanner_provider,
@@ -231,7 +256,18 @@ impl CheckCommandsSurface {
     }
 
     /// Scan with multi-workspace discovery.
-    /// If >1 workspaces found, show summary per workspace with violations grouped by code.
+    ///
+    /// For each discovered workspace member (Cargo.toml member, pyproject.toml
+    /// module, package.json workspace):
+    ///   1. Create per-project DI containers via OrchestratorFactory
+    ///   2. Run all 6 linter groups on the member
+    ///   3. Run orphan detection across ALL source files (cross-workspace)
+    ///   4. Filter results to that member's path
+    ///   5. Aggregate into global results
+    ///
+    /// Cross-workspace orphan detection is important: contracts defined in
+    /// `shared/` may be implemented in `import-rules/`, so the orphan graph
+    /// must span all workspace members.
     pub fn scan_with_discovery(&self, path: &str, filter: Option<&str>) {
         let path_obj = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,

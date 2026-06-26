@@ -1,4 +1,19 @@
 // PURPOSE: RsClippyAdapter — ILinterAdapterPort implementation for Clippy linting integration
+//
+// Executes `cargo clippy --message-format=json` as a subprocess, then parses
+// the JSON output line by line. Clippy outputs one JSON object per diagnostic
+// message, each containing spans (source locations), severity levels, and
+// lint codes.
+//
+// The adapter handles:
+//   - Finding the correct Cargo.toml parent directory
+//   - Parsing the JSON stream (filtering for compiler-message reasons)
+//   - Resolving relative file paths to absolute across workspaces
+//   - Converting Clippy severity levels to AES severity levels
+//   - Falling back to stderr if stdout is empty (Clippy sometimes outputs to stderr)
+//
+// NOTE: apply_fix runs `cargo clippy --fix` which modifies files in place.
+// This is the only adapter that supports auto-fix.
 use std::path::Path;
 use std::sync::Arc;
 

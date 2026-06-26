@@ -1,5 +1,10 @@
 // PURPOSE: RoleOrchestrator — dispatches files to correct role checker based on filename prefix
 //
+// The role orchestrator is unique among the feature agents: it doesn't
+// just delegate to checkers — it first classifies each file by its
+// filename prefix (taxonomy_, contract_, capabilities_, etc.), then
+// dispatches to the corresponding layer-specific role checker.
+//
 // ALGORITHM:
 //   1. run_all_role_checks iterates files, extracts filename prefix (first underscore-segment).
 //   2. Matches prefix to layer (taxonomy, contract, capabilities, infrastructure, agent,
@@ -61,6 +66,18 @@ impl RoleOrchestrator {
         })
     }
 
+    /// Run all AES401-406 role checks across all collected files.
+    ///
+    /// For each file, extracts the filename prefix (first underscore segment) to
+    /// determine which AES layer it belongs to, then dispatches to the appropriate
+    /// checker. Each layer has specific rules:
+    ///   - agent: file size, type annotations, container/orchestrator/lifecycle
+    ///   - surface: function count, smart vs utility vs passive classification
+    ///   - infrastructure: port implementation checks
+    ///   - contract: port vs protocol differentiation
+    ///   - capabilities: routing checks
+    ///   - taxonomy: entity, error, event, constant checks
+    ///   - root: no role checks (pure DI wiring)
     pub fn run_all_role_checks(
         &self,
         files: &[String],
@@ -74,6 +91,7 @@ impl RoleOrchestrator {
                 .and_then(|n| n.to_str())
                 .unwrap_or_default();
 
+            // Extract the AES layer prefix from the filename (e.g., "taxonomy_" -> "taxonomy")
             let stem = Path::new(filename)
                 .file_stem()
                 .and_then(|s| s.to_str())
@@ -90,6 +108,7 @@ impl RoleOrchestrator {
             let language = detector.detect(&fp).as_str().to_string();
             let source_vo = SourceContentVO::new(fp, content_vo, &language);
 
+            // Dispatch based on layer prefix — each layer has its own checker protocol
             match prefix {
                 "agent" => {
                     let checker = self.aggregate.agent();
@@ -103,10 +122,11 @@ impl RoleOrchestrator {
                         checker.check_lifecycle(&source_vo, violations);
                     }
                 }
-                "root" => {}
+                "root" => {} // Root layer (di containers, entries) has no role rules
                 "surfaces" | "surface" => {
                     let checker = self.aggregate.surface();
                     checker.check_fn_count_limit(&source_vo, violations);
+                    // Classify surface type for more specific checks
                     let is_smart = filename.contains("_command")
                         || filename.contains("_controller")
                         || filename.contains("_page")
@@ -147,7 +167,7 @@ impl RoleOrchestrator {
                     checker.check_event(&source_vo, violations);
                     checker.check_constant(&source_vo, violations);
                 }
-                _ => {}
+                _ => {} // Unknown prefix — skip (handled by other crates)
             }
         }
     }

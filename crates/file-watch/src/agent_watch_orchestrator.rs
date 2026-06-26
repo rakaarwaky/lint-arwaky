@@ -1,4 +1,17 @@
 // PURPOSE: WatchOrchestrator — coordinates watch → analyze → lint pipeline
+//
+// The watch mode provides real-time feedback: when a file changes on disk,
+// the watcher triggers a lint scan on that specific file and prints results.
+//
+// Architecture:
+//   1. Performs an initial full lint on startup (gives baseline)
+//   2. Starts the filesystem watcher (inotify on Linux, via `notify` crate)
+//   3. Event loop: receives file-change events, checks if the file is
+//      lintable (.rs, .py, .js, .ts, etc.), runs lint, prints results
+//   4. Graceful shutdown: Ctrl+C triggers AtomicBool flag, stops watcher
+//
+// The event loop uses tokio::select! for cancellability — the sleep branch
+// allows checking the running flag every 100ms without blocking on recv().
 use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;

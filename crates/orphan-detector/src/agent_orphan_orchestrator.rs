@@ -1,4 +1,18 @@
-// PURPOSE: IOrphanAggregate — aggregate trait implementing all orphan detection protocols
+// PURPOSE: ArchOrphanAnalyzer — aggregate implementing all 6 orphan detection protocols (AES501-506)
+//
+// Orphan detection works by building a full import dependency graph across
+// all source files, then tracing reachability from known entry points
+// (_container.rs, main.rs, lib.rs, index.ts, etc.). Files that are not
+// reachable are flagged as orphans.
+//
+// Each AES layer has its own orphan protocol (ITaxonomyOrphanProtocol for
+// AES501, IContractOrphanProtocol for AES502, etc.) because different
+// layers have different definition/reachability criteria:
+//   - Taxonomy:  checked via inbound links (imports from other files)
+//   - Contract:  checked via file definitions + inheritance map
+//   - Infrastructure/Capabilities: checked via alive set (reachability)
+//   - Agent:     checked via cross-file references
+//   - Surfaces:  checked via alive set + optional entry detection
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
@@ -82,6 +96,15 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     }
 
     /// Check orphans for all files in the given list via the checker aggregate for layer detection.
+    ///
+    /// This is the main orphan detection pipeline:
+    ///   1. Build the import graph context (all imports between files)
+    ///   2. Identify entry points (containers, main files, index files)
+    ///   3. Trace reachability from entry points via BFS on the import graph
+    ///   4. For each file not in the reachable set:
+    ///      a. Detect its AES layer from filename prefix
+    ///      b. Dispatch to layer-specific orphan protocol
+    ///      c. If the protocol confirms it's orphan, add violation with appropriate AES code
     fn check_orphans(
         &self,
         layer_detector: &dyn ILayerDetectionAggregate,
@@ -95,7 +118,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             .resolver
             .build_graph_context(std::slice::from_ref(&file_vo), root_dir);
 
-        // Trace reachability
+        // Trace reachability: BFS from all entry points through the import graph
         let configured = layer_detector.get_orphan_entry_points();
         let configured_vo = shared::orphan_detector::OrphanEntryPatternListVO::new(configured);
         let entry_points = self
@@ -104,7 +127,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let alive_files_set: Vec<String> =
             self._trace_reachability(&entry_points.values, &context.import_graph);
 
-        // Evaluate each file
+        // Evaluate each file: alive (reachable) vs orphan (unreachable)
         for f in files {
             let file_fp = match FilePath::new(f.clone()) {
                 Ok(fp) => fp,
@@ -120,11 +143,13 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 None => continue,
             };
 
+            // Skip files in the layer's exception list (e.g., mod.rs, __init__.py)
             let basename = file_fp.basename();
             if definition.exceptions.values.contains(&basename) {
                 continue;
             }
 
+            // Skip if orphan checking is disabled for this layer
             if !definition.orphan.check_orphan.value {
                 continue;
             }
@@ -133,6 +158,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             let res =
                 self._evaluate_layer(f, &context, &alive_files_set, &layer_vo, files, root_dir);
 
+            // If the layer-specific protocol confirms orphan status, emit the appropriate AES code
             if res.is_orphan {
                 let code = match layer_str.to_lowercase() {
                     s if s.contains(LAYER_TAXONOMY) => "AES501",
@@ -152,6 +178,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 }
 
 impl ArchOrphanAnalyzer {
+    /// Build a LintResult from orphan analysis output.
     fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
         LintResult {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
@@ -172,6 +199,8 @@ impl ArchOrphanAnalyzer {
         }
     }
 
+    /// BFS traversal of the import graph to find all reachable (alive) files.
+    /// Starting from entry points, follows imports to find all transitive dependencies.
     fn _trace_reachability(&self, entry_points: &[String], graph: &ImportGraph) -> Vec<String> {
         use std::collections::VecDeque;
 

@@ -1,4 +1,15 @@
 // PURPOSE: ESLintAdapter — ILinterAdapterPort implementation for ESLint integration
+//
+// Executes `npx eslint --format=json` as a subprocess and parses the
+// JSON output. ESLint outputs a JSON array of per-file results, each
+// containing an array of messages with rule IDs, severity, and location.
+//
+// Key handling:
+//   - Resolves the correct working directory (package.json parent)
+//   - Uses npx to find eslint (works for both local and global installs)
+//   - Mirrors Ruff adapter's path-fallback logic for consistency
+//   - Returns empty results for non-JS/TS files (no error)
+//   - Maps ESLint severity (1=warning, 2=error) to AES severity levels
 
 use serde_json::Value;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;

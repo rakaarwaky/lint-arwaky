@@ -1,4 +1,14 @@
 // PURPOSE: PyRuffAdapter — ILinterAdapterPort implementation for Ruff linter integration
+//
+// Executes `ruff check --output-format=json` as a subprocess and parses
+// the JSON output. Ruff outputs a JSON array of diagnostics with file paths,
+// line numbers, severity levels, and rule codes.
+//
+// Key handling:
+//   - Falls back to parent directory if target is a file (Ruff requires a directory)
+//   - Searches for pyproject.toml to determine the correct working directory
+//   - Maps Ruff severity levels (error/warning/info) to AES severity
+//   - Converts relative Ruff paths to absolute project paths
 
 use async_trait::async_trait;
 use serde_json::Value;
