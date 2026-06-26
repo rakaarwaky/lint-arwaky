@@ -78,16 +78,3 @@ impl IWorkspaceDetectorPort for WorkspaceDetector {
             .any(|dir| root.join(dir).is_dir())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_workspace_detection_concept() {
-        assert_eq!(WorkspaceType::Rust.as_str(), "rust");
-        assert_eq!(WorkspaceType::TypeScript.as_str(), "typescript");
-        assert_eq!(WorkspaceType::Python.as_str(), "python");
-        assert_eq!(WorkspaceType::Unknown.as_str(), "unknown");
-    }
-}

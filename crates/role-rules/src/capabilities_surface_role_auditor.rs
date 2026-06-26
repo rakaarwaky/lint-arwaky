@@ -581,7 +581,7 @@ impl SurfaceRoleChecker {
 // --- helpers -----------------------------------------------------------------
 
 /// Check if the file is a surface file by filename prefix `surface_` or `surfaces_` or directory `surfaces/`.
-fn is_in_surfaces(f: &FilePath) -> bool {
+pub fn is_in_surfaces(f: &FilePath) -> bool {
     let path_str = f.to_string();
     let basename = match path_str.rsplit('/').next() {
         Some(s) => s,
@@ -603,7 +603,7 @@ fn is_in_surfaces(f: &FilePath) -> bool {
 }
 
 /// Check if the file is a barrel/init file.
-fn is_init(f: &FilePath) -> bool {
+pub fn is_init(f: &FilePath) -> bool {
     let path_str = f.to_string();
     path_str.ends_with("__init__.py")
         || path_str.ends_with("mod.rs")
@@ -636,36 +636,5 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
         violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
     ) {
         self.check_fn_count_limit(source, violations);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{is_in_surfaces, is_init, FilePath};
-
-    #[test]
-    fn test_is_in_surfaces() {
-        let f = FilePath::new("src/surfaces/surface_handler.py")
-            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
-        assert!(is_in_surfaces(&f));
-
-        let f = FilePath::new("src/capabilities/capabilities_not_checker.py")
-            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
-        assert!(!is_in_surfaces(&f));
-
-        let f = FilePath::new("src/cli-commands/surface_check_command.rs")
-            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
-        assert!(is_in_surfaces(&f));
-    }
-
-    #[test]
-    fn test_is_init() {
-        let f = FilePath::new("src/surfaces/__init__.py")
-            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
-        assert!(is_init(&f));
-
-        let f = FilePath::new("src/surfaces/handler.py")
-            .unwrap_or_else(|_| FilePath::new(".").unwrap_or_default());
-        assert!(!is_init(&f));
     }
 }

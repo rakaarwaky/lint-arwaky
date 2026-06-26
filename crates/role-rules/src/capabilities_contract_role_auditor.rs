@@ -49,7 +49,7 @@ impl Default for ContractRoleChecker {
 /// (impl blocks, inherent impls, free functions) are intentionally ignored
 /// because the AES402 rule applies to the contract layer (port / protocol
 /// traits) — implementation details are an adapter concern.
-fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
+pub fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
     let mut results = Vec::new();
     let mut in_trait_depth: i32 = 0;
     let mut brace_depth: i32 = 0;
@@ -112,7 +112,7 @@ fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
 ///     (`Count`, `LineNumber`, `ColumnNumber`, `Duration`).
 ///   * `char` is FORBIDDEN — must use a domain VO if a single character is
 ///     ever needed (rare).
-fn signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
+pub fn signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
     let mut forbidden: Vec<&'static str> = Vec::new();
 
     let line = sig.trim();
@@ -434,103 +434,5 @@ impl IContractRoleChecker for ContractRoleChecker {
         violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
     ) {
         self.check_aggregate(source, def, violations);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn extracts_single_line_method_signatures() {
-        let src = "\
-pub trait IFoo {
-    fn a(&self) -> bool;
-    fn b(&self, x: &str) -> usize;
-    fn c(&self) -> Result<String, ErrorCode>;
-}
-";
-        let sigs = extract_trait_method_signatures(src);
-        assert_eq!(sigs.len(), 3);
-        assert!(sigs[0].1.contains("fn a"));
-        assert!(sigs[1].1.contains("fn b"));
-        assert!(sigs[2].1.contains("fn c"));
-    }
-
-    #[test]
-    fn ignores_free_functions_and_impls() {
-        let src = "\
-fn helper() -> String { ... }
-impl Foo {
-    pub fn method(&self) -> String { ... }
-}
-pub trait IFoo {
-    fn only(&self) -> usize;
-}
-";
-        let sigs = extract_trait_method_signatures(src);
-        assert_eq!(sigs.len(), 1);
-        assert!(sigs[0].1.contains("fn only"));
-    }
-
-    #[test]
-    fn detects_string_param() {
-        assert_eq!(
-            signature_uses_forbidden_primitive("fn f(&self, msg: String);"),
-            vec!["String"],
-        );
-    }
-
-    #[test]
-    fn detects_result_string() {
-        let v = signature_uses_forbidden_primitive(
-            "fn f(&self, p: &Path) -> Result<String, ErrorCode>;",
-        );
-        assert!(v.contains(&"String"));
-        assert!(v.contains(&"Result<String, _>"));
-    }
-
-    #[test]
-    fn detects_result_borrowed_str() {
-        let v =
-            signature_uses_forbidden_primitive("fn f(&self, p: &Path) -> Result<&str, ErrorCode>;");
-        assert!(v.contains(&"Result<&str, _>"));
-    }
-
-    #[test]
-    fn detects_numeric_primitives() {
-        assert!(signature_uses_forbidden_primitive("fn f(&self, n: i32) -> i64;").contains(&"i32"));
-        assert!(
-            signature_uses_forbidden_primitive("fn f(&self, n: usize) -> bool;").contains(&"usize")
-        );
-        assert!(signature_uses_forbidden_primitive("fn f(&self) -> f64;").contains(&"f64"));
-    }
-
-    #[test]
-    fn allows_borrowed_str() {
-        assert!(signature_uses_forbidden_primitive(
-            "fn f(&self, file: &str, content: &str) -> bool;"
-        )
-        .is_empty());
-    }
-
-    #[test]
-    fn allows_bool() {
-        assert!(signature_uses_forbidden_primitive("fn f(&self) -> bool;").is_empty());
-        assert!(signature_uses_forbidden_primitive("fn f(&self, flag: bool) -> bool;").is_empty());
-    }
-
-    #[test]
-    fn does_not_match_substring_of_identifier() {
-        // `StringBuilder` (an identifier) must NOT trigger String.
-        assert!(signature_uses_forbidden_primitive("fn f(&self, s: StringBuilder);").is_empty());
-        // `MyFloat` must NOT trigger float.
-        assert!(signature_uses_forbidden_primitive("fn f(&self, x: MyFloat);").is_empty());
-    }
-
-    #[test]
-    fn empty_signature_is_clean() {
-        assert!(signature_uses_forbidden_primitive("").is_empty());
-        assert!(signature_uses_forbidden_primitive("   ").is_empty());
     }
 }
