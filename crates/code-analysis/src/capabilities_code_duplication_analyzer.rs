@@ -53,12 +53,13 @@ impl CodeDuplicationAnalyzer {
     /// Instead of one violation per sliding-window match, calculates what % of a file's
     /// normalized windows also appear in other files. Only files exceeding `threshold_pct`
     /// are flagged — one violation per file.
+    /// Returns (file_path, violation) tuples so the caller can attach the file path.
     pub fn check_file_similarity(
         &self,
         files: &[String],
         min_dup_lines: usize,
         threshold_pct: f64,
-    ) -> Vec<AesCodeAnalysisViolation> {
+    ) -> Vec<(String, AesCodeAnalysisViolation)> {
         let detector = LanguageDetector::new();
         let entries = collect_file_entries(files, &detector);
         if entries.is_empty() {
@@ -139,9 +140,13 @@ impl CodeDuplicationAnalyzer {
                     ));
                 }
 
-                violations.push(AesCodeAnalysisViolation::CodeDuplication {
-                    reason: Some(LintMessage::new(msg)),
-                });
+                let file_path = _path.display().to_string();
+                violations.push((
+                    file_path,
+                    AesCodeAnalysisViolation::CodeDuplication {
+                        reason: Some(LintMessage::new(msg)),
+                    },
+                ));
             }
         }
 
@@ -177,30 +182,36 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
         };
         let threshold_pct = config
             .rules
-            .first()
-            .and_then(|r| r.code_analysis.duplication_threshold)
+            .iter()
+            .find(|r| r.rule_type.to_string() == "AES305")
+            .map(|r| {
+                if r.code_analysis.min_lines.value > 0 {
+                    r.code_analysis.min_lines.value as f64
+                } else {
+                    50.0
+                }
+            })
             .unwrap_or(50.0);
 
-        let src_fp = match FilePath::new(src.to_string_lossy().to_string()) {
-            Ok(fp) => fp,
+        let dir_path = match shared::common::taxonomy_path_vo::DirectoryPath::new(
+            src.to_string_lossy().to_string(),
+        ) {
+            Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(r) => r,
-            Err(_) => return Vec::new(),
-        };
-
-        let all_files = rt.block_on(fs.walk(&src_fp, Some(&ignored)));
-        let file_strs: Vec<String> = all_files.values.iter().map(|fp| fp.value.clone()).collect();
+        let source_files =
+            crate::agent_code_analysis_orchestrator::collect_source_files(&src, &dir_path, &ignored);
+        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         self.check_file_similarity(&file_strs, min_lines, threshold_pct)
+            .into_iter()
+            .map(|(_, v)| v)
+            .collect()
     }
 }
 
-/// File content + path, ready for the sliding-window scan.
+/// Collect file entries: (PathBuf, content_string) for each lintable file.
 type FileEntry = (PathBuf, String);
 
-/// Read each input file via std::fs; skip non-lintable / unreadable files.
 fn collect_file_entries(files: &[String], detector: &LanguageDetector) -> Vec<FileEntry> {
     let mut out = Vec::new();
     for file_str in files {
@@ -249,56 +260,43 @@ fn scan_duplicate_blocks(entries: Vec<FileEntry>, min_lines: usize) -> Vec<Vec<(
         }
         for (idx, w) in lines.windows(min_lines).enumerate() {
             let key = normalize_window(w);
-            blocks.entry(key).or_default().push((path.clone(), idx + 1));
+            blocks
+                .entry(key)
+                .or_default()
+                .push((path.clone(), idx + 1));
         }
     }
-    blocks.into_values().filter(|v| v.len() > 1).collect()
+    blocks
+        .into_values()
+        .filter(|locs| {
+            let unique_files: HashSet<_> = locs.iter().map(|(p, _)| p).collect();
+            unique_files.len() > 1
+        })
+        .collect()
 }
 
-/// Convert the grouped duplicate windows into AesCodeAnalysisViolation messages,
-/// appending a summary violation when any duplicates were found.
+/// Build violation list from duplicated blocks.
 fn build_violations(
-    duplicates: &[Vec<(PathBuf, usize)>],
+    blocks: &[Vec<(PathBuf, usize)>],
     total_loc: usize,
-    min_lines: usize,
+    min_dup_lines: usize,
 ) -> Vec<AesCodeAnalysisViolation> {
-    let mut violations = Vec::new();
-    for locations in duplicates {
-        let msg = format!(
-            "Duplicate block found across {} files (similarity ~{}%). Locations: {}",
-            locations.len(),
-            100usize
-                .saturating_sub(locations.len().saturating_sub(1) * 5)
-                .min(100),
-            locations
-                .iter()
-                .take(3)
-                .map(|(p, l)| format!("{}:{}", p.display(), l))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-        violations.push(AesCodeAnalysisViolation::CodeDuplication {
-            reason: Some(LintMessage::new(msg)),
-        });
+    if blocks.is_empty() || total_loc == 0 {
+        return Vec::new();
     }
-
-    if !duplicates.is_empty() {
-        let total_dup_lines = duplicates.len() * min_lines;
-        let pct = if total_loc > 0 {
-            total_dup_lines as f64 / total_loc as f64 * 100.0
-        } else {
-            0.0
-        };
-        violations.push(AesCodeAnalysisViolation::CodeDuplication {
-            reason: Some(LintMessage::new(format!(
-                "Summary: {} duplicate blocks ({} lines) out of {} total LOC ({:.1}%)",
-                duplicates.len(),
-                total_dup_lines,
-                total_loc,
-                pct,
-            ))),
-        });
+    let dup_lines: usize = blocks
+        .iter()
+        .map(|b| b.len() * min_dup_lines)
+        .sum();
+    let pct = dup_lines as f64 / total_loc as f64 * 100.0;
+    if pct < 10.0 {
+        return Vec::new();
     }
-
-    violations
+    vec![AesCodeAnalysisViolation::CodeDuplication {
+        reason: Some(LintMessage::new(format!(
+            "AES305: {:.1}% of lines appear in duplicate blocks across {} files.",
+            pct,
+            blocks.len()
+        ))),
+    }]
 }

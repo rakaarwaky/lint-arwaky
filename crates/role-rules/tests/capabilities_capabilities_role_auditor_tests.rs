@@ -57,7 +57,7 @@ fn rust_with_protocol_but_no_impl_emits_routing_violation() {
     let mut violations = Vec::new();
     let src = make_source(
         "capabilities_file_checker.rs",
-        "use shared::capabilities::contract_file_protocol::IFileChecker;\npub struct FileChecker;\n// Missing impl IFileChecker for FileChecker",
+        "use shared::capabilities::contract_file_protocol::IFileChecker;\npub struct FileChecker;\n// Missing: struct has no trait impl",
         "rust",
     );
     checker.check_capability_routing(&src, "capabilities", &mut violations);
@@ -113,7 +113,7 @@ fn js_with_protocol_import_and_class_no_violation() {
     let mut violations = Vec::new();
     let src = make_source(
         "capabilities_user_checker.ts",
-        "import { IUserChecker } from './_protocol'\nclass UserChecker implements IUserChecker {\n    check(): void {}\n}",
+        "import { IUserChecker } from './_protocol'\nclass UserChecker implements IUserChecker {\n    public check(): void {}\n}",
         "javascript",
     );
     checker.check_capability_routing(&src, "capabilities", &mut violations);

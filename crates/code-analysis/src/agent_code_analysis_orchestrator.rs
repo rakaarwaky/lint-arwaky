@@ -232,9 +232,9 @@ impl CodeAnalysisOrchestrator {
             min_dup_lines,
             threshold_pct,
         );
-        for dv in dup_violations {
+        for (file_path, dv) in dup_violations {
             violations.push(LintResult::new_arch(
-                "",
+                &file_path,
                 0,
                 "AES305",
                 Severity::HIGH,

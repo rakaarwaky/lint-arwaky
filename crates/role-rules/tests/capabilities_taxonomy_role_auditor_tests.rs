@@ -98,7 +98,7 @@ fn event_with_primitives_emits_violations() {
     let mut violations = Vec::new();
     let src = make_source(
         "taxonomy_scan_event.rs",
-        "pub struct ScanEvent { pub path: String }",
+        "pub struct ScanEvent {\n    pub path: String,\n}",
         "rust",
     );
     checker.check_event(&src, &mut violations);
@@ -168,7 +168,7 @@ fn python_entity_with_primitives_emits_violations() {
     let mut violations = Vec::new();
     let src = make_source(
         "taxonomy_user_entity.py",
-        "class UserEntity:\n    name: str\n    age: int",
+        "class UserEntity:\n    name: str,\n    age: int,",
         "python",
     );
     checker.check_entity(&src, &mut violations);

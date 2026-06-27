@@ -684,6 +684,7 @@ architecture:
 
     AES501:
       enabled: true
+      check_orphan: true
       scope: ["taxonomy"]
       entry_points:
         [
@@ -697,6 +698,7 @@ architecture:
 
     AES502:
       enabled: true
+      check_orphan: true
       scope: ["contract"]
       entry_points:
         [
@@ -710,6 +712,7 @@ architecture:
 
     AES503:
       enabled: true
+      check_orphan: true
       scope: ["capabilities"]
       entry_points:
         [
@@ -723,6 +726,7 @@ architecture:
 
     AES504:
       enabled: true
+      check_orphan: true
       scope: ["infrastructure"]
       entry_points:
         [
@@ -736,6 +740,7 @@ architecture:
 
     AES505:
       enabled: true
+      check_orphan: true
       scope: ["agent"]
       entry_points:
         [
@@ -750,6 +755,7 @@ architecture:
 
     AES506:
       enabled: true
+      check_orphan: true
       scope: ["surfaces"]
       entry_points:
         [
