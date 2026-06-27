@@ -265,10 +265,7 @@ fn scan_duplicate_blocks(entries: Vec<FileEntry>, min_lines: usize) -> Vec<Vec<(
     }
     blocks
         .into_values()
-        .filter(|locs| {
-            let unique_files: HashSet<_> = locs.iter().map(|(p, _)| p).collect();
-            unique_files.len() > 1
-        })
+        .filter(|locs| locs.len() >= 2)
         .collect()
 }
 
@@ -289,11 +286,22 @@ fn build_violations(
     if pct < 10.0 {
         return Vec::new();
     }
+    let mut locations: Vec<String> = blocks
+        .iter()
+        .flat_map(|b| {
+            b.iter()
+                .map(|(path, line)| format!("{}:{}", path.display(), line))
+        })
+        .collect();
+    locations.sort();
+    locations.dedup();
     vec![AesCodeAnalysisViolation::CodeDuplication {
         reason: Some(LintMessage::new(format!(
-            "AES305: {:.1}% of lines appear in duplicate blocks across {} files.",
+            "AES305: Duplicate block ({} lines) at {} — {:.1}% of total across {} occurrence(s).",
+            min_dup_lines,
+            locations.join(", "),
             pct,
-            blocks.len()
+            blocks.iter().map(|b| b.len()).sum::<usize>()
         ))),
     }]
 }
