@@ -583,3 +583,103 @@ fn test_doctor_with_maintenance_returns_real_diagnostics() {
         "Should NOT show CLI stub when maintenance is wired"
     );
 }
+// ---------------------------------------------------------------------------
+// Git hook tests
+// ---------------------------------------------------------------------------
+
+struct MockHookPort {
+    install_ok: bool,
+    uninstall_ok: bool,
+}
+
+impl MockHookPort {
+    fn success() -> Self {
+        Self { install_ok: true, uninstall_ok: true }
+    }
+    fn install_error() -> Self {
+        Self { install_ok: false, uninstall_ok: true }
+    }
+    fn uninstall_error() -> Self {
+        Self { install_ok: true, uninstall_ok: false }
+    }
+}
+
+impl shared::git_hooks::contract_manager_port::IHookManagerPort for MockHookPort {
+    fn install_pre_commit(
+        &self,
+        _executable_path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Result<shared::mcp_server::taxonomy_job_vo::SuccessStatus, shared::git_hooks::taxonomy_hook_error::GitHookError> {
+        if self.install_ok {
+            Ok(shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(true))
+        } else {
+            Err(shared::git_hooks::taxonomy_hook_error::GitHookError::new(
+                shared::common::taxonomy_message_vo::LintMessage::new("hook installation failed".to_string()),
+            ))
+        }
+    }
+    fn uninstall_pre_commit(
+        &self,
+    ) -> Result<shared::mcp_server::taxonomy_job_vo::SuccessStatus, shared::git_hooks::taxonomy_hook_error::GitHookError> {
+        if self.uninstall_ok {
+            Ok(shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(true))
+        } else {
+            Err(shared::git_hooks::taxonomy_hook_error::GitHookError::new(
+                shared::common::taxonomy_message_vo::LintMessage::new("hook removal failed".to_string()),
+            ))
+        }
+    }
+}
+
+#[test]
+fn test_install_hook_with_port_success() {
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+        .with_hook_port(Arc::new(MockHookPort::success()));
+    let result = executor.install_hook();
+    assert!(result.success);
+    assert!(result.output.contains("installed successfully"));
+}
+
+#[test]
+fn test_install_hook_with_port_error() {
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+        .with_hook_port(Arc::new(MockHookPort::install_error()));
+    let result = executor.install_hook();
+    assert!(!result.success);
+    assert!(result.output.contains("Git pre-commit hook installation failed"));
+    assert!(result.output.contains("hook installation failed"));
+}
+
+#[test]
+fn test_install_hook_without_port_falls_back_to_stub() {
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()));
+    let result = executor.install_hook();
+    assert!(result.success);
+    assert!(result.output.contains("lint-arwaky-cli install-hook"));
+}
+
+#[test]
+fn test_uninstall_hook_with_port_success() {
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+        .with_hook_port(Arc::new(MockHookPort::success()));
+    let result = executor.uninstall_hook();
+    assert!(result.success);
+    assert!(result.output.contains("removed successfully"));
+}
+
+#[test]
+fn test_uninstall_hook_with_port_error() {
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+        .with_hook_port(Arc::new(MockHookPort::uninstall_error()));
+    let result = executor.uninstall_hook();
+    assert!(!result.success);
+    assert!(result.output.contains("Git pre-commit hook removal failed"));
+    assert!(result.output.contains("hook removal failed"));
+}
+
+#[test]
+fn test_uninstall_hook_without_port_falls_back_to_stub() {
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()));
+    let result = executor.uninstall_hook();
+    assert!(result.success);
+    assert!(result.output.contains("lint-arwaky-cli uninstall-hook"));
+}
