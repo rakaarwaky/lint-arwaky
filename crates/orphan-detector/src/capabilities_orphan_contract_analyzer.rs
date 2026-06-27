@@ -206,8 +206,8 @@ pub fn is_contract_orphan(
     OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
 }
 
-fn extract_contract_trait_name(content: &str) -> Option<String> {
-    let re_rust = Regex::new(r"pub\s+trait\s+([A-Za-z0-9_]+)").ok()?;
+pub fn extract_contract_trait_name(content: &str) -> Option<String> {
+    let re_rust = Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok()?;
     let re_py = Regex::new(r"class\s+([A-Za-z0-9_]+)").ok()?;
     let re_ts_interface = Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok()?;
     let re_interface = Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok()?;

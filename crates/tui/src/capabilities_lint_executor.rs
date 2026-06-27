@@ -429,7 +429,7 @@ impl ILintExecutorProtocol for LintExecutor {
                 let security_names = ["cargo-audit", "bandit"];
                 let security_results: LintResultList = LintResultList::new(
                     results.values.iter()
-                        .filter(|r| r.source.as_ref().map_or(false, |s| security_names.iter().any(|n| s.contains(n))))
+                        .filter(|r| r.source.as_ref().is_some_and(|s| security_names.iter().any(|n| s.contains(n))))
                         .cloned()
                         .collect(),
                 );

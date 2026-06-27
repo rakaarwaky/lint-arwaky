@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use import_rules_lint_arwaky::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::import_rules::contract_rule_protocol::IArchRuleProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_common_vo::{LineNumber, PatternList};
 use shared::common::taxonomy_message_vo::LintMessage;
@@ -125,9 +125,9 @@ impl IImportParserPort for MockForbiddenParser {
 
 fn make_def(forbidden: Vec<&str>, allowed: Vec<&str>, exceptions: Vec<&str>) -> LayerDefinition {
     LayerDefinition {
-        forbidden: PatternList::new(forbidden.into_iter().map(|s| s.to_string()).collect()),
-        allowed: PatternList::new(allowed.into_iter().map(|s| s.to_string()).collect()),
-        exceptions: PatternList::new(exceptions.into_iter().map(|s| s.to_string()).collect()),
+        forbidden: PatternList::new(forbidden.to_vec()),
+        allowed: PatternList::new(allowed.to_vec()),
+        exceptions: PatternList::new(exceptions.to_vec()),
         ..LayerDefinition::default()
     }
 }
@@ -168,7 +168,7 @@ fn forbidden_surfaces_default_forbidden_list() {
     let def = make_def(vec![], vec!["shared"], vec![]);
     checker.check_forbidden_imports("src/surface_command.rs", "surfaces", &def, &mut violations);
     assert_eq!(violations.len(), 1, "surfaces defaults should forbid agent imports");
-    assert!(violations[0].code.value().contains("AES201"));
+    assert!(violations[0].code.to_string().contains("AES201"));
 }
 
 #[test]
@@ -238,7 +238,7 @@ fn scope_forbidden_skip_exception() {
             name: "test-rule".to_string().into(),
             scope: "agent(orchestrator)".to_string().into(),
             forbidden: PatternList::new(vec!["infrastructure".to_string()]),
-            allowed: PatternList::new(vec![]),
+            allowed: PatternList::default(),
             exceptions: PatternList::new(vec!["skip_me.rs".to_string()]),
             ..ArchitectureRule::default()
         }],

@@ -38,12 +38,12 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
 }
 
 /// Get surface suffix from filename
-fn get_surface_suffix(basename: &str) -> String {
+pub fn get_surface_suffix(basename: &str) -> String {
     file_suffix(basename)
 }
 
 /// Surface category
-fn surface_category(suffix: &str) -> &'static str {
+pub fn surface_category(suffix: &str) -> &'static str {
     match suffix {
         "command" | "controller" | "page" => "smart",
         "hook" | "store" | "action" | "screen" | "router" => "utility",

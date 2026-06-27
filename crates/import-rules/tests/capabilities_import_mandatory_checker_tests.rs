@@ -9,6 +9,7 @@ use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::contract_rule_protocol::IArchRuleProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::taxonomy_definition_vo::LayerDefinition;
@@ -124,8 +125,8 @@ impl IImportParserPort for MockMandatoryParser {
 
 fn make_def(mandatory: Vec<&str>, exceptions: Vec<&str>) -> LayerDefinition {
     LayerDefinition {
-        mandatory: PatternList::new(mandatory.into_iter().map(|s| s.to_string()).collect()),
-        exceptions: PatternList::new(exceptions.into_iter().map(|s| s.to_string()).collect()),
+        mandatory: PatternList::new(mandatory.to_vec()),
+        exceptions: PatternList::new(exceptions.to_vec()),
         ..LayerDefinition::default()
     }
 }
@@ -177,7 +178,7 @@ fn mandatory_missing_import_detected() {
     let def = make_def(vec!["shared"], vec![]);
     checker.check_mandatory_imports("src/capabilities_processor.rs", &def, &mut violations);
     assert_eq!(violations.len(), 1, "missing mandatory import should be flagged");
-    assert!(violations[0].code.value().contains("AES202"));
+    assert!(violations[0].code.to_string().contains("AES202"));
 }
 
 #[test]
@@ -216,7 +217,7 @@ fn scope_mandatory_skips_rules_with_empty_mandatory() {
         rules: vec![ArchitectureRule {
             name: "no-mandatory".to_string().into(),
             scope: "capabilities(processor)".to_string().into(),
-            mandatory: PatternList::new(vec![]),
+            mandatory: PatternList::default(),
             ..ArchitectureRule::default()
         }],
         ..ArchitectureConfig::default()
@@ -229,5 +230,5 @@ fn scope_mandatory_skips_rules_with_empty_mandatory() {
 fn rule_name_is_aes202() {
     let parser = MockMandatoryParser::new();
     let checker = ArchImportMandatoryChecker::new(Arc::new(parser));
-    assert_eq!(checker.rule_name().value(), "AES202");
+    assert_eq!(checker.rule_name().to_string(), "AES202");
 }

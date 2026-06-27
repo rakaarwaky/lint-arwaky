@@ -97,19 +97,11 @@ fn make_executor(mock: MockCodeAnalysis) -> LintExecutor {
 
 struct MockFixOrchestrator {
     output: String,
-    success: bool,
 }
 impl MockFixOrchestrator {
-    fn success(output: &str) -> Self {
+    fn new(output: &str) -> Self {
         Self {
             output: output.to_string(),
-            success: true,
-        }
-    }
-    fn failure(output: &str) -> Self {
-        Self {
-            output: output.to_string(),
-            success: false,
         }
     }
 }
@@ -341,7 +333,7 @@ fn test_format_results_with_violations() {
 fn test_fix_with_orchestrator_live() {
     let executor = make_executor_with_fix(
         MockCodeAnalysis::with_violations(3, false),
-        MockFixOrchestrator::success("Fixed 2 violations automatically (1 remaining)"),
+        MockFixOrchestrator::new("Fixed 2 violations automatically (1 remaining)"),
     );
     let flags = ActionFlags::default();
     let result = executor.fix("/some/path", &flags);
@@ -354,7 +346,7 @@ fn test_fix_with_orchestrator_live() {
 fn test_fix_with_orchestrator_dry_run() {
     let executor = make_executor_with_fix(
         MockCodeAnalysis::with_violations(5, false),
-        MockFixOrchestrator::success("Dry-run: would fix 3 violations"),
+        MockFixOrchestrator::new("Dry-run: would fix 3 violations"),
     );
     let mut flags = ActionFlags::default();
     flags.dry_run = true;
@@ -389,7 +381,7 @@ fn test_fix_without_orchestrator_dry_run_shows_stub() {
 fn test_new_with_fix_preserves_code_analysis() {
     let executor = make_executor_with_fix(
         MockCodeAnalysis::with_violations(3, false),
-        MockFixOrchestrator::success("ok"),
+        MockFixOrchestrator::new("ok"),
     );
     let flags = ActionFlags::default();
     let result = executor.check("/root", &flags);
@@ -443,7 +435,7 @@ fn test_install_with_setup_aggregate_python_project() {
     let mock = MockSetupAggregate::new("rust");
     let executor = LintExecutor::new_with_setup(
         Arc::new(MockCodeAnalysis::empty()),
-        Arc::new(MockFixOrchestrator::success("ok")),
+        Arc::new(MockFixOrchestrator::new("ok")),
         Arc::new(mock),
     );
     let flags = ActionFlags::default();
@@ -462,7 +454,7 @@ fn test_install_with_setup_aggregate_js_project() {
     let mock = MockSetupAggregate::new("javascript");
     let executor = LintExecutor::new_with_setup(
         Arc::new(MockCodeAnalysis::empty()),
-        Arc::new(MockFixOrchestrator::success("ok")),
+        Arc::new(MockFixOrchestrator::new("ok")),
         Arc::new(mock),
     );
     let flags = ActionFlags::default();
@@ -480,7 +472,7 @@ fn test_install_with_setup_aggregate_python_failure() {
     mock.py_success = false;
     let executor = LintExecutor::new_with_setup(
         Arc::new(MockCodeAnalysis::empty()),
-        Arc::new(MockFixOrchestrator::success("ok")),
+        Arc::new(MockFixOrchestrator::new("ok")),
         Arc::new(mock),
     );
     let flags = ActionFlags::default();

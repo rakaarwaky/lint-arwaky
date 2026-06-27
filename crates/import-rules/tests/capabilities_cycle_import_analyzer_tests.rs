@@ -1,5 +1,6 @@
 use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
-use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ConfigEnabled};
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::taxonomy_common_vo::BooleanVO;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
@@ -87,7 +88,7 @@ impl IImportParserPort for MockCycleParser {
     fn extract_used_symbols(&self, _content: &str, _imported: &HashMap<Identity, Identity>) -> HashSet<Identity> { HashSet::new() }
     fn find_import_line_number(&self, _content: &str, _alias: &str) -> LineNumber { LineNumber::new(0) }
     fn extract_rust_js_imports(&self, _content: &str) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn is_name_used(&self, _name: &str, _content: &str, _exclude_line: usize) -> bool { false }
+    fn is_name_used(&self, _name: &str, _content: &str, _exclude_line: LineNumber) -> bool { false }
 }
 
 // ---------------------------------------------------------------------------
@@ -97,7 +98,7 @@ impl IImportParserPort for MockCycleParser {
 #[test]
 fn no_edges_no_violations() {
     let config = ArchitectureConfig {
-        enabled: ConfigEnabled::new(true),
+        enabled: BooleanVO::new(true),
         ..Default::default()
     };
     let parser = Arc::new(MockCycleParser {
@@ -107,7 +108,7 @@ fn no_edges_no_violations() {
     let analyzer = DependencyCycleAnalyzer::new(config, parser);
     // A dummy IAnalyzer is needed — the scan method requires it
     // For now, we test that the DependencyEdge struct and cycle detection concepts work
-    let edge = DependencyEdge::new("capabilities", "surfaces");
+    let edge = DependencyEdge::new("capabilities".to_string(), "surfaces".to_string());
     assert_eq!(edge.source, "capabilities");
     assert_eq!(edge.target, "surfaces");
 }

@@ -34,7 +34,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 
 /// Extract aggregate trait names from agent file content.
 /// Looks for: impl IAggregateTrait for Struct, Box<dyn IAggregateTrait>, Arc<dyn IAggregateTrait>
-fn extract_aggregate_traits(content: &str) -> Vec<String> {
+pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
     let mut traits = Vec::new();
 
     // Rust: impl ITrait for Struct

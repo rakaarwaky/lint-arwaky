@@ -2572,7 +2572,7 @@ dependencies = [
 
 [[package]]
 name = "lint_arwaky-arwaky"
-version = "1.10.64"
+version = "1.10.65"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2968,6 +2968,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tokio",
 ]
 
 [[package]]

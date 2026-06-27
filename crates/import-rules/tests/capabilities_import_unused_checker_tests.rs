@@ -154,11 +154,12 @@ fn check_unused_imports_detects_unused_rust_import() {
     parser.rust_js_imports = vec![(SymbolName::new("HashMap"), LineNumber::new(1))];
     parser.name_used = false;
 
+    let content = parser.content.clone();
     let checker = UnusedImportRuleChecker::new(Arc::new(parser));
     let mut violations = vec![];
-    checker.check_unused_imports("test.rs", &parser.content, &mut violations);
+    checker.check_unused_imports("test.rs", &content, &mut violations);
     assert_eq!(violations.len(), 1, "unused Rust import should be flagged");
-    assert!(violations[0].code.value().contains("AES203"));
+    assert!(violations[0].code.to_string().contains("AES203"));
 }
 
 #[test]
@@ -168,8 +169,9 @@ fn check_unused_imports_used_rust_import_no_violation() {
     parser.rust_js_imports = vec![(SymbolName::new("HashMap"), LineNumber::new(1))];
     parser.name_used = true;
 
+    let content = parser.content.clone();
     let checker = UnusedImportRuleChecker::new(Arc::new(parser));
     let mut violations = vec![];
-    checker.check_unused_imports("test.rs", &parser.content, &mut violations);
+    checker.check_unused_imports("test.rs", &content, &mut violations);
     assert!(violations.is_empty(), "used import should not flag");
 }
