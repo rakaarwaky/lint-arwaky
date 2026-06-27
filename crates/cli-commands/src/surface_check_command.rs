@@ -339,7 +339,7 @@ impl CheckCommandsSurface {
                     eprintln!("  - {} ({})", name, ws.workspace_type);
                 }
                 eprintln!();
-                eprintln!("Usage: lint-arwaky scan {path} --member <name>");
+                eprintln!("Usage: lint-arwaky-cli scan {path} --member <name>");
                 return;
             }
             filtered
@@ -513,7 +513,7 @@ impl CheckCommandsSurface {
                 println!("  Scan Individual Members");
                 println!("============================================================");
                 println!("  To scan a specific workspace member:");
-                println!("    lint-arwaky scan {path} --member <name>");
+                println!("    lint-arwaky-cli scan . --member <name>");
                 println!();
                 println!("  Available members:");
                 for ws in &workspaces {
@@ -525,7 +525,7 @@ impl CheckCommandsSurface {
                 }
                 println!();
                 println!("  Filter by AES rule code:");
-                println!("    lint-arwaky scan {path} --filter AES204");
+                println!("    lint-arwaky-cli scan . --filter AES204");
             }
         }
     }
