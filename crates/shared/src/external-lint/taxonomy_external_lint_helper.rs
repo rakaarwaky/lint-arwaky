@@ -100,12 +100,15 @@ pub async fn noop_apply_fix() -> Result<ComplianceStatus, LinterOperationError> 
 
 /// Return true if the given path contains any Python (`.py`) files.
 ///
-/// Recursively walks directories, short-circuiting at the first `.py` file found.
-/// If `path` itself is a `.py` file, returns true immediately.
+/// For existing directories: recursively walks, short-circuiting at the first `.py`
+/// file found. For non-existent paths: checks the filename extension — if it ends
+/// in `.py` the path is treated as having a Python file (letting the tool itself
+/// handle the missing-file error).
 pub fn has_python_files(path: &FilePath) -> bool {
     let p = std::path::Path::new(&path.value);
     if !p.exists() {
-        return false;
+        // Non-existent path — check by extension (e.g. "foo.py" for test mocks)
+        return p.extension().map(|e| e == "py").unwrap_or(false);
     }
     if p.is_file() {
         return p.extension().map(|e| e == "py").unwrap_or(false);

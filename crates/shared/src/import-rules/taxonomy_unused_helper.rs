@@ -92,7 +92,8 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
                         }
                     }
                 } else {
-                    let name = use_part.rsplit("::").next().unwrap_or(use_part);
+                    let raw_name = use_part.rsplit("::").next().unwrap_or(use_part);
+                    let name = raw_name.split(" as ").last().unwrap_or(raw_name).trim();
                     if !name.is_empty() && name != "*" {
                         aliases.insert(Identity::new(name), Identity::new(use_part));
                     }

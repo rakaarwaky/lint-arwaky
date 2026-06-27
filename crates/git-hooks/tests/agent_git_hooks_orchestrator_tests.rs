@@ -22,9 +22,23 @@ impl IDiffProtocol for MockDiff {
         LintResultList::default()
     }
     async fn get_diff(&self, _path: &FilePath) -> GitDiffResultVO {
-        GitDiffResultVO::default()
+        use shared::common::taxonomy_common_vo::Count;
+        use shared::common::taxonomy_paths_vo::FilePathList;
+        use shared::common::taxonomy_paths_vo::RenamedFileList;
+        GitDiffResultVO::new(
+            FilePathList::default(),
+            FilePathList::default(),
+            FilePathList::default(),
+            RenamedFileList::new(vec![]),
+            FilePathList::default(),
+            FilePathList::default(),
+            Count::new(0),
+        )
     }
-    async fn get_changed_files(&self, _path: &FilePath) -> shared::common::taxonomy_paths_vo::FilePathList {
+    async fn get_changed_files(
+        &self,
+        _path: &FilePath,
+    ) -> shared::common::taxonomy_paths_vo::FilePathList {
         shared::common::taxonomy_paths_vo::FilePathList::default()
     }
     async fn get_default_branch(&self, _path: &FilePath) -> String {
@@ -43,14 +57,24 @@ impl IHookProtocol for MockHook {
     fn get_hook_manager_identity(&self) -> shared::taxonomy_layer_vo::Identity {
         shared::taxonomy_layer_vo::Identity::new("mock_hook")
     }
-    async fn initialize_config(&self, _path: &str) -> shared::taxonomy_suggestion_vo::DescriptionVO {
+    async fn initialize_config(
+        &self,
+        _path: &str,
+    ) -> shared::taxonomy_suggestion_vo::DescriptionVO {
         shared::taxonomy_suggestion_vo::DescriptionVO::new("ok")
     }
-    fn update_ignore_rule(&self, _request: shared::git_hooks::taxonomy_git_diff_data_vo::HookIgnoreUpdateVO) -> shared::taxonomy_suggestion_vo::DescriptionVO {
+    fn update_ignore_rule(
+        &self,
+        _request: shared::git_hooks::taxonomy_git_diff_data_vo::HookIgnoreUpdateVO,
+    ) -> shared::taxonomy_suggestion_vo::DescriptionVO {
         shared::taxonomy_suggestion_vo::DescriptionVO::new("ok")
     }
-    async fn get_diff_data(&self, _p1: &str, _p2: &str) -> shared::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO {
-        shared::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO::default()
+    async fn get_diff_data(
+        &self,
+        _p1: &str,
+        _p2: &str,
+    ) -> shared::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO {
+        shared::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO::unchanged("a.rs", "b.rs")
     }
 }
 
@@ -122,8 +146,6 @@ async fn uninstall_hook_returns_ok() {
 fn get_hook_manager_returns_manager() {
     let orch = make_orchestrator();
     let manager = orch.get_hook_manager();
-    let result = manager.install_pre_commit(
-        &FilePath::new("test".to_string()).unwrap_or_default(),
-    );
+    let result = manager.install_pre_commit(&FilePath::new("test".to_string()).unwrap_or_default());
     assert!(result.is_ok());
 }

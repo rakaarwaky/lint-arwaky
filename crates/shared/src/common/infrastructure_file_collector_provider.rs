@@ -75,6 +75,13 @@ fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) 
                 continue;
             }
             if path.is_dir() {
+                let dir_name = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy())
+                    .unwrap_or_default();
+                if dir_name == "tests" {
+                    continue;
+                }
                 walk_source_files(&path, files, ignored);
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if is_source_file(ext) {
