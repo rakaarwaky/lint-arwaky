@@ -116,7 +116,7 @@ impl LintFixOrchestratorAggregate for MockFixOrchestrator {
 }
 
 fn make_executor_with_fix(mock: MockCodeAnalysis, fix_mock: MockFixOrchestrator) -> LintExecutor {
-    LintExecutor::new_with_fix(Arc::new(mock), Arc::new(fix_mock))
+    LintExecutor::new(Arc::new(mock)).with_fix(Arc::new(fix_mock))
 }
 
 // ---------------------------------------------------------------------------
@@ -405,7 +405,7 @@ fn test_fix_without_orchestrator_dry_run_shows_stub() {
 }
 
 #[test]
-fn test_new_with_fix_preserves_code_analysis() {
+fn test_with_fix_preserves_code_analysis() {
     let executor = make_executor_with_fix(
         MockCodeAnalysis::with_violations(3, false),
         MockFixOrchestrator::new("ok"),
@@ -460,11 +460,9 @@ fn test_install_stub_without_setup_aggregate() {
 #[test]
 fn test_install_with_setup_aggregate_python_project() {
     let mock = MockSetupAggregate::new("rust");
-    let executor = LintExecutor::new_with_setup(
-        Arc::new(MockCodeAnalysis::empty()),
-        Arc::new(MockFixOrchestrator::new("ok")),
-        Arc::new(mock),
-    );
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+        .with_fix(Arc::new(MockFixOrchestrator::new("ok")))
+        .with_setup(Arc::new(mock));
     let flags = ActionFlags::default();
     let result = executor.install(&flags);
     assert!(result.success, "Expected success, got: {}", result.output);
@@ -472,18 +470,18 @@ fn test_install_with_setup_aggregate_python_project() {
     assert!(result.output.contains("Detected language: rust"));
     assert!(result.output.contains("Python (ruff, mypy, bandit)"));
     assert!(result.output.contains("[OK]"));
+    assert!(result
+        .output
+        .contains("JavaScript (eslint, prettier, typescript)"));
     assert!(result.output.contains("All adapter dependencies installed"));
-    assert!(!result.output.contains("JavaScript (eslint"));
 }
 
 #[test]
 fn test_install_with_setup_aggregate_js_project() {
     let mock = MockSetupAggregate::new("javascript");
-    let executor = LintExecutor::new_with_setup(
-        Arc::new(MockCodeAnalysis::empty()),
-        Arc::new(MockFixOrchestrator::new("ok")),
-        Arc::new(mock),
-    );
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+        .with_fix(Arc::new(MockFixOrchestrator::new("ok")))
+        .with_setup(Arc::new(mock));
     let flags = ActionFlags::default();
     let result = executor.install(&flags);
     assert!(result.success, "Expected success, got: {}", result.output);
@@ -499,11 +497,9 @@ fn test_install_with_setup_aggregate_js_project() {
 fn test_install_with_setup_aggregate_python_failure() {
     let mut mock = MockSetupAggregate::new("rust");
     mock.py_success = false;
-    let executor = LintExecutor::new_with_setup(
-        Arc::new(MockCodeAnalysis::empty()),
-        Arc::new(MockFixOrchestrator::new("ok")),
-        Arc::new(mock),
-    );
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+        .with_fix(Arc::new(MockFixOrchestrator::new("ok")))
+        .with_setup(Arc::new(mock));
     let flags = ActionFlags::default();
     let result = executor.install(&flags);
     assert!(
@@ -879,4 +875,38 @@ fn test_orphan_real_vs_stub_distinction() {
     let stub = make_executor(MockCodeAnalysis::empty());
     let result_stub = stub.orphan("/path");
     assert!(result_stub.output.contains("lint-arwaky-cli orphan"));
+}
+
+struct MockMultiProjectOrchestrator {
+    workspaces: Vec<shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo>,
+}
+
+#[async_trait::async_trait]
+impl shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate
+    for MockMultiProjectOrchestrator
+{
+    async fn discover_workspaces(
+        &self,
+        _root: &FilePath,
+    ) -> Vec<shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo> {
+        self.workspaces.clone()
+    }
+}
+
+#[test]
+fn test_scan_with_multi_project_discovery() {
+    let mock_config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
+    let ws = shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo::new(
+        FilePath::new("/root/member1".to_string()).unwrap_or_default(),
+        "rust".to_string(),
+        mock_config,
+    );
+    let orch = MockMultiProjectOrchestrator {
+        workspaces: vec![ws],
+    };
+    let executor =
+        make_executor(MockCodeAnalysis::empty()).with_multi_project_orchestrator(Arc::new(orch));
+
+    let result = executor.scan("/root");
+    assert!(result.success);
 }

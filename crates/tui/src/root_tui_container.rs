@@ -57,23 +57,22 @@ impl TuiContainer {
             shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
         );
         let lint_executor = Arc::new(
-            LintExecutor::new_with_setup(
-                code_analysis_aggregate,
-                fix_orchestrator,
-                setup_aggregate,
-            )
-            .with_hook_port(hook_adapter)
-            .with_config(config_container.orchestrator())
-            .with_maintenance(maintenance_container.orchestrator())
-            .with_orphan(
-                orphan_container.analyzer(),
-                orphan_container.layer_detector(),
-                scanner_provider,
-            )
-            .with_external_lint(external_lint_container.aggregate())
-            .with_import_orchestrator(import_container.orchestrator())
-            .with_naming_orchestrator(naming_container.orchestrator())
-            .with_role_orchestrator(role_container.orchestrator()),
+            LintExecutor::new(code_analysis_aggregate)
+                .with_fix(fix_orchestrator)
+                .with_setup(setup_aggregate)
+                .with_hook_port(hook_adapter)
+                .with_config(config_container.orchestrator())
+                .with_maintenance(maintenance_container.orchestrator())
+                .with_orphan(
+                    orphan_container.analyzer(),
+                    orphan_container.layer_detector(),
+                    scanner_provider,
+                )
+                .with_external_lint(external_lint_container.aggregate())
+                .with_import_orchestrator(import_container.orchestrator())
+                .with_naming_orchestrator(naming_container.orchestrator())
+                .with_role_orchestrator(role_container.orchestrator())
+                .with_multi_project_orchestrator(config_container.multi_project_orchestrator()),
         );
         let action_handler: Arc<dyn IActionHandlerProtocol> =
             Arc::new(ActionHandler::new(fs_adapter, lint_executor));

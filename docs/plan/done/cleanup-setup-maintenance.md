@@ -23,19 +23,21 @@
 ### 2. Move `doctor` from setup to maintenance
 
 **Remove from setup:**
-| File | What to remove |
-|---|---|
-| `surface_core_command.rs` | `SetupCommands::Doctor` variant |
+
+| File                       | What to remove                                    |
+| -------------------------- | ------------------------------------------------- |
+| `surface_core_command.rs`  | `SetupCommands::Doctor` variant                   |
 | `surface_setup_command.rs` | `SetupCommands::Doctor` match arm (lines 360-508) |
-| `surface_tui_command.rs` | `[setup doctor]` menu item + match arm |
+| `surface_tui_command.rs`   | `[setup doctor]` menu item + match arm            |
 
 **Add to maintenance:**
-| File | What to update |
-|---|---|
-| `surface_core_command.rs` | Add `Commands::Doctor` top-level variant |
-| `root_cli_main_entry.rs` | Add match arm calling maintenance `doctor` |
+
+| File                             | What to update                                                     |
+| -------------------------------- | ------------------------------------------------------------------ |
+| `surface_core_command.rs`        | Add `Commands::Doctor` top-level variant                           |
+| `root_cli_main_entry.rs`         | Add match arm calling maintenance `doctor`                         |
 | `surface_maintenance_command.rs` | Replace stub `doctor()` with real impl (from setup, lines 360-508) |
-| `surface_tui_command.rs` | Replace `[setup doctor]` with `[doctor]` under Info section |
+| `surface_tui_command.rs`         | Replace `[setup doctor]` with `[doctor]` under Info section        |
 
 ### 3. Update TUI menu
 

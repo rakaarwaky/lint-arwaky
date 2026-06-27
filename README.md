@@ -144,17 +144,17 @@ Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` →
 
 ### Adapters (External Linters)
 
-| Adapter (Crate)       | Target Language       | Linters / Tools Run             | Layer          |
-| --------------------- | --------------------- | ------------------------------- | -------------- |
-| `RustLinterAdapter`   | Rust                  | Clippy (`cargo clippy`)         | infrastructure |
-| `RustFmtAdapter`      | Rust                  | Code Formatter (`cargo fmt`)    | infrastructure |
-| `CargoAuditAdapter`   | Rust                  | Vulnerabilities (`cargo audit`) | infrastructure |
-| `RuffAdapter`         | Python                | Linter & Formatter (`ruff`)     | infrastructure |
-| `MyPyAdapter`         | Python                | Type Checker (`mypy`)           | infrastructure |
-| `BanditAdapter`       | Python                | Security Scanner (`bandit`)     | infrastructure |
-| `ESLintAdapter`       | JavaScript/TypeScript | Code Linter (`eslint`)          | infrastructure |
-| `PrettierAdapter`     | JavaScript/TypeScript | Code Formatter (`prettier`)     | infrastructure |
-| `TSCAdapter`          | JavaScript/TypeScript | Type Checker (`tsc`)            | infrastructure |
+| Adapter (Crate)     | Target Language       | Linters / Tools Run             | Layer          |
+| ------------------- | --------------------- | ------------------------------- | -------------- |
+| `RustLinterAdapter` | Rust                  | Clippy (`cargo clippy`)         | infrastructure |
+| `RustFmtAdapter`    | Rust                  | Code Formatter (`cargo fmt`)    | infrastructure |
+| `CargoAuditAdapter` | Rust                  | Vulnerabilities (`cargo audit`) | infrastructure |
+| `RuffAdapter`       | Python                | Linter & Formatter (`ruff`)     | infrastructure |
+| `MyPyAdapter`       | Python                | Type Checker (`mypy`)           | infrastructure |
+| `BanditAdapter`     | Python                | Security Scanner (`bandit`)     | infrastructure |
+| `ESLintAdapter`     | JavaScript/TypeScript | Code Linter (`eslint`)          | infrastructure |
+| `PrettierAdapter`   | JavaScript/TypeScript | Code Formatter (`prettier`)     | infrastructure |
+| `TSCAdapter`        | JavaScript/TypeScript | Type Checker (`tsc`)            | infrastructure |
 
 The AES rules enforcement (such as filename rules, layer dependency constraints, and primitive usage checks) is executed directly at the AST and text parsing levels by internal check orchestrators, carrying the highest weight in compliance scoring.
 

@@ -8,6 +8,13 @@ impl PathUtils {
         let mut results = Vec::new();
 
         if !dir.is_dir() {
+            if dir.is_file() {
+                if let Some(name_str) = dir.file_name().and_then(|s| s.to_str()) {
+                    if !ignored.contains(&name_str) {
+                        results.push(dir.to_path_buf());
+                    }
+                }
+            }
             return results;
         }
 

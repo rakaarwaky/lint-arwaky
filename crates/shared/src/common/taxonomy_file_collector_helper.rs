@@ -94,6 +94,24 @@ pub fn collect_source_files(
     ignored: &[String],
 ) -> Vec<FilePath> {
     let mut files = Vec::new();
+    let path = std::path::Path::new(&dir_path.value);
+    if path.is_file() {
+        let relative_path = match path.strip_prefix(root_dir) {
+            Ok(p) => p,
+            Err(_) => path,
+        };
+        let rel_str = relative_path.to_string_lossy();
+        if !is_path_ignored(&rel_str, ignored) {
+            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
+                let detector = LanguageDetector::new();
+                if detector.is_lintable(&fp) {
+                    files.push(fp);
+                }
+            }
+        }
+        return files;
+    }
+
     if let Ok(entries) = std::fs::read_dir(&dir_path.value) {
         for entry in entries.flatten() {
             let path = entry.path();

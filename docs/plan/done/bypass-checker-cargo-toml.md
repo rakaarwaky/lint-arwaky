@@ -5,13 +5,14 @@ Upgrade BypassChecker — 2 Changes
 Current: `.unwrap()`, `.unwrap_or()`, `.unwrap_or_default()`, `.expect()` — all flagged as UnwrapExpect
 
 New:
-| Method | Panic? | AES304 |
-|---|---|---|
-| `.unwrap()` | Yes | FORBIDDEN |
-| `.expect("msg")` | Yes | FORBIDDEN |
-| `.unwrap_or_default()` | No (safe) | ALLOWED |
-| `.unwrap_or(val)` | No (safe) | ALLOWED |
-| `.unwrap_or_else(fn)` | No (safe) | ALLOWED |
+
+| Method                 | Panic?    | AES304    |
+| ---------------------- | --------- | --------- |
+| `.unwrap()`            | Yes       | FORBIDDEN |
+| `.expect("msg")`       | Yes       | FORBIDDEN |
+| `.unwrap_or_default()` | No (safe) | ALLOWED   |
+| `.unwrap_or(val)`      | No (safe) | ALLOWED   |
+| `.unwrap_or_else(fn)`  | No (safe) | ALLOWED   |
 
 Implementation: in `check_bypass_comments`, after matching the "unwrap" token,
 check whether the line contains `.unwrap_or` → if yes, skip (safe).
