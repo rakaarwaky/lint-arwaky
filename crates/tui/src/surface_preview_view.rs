@@ -101,6 +101,8 @@ Setup:
 
 General:
   ?       Toggle this help
+  y       Copy preview to clipboard
+  Ctrl+Y  Copy preview to clipboard + save to lint-results.txt
   q       Quit
 "
     .to_string()

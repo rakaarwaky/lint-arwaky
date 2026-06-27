@@ -35,11 +35,26 @@ impl FileListView {
             .borders(Borders::ALL)
             .border_style(border_style);
 
-        let items: Vec<ListItem> = state
-            .entries
+        // Use pre-computed filtered_indices from AppState
+        let display_indices: Vec<usize> = if !state.filtered_indices.is_empty() {
+            state.filtered_indices.clone()
+        } else {
+            (0..state.entries.len()).collect()
+        };
+
+        // In search mode, filter_pos is the highlight position in the displayed list.
+        // In normal mode, selected_index is the highlight position.
+        let display_selected = if !state.filtered_indices.is_empty() {
+            Some(state.filter_pos)
+        } else {
+            Some(state.selected_index)
+        };
+
+        let items: Vec<ListItem> = display_indices
             .iter()
             .enumerate()
-            .map(|(i, entry)| {
+            .map(|(i, &orig_idx)| {
+                let entry = &state.entries[orig_idx];
                 let badge_color = layer_color(&entry.layer);
                 let badge = entry.layer.badge_label();
                 let name = entry.display_name();
@@ -57,7 +72,7 @@ impl FileListView {
                     Span::styled(name, name_style),
                 ]);
 
-                let item_style = if i == state.selected_index {
+                let item_style = if Some(i) == display_selected {
                     Style::default()
                         .bg(Color::DarkGray)
                         .add_modifier(Modifier::BOLD)
@@ -70,7 +85,17 @@ impl FileListView {
             .collect();
 
         let mut list_state = ListState::default();
-        list_state.select(Some(state.selected_index));
+        list_state.select(display_selected);
+
+        // Show search query in panel title when search mode is active
+        let block = if state.search_mode {
+            Block::default()
+                .title(format!(" Search: {} ", state.search_query))
+                .borders(Borders::ALL)
+                .border_style(border_style)
+        } else {
+            block
+        };
 
         let list = List::new(items).block(block).highlight_style(
             Style::default()

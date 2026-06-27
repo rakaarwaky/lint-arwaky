@@ -268,13 +268,16 @@ fn test_quit() {
 fn test_mouse_scroll() {
     let h = make_handler();
     let mut state = AppState::new("/root".to_string());
+    state.entries = make_entries(); // 2 entries — scroll needs entries to be bounded
     assert_eq!(state.scroll_offset, 0);
     h.handle(&mut state, TuiEvent::MouseScrollDown);
     assert_eq!(state.scroll_offset, 1);
+    h.handle(&mut state, TuiEvent::MouseScrollDown);
+    assert_eq!(state.scroll_offset, 1); // bounded at entries.len()-1
     h.handle(&mut state, TuiEvent::MouseScrollUp);
     assert_eq!(state.scroll_offset, 0);
     h.handle(&mut state, TuiEvent::MouseScrollUp);
-    assert_eq!(state.scroll_offset, 0);
+    assert_eq!(state.scroll_offset, 0); // bounded at 0
 }
 
 #[test]
@@ -351,4 +354,237 @@ fn test_empty_entries() {
     assert_eq!(state.selected_index, 0);
     h.handle(&mut state, TuiEvent::MoveBottom);
     assert_eq!(state.selected_index, 0);
+}
+
+#[test]
+fn test_action_watch_shows_cli_redirect() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    h.handle(&mut state, TuiEvent::ActionWatch);
+    assert_eq!(state.preview_mode, PreviewMode::ActionOutput);
+    assert!(state.preview_text.contains("lint-arwaky-cli watch"));
+    assert!(state.status_message.contains("File watch"));
+}
+
+#[test]
+fn test_copy_to_clipboard_empty_preview() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.preview_text.clear();
+    h.handle(&mut state, TuiEvent::CopyToClipboard);
+    assert_eq!(state.status_message, "Nothing to copy");
+}
+
+#[test]
+fn test_copy_to_clipboard_with_content() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.preview_text = "lint results here".to_string();
+    h.handle(&mut state, TuiEvent::CopyToClipboard);
+    // In test cfg, arboard is skipped; clipboard tools may or may not exist.
+    // Either "Copied to clipboard!" or "Clipboard unavailable" is acceptable.
+    assert!(
+        state.status_message.contains("Copied")
+            || state.status_message.contains("Clipboard unavailable"),
+        "unexpected status: {}",
+        state.status_message
+    );
+}
+
+#[test]
+fn test_copy_to_file_empty_preview() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.preview_text.clear();
+    h.handle(&mut state, TuiEvent::CopyToFile);
+    assert_eq!(state.status_message, "Nothing to copy");
+}
+
+#[test]
+fn test_copy_to_file_creates_file() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.preview_text = "test output".to_string();
+
+    // Use a temp directory to avoid polluting CWD
+    let tmp = std::env::temp_dir().join("lint_arwaky_test_copy");
+    let _ = std::fs::create_dir_all(&tmp);
+    let original_dir = std::env::current_dir().unwrap();
+    let _ = std::env::set_current_dir(&tmp);
+
+    h.handle(&mut state, TuiEvent::CopyToFile);
+
+    // Restore CWD before assertions
+    let _ = std::env::set_current_dir(&original_dir);
+
+    assert_eq!(state.status_message, "Saved to lint-results.txt");
+
+    let content = std::fs::read_to_string(tmp.join("lint-results.txt")).unwrap();
+    assert_eq!(content, "test output");
+
+    // Cleanup
+    let _ = std::fs::remove_dir_all(&tmp);
+}
+
+// ---- Search navigation tests ----
+
+fn make_search_entries() -> Vec<FileEntry> {
+    vec![
+        FileEntry {
+            name: "alpha.rs".to_string(),
+            full_path: "/root/alpha.rs".to_string(),
+            is_dir: false,
+            layer: AesLayer::None,
+            violation_count: 0,
+            extension: "rs".to_string(),
+            size_bytes: 50,
+        },
+        FileEntry {
+            name: "beta.txt".to_string(),
+            full_path: "/root/beta.txt".to_string(),
+            is_dir: false,
+            layer: AesLayer::None,
+            violation_count: 0,
+            extension: "txt".to_string(),
+            size_bytes: 100,
+        },
+        FileEntry {
+            name: "gamma.rs".to_string(),
+            full_path: "/root/gamma.rs".to_string(),
+            is_dir: false,
+            layer: AesLayer::None,
+            violation_count: 0,
+            extension: "rs".to_string(),
+            size_bytes: 150,
+        },
+    ]
+}
+
+fn setup_search_state(query: &str) -> AppState {
+    let mut state = AppState::new("/root".to_string());
+    state.entries = make_search_entries();
+    state.search_mode = true;
+    state.search_query = query.to_string();
+    state.compute_filtered_indices();
+    state
+}
+
+#[test]
+fn test_search_move_down_skips_non_matching() {
+    let h = make_handler();
+    let mut state = setup_search_state(".rs");
+    // ".rs" matches alpha (idx 0) and gamma (idx 2), skips beta (idx 1)
+    assert_eq!(state.filtered_indices, vec![0, 2]);
+    assert_eq!(state.selected_index, 0); // alpha
+    assert_eq!(state.filter_pos, 0);
+
+    h.handle(&mut state, TuiEvent::MoveDown);
+    // Should jump to gamma (idx 2), skip beta
+    assert_eq!(
+        state.selected_index, 2,
+        "should skip beta and land on gamma"
+    );
+    assert_eq!(state.filter_pos, 1);
+}
+
+#[test]
+fn test_search_move_up_skips_non_matching() {
+    let h = make_handler();
+    let mut state = setup_search_state(".rs");
+    // Start at gamma (last matching)
+    state.filter_pos = 1;
+    state.selected_index = 2;
+    assert_eq!(state.filtered_indices, vec![0, 2]);
+
+    h.handle(&mut state, TuiEvent::MoveUp);
+    // Should jump back to alpha (idx 0), skip beta
+    assert_eq!(
+        state.selected_index, 0,
+        "should skip beta and land on alpha"
+    );
+    assert_eq!(state.filter_pos, 0);
+}
+
+#[test]
+fn test_search_move_down_stops_at_last_match() {
+    let h = make_handler();
+    let mut state = setup_search_state(".rs");
+    // Already on gamma (last match)
+    state.filter_pos = 1;
+    state.selected_index = 2;
+
+    h.handle(&mut state, TuiEvent::MoveDown);
+    // Should stay on gamma — can't go past last match
+    assert_eq!(state.selected_index, 2);
+    assert_eq!(state.filter_pos, 1);
+}
+
+#[test]
+fn test_search_move_up_stops_at_first_match() {
+    let h = make_handler();
+    let mut state = setup_search_state(".rs");
+    // Already on alpha (first match)
+    assert_eq!(state.filter_pos, 0);
+
+    h.handle(&mut state, TuiEvent::MoveUp);
+    // Should stay on alpha
+    assert_eq!(state.selected_index, 0);
+    assert_eq!(state.filter_pos, 0);
+}
+
+#[test]
+fn test_search_cancel_resets_filter() {
+    let h = make_handler();
+    let mut state = setup_search_state(".rs");
+    assert_eq!(state.filtered_indices, vec![0, 2]);
+
+    h.handle(&mut state, TuiEvent::SearchCancel);
+    assert!(state.filtered_indices.is_empty());
+    assert_eq!(state.filter_pos, 0);
+    assert!(!state.search_mode);
+}
+
+#[test]
+fn test_search_toggle_clears_filter() {
+    let h = make_handler();
+    let mut state = setup_search_state(".rs");
+    assert_eq!(state.filtered_indices, vec![0, 2]);
+
+    // Toggle search off
+    h.handle(&mut state, TuiEvent::ToggleSearch);
+    assert!(state.filtered_indices.is_empty());
+    assert!(!state.search_mode);
+}
+
+#[test]
+fn test_mouse_scroll_syncs_selection() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.entries = make_search_entries();
+    // 3 entries, set terminal height to something reasonable
+    state.terminal_height = 10;
+    state.selected_index = 0;
+
+    // Scroll down — selection should follow
+    h.handle(&mut state, TuiEvent::MouseScrollDown);
+    assert_eq!(state.scroll_offset, 1);
+    assert_eq!(state.selected_index, 1, "selection follows scroll down");
+
+    // Scroll back up — selection should follow
+    h.handle(&mut state, TuiEvent::MouseScrollUp);
+    assert_eq!(state.scroll_offset, 0);
+    assert_eq!(state.selected_index, 0, "selection follows scroll up");
+}
+
+#[test]
+fn test_empty_search_matches_nothing() {
+    let h = make_handler();
+    let mut state = setup_search_state("zzz");
+    // No entries match "zzz"
+    assert!(state.filtered_indices.is_empty());
+
+    // MoveDown/MoveUp should be no-ops
+    h.handle(&mut state, TuiEvent::MoveDown);
+    h.handle(&mut state, TuiEvent::MoveUp);
+    assert_eq!(state.filter_pos, 0);
 }

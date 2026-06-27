@@ -51,11 +51,12 @@ ctrlc = "3.4"
 futures = "0.3"
 ratatui = "0.29"
 crossterm = "0.28"
+arboard = "3"
 tui = { package = "tui-lint-arwaky", path = "crates/tui" }
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "1.10.56"
+version = "1.10.63"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
 license = "MIT"

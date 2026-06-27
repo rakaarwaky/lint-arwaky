@@ -36,7 +36,11 @@ pub struct AppState {
     pub should_quit: bool,
     pub violation_count: usize,
     pub tree_scroll: usize,
-    pub terminal_height: usize,
+    pub terminal_height: u16,
+    /// Indices into `entries` matching the current search query (empty when not filtering).
+    pub filtered_indices: Vec<usize>,
+    /// Position within `filtered_indices` — which matching entry is selected.
+    pub filter_pos: usize,
 }
 
 impl AppState {
@@ -62,29 +66,62 @@ impl AppState {
             violation_count: 0,
             tree_scroll: 0,
             terminal_height: 0,
+            filtered_indices: Vec::new(),
+            filter_pos: 0,
         }
     }
 
     pub fn select_next(&mut self) {
-        if !self.entries.is_empty() && self.selected_index < self.entries.len() - 1 {
+        if self.search_mode && !self.search_query.is_empty() {
+            if !self.filtered_indices.is_empty()
+                && self.filter_pos < self.filtered_indices.len() - 1
+            {
+                self.filter_pos += 1;
+                self.selected_index = self.filtered_indices[self.filter_pos];
+                self.adjust_scroll(self.file_list_visible_height());
+            }
+        } else if !self.entries.is_empty() && self.selected_index < self.entries.len() - 1 {
             self.selected_index += 1;
+            self.adjust_scroll(self.file_list_visible_height());
         }
     }
 
     pub fn select_prev(&mut self) {
-        if self.selected_index > 0 {
+        if self.search_mode && !self.search_query.is_empty() {
+            if self.filter_pos > 0 {
+                self.filter_pos -= 1;
+                self.selected_index = self.filtered_indices[self.filter_pos];
+                self.adjust_scroll(self.file_list_visible_height());
+            }
+        } else if self.selected_index > 0 {
             self.selected_index -= 1;
+            self.adjust_scroll(self.file_list_visible_height());
         }
     }
 
     pub fn select_first(&mut self) {
-        self.selected_index = 0;
-        self.scroll_offset = 0;
+        if self.search_mode && !self.search_query.is_empty() {
+            if !self.filtered_indices.is_empty() {
+                self.filter_pos = 0;
+                self.selected_index = self.filtered_indices[0];
+            }
+            self.scroll_offset = 0;
+        } else {
+            self.selected_index = 0;
+            self.scroll_offset = 0;
+        }
     }
 
     pub fn select_last(&mut self) {
-        if !self.entries.is_empty() {
+        if self.search_mode && !self.search_query.is_empty() {
+            if !self.filtered_indices.is_empty() {
+                self.filter_pos = self.filtered_indices.len() - 1;
+                self.selected_index = self.filtered_indices[self.filter_pos];
+                self.adjust_scroll(self.file_list_visible_height());
+            }
+        } else if !self.entries.is_empty() {
             self.selected_index = self.entries.len() - 1;
+            self.adjust_scroll(self.file_list_visible_height());
         }
     }
 
@@ -129,5 +166,38 @@ impl AppState {
         if self.selected_index >= self.scroll_offset + visible_height {
             self.scroll_offset = self.selected_index - visible_height + 1;
         }
+    }
+
+    /// Recompute `filtered_indices` from the current search query.
+    /// Call after ToggleSearch, SearchInput, SearchBackspace, SearchConfirm, SearchCancel,
+    /// and after loading a new directory while search mode is active.
+    pub fn compute_filtered_indices(&mut self) {
+        if self.search_mode && !self.search_query.is_empty() {
+            let query = self.search_query.to_lowercase();
+            self.filtered_indices = self
+                .entries
+                .iter()
+                .enumerate()
+                .filter(|(_, entry)| entry.name.to_lowercase().contains(&query))
+                .map(|(i, _)| i)
+                .collect();
+            // Clamp filter_pos to valid range
+            if self.filter_pos >= self.filtered_indices.len() {
+                self.filter_pos = self.filtered_indices.len().saturating_sub(1);
+            }
+            // Sync selected_index from the current filter position
+            if !self.filtered_indices.is_empty() {
+                self.selected_index = self.filtered_indices[self.filter_pos];
+            }
+        } else {
+            self.filtered_indices.clear();
+            self.filter_pos = 0;
+        }
+    }
+
+    /// Compute the visible height of the file list panel from terminal_height.
+    /// Layout: 1 header row + 3 shortcut rows + 1 status row = 5 rows overhead.
+    fn file_list_visible_height(&self) -> usize {
+        (self.terminal_height as usize).saturating_sub(5)
     }
 }

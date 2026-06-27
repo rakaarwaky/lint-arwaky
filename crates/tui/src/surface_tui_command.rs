@@ -159,6 +159,7 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
             KeyCode::Char('s') => TuiEvent::ActionSecurity,
             KeyCode::Char('d') => TuiEvent::ActionDuplicates,
             KeyCode::Char('p') => TuiEvent::ActionDependencies,
+            KeyCode::Char('y') => TuiEvent::CopyToFile,
             _ => TuiEvent::None,
         };
     }
@@ -212,6 +213,7 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         KeyCode::Char('U') => TuiEvent::ActionUninstallHook,
         KeyCode::Char('a') => TuiEvent::ActionAdapters,
         KeyCode::Char('v') => TuiEvent::ActionVersion,
+        KeyCode::Char('y') => TuiEvent::CopyToClipboard,
         KeyCode::Char('?') => TuiEvent::ToggleHelp,
         KeyCode::Char('/') => TuiEvent::ToggleSearch,
         KeyCode::Esc => TuiEvent::Quit,

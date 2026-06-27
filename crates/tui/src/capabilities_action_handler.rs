@@ -32,8 +32,14 @@ impl ActionHandler {
     pub fn handle(&self, state: &mut AppState, event: TuiEvent) {
         match event {
             // ---- Navigation: list selection ----
-            TuiEvent::MoveDown => state.select_next(),
-            TuiEvent::MoveUp => state.select_prev(),
+            TuiEvent::MoveDown => {
+                state.select_next();
+                self.load_preview(state);
+            }
+            TuiEvent::MoveUp => {
+                state.select_prev();
+                self.load_preview(state);
+            }
             TuiEvent::MoveTop => state.select_first(),
             TuiEvent::MoveBottom => state.select_last(),
             // ---- Focus cycling between panels (FileList / Preview / Tree) ----
@@ -57,18 +63,22 @@ impl ActionHandler {
                 if !state.search_mode {
                     state.search_query.clear();
                 }
+                state.compute_filtered_indices();
             }
             TuiEvent::SearchInput(ch) => {
                 if state.search_mode {
                     state.search_query.push(ch);
+                    state.compute_filtered_indices();
                 }
             }
             TuiEvent::SearchBackspace => {
                 state.search_query.pop();
+                state.compute_filtered_indices();
             }
             TuiEvent::SearchConfirm | TuiEvent::SearchCancel => {
                 state.search_mode = false;
                 state.search_query.clear();
+                state.compute_filtered_indices();
             }
             // ---- Lint actions that operate on the selected file/directory ----
             TuiEvent::ActionCheck => self.run_action(state, |lp, p, f| lp.check(p, f)),
@@ -100,6 +110,12 @@ impl ActionHandler {
             }
             TuiEvent::ActionAdapters => self.run_action_no_path(state, |lp| lp.adapters()),
             TuiEvent::ActionVersion => self.run_action_no_path(state, |lp| lp.version()),
+            // ---- Watch: not yet implemented in TUI — redirect to CLI ----
+            TuiEvent::ActionWatch => {
+                state.preview_text = "File watch is not available in the TUI yet.\n\nUse the CLI command:\n  lint-arwaky-cli watch <path>\n\nThis will start a file watcher that re-runs\nthe linter on every file change.".to_string();
+                state.preview_mode = PreviewMode::ActionOutput;
+                state.set_status("File watch: use CLI `lint-arwaky-cli watch`");
+            }
             // ---- Path input dialog: character-by-character editing ----
             TuiEvent::PathInput(ch) => state.path_input.push(ch),
             TuiEvent::PathBackspace => {
@@ -129,7 +145,7 @@ impl ActionHandler {
             }
             // ---- Resize: track terminal height for mouse click mapping ----
             TuiEvent::Resize(_w, h) => {
-                state.terminal_height = h as usize;
+                state.terminal_height = h;
             }
             // ---- Quit and mouse scroll ----
             TuiEvent::Quit => state.should_quit = true,
@@ -137,11 +153,25 @@ impl ActionHandler {
             TuiEvent::MouseScrollUp => {
                 if state.scroll_offset > 0 {
                     state.scroll_offset -= 1;
+                    // Sync selection: move with scroll to keep in view
+                    if state.selected_index > 0 {
+                        state.selected_index -= 1;
+                    }
                 }
             }
             TuiEvent::MouseScrollDown => {
-                state.scroll_offset += 1;
+                let max_scroll = state.entries.len().saturating_sub(1);
+                if state.scroll_offset < max_scroll {
+                    state.scroll_offset += 1;
+                    // Sync selection: move with scroll to keep in view
+                    let max_idx = state.entries.len().saturating_sub(1);
+                    if state.selected_index < max_idx {
+                        state.selected_index += 1;
+                    }
+                }
             }
+            TuiEvent::CopyToClipboard => self.copy_to_clipboard(state),
+            TuiEvent::CopyToFile => self.copy_to_file(state),
             _ => {}
         }
     }
@@ -184,6 +214,7 @@ impl ActionHandler {
         state.scroll_offset = 0;
         state.preview_mode = PreviewMode::FileContent;
         state.set_status(format!("Dir: {}", path));
+        state.compute_filtered_indices();
     }
 
     /// Read up to 100 lines of a file for inline preview.
@@ -239,6 +270,65 @@ impl ActionHandler {
         state.set_status(status);
     }
 
+    /// Copy the current preview content to the system clipboard.
+    /// Uses arboard if available, falls back to xclip/wl-copy shell commands.
+    fn copy_to_clipboard(&self, state: &mut AppState) {
+        let text = state.preview_text.clone();
+        if text.is_empty() {
+            state.set_status("Nothing to copy");
+            return;
+        }
+
+        let mut success = false;
+
+        // Try arboard first
+        #[cfg(not(test))]
+        {
+            if let Ok(mut clipboard) = arboard::Clipboard::new() {
+                success = clipboard.set_text(&text).is_ok();
+            }
+        }
+
+        // Fallback to shell commands: xclip → wl-copy
+        if !success {
+            use std::io::Write;
+            success = std::process::Command::new("sh")
+                .arg("-c")
+                .arg("xclip -selection clipboard 2>/dev/null || wl-copy 2>/dev/null || true")
+                .stdin(std::process::Stdio::piped())
+                .spawn()
+                .and_then(|mut child| {
+                    if let Some(ref mut stdin) = child.stdin {
+                        let _ = stdin.write_all(text.as_bytes());
+                    }
+                    child.wait()
+                })
+                .map(|status| status.success())
+                .unwrap_or(false);
+        }
+
+        if success {
+            state.set_status("Copied to clipboard!");
+        } else {
+            state.set_status("Clipboard unavailable — install xclip or wl-copy");
+        }
+    }
+
+    /// Copy the current preview content to a file `lint-results.txt` in the current directory.
+    fn copy_to_file(&self, state: &mut AppState) {
+        let text = &state.preview_text;
+        if text.is_empty() {
+            state.set_status("Nothing to copy");
+            return;
+        }
+
+        let path = std::path::Path::new("lint-results.txt");
+        match std::fs::write(path, text) {
+            Ok(()) => state.set_status("Saved to lint-results.txt"),
+            Err(e) => state.set_status(format!("Save failed: {e}")),
+        }
+    }
+
     /// Handle mouse clicks on the file list and shortcut areas.
     /// File list: maps y-coordinate to entry index.
     /// Shortcuts: maps x-coordinate to approximate action key.
@@ -247,10 +337,9 @@ impl ActionHandler {
         if h < 5 {
             return;
         }
-        let row = row as usize;
         // Shortcuts area = bottom 4 rows (3 shortcuts + 1 status)
         let shortcuts_start = h - 4;
-        let file_list_start = 1; // after header
+        let file_list_start: u16 = 1; // after header
         let file_list_end = shortcuts_start - 1;
 
         if row >= shortcuts_start && row < h {
@@ -259,7 +348,7 @@ impl ActionHandler {
         } else if row >= file_list_start && row < file_list_end {
             // Clicked on file list area — map y to entry index
             let panel_row = row - file_list_start;
-            let new_index = state.scroll_offset + panel_row;
+            let new_index = state.scroll_offset + panel_row as usize;
             if new_index < state.entries.len() {
                 state.selected_index = new_index;
                 state.panel_focus = PanelFocus::FileList;

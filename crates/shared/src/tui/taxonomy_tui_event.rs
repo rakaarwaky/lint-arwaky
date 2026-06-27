@@ -45,6 +45,8 @@ pub enum TuiEvent {
     MouseClick(u16, u16),
     MouseScrollUp,
     MouseScrollDown,
+    CopyToClipboard,
+    CopyToFile,
     Tick,
     None,
 }

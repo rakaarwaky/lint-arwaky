@@ -21,6 +21,7 @@ maintenance.workspace = true
 git_hooks.workspace = true
 ratatui.workspace = true
 crossterm.workspace = true
+arboard.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
 

@@ -33,7 +33,9 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::external_lint::taxonomy_external_lint_helper::{resolve_js_cmd, resolve_js_working_dir as resolve_working_dir};
+use shared::external_lint::taxonomy_external_lint_helper::{
+    canonicalize_path, exec_cmd_scan, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir,
+};
 
 pub struct ESLintAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
@@ -70,10 +72,7 @@ impl ILinterAdapterPort for ESLintAdapter {
         }
 
         let wd = resolve_working_dir(path);
-        let abs_path = match std::fs::canonicalize(path_str) {
-            Ok(p) => p.to_string_lossy().to_string(),
-            Err(_) => path_str.clone(),
-        };
+        let abs_path = canonicalize_path(path_str);
 
         let cmd = resolve_js_cmd(
             "eslint",
@@ -81,44 +80,30 @@ impl ILinterAdapterPort for ESLintAdapter {
             &wd.value,
         );
 
-        let response = match self
-            .executor
-            .execute_command(
-                PatternList::new(cmd),
-                wd.clone(),
-                Some(shared::taxonomy_duration_vo::Timeout::new(60.0)),
-            )
-            .await
-        {
-            Ok(r) => r,
-            Err(e) => {
-                return Err(LinterOperationError::Scan(ScanError {
-                    path: path.clone(),
-                    message: ErrorMessage::new(e.to_string()),
-                    error_code: None,
-                    adapter_name: Some(self.name()),
-                    cause: None,
-                }));
-            }
-        };
+        let response = exec_cmd_scan(
+            self.executor.as_ref(),
+            cmd,
+            wd.clone(),
+            60.0,
+            Some(self.name()),
+            path,
+        )
+        .await?;
 
         let stdout_str = response.stdout.to_string();
         if stdout_str.trim().is_empty() {
             return Ok(LintResultList::default());
         }
 
-        let parsed: Value = match serde_json::from_str(&stdout_str) {
-            Ok(v) => v,
-            Err(e) => {
-                return Err(LinterOperationError::Scan(ScanError {
-                    path: path.clone(),
-                    message: ErrorMessage::new(format!("Failed to parse JSON: {}", e)),
-                    error_code: None,
-                    adapter_name: Some(self.name()),
-                    cause: None,
-                }));
-            }
-        };
+        let parsed: Value = serde_json::from_str(&stdout_str).map_err(|e| {
+            LinterOperationError::Scan(ScanError {
+                path: path.clone(),
+                message: ErrorMessage::new(format!("Failed to parse JSON: {}", e)),
+                error_code: None,
+                adapter_name: Some(self.name()),
+                cause: None,
+            })
+        })?;
 
         let mut results = Vec::new();
         if let Some(files) = parsed.as_array() {

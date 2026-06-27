@@ -75,6 +75,8 @@ fn default_rows() -> ShortcutRows {
             ("^S", "security"),
             ("^D", "duplicates"),
             ("^P", "deps"),
+            ("y", "copy"),
+            ("^Y", "save"),
             ("?", "help"),
             ("q", "quit"),
         ],

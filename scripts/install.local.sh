@@ -31,8 +31,8 @@ NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 sed -i "0,/^version = \"$OLD_VERSION\"/s/^version = \"$OLD_VERSION\"/version = \"$NEW_VERSION\"/" "$CARGO_TOML"
 echo "  $OLD_VERSION  ->  $NEW_VERSION"
 
-# 3. Build
-cargo build --release
+# 3. Build (increase stack size to prevent LLVM SIGSEGV during LTO)
+RUST_MIN_STACK=16777216 cargo build --release
 
 # 4. Checksums + install
 pushd "$RELEASE_DIR" >/dev/null

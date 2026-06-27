@@ -1,8 +1,81 @@
 // PURPOSE: taxonomy_external_lint_helper — shared utility functions for external linter adapters
-// Pure functions: resolve working directories and executable commands.
-// Used by JS and RS adapter implementations.
+// Pure functions: resolve working directories, canonicalize paths,
+// execute commands with error mapping. Used by JS, Python, and RS adapters.
+
+use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
+use crate::common::taxonomy_adapter_error::AdapterError;
+use crate::common::taxonomy_adapter_error::ScanError;
+use crate::common::taxonomy_adapter_name_vo::AdapterName;
+use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_common_vo::PatternList;
+use crate::common::taxonomy_duration_vo::Timeout;
 use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_response_data_vo::ResponseData;
 use std::path::{Path, PathBuf};
+
+/// Canonicalize a path string, falling back to the original on error.
+pub fn canonicalize_path(path_str: &str) -> String {
+    match std::fs::canonicalize(path_str) {
+        Ok(p) => p.to_string_lossy().to_string(),
+        Err(_) => path_str.to_string(),
+    }
+}
+
+/// Execute a command, mapping execution failures to `LinterOperationError::Scan`.
+pub async fn exec_cmd_scan(
+    executor: &dyn ICommandExecutorPort,
+    args: Vec<String>,
+    working_dir: FilePath,
+    timeout_secs: f64,
+    adapter_name: Option<AdapterName>,
+    path: &FilePath,
+) -> Result<ResponseData, LinterOperationError> {
+    executor
+        .execute_command(
+            PatternList::new(args),
+            working_dir,
+            Some(Timeout::new(timeout_secs)),
+        )
+        .await
+        .map_err(|e| {
+            LinterOperationError::Scan(ScanError {
+                path: path.clone(),
+                message: ErrorMessage::new(e.to_string()),
+                error_code: None,
+                adapter_name,
+                cause: None,
+            })
+        })
+}
+
+/// Execute a command, mapping execution failures to `LinterOperationError::Adapter`.
+pub async fn exec_cmd_adapter(
+    executor: &dyn ICommandExecutorPort,
+    args: Vec<String>,
+    working_dir: FilePath,
+    timeout_secs: f64,
+    adapter_name: AdapterName,
+) -> Result<ResponseData, LinterOperationError> {
+    executor
+        .execute_command(
+            PatternList::new(args),
+            working_dir,
+            Some(Timeout::new(timeout_secs)),
+        )
+        .await
+        .map_err(|e| {
+            LinterOperationError::Adapter(AdapterError::new(
+                adapter_name,
+                ErrorMessage::new(e.to_string()),
+            ))
+        })
+}
+
+/// Create a default `"."` working directory, falling back to the given path if it fails.
+pub fn default_working_dir(path: &FilePath) -> FilePath {
+    FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
+}
 
 /// Resolve the executable command for a JS tool (eslint, prettier, tsc).
 /// Prefers local node_modules/.bin over npx/bunx.
