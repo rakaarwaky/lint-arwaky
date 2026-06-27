@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_js_eslint_adapter::ESLintAdapter;
@@ -65,13 +66,13 @@ async fn parses_eslint_json_output() {
     assert_eq!(results.len(), 2);
 
     // severity 2 -> HIGH
-    assert_eq!(results.values[0].severity as i32, Severity::HIGH as i32);
-    assert_eq!(results.values[0].code.value(), "no-unused-vars");
+    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
+    assert_eq!(results.values[0].code.code(), "no-unused-vars");
     assert_eq!(results.values[0].line.value(), 10);
 
     // severity 1 -> MEDIUM
-    assert_eq!(results.values[1].severity as i32, Severity::MEDIUM as i32);
-    assert_eq!(results.values[1].code.value(), "semi");
+    assert_eq!(results.values[1].severity.clone() as i32, Severity::MEDIUM as i32);
+    assert_eq!(results.values[1].code.code(), "semi");
 }
 
 #[tokio::test]
@@ -113,5 +114,5 @@ async fn fallback_rule_id_for_missing_rule() {
     let adapter = make_adapter(json);
     let path = make_path("test.ts");
     let results = adapter.scan(&path).await.unwrap();
-    assert_eq!(results.values[0].code.value(), "ESLINT");
+    assert_eq!(results.values[0].code.code(), "ESLINT");
 }

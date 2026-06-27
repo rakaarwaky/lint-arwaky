@@ -95,14 +95,14 @@ impl ILinterAdapterPort for MyPyAdapter {
             exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 120.0, self.name()).await?;
 
         let stdout = &response.stdout;
-        let re = match Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
+        let re = match Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$") {
             Ok(r) => r,
-            Err(_) => match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
+            Err(_) => match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$") {
                 Ok(r) => r,
                 Err(_) => return Ok(LintResultList::new(vec![])),
             },
         };
-        let re_simple = match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
+        let re_simple = match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$") {
             Ok(r) => r,
             Err(_) => return Ok(LintResultList::new(vec![])),
         };

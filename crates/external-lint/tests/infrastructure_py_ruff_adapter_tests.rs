@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_py_ruff_adapter::RuffAdapter;
@@ -76,13 +77,13 @@ async fn parses_json_array_of_findings() {
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 2);
 
-    assert_eq!(results.values[0].code.value(), "F401");
+    assert_eq!(results.values[0].code.code(), "F401");
     assert_eq!(results.values[0].line.value(), 10);
     assert_eq!(results.values[0].column.value(), 5);
 
-    assert_eq!(results.values[1].code.value(), "E302");
+    assert_eq!(results.values[1].code.code(), "E302");
     assert_eq!(results.values[1].line.value(), 15);
-    assert_eq!(results.values[1].severity as i32, Severity::HIGH as i32);
+    assert_eq!(results.values[1].severity.clone() as i32, Severity::HIGH as i32);
 
     assert_eq!(results.values[0].source.as_ref().unwrap().value(), "ruff");
 }
@@ -113,9 +114,9 @@ async fn maps_severity_correctly() {
     let adapter = make_adapter(json);
     let path = make_path("test.py");
     let results = adapter.scan(&path).await.unwrap();
-    assert_eq!(results.values[0].severity as i32, Severity::HIGH as i32);
-    assert_eq!(results.values[1].severity as i32, Severity::MEDIUM as i32);
-    assert_eq!(results.values[2].severity as i32, Severity::LOW as i32);
+    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
+    assert_eq!(results.values[1].severity.clone() as i32, Severity::MEDIUM as i32);
+    assert_eq!(results.values[2].severity.clone() as i32, Severity::LOW as i32);
 }
 
 #[tokio::test]

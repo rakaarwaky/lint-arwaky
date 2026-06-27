@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_rs_fmt_adapter::RustFmtAdapter;
@@ -112,7 +113,7 @@ async fn returns_fallback_result_when_diff_has_no_added_lines() {
     let path = make_path(&dir.to_string_lossy());
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results.values[0].code.value(), "rustfmt::unformatted");
+    assert_eq!(results.values[0].code.code(), "rustfmt::unformatted");
     let _ = std::fs::remove_dir_all(&dir);
 }
 

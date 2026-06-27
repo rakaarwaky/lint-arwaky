@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_rs_clippy_adapter::RustLinterAdapter;
@@ -94,7 +95,7 @@ async fn parses_diagnostic_json_line() {
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 1);
     let r = &results.values[0];
-    assert_eq!(r.code.value(), "clippy::needless_return");
+    assert_eq!(r.code.code(), "clippy::needless_return");
     assert_eq!(r.line.value(), 42);
     assert_eq!(r.column.value(), 5);
 
@@ -132,7 +133,7 @@ async fn falls_back_to_stderr_when_stdout_empty() {
     let path = make_path(&dir.to_string_lossy());
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results.values[0].code.value(), "clippy::style");
+    assert_eq!(results.values[0].code.code(), "clippy::style");
 
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -167,7 +168,7 @@ async fn maps_error_severity_to_high() {
 
     let path = make_path(&dir.to_string_lossy());
     let results = adapter.scan(&path).await.unwrap();
-    assert_eq!(results.values[0].severity as i32, 3); // HIGH
+    assert_eq!(results.values[0].severity.clone() as i32, 3); // HIGH
 
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -184,7 +185,7 @@ async fn maps_warning_severity_to_medium() {
 
     let path = make_path(&dir.to_string_lossy());
     let results = adapter.scan(&path).await.unwrap();
-    assert_eq!(results.values[0].severity as i32, 2); // MEDIUM
+    assert_eq!(results.values[0].severity.clone() as i32, 2); // MEDIUM
 
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -216,7 +217,7 @@ async fn ignores_malformed_json_lines() {
     let results = adapter.scan(&path).await.unwrap();
     // Should parse the valid JSON line and skip the non-JSON line
     assert_eq!(results.len(), 1);
-    assert_eq!(results.values[0].code.value(), "clippy::ok");
+    assert_eq!(results.values[0].code.code(), "clippy::ok");
 
     let _ = std::fs::remove_dir_all(&dir);
 }

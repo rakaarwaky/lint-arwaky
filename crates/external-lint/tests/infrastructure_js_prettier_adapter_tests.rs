@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_js_prettier_adapter::PrettierAdapter;
@@ -58,8 +59,8 @@ async fn detects_warning_in_stderr() {
     let path = make_path("src/app.ts");
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results.values[0].code.value(), "formatting");
-    assert_eq!(results.values[0].severity as i32, Severity::LOW as i32);
+    assert_eq!(results.values[0].code.code(), "formatting");
+    assert_eq!(results.values[0].severity.clone() as i32, Severity::LOW as i32);
 }
 
 #[tokio::test]

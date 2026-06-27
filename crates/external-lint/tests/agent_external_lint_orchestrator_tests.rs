@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -24,9 +25,12 @@ use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
+static COUNTER: AtomicU64 = AtomicU64::new(0);
+
 // ---------------------------------------------------------------------------
 // Mock adapter that captures the path it was called with and returns
 // a preconfigured set of results.  Useful for verifying dispatch logic.
+
 // ---------------------------------------------------------------------------
 struct MockAdapter {
     name: &'static str,
@@ -53,13 +57,13 @@ impl ILinterAdapterPort for MockAdapter {
 }
 
 fn make_adapters() -> HashMap<String, Arc<dyn ILinterAdapterPort>> {
-    let mut m = HashMap::new();
+    let mut m: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
     m.insert(
         "clippy".into(),
         Arc::new(MockAdapter {
             name: "clippy",
             results: LintResultList::new(vec![LintResult {
-                file: FilePath::new("src/main.rs".into()).unwrap_or_default(),
+                file: FilePath::new("src/main.rs".to_string()).unwrap_or_default(),
                 line: LineNumber::new(10),
                 column: ColumnNumber::new(5),
                 code: ErrorCode::raw("clippy::pedantic"),
@@ -77,7 +81,7 @@ fn make_adapters() -> HashMap<String, Arc<dyn ILinterAdapterPort>> {
         Arc::new(MockAdapter {
             name: "ruff",
             results: LintResultList::new(vec![LintResult {
-                file: FilePath::new("src/main.py".into()).unwrap_or_default(),
+                file: FilePath::new("src/main.py".to_string()).unwrap_or_default(),
                 line: LineNumber::new(3),
                 column: ColumnNumber::new(1),
                 code: ErrorCode::raw("F401"),
@@ -95,7 +99,7 @@ fn make_adapters() -> HashMap<String, Arc<dyn ILinterAdapterPort>> {
         Arc::new(MockAdapter {
             name: "eslint",
             results: LintResultList::new(vec![LintResult {
-                file: FilePath::new("src/app.ts".into()).unwrap_or_default(),
+                file: FilePath::new("src/app.ts".to_string()).unwrap_or_default(),
                 line: LineNumber::new(42),
                 column: ColumnNumber::new(7),
                 code: ErrorCode::raw("no-unused-vars"),
@@ -112,7 +116,8 @@ fn make_adapters() -> HashMap<String, Arc<dyn ILinterAdapterPort>> {
 }
 
 fn make_temp_dir(files: &[&str]) -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join(format!("lint_test_{}", std::process::id()));
+    let id = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let dir = std::env::temp_dir().join(format!("lint_test_{}_{}", std::process::id(), id));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     for f in files {
@@ -125,8 +130,10 @@ fn make_temp_dir(files: &[&str]) -> std::path::PathBuf {
     dir
 }
 
+
 // ---------------------------------------------------------------------------
 // Language detection tests (using temp directories)
+
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
@@ -260,7 +267,7 @@ async fn adapter_not_in_map_is_skipped_gracefully() {
     let dir = make_temp_dir(&["main.rs"]);
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
     // Only register ruff — no clippy for this Rust project
-    let mut adapters = HashMap::new();
+    let mut adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
     adapters.insert(
         "ruff".into(),
         Arc::new(MockAdapter {
@@ -314,7 +321,7 @@ async fn adapter_failure_does_not_crash_scan() {
                                 AdapterError::new(
                                     AdapterName::raw("clippy"),
                                     ErrorMessage::new(
-                                        "No such file or directory".into(),
+                                        "No such file or directory".to_string(),
                                     ),
                                 ),
                             )),
@@ -325,7 +332,7 @@ async fn adapter_failure_does_not_crash_scan() {
         Arc::new(MockAdapter {
             name: "ruff",
             results: LintResultList::new(vec![LintResult {
-                file: FilePath::new("test.py".into()).unwrap_or_default(),
+                file: FilePath::new("test.py".to_string()).unwrap_or_default(),
                 line: LineNumber::new(1),
                 column: ColumnNumber::new(1),
                 code: ErrorCode::raw("E999"),

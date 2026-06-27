@@ -3,13 +3,18 @@ use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use shared::code_analysis::taxonomy_analysis_vo::{FileDefinitionMap, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap};
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_error_vo::ErrorCode;
 use shared::common::taxonomy_lint_vo::ScopeRef;
 use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_setup_contract_vo::{CreateConfigDirResult, ProjectLanguageVO, WriteConfigResult};
@@ -687,4 +692,119 @@ fn test_uninstall_hook_without_port_falls_back_to_stub() {
     let result = executor.uninstall_hook();
     assert!(result.success);
     assert!(result.output.contains("lint-arwaky-cli uninstall-hook"));
+}
+
+// --- Mocks for orphan detection ---
+
+struct MockOrphanAggregate {
+    orphan_count: usize,
+}
+impl MockOrphanAggregate {
+    fn with_orphans(count: usize) -> Self {
+        Self { orphan_count: count }
+    }
+}
+impl IOrphanAggregate for MockOrphanAggregate {
+    fn build_orphan_graph_context(&self, _files: &[String], _root_dir: &str) -> GraphAnalysisContext {
+        GraphAnalysisContext::new(
+            ImportGraph::new(std::collections::HashMap::new()),
+            InboundLinkMap::new(std::collections::HashMap::new()),
+            InheritanceMap::new(std::collections::HashMap::new()),
+            FileDefinitionMap::new(std::collections::HashMap::new()),
+        )
+    }
+    fn identify_orphan_entry_points(&self, _files: &[String]) -> std::collections::HashSet<String> {
+        std::collections::HashSet::new()
+    }
+    fn check_orphans(
+        &self,
+        _layer_detector: &dyn ILayerDetectionAggregate,
+        files: &[String],
+        _root_dir: &str,
+    ) -> Vec<LintResult> {
+        (0..self.orphan_count)
+            .map(|i| LintResult {
+                file: FilePath::new(format!("orphan_{}.rs", i)).unwrap_or_default(),
+                line: LineNumber::new(1),
+                column: Default::default(),
+                code: ErrorCode::raw("ORPHAN001"),
+                message: LintMessage::new(format!("orphan file {}", i)),
+                source: Some(shared::common::taxonomy_adapter_name_vo::AdapterName::raw("orphan_detector")),
+                severity: Severity::MEDIUM,
+                enclosing_scope: None,
+                related_locations: Default::default(),
+            })
+            .collect()
+    }
+}
+
+struct MockLayerDetector;
+impl ILayerDetectionAggregate for MockLayerDetector {
+    fn detect_layer(&self, _file_path: &str, _root_dir: &str) -> Option<String> {
+        Some("taxonomy".to_string())
+    }
+    fn get_layer_def(&self, _layer: &str) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
+        None
+    }
+    fn get_orphan_entry_points(&self) -> Vec<String> {
+        vec![]
+    }
+}
+
+struct MockScannerProvider;
+impl IScannerProviderPort for MockScannerProvider {
+    fn scan_directory(&self, _path: &DirectoryPath) -> Result<FilePathList, shared::common::taxonomy_filesystem_error::FileSystemError> {
+        Ok(FilePathList::new(vec![
+            FilePath::new("src/main.rs".to_string()).unwrap_or_default(),
+            FilePath::new("src/lib.rs".to_string()).unwrap_or_default(),
+        ]))
+    }
+    fn get_ignored_files(&self) -> FilePathList {
+        FilePathList::new(vec![])
+    }
+}
+
+fn make_executor_with_orphan(
+    mock: MockCodeAnalysis,
+    orphan_agg: MockOrphanAggregate,
+) -> LintExecutor {
+    LintExecutor::new(Arc::new(mock))
+        .with_orphan(
+            Arc::new(orphan_agg),
+            Arc::new(MockLayerDetector),
+            Arc::new(MockScannerProvider),
+        )
+}
+
+#[test]
+fn test_orphan_with_real_detection() {
+    let executor = make_executor_with_orphan(MockCodeAnalysis::empty(), MockOrphanAggregate::with_orphans(3));
+    let result = executor.orphan("/some/path");
+    assert!(result.success);
+    assert!(result.output.contains("Orphan detection"));
+    assert!(result.output.contains("Scanned 2 files"));
+    assert!(result.output.contains("Found 3 orphan(s)"));
+    assert!(result.output.contains("orphan file 0"));
+    assert!(result.output.contains("ORPHAN001"));
+}
+
+#[test]
+fn test_orphan_with_real_detection_no_orphans() {
+    let executor = make_executor_with_orphan(MockCodeAnalysis::empty(), MockOrphanAggregate::with_orphans(0));
+    let result = executor.orphan("/some/path");
+    assert!(result.success);
+    assert!(result.output.contains("No orphan files detected."));
+}
+
+#[test]
+fn test_orphan_real_vs_stub_distinction() {
+    // With orphan aggregate wired in -> real detection
+    let real = make_executor_with_orphan(MockCodeAnalysis::empty(), MockOrphanAggregate::with_orphans(1));
+    let result_real = real.orphan("/path");
+    assert!(result_real.output.contains("Scanned"));
+
+    // Without orphan aggregate -> stub
+    let stub = make_executor(MockCodeAnalysis::empty());
+    let result_stub = stub.orphan("/path");
+    assert!(result_stub.output.contains("lint-arwaky-cli orphan"));
 }

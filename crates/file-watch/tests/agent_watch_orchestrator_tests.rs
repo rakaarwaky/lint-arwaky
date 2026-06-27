@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use file_watch_lint_arwaky::infrastructure_notify_provider::NotifyWatchProvider;

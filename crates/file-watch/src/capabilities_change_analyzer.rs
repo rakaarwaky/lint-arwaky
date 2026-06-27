@@ -27,7 +27,7 @@ impl IChangeAnalyzerProtocol for ChangeAnalyzer {
     }
 
     fn is_lintable(path: &str) -> bool {
-        let lintable_exts = [".rs", ".py", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".cjs"];
+        let lintable_exts = [".rs", ".py", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".cjs", ".json", ".css", ".md", ".toml", ".yaml", ".yml"];
         lintable_exts.iter().any(|ext| path.ends_with(ext))
     }
 

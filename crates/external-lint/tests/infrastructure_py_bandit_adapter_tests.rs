@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_py_bandit_adapter::BanditAdapter;
@@ -61,11 +62,11 @@ async fn parses_bandit_json_results() {
     let path = make_path("src/main.py");
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 2);
-    assert_eq!(results.values[0].code.value(), "B101");
+    assert_eq!(results.values[0].code.code(), "B101");
     assert_eq!(results.values[0].line.value(), 42);
-    assert_eq!(results.values[0].severity as i32, Severity::HIGH as i32);
-    assert_eq!(results.values[1].code.value(), "B301");
-    assert_eq!(results.values[1].severity as i32, Severity::MEDIUM as i32);
+    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
+    assert_eq!(results.values[1].code.code(), "B301");
+    assert_eq!(results.values[1].severity.clone() as i32, Severity::MEDIUM as i32);
 }
 
 #[tokio::test]
@@ -97,10 +98,10 @@ async fn maps_bandit_severity_correctly() {
     let adapter = make_adapter(json);
     let path = make_path("t.py");
     let results = adapter.scan(&path).await.unwrap();
-    assert_eq!(results.values[0].severity as i32, Severity::HIGH as i32);
-    assert_eq!(results.values[1].severity as i32, Severity::MEDIUM as i32);
-    assert_eq!(results.values[2].severity as i32, Severity::LOW as i32);
-    assert_eq!(results.values[3].severity as i32, Severity::MEDIUM as i32); // default
+    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
+    assert_eq!(results.values[1].severity.clone() as i32, Severity::MEDIUM as i32);
+    assert_eq!(results.values[2].severity.clone() as i32, Severity::LOW as i32);
+    assert_eq!(results.values[3].severity.clone() as i32, Severity::MEDIUM as i32); // default
 }
 
 #[tokio::test]

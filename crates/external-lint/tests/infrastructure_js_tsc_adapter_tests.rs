@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_js_tsc_adapter::TSCAdapter;
@@ -55,10 +56,10 @@ async fn parses_parenthesized_tsc_format() {
     let path = make_path("src/app.ts");
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results.values[0].code.value(), "TS2322");
+    assert_eq!(results.values[0].code.code(), "TS2322");
     assert_eq!(results.values[0].line.value(), 10);
     assert_eq!(results.values[0].column.value(), 5);
-    assert_eq!(results.values[0].severity as i32, Severity::HIGH as i32);
+    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
 }
 
 #[tokio::test]
@@ -68,7 +69,7 @@ async fn parses_colon_delimited_tsc_format() {
     let path = make_path("src/app.ts");
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 1);
-    assert_eq!(results.values[0].code.value(), "TS2554");
+    assert_eq!(results.values[0].code.code(), "TS2554");
     assert_eq!(results.values[0].line.value(), 10);
     assert_eq!(results.values[0].column.value(), 5);
 }
@@ -83,8 +84,8 @@ src/utils.ts(25,3): error TS7006: Parameter implicitly has 'any' type.
     let path = make_path("src/app.ts");
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 2);
-    assert_eq!(results.values[0].code.value(), "TS2322");
-    assert_eq!(results.values[1].code.value(), "TS7006");
+    assert_eq!(results.values[0].code.code(), "TS2322");
+    assert_eq!(results.values[1].code.code(), "TS7006");
 }
 
 #[tokio::test]

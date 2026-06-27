@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_py_mypy_adapter::MyPyAdapter;
@@ -58,8 +59,8 @@ async fn parses_mypy_output_with_column() {
     assert_eq!(results.len(), 1);
     assert_eq!(results.values[0].line.value(), 10);
     assert_eq!(results.values[0].column.value(), 5);
-    assert_eq!(results.values[0].code.value(), "return-value");
-    assert_eq!(results.values[0].severity as i32, Severity::HIGH as i32);
+    assert_eq!(results.values[0].code.code(), "return-value");
+    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
 }
 
 #[tokio::test]
@@ -71,7 +72,7 @@ async fn parses_mypy_output_without_column() {
     assert_eq!(results.len(), 1);
     assert_eq!(results.values[0].line.value(), 10);
     assert_eq!(results.values[0].column.value(), 0);
-    assert_eq!(results.values[0].code.value(), "return-value");
+    assert_eq!(results.values[0].code.code(), "return-value");
 }
 
 #[tokio::test]
@@ -86,11 +87,11 @@ src/main.py:42: note: revealed type is 'int' [note]
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 3);
     // error -> HIGH
-    assert_eq!(results.values[0].severity as i32, Severity::HIGH as i32);
+    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
     // warning -> MEDIUM
-    assert_eq!(results.values[1].severity as i32, Severity::MEDIUM as i32);
+    assert_eq!(results.values[1].severity.clone() as i32, Severity::MEDIUM as i32);
     // note -> LOW
-    assert_eq!(results.values[2].severity as i32, Severity::LOW as i32);
+    assert_eq!(results.values[2].severity.clone() as i32, Severity::LOW as i32);
 }
 
 #[tokio::test]
@@ -99,7 +100,7 @@ async fn syntax_errors_get_critical_severity() {
     let adapter = make_adapter(output);
     let path = make_path("src/main.py");
     let results = adapter.scan(&path).await.unwrap();
-    assert_eq!(results.values[0].severity as i32, Severity::CRITICAL as i32);
+    assert_eq!(results.values[0].severity.clone() as i32, Severity::CRITICAL as i32);
 }
 
 #[tokio::test]
