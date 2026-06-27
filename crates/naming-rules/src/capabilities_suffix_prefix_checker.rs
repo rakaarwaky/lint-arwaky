@@ -90,11 +90,11 @@ impl SuffixPrefixChecker {
             None => return,
         };
 
-        let suffix = get_suffix(&stem);
+        let suffix = get_suffix(stem);
 
         // Step 5: Check if the suffix is explicitly forbidden for the current layer.
-        if let Some(ref suf) = suffix {
-            if def.naming.forbidden_suffix.values.contains(suf) {
+        if let Some(suf) = &suffix {
+            if def.naming.forbidden_suffix.values.iter().any(|v| v == *suf) {
                 let layer_display = _layer_name
                     .as_ref()
                     .map(|l| l.value().to_string())
@@ -104,7 +104,7 @@ impl SuffixPrefixChecker {
                     "AES102",
                     NamingViolation::SuffixForbidden {
                         layer_name: layer_display.clone(),
-                        forbidden_suffix: suf.clone(),
+                        forbidden_suffix: suf.to_string(),
                         reason: Some(LintMessage::new(format!(
                             "Suffix '{}' is not permitted in the '{}' layer. Each architectural layer allows only \
                              specific suffixes that match its role. The suffix '{}' belongs to a different layer's domain. \
@@ -122,7 +122,7 @@ impl SuffixPrefixChecker {
         // Step 6: If the layer configuration enforces a strict suffix policy, ensure the suffix matches the allowed list.
         if def.naming.suffix_policy.value == "strict" {
             let valid = match &suffix {
-                Some(s) => def.naming.allowed_suffix.values.contains(s),
+                Some(s) => def.naming.allowed_suffix.values.iter().any(|v| v == *s),
                 None => false,
             };
             if !valid {
@@ -131,7 +131,7 @@ impl SuffixPrefixChecker {
                     .as_ref()
                     .map(|l| l.value().to_string())
                     .unwrap_or_else(|| "unknown".to_string());
-                let suffix_display = suffix.as_deref().unwrap_or("(none)");
+                let suffix_display = suffix.unwrap_or("(none)");
                 violations.push(Self::make_result(
                     file,
                     "AES102",

@@ -99,13 +99,13 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         let mut results = LintResultList::new(Vec::new());
         let all_files = self.fs.walk(target, Some(&self.ignored_patterns)).await;
         let files = Self::filter_source_files(&all_files);
-        let root_dir = target.clone();
+        let root_dir = target;
 
         self.naming_convention_checker
-            .check_file_naming(self.analyzer.as_ref(), &files, &root_dir, &mut results)
+            .check_file_naming(self.analyzer.as_ref(), &files, root_dir, &mut results)
             .await;
         self.suffix_prefix_checker
-            .check_domain_suffixes(self.analyzer.as_ref(), &files, &root_dir, &mut results)
+            .check_domain_suffixes(self.analyzer.as_ref(), &files, root_dir, &mut results)
             .await;
 
         results.values

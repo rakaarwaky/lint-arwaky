@@ -2790,6 +2790,7 @@ name = "naming_rules-lint-arwaky"
 version = "1.10.14"
 dependencies = [
  "async-trait",
+ "once_cell",
  "regex",
  "shared-lint-arwaky",
 ]

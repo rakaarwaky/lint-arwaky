@@ -127,12 +127,13 @@ Allowed branch naming:
 
 When merging a PR to develop:
 
-- ** use `--delete-branch`** — for feature / fix branches after merger 
-- **do NOT be deleted `develop` branch **  after merge to `main`
+- ** use `--delete-branch`** — for feature / fix branches after merger
+- **do NOT be deleted `develop` branch ** after merge to `main`
 - Branches that were accidentally deleted must be restored immediately via:
   ```bash
   git branch <branch-name> origin/develop
   jj git import
   jj bookmark set <branch-name>
   ```
+
 g

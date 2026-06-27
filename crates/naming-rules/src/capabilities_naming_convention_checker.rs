@@ -1,6 +1,7 @@
 // PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 2 words)
 use crate::taxonomy_naming_utility::get_stem;
 use async_trait::async_trait;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
@@ -23,6 +24,9 @@ use shared::taxonomy_suggestion_vo::DescriptionVO;
 
 #[derive(Clone)]
 pub struct NamingConventionChecker {}
+
+static NAMING_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+)+$").expect("invalid naming regex"));
 
 impl Default for NamingConventionChecker {
     fn default() -> Self {
@@ -139,42 +143,35 @@ impl NamingConventionChecker {
             return;
         }
 
-        // Step 3: Retrieve the layer definition. If it does not exist, abort.
-        let def = match definition {
-            Some(d) => d,
-            None => return,
-        };
-
-        // Step 4: Skip validation if the file name is explicitly listed in the layer's exception config.
-        if def.exceptions.values.contains(&filename.to_string()) {
-            return;
+        // Step 3: Skip validation if the file name is explicitly listed in the layer's exception config.
+        if let Some(def) = definition {
+            if def.exceptions.values.contains(&filename.to_string()) {
+                return;
+            }
         }
 
-        // Step 5: Validate the file stem pattern using a regular expression.
+        // Step 4: Validate the file stem pattern using a regular expression.
         // It must consist of lowercase letters and digits separated by underscores (e.g., prefix_concept_suffix).
         let stem = get_stem(filename).unwrap_or_default();
-        let naming_regex = r"^[a-z0-9]+(_[a-z0-9]+)+$";
 
-        if let Ok(re) = Regex::new(naming_regex) {
-            if !re.is_match(&stem) {
-                violations.push(Self::make_result(
-                    file,
-                    "AES101",
-                    NamingViolation::NamingConvention {
-                        min_words: 2,
-                        separator: "_".to_string(),
-                        reason: Some(LintMessage::new(format!(
-                            "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
-                             Expected: lowercase alphanumeric words separated by underscores, minimum 2 words. \
-                             Example valid names: 'capabilities_user_checker', 'infrastructure_db_adapter'. \
-                             Issue: '{}' may have uppercase characters, wrong separator, or only 1 word.",
-                            stem, stem
-                        ))),
-                    }
-                    .to_string(),
-                    Severity::HIGH,
-                ));
-            }
+        if !NAMING_REGEX.is_match(stem) {
+            violations.push(Self::make_result(
+                file,
+                "AES101",
+                NamingViolation::NamingConvention {
+                    min_words: 2,
+                    separator: "_".to_string(),
+                    reason: Some(LintMessage::new(format!(
+                        "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
+                         Expected: lowercase alphanumeric words separated by underscores, minimum 2 words. \
+                         Example valid names: 'capabilities_user_checker', 'infrastructure_db_adapter'. \
+                         Issue: '{}' may have uppercase characters, wrong separator, or only 1 word.",
+                        stem, stem
+                    ))),
+                }
+                .to_string(),
+                Severity::HIGH,
+            ));
         }
     }
 }
