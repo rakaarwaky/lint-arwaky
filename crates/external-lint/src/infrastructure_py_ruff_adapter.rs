@@ -32,7 +32,7 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
-use shared::external_lint::taxonomy_external_lint_helper::{default_working_dir, exec_cmd_adapter};
+use shared::external_lint::infrastructure_external_lint_helper::{default_working_dir, exec_cmd_adapter};
 
 pub struct RuffAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
