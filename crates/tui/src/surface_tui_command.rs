@@ -155,7 +155,7 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
 
     if ctrl {
         return match key.code {
-            KeyCode::Char('q') | KeyCode::Char('c') => TuiEvent::Quit,
+            KeyCode::Char('q') => TuiEvent::Quit,
             KeyCode::Char('s') => TuiEvent::ActionSecurity,
             KeyCode::Char('d') => TuiEvent::ActionDuplicates,
             KeyCode::Char('p') => TuiEvent::ActionDependencies,
@@ -214,7 +214,7 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         KeyCode::Char('v') => TuiEvent::ActionVersion,
         KeyCode::Char('?') => TuiEvent::ToggleHelp,
         KeyCode::Char('/') => TuiEvent::ToggleSearch,
-        KeyCode::Esc => TuiEvent::None,
+        KeyCode::Esc => TuiEvent::Quit,
         _ => TuiEvent::None,
     }
 }
@@ -241,7 +241,7 @@ fn render_header(state: &AppState, frame: &mut ratatui::Frame, area: ratatui::la
         Span::styled("Path: ", Style::default().fg(Color::DarkGray)),
         Span::styled(&state.current_dir, Style::default().fg(Color::White)),
         Span::styled("  ", Style::default()),
-        Span::styled("[q] Quit", Style::default().fg(Color::DarkGray)),
+        Span::styled("[q/Esc] Quit", Style::default().fg(Color::DarkGray)),
     ]);
 
     let paragraph = Paragraph::new(line);
