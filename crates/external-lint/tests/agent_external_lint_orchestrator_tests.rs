@@ -3,26 +3,26 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::agent_external_lint_orchestrator::ExternalLintOrchestrator;
-use shared_lint_arwaky::cli_commands::contract_executor_port::ICommandExecutorPort;
-use shared_lint_arwaky::cli_commands::taxonomy_result_vo::LintResult;
-use shared_lint_arwaky::cli_commands::taxonomy_result_vo::LintResultList;
-use shared_lint_arwaky::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use shared_lint_arwaky::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared_lint_arwaky::common::taxonomy_adapter_error::AdapterError;
-use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
-use shared_lint_arwaky::common::taxonomy_common_error::ErrorMessage;
-use shared_lint_arwaky::common::taxonomy_common_vo::ColumnNumber;
-use shared_lint_arwaky::common::taxonomy_common_vo::LineNumber;
-use shared_lint_arwaky::common::taxonomy_common_vo::PatternList;
-use shared_lint_arwaky::common::taxonomy_duration_vo::Timeout;
-use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;
-use shared_lint_arwaky::common::taxonomy_lint_vo::LocationList;
-use shared_lint_arwaky::common::taxonomy_message_vo::ComplianceStatus;
-use shared_lint_arwaky::common::taxonomy_message_vo::LintMessage;
-use shared_lint_arwaky::common::taxonomy_path_vo::FilePath;
-use shared_lint_arwaky::common::taxonomy_response_data_vo::ResponseData;
-use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
-use shared_lint_arwaky::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
+use shared::common::taxonomy_adapter_error::AdapterError;
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
+use shared::common::taxonomy_common_error::ErrorMessage;
+use shared::common::taxonomy_common_vo::ColumnNumber;
+use shared::common::taxonomy_common_vo::LineNumber;
+use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_duration_vo::Timeout;
+use shared::common::taxonomy_error_vo::ErrorCode;
+use shared::common::taxonomy_lint_vo::LocationList;
+use shared::common::taxonomy_message_vo::ComplianceStatus;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_response_data_vo::ResponseData;
+use shared::common::taxonomy_severity_vo::Severity;
+use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
 // ---------------------------------------------------------------------------
 // Mock adapter that captures the path it was called with and returns

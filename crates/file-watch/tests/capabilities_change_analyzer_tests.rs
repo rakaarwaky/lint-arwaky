@@ -1,5 +1,5 @@
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
-use shared_lint_arwaky::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
+use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 
 // ---------------------------------------------------------------------------
 // is_lintable — which file extensions should trigger a re-lint

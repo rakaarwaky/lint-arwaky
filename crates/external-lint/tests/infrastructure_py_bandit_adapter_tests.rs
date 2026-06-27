@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_py_bandit_adapter::BanditAdapter;
-use shared_lint_arwaky::cli_commands::contract_executor_port::ICommandExecutorPort;
-use shared_lint_arwaky::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared_lint_arwaky::common::taxonomy_common_vo::PatternList;
-use shared_lint_arwaky::common::taxonomy_duration_vo::Timeout;
-use shared_lint_arwaky::common::taxonomy_path_vo::FilePath;
-use shared_lint_arwaky::common::taxonomy_response_data_vo::ResponseData;
-use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_duration_vo::Timeout;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_response_data_vo::ResponseData;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 
 struct MockBanditExecutor { output: String }
 

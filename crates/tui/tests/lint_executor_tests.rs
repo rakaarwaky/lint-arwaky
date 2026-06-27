@@ -490,13 +490,18 @@ fn test_install_with_setup_aggregate_python_failure() {
 // ---------------------------------------------------------------------------
 
 #[test]
-fn test_config_show_stub_without_config_orchestrator() {
+fn test_config_show_without_config_orchestrator_uses_fallback() {
     let executor = make_executor(MockCodeAnalysis::empty());
     let result = executor.config_show();
     assert!(result.success);
     assert!(result.output.contains("Active Configuration"));
-    assert!(result.output.contains("Use CLI"));
-    assert!(result.output.contains("lint-arwaky-cli config show"));
+    // Without orchestrator, config_show does CWD fallback search.
+    // It either finds a real config or falls back to built-in defaults.
+    assert!(
+        result.output.contains("Source:") || result.output.contains("built-in defaults"),
+        "expected source or built-in defaults in output: {}",
+        result.output
+    );
 }
 
 // ---------------------------------------------------------------------------

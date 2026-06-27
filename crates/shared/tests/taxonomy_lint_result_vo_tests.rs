@@ -38,7 +38,7 @@ fn lint_result_new_arch_creates_result() {
     let r = LintResult::new_arch("src/main.rs", 42, "AES101", Severity::HIGH, "violation detected");
     assert_eq!(r.file.value, "src/main.rs");
     assert_eq!(r.line.value(), 42);
-    assert_eq!(r.code.value(), "AES101");
+    assert_eq!(r.code.code(), "AES101");
     assert_eq!(r.source.as_ref().unwrap().value(), "architecture");
 }
 
