@@ -21,11 +21,22 @@ impl TuiContainer {
         let fix_orchestrator = auto_fix_container.orchestrator(false);
         let setup_container = project_setup::root_project_setup_container::SetupContainer::new();
         let setup_aggregate = setup_container.aggregate();
-        let lint_executor = Arc::new(LintExecutor::new_with_setup(
-            code_analysis_aggregate,
-            fix_orchestrator,
-            setup_aggregate,
-        ));
+        let hook_adapter: Arc<dyn shared::git_hooks::contract_manager_port::IHookManagerPort> =
+            Arc::new(git_hooks::infrastructure_hook_adapter::GitHookAdapter::new(
+                shared::common::taxonomy_path_vo::FilePath::new(".".to_string())
+                    .unwrap_or_default(),
+            ));
+        let config_container =
+            config_system::root_config_system_container::ConfigContainer::new();
+        let lint_executor = Arc::new(
+            LintExecutor::new_with_setup(
+                code_analysis_aggregate,
+                fix_orchestrator,
+                setup_aggregate,
+            )
+            .with_hook_port(hook_adapter)
+            .with_config(config_container.orchestrator()),
+        );
         let action_handler: Arc<dyn IActionHandlerProtocol> =
             Arc::new(ActionHandler::new(fs_adapter, lint_executor));
         let tui_aggregate: Arc<dyn ITuiAggregate> = Arc::new(TuiOrchestrator::new(action_handler));

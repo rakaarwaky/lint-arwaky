@@ -6,6 +6,8 @@ use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
+use shared::git_hooks::contract_manager_port::IHookManagerPort;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
@@ -73,13 +75,17 @@ pub fn discover_adapters() -> Vec<AdapterInfo> {
 
 /// LintExecutor — TUI-facing lint action provider.
 /// Delegates code analysis to ICodeAnalysisAggregate and formats results for display.
-/// Optionally holds a SetupManagementAggregate for real config initialization
-/// and a MaintenanceCommandsAggregate for real environment diagnostics (doctor).
+/// Optionally holds a SetupManagementAggregate for real config initialization,
+/// a MaintenanceCommandsAggregate for real environment diagnostics (doctor),
+/// an IHookManagerPort for real git hook operations, and an
+/// IConfigOrchestrationAggregate for real config display.
 pub struct LintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
     fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
     setup_aggregate: Option<Arc<dyn SetupManagementAggregate>>,
     maintenance: Option<Arc<dyn MaintenanceCommandsAggregate>>,
+    hook_port: Option<Arc<dyn IHookManagerPort>>,
+    config_orchestrator: Option<Arc<dyn IConfigOrchestrationAggregate>>,
 }
 
 impl LintExecutor {
@@ -89,6 +95,8 @@ impl LintExecutor {
             fix_orchestrator: None,
             setup_aggregate: None,
             maintenance: None,
+            hook_port: None,
+            config_orchestrator: None,
         }
     }
 
@@ -101,6 +109,8 @@ impl LintExecutor {
             fix_orchestrator: Some(fix_orchestrator),
             setup_aggregate: None,
             maintenance: None,
+            hook_port: None,
+            config_orchestrator: None,
         }
     }
 
@@ -114,12 +124,29 @@ impl LintExecutor {
             fix_orchestrator: Some(fix_orchestrator),
             setup_aggregate: Some(setup_aggregate),
             maintenance: None,
+            hook_port: None,
+            config_orchestrator: None,
         }
     }
 
     /// Builder method: attach a maintenance aggregate for real doctor diagnostics.
     pub fn with_maintenance(mut self, maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> Self {
         self.maintenance = Some(maintenance);
+        self
+    }
+
+    /// Builder method: attach a hook manager port for real git hook operations.
+    pub fn with_hook_port(mut self, hook_port: Arc<dyn IHookManagerPort>) -> Self {
+        self.hook_port = Some(hook_port);
+        self
+    }
+
+    /// Builder method: attach a config orchestrator for real config display.
+    pub fn with_config(
+        mut self,
+        config_orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
+    ) -> Self {
+        self.config_orchestrator = Some(config_orchestrator);
         self
     }
 
@@ -245,6 +272,106 @@ impl LintExecutor {
             }
         }
     }
+
+    /// Format DependencyReport into a human-readable list for the TUI.
+    fn format_dependency_report(
+        path: &str,
+        report: &DependencyReport,
+    ) -> LintExecutionResult {
+        let count = report.dependencies.len();
+        let mut output = format!(
+            "Dependency scan for {}\nLanguage: {}\nTotal dependencies: {}\n",
+            path, report.language, count
+        );
+
+        let direct: Vec<_> = report
+            .dependencies
+            .iter()
+            .filter(|d| d.dep_type == "direct")
+            .collect();
+        let transitive: Vec<_> = report
+            .dependencies
+            .iter()
+            .filter(|d| d.dep_type == "transitive")
+            .collect();
+
+        if !direct.is_empty() {
+            output.push_str(&format!("\nDirect ({}) [top 30]:\n", direct.len()));
+            for dep in direct.iter().take(30) {
+                output.push_str(&format!("  {} {}\n", dep.name, dep.version));
+            }
+            if direct.len() > 30 {
+                output.push_str(&format!("  ... and {} more\n", direct.len() - 30));
+            }
+        }
+
+        if !transitive.is_empty() {
+            output.push_str(&format!(
+                "\nTransitive ({}) [top 30]:\n",
+                transitive.len()
+            ));
+            for dep in transitive.iter().take(30) {
+                output.push_str(&format!("  {} {}\n", dep.name, dep.version));
+            }
+            if transitive.len() > 30 {
+                output.push_str(&format!("  ... and {} more\n", transitive.len() - 30));
+            }
+        }
+
+        LintExecutionResult::success(output, count)
+    }
+
+    /// Format a ConfigResult into a human-readable display for the TUI config_show action.
+    fn format_config_result(
+        result: &shared::config_system::taxonomy_source_vo::ConfigResult,
+    ) -> LintExecutionResult {
+        let mut output = String::from("Active Configuration\n");
+        output.push_str(&format!(
+            "Source: {} ({})\n",
+            result.source.path.value, result.source.language
+        ));
+
+        if !result.warnings.is_empty() {
+            output.push_str("\nWarnings:\n");
+            for w in &result.warnings {
+                output.push_str(&format!("  - {}\n", w));
+            }
+        }
+
+        let config = &result.config;
+        output.push_str(&format!("\nEnabled: {}\n", config.enabled.value));
+        output.push_str(&format!("Layers: {}\n", config.layers.len()));
+        output.push_str(&format!("Rules: {}\n", config.rules.len()));
+        output.push_str(&format!(
+            "Ignored paths: {}\n",
+            config.ignored_paths.values.len()
+        ));
+        output.push_str(&format!(
+            "Mandatory class definition: {}\n",
+            config.mandatory_class_definition.value
+        ));
+
+        if !config.layers.is_empty() {
+            output.push_str("\nArchitecture Layers:\n");
+            for name in config.layers.keys() {
+                output.push_str(&format!("  - {}\n", name.value));
+            }
+        }
+
+        if !config.rules.is_empty() {
+            output.push_str("\nRules:\n");
+            for (i, rule) in config.rules.iter().enumerate() {
+                output.push_str(&format!(
+                    "  {}. {} (scope: {})\n",
+                    i + 1,
+                    rule.name.value,
+                    rule.scope.value,
+                ));
+            }
+        }
+
+        LintExecutionResult::success(output, 0)
+    }
 }
 
 /// ILintExecutorProtocol implementation.
@@ -362,7 +489,7 @@ impl ILintExecutorProtocol for LintExecutor {
     fn doctor(&self) -> LintExecutionResult {
         match &self.maintenance {
             Some(maintenance) => {
-                // Bridge async→sync: create a short-lived tokio runtime to run
+                // Bridge async->sync: create a short-lived tokio runtime to run
                 // the async diagnose_toolchain() from this sync trait method.
                 let rt = match tokio::runtime::Runtime::new() {
                     Ok(rt) => rt,
@@ -406,24 +533,99 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn config_show(&self) -> LintExecutionResult {
-        let output =
-            "Active Configuration:\nUse CLI `lint-arwaky-cli config show` to display full config."
-                .to_string();
-        LintExecutionResult::success(output, 0)
+        match &self.config_orchestrator {
+            Some(orchestrator) => {
+                // Bridge async->sync: create a short-lived tokio runtime.
+                let rt = match tokio::runtime::Runtime::new() {
+                    Ok(rt) => rt,
+                    Err(e) => {
+                        return LintExecutionResult::failure(format!(
+                            "Failed to create runtime for config display: {}",
+                            e
+                        ));
+                    }
+                };
+                let cwd = std::env::current_dir()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|_| ".".to_string());
+                let project_root =
+                    shared::common::taxonomy_path_vo::FilePath::new(cwd).unwrap_or_default();
+                let result = rt.block_on(orchestrator.load_project_config(&project_root));
+                Self::format_config_result(&result)
+            }
+            None => {
+                let output =
+                    "Active Configuration:\nUse CLI `lint-arwaky-cli config show` to display full config."
+                        .to_string();
+                LintExecutionResult::success(output, 0)
+            }
+        }
     }
 
     fn install_hook(&self) -> LintExecutionResult {
-        let output =
-            "Git pre-commit hook installation.\nUse CLI `lint-arwaky-cli install-hook` to install."
-                .to_string();
-        LintExecutionResult::success(output, 0)
+        match &self.hook_port {
+            Some(port) => {
+                let exe_path = shared::common::taxonomy_path_vo::FilePath::default();
+                match port.install_pre_commit(&exe_path) {
+                    Ok(status) => {
+                        if status.value {
+                            LintExecutionResult::success(
+                                "Git pre-commit hook installed successfully.".to_string(),
+                                0,
+                            )
+                        } else {
+                            LintExecutionResult::failure(
+                                "Git pre-commit hook installation failed.\n\
+                                 Not a git repository? Run `git init` first."
+                                    .to_string(),
+                            )
+                        }
+                    }
+                    Err(e) => LintExecutionResult::failure(format!(
+                        "Git pre-commit hook installation failed.\nError: {}",
+                        e
+                    )),
+                }
+            }
+            None => LintExecutionResult::success(
+                "Git pre-commit hook installation.\n\
+                 Use CLI `lint-arwaky-cli install-hook` to install."
+                    .to_string(),
+                0,
+            ),
+        }
     }
 
     fn uninstall_hook(&self) -> LintExecutionResult {
-        let output =
-            "Git pre-commit hook removal.\nUse CLI `lint-arwaky-cli uninstall-hook` to remove."
-                .to_string();
-        LintExecutionResult::success(output, 0)
+        match &self.hook_port {
+            Some(port) => match port.uninstall_pre_commit() {
+                Ok(status) => {
+                    if status.value {
+                        LintExecutionResult::success(
+                            "Git pre-commit hook removed successfully.".to_string(),
+                            0,
+                        )
+                    } else {
+                        LintExecutionResult::success(
+                            "No git pre-commit hook found \
+                             (not a git repo or hook already removed)."
+                                .to_string(),
+                            0,
+                        )
+                    }
+                }
+                Err(e) => LintExecutionResult::failure(format!(
+                    "Git pre-commit hook removal failed.\nError: {}",
+                    e
+                )),
+            },
+            None => LintExecutionResult::success(
+                "Git pre-commit hook removal.\n\
+                 Use CLI `lint-arwaky-cli uninstall-hook` to remove."
+                    .to_string(),
+                0,
+            ),
+        }
     }
 
     fn adapters(&self) -> LintExecutionResult {
