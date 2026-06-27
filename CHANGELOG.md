@@ -1,6 +1,38 @@
 # Changelog
 
-## 1.10.14 (Upcoming)
+## 1.10.72 (2026-06-27)
+
+### Added
+
+- **Ratatui TUI**: Implemented an interactive terminal user interface (`lint-arwaky-tui`) featuring a file browser, preview panel, real config display (`c` key), and diagnostic logs (`d` key). Full scan is wired to execute checks using all 6 underlying rule orchestrators.
+- **TUI Scrolling**: Added preview panel scroll support via PageUp/PageDown keybindings and mouse scroll.
+- **MCP Command Execution**: Added a unified command execution interface on the MCP server (powered by the new `rmcp` SDK and `McpContainer`) to run lint scans, CI checks, and maintenance diagnostics.
+- **Multi-Format Scan Report**: Expanded the `scan` command to support multiple report formats (JSON, JUnit, SARIF, text) and clean/aggregated outputs for shared workspaces.
+- **Scan --member Filter**: Added a `--member` flag to target specific workspace members during a workspace scan.
+- **New Lint Rules & Enhancements**:
+  - Python and TypeScript contract primitive checks (`AES402`).
+  - Detection for workspace-level `clippy::allow` bypass comments in `Cargo.toml`.
+  - Added option to toggle/flag orphan checking inside configuration YAML files.
+  - Ignored vendor minified assets (e.g. `.min.js`, `.min.css`) in `lint_arwaky.config.rust.yaml` to avoid AES304 violations on third-party libraries.
+  - Implemented `watch` subcommand using Linux `inotify` debounce rather than raw polling loops.
+
+### Fixed
+
+- **AES Dummy Checker**: Fixed `function_body_is_dummy` logic to correctly evaluate single-line bodies without false positives.
+- **Orphan & Cycle Detectors**: Enhanced cross-layer cycle detection (`AES205`) for `crate::` imports, self-import checks, and entry point detection for `*_entry` files.
+- **Import Mapping Guards**: Excluded Rust trait imports from import alias mapping to avoid false positives.
+- **Graceful Tool Handling**: Improved resilience when running external linters (e.g. handling empty Ruff outputs gracefully).
+- **DI & Decoupling**: Replaced risky `unwrap` and `expect` calls with robust pattern matching throughout the capability and service container layers.
+- **Ignore Filter Suffix Globs**: Replaced naive substring match with a deep, segment-equality matching algorithm that properly handles paths like `test-workspaces/**`.
+
+### Changed
+
+- **Binary Renamed**: Renamed the CLI entry command to `lint-arwaky-cli`.
+- **SDK Migration**: Migrated the MCP server from legacy infrastructure to the official `rmcp` SDK.
+- **Shared Workspace Restructuring**: Moved internal test modules to external `tests/` directories, unified common taxonomy imports, and centralized dependency injection through `CliContainer` and `McpContainer`.
+- **Configuration Parsing**: Replaced `serde_yaml` with `serde_yml`.
+- Replaced `language-adapters` with the `external-lint` crate structure.
+- Hardened capabilities and infrastructure layers by enforcing strict port/protocol contracts.
 
 ### Removed
 
@@ -9,33 +41,10 @@
 - **Removed unused CLI commands**: `suggest`, `multi-project`, `cancel`, `import`, `export`, `diff`, `report`, `complexity` — stubs or redundant with existing commands.
 - **Removed `setup doctor`**: Moved to `maintenance doctor` (top-level subcommand).
 
-### Added
-
-- **`maintenance doctor`**: Environment diagnostics moved from `setup doctor` to `maintenance doctor` — better placement for periodic health checks.
-- **`watch` with inotify**: Proper file watcher using `notify` crate (inotify on Linux) with debounce, instead of polling-based sleep loop.
-- **AES304 (BypassComment) enforcement — self-lint fix**: The `BypassChecker` in `crates/code-analysis/src/capabilities_check_bypass_checker.rs` now reliably flags `.unwrap_or_default`, `.unwrap_or`, `.unwrap_or_else`, `.expect(...)`, `panic!(...)`, `todo!(...)`, `unimplemented!(...)`, and `unreachable!(...)` as AES304 CRITICAL violations. Previously the pattern matcher only fired on the literal `.unwrap()` (with empty parens), so the majority of `.unwrap_*` and `.expect_*` call-sites in production code were silently passing. The checker now (a) reads forbidden patterns from `ArchitectureConfig.rules[AES304].code_analysis.forbidden_bypass` via a new `BypassChecker::from_patterns(...)` constructor, (b) walks the Rust method-call chain across `_segment` boundaries so every `.unwrap_or*` and `.expect_*` variant is detected, and (c) requires a leading `.` for method tokens (preventing false positives on identifier names like `unwrap_helper`). 17 unit tests in `capabilities_check_bypass_checker` cover positive matches, false-positive guards, config-driven patterns, and test-module / `Lazy<Regex>` skip rules. Config YAML keys renamed from `patterns:` to `forbidden_bypass:` across `lint_arwaky.config.{rust,python,javascript}.yaml` so YAML actually reaches the checker (previously ignored due to serde flatten on `CodeAnalysisRuleVO.forbidden_bypass`).
-- **File-path extension bug fix — self-lint root cause**: `FilePath::extension()` no longer rejects paths whose string representation starts with `.` (e.g. `./foo.rs`). The previous implementation returned `""` for any path beginning with `.`, which caused `LanguageDetector::is_lintable` to skip relative paths emitted by `std::fs::read_dir` in `collect_source_files`. Net effect: `lint-arwaky check .` was scanning zero source files when invoked with a relative project root, which silently hid every other AES rule. The fix extracts the basename first, then runs the special-file and dot-prefix checks against it. 4 regression tests in `taxonomy_path_vo.rs` cover `./foo.rs`, `/home/user/.gitignore`, full paths, and `Makefile`/`Dockerfile`.
-- **`[workspace.lints.clippy]` in `Cargo.toml`**: Centralized clippy policy at the workspace level. Currently enables `result_large_err = "warn"` for visibility; documents the deliberate exclusion of `clippy::unwrap_used` / `clippy::expect_used` (the AES304 self-lint policy is the project's source of truth for those patterns, not clippy) and `clippy::module_name_repetitions` (the AES layer-trait naming convention embeds layer names on purpose).
-- **AES304 per-language panic-equivalent detection**: `BypassChecker` now detects language-native panic idioms that mirror Rust's `panic!()` / `unimplemented!()`. Python files fire on `raise NotImplementedError` (or `raise NotImplemented`) → AES304 UNIMPLEMENTED and on `assert False, "..."` → AES304 PANIC. JavaScript/TypeScript files fire on `throw new Error(...)`, `throw new TypeError(...)`, `throw new RangeError(...)`, `throw new ReferenceError(...)`, and `throw new SyntaxError(...)` → AES304 PANIC. Detection is language-scoped via `LanguageDetector::detect` on the file extension, so cross-language false positives (e.g. Python code mentioning `throw new error` as an identifier name) cannot fire. 14 new unit tests cover positive cases for Python and JS/TS plus negative guards for `expect(value).toBe(5)` (Jest), `throw err` (re-throw), `raise ValueError("...")` (legitimate error), and Python `throw new error` as identifier.
-- **Ignore vendor minified assets in `lint_arwaky.config.rust.yaml`**: Added `.min.js` and `.min.css` to `ignored_paths` so third-party libraries (e.g. `packages/vscode-extension/media/cytoscape.min.js`) are not scanned by AES304. Without this, every minified `.js` shipped under `packages/` would generate dozens of false positives from `throw` statements inside the library's own source.
-- **Ignored-paths filter bug fix — root cause for fixture leak**: `is_path_ignored` in `crates/shared/src/source-parsing/taxonomy_file_collector_helper.rs` previously did a naive substring check (`s.contains("/test-workspaces")`), which (a) failed on absolute paths where the leading slash was missing, and (b) failed on paths where the pattern segment appeared mid-path (e.g. pattern `/test-workspaces` did not match `/home/.../test-workspaces/crates/foo.rs`). The result was that all of `test-workspaces/**` (87 intentional fixture violations) and `packages/vscode-extension/src/**` (9 false positives from cytoscape.min.js, etc.) leaked into `lint-arwaky check .` results despite being listed in `ignored_paths`. The fix replaces the substring match with **segment-equality matching at any depth**: split both path and pattern on `/`, drop the leading slash from the pattern, and verify the pattern segments appear contiguously in the path segments anywhere. Suffix globs (`.min.js`) and bare segments (`node_modules`) are also handled correctly. After the fix, `lint-arwaky check .` reports 52 real `crates/` violations (down from 132 — the 80 leaked fixture/vendor violations are gone). The same logic was wired into `infrastructure_file_collector::is_ignored_dir` and `import_rules::agent_import_orchestrator::is_ignored`, both of which previously had their own buggy variants of the substring check. 8 unit tests in `taxonomy_file_collector_helper.rs` cover absolute paths, relative paths, partial-segment false positives, and suffix globs.
-- **AES402 (CONTRACT_PRIMITIVE) audit and refactor — in progress**: `ContractRoleChecker::check_contract_primitive` previously fired on any file containing the substring `"String"`, `"i32"`, `"str"`, etc. — yielding 30 false-positive violations even on files that used these words in prose comments. The fix scans only method signatures inside `pub trait Name { ... }` blocks (10 new unit tests in `capabilities_contract_role_auditor.rs`), excludes `&str` and `bool` per project policy, and explicitly forbids `String`, `Result<String, _>`, `Result<&str, _>`, `i32/i64/u32/u64/f32/f64/usize/isize`, and `char`. After the rule fix, three contracts have been refactored end-to-end (their implementations, callers, and stub ports) so that no primitive types remain in their public method signatures: `IFixProtocol` (in `shared/src/auto-fix/contract_fix_protocol.rs`), `IHookProtocol` (in `shared/src/git-hooks/contract_hook_protocol.rs`, plus a new `taxonomy_git_diff_data_vo.rs` for the previously-untyped `HashMap<String, serde_json::Value>` return type of `get_diff_data`), and `IUnusedImportProtocol` (in `shared/src/import-rules/contract_unused_import_protocol.rs`). Self-lint violations have dropped from 52 to 36 in this campaign. Three more contracts remain to be migrated — `IImportParserPort` (10 violations, the largest cascade), `ISetupManagementProtocol` + `ISetupInstallerPort` (4), and `IOrphanGraphResolverProtocol` (2) — each of which will be addressed in a follow-up commit per the agreed "incremental per-contract" rollout.
-
-### Changed
-
-- **Renamed `language-adapters` → `external-lint`**: Crate directory and Cargo.toml name updated.
-- **Replaced hardcoded extension checks**: 13 locations across 10 files now use `ILanguageDetectorPort` instead of `ends_with()` — language detection is now a single source of truth via `source-parsing`.
-- **Inlined `ReportFormatterProcessor::format_text()` logic** into `root_cli_main_entry.rs` — removed import from the separate crate.
-- **AES renumbering (final v3.0)**: All 24 codes reorganized into 5 groups (Naming AES100s, Import AES200s, Quality AES300s, Role AES400s, Orphan AES500s). Old AES codes removed from `RULES_AES.md` and docs updated.
-
 ### Documentation
 
 - **Updated all docs**: `AGENTS.md`, `ARCHITECTURE.md`, `DEPLOY.md`, `CONTRIBUTING.md`, `PRD.md`, `RULES_AES.md`, `SKILL.md` — aligned crate lists, AES codes, supported commands, and removed references to deleted crates.
 - **`SKILL.md`**: Trimmed to only document CLI commands that are actually implemented and supported.
-- **`PRD.md`**: FR table matched to actual AES rules; removed feature requirements for deleted crates.
-- **`RULES_AES.md`**: Filled all empty descriptions based on actual code enforcement; removed AES103/AES104.
-
----
 
 ## 1.10.9 (2026-06-11) — Published to crates.io + Linux-Only Installer
 

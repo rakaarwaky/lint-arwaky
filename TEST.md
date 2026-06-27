@@ -79,7 +79,7 @@ Ensure that layer boundaries are maintained and no dead code (_orphan code_) rem
       Verify random samples of files in each layer using the `cycles` tool:
 
   ```bash
-  graph-it serve cycles crates/source-parsing/src/contract_parser_port.rs
+  graph-it serve cycles crates/shared/src/common/contract_parser_port.rs
   graph-it serve cycles crates/naming-rules/src/contract_naming_runner_aggregate.rs
   ```
 
@@ -89,7 +89,7 @@ Ensure that layer boundaries are maintained and no dead code (_orphan code_) rem
       Ensure UI/Surfaces components do not import technical infrastructure or capabilities directly (must go through `ServiceContainerAggregate`):
 
   ```bash
-  graph-it serve path-in crates/external-lint/src/infrastructure_js_naming.rs
+  graph-it serve path-in crates/external-lint/src/infrastructure_js_eslint_adapter.rs
   ```
 
   _Criteria:_ Infrastructure files are only imported by `root/` (di-container) files.

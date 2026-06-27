@@ -1,5 +1,5 @@
 ---
-version: 1.10.29
+version: 1.10.72
 ---
 
 # Lint Arwaky Skill

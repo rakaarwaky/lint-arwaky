@@ -67,12 +67,7 @@ git clone https://github.com/rakaarwaky/lint-arwaky.git
 cd lint-arwaky
 cargo build --release
 # Binaries: target/release/lint-arwaky-cli, target/release/lint-arwaky-mcp, target/release/lint-arwaky-tui
-```
-
-### Verify installation
-
-```bash
-lint-arwaky-cli version        # should print "Lint Arwaky v1.10.14 (AES Semantic Builder)"
+lint-arwaky-cli version        # should print "Lint Arwaky v1.10.72 (AES Semantic Builder)"
 lint-arwaky-cli maintenance doctor   # environment diagnostics
 ```
 
@@ -140,10 +135,9 @@ crates/
   cli-commands/      import-rules/         role-rules/
   config-system/     naming-rules/         external-lint/
   project-setup/     git-hooks/            orphan-detector/
-  file-watch/        auto-fix/
-  maintenance/       mcp-server/           file-system/
-  code-analysis/     source-parsing/
-  shared/
+  file-watch/        auto-fix/             tui/
+  maintenance/       mcp-server/
+  code-analysis/     shared/
 ```
 
 Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
@@ -350,7 +344,7 @@ cargo run --bin lint-arwaky-tui
 
 ---
 
-## Project Stats (v1.10.29)
+## Project Stats (v1.10.72)
 
 | Metric             | Value                                                                                               |
 | ------------------ | --------------------------------------------------------------------------------------------------- |

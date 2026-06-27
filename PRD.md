@@ -8,7 +8,7 @@
 
 **Name**: Lint Arwaky
 **Type**: CLI tool + MCP server
-**Version**: 1.10.14
+**Version**: 1.10.72
 **License**: MIT
 **Language**: Rust (2021 edition)
 
@@ -68,7 +68,7 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 | FR-001 | All `taxonomy_*` VOs, entities, events, errors, constants across features |
 | FR-002 | All `contract_*` ports, protocols, and aggregates across features         |
 
-### 5.2 `source-parsing` — Source Code Parsing
+### 5.2 `shared` (common) — Source Code Parsing (Consolidated)
 
 | ID     | Requirement                                                                                   |
 | ------ | --------------------------------------------------------------------------------------------- |
@@ -77,7 +77,7 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 | FR-007 | Symbol & Definition Mapping — index raw symbols, class/struct definitions, functions, methods |
 | FR-129 | Path Normalization — normalize file paths and relative imports                                |
 
-### 5.3 `file-system` — File System Abstraction
+### 5.3 `shared` (common) — File System Abstraction (Consolidated)
 
 | ID     | Requirement                                                                |
 | ------ | -------------------------------------------------------------------------- |
