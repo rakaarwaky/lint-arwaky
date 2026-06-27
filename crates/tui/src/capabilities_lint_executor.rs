@@ -482,7 +482,10 @@ impl ILintExecutorProtocol for LintExecutor {
             &self.scanner_provider,
         ) {
             (Some(orphan_agg), Some(layer_det), Some(scanner)) => {
-                let scan_root = path.to_string();
+                // Resolve workspace root like CLI does
+                let scan_root = shared::common::taxonomy_workspace_helper::find_workspace_root(path)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|| path.to_string());
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
@@ -606,8 +609,38 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn duplicates(&self, path: &str) -> LintExecutionResult {
-        let output = format!("Duplication detection for {}\nUse CLI `lint-arwaky-cli duplicates {}` for full analysis.", path, path);
-        LintExecutionResult::success(output, 0)
+        let analyzer = code_analysis::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer::new();
+        let scan_root = shared::common::taxonomy_workspace_helper::find_workspace_root(path)
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|| path.to_string());
+
+        let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
+            .unwrap_or_default();
+        let scanner = shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
+        let source_files = match scanner.scan_directory(&dir_path) {
+            Ok(list) => list.values,
+            Err(_) => Vec::new(),
+        };
+        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+
+        let violations = analyzer.check_duplicates(&file_strs, 10);
+        let count = violations.len();
+        let mut output = format!("Duplication detection for {}\nScanned {} files\n", path, file_strs.len());
+        if violations.is_empty() {
+            output.push_str("No significant code duplication detected.\n");
+        } else {
+            output.push_str(&format!("Found {} duplication violation(s):\n\n", count));
+            for (i, v) in violations.iter().enumerate() {
+                let msg = match v {
+                    shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation::CodeDuplication { reason } => {
+                        reason.as_ref().map(|r| r.value.clone()).unwrap_or_default()
+                    }
+                    _ => String::new(),
+                };
+                output.push_str(&format!("{}. {}\n\n", i + 1, msg));
+            }
+        }
+        LintExecutionResult::success(output, count)
     }
 
     fn dependencies(&self, path: &str) -> LintExecutionResult {
