@@ -42,6 +42,13 @@ impl ActionHandler {
             }
             TuiEvent::MoveTop => state.select_first(),
             TuiEvent::MoveBottom => state.select_last(),
+            // ---- Preview panel scrolling ----
+            TuiEvent::PreviewScrollUp => {
+                state.preview_scroll = state.preview_scroll.saturating_sub(3);
+            }
+            TuiEvent::PreviewScrollDown => {
+                state.preview_scroll = state.preview_scroll.saturating_add(3);
+            }
             // ---- Focus cycling between panels (FileList / Preview / Tree) ----
             TuiEvent::FocusNext => state.cycle_focus_forward(),
             TuiEvent::FocusPrev => state.cycle_focus_backward(),
@@ -249,6 +256,7 @@ impl ActionHandler {
         let result = action(self.lint_port.as_ref(), &path, &state.action_flags);
         state.preview_text = result.output;
         state.violation_count = result.violation_count;
+        state.preview_scroll = 0;
         state.preview_mode = PreviewMode::LintResults;
         let status = if result.success { "Done" } else { "Error" };
         state.set_status(format!(

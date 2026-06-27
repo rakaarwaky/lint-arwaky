@@ -11,10 +11,13 @@ use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::git_hooks::contract_manager_port::IHookManagerPort;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
+use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
@@ -76,6 +79,9 @@ pub struct LintExecutor {
     orphan_aggregate: Option<Arc<dyn IOrphanAggregate>>,
     layer_detector: Option<Arc<dyn ILayerDetectionAggregate>>,
     scanner_provider: Option<Arc<dyn IScannerProviderPort>>,
+    import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
+    naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
+    role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
 }
 
 impl LintExecutor {
@@ -91,6 +97,9 @@ impl LintExecutor {
             orphan_aggregate: None,
             layer_detector: None,
             scanner_provider: None,
+            import_orchestrator: None,
+            naming_orchestrator: None,
+            role_orchestrator: None,
         }
     }
 
@@ -109,6 +118,9 @@ impl LintExecutor {
             orphan_aggregate: None,
             layer_detector: None,
             scanner_provider: None,
+            import_orchestrator: None,
+            naming_orchestrator: None,
+            role_orchestrator: None,
         }
     }
 
@@ -128,6 +140,9 @@ impl LintExecutor {
             orphan_aggregate: None,
             layer_detector: None,
             scanner_provider: None,
+            import_orchestrator: None,
+            naming_orchestrator: None,
+            role_orchestrator: None,
         }
     }
 
@@ -163,6 +178,30 @@ impl LintExecutor {
         self.orphan_aggregate = Some(orphan_aggregate);
         self.layer_detector = Some(layer_detector);
         self.scanner_provider = Some(scanner_provider);
+        self
+    }
+
+    pub fn with_import_orchestrator(
+        mut self,
+        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+    ) -> Self {
+        self.import_orchestrator = Some(import_orchestrator);
+        self
+    }
+
+    pub fn with_naming_orchestrator(
+        mut self,
+        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+    ) -> Self {
+        self.naming_orchestrator = Some(naming_orchestrator);
+        self
+    }
+
+    pub fn with_role_orchestrator(
+        mut self,
+        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    ) -> Self {
+        self.role_orchestrator = Some(role_orchestrator);
         self
     }
 
@@ -372,19 +411,115 @@ impl LintExecutor {
     }
 }
 
+impl LintExecutor {
+    fn run_comprehensive_scan(&self, path: &str) -> LintExecutionResult {
+        let mut all_results = Vec::new();
+
+        // 1. AES code analysis
+        let aes_results = self.code_analysis.run_code_analysis(path);
+        all_results.extend(aes_results.values);
+
+        // 2. Naming rules audit (AES101-102)
+        if let Some(ref naming) = self.naming_orchestrator {
+            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                .unwrap_or_default();
+            let rt = match tokio::runtime::Runtime::new() {
+                Ok(rt) => rt,
+                Err(e) => {
+                    return LintExecutionResult::failure(format!(
+                        "Failed to create runtime: {}",
+                        e
+                    ));
+                }
+            };
+            let naming_results = rt.block_on(naming.run_audit(&path_obj));
+            all_results.extend(naming_results);
+        }
+
+        // 3. Import rules audit (AES201-205, cycles)
+        if let Some(ref import) = self.import_orchestrator {
+            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                .unwrap_or_default();
+            let rt = match tokio::runtime::Runtime::new() {
+                Ok(rt) => rt,
+                Err(e) => {
+                    return LintExecutionResult::failure(format!(
+                        "Failed to create runtime: {}",
+                        e
+                    ));
+                }
+            };
+            let import_results = rt.block_on(import.run_audit(&path_obj));
+            all_results.extend(import_results);
+        }
+
+        // 4. External linter adapters (Clippy, Ruff, ESLint, etc.)
+        if let Some(ref external_lint) = self.external_lint {
+            let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                .unwrap_or_default();
+            let rt = match tokio::runtime::Runtime::new() {
+                Ok(rt) => rt,
+                Err(e) => {
+                    return LintExecutionResult::failure(format!(
+                        "Failed to create runtime: {}",
+                        e
+                    ));
+                }
+            };
+            let ext_results = rt.block_on(external_lint.scan_all(&fp));
+            all_results.extend(ext_results.values);
+        }
+
+        // 5. Role rules audit (AES401-406)
+        if let Some(ref role) = self.role_orchestrator {
+            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                .unwrap_or_default();
+            let rt = match tokio::runtime::Runtime::new() {
+                Ok(rt) => rt,
+                Err(e) => {
+                    return LintExecutionResult::failure(format!(
+                        "Failed to create runtime: {}",
+                        e
+                    ));
+                }
+            };
+            let role_results = rt.block_on(role.run_audit(&path_obj));
+            all_results.extend(role_results);
+        }
+
+        // 6. Orphan detection (AES501-506)
+        if let (Some(ref orphan_agg), Some(ref layer_det), Some(ref scanner)) = (
+            &self.orphan_aggregate,
+            &self.layer_detector,
+            &self.scanner_provider,
+        ) {
+            let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
+                .unwrap_or_default();
+            let source_files = match scanner.scan_directory(&dir_path) {
+                Ok(list) => list.values,
+                Err(_) => Vec::new(),
+            };
+            let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+            if !file_strs.is_empty() {
+                let orphan_results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, path);
+                all_results.extend(orphan_results);
+            }
+        }
+
+        let count = all_results.len();
+        let results = LintResultList::new(all_results);
+        let output = self.format_results(&results);
+        LintExecutionResult::success(output, count)
+    }
+}
+
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
-        let results = self.code_analysis.run_code_analysis(path);
-        let output = self.format_results(&results);
-        let count = results.len();
-        LintExecutionResult::success(output, count)
+        self.run_comprehensive_scan(path)
     }
 
     fn scan(&self, path: &str) -> LintExecutionResult {
-        let results = self.code_analysis.run_code_analysis(path);
-        let output = self.format_results(&results);
-        let count = results.len();
-        LintExecutionResult::success(output, count)
+        self.run_comprehensive_scan(path)
     }
 
     fn fix(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {

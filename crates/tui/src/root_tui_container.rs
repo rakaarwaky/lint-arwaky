@@ -48,6 +48,11 @@ impl TuiContainer {
         let maintenance_container = MaintenanceContainer::new();
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+        let external_lint_container =
+            external_lint::root_external_lint_container::ExternalLintContainer::new_default();
+        let naming_container =
+            naming_rules::root_naming_rules_container::NamingContainer::new_default();
+        let role_container = role_rules::root_role_rules_container::RoleContainer::new();
         let scanner_provider: Arc<dyn IScannerProviderPort> = Arc::new(
             shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
         );
@@ -64,7 +69,11 @@ impl TuiContainer {
                 orphan_container.analyzer(),
                 orphan_container.layer_detector(),
                 scanner_provider,
-            ),
+            )
+            .with_external_lint(external_lint_container.aggregate())
+            .with_import_orchestrator(import_container.orchestrator())
+            .with_naming_orchestrator(naming_container.orchestrator())
+            .with_role_orchestrator(role_container.orchestrator()),
         );
         let action_handler: Arc<dyn IActionHandlerProtocol> =
             Arc::new(ActionHandler::new(fs_adapter, lint_executor));

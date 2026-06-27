@@ -196,6 +196,8 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         KeyCode::Char('l') | KeyCode::Right | KeyCode::Enter => TuiEvent::NavigateForward,
         KeyCode::Home => TuiEvent::MoveTop,
         KeyCode::End => TuiEvent::MoveBottom,
+        KeyCode::PageUp => TuiEvent::PreviewScrollUp,
+        KeyCode::PageDown => TuiEvent::PreviewScrollDown,
         KeyCode::Tab => TuiEvent::FocusNext,
         KeyCode::BackTab => TuiEvent::FocusPrev,
         KeyCode::Char('c') => TuiEvent::ActionCheck,

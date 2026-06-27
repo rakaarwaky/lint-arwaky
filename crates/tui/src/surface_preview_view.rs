@@ -53,6 +53,7 @@ impl PreviewView {
         let paragraph = Paragraph::new(content)
             .block(block)
             .wrap(Wrap { trim: false })
+            .scroll((state.preview_scroll as u16, 0))
             .style(Style::default().fg(Color::White));
 
         frame.render_widget(paragraph, area);

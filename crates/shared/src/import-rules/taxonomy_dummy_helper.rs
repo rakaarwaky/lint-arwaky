@@ -472,14 +472,30 @@ fn function_body<'a>(lines: &'a [&'a str], start: usize) -> (usize, Vec<&'a str>
 }
 
 fn function_body_is_dummy(lines: &[&str]) -> bool {
-    let body: String = lines
+    // Collect the body lines (skip the fn signature line at index 0)
+    let body_lines: Vec<&str> = lines
         .iter()
         .skip(1)
         .map(|line| line.trim())
         .filter(|line| !line.is_empty() && !line.starts_with("//"))
-        .collect::<Vec<_>>()
-        .join(" ");
+        .collect();
 
+    if body_lines.is_empty() {
+        return true;
+    }
+
+    // Single-line body like `{ 42 }` or `{ return x; }` — not dummy
+    if body_lines.len() == 1 {
+        let single = body_lines[0];
+        if single.starts_with('{') && single.ends_with('}') {
+            let inner = &single[1..single.len() - 1].trim();
+            return inner.is_empty() || is_short_marker(inner);
+        }
+        return is_short_marker(single);
+    }
+
+    // Multi-line body: join and check
+    let body: String = body_lines.join(" ");
     let trimmed = body.trim();
     if trimmed == "{}" || trimmed == "{ }" {
         return true;
