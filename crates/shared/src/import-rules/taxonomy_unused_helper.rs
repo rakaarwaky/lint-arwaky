@@ -49,14 +49,24 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
             continue;
         }
 
-        // Rust `use` statements: `use std::collections::HashMap;`
+        // Rust `use` statements: `use std::collections::HashMap;` or `use serde::{A, B};`
         if let Some(use_part) = trimmed.strip_prefix("use ") {
             let use_part = use_part.trim_end_matches(';').trim();
             if !use_part.is_empty() && !use_part.starts_with("crate::") && !use_part.starts_with("super::") && !use_part.starts_with("self::") {
-                // Extract the last segment as the imported name
-                let name = use_part.rsplit("::").next().unwrap_or(use_part);
-                if !name.is_empty() && name != "*" {
-                    aliases.insert(Identity::new(name), Identity::new(use_part));
+                if let Some(brace_pos) = use_part.find("::{") {
+                    let prefix = &use_part[..brace_pos];
+                    let inner = use_part[brace_pos + 3..].trim_end_matches('}');
+                    for name in inner.split(',') {
+                        let name = name.trim().split(" as ").last().unwrap_or("").trim();
+                        if !name.is_empty() && name != "_" && name != "*" {
+                            aliases.insert(Identity::new(name), Identity::new(format!("{}::{}", prefix, name)));
+                        }
+                    }
+                } else {
+                    let name = use_part.rsplit("::").next().unwrap_or(use_part);
+                    if !name.is_empty() && name != "*" {
+                        aliases.insert(Identity::new(name), Identity::new(use_part));
+                    }
                 }
             }
             continue;
