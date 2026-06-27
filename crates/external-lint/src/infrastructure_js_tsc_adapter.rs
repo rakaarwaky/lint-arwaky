@@ -30,7 +30,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use shared::external_lint::taxonomy_external_lint_helper::{
-    canonicalize_path, exec_cmd_scan, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir,
+    canonicalize_path, exec_cmd_scan, noop_apply_fix, resolve_js_cmd,
+    resolve_js_working_dir as resolve_working_dir,
 };
 
 pub struct TSCAdapter {
@@ -148,6 +149,6 @@ impl ILinterAdapterPort for TSCAdapter {
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        Ok(ComplianceStatus::new(false))
+        noop_apply_fix().await
     }
 }

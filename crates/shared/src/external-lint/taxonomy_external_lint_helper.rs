@@ -12,6 +12,7 @@ use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_duration_vo::Timeout;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_response_data_vo::ResponseData;
+use crate::common::taxonomy_message_vo::ComplianceStatus;
 use std::path::{Path, PathBuf};
 
 /// Canonicalize a path string, falling back to the original on error.
@@ -75,6 +76,26 @@ pub async fn exec_cmd_adapter(
 /// Create a default `"."` working directory, falling back to the given path if it fails.
 pub fn default_working_dir(path: &FilePath) -> FilePath {
     FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
+}
+
+/// Applies a JS tool's fix command, returning `Ok(ComplianceStatus::new(true))` on success.
+/// Combines resolve_js_working_dir + canonicalize_path + resolve_js_cmd + exec_cmd_adapter.
+pub async fn js_apply_fix(
+    executor: &dyn ICommandExecutorPort,
+    path: &FilePath,
+    tool: &str,
+    fix_arg: &str,
+) -> Result<ComplianceStatus, LinterOperationError> {
+    let wd = resolve_js_working_dir(path);
+    let abs_path = canonicalize_path(&path.value);
+    let cmd = resolve_js_cmd(tool, vec![abs_path, fix_arg.to_string()], &wd.value);
+    let response = exec_cmd_adapter(executor, cmd, wd, 60.0, AdapterName::raw(tool)).await?;
+    Ok(ComplianceStatus::new(response.returncode == 0))
+}
+
+/// No-op apply_fix for linters that cannot auto-fix (scanners, type-checkers).
+pub async fn noop_apply_fix() -> Result<ComplianceStatus, LinterOperationError> {
+    Ok(ComplianceStatus::new(false))
 }
 
 /// Resolve the executable command for a JS tool (eslint, prettier, tsc).

@@ -28,7 +28,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use shared::external_lint::taxonomy_external_lint_helper::{
-    canonicalize_path, exec_cmd_adapter, exec_cmd_scan, resolve_js_cmd,
+    canonicalize_path, exec_cmd_scan, js_apply_fix, resolve_js_cmd,
     resolve_js_working_dir as resolve_working_dir,
 };
 
@@ -110,11 +110,6 @@ impl ILinterAdapterPort for PrettierAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        let wd = resolve_working_dir(path);
-        let abs_path = canonicalize_path(&path.value);
-        let cmd = resolve_js_cmd("prettier", vec!["--write".to_string(), abs_path], &wd.value);
-
-        let response = exec_cmd_adapter(self.executor.as_ref(), cmd, wd, 60.0, self.name()).await?;
-        Ok(ComplianceStatus::new(response.returncode == 0))
+        js_apply_fix(self.executor.as_ref(), path, "prettier", "--write").await
     }
 }

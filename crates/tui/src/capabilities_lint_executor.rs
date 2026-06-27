@@ -6,7 +6,9 @@ use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
@@ -71,11 +73,13 @@ pub fn discover_adapters() -> Vec<AdapterInfo> {
 
 /// LintExecutor — TUI-facing lint action provider.
 /// Delegates code analysis to ICodeAnalysisAggregate and formats results for display.
-/// Optionally holds a SetupManagementAggregate for real config initialization.
+/// Optionally holds a SetupManagementAggregate for real config initialization
+/// and a MaintenanceCommandsAggregate for real environment diagnostics (doctor).
 pub struct LintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
     fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
     setup_aggregate: Option<Arc<dyn SetupManagementAggregate>>,
+    maintenance: Option<Arc<dyn MaintenanceCommandsAggregate>>,
 }
 
 impl LintExecutor {
@@ -84,6 +88,7 @@ impl LintExecutor {
             code_analysis,
             fix_orchestrator: None,
             setup_aggregate: None,
+            maintenance: None,
         }
     }
 
@@ -95,6 +100,7 @@ impl LintExecutor {
             code_analysis,
             fix_orchestrator: Some(fix_orchestrator),
             setup_aggregate: None,
+            maintenance: None,
         }
     }
 
@@ -107,7 +113,14 @@ impl LintExecutor {
             code_analysis,
             fix_orchestrator: Some(fix_orchestrator),
             setup_aggregate: Some(setup_aggregate),
+            maintenance: None,
         }
+    }
+
+    /// Builder method: attach a maintenance aggregate for real doctor diagnostics.
+    pub fn with_maintenance(mut self, maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> Self {
+        self.maintenance = Some(maintenance);
+        self
     }
 
     /// Format lint results into a human-readable numbered list for TUI preview panel.
@@ -118,7 +131,7 @@ impl LintExecutor {
         let mut output = format!("Found {} violation(s):\n\n", results.len());
         for (i, result) in results.iter().enumerate() {
             output.push_str(&format!(
-                "{}. [{}] {}:{} \u{2014} {}\n   Code: {} | Severity: {}\n\n",
+                "{}. [{}] {}:{} — {}\n   Code: {} | Severity: {}\n\n",
                 i + 1,
                 result
                     .source
@@ -135,9 +148,62 @@ impl LintExecutor {
         output
     }
 
+    /// Format ToolchainDiagnostics into a human-readable health report.
+    fn format_doctor_report(
+        diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
+    ) -> LintExecutionResult {
+        let mut output = String::from("Environment Diagnostics\n");
+        output.push_str(&format!("Binary: {}\n\n", diagnostics.binary_path));
+
+        let format_section = |name: &str,
+                              tools: &[shared::project_setup::taxonomy_doctor_vo::ToolStatus]|
+         -> String {
+            let mut section = format!("== {} ==\n", name);
+            for tool in tools {
+                let icon = match tool.status.as_str() {
+                    "OK" => "\u{2713}",
+                    "WARN" => "\u{26A0}",
+                    "FAIL" => "\u{2717}",
+                    _ => "?",
+                };
+                let note = match tool.status.as_str() {
+                    "WARN" => " (optional)",
+                    "FAIL" => " (required)",
+                    _ => "",
+                };
+                section.push_str(&format!(
+                    "  {} {} {}{}\n",
+                    icon, tool.name, tool.version, note
+                ));
+            }
+            section.push('\n');
+            section
+        };
+
+        output.push_str(&format_section("Rust Tools", &diagnostics.rust_tools));
+        output.push_str(&format_section("Python Tools", &diagnostics.python_tools));
+        output.push_str(&format_section("JS/TS Tools", &diagnostics.js_tools));
+        output.push_str(&format_section("VCS Tools", &diagnostics.vcs_tools));
+
+        let fail_count = diagnostics
+            .rust_tools
+            .iter()
+            .chain(diagnostics.python_tools.iter())
+            .chain(diagnostics.js_tools.iter())
+            .chain(diagnostics.vcs_tools.iter())
+            .filter(|t| t.status == "FAIL")
+            .count();
+
+        if fail_count == 0 {
+            output.push_str("All required tools OK.\n");
+        } else {
+            output.push_str(&format!("{} required tool(s) missing!\n", fail_count));
+        }
+
+        LintExecutionResult::success(output, fail_count)
+    }
+
     /// Run real config initialization using SetupManagementAggregate.
-    /// Detects project language, loads the matching config template,
-    /// and writes lint_arwaky.config.yaml if it does not already exist.
     fn run_init(&self) -> LintExecutionResult {
         match &self.setup_aggregate {
             Some(protocol) => {
@@ -262,19 +328,62 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn dependencies(&self, path: &str) -> LintExecutionResult {
-        let output = format!(
-            "Dependency scan for {}\nUse CLI `lint-arwaky-cli dependencies {}` for full report.",
-            path, path
-        );
-        LintExecutionResult::success(output, 0)
+        match &self.maintenance {
+            Some(maintenance) => {
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                    .unwrap_or_default();
+                let rt = match tokio::runtime::Runtime::new() {
+                    Ok(rt) => rt,
+                    Err(e) => {
+                        return LintExecutionResult::failure(format!(
+                            "Failed to create runtime for dependency report: {}",
+                            e
+                        ));
+                    }
+                };
+                match rt.block_on(maintenance.run_dependency_report(&fp)) {
+                    Ok(report) => Self::format_dependency_report(path, &report),
+                    Err(e) => LintExecutionResult::failure(format!(
+                        "Dependency scan for {}\nError: {}",
+                        path, e
+                    )),
+                }
+            }
+            None => {
+                let output = format!(
+                    "Dependency scan for {}\nUse CLI `lint-arwaky-cli dependencies {}` for full report.",
+                    path, path
+                );
+                LintExecutionResult::success(output, 0)
+            }
+        }
     }
 
     fn doctor(&self) -> LintExecutionResult {
-        let output = "Environment Diagnostics:\n\
-            Use CLI `lint-arwaky-cli maintenance doctor` for full environment check.\n\
-            Required: Rust toolchain, Python 3.8+, Node.js 18+"
-            .to_string();
-        LintExecutionResult::success(output, 0)
+        match &self.maintenance {
+            Some(maintenance) => {
+                // Bridge async→sync: create a short-lived tokio runtime to run
+                // the async diagnose_toolchain() from this sync trait method.
+                let rt = match tokio::runtime::Runtime::new() {
+                    Ok(rt) => rt,
+                    Err(e) => {
+                        return LintExecutionResult::failure(format!(
+                            "Failed to create runtime for diagnostics: {}",
+                            e
+                        ));
+                    }
+                };
+                let diagnostics = rt.block_on(maintenance.diagnose_toolchain());
+                Self::format_doctor_report(&diagnostics)
+            }
+            None => {
+                let output = "Environment Diagnostics:\n\
+                    Use CLI `lint-arwaky-cli maintenance doctor` for full environment check.\n\
+                    Required: Rust toolchain, Python 3.8+, Node.js 18+"
+                    .to_string();
+                LintExecutionResult::success(output, 0)
+            }
+        }
     }
 
     fn init(&self, _flags: &ActionFlags) -> LintExecutionResult {

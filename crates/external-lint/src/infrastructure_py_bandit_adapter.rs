@@ -30,7 +30,7 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
-use shared::external_lint::taxonomy_external_lint_helper::{default_working_dir, exec_cmd_adapter};
+use shared::external_lint::taxonomy_external_lint_helper::{default_working_dir, exec_cmd_adapter, noop_apply_fix};
 
 pub struct BanditAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
@@ -149,6 +149,6 @@ impl ILinterAdapterPort for BanditAdapter {
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        Ok(ComplianceStatus::new(false))
+        noop_apply_fix().await
     }
 }
