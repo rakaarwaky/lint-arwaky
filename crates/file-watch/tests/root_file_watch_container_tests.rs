@@ -66,7 +66,7 @@ fn container_orchestrator_runs_with_mock_linter() {
     use shared::common::taxonomy_path_vo::FilePath;
     use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
     use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
-    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::atomic::AtomicBool;
 
     let container = FileWatchContainer::new();
     let orchestrator =

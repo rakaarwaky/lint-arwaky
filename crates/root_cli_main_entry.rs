@@ -13,7 +13,7 @@ use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
-use code_analysis::{has_critical, lint_path, CodeDuplicationAnalyzer};
+use code_analysis::{lint_path, CodeDuplicationAnalyzer};
 use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter;
 use import_rules::root_import_rules_container::NullSourceParser;
@@ -447,7 +447,7 @@ fn run_default_check(project_root: &str) -> ExitCode {
     println!("Scanning: {}", project_root);
     println!();
     println!("{}", report);
-    if has_critical(&results) {
+    if total > 0 {
         ExitCode::from(1)
     } else {
         ExitCode::SUCCESS

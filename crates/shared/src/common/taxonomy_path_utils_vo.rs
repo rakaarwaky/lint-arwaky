@@ -4,7 +4,6 @@ impl PathUtils {
     /// Walk a directory recursively, collecting files while skipping ignored patterns.
     pub fn walk_recursive(dir: &std::path::Path, ignored: &[&str]) -> Vec<std::path::PathBuf> {
         use std::fs;
-        use std::path::PathBuf;
 
         let mut results = Vec::new();
 

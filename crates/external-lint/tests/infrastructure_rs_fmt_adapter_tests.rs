@@ -113,15 +113,14 @@ async fn returns_empty_when_no_cargo_toml() {
 }
 
 #[tokio::test]
-async fn returns_fallback_result_when_diff_has_no_added_lines() {
-    // When exit code != 0 but no '+' lines are found, adapter should add a fallback result
-    let diff = "Diff in src/main.rs:\n-    removed line\n context line";
+async fn returns_empty_when_diff_has_no_added_lines() {
+    // When exit code != 0 but no '+' lines are found, adapter returns empty (no false positive)
+    let diff = "Diff in src/main.rs:\\n-    removed line\\n context line";
     let adapter = make_adapter(diff, 1);
     let dir = with_cargo_toml();
     let path = make_path(&dir.to_string_lossy());
     let results = adapter.scan(&path).await.unwrap();
-    assert_eq!(results.len(), 1);
-    assert_eq!(results.values[0].code.code(), "rustfmt::unformatted");
+    assert_eq!(results.len(), 0);
     let _ = std::fs::remove_dir_all(&dir);
 }
 

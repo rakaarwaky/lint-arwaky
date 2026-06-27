@@ -1,7 +1,7 @@
 // PURPOSE: FileSystemAdapter — INamingFileSystemPort implementation custom-tailored for naming-rules (crawling/walking only)
 use async_trait::async_trait;
 
-use shared::common::path_utils::PathUtils;
+use shared::common::taxonomy_path_utils_vo::PathUtils;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
@@ -34,7 +34,7 @@ impl INamingFileSystemPort for OSFileSystemAdapter {
         FilePathList {
             values: results
                 .into_iter()
-                .map(|p| FilePath::new(p.to_string_lossy().to_string()).unwrap())
+                .filter_map(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
                 .collect(),
         }
     }

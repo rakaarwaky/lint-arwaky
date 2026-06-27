@@ -62,8 +62,7 @@ pub fn handle_check(
         ))
     } else {
         let surface = CheckCommandsSurface::new(ctx);
-        surface.scan(&root, filter.as_deref(), config, format);
-        ExitCode::SUCCESS
+        surface.scan(&root, filter.as_deref(), config, format)
     }
 }
 

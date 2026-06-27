@@ -37,10 +37,10 @@ pub mod taxonomy_language_detector_helper;
 pub mod taxonomy_language_vo;
 pub mod taxonomy_naming_list_vo;
 pub mod taxonomy_parser_error;
+pub mod taxonomy_path_utils_vo;
 pub mod taxonomy_path_vo;
 pub mod taxonomy_paths_vo;
 pub mod taxonomy_workspace_helper;
-pub mod path_utils;
 pub use infrastructure_file_collector_provider::{
     collect_all_source_files, walk_rs_files, FileCollectorProvider,
 };

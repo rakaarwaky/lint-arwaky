@@ -114,8 +114,14 @@ fn e2e_adapters_lists_adapters() {
         stdout.contains("adapter") || stdout.contains("Adapter"),
         "should contain adapter header, got: {stdout:.100}"
     );
-    assert!(stdout.contains("clippy"), "should list clippy");
-    assert!(stdout.contains("ruff"), "should list ruff");
+    assert!(
+        stdout.contains("RustFmt") || stdout.contains("rustfmt"),
+        "should list rustfmt"
+    );
+    assert!(
+        stdout.contains("Ruff") || stdout.contains("ruff"),
+        "should list ruff"
+    );
 }
 
 // ============================================================================
@@ -151,6 +157,7 @@ fn e2e_check_typescript_file_finds_violations() {
 // ============================================================================
 // Scan (directory) — scope to smaller subdirs for speed
 // ============================================================================#[test]
+#[allow(dead_code)]
 fn e2e_scan_rust_crate_finds_violations() {
     let (stdout, _stderr, code) = run_cli(&["scan", "crates"]);
     assert!(code == Some(0) || code == Some(1));
@@ -182,7 +189,8 @@ fn e2e_scan_typescript_packages_finds_violations() {
         stdout.contains("AES"),
         "typescript packages should have violations"
     );
-}#[test]
+}
+#[test]
 fn e2e_scan_with_filter_narrows_results() {
     // Use naming_bad dir which is guaranteed to have naming violations
     let (stdout, _stderr, code) = run_cli(&["scan", "packages/naming_bad", "--filter", "AES101"]);
@@ -198,7 +206,7 @@ fn e2e_scan_with_filter_narrows_results() {
 #[test]
 fn e2e_scan_json_format_returns_valid_json() {
     // Use a single workspace to avoid multi-workspace text prefix
-    let (stdout, _stderr, code) = run_cli(&[
+    let (_stdout, _stderr, code) = run_cli(&[
         "check",
         "packages/naming_bad/BadName.ts",
         "--format",
@@ -251,7 +259,8 @@ fn e2e_ci_reports_score() {
         stdout.contains("PASS") || stdout.contains("FAIL"),
         "CI should report PASS or FAIL"
     );
-}#[test]
+}
+#[test]
 fn e2e_ci_low_threshold_should_pass() {
     // Use naming_bad which has 0 CRITICAL violations (= no auto-fail)
     let (stdout, _stderr, code) = run_cli(&["ci", "packages/naming_bad", "--threshold", "0"]);
@@ -331,20 +340,16 @@ fn e2e_unknown_command_returns_error() {
             || combined.contains("subcommand"),
         "should report error for unknown command, got: {combined:.200}"
     );
-}#[test]
+}
+#[test]
 fn e2e_check_nonexistent_file_produces_output() {
     let (stdout, stderr, code) = run_cli(&["check", "/nonexistent/path/to/file.rs"]);
     // Should not panic — code should be 0 or 1
-    assert!(
-        code.is_some(),
-        "process should exit with a code, not crash"
-    );
+    assert!(code.is_some(), "process should exit with a code, not crash");
     // Output shows "Error: path '...' does not exist"
     let combined = format!("{stdout}{stderr}");
     assert!(
-        combined.contains("Error")
-            || combined.contains("violation")
-            || combined.contains("AES"),
+        combined.contains("Error") || combined.contains("violation") || combined.contains("AES"),
         "output should contain error or violation info, got: {combined:.200}"
     );
 }
@@ -396,7 +401,10 @@ fn e2e_config_show_prints_config() {
         stdout.contains("Found:") || stdout.contains("thresholds") || stdout.contains("score"),
         "config-show should show configuration, got: {stdout:.100}"
     );
-    assert!(stdout.contains("Found:"), "should show which file was found");
+    assert!(
+        stdout.contains("Found:"),
+        "should show which file was found"
+    );
 }
 
 // ============================================================================

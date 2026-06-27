@@ -34,6 +34,37 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
     }
 }
 
+/// Fallback: check if any sibling .rs file in the same directory imports this module via `crate::` path.
+/// The graph resolver doesn't always track crate:: imports within the same crate.
+fn has_crate_self_import(file_path: &str) -> bool {
+    let stem = std::path::Path::new(file_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
+    if stem.is_empty() {
+        return false;
+    }
+    let search = format!("crate::{}", stem);
+    if let Some(parent) = std::path::Path::new(file_path).parent() {
+        if let Ok(entries) = std::fs::read_dir(parent) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path == std::path::Path::new(file_path) {
+                    continue;
+                }
+                if path.extension().is_some_and(|e| e == "rs") {
+                    if let Ok(content) = std::fs::read_to_string(&path) {
+                        if content.contains(&search) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
 pub fn is_taxonomy_orphan(
     f: &FilePath,
     _root: &FilePath,
@@ -53,15 +84,21 @@ pub fn is_taxonomy_orphan(
         // utility/helper: must be imported by file outside taxonomy
         let importers = match inbound.mapping.get(f.value()) {
             Some(v) => v,
-            None => return OrphanIndicatorResult::new(
-                true,
-                AesOrphanViolation::TaxonomyOrphan {
-                    stem: stem.clone(),
-                    category: "utility",
-                    reason: Some(format!("Taxonomy '{}' (utility/helper) is not imported by any file outside taxonomy.", stem).into()),
-                }.to_string(),
-                Severity::LOW,
-            ),
+            None => {
+                // Fallback: graph resolver may not catch crate:: imports within same crate
+                if has_crate_self_import(f.value()) {
+                    return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+                }
+                return OrphanIndicatorResult::new(
+                    true,
+                    AesOrphanViolation::TaxonomyOrphan {
+                        stem: stem.clone(),
+                        category: "utility",
+                        reason: Some(format!("Taxonomy '{}' (utility/helper) is not imported by any file outside taxonomy.", stem).into()),
+                    }.to_string(),
+                    Severity::LOW,
+                );
+            }
         };
         let has_outside_taxonomy = importers.iter().any(|importer| {
             importer

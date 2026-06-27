@@ -1,5 +1,4 @@
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 
 #[test]
 fn container_default_constructs() {

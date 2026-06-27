@@ -1,5 +1,5 @@
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
-    find_workspace_root, McpServerDependencies, McpServerOrchestrator,
+    McpServerDependencies, McpServerOrchestrator,
 };
 use mcp_server_lint_arwaky::contract_mcp_server_aggregate::IMcpServerAggregate;
 use mcp_server_lint_arwaky::taxonomy_mcp_tool_args_vo::{
@@ -11,6 +11,7 @@ use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggreg
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::taxonomy_workspace_helper::find_workspace_root;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;

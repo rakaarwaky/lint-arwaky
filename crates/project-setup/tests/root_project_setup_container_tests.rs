@@ -1,8 +1,6 @@
 // PURPOSE: Integration tests for SetupContainer — construction and accessor sanity
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::cli_commands::taxonomy_protocol_vo::TransportProtocol;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 
 #[test]
 fn container_default_constructs_with_aggregate_and_protocol() {
