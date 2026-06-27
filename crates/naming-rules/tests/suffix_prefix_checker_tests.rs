@@ -1,3 +1,5 @@
+use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
+use naming_rules_lint_arwaky::taxonomy_naming_utility::{get_stem, get_suffix};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_layer_vo::LayerNameVO;
@@ -77,58 +79,37 @@ fn is_entry_point_rejects_regular_file() {
 }
 
 // ---------------------------------------------------------------------------
-// get_stem / get_suffix (via SuffixPrefixChecker)
+// get_stem / get_suffix (via taxonomy_naming_utility)
 // ---------------------------------------------------------------------------
 
 #[test]
 fn get_stem_removes_extension() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-    assert_eq!(
-        SuffixPrefixChecker::get_stem("checker.rs"),
-        Some("checker".to_string())
-    );
+    assert_eq!(get_stem("checker.rs"), Some("checker".to_string()));
 }
 
 #[test]
 fn get_stem_handles_no_extension() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-    assert_eq!(
-        SuffixPrefixChecker::get_stem("checker"),
-        Some("checker".to_string())
-    );
+    assert_eq!(get_stem("checker"), Some("checker".to_string()));
 }
 
 #[test]
 fn get_stem_handles_multiple_dots() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-    assert_eq!(
-        SuffixPrefixChecker::get_stem("my.test.file.rs"),
-        Some("my.test.file".to_string())
-    );
+    assert_eq!(get_stem("my.test.file.rs"), Some("my.test.file".to_string()));
 }
 
 #[test]
 fn get_suffix_returns_last_underscore_part() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-    assert_eq!(
-        SuffixPrefixChecker::get_suffix("capabilities_checker"),
-        Some("checker".to_string())
-    );
+    assert_eq!(get_suffix("capabilities_checker"), Some("checker".to_string()));
 }
 
 #[test]
 fn get_suffix_no_underscore_returns_none() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-    assert_eq!(SuffixPrefixChecker::get_suffix("checker"), None);
+    assert_eq!(get_suffix("checker"), None);
 }
 
 #[test]
 fn get_suffix_single_underscore() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-    assert_eq!(
-        SuffixPrefixChecker::get_suffix("_checker"),
-        Some("checker".to_string())
-    );
+    assert_eq!(get_suffix("_checker"), Some("checker".to_string()));
 }
 
 // ---------------------------------------------------------------------------
@@ -137,7 +118,6 @@ fn get_suffix_single_underscore() {
 
 #[test]
 fn check_domain_suffixes_skips_barrel_file() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
     let checker = SuffixPrefixChecker::new();
     let mut violations = Vec::new();
     checker.check_domain_suffixes("mod.rs", "mod.rs", None, &None, &mut violations);
@@ -146,7 +126,6 @@ fn check_domain_suffixes_skips_barrel_file() {
 
 #[test]
 fn check_domain_suffixes_skips_entry_point() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
     let checker = SuffixPrefixChecker::new();
     let mut violations = Vec::new();
     checker.check_domain_suffixes("main.rs", "main.rs", None, &None, &mut violations);
@@ -155,7 +134,6 @@ fn check_domain_suffixes_skips_entry_point() {
 
 #[test]
 fn check_domain_suffixes_no_definition_no_op() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
     let checker = SuffixPrefixChecker::new();
     let mut violations = Vec::new();
     checker.check_domain_suffixes("random.rs", "random.rs", None, &None, &mut violations);
@@ -164,7 +142,6 @@ fn check_domain_suffixes_no_definition_no_op() {
 
 #[test]
 fn check_domain_suffixes_skips_exceptions() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
     use shared::taxonomy_common_vo::PatternList;
     use shared::taxonomy_definition_vo::LayerDefinition;
 
@@ -186,7 +163,6 @@ fn check_domain_suffixes_skips_exceptions() {
 
 #[test]
 fn make_result_produces_lint_result_with_code() {
-    use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
     let result = SuffixPrefixChecker::make_result("test.rs", "AES102", "msg", Severity::HIGH);
     assert_eq!(result.code.to_string(), "AES102");
     assert_eq!(result.message.to_string(), "msg");

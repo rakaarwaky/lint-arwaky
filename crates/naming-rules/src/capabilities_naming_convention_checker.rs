@@ -1,4 +1,5 @@
 // PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 2 words)
+use crate::taxonomy_naming_utility::get_stem;
 use async_trait::async_trait;
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
@@ -89,7 +90,7 @@ impl NamingConventionChecker {
 
         // Step 2: Handle cases where the layer could not be determined.
         if layer_name.is_none() {
-            let stem = filename.split('.').next().unwrap_or(filename);
+            let stem = get_stem(filename).unwrap_or_default();
             let actual_prefix = stem.split('_').next().unwrap_or_default().to_string();
 
             // Check if the file starts with an unrecognized/invalid prefix (not corresponding to a standard AES layer).
@@ -118,7 +119,7 @@ impl NamingConventionChecker {
             }
 
             // If the prefix is recognized or is empty, but there is no underscore or does not meet basic naming requirements.
-            let stem = filename.split('.').next().unwrap_or(filename);
+            let stem = get_stem(filename).unwrap_or_default();
             violations.push(Self::make_result(
                 file,
                 "AES101",
@@ -151,11 +152,11 @@ impl NamingConventionChecker {
 
         // Step 5: Validate the file stem pattern using a regular expression.
         // It must consist of lowercase letters and digits separated by underscores (e.g., prefix_concept_suffix).
-        let stem = filename.split('.').next().unwrap_or_default();
+        let stem = get_stem(filename).unwrap_or_default();
         let naming_regex = r"^[a-z0-9]+(_[a-z0-9]+)+$";
 
         if let Ok(re) = Regex::new(naming_regex) {
-            if !re.is_match(stem) {
+            if !re.is_match(&stem) {
                 violations.push(Self::make_result(
                     file,
                     "AES101",
