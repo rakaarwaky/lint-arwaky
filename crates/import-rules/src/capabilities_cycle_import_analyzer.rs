@@ -117,13 +117,37 @@ impl DependencyCycleAnalyzer {
             // Step 3f: For each import, resolve its target layer (strip scoped suffix)
             let mut has_cross_layer = false;
             for module in modules {
-                // Skip crate:: imports — they are intra-crate, not cross-layer
-                if module.value().starts_with("crate::")
-                    || module.value().starts_with("lint_arwaky::")
-                {
+                let module_value = module.value();
+                // For crate:: imports, check if the first segment is a layer name
+                // (e.g., crate::contract::foo → contract layer = cross-layer)
+                let is_crate_import = module_value.starts_with("crate::")
+                    || module_value.starts_with("lint_arwaky::");
+                let layer_prefixes = ["taxonomy_", "contract_", "capabilities_", "infrastructure_", "agent_", "surface_"];
+                let layer_names = ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surface"];
+                let is_cross_layer_crate = if is_crate_import {
+                    let stripped = module_value
+                        .strip_prefix("crate::")
+                        .or_else(|| module_value.strip_prefix("lint_arwaky::"))
+                        .unwrap_or("");
+                    let first_segment = stripped.split("::").next().unwrap_or("");
+                    layer_prefixes.iter().any(|p| stripped.starts_with(p))
+                        || layer_names.contains(&first_segment)
+                } else {
+                    false
+                };
+                // Skip crate:: imports that don't reference a layer prefix
+                if is_crate_import && !is_cross_layer_crate {
                     continue;
                 }
-                let module_fp = filepath_or_default(FilePath::new(module.value().to_string()));
+                let module_path = if is_crate_import {
+                    module_value
+                        .strip_prefix("crate::")
+                        .or_else(|| module_value.strip_prefix("lint_arwaky::"))
+                        .unwrap_or(module_value)
+                } else {
+                    module_value
+                };
+                let module_fp = filepath_or_default(FilePath::new(module_path.to_string()));
                 if let Some(target_layer) = analyzer.detect_module_layer(&module_fp) {
                     let val = target_layer.value();
                     let target_layer_str = match val.split('(').next() {
