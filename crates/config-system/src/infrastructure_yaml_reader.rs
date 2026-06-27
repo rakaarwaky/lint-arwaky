@@ -50,8 +50,8 @@ impl ConfigYamlReader {
         // Priority 2: XDG system config dirs — $XDG_CONFIG_DIRS (default /etc/xdg)
         // dirs crate doesn't expose config_dirs(), so parse env var manually
         let system_dirs = match std::env::var("XDG_CONFIG_DIRS") {
-            Ok(dirs) => dirs,
-            Err(_) => "/etc/xdg".to_string(),
+            Ok(dirs) if !dirs.is_empty() => dirs,
+            _ => "/etc/xdg".to_string(),
         };
         for dir in system_dirs.split(':').filter(|s| !s.is_empty()) {
             candidates.push(
@@ -62,14 +62,15 @@ impl ConfigYamlReader {
         }
 
         for path in &candidates {
-            if path.exists() {
-                if let Ok(content) = std::fs::read_to_string(path) {
+            match std::fs::read_to_string(path) {
+                Ok(content) => {
                     return Some(ConfigSource::new(
                         language,
                         path.to_string_lossy().to_string(),
                         content,
                     ));
                 }
+                Err(_) => continue,
             }
         }
         None
@@ -91,8 +92,9 @@ impl IConfigReaderPort for ConfigYamlReader {
     async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource> {
         let filename = Self::config_filename(language);
         let mut current = std::path::PathBuf::from(&project_root.value);
+        let mut depth = 0;
 
-        while !current.as_os_str().is_empty() {
+        while !current.as_os_str().is_empty() && depth < 2 {
             let candidate = current.join(&filename);
             if let Ok(content) = std::fs::read_to_string(&candidate) {
                 return Some(ConfigSource::new(
@@ -107,6 +109,7 @@ impl IConfigReaderPort for ConfigYamlReader {
             } else {
                 break;
             }
+            depth += 1;
         }
 
         // Fallback: XDG config dirs

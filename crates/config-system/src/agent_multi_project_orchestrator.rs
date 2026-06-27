@@ -85,6 +85,15 @@ impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
         let root_path = std::path::Path::new(&root.value);
         let workspaces = Self::scan_workspace_dirs(root_path);
 
+        if workspaces.is_empty() {
+            eprintln!(
+                "Warning: No AES-compliant workspace members (crates/, packages/, or modules/) found in '{}'. \
+                This system mandates a multi-module structure. Please refactor your project.",
+                root.value
+            );
+            return Vec::new();
+        }
+
         let mut results = Vec::new();
         for ws in &workspaces {
             let ws_type = self.workspace_detector.detect(ws);

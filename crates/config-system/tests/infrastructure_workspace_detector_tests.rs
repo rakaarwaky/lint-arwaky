@@ -115,9 +115,9 @@ fn unknown_directory_returns_unknown() {
 #[test]
 fn parent_walk_detects_cargo_toml_upward() {
     let dir = temp_dir();
-    let subdir = dir.join("deeply/nested/path");
+    let subdir = dir.join("subdir");
     std::fs::create_dir_all(&subdir).unwrap();
-    // Place Cargo.toml in parent (not in subdir)
+    // Place Cargo.toml in parent (1 level up from subdir)
     std::fs::File::create(dir.join("Cargo.toml")).unwrap();
     let fp = FilePath::new(subdir.to_string_lossy().to_string()).unwrap();
     let detector = WorkspaceDetector::new();
