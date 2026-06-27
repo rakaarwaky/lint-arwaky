@@ -7,7 +7,8 @@ use crate::surface_tree_view::TreeView;
 use crossterm::event;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
 use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+    disable_raw_mode, enable_raw_mode, size as terminal_size, EnterAlternateScreen,
+    LeaveAlternateScreen,
 };
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout};
@@ -61,7 +62,16 @@ impl TuiCommandSurface {
         let cwd = std::env::current_dir()
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|_| ".".to_string());
-        let mut state = AppState::new(cwd);
+        let mut state = AppState::new(cwd.clone());
+
+        // Initialize terminal_height so mouse clicks work from the start.
+        // Without this, the h < 5 guard in handle_mouse_click drops ALL
+        // clicks until the first Resize event arrives.
+        if let Ok((_, h)) = terminal_size() {
+            state.terminal_height = h;
+        }
+        state.show_path_dialog = false;
+        self.tui_aggregate.load_directory(&mut state, &cwd);
 
         let views = RenderViews::new();
         let result = self.event_loop(&mut terminal, &mut state, &views);
@@ -119,7 +129,7 @@ impl TuiCommandSurface {
 
             if event::poll(Duration::from_millis(50))? {
                 let crossterm_event = event::read()?;
-                let tui_event = from_crossterm_event(crossterm_event);
+                let tui_event = from_crossterm_event(crossterm_event, state);
                 self.tui_aggregate.handle_event(state, tui_event);
             }
 
@@ -131,16 +141,16 @@ impl TuiCommandSurface {
     }
 }
 
-fn from_crossterm_event(event: event::Event) -> TuiEvent {
+fn from_crossterm_event(event: event::Event, state: &AppState) -> TuiEvent {
     match event {
-        event::Event::Key(key) => from_key_event(key),
+        event::Event::Key(key) => from_key_event(key, state),
         event::Event::Mouse(mouse) => from_mouse_event(mouse),
         event::Event::Resize(w, h) => TuiEvent::Resize(w, h),
         _ => TuiEvent::None,
     }
 }
 
-fn from_key_event(key: KeyEvent) -> TuiEvent {
+fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
     let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
 
     if ctrl {
@@ -153,6 +163,30 @@ fn from_key_event(key: KeyEvent) -> TuiEvent {
         };
     }
 
+    // Path dialog: ALL input goes to path editing when dialog is visible
+    if state.show_path_dialog {
+        return match key.code {
+            KeyCode::Char(ch) => TuiEvent::PathInput(ch),
+            KeyCode::Backspace => TuiEvent::PathBackspace,
+            KeyCode::Enter => TuiEvent::PathConfirm,
+            KeyCode::Tab => TuiEvent::PathUseCurrent,
+            KeyCode::Esc => TuiEvent::Quit,
+            _ => TuiEvent::None,
+        };
+    }
+
+    // Search mode: character and edit keys go to search
+    if state.search_mode {
+        return match key.code {
+            KeyCode::Char(ch) => TuiEvent::SearchInput(ch),
+            KeyCode::Backspace => TuiEvent::SearchBackspace,
+            KeyCode::Enter => TuiEvent::SearchConfirm,
+            KeyCode::Esc => TuiEvent::SearchCancel,
+            _ => TuiEvent::None,
+        };
+    }
+
+    // Normal mode: navigation and action keys
     match key.code {
         KeyCode::Char('q') => TuiEvent::Quit,
         KeyCode::Char('j') | KeyCode::Down => TuiEvent::MoveDown,
@@ -180,15 +214,7 @@ fn from_key_event(key: KeyEvent) -> TuiEvent {
         KeyCode::Char('v') => TuiEvent::ActionVersion,
         KeyCode::Char('?') => TuiEvent::ToggleHelp,
         KeyCode::Char('/') => TuiEvent::ToggleSearch,
-        KeyCode::Esc => TuiEvent::SearchCancel,
-        KeyCode::Char(ch) => {
-            if ch == '\n' {
-                TuiEvent::SearchConfirm
-            } else {
-                TuiEvent::SearchInput(ch)
-            }
-        }
-        KeyCode::Backspace => TuiEvent::SearchBackspace,
+        KeyCode::Esc => TuiEvent::None,
         _ => TuiEvent::None,
     }
 }
