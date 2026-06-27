@@ -3,9 +3,10 @@
 
 [advisories]
 vulnerability = "deny"
-unmaintained = "warn"
-yanked = "warn"
-notice = "warn"
+unmaintained = "all"
+yanked = "all"
+notice = "all"
+severity = "deny"
 
 [licenses]
 unlicensed = "deny"
@@ -22,7 +23,7 @@ allow = [
 
 [bans]
 multiple-versions = "warn"
-wildcard-versions = "warn"
+wildcards = "warn"
 highlight = "all"
 
 [sources]
