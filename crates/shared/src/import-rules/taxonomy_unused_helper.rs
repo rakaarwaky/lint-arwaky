@@ -74,27 +74,20 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
         // Rust `use` statements: `use std::collections::HashMap;` or `use serde::{A, B};`
         if let Some(use_part) = trimmed.strip_prefix("use ") {
             let use_part = use_part.trim_end_matches(';').trim();
-            if !use_part.is_empty()
-                && !use_part.starts_with("crate::")
-                && !use_part.starts_with("super::")
-                && !use_part.starts_with("self::")
-            {
+            if !use_part.is_empty() && !use_part.starts_with("crate::") && !use_part.starts_with("super::") && !use_part.starts_with("self::") {
                 if let Some(brace_pos) = use_part.find("::{") {
                     let prefix = &use_part[..brace_pos];
                     let inner = use_part[brace_pos + 3..].trim_end_matches('}');
                     for name in inner.split(',') {
                         let name = name.trim().split(" as ").last().unwrap_or("").trim();
-                        if !name.is_empty() && name != "_" && name != "*" {
-                            aliases.insert(
-                                Identity::new(name),
-                                Identity::new(format!("{}::{}", prefix, name)),
-                            );
+                        if !name.is_empty() && name != "_" && name != "*" && !is_rust_trait_import(name) {
+                            aliases.insert(Identity::new(name), Identity::new(format!("{}::{}", prefix, name)));
                         }
                     }
                 } else {
                     let raw_name = use_part.rsplit("::").next().unwrap_or(use_part);
                     let name = raw_name.split(" as ").last().unwrap_or(raw_name).trim();
-                    if !name.is_empty() && name != "*" {
+                    if !name.is_empty() && name != "*" && !is_rust_trait_import(name) {
                         aliases.insert(Identity::new(name), Identity::new(use_part));
                     }
                 }
