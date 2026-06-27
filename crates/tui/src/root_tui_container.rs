@@ -3,6 +3,7 @@ use crate::capabilities_action_handler::ActionHandler;
 use crate::capabilities_lint_executor::LintExecutor;
 use crate::infrastructure_file_system_adapter::FileSystemAdapter;
 use crate::surface_tui_command::TuiCommandSurface;
+use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
 use maintenance::root_maintenance_container::MaintenanceContainer;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
@@ -14,6 +15,21 @@ pub struct TuiContainer;
 impl TuiContainer {
     pub fn run() -> anyhow::Result<()> {
         let fs_adapter = Arc::new(FileSystemAdapter::new());
+
+        // Initialize the global checker singleton so that
+        // CodeAnalysisOrchestrator (used by LintExecutor::scan/check)
+        // gets a real LayerDetectionAnalyzer instead of PlaceholderAnalyzer.
+        // This is required for layer-dependent checks (AES205, AES302, etc.)
+        // to work in the TUI.
+        let import_container =
+            import_rules::root_import_rules_container::ImportContainer::new_default();
+        let analyzer = import_container.analyzer();
+        let checker_container =
+            code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(
+                analyzer.clone(),
+            );
+        init_global_checker(Arc::new(checker_container));
+
         let code_analysis_container =
             code_analysis::root_code_analysis_container::CodeAnalysisContainer::new();
         let code_analysis_aggregate = code_analysis_container.code_analysis_linter();
