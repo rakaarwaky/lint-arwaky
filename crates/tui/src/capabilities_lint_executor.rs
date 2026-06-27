@@ -483,9 +483,10 @@ impl ILintExecutorProtocol for LintExecutor {
         ) {
             (Some(orphan_agg), Some(layer_det), Some(scanner)) => {
                 // Resolve workspace root like CLI does
-                let scan_root = shared::common::taxonomy_workspace_helper::find_workspace_root(path)
-                    .map(|p| p.to_string_lossy().to_string())
-                    .unwrap_or_else(|| path.to_string());
+                let scan_root =
+                    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_else(|| path.to_string());
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
@@ -609,14 +610,16 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn duplicates(&self, path: &str) -> LintExecutionResult {
-        let analyzer = code_analysis::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer::new();
+        let analyzer =
+            code_analysis::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer::new();
         let scan_root = shared::common::taxonomy_workspace_helper::find_workspace_root(path)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
         let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
             .unwrap_or_default();
-        let scanner = shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
+        let scanner =
+            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
         let source_files = match scanner.scan_directory(&dir_path) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
@@ -625,7 +628,11 @@ impl ILintExecutorProtocol for LintExecutor {
 
         let violations = analyzer.check_duplicates(&file_strs, 10);
         let count = violations.len();
-        let mut output = format!("Duplication detection for {}\nScanned {} files\n", path, file_strs.len());
+        let mut output = format!(
+            "Duplication detection for {}\nScanned {} files\n",
+            path,
+            file_strs.len()
+        );
         if violations.is_empty() {
             output.push_str("No significant code duplication detected.\n");
         } else {
