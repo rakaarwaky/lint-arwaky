@@ -20,6 +20,7 @@ fn container_default_is_same_as_new() {
 
 #[test]
 fn container_orchestrator_is_accessible() {
+    use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
     let container = ConfigContainer::new();
     let orch = container.orchestrator();
     let _ws = orch.workspace_detector();
@@ -28,10 +29,10 @@ fn container_orchestrator_is_accessible() {
 
 #[test]
 fn container_parser_is_accessible() {
+    use shared::config_system::contract_parser_port::IConfigParserPort;
     use shared::common::taxonomy_path_vo::FilePath;
     let container = ConfigContainer::new();
     let parser = container.parser();
-    // Parser should handle nonexistent paths gracefully
     let fp = FilePath::new("/nonexistent/config.yaml".to_string()).unwrap();
     let result = parser.parse_yaml_config(&fp);
     assert!(result.is_err());
@@ -39,11 +40,10 @@ fn container_parser_is_accessible() {
 
 #[test]
 fn container_validator_uses_default_config() {
+    use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
     let container = ConfigContainer::new();
     let validator = container.validator();
-    // Default thresholds should be valid
     assert!(validator.validate_thresholds().is_valid);
-    // Unlisted adapters default to enabled
     assert!(validator.is_adapter_enabled(
         &shared::common::taxonomy_adapter_name_vo::AdapterName::raw("any_tool")
     ));
@@ -54,7 +54,6 @@ fn container_multi_project_orchestrator_is_accessible() {
     use shared::common::taxonomy_path_vo::FilePath;
     let container = ConfigContainer::new();
     let mp = container.multi_project_orchestrator();
-    // Should handle nonexistent paths without panic
     let fp = FilePath::new("/nonexistent/path".to_string()).unwrap();
     let rt = tokio::runtime::Runtime::new().unwrap();
     let workspaces = rt.block_on(mp.discover_workspaces(&fp));

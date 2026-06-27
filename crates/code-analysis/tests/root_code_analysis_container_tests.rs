@@ -46,6 +46,7 @@ fn container_default_is_same_as_new() {
 
 #[test]
 fn container_new_with_analyzer_provides_custom_analyzer() {
+    use std::sync::Arc;
     // Use a custom placeholder analyzer
     let custom = Arc::new(TestAnalyzer);
     let container = CodeAnalysisContainer::new_with_analyzer(custom);

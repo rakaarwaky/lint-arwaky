@@ -19,5 +19,7 @@ toml.workspace = true
 shared.workspace = true
 dirs.workspace = true
 
+tokio = { workspace = true, features = ["rt", "macros"] }
+
 [dev-dependencies]
 tokio.workspace = true

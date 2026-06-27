@@ -493,22 +493,44 @@ impl CheckCommandsSurface {
             let global_total = global_all_results.len();
             // Filter to AES-only codes for display and unique count
             let global_code_counts: std::collections::HashMap<String, usize> = global_all_counts
-                .into_iter()
+                .iter()
                 .filter(|(code, _)| code.starts_with("AES"))
+                .map(|(k, v)| (k.clone(), *v))
                 .collect();
             let global_unique_codes = global_code_counts.len();
+            // External lint codes (non-AES)
+            let external_code_counts: std::collections::HashMap<String, usize> = global_all_counts
+                .iter()
+                .filter(|(code, _)| !code.starts_with("AES"))
+                .map(|(k, v)| (k.clone(), *v))
+                .collect();
+            let global_unique_external = external_code_counts.len();
 
             println!("============================================================");
             println!("  Combined Multi-Workspace Report Summary");
             println!("============================================================");
             println!("  Total Workspace Members: {}", workspaces.len());
             println!("  Total Unique AES Codes: {global_unique_codes}");
+            if global_unique_external > 0 {
+                println!("  Total Unique External Codes: {global_unique_external}");
+            }
             println!("  Total Violations: {global_total}");
             println!();
+            // AES codes section
             let mut sorted: Vec<_> = global_code_counts.into_iter().collect();
             sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
             for (code, count) in &sorted {
                 println!("  {code}: {count}");
+            }
+            // External codes section
+            if !external_code_counts.is_empty() {
+                println!();
+                println!("  ── External Lint Codes ──");
+                let mut ext_sorted: Vec<_> = external_code_counts.into_iter().collect();
+                ext_sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
+                for (code, count) in &ext_sorted {
+                    println!("  {code}: {count}");
+                }
             }
 
             // Print usage instructions for per-member scanning
