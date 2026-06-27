@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use import_rules_lint_arwaky::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use shared::common::taxonomy_common_vo::{LineNumber, PatternList};
@@ -7,7 +7,7 @@ use shared::common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, Li
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule, ConfigEnabled};
+use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
@@ -53,22 +53,22 @@ impl IImportParserPort for MockMandatoryParser {
         }
     }
 
-    fn import_matches_scope(&self, _import_line: &LineContentVO, _layer: &LayerNameVO, _suffixes: &[Identity]) -> bool {
+    fn import_matches_scope(&self, _: &LineContentVO, _: &LayerNameVO, _: &[Identity]) -> bool {
         self.scope_match
     }
 
-    fn get_basename(&self, _file: &FilePath) -> Identity {
+    fn get_basename(&self, _: &FilePath) -> Identity {
         Identity::new(&self.basename)
     }
 
-    fn read_import_lines(&self, _file: &FilePath) -> Vec<(LineNumber, LineContentVO)> {
+    fn read_import_lines(&self, _: &FilePath) -> Vec<(LineNumber, LineContentVO)> {
         self.import_lines
             .iter()
             .map(|(ln, line)| (LineNumber::new(*ln), LineContentVO::new(line.clone())))
             .collect()
     }
 
-    fn parse_import_lines(&self, _content: &FileContentVO) -> Vec<(LineNumber, LineContentVO)> {
+    fn parse_import_lines(&self, _: &FileContentVO) -> Vec<(LineNumber, LineContentVO)> {
         self.import_lines
             .iter()
             .map(|(ln, line)| (LineNumber::new(*ln), LineContentVO::new(line.clone())))
@@ -85,8 +85,7 @@ impl IImportParserPort for MockMandatoryParser {
     }
 
     fn extract_layer_from_import(&self, segment: &Identity) -> Option<LayerNameVO> {
-        let seg = segment.value();
-        match seg {
+        match segment.value() {
             "taxonomy" => Some(LayerNameVO::new("taxonomy")),
             "contract" => Some(LayerNameVO::new("contract")),
             "capabilities" => Some(LayerNameVO::new("capabilities")),
@@ -94,8 +93,8 @@ impl IImportParserPort for MockMandatoryParser {
             "agent" => Some(LayerNameVO::new("agent")),
             "surfaces" | "surface" => Some(LayerNameVO::new("surfaces")),
             "root" => Some(LayerNameVO::new("root")),
-            _ => {
-                if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(seg) {
+            s => {
+                if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(s) {
                     Some(LayerNameVO::new(layer))
                 } else {
                     None
@@ -104,23 +103,23 @@ impl IImportParserPort for MockMandatoryParser {
         }
     }
 
-    fn read_file_to_message(&self, _file: &FilePath) -> Result<LintMessage, std::io::Error> {
+    fn read_file_to_message(&self, _: &FilePath) -> Result<LintMessage, std::io::Error> {
         Ok(LintMessage::new(self.file_content.clone()))
     }
 
-    fn extract_import_modules(&self, _content: &str) -> Vec<SymbolName> { vec![] }
-    fn get_language_from_path(&self, _path: &str) -> LanguageVO { LanguageVO::Rust }
-    fn get_dummy_function_ranges(&self, _lines: &[&str], _lang: LanguageVO) -> Vec<(LineNumber, LineNumber)> { vec![] }
-    fn get_imported_symbols(&self, _lines: &[&str], _lang: LanguageVO) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn get_dummy_impl_traits_with_lines(&self, _lines: &[&str]) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn is_symbol_used_real(&self, _lines: &[&str], _symbol: &str, _dummy_ranges: &[(LineNumber, LineNumber)], _dummy_impl_traits: &[String]) -> bool { false }
-    fn detect_cycle_edges(&self, _edges: &[DependencyEdge]) -> Vec<SymbolName> { vec![] }
-    fn extract_imported_aliases(&self, _content: &str) -> HashMap<Identity, Identity> { HashMap::new() }
-    fn extract_exported_symbols(&self, _content: &str) -> HashSet<Identity> { HashSet::new() }
-    fn extract_used_symbols(&self, _content: &str, _imported_aliases: &HashMap<Identity, Identity>) -> HashSet<Identity> { HashSet::new() }
-    fn find_import_line_number(&self, _content: &str, _alias: &str) -> LineNumber { LineNumber::new(0) }
-    fn extract_rust_js_imports(&self, _content: &str) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn is_name_used(&self, _name: &str, _content: &str, _exclude_line: LineNumber) -> bool { false }
+    fn extract_import_modules(&self, _: &str) -> Vec<SymbolName> { vec![] }
+    fn get_language_from_path(&self, _: &str) -> LanguageVO { LanguageVO::Rust }
+    fn get_dummy_function_ranges(&self, _: &[&str], _: LanguageVO) -> Vec<(LineNumber, LineNumber)> { vec![] }
+    fn get_imported_symbols(&self, _: &[&str], _: LanguageVO) -> Vec<(SymbolName, LineNumber)> { vec![] }
+    fn get_dummy_impl_traits_with_lines(&self, _: &[&str]) -> Vec<(SymbolName, LineNumber)> { vec![] }
+    fn is_symbol_used_real(&self, _: &[&str], _: &str, _: &[(LineNumber, LineNumber)], _: &[String]) -> bool { false }
+    fn detect_cycle_edges(&self, _: &[DependencyEdge]) -> Vec<SymbolName> { vec![] }
+    fn extract_imported_aliases(&self, _: &str) -> HashMap<Identity, Identity> { HashMap::new() }
+    fn extract_exported_symbols(&self, _: &str) -> HashSet<Identity> { HashSet::new() }
+    fn extract_used_symbols(&self, _: &str, _: &HashMap<Identity, Identity>) -> HashSet<Identity> { HashSet::new() }
+    fn find_import_line_number(&self, _: &str, _: &str) -> LineNumber { LineNumber::new(0) }
+    fn extract_rust_js_imports(&self, _: &str) -> Vec<(SymbolName, LineNumber)> { vec![] }
+    fn is_name_used(&self, _: &str, _: &str, _: LineNumber) -> bool { false }
 }
 
 fn make_def(mandatory: Vec<&str>, exceptions: Vec<&str>) -> LayerDefinition {
@@ -177,7 +176,6 @@ fn mandatory_missing_import_detected() {
     let mut violations = vec![];
     let def = make_def(vec!["shared"], vec![]);
     checker.check_mandatory_imports("src/capabilities_processor.rs", &def, &mut violations);
-    // Should detect that "shared" is NOT imported
     assert_eq!(violations.len(), 1, "missing mandatory import should be flagged");
     assert!(violations[0].code.value().contains("AES202"));
 }

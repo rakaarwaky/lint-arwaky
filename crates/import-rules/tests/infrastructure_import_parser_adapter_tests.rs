@@ -1,5 +1,3 @@
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 use std::fs;
 
 use import_rules_lint_arwaky::infrastructure_import_parser_adapter::ImportParserAdapter;

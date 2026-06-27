@@ -8,6 +8,7 @@ use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 
@@ -42,38 +43,38 @@ impl IImportParserPort for MockUnusedParser {
     fn resolve_scope(&self, scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
         (LayerNameVO::new(scope.value()), vec![])
     }
-    fn import_matches_scope(&self, _i: &LineContentVO, _l: &LayerNameVO, _s: &[Identity]) -> bool { false }
-    fn get_basename(&self, _f: &FilePath) -> Identity { Identity::new("test.rs") }
-    fn read_import_lines(&self, _f: &FilePath) -> Vec<(LineNumber, LineContentVO)> { vec![] }
-    fn parse_import_lines(&self, _c: &FileContentVO) -> Vec<(LineNumber, LineContentVO)> { vec![] }
-    fn extract_module_from_line(&self, _l: &LineContentVO) -> Option<Identity> { None }
-    fn extract_layer_from_import(&self, _s: &Identity) -> Option<LayerNameVO> { None }
-    fn read_file_to_message(&self, _f: &FilePath) -> Result<LintMessage, std::io::Error> {
+    fn import_matches_scope(&self, _: &LineContentVO, _: &LayerNameVO, _: &[Identity]) -> bool { false }
+    fn get_basename(&self, _: &FilePath) -> Identity { Identity::new("test.rs") }
+    fn read_import_lines(&self, _: &FilePath) -> Vec<(LineNumber, LineContentVO)> { vec![] }
+    fn parse_import_lines(&self, _: &FileContentVO) -> Vec<(LineNumber, LineContentVO)> { vec![] }
+    fn extract_module_from_line(&self, _: &LineContentVO) -> Option<Identity> { None }
+    fn extract_layer_from_import(&self, _: &Identity) -> Option<LayerNameVO> { None }
+    fn read_file_to_message(&self, _: &FilePath) -> Result<LintMessage, std::io::Error> {
         Ok(LintMessage::new(self.content.clone()))
     }
-    fn extract_import_modules(&self, _c: &str) -> Vec<SymbolName> { vec![] }
-    fn get_language_from_path(&self, _p: &str) -> LanguageVO { LanguageVO::Rust }
-    fn get_dummy_function_ranges(&self, _l: &[&str], _lang: LanguageVO) -> Vec<(LineNumber, LineNumber)> { vec![] }
-    fn get_imported_symbols(&self, _l: &[&str], _lang: LanguageVO) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn get_dummy_impl_traits_with_lines(&self, _l: &[&str]) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn is_symbol_used_real(&self, _l: &[&str], _s: &str, _d: &[(LineNumber, LineNumber)], _di: &[String]) -> bool { false }
-    fn detect_cycle_edges(&self, _e: &[DependencyEdge]) -> Vec<SymbolName> { vec![] }
-    fn extract_imported_aliases(&self, _c: &str) -> HashMap<Identity, Identity> {
+    fn extract_import_modules(&self, _: &str) -> Vec<SymbolName> { vec![] }
+    fn get_language_from_path(&self, _: &str) -> LanguageVO { LanguageVO::Rust }
+    fn get_dummy_function_ranges(&self, _: &[&str], _: LanguageVO) -> Vec<(LineNumber, LineNumber)> { vec![] }
+    fn get_imported_symbols(&self, _: &[&str], _: LanguageVO) -> Vec<(SymbolName, LineNumber)> { vec![] }
+    fn get_dummy_impl_traits_with_lines(&self, _: &[&str]) -> Vec<(SymbolName, LineNumber)> { vec![] }
+    fn is_symbol_used_real(&self, _: &[&str], _: &str, _: &[(LineNumber, LineNumber)], _: &[String]) -> bool { false }
+    fn detect_cycle_edges(&self, _: &[DependencyEdge]) -> Vec<SymbolName> { vec![] }
+    fn extract_imported_aliases(&self, _: &str) -> HashMap<Identity, Identity> {
         self.imported_aliases.clone()
     }
-    fn extract_exported_symbols(&self, _c: &str) -> HashSet<Identity> {
+    fn extract_exported_symbols(&self, _: &str) -> HashSet<Identity> {
         self.exported_symbols.clone()
     }
-    fn extract_used_symbols(&self, _c: &str, _i: &HashMap<Identity, Identity>) -> HashSet<Identity> {
+    fn extract_used_symbols(&self, _: &str, _: &HashMap<Identity, Identity>) -> HashSet<Identity> {
         self.used_symbols.clone()
     }
-    fn find_import_line_number(&self, _c: &str, _a: &str) -> LineNumber {
+    fn find_import_line_number(&self, _: &str, _: &str) -> LineNumber {
         LineNumber::new(self.find_line)
     }
-    fn extract_rust_js_imports(&self, _c: &str) -> Vec<(SymbolName, LineNumber)> {
+    fn extract_rust_js_imports(&self, _: &str) -> Vec<(SymbolName, LineNumber)> {
         self.rust_js_imports.clone()
     }
-    fn is_name_used(&self, _n: &str, _c: &str, _e: LineNumber) -> bool {
+    fn is_name_used(&self, _: &str, _: &str, _: LineNumber) -> bool {
         self.name_used
     }
 }
@@ -134,7 +135,6 @@ fn unused_exported_symbol_not_flagged() {
     let checker = UnusedImportRuleChecker::new(Arc::new(parser));
     let path = FilePath::new("test.py").unwrap_or_default();
     let unused = checker.find_unused_imports(&path);
-    // os is exported so not unused, sys is neither used nor exported
     assert_eq!(unused.len(), 1, "sys should be flagged but os (exported) should not");
 }
 
