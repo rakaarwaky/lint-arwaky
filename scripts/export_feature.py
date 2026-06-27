@@ -197,7 +197,7 @@ def _score_files(files: list[Path], components: list[str]) -> list[tuple[int, Pa
 def collect_crate_files(crate_path: Path) -> set[Path]:
     files: set[Path] = set()
     src_dir = crate_path / "src"
-    important_files = {CARGO_TOML, "build.rs", "README.md", "LICENSE", "LICENSE-MIT", "LICENSE-APACHE"}
+    important_files = {CARGO_TOML, "build.rs", "README.md", "FRD.md", "LICENSE", "LICENSE-MIT", "LICENSE-APACHE"}
     
     for f in crate_path.iterdir():
         if f.is_file() and f.name in important_files:

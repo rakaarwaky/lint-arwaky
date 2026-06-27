@@ -12,6 +12,7 @@ use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]
@@ -86,18 +87,14 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
     let raw: serde_yml::Value = serde_yml::from_str(yaml_str).unwrap_or_default();
     if let Some(arch_val) = raw.get("architecture") {
         let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
-        // Extract layers from rules.AES102.layers if not at top-level layers
-        if arch_json
-            .get("rules")
-            .and_then(|r| r.get("AES102"))
-            .and_then(|a| a.get("layers"))
-            .is_some()
-            && arch_json.get("layers").is_none()
-        {
+        // Extract layers from rules (first rule containing "layers" key) if not at top-level
+        if arch_json.get("layers").is_none() {
             if let Some(rules_obj) = arch_json.get_mut("rules").and_then(|r| r.as_object_mut()) {
-                if let Some(aes102) = rules_obj.get_mut("AES102").and_then(|a| a.as_object_mut()) {
-                    if let Some(layers) = aes102.remove("layers") {
+                for (_rule_code, rule_val) in rules_obj.iter_mut() {
+                    if let Some(layers) = rule_val.get_mut("layers") {
+                        let layers = std::mem::take(layers);
                         arch_json["layers"] = layers;
+                        break;
                     }
                 }
             }
@@ -272,19 +269,37 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
 
 /// All 3 config YAMLs are baked into the binary at compile time via `include_str!`.
 /// Runtime project-level config files override these defaults.
+/// Cached via OnceLock to avoid re-parsing on every call.
+static DEFAULT_RUST_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
+static DEFAULT_PYTHON_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
+static DEFAULT_TS_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
+
 pub fn default_aes_config() -> ArchitectureConfig {
-    parse_config_yaml(include_str!("../../../../lint_arwaky.config.rust.yaml"))
+    DEFAULT_RUST_CONFIG
+        .get_or_init(|| parse_config_yaml(include_str!("../../../../lint_arwaky.config.rust.yaml")))
+        .clone()
 }
 
 pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
     match language {
         "rust" => default_aes_config(),
-        "python" => parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml")),
-        "javascript" | "typescript" => parse_config_yaml(include_str!(
-            "../../../../lint_arwaky.config.javascript.yaml"
-        )),
+        "python" => DEFAULT_PYTHON_CONFIG
+            .get_or_init(|| {
+                parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml"))
+            })
+            .clone(),
+        "javascript" | "typescript" => DEFAULT_TS_CONFIG
+            .get_or_init(|| {
+                parse_config_yaml(include_str!(
+                    "../../../../lint_arwaky.config.javascript.yaml"
+                ))
+            })
+            .clone(),
         _ => {
-            eprintln!("[warn] Unknown language '{}', using empty default config.", language);
+            eprintln!(
+                "[warn] Unknown language '{}', using empty default config.",
+                language
+            );
             ArchitectureConfig::default()
         }
     }

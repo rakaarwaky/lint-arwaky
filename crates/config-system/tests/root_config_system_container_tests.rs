@@ -1,4 +1,5 @@
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
+use shared::config_system::taxonomy_setting_vo::ProjectConfig;
 
 #[test]
 fn container_can_be_constructed() {
@@ -13,8 +14,9 @@ fn container_can_be_constructed() {
 fn container_default_is_same_as_new() {
     let c1 = ConfigContainer::new();
     let c2 = ConfigContainer::default();
-    let r1 = c1.validator().validate_thresholds();
-    let r2 = c2.validator().validate_thresholds();
+    let config = ProjectConfig::defaults();
+    let r1 = c1.validator().validate_thresholds(&config);
+    let r2 = c2.validator().validate_thresholds(&config);
     assert_eq!(r1.is_valid, r2.is_valid);
 }
 
@@ -41,8 +43,10 @@ fn container_parser_is_accessible() {
 fn container_validator_uses_default_config() {
     let container = ConfigContainer::new();
     let validator = container.validator();
-    assert!(validator.validate_thresholds().is_valid);
+    let config = ProjectConfig::defaults();
+    assert!(validator.validate_thresholds(&config).is_valid);
     assert!(validator.is_adapter_enabled(
+        &config,
         &shared::common::taxonomy_adapter_name_vo::AdapterName::raw("any_tool")
     ));
 }

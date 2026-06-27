@@ -16,39 +16,16 @@ impl ConfigYamlReader {
         format!("lint_arwaky.config.{}.yaml", language)
     }
 
-    /// Get XDG data directory for lint-arwaky ($XDG_DATA_HOME/lint-arwaky/)
-    pub fn data_dir() -> Option<std::path::PathBuf> {
-        dirs::data_dir().map(|d| d.join("lint-arwaky"))
-    }
-
-    /// Get XDG cache directory for lint-arwaky ($XDG_CACHE_HOME/lint-arwaky/)
-    pub fn cache_dir() -> Option<std::path::PathBuf> {
-        dirs::cache_dir().map(|d| d.join("lint-arwaky"))
-    }
-
-    /// Get XDG state directory for lint-arwaky ($XDG_STATE_HOME/lint-arwaky/)
-    pub fn state_dir() -> Option<std::path::PathBuf> {
-        dirs::state_dir().map(|d| d.join("lint-arwaky"))
-    }
-
     /// Read config from XDG-compliant directories in priority order.
-    /// Called after project-local lookup fails. Returns `None` to fall back to
-    /// compiled-in defaults.
-    ///
-    /// Priority order (XDG Base Directory Specification):
-    /// 1) `$XDG_CONFIG_HOME/lint-arwaky/`  (default `~/.config/lint-arwaky/`)
-    /// 2) Each dir in `$XDG_CONFIG_DIRS`    (default `/etc/xdg/lint-arwaky/`)
-    fn read_any(language: &str) -> Option<ConfigSource> {
+    /// Returns `None` to fall back to compiled-in defaults.
+    async fn read_any(language: &str) -> Option<ConfigSource> {
         let filename = Self::config_filename(language);
         let mut candidates: Vec<std::path::PathBuf> = Vec::new();
 
-        // Priority 1: XDG user config dir — $XDG_CONFIG_HOME (default ~/.config)
         if let Some(user_config) = dirs::config_dir() {
             candidates.push(user_config.join("lint-arwaky").join(&filename));
         }
 
-        // Priority 2: XDG system config dirs — $XDG_CONFIG_DIRS (default /etc/xdg)
-        // dirs crate doesn't expose config_dirs(), so parse env var manually
         let system_dirs = match std::env::var("XDG_CONFIG_DIRS") {
             Ok(dirs) if !dirs.is_empty() => dirs,
             _ => "/etc/xdg".to_string(),
@@ -62,7 +39,7 @@ impl ConfigYamlReader {
         }
 
         for path in &candidates {
-            match std::fs::read_to_string(path) {
+            match tokio::fs::read_to_string(path).await {
                 Ok(content) => {
                     return Some(ConfigSource::new(
                         language,
@@ -85,10 +62,6 @@ impl Default for ConfigYamlReader {
 
 #[async_trait]
 impl IConfigReaderPort for ConfigYamlReader {
-    /// Read config with priority order:
-    /// 1) Project root directory
-    /// 2) Parent of project root
-    /// 3) XDG config dirs ($XDG_CONFIG_HOME, $XDG_CONFIG_DIRS)
     async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource> {
         let filename = Self::config_filename(language);
         let mut current = std::path::PathBuf::from(&project_root.value);
@@ -96,7 +69,7 @@ impl IConfigReaderPort for ConfigYamlReader {
 
         while !current.as_os_str().is_empty() && depth < 2 {
             let candidate = current.join(&filename);
-            if let Ok(content) = std::fs::read_to_string(&candidate) {
+            if let Ok(content) = tokio::fs::read_to_string(&candidate).await {
                 return Some(ConfigSource::new(
                     language,
                     candidate.to_string_lossy().to_string(),
@@ -112,13 +85,12 @@ impl IConfigReaderPort for ConfigYamlReader {
             depth += 1;
         }
 
-        // Fallback: XDG config dirs
-        Self::read_any(language)
+        Self::read_any(language).await
     }
 
     async fn list_config_files(&self, project_root: &FilePath) -> Vec<(String, String)> {
         let mut found = Vec::new();
-        for lang in &["rust", "python", "javascript", "typescript"] {
+        for lang in &["rust", "python", "typescript"] {
             if let Some(config) = self.read_config(project_root, lang).await {
                 found.push((lang.to_string(), config.path.to_string()));
             }

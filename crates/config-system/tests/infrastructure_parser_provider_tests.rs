@@ -86,20 +86,37 @@ fn parses_yaml_with_adapters() {
 
 // ─── parse_toml_config ─────────────────────────────────────────────────────
 
-// Note: TOML parsing tests are skipped because toml v1.x crate's `str::parse::<toml::Value>()`
-// has compatibility issues with parsing full TOML documents. The source code in
-// `ConfigParserProvider` may need updating to use `toml::from_str()` instead.
-// These tests will be re-enabled once the source code is updated.
-
-#[ignore]
 #[test]
-fn parses_valid_toml_config() {
+fn parses_valid_toml_config_with_hyphen_key() {
+    let dir = temp_dir();
+    let toml_path = dir.join("Cargo.toml");
+    let content = r#"[package]
+name = "test_pkg"
+[tool.lint-arwaky]
+project_name = "toml_project"
+[tool.lint-arwaky.thresholds]
+score = 85.0
+complexity = 8
+max_file_lines = 400
+"#;
+    std::fs::write(&toml_path, content).unwrap();
+
+    let parser = ConfigParserProvider::new();
+    let fp = FilePath::new(toml_path.to_string_lossy().to_string()).unwrap();
+    let result = parser.parse_toml_config(&fp).unwrap();
+    assert!(result.is_some(), "expected Some, got None");
+    let config = result.unwrap();
+    assert_eq!(config.project_name.value, "toml_project");
+}
+
+#[test]
+fn parses_valid_toml_config_with_underscore_key() {
     let dir = temp_dir();
     let toml_path = dir.join("Cargo.toml");
     let content = r#"[package]
 name = "test_pkg"
 [tool.lint_arwaky]
-project_name = "toml_project"
+project_name = "toml_project_legacy"
 [tool.lint_arwaky.thresholds]
 score = 85.0
 complexity = 8
@@ -109,30 +126,22 @@ max_file_lines = 400
 
     let parser = ConfigParserProvider::new();
     let fp = FilePath::new(toml_path.to_string_lossy().to_string()).unwrap();
-    let result = parser.parse_toml_config(&fp);
+    let result = parser.parse_toml_config(&fp).unwrap();
     assert!(result.is_some(), "expected Some, got None");
-    let inner = result.as_ref().unwrap();
-    assert!(
-        inner.is_ok(),
-        "expected Ok, got Err: {:?}",
-        inner.as_ref().err()
-    );
-    let config = result.unwrap().unwrap();
-    assert_eq!(config.project_name.value, "toml_project");
+    let config = result.unwrap();
+    assert_eq!(config.project_name.value, "toml_project_legacy");
 }
 
 #[test]
-fn nonexistent_toml_file_returns_some_err() {
+fn nonexistent_toml_file_returns_err() {
     let parser = ConfigParserProvider::new();
     let fp = FilePath::new("/nonexistent/path/Cargo.toml".to_string()).unwrap();
     let result = parser.parse_toml_config(&fp);
-    assert!(result.is_some());
-    assert!(result.as_ref().unwrap().is_err());
+    assert!(result.is_err());
 }
 
-#[ignore]
 #[test]
-fn toml_without_tool_lint_arwaky_returns_none() {
+fn toml_without_tool_lint_arwaky_returns_ok_none() {
     let dir = temp_dir();
     let toml_path = dir.join("Cargo.toml");
     let content = "[package]\nname = \"simple\"\nversion = \"1.0.0\"\n";
@@ -140,20 +149,18 @@ fn toml_without_tool_lint_arwaky_returns_none() {
 
     let parser = ConfigParserProvider::new();
     let fp = FilePath::new(toml_path.to_string_lossy().to_string()).unwrap();
-    let result = parser.parse_toml_config(&fp);
+    let result = parser.parse_toml_config(&fp).unwrap();
     assert!(result.is_none(), "expected None, got Some({:?})", result);
 }
 
 #[test]
-fn invalid_toml_content_returns_some_err() {
+fn invalid_toml_content_returns_err() {
     let dir = temp_dir();
     let toml_path = dir.join("Cargo.toml");
-    // Write binary garbage that is not valid TOML
     std::fs::write(&toml_path, b"\x00\x01\x02\xff\xfe\xfd").unwrap();
 
     let parser = ConfigParserProvider::new();
     let fp = FilePath::new(toml_path.to_string_lossy().to_string()).unwrap();
     let result = parser.parse_toml_config(&fp);
-    assert!(result.is_some(), "expected Some, got None");
-    assert!(result.as_ref().unwrap().is_err(), "expected Err, got Ok");
+    assert!(result.is_err(), "expected Err, got Ok");
 }

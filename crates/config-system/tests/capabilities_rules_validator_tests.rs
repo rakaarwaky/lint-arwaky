@@ -14,8 +14,8 @@ fn enabled_adapter_returns_true() {
         adapters: vec![AdapterEntry::enabled(AdapterName::raw("ruff"))],
         ..ProjectConfig::defaults()
     };
-    let validator = ConfigRulesValidator::new(config);
-    assert!(validator.is_adapter_enabled(&AdapterName::raw("ruff")));
+    let validator = ConfigRulesValidator::new();
+    assert!(validator.is_adapter_enabled(&config, &AdapterName::raw("ruff")));
 }
 
 #[test]
@@ -28,15 +28,15 @@ fn disabled_adapter_returns_false() {
         )],
         ..ProjectConfig::defaults()
     };
-    let validator = ConfigRulesValidator::new(config);
-    assert!(!validator.is_adapter_enabled(&AdapterName::raw("mypy")));
+    let validator = ConfigRulesValidator::new();
+    assert!(!validator.is_adapter_enabled(&config, &AdapterName::raw("mypy")));
 }
 
 #[test]
 fn unlisted_adapter_defaults_to_enabled() {
     let config = ProjectConfig::defaults();
-    let validator = ConfigRulesValidator::new(config);
-    assert!(validator.is_adapter_enabled(&AdapterName::raw("unknown_tool")));
+    let validator = ConfigRulesValidator::new();
+    assert!(validator.is_adapter_enabled(&config, &AdapterName::raw("unknown_tool")));
 }
 
 #[test]
@@ -49,10 +49,10 @@ fn multiple_adapters_checked_independently() {
         ],
         ..ProjectConfig::defaults()
     };
-    let validator = ConfigRulesValidator::new(config);
-    assert!(validator.is_adapter_enabled(&AdapterName::raw("ruff")));
-    assert!(!validator.is_adapter_enabled(&AdapterName::raw("mypy")));
-    assert!(!validator.is_adapter_enabled(&AdapterName::raw("bandit")));
+    let validator = ConfigRulesValidator::new();
+    assert!(validator.is_adapter_enabled(&config, &AdapterName::raw("ruff")));
+    assert!(!validator.is_adapter_enabled(&config, &AdapterName::raw("mypy")));
+    assert!(!validator.is_adapter_enabled(&config, &AdapterName::raw("bandit")));
 }
 
 // ─── validate_thresholds ───────────────────────────────────────────────────
@@ -60,8 +60,8 @@ fn multiple_adapters_checked_independently() {
 #[test]
 fn default_thresholds_are_valid() {
     let config = ProjectConfig::defaults();
-    let validator = ConfigRulesValidator::new(config);
-    let result = validator.validate_thresholds();
+    let validator = ConfigRulesValidator::new();
+    let result = validator.validate_thresholds(&config);
     assert!(result.is_valid);
 }
 
@@ -71,8 +71,8 @@ fn score_below_zero_is_invalid() {
         thresholds: Thresholds::new(Score::new(-1.0), Count::new(10), Count::new(500)),
         ..ProjectConfig::defaults()
     };
-    let validator = ConfigRulesValidator::new(config);
-    let result = validator.validate_thresholds();
+    let validator = ConfigRulesValidator::new();
+    let result = validator.validate_thresholds(&config);
     assert!(!result.is_valid);
 }
 
@@ -82,8 +82,8 @@ fn score_above_100_is_invalid() {
         thresholds: Thresholds::new(Score::new(150.0), Count::new(10), Count::new(500)),
         ..ProjectConfig::defaults()
     };
-    let validator = ConfigRulesValidator::new(config);
-    let result = validator.validate_thresholds();
+    let validator = ConfigRulesValidator::new();
+    let result = validator.validate_thresholds(&config);
     assert!(!result.is_valid);
 }
 
@@ -93,8 +93,8 @@ fn zero_complexity_is_invalid() {
         thresholds: Thresholds::new(Score::new(80.0), Count::new(0), Count::new(500)),
         ..ProjectConfig::defaults()
     };
-    let validator = ConfigRulesValidator::new(config);
-    let result = validator.validate_thresholds();
+    let validator = ConfigRulesValidator::new();
+    let result = validator.validate_thresholds(&config);
     assert!(!result.is_valid);
 }
 
@@ -104,8 +104,8 @@ fn zero_max_file_lines_is_invalid() {
         thresholds: Thresholds::new(Score::new(80.0), Count::new(10), Count::new(0)),
         ..ProjectConfig::defaults()
     };
-    let validator = ConfigRulesValidator::new(config);
-    let result = validator.validate_thresholds();
+    let validator = ConfigRulesValidator::new();
+    let result = validator.validate_thresholds(&config);
     assert!(!result.is_valid);
 }
 
@@ -115,8 +115,8 @@ fn boundary_values_are_valid() {
         thresholds: Thresholds::new(Score::new(0.0), Count::new(1), Count::new(1)),
         ..ProjectConfig::defaults()
     };
-    let validator = ConfigRulesValidator::new(config);
-    let result = validator.validate_thresholds();
+    let validator = ConfigRulesValidator::new();
+    let result = validator.validate_thresholds(&config);
     assert!(result.is_valid);
 }
 
@@ -126,7 +126,22 @@ fn max_score_is_valid() {
         thresholds: Thresholds::new(Score::new(100.0), Count::new(10), Count::new(500)),
         ..ProjectConfig::defaults()
     };
-    let validator = ConfigRulesValidator::new(config);
-    let result = validator.validate_thresholds();
+    let validator = ConfigRulesValidator::new();
+    let result = validator.validate_thresholds(&config);
     assert!(result.is_valid);
+}
+
+#[test]
+fn multiple_invalid_thresholds_reported() {
+    let config = ProjectConfig {
+        thresholds: Thresholds::new(Score::new(-1.0), Count::new(0), Count::new(0)),
+        ..ProjectConfig::defaults()
+    };
+    let validator = ConfigRulesValidator::new();
+    let result = validator.validate_thresholds(&config);
+    assert!(!result.is_valid);
+    let reason = result.reason.unwrap_or_default();
+    assert!(reason.contains("Score threshold"));
+    assert!(reason.contains("Complexity threshold"));
+    assert!(reason.contains("max_file_lines threshold"));
 }

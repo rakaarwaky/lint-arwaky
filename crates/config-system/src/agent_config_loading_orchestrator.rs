@@ -50,17 +50,17 @@ impl IConfigOrchestrationAggregate for ConfigLoadingOrchestrator {
     ) -> ConfigResult {
         match self.config_reader.read_config(project_root, language).await {
             Some(source) => {
-                let parsed = parse_config_yaml(&source.raw_content);
-                if !parsed.layers.is_empty() {
-                    ConfigResult::new(parsed, source, Vec::new())
-                } else {
-                    let warnings = vec![
-                        "Config file had no architecture layers, using built-in defaults"
+                let mut parsed = parse_config_yaml(&source.raw_content);
+                let mut warnings = Vec::new();
+                if parsed.layers.is_empty() {
+                    let defaults = default_config_for_language(language);
+                    parsed.layers = defaults.layers;
+                    warnings.push(
+                        "Config file had no architecture layers, using built-in defaults for layers only."
                             .to_string(),
-                    ];
-                    let config = default_config_for_language(language);
-                    ConfigResult::new(config, source, warnings)
+                    );
                 }
+                ConfigResult::new(parsed, source, warnings)
             }
             None => {
                 let warnings = vec!["No config file found, using built-in defaults".to_string()];

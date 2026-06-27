@@ -31,11 +31,7 @@ impl ConfigContainer {
                 ),
             ),
             parser: Arc::new(crate::infrastructure_parser_provider::ConfigParserProvider::new()),
-            validator: Arc::new(
-                crate::capabilities_rules_validator::ConfigRulesValidator::new(
-                    shared::config_system::taxonomy_setting_vo::ProjectConfig::defaults(),
-                ),
-            ),
+            validator: Arc::new(crate::capabilities_rules_validator::ConfigRulesValidator::new()),
             multi_project_orchestrator: Arc::new(
                 crate::agent_multi_project_orchestrator::MultiProjectOrchestrator::new(
                     workspace_detector,

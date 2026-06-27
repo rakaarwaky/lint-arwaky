@@ -25,10 +25,13 @@ impl FilePath {
         }
         // Normalize: replace backslashes with forward slashes, and collapse multiple slashes.
         value = value.replace('\\', "/");
-        // Remove all trailing slashes
-        while value.ends_with('/') && value.len() > 1 {
-            value.pop();
-        }
+        // Remove trailing slashes
+        let trimmed = value.trim_end_matches('/');
+        value = if trimmed.is_empty() {
+            "/".to_string()
+        } else {
+            trimmed.to_string()
+        };
         // If after normalization it's empty, then it was all slashes -> treat as root
         if value.is_empty() {
             return Ok(FilePath {
@@ -140,10 +143,13 @@ impl DirectoryPath {
         }
         // Normalize: replace backslashes with forward slashes, and remove trailing slash.
         value = value.replace('\\', "/");
-        // Remove trailing slash unless it's just "/"
-        if value.ends_with('/') && value.len() > 1 {
-            value.pop();
-        }
+        // Remove trailing slashes
+        let trimmed = value.trim_end_matches('/');
+        value = if trimmed.is_empty() {
+            "/".to_string()
+        } else {
+            trimmed.to_string()
+        };
         Ok(DirectoryPath { value })
     }
 }

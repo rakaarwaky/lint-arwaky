@@ -11,13 +11,7 @@ The following issues were detected by `lint-arwaky-cli scan`:
   AES Architecture Compliance Report
 ============================================================
   Project: /home/raka/mcp-arwaky/lint-arwaky/crates/config-system
-  Violations: 2
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/config-system/src/infrastructure_parser_provider.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
-  [AES304] /home/raka/mcp-arwaky/lint-arwaky/crates/config-system/src/infrastructure_yaml_reader.rs - AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.
-WHY? Using unwrap or expect results in runtime panics and bypasses proper error propagation.
-FIX: Replace the unwrap/expect call with structured error handling (Option/Result pattern matching or '?').
+  Violations: 0
 ```
 
 ---
@@ -25,6 +19,7 @@ FIX: Replace the unwrap/expect call with structured error handling (Option/Resul
 ## File List
 
 - [crates/config-system/Cargo.toml](file:///home/raka/mcp-arwaky/lint-arwaky/crates/config-system/Cargo.toml)
+- [crates/config-system/FRD.md](file:///home/raka/mcp-arwaky/lint-arwaky/crates/config-system/FRD.md)
 - [crates/config-system/src/agent_config_loading_orchestrator.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/config-system/src/agent_config_loading_orchestrator.rs)
 - [crates/config-system/src/agent_multi_project_orchestrator.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/config-system/src/agent_multi_project_orchestrator.rs)
 - [crates/config-system/src/capabilities_rules_validator.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/config-system/src/capabilities_rules_validator.rs)
@@ -36,6 +31,7 @@ FIX: Replace the unwrap/expect call with structured error handling (Option/Resul
 - [crates/shared/src/common/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/mod.rs)
 - [crates/shared/src/common/taxonomy_adapter_name_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_adapter_name_vo.rs)
 - [crates/shared/src/common/taxonomy_common_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_common_vo.rs)
+- [crates/shared/src/common/taxonomy_path_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_path_vo.rs)
 - [crates/shared/src/config-system/contract_multi_project_orchestrator_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_multi_project_orchestrator_aggregate.rs)
 - [crates/shared/src/config-system/contract_orchestration_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_orchestration_aggregate.rs)
 - [crates/shared/src/config-system/contract_parser_port.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_parser_port.rs)
@@ -43,8 +39,6 @@ FIX: Replace the unwrap/expect call with structured error handling (Option/Resul
 - [crates/shared/src/config-system/contract_validator_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_validator_protocol.rs)
 - [crates/shared/src/config-system/contract_workspace_detector_port.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_workspace_detector_port.rs)
 - [crates/shared/src/config-system/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/mod.rs)
-- [crates/shared/src/config-system/taxonomy_adapter_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_adapter_vo.rs)
-- [crates/shared/src/config-system/taxonomy_app_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_app_vo.rs)
 - [crates/shared/src/config-system/taxonomy_config_error.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_config_error.rs)
 - [crates/shared/src/config-system/taxonomy_config_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_config_vo.rs)
 - [crates/shared/src/config-system/taxonomy_identifier_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_identifier_vo.rs)
@@ -54,8 +48,6 @@ FIX: Replace the unwrap/expect call with structured error handling (Option/Resul
 - [crates/shared/src/config-system/taxonomy_setting_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_setting_vo.rs)
 - [crates/shared/src/config-system/taxonomy_source_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_source_vo.rs)
 - [crates/shared/src/config-system/taxonomy_validation_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_validation_vo.rs)
-- [crates/shared/src/source-parsing/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/source-parsing/mod.rs)
-- [crates/shared/src/source-parsing/taxonomy_path_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/source-parsing/taxonomy_path_vo.rs)
 
 ---
 
@@ -78,10 +70,61 @@ workspace = true
 serde.workspace = true
 serde_json.workspace = true
 async-trait.workspace = true
-serde_yaml.workspace = true
+serde_yml.workspace = true
 toml.workspace = true
 shared.workspace = true
 dirs.workspace = true
+
+tokio = { workspace = true, features = ["rt", "macros"] }
+
+[dev-dependencies]
+tokio.workspace = true
+```
+
+---
+
+## File: crates/config-system/FRD.md
+
+```rust
+# Feature Requirement Document (FRD) - Config System
+
+## 1. Feature Goal
+
+The primary purpose of the `config-system` module is to manage lint_arwaky configuration by implementing a loading, parsing, validation, and workspace detection system. This module is responsible for reading `lint_arwaky.config.*.yaml` files and merging them with project-level overrides.
+
+## 2. Requirements & Scope
+
+The `config-system` module is responsible for configuration based on the following specifications:
+
+### Component Specifications
+
+- **ConfigLoadingOrchestrator**: Coordinates the configuration loading process from various sources.
+- **ConfigRulesValidator**: Validates loaded configuration rules against the defined schema.
+- **WorkspaceDetector**: Detects Rust workspace roots based on Cargo.toml or common project roots.
+- **ConfigParserProvider**: Provides parsers for YAML, TOML (Cargo.toml), and other configuration formats.
+- **ConfigYamlReader**: Reads and parses the main YAML configuration file.
+- **MultiProjectOrchestrator**: Manages configuration for multiple projects/workspaces simultaneously.
+
+### Inputs
+
+- Path to the project root or current working directory.
+- Default configuration values and defined AES rules.
+
+### Outputs
+
+- A validated configuration struct (`ArchitectureConfig`).
+- Validation errors if the configuration does not match the schema.
+
+---
+
+## 3. Success Indicators
+
+The success of the `config-system` module is measured by:
+
+- **Discovery Reliability**: Workspaces are correctly detected from various project structures.
+- **Validation Accuracy**: Invalid configurations are rejected with clear error messages.
+- **Merge Correctness**: Project-level overrides are merged correctly without conflicts.
+- **Self-Audit Conformity**: The module itself complies with AES rules in its source code.
 ```
 
 ---
@@ -91,6 +134,7 @@ dirs.workspace = true
 ```rust
 // PURPOSE: ConfigLoadingOrchestrator — orchestrates config discovery, loading, parsing across languages
 use async_trait::async_trait;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::config_system::contract_reader_port::IConfigReaderPort;
 use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
@@ -98,7 +142,6 @@ use shared::config_system::taxonomy_config_vo::default_config_for_language;
 use shared::config_system::taxonomy_config_vo::parse_config_yaml;
 use shared::config_system::taxonomy_source_vo::ConfigResult;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct ConfigLoadingOrchestrator {
@@ -170,13 +213,13 @@ impl IConfigOrchestrationAggregate for ConfigLoadingOrchestrator {
 
 ```rust
 use async_trait::async_trait;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_reader_port::IConfigReaderPort;
 use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
 use shared::config_system::taxonomy_config_vo::default_config_for_language;
 use shared::config_system::taxonomy_config_vo::parse_config_yaml;
 use shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 pub struct MultiProjectOrchestrator {
@@ -213,6 +256,7 @@ impl MultiProjectOrchestrator {
     fn scan_workspace_dirs(root: &std::path::Path) -> Vec<FilePath> {
         let workspace_dirs = ["crates", "packages", "modules"];
 
+        // Case 1: root itself is a workspace-member root (e.g. "crates/")
         let is_root_workspace_dir = match root.file_name() {
             Some(name) => {
                 let name_str = name.to_string_lossy();
@@ -225,6 +269,19 @@ impl MultiProjectOrchestrator {
             return Self::collect_subdirs(root);
         }
 
+        // Case 2: root is itself a single member (e.g. "crates/import-rules/")
+        if let Some(parent) = root.parent() {
+            if let Some(parent_name) = parent.file_name() {
+                let parent_str = parent_name.to_string_lossy();
+                if workspace_dirs.contains(&parent_str.as_ref()) && root.is_dir() {
+                    if let Ok(fp) = FilePath::new(root.to_string_lossy().to_string()) {
+                        return vec![fp];
+                    }
+                }
+            }
+        }
+
+        // Case 3: collect all members under workspace directories
         let mut results = Vec::new();
         for dir in &workspace_dirs {
             let dir_path = root.join(dir);
@@ -330,11 +387,11 @@ impl IConfigValidatorProtocol for ConfigRulesValidator {
 
 ```rust
 // PURPOSE: ConfigParserProvider — IConfigParserPort implementation for YAML and TOML config parsing
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_parser_port::IConfigParserPort;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_identifier_vo::ConfigKey;
 use shared::config_system::taxonomy_setting_vo::ProjectConfig;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 use shared::taxonomy_common_error::ErrorMessage;
 use std::path::Path;
 
@@ -366,7 +423,7 @@ impl IConfigParserPort for ConfigParserProvider {
                 });
             }
         };
-        let raw: serde_yaml::Value = match serde_yaml::from_str(&content) {
+        let raw: serde_yml::Value = match serde_yml::from_str(&content) {
             Ok(v) => v,
             Err(e) => {
                 return Err(ConfigError {
@@ -432,8 +489,20 @@ impl IConfigParserPort for ConfigParserProvider {
                     }));
                 }
             };
-            let config: ProjectConfig =
-                serde_json::from_value(json_value).unwrap_or_else(|_| ProjectConfig::defaults());
+            let config: ProjectConfig = match serde_json::from_value(json_value) {
+                Ok(c) => c,
+                Err(e) => {
+                    return Some(Err(ConfigError {
+                        key: ConfigKey::new("toml.parse"),
+                        message: ErrorMessage::new(format!(
+                            "Failed to deserialize TOML config: {}",
+                            e
+                        )),
+                        config_file: path.clone(),
+                        ..Default::default()
+                    }));
+                }
+            };
             Some(Ok(config))
         } else {
             None
@@ -448,9 +517,9 @@ impl IConfigParserPort for ConfigParserProvider {
 
 ```rust
 // PURPOSE: WorkspaceDetector — IWorkspaceDetectorPort implementation for workspace type detection
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
 use shared::config_system::contract_workspace_detector_port::WorkspaceType;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct WorkspaceDetector;
 
@@ -527,19 +596,6 @@ impl IWorkspaceDetectorPort for WorkspaceDetector {
             .any(|dir| root.join(dir).is_dir())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_workspace_detection_concept() {
-        assert_eq!(WorkspaceType::Rust.as_str(), "rust");
-        assert_eq!(WorkspaceType::TypeScript.as_str(), "typescript");
-        assert_eq!(WorkspaceType::Python.as_str(), "python");
-        assert_eq!(WorkspaceType::Unknown.as_str(), "unknown");
-    }
-}
 ```
 
 ---
@@ -550,9 +606,9 @@ mod tests {
 // PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk
 // XDG Base Directory Specification compliant config lookup
 use async_trait::async_trait;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_reader_port::IConfigReaderPort;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
-use shared::source_parsing::taxonomy_path_vo::FilePath;
 
 pub struct ConfigYamlReader;
 
@@ -561,7 +617,7 @@ impl ConfigYamlReader {
         Self
     }
 
-    fn config_filename(language: &str) -> String {
+    pub fn config_filename(language: &str) -> String {
         format!("lint_arwaky.config.{}.yaml", language)
     }
 
@@ -598,8 +654,10 @@ impl ConfigYamlReader {
 
         // Priority 2: XDG system config dirs — $XDG_CONFIG_DIRS (default /etc/xdg)
         // dirs crate doesn't expose config_dirs(), so parse env var manually
-        let system_dirs =
-            std::env::var("XDG_CONFIG_DIRS").unwrap_or_else(|_| "/etc/xdg".to_string());
+        let system_dirs = match std::env::var("XDG_CONFIG_DIRS") {
+            Ok(dirs) => dirs,
+            Err(_) => "/etc/xdg".to_string(),
+        };
         for dir in system_dirs.split(':').filter(|s| !s.is_empty()) {
             candidates.push(
                 std::path::PathBuf::from(dir)
@@ -668,47 +726,6 @@ impl IConfigReaderPort for ConfigYamlReader {
             }
         }
         found
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_xdg_config_dir() {
-        let config_dir = dirs::config_dir();
-        assert!(config_dir.is_some());
-    }
-
-    #[test]
-    fn test_xdg_directories() {
-        let data_dir = ConfigYamlReader::data_dir();
-        assert!(data_dir.is_some());
-        let data_path = data_dir.unwrap();
-        assert!(data_path.ends_with("lint-arwaky"));
-
-        let cache_dir = ConfigYamlReader::cache_dir();
-        assert!(cache_dir.is_some());
-        let cache_path = cache_dir.unwrap();
-        assert!(cache_path.ends_with("lint-arwaky"));
-
-        let state_dir = ConfigYamlReader::state_dir();
-        assert!(state_dir.is_some());
-        let state_path = state_dir.unwrap();
-        assert!(state_path.ends_with("lint-arwaky"));
-    }
-
-    #[test]
-    fn test_config_filename() {
-        assert_eq!(
-            ConfigYamlReader::config_filename("rust"),
-            "lint_arwaky.config.rust.yaml"
-        );
-        assert_eq!(
-            ConfigYamlReader::config_filename("python"),
-            "lint_arwaky.config.python.yaml"
-        );
     }
 }
 ```
@@ -812,14 +829,17 @@ impl ConfigContainer {
 // common — truly shared types used by multiple features
 pub mod taxonomy_action_vo;
 pub mod taxonomy_adapter_name_vo;
+pub mod taxonomy_byte_count_vo;
 pub mod taxonomy_common_error;
 pub mod taxonomy_common_vo;
 pub mod taxonomy_definition_vo;
+pub mod taxonomy_display_content_vo;
 pub mod taxonomy_duration_vo;
 pub mod taxonomy_error_vo;
 pub mod taxonomy_job_id_vo;
 pub mod taxonomy_job_vo;
 pub mod taxonomy_layer_vo;
+pub mod taxonomy_line_count_vo;
 pub mod taxonomy_lint_vo;
 pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
@@ -828,6 +848,30 @@ pub mod taxonomy_severity_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_value_object_utility;
+
+// from file-system/ (foundational, multi-feature)
+pub mod contract_system_port;
+pub mod taxonomy_filesystem_error;
+
+// from source-parsing/ (foundational, multi-feature)
+pub mod contract_language_detector_port;
+pub mod contract_parser_port;
+pub mod contract_path_normalization_port;
+pub mod contract_scanner_provider_port;
+pub mod infrastructure_file_collector_provider;
+pub mod taxonomy_adapter_error;
+pub mod taxonomy_file_collector_helper;
+pub mod taxonomy_language_detector_helper;
+pub mod taxonomy_language_vo;
+pub mod taxonomy_naming_list_vo;
+pub mod taxonomy_parser_error;
+pub mod taxonomy_path_utils_vo;
+pub mod taxonomy_path_vo;
+pub mod taxonomy_paths_vo;
+pub mod taxonomy_workspace_helper;
+pub use infrastructure_file_collector_provider::{
+    collect_all_source_files, walk_rs_files, FileCollectorProvider,
+};
 ```
 
 ---
@@ -890,32 +934,6 @@ impl std::fmt::Display for AdapterName {
 impl Hash for AdapterName {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.value.hash(state);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::AdapterName;
-
-    #[test]
-    fn test_adapter_name_new() {
-        let name = AdapterName::new("ruff").unwrap_or_default();
-        assert_eq!(name.value, "ruff");
-
-        // Test trimming
-        let name = AdapterName::new("  ruff  ").unwrap_or_default();
-        assert_eq!(name.value, "ruff");
-
-        // Test that internal spaces are preserved
-        let name = AdapterName::new("my adapter").unwrap_or_default();
-        assert_eq!(name.value, "my adapter");
-    }
-
-    #[test]
-    fn test_adapter_name_invalid() {
-        assert!(AdapterName::new("").is_err());
-        assert!(AdapterName::new("   ").is_err());
-        assert!(AdapterName::new("\t\n  ").is_err());
     }
 }
 ```
@@ -1589,11 +1607,197 @@ impl From<String> for ErrorMessage {
 
 ---
 
+## File: crates/shared/src/common/taxonomy_path_vo.rs
+
+```rust
+// PURPOSE: FilePath, DirectoryPath — value objects for validated file and directory paths
+use serde::{Deserialize, Serialize};
+use std::hash::{Hash, Hasher};
+
+/// file_path_vo — File and directory path value objects.
+///
+/// File path identifier.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct FilePath {
+    pub value: String,
+}
+
+impl FilePath {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
+    /// Create a new FilePath from a string.
+    ///
+    /// # Errors
+    /// Returns an error if the path is invalid (empty or only whitespace).
+    pub fn new<S: Into<String>>(value: S) -> Result<Self, String> {
+        let mut value = value.into();
+        if value.trim().is_empty() {
+            return Err("File path cannot be empty".to_string());
+        }
+        // Normalize: replace backslashes with forward slashes, and collapse multiple slashes.
+        value = value.replace('\\', "/");
+        // Remove all trailing slashes
+        while value.ends_with('/') && value.len() > 1 {
+            value.pop();
+        }
+        // If after normalization it's empty, then it was all slashes -> treat as root
+        if value.is_empty() {
+            return Ok(FilePath {
+                value: "/".to_string(),
+            });
+        }
+        Ok(FilePath { value })
+    }
+
+    /// File extension without dot.
+    pub fn extension(&self) -> String {
+        let special_files = [
+            "Makefile",
+            "Dockerfile",
+            "Dockerfile.dev",
+            "Dockerfile.prod",
+            ".bashrc",
+            ".profile",
+            ".zshrc",
+            ".gitignore",
+            ".dockerignore",
+        ];
+        // Operate on the basename, not the full path — `./foo.rs` must still yield
+        // `rs` as its extension, and `.bashrc` (which is fully a basename) must NOT
+        // be confused with a hidden file mid-path.
+        let basename = match self.value.rsplit('/').next() {
+            Some(b) => b,
+            None => return String::new(),
+        };
+        if special_files.contains(&basename) || basename.starts_with('.') {
+            return String::new();
+        }
+        match basename.rsplit('.').next() {
+            Some(ext) => ext.to_string(),
+            None => String::new(),
+        }
+    }
+
+    /// Check if path has given extension (without dot).
+    pub fn has_extension(&self, ext: &str) -> bool {
+        self.extension().eq_ignore_ascii_case(ext)
+    }
+
+    /// Extract filename/basename of the path.
+    pub fn basename(&self) -> String {
+        match self.value.rsplit('/').next() {
+            Some(f) => f.to_string(),
+            None => self.value.clone(),
+        }
+    }
+
+    /// Check if the path is a barrel file.
+    pub fn is_barrel_file(&self) -> bool {
+        let f = self.basename();
+        matches!(
+            f.as_ref(),
+            "__init__.py" | "mod.rs" | "index.ts" | "index.js"
+        )
+    }
+
+    /// Check if the path is a module/layer entry point file.
+    pub fn is_entry_point(&self) -> bool {
+        let f = self.basename();
+        matches!(
+            f.as_ref(),
+            "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs"
+        )
+    }
+}
+
+impl std::ops::Deref for FilePath {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl std::fmt::Display for FilePath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl Hash for FilePath {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.value.hash(state);
+    }
+}
+
+/// Directory path identifier.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Default)]
+pub struct DirectoryPath {
+    pub value: String,
+}
+
+impl DirectoryPath {
+    pub fn value(&self) -> &str {
+        &self.value
+    }
+    /// Create a new DirectoryPath from a string.
+    ///
+    /// # Errors
+    /// Returns an error if the path is invalid (empty or only whitespace).
+    pub fn new<S: Into<String>>(value: S) -> Result<Self, String> {
+        let mut value = value.into();
+        if value.trim().is_empty() {
+            return Err("Directory path cannot be empty".to_string());
+        }
+        // Normalize: replace backslashes with forward slashes, and remove trailing slash.
+        value = value.replace('\\', "/");
+        // Remove trailing slash unless it's just "/"
+        if value.ends_with('/') && value.len() > 1 {
+            value.pop();
+        }
+        Ok(DirectoryPath { value })
+    }
+}
+
+impl std::ops::Deref for DirectoryPath {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl std::fmt::Display for DirectoryPath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for DirectoryPath {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        DirectoryPath::new(s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Hash for DirectoryPath {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.value.hash(state);
+    }
+}
+```
+
+---
+
 ## File: crates/shared/src/config-system/contract_multi_project_orchestrator_aggregate.rs
 
 ```rust
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 #[async_trait]
@@ -1609,10 +1813,10 @@ pub trait MultiProjectOrchestratorAggregate: Send + Sync {
 ```rust
 // PURPOSE: IConfigOrchestrationAggregate — aggregate contract for orchestrating configuration loading across languages
 
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::contract_reader_port::IConfigReaderPort;
 use crate::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
 use crate::config_system::taxonomy_source_vo::ConfigResult;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 use std::sync::Arc;
 
@@ -1636,9 +1840,9 @@ pub trait IConfigOrchestrationAggregate: Send + Sync {
 
 ```rust
 // PURPOSE: IConfigParserPort — contract for config parser provider (YAML and TOML)
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_error::ConfigError;
 use crate::config_system::taxonomy_setting_vo::ProjectConfig;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 
 pub trait IConfigParserPort: Send + Sync {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError>;
@@ -1653,8 +1857,8 @@ pub trait IConfigParserPort: Send + Sync {
 ```rust
 // PURPOSE: IConfigReaderPort — port trait for reading configuration from external sources
 
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_source_vo::ConfigSource;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 #[async_trait]
@@ -1689,7 +1893,7 @@ pub trait IConfigValidatorProtocol: Send + Sync {
 
 ```rust
 // PURPOSE: IWorkspaceDetectorPort — port trait for detecting workspace type from directory structure
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorkspaceType {
@@ -1737,8 +1941,6 @@ pub mod contract_parser_port;
 pub mod contract_reader_port;
 pub mod contract_validator_protocol;
 pub mod contract_workspace_detector_port;
-pub mod taxonomy_adapter_vo;
-pub mod taxonomy_app_vo;
 pub mod taxonomy_config_error;
 pub mod taxonomy_config_vo;
 pub mod taxonomy_identifier_vo;
@@ -1752,253 +1954,15 @@ pub mod taxonomy_validation_vo;
 
 ---
 
-## File: crates/shared/src/config-system/taxonomy_adapter_vo.rs
-
-```rust
-// PURPOSE: AdapterClassMap, AdapterMetadataList, AdapterNameList — VOs for adapter registration metadata
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::mcp_server::taxonomy_job_vo::AdapterMetadata;
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct AdapterMetadataList {
-    #[serde(default)]
-    pub values: Vec<AdapterMetadata>,
-}
-
-impl Default for AdapterMetadataList {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AdapterMetadataList {
-    pub fn new() -> Self {
-        Self { values: Vec::new() }
-    }
-    pub fn push(&mut self, item: AdapterMetadata) {
-        self.values.push(item);
-    }
-    pub fn len(&self) -> usize {
-        self.values.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-}
-
-impl std::ops::Deref for AdapterMetadataList {
-    type Target = Vec<AdapterMetadata>;
-    fn deref(&self) -> &Self::Target {
-        &self.values
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct AdapterNameList {
-    #[serde(default)]
-    pub values: Vec<AdapterName>,
-}
-
-impl Default for AdapterNameList {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AdapterNameList {
-    pub fn new() -> Self {
-        Self { values: Vec::new() }
-    }
-    pub fn push(&mut self, item: AdapterName) {
-        self.values.push(item);
-    }
-    pub fn len(&self) -> usize {
-        self.values.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-}
-
-impl std::ops::Deref for AdapterNameList {
-    type Target = Vec<AdapterName>;
-    fn deref(&self) -> &Self::Target {
-        &self.values
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct AdapterClassMap {
-    #[serde(default)]
-    pub values: std::collections::HashMap<String, String>,
-}
-
-impl Default for AdapterClassMap {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AdapterClassMap {
-    pub fn new() -> Self {
-        Self {
-            values: std::collections::HashMap::new(),
-        }
-    }
-    pub fn get(&self, key: &str) -> Option<&String> {
-        self.values.get(key)
-    }
-    pub fn len(&self) -> usize {
-        self.values.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-}
-```
-
----
-
-## File: crates/shared/src/config-system/taxonomy_app_vo.rs
-
-```rust
-// PURPOSE: AppConfigVO, AppName, AppVersion — value objects for application configuration metadata
-use std::env;
-
-use crate::common::taxonomy_common_vo::BooleanVO;
-use crate::config_system::taxonomy_adapter_vo::AdapterNameList;
-use crate::config_system::taxonomy_setting_vo::{AdapterStatus, ProjectConfig, Thresholds};
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-
-/// app_config_vo — Unified configuration for the application.
-///
-/// Unified configuration — transport, paths, and project settings.
-#[derive(Debug, Clone)]
-pub struct AppConfig {
-    phantom_root: DirectoryPath,
-    project: ProjectConfig,
-}
-
-impl AppConfig {
-    /// Create a new AppConfig.
-    ///
-    /// # Arguments
-    /// * `phantom_root` - Optional phantom root directory. Defaults to environment variable `PHANTOM_ROOT` or home directory.
-    /// * `project_root` - Optional project root directory. Defaults to environment variable `PROJECT_ROOT` or current directory.
-    /// * `project` - Optional project configuration. Defaults to `crate::config_system::taxonomy_setting_vo::ProjectConfig::default()`.
-    pub fn create(
-        phantom_root: Option<String>,
-        project_root: Option<String>,
-        project: Option<ProjectConfig>,
-    ) -> Self {
-        let p_root = match phantom_root.or_else(|| env::var("PHANTOM_ROOT").ok()) {
-            Some(r) => r,
-            None => match env::var("HOME") {
-                Ok(h) => h,
-                Err(_) => ".".to_string(),
-            },
-        };
-        let _proj_root = match project_root.or_else(|| env::var("PROJECT_ROOT").ok()) {
-            Some(r) => r,
-            None => match env::current_dir() {
-                Ok(d) => d.to_string_lossy().to_string(),
-                Err(_) => ".".to_string(),
-            },
-        };
-        let proj = project.unwrap_or_default();
-
-        Self {
-            phantom_root: DirectoryPath::new(p_root).unwrap_or_default(),
-            project: proj,
-        }
-    }
-
-    /// Get the thresholds from the project configuration.
-    pub fn thresholds(&self) -> &Thresholds {
-        &self.project.thresholds
-    }
-
-    /// Get status for a named adapter.
-    pub fn adapter_status(&self, name: &str) -> AdapterStatus {
-        for entry in &self.project.adapters {
-            if entry.name.value == name {
-                return entry.status;
-            }
-        }
-        AdapterStatus::NotInstalled
-    }
-
-    /// Check if an adapter is enabled.
-    pub fn is_adapter_enabled(&self, name: &str) -> BooleanVO {
-        let status = self.adapter_status(name);
-        BooleanVO::new(status == AdapterStatus::Enabled)
-    }
-
-    /// Names of enabled adapters.
-    pub fn active_adapters(&self) -> AdapterNameList {
-        let mut values = Vec::new();
-        for entry in &self.project.adapters {
-            if entry.is_active() {
-                values.push(entry.name.clone());
-            }
-        }
-        AdapterNameList { values }
-    }
-}
-
-impl std::fmt::Display for AppConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "AppConfig(phantom={}, adapters={:?})",
-            self.phantom_root,
-            self.active_adapters()
-        )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::AppConfig;
-    use super::ProjectConfig;
-    use std::env;
-
-    #[test]
-    fn test_app_config_create() {
-        let config = AppConfig::create(
-            Some("/phantom".to_string()),
-            Some("/project".to_string()),
-            Some(ProjectConfig::default()),
-        );
-        assert_eq!(config.phantom_root.to_string(), "/phantom");
-    }
-
-    #[test]
-    fn test_app_config_defaults() {
-        // Set environment variables for deterministic test
-        env::set_var("PHANTOM_ROOT", "/test/phantom");
-        env::set_var("PROJECT_ROOT", "/test/project");
-        let config = AppConfig::create(None, None, None);
-        assert_eq!(config.phantom_root.to_string(), "/test/phantom");
-        // Clean up
-        env::remove_var("PHANTOM_ROOT");
-        env::remove_var("PROJECT_ROOT");
-    }
-}
-```
-
----
-
 ## File: crates/shared/src/config-system/taxonomy_config_error.rs
 
 ```rust
 // PURPOSE: ConfigError, ConfigErrorKind — structured error types for configuration loading failures
 use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_identifier_vo::ConfigKey;
 use crate::config_system::taxonomy_setting_vo::ActualValue;
 use crate::config_system::taxonomy_setting_vo::ExpectedValue;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]
@@ -2054,9 +2018,9 @@ use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_definition_vo::NamingConfig;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -2129,9 +2093,9 @@ impl Default for ArchitectureConfig {
 }
 
 pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
-    let raw: serde_yaml::Value = serde_yaml::from_str(yaml_str).unwrap_or_default();
+    let raw: serde_yml::Value = serde_yml::from_str(yaml_str).unwrap_or_default();
     if let Some(arch_val) = raw.get("architecture") {
-        let mut arch_json = serde_json::to_value(arch_val).unwrap_or_default();
+        let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
         // Extract layers from rules.AES102.layers if not at top-level layers
         if arch_json
             .get("rules")
@@ -2330,18 +2294,6 @@ pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
         _ => default_aes_config(),
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_default_config_parsing() {
-        let config = default_config_for_language("typescript");
-        println!("typescript layers: {:?}", config.layers.keys());
-        assert!(!config.layers.is_empty());
-    }
-}
 ```
 
 ---
@@ -2394,7 +2346,7 @@ use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_common_vo::Score;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AggregatedResults {
@@ -2460,8 +2412,8 @@ impl ProjectResult {
 
 ```rust
 use crate::common::taxonomy_common_vo::BooleanVO;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
 
 #[derive(Debug, Clone, Default)]
 pub struct MultiProjectVO {
@@ -2476,8 +2428,8 @@ pub struct MultiProjectVO {
 ## File: crates/shared/src/config-system/taxonomy_multi_project_workspace_info_vo.rs
 
 ```rust
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -2512,10 +2464,10 @@ use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_common_vo::Score;
+use crate::common::taxonomy_path_vo::DirectoryPath;
+use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::source_parsing::taxonomy_path_vo::DirectoryPath;
-use crate::source_parsing::taxonomy_paths_vo::FilePathList;
 
 string_value_object!(ActualValue);
 string_value_object!(ExpectedValue);
@@ -2663,8 +2615,8 @@ impl ProjectConfig {
 pub use crate::common::taxonomy_source_vo::ContentString;
 pub use crate::common::taxonomy_source_vo::SourceContentVO;
 
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::source_parsing::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
 /// Represents a configuration source with its language, path, and raw content.
@@ -2734,314 +2686,6 @@ impl ValidationResult {
             is_valid: false,
             reason: Some(reason.to_string()),
         }
-    }
-}
-```
-
----
-
-## File: crates/shared/src/source-parsing/mod.rs
-
-```rust
-// source-parsing — taxonomy and contract types
-pub mod contract_language_detector_port;
-pub mod contract_parser_port;
-pub mod contract_path_normalization_port;
-pub mod contract_scanner_provider_port;
-pub mod infrastructure_file_collector_provider;
-pub mod taxonomy_adapter_error;
-pub mod taxonomy_barrel_provider_vo;
-pub mod taxonomy_file_collector_helper;
-pub mod taxonomy_language_detector_helper;
-pub mod taxonomy_naming_error;
-pub mod taxonomy_naming_list_vo;
-pub mod taxonomy_parser_error;
-pub mod taxonomy_path_vo;
-pub mod taxonomy_paths_vo;
-pub mod taxonomy_semantic_error;
-pub use infrastructure_file_collector_provider::{
-    collect_all_source_files, count_loc, walk_rs_files, FileCollectorProvider,
-};
-```
-
----
-
-## File: crates/shared/src/source-parsing/taxonomy_path_vo.rs
-
-```rust
-// PURPOSE: FilePath, DirectoryPath — value objects for validated file and directory paths
-use serde::{Deserialize, Serialize};
-use std::hash::{Hash, Hasher};
-
-/// file_path_vo — File and directory path value objects.
-///
-/// File path identifier.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub struct FilePath {
-    pub value: String,
-}
-
-impl FilePath {
-    pub fn value(&self) -> &str {
-        &self.value
-    }
-    /// Create a new FilePath from a string.
-    ///
-    /// # Errors
-    /// Returns an error if the path is invalid (empty or only whitespace).
-    pub fn new<S: Into<String>>(value: S) -> Result<Self, String> {
-        let mut value = value.into();
-        if value.trim().is_empty() {
-            return Err("File path cannot be empty".to_string());
-        }
-        // Normalize: replace backslashes with forward slashes, and collapse multiple slashes.
-        value = value.replace('\\', "/");
-        // Remove all trailing slashes
-        while value.ends_with('/') && value.len() > 1 {
-            value.pop();
-        }
-        // If after normalization it's empty, then it was all slashes -> treat as root
-        if value.is_empty() {
-            return Ok(FilePath {
-                value: "/".to_string(),
-            });
-        }
-        Ok(FilePath { value })
-    }
-
-    /// File extension without dot.
-    pub fn extension(&self) -> String {
-        let special_files = [
-            "Makefile",
-            "Dockerfile",
-            "Dockerfile.dev",
-            "Dockerfile.prod",
-            ".bashrc",
-            ".profile",
-            ".zshrc",
-            ".gitignore",
-            ".dockerignore",
-        ];
-        // Operate on the basename, not the full path — `./foo.rs` must still yield
-        // `rs` as its extension, and `.bashrc` (which is fully a basename) must NOT
-        // be confused with a hidden file mid-path.
-        let basename = match self.value.rsplit('/').next() {
-            Some(b) => b,
-            None => return String::new(),
-        };
-        if special_files.contains(&basename) || basename.starts_with('.') {
-            return String::new();
-        }
-        match basename.rsplit('.').next() {
-            Some(ext) => ext.to_string(),
-            None => String::new(),
-        }
-    }
-
-    /// Check if path has given extension (without dot).
-    pub fn has_extension(&self, ext: &str) -> bool {
-        self.extension().eq_ignore_ascii_case(ext)
-    }
-
-    /// Extract filename/basename of the path.
-    pub fn basename(&self) -> String {
-        match self.value.rsplit('/').next() {
-            Some(f) => f.to_string(),
-            None => self.value.clone(),
-        }
-    }
-
-    /// Check if the path is a barrel file.
-    pub fn is_barrel_file(&self) -> bool {
-        let f = self.basename();
-        matches!(
-            f.as_ref(),
-            "__init__.py" | "mod.rs" | "index.ts" | "index.js"
-        )
-    }
-
-    /// Check if the path is a module/layer entry point file.
-    pub fn is_entry_point(&self) -> bool {
-        let f = self.basename();
-        matches!(
-            f.as_ref(),
-            "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs"
-        )
-    }
-}
-
-impl std::ops::Deref for FilePath {
-    type Target = str;
-
-    fn deref(&self) -> &Self::Target {
-        &self.value
-    }
-}
-
-impl std::fmt::Display for FilePath {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
-
-impl Hash for FilePath {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.value.hash(state);
-    }
-}
-
-/// Directory path identifier.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Default)]
-pub struct DirectoryPath {
-    pub value: String,
-}
-
-impl DirectoryPath {
-    pub fn value(&self) -> &str {
-        &self.value
-    }
-    /// Create a new DirectoryPath from a string.
-    ///
-    /// # Errors
-    /// Returns an error if the path is invalid (empty or only whitespace).
-    pub fn new<S: Into<String>>(value: S) -> Result<Self, String> {
-        let mut value = value.into();
-        if value.trim().is_empty() {
-            return Err("Directory path cannot be empty".to_string());
-        }
-        // Normalize: replace backslashes with forward slashes, and remove trailing slash.
-        value = value.replace('\\', "/");
-        // Remove trailing slash unless it's just "/"
-        if value.ends_with('/') && value.len() > 1 {
-            value.pop();
-        }
-        Ok(DirectoryPath { value })
-    }
-}
-
-impl std::ops::Deref for DirectoryPath {
-    type Target = str;
-
-    fn deref(&self) -> &Self::Target {
-        &self.value
-    }
-}
-
-impl std::fmt::Display for DirectoryPath {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value)
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for DirectoryPath {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        DirectoryPath::new(s).map_err(serde::de::Error::custom)
-    }
-}
-
-impl Hash for DirectoryPath {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.value.hash(state);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{DirectoryPath, FilePath};
-
-    #[test]
-    fn test_file_path_new() {
-        let fp = FilePath::new("test.txt").unwrap_or_default();
-        assert_eq!(fp.value, "test.txt");
-        assert_eq!(fp.extension(), "txt");
-        assert!(fp.has_extension("txt"));
-        assert!(!fp.has_extension("md"));
-
-        // Test normalization
-        let fp = FilePath::new("path\\to\\file.txt").unwrap_or_default();
-        assert_eq!(fp.value, "path/to/file.txt");
-
-        let fp = FilePath::new("path/to/file/").unwrap_or_default();
-        assert_eq!(fp.value, "path/to/file");
-
-        let fp = FilePath::new("/").unwrap_or_default();
-        assert_eq!(fp.value, "/");
-
-        let fp = FilePath::new("///").unwrap_or_default();
-        assert_eq!(fp.value, "/");
-    }
-
-    #[test]
-    fn test_file_path_invalid() {
-        assert!(FilePath::new("").is_err());
-        assert!(FilePath::new("   ").is_err());
-    }
-
-    #[test]
-    fn test_directory_path_new() {
-        let dp = DirectoryPath::new("test/dir").unwrap_or_default();
-        assert_eq!(dp.value, "test/dir");
-
-        let dp = DirectoryPath::new("test/dir/").unwrap_or_default();
-        assert_eq!(dp.value, "test/dir");
-
-        let dp = DirectoryPath::new("/").unwrap_or_default();
-        assert_eq!(dp.value, "/");
-    }
-
-    #[test]
-    fn test_directory_path_invalid() {
-        assert!(DirectoryPath::new("").is_err());
-        assert!(DirectoryPath::new("   ").is_err());
-    }
-
-    /// Regression: `./foo.rs` must report `rs` as its extension, not empty string.
-    /// The old implementation treated any path starting with `.` as having no
-    /// extension, which caused `LanguageDetector::is_lintable` to skip relative
-    /// paths emitted by `std::fs::read_dir` in `collect_source_files`. Result: zero
-    /// files collected when the user runs `lint-arwaky check .` on a directory
-    /// tree with non-`.git`-anchored paths.
-    #[test]
-    fn test_extension_with_dot_slash_prefix() {
-        let fp = FilePath::new("./foo.rs").unwrap_or_default();
-        assert_eq!(fp.extension(), "rs");
-        let fp = FilePath::new("./nested/foo.py").unwrap_or_default();
-        assert_eq!(fp.extension(), "py");
-        let fp = FilePath::new(".//foo.ts").unwrap_or_default();
-        assert_eq!(fp.extension(), "ts");
-    }
-
-    /// Regression: a hidden-file basename (e.g. `.bashrc`) must still report no
-    /// extension, since the basename itself starts with a dot.
-    #[test]
-    fn test_extension_hidden_basename() {
-        let fp = FilePath::new(".bashrc").unwrap_or_default();
-        assert_eq!(fp.extension(), "");
-        let fp = FilePath::new("/home/user/.gitignore").unwrap_or_default();
-        assert_eq!(fp.extension(), "");
-    }
-
-    /// Regression: full paths must still resolve the extension on the basename.
-    #[test]
-    fn test_extension_full_path() {
-        let fp =
-            FilePath::new("/tmp/bypass_test/capabilities_unwrap_checker.rs").unwrap_or_default();
-        assert_eq!(fp.extension(), "rs");
-        let fp = FilePath::new("crates/code-analysis/src/foo.rs").unwrap_or_default();
-        assert_eq!(fp.extension(), "rs");
-    }
-
-    /// Makefile / Dockerfile — special filenames, no extension.
-    #[test]
-    fn test_extension_special_filenames() {
-        let fp = FilePath::new("Makefile").unwrap_or_default();
-        assert_eq!(fp.extension(), "");
-        let fp = FilePath::new("Dockerfile").unwrap_or_default();
-        assert_eq!(fp.extension(), "");
     }
 }
 ```

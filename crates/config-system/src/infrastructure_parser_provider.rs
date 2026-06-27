@@ -24,100 +24,72 @@ impl ConfigParserProvider {
 impl IConfigParserPort for ConfigParserProvider {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
         let p = Path::new(&path.value);
+        let err_path = path.clone();
         let content = match std::fs::read_to_string(p) {
             Ok(c) => c,
             Err(e) => {
                 return Err(ConfigError {
                     key: ConfigKey::new("yaml.parse"),
                     message: ErrorMessage::new(format!("Failed to read config: {}", e)),
-                    config_file: path.clone(),
+                    config_file: err_path,
                     ..Default::default()
                 });
             }
         };
-        let raw: serde_yml::Value = match serde_yml::from_str(&content) {
-            Ok(v) => v,
-            Err(e) => {
-                return Err(ConfigError {
-                    key: ConfigKey::new("yaml.parse"),
-                    message: ErrorMessage::new(format!("Failed to parse YAML: {}", e)),
-                    config_file: path.clone(),
-                    ..Default::default()
-                });
-            }
-        };
-        let json_value = serde_json::to_value(&raw).map_err(|e| ConfigError {
-            key: ConfigKey::new("yaml.convert"),
-            message: ErrorMessage::new(format!("Failed to convert YAML to JSON: {}", e)),
-            config_file: path.clone(),
+        let config: ProjectConfig = serde_yml::from_str(&content).map_err(|e| ConfigError {
+            key: ConfigKey::new("yaml.parse"),
+            message: ErrorMessage::new(format!("Failed to deserialize YAML config: {}", e)),
+            config_file: err_path,
             ..Default::default()
         })?;
-        let config: ProjectConfig =
-            serde_json::from_value(json_value).map_err(|e| ConfigError {
-                key: ConfigKey::new("yaml.parse"),
-                message: ErrorMessage::new(format!("Failed to deserialize config: {}", e)),
-                config_file: path.clone(),
-                ..Default::default()
-            })?;
         Ok(config)
     }
 
-    fn parse_toml_config(&self, path: &FilePath) -> Option<Result<ProjectConfig, ConfigError>> {
+    fn parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError> {
         let p = Path::new(&path.value);
+        let err_path = path.clone();
         let content = match std::fs::read_to_string(p) {
             Ok(c) => c,
             Err(e) => {
-                return Some(Err(ConfigError {
-                    key: ConfigKey::new("tool.lint_arwaky"),
+                return Err(ConfigError {
+                    key: ConfigKey::new("tool.lint-arwaky"),
                     message: ErrorMessage::new(format!("Failed to read TOML: {}", e)),
-                    config_file: path.clone(),
+                    config_file: err_path,
                     ..Default::default()
-                }));
+                });
             }
         };
-        let toml_value: toml::Value = match content.parse() {
+        let toml_value: toml::Value = match toml::from_str(&content) {
             Ok(v) => v,
             Err(e) => {
-                return Some(Err(ConfigError {
-                    key: ConfigKey::new("tool.lint_arwaky"),
+                return Err(ConfigError {
+                    key: ConfigKey::new("tool.lint-arwaky"),
                     message: ErrorMessage::new(format!("Failed to parse TOML: {}", e)),
-                    config_file: path.clone(),
+                    config_file: err_path,
                     ..Default::default()
-                }));
+                });
             }
         };
-        if let Some(tool_section) = toml_value.get("tool").and_then(|t| t.get("lint_arwaky")) {
-            let json_value = match serde_json::to_value(tool_section) {
-                Ok(v) => v,
-                Err(e) => {
-                    return Some(Err(ConfigError {
-                        key: ConfigKey::new("toml.convert"),
-                        message: ErrorMessage::new(format!(
-                            "Failed to convert TOML to JSON: {}",
-                            e
-                        )),
-                        config_file: path.clone(),
-                        ..Default::default()
-                    }));
-                }
-            };
-            let config: ProjectConfig = match serde_json::from_value(json_value) {
-                Ok(c) => c,
-                Err(e) => {
-                    return Some(Err(ConfigError {
-                        key: ConfigKey::new("toml.parse"),
-                        message: ErrorMessage::new(format!(
-                            "Failed to deserialize TOML config: {}",
-                            e
-                        )),
-                        config_file: path.clone(),
-                        ..Default::default()
-                    }));
-                }
-            };
-            Some(Ok(config))
+        let tool_section = toml_value
+            .get("tool")
+            .and_then(|t| t.get("lint-arwaky").or_else(|| t.get("lint_arwaky")));
+        if let Some(tool_section) = tool_section {
+            let json_value = serde_json::to_value(tool_section).map_err(|e| ConfigError {
+                key: ConfigKey::new("toml.convert"),
+                message: ErrorMessage::new(format!("Failed to convert TOML to JSON: {}", e)),
+                config_file: err_path.clone(),
+                ..Default::default()
+            })?;
+            let config: ProjectConfig =
+                serde_json::from_value(json_value).map_err(|e| ConfigError {
+                    key: ConfigKey::new("toml.parse"),
+                    message: ErrorMessage::new(format!("Failed to deserialize TOML config: {}", e)),
+                    config_file: err_path,
+                    ..Default::default()
+                })?;
+            Ok(Some(config))
         } else {
-            None
+            Ok(None)
         }
     }
 }

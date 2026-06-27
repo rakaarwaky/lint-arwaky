@@ -5,5 +5,5 @@ use crate::config_system::taxonomy_setting_vo::ProjectConfig;
 
 pub trait IConfigParserPort: Send + Sync {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError>;
-    fn parse_toml_config(&self, path: &FilePath) -> Option<Result<ProjectConfig, ConfigError>>;
+    fn parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError>;
 }

@@ -524,6 +524,7 @@ version = "1.10.14"
 dependencies = [
  "async-trait",
  "dirs",
+ "futures",
  "serde",
  "serde_json",
  "serde_yml",
@@ -2574,7 +2575,7 @@ dependencies = [
 
 [[package]]
 name = "lint_arwaky-arwaky"
-version = "1.10.73"
+version = "1.10.74"
 dependencies = [
  "anyhow",
  "async-trait",

@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use futures::future::join_all;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_reader_port::IConfigReaderPort;
@@ -26,13 +27,35 @@ impl MultiProjectOrchestrator {
 
     fn collect_subdirs(dir: &std::path::Path) -> Vec<FilePath> {
         let mut results = Vec::new();
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let sub = entry.path();
-                if sub.is_dir() {
-                    if let Ok(fp) = FilePath::new(sub.to_string_lossy().to_string()) {
-                        results.push(fp);
+        let entries = match std::fs::read_dir(dir) {
+            Ok(e) => e,
+            Err(e) => {
+                eprintln!(
+                    "Warning: Failed to read directory '{}': {}",
+                    dir.display(),
+                    e
+                );
+                return results;
+            }
+        };
+        for entry in entries {
+            match entry {
+                Ok(entry) => {
+                    if let Ok(ft) = entry.file_type() {
+                        if ft.is_dir() {
+                            let sub = entry.path();
+                            if let Ok(fp) = FilePath::new(sub.to_string_lossy().to_string()) {
+                                results.push(fp);
+                            }
+                        }
                     }
+                }
+                Err(e) => {
+                    eprintln!(
+                        "Warning: Failed to read directory entry in '{}': {}",
+                        dir.display(),
+                        e
+                    );
                 }
             }
         }
@@ -94,26 +117,27 @@ impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
             return Vec::new();
         }
 
-        let mut results = Vec::new();
-        for ws in &workspaces {
-            let ws_type = self.workspace_detector.detect(ws);
-            let language = ws_type.as_str();
-
-            let config = match self.config_reader.read_config(ws, language).await {
-                Some(source) => {
-                    let parsed = parse_config_yaml(&source.raw_content);
-                    if !parsed.layers.is_empty() {
+        let futures = workspaces.iter().map(|ws| {
+            let ws = ws.clone();
+            let detector = self.workspace_detector.clone();
+            let reader = self.config_reader.clone();
+            async move {
+                let ws_type = detector.detect(&ws);
+                let language = ws_type.as_str();
+                let config = match reader.read_config(&ws, language).await {
+                    Some(source) => {
+                        let mut parsed = parse_config_yaml(&source.raw_content);
+                        if parsed.layers.is_empty() {
+                            parsed.layers = default_config_for_language(language).layers;
+                        }
                         parsed
-                    } else {
-                        default_config_for_language(language)
                     }
-                }
-                None => default_config_for_language(language),
-            };
+                    None => default_config_for_language(language),
+                };
+                WorkspaceInfo::new(ws, language.to_string(), config)
+            }
+        });
 
-            results.push(WorkspaceInfo::new(ws.clone(), language.to_string(), config));
-        }
-
-        results
+        join_all(futures).await
     }
 }
