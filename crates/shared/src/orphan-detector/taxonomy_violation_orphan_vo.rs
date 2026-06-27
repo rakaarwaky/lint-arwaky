@@ -86,14 +86,14 @@ impl fmt::Display for AesOrphanViolation {
                         stem
                     ),
                 };
-                write!(f, "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs, or remove the file if it is obsolete.", stem, why, stem)
+                write!(f, "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs via `use {}::...;` and wire it into the container's constructor. If this file is obsolete, delete it and remove its module declaration from lib.rs.", stem, why, stem, stem)
             }
             AesOrphanViolation::InfrastructureOrphan { stem, reason } => {
                 let why = match reason.as_ref() {
                     Some(r) => r.to_string(),
                     None => format!("Infrastructure file '{}' is not wired in any container and unreachable from any entry point.", stem),
                 };
-                write!(f, "AES504 INFRASTRUCTURE_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs, or remove the file if it is obsolete.", stem, why, stem)
+                write!(f, "AES504 INFRASTRUCTURE_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in the corresponding agent_*_orchestrator.rs or root_*_container.rs by passing it as a dependency. If this adapter is unused, delete it and remove its module declaration.", stem, why, stem)
             }
             AesOrphanViolation::AgentOrphan { agg_name, reason } => {
                 let why = match reason.as_ref() {

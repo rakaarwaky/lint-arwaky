@@ -122,8 +122,22 @@ impl DependencyCycleAnalyzer {
                 // (e.g., crate::contract::foo → contract layer = cross-layer)
                 let is_crate_import = module_value.starts_with("crate::")
                     || module_value.starts_with("lint_arwaky::");
-                let layer_prefixes = ["taxonomy_", "contract_", "capabilities_", "infrastructure_", "agent_", "surface_"];
-                let layer_names = ["taxonomy", "contract", "capabilities", "infrastructure", "agent", "surface"];
+                let layer_prefixes = [
+                    "taxonomy_",
+                    "contract_",
+                    "capabilities_",
+                    "infrastructure_",
+                    "agent_",
+                    "surface_",
+                ];
+                let layer_names = [
+                    "taxonomy",
+                    "contract",
+                    "capabilities",
+                    "infrastructure",
+                    "agent",
+                    "surface",
+                ];
                 let is_cross_layer_crate = if is_crate_import {
                     let stripped = module_value
                         .strip_prefix("crate::")

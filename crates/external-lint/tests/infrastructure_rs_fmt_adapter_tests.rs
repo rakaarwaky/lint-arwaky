@@ -70,7 +70,10 @@ fn make_path(p: &str) -> FilePath {
 }
 
 fn with_cargo_toml() -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join(format!("rustfmt_test_{}", std::process::id()));
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    static COUNTER: AtomicUsize = AtomicUsize::new(0);
+    let id = COUNTER.fetch_add(1, Ordering::SeqCst);
+    let dir = std::env::temp_dir().join(format!("rustfmt_test_{}_{}", std::process::id(), id));
     let _ = std::fs::create_dir_all(&dir);
     std::fs::write(
         dir.join("Cargo.toml"),

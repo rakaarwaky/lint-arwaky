@@ -56,37 +56,6 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 | Python (modules)        | `scan test-workspaces/modules`  | 454              | 11               | ❌      |
 | JS/TS (packages)        | `scan test-workspaces/packages` | 1357             | 7                | ❌      |
 
-### All 24 AES Codes Target
-
-| Code   | Group                            | Rust | Python | JS/TS |
-| ------ | -------------------------------- | ---- | ------ | ----- |
-| AES101 | Naming — layer prefix            | ❌   | ❌     | ❌    |
-| AES102 | Naming — suffix convention       | ✅   | ✅     | ✅    |
-| AES201 | Import — forbidden layer         | ✅   | ✅     | ✅    |
-| AES202 | Import — mandatory import        | ✅   | ✅     | ✅    |
-| AES203 | Import — unused import           | ✅   | ✅     | ✅    |
-| AES204 | Import — dummy/todo import       | ✅   | ✅     | ✅    |
-| AES205 | Import — barrel re-export        | ✅   | ❌     | ❌    |
-| AES301 | Quality — file max lines         | ❌   | ❌     | ❌    |
-| AES302 | Quality — fn max lines           | ❌   | ❌     | ❌    |
-| AES303 | Quality — bypass suppression     | ✅   | ✅     | ✅    |
-| AES304 | Quality — mandatory def          | ✅   | ✅     | ❌    |
-| AES305 | Quality — todo in non-test       | ❌   | ❌     | ❌    |
-| AES401 | Role — layer-role suffix         | ✅   | ❌     | ❌    |
-| AES402 | Role — bypass aggregate          | ✅   | ❌     | ❌    |
-| AES403 | Role — capability bypasses agent | ✅   | ❌     | ❌    |
-| AES404 | Role — surface calls capability  | ✅   | ❌     | ❌    |
-| AES405 | Role — infra no aggregate        | ✅   | ✅     | ✅    |
-| AES406 | Role — duplicate container       | ✅   | ❌     | ❌    |
-| AES501 | Orphan — unreachable file        | ✅   | ✅     | ❌    |
-| AES502 | Orphan — unused contract         | ✅   | ❌     | ❌    |
-| AES503 | Orphan — unused capability       | ✅   | ✅     | ❌    |
-| AES504 | Orphan — dead dependency         | ✅   | ❌     | ❌    |
-| AES505 | Orphan — circular dependency     | ❌   | ❌     | ❌    |
-| AES506 | Orphan — barrel all-unused       | ✅   | ✅     | ❌    |
-
----
-
 ### 4.1 Release Eligibility Checklist (Production Ready)
 
 Before releasing the binary to a production environment or deploying it to a client, the AI Agent must complete the following verification tasks:
