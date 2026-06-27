@@ -142,21 +142,21 @@ crates/
 
 Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
 
-### Adapters
+### Adapters (External Linters)
 
-| Adapter                     | What it checks                    | Layer          |
-| --------------------------- | --------------------------------- | -------------- |
-| `ast_rust_scanner`          | Rust AST parsing                  | infrastructure |
-| `ast_py_scanner`            | Python AST parsing                | infrastructure |
-| `ast_js_scanner`            | JavaScript/TypeScript AST parsing | infrastructure |
-| `rust_linter_adapter`       | Clippy                            | infrastructure |
-| `python_ruff_adapter`       | Ruff                              | infrastructure |
-| `python_mypy_adapter`       | MyPy                              | infrastructure |
-| `python_bandit_adapter`     | Bandit                            | infrastructure |
-| `python_metrics_adapter`    | Radon-style complexity            | infrastructure |
-| `javascript_linter_adapter` | ESLint / Prettier / TSC           | infrastructure |
+| Adapter (Crate)       | Target Language       | Linters / Tools Run             | Layer          |
+| --------------------- | --------------------- | ------------------------------- | -------------- |
+| `RustLinterAdapter`   | Rust                  | Clippy (`cargo clippy`)         | infrastructure |
+| `RustFmtAdapter`      | Rust                  | Code Formatter (`cargo fmt`)    | infrastructure |
+| `CargoAuditAdapter`   | Rust                  | Vulnerabilities (`cargo audit`) | infrastructure |
+| `RuffAdapter`         | Python                | Linter & Formatter (`ruff`)     | infrastructure |
+| `MyPyAdapter`         | Python                | Type Checker (`mypy`)           | infrastructure |
+| `BanditAdapter`       | Python                | Security Scanner (`bandit`)     | infrastructure |
+| `ESLintAdapter`       | JavaScript/TypeScript | Code Linter (`eslint`)          | infrastructure |
+| `PrettierAdapter`     | JavaScript/TypeScript | Code Formatter (`prettier`)     | infrastructure |
+| `TSCAdapter`          | JavaScript/TypeScript | Type Checker (`tsc`)            | infrastructure |
 
-The architecture compliance analyzer (`arch_compliance_analyzer.rs`) carries the highest effective weight — structural violations are the highest priority.
+The AES rules enforcement (such as filename rules, layer dependency constraints, and primitive usage checks) is executed directly at the AST and text parsing levels by internal check orchestrators, carrying the highest weight in compliance scoring.
 
 ---
 
