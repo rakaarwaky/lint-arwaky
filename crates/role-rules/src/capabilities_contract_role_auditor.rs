@@ -155,21 +155,41 @@ pub fn python_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str>
     let lower = sig.to_lowercase();
 
     // Check parameter annotations
-    if lower.contains(": str") { forbidden.push("str"); }
-    if lower.contains(": int") { forbidden.push("int"); }
-    if lower.contains(": float") { forbidden.push("float"); }
-    if lower.contains(": list") { forbidden.push("list"); }
-    if lower.contains(": dict") { forbidden.push("dict"); }
+    if lower.contains(": str") {
+        forbidden.push("str");
+    }
+    if lower.contains(": int") {
+        forbidden.push("int");
+    }
+    if lower.contains(": float") {
+        forbidden.push("float");
+    }
+    if lower.contains(": list") {
+        forbidden.push("list");
+    }
+    if lower.contains(": dict") {
+        forbidden.push("dict");
+    }
     // Note: bool is allowed per AES402 policy (semantic toggle)
 
     // Check return type
     if let Some(arrow_idx) = lower.find("->") {
         let ret = lower[arrow_idx + 2..].trim();
-        if ret.starts_with("str") { forbidden.push("str"); }
-        if ret.starts_with("int") { forbidden.push("int"); }
-        if ret.starts_with("float") { forbidden.push("float"); }
-        if ret.starts_with("list") { forbidden.push("list"); }
-        if ret.starts_with("dict") { forbidden.push("dict"); }
+        if ret.starts_with("str") {
+            forbidden.push("str");
+        }
+        if ret.starts_with("int") {
+            forbidden.push("int");
+        }
+        if ret.starts_with("float") {
+            forbidden.push("float");
+        }
+        if ret.starts_with("list") {
+            forbidden.push("list");
+        }
+        if ret.starts_with("dict") {
+            forbidden.push("dict");
+        }
     }
 
     forbidden.sort();
@@ -227,7 +247,8 @@ pub fn extract_typescript_method_signatures(content: &str) -> Vec<(usize, String
         }
 
         if in_block {
-            brace_depth += trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
+            brace_depth +=
+                trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
             if brace_depth <= 0 {
                 in_block = false;
                 brace_depth = 0;
@@ -263,16 +284,28 @@ pub fn typescript_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static 
     let lower = sig.to_lowercase();
 
     // Check parameter annotations
-    if lower.contains(": string") { forbidden.push("string"); }
-    if lower.contains(": number") { forbidden.push("number"); }
-    if lower.contains(": any") { forbidden.push("any"); }
+    if lower.contains(": string") {
+        forbidden.push("string");
+    }
+    if lower.contains(": number") {
+        forbidden.push("number");
+    }
+    if lower.contains(": any") {
+        forbidden.push("any");
+    }
 
     // Check return type
     if let Some(paren_idx) = lower.rfind(')') {
         let after = lower[paren_idx + 1..].trim();
-        if after.starts_with(": string") { forbidden.push("string"); }
-        if after.starts_with(": number") { forbidden.push("number"); }
-        if after.starts_with(": any") { forbidden.push("any"); }
+        if after.starts_with(": string") {
+            forbidden.push("string");
+        }
+        if after.starts_with(": number") {
+            forbidden.push("number");
+        }
+        if after.starts_with(": any") {
+            forbidden.push("any");
+        }
     }
 
     forbidden.sort();

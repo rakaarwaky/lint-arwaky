@@ -20,7 +20,9 @@ fn entity_with_primitive_fields_emits_violations() {
     );
     checker.check_entity(&src, &mut violations);
     assert!(!violations.is_empty());
-    assert!(violations.iter().all(|v| v.code.to_string().contains("AES401")));
+    assert!(violations
+        .iter()
+        .all(|v| v.code.to_string().contains("AES401")));
 }
 
 #[test]

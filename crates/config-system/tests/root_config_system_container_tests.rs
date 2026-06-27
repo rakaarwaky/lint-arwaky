@@ -29,8 +29,8 @@ fn container_orchestrator_is_accessible() {
 
 #[test]
 fn container_parser_is_accessible() {
-    use shared::config_system::contract_parser_port::IConfigParserPort;
     use shared::common::taxonomy_path_vo::FilePath;
+    use shared::config_system::contract_parser_port::IConfigParserPort;
     let container = ConfigContainer::new();
     let parser = container.parser();
     let fp = FilePath::new("/nonexistent/config.yaml".to_string()).unwrap();

@@ -36,17 +36,13 @@ impl ICodeAnalysisAggregate for MockLinter {
 
 #[test]
 fn container_can_be_constructed() {
-    let container = AutoFixContainer::new(
-        Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>,
-    );
+    let container = AutoFixContainer::new(Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>);
     let _ = container;
 }
 
 #[test]
 fn container_orchestrator_creation_live_mode() {
-    let container = AutoFixContainer::new(
-        Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>,
-    );
+    let container = AutoFixContainer::new(Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>);
     let orch = container.orchestrator(false);
     let path = FilePath::new("/nonexistent/test.rs".to_string()).unwrap_or_default();
     let result = orch.execute(&path);
@@ -56,9 +52,7 @@ fn container_orchestrator_creation_live_mode() {
 
 #[test]
 fn container_orchestrator_creation_dry_run() {
-    let container = AutoFixContainer::new(
-        Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>,
-    );
+    let container = AutoFixContainer::new(Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>);
     let orch = container.orchestrator(true);
     let path = FilePath::new("/nonexistent/test.rs".to_string()).unwrap_or_default();
     let result = orch.execute(&path);
@@ -68,9 +62,7 @@ fn container_orchestrator_creation_dry_run() {
 
 #[test]
 fn container_orchestrator_is_cloneable() {
-    let container = AutoFixContainer::new(
-        Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>,
-    );
+    let container = AutoFixContainer::new(Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>);
     let orch1 = container.orchestrator(false);
     let orch2 = container.orchestrator(true);
     // Both should work independently

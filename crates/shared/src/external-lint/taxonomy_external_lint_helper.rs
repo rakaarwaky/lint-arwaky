@@ -1,4 +1,4 @@
-// PURPOSE: infrastructure_external_lint_helper — shared utility functions for external linter adapters
+// PURPOSE: taxonomy_external_lint_helper — shared utility functions for external linter adapters
 // Pure functions: resolve working directories, canonicalize paths,
 // execute commands with error mapping. Used by JS, Python, and RS adapters.
 
@@ -96,6 +96,39 @@ pub async fn js_apply_fix(
 /// No-op apply_fix for linters that cannot auto-fix (scanners, type-checkers).
 pub async fn noop_apply_fix() -> Result<ComplianceStatus, LinterOperationError> {
     Ok(ComplianceStatus::new(false))
+}
+
+/// Return true if the given path contains any Python (`.py`) files.
+///
+/// Recursively walks directories, short-circuiting at the first `.py` file found.
+/// If `path` itself is a `.py` file, returns true immediately.
+pub fn has_python_files(path: &FilePath) -> bool {
+    let p = std::path::Path::new(&path.value);
+    if !p.exists() {
+        return false;
+    }
+    if p.is_file() {
+        return p.extension().map(|e| e == "py").unwrap_or(false);
+    }
+    // Directory walk — short-circuit at first .py file
+    has_py_in_dir(p)
+}
+
+fn has_py_in_dir(dir: &std::path::Path) -> bool {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            if has_py_in_dir(&path) {
+                return true;
+            }
+        } else if path.extension().map(|e| e == "py").unwrap_or(false) {
+            return true;
+        }
+    }
+    false
 }
 
 /// Resolve the executable command for a JS tool (eslint, prettier, tsc).

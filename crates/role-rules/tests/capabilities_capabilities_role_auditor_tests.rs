@@ -13,11 +13,7 @@ fn make_source(file: &str, content: &str, language: &str) -> SourceContentVO {
 fn non_capabilities_layer_is_skipped() {
     let checker = CapabilitiesRoleChecker::new();
     let mut violations = Vec::new();
-    let src = make_source(
-        "infrastructure_adapter.rs",
-        "pub struct MyAdapter;",
-        "rust",
-    );
+    let src = make_source("infrastructure_adapter.rs", "pub struct MyAdapter;", "rust");
     checker.check_capability_routing(&src, "infrastructure", &mut violations);
     assert!(violations.is_empty());
 }

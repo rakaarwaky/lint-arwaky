@@ -1,4 +1,6 @@
-use role_rules_lint_arwaky::taxonomy_language_helper::{detect_language, detect_language_from_path};
+use role_rules_lint_arwaky::taxonomy_language_helper::{
+    detect_language, detect_language_from_path,
+};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 
@@ -38,7 +40,11 @@ fn detects_javascript_from_source() {
 
 #[test]
 fn detects_typescript_from_source() {
-    let src = make_source("surface_handler.ts", "function main(): void {}", "javascript");
+    let src = make_source(
+        "surface_handler.ts",
+        "function main(): void {}",
+        "javascript",
+    );
     let info = detect_language(&src);
     assert!(!info.is_rs);
     assert!(info.is_js);

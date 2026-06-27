@@ -1,4 +1,6 @@
-use role_rules_lint_arwaky::capabilities_surface_role_auditor::{is_in_surfaces, is_init, SurfaceRoleChecker};
+use role_rules_lint_arwaky::capabilities_surface_role_auditor::{
+    is_in_surfaces, is_init, SurfaceRoleChecker,
+};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 
@@ -39,7 +41,9 @@ fn test_is_init() {
 fn fn_count_within_limit_no_violation() {
     let checker = SurfaceRoleChecker::new();
     let mut violations = Vec::new();
-    let content = (0..10).map(|i| format!("fn helper_{}() {{}}\n", i)).collect::<String>();
+    let content = (0..10)
+        .map(|i| format!("fn helper_{}() {{}}\n", i))
+        .collect::<String>();
     let src = make_source("surface_handler.rs", &content, "rust");
     checker.check_fn_count_limit(&src, &mut violations);
     assert!(violations.is_empty());
@@ -49,7 +53,9 @@ fn fn_count_within_limit_no_violation() {
 fn fn_count_exceeding_limit_emits_violation() {
     let checker = SurfaceRoleChecker::new();
     let mut violations = Vec::new();
-    let content = (0..20).map(|i| format!("fn helper_{}() {{}}\n", i)).collect::<String>();
+    let content = (0..20)
+        .map(|i| format!("fn helper_{}() {{}}\n", i))
+        .collect::<String>();
     let src = make_source("surface_handler.rs", &content, "rust");
     checker.check_fn_count_limit(&src, &mut violations);
     assert_eq!(violations.len(), 1);
@@ -60,7 +66,9 @@ fn fn_count_exceeding_limit_emits_violation() {
 fn python_fn_count_within_limit_no_violation() {
     let checker = SurfaceRoleChecker::new();
     let mut violations = Vec::new();
-    let lines: Vec<String> = (0..5).map(|i| format!("def helper_{}():\n    pass\n", i)).collect();
+    let lines: Vec<String> = (0..5)
+        .map(|i| format!("def helper_{}():\n    pass\n", i))
+        .collect();
     let content = lines.join("");
     let src = make_source("surface_handler.py", &content, "python");
     checker.check_fn_count_limit(&src, &mut violations);
@@ -71,7 +79,9 @@ fn python_fn_count_within_limit_no_violation() {
 fn python_fn_count_exceeding_limit_emits_violation() {
     let checker = SurfaceRoleChecker::new();
     let mut violations = Vec::new();
-    let lines: Vec<String> = (0..20).map(|i| format!("def helper_{}():\n    pass\n", i)).collect();
+    let lines: Vec<String> = (0..20)
+        .map(|i| format!("def helper_{}():\n    pass\n", i))
+        .collect();
     let content = lines.join("");
     let src = make_source("surface_handler.py", &content, "python");
     checker.check_fn_count_limit(&src, &mut violations);
@@ -82,7 +92,9 @@ fn python_fn_count_exceeding_limit_emits_violation() {
 fn js_fn_count_exceeding_limit_emits_violation() {
     let checker = SurfaceRoleChecker::new();
     let mut violations = Vec::new();
-    let content = (0..20).map(|i| format!("function helper_{}() {{}}\n", i)).collect::<String>();
+    let content = (0..20)
+        .map(|i| format!("function helper_{}() {{}}\n", i))
+        .collect::<String>();
     let src = make_source("surface_handler.js", &content, "javascript");
     checker.check_fn_count_limit(&src, &mut violations);
     assert_eq!(violations.len(), 1);

@@ -196,8 +196,11 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-        let source_files =
-            crate::agent_code_analysis_orchestrator::collect_source_files(&src, &dir_path, &ignored_vec);
+        let source_files = crate::agent_code_analysis_orchestrator::collect_source_files(
+            &src,
+            &dir_path,
+            &ignored_vec,
+        );
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         self.check_file_similarity(&file_strs, min_lines, threshold_pct)
             .into_iter()
@@ -257,10 +260,7 @@ fn scan_duplicate_blocks(entries: Vec<FileEntry>, min_lines: usize) -> Vec<Vec<(
         }
         for (idx, w) in lines.windows(min_lines).enumerate() {
             let key = normalize_window(w);
-            blocks
-                .entry(key)
-                .or_default()
-                .push((path.clone(), idx + 1));
+            blocks.entry(key).or_default().push((path.clone(), idx + 1));
         }
     }
     blocks
@@ -278,10 +278,7 @@ fn build_violations(
     if blocks.is_empty() || total_loc == 0 {
         return Vec::new();
     }
-    let dup_lines: usize = blocks
-        .iter()
-        .map(|b| b.len() * min_dup_lines)
-        .sum();
+    let dup_lines: usize = blocks.iter().map(|b| b.len() * min_dup_lines).sum();
     let pct = dup_lines as f64 / total_loc as f64 * 100.0;
     if pct < 10.0 {
         return Vec::new();

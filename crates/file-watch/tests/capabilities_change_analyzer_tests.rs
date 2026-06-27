@@ -157,4 +157,3 @@ fn filter_lintable_empty_returns_empty() {
     let result = analyzer.filter_lintable(vec![]);
     assert!(result.is_empty());
 }
-

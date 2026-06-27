@@ -1,19 +1,17 @@
 use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
+use shared::common::taxonomy_common_vo::{Count, Score};
 use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use shared::config_system::taxonomy_setting_vo::{
     AdapterEntry, AdapterStatus, ProjectConfig, Thresholds,
 };
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::{Count, Score};
 
 // ─── is_adapter_enabled ─────────────────────────────────────────────────────
 
 #[test]
 fn enabled_adapter_returns_true() {
     let config = ProjectConfig {
-        adapters: vec![
-            AdapterEntry::enabled(AdapterName::raw("ruff")),
-        ],
+        adapters: vec![AdapterEntry::enabled(AdapterName::raw("ruff"))],
         ..ProjectConfig::defaults()
     };
     let validator = ConfigRulesValidator::new(config);
@@ -23,9 +21,11 @@ fn enabled_adapter_returns_true() {
 #[test]
 fn disabled_adapter_returns_false() {
     let config = ProjectConfig {
-        adapters: vec![
-            AdapterEntry::new(AdapterName::raw("mypy"), AdapterStatus::Disabled, 1.0),
-        ],
+        adapters: vec![AdapterEntry::new(
+            AdapterName::raw("mypy"),
+            AdapterStatus::Disabled,
+            1.0,
+        )],
         ..ProjectConfig::defaults()
     };
     let validator = ConfigRulesValidator::new(config);

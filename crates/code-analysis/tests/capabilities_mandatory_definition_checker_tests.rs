@@ -8,7 +8,12 @@ use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceP
 fn skips_mod_rs() {
     let checker = MandatoryDefinitionChecker::new();
     let mut violations = Vec::new();
-    checker.check_mandatory_class_definition("src/mod.rs", None, "use std::collections;", &mut violations);
+    checker.check_mandatory_class_definition(
+        "src/mod.rs",
+        None,
+        "use std::collections;",
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 
@@ -24,7 +29,12 @@ fn skips_init_py() {
 fn skips_constant_file() {
     let checker = MandatoryDefinitionChecker::new();
     let mut violations = Vec::new();
-    checker.check_mandatory_class_definition("taxonomy_colors_constant.rs", None, "pub const X: usize = 1;", &mut violations);
+    checker.check_mandatory_class_definition(
+        "taxonomy_colors_constant.rs",
+        None,
+        "pub const X: usize = 1;",
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 
@@ -32,14 +42,19 @@ fn skips_constant_file() {
 fn no_definition_no_check() {
     let checker = MandatoryDefinitionChecker::new();
     let mut violations = Vec::new();
-    checker.check_mandatory_class_definition("src/foo.rs", None, "// just a comment", &mut violations);
+    checker.check_mandatory_class_definition(
+        "src/foo.rs",
+        None,
+        "// just a comment",
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 
 #[test]
 fn disabled_mandatory_class_no_violation() {
-    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
     use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
     use shared::taxonomy_definition_vo::LayerDefinition;
 
     let checker = MandatoryDefinitionChecker::new();
@@ -54,14 +69,19 @@ fn disabled_mandatory_class_no_violation() {
         exceptions: PatternList::default(),
         ..Default::default()
     };
-    checker.check_mandatory_class_definition("src/foo.rs", Some(&def), "fn helper() {}", &mut violations);
+    checker.check_mandatory_class_definition(
+        "src/foo.rs",
+        Some(&def),
+        "fn helper() {}",
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 
 #[test]
 fn missing_class_emits_violation() {
-    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
     use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
     use shared::taxonomy_definition_vo::LayerDefinition;
 
     let checker = MandatoryDefinitionChecker::new();
@@ -76,15 +96,20 @@ fn missing_class_emits_violation() {
         exceptions: PatternList::default(),
         ..Default::default()
     };
-    checker.check_mandatory_class_definition("src/foo.rs", Some(&def), "fn helper() {}", &mut violations);
+    checker.check_mandatory_class_definition(
+        "src/foo.rs",
+        Some(&def),
+        "fn helper() {}",
+        &mut violations,
+    );
     assert_eq!(violations.len(), 1);
     assert!(violations[0].code.to_string().contains("AES303"));
 }
 
 #[test]
 fn has_pub_struct_no_violation() {
-    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
     use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
     use shared::taxonomy_definition_vo::LayerDefinition;
 
     let checker = MandatoryDefinitionChecker::new();
@@ -99,14 +124,19 @@ fn has_pub_struct_no_violation() {
         exceptions: PatternList::default(),
         ..Default::default()
     };
-    checker.check_mandatory_class_definition("src/foo.rs", Some(&def), "pub struct Foo;", &mut violations);
+    checker.check_mandatory_class_definition(
+        "src/foo.rs",
+        Some(&def),
+        "pub struct Foo;",
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 
 #[test]
 fn exception_list_skips_file() {
-    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
     use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
     use shared::taxonomy_definition_vo::LayerDefinition;
 
     let checker = MandatoryDefinitionChecker::new();
@@ -121,7 +151,12 @@ fn exception_list_skips_file() {
         exceptions: PatternList::new(vec!["foo.rs".to_string()]),
         ..Default::default()
     };
-    checker.check_mandatory_class_definition("src/foo.rs", Some(&def), "fn helper() {}", &mut violations);
+    checker.check_mandatory_class_definition(
+        "src/foo.rs",
+        Some(&def),
+        "fn helper() {}",
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 
@@ -166,7 +201,11 @@ fn python_empty_class_with_newline_pass_emits_violation() {
 fn python_non_empty_class_no_violation() {
     let checker = MandatoryDefinitionChecker::new();
     let mut violations = Vec::new();
-    checker.check_dead_inheritance("test.py", "class Foo:\n    def bar(self): pass", &mut violations);
+    checker.check_dead_inheritance(
+        "test.py",
+        "class Foo:\n    def bar(self): pass",
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 

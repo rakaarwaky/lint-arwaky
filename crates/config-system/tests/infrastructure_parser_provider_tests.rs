@@ -1,6 +1,6 @@
 use config_system_lint_arwaky::infrastructure_parser_provider::ConfigParserProvider;
-use shared::config_system::contract_parser_port::IConfigParserPort;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::contract_parser_port::IConfigParserPort;
 use std::io::Write;
 
 fn temp_dir() -> std::path::PathBuf {
@@ -112,7 +112,11 @@ max_file_lines = 400
     let result = parser.parse_toml_config(&fp);
     assert!(result.is_some(), "expected Some, got None");
     let inner = result.as_ref().unwrap();
-    assert!(inner.is_ok(), "expected Ok, got Err: {:?}", inner.as_ref().err());
+    assert!(
+        inner.is_ok(),
+        "expected Ok, got Err: {:?}",
+        inner.as_ref().err()
+    );
     let config = result.unwrap().unwrap();
     assert_eq!(config.project_name.value, "toml_project");
 }

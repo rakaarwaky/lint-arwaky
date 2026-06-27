@@ -136,21 +136,31 @@ fn main() -> ExitCode {
     // ── Phase 5: Dispatch to command handlers ─────────────────────────
     let filter = cli.filter.clone();
     match cli.command {
-        Commands::Check { path, git_diff } => surface_check_action::handle_check(
+        Commands::Check {
+            path,
+            git_diff,
+            format,
+        } => surface_check_action::handle_check(
             path,
             git_diff,
             make_check_context(&container, &layer_detector),
             filter,
             Some(container.git_aggregate.clone()),
             shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
+            format,
         ),
-        Commands::Scan { path, member } => surface_check_action::handle_scan(
+        Commands::Scan {
+            path,
+            member,
+            format,
+        } => surface_check_action::handle_scan(
             path,
             make_check_context(&container, &layer_detector),
             Some(container.multi_project_orchestrator.clone()),
             factory,
             filter,
             member,
+            format,
         ),
         Commands::Fix { path, dry_run } => surface_fix_command::handle_fix(
             path,

@@ -13,11 +13,7 @@ fn make_source(file: &str, content: &str, language: &str) -> SourceContentVO {
 fn file_within_limit_no_violation() {
     let checker = AgentRoleChecker::new();
     let mut violations = Vec::new();
-    let src = make_source(
-        "agent_orchestrator.rs",
-        "line1\nline2\nline3",
-        "rust",
-    );
+    let src = make_source("agent_orchestrator.rs", "line1\nline2\nline3", "rust");
     checker.check_file_size_limit(&src, 10, &mut violations);
     assert!(violations.is_empty());
 }
@@ -69,7 +65,9 @@ fn detects_colon_any_annotation() {
     );
     checker.check_any_type_annotation(&src, &mut violations);
     assert_eq!(violations.len(), 2);
-    assert!(violations.iter().all(|v| v.code.to_string().contains("AES405")));
+    assert!(violations
+        .iter()
+        .all(|v| v.code.to_string().contains("AES405")));
 }
 
 #[test]

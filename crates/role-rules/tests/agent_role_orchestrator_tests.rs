@@ -1,5 +1,5 @@
-use role_rules_lint_arwaky::agent_role_orchestrator::RoleOrchestrator;
 use role_rules_lint_arwaky::agent_role_orchestrator::RoleAggregateImpl;
+use role_rules_lint_arwaky::agent_role_orchestrator::RoleOrchestrator;
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChecker;

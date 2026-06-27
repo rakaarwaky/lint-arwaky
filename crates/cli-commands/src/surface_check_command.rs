@@ -14,6 +14,7 @@
 // each member gets its own language-specific configuration.
 use std::sync::Arc;
 
+use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
@@ -111,7 +112,13 @@ impl CheckCommandsSurface {
     ///
     /// If a factory is provided, per-project containers are created for
     /// each workspace member (used by scan, not check).
-    pub fn scan(&self, path: &str, filter: Option<&str>, config: ArchitectureConfig) {
+    pub fn scan(
+        &self,
+        path: &str,
+        filter: Option<&str>,
+        config: ArchitectureConfig,
+        format: Format,
+    ) {
         let path_obj = crate::surface_common_command::resolve_file_path(path);
         let rt = match crate::surface_common_command::create_runtime() {
             Ok(r) => r,
@@ -169,7 +176,7 @@ impl CheckCommandsSurface {
         );
         all_results.extend(orphan_results);
 
-        self.filter_and_display_results(all_results, path, filter, code_analysis_linter);
+        self.filter_and_display_results(all_results, path, filter, code_analysis_linter, &format);
     }
 
     /// Run orphan detection pass — scans workspace for cross-folder import graph.
@@ -200,6 +207,7 @@ impl CheckCommandsSurface {
         path: &str,
         filter: Option<&str>,
         reporter: Arc<dyn ICodeAnalysisAggregate>,
+        format: &Format,
     ) {
         let canonical_scan_path = crate::surface_common_command::canonicalize_path(path);
         let cwd = crate::surface_common_command::current_dir();
@@ -221,8 +229,25 @@ impl CheckCommandsSurface {
                 })
                 .collect()
         };
-        let results_list = LintResultList::new(filtered_results);
-        println!("{}", reporter.format_report(&results_list, path));
+        match format {
+            Format::Text => {
+                let results_list = LintResultList::new(filtered_results);
+                println!("{}", reporter.format_report(&results_list, path));
+            }
+            Format::Json => {
+                let json = serde_json::to_string_pretty(&filtered_results)
+                    .unwrap_or_else(|_| "[]".to_string());
+                println!("{json}");
+            }
+            Format::Sarif => {
+                let sarif = self.format_sarif_output(&filtered_results);
+                println!("{sarif}");
+            }
+            Format::Junit => {
+                let junit = self.format_junit_output(&filtered_results);
+                println!("{junit}");
+            }
+        }
     }
 
     /// Check if a single file is an orphan.
@@ -284,7 +309,13 @@ impl CheckCommandsSurface {
     /// Cross-workspace orphan detection is important: contracts defined in
     /// `shared/` may be implemented in `import-rules/`, so the orphan graph
     /// must span all workspace members.
-    pub fn scan_with_discovery(&self, path: &str, filter: Option<&str>, member: Option<&str>) {
+    pub fn scan_with_discovery(
+        &self,
+        path: &str,
+        filter: Option<&str>,
+        member: Option<&str>,
+        format: Format,
+    ) {
         let path_obj = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
             Err(_) => {
@@ -310,7 +341,7 @@ impl CheckCommandsSurface {
         if workspaces.is_empty() {
             // No workspaces discovered — treat path as a standalone scan
             let default_config = ArchitectureConfig::default();
-            self.scan(path, filter, default_config);
+            self.scan(path, filter, default_config, format);
             return;
         }
 
@@ -474,86 +505,305 @@ impl CheckCommandsSurface {
                 }
                 println!();
             } else {
-                // Single workspace — print full violation detail
-                let results_list = LintResultList::new(filtered_results);
-                print!(
-                    "{}",
-                    code_analysis_linter.format_report(&results_list, &ws.path.value)
-                );
+                // Single workspace — print full violation detail (respects --format)
+                match format {
+                    Format::Text => {
+                        let results_list = LintResultList::new(filtered_results);
+                        print!(
+                            "{}",
+                            code_analysis_linter.format_report(&results_list, &ws.path.value)
+                        );
+                    }
+                    Format::Json => {
+                        let json = serde_json::to_string_pretty(&filtered_results)
+                            .unwrap_or_else(|_| "[]".to_string());
+                        println!("{json}");
+                    }
+                    Format::Sarif => {
+                        let sarif = self.format_sarif_output(&filtered_results);
+                        println!("{sarif}");
+                    }
+                    Format::Junit => {
+                        let junit = self.format_junit_output(&filtered_results);
+                        println!("{junit}");
+                    }
+                }
             }
         }
 
         if multi {
-            // Print combined summary — AES-only counts
-            let mut global_all_counts: std::collections::HashMap<String, usize> =
-                std::collections::HashMap::new();
-            for r in &global_all_results {
-                *global_all_counts.entry(r.code.to_string()).or_insert(0) += 1;
-            }
-            let global_total = global_all_results.len();
-            // Filter to AES-only codes for display and unique count
-            let global_code_counts: std::collections::HashMap<String, usize> = global_all_counts
-                .iter()
-                .filter(|(code, _)| code.starts_with("AES"))
-                .map(|(k, v)| (k.clone(), *v))
-                .collect();
-            let global_unique_codes = global_code_counts.len();
-            // External lint codes (non-AES)
-            let external_code_counts: std::collections::HashMap<String, usize> = global_all_counts
-                .iter()
-                .filter(|(code, _)| !code.starts_with("AES"))
-                .map(|(k, v)| (k.clone(), *v))
-                .collect();
-            let global_unique_external = external_code_counts.len();
-
-            println!("============================================================");
-            println!("  Combined Multi-Workspace Report Summary");
-            println!("============================================================");
-            println!("  Total Workspace Members: {}", workspaces.len());
-            println!("  Total Unique AES Codes: {global_unique_codes}");
-            if global_unique_external > 0 {
-                println!("  Total Unique External Codes: {global_unique_external}");
-            }
-            println!("  Total Violations: {global_total}");
-            println!();
-            // AES codes section
-            let mut sorted: Vec<_> = global_code_counts.into_iter().collect();
-            sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
-            for (code, count) in &sorted {
-                println!("  {code}: {count}");
-            }
-            // External codes section
-            if !external_code_counts.is_empty() {
-                println!();
-                println!("  ── External Lint Codes ──");
-                let mut ext_sorted: Vec<_> = external_code_counts.into_iter().collect();
-                ext_sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
-                for (code, count) in &ext_sorted {
-                    println!("  {code}: {count}");
+            match format {
+                Format::Text => {
+                    self.print_multi_workspace_summary(&global_all_results, &workspaces, member);
                 }
-            }
-
-            // Print usage instructions for per-member scanning
-            if member.is_none() {
-                println!();
-                println!("============================================================");
-                println!("  Scan Individual Members");
-                println!("============================================================");
-                println!("  To scan a specific workspace member:");
-                println!("    lint-arwaky-cli scan . --member <name>");
-                println!();
-                println!("  Available members:");
-                for ws in &workspaces {
-                    let name = std::path::Path::new(&ws.path.value)
-                        .file_name()
-                        .map(|n| n.to_string_lossy())
-                        .unwrap_or_default();
-                    println!("    - {} ({})", name, ws.workspace_type);
+                Format::Json => {
+                    let json = serde_json::to_string_pretty(&global_all_results)
+                        .unwrap_or_else(|_| "[]".to_string());
+                    println!("{json}");
                 }
-                println!();
-                println!("  Filter by AES rule code:");
-                println!("    lint-arwaky-cli scan . --filter AES204");
+                Format::Sarif => {
+                    let sarif = self.format_sarif_output(&global_all_results);
+                    println!("{sarif}");
+                }
+                Format::Junit => {
+                    let junit = self.format_junit_output(&global_all_results);
+                    println!("{junit}");
+                }
             }
         }
     }
+
+    /// Format results as a SARIF 2.1.0 JSON string.
+    fn format_sarif_output(
+        &self,
+        results: &[shared::cli_commands::taxonomy_result_vo::LintResult],
+    ) -> String {
+        use shared::cli_commands::taxonomy_severity_vo::Severity;
+
+        #[derive(serde::Serialize)]
+        struct SarifLog {
+            #[serde(rename = "$schema")]
+            schema: &'static str,
+            version: &'static str,
+            runs: Vec<SarifRun>,
+        }
+
+        #[derive(serde::Serialize)]
+        struct SarifRun {
+            tool: SarifTool,
+            results: Vec<SarifResult>,
+        }
+
+        #[derive(serde::Serialize)]
+        struct SarifTool {
+            driver: SarifDriver,
+        }
+
+        #[derive(serde::Serialize)]
+        struct SarifDriver {
+            name: &'static str,
+            version: &'static str,
+            information_uri: &'static str,
+        }
+
+        #[derive(serde::Serialize)]
+        struct SarifResult {
+            rule_id: String,
+            level: String,
+            message: SarifMessage,
+            locations: Vec<SarifLocation>,
+        }
+
+        #[derive(serde::Serialize)]
+        struct SarifMessage {
+            text: String,
+        }
+
+        #[derive(serde::Serialize)]
+        struct SarifLocation {
+            physical_location: SarifPhysicalLocation,
+        }
+
+        #[derive(serde::Serialize)]
+        struct SarifPhysicalLocation {
+            artifact_location: SarifArtifactLocation,
+            region: SarifRegion,
+        }
+
+        #[derive(serde::Serialize)]
+        struct SarifArtifactLocation {
+            uri: String,
+        }
+
+        #[derive(serde::Serialize)]
+        struct SarifRegion {
+            start_line: i64,
+        }
+
+        // Map Severity → SARIF level
+        fn severity_to_sarif_level(sev: &Severity) -> &'static str {
+            match sev {
+                Severity::CRITICAL | Severity::HIGH => "error",
+                Severity::MEDIUM => "warning",
+                Severity::LOW | Severity::INFO => "note",
+            }
+        }
+
+        let sarif_results: Vec<SarifResult> = results
+            .iter()
+            .map(|r| SarifResult {
+                rule_id: r.code.to_string(),
+                level: severity_to_sarif_level(&r.severity).to_string(),
+                message: SarifMessage {
+                    text: r.message.value.clone(),
+                },
+                locations: vec![SarifLocation {
+                    physical_location: SarifPhysicalLocation {
+                        artifact_location: SarifArtifactLocation {
+                            uri: r.file.value.clone(),
+                        },
+                        region: SarifRegion {
+                            start_line: r.line.value(),
+                        },
+                    },
+                }],
+            })
+            .collect();
+
+        let log = SarifLog {
+            schema: "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+            version: "2.1.0",
+            runs: vec![SarifRun {
+                tool: SarifTool {
+                    driver: SarifDriver {
+                        name: "lint-arwaky",
+                        version: env!("CARGO_PKG_VERSION"),
+                        information_uri: "https://github.com/rakaarwaky/lint-arwaky",
+                    },
+                },
+                results: sarif_results,
+            }],
+        };
+
+        serde_json::to_string_pretty(&log).unwrap_or_else(|_| "{}".to_string())
+    }
+
+    /// Format results as JUnit XML.
+    fn format_junit_output(
+        &self,
+        results: &[shared::cli_commands::taxonomy_result_vo::LintResult],
+    ) -> String {
+        let total = results.len();
+        let failures: Vec<_> = results
+            .iter()
+            .filter(|r| {
+                use shared::cli_commands::taxonomy_severity_vo::Severity;
+                matches!(
+                    r.severity,
+                    Severity::CRITICAL | Severity::HIGH | Severity::MEDIUM | Severity::LOW
+                )
+            })
+            .collect();
+        let failure_count = failures.len();
+
+        let mut xml = String::new();
+        xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.push_str(&format!(
+            "<testsuites name=\"lint-arwaky\" tests=\"{total}\" failures=\"{failure_count}\">\n"
+        ));
+        xml.push_str(&format!(
+            "  <testsuite name=\"lint-arwaky\" tests=\"{total}\" failures=\"{failure_count}\">\n"
+        ));
+
+        for r in results {
+            let classname = xml_escape(&r.code.to_string());
+            let name = xml_escape(&format!("{}:{}", r.file.value, r.line.value()));
+            let message = xml_escape(&r.message.value);
+            let sev = r.severity.to_string();
+
+            xml.push_str(&format!(
+                "    <testcase classname=\"{classname}\" name=\"{name}\">\n"
+            ));
+            xml.push_str(&format!(
+                "      <failure message=\"{sev}: {message}\" type=\"{sev}\">\n"
+            ));
+            xml.push_str(&format!("        {message}\n"));
+            xml.push_str("      </failure>\n");
+            xml.push_str("    </testcase>\n");
+        }
+
+        xml.push_str("  </testsuite>\n");
+        xml.push_str("</testsuites>\n");
+        xml
+    }
+
+    /// Print multi-workspace text summary (extracted from scan_with_discovery).
+    fn print_multi_workspace_summary(
+        &self,
+        global_all_results: &[shared::cli_commands::taxonomy_result_vo::LintResult],
+        workspaces: &[shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo],
+        member: Option<&str>,
+    ) {
+        use std::collections::HashMap;
+
+        let mut global_all_counts: HashMap<String, usize> = HashMap::new();
+        for r in global_all_results {
+            *global_all_counts.entry(r.code.to_string()).or_insert(0) += 1;
+        }
+        let global_total = global_all_results.len();
+        let global_code_counts: HashMap<String, usize> = global_all_counts
+            .iter()
+            .filter(|(code, _)| code.starts_with("AES"))
+            .map(|(k, v)| (k.clone(), *v))
+            .collect();
+        let global_unique_codes = global_code_counts.len();
+        let external_code_counts: HashMap<String, usize> = global_all_counts
+            .iter()
+            .filter(|(code, _)| !code.starts_with("AES"))
+            .map(|(k, v)| (k.clone(), *v))
+            .collect();
+        let global_unique_external = external_code_counts.len();
+
+        println!("============================================================");
+        println!("  Combined Multi-Workspace Report Summary");
+        println!("============================================================");
+        println!("  Total Workspace Members: {}", workspaces.len());
+        println!("  Total Unique AES Codes: {global_unique_codes}");
+        if global_unique_external > 0 {
+            println!("  Total Unique External Codes: {global_unique_external}");
+        }
+        println!("  Total Violations: {global_total}");
+        println!();
+        let mut sorted: Vec<_> = global_code_counts.into_iter().collect();
+        sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
+        for (code, count) in &sorted {
+            println!("  {code}: {count}");
+        }
+        if !external_code_counts.is_empty() {
+            println!();
+            println!("  ── External Lint Codes ──");
+            let mut ext_sorted: Vec<_> = external_code_counts.into_iter().collect();
+            ext_sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
+            for (code, count) in &ext_sorted {
+                println!("  {code}: {count}");
+            }
+        }
+
+        if member.is_none() {
+            println!();
+            println!("============================================================");
+            println!("  Scan Individual Members");
+            println!("============================================================");
+            println!("  To scan a specific workspace member:");
+            println!("    lint-arwaky-cli scan . --member <name>");
+            println!();
+            println!("  Available members:");
+            for ws in workspaces {
+                let name = std::path::Path::new(&ws.path.value)
+                    .file_name()
+                    .map(|n| n.to_string_lossy())
+                    .unwrap_or_default();
+                println!("    - {} ({})", name, ws.workspace_type);
+            }
+            println!();
+            println!("  Filter by AES rule code:");
+            println!("    lint-arwaky-cli scan . --filter AES204");
+        }
+    }
+}
+
+/// XML-escape a string for safe inclusion in JUnit XML output.
+fn xml_escape(s: &str) -> String {
+    let mut escaped = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            '"' => escaped.push_str("&quot;"),
+            '\'' => escaped.push_str("&apos;"),
+            other => escaped.push(other),
+        }
+    }
+    escaped
 }

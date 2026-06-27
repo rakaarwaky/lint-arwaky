@@ -1,6 +1,8 @@
 // PURPOSE: Cli + Commands enums — clap-based CLI definition with all subcommands
 use clap::{Parser, Subcommand};
 
+use crate::cli_commands::taxonomy_format_vo::Format;
+
 #[derive(Parser, Debug)]
 #[command(name = "lint-arwaky")]
 #[command(about = "Lint Arwaky CLI: Autonomous Code Quality Gatekeeper.", long_about = None)]
@@ -35,6 +37,9 @@ pub enum Commands {
         /// Only check git diff
         #[arg(long)]
         git_diff: bool,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
     },
 
     /// Alias for check (CI-friendly). Discovers workspace members and runs all linters.
@@ -45,6 +50,9 @@ pub enum Commands {
         /// Scan only a specific workspace member by name (e.g. "shared", "import-rules")
         #[arg(long)]
         member: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
     },
 
     /// Apply safe automatic fixes
@@ -68,7 +76,7 @@ pub enum Commands {
     /// Diagnose environment health
     Doctor,
 
-    /// Check if a file is an orphan (AES030)
+    /// Check if a file is an orphan (AES501-AES506)
     Orphan {
         /// File path to check
         path: String,

@@ -30,8 +30,8 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
-use shared::external_lint::infrastructure_external_lint_helper::{
-    default_working_dir, exec_cmd_adapter, noop_apply_fix,
+use shared::external_lint::taxonomy_external_lint_helper::{
+    default_working_dir, exec_cmd_adapter, has_python_files, noop_apply_fix,
 };
 
 pub struct BanditAdapter {
@@ -77,6 +77,11 @@ impl ILinterAdapterPort for BanditAdapter {
     }
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+        // Skip if no Python files exist in the target path
+        if !has_python_files(path) {
+            return Ok(LintResultList::new(vec![]));
+        }
+
         let executable = self.resolve_executable();
         let cmd = vec![
             executable,

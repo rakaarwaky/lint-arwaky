@@ -4,17 +4,22 @@ use code_analysis_lint_arwaky::agent_code_analysis_orchestrator::{
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 
-
 // ─── detect_source_dir ──────────────────────────────────────────────────────
 
 #[test]
 fn detects_crates_dir() {
     // Navigate from crate dir up to workspace root
     let crate_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    let workspace_root = crate_dir.parent().and_then(|p| p.parent()).unwrap_or(crate_dir);
+    let workspace_root = crate_dir
+        .parent()
+        .and_then(|p| p.parent())
+        .unwrap_or(crate_dir);
     let result = detect_source_dir(workspace_root);
     let name = result.file_name().and_then(|n| n.to_str()).unwrap_or("");
-    assert_eq!(name, "crates", "expected 'crates' dir from workspace root, got: {name}");
+    assert_eq!(
+        name, "crates",
+        "expected 'crates' dir from workspace root, got: {name}"
+    );
 }
 
 #[test]
@@ -40,17 +45,25 @@ fn resolve_target_none_returns_dot() {
 
 #[test]
 fn has_critical_true_when_critical_exists() {
-    let results = vec![
-        LintResult::new_arch("f.rs", 0, "AES001", Severity::CRITICAL, "critical!"),
-    ];
+    let results = vec![LintResult::new_arch(
+        "f.rs",
+        0,
+        "AES001",
+        Severity::CRITICAL,
+        "critical!",
+    )];
     assert!(has_critical(&results));
 }
 
 #[test]
 fn has_critical_false_when_only_high() {
-    let results = vec![
-        LintResult::new_arch("f.rs", 0, "AES001", Severity::HIGH, "high"),
-    ];
+    let results = vec![LintResult::new_arch(
+        "f.rs",
+        0,
+        "AES001",
+        Severity::HIGH,
+        "high",
+    )];
     assert!(!has_critical(&results));
 }
 
@@ -82,9 +95,13 @@ fn format_report_empty_no_panic() {
 #[test]
 fn format_report_with_violations() {
     let orch = CodeAnalysisOrchestrator::new();
-    let results = vec![
-        LintResult::new_arch("f.rs", 5, "AES301", Severity::HIGH, "file too large"),
-    ];
+    let results = vec![LintResult::new_arch(
+        "f.rs",
+        5,
+        "AES301",
+        Severity::HIGH,
+        "file too large",
+    )];
     let report = orch.format_report(&results, "test_project");
     assert!(report.contains("AES301"));
     assert!(report.contains("f.rs"));

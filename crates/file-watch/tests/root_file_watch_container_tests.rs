@@ -57,22 +57,20 @@ fn container_provider_is_accessible() {
 #[test]
 fn container_orchestrator_can_be_created() {
     let container = FileWatchContainer::new();
-    let _orchestrator = container.orchestrator(
-        Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>,
-    );
+    let _orchestrator =
+        container.orchestrator(Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>);
 }
 
 #[test]
 fn container_orchestrator_runs_with_mock_linter() {
+    use shared::common::taxonomy_path_vo::FilePath;
     use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
     use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
-    use shared::common::taxonomy_path_vo::FilePath;
     use std::sync::atomic::{AtomicBool, Ordering};
 
     let container = FileWatchContainer::new();
-    let orchestrator = container.orchestrator(
-        Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>,
-    );
+    let orchestrator =
+        container.orchestrator(Arc::new(MockLinter) as Arc<dyn ICodeAnalysisAggregate>);
     // Use an actual temp directory so the watcher can start
     let dir = std::env::temp_dir().join(format!("watch_container_{}", std::process::id()));
     let _ = std::fs::create_dir_all(&dir);
@@ -85,6 +83,10 @@ fn container_orchestrator_runs_with_mock_linter() {
     let running = Arc::new(AtomicBool::new(false));
     // With running=false, should stop after initial lint + watcher start
     let exit_code = orchestrator.run(config, running);
-    assert_eq!(exit_code, std::process::ExitCode::SUCCESS, "orchestrator should exit gracefully");
+    assert_eq!(
+        exit_code,
+        std::process::ExitCode::SUCCESS,
+        "orchestrator should exit gracefully"
+    );
     let _ = std::fs::remove_dir_all(&dir);
 }

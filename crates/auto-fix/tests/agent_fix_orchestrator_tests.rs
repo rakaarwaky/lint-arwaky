@@ -62,12 +62,7 @@ impl IFixProtocol for MockFixProtocol {
     fn report_non_fixable(&self, violations: &[LintResult]) -> Vec<LintMessage> {
         violations
             .iter()
-            .map(|v| {
-                LintMessage::new(format!(
-                    "MANUAL: {}",
-                    v.code.to_string()
-                ))
-            })
+            .map(|v| LintMessage::new(format!("MANUAL: {}", v.code.to_string())))
             .collect()
     }
 
@@ -106,10 +101,7 @@ fn execute_trait_delegates_to_protocol() {
 #[test]
 fn manual_report_filters_violations() {
     let orch = FixOrchestrator::new(Arc::new(MockFixProtocol));
-    let violations = vec![
-        make_result("AES101"),
-        make_result("AES500"),
-    ];
+    let violations = vec![make_result("AES101"), make_result("AES500")];
     let report = orch.manual_report(&violations);
     assert_eq!(report.len(), 2);
     assert!(report[0].contains("AES101"));

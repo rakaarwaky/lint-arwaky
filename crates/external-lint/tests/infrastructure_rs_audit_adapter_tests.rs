@@ -41,7 +41,10 @@ async fn scan_returns_empty_when_no_cargo_lock() {
     // No Cargo.lock in this directory
     let path = make_path(&dir.to_string_lossy());
     let results = adapter.scan(&path).await.unwrap();
-    assert!(results.is_empty(), "expected no results for dir without Cargo.lock");
+    assert!(
+        results.is_empty(),
+        "expected no results for dir without Cargo.lock"
+    );
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -62,7 +65,10 @@ async fn scan_with_empty_cargo_lock_does_not_panic() {
     std::fs::write(dir.join("Cargo.lock"), "").unwrap();
     let path = make_path(&dir.to_string_lossy());
     let results = adapter.scan(&path).await.unwrap();
-    assert!(results.is_empty(), "expected empty results for empty Cargo.lock");
+    assert!(
+        results.is_empty(),
+        "expected empty results for empty Cargo.lock"
+    );
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -71,5 +77,8 @@ async fn apply_fix_returns_true() {
     let adapter = make_adapter();
     let path = make_path("Cargo.lock");
     let status = adapter.apply_fix(&path).await.unwrap();
-    assert!(status.value(), "cargo-audit apply_fix should return true (noop)");
+    assert!(
+        status.value(),
+        "cargo-audit apply_fix should return true (noop)"
+    );
 }

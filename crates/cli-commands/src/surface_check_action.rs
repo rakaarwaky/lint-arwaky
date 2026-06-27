@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 use std::process::ExitCode;
 
+use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -30,11 +31,17 @@ pub fn handle_check(
     filter: Option<String>,
     git_aggregate: Option<Arc<dyn GitHooksAggregate>>,
     config: ArchitectureConfig,
+    format: Format,
 ) -> ExitCode {
     let root = match path {
         Some(p) => p,
         None => ".".to_string(),
     };
+    // Validate path exists before scanning
+    if !std::path::Path::new(&root).exists() {
+        eprintln!("Error: path '{}' does not exist", root);
+        return ExitCode::FAILURE;
+    }
     if git_diff {
         let git_agg = match git_aggregate {
             Some(g) => g,
@@ -55,7 +62,7 @@ pub fn handle_check(
         ))
     } else {
         let surface = CheckCommandsSurface::new(ctx);
-        surface.scan(&root, filter.as_deref(), config);
+        surface.scan(&root, filter.as_deref(), config, format);
         ExitCode::SUCCESS
     }
 }
@@ -68,13 +75,19 @@ pub fn handle_scan(
     factory: OrchestratorFactory,
     filter: Option<String>,
     member: Option<String>,
+    format: Format,
 ) -> ExitCode {
     let root = match path {
         Some(p) => p,
         None => ".".to_string(),
     };
+    // Validate path exists before scanning
+    if !std::path::Path::new(&root).exists() {
+        eprintln!("Error: path '{}' does not exist", root);
+        return ExitCode::FAILURE;
+    }
     let surface = CheckCommandsSurface::new_with_factory(ctx, multi_project_orchestrator, factory);
-    surface.scan_with_discovery(&root, filter.as_deref(), member.as_deref());
+    surface.scan_with_discovery(&root, filter.as_deref(), member.as_deref(), format);
     ExitCode::SUCCESS
 }
 
