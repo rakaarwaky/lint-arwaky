@@ -16,6 +16,7 @@ use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtoc
 use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::taxonomy_common_vo::PatternList;
+use std::path::Path;
 use std::sync::Arc;
 
 /// Naming orchestrator — the agent layer for naming convention enforcement.
@@ -69,13 +70,15 @@ impl NamingOrchestrator {
 
     /// Filter to source code files only (.rs, .py, .js, .ts, .jsx, .tsx).
     pub fn filter_source_files(files: &FilePathList) -> FilePathList {
-        let source_exts = ["rs", "py", "js", "ts", "jsx", "tsx"];
         let filtered: Vec<FilePath> = files
             .values
             .iter()
-            .filter(|f| match f.value.rsplit('.').next() {
-                Some(ext) => source_exts.contains(&ext),
-                None => false,
+            .filter(|f| {
+                let path = Path::new(&f.value);
+                matches!(
+                    path.extension().and_then(|e| e.to_str()),
+                    Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
+                )
             })
             .cloned()
             .collect();

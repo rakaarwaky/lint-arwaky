@@ -38,7 +38,7 @@ impl SuffixPrefixChecker {
         msg: impl Into<String>,
         sev: Severity,
     ) -> LintResult {
-        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let file_path = FilePath::new(file).unwrap_or_default();
         LintResult {
             file: file_path,
             line: LineNumber::new(1),
@@ -56,33 +56,6 @@ impl SuffixPrefixChecker {
             }),
             related_locations: LocationList::new(),
         }
-    }
-
-    pub fn is_barrel_file(filename: &str) -> bool {
-        matches!(
-            filename,
-            "__init__.py" | "mod.rs" | "index.ts" | "index.js" | "index.tsx" | "index.jsx"
-        )
-    }
-
-    pub fn is_entry_point(filename: &str) -> bool {
-        matches!(
-            filename,
-            "__init__.py"
-                | "main.py"
-                | "py.typed"
-                | "app.py"
-                | "lib.rs"
-                | "main.rs"
-                | "index.ts"
-                | "index.js"
-                | "index.tsx"
-                | "index.jsx"
-                | "main.ts"
-                | "main.js"
-                | "app.ts"
-                | "app.js"
-        )
     }
 
     pub fn get_stem(filename: &str) -> Option<String> {
@@ -103,11 +76,12 @@ impl SuffixPrefixChecker {
         file: &str,
         filename: &str,
         definition: Option<&LayerDefinition>,
-        _layer_name: &Option<String>,
+        _layer_name: &Option<LayerNameVO>,
         violations: &mut Vec<LintResult>,
     ) {
         // Step 1: Skip checking for barrel files and system entry point files.
-        if Self::is_barrel_file(filename) || Self::is_entry_point(filename) {
+        let fp = FilePath::new(filename.to_string()).unwrap_or_default();
+        if fp.is_barrel_file() || fp.is_entry_point() {
             return;
         }
 
@@ -133,7 +107,10 @@ impl SuffixPrefixChecker {
         // Step 5: Check if the suffix is explicitly forbidden for the current layer.
         if let Some(ref suf) = suffix {
             if def.naming.forbidden_suffix.values.contains(suf) {
-                let layer_display = _layer_name.as_deref().unwrap_or("unknown").to_string();
+                let layer_display = _layer_name
+                    .as_ref()
+                    .map(|l| l.value().to_string())
+                    .unwrap_or_else(|| "unknown".to_string());
                 violations.push(Self::make_result(
                     file,
                     "AES102",
@@ -162,7 +139,10 @@ impl SuffixPrefixChecker {
             };
             if !valid {
                 let allowed_list = def.naming.allowed_suffix.values.clone();
-                let layer_display = _layer_name.as_deref().unwrap_or("unknown").to_string();
+                let layer_display = _layer_name
+                    .as_ref()
+                    .map(|l| l.value().to_string())
+                    .unwrap_or_else(|| "unknown".to_string());
                 let suffix_display = suffix.as_deref().unwrap_or("(none)");
                 violations.push(Self::make_result(
                     file,
@@ -214,16 +194,11 @@ impl INamingCheckerProtocol for SuffixPrefixChecker {
             // Step 2: Extract the raw filename from the path.
             let filename = f.rsplit('/').next().unwrap_or(&f_str);
             // Step 3: Determine the architectural layer for the file.
-            let layer = analyzer
-                .detect_layer(f, root_dir)
-                .map(|l| l.value().to_string());
+            let layer = analyzer.detect_layer(f, root_dir);
             // Step 4: Fetch layer-specific definition properties.
-            let def = layer.as_ref().and_then(|l| {
-                analyzer
-                    .layer_map()
-                    .values
-                    .get(&LayerNameVO::new(l.as_str()))
-            });
+            let def = layer
+                .as_ref()
+                .and_then(|l| analyzer.layer_map().values.get(l));
             // Step 5: Execute the suffix checker function.
             self.check_domain_suffixes(&f_str, filename, def, &layer, &mut results.values);
         }

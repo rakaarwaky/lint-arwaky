@@ -128,7 +128,8 @@ Allowed branch naming:
 When merging a PR to develop:
 
 - Use `gh pr merge <num> --squash` ONLY
-- **NEVER use `--delete-branch`** — feature branches must NOT be deleted after merge
+- ** use `--delete-branch`** — for feature branches after merger 
+- but do  NOT be deleted `develop` branch after merge to main 
 - Branches that were accidentally deleted must be restored immediately via:
   ```bash
   git branch <branch-name> origin/develop

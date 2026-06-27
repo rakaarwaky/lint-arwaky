@@ -40,7 +40,7 @@ impl NamingConventionChecker {
         msg: impl Into<String>,
         sev: Severity,
     ) -> LintResult {
-        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let file_path = FilePath::new(file).unwrap_or_default();
         LintResult {
             file: file_path,
             line: LineNumber::new(1),
@@ -60,39 +60,12 @@ impl NamingConventionChecker {
         }
     }
 
-    pub fn is_barrel_file(filename: &str) -> bool {
-        matches!(
-            filename,
-            "__init__.py" | "mod.rs" | "index.ts" | "index.js" | "index.tsx" | "index.jsx"
-        )
-    }
-
-    pub fn is_entry_point(filename: &str) -> bool {
-        matches!(
-            filename,
-            "__init__.py"
-                | "main.py"
-                | "py.typed"
-                | "app.py"
-                | "lib.rs"
-                | "main.rs"
-                | "index.ts"
-                | "index.js"
-                | "index.tsx"
-                | "index.jsx"
-                | "main.ts"
-                | "main.js"
-                | "app.ts"
-                | "app.js"
-        )
-    }
-
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min 2 words).
     pub fn check_file_naming(
         &self,
         file: &str,
         filename: &str,
-        layer_name: &Option<String>,
+        layer_name: &Option<LayerNameVO>,
         definition: Option<&LayerDefinition>,
         _config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
@@ -109,7 +82,8 @@ impl NamingConventionChecker {
         ];
 
         // Step 1: Skip naming verification for barrel files (e.g. __init__.py, mod.rs, index.ts) and entry point files (e.g. main.rs, app.py).
-        if Self::is_barrel_file(filename) || Self::is_entry_point(filename) {
+        let fp = FilePath::new(filename.to_string()).unwrap_or_default();
+        if fp.is_barrel_file() || fp.is_entry_point() {
             return;
         }
 
@@ -223,16 +197,11 @@ impl INamingCheckerProtocol for NamingConventionChecker {
                 None => &f_str,
             };
             // Step 3: Determine the architectural layer for the file.
-            let layer = analyzer
-                .detect_layer(f, root_dir)
-                .map(|l| l.value().to_string());
+            let layer = analyzer.detect_layer(f, root_dir);
             // Step 4: Fetch layer-specific definition properties.
-            let def = layer.as_ref().and_then(|l| {
-                analyzer
-                    .layer_map()
-                    .values
-                    .get(&LayerNameVO::new(l.as_str()))
-            });
+            let def = layer
+                .as_ref()
+                .and_then(|l| analyzer.layer_map().values.get(l));
             // Step 5: Execute the naming checker function.
             self.check_file_naming(
                 &f_str,

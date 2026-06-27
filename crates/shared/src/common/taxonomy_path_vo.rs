@@ -83,12 +83,12 @@ impl FilePath {
         }
     }
 
-    /// Check if the path is a barrel file.
+    /// Check if the path is a barrel file (module re-export aggregator).
     pub fn is_barrel_file(&self) -> bool {
         let f = self.basename();
         matches!(
             f.as_ref(),
-            "__init__.py" | "mod.rs" | "index.ts" | "index.js"
+            "__init__.py" | "mod.rs" | "index.ts" | "index.js" | "index.tsx" | "index.jsx"
         )
     }
 
@@ -97,7 +97,20 @@ impl FilePath {
         let f = self.basename();
         matches!(
             f.as_ref(),
-            "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs"
+            "__init__.py"
+                | "main.py"
+                | "py.typed"
+                | "app.py"
+                | "lib.rs"
+                | "main.rs"
+                | "index.ts"
+                | "index.js"
+                | "index.tsx"
+                | "index.jsx"
+                | "main.ts"
+                | "main.js"
+                | "app.ts"
+                | "app.js"
         )
     }
 }
