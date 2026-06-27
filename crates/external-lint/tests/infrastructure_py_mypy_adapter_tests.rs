@@ -98,7 +98,7 @@ src/utils.py:25:7: warning: unused function [unused-function]
 src/main.py:42: note: revealed type is 'int' [note]
 ";
     let adapter = make_adapter(output);
-    let path = make_path(".");
+    let path = make_path("src/main.py");
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 3);
     // error -> HIGH
