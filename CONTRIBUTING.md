@@ -1,11 +1,11 @@
 # Contributing to Lint Arwaky
 
-> This guide covers everything you need to start contributing 
+> This guide covers everything you need to start contributing
 
 ## Why Contribute
 
-| Aspect                           | Benefit                                                        |
-| -------------------------------- | -------------------------------------------------------------- |
+| Aspect                     | Benefit                                                        |
+| -------------------------- | -------------------------------------------------------------- |
 | **Real-world impact**      | Your code powers the same rule engine that audits this project |
 | **Skill development**      | Practice Rust, async/tokio, MCP, and 6-layer architecture      |
 | **Open-source experience** | Build portfolio with a self-auditing codebase                  |

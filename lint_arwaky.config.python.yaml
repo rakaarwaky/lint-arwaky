@@ -46,12 +46,7 @@ architecture:
           "surfaces",
           "root",
         ]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES102:
       enabled: true
@@ -214,12 +209,7 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -368,17 +358,13 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
       conditions:
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(protocol)"]
-          forbidden: ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          forbidden:
+            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -390,7 +376,8 @@ architecture:
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(port)"]
-          forbidden: ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          forbidden:
+            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -419,45 +406,25 @@ architecture:
     AES402:
       enabled: true
       scope: ["contract(aggregate)", "contract(port|protocol)"]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES403:
       enabled: true
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES404:
       enabled: true
       scope: ["infrastructure"]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES405:
       enabled: true
       scope: ["agent(orchestrator)"]
       max_lines: 1000
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES406:
       enabled: true
@@ -468,12 +435,7 @@ architecture:
           "surfaces(component|view|layout)",
         ]
       max_functions: 15
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES301:
       enabled: true
@@ -487,12 +449,7 @@ architecture:
           "surfaces",
         ]
       max_lines: 1000
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES302:
       enabled: true
@@ -506,12 +463,7 @@ architecture:
           "surfaces",
         ]
       min_lines: 5
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES304:
       enabled: true
@@ -586,12 +538,7 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py"
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES501:
       enabled: true

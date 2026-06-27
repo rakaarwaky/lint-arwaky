@@ -1,4 +1,4 @@
-```markdown
+````markdown
 # Implementation Draft: AI Auto-Repair Model (Perfect AES Dogfooding v10)
 
 Draft v10 resolves all audit findings from v9, including fixes for the model input pipeline (directory prior & feature extraction), elimination of silent fallback in label lookup, separation of file extension from module name for reference propagation, deduplication of forward pass, as well as strengthened transactional rollback logic and CLI input validation.
@@ -6,11 +6,13 @@ Draft v10 resolves all audit findings from v9, including fixes for the model inp
 ## 1. Taxonomy Layer (Data, Constants, Errors & Value Objects)
 
 File: `taxonomy_system_constant.rs`
+
 ```rust
 /// Absolute/relative path to the Safetensors model weights file.
 /// Will be loaded by Infrastructure during Root initialization.
 pub const MODEL_WEIGHTS_PATH: &str = "weights/model.safetensors";
 ```
+````
 
 File: `taxonomy_prefix_label_constant.rs`
 
@@ -172,7 +174,7 @@ impl TokenIds {
     pub fn len(&self) -> usize {
         self.0.len()
     }
-  
+
     // L-2 Fix: Adding is_empty to satisfy Clippy standards
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
@@ -573,7 +575,7 @@ impl BpeTransformerProtocol for BpeTokenizer {
     // M-3 Fix: Tokenization only from extracted AST features
     fn tokenize(&self, features: &ExtractedFeature) -> Result<TokenIds, SystemError> {
         let mut tokens = Vec::new();
-    
+
         let mut combined_text = String::new();
         for imp in &features.imports { combined_text.push_str(imp); combined_text.push(' '); }
         for st in &features.structs_traits { combined_text.push_str(st); combined_text.push(' '); }
@@ -589,7 +591,7 @@ impl BpeTransformerProtocol for BpeTokenizer {
             };
             tokens.push(id);
         }
-    
+
         if tokens.is_empty() { tokens.push(0); }
         Ok(TokenIds(tokens))
     }
@@ -644,7 +646,7 @@ use crate::taxonomy_concept_vocab_constant::CONCEPT_VOCAB;
 
 use burn::module::Module;
 use burn::tensor::{backend::Backend, Device, Tensor, Int};
-use burn::record::{BinBytesRecorder, Recorder}; 
+use burn::record::{BinBytesRecorder, Recorder};
 use burn::nn::{Embedding, EmbeddingConfig, Linear, LinearConfig};
 use burn::nn::transformer::{TransformerEncoder, TransformerEncoderConfig};
 
@@ -662,11 +664,11 @@ impl<B: Backend> AESNamingModelPredictor<B> {
     pub fn new_from_bytes(weights: &FileBytes, device: &Device<B>) -> Result<Self, SystemError> {
         let config = AESNamingModelConfig::default();
         let mut model = Self::init_empty(device, &config);
-    
+
         let record = BinBytesRecorder::new()
             .load(weights.0.clone(), device)
             .map_err(|e| SystemError::PredictionError(ErrorMessage(format!("Failed to load record: {}", e))))?;
-    
+
         model = model.load_record(record);
         Ok(model)
     }
@@ -681,11 +683,11 @@ impl<B: Backend> AESNamingModelPredictor<B> {
             concept_projection: LinearConfig::new(config.d_model, CONCEPT_VOCAB.len()).init(device), // L-1 Fix: Size 8
         }
     }
-  
+
     // H-3 Fix: Forward pass extraction to avoid code duplication (AES305)
     fn forward_logits(&self, tokens: &TokenIds, features: &ExtractedFeature) -> Result<(Tensor<B, 2>, Tensor<B, 2>, Tensor<B, 2>), SystemError> {
         let device = self.prefix_head.devices()[0].clone();
-    
+
         let tokens_data: Vec<i64> = tokens.0.iter().map(|&v| v as i64).collect();
         let seq_len = tokens_data.len();
         let tokens_tensor = Tensor::<B, 2, Int>::from_data(
@@ -696,14 +698,14 @@ impl<B: Backend> AESNamingModelPredictor<B> {
         let token_emb = self.token_embed.forward(tokens_tensor);
         let x = token_emb; // Simplified for sequence dimension stability
         let encoded = self.encoder.forward(x, None);
-    
+
         let pooled = encoded.clone().mean_dim(1);
-    
+
         // C-1 Fix: Real Directory Prior Embedding
         let dir_hash = features.directory_context.bytes().fold(0u64, |acc, b| acc.wrapping_mul(31).wrapping_add(b as u64)) % 1024;
         let dir_idx_tensor = Tensor::<B, 1, Int>::from_data([dir_hash as i64], &device);
         let dir_prior = self.dir_embed.forward(dir_idx_tensor);
-    
+
         let pooled_with_dir = pooled + dir_prior;
 
         let prefix_logits = self.prefix_head.forward(pooled_with_dir.clone());
@@ -811,7 +813,7 @@ impl FileReaderPort for FileSystemReaderAdapter {
         let content = fs::read_to_string(&path.0)?;
         Ok(FileContent(content))
     }
-  
+
     fn read_file_as_bytes(&self, path: &FilePath) -> Result<FileBytes, SystemError> {
         let bytes = fs::read(&path.0)?;
         Ok(FileBytes(bytes))
@@ -835,7 +837,7 @@ impl FileWriterPort for FileSystemWriterAdapter {
         fs::write(&path.0, &content.0)?;
         Ok(())
     }
-  
+
     fn rename_file(&self, old_path: &FilePath, new_path: &FilePath) -> Result<(), SystemError> {
         fs::rename(&old_path.0, &new_path.0)?;
         Ok(())
@@ -996,7 +998,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
 
         let content = self.reader.read_file_as_string(target_file)?;
         let features = self.extractor.extract_from_file(target_file, &content)?;
-    
+
         // M-3 Fix: Passing features to the tokenizer
         let tokens = self.tokenizer.tokenize(&features)?;
 
@@ -1004,7 +1006,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
         if config.vocab_size == 0 || config.d_model == 0 {
             return Err(SystemError::PredictionError(ErrorMessage("Model config invalid".to_string())));
         }
-    
+
         let prediction = self.predictor.predict(&features, &tokens)?;
 
         if prediction.prefix_confidence < 0.85 || prediction.suffix_confidence < 0.85 || prediction.concept_confidence < 0.85 {
@@ -1057,14 +1059,14 @@ impl AutorepairAggregate for AutorepairOrchestrator {
                     rollback_failed = true;
                 }
             }
-        
+
             for (original_path, backup_content) in backups {
                 if let Err(e) = self.writer.write_file_as_string(&original_path, &backup_content) {
                     rollback_errors.push(format!("write rollback failed for {:?}: {:?}", original_path.0, e));
                     rollback_failed = true;
                 }
             }
-        
+
             let err_msg = format!(
                 "Post-auto-fix verification failed: {:?}. Rollback Issues: [{}]",
                 verification_err,
@@ -1135,7 +1137,7 @@ use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 use crate::contract_autorepair_aggregate::AutorepairAggregate;
 
-use burn::backend::NdArray; 
+use burn::backend::NdArray;
 use burn::tensor::Device;
 
 // M-4 Fix: File and struct naming aligned with the feature crate (autorepair)
@@ -1144,10 +1146,10 @@ pub struct AutorepairContainer;
 impl AutorepairContainer {
     pub fn build() -> Result<Box<dyn AutorepairAggregate>, SystemError> {
         let weights_path = FilePath::from_constant(MODEL_WEIGHTS_PATH);
-    
+
         let reader_adapter = FileSystemReaderAdapter;
         let weights_bytes = reader_adapter.read_file_as_bytes(&weights_path)?;
-    
+
         let device = Device::<NdArray>::default();
         let predictor = AESNamingModelPredictor::<NdArray>::new_from_bytes(&weights_bytes, &device)?;
 
@@ -1164,7 +1166,7 @@ impl AutorepairContainer {
             compiler: Box::new(CargoCompilerAdapter),
             linter: Box::new(LintArwakyAdapter),
         };
-    
+
         Ok(Box::new(AutorepairOrchestrator::new(deps)))
     }
 }
@@ -1197,9 +1199,9 @@ fn run() -> Result<(), SystemError> {
     let command = &args[1];
     let workspace = FilePath::from_constant(&args[2]);
     let target = FilePath::from_constant(&args[3]);
-  
+
     let controller = AutofixCommand::new(aggregate.as_ref());
-  
+
     match controller.route_command(command, &workspace, &target) {
         Ok(()) => {
             println!("Auto-Repair Success!");
@@ -1223,4 +1225,5 @@ fn main() {
 ```
 
 ```
+
 ```

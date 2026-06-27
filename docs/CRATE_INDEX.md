@@ -35,6 +35,7 @@
 ### What it does
 
 Contains **all shared types** used across the entire workspace:
+
 - **Taxonomy layer:** Value Objects (VOs), Entities, Events, Errors, Constants
 - **Contract layer:** Port traits, Protocol traits, Aggregate traits
 
@@ -44,16 +45,16 @@ Every other crate depends on shared types. Without a shared crate, you'd have ci
 
 ### Key files
 
-| File | Purpose |
-|------|---------|
-| `taxonomy_file_path_vo.rs` | `FilePath` VO — validated, normalized file paths |
-| `taxonomy_severity_vo.rs` | `Severity` enum — Error, Warning, Info |
-| `taxonomy_language_vo.rs` | `Language` enum — Rust, Python, JavaScript |
-| `taxonomy_layer_vo.rs` | `Layer` enum — the 7 architectural layers |
-| `taxonomy_lint_result_vo.rs` | `LintResult` — violation record |
-| `contract_import_runner_aggregate.rs` | `IImportRunnerAggregate` trait |
-| `contract_code_analysis_aggregate.rs` | `ICodeAnalysisAggregate` trait |
-| `contract_naming_runner_aggregate.rs` | `INamingRunnerAggregate` trait |
+| File                                  | Purpose                                          |
+| ------------------------------------- | ------------------------------------------------ |
+| `taxonomy_file_path_vo.rs`            | `FilePath` VO — validated, normalized file paths |
+| `taxonomy_severity_vo.rs`             | `Severity` enum — Error, Warning, Info           |
+| `taxonomy_language_vo.rs`             | `Language` enum — Rust, Python, JavaScript       |
+| `taxonomy_layer_vo.rs`                | `Layer` enum — the 7 architectural layers        |
+| `taxonomy_lint_result_vo.rs`          | `LintResult` — violation record                  |
+| `contract_import_runner_aggregate.rs` | `IImportRunnerAggregate` trait                   |
+| `contract_code_analysis_aggregate.rs` | `ICodeAnalysisAggregate` trait                   |
+| `contract_naming_runner_aggregate.rs` | `INamingRunnerAggregate` trait                   |
 
 ### How to add new shared types
 
@@ -72,6 +73,7 @@ Every other crate depends on shared types. Without a shared crate, you'd have ci
 ### What it does
 
 Enforces import compliance across Rust, Python, and JavaScript/TypeScript:
+
 - **AES201:** Forbidden imports (e.g., importing from wrong layer)
 - **AES202:** Mandatory imports (e.g., every file must import its VO)
 - **AES203:** Unused imports
@@ -118,6 +120,7 @@ import-rules/src/
 ### What it does
 
 Enforces naming conventions:
+
 - **AES101:** File suffix convention (e.g., `*_vo.rs` for value objects)
 - **AES102:** Filename pattern matching (e.g., `snake_case` for Rust)
 
@@ -149,6 +152,7 @@ naming-rules/src/
 ### What it does
 
 Checks code quality metrics:
+
 - **AES301:** File line limits (max 500 lines)
 - **AES302:** Function line limits (max 50 lines)
 - **AES303:** Bypass suppression detection (`noqa`, `type: ignore`, `#[allow(...)]`)
@@ -184,6 +188,7 @@ code-analysis/src/
 ### What it does
 
 Enforces layer-role boundaries:
+
 - **AES401:** Layer-role suffix mismatch (e.g., `taxonomy_*` file can't define a struct named `Checker`)
 - **AES402:** Contract uses primitive types (must use VOs)
 - **AES403:** Capability complexity (too many dependencies)
@@ -223,6 +228,7 @@ role-rules/src/
 ### What it does
 
 Detects **dead/unreachable code**:
+
 - **AES501:** Unused taxonomy files (VOs never imported)
 - **AES502:** Unused contracts (traits never implemented)
 - **AES503:** Unused capabilities (checkers never called)
@@ -262,6 +268,7 @@ orphan-detector/src/
 ### What it does
 
 Applies **safe automatic fixes** for certain violations:
+
 - Removes unused imports (AES203)
 - Removes forbidden imports (AES201)
 - Removes dummy imports (AES204)
@@ -284,6 +291,7 @@ Only **removal** operations are automated. No code is **added** or **modified** 
 ### What it does
 
 Loads and parses configuration:
+
 - Reads `lint_arwaky.config.{rust,python,javascript}.yaml`
 - Detects workspace root (walks up directory tree)
 - Discovers workspace members (Cargo.toml, pyproject.toml, package.json)
@@ -312,6 +320,7 @@ project-root/
 ### What it does
 
 Wraps **external linter tools**:
+
 - **Rust:** Clippy, rustfmt, Cargo Audit
 - **Python:** Ruff, MyPy, Bandit
 - **JavaScript:** ESLint, Prettier, TypeScript Compiler
@@ -323,6 +332,7 @@ External tools are **best-in-class** for their languages. Lint Arwaky **delegate
 ### Adapter pattern
 
 Each adapter:
+
 1. Executes the external tool as a subprocess
 2. Parses the tool's output (stdout/stderr)
 3. Converts to `LintResult` format
@@ -350,6 +360,7 @@ impl IExternalLintProtocol for ClippyAdapter {
 ### What it does
 
 Implements all CLI subcommands:
+
 - `check` — Single project lint
 - `scan` — Multi-project lint
 - `fix` — Auto-fix violations
@@ -391,6 +402,7 @@ cli-commands/src/
 ### What it does
 
 Implements a **Model Context Protocol (MCP) server** for AI agents:
+
 - JSON-RPC 2.0 over stdio
 - 5 tools: `execute_command`, `list_commands`, `command_schema`, `read_skill`, `health_check`
 - Async via tokio
@@ -401,13 +413,13 @@ AI agents (Claude, GPT, etc.) need a **standardized interface** to interact with
 
 ### MCP tools
 
-| Tool | Purpose |
-|------|---------|
+| Tool              | Purpose                                         |
+| ----------------- | ----------------------------------------------- |
 | `execute_command` | Run a lint command (check, scan, fix, ci, etc.) |
-| `list_commands` | List available commands and their parameters |
-| `command_schema` | Get JSON schema for a command's parameters |
-| `read_skill` | Read SKILL.md content (AI agent context) |
-| `health_check` | Verify server is running |
+| `list_commands`   | List available commands and their parameters    |
+| `command_schema`  | Get JSON schema for a command's parameters      |
+| `read_skill`      | Read SKILL.md content (AI agent context)        |
+| `health_check`    | Verify server is running                        |
 
 ---
 
@@ -419,6 +431,7 @@ AI agents (Claude, GPT, etc.) need a **standardized interface** to interact with
 ### What it does
 
 Terminal-based file browser with **real-time lint results**:
+
 - 3-panel layout (Ranger-style)
 - Keyboard navigation
 - File content preview
@@ -430,14 +443,14 @@ Some developers prefer **keyboard-driven interfaces**. The TUI provides a visual
 
 ### Key bindings
 
-| Key | Action |
-|-----|--------|
-| `↑/↓` | Navigate files |
+| Key     | Action                       |
+| ------- | ---------------------------- |
+| `↑/↓`   | Navigate files               |
 | `Enter` | Open file / expand directory |
-| `q` | Quit |
-| `r` | Refresh |
-| `f` | Toggle file filter |
-| `l` | Show/hide lint results |
+| `q`     | Quit                         |
+| `r`     | Refresh                      |
+| `f`     | Toggle file filter           |
+| `l`     | Show/hide lint results       |
 
 ---
 
@@ -449,6 +462,7 @@ Some developers prefer **keyboard-driven interfaces**. The TUI provides a visual
 ### What it does
 
 Real-time file system monitoring:
+
 - Uses `inotify` on Linux (via `notify` crate)
 - Debounces rapid changes (500ms)
 - Filters to source files only
@@ -468,6 +482,7 @@ Developers want **instant feedback** when they save a file. File watching provid
 ### What it does
 
 Manages Git pre-commit hooks:
+
 - `install-hook` — Creates `.git/hooks/pre-commit`
 - `uninstall-hook` — Removes the hook
 - Hook runs `lint-arwaky-cli check` on staged files
@@ -486,6 +501,7 @@ Git hooks **enforce quality at commit time**. Developers can't commit code that 
 ### What it does
 
 Project initialization and diagnostics:
+
 - `init` — Create config files for a new project
 - `doctor` — Check environment (Rust, Python, Node.js versions)
 - `mcp-config` — Generate MCP config for Claude Desktop
@@ -504,6 +520,7 @@ New projects need **quick setup**. The setup crate automates config generation a
 ### What it does
 
 Ongoing maintenance operations:
+
 - Environment diagnostics
 - Security vulnerability scans
 - Dependency analysis and updates
@@ -553,33 +570,33 @@ Codebases need **regular maintenance**. This crate provides tools for ongoing he
 
 ## Quick Reference: Which Crate for What?
 
-| I want to... | Edit crate |
-|--------------|-----------|
-| Add a new value type | `shared/` |
-| Add a new trait interface | `shared/` |
-| Add a new import rule | `import-rules/` |
-| Add a new naming rule | `naming-rules/` |
-| Add a new quality check | `code-analysis/` |
-| Add a new role check | `role-rules/` |
-| Add a new orphan check | `orphan-detector/` |
-| Add a new auto-fix | `auto-fix/` |
-| Add a new config option | `config-system/` |
-| Add a new external tool | `external-lint/` |
-| Add a new CLI command | `cli-commands/` |
-| Add a new MCP tool | `mcp-server/` |
-| Add a new TUI view | `tui/` |
-| Modify file watching | `file-watch/` |
-| Modify git hooks | `git-hooks/` |
-| Modify project setup | `project-setup/` |
+| I want to...              | Edit crate         |
+| ------------------------- | ------------------ |
+| Add a new value type      | `shared/`          |
+| Add a new trait interface | `shared/`          |
+| Add a new import rule     | `import-rules/`    |
+| Add a new naming rule     | `naming-rules/`    |
+| Add a new quality check   | `code-analysis/`   |
+| Add a new role check      | `role-rules/`      |
+| Add a new orphan check    | `orphan-detector/` |
+| Add a new auto-fix        | `auto-fix/`        |
+| Add a new config option   | `config-system/`   |
+| Add a new external tool   | `external-lint/`   |
+| Add a new CLI command     | `cli-commands/`    |
+| Add a new MCP tool        | `mcp-server/`      |
+| Add a new TUI view        | `tui/`             |
+| Modify file watching      | `file-watch/`      |
+| Modify git hooks          | `git-hooks/`       |
+| Modify project setup      | `project-setup/`   |
 
 ---
 
 ## Further Reading
 
-| Topic | Document |
-|-------|----------|
-| Navigation hub (start here) | [DOCS.md](DOCS.md) |
+| Topic                              | Document                                 |
+| ---------------------------------- | ---------------------------------------- |
+| Navigation hub (start here)        | [DOCS.md](DOCS.md)                       |
 | Developer guide (patterns, how-to) | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) |
-| End-to-end data flow | [DATA_FLOW.md](DATA_FLOW.md) |
-| AES 7-layer architecture | [ARCHITECTURE.md](../ARCHITECTURE.md) |
-| 24 AES rules catalog | [rules/RULES_AES.md](rules/RULES_AES.md) |
+| End-to-end data flow               | [DATA_FLOW.md](DATA_FLOW.md)             |
+| AES 7-layer architecture           | [ARCHITECTURE.md](../ARCHITECTURE.md)    |
+| 24 AES rules catalog               | [rules/RULES_AES.md](rules/RULES_AES.md) |

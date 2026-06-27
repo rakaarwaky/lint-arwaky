@@ -60,6 +60,7 @@ The `source-parsing` crate (`crates/source-parsing/`) contains infrastructure im
 ### 1. Entry Points that use `source_parsing` directly
 
 **`crates/root_cli_main_entry.rs`** (lines 20-21, 79-80, 128, 145, 207, 210):
+
 ```rust
 let source_parsing_container =
     source_parsing::root_source_parsing_container::SourceParsingContainer::new();
@@ -70,6 +71,7 @@ language_detector: source_parsing_container.language_detector(),
 ```
 
 **`crates/root_mcp_main_entry.rs`** (lines 15-17):
+
 ```rust
 let source_parsing_container =
     source_parsing::root_source_parsing_container::SourceParsingContainer::new();
@@ -81,6 +83,7 @@ let source_parser = source_parsing_container.source_parser();
 #### `import-rules` — needs `ISourceParserPort`
 
 **`crates/import-rules/src/root_import_rules_container.rs`:**
+
 ```rust
 use shared::source_parsing::contract_parser_port::ISourceParserPort;
 
@@ -98,6 +101,7 @@ impl ImportContainer {
 ```
 
 **`crates/import-rules/src/capabilities_layer_detection_analyzer.rs`:**
+
 ```rust
 use shared::source_parsing::contract_parser_port::ISourceParserPort;
 
@@ -107,6 +111,7 @@ pub struct LayerDetectionAnalyzer {
 ```
 
 **Files using `shared::source_parsing::*`:**
+
 - `capabilities_dummy_import_checker.rs`
 - `infrastructure_import_parser_adapter.rs`
 - `capabilities_cycle_import_analyzer.rs`
@@ -121,6 +126,7 @@ pub struct LayerDetectionAnalyzer {
 #### `code-analysis` — needs `ISourceParserPort`
 
 **`crates/code-analysis/src/root_code_analysis_container.rs`:**
+
 ```rust
 impl shared::source_parsing::contract_parser_port::ISourceParserPort for NullSourceParser {
     // Already has a null/stub implementation!
@@ -130,6 +136,7 @@ fn parser(&self) -> &dyn shared::source_parsing::contract_parser_port::ISourcePa
 ```
 
 **`crates/code-analysis/src/capabilities_check_bypass_checker.rs`:**
+
 ```rust
 use shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
@@ -137,12 +144,14 @@ use shared::source_parsing::taxonomy_path_vo::FilePath;
 ```
 
 **`crates/code-analysis/src/capabilities_code_duplication_analyzer.rs`:**
+
 ```rust
 use shared::source_parsing::taxonomy_language_detector_helper::LanguageDetector;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
 ```
 
 **`crates/code-analysis/src/agent_code_analysis_orchestrator.rs`:**
+
 ```rust
 use shared::source_parsing::taxonomy_path_vo::{DirectoryPath, FilePath};
 shared::source_parsing::taxonomy_file_collector_helper::collect_source_files(...)
@@ -153,6 +162,7 @@ shared::source_parsing::taxonomy_file_collector_helper::collect_source_files(...
 #### `cli-commands` — needs `IScannerProviderPort`, `ILanguageDetectorPort`
 
 **`crates/cli-commands/src/surface_check_command.rs`:**
+
 ```rust
 use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
 use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
@@ -171,6 +181,7 @@ pub struct CheckContext {
 ```
 
 **`crates/cli-commands/src/surface_git_command.rs`:**
+
 ```rust
 use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
 // Uses is_lintable() to filter git diff files
@@ -181,6 +192,7 @@ use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPo
 #### `git-hooks` — needs `IScannerProviderPort`
 
 **`crates/git-hooks/src/root_git_hooks_container.rs`:**
+
 ```rust
 use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 
@@ -200,6 +212,7 @@ impl GitContainer {
 ```
 
 **`crates/git-hooks/src/capabilities_diff_checker.rs`:**
+
 ```rust
 use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 
@@ -335,6 +348,7 @@ Path normalization with phantom root handling. Implements `IPathNormalizationPor
 ## Contracts (Ports) — DO NOT MODIFY, stay in shared
 
 ### `ISourceParserPort` (37 lines)
+
 **File:** `crates/shared/src/source-parsing/contract_parser_port.rs`
 
 ```rust
@@ -360,6 +374,7 @@ pub trait ISourceParserPort: Send + Sync {
 ```
 
 ### `IScannerProviderPort` (10 lines)
+
 **File:** `crates/shared/src/source-parsing/contract_scanner_provider_port.rs`
 
 ```rust
@@ -370,6 +385,7 @@ pub trait IScannerProviderPort: Send + Sync {
 ```
 
 ### `ILanguageDetectorPort` (47 lines)
+
 **File:** `crates/shared/src/source_parsing/contract_language_detector_port.rs`
 
 ```rust
@@ -407,12 +423,12 @@ source_parsing.workspace = true
 
 Each affected crate gets its own infrastructure files:
 
-| Crate | New Files | Source to Copy From |
-|-------|-----------|---------------------|
-| import-rules | `infrastructure_language_detector.rs` | `source-parsing/src/infrastructure_language_detector.rs` |
-| code-analysis | `infrastructure_language_detector.rs` | Same |
-| cli-commands | `infrastructure_language_detector.rs`, `infrastructure_scanner_provider.rs` | LanguageDetector + FileCollectorProvider |
-| git-hooks | (already has `new_default()` using `shared::FileCollectorProvider`) | No new files needed |
+| Crate         | New Files                                                                   | Source to Copy From                                      |
+| ------------- | --------------------------------------------------------------------------- | -------------------------------------------------------- |
+| import-rules  | `infrastructure_language_detector.rs`                                       | `source-parsing/src/infrastructure_language_detector.rs` |
+| code-analysis | `infrastructure_language_detector.rs`                                       | Same                                                     |
+| cli-commands  | `infrastructure_language_detector.rs`, `infrastructure_scanner_provider.rs` | LanguageDetector + FileCollectorProvider                 |
+| git-hooks     | (already has `new_default()` using `shared::FileCollectorProvider`)         | No new files needed                                      |
 
 ### Phase 2: Modify Containers to Provide Default Constructors
 
@@ -474,25 +490,27 @@ cargo clippy --all-targets -- -D warnings
 
 ## Risk Assessment
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Code duplication | Medium | Keep shared contracts in `shared`; only duplicate small infrastructure |
-| Breaking DI pattern | Low | Maintain `new()` for DI, add `new_default()` for self-contained |
-| Missing features | High | Copy FULL implementations, not simplified versions |
-| Breaking existing tests | Medium | Run `cargo test --workspace` after each phase |
-| Entry point compilation | High | Update all 3 entry points (CLI, MCP, TUI) |
+| Risk                    | Impact | Mitigation                                                             |
+| ----------------------- | ------ | ---------------------------------------------------------------------- |
+| Code duplication        | Medium | Keep shared contracts in `shared`; only duplicate small infrastructure |
+| Breaking DI pattern     | Low    | Maintain `new()` for DI, add `new_default()` for self-contained        |
+| Missing features        | High   | Copy FULL implementations, not simplified versions                     |
+| Breaking existing tests | Medium | Run `cargo test --workspace` after each phase                          |
+| Entry point compilation | High   | Update all 3 entry points (CLI, MCP, TUI)                              |
 
 ---
 
 ## Files to Touch (Complete List)
 
 ### New Files to Create
+
 - `crates/import-rules/src/infrastructure_language_detector.rs`
 - `crates/code-analysis/src/infrastructure_language_detector.rs`
 - `crates/cli-commands/src/infrastructure_language_detector.rs`
 - `crates/cli-commands/src/infrastructure_scanner_provider.rs`
 
 ### Files to Modify
+
 - `crates/import-rules/src/root_import_rules_container.rs` — add `new_default()`
 - `crates/code-analysis/src/root_code_analysis_container.rs` — add `new_default()`
 - `crates/cli-commands/src/surface_check_command.rs` — add `new_default()` to `CheckContext`
@@ -503,6 +521,7 @@ cargo clippy --all-targets -- -D warnings
 - `Cargo.toml` (root) — remove lines 22 and 94
 
 ### Files to Delete (Phase 4)
+
 - `crates/source-parsing/` (entire directory)
 
 ---

@@ -5,14 +5,17 @@ Draft v4 combines the **Bullet-Proof 7-Layer AES Architecture (100% Compliant)**
 ---
 
 ## 1. Taxonomy Layer (Data, Constants, Errors & Value Objects)
+
 Pure layer without framework dependencies.
 
 **File:** `taxonomy_system_constant.rs`
+
 ```rust
 pub const MODEL_WEIGHTS_PATH: &str = "weights/model.safetensors";
 ```
 
 **File:** `taxonomy_system_error.rs`
+
 ```rust
 #[derive(Debug)]
 pub enum SystemError {
@@ -23,6 +26,7 @@ pub enum SystemError {
 ```
 
 **File:** `taxonomy_file_path_vo.rs`
+
 ```rust
 use std::path::PathBuf;
 #[derive(Debug, Clone)]
@@ -30,12 +34,14 @@ pub struct FilePath(pub PathBuf);
 ```
 
 **File:** `taxonomy_module_name_vo.rs`
+
 ```rust
 #[derive(Debug, Clone)]
 pub struct ModuleName(pub String);
 ```
 
 **File:** `taxonomy_extracted_feature_vo.rs`
+
 ```rust
 #[derive(Debug, Clone)]
 pub struct ExtractedFeature {
@@ -46,6 +52,7 @@ pub struct ExtractedFeature {
 ```
 
 **File:** `taxonomy_prediction_result_vo.rs`
+
 ```rust
 #[derive(Debug, Clone)]
 pub struct PredictionResult {
@@ -57,6 +64,7 @@ pub struct PredictionResult {
 ```
 
 **File:** `taxonomy_model_config_vo.rs`
+
 ```rust
 #[derive(Debug, Clone)]
 pub struct AESNamingModelConfig {
@@ -74,9 +82,11 @@ pub struct AESNamingModelConfig {
 ---
 
 ## 2. Contract Layer (Interfaces / Ports, Protocols & Aggregates)
-Sacred boundary of the architecture that uses VOs to avoid *Primitive Obsession*.
+
+Sacred boundary of the architecture that uses VOs to avoid _Primitive Obsession_.
 
 **File:** `contract_file_reader_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -88,6 +98,7 @@ pub trait FileReaderPort {
 ```
 
 **File:** `contract_reference_writer_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -99,6 +110,7 @@ pub trait ReferenceWriterPort {
 ```
 
 **File:** `contract_model_predictor_protocol.rs`
+
 ```rust
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
 use crate::taxonomy_prediction_result_vo::PredictionResult;
@@ -112,6 +124,7 @@ pub trait ModelPredictorProtocol {
 ```
 
 **File:** `contract_ast_extractor_protocol.rs`
+
 ```rust
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
 use crate::taxonomy_system_error::SystemError;
@@ -122,6 +135,7 @@ pub trait AstExtractorProtocol {
 ```
 
 **File:** `contract_autorepair_aggregate.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -134,9 +148,11 @@ pub trait AutorepairAggregate {
 ---
 
 ## 3. Capabilities Layer (Pure Business Logic)
-Contains the *syn* parser logic and pure *Burn* model, without I/O.
+
+Contains the _syn_ parser logic and pure _Burn_ model, without I/O.
 
 **File:** `capabilities_ast_extractor.rs`
+
 ```rust
 use crate::contract_ast_extractor_protocol::AstExtractorProtocol;
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
@@ -188,6 +204,7 @@ impl AstExtractorProtocol for SynAstExtractor {
 ```
 
 **File:** `capabilities_model_predictor.rs`
+
 ```rust
 use crate::contract_model_predictor_protocol::ModelPredictorProtocol;
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
@@ -221,8 +238,8 @@ impl<B: Backend> AESNamingModelPredictor<B> {
 
         let token_emb = self.token_embed.forward(tokens);
         let positions = Tensor::<B, 1, Int>::arange(0..seq_len as i64, &device).reshape([1, seq_len]);
-        let pos_emb = self.pos_embed.forward(positions).repeat_dim(0, batch_size); 
-        
+        let pos_emb = self.pos_embed.forward(positions).repeat_dim(0, batch_size);
+
         let x = token_emb + pos_emb;
         let encoded = self.encoder.forward(x, None);
         let pooled = encoded.clone().mean_dim(1);
@@ -251,7 +268,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
 
     fn get_config(&self) -> AESNamingModelConfig {
         AESNamingModelConfig {
-            vocab_size: 12000, d_model: 128, d_ff: 512, n_heads: 4, 
+            vocab_size: 12000, d_model: 128, d_ff: 512, n_heads: 4,
             n_layers: 4, num_prefixes: 7, num_suffixes: 35, max_seq_len: 512,
         }
     }
@@ -261,9 +278,11 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
 ---
 
 ## 4. Infrastructure Layer (I/O & External Systems)
+
 Pure read/write implementation.
 
 **File:** `infrastructure_fs_reader.rs`
+
 ```rust
 use crate::contract_file_reader_port::FileReaderPort;
 use crate::taxonomy_system_error::SystemError;
@@ -284,6 +303,7 @@ impl FileReaderPort for FileSystemReaderAdapter {
 ```
 
 **File:** `infrastructure_fs_writer.rs`
+
 ```rust
 use crate::contract_reference_writer_port::ReferenceWriterPort;
 use crate::taxonomy_system_error::SystemError;
@@ -303,7 +323,7 @@ impl ReferenceWriterPort for FileSystemReferenceWriterAdapter {
         {
             let path = entry.path();
             let content = fs::read_to_string(path).map_err(|e| SystemError::IoError(e.to_string()))?;
-        
+
             if content.contains(&old_name.0) {
                 let mut new_content = content.replace(
                     &format!("use crate::{};", old_name.0),
@@ -313,7 +333,7 @@ impl ReferenceWriterPort for FileSystemReferenceWriterAdapter {
                     &format!("mod {};", old_name.0),
                     &format!("mod {};", new_name.0)
                 );
-            
+
                 fs::write(path, new_content).map_err(|e| SystemError::IoError(e.to_string()))?;
             }
         }
@@ -327,6 +347,7 @@ impl ReferenceWriterPort for FileSystemReferenceWriterAdapter {
 ## 5. Agent Layer (Orchestration Workflow)
 
 **File:** `agent_autorepair_orchestrator.rs`
+
 ```rust
 use crate::contract_file_reader_port::FileReaderPort;
 use crate::contract_reference_writer_port::ReferenceWriterPort;
@@ -361,7 +382,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
 
         let ext = target_file.0.extension().and_then(|e| e.to_str()).unwrap_or("rs");
         let new_name_str = format!("{}_{}{}.{}", prediction.prefix, prediction.concept, prediction.suffix, ext);
-        
+
         let old_name_str = target_file.0.file_name().and_then(|n| n.to_str())
             .ok_or_else(|| SystemError::ParsingError("Invalid file name".to_string()))?;
 
@@ -379,14 +400,15 @@ impl AutorepairAggregate for AutorepairOrchestrator {
 ## 6. Surface Layer (User Interaction / UI)
 
 **File:** `surface_autofix_command.rs`
+
 ```rust
 use crate::contract_autorepair_aggregate::AutorepairAggregate;
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 
 pub fn handle_autofix_command(
-    aggregate: &dyn AutorepairAggregate, 
-    workspace: &FilePath, 
+    aggregate: &dyn AutorepairAggregate,
+    workspace: &FilePath,
     target: &FilePath
 ) -> Result<(), SystemError> {
     aggregate.execute_fix(workspace, target)
@@ -398,6 +420,7 @@ pub fn handle_autofix_command(
 ## 7. Root Layer (Dependency Injection / Composition Root)
 
 **File:** `root_app_container.rs`
+
 ```rust
 use crate::infrastructure_fs_reader::FileSystemReaderAdapter;
 use crate::infrastructure_fs_writer::FileSystemReferenceWriterAdapter;
@@ -409,7 +432,7 @@ use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 use crate::contract_file_reader_port::FileReaderPort;
 use crate::contract_autorepair_aggregate::AutorepairAggregate;
-use burn::backend::NdArray; 
+use burn::backend::NdArray;
 use burn::tensor::Device;
 use std::path::PathBuf;
 
@@ -428,13 +451,14 @@ impl AutorepairContainer {
         let extractor = Box::new(SynAstExtractor);
 
         let orchestrator = AutorepairOrchestrator::new(reader, writer, extractor, predictor);
-        
+
         Ok(Box::new(orchestrator))
     }
 }
 ```
 
 **File:** `root_cli_main_entry.rs`
+
 ```rust
 use crate::root_app_container::AutorepairContainer;
 use crate::surface_autofix_command::handle_autofix_command;
@@ -446,7 +470,7 @@ fn main() {
         Ok(aggregate) => {
             let workspace = FilePath(PathBuf::from("./"));
             let target = FilePath(PathBuf::from("src/wrong_file.rs"));
-            
+
             if let Err(e) = handle_autofix_command(aggregate.as_ref(), &workspace, &target) {
                 eprintln!("Fatal Error (Domain): {:?}", e);
                 std::process::exit(1);

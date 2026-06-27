@@ -1,6 +1,6 @@
 # Implementation Draft: AI Auto-Repair Model (Perfect AES Dogfooding v8)
 
-Draft v8 presents a *Grandmaster*-level AES architecture with zero tolerance for lint/compiler bypasses, free from raw primitives in contract/domain VOs (AES402), and resolves all Burn model pipeline, BPE tokenization, transactional verification, and rollback error handling challenges.
+Draft v8 presents a _Grandmaster_-level AES architecture with zero tolerance for lint/compiler bypasses, free from raw primitives in contract/domain VOs (AES402), and resolves all Burn model pipeline, BPE tokenization, transactional verification, and rollback error handling challenges.
 
 ---
 
@@ -9,6 +9,7 @@ Draft v8 presents a *Grandmaster*-level AES architecture with zero tolerance for
 Each file in this layer is free from external dependencies, strictly encapsulated, and documented above 5 effective lines (AES302).
 
 ### File: `taxonomy_system_constant.rs`
+
 ```rust
 /// Absolute/relative path to the Safetensors model weights file.
 /// Will be loaded by Infrastructure during Root initialization.
@@ -16,6 +17,7 @@ pub const MODEL_WEIGHTS_PATH: &str = "weights/model.safetensors";
 ```
 
 ### File: `taxonomy_prefix_label_constant.rs`
+
 ```rust
 /// Class label list for the AES architecture prefix.
 /// Indices in this array correspond to the model output classes.
@@ -31,6 +33,7 @@ pub const PREFIX_LABELS: &[&str] = &[
 ```
 
 ### File: `taxonomy_suffix_label_constant.rs`
+
 ```rust
 /// Class label list for the AES role suffix.
 /// Indices in this array correspond to the model output classes.
@@ -46,6 +49,7 @@ pub const SUFFIX_LABELS: &[&str] = &[
 ```
 
 ### File: `taxonomy_concept_vocab_constant.rs`
+
 ```rust
 /// Base vocabulary for decoding file name domain concepts from the model.
 pub const CONCEPT_VOCAB: &[&str] = &[
@@ -61,6 +65,7 @@ pub const CONCEPT_VOCAB: &[&str] = &[
 ```
 
 ### File: `taxonomy_system_error.rs`
+
 ```rust
 /// Centralized error data structure for the Auto-Repair system.
 /// Maps filesystem, parsing, prediction, and verification operation failures.
@@ -84,6 +89,7 @@ impl From<std::io::Error> for SystemError {
 ```
 
 ### File: `taxonomy_file_path_vo.rs`
+
 ```rust
 use std::path::PathBuf;
 
@@ -101,6 +107,7 @@ impl FilePath {
 ```
 
 ### File: `taxonomy_module_name_vo.rs`
+
 ```rust
 /// Value Object to represent a Rust module name.
 #[derive(Debug, Clone)]
@@ -115,6 +122,7 @@ impl ModuleName {
 ```
 
 ### File: `taxonomy_file_content_vo.rs`
+
 ```rust
 /// Value Object to represent the text content of a file.
 #[derive(Debug, Clone)]
@@ -129,6 +137,7 @@ impl FileContent {
 ```
 
 ### File: `taxonomy_file_bytes_vo.rs`
+
 ```rust
 /// Value Object to represent the raw bytes of a model weights file.
 #[derive(Debug, Clone)]
@@ -143,6 +152,7 @@ impl FileBytes {
 ```
 
 ### File: `taxonomy_file_extension_vo.rs`
+
 ```rust
 /// Value Object to represent a file extension (e.g. "rs", "py").
 #[derive(Debug, Clone)]
@@ -157,6 +167,7 @@ impl FileExtension {
 ```
 
 ### File: `taxonomy_token_ids_vo.rs`
+
 ```rust
 /// H-5 Fix: Value Object to wrap BPE tokenization results.
 /// Avoids primitive Vec<u32> crossing contract boundaries.
@@ -172,6 +183,7 @@ impl TokenIds {
 ```
 
 ### File: `taxonomy_layer_prefix_vo.rs`
+
 ```rust
 /// M-2 Fix: Value Object to safely wrap prefix classification output.
 #[derive(Debug, Clone)]
@@ -185,6 +197,7 @@ impl LayerPrefix {
 ```
 
 ### File: `taxonomy_layer_suffix_vo.rs`
+
 ```rust
 /// M-2 Fix: Value Object to safely wrap suffix classification output.
 #[derive(Debug, Clone)]
@@ -198,6 +211,7 @@ impl LayerSuffix {
 ```
 
 ### File: `taxonomy_concept_token_vo.rs`
+
 ```rust
 /// M-2 Fix: Value Object to safely wrap domain concept decoding results.
 #[derive(Debug, Clone)]
@@ -211,6 +225,7 @@ impl ConceptToken {
 ```
 
 ### File: `taxonomy_extracted_feature_vo.rs`
+
 ```rust
 /// Representation of static features extracted from a source code file.
 #[derive(Debug, Clone)]
@@ -223,6 +238,7 @@ pub struct ExtractedFeature {
 ```
 
 ### File: `taxonomy_prediction_result_vo.rs`
+
 ```rust
 use crate::taxonomy_layer_prefix_vo::LayerPrefix;
 use crate::taxonomy_layer_suffix_vo::LayerSuffix;
@@ -242,6 +258,7 @@ pub struct PredictionResult {
 ```
 
 ### File: `taxonomy_model_config_vo.rs`
+
 ```rust
 /// Internal AI prediction model configuration data structure.
 #[derive(Debug, Clone)]
@@ -261,6 +278,7 @@ pub struct AESNamingModelConfig {
 Architecture modularity boundary that fully uses VOs (AES402).
 
 ### File: `contract_file_reader_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -275,6 +293,7 @@ pub trait FileReaderPort {
 ```
 
 ### File: `contract_file_writer_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -288,6 +307,7 @@ pub trait FileWriterPort {
 ```
 
 ### File: `contract_workspace_scanner_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -299,6 +319,7 @@ pub trait WorkspaceScannerPort {
 ```
 
 ### File: `contract_reference_replacer_protocol.rs`
+
 ```rust
 use crate::taxonomy_file_content_vo::FileContent;
 use crate::taxonomy_module_name_vo::ModuleName;
@@ -310,6 +331,7 @@ pub trait ReferenceReplacerProtocol {
 ```
 
 ### File: `contract_file_name_resolver_protocol.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -327,6 +349,7 @@ pub trait FileNameResolverProtocol {
 ```
 
 ### File: `contract_model_predictor_protocol.rs`
+
 ```rust
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
 use crate::taxonomy_token_ids_vo::TokenIds;
@@ -344,6 +367,7 @@ pub trait ModelPredictorProtocol {
 ```
 
 ### File: `contract_ast_extractor_protocol.rs`
+
 ```rust
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
 use crate::taxonomy_file_content_vo::FileContent;
@@ -357,6 +381,7 @@ pub trait AstExtractorProtocol {
 ```
 
 ### File: `contract_bpe_tokenizer_protocol.rs`
+
 ```rust
 use crate::taxonomy_file_content_vo::FileContent;
 use crate::taxonomy_token_ids_vo::TokenIds;
@@ -370,6 +395,7 @@ pub trait BpeTokenizerProtocol {
 ```
 
 ### File: `contract_exception_filter_protocol.rs`
+
 ```rust
 use crate::taxonomy_file_path_vo::FilePath;
 
@@ -380,6 +406,7 @@ pub trait ExceptionFilterProtocol {
 ```
 
 ### File: `contract_compiler_runner_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -391,6 +418,7 @@ pub trait CompilerRunnerPort {
 ```
 
 ### File: `contract_linter_runner_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -402,6 +430,7 @@ pub trait LinterRunnerPort {
 ```
 
 ### File: `contract_autorepair_aggregate.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -419,6 +448,7 @@ pub trait AutorepairAggregate {
 Pure modular programming logic without direct I/O.
 
 ### File: `capabilities_reference_replacer.rs`
+
 ```rust
 use crate::contract_reference_replacer_protocol::ReferenceReplacerProtocol;
 use crate::taxonomy_file_content_vo::FileContent;
@@ -442,6 +472,7 @@ impl ReferenceReplacerProtocol for StringReferenceReplacer {
 ```
 
 ### File: `capabilities_file_name_resolver.rs`
+
 ```rust
 use crate::contract_file_name_resolver_protocol::FileNameResolverProtocol;
 use crate::taxonomy_system_error::SystemError;
@@ -480,6 +511,7 @@ impl FileNameResolverProtocol for StandardFileNameResolver {
 ```
 
 ### File: `capabilities_ast_extractor.rs`
+
 ```rust
 use crate::contract_ast_extractor_protocol::AstExtractorProtocol;
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
@@ -534,6 +566,7 @@ impl AstExtractorProtocol for SynAstExtractor {
 ```
 
 ### File: `capabilities_bpe_tokenizer.rs`
+
 ```rust
 use crate::contract_bpe_tokenizer_protocol::BpeTokenizerProtocol;
 use crate::taxonomy_file_content_vo::FileContent;
@@ -552,6 +585,7 @@ impl BpeTokenizerProtocol for BpeTokenizer {
 ```
 
 ### File: `capabilities_exception_filter.rs`
+
 ```rust
 use crate::contract_exception_filter_protocol::ExceptionFilterProtocol;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -581,6 +615,7 @@ impl ExceptionFilterProtocol for ExceptionFilter {
 ```
 
 ### File: `capabilities_model_predictor.rs`
+
 ```rust
 use crate::contract_model_predictor_protocol::ModelPredictorProtocol;
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
@@ -616,11 +651,11 @@ impl<B: Backend> AESNamingModelPredictor<B> {
     pub fn new_from_bytes(weights: &FileBytes, device: &Device<B>) -> Result<Self, SystemError> {
         let config = AESNamingModelConfig { vocab_size: 12000, d_model: 128, d_ff: 512, n_heads: 4, n_layers: 4 };
         let mut model = Self::init_empty(device, &config);
-        
+
         let record = BinBytesRecorder::new()
             .load(weights.0.clone(), device)
             .map_err(|e| SystemError::PredictionError(format!("Failed to load record: {}", e)))?;
-        
+
         model = model.load_record(record);
         Ok(model)
     }
@@ -640,7 +675,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
     /// H-1 & H-2 Fix: predict accepts real TokenIds, processes tensor logit output, argmax, and softmax in reality.
     fn predict(&self, _features: &ExtractedFeature, tokens: &TokenIds) -> Result<PredictionResult, SystemError> {
         let device = self.prefix_head.devices()[0].clone();
-        
+
         // Reading actual BPE tokenization results into a Tensor
         let tokens_data: Vec<i64> = tokens.0.iter().map(|&v| v as i64).collect();
         let seq_len = tokens_data.len();
@@ -650,7 +685,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
         );
 
         let token_emb = self.token_embed.forward(tokens_tensor);
-        
+
         // Embedding the directory context prior vector (D) into the sequence
         let dir_prior = Tensor::<B, 2>::zeros([1, 128], &device);
         let x = token_emb + dir_prior;
@@ -662,7 +697,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
         let suffix_logits = self.suffix_head.forward(pooled);
         let concept_logits = self.concept_projection.forward(encoded);
 
-        // H-2 Fix: Computing argmax and max softmax score from real tensors to measure confidence 
+        // H-2 Fix: Computing argmax and max softmax score from real tensors to measure confidence
         let prefix_idx = prefix_logits.clone().argmax(1).into_scalar() as usize;
         let prefix_confidence = prefix_logits.softmax(1).slice([0..1, prefix_idx..prefix_idx+1]).into_scalar() as f32;
 
@@ -723,6 +758,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
 Concrete adapters that handle disk interaction and external command execution.
 
 ### File: `infrastructure_fs_reader.rs`
+
 ```rust
 use crate::contract_file_reader_port::FileReaderPort;
 use crate::taxonomy_system_error::SystemError;
@@ -738,7 +774,7 @@ impl FileReaderPort for FileSystemReaderAdapter {
         let content = fs::read_to_string(&path.0)?;
         Ok(FileContent(content))
     }
-    
+
     fn read_file_as_bytes(&self, path: &FilePath) -> Result<FileBytes, SystemError> {
         let bytes = fs::read(&path.0)?;
         Ok(FileBytes(bytes))
@@ -747,6 +783,7 @@ impl FileReaderPort for FileSystemReaderAdapter {
 ```
 
 ### File: `infrastructure_fs_writer.rs`
+
 ```rust
 use crate::contract_file_writer_port::FileWriterPort;
 use crate::taxonomy_system_error::SystemError;
@@ -761,7 +798,7 @@ impl FileWriterPort for FileSystemWriterAdapter {
         fs::write(&path.0, &content.0)?;
         Ok(())
     }
-    
+
     fn rename_file(&self, old_path: &FilePath, new_path: &FilePath) -> Result<(), SystemError> {
         fs::rename(&old_path.0, &new_path.0)?;
         Ok(())
@@ -770,6 +807,7 @@ impl FileWriterPort for FileSystemWriterAdapter {
 ```
 
 ### File: `infrastructure_workspace_scanner.rs`
+
 ```rust
 use crate::contract_workspace_scanner_port::WorkspaceScannerPort;
 use crate::taxonomy_system_error::SystemError;
@@ -793,6 +831,7 @@ impl WorkspaceScannerPort for WalkdirWorkspaceScannerAdapter {
 ```
 
 ### File: `infrastructure_compiler_adapter.rs`
+
 ```rust
 use crate::contract_compiler_runner_port::CompilerRunnerPort;
 use crate::taxonomy_system_error::SystemError;
@@ -818,6 +857,7 @@ impl CompilerRunnerPort for CargoCompilerAdapter {
 ```
 
 ### File: `infrastructure_linter_adapter.rs`
+
 ```rust
 use crate::contract_linter_runner_port::LinterRunnerPort;
 use crate::taxonomy_system_error::SystemError;
@@ -855,6 +895,7 @@ impl LinterRunnerPort for LintArwakyAdapter {
 Transactional Auto-Repair workflow coordinator that implements the Aggregate.
 
 ### File: `agent_autorepair_orchestrator.rs`
+
 ```rust
 use crate::contract_file_reader_port::FileReaderPort;
 use crate::contract_file_writer_port::FileWriterPort;
@@ -929,7 +970,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
         // 1. Feature Extraction, Tokenization, & Prediction
         let content = self.reader.read_file_as_string(target_file)?;
         let features = self.extractor.extract_from_file(target_file, &content)?;
-        
+
         // C-1 Fix: Running actual BPE tokenization from input content and passing it to the predictor
         let tokens = self.tokenizer.tokenize(&content)?;
 
@@ -937,14 +978,14 @@ impl AutorepairAggregate for AutorepairOrchestrator {
         if config.vocab_size == 0 || config.d_model == 0 {
             return Err(SystemError::PredictionError("Model config invalid".to_string()));
         }
-        
+
         // H-1 Fix: Sending BPE tokenization TokenIds result to the model predictor to break the mock
         let prediction = self.predictor.predict(&features, &tokens)?;
 
         // Threshold check (85%) multi-head confidence gating
-        if prediction.prefix_confidence < 0.85 
-            || prediction.suffix_confidence < 0.85 
-            || prediction.concept_confidence < 0.85 
+        if prediction.prefix_confidence < 0.85
+            || prediction.suffix_confidence < 0.85
+            || prediction.concept_confidence < 0.85
         {
             let alternatives = self.predictor.predict_alternatives(&features, &tokens)?;
             let alt_details = alternatives.iter()
@@ -998,7 +1039,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
                     rollback_errors.push(format!("write rollback failed for {:?}: {:?}", original_path.0, e));
                 }
             }
-            
+
             return Err(SystemError::VerificationError(format!(
                 "Post-auto-fix verification failed: {:?}. Rollback Issues: [{}]",
                 verification_err,
@@ -1018,6 +1059,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
 External interaction boundary that houses the input routing router (AES506).
 
 ### File: `surface_autofix_router.rs`
+
 ```rust
 use crate::contract_autorepair_aggregate::AutorepairAggregate;
 use crate::taxonomy_system_error::SystemError;
@@ -1050,6 +1092,7 @@ impl<'a> AutofixRouter<'a> {
 Top-level Composition Root that wires all concrete adapters to the interface contract types.
 
 ### File: `root_app_container.rs`
+
 ```rust
 use crate::infrastructure_fs_reader::FileSystemReaderAdapter;
 use crate::infrastructure_fs_writer::FileSystemWriterAdapter;
@@ -1068,7 +1111,7 @@ use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 use crate::contract_autorepair_aggregate::AutorepairAggregate;
 
-use burn::backend::NdArray; 
+use burn::backend::NdArray;
 use burn::tensor::Device;
 
 pub struct AutorepairContainer;
@@ -1076,11 +1119,11 @@ pub struct AutorepairContainer;
 impl AutorepairContainer {
     pub fn build() -> Result<Box<dyn AutorepairAggregate>, SystemError> {
         let weights_path = FilePath::from_constant(MODEL_WEIGHTS_PATH);
-        
+
         // M-1 Fix: Efficiently reusing FileSystemReaderAdapter without double instantiation
         let reader_adapter = FileSystemReaderAdapter;
         let weights_bytes = reader_adapter.read_file_as_bytes(&weights_path)?;
-        
+
         let device = Device::<NdArray>::default();
         let predictor = AESNamingModelPredictor::<NdArray>::new_from_bytes(&weights_bytes, &device)?;
 
@@ -1098,13 +1141,14 @@ impl AutorepairContainer {
             compiler: Box::new(CargoCompilerAdapter),
             linter: Box::new(LintArwakyAdapter),
         };
-        
+
         Ok(Box::new(AutorepairOrchestrator::new(deps)))
     }
 }
 ```
 
 ### File: `root_cli_main_entry.rs`
+
 ```rust
 use crate::root_app_container::AutorepairContainer;
 use crate::surface_autofix_router::AutofixRouter;
@@ -1125,9 +1169,9 @@ fn run() -> Result<(), SystemError> {
     let command = &args[1];
     let workspace = FilePath::from_constant(&args[2]);
     let target = FilePath::from_constant(&args[3]);
-    
+
     let router = AutofixRouter::new(aggregate.as_ref());
-    
+
     // H-4 Fix: Entry point filters aggregate router execution result branching directly
     match router.route_command(command, &workspace, &target) {
         Ok(()) => {

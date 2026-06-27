@@ -697,21 +697,11 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES205:
       enabled: true
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       scope:
         [
           "taxonomy",
@@ -735,12 +725,7 @@ architecture:
           "surfaces",
         ]
       max_lines: 1000
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES302:
       enabled: true
@@ -754,12 +739,7 @@ architecture:
           "surfaces",
         ]
       min_lines: 5
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES303:
       enabled: true
@@ -772,21 +752,11 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES304:
       enabled: true
-      scope:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      scope: ["main.rs", "lib.rs", "mod.rs"]
       patterns:
         [
           "#[allow(",
@@ -796,12 +766,7 @@ architecture:
           "type: ignore",
           "eslint-disable",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES305:
       enabled: true
@@ -814,12 +779,7 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     # ─── AES400: Role ───
     AES401:
@@ -830,45 +790,25 @@ architecture:
     AES402:
       enabled: true
       scope: ["contract(aggregate)", "contract(port|protocol)"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES403:
       enabled: true
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES404:
       enabled: true
       scope: ["infrastructure"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES405:
       enabled: true
       scope: ["agent(orchestrator)"]
       max_lines: 1000
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES406:
       enabled: true
@@ -879,70 +819,35 @@ architecture:
           "surfaces(component|view|layout)",
         ]
       max_functions: 15
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     # ─── AES500: Orphan ───
     AES501:
       enabled: true
       scope: ["taxonomy"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: ["main.rs", "lib.rs", "mod.rs"]
 
     AES502:
       enabled: true
       scope: ["contract"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: ["main.rs", "lib.rs", "mod.rs"]
 
     AES503:
       enabled: true
       scope: ["capabilities"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: ["main.rs", "lib.rs", "mod.rs"]
 
     AES504:
       enabled: true
       scope: ["infrastructure"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: ["main.rs", "lib.rs", "mod.rs"]
 
     AES505:
       enabled: true
       scope: ["agent"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: ["main.rs", "lib.rs", "mod.rs"]
 
     AES506:
       enabled: true
       scope: ["surfaces"]
-      entry_points:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs"
-        ]
+      entry_points: ["main.rs", "lib.rs", "mod.rs"]

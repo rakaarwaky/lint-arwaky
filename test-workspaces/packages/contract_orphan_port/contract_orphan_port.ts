@@ -1,1 +1,3 @@
-interface Port { do(): void }
+interface Port {
+  do(): void;
+}

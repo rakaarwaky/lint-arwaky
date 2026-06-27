@@ -1299,13 +1299,13 @@ impl LintArwakyAdapter {
 
 ## 37. Integration Checklist
 
-| Step | File | Action |
-|------|------|--------|
-| 1 | `crates/shared/src/autorepair/` | Create directory + 14 files |
-| 2 | `crates/shared/src/lib.rs` | Add `#[path = "autorepair/mod.rs"] pub mod autorepair;` |
-| 3 | `crates/shared/Cargo.toml` | No changes needed (no new deps in shared) |
-| 4 | `crates/autorepair/` | Create directory + Cargo.toml + 16 src files |
-| 5 | `Cargo.toml` (root) | Add `autorepair` to workspace deps + bin deps |
-| 6 | `cargo check -p autorepair-lint-arwaky` | Verify compilation |
-| 7 | `cargo test -p autorepair-lint-arwaky` | Run unit tests |
-| 8 | `cargo clippy -p autorepair-lint-arwaky -- -D warnings` | Lint check |
+| Step | File                                                    | Action                                                  |
+| ---- | ------------------------------------------------------- | ------------------------------------------------------- |
+| 1    | `crates/shared/src/autorepair/`                         | Create directory + 14 files                             |
+| 2    | `crates/shared/src/lib.rs`                              | Add `#[path = "autorepair/mod.rs"] pub mod autorepair;` |
+| 3    | `crates/shared/Cargo.toml`                              | No changes needed (no new deps in shared)               |
+| 4    | `crates/autorepair/`                                    | Create directory + Cargo.toml + 16 src files            |
+| 5    | `Cargo.toml` (root)                                     | Add `autorepair` to workspace deps + bin deps           |
+| 6    | `cargo check -p autorepair-lint-arwaky`                 | Verify compilation                                      |
+| 7    | `cargo test -p autorepair-lint-arwaky`                  | Run unit tests                                          |
+| 8    | `cargo clippy -p autorepair-lint-arwaky -- -D warnings` | Lint check                                              |

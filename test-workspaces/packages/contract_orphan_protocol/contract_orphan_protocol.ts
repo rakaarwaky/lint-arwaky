@@ -1,1 +1,3 @@
-interface Protocol { run(): void }
+interface Protocol {
+  run(): void;
+}

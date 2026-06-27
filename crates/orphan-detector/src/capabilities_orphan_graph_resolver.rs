@@ -40,26 +40,39 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
         files: &[OrphanFileListVO],
         configured: &[OrphanEntryPatternListVO],
     ) -> OrphanFileListVO {
-        if configured.is_empty() || configured.iter().all(|p| p.values.is_empty()) {
-            return OrphanFileListVO::new(Vec::new());
-        }
         let file_strs: Vec<String> = files
             .iter()
             .flat_map(|v| v.values.iter().cloned())
             .collect();
+
         let configured_strs: Vec<String> = configured
             .iter()
             .flat_map(|p| p.values.iter().cloned())
             .collect();
-        let matched: Vec<String> = file_strs
-            .iter()
-            .filter(|f| {
-                configured_strs
-                    .iter()
-                    .any(|pattern| f.ends_with(pattern) || f.contains(pattern))
-            })
-            .cloned()
-            .collect();
+
+        // If configured patterns exist, use them; otherwise auto-detect _entry files
+        let matched: Vec<String> = if configured_strs.is_empty() {
+            file_strs
+                .iter()
+                .filter(|f| {
+                    f.contains("_entry")
+                        || f.contains("root_")
+                        || f.ends_with("main.rs")
+                        || f.ends_with("lib.rs")
+                })
+                .cloned()
+                .collect()
+        } else {
+            file_strs
+                .iter()
+                .filter(|f| {
+                    configured_strs
+                        .iter()
+                        .any(|pattern| f.ends_with(pattern) || f.contains(pattern))
+                })
+                .cloned()
+                .collect()
+        };
         OrphanFileListVO::new(matched)
     }
 }
@@ -109,11 +122,12 @@ impl OrphanGraphResolver {
             }
         }
 
-        // Also handle pub mod declarations with #[path] attributes (lib.rs pattern)
+        // Handle pub mod declarations (both with #[path] and plain)
         let pub_mod_re =
             regex::Regex::new(r#"#\[path\s*=\s*"([^"]+)"\]\s*(?:pub\s+)?mod\s+([a-zA-Z_]+)"#).ok();
         for f in files {
             if let Ok(content) = std::fs::read_to_string(f) {
+                // Handle #[path = "..."] pub mod declarations
                 if let Some(ref re) = pub_mod_re {
                     for cap in re.captures_iter(&content) {
                         let mod_path = cap[1].to_string();

@@ -4,17 +4,17 @@ Draft v12 upgrades from v11 with frontier technology: real BPE tokenizer via Hug
 
 **Key Upgrades from v11 → v12:**
 
-| # | Component              | v11                             | v12 (Frontier)                       |
-| - | ---------------------- | ------------------------------- | ------------------------------------ |
-| 1 | Tokenizer              | Simulated BPE (hardcoded match) | Real BPE via`tokenizers` crate     |
-| 2 | Positional Encoding    | ❌ Missing                      | ✅ Sinusoidal positional encoding    |
-| 3 | AST Extraction         | `syn` (Rust only)             | `tree-sitter` (multi-language)     |
-| 4 | Directory Context      | Hash-based embedding            | Code2Vec AST path embedding          |
-| 5 | Alternative Sampling   | Mask-based top-3                | Temperature-scaled softmax           |
-| 6 | Attention Weights      | Not stored                      | Stored for interpretability          |
-| 7 | Multi-language         | Rust only                       | Rust, Python, TypeScript, JavaScript |
-| 8 | Model Config           | 12K vocab, 128-dim              | 32K vocab, 256-dim, 6-layer          |
-| 9 | Confidence Calibration | Raw softmax                     | Temperature-scaled + entropy         |
+| #   | Component              | v11                             | v12 (Frontier)                       |
+| --- | ---------------------- | ------------------------------- | ------------------------------------ |
+| 1   | Tokenizer              | Simulated BPE (hardcoded match) | Real BPE via`tokenizers` crate       |
+| 2   | Positional Encoding    | ❌ Missing                      | ✅ Sinusoidal positional encoding    |
+| 3   | AST Extraction         | `syn` (Rust only)               | `tree-sitter` (multi-language)       |
+| 4   | Directory Context      | Hash-based embedding            | Code2Vec AST path embedding          |
+| 5   | Alternative Sampling   | Mask-based top-3                | Temperature-scaled softmax           |
+| 6   | Attention Weights      | Not stored                      | Stored for interpretability          |
+| 7   | Multi-language         | Rust only                       | Rust, Python, TypeScript, JavaScript |
+| 8   | Model Config           | 12K vocab, 128-dim              | 32K vocab, 256-dim, 6-layer          |
+| 9   | Confidence Calibration | Raw softmax                     | Temperature-scaled + entropy         |
 
 ---
 
@@ -1635,14 +1635,14 @@ mod tests {
 
 ## 9. Frontend Technology Comparison
 
-| Aspect                 | v11                   | v12                           | Improvement              |
-| ---------------------- | --------------------- | ----------------------------- | ------------------------ |
+| Aspect                 | v11                   | v12                         | Improvement              |
+| ---------------------- | --------------------- | --------------------------- | ------------------------ |
 | Tokenizer              | Hardcoded match table | HuggingFace`tokenizers` BPE | 100x vocab coverage      |
-| Positional Encoding    | ❌ None               | ✅ Sinusoidal                 | Sequence order awareness |
-| AST Extraction         | `syn` (Rust only)   | `tree-sitter` (4 languages) | Multi-language support   |
-| Directory Context      | Hash 1024 vocab       | Code2Vec AST path embed       | Structural awareness     |
-| Confidence             | Raw softmax           | Temperature + entropy         | Calibrated uncertainty   |
-| Model Size             | 12K/128/4L            | 32K/256/6L                    | 4x capacity              |
-| Interpretability       | ❌ None               | ✅ Attention weights          | Debuggable predictions   |
-| Alternative Generation | Mask top-3            | Temperature sampling          | Diverse alternatives     |
-| Scan Scope             | Rust only             | RS/PY/TS/JS                   | Full-stack support       |
+| Positional Encoding    | ❌ None               | ✅ Sinusoidal               | Sequence order awareness |
+| AST Extraction         | `syn` (Rust only)     | `tree-sitter` (4 languages) | Multi-language support   |
+| Directory Context      | Hash 1024 vocab       | Code2Vec AST path embed     | Structural awareness     |
+| Confidence             | Raw softmax           | Temperature + entropy       | Calibrated uncertainty   |
+| Model Size             | 12K/128/4L            | 32K/256/6L                  | 4x capacity              |
+| Interpretability       | ❌ None               | ✅ Attention weights        | Debuggable predictions   |
+| Alternative Generation | Mask top-3            | Temperature sampling        | Diverse alternatives     |
+| Scan Scope             | Rust only             | RS/PY/TS/JS                 | Full-stack support       |

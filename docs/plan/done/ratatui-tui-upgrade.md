@@ -2091,30 +2091,30 @@ impl TuiContainer {
 
 ## Summary
 
-| #  | File                                      | Layer          | Suffix            |
-| -- | ----------------------------------------- | -------------- | ----------------- |
-| 1  | `lib.rs`                                | root           | exception         |
-| 2  | `taxonomy_state_vo.rs`                  | taxonomy       | `_vo`           |
-| 3  | `taxonomy_file_entry_vo.rs`             | taxonomy       | `_vo`           |
-| 4  | `taxonomy_tui_event.rs`                 | taxonomy       | `_event`        |
-| 5  | `taxonomy_action_flags_vo.rs`           | taxonomy       | `_vo`           |
-| 6  | `contract_file_system_port.rs`          | contract       | `_port`         |
-| 7  | `contract_lint_executor_port.rs`        | contract       | `_port`         |
-| 8  | `contract_tui_aggregate.rs`             | contract       | `_aggregate`    |
-| 9  | `capabilities_file_browser.rs`          | capabilities   | flexible ✓       |
-| 10 | `capabilities_layer_detector.rs`        | capabilities   | flexible ✓       |
-| 11 | `capabilities_lint_executor.rs`         | capabilities   | `_executor` ✓  |
-| 12 | `capabilities_action_handler.rs`        | capabilities   | flexible ✓       |
-| 13 | `infrastructure_file_system_adapter.rs` | infrastructure | `_adapter`      |
-| 14 | `agent_tui_orchestrator.rs`             | agent          | `_orchestrator` |
-| 15 | `surface_file_list_view.rs`             | surface        | `_view`         |
-| 16 | `surface_preview_view.rs`               | surface        | `_view`         |
-| 17 | `surface_tree_view.rs`                  | surface        | `_view`         |
-| 18 | `surface_path_screen.rs`                | surface        | `_screen`       |
-| 19 | `surface_help_screen.rs`                | surface        | `_screen`       |
-| 20 | `surface_shortcut_component.rs`         | surface        | `_component`    |
-| 21 | `surface_status_component.rs`           | surface        | `_component`    |
-| 22 | `surface_tui_command.rs`                | surface        | `_command`      |
-| 23 | `root_tui_container.rs`                 | root           | `_container`    |
+| #   | File                                    | Layer          | Suffix          |
+| --- | --------------------------------------- | -------------- | --------------- |
+| 1   | `lib.rs`                                | root           | exception       |
+| 2   | `taxonomy_state_vo.rs`                  | taxonomy       | `_vo`           |
+| 3   | `taxonomy_file_entry_vo.rs`             | taxonomy       | `_vo`           |
+| 4   | `taxonomy_tui_event.rs`                 | taxonomy       | `_event`        |
+| 5   | `taxonomy_action_flags_vo.rs`           | taxonomy       | `_vo`           |
+| 6   | `contract_file_system_port.rs`          | contract       | `_port`         |
+| 7   | `contract_lint_executor_port.rs`        | contract       | `_port`         |
+| 8   | `contract_tui_aggregate.rs`             | contract       | `_aggregate`    |
+| 9   | `capabilities_file_browser.rs`          | capabilities   | flexible ✓      |
+| 10  | `capabilities_layer_detector.rs`        | capabilities   | flexible ✓      |
+| 11  | `capabilities_lint_executor.rs`         | capabilities   | `_executor` ✓   |
+| 12  | `capabilities_action_handler.rs`        | capabilities   | flexible ✓      |
+| 13  | `infrastructure_file_system_adapter.rs` | infrastructure | `_adapter`      |
+| 14  | `agent_tui_orchestrator.rs`             | agent          | `_orchestrator` |
+| 15  | `surface_file_list_view.rs`             | surface        | `_view`         |
+| 16  | `surface_preview_view.rs`               | surface        | `_view`         |
+| 17  | `surface_tree_view.rs`                  | surface        | `_view`         |
+| 18  | `surface_path_screen.rs`                | surface        | `_screen`       |
+| 19  | `surface_help_screen.rs`                | surface        | `_screen`       |
+| 20  | `surface_shortcut_component.rs`         | surface        | `_component`    |
+| 21  | `surface_status_component.rs`           | surface        | `_component`    |
+| 22  | `surface_tui_command.rs`                | surface        | `_command`      |
+| 23  | `root_tui_container.rs`                 | root           | `_container`    |
 
 **All 23 files are flat in `crates/tui/src/` — zero subfolders. All filenames comply with AES101/AES102 naming rules.**

@@ -6,8 +6,8 @@
 
 There are 23 test workspace members with intentional violations grouped under a single multi-project directory:
 
-| Category         | Workspace Members | Path                                | Purpose                               |
-| ---------------- | ----------------- | ----------------------------------- | ------------------------------------- |
+| Category         | Workspace Members | Path                              | Purpose                               |
+| ---------------- | ----------------- | --------------------------------- | ------------------------------------- |
 | Rust (crates)    | 7                 | `test-workspaces/crates/<name>`   | AES Rust + general quality checks     |
 | Python (modules) | 8                 | `test-workspaces/modules/<name>`  | AES Python + Ruff/MyPy/Bandit scans   |
 | JS/TS (packages) | 8                 | `test-workspaces/packages/<name>` | AES JS/TS + ESLint/Prettier/TSC scans |
@@ -40,28 +40,26 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 
 ## 3. Pass / Fail Criteria
 
-| Criteria                           | PASS                   | FAIL          |
-| ---------------------------------- | ---------------------- | ------------- |
-| Total violations (scan)            | >= 2000 violations     | < 2000 or 0   |
-| Unique AES codes (Rust)            | >= 24 unique AES codes | < 24          |
-| Unique AES codes (Python)          | >= 24 unique AES codes | < 24          |
-| Unique AES codes (JS/TS)           | >= 24 unique AES codes | < 24          |
-
+| Criteria                  | PASS                   | FAIL        |
+| ------------------------- | ---------------------- | ----------- |
+| Total violations (scan)   | >= 2000 violations     | < 2000 or 0 |
+| Unique AES codes (Rust)   | >= 24 unique AES codes | < 24        |
+| Unique AES codes (Python) | >= 24 unique AES codes | < 24        |
+| Unique AES codes (JS/TS)  | >= 24 unique AES codes | < 24        |
 
 **Baseline v1.10.29** (22 June 2026):
 
-| Project                 | Command                           | Total Violations | Unique AES Codes | Status  |
-| ----------------------- | --------------------------------- | ---------------- | ---------------- | ------- |
+| Project                 | Command                         | Total Violations | Unique AES Codes | Status  |
+| ----------------------- | ------------------------------- | ---------------- | ---------------- | ------- |
 | Self-lint (lint-arwaky) | `check .`                       | 0                | 0                | ✅ PASS |
 | Rust (crates)           | `scan test-workspaces/crates`   | 262              | 19               | ❌      |
 | Python (modules)        | `scan test-workspaces/modules`  | 454              | 11               | ❌      |
 | JS/TS (packages)        | `scan test-workspaces/packages` | 1357             | 7                | ❌      |
 
-
 ### All 24 AES Codes Target
 
-| Code   | Group                             | Rust | Python | JS/TS |
-| ------ | --------------------------------- | ---- | ------ | ----- |
+| Code   | Group                            | Rust | Python | JS/TS |
+| ------ | -------------------------------- | ---- | ------ | ----- |
 | AES101 | Naming — layer prefix            | ❌   | ❌     | ❌    |
 | AES102 | Naming — suffix convention       | ✅   | ✅     | ✅    |
 | AES201 | Import — forbidden layer         | ✅   | ✅     | ✅    |
@@ -89,8 +87,6 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 
 ---
 
-
-
 ### 4.1 Release Eligibility Checklist (Production Ready)
 
 Before releasing the binary to a production environment or deploying it to a client, the AI Agent must complete the following verification tasks:
@@ -111,7 +107,7 @@ The base codebase must be clean of any internal architecture rule violations.
 Ensure that layer boundaries are maintained and no dead code (_orphan code_) remains in the active workspace.
 
 - [ ] **Circular Dependency Detection:**
-  Verify random samples of files in each layer using the `cycles` tool:
+      Verify random samples of files in each layer using the `cycles` tool:
 
   ```bash
   graph-it serve cycles crates/source-parsing/src/contract_parser_port.rs
@@ -119,16 +115,18 @@ Ensure that layer boundaries are maintained and no dead code (_orphan code_) rem
   ```
 
   _Criteria:_ Output shows **0 dependency cycles**.
+
 - [ ] **Layer Boundary Protection:**
-  Ensure UI/Surfaces components do not import technical infrastructure or capabilities directly (must go through `ServiceContainerAggregate`):
+      Ensure UI/Surfaces components do not import technical infrastructure or capabilities directly (must go through `ServiceContainerAggregate`):
 
   ```bash
   graph-it serve path-in crates/external-lint/src/infrastructure_js_naming.rs
   ```
 
   _Criteria:_ Infrastructure files are only imported by `root/` (di-container) files.
+
 - [ ] **Orphan Code (Dead Code) Verification:**
-  Ensure that no active logic files are isolated or unreferenced:
+      Ensure that no active logic files are isolated or unreferenced:
 
   ```bash
   graph-it serve path-in crates/orphan-detector/src/capabilities_orphan_capabilities_analyzer.rs
@@ -157,11 +155,13 @@ The multi-adapter scanner must be proven to successfully detect at least 18 uniq
   ```bash
   cargo test --workspace
   ```
+
 - [ ] Run binary health diagnostics:
 
   ```bash
   lint-arwaky-cli maintenance doctor
   ```
+
 - [ ] Run JSON-RPC MCP protocol smoke-test:
 
   ```bash

@@ -78,7 +78,11 @@ pub fn is_contract_orphan(
     let mut has_impl = false;
     for cf in &search_files {
         let cb = file_basename(cf);
-        if !cb.starts_with(target_prefix) {
+        // Check target layer files (infrastructure_ for ports, capabilities_ for protocols, agent_ for aggregates)
+        // Also check root_*_container files (DI wiring often implements traits there)
+        let is_target_layer = cb.starts_with(target_prefix);
+        let is_container_impl = cb.starts_with("root_") && cb.ends_with("_container.rs");
+        if !is_target_layer && !is_container_impl {
             continue;
         }
         if let Ok(c) = std::fs::read_to_string(cf) {
@@ -117,9 +121,9 @@ pub fn is_contract_orphan(
         );
     }
 
-    // Check 2: port/protocol not called by any orchestrator OR container
+    // Check 2: port/protocol not called by any orchestrator, container, capabilities, or surface
     if suffix == "port" || suffix == "protocol" {
-        let mut called_by_orchestrator_or_container = false;
+        let mut called_by_impl_or_user = false;
         for cf in &search_files {
             let cb = file_basename(cf);
             // Check orchestrator files
@@ -130,18 +134,22 @@ pub fn is_contract_orphan(
                     || cb.ends_with("_orchestrator.js"));
             // Check container files (DI wiring)
             let is_container = cb.ends_with("_container.rs");
+            // Check capabilities files (trait implementations)
+            let is_capabilities = cb.starts_with("capabilities_");
+            // Check surface files (trait usage)
+            let is_surface = cb.starts_with("surface_");
 
-            if !is_orchestrator && !is_container {
+            if !is_orchestrator && !is_container && !is_capabilities && !is_surface {
                 continue;
             }
             if let Ok(c) = std::fs::read_to_string(cf) {
                 if c.contains(&trait_name) {
-                    called_by_orchestrator_or_container = true;
+                    called_by_impl_or_user = true;
                     break;
                 }
             }
         }
-        if !called_by_orchestrator_or_container {
+        if !called_by_impl_or_user {
             return OrphanIndicatorResult::new(
                 true,
                 AesOrphanViolation::ContractOrphan {
@@ -212,16 +220,26 @@ pub fn extract_contract_trait_name(content: &str) -> Option<String> {
     let re_ts_interface = Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok()?;
     let re_interface = Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok()?;
 
-    if let Some(caps) = re_rust.captures(content) {
+    // Skip comment lines to avoid matching "trait for" in comments
+    let code_lines: String = content
+        .lines()
+        .filter(|l| {
+            let t = l.trim();
+            !t.starts_with("//") && !t.starts_with("/*") && !t.starts_with("*")
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    if let Some(caps) = re_rust.captures(&code_lines) {
         return Some(caps[1].to_string());
     }
-    if let Some(caps) = re_ts_interface.captures(content) {
+    if let Some(caps) = re_ts_interface.captures(&code_lines) {
         return Some(caps[1].to_string());
     }
-    if let Some(caps) = re_interface.captures(content) {
+    if let Some(caps) = re_interface.captures(&code_lines) {
         return Some(caps[1].to_string());
     }
-    re_py.captures(content).map(|caps| caps[1].to_string())
+    re_py.captures(&code_lines).map(|caps| caps[1].to_string())
 }
 
 fn collect_rs_files(dir: &std::path::Path, files: &mut Vec<String>) {

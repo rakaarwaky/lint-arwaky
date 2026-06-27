@@ -9,6 +9,7 @@ Draft v11 resolves all audit findings from v10, including markdown structure fix
 Each file in this layer has zero external dependencies, is strictly encapsulated, and is documented above 5 effective lines (AES302).
 
 ### File: `taxonomy_system_constant.rs`
+
 ```rust
 /// Absolute/relative path to the Safetensors model weights file.
 /// Loaded by Infrastructure during Root initialization.
@@ -20,6 +21,7 @@ pub const DIR_EMBED_VOCAB_SIZE: usize = 1024;
 ```
 
 ### File: `taxonomy_prefix_label_constant.rs`
+
 ```rust
 /// Class labels for AES architecture prefix.
 /// Array indices correspond to model output classes.
@@ -29,6 +31,7 @@ pub const PREFIX_LABELS: &[&str] = &[
 ```
 
 ### File: `taxonomy_suffix_label_constant.rs`
+
 ```rust
 /// Class labels for AES role suffix.
 /// Array indices correspond to model output classes.
@@ -44,6 +47,7 @@ pub const SUFFIX_LABELS: &[&str] = &[
 ```
 
 ### File: `taxonomy_concept_vocab_constant.rs`
+
 ```rust
 /// Base vocabulary for decoding file domain concepts from the model.
 pub const CONCEPT_VOCAB: &[&str] = &[
@@ -52,6 +56,7 @@ pub const CONCEPT_VOCAB: &[&str] = &[
 ```
 
 ### File: `taxonomy_error_message_vo.rs`
+
 ```rust
 /// Value Object to safely wrap error messages.
 /// Prevents Primitive Obsession against raw Strings in the Taxonomy Error layer (AES401).
@@ -67,6 +72,7 @@ impl ErrorMessage {
 ```
 
 ### File: `taxonomy_system_error.rs`
+
 ```rust
 use crate::taxonomy_error_message_vo::ErrorMessage;
 
@@ -92,6 +98,7 @@ impl From<std::io::Error> for SystemError {
 ```
 
 ### File: `taxonomy_file_path_vo.rs`
+
 ```rust
 use std::path::PathBuf;
 
@@ -107,6 +114,7 @@ impl FilePath {
 ```
 
 ### File: `taxonomy_module_name_vo.rs`
+
 ```rust
 /// Value Object to represent a Rust module name (without extension).
 #[derive(Debug, Clone)]
@@ -120,6 +128,7 @@ impl ModuleName {
 ```
 
 ### File: `taxonomy_file_content_vo.rs`
+
 ```rust
 /// Value Object to represent the text content of a file.
 #[derive(Debug, Clone)]
@@ -133,6 +142,7 @@ impl FileContent {
 ```
 
 ### File: `taxonomy_file_bytes_vo.rs`
+
 ```rust
 /// Value Object to represent raw bytes from a model weights file.
 #[derive(Debug, Clone)]
@@ -146,6 +156,7 @@ impl FileBytes {
 ```
 
 ### File: `taxonomy_file_extension_vo.rs`
+
 ```rust
 /// Value Object to represent a file extension (e.g., "rs", "py").
 #[derive(Debug, Clone)]
@@ -159,6 +170,7 @@ impl FileExtension {
 ```
 
 ### File: `taxonomy_token_ids_vo.rs`
+
 ```rust
 /// Value Object wrapping BPE tokenization results.
 #[derive(Debug, Clone)]
@@ -177,6 +189,7 @@ impl TokenIds {
 ```
 
 ### File: `taxonomy_layer_prefix_vo.rs`
+
 ```rust
 /// Value Object to safely wrap classification output prefix.
 #[derive(Debug, Clone)]
@@ -190,6 +203,7 @@ impl LayerPrefix {
 ```
 
 ### File: `taxonomy_layer_suffix_vo.rs`
+
 ```rust
 /// Value Object to safely wrap classification output suffix.
 #[derive(Debug, Clone)]
@@ -203,6 +217,7 @@ impl LayerSuffix {
 ```
 
 ### File: `taxonomy_concept_token_vo.rs`
+
 ```rust
 /// Value Object to safely wrap domain concept decoding results.
 #[derive(Debug, Clone)]
@@ -216,6 +231,7 @@ impl ConceptToken {
 ```
 
 ### File: `taxonomy_extracted_feature_vo.rs`
+
 ```rust
 /// Static features extracted from a source code file.
 #[derive(Debug, Clone)]
@@ -228,6 +244,7 @@ pub struct ExtractedFeature {
 ```
 
 ### File: `taxonomy_prediction_result_vo.rs`
+
 ```rust
 use crate::taxonomy_layer_prefix_vo::LayerPrefix;
 use crate::taxonomy_layer_suffix_vo::LayerSuffix;
@@ -246,6 +263,7 @@ pub struct PredictionResult {
 ```
 
 ### File: `taxonomy_model_config_vo.rs`
+
 ```rust
 /// Internal configuration data structure for the AI prediction model.
 #[derive(Debug, Clone)]
@@ -278,6 +296,7 @@ impl Default for AESNamingModelConfig {
 Architectural boundary that uses VOs fully (AES402). All traits are documented with doc comments to maintain clear contracts.
 
 ### File: `contract_file_reader_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -293,6 +312,7 @@ pub trait FileReaderPort {
 ```
 
 ### File: `contract_file_writer_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -306,6 +326,7 @@ pub trait FileWriterPort {
 ```
 
 ### File: `contract_workspace_scanner_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -317,6 +338,7 @@ pub trait WorkspaceScannerPort {
 ```
 
 ### File: `contract_reference_processor_protocol.rs`
+
 ```rust
 use crate::taxonomy_file_content_vo::FileContent;
 use crate::taxonomy_module_name_vo::ModuleName;
@@ -328,6 +350,7 @@ pub trait ReferenceProcessorProtocol {
 ```
 
 ### File: `contract_file_name_resolver_protocol.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -346,6 +369,7 @@ pub trait FileNameResolverProtocol {
 ```
 
 ### File: `contract_model_classifier_protocol.rs`
+
 ```rust
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
 use crate::taxonomy_token_ids_vo::TokenIds;
@@ -362,6 +386,7 @@ pub trait ModelClassifierProtocol {
 ```
 
 ### File: `contract_ast_extractor_protocol.rs`
+
 ```rust
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
 use crate::taxonomy_file_content_vo::FileContent;
@@ -375,6 +400,7 @@ pub trait AstExtractorProtocol {
 ```
 
 ### File: `contract_bpe_transformer_protocol.rs`
+
 ```rust
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
 use crate::taxonomy_token_ids_vo::TokenIds;
@@ -387,6 +413,7 @@ pub trait BpeTransformerProtocol {
 ```
 
 ### File: `contract_exception_filter_protocol.rs`
+
 ```rust
 use crate::taxonomy_file_path_vo::FilePath;
 
@@ -397,6 +424,7 @@ pub trait ExceptionFilterProtocol {
 ```
 
 ### File: `contract_compiler_runner_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -408,6 +436,7 @@ pub trait CompilerRunnerPort {
 ```
 
 ### File: `contract_linter_runner_port.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -419,6 +448,7 @@ pub trait LinterRunnerPort {
 ```
 
 ### File: `contract_autorepair_aggregate.rs`
+
 ```rust
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -436,6 +466,7 @@ pub trait AutorepairAggregate {
 Pure modular programming logic with no direct I/O. AES102 is satisfied with standard suffixes `_processor`, `_transformer`, and `_classifier`.
 
 ### File: `capabilities_reference_processor.rs`
+
 ```rust
 use crate::contract_reference_processor_protocol::ReferenceProcessorProtocol;
 use crate::taxonomy_file_content_vo::FileContent;
@@ -459,6 +490,7 @@ impl ReferenceProcessorProtocol for StringReferenceProcessor {
 ```
 
 ### File: `capabilities_file_name_resolver.rs`
+
 ```rust
 use crate::contract_file_name_resolver_protocol::FileNameResolverProtocol;
 use crate::taxonomy_system_error::SystemError;
@@ -499,6 +531,7 @@ impl FileNameResolverProtocol for StandardFileNameResolver {
 ```
 
 ### File: `capabilities_ast_extractor.rs`
+
 ```rust
 use crate::contract_ast_extractor_protocol::AstExtractorProtocol;
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
@@ -553,6 +586,7 @@ impl AstExtractorProtocol for SynAstExtractor {
 ```
 
 ### File: `capabilities_bpe_transformer.rs`
+
 ```rust
 use crate::contract_bpe_transformer_protocol::BpeTransformerProtocol;
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
@@ -588,6 +622,7 @@ impl BpeTransformerProtocol for BpeTokenizer {
 ```
 
 ### File: `capabilities_exception_filter.rs`
+
 ```rust
 use crate::contract_exception_filter_protocol::ExceptionFilterProtocol;
 use crate::taxonomy_file_path_vo::FilePath;
@@ -615,6 +650,7 @@ impl ExceptionFilterProtocol for ExceptionFilter {
 ```
 
 ### File: `capabilities_model_classifier.rs`
+
 ```rust
 use crate::contract_model_classifier_protocol::ModelClassifierProtocol;
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
@@ -787,6 +823,7 @@ impl<B: Backend> ModelClassifierProtocol for AESNamingModelPredictor<B> {
 Concrete adapters that bridge disk interaction and external command execution.
 
 ### File: `infrastructure_fs_reader.rs`
+
 ```rust
 use crate::contract_file_reader_port::FileReaderPort;
 use crate::taxonomy_system_error::SystemError;
@@ -811,6 +848,7 @@ impl FileReaderPort for FileSystemReaderAdapter {
 ```
 
 ### File: `infrastructure_fs_writer.rs`
+
 ```rust
 use crate::contract_file_writer_port::FileWriterPort;
 use crate::taxonomy_system_error::SystemError;
@@ -834,6 +872,7 @@ impl FileWriterPort for FileSystemWriterAdapter {
 ```
 
 ### File: `infrastructure_workspace_scanner.rs`
+
 ```rust
 use crate::contract_workspace_scanner_port::WorkspaceScannerPort;
 use crate::taxonomy_system_error::SystemError;
@@ -858,6 +897,7 @@ impl WorkspaceScannerPort for WalkdirWorkspaceScannerAdapter {
 ```
 
 ### File: `infrastructure_compiler_adapter.rs`
+
 ```rust
 use crate::contract_compiler_runner_port::CompilerRunnerPort;
 use crate::taxonomy_system_error::SystemError;
@@ -884,6 +924,7 @@ impl CompilerRunnerPort for CargoCompilerAdapter {
 ```
 
 ### File: `infrastructure_linter_adapter.rs`
+
 ```rust
 use crate::contract_linter_runner_port::LinterRunnerPort;
 use crate::taxonomy_system_error::SystemError;
@@ -922,6 +963,7 @@ impl LinterRunnerPort for LintArwakyAdapter {
 Transactional Auto-Repair workflow coordinator that implements the Aggregate.
 
 ### File: `agent_autorepair_orchestrator.rs`
+
 ```rust
 use crate::contract_file_reader_port::FileReaderPort;
 use crate::contract_file_writer_port::FileWriterPort;
@@ -1083,6 +1125,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
 Outer interaction boundary that houses the input routing controller (Smart Surface - AES506).
 
 ### File: `surface_autofix_command.rs`
+
 ```rust
 use crate::contract_autorepair_aggregate::AutorepairAggregate;
 use crate::taxonomy_system_error::SystemError;
@@ -1115,6 +1158,7 @@ impl<'a> AutofixCommand<'a> {
 Top-level Composition Root that wires all concrete adapters to contract interface types.
 
 ### File: `root_autorepair_container.rs`
+
 ```rust
 use crate::infrastructure_fs_reader::FileSystemReaderAdapter;
 use crate::infrastructure_fs_writer::FileSystemWriterAdapter;
@@ -1168,6 +1212,7 @@ impl AutorepairContainer {
 ```
 
 ### File: `root_cli_main_entry.rs`
+
 ```rust
 use crate::root_autorepair_container::AutorepairContainer;
 use crate::surface_autofix_command::AutofixCommand;
@@ -1223,6 +1268,7 @@ fn main() {
 ## 8. Unit Tests (Pure Capabilities)
 
 ### File: `tests_capabilities_reference_processor.rs`
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -1268,6 +1314,7 @@ mod tests {
 ```
 
 ### File: `tests_capabilities_exception_filter.rs`
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -1314,6 +1361,7 @@ mod tests {
 ```
 
 ### File: `tests_capabilities_file_name_resolver.rs`
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -1375,6 +1423,7 @@ mod tests {
 ```
 
 ### File: `tests_taxonomy_token_ids.rs`
+
 ```rust
 #[cfg(test)]
 mod tests {

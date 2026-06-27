@@ -1,4 +1,5 @@
 pub mod taxonomy_action_flags_vo;
+pub mod taxonomy_adapter_info_vo;
 pub mod taxonomy_file_entry_vo;
 pub mod taxonomy_lint_result_vo;
 pub mod taxonomy_state_vo;

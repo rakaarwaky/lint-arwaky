@@ -89,13 +89,15 @@ pub fn is_taxonomy_orphan(
                 )
             }
         };
-        let has_contract_importer = importers.iter().any(|importer| {
+        let has_any_importer = importers.iter().any(|importer| {
+            // Must be imported by a file outside the taxonomy layer
+            // (contract_, capabilities_, infrastructure_, surface_, agent_, root_)
             importer
                 .split('/')
                 .next_back()
-                .is_some_and(|b| b.starts_with("contract_"))
+                .is_some_and(|b| !b.starts_with("taxonomy_"))
         });
-        !has_contract_importer
+        !has_any_importer
     };
 
     let category = if is_utility_or_helper {

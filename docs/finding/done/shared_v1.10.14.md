@@ -548,7 +548,7 @@ publish = false
 [lints]
 workspace = true
 
-[dependencies] 
+[dependencies]
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true
@@ -5114,7 +5114,7 @@ impl MetadataVO {
 
 ## File: crates/shared/src/common/taxonomy_value_object_utility.rs
 
-```rust
+````rust
 // PURPOSE: Macros for generating boilerplate impls on String/primitive wrapper value objects.
 //
 // These macros emit the impls that every String-wrapper VO needs:
@@ -5459,7 +5459,7 @@ mod macro_tests {
         assert_eq!(v.value(), 11);
     }
 }
-```
+````
 
 ---
 
@@ -12630,4 +12630,3 @@ impl std::fmt::Display for CallChainError {
 ```
 
 ---
-

@@ -130,6 +130,7 @@ pub struct LintResult {
 ### Step 5 — Format & Display
 
 Results flow back to the surface layer where they're formatted as:
+
 - **CLI:** colored terminal output
 - **MCP:** JSON for AI agents
 - **TUI:** ratatui table widgets
@@ -140,15 +141,15 @@ Results flow back to the surface layer where they're formatted as:
 
 Every `.rs` file in a feature crate declares its layer through its **filename prefix**:
 
-| Prefix | Layer | What it contains | Example |
-|--------|-------|-----------------|---------|
-| `taxonomy_` | Domain Models | Value objects, entities, errors, constants | `taxonomy_file_path_vo.rs` |
-| `contract_` | Interfaces | Trait definitions (ports, protocols, aggregates) | `contract_import_runner_aggregate.rs` |
-| `capabilities_` | Business Logic | Checkers, analyzers, processors | `capabilities_import_mandatory_checker.rs` |
-| `infrastructure_` | Tool Wrappers | Adapters for external tools (Clippy, Ruff, etc.) | `infrastructure_rs_clippy_adapter.rs` |
-| `agent_` | Orchestration | Coordinates capabilities + infrastructure | `agent_import_orchestrator.rs` |
-| `surface_` | Entry Points | CLI commands, MCP handlers, TUI views | `surface_check_command.rs` |
-| `root_` | Wiring | DI containers, binary entry points | `root_import_rules_container.rs` |
+| Prefix            | Layer          | What it contains                                 | Example                                    |
+| ----------------- | -------------- | ------------------------------------------------ | ------------------------------------------ |
+| `taxonomy_`       | Domain Models  | Value objects, entities, errors, constants       | `taxonomy_file_path_vo.rs`                 |
+| `contract_`       | Interfaces     | Trait definitions (ports, protocols, aggregates) | `contract_import_runner_aggregate.rs`      |
+| `capabilities_`   | Business Logic | Checkers, analyzers, processors                  | `capabilities_import_mandatory_checker.rs` |
+| `infrastructure_` | Tool Wrappers  | Adapters for external tools (Clippy, Ruff, etc.) | `infrastructure_rs_clippy_adapter.rs`      |
+| `agent_`          | Orchestration  | Coordinates capabilities + infrastructure        | `agent_import_orchestrator.rs`             |
+| `surface_`        | Entry Points   | CLI commands, MCP handlers, TUI views            | `surface_check_command.rs`                 |
+| `root_`           | Wiring         | DI containers, binary entry points               | `root_import_rules_container.rs`           |
 
 ### Why file prefixes instead of directories?
 
@@ -348,15 +349,15 @@ lint-arwaky (workspace)
 
 ### What goes where?
 
-| You want to... | Put code in... |
-|----------------|---------------|
-| Add a new value type (VO) | `shared/src/common/taxonomy_*_vo.rs` |
-| Add a new trait interface | `shared/src/{feature}/contract_*_aggregate.rs` |
-| Add a new lint checker | `crates/{feature}/capabilities_*_checker.rs` |
-| Add a new external tool | `crates/external-lint/infrastructure_*_adapter.rs` |
-| Add a new CLI command | `crates/cli-commands/src/surface_*_command.rs` |
-| Add a new MCP tool | `crates/mcp-server/src/` |
-| Wire up new dependencies | `crates/{feature}/root_*_container.rs` |
+| You want to...            | Put code in...                                     |
+| ------------------------- | -------------------------------------------------- |
+| Add a new value type (VO) | `shared/src/common/taxonomy_*_vo.rs`               |
+| Add a new trait interface | `shared/src/{feature}/contract_*_aggregate.rs`     |
+| Add a new lint checker    | `crates/{feature}/capabilities_*_checker.rs`       |
+| Add a new external tool   | `crates/external-lint/infrastructure_*_adapter.rs` |
+| Add a new CLI command     | `crates/cli-commands/src/surface_*_command.rs`     |
+| Add a new MCP tool        | `crates/mcp-server/src/`                           |
+| Wire up new dependencies  | `crates/{feature}/root_*_container.rs`             |
 
 ---
 
@@ -645,31 +646,31 @@ let path = FilePath::new(raw_path)?;  // Normalizes separators, validates
 
 ## Quick Reference: File Locations
 
-| What | Where |
-|------|-------|
-| All shared types | `crates/shared/src/` |
-| Feature crate source | `crates/{feature}/src/` |
-| CLI commands | `crates/cli-commands/src/surface_*_command.rs` |
-| MCP tools | `crates/mcp-server/src/` |
-| TUI views | `crates/tui/src/surface_*_view.rs` |
-| Config files | `lint_arwaky.config.{rust,python,javascript}.yaml` |
-| Test workspaces | `test-workspaces/` |
-| CI workflows | `.github/workflows/` |
-| Build scripts | `scripts/` |
+| What                 | Where                                              |
+| -------------------- | -------------------------------------------------- |
+| All shared types     | `crates/shared/src/`                               |
+| Feature crate source | `crates/{feature}/src/`                            |
+| CLI commands         | `crates/cli-commands/src/surface_*_command.rs`     |
+| MCP tools            | `crates/mcp-server/src/`                           |
+| TUI views            | `crates/tui/src/surface_*_view.rs`                 |
+| Config files         | `lint_arwaky.config.{rust,python,javascript}.yaml` |
+| Test workspaces      | `test-workspaces/`                                 |
+| CI workflows         | `.github/workflows/`                               |
+| Build scripts        | `scripts/`                                         |
 
 ---
 
 ## Further Reading
 
-| Topic | Document |
-|-------|----------|
-| Navigation hub (start here) | [DOCS.md](DOCS.md) |
-| End-to-end data flow | [DATA_FLOW.md](DATA_FLOW.md) |
-| Complete crate reference | [CRATE_INDEX.md](CRATE_INDEX.md) |
-| AES 7-layer architecture | [ARCHITECTURE.md](../ARCHITECTURE.md) |
-| 24 AES rules catalog | [rules/RULES_AES.md](rules/RULES_AES.md) |
-| Product requirements | [PRD.md](../PRD.md) |
-| AI agent skill | [SKILL.md](../SKILL.md) |
-| Contributing guide | [CONTRIBUTING.md](../CONTRIBUTING.md) |
-| Deployment guide | [DEPLOY.md](../DEPLOY.md) |
-| Test plan | [TEST.md](../TEST.md) |
+| Topic                       | Document                                 |
+| --------------------------- | ---------------------------------------- |
+| Navigation hub (start here) | [DOCS.md](DOCS.md)                       |
+| End-to-end data flow        | [DATA_FLOW.md](DATA_FLOW.md)             |
+| Complete crate reference    | [CRATE_INDEX.md](CRATE_INDEX.md)         |
+| AES 7-layer architecture    | [ARCHITECTURE.md](../ARCHITECTURE.md)    |
+| 24 AES rules catalog        | [rules/RULES_AES.md](rules/RULES_AES.md) |
+| Product requirements        | [PRD.md](../PRD.md)                      |
+| AI agent skill              | [SKILL.md](../SKILL.md)                  |
+| Contributing guide          | [CONTRIBUTING.md](../CONTRIBUTING.md)    |
+| Deployment guide            | [DEPLOY.md](../DEPLOY.md)                |
+| Test plan                   | [TEST.md](../TEST.md)                    |

@@ -1,6 +1,6 @@
-in id    pub importsala hadraft ayng saya buat tolong adna berikan kritik dan saranasaja # Implementation Draft: AI Auto-Repair Model (AES Dogfooding Architecture)
+in id pub importsala hadraft ayng saya buat tolong adna berikan kritik dan saranasaja # Implementation Draft: AI Auto-Repair Model (AES Dogfooding Architecture)
 
-This draft demonstrates how the AI Auto-Repair feature using Rust Burn is implemented within `lint-arwaky` following *dogfooding* principles (strictly adhering to the 7-layer AES rules).
+This draft demonstrates how the AI Auto-Repair feature using Rust Burn is implemented within `lint-arwaky` following _dogfooding_ principles (strictly adhering to the 7-layer AES rules).
 
 Code is no longer written monolithically, but is instead split into specific layers: **Taxonomy, Contract, Capabilities, Infrastructure, and Agent**.
 
@@ -54,7 +54,7 @@ pub struct ModelOutputVO<B: Backend> {
 
 ## 2. Contract Layer (Interfaces / Ports & Protocols)
 
-Defines *boundaries* between layers so that Capabilities and Infrastructure are not directly coupled (dependency inversion).
+Defines _boundaries_ between layers so that Capabilities and Infrastructure are not directly coupled (dependency inversion).
 
 **File:** `contract_model_predictor_protocol.rs`
 
@@ -95,7 +95,7 @@ pub trait ReferenceModifierPort {
 
 ## 3. Capabilities Layer (Pure Business Logic)
 
-This layer contains prediction logic (Burn Model) and *parsing* (Syn AST). There should be no *file system* access here.
+This layer contains prediction logic (Burn Model) and _parsing_ (Syn AST). There should be no _file system_ access here.
 
 **File:** `capabilities_model_predictor.rs`
 
@@ -160,7 +160,7 @@ impl AstScannerPort for FileSystemAstScannerAdapter {
     fn scan_file_features(&self, path: &Path) -> Result<ExtractedFeatureVO, String> {
         // 1. Read file from the system (Infrastructure duty)
         let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
-      
+
         // 2. Delegate parsing to Capabilities
         extract_ast_from_string(&content).map_err(|e| e.to_string())
     }
@@ -222,7 +222,7 @@ impl<'a, B: Backend> AutorepairOrchestrator<'a, B> {
         let prediction = self.predictor.predict(&features);
 
         // 3. Assemble new name from prediction (mocking extraction)
-        let new_file_name = "infrastructure_database_adapter.rs"; 
+        let new_file_name = "infrastructure_database_adapter.rs";
         let old_file_name = target_file.file_name().unwrap().to_str().unwrap();
 
         // 4. Call Infra: Fix references throughout the workspace
@@ -240,5 +240,5 @@ impl<'a, B: Backend> AutorepairOrchestrator<'a, B> {
 By restructuring the draft to comply with AES standards, the following are achieved:
 
 1. **No I/O Violation in Business Logic (AES404)**: `capabilities` only performs mathematical prediction and pure string parsing. File access has been entirely moved to `infrastructure_fs_*.rs`.
-2. **Correct Dependency Inversion (Contract)**: The orchestrator in the `agent_` layer only depends on abstract *traits* (Port/Protocol), not on concrete types.
-3. **Isolated Passive Data (AES401)**: Model configuration and parsing results become `_vo` entities in the `taxonomy_` layer that can be safely shared across all layers without *circular dependencies*.
+2. **Correct Dependency Inversion (Contract)**: The orchestrator in the `agent_` layer only depends on abstract _traits_ (Port/Protocol), not on concrete types.
+3. **Isolated Passive Data (AES401)**: Model configuration and parsing results become `_vo` entities in the `taxonomy_` layer that can be safely shared across all layers without _circular dependencies_.

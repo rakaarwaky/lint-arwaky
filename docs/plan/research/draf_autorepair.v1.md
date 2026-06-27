@@ -1,6 +1,6 @@
 .
 
-Hello Raka! Based on the *Technical Research Proposal* document you provided, you want to implement the *Deep Learning-Based Semantic Code Naming* system using the **Rust Burn Framework**.
+Hello Raka! Based on the _Technical Research Proposal_ document you provided, you want to implement the _Deep Learning-Based Semantic Code Naming_ system using the **Rust Burn Framework**.
 
 To "work on" or realize this proposal, I have prepared the **core implementation code** in Rust. This implementation covers the three main pillars outlined in the document: Model Architecture (Burn), AST Feature Extractor, and Reference Propagation Engine.
 
@@ -8,8 +8,8 @@ Here is the technical realization of that proposal:
 
 ### 1. Deep Learning Model Architecture (Rust Burn)
 
-*According to Section 5: Training and Optimization Pipeline*
-This is the implementation of the *Multi-Task Transformer* that predicts Prefix, Suffix, and Concept simultaneously.
+_According to Section 5: Training and Optimization Pipeline_
+This is the implementation of the _Multi-Task Transformer_ that predicts Prefix, Suffix, and Concept simultaneously.
 
 ```rust
 use burn::{
@@ -82,9 +82,9 @@ impl<B: Backend> AESNamingModel<B> {
         let token_emb = self.token_embed.forward(tokens);
         let positions = Tensor::<B, 1, Int>::arange(0..seq_len as i64, &device).reshape([1, seq_len]);
         let pos_emb = self.pos_embed.forward(positions);
-    
+
         // Broadcast pos_emb to batch_size
-        let pos_emb = pos_emb.repeat_dim(0, batch_size); 
+        let pos_emb = pos_emb.repeat_dim(0, batch_size);
         let x = token_emb + pos_emb;
 
         // 2. Transformer Encoder (Shared Representation)
@@ -96,7 +96,7 @@ impl<B: Backend> AESNamingModel<B> {
         // 4. Multi-Task Heads
         let prefix_logits = self.prefix_head.forward(pooled.clone());
         let suffix_logits = self.suffix_head.forward(pooled);
-    
+
         // Concept head generates logits for each token (for autoregressive decoding)
         let concept_logits = self.concept_head.forward(encoded);
 
@@ -111,7 +111,7 @@ impl<B: Backend> AESNamingModel<B> {
 
 ### 2. AST Feature Extractor
 
-*According to Section 4.1: Feature Extraction and Tokenization*
+_According to Section 4.1: Feature Extraction and Tokenization_
 This function extracts the "header" from Rust files (imports, structs, traits, docstrings) to feed into the model, ignoring irrelevant implementation details.
 
 ```rust
@@ -169,7 +169,7 @@ pub fn extract_ast_features(file_path: &str) -> Result<ExtractedFeatures, syn::E
 
 ### 3. Reference Propagation Engine
 
-*According to Section 6: Execution Flow and Reference Propagation*
+_According to Section 6: Execution Flow and Reference Propagation_
 After the model predicts a new file name (e.g.: `db_util.rs` -> `infrastructure_database_adapter.rs`), this engine will propagate the change throughout the workspace.
 
 ```rust
@@ -190,7 +190,7 @@ pub fn propagate_references(
     {
         let path = entry.path();
         let content = fs::read_to_string(path)?;
-    
+
         // Check if there are references to old_module_name
         if content.contains(old_module_name) {
             // Replace use and mod declarations
@@ -202,7 +202,7 @@ pub fn propagate_references(
                 &format!("mod {};", old_module_name),
                 &format!("mod {};", new_module_name)
             );
-        
+
             // Save back the updated file
             fs::write(path, new_content)?;
         }
@@ -220,8 +220,8 @@ The code above is the architectural foundation of your proposal. To make this sy
 Would you like me to continue implementing the other parts?
 
 1. **BPE Tokenizer & Dataset Synthesizer** (To train the model according to Section 4.3).
-2. **Training Loop with Burn** (Using *Joint Loss Function* according to Section 5).
-3. **CLI Integration & Fallback Logic** (Integration with `cargo check` and *Confidence Thresholding* according to Section 7).
+2. **Training Loop with Burn** (Using _Joint Loss Function_ according to Section 5).
+3. **CLI Integration & Fallback Logic** (Integration with `cargo check` and _Confidence Thresholding_ according to Section 7).
 
 Let me know which part you'd like to work on next!
 
@@ -279,10 +279,10 @@ use serde::{Deserialize, Serialize};
 pub struct TaxonomyAstFeatureVo {
     /// List of import statements (use, import)
     pub imports: Vec<String>,
-  
+
     /// List of declared struct and trait names
     pub structs_traits: Vec<String>,
-  
+
     /// List of docstrings (documentation comments)
     pub docstrings: Vec<String>,
 }
@@ -300,25 +300,25 @@ impl TaxonomyAstFeatureVo {
             docstrings,
         }
     }
-  
+
     /// Combine all features into a single string for model input
     pub fn to_input_text(&self) -> String {
         let mut text = String::new();
-    
+
         for imp in &self.imports {
             text.push_str(imp);
             text.push('\n');
         }
-    
+
         for decl in &self.structs_traits {
             text.push_str(&format!("struct {} {{}}\n", decl));
         }
-    
+
         for doc in &self.docstrings {
             text.push_str(doc);
             text.push('\n');
         }
-    
+
         text
     }
 }
@@ -338,10 +338,10 @@ use burn::tensor::{backend::Backend, Tensor};
 pub struct TaxonomyModelOutputVo<B: Backend> {
     /// Logits for prefix layer classification (7 classes)
     pub prefix_logits: Tensor<B, 2>,
-  
+
     /// Logits for functional suffix classification (33 classes)
     pub suffix_logits: Tensor<B, 2>,
-  
+
     /// Logits for concept token generation (sequence)
     pub concept_logits: Tensor<B, 3>,
 }
@@ -375,25 +375,25 @@ use serde::{Deserialize, Serialize};
 pub struct TaxonomyModelConfigVo {
     /// BPE tokenizer vocabulary size
     pub vocab_size: usize,
-  
+
     /// Model embedding dimension (d_model)
     pub d_model: usize,
-  
+
     /// Feed-forward network dimension
     pub d_ff: usize,
-  
+
     /// Number of attention heads
     pub n_heads: usize,
-  
+
     /// Number of Transformer layers
     pub n_layers: usize,
-  
+
     /// Number of prefix classes (7 AES layers)
     pub num_prefixes: usize,
-  
+
     /// Number of allowed suffix classes
     pub num_suffixes: usize,
-  
+
     /// Maximum input sequence length
     pub max_seq_len: usize,
 }
@@ -427,16 +427,16 @@ use serde::{Deserialize, Serialize};
 pub struct TaxonomyTrainingSampleVo {
     /// Input text (AST extraction result)
     pub input_text: String,
-  
+
     /// Directory context (relative path)
     pub dir_context: String,
-  
+
     /// Numeric label for prefix (0-6)
     pub prefix_label: usize,
-  
+
     /// Numeric label for suffix (0-32)
     pub suffix_label: usize,
-  
+
     /// Expected concept text
     pub concept_text: String,
 }

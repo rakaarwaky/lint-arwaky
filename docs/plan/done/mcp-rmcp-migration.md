@@ -10,17 +10,18 @@
 
 ## Current → Target
 
-| Before | After |
-|---|---|
-| Hand-rolled JSON-RPC parsing | `rmcp::transport::stdio` |
-| Manual tool dispatch `match tool_name` | `#[tool]` macro auto-dispatch |
-| Manual `tools/list` response | Auto-generated from `#[tool]` |
-| Manual `initialize` response | `ServerHandler::get_info()` |
-| `mcp-sdk-rs = "0.3.4"` (unused) | `rmcp = { version = "0.16", features = ["server"] }` |
+| Before                                 | After                                                |
+| -------------------------------------- | ---------------------------------------------------- |
+| Hand-rolled JSON-RPC parsing           | `rmcp::transport::stdio`                             |
+| Manual tool dispatch `match tool_name` | `#[tool]` macro auto-dispatch                        |
+| Manual `tools/list` response           | Auto-generated from `#[tool]`                        |
+| Manual `initialize` response           | `ServerHandler::get_info()`                          |
+| `mcp-sdk-rs = "0.3.4"` (unused)        | `rmcp = { version = "0.16", features = ["server"] }` |
 
 ## Step 1: Update Cargo.toml
 
 ### Workspace `Cargo.toml`
+
 ```toml
 rmcp = { version = "0.16", features = ["server"] }
 ```
@@ -28,6 +29,7 @@ rmcp = { version = "0.16", features = ["server"] }
 Remove `mcp-sdk-rs = "0.3.4"`.
 
 ### `mcp-server/Cargo.toml`
+
 ```toml
 rmcp.workspace = true
 ```
@@ -35,6 +37,7 @@ rmcp.workspace = true
 ## Step 2: Define Tool Structs
 
 ### `taxonomy_mcp_tool_vo.rs` (shared)
+
 ```rust
 use rmcp::schemars::JsonSchema;
 use serde::Deserialize;
@@ -59,6 +62,7 @@ pub struct ReadSkillArgs {
 ## Step 3: Implement Server
 
 ### `agent_mcp_server.rs` (mcp-server)
+
 ```rust
 use rmcp::{tool, tool_router, ServerHandler, ServiceExt, transport::stdio};
 use rmcp::handler::server::wrapper::Parameters;
@@ -104,6 +108,7 @@ impl LintArwakyServer {
 ## Step 4: Update Entry Point
 
 ### `root_mcp_main_entry.rs`
+
 ```rust
 use rmcp::ServiceExt;
 use rmcp::transport::stdio;
@@ -126,13 +131,13 @@ async fn main() -> anyhow::Result<()> {
 
 ## File Changes
 
-| Action | File |
-|---|---|
-| NEW | `shared/src/mcp-server/taxonomy_mcp_tool_vo.rs` |
-| NEW | `mcp-server/src/agent_mcp_server.rs` |
-| UPDATE | `mcp-server/Cargo.toml` |
-| UPDATE | `root_mcp_main_entry.rs` |
-| DELETE | Old JSON-RPC handler code |
+| Action | File                                            |
+| ------ | ----------------------------------------------- |
+| NEW    | `shared/src/mcp-server/taxonomy_mcp_tool_vo.rs` |
+| NEW    | `mcp-server/src/agent_mcp_server.rs`            |
+| UPDATE | `mcp-server/Cargo.toml`                         |
+| UPDATE | `root_mcp_main_entry.rs`                        |
+| DELETE | Old JSON-RPC handler code                       |
 
 ## Example (from rmcp docs)
 

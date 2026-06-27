@@ -112,14 +112,17 @@ impl DependencyCycleAnalyzer {
                 None => continue,
             };
 
-            // Step 3d: Store one representative file path for this layer (for error reporting)
-            file_by_layer
-                .entry(file_layer.clone())
-                .or_insert_with(|| file.clone());
             // Step 3e: Parse every import statement in the file
             let modules = self.parser.extract_import_modules(&content);
             // Step 3f: For each import, resolve its target layer (strip scoped suffix)
+            let mut has_cross_layer = false;
             for module in modules {
+                // Skip crate:: imports — they are intra-crate, not cross-layer
+                if module.value().starts_with("crate::")
+                    || module.value().starts_with("lint_arwaky::")
+                {
+                    continue;
+                }
                 let module_fp = filepath_or_default(FilePath::new(module.value().to_string()));
                 if let Some(target_layer) = analyzer.detect_module_layer(&module_fp) {
                     let val = target_layer.value();
@@ -131,8 +134,15 @@ impl DependencyCycleAnalyzer {
                     // Step 3g: Only record cross-layer edges (same-layer edges cannot cause cycles)
                     if target_layer_str != file_layer {
                         edges.push(DependencyEdge::new(file_layer.clone(), target_layer_str));
+                        has_cross_layer = true;
                     }
                 }
+            }
+            // Step 3d: Only store files that contribute cross-layer edges as representatives
+            if has_cross_layer {
+                file_by_layer
+                    .entry(file_layer.clone())
+                    .or_insert_with(|| file.clone());
             }
         }
 

@@ -1,35 +1,43 @@
 # Feature Requirement Document (FRD) - Project Setup
 
 ## 1. Feature Goal
+
 The primary purpose of the `project-setup` module is to provide scaffolding facilities and doctor checks for new projects. This module initializes projects with AES-compliant directory layouts, sets up MCP configuration, and provides CI/CD templates for lint_arwaky integration.
 
 ## 2. Requirements & Scope
+
 The `project-setup` module is responsible for setup based on the following specifications:
 
 ### Component Specifications
-* **SetupManagementOrchestrator**: Coordinates the project initialization process.
-* **SetupManagementProcessor**: Processes templates and files that need to be created.
-* **SetupInstallerAdapter**: Adapter for filesystem operations and template installation.
+
+- **SetupManagementOrchestrator**: Coordinates the project initialization process.
+- **SetupManagementProcessor**: Processes templates and files that need to be created.
+- **SetupInstallerAdapter**: Adapter for filesystem operations and template installation.
 
 ### Features
-* **init**: Create AES directory structure (taxonomy, contract, capabilities, infrastructure, agent, surface, root).
-* **doctor**: Check whether a project is ready for lint_arwaky.
-* **mcp-config**: Create MCP configuration for AI integration.
-* **ci-templates**: Provide GitHub Actions templates or CI scripts.
+
+- **init**: Create AES directory structure (taxonomy, contract, capabilities, infrastructure, agent, surface, root).
+- **doctor**: Check whether a project is ready for lint_arwaky.
+- **mcp-config**: Create MCP configuration for AI integration.
+- **ci-templates**: Provide GitHub Actions templates or CI scripts.
 
 ### Inputs
-* Target path for initialization.
-* Setup parameters (language, framework, template).
+
+- Target path for initialization.
+- Setup parameters (language, framework, template).
 
 ### Outputs
-* Created template files.
-* Initialization status and error messages when needed.
+
+- Created template files.
+- Initialization status and error messages when needed.
 
 ---
 
 ## 3. Success Indicators
+
 The success of the `project-setup` module is measured by:
-* **Structure Correctness**: Directories and files are created according to AES patterns.
-* **Template Accuracy**: Created templates are ready to use and meet standards.
-* **CI Integration**: CI workflows can be used immediately without modification.
-* **Self-Audit Conformity**: The module itself passes AES rule checks.
+
+- **Structure Correctness**: Directories and files are created according to AES patterns.
+- **Template Accuracy**: Created templates are ready to use and meet standards.
+- **CI Integration**: CI workflows can be used immediately without modification.
+- **Self-Audit Conformity**: The module itself passes AES rule checks.

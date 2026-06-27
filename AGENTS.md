@@ -6,16 +6,16 @@
 _# Build everything
 cargo build --release
 
-# Self-lint 
-cargo run --bin lint-arwaky-cli -- check 
+# Self-lint
+cargo run --bin lint-arwaky-cli -- check
 
-# Scan — 
+# Scan —
 cargo run --bin lint-arwaky-cli -- scan <project-path>
 
-# Run MCP server 
+# Run MCP server
 cargo run --bin lint-arwaky-mcp
 
-# Run TUI launcher 
+# Run TUI launcher
 cargo run --bin lint-arwaky-tui
 
 # Per-crate build/check/test
@@ -38,26 +38,26 @@ cargo clippy -p import_rules -- -D warnings  # per crate
 
 The codebase uses **7 architectural layers** as **file prefixes**, organized into **feature module** (vertical slicing) in a **Cargo workspace**.
 
-| Layer (prefix)      | Allowed suffixes                                                                                                                               |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`                                                                                    |
-| `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                                       |
-| `capabilities_`   | `_checker`, `_analyzer`, `_processor`, etc.                                                                                              |
-| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.                                                                                                |
-| `agent_`          | `_orchestrator`                                                                                                                              |
+| Layer (prefix)    | Allowed suffixes                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`                                                                        |
+| `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                       |
+| `capabilities_`   | `_checker`, `_analyzer`, `_processor`, etc.                                                                              |
+| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.                                                                                |
+| `agent_`          | `_orchestrator`                                                                                                          |
 | `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` |
-| `root_`           | `_container`, `_entry`                                                                                                                     |
+| `root_`           | `_container`, `_entry`                                                                                                   |
 
 ### Workspace Packages Strcuture
 
 ```
 crates/
   shared/               — Foundation: ALL taxonomy_ + contract_
-  import-rules/         — Import compliance checks 
-  naming-rules/         — Naming convention enforcement 
-  role-rules/           — Role-layer violation checks 
-  orphan-detector/      — Unreachable/dead component detection 
-  code-analysis/        — Code quality: file limits, bypasses, mandatory defs 
+  import-rules/         — Import compliance checks
+  naming-rules/         — Naming convention enforcement
+  role-rules/           — Role-layer violation checks
+  orphan-detector/      — Unreachable/dead component detection
+  code-analysis/        — Code quality: file limits, bypasses, mandatory defs
   auto-fix/             — Auto-fix processor
   config-system/        — Config loading & parsing
   external-lint/        — Python, JS, Rust external linter adapters
@@ -65,7 +65,7 @@ crates/
   git-hooks/            — Git hooks management
   maintenance/          — Maintenance operations
   project-setup/        — Project init, doctor, mcp-config
-  cli-commands/         — CLI surfaces (_command) 
+  cli-commands/         — CLI surfaces (_command)
   mcp-server/           — MCP server surfaces
   tui/                  — TUI Interface
   root_cli_main_entry.rs       — CLI binary entry (root_entry)
@@ -83,9 +83,9 @@ Each contains intentional violations. See `TEST.md` for pass/fail criteria.
 
 ### Configuration & Rules
 
-| File                                   | Purpose                                    |
-| -------------------------------------- | ------------------------------------------ |
-| `Cargo.toml` (root)                  | Workspace manifest — members, deps, bins  |
+| File                                 | Purpose                                    |
+| ------------------------------------ | ------------------------------------------ |
+| `Cargo.toml` (root)                  | Workspace manifest — members, deps, bins   |
 | `crates/*/Cargo.toml`                | Per-crate manifests                        |
 | `lint_arwaky.config.rust.yaml`       | AES rules config for Rust                  |
 | `lint_arwaky.config.python.yaml`     | AES rules config for Python                |
@@ -93,8 +93,8 @@ Each contains intentional violations. See `TEST.md` for pass/fail criteria.
 
 ### Documentation
 
-| File                | Purpose                                  |
-| ------------------- | ---------------------------------------- |
+| File              | Purpose                                  |
+| ----------------- | ---------------------------------------- |
 | `RULES_AES.md`    | Complete 24 AES rules catalog            |
 | `RULES_RUFF.md`   | Python Ruff rule mapping                 |
 | `RULES_MYPY.md`   | Python MyPy rule mapping                 |
@@ -111,10 +111,10 @@ Each contains intentional violations. See `TEST.md` for pass/fail criteria.
 
 ### Scripts
 
-| File                  | Purpose                                                                                        |
-| --------------------- | ---------------------------------------------------------------------------------------------- |
+| File                | Purpose                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------- |
 | `install.local.sh`  | Bumps patch version + builds release + installs 3 binaries (`cli`, `mcp`, `tui`) locally |
-| `install.remote.sh` | Remote/CI install script                                                                       |
+| `install.remote.sh` | Remote/CI install script                                                                 |
 
 ## Branch management (CRITICAL — must follow)
 

@@ -2,17 +2,18 @@
 
 ## Current State
 
-| Component | Status | Problem |
-|---|---|---|
-| `file-watch` crate | Partial | Snapshot-based polling via `read_dir`, no real FS events |
-| `IWatchProviderPort` | Minimal | Only `start`/`stop`/`is_available`, no change detection callback |
-| `WatchServiceProvider` | Stub | `start`/`stop` on trait are no-ops, real logic in non-trait methods |
-| TUI `watch` | Stub | `sleep(2s)` + full re-lint loop, no change detection |
-| CLI `watch` | Same as TUI | Same polling stub |
+| Component              | Status      | Problem                                                             |
+| ---------------------- | ----------- | ------------------------------------------------------------------- |
+| `file-watch` crate     | Partial     | Snapshot-based polling via `read_dir`, no real FS events            |
+| `IWatchProviderPort`   | Minimal     | Only `start`/`stop`/`is_available`, no change detection callback    |
+| `WatchServiceProvider` | Stub        | `start`/`stop` on trait are no-ops, real logic in non-trait methods |
+| TUI `watch`            | Stub        | `sleep(2s)` + full re-lint loop, no change detection                |
+| CLI `watch`            | Same as TUI | Same polling stub                                                   |
 
 ## Goal
 
 Proper file watcher using Linux `inotify` (via `notify` crate) that:
+
 - Detects file changes (create/modify/delete) in real-time
 - Debounces rapid changes (avoid linting 50 times during `git checkout`)
 - Runs lint only on changed files (incremental), with optional full re-lint
@@ -87,6 +88,7 @@ pub trait IWatchProviderPort: Send + Sync {
 ### 2a. Add dependency
 
 `file-watch/Cargo.toml`:
+
 ```toml
 [dependencies]
 notify = "6"          # inotify on Linux, FSEvent on macOS
@@ -103,6 +105,7 @@ tokio = { workspace = true, features = ["sync", "rt"] }
 - Respects ignore patterns (skip `.git`, `node_modules`, `target`, `__pycache__`)
 
 Key implementation:
+
 ```rust
 pub struct NotifyWatchProvider {
     watcher: Mutex<Option<Debouncer<RecommendedWatcher>>>,
@@ -170,6 +173,7 @@ impl WatchOrchestrator {
 ### 5a. `root_file_watch_container.rs` (UPDATE)
 
 Wire new components:
+
 ```rust
 pub fn orchestrator(&self) -> Arc<WatchOrchestrator> {
     // create NotifyWatchProvider → ChangeAnalyzer → WatchOrchestrator
@@ -187,6 +191,7 @@ Add `watch` menu item back with path input → calls orchestrator
 ### 6b. CLI `surface_watch_command.rs`
 
 Replace polling loop with orchestrator call:
+
 ```rust
 pub fn handle_watch(path: Option<String>) -> ExitCode {
     let config = WatchConfig::from_path(path);
@@ -204,33 +209,33 @@ Wire `FileWatchContainer` into CLI composition
 
 ## Step 7: Testing
 
-| Test | Description |
-|---|---|
-| Unit: `ChangeAnalyzer` | Dedup, filter, batch events |
-| Unit: `NotifyWatchProvider` | Start/stop, event broadcast |
-| Integration: full watch loop | Create file → lint triggered → output printed |
-| E2E: TUI watch | Start watch, modify file, see lint output |
-| E2E: CLI watch | `lint-arwaky watch .`, modify file, verify output |
+| Test                         | Description                                       |
+| ---------------------------- | ------------------------------------------------- |
+| Unit: `ChangeAnalyzer`       | Dedup, filter, batch events                       |
+| Unit: `NotifyWatchProvider`  | Start/stop, event broadcast                       |
+| Integration: full watch loop | Create file → lint triggered → output printed     |
+| E2E: TUI watch               | Start watch, modify file, see lint output         |
+| E2E: CLI watch               | `lint-arwaky watch .`, modify file, verify output |
 
 ---
 
 ## File Changes Summary
 
-| Action | File | Layer |
-|---|---|---|
-| NEW | `shared/file-watch/taxonomy_watch_event_vo.rs` | taxonomy |
-| NEW | `shared/file-watch/taxonomy_watch_config_vo.rs` | taxonomy |
-| UPDATE | `shared/file-watch/contract_provider_port.rs` | contract |
-| UPDATE | `shared/file-watch/mod.rs` | taxonomy |
-| NEW | `file-watch/src/infrastructure_notify_provider.rs` | infrastructure |
-| NEW | `file-watch/src/capabilities_change_analyzer.rs` | capabilities |
-| NEW | `file-watch/src/agent_watch_orchestrator.rs` | agent |
-| UPDATE | `file-watch/src/root_file_watch_container.rs` | root |
-| UPDATE | `file-watch/src/lib.rs` | root |
-| UPDATE | `file-watch/Cargo.toml` | config |
-| UPDATE | `cli-commands/src/surface_watch_command.rs` | surface |
-| UPDATE | `cli-commands/src/surface_tui_command.rs` | surface |
-| UPDATE | `root_cli_main_entry.rs` | root |
+| Action | File                                               | Layer          |
+| ------ | -------------------------------------------------- | -------------- |
+| NEW    | `shared/file-watch/taxonomy_watch_event_vo.rs`     | taxonomy       |
+| NEW    | `shared/file-watch/taxonomy_watch_config_vo.rs`    | taxonomy       |
+| UPDATE | `shared/file-watch/contract_provider_port.rs`      | contract       |
+| UPDATE | `shared/file-watch/mod.rs`                         | taxonomy       |
+| NEW    | `file-watch/src/infrastructure_notify_provider.rs` | infrastructure |
+| NEW    | `file-watch/src/capabilities_change_analyzer.rs`   | capabilities   |
+| NEW    | `file-watch/src/agent_watch_orchestrator.rs`       | agent          |
+| UPDATE | `file-watch/src/root_file_watch_container.rs`      | root           |
+| UPDATE | `file-watch/src/lib.rs`                            | root           |
+| UPDATE | `file-watch/Cargo.toml`                            | config         |
+| UPDATE | `cli-commands/src/surface_watch_command.rs`        | surface        |
+| UPDATE | `cli-commands/src/surface_tui_command.rs`          | surface        |
+| UPDATE | `root_cli_main_entry.rs`                           | root           |
 
 ---
 

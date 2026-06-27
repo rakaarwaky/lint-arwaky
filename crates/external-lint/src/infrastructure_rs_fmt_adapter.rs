@@ -143,17 +143,9 @@ impl ILinterAdapterPort for RustFmtAdapter {
         }
 
         if results.is_empty() {
-            results.push(LintResult {
-                file: FilePath::new("Cargo.toml".to_string()).unwrap_or_default(),
-                line: LineNumber::new(0),
-                column: ColumnNumber::new(0),
-                code: ErrorCode::raw("rustfmt::unformatted"),
-                message: LintMessage::new("Project is not formatted by rustfmt".to_string()),
-                source: Some(AdapterName::raw("rustfmt")),
-                severity: Severity::MEDIUM,
-                enclosing_scope: None,
-                related_locations: LocationList::new(),
-            });
+            // No diff lines parsed — cargo fmt --check may have exited non-zero
+            // for a reason unrelated to formatting (e.g., parse error). Don't
+            // create a fake violation.
         }
 
         Ok(LintResultList::new(results))

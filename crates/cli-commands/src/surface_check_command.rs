@@ -12,6 +12,7 @@
 // The OrchestratorFactory type enables the `scan` command to create
 // fresh per-project DI containers for each workspace member, so that
 // each member gets its own language-specific configuration.
+use std::process::ExitCode;
 use std::sync::Arc;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
@@ -118,11 +119,11 @@ impl CheckCommandsSurface {
         filter: Option<&str>,
         config: ArchitectureConfig,
         format: Format,
-    ) {
+    ) -> ExitCode {
         let path_obj = crate::surface_common_command::resolve_file_path(path);
         let rt = match crate::surface_common_command::create_runtime() {
             Ok(r) => r,
-            Err(_) => return,
+            Err(_) => return ExitCode::FAILURE,
         };
 
         // Determine dynamic orchestrators based on detected language config
@@ -176,7 +177,18 @@ impl CheckCommandsSurface {
         );
         all_results.extend(orphan_results);
 
-        self.filter_and_display_results(all_results, path, filter, code_analysis_linter, &format);
+        let violation_count = self.filter_and_display_results(
+            all_results,
+            path,
+            filter,
+            code_analysis_linter,
+            &format,
+        );
+        if violation_count > 0 {
+            ExitCode::from(1)
+        } else {
+            ExitCode::SUCCESS
+        }
     }
 
     /// Run orphan detection pass — scans workspace for cross-folder import graph.
@@ -208,7 +220,7 @@ impl CheckCommandsSurface {
         filter: Option<&str>,
         reporter: Arc<dyn ICodeAnalysisAggregate>,
         format: &Format,
-    ) {
+    ) -> usize {
         let canonical_scan_path = crate::surface_common_command::canonicalize_path(path);
         let cwd = crate::surface_common_command::current_dir();
         let filtered_results: Vec<_> = if let Some(code) = filter {
@@ -229,6 +241,7 @@ impl CheckCommandsSurface {
                 })
                 .collect()
         };
+        let violation_count = filtered_results.len();
         match format {
             Format::Text => {
                 let results_list = LintResultList::new(filtered_results);
@@ -248,6 +261,7 @@ impl CheckCommandsSurface {
                 println!("{junit}");
             }
         }
+        violation_count
     }
 
     /// Check if a single file is an orphan.
@@ -255,13 +269,15 @@ impl CheckCommandsSurface {
     pub fn check_orphan_single_file(&self, file_path: &str) {
         let path_obj = std::path::Path::new(file_path);
 
-        // Collect all source files from workspace root for cross-folder graph building
-        let dir_path = DirectoryPath::new(".".to_string()).unwrap_or_default();
-        let source_files = match self.scanner_provider.scan_directory(&dir_path) {
-            Ok(list) => list.values,
-            Err(_) => Vec::new(),
+        // Find workspace root for cross-crate graph building
+        let scan_root = match crate::surface_check_action::find_workspace_root(file_path) {
+            Some(r) => r,
+            None => std::path::PathBuf::from("."),
         };
-        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+        let all_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
+            .iter()
+            .map(|f| f.value.clone())
+            .collect();
 
         // Normalize the target file path
         let target_path = if path_obj.is_absolute() {
@@ -271,10 +287,12 @@ impl CheckCommandsSurface {
             cwd.join(file_path).to_string_lossy().to_string()
         };
 
-        // Run orphan detection
-        let all_results =
-            self.orphan_orchestrator
-                .check_orphans(self.layer_detector.as_ref(), &file_strs, ".");
+        // Run orphan detection with workspace root
+        let all_results = self.orphan_orchestrator.check_orphans(
+            self.layer_detector.as_ref(),
+            &all_files,
+            &scan_root.to_string_lossy(),
+        );
 
         // Filter results for the specific file
         let file_results: Vec<_> = all_results
@@ -339,7 +357,7 @@ impl CheckCommandsSurface {
         let workspaces = rt.block_on(orchestrator.discover_workspaces(&path_obj));
 
         if workspaces.is_empty() {
-            // No workspaces discovered — treat path as a standalone scan
+            // No workspaces discovered — fall back to single-scan mode
             let default_config = ArchitectureConfig::default();
             self.scan(path, filter, default_config, format);
             return;
@@ -445,11 +463,12 @@ impl CheckCommandsSurface {
             all_results.extend(role_results);
 
             // Orphan detection — scan across ALL workspaces so contracts in shared/
-            // can find their implementations in other crates
+            // can find their implementations in other crates. Use scan_root (workspace
+            // root) so the graph resolver can find all workspace crate directories.
             let orphan_results = self.orphan_orchestrator.check_orphans(
                 self.layer_detector.as_ref(),
                 &all_source_files,
-                &ws.path.value,
+                &scan_root.to_string_lossy(),
             );
             all_results.extend(orphan_results);
 
@@ -508,7 +527,7 @@ impl CheckCommandsSurface {
                 // Single workspace — print full violation detail (respects --format)
                 match format {
                     Format::Text => {
-                        let results_list = LintResultList::new(filtered_results);
+                        let results_list = LintResultList::new(filtered_results.clone());
                         print!(
                             "{}",
                             code_analysis_linter.format_report(&results_list, &ws.path.value)

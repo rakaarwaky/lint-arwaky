@@ -6,6 +6,8 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 
+static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
+
 // Known derive-macro imports that Rust compiler consumes implicitly.
 // These are never "used" as ordinary symbols — they're consumed by #[derive(...)]
 // attributes, so they must never be flagged as unused.
@@ -28,7 +30,69 @@ const DERIVE_MACROS: &[&str] = &[
     "AsRefStr",
 ];
 
-static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
+fn is_rust_trait_import(name: &str) -> bool {
+    if name.starts_with('I') && name.len() > 1 && name.chars().nth(1).unwrap_or(' ').is_uppercase()
+    {
+        return true;
+    }
+    if name.ends_with("Protocol")
+        || name.ends_with("Port")
+        || name.ends_with("Trait")
+        || name.ends_with("Aggregate")
+        || name.ends_with("Ext")
+    {
+        return true;
+    }
+    matches!(
+        name,
+        "Default"
+            | "Debug"
+            | "Display"
+            | "Clone"
+            | "Copy"
+            | "PartialEq"
+            | "Eq"
+            | "PartialOrd"
+            | "Ord"
+            | "Hash"
+            | "From"
+            | "Into"
+            | "TryFrom"
+            | "TryInto"
+            | "AsRef"
+            | "AsMut"
+            | "Deref"
+            | "DerefMut"
+            | "Iterator"
+            | "IntoIterator"
+            | "ExactSizeIterator"
+            | "FusedIterator"
+            | "Future"
+            | "Stream"
+            | "Read"
+            | "Write"
+            | "BufRead"
+            | "Seek"
+            | "Send"
+            | "Sync"
+            | "Unpin"
+            | "Sized"
+            | "Drop"
+            | "Fn"
+            | "FnMut"
+            | "FnOnce"
+            | "async_trait"
+            | "Digest"
+            | "Manager"
+            | "Emitter"
+            | "Serialize"
+            | "Deserialize"
+            | "EnumIter"
+            | "EnumString"
+            | "AsRefStr"
+            | "Parser"
+    )
+}
 
 pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
     let mut aliases = HashMap::new();
@@ -74,14 +138,25 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
         // Rust `use` statements: `use std::collections::HashMap;` or `use serde::{A, B};`
         if let Some(use_part) = trimmed.strip_prefix("use ") {
             let use_part = use_part.trim_end_matches(';').trim();
-            if !use_part.is_empty() && !use_part.starts_with("crate::") && !use_part.starts_with("super::") && !use_part.starts_with("self::") {
+            if !use_part.is_empty()
+                && !use_part.starts_with("crate::")
+                && !use_part.starts_with("super::")
+                && !use_part.starts_with("self::")
+            {
                 if let Some(brace_pos) = use_part.find("::{") {
                     let prefix = &use_part[..brace_pos];
                     let inner = use_part[brace_pos + 3..].trim_end_matches('}');
                     for name in inner.split(',') {
                         let name = name.trim().split(" as ").last().unwrap_or("").trim();
-                        if !name.is_empty() && name != "_" && name != "*" && !is_rust_trait_import(name) {
-                            aliases.insert(Identity::new(name), Identity::new(format!("{}::{}", prefix, name)));
+                        if !name.is_empty()
+                            && name != "_"
+                            && name != "*"
+                            && !is_rust_trait_import(name)
+                        {
+                            aliases.insert(
+                                Identity::new(name),
+                                Identity::new(format!("{}::{}", prefix, name)),
+                            );
                         }
                     }
                 } else {
@@ -286,70 +361,6 @@ pub fn is_name_used(name: &str, content: &str, exclude_line: usize) -> bool {
 }
 
 // ─── Private Helpers ───
-
-fn is_rust_trait_import(name: &str) -> bool {
-    if name.starts_with('I') && name.len() > 1 && name.chars().nth(1).unwrap_or(' ').is_uppercase()
-    {
-        return true;
-    }
-    if name.ends_with("Protocol")
-        || name.ends_with("Port")
-        || name.ends_with("Trait")
-        || name.ends_with("Aggregate")
-        || name.ends_with("Ext")
-    {
-        return true;
-    }
-    matches!(
-        name,
-        "Default"
-            | "Debug"
-            | "Display"
-            | "Clone"
-            | "Copy"
-            | "PartialEq"
-            | "Eq"
-            | "PartialOrd"
-            | "Ord"
-            | "Hash"
-            | "From"
-            | "Into"
-            | "TryFrom"
-            | "TryInto"
-            | "AsRef"
-            | "AsMut"
-            | "Deref"
-            | "DerefMut"
-            | "Iterator"
-            | "IntoIterator"
-            | "ExactSizeIterator"
-            | "FusedIterator"
-            | "Future"
-            | "Stream"
-            | "Read"
-            | "Write"
-            | "BufRead"
-            | "Seek"
-            | "Send"
-            | "Sync"
-            | "Unpin"
-            | "Sized"
-            | "Drop"
-            | "Fn"
-            | "FnMut"
-            | "FnOnce"
-            | "async_trait"
-            | "Digest"
-            | "Manager"
-            | "Emitter"
-            | "Serialize"
-            | "Deserialize"
-            | "EnumIter"
-            | "EnumString"
-            | "AsRefStr"
-            | "Parser"
-    )
-}
 
 #[cfg(test)]
 mod tests {

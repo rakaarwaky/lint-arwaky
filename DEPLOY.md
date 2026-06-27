@@ -1,6 +1,6 @@
 # Deployment Guide — Lint Arwaky v1.10.14
 
-**Status**: PRODUCTION-READY — 
+**Status**: PRODUCTION-READY —
 
 ---
 
@@ -22,7 +22,7 @@ No external services required. The MCP server speaks JSON-RPC 2.0 over stdin/std
 ### Option 1: Installer script
 
 ```bash
-# Linux 
+# Linux
 curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/install.remote.sh | bash
 ```
 
@@ -145,15 +145,15 @@ lint-arwaky-cli check .
 lint-arwaky-cli scan <path> .
 
 # CI mode with exit codes
-lint-arwaky-cli ci 
+lint-arwaky-cli ci
 
 # Auto-fix (where safe)
-lint-arwaky-cli fix 
+lint-arwaky-cli fix
 
 # Orphan check
 lint-arwaky-cli orphan <path>
 
-# File watching 
+# File watching
 lint-arwaky-cli watch .
 ```
 

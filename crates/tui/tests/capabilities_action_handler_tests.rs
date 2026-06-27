@@ -310,6 +310,208 @@ fn test_action_doctor() {
     assert!(state.preview_text.contains("healthy"));
 }
 
+// ============ Additional lint actions ============
+
+#[test]
+fn test_action_scan() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.entries = make_entries();
+    h.handle(&mut state, TuiEvent::ActionScan);
+    assert_eq!(state.preview_mode, PreviewMode::LintResults);
+    assert!(state.preview_text.contains("scanned"));
+    assert_eq!(state.violation_count, 5);
+}
+
+#[test]
+fn test_action_fix() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.entries = make_entries();
+    h.handle(&mut state, TuiEvent::ActionFix);
+    assert_eq!(state.preview_mode, PreviewMode::LintResults);
+    assert!(state.preview_text.contains("fixed"));
+}
+
+#[test]
+fn test_action_ci() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.entries = make_entries();
+    h.handle(&mut state, TuiEvent::ActionCi);
+    assert!(state.preview_text.contains("ci pass"));
+}
+
+#[test]
+fn test_action_orphan() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.entries = make_entries();
+    h.handle(&mut state, TuiEvent::ActionOrphan);
+    assert!(state.preview_text.contains("orphan ok"));
+}
+
+#[test]
+fn test_action_security() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.entries = make_entries();
+    h.handle(&mut state, TuiEvent::ActionSecurity);
+    assert!(state.preview_text.contains("secure"));
+}
+
+#[test]
+fn test_action_duplicates() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.entries = make_entries();
+    h.handle(&mut state, TuiEvent::ActionDuplicates);
+    assert!(state.preview_text.contains("no dupes"));
+}
+
+#[test]
+fn test_action_dependencies() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.entries = make_entries();
+    h.handle(&mut state, TuiEvent::ActionDependencies);
+    assert!(state.preview_text.contains("deps ok"));
+}
+
+#[test]
+fn test_action_init() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    h.handle(&mut state, TuiEvent::ActionInit);
+    assert_eq!(state.preview_mode, PreviewMode::ActionOutput);
+    assert!(state.preview_text.contains("init done"));
+}
+
+#[test]
+fn test_action_install() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    h.handle(&mut state, TuiEvent::ActionInstall);
+    assert!(state.preview_text.contains("installed"));
+}
+
+#[test]
+fn test_action_mcp_config() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    h.handle(&mut state, TuiEvent::ActionMcpConfig);
+    assert!(state.preview_text.contains("mcp config"));
+}
+
+#[test]
+fn test_action_config_show() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    h.handle(&mut state, TuiEvent::ActionConfigShow);
+    assert!(state.preview_text.contains("config shown"));
+}
+
+#[test]
+fn test_action_install_hook() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    h.handle(&mut state, TuiEvent::ActionInstallHook);
+    assert!(state.preview_text.contains("hook installed"));
+}
+
+#[test]
+fn test_action_uninstall_hook() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    h.handle(&mut state, TuiEvent::ActionUninstallHook);
+    assert!(state.preview_text.contains("hook removed"));
+}
+
+#[test]
+fn test_action_adapters() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    h.handle(&mut state, TuiEvent::ActionAdapters);
+    assert!(state.preview_text.contains("adapters listed"));
+}
+
+#[test]
+fn test_action_version() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    h.handle(&mut state, TuiEvent::ActionVersion);
+    assert!(state.preview_text.contains("v1.0"));
+}
+
+#[test]
+fn test_path_use_current() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.show_path_dialog = true;
+    state.current_dir = String::new();
+    h.handle(&mut state, TuiEvent::PathUseCurrent);
+    // Should close dialog and set current_dir from env
+    assert!(!state.show_path_dialog);
+    assert!(!state.current_dir.is_empty());
+}
+
+#[test]
+fn test_resize_sets_terminal_height() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    assert_eq!(state.terminal_height, 0);
+    h.handle(&mut state, TuiEvent::Resize(80, 24));
+    assert_eq!(state.terminal_height, 24);
+}
+
+#[test]
+fn test_navigate_back_stays_at_root() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.current_dir = "/".to_string();
+    state.project_root = "/".to_string();
+    state.entries = make_entries();
+    h.handle(&mut state, TuiEvent::NavigateBack);
+    // Should stay at root since parent would be shorter than project_root
+    assert_eq!(state.current_dir, "/");
+}
+
+#[test]
+fn test_navigate_forward_into_directory() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.entries = vec![shared::tui::taxonomy_file_entry_vo::FileEntry {
+        name: "subdir".to_string(),
+        full_path: "/root/subdir".to_string(),
+        is_dir: true,
+        layer: shared::tui::taxonomy_file_entry_vo::AesLayer::None,
+        violation_count: 0,
+        extension: String::new(),
+        size_bytes: 0,
+    }];
+    h.handle(&mut state, TuiEvent::MoveDown); // no-op, only 1 entry
+    h.handle(&mut state, TuiEvent::NavigateForward);
+    // Should navigate into /root/subdir via MockFs (parent returns Some(/root))
+    // MockFs.parent_directory("/root/subdir") -> Some("/root")
+    // So current_dir should still be /root since MockFs doesn't support deep navigation
+    assert_eq!(state.current_dir, "/root/subdir");
+}
+
+#[test]
+fn test_navigate_forward_into_file_shows_preview() {
+    let h = make_handler();
+    let mut state = AppState::new("/root".to_string());
+    state.entries = make_entries();
+    // file_b.rs is at index 1 after load_directory sorts dirs first
+    state.selected_index = 1;
+    h.handle(&mut state, TuiEvent::NavigateForward);
+    // Should load file preview (not change directory)
+    assert_eq!(state.current_dir, "/root");
+    assert_eq!(state.preview_mode, PreviewMode::FileContent);
+}
+
+// ---- missing: ActionHandler::poll_watch is a no-op by design ----
+
 #[test]
 fn test_path_input_and_backspace() {
     let h = make_handler();

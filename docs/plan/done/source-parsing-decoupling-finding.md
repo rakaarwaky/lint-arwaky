@@ -4,12 +4,12 @@
 
 The `source-parsing` crate provides infrastructure implementations (scanners, language detector, etc.) that are injected at runtime into other feature crates. If `source-parsing` is deleted, the following crates fail at **runtime**:
 
-| Crate | Ports Needed | Status |
-|-------|--------------|--------|
-| import-rules | `ISourceParserPort` | ❌ RUNTIME GAGAL |
-| code-analysis | `ISourceParserPort` | ❌ RUNTIME GAGAL |
-| cli-commands | `IScannerProviderPort`, `ILanguageDetectorPort` | ❌ RUNTIME GAGAL |
-| git-hooks | `IScannerProviderPort` | ❌ RUNTIME GAGAL |
+| Crate         | Ports Needed                                    | Status           |
+| ------------- | ----------------------------------------------- | ---------------- |
+| import-rules  | `ISourceParserPort`                             | ❌ RUNTIME GAGAL |
+| code-analysis | `ISourceParserPort`                             | ❌ RUNTIME GAGAL |
+| cli-commands  | `IScannerProviderPort`, `ILanguageDetectorPort` | ❌ RUNTIME GAGAL |
+| git-hooks     | `IScannerProviderPort`                          | ❌ RUNTIME GAGAL |
 
 **Goal:** Make each crate self-contained with its own infrastructure implementation, eliminating runtime dependency on `source-parsing` crate.
 
@@ -459,6 +459,7 @@ impl ISourceParserPort for SourceParserOrchestrator {
 **Full file: 782 lines** — Contains regex-based Rust source parser implementing `ISourceParserPort`.
 
 Key methods:
+
 - `extract_imports()` — extracts `use` statements
 - `get_raw_symbols()` — extracts struct, enum, trait, fn definitions
 - `find_unused_imports()` — finds unused imports
@@ -571,6 +572,7 @@ impl SourceParsingContainer {
 ### 5.1 import-rules
 
 #### Cargo.toml
+
 ```toml
 [package]
 name = "import_rules-lint-arwaky"
@@ -593,6 +595,7 @@ shared.workspace = true
 ```
 
 #### root_import_rules_container.rs
+
 ```rust
 use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -644,6 +647,7 @@ impl ImportContainer {
 ### 5.2 code-analysis
 
 #### Cargo.toml
+
 ```toml
 [package]
 name = "code_analysis-lint-arwaky"
@@ -667,6 +671,7 @@ shared.workspace = true
 ```
 
 #### root_code_analysis_container.rs (relevant parts)
+
 ```rust
 // Already has NullSourceParser implementation
 impl shared::source_parsing::contract_parser_port::ISourceParserPort for NullSourceParser {
@@ -683,6 +688,7 @@ impl NullSourceParser {
 ### 5.3 cli-commands
 
 #### Cargo.toml
+
 ```toml
 [package]
 name = "cli_commands-lint-arwaky"
@@ -714,6 +720,7 @@ dirs.workspace = true
 ```
 
 #### surface_check_command.rs (relevant parts)
+
 ```rust
 use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
 use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
@@ -733,6 +740,7 @@ pub struct CheckContext {
 ```
 
 #### surface_git_command.rs
+
 ```rust
 use shared::source_parsing::contract_language_detector_port::ILanguageDetectorPort;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
@@ -750,6 +758,7 @@ pub async fn handle_git_diff(
 ### 5.4 git-hooks
 
 #### Cargo.toml
+
 ```toml
 [package]
 name = "git_hooks-lint-arwaky"
@@ -770,6 +779,7 @@ shared.workspace = true
 ```
 
 #### root_git_hooks_container.rs
+
 ```rust
 use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use std::sync::Arc;
@@ -802,6 +812,7 @@ impl GitContainer {
 ```
 
 #### capabilities_diff_checker.rs
+
 ```rust
 use shared::source_parsing::contract_scanner_provider_port::IScannerProviderPort;
 use shared::source_parsing::taxonomy_path_vo::FilePath;
@@ -904,12 +915,12 @@ source_parsing.workspace = true  # ← TO BE REMOVED
 
 Each crate needs these files (copy from source-parsing, adapt):
 
-| Crate | New Files |
-|-------|-----------|
-| import-rules | `infrastructure_language_detector.rs` |
-| code-analysis | `infrastructure_language_detector.rs` |
-| cli-commands | `infrastructure_language_detector.rs`, `infrastructure_scanner_provider.rs` |
-| git-hooks | `infrastructure_scanner_provider.rs` |
+| Crate         | New Files                                                                   |
+| ------------- | --------------------------------------------------------------------------- |
+| import-rules  | `infrastructure_language_detector.rs`                                       |
+| code-analysis | `infrastructure_language_detector.rs`                                       |
+| cli-commands  | `infrastructure_language_detector.rs`, `infrastructure_scanner_provider.rs` |
+| git-hooks     | `infrastructure_scanner_provider.rs`                                        |
 
 ### Phase 2: Add `new_default()` Constructors
 
@@ -928,6 +939,7 @@ impl ImportContainer {
 ### Phase 3: Update Entry Points
 
 Remove `source_parsing::` dependency from:
+
 - `root_cli_main_entry.rs`
 - `root_mcp_main_entry.rs`
 

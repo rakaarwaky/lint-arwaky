@@ -1,6 +1,7 @@
 ---
 version: 1.10.29
 ---
+
 # Lint Arwaky Skill
 
 Multi-language linting and AES (Agentic Engineering System) architecture enforcement.
@@ -16,14 +17,14 @@ Multi-language linting and AES (Agentic Engineering System) architecture enforce
 
 Agentic Engineering System — 7-layer strict layered architecture enforced by file prefix naming.
 
-| Layer                    | Prefix              | Dependency Direction                                 |
-| ------------------------ | ------------------- | ---------------------------------------------------- |
+| Layer              | Prefix            | Dependency Direction                                 |
+| ------------------ | ----------------- | ---------------------------------------------------- |
 | **root**           | `root_`           | Wires everything, depends on all                     |
-| **surfaces**       | `surface_`        | UI/API entry points → agents                        |
-| **agent**          | `agent_`          | Orchestrators → capabilities + infra                |
-| **capabilities**   | `capabilities_`   | Business logic → contracts                          |
-| **infrastructure** | `infrastructure_` | Tech adapters → contracts                           |
-| **contract**       | `contract_`       | Interfaces (ports, protocols) → taxonomy            |
+| **surfaces**       | `surface_`        | UI/API entry points → agents                         |
+| **agent**          | `agent_`          | Orchestrators → capabilities + infra                 |
+| **capabilities**   | `capabilities_`   | Business logic → contracts                           |
+| **infrastructure** | `infrastructure_` | Tech adapters → contracts                            |
+| **contract**       | `contract_`       | Interfaces (ports, protocols) → taxonomy             |
 | **taxonomy**       | `taxonomy_`       | Pure domain VOs, entities, errors, events, constants |
 
 Import rule: `surface` → `agent` → `capabilities` / `infrastructure` → `contract` → `taxonomy`.
@@ -31,35 +32,35 @@ Peer layers cannot import each other. Violations are **AES201 (CRITICAL)**.
 
 # AES Rules (24 rules)
 
-| Code   | Group   | Rule                                                  | Severity |
-| ------ | ------- | ----------------------------------------------------- | -------- |
-| AES101 | Naming  | File suffix must match layer convention               | MAJOR    |
+| Code   | Group   | Rule                                                | Severity |
+| ------ | ------- | --------------------------------------------------- | -------- |
+| AES101 | Naming  | File suffix must match layer convention             | MAJOR    |
 | AES102 | Naming  | Filename must follow `layer_concept_suffix` pattern | MAJOR    |
-| AES201 | Import  | Forbidden layer import detected                       | CRITICAL |
-| AES202 | Import  | Missing mandatory import for layer                    | CRITICAL |
-| AES203 | Import  | Unused import detected                                | MINOR    |
-| AES204 | Import  | Dummy/todo-only import detected                       | MINOR    |
-| AES205 | Import  | Missing re-export in barrel file                      | MAJOR    |
-| AES301 | Quality | File exceeds max line count                           | MINOR    |
-| AES302 | Quality | Function exceeds max line count                       | MINOR    |
-| AES303 | Quality | Bypass (noqa/allow) suppression detected              | CRITICAL |
-| AES304 | Quality | Missing mandatory definition                          | MAJOR    |
-| AES305 | Quality | `todo!()` / `unimplemented!()` in non-test        | MINOR    |
-| AES306 | Quality | Function exceeds max parameters                       | MINOR    |
-| AES307 | Quality | Function exceeds max return types                     | MINOR    |
-| AES308 | Quality | Nested function complexity too high                   | MINOR    |
-| AES401 | Role    | Layer-role suffix mismatch                            | CRITICAL |
-| AES402 | Role    | Bypasses contract aggregate (direct impl dep)         | CRITICAL |
-| AES403 | Role    | Capability bypasses agent orchestrator                | CRITICAL |
-| AES404 | Role    | Surface calls capability directly                     | CRITICAL |
-| AES405 | Role    | Infrastructure implements port without aggregate      | CRITICAL |
-| AES406 | Role    | Duplicate registration in container                   | MAJOR    |
-| AES501 | Orphan  | Unused/Unreachable file                               | MAJOR    |
-| AES502 | Orphan  | Unused contract port/protocol                         | MAJOR    |
-| AES503 | Orphan  | Unused capability                                     | MAJOR    |
-| AES504 | Orphan  | Dead dependency                                       | MINOR    |
-| AES505 | Orphan  | Circular dependency                                   | CRITICAL |
-| AES506 | Orphan  | Barrel file with all-unused exports                   | MAJOR    |
+| AES201 | Import  | Forbidden layer import detected                     | CRITICAL |
+| AES202 | Import  | Missing mandatory import for layer                  | CRITICAL |
+| AES203 | Import  | Unused import detected                              | MINOR    |
+| AES204 | Import  | Dummy/todo-only import detected                     | MINOR    |
+| AES205 | Import  | Missing re-export in barrel file                    | MAJOR    |
+| AES301 | Quality | File exceeds max line count                         | MINOR    |
+| AES302 | Quality | Function exceeds max line count                     | MINOR    |
+| AES303 | Quality | Bypass (noqa/allow) suppression detected            | CRITICAL |
+| AES304 | Quality | Missing mandatory definition                        | MAJOR    |
+| AES305 | Quality | `todo!()` / `unimplemented!()` in non-test          | MINOR    |
+| AES306 | Quality | Function exceeds max parameters                     | MINOR    |
+| AES307 | Quality | Function exceeds max return types                   | MINOR    |
+| AES308 | Quality | Nested function complexity too high                 | MINOR    |
+| AES401 | Role    | Layer-role suffix mismatch                          | CRITICAL |
+| AES402 | Role    | Bypasses contract aggregate (direct impl dep)       | CRITICAL |
+| AES403 | Role    | Capability bypasses agent orchestrator              | CRITICAL |
+| AES404 | Role    | Surface calls capability directly                   | CRITICAL |
+| AES405 | Role    | Infrastructure implements port without aggregate    | CRITICAL |
+| AES406 | Role    | Duplicate registration in container                 | MAJOR    |
+| AES501 | Orphan  | Unused/Unreachable file                             | MAJOR    |
+| AES502 | Orphan  | Unused contract port/protocol                       | MAJOR    |
+| AES503 | Orphan  | Unused capability                                   | MAJOR    |
+| AES504 | Orphan  | Dead dependency                                     | MINOR    |
+| AES505 | Orphan  | Circular dependency                                 | CRITICAL |
+| AES506 | Orphan  | Barrel file with all-unused exports                 | MAJOR    |
 
 # MCP Tools
 

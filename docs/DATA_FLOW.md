@@ -201,16 +201,16 @@ test-workspaces/
 
 ### Fix safety rules
 
-| Violation | Safe to fix? | Action |
-|-----------|-------------|--------|
-| AES201 (forbidden import) | Yes | Remove the import line |
-| AES202 (missing mandatory) | No | Requires manual intervention |
-| AES203 (unused import) | Yes | Remove the import line |
-| AES204 (dummy import) | Yes | Remove the import line |
-| AES205 (cycle) | No | Requires architectural change |
-| AES301 (file too long) | No | Requires code splitting |
-| AES304 (bypass) | No | Requires manual review |
-| AES501-506 (orphan) | No | Requires manual deletion |
+| Violation                  | Safe to fix? | Action                        |
+| -------------------------- | ------------ | ----------------------------- |
+| AES201 (forbidden import)  | Yes          | Remove the import line        |
+| AES202 (missing mandatory) | No           | Requires manual intervention  |
+| AES203 (unused import)     | Yes          | Remove the import line        |
+| AES204 (dummy import)      | Yes          | Remove the import line        |
+| AES205 (cycle)             | No           | Requires architectural change |
+| AES301 (file too long)     | No           | Requires code splitting       |
+| AES304 (bypass)            | No           | Requires manual review        |
+| AES501-506 (orphan)        | No           | Requires manual deletion      |
 
 ---
 
@@ -367,23 +367,23 @@ filter (source file?)
 
 ## Summary: Data Flow Patterns
 
-| Operation | Input | Processing | Output |
-|-----------|-------|------------|--------|
-| `check` | `FilePath` | All linters → aggregate | `Vec<LintResult>` |
-| `scan` | `FilePath` | Per-project containers → merge | `Vec<LintResult>` |
-| `fix` | `FilePath` | Lint → filter fixable → apply | Modified files |
-| `ci` | `FilePath` | Lint → score → reports | Exit code + files |
-| `watch` | `FilePath` | inotify → debounce → lint | Live terminal output |
-| MCP | JSON-RPC | Parse → dispatch → lint | JSON response |
+| Operation | Input      | Processing                     | Output               |
+| --------- | ---------- | ------------------------------ | -------------------- |
+| `check`   | `FilePath` | All linters → aggregate        | `Vec<LintResult>`    |
+| `scan`    | `FilePath` | Per-project containers → merge | `Vec<LintResult>`    |
+| `fix`     | `FilePath` | Lint → filter fixable → apply  | Modified files       |
+| `ci`      | `FilePath` | Lint → score → reports         | Exit code + files    |
+| `watch`   | `FilePath` | inotify → debounce → lint      | Live terminal output |
+| MCP       | JSON-RPC   | Parse → dispatch → lint        | JSON response        |
 
 ---
 
 ## Further Reading
 
-| Topic | Document |
-|-------|----------|
-| Navigation hub (start here) | [DOCS.md](DOCS.md) |
+| Topic                              | Document                                 |
+| ---------------------------------- | ---------------------------------------- |
+| Navigation hub (start here)        | [DOCS.md](DOCS.md)                       |
 | Developer guide (patterns, how-to) | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) |
-| Complete crate reference | [CRATE_INDEX.md](CRATE_INDEX.md) |
-| AES 7-layer architecture | [ARCHITECTURE.md](../ARCHITECTURE.md) |
-| 24 AES rules catalog | [rules/RULES_AES.md](rules/RULES_AES.md) |
+| Complete crate reference           | [CRATE_INDEX.md](CRATE_INDEX.md)         |
+| AES 7-layer architecture           | [ARCHITECTURE.md](../ARCHITECTURE.md)    |
+| 24 AES rules catalog               | [rules/RULES_AES.md](rules/RULES_AES.md) |
