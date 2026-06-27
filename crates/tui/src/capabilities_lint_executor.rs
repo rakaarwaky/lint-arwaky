@@ -150,19 +150,6 @@ impl LintExecutor {
         self
     }
 
-    /// Builder method: attach orphan detector aggregates for real orphan analysis.
-    pub fn with_orphan(
-        mut self,
-        orphan_aggregate: Arc<dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate>,
-        layer_detector: Arc<dyn shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate>,
-        scanner_provider: Arc<dyn shared::common::contract_scanner_provider_port::IScannerProviderPort>,
-    ) -> Self {
-        self.orphan_aggregate = Some(orphan_aggregate);
-        self.layer_detector = Some(layer_detector);
-        self.scanner_provider = Some(scanner_provider);
-        self
-    }
-
     /// Format lint results into a human-readable numbered list for TUI preview panel.
     pub fn format_results(&self, results: &LintResultList) -> String {
         if results.is_empty() {
@@ -606,11 +593,41 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn mcp_config(&self, flags: &ActionFlags) -> LintExecutionResult {
-        let output = format!(
-            "MCP Configuration for client: {}\nUse CLI `lint-arwaky-cli setup mcp-config --client {}` to print config.",
-            flags.mcp_client, flags.mcp_client
-        );
-        LintExecutionResult::success(output, 0)
+        match &self.setup_aggregate {
+            Some(setup) => {
+                let transport =
+                    shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::STDAggregate;
+                let config_vo = match flags.mcp_client.as_str() {
+                    "claude" => setup.mcp_config_claude(&transport),
+                    "hermes" => setup.mcp_config_hermes(&transport),
+                    "vscode" => setup.mcp_config_vscode(&transport),
+                    _ => setup.generate_mcp_config(&transport),
+                };
+                let json = match serde_json::to_string_pretty(&config_vo.value) {
+                    Ok(j) => j,
+                    Err(e) => {
+                        return LintExecutionResult::failure(format!(
+                            "MCP config serialization failed: {}",
+                            e
+                        ));
+                    }
+                };
+                let output = format!(
+                    "MCP Configuration (client: {})\n\
+                     Transport: Stdio\n\n{}",
+                    flags.mcp_client, json
+                );
+                LintExecutionResult::success(output, 0)
+            }
+            None => {
+                let output = format!(
+                    "MCP Configuration for client: {}.\n\
+                     Use CLI `lint-arwaky-cli setup mcp-config --client {}` to print config.",
+                    flags.mcp_client, flags.mcp_client
+                );
+                LintExecutionResult::success(output, 0)
+            }
+        }
     }
 
     fn config_show(&self) -> LintExecutionResult {
