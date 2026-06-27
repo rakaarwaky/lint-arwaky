@@ -125,7 +125,6 @@ pub fn extract_used_symbols(
             !t.starts_with("import ")
                 && !t.starts_with("from ")
                 && !t.starts_with("use ")
-                && !t.starts_with('#')
         })
         .collect::<Vec<_>>()
         .join("\n");
