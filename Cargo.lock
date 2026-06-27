@@ -4435,6 +4435,7 @@ dependencies = [
  "project_setup-lint-arwaky",
  "ratatui",
  "role_rules-lint-arwaky",
+ "serde_json",
  "shared-lint-arwaky",
  "tokio",
 ]

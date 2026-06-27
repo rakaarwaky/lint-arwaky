@@ -22,6 +22,7 @@ git_hooks.workspace = true
 ratatui.workspace = true
 crossterm.workspace = true
 arboard.workspace = true
+serde_json.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
 

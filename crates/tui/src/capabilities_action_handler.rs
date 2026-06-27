@@ -371,4 +371,6 @@ impl IActionHandlerProtocol for ActionHandler {
     fn load_preview(&self, state: &mut AppState) {
         ActionHandler::load_preview(self, state);
     }
+
+    fn poll_watch(&self, _state: &mut AppState) {}
 }

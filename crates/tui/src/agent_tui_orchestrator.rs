@@ -35,4 +35,8 @@ impl ITuiAggregate for TuiOrchestrator {
     fn load_preview(&self, state: &mut AppState) {
         self.action_handler.load_preview(state);
     }
+
+    fn poll_watch(&self, state: &mut AppState) {
+        self.action_handler.poll_watch(state);
+    }
 }
