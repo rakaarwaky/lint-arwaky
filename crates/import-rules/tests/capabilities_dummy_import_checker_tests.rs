@@ -2,18 +2,19 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::common::taxonomy_common_vo::LineNumber;
-use shared::common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
+use shared::common::taxonomy_layer_vo::{Identity, LayerNameVO, LineContentVO};
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule, ConfigEnabled};
+use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ConfigEnabled};
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
-use shared::import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
+use shared::import_rules::contract_rule_protocol::{IAnalyzer, IArchRuleProtocol};
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
 
 // ---------------------------------------------------------------------------
 // Mock parser
@@ -23,7 +24,7 @@ struct MockDummyParser {
     imported_symbols: Vec<(SymbolName, LineNumber)>,
     dummy_impl_traits: Vec<(SymbolName, LineNumber)>,
     symbol_used_real: bool,
-    lines: Vec<String>,
+    content: String,
     lang: LanguageVO,
 }
 
@@ -34,7 +35,7 @@ impl MockDummyParser {
             imported_symbols: vec![],
             dummy_impl_traits: vec![],
             symbol_used_real: false,
-            lines: vec![],
+            content: String::new(),
             lang: LanguageVO::Rust,
         }
     }
@@ -51,7 +52,7 @@ impl IImportParserPort for MockDummyParser {
     fn extract_module_from_line(&self, _l: &LineContentVO) -> Option<Identity> { None }
     fn extract_layer_from_import(&self, _s: &Identity) -> Option<LayerNameVO> { None }
     fn read_file_to_message(&self, _f: &FilePath) -> Result<LintMessage, std::io::Error> {
-        Ok(LintMessage::new(self.lines.join("\n")))
+        Ok(LintMessage::new(self.content.clone()))
     }
     fn extract_import_modules(&self, _c: &str) -> Vec<SymbolName> { vec![] }
     fn get_language_from_path(&self, _p: &str) -> LanguageVO { self.lang }
@@ -75,6 +76,7 @@ impl IImportParserPort for MockDummyParser {
     fn extract_rust_js_imports(&self, _c: &str) -> Vec<(SymbolName, LineNumber)> { vec![] }
     fn is_name_used(&self, _n: &str, _c: &str, _e: LineNumber) -> bool { false }
 }
+use shared::common::taxonomy_layer_vo::FileContentVO;
 
 // ---------------------------------------------------------------------------
 // Mock analyzer
@@ -83,6 +85,7 @@ struct MockAnalyzer;
 
 impl IAnalyzer for MockAnalyzer {
     fn config(&self) -> &ArchitectureConfig {
+        // Use a static config since we can't create one in a const context
         static CONFIG: ArchitectureConfig = ArchitectureConfig {
             enabled: ConfigEnabled::new(true),
             layers: LayerMapVO::new(),
@@ -111,17 +114,21 @@ fn make_root_dir() -> FilePath {
 fn dummy_skips_self_check_file() {
     let parser = MockDummyParser::new();
     let checker = DummyImportChecker::new(Arc::new(parser));
-    let mut violations = vec![];
-    let result = checker.check_mandatory_imports(
+    let violations = vec![];
+    let files = FilePathList::new(vec![
+        FilePath::new("/path/to/capabilities_dummy_import_checker.rs").unwrap_or_default()
+    ]);
+    let mut results = LintResultList::new(violations);
+
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(checker.check_mandatory_imports(
         &MockAnalyzer,
-        &shared::common::taxonomy_paths_vo::FilePathList::new(vec![
-            FilePath::new("/path/to/capabilities_dummy_import_checker.rs").unwrap_or_default()
-        ]),
+        &files,
         &make_root_dir(),
-        &mut shared::cli_commands::taxonomy_result_vo::LintResultList::new(violations),
-    );
+        &mut results,
+    ));
     // No violations since the self-check file is skipped
-    // We just verify it doesn't panic
+    assert!(results.values.is_empty());
 }
 
 #[test]
@@ -132,28 +139,7 @@ fn rule_name_is_aes204() {
 }
 
 #[test]
-fn dummy_imports_detected_when_symbol_not_used_real() {
-    let mut parser = MockDummyParser::new();
-    parser.imported_symbols = vec![(SymbolName::new("HashMap"), LineNumber::new(5))];
-    parser.symbol_used_real = false;
-    parser.lines = vec![
-        "use std::collections::HashMap;".to_string(),
-        "fn _use_imports() {".to_string(),
-        "    HashMap::new();".to_string(),
-        "}".to_string(),
-    ];
-    parser.dummy_ranges = vec![(LineNumber::new(2), LineNumber::new(4))];
-
-    let checker = DummyImportChecker::new(Arc::new(parser));
-    let content = "use std::collections::HashMap;\nfn _use_imports() {\n    HashMap::new();\n}\n";
-    let mut violations = vec![];
-    // Test check_dummy_imports indirectly through the public API
-    // We can't call the private method directly, but we can test check_mandatory_imports
-    // which requires async runtime
-}
-
-#[test]
-fn dummy_function_ranges_empty_no_violation() {
+fn checker_constructs_with_parser() {
     let parser = MockDummyParser::new();
     let checker = DummyImportChecker::new(Arc::new(parser));
     assert_eq!(checker.rule_name().value(), "AES204");

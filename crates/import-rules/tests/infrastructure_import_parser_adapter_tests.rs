@@ -3,6 +3,7 @@ use std::sync::Arc;
 use std::fs;
 
 use import_rules_lint_arwaky::infrastructure_import_parser_adapter::ImportParserAdapter;
+use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::common::taxonomy_path_vo::FilePath;

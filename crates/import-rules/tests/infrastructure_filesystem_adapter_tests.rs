@@ -12,10 +12,15 @@ fn make_fp(s: &str) -> FilePath {
     FilePath::new(s.to_string()).unwrap_or_default()
 }
 
-fn setup_temp_dir(name: &str) -> (tempfile::TempDir, FilePath) {
-    let dir = tempfile::tempdir().expect("failed to create temp dir");
-    let fp = make_fp(dir.path().to_string_lossy().as_ref());
+fn setup_temp_dir(name: &str) -> (std::path::PathBuf, FilePath) {
+    let dir = std::env::temp_dir().join(format!("fs_test_{}_{}", name, std::process::id()));
+    let _ = fs::create_dir_all(&dir);
+    let fp = make_fp(&dir.to_string_lossy());
     (dir, fp)
+}
+
+fn cleanup(dir: &std::path::Path) {
+    let _ = fs::remove_dir_all(dir);
 }
 
 // ---------------------------------------------------------------------------
@@ -26,11 +31,12 @@ fn setup_temp_dir(name: &str) -> (tempfile::TempDir, FilePath) {
 async fn exists_returns_true_for_existing_file() {
     let adapter = OSFileSystemAdapter::new();
     let (dir, _) = setup_temp_dir("exists_test");
-    let file_path = dir.path().join("test.txt");
+    let file_path = dir.join("test.txt");
     fs::write(&file_path, "hello").unwrap();
     let fp = make_fp(&file_path.to_string_lossy());
     let result = adapter.exists(&fp).await;
     assert!(result.value());
+    cleanup(&dir);
 }
 
 #[tokio::test]
@@ -49,11 +55,12 @@ async fn exists_returns_false_for_nonexistent() {
 async fn is_file_true_for_file() {
     let adapter = OSFileSystemAdapter::new();
     let (dir, _) = setup_temp_dir("is_file_test");
-    let file_path = dir.path().join("file.txt");
+    let file_path = dir.join("file.txt");
     fs::write(&file_path, "data").unwrap();
     let fp = make_fp(&file_path.to_string_lossy());
     assert!(adapter.is_file(&fp).await.value());
     assert!(!adapter.is_directory(&fp).await.value());
+    cleanup(&dir);
 }
 
 // ---------------------------------------------------------------------------
@@ -64,11 +71,12 @@ async fn is_file_true_for_file() {
 async fn read_text_returns_content() {
     let adapter = OSFileSystemAdapter::new();
     let (dir, _) = setup_temp_dir("read_test");
-    let file_path = dir.path().join("hello.txt");
+    let file_path = dir.join("hello.txt");
     fs::write(&file_path, "Hello, World!").unwrap();
     let fp = make_fp(&file_path.to_string_lossy());
     let content = adapter.read_text(&fp).await.unwrap();
     assert_eq!(content.value(), "Hello, World!");
+    cleanup(&dir);
 }
 
 #[tokio::test]
@@ -87,7 +95,7 @@ async fn read_file_nonexistent_returns_error() {
 async fn write_text_creates_file() {
     let adapter = OSFileSystemAdapter::new();
     let (dir, _) = setup_temp_dir("write_test");
-    let file_path = dir.path().join("output.txt");
+    let file_path = dir.join("output.txt");
     let fp = make_fp(&file_path.to_string_lossy());
     let result = adapter.write_text(&fp, &ContentString::new("test content"), None).await;
     assert!(result.is_ok());
@@ -95,6 +103,7 @@ async fn write_text_creates_file() {
     assert!(file_path.exists());
     let read_back = fs::read_to_string(&file_path).unwrap();
     assert_eq!(read_back, "test content");
+    cleanup(&dir);
 }
 
 // ---------------------------------------------------------------------------
@@ -105,10 +114,11 @@ async fn write_text_creates_file() {
 async fn get_line_count_returns_correct_count() {
     let adapter = OSFileSystemAdapter::new();
     let (dir, _) = setup_temp_dir("line_count_test");
-    let file_path = dir.path().join("lines.txt");
+    let file_path = dir.join("lines.txt");
     fs::write(&file_path, "line1\nline2\nline3\n").unwrap();
     let fp = make_fp(&file_path.to_string_lossy());
     assert_eq!(adapter.get_line_count(&fp).await.value(), 3);
+    cleanup(&dir);
 }
 
 #[tokio::test]
@@ -193,31 +203,32 @@ async fn path_join_combines_parts() {
 async fn walk_finds_all_files() {
     let adapter = OSFileSystemAdapter::new();
     let (dir, fp) = setup_temp_dir("walk_test");
-    fs::write(dir.path().join("a.rs"), "").unwrap();
-    fs::write(dir.path().join("b.py"), "").unwrap();
-    let _ = fs::create_dir(dir.path().join("sub"));
-    fs::write(dir.path().join("sub/c.js"), "").unwrap();
+    fs::write(dir.join("a.rs"), "").unwrap();
+    fs::write(dir.join("b.py"), "").unwrap();
+    let _ = fs::create_dir(dir.join("sub"));
+    fs::write(dir.join("sub/c.js"), "").unwrap();
 
     let files = adapter.walk(&fp, None).await;
     // Should find 3 files (a.rs, b.py, sub/c.js)
     assert_eq!(files.values.len(), 3);
+    cleanup(&dir);
 }
 
 #[tokio::test]
 async fn walk_ignores_patterns() {
     let adapter = OSFileSystemAdapter::new();
     let (dir, fp) = setup_temp_dir("walk_ignore");
-    fs::write(dir.path().join("keep.rs"), "").unwrap();
-    fs::write(dir.path().join("ignore.py"), "").unwrap();
-    fs::write(dir.path().join("target"), "").unwrap();
+    fs::write(dir.join("keep.rs"), "").unwrap();
+    fs::write(dir.join("ignore.py"), "").unwrap();
+    fs::write(dir.join("target"), "").unwrap();
 
     let files = adapter.walk(
         &fp,
         Some(&PatternList::new(vec!["target".to_string(), "node_modules".to_string()])),
     ).await;
     // Should find 2 files (keep.rs, ignore.py) - target is ignored by name
-    // Note: the walk ignores by file name alone, not extension
     assert_eq!(files.values.len(), 2);
+    cleanup(&dir);
 }
 
 // ---------------------------------------------------------------------------
