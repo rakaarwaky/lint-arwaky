@@ -92,6 +92,194 @@ pub fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
     results
 }
 
+/// Extract `(line_no, raw_signature_line)` for every `def method_name(self, ...)` declaration
+/// inside a Python class that has type annotations using primitive types.
+///
+/// Python contract files (protocol/port) should use custom types/VOs instead of
+/// primitive types (str, int, bool, float, list, dict) in method signatures.
+pub fn extract_python_method_signatures(content: &str) -> Vec<(usize, String)> {
+    let mut results = Vec::new();
+    let mut in_class = false;
+    let mut class_indent = 0;
+
+    for (idx, raw) in content.lines().enumerate() {
+        let line_no = idx + 1;
+        let trimmed = raw.trim();
+
+        // Detect class definition
+        if trimmed.starts_with("class ") && trimmed.contains(':') {
+            in_class = true;
+            class_indent = raw.len() - raw.trim_start().len();
+            continue;
+        }
+
+        if !in_class {
+            continue;
+        }
+
+        // Detect method definition with type annotations
+        let current_indent = raw.len() - raw.trim_start().len();
+        if current_indent <= class_indent && !trimmed.is_empty() {
+            // We've left the class
+            in_class = false;
+            continue;
+        }
+
+        if trimmed.starts_with("def ") && trimmed.contains("->") {
+            // Has return type annotation — check for primitive types
+            let lower = trimmed.to_lowercase();
+            let has_primitive = lower.contains(": str")
+                || lower.contains(": int")
+                || lower.contains(": bool")
+                || lower.contains(": float")
+                || lower.contains(": list")
+                || lower.contains(": dict")
+                || lower.contains("-> str")
+                || lower.contains("-> int")
+                || lower.contains("-> bool")
+                || lower.contains("-> float")
+                || lower.contains("-> list")
+                || lower.contains("-> dict");
+            if has_primitive {
+                results.push((line_no, raw.to_string()));
+            }
+        }
+    }
+
+    results
+}
+
+/// Check if a Python method signature uses forbidden primitive types.
+pub fn python_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
+    let mut forbidden: Vec<&'static str> = Vec::new();
+    let lower = sig.to_lowercase();
+
+    // Check parameter annotations
+    if lower.contains(": str") { forbidden.push("str"); }
+    if lower.contains(": int") { forbidden.push("int"); }
+    if lower.contains(": float") { forbidden.push("float"); }
+    if lower.contains(": list") { forbidden.push("list"); }
+    if lower.contains(": dict") { forbidden.push("dict"); }
+    // Note: bool is allowed per AES402 policy (semantic toggle)
+
+    // Check return type
+    if let Some(arrow_idx) = lower.find("->") {
+        let ret = lower[arrow_idx + 2..].trim();
+        if ret.starts_with("str") { forbidden.push("str"); }
+        if ret.starts_with("int") { forbidden.push("int"); }
+        if ret.starts_with("float") { forbidden.push("float"); }
+        if ret.starts_with("list") { forbidden.push("list"); }
+        if ret.starts_with("dict") { forbidden.push("dict"); }
+    }
+
+    forbidden.sort();
+    forbidden.dedup();
+    forbidden
+}
+
+/// Extract `(line_no, raw_signature_line)` for every method declaration inside a TypeScript
+/// `interface` or `class` that uses primitive types in parameter/return annotations.
+pub fn extract_typescript_method_signatures(content: &str) -> Vec<(usize, String)> {
+    let mut results = Vec::new();
+    let mut in_block = false;
+    let mut brace_depth = 0;
+
+    for (idx, raw) in content.lines().enumerate() {
+        let line_no = idx + 1;
+        let trimmed = raw.trim();
+
+        // Detect interface or class definition
+        if (trimmed.starts_with("export interface ")
+            || trimmed.starts_with("interface ")
+            || trimmed.starts_with("export class ")
+            || trimmed.starts_with("class "))
+            && trimmed.contains('{')
+        {
+            in_block = true;
+            brace_depth = trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
+            // For single-line blocks, check the content between { and }
+            if brace_depth == 0 {
+                // Extract content between braces and check for primitives
+                if let Some(open) = trimmed.find('{') {
+                    if let Some(close) = trimmed.rfind('}') {
+                        let inner = &trimmed[open + 1..close];
+                        if inner.contains('(') && inner.contains(':') {
+                            let lower = inner.to_lowercase();
+                            let has_primitive = lower.contains(": string")
+                                || lower.contains(": number")
+                                || lower.contains(": any")
+                                || lower.contains(": string[]")
+                                || lower.contains(": number[]")
+                                || lower.contains("): string")
+                                || lower.contains("): number")
+                                || lower.contains("): any")
+                                || lower.contains("): string[]")
+                                || lower.contains("): number[]");
+                            if has_primitive {
+                                results.push((line_no, raw.to_string()));
+                            }
+                        }
+                    }
+                }
+                in_block = false;
+            }
+            continue;
+        }
+
+        if in_block {
+            brace_depth += trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
+            if brace_depth <= 0 {
+                in_block = false;
+                brace_depth = 0;
+                continue;
+            }
+
+            // Look for method declarations with type annotations
+            if trimmed.contains('(') && trimmed.contains(':') {
+                let lower = trimmed.to_lowercase();
+                let has_primitive = lower.contains(": string")
+                    || lower.contains(": number")
+                    || lower.contains(": any")
+                    || lower.contains(": string[]")
+                    || lower.contains(": number[]")
+                    || lower.contains("): string")
+                    || lower.contains("): number")
+                    || lower.contains("): any")
+                    || lower.contains("): string[]")
+                    || lower.contains("): number[]");
+                if has_primitive {
+                    results.push((line_no, raw.to_string()));
+                }
+            }
+        }
+    }
+
+    results
+}
+
+/// Check if a TypeScript method signature uses forbidden primitive types.
+pub fn typescript_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
+    let mut forbidden: Vec<&'static str> = Vec::new();
+    let lower = sig.to_lowercase();
+
+    // Check parameter annotations
+    if lower.contains(": string") { forbidden.push("string"); }
+    if lower.contains(": number") { forbidden.push("number"); }
+    if lower.contains(": any") { forbidden.push("any"); }
+
+    // Check return type
+    if let Some(paren_idx) = lower.rfind(')') {
+        let after = lower[paren_idx + 1..].trim();
+        if after.starts_with(": string") { forbidden.push("string"); }
+        if after.starts_with(": number") { forbidden.push("number"); }
+        if after.starts_with(": any") { forbidden.push("any"); }
+    }
+
+    forbidden.sort();
+    forbidden.dedup();
+    forbidden
+}
+
 /// Decide whether a single Rust method signature uses a forbidden primitive
 /// type. Returns the list of forbidden type tokens found (used for the
 /// violation message). Empty list means the signature is clean.
@@ -356,27 +544,62 @@ impl ContractRoleChecker {
             return;
         }
 
-        // For each language, parse trait/method signatures and flag forbidden
-        // primitive types in params and return types.
-        //
-        // Note: the AES402 helper functions are Rust-specific — they parse
-        // `pub trait Name { fn ... ; }` syntax. Python and JS contract files
-        // are routed through this same code path because the same Rust-style
-        // primitive types can appear in cross-language adapter contracts.
-        let _ = is_py;
-        let _ = is_js;
+        let lang = if is_rs {
+            Language::Rust
+        } else if is_py {
+            Language::Python
+        } else {
+            Language::JavaScript
+        };
+
+        if is_py {
+            // Python-specific: look for class methods with primitive type annotations
+            for (line_no, sig) in extract_python_method_signatures(content) {
+                let forbidden = python_signature_uses_forbidden_primitive(&sig);
+                if forbidden.is_empty() {
+                    continue;
+                }
+                let msg = AesRoleViolation::ContractPrimitive { reason: None }
+                    .with_language(lang)
+                    .to_string();
+                violations.push(LintResult::new_arch(
+                    file,
+                    line_no,
+                    "AES402",
+                    Severity::HIGH,
+                    msg,
+                ));
+            }
+            return;
+        }
+
+        if is_js {
+            // JS/TS-specific: look for interface/class methods with primitive type annotations
+            for (line_no, sig) in extract_typescript_method_signatures(content) {
+                let forbidden = typescript_signature_uses_forbidden_primitive(&sig);
+                if forbidden.is_empty() {
+                    continue;
+                }
+                let msg = AesRoleViolation::ContractPrimitive { reason: None }
+                    .with_language(lang)
+                    .to_string();
+                violations.push(LintResult::new_arch(
+                    file,
+                    line_no,
+                    "AES402",
+                    Severity::HIGH,
+                    msg,
+                ));
+            }
+            return;
+        }
+
+        // Rust: use trait-method-signature parser
         for (line_no, sig) in extract_trait_method_signatures(content) {
             let forbidden = signature_uses_forbidden_primitive(&sig);
             if forbidden.is_empty() {
                 continue;
             }
-            let lang = if is_rs {
-                Language::Rust
-            } else if is_py {
-                Language::Python
-            } else {
-                Language::JavaScript
-            };
             let msg = AesRoleViolation::ContractPrimitive { reason: None }
                 .with_language(lang)
                 .to_string();

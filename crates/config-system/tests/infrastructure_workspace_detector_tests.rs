@@ -76,9 +76,9 @@ fn detects_python_from_requirements_txt() {
 #[test]
 fn detects_rust_from_crates_parent() {
     let dir = temp_dir();
-    let crates_dir = dir.join("crates");
-    std::fs::create_dir_all(&crates_dir).unwrap();
-    let fp = FilePath::new(crates_dir.to_string_lossy().to_string()).unwrap();
+    let pkg_dir = dir.join("crates").join("some_crate");
+    std::fs::create_dir_all(&pkg_dir).unwrap();
+    let fp = FilePath::new(pkg_dir.to_string_lossy().to_string()).unwrap();
     let detector = WorkspaceDetector::new();
     assert_eq!(detector.detect(&fp), WorkspaceType::Rust);
 }
@@ -86,9 +86,9 @@ fn detects_rust_from_crates_parent() {
 #[test]
 fn detects_typescript_from_packages_parent() {
     let dir = temp_dir();
-    let packages_dir = dir.join("packages");
-    std::fs::create_dir_all(&packages_dir).unwrap();
-    let fp = FilePath::new(packages_dir.to_string_lossy().to_string()).unwrap();
+    let pkg_dir = dir.join("packages").join("some_package");
+    std::fs::create_dir_all(&pkg_dir).unwrap();
+    let fp = FilePath::new(pkg_dir.to_string_lossy().to_string()).unwrap();
     let detector = WorkspaceDetector::new();
     assert_eq!(detector.detect(&fp), WorkspaceType::TypeScript);
 }
@@ -96,9 +96,9 @@ fn detects_typescript_from_packages_parent() {
 #[test]
 fn detects_python_from_modules_parent() {
     let dir = temp_dir();
-    let modules_dir = dir.join("modules");
-    std::fs::create_dir_all(&modules_dir).unwrap();
-    let fp = FilePath::new(modules_dir.to_string_lossy().to_string()).unwrap();
+    let mod_dir = dir.join("modules").join("some_module");
+    std::fs::create_dir_all(&mod_dir).unwrap();
+    let fp = FilePath::new(mod_dir.to_string_lossy().to_string()).unwrap();
     let detector = WorkspaceDetector::new();
     assert_eq!(detector.detect(&fp), WorkspaceType::Python);
 }

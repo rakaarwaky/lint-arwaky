@@ -49,6 +49,19 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
             continue;
         }
 
+        // Rust `use` statements: `use std::collections::HashMap;`
+        if let Some(use_part) = trimmed.strip_prefix("use ") {
+            let use_part = use_part.trim_end_matches(';').trim();
+            if !use_part.is_empty() && !use_part.starts_with("crate::") && !use_part.starts_with("super::") && !use_part.starts_with("self::") {
+                // Extract the last segment as the imported name
+                let name = use_part.rsplit("::").next().unwrap_or(use_part);
+                if !name.is_empty() && name != "*" {
+                    aliases.insert(Identity::new(name), Identity::new(use_part));
+                }
+            }
+            continue;
+        }
+
         if let Some(import_part) = trimmed.strip_prefix("import ") {
             for name in import_part.split(',') {
                 let name = name.trim();
@@ -99,7 +112,10 @@ pub fn extract_used_symbols(
         .lines()
         .filter(|l| {
             let t = l.trim();
-            !t.starts_with("import ") && !t.starts_with("from ") && !t.starts_with('#')
+            !t.starts_with("import ")
+                && !t.starts_with("from ")
+                && !t.starts_with("use ")
+                && !t.starts_with('#')
         })
         .collect::<Vec<_>>()
         .join("\n");

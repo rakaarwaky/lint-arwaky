@@ -62,7 +62,7 @@ fn default_thresholds_are_valid() {
     let config = ProjectConfig::defaults();
     let validator = ConfigRulesValidator::new(config);
     let result = validator.validate_thresholds();
-    assert!(result.is_ok());
+    assert!(result.is_valid);
 }
 
 #[test]
@@ -73,7 +73,7 @@ fn score_below_zero_is_invalid() {
     };
     let validator = ConfigRulesValidator::new(config);
     let result = validator.validate_thresholds();
-    assert!(!result.is_ok());
+    assert!(!result.is_valid);
 }
 
 #[test]
@@ -84,7 +84,7 @@ fn score_above_100_is_invalid() {
     };
     let validator = ConfigRulesValidator::new(config);
     let result = validator.validate_thresholds();
-    assert!(!result.is_ok());
+    assert!(!result.is_valid);
 }
 
 #[test]
@@ -95,7 +95,7 @@ fn zero_complexity_is_invalid() {
     };
     let validator = ConfigRulesValidator::new(config);
     let result = validator.validate_thresholds();
-    assert!(!result.is_ok());
+    assert!(!result.is_valid);
 }
 
 #[test]
@@ -106,7 +106,7 @@ fn zero_max_file_lines_is_invalid() {
     };
     let validator = ConfigRulesValidator::new(config);
     let result = validator.validate_thresholds();
-    assert!(!result.is_ok());
+    assert!(!result.is_valid);
 }
 
 #[test]
@@ -117,7 +117,7 @@ fn boundary_values_are_valid() {
     };
     let validator = ConfigRulesValidator::new(config);
     let result = validator.validate_thresholds();
-    assert!(result.is_ok());
+    assert!(result.is_valid);
 }
 
 #[test]
@@ -128,5 +128,5 @@ fn max_score_is_valid() {
     };
     let validator = ConfigRulesValidator::new(config);
     let result = validator.validate_thresholds();
-    assert!(result.is_ok());
+    assert!(result.is_valid);
 }

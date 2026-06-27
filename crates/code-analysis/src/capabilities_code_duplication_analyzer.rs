@@ -163,14 +163,12 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
         let root = crate::agent_code_analysis_orchestrator::resolve_target(path);
         let src = crate::agent_code_analysis_orchestrator::detect_source_dir(Path::new(&root));
         let config = default_aes_config();
-        let ignored = PatternList {
-            values: config
-                .ignored_paths
-                .values
-                .iter()
-                .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-                .collect(),
-        };
+        let ignored_vec: Vec<String> = config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
+            .collect();
         let min_lines = match config
             .rules
             .first()
@@ -200,7 +198,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             Err(_) => return Vec::new(),
         };
         let source_files =
-            crate::agent_code_analysis_orchestrator::collect_source_files(&src, &dir_path, &ignored);
+            crate::agent_code_analysis_orchestrator::collect_source_files(&src, &dir_path, &ignored_vec);
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         self.check_file_similarity(&file_strs, min_lines, threshold_pct)
             .into_iter()

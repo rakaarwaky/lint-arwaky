@@ -15,7 +15,7 @@ fn container_default_is_same_as_new() {
     let c2 = ConfigContainer::default();
     let r1 = c1.validator().validate_thresholds();
     let r2 = c2.validator().validate_thresholds();
-    assert_eq!(r1.is_ok(), r2.is_ok());
+    assert_eq!(r1.is_valid, r2.is_valid);
 }
 
 #[test]
@@ -45,7 +45,7 @@ fn container_validator_uses_default_config() {
     let container = ConfigContainer::new();
     let validator = container.validator();
     // Default thresholds should be valid
-    assert!(validator.validate_thresholds().is_ok());
+    assert!(validator.validate_thresholds().is_valid);
     // Unlisted adapters default to enabled
     assert!(validator.is_adapter_enabled(
         &shared::common::taxonomy_adapter_name_vo::AdapterName::raw("any_tool")
