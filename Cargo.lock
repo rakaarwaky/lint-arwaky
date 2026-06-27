@@ -4421,6 +4421,7 @@ version = "1.10.43"
 dependencies = [
  "anyhow",
  "arboard",
+ "async-trait",
  "auto_fix-lint-arwaky",
  "code_analysis-lint-arwaky",
  "config_system-lint-arwaky",

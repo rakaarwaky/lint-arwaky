@@ -498,3 +498,88 @@ fn test_config_show_stub_without_config_orchestrator() {
     assert!(result.output.contains("Use CLI"));
     assert!(result.output.contains("lint-arwaky-cli config show"));
 }
+
+// ---------------------------------------------------------------------------
+// Doctor with real MaintenanceCommandsAggregate wiring
+// ---------------------------------------------------------------------------
+
+struct MockMaintenanceAggregate;
+
+#[async_trait::async_trait]
+impl shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate
+    for MockMaintenanceAggregate
+{
+    async fn stats(
+        &self,
+        _: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::project_setup::taxonomy_stats_vo::MaintenanceStatsVO {
+        unimplemented!()
+    }
+    async fn clean(&self) {}
+    async fn update(&self) {}
+    async fn doctor(&self) -> shared::project_setup::taxonomy_doctor_vo::DoctorResultVO {
+        unimplemented!()
+    }
+    async fn cancel(&self, _: shared::mcp_server::taxonomy_action_vo::JobId) {}
+    async fn diagnose_toolchain(
+        &self,
+    ) -> shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics {
+        // Deterministic fake — no process spawning
+        shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics {
+            rust_tools: vec![shared::project_setup::taxonomy_doctor_vo::ToolStatus {
+                name: "cargo".to_string(),
+                status: "OK".to_string(),
+                version: "cargo 1.80.0".to_string(),
+            }],
+            python_tools: vec![shared::project_setup::taxonomy_doctor_vo::ToolStatus {
+                name: "python3".to_string(),
+                status: "OK".to_string(),
+                version: "Python 3.11.0".to_string(),
+            }],
+            js_tools: vec![shared::project_setup::taxonomy_doctor_vo::ToolStatus {
+                name: "node".to_string(),
+                status: "OK".to_string(),
+                version: "v20.0.0".to_string(),
+            }],
+            vcs_tools: vec![shared::project_setup::taxonomy_doctor_vo::ToolStatus {
+                name: "git".to_string(),
+                status: "OK".to_string(),
+                version: "git 2.40.0".to_string(),
+            }],
+            binary_path: "/usr/bin/lint-arwaky".to_string(),
+        }
+    }
+    async fn run_security_scan(
+        &self,
+        _: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::project_setup::taxonomy_doctor_vo::SecurityScanReport {
+        unimplemented!()
+    }
+    async fn run_dependency_report(
+        &self,
+        _: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Result<shared::project_setup::taxonomy_doctor_vo::DependencyReport, String> {
+        unimplemented!()
+    }
+}
+
+#[test]
+fn test_doctor_with_maintenance_returns_real_diagnostics() {
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+        .with_maintenance(Arc::new(MockMaintenanceAggregate));
+    let result = executor.doctor();
+    assert!(result.success, "doctor() failed: {}", result.output);
+    assert!(result.output.contains("Environment Diagnostics"));
+    // Should contain mock tool versions, NOT the CLI stub
+    assert!(
+        result.output.contains("cargo 1.80.0"),
+        "Missing cargo version: {}",
+        result.output
+    );
+    assert!(result.output.contains("Python 3.11.0"));
+    assert!(result.output.contains("All required tools OK"));
+    assert!(
+        !result.output.contains("lint-arwaky-cli maintenance doctor"),
+        "Should NOT show CLI stub when maintenance is wired"
+    );
+}

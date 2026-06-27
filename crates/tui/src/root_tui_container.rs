@@ -3,6 +3,7 @@ use crate::capabilities_action_handler::ActionHandler;
 use crate::capabilities_lint_executor::LintExecutor;
 use crate::infrastructure_file_system_adapter::FileSystemAdapter;
 use crate::surface_tui_command::TuiCommandSurface;
+use maintenance::root_maintenance_container::MaintenanceContainer;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use std::sync::Arc;
@@ -28,6 +29,7 @@ impl TuiContainer {
             ));
         let config_container =
             config_system::root_config_system_container::ConfigContainer::new();
+        let maintenance_container = MaintenanceContainer::new();
         let lint_executor = Arc::new(
             LintExecutor::new_with_setup(
                 code_analysis_aggregate,
@@ -35,7 +37,8 @@ impl TuiContainer {
                 setup_aggregate,
             )
             .with_hook_port(hook_adapter)
-            .with_config(config_container.orchestrator()),
+            .with_config(config_container.orchestrator())
+            .with_maintenance(maintenance_container.orchestrator()),
         );
         let action_handler: Arc<dyn IActionHandlerProtocol> =
             Arc::new(ActionHandler::new(fs_adapter, lint_executor));
