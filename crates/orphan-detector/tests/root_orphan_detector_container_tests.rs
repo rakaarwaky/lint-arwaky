@@ -5,7 +5,11 @@ fn orphan_container_constructs() {
     let container = OrphanContainer::new();
     let analyzer = container.analyzer();
     let layer_detector = container.layer_detector();
-    assert!(analyzer.build_orphan_graph_context(&[], ".").import_graph.mapping.is_empty());
+    assert!(analyzer
+        .build_orphan_graph_context(&[], ".")
+        .import_graph
+        .mapping
+        .is_empty());
 }
 
 #[test]
@@ -20,8 +24,14 @@ fn orphan_container_default() {
 fn orphan_container_detect_layer() {
     let container = OrphanContainer::new();
     let detector = container.layer_detector();
-    assert_eq!(detector.detect_layer("src/taxonomy_config_vo.rs", "."), Some("taxonomy".to_string()));
-    assert_eq!(detector.detect_layer("src/capabilities_checker.rs", "."), Some("capabilities".to_string()));
+    assert_eq!(
+        detector.detect_layer("src/taxonomy_config_vo.rs", "."),
+        Some("taxonomy".to_string())
+    );
+    assert_eq!(
+        detector.detect_layer("src/capabilities_checker.rs", "."),
+        Some("capabilities".to_string())
+    );
     assert_eq!(detector.detect_layer("src/random.rs", "."), None);
 }
 

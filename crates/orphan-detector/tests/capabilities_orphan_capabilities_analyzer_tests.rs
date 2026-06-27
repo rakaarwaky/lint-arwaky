@@ -1,6 +1,6 @@
 use orphan_detector_lint_arwaky::capabilities_orphan_capabilities_analyzer::is_infra_cap_orphan_raw_wired;
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 
 #[test]
 fn raw_wired_not_orphan_when_wired_and_reachable() {
@@ -11,13 +11,19 @@ fn raw_wired_not_orphan_when_wired_and_reachable() {
 #[test]
 fn raw_wired_not_orphan_when_wired_but_not_reachable() {
     let result = is_infra_cap_orphan_raw_wired(true, false);
-    assert!(!result.is_orphan, "wired in container => not orphan even if unreachable");
+    assert!(
+        !result.is_orphan,
+        "wired in container => not orphan even if unreachable"
+    );
 }
 
 #[test]
 fn raw_wired_not_orphan_when_reachable_but_not_wired() {
     let result = is_infra_cap_orphan_raw_wired(false, true);
-    assert!(!result.is_orphan, "reachable from entry point => not orphan");
+    assert!(
+        !result.is_orphan,
+        "reachable from entry point => not orphan"
+    );
 }
 
 #[test]

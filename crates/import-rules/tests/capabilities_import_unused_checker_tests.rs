@@ -43,22 +43,58 @@ impl IImportParserPort for MockUnusedParser {
     fn resolve_scope(&self, scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
         (LayerNameVO::new(scope.value()), vec![])
     }
-    fn import_matches_scope(&self, _: &LineContentVO, _: &LayerNameVO, _: &[Identity]) -> bool { false }
-    fn get_basename(&self, _: &FilePath) -> Identity { Identity::new("test.rs") }
-    fn read_import_lines(&self, _: &FilePath) -> Vec<(LineNumber, LineContentVO)> { vec![] }
-    fn parse_import_lines(&self, _: &FileContentVO) -> Vec<(LineNumber, LineContentVO)> { vec![] }
-    fn extract_module_from_line(&self, _: &LineContentVO) -> Option<Identity> { None }
-    fn extract_layer_from_import(&self, _: &Identity) -> Option<LayerNameVO> { None }
+    fn import_matches_scope(&self, _: &LineContentVO, _: &LayerNameVO, _: &[Identity]) -> bool {
+        false
+    }
+    fn get_basename(&self, _: &FilePath) -> Identity {
+        Identity::new("test.rs")
+    }
+    fn read_import_lines(&self, _: &FilePath) -> Vec<(LineNumber, LineContentVO)> {
+        vec![]
+    }
+    fn parse_import_lines(&self, _: &FileContentVO) -> Vec<(LineNumber, LineContentVO)> {
+        vec![]
+    }
+    fn extract_module_from_line(&self, _: &LineContentVO) -> Option<Identity> {
+        None
+    }
+    fn extract_layer_from_import(&self, _: &Identity) -> Option<LayerNameVO> {
+        None
+    }
     fn read_file_to_message(&self, _: &FilePath) -> Result<LintMessage, std::io::Error> {
         Ok(LintMessage::new(self.content.clone()))
     }
-    fn extract_import_modules(&self, _: &str) -> Vec<SymbolName> { vec![] }
-    fn get_language_from_path(&self, _: &str) -> LanguageVO { LanguageVO::Rust }
-    fn get_dummy_function_ranges(&self, _: &[&str], _: LanguageVO) -> Vec<(LineNumber, LineNumber)> { vec![] }
-    fn get_imported_symbols(&self, _: &[&str], _: LanguageVO) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn get_dummy_impl_traits_with_lines(&self, _: &[&str]) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn is_symbol_used_real(&self, _: &[&str], _: &str, _: &[(LineNumber, LineNumber)], _: &[String]) -> bool { false }
-    fn detect_cycle_edges(&self, _: &[DependencyEdge]) -> Vec<SymbolName> { vec![] }
+    fn extract_import_modules(&self, _: &str) -> Vec<SymbolName> {
+        vec![]
+    }
+    fn get_language_from_path(&self, _: &str) -> LanguageVO {
+        LanguageVO::Rust
+    }
+    fn get_dummy_function_ranges(
+        &self,
+        _: &[&str],
+        _: LanguageVO,
+    ) -> Vec<(LineNumber, LineNumber)> {
+        vec![]
+    }
+    fn get_imported_symbols(&self, _: &[&str], _: LanguageVO) -> Vec<(SymbolName, LineNumber)> {
+        vec![]
+    }
+    fn get_dummy_impl_traits_with_lines(&self, _: &[&str]) -> Vec<(SymbolName, LineNumber)> {
+        vec![]
+    }
+    fn is_symbol_used_real(
+        &self,
+        _: &[&str],
+        _: &str,
+        _: &[(LineNumber, LineNumber)],
+        _: &[String],
+    ) -> bool {
+        false
+    }
+    fn detect_cycle_edges(&self, _: &[DependencyEdge]) -> Vec<SymbolName> {
+        vec![]
+    }
     fn extract_imported_aliases(&self, _: &str) -> HashMap<Identity, Identity> {
         self.imported_aliases.clone()
     }
@@ -135,7 +171,11 @@ fn unused_exported_symbol_not_flagged() {
     let checker = UnusedImportRuleChecker::new(Arc::new(parser));
     let path = FilePath::new("test.py").unwrap_or_default();
     let unused = checker.find_unused_imports(&path);
-    assert_eq!(unused.len(), 1, "sys should be flagged but os (exported) should not");
+    assert_eq!(
+        unused.len(),
+        1,
+        "sys should be flagged but os (exported) should not"
+    );
 }
 
 #[test]
@@ -165,7 +205,8 @@ fn check_unused_imports_detects_unused_rust_import() {
 #[test]
 fn check_unused_imports_used_rust_import_no_violation() {
     let mut parser = MockUnusedParser::new();
-    parser.content = "use std::collections::HashMap;\nfn main() { let mut m = HashMap::new(); }".to_string();
+    parser.content =
+        "use std::collections::HashMap;\nfn main() { let mut m = HashMap::new(); }".to_string();
     parser.rust_js_imports = vec![(SymbolName::new("HashMap"), LineNumber::new(1))];
     parser.name_used = true;
 

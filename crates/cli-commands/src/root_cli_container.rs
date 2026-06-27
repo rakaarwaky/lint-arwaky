@@ -64,8 +64,7 @@ impl CliContainer {
             shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
         );
 
-        let config_container =
-            config_system::root_config_system_container::ConfigContainer::new();
+        let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let multi_project_orchestrator = config_container.multi_project_orchestrator();
 
         let git_container = git_hooks::root_git_hooks_container::GitContainer::new_default();

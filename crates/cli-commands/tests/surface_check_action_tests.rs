@@ -3,7 +3,10 @@ use cli_commands_lint_arwaky::surface_check_action::find_workspace_root;
 #[test]
 fn find_workspace_root_returns_some_for_project() {
     let result = find_workspace_root(".");
-    assert!(result.is_some(), "should find workspace root from project dir");
+    assert!(
+        result.is_some(),
+        "should find workspace root from project dir"
+    );
 }
 
 #[test]

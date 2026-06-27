@@ -39,7 +39,10 @@ fn extract_aggregate_js_class_implements() {
 fn extract_aggregate_no_aggregate_trait() {
     let content = "impl IHelper for Foo { fn help(&self) {} }";
     let traits = extract_aggregate_traits(content);
-    assert!(traits.is_empty(), "non-aggregate traits should not be extracted");
+    assert!(
+        traits.is_empty(),
+        "non-aggregate traits should not be extracted"
+    );
 }
 
 #[test]

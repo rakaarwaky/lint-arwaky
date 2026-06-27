@@ -34,7 +34,12 @@ impl NamingConventionChecker {
         Self {}
     }
 
-    fn make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
+    pub fn make_result(
+        file: &str,
+        code: &str,
+        msg: impl Into<String>,
+        sev: Severity,
+    ) -> LintResult {
         let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         LintResult {
             file: file_path,
@@ -55,14 +60,14 @@ impl NamingConventionChecker {
         }
     }
 
-    fn is_barrel_file(filename: &str) -> bool {
+    pub fn is_barrel_file(filename: &str) -> bool {
         matches!(
             filename,
             "__init__.py" | "mod.rs" | "index.ts" | "index.js" | "index.tsx" | "index.jsx"
         )
     }
 
-    fn is_entry_point(filename: &str) -> bool {
+    pub fn is_entry_point(filename: &str) -> bool {
         matches!(
             filename,
             "__init__.py"

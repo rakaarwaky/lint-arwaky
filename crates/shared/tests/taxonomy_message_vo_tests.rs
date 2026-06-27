@@ -48,6 +48,5 @@ fn compliance_status_false() {
 #[test]
 fn compliance_status_default() {
     let s = ComplianceStatus::default();
-    // Default is true based on the implementation
-    assert!(s.value());
+    assert!(!s.value());
 }

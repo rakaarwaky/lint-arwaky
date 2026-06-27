@@ -68,7 +68,7 @@ impl NamingOrchestrator {
     }
 
     /// Filter to source code files only (.rs, .py, .js, .ts, .jsx, .tsx).
-    fn filter_source_files(files: &FilePathList) -> FilePathList {
+    pub fn filter_source_files(files: &FilePathList) -> FilePathList {
         let source_exts = ["rs", "py", "js", "ts", "jsx", "tsx"];
         let filtered: Vec<FilePath> = files
             .values

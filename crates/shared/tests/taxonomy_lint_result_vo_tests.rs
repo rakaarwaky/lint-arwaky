@@ -9,7 +9,7 @@ use shared_lint_arwaky::common::taxonomy_path_vo::FilePath;
 
 fn sample_result() -> LintResult {
     LintResult {
-        file: FilePath::new("test.rs".into()).unwrap_or_default(),
+        file: FilePath::new("test.rs").unwrap_or_default(),
         line: LineNumber::new(10),
         column: ColumnNumber::new(5),
         code: ErrorCode::raw("E001"),
@@ -35,7 +35,13 @@ fn lint_result_has_expected_fields() {
 
 #[test]
 fn lint_result_new_arch_creates_result() {
-    let r = LintResult::new_arch("src/main.rs", 42, "AES101", Severity::HIGH, "violation detected");
+    let r = LintResult::new_arch(
+        "src/main.rs",
+        42,
+        "AES101",
+        Severity::HIGH,
+        "violation detected",
+    );
     assert_eq!(r.file.value, "src/main.rs");
     assert_eq!(r.line.value(), 42);
     assert_eq!(r.code.code(), "AES101");
@@ -120,9 +126,9 @@ fn severity_values_correct_order() {
 
 #[test]
 fn severity_display() {
-    assert_eq!(format!("{}", Severity::LOW), "LOW");
-    assert_eq!(format!("{}", Severity::MEDIUM), "MEDIUM");
-    assert_eq!(format!("{}", Severity::HIGH), "HIGH");
+    assert_eq!(format!("{}", Severity::LOW), "low");
+    assert_eq!(format!("{}", Severity::MEDIUM), "medium");
+    assert_eq!(format!("{}", Severity::HIGH), "high");
 }
 
 #[test]
@@ -138,7 +144,7 @@ fn severity_clone() {
 #[test]
 fn error_code_raw() {
     let code = ErrorCode::raw("AES101");
-    assert_eq!(code.value(), "AES101");
+    assert_eq!(code.code(), "AES101");
 }
 
 #[test]

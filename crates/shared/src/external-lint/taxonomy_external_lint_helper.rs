@@ -10,9 +10,9 @@ use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_duration_vo::Timeout;
+use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_response_data_vo::ResponseData;
-use crate::common::taxonomy_message_vo::ComplianceStatus;
 use std::path::{Path, PathBuf};
 
 /// Canonicalize a path string, falling back to the original on error.

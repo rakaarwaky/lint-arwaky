@@ -4,20 +4,24 @@ use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::code_analysis::taxonomy_analysis_vo::{
+    FileDefinitionMap, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap,
+};
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::code_analysis::taxonomy_analysis_vo::{FileDefinitionMap, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap};
+use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_error_vo::ErrorCode;
 use shared::common::taxonomy_lint_vo::ScopeRef;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
+use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::project_setup::taxonomy_setup_contract_vo::{CreateConfigDirResult, ProjectLanguageVO, WriteConfigResult};
+use shared::project_setup::taxonomy_setup_contract_vo::{
+    CreateConfigDirResult, ProjectLanguageVO, WriteConfigResult,
+};
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use std::sync::Arc;
@@ -136,22 +140,41 @@ impl MockSetupAggregate {
 
 #[async_trait::async_trait]
 impl SetupManagementAggregate for MockSetupAggregate {
-    fn check_http(&self, _url: &shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO) -> SuccessStatus {
+    fn check_http(
+        &self,
+        _url: &shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO,
+    ) -> SuccessStatus {
         SuccessStatus::new(true)
     }
-    fn generate_env(&self, _transport: &shared::cli_commands::taxonomy_protocol_vo::TransportProtocol, _home: &shared::common::taxonomy_path_vo::DirectoryPath) -> EnvContentVO {
+    fn generate_env(
+        &self,
+        _transport: &shared::cli_commands::taxonomy_protocol_vo::TransportProtocol,
+        _home: &shared::common::taxonomy_path_vo::DirectoryPath,
+    ) -> EnvContentVO {
         EnvContentVO::new("mock env".to_string())
     }
-    fn generate_mcp_config(&self, _transport: &shared::cli_commands::taxonomy_protocol_vo::TransportProtocol) -> McpConfigVO {
+    fn generate_mcp_config(
+        &self,
+        _transport: &shared::cli_commands::taxonomy_protocol_vo::TransportProtocol,
+    ) -> McpConfigVO {
         McpConfigVO::new(std::collections::HashMap::new())
     }
-    fn mcp_config_claude(&self, _transport: &shared::cli_commands::taxonomy_protocol_vo::TransportProtocol) -> McpConfigVO {
+    fn mcp_config_claude(
+        &self,
+        _transport: &shared::cli_commands::taxonomy_protocol_vo::TransportProtocol,
+    ) -> McpConfigVO {
         McpConfigVO::new(std::collections::HashMap::new())
     }
-    fn mcp_config_hermes(&self, _transport: &shared::cli_commands::taxonomy_protocol_vo::TransportProtocol) -> McpConfigVO {
+    fn mcp_config_hermes(
+        &self,
+        _transport: &shared::cli_commands::taxonomy_protocol_vo::TransportProtocol,
+    ) -> McpConfigVO {
         McpConfigVO::new(std::collections::HashMap::new())
     }
-    fn mcp_config_vscode(&self, _transport: &shared::cli_commands::taxonomy_protocol_vo::TransportProtocol) -> McpConfigVO {
+    fn mcp_config_vscode(
+        &self,
+        _transport: &shared::cli_commands::taxonomy_protocol_vo::TransportProtocol,
+    ) -> McpConfigVO {
         McpConfigVO::new(std::collections::HashMap::new())
     }
     async fn install_python_adapters(&self) -> SuccessStatus {
@@ -362,7 +385,9 @@ fn test_fix_without_orchestrator_shows_stub() {
     let flags = ActionFlags::default();
     let result = executor.fix("/root", &flags);
     assert!(result.success);
-    assert!(result.output.contains("Fix application requires FixOrchestrator"));
+    assert!(result
+        .output
+        .contains("Fix application requires FixOrchestrator"));
     assert!(result.output.contains("lint-arwaky-cli fix"));
 }
 
@@ -374,7 +399,9 @@ fn test_fix_without_orchestrator_dry_run_shows_stub() {
     let result = executor.fix("/root", &flags);
     assert!(result.success);
     assert!(result.output.contains("[DRY-RUN]"));
-    assert!(result.output.contains("Fix application requires FixOrchestrator"));
+    assert!(result
+        .output
+        .contains("Fix application requires FixOrchestrator"));
 }
 
 #[test]
@@ -462,7 +489,9 @@ fn test_install_with_setup_aggregate_js_project() {
     assert!(result.success, "Expected success, got: {}", result.output);
     assert!(result.output.contains("Detected language: javascript"));
     assert!(result.output.contains("Python (ruff, mypy, bandit)"));
-    assert!(result.output.contains("JavaScript (eslint, prettier, typescript)"));
+    assert!(result
+        .output
+        .contains("JavaScript (eslint, prettier, typescript)"));
     assert!(result.output.contains("All adapter dependencies installed"));
 }
 
@@ -477,7 +506,11 @@ fn test_install_with_setup_aggregate_python_failure() {
     );
     let flags = ActionFlags::default();
     let result = executor.install(&flags);
-    assert!(!result.success, "Expected failure when py install fails, got: {}", result.output);
+    assert!(
+        !result.success,
+        "Expected failure when py install fails, got: {}",
+        result.output
+    );
     assert!(result.output.contains("[FAIL] Python"));
     assert!(result.output.contains("Some adapter(s) failed to install"));
 }
@@ -596,13 +629,22 @@ struct MockHookPort {
 
 impl MockHookPort {
     fn success() -> Self {
-        Self { install_ok: true, uninstall_ok: true }
+        Self {
+            install_ok: true,
+            uninstall_ok: true,
+        }
     }
     fn install_error() -> Self {
-        Self { install_ok: false, uninstall_ok: true }
+        Self {
+            install_ok: false,
+            uninstall_ok: true,
+        }
     }
     fn uninstall_error() -> Self {
-        Self { install_ok: true, uninstall_ok: false }
+        Self {
+            install_ok: true,
+            uninstall_ok: false,
+        }
     }
 }
 
@@ -610,23 +652,37 @@ impl shared::git_hooks::contract_manager_port::IHookManagerPort for MockHookPort
     fn install_pre_commit(
         &self,
         _executable_path: &shared::common::taxonomy_path_vo::FilePath,
-    ) -> Result<shared::mcp_server::taxonomy_job_vo::SuccessStatus, shared::git_hooks::taxonomy_hook_error::GitHookError> {
+    ) -> Result<
+        shared::mcp_server::taxonomy_job_vo::SuccessStatus,
+        shared::git_hooks::taxonomy_hook_error::GitHookError,
+    > {
         if self.install_ok {
-            Ok(shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(true))
+            Ok(shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(
+                true,
+            ))
         } else {
             Err(shared::git_hooks::taxonomy_hook_error::GitHookError::new(
-                shared::common::taxonomy_message_vo::LintMessage::new("hook installation failed".to_string()),
+                shared::common::taxonomy_message_vo::LintMessage::new(
+                    "hook installation failed".to_string(),
+                ),
             ))
         }
     }
     fn uninstall_pre_commit(
         &self,
-    ) -> Result<shared::mcp_server::taxonomy_job_vo::SuccessStatus, shared::git_hooks::taxonomy_hook_error::GitHookError> {
+    ) -> Result<
+        shared::mcp_server::taxonomy_job_vo::SuccessStatus,
+        shared::git_hooks::taxonomy_hook_error::GitHookError,
+    > {
         if self.uninstall_ok {
-            Ok(shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(true))
+            Ok(shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(
+                true,
+            ))
         } else {
             Err(shared::git_hooks::taxonomy_hook_error::GitHookError::new(
-                shared::common::taxonomy_message_vo::LintMessage::new("hook removal failed".to_string()),
+                shared::common::taxonomy_message_vo::LintMessage::new(
+                    "hook removal failed".to_string(),
+                ),
             ))
         }
     }
@@ -647,7 +703,9 @@ fn test_install_hook_with_port_error() {
         .with_hook_port(Arc::new(MockHookPort::install_error()));
     let result = executor.install_hook();
     assert!(!result.success);
-    assert!(result.output.contains("Git pre-commit hook installation failed"));
+    assert!(result
+        .output
+        .contains("Git pre-commit hook installation failed"));
     assert!(result.output.contains("hook installation failed"));
 }
 
@@ -693,11 +751,17 @@ struct MockOrphanAggregate {
 }
 impl MockOrphanAggregate {
     fn with_orphans(count: usize) -> Self {
-        Self { orphan_count: count }
+        Self {
+            orphan_count: count,
+        }
     }
 }
 impl IOrphanAggregate for MockOrphanAggregate {
-    fn build_orphan_graph_context(&self, _files: &[String], _root_dir: &str) -> GraphAnalysisContext {
+    fn build_orphan_graph_context(
+        &self,
+        _files: &[String],
+        _root_dir: &str,
+    ) -> GraphAnalysisContext {
         GraphAnalysisContext::new(
             ImportGraph::new(std::collections::HashMap::new()),
             InboundLinkMap::new(std::collections::HashMap::new()),
@@ -721,7 +785,9 @@ impl IOrphanAggregate for MockOrphanAggregate {
                 column: Default::default(),
                 code: ErrorCode::raw("ORPHAN001"),
                 message: LintMessage::new(format!("orphan file {}", i)),
-                source: Some(shared::common::taxonomy_adapter_name_vo::AdapterName::raw("orphan_detector")),
+                source: Some(shared::common::taxonomy_adapter_name_vo::AdapterName::raw(
+                    "orphan_detector",
+                )),
                 severity: Severity::MEDIUM,
                 enclosing_scope: None,
                 related_locations: Default::default(),
@@ -735,7 +801,10 @@ impl ILayerDetectionAggregate for MockLayerDetector {
     fn detect_layer(&self, _file_path: &str, _root_dir: &str) -> Option<String> {
         Some("taxonomy".to_string())
     }
-    fn get_layer_def(&self, _layer: &str) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
+    fn get_layer_def(
+        &self,
+        _layer: &str,
+    ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
         None
     }
     fn get_orphan_entry_points(&self) -> Vec<String> {
@@ -745,7 +814,10 @@ impl ILayerDetectionAggregate for MockLayerDetector {
 
 struct MockScannerProvider;
 impl IScannerProviderPort for MockScannerProvider {
-    fn scan_directory(&self, _path: &DirectoryPath) -> Result<FilePathList, shared::common::taxonomy_filesystem_error::FileSystemError> {
+    fn scan_directory(
+        &self,
+        _path: &DirectoryPath,
+    ) -> Result<FilePathList, shared::common::taxonomy_filesystem_error::FileSystemError> {
         Ok(FilePathList::new(vec![
             FilePath::new("src/main.rs".to_string()).unwrap_or_default(),
             FilePath::new("src/lib.rs".to_string()).unwrap_or_default(),
@@ -760,17 +832,19 @@ fn make_executor_with_orphan(
     mock: MockCodeAnalysis,
     orphan_agg: MockOrphanAggregate,
 ) -> LintExecutor {
-    LintExecutor::new(Arc::new(mock))
-        .with_orphan(
-            Arc::new(orphan_agg),
-            Arc::new(MockLayerDetector),
-            Arc::new(MockScannerProvider),
-        )
+    LintExecutor::new(Arc::new(mock)).with_orphan(
+        Arc::new(orphan_agg),
+        Arc::new(MockLayerDetector),
+        Arc::new(MockScannerProvider),
+    )
 }
 
 #[test]
 fn test_orphan_with_real_detection() {
-    let executor = make_executor_with_orphan(MockCodeAnalysis::empty(), MockOrphanAggregate::with_orphans(3));
+    let executor = make_executor_with_orphan(
+        MockCodeAnalysis::empty(),
+        MockOrphanAggregate::with_orphans(3),
+    );
     let result = executor.orphan("/some/path");
     assert!(result.success);
     assert!(result.output.contains("Orphan detection"));
@@ -782,7 +856,10 @@ fn test_orphan_with_real_detection() {
 
 #[test]
 fn test_orphan_with_real_detection_no_orphans() {
-    let executor = make_executor_with_orphan(MockCodeAnalysis::empty(), MockOrphanAggregate::with_orphans(0));
+    let executor = make_executor_with_orphan(
+        MockCodeAnalysis::empty(),
+        MockOrphanAggregate::with_orphans(0),
+    );
     let result = executor.orphan("/some/path");
     assert!(result.success);
     assert!(result.output.contains("No orphan files detected."));
@@ -791,7 +868,10 @@ fn test_orphan_with_real_detection_no_orphans() {
 #[test]
 fn test_orphan_real_vs_stub_distinction() {
     // With orphan aggregate wired in -> real detection
-    let real = make_executor_with_orphan(MockCodeAnalysis::empty(), MockOrphanAggregate::with_orphans(1));
+    let real = make_executor_with_orphan(
+        MockCodeAnalysis::empty(),
+        MockOrphanAggregate::with_orphans(1),
+    );
     let result_real = real.orphan("/path");
     assert!(result_real.output.contains("Scanned"));
 

@@ -57,7 +57,11 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
         "Remove git pre-commit hook",
         "lint-arwaky-cli uninstall-hook",
     ),
-    ("adapters", "List enabled adapters", "lint-arwaky-cli adapters"),
+    (
+        "adapters",
+        "List enabled adapters",
+        "lint-arwaky-cli adapters",
+    ),
     ("version", "Show version", "lint-arwaky-cli version"),
     ("init", "Create default config", "lint-arwaky-cli init"),
     (

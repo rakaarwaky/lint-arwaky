@@ -44,13 +44,13 @@ impl TuiContainer {
                 shared::common::taxonomy_path_vo::FilePath::new(".".to_string())
                     .unwrap_or_default(),
             ));
-        let config_container =
-            config_system::root_config_system_container::ConfigContainer::new();
+        let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let maintenance_container = MaintenanceContainer::new();
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
-        let scanner_provider: Arc<dyn IScannerProviderPort> =
-            Arc::new(shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new());
+        let scanner_provider: Arc<dyn IScannerProviderPort> = Arc::new(
+            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
+        );
         let lint_executor = Arc::new(
             LintExecutor::new_with_setup(
                 code_analysis_aggregate,

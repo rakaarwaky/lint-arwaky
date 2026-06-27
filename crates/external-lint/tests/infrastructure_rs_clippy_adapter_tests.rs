@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_rs_clippy_adapter::RustLinterAdapter;
@@ -28,10 +28,7 @@ impl ICommandExecutorPort for MockClippyExecutor {
         _timeout: Option<Timeout>,
     ) -> anyhow::Result<ResponseData> {
         let mut meta = std::collections::HashMap::new();
-        meta.insert(
-            "protocol".into(),
-            serde_json::Value::String("Stdio".into()),
-        );
+        meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
         Ok(ResponseData {
             value: None,
             stdout: self.output.clone(),

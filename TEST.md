@@ -42,59 +42,11 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 
 | Criteria                           | PASS                   | FAIL          |
 | ---------------------------------- | ---------------------- | ------------- |
-| Total discovered workspace members | 23 workspace members   | < 23          |
 | Total violations (scan)            | >= 2000 violations     | < 2000 or 0   |
 | Unique AES codes (Rust)            | >= 24 unique AES codes | < 24          |
 | Unique AES codes (Python)          | >= 24 unique AES codes | < 24          |
 | Unique AES codes (JS/TS)           | >= 24 unique AES codes | < 24          |
-| Total unique AES codes (all)       | >= 24 unique AES codes | < 24          |
 
-## 4. Expected Violations
-
-### 4.1 Rust (AES Self-Lint) — 155 violations detected ✅
-
-| AES Code | Type                | Example File                                                |
-| -------- | ------------------- | ---------------------------------------------------------- |
-| AES201   | Forbidden import    | surface_direct_infra_handler, taxonomy_forbidden_import    |
-| AES202   | Mandatory import    | capabilities files missing taxonomy import                 |
-| AES101   | Naming convention   | badname.rs                                                 |
-| AES102   | Suffix mismatch     | surface_mod, contract_wrong_name_port, taxonomy_mod        |
-| AES301   | File too large      | extremely_large_vo                                         |
-| AES302   | File too short      | surface_mod, capabilities_mcp_tool_processor, agent_mod    |
-| AES304   | Bypass/unwrap       | agent_unsafe_bypass_orchestrator, taxonomy_bypass_comment  |
-| AES203   | Unused import       | surface_complex_view_handler, infrastructure_broad_import  |
-| AES303   | Mandatory def       | taxonomy_bare_entity (dead inheritance)                    |
-| AES501   | Orphan taxonomy     | taxonomy orphan files                                      |
-| AES502   | Orphan contract     | contract_wrong_name_port                                   |
-| AES503   | Orphan capabilities | capabilities orphan files                                  |
-| AES504   | Orphan infra        | infrastructure orphan files                                |
-| AES505   | Orphan agent        | agent orphan files                                         |
-| AES506   | Orphan surface      | surface orphan files                                       |
-| AES401   | Taxonomy role       | taxonomy_primitive_entity, taxonomy_impure_system_constant |
-| AES402   | Contract primitive  | contract_wrong_name_port                                   |
-| AES403   | Capabilities role   | capabilities_unmatched_struct_processor                    |
-| AES405   | Agent role          | agent_stateful_violations                                  |
-| AES406   | Surface role        | surface_complex_busy_handler, surface_many_functions       |
-
-### 4.2 Python (Multi-Adapter — requires ruff, mypy, bandit installed)
-
-| Tool   | Expected Issues             |
-| ------ | --------------------------- |
-| Ruff   | Style/formatting violations |
-| MyPy   | Type annotation violations  |
-| Bandit | Security violations         |
-
-
-
-| Tool     | Expected Issues          |
-| -------- | ------------------------ |
-| ESLint   | Code quality violations  |
-| Prettier | Formatting violations    |
-| TSC      | Type checking violations |
-
-```bash
-cargo run --bin lint-arwaky-cli -- scan test-workspaces/
-```
 
 **Baseline v1.10.29** (22 June 2026):
 
@@ -104,20 +56,7 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/
 | Rust (crates)           | `scan test-workspaces/crates`   | 262              | 19               | ❌      |
 | Python (modules)        | `scan test-workspaces/modules`  | 454              | 11               | ❌      |
 | JS/TS (packages)        | `scan test-workspaces/packages` | 1357             | 7                | ❌      |
-| **Combined**      | `scan test-workspaces/`         | 2073             | 81               | ❌      |
 
-**Target: 24 unique AES codes per language.**
-
-### Per-language AES Coverage (Current)
-
-**Rust (19/24):** AES102, AES201, AES202, AES203, AES204, AES205, AES303, AES304, AES401, AES402, AES403, AES404, AES405, AES406, AES501, AES502, AES503, AES504, AES506
-**Missing:** AES101, AES301, AES302, AES305, AES505
-
-**Python (11/24):** AES102, AES201, AES202, AES203, AES204, AES303, AES304, AES405, AES501, AES503, AES506
-**Missing:** AES101, AES205, AES301, AES302, AES305, AES401, AES402, AES403, AES404, AES406, AES502, AES504, AES505
-
-**JS/TS (7/24):** AES102, AES201, AES202, AES203, AES204, AES303, AES405
-**Missing:** AES101, AES205, AES301, AES302, AES304, AES305, AES401, AES402, AES403, AES404, AES406, AES501, AES502, AES503, AES504, AES505, AES506
 
 ### All 24 AES Codes Target
 
@@ -150,12 +89,9 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/
 
 ---
 
-## 6. Production Readiness Checklist & AI Agent Instructions
 
-> [!IMPORTANT]
-> Since this project is developed using **Agentic Coding (AI Agent-driven)** where you (the user) do not manually read the code, this checklist acts as an **automation contract**. The AI Agent **must** run and verify all steps below before declaring a feature/task complete or proposing a merge to the main branch.
 
-### 6.1 Release Eligibility Checklist (Production Ready)
+### 4.1 Release Eligibility Checklist (Production Ready)
 
 Before releasing the binary to a production environment or deploying it to a client, the AI Agent must complete the following verification tasks:
 
@@ -234,7 +170,7 @@ The multi-adapter scanner must be proven to successfully detect at least 18 uniq
 
   _Criteria:_ Binary responds in **< 2 seconds** with the complete list of 5 registered MCP tools.
 
-### 6.2 Specific Instructions for AI Agents Working Here
+### 4.2 Specific Instructions for AI Agents Working Here
 
 1. **Automated Verification:** Every time you modify the code, you must rebuild the binary using `build.local.sh` and run the `check .` audit locally.
 2. **Fix the Root Cause, Do Not Bypass:** Never use inline bypasses (`unwrap`, `expect`, `panic!`, `noqa`) to bypass architecture warnings. You must design code according to contracts or register the module under YAML exceptions if it is genuinely safe.

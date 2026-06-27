@@ -12,8 +12,8 @@ use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_rule_protocol::IArchRuleProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
-use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::import_rules::taxonomy_path_helper;
+use shared::taxonomy_definition_vo::LayerDefinition;
 
 // ---------------------------------------------------------------------------
 // Mock parser
@@ -108,19 +108,55 @@ impl IImportParserPort for MockMandatoryParser {
         Ok(LintMessage::new(self.file_content.clone()))
     }
 
-    fn extract_import_modules(&self, _: &str) -> Vec<SymbolName> { vec![] }
-    fn get_language_from_path(&self, _: &str) -> LanguageVO { LanguageVO::Rust }
-    fn get_dummy_function_ranges(&self, _: &[&str], _: LanguageVO) -> Vec<(LineNumber, LineNumber)> { vec![] }
-    fn get_imported_symbols(&self, _: &[&str], _: LanguageVO) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn get_dummy_impl_traits_with_lines(&self, _: &[&str]) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn is_symbol_used_real(&self, _: &[&str], _: &str, _: &[(LineNumber, LineNumber)], _: &[String]) -> bool { false }
-    fn detect_cycle_edges(&self, _: &[DependencyEdge]) -> Vec<SymbolName> { vec![] }
-    fn extract_imported_aliases(&self, _: &str) -> HashMap<Identity, Identity> { HashMap::new() }
-    fn extract_exported_symbols(&self, _: &str) -> HashSet<Identity> { HashSet::new() }
-    fn extract_used_symbols(&self, _: &str, _: &HashMap<Identity, Identity>) -> HashSet<Identity> { HashSet::new() }
-    fn find_import_line_number(&self, _: &str, _: &str) -> LineNumber { LineNumber::new(0) }
-    fn extract_rust_js_imports(&self, _: &str) -> Vec<(SymbolName, LineNumber)> { vec![] }
-    fn is_name_used(&self, _: &str, _: &str, _: LineNumber) -> bool { false }
+    fn extract_import_modules(&self, _: &str) -> Vec<SymbolName> {
+        vec![]
+    }
+    fn get_language_from_path(&self, _: &str) -> LanguageVO {
+        LanguageVO::Rust
+    }
+    fn get_dummy_function_ranges(
+        &self,
+        _: &[&str],
+        _: LanguageVO,
+    ) -> Vec<(LineNumber, LineNumber)> {
+        vec![]
+    }
+    fn get_imported_symbols(&self, _: &[&str], _: LanguageVO) -> Vec<(SymbolName, LineNumber)> {
+        vec![]
+    }
+    fn get_dummy_impl_traits_with_lines(&self, _: &[&str]) -> Vec<(SymbolName, LineNumber)> {
+        vec![]
+    }
+    fn is_symbol_used_real(
+        &self,
+        _: &[&str],
+        _: &str,
+        _: &[(LineNumber, LineNumber)],
+        _: &[String],
+    ) -> bool {
+        false
+    }
+    fn detect_cycle_edges(&self, _: &[DependencyEdge]) -> Vec<SymbolName> {
+        vec![]
+    }
+    fn extract_imported_aliases(&self, _: &str) -> HashMap<Identity, Identity> {
+        HashMap::new()
+    }
+    fn extract_exported_symbols(&self, _: &str) -> HashSet<Identity> {
+        HashSet::new()
+    }
+    fn extract_used_symbols(&self, _: &str, _: &HashMap<Identity, Identity>) -> HashSet<Identity> {
+        HashSet::new()
+    }
+    fn find_import_line_number(&self, _: &str, _: &str) -> LineNumber {
+        LineNumber::new(0)
+    }
+    fn extract_rust_js_imports(&self, _: &str) -> Vec<(SymbolName, LineNumber)> {
+        vec![]
+    }
+    fn is_name_used(&self, _: &str, _: &str, _: LineNumber) -> bool {
+        false
+    }
 }
 
 fn make_def(mandatory: Vec<&str>, exceptions: Vec<&str>) -> LayerDefinition {
@@ -177,7 +213,11 @@ fn mandatory_missing_import_detected() {
     let mut violations = vec![];
     let def = make_def(vec!["shared"], vec![]);
     checker.check_mandatory_imports("src/capabilities_processor.rs", &def, &mut violations);
-    assert_eq!(violations.len(), 1, "missing mandatory import should be flagged");
+    assert_eq!(
+        violations.len(),
+        1,
+        "missing mandatory import should be flagged"
+    );
     assert!(violations[0].code.to_string().contains("AES202"));
 }
 
@@ -191,7 +231,10 @@ fn mandatory_import_present_no_violation() {
     let mut violations = vec![];
     let def = make_def(vec!["shared"], vec![]);
     checker.check_mandatory_imports("src/capabilities_processor.rs", &def, &mut violations);
-    assert!(violations.is_empty(), "present mandatory import should not flag");
+    assert!(
+        violations.is_empty(),
+        "present mandatory import should not flag"
+    );
 }
 
 #[test]
@@ -222,8 +265,15 @@ fn scope_mandatory_skips_rules_with_empty_mandatory() {
         }],
         ..ArchitectureConfig::default()
     };
-    checker.check_scope_mandatory_imports("src/capabilities_processor.rs", &config, &mut violations);
-    assert!(violations.is_empty(), "rule with empty mandatory should be skipped");
+    checker.check_scope_mandatory_imports(
+        "src/capabilities_processor.rs",
+        &config,
+        &mut violations,
+    );
+    assert!(
+        violations.is_empty(),
+        "rule with empty mandatory should be skipped"
+    );
 }
 
 #[test]

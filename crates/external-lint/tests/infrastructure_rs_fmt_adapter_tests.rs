@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_rs_fmt_adapter::RustFmtAdapter;
@@ -42,12 +42,16 @@ impl ICommandExecutorPort for MockFmtExecutor {
 struct IdentityPathNorm;
 
 impl IPathNormalizationPort for IdentityPathNorm {
-    fn normalize_path(&self, path: FilePath) -> FilePath { path }
+    fn normalize_path(&self, path: FilePath) -> FilePath {
+        path
+    }
     fn resolve_infrastructure_path(
         &self,
         path: FilePath,
         _context_path: Option<FilePath>,
-    ) -> FilePath { path }
+    ) -> FilePath {
+        path
+    }
 }
 
 fn make_adapter(output: &str, exit_code: i32) -> RustFmtAdapter {
@@ -68,7 +72,11 @@ fn make_path(p: &str) -> FilePath {
 fn with_cargo_toml() -> std::path::PathBuf {
     let dir = std::env::temp_dir().join(format!("rustfmt_test_{}", std::process::id()));
     let _ = std::fs::create_dir_all(&dir);
-    std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"test\"\nversion = \"0.1.0\"\n").unwrap();
+    std::fs::write(
+        dir.join("Cargo.toml"),
+        "[package]\nname = \"test\"\nversion = \"0.1.0\"\n",
+    )
+    .unwrap();
     dir
 }
 

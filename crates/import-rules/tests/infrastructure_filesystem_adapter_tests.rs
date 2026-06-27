@@ -1,10 +1,9 @@
 use std::fs;
-use std::sync::Arc;
 
 use import_rules_lint_arwaky::infrastructure_filesystem_adapter::OSFileSystemAdapter;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_layer_vo::Identity;
 use shared::taxonomy_source_vo::ContentString;
 
@@ -97,7 +96,9 @@ async fn write_text_creates_file() {
     let (dir, _) = setup_temp_dir("write_test");
     let file_path = dir.join("output.txt");
     let fp = make_fp(&file_path.to_string_lossy());
-    let result = adapter.write_text(&fp, &ContentString::new("test content"), None).await;
+    let result = adapter
+        .write_text(&fp, &ContentString::new("test content"), None)
+        .await;
     assert!(result.is_ok());
     assert!(result.unwrap().value());
     assert!(file_path.exists());
@@ -169,7 +170,10 @@ async fn get_relative_path_no_prefix_returns_original() {
 async fn get_parent_deep_path() {
     let adapter = OSFileSystemAdapter::new();
     let fp = make_fp("/home/user/project/src/main.rs");
-    assert_eq!(adapter.get_parent(&fp).await.value(), "/home/user/project/src");
+    assert_eq!(
+        adapter.get_parent(&fp).await.value(),
+        "/home/user/project/src"
+    );
 }
 
 #[tokio::test]
@@ -222,10 +226,15 @@ async fn walk_ignores_patterns() {
     fs::write(dir.join("ignore.py"), "").unwrap();
     fs::write(dir.join("target"), "").unwrap();
 
-    let files = adapter.walk(
-        &fp,
-        Some(&PatternList::new(vec!["target".to_string(), "node_modules".to_string()])),
-    ).await;
+    let files = adapter
+        .walk(
+            &fp,
+            Some(&PatternList::new(vec![
+                "target".to_string(),
+                "node_modules".to_string(),
+            ])),
+        )
+        .await;
     // Should find 2 files (keep.rs, ignore.py) - target is ignored by name
     assert_eq!(files.values.len(), 2);
     cleanup(&dir);

@@ -18,6 +18,6 @@ pub mod surface_setup_command;
 pub mod surface_watch_command;
 pub use surface_watch_command::WatchCommandsSurface;
 pub mod infrastructure_language_detector;
-pub mod surface_config_command;
 pub mod root_cli_container;
+pub mod surface_config_command;
 pub use root_cli_container::CliContainer;

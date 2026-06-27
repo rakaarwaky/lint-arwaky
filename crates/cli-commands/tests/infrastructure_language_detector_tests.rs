@@ -27,7 +27,10 @@ fn language_detector_detect_python() {
 #[test]
 fn language_detector_detect_typescript() {
     let detector = CliLanguageDetector::new();
-    assert_eq!(detector.detect(&make_fp("component.ts")), Language::TypeScript);
+    assert_eq!(
+        detector.detect(&make_fp("component.ts")),
+        Language::TypeScript
+    );
 }
 
 #[test]

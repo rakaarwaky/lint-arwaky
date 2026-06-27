@@ -1,17 +1,19 @@
-use std::sync::Arc;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_py_bandit_adapter::BanditAdapter;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 
-struct MockBanditExecutor { output: String }
+struct MockBanditExecutor {
+    output: String,
+}
 
 #[async_trait]
 impl ICommandExecutorPort for MockBanditExecutor {
@@ -31,24 +33,34 @@ impl ICommandExecutorPort for MockBanditExecutor {
             metadata: meta,
         })
     }
-    async fn health_check(&self) -> anyhow::Result<ResponseData> { Ok(ResponseData::new()) }
+    async fn health_check(&self) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::new())
+    }
 }
 
 struct IdentityPathNorm;
 impl IPathNormalizationPort for IdentityPathNorm {
-    fn normalize_path(&self, path: FilePath) -> FilePath { path }
-    fn resolve_infrastructure_path(&self, path: FilePath, _: Option<FilePath>) -> FilePath { path }
+    fn normalize_path(&self, path: FilePath) -> FilePath {
+        path
+    }
+    fn resolve_infrastructure_path(&self, path: FilePath, _: Option<FilePath>) -> FilePath {
+        path
+    }
 }
 
 fn make_adapter(output: &str) -> BanditAdapter {
     BanditAdapter::new(
-        Arc::new(MockBanditExecutor { output: output.to_string() }),
+        Arc::new(MockBanditExecutor {
+            output: output.to_string(),
+        }),
         Arc::new(IdentityPathNorm),
         None,
     )
 }
 
-fn make_path(p: &str) -> FilePath { FilePath::new(p.to_string()).unwrap_or_default() }
+fn make_path(p: &str) -> FilePath {
+    FilePath::new(p.to_string()).unwrap_or_default()
+}
 
 #[tokio::test]
 async fn parses_bandit_json_results() {
@@ -64,9 +76,15 @@ async fn parses_bandit_json_results() {
     assert_eq!(results.len(), 2);
     assert_eq!(results.values[0].code.code(), "B101");
     assert_eq!(results.values[0].line.value(), 42);
-    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
+    assert_eq!(
+        results.values[0].severity.clone() as i32,
+        Severity::HIGH as i32
+    );
     assert_eq!(results.values[1].code.code(), "B301");
-    assert_eq!(results.values[1].severity.clone() as i32, Severity::MEDIUM as i32);
+    assert_eq!(
+        results.values[1].severity.clone() as i32,
+        Severity::MEDIUM as i32
+    );
 }
 
 #[tokio::test]
@@ -98,10 +116,22 @@ async fn maps_bandit_severity_correctly() {
     let adapter = make_adapter(json);
     let path = make_path("t.py");
     let results = adapter.scan(&path).await.unwrap();
-    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
-    assert_eq!(results.values[1].severity.clone() as i32, Severity::MEDIUM as i32);
-    assert_eq!(results.values[2].severity.clone() as i32, Severity::LOW as i32);
-    assert_eq!(results.values[3].severity.clone() as i32, Severity::MEDIUM as i32); // default
+    assert_eq!(
+        results.values[0].severity.clone() as i32,
+        Severity::HIGH as i32
+    );
+    assert_eq!(
+        results.values[1].severity.clone() as i32,
+        Severity::MEDIUM as i32
+    );
+    assert_eq!(
+        results.values[2].severity.clone() as i32,
+        Severity::LOW as i32
+    );
+    assert_eq!(
+        results.values[3].severity.clone() as i32,
+        Severity::MEDIUM as i32
+    ); // default
 }
 
 #[tokio::test]

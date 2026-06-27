@@ -14,11 +14,11 @@ use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
 use code_analysis::{has_critical, lint_path, CodeDuplicationAnalyzer};
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter;
 use import_rules::root_import_rules_container::NullSourceParser;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_parser_port::ISourceParserPort;
 use shared::common::contract_system_port::IFileSystemPort;
@@ -75,10 +75,9 @@ fn main() -> ExitCode {
                 config.clone(),
                 Arc::new(NullSourceParser),
             );
-        let naming_container =
-            naming_rules::root_naming_rules_container::NamingContainer::new(
-                import_container.analyzer(),
-            );
+        let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
+            import_container.analyzer(),
+        );
         let role_container =
             role_rules::root_role_rules_container::RoleContainer::new_with_config(config.clone());
         let analyzer = import_container.analyzer();
@@ -98,7 +97,8 @@ fn main() -> ExitCode {
             external_lint: ext_lint_clone.clone(),
             role_orchestrator: role_container.orchestrator(),
             scanner_provider: Arc::new(
-                shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
+                shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(
+                ),
             ),
             orphan_orchestrator: orphan_container.analyzer(),
             layer_detector: layer_det_clone.clone(),
@@ -204,9 +204,10 @@ fn main() -> ExitCode {
             surface_plugin_command::handle_adapters(container.external_lint.clone())
         }
         Commands::Orphan { path } => {
-            let surface = surface_check_command::CheckCommandsSurface::new(
-                make_check_context(&container, &layer_detector),
-            );
+            let surface = surface_check_command::CheckCommandsSurface::new(make_check_context(
+                &container,
+                &layer_detector,
+            ));
             surface.check_orphan_single_file(&path);
             ExitCode::SUCCESS
         }

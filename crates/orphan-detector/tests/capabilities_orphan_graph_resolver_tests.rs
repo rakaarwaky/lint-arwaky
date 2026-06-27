@@ -1,29 +1,30 @@
 use orphan_detector_lint_arwaky::capabilities_orphan_graph_resolver::OrphanGraphResolver;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
-use shared::orphan_detector::taxonomy_orphan_contract_vo::{OrphanEntryPatternListVO, OrphanFileListVO};
+use shared::orphan_detector::taxonomy_orphan_contract_vo::{
+    OrphanEntryPatternListVO, OrphanFileListVO,
+};
 
 #[test]
 fn identify_entry_points_empty_config_returns_empty() {
     let resolver = OrphanGraphResolver::new();
-    let files = vec![
-        OrphanFileListVO::new(vec!["src/main.rs".to_string()]),
-    ];
+    let files = vec![OrphanFileListVO::new(vec!["src/main.rs".to_string()])];
     let entries = resolver.identify_entry_points(&files, &[]);
-    assert!(entries.values.is_empty(), "no configured patterns => empty entries");
+    assert!(
+        entries.values.is_empty(),
+        "no configured patterns => empty entries"
+    );
 }
 
 #[test]
 fn identify_entry_points_matches_ends_with() {
     let resolver = OrphanGraphResolver::new();
-    let files = vec![
-        OrphanFileListVO::new(vec![
-            "src/root_container.rs".to_string(),
-            "src/surface_command.rs".to_string(),
-        ]),
-    ];
-    let patterns = vec![
-        OrphanEntryPatternListVO::new(vec!["_container.rs".to_string()]),
-    ];
+    let files = vec![OrphanFileListVO::new(vec![
+        "src/root_container.rs".to_string(),
+        "src/surface_command.rs".to_string(),
+    ])];
+    let patterns = vec![OrphanEntryPatternListVO::new(vec![
+        "_container.rs".to_string()
+    ])];
     let entries = resolver.identify_entry_points(&files, &patterns);
     assert_eq!(entries.values.len(), 1);
     assert!(entries.values[0].ends_with("_container.rs"));
@@ -32,15 +33,11 @@ fn identify_entry_points_matches_ends_with() {
 #[test]
 fn identify_entry_points_matches_contains() {
     let resolver = OrphanGraphResolver::new();
-    let files = vec![
-        OrphanFileListVO::new(vec![
-            "src/root_entry.rs".to_string(),
-            "src/lib.rs".to_string(),
-        ]),
-    ];
-    let patterns = vec![
-        OrphanEntryPatternListVO::new(vec!["_entry".to_string()]),
-    ];
+    let files = vec![OrphanFileListVO::new(vec![
+        "src/root_entry.rs".to_string(),
+        "src/lib.rs".to_string(),
+    ])];
+    let patterns = vec![OrphanEntryPatternListVO::new(vec!["_entry".to_string()])];
     let entries = resolver.identify_entry_points(&files, &patterns);
     assert_eq!(entries.values.len(), 1);
     assert!(entries.values[0].contains("_entry"));
@@ -58,12 +55,10 @@ fn identify_entry_points_all_config_empty_returns_empty() {
 #[test]
 fn identify_entry_points_no_match() {
     let resolver = OrphanGraphResolver::new();
-    let files = vec![
-        OrphanFileListVO::new(vec!["src/helper.rs".to_string()]),
-    ];
-    let patterns = vec![
-        OrphanEntryPatternListVO::new(vec!["_container".to_string()]),
-    ];
+    let files = vec![OrphanFileListVO::new(vec!["src/helper.rs".to_string()])];
+    let patterns = vec![OrphanEntryPatternListVO::new(
+        vec!["_container".to_string()],
+    )];
     let entries = resolver.identify_entry_points(&files, &patterns);
     assert!(entries.values.is_empty());
 }
@@ -71,20 +66,16 @@ fn identify_entry_points_no_match() {
 #[test]
 fn identify_entry_points_multiple_matches() {
     let resolver = OrphanGraphResolver::new();
-    let files = vec![
-        OrphanFileListVO::new(vec![
-            "src/root_container.rs".to_string(),
-            "src/root_entry.rs".to_string(),
-            "src/main.rs".to_string(),
-            "src/lib.rs".to_string(),
-        ]),
-    ];
-    let patterns = vec![
-        OrphanEntryPatternListVO::new(vec![
-            "_container.rs".to_string(),
-            "_entry.rs".to_string(),
-        ]),
-    ];
+    let files = vec![OrphanFileListVO::new(vec![
+        "src/root_container.rs".to_string(),
+        "src/root_entry.rs".to_string(),
+        "src/main.rs".to_string(),
+        "src/lib.rs".to_string(),
+    ])];
+    let patterns = vec![OrphanEntryPatternListVO::new(vec![
+        "_container.rs".to_string(),
+        "_entry.rs".to_string(),
+    ])];
     let entries = resolver.identify_entry_points(&files, &patterns);
     assert_eq!(entries.values.len(), 2);
 }

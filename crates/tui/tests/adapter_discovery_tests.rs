@@ -1,19 +1,33 @@
-use tui_lint_arwaky::capabilities_lint_executor::{discover_adapters, LintExecutor};
-use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use std::sync::Arc;
+use tui_lint_arwaky::capabilities_lint_executor::{discover_adapters, LintExecutor};
 
 struct MockCodeAnalysis;
 impl ICodeAnalysisAggregate for MockCodeAnalysis {
-    fn run_code_analysis(&self, _path: &str) -> LintResultList { LintResultList::new(vec![]) }
-    fn run_code_analysis_dir(&self, _path: &str) -> LintResultList { LintResultList::new(vec![]) }
-    fn run_code_analysis_path(&self, _path: &str) -> Vec<LintResult> { vec![] }
-    fn calc_score(&self, _results: &[LintResult]) -> f64 { 95.0 }
-    fn check_critical(&self, _results: &[LintResult]) -> bool { false }
-    fn format_report(&self, _results: &LintResultList, _root: &str) -> String { "mock".into() }
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> { vec![] }
+    fn run_code_analysis(&self, _path: &str) -> LintResultList {
+        LintResultList::new(vec![])
+    }
+    fn run_code_analysis_dir(&self, _path: &str) -> LintResultList {
+        LintResultList::new(vec![])
+    }
+    fn run_code_analysis_path(&self, _path: &str) -> Vec<LintResult> {
+        vec![]
+    }
+    fn calc_score(&self, _results: &[LintResult]) -> f64 {
+        95.0
+    }
+    fn check_critical(&self, _results: &[LintResult]) -> bool {
+        false
+    }
+    fn format_report(&self, _results: &LintResultList, _root: &str) -> String {
+        "mock".into()
+    }
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        vec![]
+    }
 }
 
 #[test]
@@ -63,9 +77,15 @@ fn test_discover_adapters_builtin_always_installed() {
     // Built-in scanners must always report installed = true
     let builtin_names = ["ast_rust_scanner", "ast_py_scanner", "ast_js_scanner"];
     for name in &builtin_names {
-        let adapter = adapters.iter().find(|a| a.name == *name)
+        let adapter = adapters
+            .iter()
+            .find(|a| a.name == *name)
             .unwrap_or_else(|| panic!("missing built-in adapter: {}", name));
-        assert!(adapter.installed, "built-in '{}' should always be installed", name);
+        assert!(
+            adapter.installed,
+            "built-in '{}' should always be installed",
+            name
+        );
     }
 }
 

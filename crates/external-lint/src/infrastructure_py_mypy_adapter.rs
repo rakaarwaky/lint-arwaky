@@ -31,7 +31,9 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
-use shared::external_lint::taxonomy_external_lint_helper::{default_working_dir, exec_cmd_adapter, noop_apply_fix};
+use shared::external_lint::taxonomy_external_lint_helper::{
+    default_working_dir, exec_cmd_adapter, noop_apply_fix,
+};
 
 pub struct MyPyAdapter {
     executor: Arc<dyn ICommandExecutorPort>,

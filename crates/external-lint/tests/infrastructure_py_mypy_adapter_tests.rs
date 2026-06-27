@@ -1,17 +1,19 @@
-use std::sync::Arc;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_py_mypy_adapter::MyPyAdapter;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 
-struct MockMyPyExecutor { output: String }
+struct MockMyPyExecutor {
+    output: String,
+}
 
 #[async_trait]
 impl ICommandExecutorPort for MockMyPyExecutor {
@@ -31,24 +33,34 @@ impl ICommandExecutorPort for MockMyPyExecutor {
             metadata: meta,
         })
     }
-    async fn health_check(&self) -> anyhow::Result<ResponseData> { Ok(ResponseData::new()) }
+    async fn health_check(&self) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::new())
+    }
 }
 
 struct IdentityPathNorm;
 impl IPathNormalizationPort for IdentityPathNorm {
-    fn normalize_path(&self, path: FilePath) -> FilePath { path }
-    fn resolve_infrastructure_path(&self, path: FilePath, _: Option<FilePath>) -> FilePath { path }
+    fn normalize_path(&self, path: FilePath) -> FilePath {
+        path
+    }
+    fn resolve_infrastructure_path(&self, path: FilePath, _: Option<FilePath>) -> FilePath {
+        path
+    }
 }
 
 fn make_adapter(output: &str) -> MyPyAdapter {
     MyPyAdapter::new(
-        Arc::new(MockMyPyExecutor { output: output.to_string() }),
+        Arc::new(MockMyPyExecutor {
+            output: output.to_string(),
+        }),
         Arc::new(IdentityPathNorm),
         None,
     )
 }
 
-fn make_path(p: &str) -> FilePath { FilePath::new(p.to_string()).unwrap_or_default() }
+fn make_path(p: &str) -> FilePath {
+    FilePath::new(p.to_string()).unwrap_or_default()
+}
 
 #[tokio::test]
 async fn parses_mypy_output_with_column() {
@@ -60,7 +72,10 @@ async fn parses_mypy_output_with_column() {
     assert_eq!(results.values[0].line.value(), 10);
     assert_eq!(results.values[0].column.value(), 5);
     assert_eq!(results.values[0].code.code(), "return-value");
-    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
+    assert_eq!(
+        results.values[0].severity.clone() as i32,
+        Severity::HIGH as i32
+    );
 }
 
 #[tokio::test]
@@ -87,11 +102,20 @@ src/main.py:42: note: revealed type is 'int' [note]
     let results = adapter.scan(&path).await.unwrap();
     assert_eq!(results.len(), 3);
     // error -> HIGH
-    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
+    assert_eq!(
+        results.values[0].severity.clone() as i32,
+        Severity::HIGH as i32
+    );
     // warning -> MEDIUM
-    assert_eq!(results.values[1].severity.clone() as i32, Severity::MEDIUM as i32);
+    assert_eq!(
+        results.values[1].severity.clone() as i32,
+        Severity::MEDIUM as i32
+    );
     // note -> LOW
-    assert_eq!(results.values[2].severity.clone() as i32, Severity::LOW as i32);
+    assert_eq!(
+        results.values[2].severity.clone() as i32,
+        Severity::LOW as i32
+    );
 }
 
 #[tokio::test]
@@ -100,7 +124,10 @@ async fn syntax_errors_get_critical_severity() {
     let adapter = make_adapter(output);
     let path = make_path("src/main.py");
     let results = adapter.scan(&path).await.unwrap();
-    assert_eq!(results.values[0].severity.clone() as i32, Severity::CRITICAL as i32);
+    assert_eq!(
+        results.values[0].severity.clone() as i32,
+        Severity::CRITICAL as i32
+    );
 }
 
 #[tokio::test]

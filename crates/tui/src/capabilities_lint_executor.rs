@@ -181,7 +181,11 @@ impl LintExecutor {
             output.push_str(&format!(
                 "{}. [{}] {}:{} — {}\n   Code: {} | Severity: {}\n\n",
                 i + 1,
-                result.source.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "unknown".to_string()),
+                result
+                    .source
+                    .as_ref()
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "unknown".to_string()),
                 result.file,
                 result.line.value,
                 result.message,
@@ -197,7 +201,9 @@ impl LintExecutor {
     ) -> LintExecutionResult {
         let mut output = String::from("Environment Diagnostics\n");
         output.push_str(&format!("Binary: {}\n\n", diagnostics.binary_path));
-        let format_section = |name: &str, tools: &[shared::project_setup::taxonomy_doctor_vo::ToolStatus]| -> String {
+        let format_section = |name: &str,
+                              tools: &[shared::project_setup::taxonomy_doctor_vo::ToolStatus]|
+         -> String {
             let mut section = format!("== {} ==\n", name);
             for tool in tools {
                 let icon = match tool.status.as_str() {
@@ -211,7 +217,10 @@ impl LintExecutor {
                     "FAIL" => " (required)",
                     _ => "",
                 };
-                section.push_str(&format!("  {} {} {}{}\n", icon, tool.name, tool.version, note));
+                section.push_str(&format!(
+                    "  {} {} {}{}\n",
+                    icon, tool.name, tool.version, note
+                ));
             }
             section.push('\n');
             section
@@ -220,7 +229,9 @@ impl LintExecutor {
         output.push_str(&format_section("Python Tools", &diagnostics.python_tools));
         output.push_str(&format_section("JS/TS Tools", &diagnostics.js_tools));
         output.push_str(&format_section("VCS Tools", &diagnostics.vcs_tools));
-        let fail_count = diagnostics.rust_tools.iter()
+        let fail_count = diagnostics
+            .rust_tools
+            .iter()
             .chain(diagnostics.python_tools.iter())
             .chain(diagnostics.js_tools.iter())
             .chain(diagnostics.vcs_tools.iter())
@@ -247,7 +258,10 @@ impl LintExecutor {
                 let template = protocol.get_config_template(lang_str);
                 match protocol.write_config_file(config_path, template) {
                     Ok(desc) => {
-                        let output = format!("Config initialization.\n{}\nDetected language: {}", desc.value, lang_str);
+                        let output = format!(
+                            "Config initialization.\n{}\nDetected language: {}",
+                            desc.value, lang_str
+                        );
                         LintExecutionResult::success(output, 0)
                     }
                     Err(e) => {
@@ -265,9 +279,20 @@ impl LintExecutor {
 
     fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
         let count = report.dependencies.len();
-        let mut output = format!("Dependency scan for {}\nLanguage: {}\nTotal dependencies: {}\n", path, report.language, count);
-        let direct: Vec<_> = report.dependencies.iter().filter(|d| d.dep_type == "direct").collect();
-        let transitive: Vec<_> = report.dependencies.iter().filter(|d| d.dep_type == "transitive").collect();
+        let mut output = format!(
+            "Dependency scan for {}\nLanguage: {}\nTotal dependencies: {}\n",
+            path, report.language, count
+        );
+        let direct: Vec<_> = report
+            .dependencies
+            .iter()
+            .filter(|d| d.dep_type == "direct")
+            .collect();
+        let transitive: Vec<_> = report
+            .dependencies
+            .iter()
+            .filter(|d| d.dep_type == "transitive")
+            .collect();
         if !direct.is_empty() {
             output.push_str(&format!("\nDirect ({}) [top 30]:\n", direct.len()));
             for dep in direct.iter().take(30) {
@@ -289,9 +314,14 @@ impl LintExecutor {
         LintExecutionResult::success(output, count)
     }
 
-    fn format_config_result(result: &shared::config_system::taxonomy_source_vo::ConfigResult) -> LintExecutionResult {
+    fn format_config_result(
+        result: &shared::config_system::taxonomy_source_vo::ConfigResult,
+    ) -> LintExecutionResult {
         let mut output = String::from("Active Configuration\n");
-        output.push_str(&format!("Source: {} ({})\n", result.source.path.value, result.source.language));
+        output.push_str(&format!(
+            "Source: {} ({})\n",
+            result.source.path.value, result.source.language
+        ));
         if !result.warnings.is_empty() {
             output.push_str("\nWarnings:\n");
             for w in &result.warnings {
@@ -302,9 +332,18 @@ impl LintExecutor {
         output.push_str(&format!("\nEnabled: {}\n", config.enabled.value));
         output.push_str(&format!("Layers: {}\n", config.layers.len()));
         output.push_str(&format!("Rules: {}\n", config.rules.len()));
-        output.push_str(&format!("Ignored paths: {}\n", config.ignored_paths.values.len()));
-        output.push_str(&format!("Mandatory class definition: {}\n", config.mandatory_class_definition.value));
-        output.push_str(&format!("Naming word count: {}\n", config.naming.word_count.value));
+        output.push_str(&format!(
+            "Ignored paths: {}\n",
+            config.ignored_paths.values.len()
+        ));
+        output.push_str(&format!(
+            "Mandatory class definition: {}\n",
+            config.mandatory_class_definition.value
+        ));
+        output.push_str(&format!(
+            "Naming word count: {}\n",
+            config.naming.word_count.value
+        ));
         if !config.layers.is_empty() {
             output.push_str("\nArchitecture Layers:\n");
             for (name, def) in config.layers.iter() {
@@ -326,7 +365,13 @@ impl LintExecutor {
                 } else {
                     format!(" — {}", rule.description.value)
                 };
-                output.push_str(&format!("  {}. {} [{}]{}\n", i + 1, rule.name.value, rule.scope.value, desc));
+                output.push_str(&format!(
+                    "  {}. {} [{}]{}\n",
+                    i + 1,
+                    rule.name.value,
+                    rule.scope.value,
+                    desc
+                ));
             }
         }
         LintExecutionResult::success(output, 0)
@@ -352,7 +397,8 @@ impl ILintExecutorProtocol for LintExecutor {
         let mode = if flags.dry_run { "DRY-RUN" } else { "LIVE" };
         match &self.fix_orchestrator {
             Some(orchestrator) => {
-                let file_path = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
+                let file_path =
+                    shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
                 let fix_result: FixResult = orchestrator.execute(&file_path);
                 let output = format!("[{}] {}", mode, fix_result.output);
                 if fix_result.is_success() {
@@ -381,29 +427,61 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn orphan(&self, path: &str) -> LintExecutionResult {
-        match (&self.orphan_aggregate, &self.layer_detector, &self.scanner_provider) {
+        match (
+            &self.orphan_aggregate,
+            &self.layer_detector,
+            &self.scanner_provider,
+        ) {
             (Some(orphan_agg), Some(layer_det), Some(scanner)) => {
                 let scan_root = path.to_string();
-                let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone()).unwrap_or_default();
+                let dir_path =
+                    shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
+                        .unwrap_or_default();
                 let source_files = match scanner.scan_directory(&dir_path) {
                     Ok(list) => list.values,
                     Err(e) => {
-                        return LintExecutionResult::failure(format!("Orphan detection for {}\nFailed to scan directory: {}", path, e));
+                        return LintExecutionResult::failure(format!(
+                            "Orphan detection for {}\nFailed to scan directory: {}",
+                            path, e
+                        ));
                     }
                 };
                 let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
                 if file_strs.is_empty() {
-                    return LintExecutionResult::success(format!("Orphan detection for {}\nNo source files found in {}.", path, scan_root), 0);
+                    return LintExecutionResult::success(
+                        format!(
+                            "Orphan detection for {}\nNo source files found in {}.",
+                            path, scan_root
+                        ),
+                        0,
+                    );
                 }
                 let results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, &scan_root);
                 let count = results.len();
-                let mut output = format!("Orphan detection for {}\nScanned {} files in {}\n", path, file_strs.len(), scan_root);
+                let mut output = format!(
+                    "Orphan detection for {}\nScanned {} files in {}\n",
+                    path,
+                    file_strs.len(),
+                    scan_root
+                );
                 if results.is_empty() {
                     output.push_str("No orphan files detected.\n");
                 } else {
                     output.push_str(&format!("Found {} orphan(s):\n\n", count));
                     for (i, result) in results.iter().enumerate() {
-                        output.push_str(&format!("{}. [{}] {} — {}\n   Code: {} | Severity: {}\n\n", i + 1, result.source.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "unknown".to_string()), result.file, result.message, result.code, result.severity));
+                        output.push_str(&format!(
+                            "{}. [{}] {} — {}\n   Code: {} | Severity: {}\n\n",
+                            i + 1,
+                            result
+                                .source
+                                .as_ref()
+                                .map(|s| s.to_string())
+                                .unwrap_or_else(|| "unknown".to_string()),
+                            result.file,
+                            result.message,
+                            result.code,
+                            result.severity
+                        ));
                     }
                 }
                 LintExecutionResult::success(output, count)
@@ -418,18 +496,28 @@ impl ILintExecutorProtocol for LintExecutor {
     fn security(&self, path: &str) -> LintExecutionResult {
         match &self.external_lint {
             Some(ext_lint) => {
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                    .unwrap_or_default();
                 let rt = match tokio::runtime::Runtime::new() {
                     Ok(rt) => rt,
                     Err(e) => {
-                        return LintExecutionResult::failure(format!("Failed to create runtime for security scan: {}", e));
+                        return LintExecutionResult::failure(format!(
+                            "Failed to create runtime for security scan: {}",
+                            e
+                        ));
                     }
                 };
                 let results = rt.block_on(ext_lint.scan_all(&fp));
                 let security_names = ["cargo-audit", "bandit"];
                 let security_results: LintResultList = LintResultList::new(
-                    results.values.iter()
-                        .filter(|r| r.source.as_ref().is_some_and(|s| security_names.iter().any(|n| s.contains(n))))
+                    results
+                        .values
+                        .iter()
+                        .filter(|r| {
+                            r.source
+                                .as_ref()
+                                .is_some_and(|s| security_names.iter().any(|n| s.contains(n)))
+                        })
                         .cloned()
                         .collect(),
                 );
@@ -437,9 +525,25 @@ impl ILintExecutorProtocol for LintExecutor {
                 let output = if security_count == 0 {
                     format!("Security scan for {}\n{} total lint results, none from security adapters (cargo-audit, bandit).\nAdapters scanned: {}", path, results.len(), ext_lint.adapter_names().join(", "))
                 } else {
-                    let mut out = format!("Security scan for {}\nFound {} finding(s) from security adapters:\n\n", path, security_count);
+                    let mut out = format!(
+                        "Security scan for {}\nFound {} finding(s) from security adapters:\n\n",
+                        path, security_count
+                    );
                     for (i, result) in security_results.iter().enumerate() {
-                        out.push_str(&format!("{}. [{}] {}:{} — {}\n   Code: {} | Severity: {}\n\n", i + 1, result.source.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "unknown".to_string()), result.file, result.line.value, result.message, result.code, result.severity));
+                        out.push_str(&format!(
+                            "{}. [{}] {}:{} — {}\n   Code: {} | Severity: {}\n\n",
+                            i + 1,
+                            result
+                                .source
+                                .as_ref()
+                                .map(|s| s.to_string())
+                                .unwrap_or_else(|| "unknown".to_string()),
+                            result.file,
+                            result.line.value,
+                            result.message,
+                            result.code,
+                            result.severity
+                        ));
                     }
                     out
                 };
@@ -460,16 +564,23 @@ impl ILintExecutorProtocol for LintExecutor {
     fn dependencies(&self, path: &str) -> LintExecutionResult {
         match &self.maintenance {
             Some(maintenance) => {
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                    .unwrap_or_default();
                 let rt = match tokio::runtime::Runtime::new() {
                     Ok(rt) => rt,
                     Err(e) => {
-                        return LintExecutionResult::failure(format!("Failed to create runtime for dependency report: {}", e));
+                        return LintExecutionResult::failure(format!(
+                            "Failed to create runtime for dependency report: {}",
+                            e
+                        ));
                     }
                 };
                 match rt.block_on(maintenance.run_dependency_report(&fp)) {
                     Ok(report) => Self::format_dependency_report(path, &report),
-                    Err(e) => LintExecutionResult::failure(format!("Dependency scan for {}\nError: {}", path, e)),
+                    Err(e) => LintExecutionResult::failure(format!(
+                        "Dependency scan for {}\nError: {}",
+                        path, e
+                    )),
                 }
             }
             None => {
@@ -485,7 +596,10 @@ impl ILintExecutorProtocol for LintExecutor {
                 let rt = match tokio::runtime::Runtime::new() {
                     Ok(rt) => rt,
                     Err(e) => {
-                        return LintExecutionResult::failure(format!("Failed to create runtime for diagnostics: {}", e));
+                        return LintExecutionResult::failure(format!(
+                            "Failed to create runtime for diagnostics: {}",
+                            e
+                        ));
                     }
                 };
                 let diagnostics = rt.block_on(maintenance.diagnose_toolchain());
@@ -507,11 +621,17 @@ impl ILintExecutorProtocol for LintExecutor {
             Some(protocol) => {
                 let language = protocol.detect_language();
                 let lang_str = &language.value;
-                let mut output = format!("Adapter dependency installation.\nDetected language: {}\n", lang_str);
+                let mut output = format!(
+                    "Adapter dependency installation.\nDetected language: {}\n",
+                    lang_str
+                );
                 let rt = match tokio::runtime::Runtime::new() {
                     Ok(rt) => rt,
                     Err(e) => {
-                        return LintExecutionResult::failure(format!("Failed to create runtime for adapter installation: {}", e));
+                        return LintExecutionResult::failure(format!(
+                            "Failed to create runtime for adapter installation: {}",
+                            e
+                        ));
                     }
                 };
                 let py_result = rt.block_on(protocol.install_python_adapters());
@@ -522,8 +642,13 @@ impl ILintExecutorProtocol for LintExecutor {
                 if is_js {
                     let js_result = rt.block_on(protocol.install_javascript_adapters(false));
                     let js_icon = if js_result.value { "[OK]" } else { "[FAIL]" };
-                    if !js_result.value { js_failed = true; }
-                    output.push_str(&format!("  {} JavaScript (eslint, prettier, typescript)\n", js_icon));
+                    if !js_result.value {
+                        js_failed = true;
+                    }
+                    output.push_str(&format!(
+                        "  {} JavaScript (eslint, prettier, typescript)\n",
+                        js_icon
+                    ));
                 }
                 if !py_result.value || js_failed {
                     output.push_str("\nSome adapter(s) failed to install.\n");
@@ -543,7 +668,8 @@ impl ILintExecutorProtocol for LintExecutor {
     fn mcp_config(&self, flags: &ActionFlags) -> LintExecutionResult {
         match &self.setup_aggregate {
             Some(setup) => {
-                let transport = shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::STDAggregate;
+                let transport =
+                    shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::STDAggregate;
                 let config_vo = match flags.mcp_client.as_str() {
                     "claude" => setup.mcp_config_claude(&transport),
                     "hermes" => setup.mcp_config_hermes(&transport),
@@ -554,7 +680,8 @@ impl ILintExecutorProtocol for LintExecutor {
                     Ok(j) => j,
                     Err(e) => {
                         return LintExecutionResult::failure(format!(
-                            "MCP config serialization failed: {}", e
+                            "MCP config serialization failed: {}",
+                            e
                         ));
                     }
                 };
@@ -580,11 +707,17 @@ impl ILintExecutorProtocol for LintExecutor {
                 let rt = match tokio::runtime::Runtime::new() {
                     Ok(rt) => rt,
                     Err(e) => {
-                        return LintExecutionResult::failure(format!("Failed to create runtime for config display: {}", e));
+                        return LintExecutionResult::failure(format!(
+                            "Failed to create runtime for config display: {}",
+                            e
+                        ));
                     }
                 };
-                let cwd = std::env::current_dir().map(|p| p.to_string_lossy().to_string()).unwrap_or_else(|_| ".".to_string());
-                let project_root = shared::common::taxonomy_path_vo::FilePath::new(cwd).unwrap_or_default();
+                let cwd = std::env::current_dir()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|_| ".".to_string());
+                let project_root =
+                    shared::common::taxonomy_path_vo::FilePath::new(cwd).unwrap_or_default();
                 let result = rt.block_on(orchestrator.load_project_config(&project_root));
                 Self::format_config_result(&result)
             }
@@ -595,7 +728,9 @@ impl ILintExecutorProtocol for LintExecutor {
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|_| ".".to_string());
                 let languages = ["rust", "python", "javascript"];
-                let mut found_source: Option<shared::config_system::taxonomy_source_vo::ConfigSource> = None;
+                let mut found_source: Option<
+                    shared::config_system::taxonomy_source_vo::ConfigSource,
+                > = None;
 
                 for &lang in &languages {
                     let filename = format!("lint_arwaky.config.{}.yaml", lang);
@@ -604,11 +739,13 @@ impl ILintExecutorProtocol for LintExecutor {
                         let candidate = current.join(&filename);
                         if candidate.exists() {
                             if let Ok(content) = std::fs::read_to_string(&candidate) {
-                                found_source = Some(shared::config_system::taxonomy_source_vo::ConfigSource::new(
-                                    lang,
-                                    candidate.to_string_lossy().to_string(),
-                                    content,
-                                ));
+                                found_source = Some(
+                                    shared::config_system::taxonomy_source_vo::ConfigSource::new(
+                                        lang,
+                                        candidate.to_string_lossy().to_string(),
+                                        content,
+                                    ),
+                                );
                                 break;
                             }
                         }
@@ -623,15 +760,28 @@ impl ILintExecutorProtocol for LintExecutor {
 
                 match found_source {
                     Some(source) => {
-                        let config = shared::config_system::taxonomy_config_vo::parse_config_yaml(&source.raw_content);
-                        let result = shared::config_system::taxonomy_source_vo::ConfigResult::new(config, source, Vec::new());
+                        let config = shared::config_system::taxonomy_config_vo::parse_config_yaml(
+                            &source.raw_content,
+                        );
+                        let result = shared::config_system::taxonomy_source_vo::ConfigResult::new(
+                            config,
+                            source,
+                            Vec::new(),
+                        );
                         Self::format_config_result(&result)
                     }
                     None => {
-                        let config = shared::config_system::taxonomy_config_vo::default_aes_config();
-                        let source = shared::config_system::taxonomy_source_vo::ConfigSource::new("rust", "embedded (built-in defaults)", "");
+                        let config =
+                            shared::config_system::taxonomy_config_vo::default_aes_config();
+                        let source = shared::config_system::taxonomy_source_vo::ConfigSource::new(
+                            "rust",
+                            "embedded (built-in defaults)",
+                            "",
+                        );
                         let result = shared::config_system::taxonomy_source_vo::ConfigResult::new(
-                            config, source, vec!["No config file found, using built-in defaults".to_string()],
+                            config,
+                            source,
+                            vec!["No config file found, using built-in defaults".to_string()],
                         );
                         Self::format_config_result(&result)
                     }
@@ -664,14 +814,24 @@ impl ILintExecutorProtocol for LintExecutor {
             Some(port) => match port.uninstall_pre_commit() {
                 Ok(status) => {
                     if status.value {
-                        LintExecutionResult::success("Git pre-commit hook removed successfully.".to_string(), 0)
+                        LintExecutionResult::success(
+                            "Git pre-commit hook removed successfully.".to_string(),
+                            0,
+                        )
                     } else {
                         LintExecutionResult::success("No git pre-commit hook found (not a git repo or hook already removed).".to_string(), 0)
                     }
                 }
-                Err(e) => LintExecutionResult::failure(format!("Git pre-commit hook removal failed.\nError: {}", e)),
+                Err(e) => LintExecutionResult::failure(format!(
+                    "Git pre-commit hook removal failed.\nError: {}",
+                    e
+                )),
             },
-            None => LintExecutionResult::success("Git pre-commit hook removal.\nUse CLI `lint-arwaky-cli uninstall-hook` to remove.".to_string(), 0),
+            None => LintExecutionResult::success(
+                "Git pre-commit hook removal.\nUse CLI `lint-arwaky-cli uninstall-hook` to remove."
+                    .to_string(),
+                0,
+            ),
         }
     }
 
@@ -680,7 +840,13 @@ impl ILintExecutorProtocol for LintExecutor {
         let mut output = String::from("Active Linter Adapters:\n");
         for (i, adapter) in adapters.iter().enumerate() {
             let status = if adapter.installed { "[+]" } else { "[-]" };
-            output.push_str(&format!("  {}. [{}] {} ({})\n", i + 1, status, adapter.label, adapter.name));
+            output.push_str(&format!(
+                "  {}. [{}] {} ({})\n",
+                i + 1,
+                status,
+                adapter.label,
+                adapter.name
+            ));
         }
         let installed = adapters.iter().filter(|a| a.installed).count();
         let total = adapters.len();
@@ -689,7 +855,10 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn version(&self) -> LintExecutionResult {
-        let output = format!("Lint Arwaky v{} (AES Semantic Builder)", env!("CARGO_PKG_VERSION"));
+        let output = format!(
+            "Lint Arwaky v{} (AES Semantic Builder)",
+            env!("CARGO_PKG_VERSION")
+        );
         LintExecutionResult::success(output, 0)
     }
 }

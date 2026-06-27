@@ -1,10 +1,10 @@
 use std::fs;
 
 use import_rules_lint_arwaky::infrastructure_import_parser_adapter::ImportParserAdapter;
-use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 
 fn make_fp(s: &str) -> FilePath {
@@ -47,7 +47,8 @@ fn resolve_scope_multiple_suffixes() {
 #[test]
 fn resolve_scope_whitespace_handling() {
     let parser = ImportParserAdapter::new();
-    let (layer, suffixes) = parser.resolve_scope(&make_identity("  agent ( container | orchestrator )  "));
+    let (layer, suffixes) =
+        parser.resolve_scope(&make_identity("  agent ( container | orchestrator )  "));
     assert_eq!(layer.value(), "agent");
     assert_eq!(suffixes.len(), 2);
 }
@@ -118,11 +119,17 @@ fn extract_module_non_import_line() {
 fn extract_layer_exact_match() {
     let parser = ImportParserAdapter::new();
     assert_eq!(
-        parser.extract_layer_from_import(&make_identity("taxonomy")).unwrap().value(),
+        parser
+            .extract_layer_from_import(&make_identity("taxonomy"))
+            .unwrap()
+            .value(),
         "taxonomy"
     );
     assert_eq!(
-        parser.extract_layer_from_import(&make_identity("infrastructure")).unwrap().value(),
+        parser
+            .extract_layer_from_import(&make_identity("infrastructure"))
+            .unwrap()
+            .value(),
         "infrastructure"
     );
 }
@@ -131,7 +138,10 @@ fn extract_layer_exact_match() {
 fn extract_layer_prefix_match() {
     let parser = ImportParserAdapter::new();
     assert_eq!(
-        parser.extract_layer_from_import(&make_identity("capabilities_checker")).unwrap().value(),
+        parser
+            .extract_layer_from_import(&make_identity("capabilities_checker"))
+            .unwrap()
+            .value(),
         "capabilities"
     );
 }
@@ -139,7 +149,9 @@ fn extract_layer_prefix_match() {
 #[test]
 fn extract_layer_no_match() {
     let parser = ImportParserAdapter::new();
-    assert!(parser.extract_layer_from_import(&make_identity("random_stuff")).is_none());
+    assert!(parser
+        .extract_layer_from_import(&make_identity("random_stuff"))
+        .is_none());
 }
 
 // ---------------------------------------------------------------------------
@@ -161,13 +173,19 @@ fn language_python_from_py() {
 #[test]
 fn language_js_from_js() {
     let parser = ImportParserAdapter::new();
-    assert_eq!(parser.get_language_from_path("index.js"), LanguageVO::JavaScript);
+    assert_eq!(
+        parser.get_language_from_path("index.js"),
+        LanguageVO::JavaScript
+    );
 }
 
 #[test]
 fn language_unknown_for_unknown_ext() {
     let parser = ImportParserAdapter::new();
-    assert_eq!(parser.get_language_from_path("data.bin"), LanguageVO::Unknown);
+    assert_eq!(
+        parser.get_language_from_path("data.bin"),
+        LanguageVO::Unknown
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -261,12 +279,15 @@ fn get_basename_simple() {
 #[test]
 fn parse_import_lines_simple() {
     let parser = ImportParserAdapter::new();
-    let content = FileContentVO::new("\
+    let content = FileContentVO::new(
+        "\
 use std::collections::HashMap;
 use std::sync::Arc;
 
 fn main() {}
-".to_string());
+"
+        .to_string(),
+    );
     let lines = parser.parse_import_lines(&content);
     assert_eq!(lines.len(), 2);
 }
@@ -274,14 +295,21 @@ fn main() {}
 #[test]
 fn parse_import_lines_multi_line_use() {
     let parser = ImportParserAdapter::new();
-    let content = FileContentVO::new("\
+    let content = FileContentVO::new(
+        "\
 use std::collections::{
     HashMap,
     HashSet,
 };
 
 fn main() {}
-".to_string());
+"
+        .to_string(),
+    );
     let lines = parser.parse_import_lines(&content);
-    assert_eq!(lines.len(), 1, "multi-line use should be parsed as one import");
+    assert_eq!(
+        lines.len(),
+        1,
+        "multi-line use should be parsed as one import"
+    );
 }

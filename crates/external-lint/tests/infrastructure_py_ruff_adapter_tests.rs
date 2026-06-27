@@ -1,15 +1,15 @@
-use std::sync::Arc;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_py_ruff_adapter::RuffAdapter;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 
 struct MockRuffExecutor {
     output: String,
@@ -43,12 +43,16 @@ impl ICommandExecutorPort for MockRuffExecutor {
 struct IdentityPathNorm;
 
 impl IPathNormalizationPort for IdentityPathNorm {
-    fn normalize_path(&self, path: FilePath) -> FilePath { path }
+    fn normalize_path(&self, path: FilePath) -> FilePath {
+        path
+    }
     fn resolve_infrastructure_path(
         &self,
         path: FilePath,
         _context_path: Option<FilePath>,
-    ) -> FilePath { path }
+    ) -> FilePath {
+        path
+    }
 }
 
 fn make_adapter(output: &str) -> RuffAdapter {
@@ -83,7 +87,10 @@ async fn parses_json_array_of_findings() {
 
     assert_eq!(results.values[1].code.code(), "E302");
     assert_eq!(results.values[1].line.value(), 15);
-    assert_eq!(results.values[1].severity.clone() as i32, Severity::HIGH as i32);
+    assert_eq!(
+        results.values[1].severity.clone() as i32,
+        Severity::HIGH as i32
+    );
 
     assert_eq!(results.values[0].source.as_ref().unwrap().value(), "ruff");
 }
@@ -114,9 +121,18 @@ async fn maps_severity_correctly() {
     let adapter = make_adapter(json);
     let path = make_path("test.py");
     let results = adapter.scan(&path).await.unwrap();
-    assert_eq!(results.values[0].severity.clone() as i32, Severity::HIGH as i32);
-    assert_eq!(results.values[1].severity.clone() as i32, Severity::MEDIUM as i32);
-    assert_eq!(results.values[2].severity.clone() as i32, Severity::LOW as i32);
+    assert_eq!(
+        results.values[0].severity.clone() as i32,
+        Severity::HIGH as i32
+    );
+    assert_eq!(
+        results.values[1].severity.clone() as i32,
+        Severity::MEDIUM as i32
+    );
+    assert_eq!(
+        results.values[2].severity.clone() as i32,
+        Severity::LOW as i32
+    );
 }
 
 #[tokio::test]

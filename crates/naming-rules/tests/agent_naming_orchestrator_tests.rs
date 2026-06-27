@@ -12,10 +12,7 @@ fn make_fp(s: &str) -> FilePath {
 
 #[test]
 fn filter_source_files_includes_rs() {
-    let files = FilePathList::new(vec![
-        make_fp("src/main.rs"),
-        make_fp("src/lib.rs"),
-    ]);
+    let files = FilePathList::new(vec![make_fp("src/main.rs"), make_fp("src/lib.rs")]);
     let filtered = NamingOrchestrator::filter_source_files(&files);
     assert_eq!(filtered.values.len(), 2);
 }

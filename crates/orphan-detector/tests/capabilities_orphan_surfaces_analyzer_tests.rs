@@ -1,5 +1,5 @@
 use orphan_detector_lint_arwaky::capabilities_orphan_surfaces_analyzer::{
-    get_surface_suffix, surface_category, is_surface_orphan_raw,
+    get_surface_suffix, is_surface_orphan_raw, surface_category,
 };
 
 #[test]

@@ -130,7 +130,6 @@ fn make_temp_dir(files: &[&str]) -> std::path::PathBuf {
     dir
 }
 
-
 // ---------------------------------------------------------------------------
 // Language detection tests (using temp directories)
 
@@ -144,10 +143,7 @@ async fn detects_rust_project() {
     let results = orch.scan_all(&path).await;
     // Only clippy adapter is set up for rust; should produce 1 result
     assert_eq!(results.len(), 1);
-    assert_eq!(
-        results.values[0].source.as_ref().unwrap().value(),
-        "clippy"
-    );
+    assert_eq!(results.values[0].source.as_ref().unwrap().value(), "clippy");
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -169,10 +165,7 @@ async fn detects_javascript_project() {
     let orch = ExternalLintOrchestrator::new(make_adapters());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 1);
-    assert_eq!(
-        results.values[0].source.as_ref().unwrap().value(),
-        "eslint"
-    );
+    assert_eq!(results.values[0].source.as_ref().unwrap().value(), "eslint");
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -191,15 +184,11 @@ async fn detects_multi_language_project() {
 async fn detects_single_file_by_extension_rust() {
     let dir = make_temp_dir(&["main.rs"]);
     let file_path = dir.join("main.rs");
-    let path =
-        FilePath::new(file_path.to_string_lossy().to_string()).unwrap_or_default();
+    let path = FilePath::new(file_path.to_string_lossy().to_string()).unwrap_or_default();
     let orch = ExternalLintOrchestrator::new(make_adapters());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 1);
-    assert_eq!(
-        results.values[0].source.as_ref().unwrap().value(),
-        "clippy"
-    );
+    assert_eq!(results.values[0].source.as_ref().unwrap().value(), "clippy");
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -207,8 +196,7 @@ async fn detects_single_file_by_extension_rust() {
 async fn detects_single_file_by_extension_python() {
     let dir = make_temp_dir(&["module.py"]);
     let file_path = dir.join("module.py");
-    let path =
-        FilePath::new(file_path.to_string_lossy().to_string()).unwrap_or_default();
+    let path = FilePath::new(file_path.to_string_lossy().to_string()).unwrap_or_default();
     let orch = ExternalLintOrchestrator::new(make_adapters());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 1);
@@ -220,15 +208,11 @@ async fn detects_single_file_by_extension_python() {
 async fn detects_single_file_by_extension_javascript() {
     let dir = make_temp_dir(&["component.tsx"]);
     let file_path = dir.join("component.tsx");
-    let path =
-        FilePath::new(file_path.to_string_lossy().to_string()).unwrap_or_default();
+    let path = FilePath::new(file_path.to_string_lossy().to_string()).unwrap_or_default();
     let orch = ExternalLintOrchestrator::new(make_adapters());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 1);
-    assert_eq!(
-        results.values[0].source.as_ref().unwrap().value(),
-        "eslint"
-    );
+    assert_eq!(results.values[0].source.as_ref().unwrap().value(), "eslint");
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -245,10 +229,7 @@ async fn skips_node_modules_and_target() {
     let results = orch.scan_all(&path).await;
     // Should still detect Rust (main.rs in root), not JS (only in node_modules)
     assert_eq!(results.len(), 1);
-    assert_eq!(
-        results.values[0].source.as_ref().unwrap().value(),
-        "clippy"
-    );
+    assert_eq!(results.values[0].source.as_ref().unwrap().value(), "clippy");
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -317,14 +298,11 @@ async fn adapter_failure_does_not_crash_scan() {
         "clippy".into(),
         Arc::new(MockAdapter {
             name: "clippy",
-            results: LintResultList::default(),                            fail_with: Some(LinterOperationError::Adapter(
-                                AdapterError::new(
-                                    AdapterName::raw("clippy"),
-                                    ErrorMessage::new(
-                                        "No such file or directory".to_string(),
-                                    ),
-                                ),
-                            )),
+            results: LintResultList::default(),
+            fail_with: Some(LinterOperationError::Adapter(AdapterError::new(
+                AdapterName::raw("clippy"),
+                ErrorMessage::new("No such file or directory".to_string()),
+            ))),
         }),
     );
     adapters.insert(
