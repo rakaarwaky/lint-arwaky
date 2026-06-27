@@ -45,14 +45,10 @@ impl fmt::Display for AesImportViolation {
                 allowed,
                 reason,
             } => {
-                let allowed_str = if allowed.is_empty() {
-                    "none".to_string()
+                let (allowed_str, fix_extra) = if allowed.is_empty() {
+                    ("none".to_string(), " This layer is fully isolated — move the imported code into this layer or remove the dependency entirely.".to_string())
                 } else {
-                    allowed
-                        .iter()
-                        .map(|v| v.value().to_string())
-                        .collect::<Vec<String>>()
-                        .join(", ")
+                    (allowed.iter().map(|v| v.value().to_string()).collect::<Vec<String>>().join(", "), String::new())
                 };
                 let dynamic_why = match reason {
                     Some(r) => r.to_string(),
@@ -116,8 +112,8 @@ impl fmt::Display for AesImportViolation {
                     f,
                     "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
                         WHY? {}\n\
-                        FIX: Remove the import or refactor to use one of the allowed layers: [{}].",
-                    source_layer, forbidden_layer, dynamic_why, allowed_str
+                        FIX: Remove the import or refactor to use one of the allowed layers: [{}]{}",
+                    source_layer, forbidden_layer, dynamic_why, allowed_str, fix_extra
                 )
             }
             AesImportViolation::MissingImport {

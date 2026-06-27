@@ -103,7 +103,7 @@ impl fmt::Display for AesOrphanViolation {
                         agg_name
                     ),
                 };
-                write!(f, "AES505 AGENT_ORPHAN: Aggregate '{}' is unreachable from any surface.\nWHY? {}\nFIX: Import and use '{}' in a surface_* file or root_*_container.rs, or remove the file if obsolete.", agg_name, why, agg_name)
+                write!(f, "AES505 AGENT_ORPHAN: Aggregate '{}' is unreachable from any surface.\nWHY? {}\nFIX: Import and use '{}' in a surface_* file or root_*_container.rs via `Arc<dyn {}>`. If the orchestrator is unused, delete it and remove its module declaration.", agg_name, why, agg_name, agg_name)
             }
             AesOrphanViolation::SurfaceOrphan {
                 category,
@@ -123,7 +123,7 @@ impl fmt::Display for AesOrphanViolation {
                         category, stem, where_hint
                     ),
                 };
-                write!(f, "AES506 SURFACE_ORPHAN: {} surface '{}' is orphaned.\nWHY? {}\nFIX: Import '{}' in {}.", category, stem, why, stem, fix_hint)
+                write!(f, "AES506 SURFACE_ORPHAN: {} surface '{}' is orphaned.\nWHY? {}\nFIX: Import '{}' in {}. If this surface is dead code, remove the file and its module declaration from lib.rs.", category, stem, why, stem, fix_hint)
             }
         }
     }
