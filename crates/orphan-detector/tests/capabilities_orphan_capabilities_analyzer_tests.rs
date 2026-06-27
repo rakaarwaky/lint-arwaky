@@ -1,7 +1,5 @@
 use orphan_detector_lint_arwaky::capabilities_orphan_capabilities_analyzer::is_infra_cap_orphan_raw_wired;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-
 #[test]
 fn raw_wired_not_orphan_when_wired_and_reachable() {
     let result = is_infra_cap_orphan_raw_wired(true, true);

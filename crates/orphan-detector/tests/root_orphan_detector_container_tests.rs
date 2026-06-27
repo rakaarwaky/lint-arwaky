@@ -4,7 +4,7 @@ use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer
 fn orphan_container_constructs() {
     let container = OrphanContainer::new();
     let analyzer = container.analyzer();
-    let layer_detector = container.layer_detector();
+    let _layer_detector = container.layer_detector();
     assert!(analyzer
         .build_orphan_graph_context(&[], ".")
         .import_graph

@@ -2,7 +2,6 @@ use config_system_lint_arwaky::infrastructure_workspace_detector_provider::Works
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
 use shared::config_system::contract_workspace_detector_port::WorkspaceType;
-use std::io::Write;
 
 fn temp_dir() -> std::path::PathBuf {
     let p = std::env::temp_dir().join(format!(

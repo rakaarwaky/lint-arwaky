@@ -26,7 +26,7 @@ fn file_within_limit_no_violation() {
 fn file_exceeding_limit_emits_violation() {
     let checker = AgentRoleChecker::new();
     let mut violations = Vec::new();
-    let lines: Vec<&str> = (0..25).map(|i| &"x\n"[..]).collect();
+    let lines: Vec<&str> = (0..25).map(|_i| &"x\n"[..]).collect();
     let content = lines.join("");
     let src = make_source("agent_orchestrator.rs", &content, "rust");
     checker.check_file_size_limit(&src, 20, &mut violations);

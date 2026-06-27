@@ -775,7 +775,7 @@ impl IOrphanAggregate for MockOrphanAggregate {
     fn check_orphans(
         &self,
         _layer_detector: &dyn ILayerDetectionAggregate,
-        files: &[String],
+        _files: &[String],
         _root_dir: &str,
     ) -> Vec<LintResult> {
         (0..self.orphan_count)

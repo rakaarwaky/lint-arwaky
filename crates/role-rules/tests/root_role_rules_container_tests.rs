@@ -16,7 +16,6 @@ fn container_can_be_constructed() {
 
 #[test]
 fn orchestrator_can_be_created_from_container() {
-    use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
     let container = RoleContainer::new();
     let orchestrator = container.orchestrator();
     assert_eq!(orchestrator.name(), "role-rules");
@@ -24,7 +23,6 @@ fn orchestrator_can_be_created_from_container() {
 
 #[test]
 fn container_default_is_same_as_new() {
-    use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
     let c1 = RoleContainer::new();
     let c2 = RoleContainer::default();
     assert_eq!(c1.orchestrator().name(), c2.orchestrator().name());
@@ -32,7 +30,6 @@ fn container_default_is_same_as_new() {
 
 #[test]
 fn container_with_config_uses_provided_config() {
-    use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
     let config = shared::config_system::taxonomy_config_vo::default_aes_config();
     let container = RoleContainer::new_with_config(config);
     let _aggregate = container.aggregate();

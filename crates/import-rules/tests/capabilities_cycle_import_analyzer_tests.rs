@@ -1,11 +1,8 @@
-use async_trait::async_trait;
 use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
-use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::taxonomy_common_vo::BooleanVO;
 use shared::taxonomy_common_vo::LineNumber;

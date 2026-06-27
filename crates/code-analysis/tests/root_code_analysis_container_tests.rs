@@ -29,8 +29,6 @@ fn container_default_constructs() {
 
 #[test]
 fn container_with_analyzer_constructs() {
-    use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-    use std::sync::Arc;
     let container = CodeAnalysisContainer::new();
     let linter = container.code_analysis_linter();
     let results = linter.run_code_analysis_path("/nonexistent/path/xyz");
@@ -48,9 +46,6 @@ fn container_default_is_same_as_new() {
 
 #[test]
 fn container_new_with_analyzer_provides_custom_analyzer() {
-    use shared::import_rules::contract_rule_protocol::IAnalyzer;
-    use std::sync::Arc;
-
     // Use a custom placeholder analyzer
     let custom = Arc::new(TestAnalyzer);
     let container = CodeAnalysisContainer::new_with_analyzer(custom);
