@@ -50,7 +50,7 @@ fn invalid_yaml_content_returns_error() {
     let dir = temp_dir();
     let yaml_path = dir.join("bad.yaml");
     let mut f = std::fs::File::create(&yaml_path).unwrap();
-    writeln!(f, "{{ invalid yaml: broken :: }").unwrap();
+    writeln!(f, "{{ invalid yaml: broken }}").unwrap();
     f.flush().unwrap();
 
     let parser = ConfigParserProvider::new();

@@ -484,13 +484,18 @@ impl CheckCommandsSurface {
         }
 
         if multi {
-            // Print combined summary
-            let mut global_code_counts: std::collections::HashMap<String, usize> =
+            // Print combined summary — AES-only counts
+            let mut global_all_counts: std::collections::HashMap<String, usize> =
                 std::collections::HashMap::new();
             for r in &global_all_results {
-                *global_code_counts.entry(r.code.to_string()).or_insert(0) += 1;
+                *global_all_counts.entry(r.code.to_string()).or_insert(0) += 1;
             }
             let global_total = global_all_results.len();
+            // Filter to AES-only codes for display and unique count
+            let global_code_counts: std::collections::HashMap<String, usize> = global_all_counts
+                .into_iter()
+                .filter(|(code, _)| code.starts_with("AES"))
+                .collect();
             let global_unique_codes = global_code_counts.len();
 
             println!("============================================================");
