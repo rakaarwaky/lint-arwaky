@@ -1,28 +1,28 @@
 # Implementation Draft: AI Auto-Repair Model (Perfect AES Dogfooding v7)
 
-Draft v7 menyajikan arsitektur AES tingkat *Grandmaster* yang 100% patuh terhadap seluruh peraturan AES (AES101–AES506) dan mencakup seluruh spesifikasi teknis model Burn, tokenizer BPE, pipeline verifikasi/rollback transaksi, pengecualian file, dan mitigasi threshold keyakinan (confidence).
+Draft v7 presents a *Grandmaster*-level AES architecture that is 100% compliant with all AES regulations (AES101–AES506) and covers all technical specifications of the Burn model, BPE tokenizer, verification/transactional rollback pipeline, file exceptions, and confidence threshold mitigation.
 
 ---
 
 ## 1. Taxonomy Layer (Data, Constants, Errors & Value Objects)
 
-Setiap file di bawah layer ini murni dari dependensi luar, dienkapsulasi untuk menghindari Primitive Obsession (AES402).
+Each file in this layer is free from external dependencies, encapsulated to avoid Primitive Obsession (AES402).
 
 ### File: `taxonomy_system_constant.rs`
 ```rust
-/// Path absolut/relatif menuju file bobot model Safetensors.
-/// Akan di-load oleh Infrastructure saat inisialisasi Root.
+/// Absolute/relative path to the Safetensors model weights file.
+/// Will be loaded by Infrastructure during Root initialization.
 pub const MODEL_WEIGHTS_PATH: &str = "weights/model.safetensors";
 
-/// Kapasitas maksimum ukuran buffer antrean untuk analisis AST paralel.
-/// Digunakan oleh orchestrator untuk manajemen throughput.
+/// Maximum queue buffer size capacity for parallel AST analysis.
+/// Used by the orchestrator for throughput management.
 pub const MAX_AST_BUFFER_SIZE: usize = 1024;
 ```
 
 ### File: `taxonomy_system_error.rs`
 ```rust
-/// Struktur data error tersentralisasi untuk sistem Auto-Repair.
-/// Memetakan kegagalan operasi filesystem, parsing, prediksi, dan verifikasi.
+/// Centralized error data structure for the Auto-Repair system.
+/// Maps filesystem, parsing, prediction, and verification operation failures.
 #[derive(Debug)]
 pub enum SystemError {
     IoError(String),
@@ -34,7 +34,7 @@ pub enum SystemError {
     VerificationError(String),
 }
 
-// AES305 Fix: Mengeliminasi duplikasi `.map_err` di seluruh layer Infrastructure
+// AES305 Fix: Eliminates `.map_err` duplication across the Infrastructure layer
 impl From<std::io::Error> for SystemError {
     fn from(err: std::io::Error) -> Self {
         SystemError::IoError(err.to_string())
@@ -46,13 +46,13 @@ impl From<std::io::Error> for SystemError {
 ```rust
 use std::path::PathBuf;
 
-/// Value Object untuk merepresentasikan path file sistem secara aman.
-/// Mencegah Primitive Obsession terhadap String/PathBuf mentah.
+/// Value Object to safely represent a file system path.
+/// Prevents Primitive Obsession with raw String/PathBuf.
 #[derive(Debug, Clone)]
 pub struct FilePath(pub PathBuf);
 
 impl FilePath {
-    /// M-1 Fix: Konstruksi FilePath dari konstanta String didelegasikan ke VO.
+    /// M-1 Fix: FilePath construction from a String constant is delegated to the VO.
     pub fn from_constant(constant: &str) -> Self {
         Self(PathBuf::from(constant))
     }
@@ -61,36 +61,36 @@ impl FilePath {
 
 ### File: `taxonomy_module_name_vo.rs`
 ```rust
-/// Value Object untuk merepresentasikan nama modul Rust.
+/// Value Object to represent a Rust module name.
 #[derive(Debug, Clone)]
 pub struct ModuleName(pub String);
 ```
 
 ### File: `taxonomy_file_content_vo.rs`
 ```rust
-/// Value Object untuk merepresentasikan isi teks dari suatu file.
+/// Value Object to represent the text content of a file.
 #[derive(Debug, Clone)]
 pub struct FileContent(pub String);
 ```
 
 ### File: `taxonomy_file_bytes_vo.rs`
 ```rust
-/// Value Object untuk merepresentasikan bytes mentah dari file bobot model.
+/// Value Object to represent the raw bytes of a model weights file.
 #[derive(Debug, Clone)]
 pub struct FileBytes(pub Vec<u8>);
 ```
 
 ### File: `taxonomy_file_extension_vo.rs`
 ```rust
-/// Value Object untuk merepresentasikan ekstensi file (misal "rs", "py").
+/// Value Object to represent a file extension (e.g. "rs", "py").
 #[derive(Debug, Clone)]
 pub struct FileExtension(pub String);
 ```
 
 ### File: `taxonomy_extracted_feature_vo.rs`
 ```rust
-/// Representasi fitur-fitur statis yang diekstraksi dari file kode sumber.
-/// M-5 Fix: Menyertakan context directory prior (D) sebagai prioritas klasifikasi prefix.
+/// Representation of static features extracted from a source code file.
+/// M-5 Fix: Includes directory prior context (D) as prefix classification priority.
 #[derive(Debug, Clone)]
 pub struct ExtractedFeature {
     pub imports: Vec<String>,
@@ -102,8 +102,8 @@ pub struct ExtractedFeature {
 
 ### File: `taxonomy_prediction_result_vo.rs`
 ```rust
-/// Hasil klasifikasi penamaan baru dari model AI.
-/// H-4 Fix: Memisahkan nilai confidence per-head untuk evaluasi safety threshold.
+/// New naming classification result from the AI model.
+/// H-4 Fix: Separates per-head confidence values for safety threshold evaluation.
 #[derive(Debug, Clone)]
 pub struct PredictionResult {
     pub prefix: String,
@@ -117,7 +117,7 @@ pub struct PredictionResult {
 
 ### File: `taxonomy_model_config_vo.rs`
 ```rust
-/// Struktur data konfigurasi internal model prediksi AI.
+/// Internal AI prediction model configuration data structure.
 #[derive(Debug, Clone)]
 pub struct AESNamingModelConfig {
     pub vocab_size: usize,
@@ -132,7 +132,7 @@ pub struct AESNamingModelConfig {
 
 ## 2. Contract Layer (Interfaces / Ports, Protocols & Aggregates)
 
-Batas modularitas arsitektur yang menggunakan VO secara penuh untuk memutus kebocoran primitif (AES402).
+Architecture modularity boundary that fully uses VOs to break primitive leakage (AES402).
 
 ### File: `contract_file_reader_port.rs`
 ```rust
@@ -141,7 +141,7 @@ use crate::taxonomy_file_path_vo::FilePath;
 use crate::taxonomy_file_content_vo::FileContent;
 use crate::taxonomy_file_bytes_vo::FileBytes;
 
-/// Port untuk membaca data filesystem secara independen.
+/// Port for independently reading filesystem data.
 pub trait FileReaderPort {
     fn read_file_as_string(&self, path: &FilePath) -> Result<FileContent, SystemError>;
     fn read_file_as_bytes(&self, path: &FilePath) -> Result<FileBytes, SystemError>;
@@ -154,7 +154,7 @@ use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 use crate::taxonomy_file_content_vo::FileContent;
 
-/// Port untuk menulis dan memodifikasi filesystem secara independen.
+/// Port for independently writing to and modifying the filesystem.
 pub trait FileWriterPort {
     fn write_file_as_string(&self, path: &FilePath, content: &FileContent) -> Result<(), SystemError>;
     fn rename_file(&self, old_path: &FilePath, new_path: &FilePath) -> Result<(), SystemError>;
@@ -166,7 +166,7 @@ pub trait FileWriterPort {
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 
-/// Port untuk memindai file kode sumber Rust di dalam cakupan workspace.
+/// Port for scanning Rust source code files within the workspace scope.
 pub trait WorkspaceScannerPort {
     fn scan_rust_files(&self, workspace_root: &FilePath) -> Result<Vec<FilePath>, SystemError>;
 }
@@ -177,7 +177,7 @@ pub trait WorkspaceScannerPort {
 use crate::taxonomy_file_content_vo::FileContent;
 use crate::taxonomy_module_name_vo::ModuleName;
 
-/// Protokol pengubahan referensi string nama modul yang lama dengan yang baru.
+/// Protocol for replacing old module name string references with new ones.
 pub trait ReferenceReplacerProtocol {
     fn replace_references(&self, content: &FileContent, old_name: &ModuleName, new_name: &ModuleName) -> FileContent;
 }
@@ -191,12 +191,12 @@ use crate::taxonomy_module_name_vo::ModuleName;
 use crate::taxonomy_file_extension_vo::FileExtension;
 use crate::taxonomy_prediction_result_vo::PredictionResult;
 
-/// Protokol penyelesaian nama modul, ekstensi, dan perakitan path baru secara aman.
+/// Protocol for safely resolving module names, extensions, and assembling new paths.
 pub trait FileNameResolverProtocol {
     fn extract_module_name(&self, path: &FilePath) -> Result<ModuleName, SystemError>;
     fn extract_extension(&self, path: &FilePath) -> Result<FileExtension, SystemError>;
     fn assemble_new_name(&self, result: &PredictionResult, ext: &FileExtension) -> ModuleName;
-    /// H-1 Fix: Penyusunan path bersaudara (sibling) didelegasikan sepenuhnya ke resolver.
+    /// H-1 Fix: Sibling path assembly is fully delegated to the resolver.
     fn build_sibling_path(&self, original: &FilePath, new_name: &ModuleName) -> Result<FilePath, SystemError>;
 }
 ```
@@ -208,10 +208,10 @@ use crate::taxonomy_prediction_result_vo::PredictionResult;
 use crate::taxonomy_model_config_vo::AESNamingModelConfig;
 use crate::taxonomy_system_error::SystemError;
 
-/// Protokol interaksi model prediksi berbasis Burn.
+/// Protocol for Burn-based prediction model interaction.
 pub trait ModelPredictorProtocol {
     fn predict(&self, features: &ExtractedFeature) -> Result<PredictionResult, SystemError>;
-    /// H-4 Fix: Mengembalikan top 3 alternatif nama jika threshold minimum tidak terpenuhi.
+    /// H-4 Fix: Returns top 3 alternative names if minimum threshold is not met.
     fn predict_alternatives(&self, features: &ExtractedFeature) -> Result<Vec<PredictionResult>, SystemError>;
     fn get_config(&self) -> AESNamingModelConfig;
 }
@@ -224,9 +224,9 @@ use crate::taxonomy_file_content_vo::FileContent;
 use crate::taxonomy_file_path_vo::FilePath;
 use crate::taxonomy_system_error::SystemError;
 
-/// Protokol ekstraksi AST (Abstract Syntax Tree) dari isi file kode sumber.
+/// Protocol for extracting AST (Abstract Syntax Tree) from source code file content.
 pub trait AstExtractorProtocol {
-    /// M-5 Fix: Signature menerima FilePath untuk memperoleh prior directory.
+    /// M-5 Fix: Signature accepts FilePath to obtain directory prior.
     fn extract_from_file(&self, path: &FilePath, content: &FileContent) -> Result<ExtractedFeature, SystemError>;
 }
 ```
@@ -236,7 +236,7 @@ pub trait AstExtractorProtocol {
 use crate::taxonomy_file_content_vo::FileContent;
 use crate::taxonomy_system_error::SystemError;
 
-/// M-4 Fix: Protokol Tokenizer BPE untuk memproses teks sebelum di-embed ke Burn model.
+/// M-4 Fix: BPE Tokenizer protocol for processing text before embedding into the Burn model.
 pub trait BpeTokenizerProtocol {
     fn tokenize(&self, content: &FileContent) -> Result<Vec<u32>, SystemError>;
 }
@@ -246,7 +246,7 @@ pub trait BpeTokenizerProtocol {
 ```rust
 use crate::taxonomy_file_path_vo::FilePath;
 
-/// H-5 Fix: Protokol penyaringan pengecualian file yang kebal terhadap aturan penamaan.
+/// H-5 Fix: File exception filtering protocol for files exempt from naming rules.
 pub trait ExceptionFilterProtocol {
     fn is_exempt(&self, path: &FilePath) -> bool;
 }
@@ -257,7 +257,7 @@ pub trait ExceptionFilterProtocol {
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 
-/// H-6 Fix: Port verifikasi compiler cargo check.
+/// H-6 Fix: Compiler verification port for cargo check.
 pub trait CompilerRunnerPort {
     fn run_check(&self, workspace: &FilePath) -> Result<(), SystemError>;
 }
@@ -268,7 +268,7 @@ pub trait CompilerRunnerPort {
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 
-/// H-6 Fix: Port verifikasi ulang linter lint-arwaky pasca modifikasi.
+/// H-6 Fix: Linter re-verification port for lint-arwaky post-modification.
 pub trait LinterRunnerPort {
     fn run_lint(&self, files: &[FilePath]) -> Result<(), SystemError>;
 }
@@ -279,7 +279,7 @@ pub trait LinterRunnerPort {
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 
-/// Batas interaksi aggregate utama untuk meluncurkan proses Auto-Repair.
+/// Main aggregate interaction boundary for launching the Auto-Repair process.
 pub trait AutorepairAggregate {
     fn execute_fix(&self, workspace_root: &FilePath, target_file: &FilePath) -> Result<(), SystemError>;
 }
@@ -289,7 +289,7 @@ pub trait AutorepairAggregate {
 
 ## 3. Capabilities Layer (Pure Business Logic)
 
-Logika pemrograman modular murni tanpa I/O langsung.
+Pure modular programming logic without direct I/O.
 
 ### File: `capabilities_reference_replacer.rs`
 ```rust
@@ -344,7 +344,7 @@ impl FileNameResolverProtocol for StandardFileNameResolver {
         ModuleName(format!("{}_{}_{}.{}", r.prefix, r.concept, r.suffix, ext.0))
     }
 
-    /// H-1 Fix: Implementasi sibling path assembly murni di resolver.
+    /// H-1 Fix: Pure sibling path assembly implementation in the resolver.
     fn build_sibling_path(&self, original: &FilePath, new_name: &ModuleName) -> Result<FilePath, SystemError> {
         let parent = original.0.parent()
             .ok_or_else(|| SystemError::ParsingError("File has no parent directory".to_string()))?;
@@ -365,7 +365,7 @@ use syn::{parse_file, Item, File};
 pub struct SynAstExtractor;
 
 impl AstExtractorProtocol for SynAstExtractor {
-    /// M-5 Fix: Mengambil directory prior context (D) dari FilePath.
+    /// M-5 Fix: Retrieves directory prior context (D) from FilePath.
     fn extract_from_file(&self, path: &FilePath, content: &FileContent) -> Result<ExtractedFeature, SystemError> {
         let syntax: File = parse_file(&content.0).map_err(|e| SystemError::ParsingError(e.to_string()))?;
         let mut imports = Vec::new();
@@ -378,7 +378,7 @@ impl AstExtractorProtocol for SynAstExtractor {
             .unwrap_or("")
             .to_string();
 
-        // H-3 Fix: Memulihkan parsing item Struct, Trait, Impl dan Docstrings yang hilang di v5
+        // H-3 Fix: Restoring parsing of Struct, Trait, Impl items and Docstrings that were missing in v5
         for item in syntax.items {
             match item {
                 Item::Use(item_use) => {
@@ -414,12 +414,12 @@ use crate::contract_bpe_tokenizer_protocol::BpeTokenizerProtocol;
 use crate::taxonomy_file_content_vo::FileContent;
 use crate::taxonomy_system_error::SystemError;
 
-/// M-4 Fix: Implementasi BPE Tokenizer dengan kosakata sebesar V=12000.
+/// M-4 Fix: BPE Tokenizer implementation with vocabulary size V=12000.
 pub struct BpeTokenizer;
 
 impl BpeTokenizerProtocol for BpeTokenizer {
     fn tokenize(&self, _content: &FileContent) -> Result<Vec<u32>, SystemError> {
-        // Logika byte-pair encoding statis
+        // Static byte-pair encoding logic
         Ok(vec![12, 104, 5, 2341, 99])
     }
 }
@@ -430,7 +430,7 @@ impl BpeTokenizerProtocol for BpeTokenizer {
 use crate::contract_exception_filter_protocol::ExceptionFilterProtocol;
 use crate::taxonomy_file_path_vo::FilePath;
 
-/// H-5 Fix: Penyaringan file-file pengecualian (entry/barrel dan file test).
+/// H-5 Fix: Exception file filtering (entry/barrel and test files).
 pub struct ExceptionFilter;
 
 impl ExceptionFilterProtocol for ExceptionFilter {
@@ -468,7 +468,7 @@ use burn::record::{BinBytesRecorder, Recorder};
 use burn::nn::{Embedding, EmbeddingConfig, Linear, LinearConfig};
 use burn::nn::transformer::{TransformerEncoder, TransformerEncoderConfig};
 
-/// C-1 Fix: Implementasi Multi-Task Transformer murni sesuai spesifikasi teknis neural network.
+/// C-1 Fix: Pure Multi-Task Transformer implementation per neural network technical specification.
 #[derive(Module, Debug)]
 pub struct AESNamingModelPredictor<B: Backend> {
     encoder: TransformerEncoder<B>,
@@ -479,14 +479,14 @@ pub struct AESNamingModelPredictor<B: Backend> {
 }
 
 impl<B: Backend> AESNamingModelPredictor<B> {
-    /// C-1 Fix: Menghilangkan bypass `_weights`. Melakukan deserialisasi bytes ke record.
+    /// C-1 Fix: Removes `_weights` bypass. Deserializes bytes to record.
     pub fn new_from_bytes(weights: &FileBytes, device: &Device<B>) -> Result<Self, SystemError> {
         let config = AESNamingModelConfig { vocab_size: 12000, d_model: 128, d_ff: 512, n_heads: 4, n_layers: 4 };
         let mut model = Self::init_empty(device, &config);
         
         let record = BinBytesRecorder::new()
             .load(weights.0.clone(), device)
-            .map_err(|e| SystemError::PredictionError(format!("Gagal memuat record: {}", e)))?;
+            .map_err(|e| SystemError::PredictionError(format!("Failed to load record: {}", e)))?;
         
         model = model.load_record(record);
         Ok(model)
@@ -507,17 +507,17 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
     fn predict(&self, _features: &ExtractedFeature) -> Result<PredictionResult, SystemError> {
         let device = self.prefix_head.devices()[0].clone();
         
-        // Mock token tensor representation untuk forward pass nyata
+        // Mock token tensor representation for a real forward pass
         let tokens_data = vec![1i64; 10];
         let tokens_tensor = Tensor::<B, 2, Int>::from_data(
             burn::tensor::Data::new(tokens_data, [1, 10]),
             &device
         );
 
-        // C-1 Fix: Mengakses seluruh layer model internal agar parameter termanfaatkan nyata dalam forward pass
+        // C-1 Fix: Accessing all internal model layers so parameters are actually utilized in the forward pass
         let token_emb = self.token_embed.forward(tokens_tensor);
         
-        // M-5 Fix: Menyematkan directory context vector prior (D) pada sequence
+        // M-5 Fix: Embedding the directory context prior vector (D) into the sequence
         let dir_prior = Tensor::<B, 2>::zeros([1, 128], &device);
         let x = token_emb + dir_prior;
 
@@ -528,7 +528,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
         let _suffix_logits = self.suffix_head.forward(pooled);
         let _concept_logits = self.concept_projection.forward(encoded);
 
-        // H-4 Fix: Mengembalikan confidence score softmax per-head secara eksplisit
+        // H-4 Fix: Explicitly returning softmax confidence scores per-head
         Ok(PredictionResult {
             prefix: "infrastructure".to_string(),
             concept: "database".to_string(),
@@ -539,7 +539,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
         })
     }
 
-    /// H-4 Fix: Implementasi top 3 rekomendasi alternatif nama
+    /// H-4 Fix: Implementation of top 3 alternative name recommendations
     fn predict_alternatives(&self, _features: &ExtractedFeature) -> Result<Vec<PredictionResult>, SystemError> {
         Ok(vec![
             PredictionResult {
@@ -567,7 +567,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
 
 ## 4. Infrastructure Layer (I/O & External Systems)
 
-Adapter konkret yang memotong interaksi disk dan execute command eksternal.
+Concrete adapters that handle disk interaction and external command execution.
 
 ### File: `infrastructure_fs_reader.rs`
 ```rust
@@ -626,7 +626,7 @@ use walkdir::WalkDir;
 pub struct WalkdirWorkspaceScannerAdapter;
 
 impl WorkspaceScannerPort for WalkdirWorkspaceScannerAdapter {
-    /// C-2 Fix: Mengeliminasi silent error swallow dari `.filter_map(|e| e.ok())`
+    /// C-2 Fix: Eliminates silent error swallowing from `.filter_map(|e| e.ok())`
     fn scan_rust_files(&self, workspace_root: &FilePath) -> Result<Vec<FilePath>, SystemError> {
         let mut paths = Vec::new();
         for entry in WalkDir::new(&workspace_root.0) {
@@ -647,7 +647,7 @@ use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 use std::process::Command;
 
-/// H-6 Fix: Adapter untuk menjalankan verifikasi kompilasi internal.
+/// H-6 Fix: Adapter for running internal compilation verification.
 pub struct CargoCompilerAdapter;
 
 impl CompilerRunnerPort for CargoCompilerAdapter {
@@ -659,7 +659,7 @@ impl CompilerRunnerPort for CargoCompilerAdapter {
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-            return Err(SystemError::VerificationError(format!("cargo check gagal: {}", stderr)));
+            return Err(SystemError::VerificationError(format!("cargo check failed: {}", stderr)));
         }
         Ok(())
     }
@@ -673,7 +673,7 @@ use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 use std::process::Command;
 
-/// H-6 Fix: Adapter untuk memverifikasi ulang perubahan file bebas dari error linter.
+/// H-6 Fix: Adapter for re-verifying file changes are free from linter errors.
 pub struct LintArwakyAdapter;
 
 impl LinterRunnerPort for LintArwakyAdapter {
@@ -690,7 +690,7 @@ impl LinterRunnerPort for LintArwakyAdapter {
 
             if !output.status.success() {
                 let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-                return Err(SystemError::VerificationError(format!("linter gagal untuk file {:?}: {}", file.0, stderr)));
+                return Err(SystemError::VerificationError(format!("linter failed for file {:?}: {}", file.0, stderr)));
             }
         }
         Ok(())
@@ -702,7 +702,7 @@ impl LinterRunnerPort for LintArwakyAdapter {
 
 ## 5. Agent Layer (Orchestration Workflow)
 
-Koordinator alur kerja Auto-Repair transaksional yang mengimplementasikan Aggregate.
+Transactional Auto-Repair workflow coordinator that implements the Aggregate.
 
 ### File: `agent_autorepair_orchestrator.rs`
 ```rust
@@ -754,16 +754,16 @@ impl AutorepairOrchestrator {
 
 impl AutorepairAggregate for AutorepairOrchestrator {
     fn execute_fix(&self, workspace_root: &FilePath, target_file: &FilePath) -> Result<(), SystemError> {
-        // H-5 Fix: Step 0 - Verifikasi filter pengecualian file imun sebelum interaksi domain
+        // H-5 Fix: Step 0 - Verify exempt file filter before domain interaction
         if self.exception_filter.is_exempt(target_file) {
-            return Err(SystemError::ExemptFile(format!("File dikecualikan: {:?}", target_file.0)));
+            return Err(SystemError::ExemptFile(format!("File is exempt: {:?}", target_file.0)));
         }
 
-        // 1. Ekstraksi Info & Prediksi
+        // 1. Feature Extraction & Prediction
         let content = self.reader.read_file_as_string(target_file)?;
         let features = self.extractor.extract_from_file(target_file, &content)?;
         
-        // L-1 Fix: Memanggil get_config() agar model config VO terpakai secara inbound/outbound
+        // L-1 Fix: Calling get_config() so the model config VO is utilized inbound/outbound
         let config = self.predictor.get_config();
         if config.vocab_size == 0 || config.d_model == 0 {
             return Err(SystemError::PredictionError("Model config invalid".to_string()));
@@ -781,18 +781,18 @@ impl AutorepairAggregate for AutorepairOrchestrator {
                 .map(|alt| format!("{}_{}_{}.rs", alt.prefix, alt.concept, alt.suffix))
                 .collect::<Vec<_>>()
                 .join(", ");
-            return Err(SystemError::LowConfidence(format!("Safety confidence threshold violated. Alternatif: {}", alt_details)));
+            return Err(SystemError::LowConfidence(format!("Safety confidence threshold violated. Alternatives: {}", alt_details)));
         }
 
-        // 2. Manipulasi string aman lewat resolver capabilities
+        // 2. Safe string manipulation via resolver capabilities
         let old_name = self.resolver.extract_module_name(target_file)?;
         let ext = self.resolver.extract_extension(target_file)?;
         let new_name = self.resolver.assemble_new_name(&prediction, &ext);
         
-        // H-1 Fix: Mengambil sibling path aman tanpa merakit PathBuf langsung di Agent
+        // H-1 Fix: Retrieving safe sibling path without assembling PathBuf directly in the Agent
         let new_target_path = self.resolver.build_sibling_path(target_file, &new_name)?;
 
-        // --- H-6 Fix: BACKUP & SNAPSHOT STAGE (untuk Rollback Transaksional seandainya verifikasi gagal) ---
+        // --- H-6 Fix: BACKUP & SNAPSHOT STAGE (for Transactional Rollback in case verification fails) ---
         let mut backups = Vec::new();
         let files = self.scanner.scan_rust_files(workspace_root)?;
         for file in &files {
@@ -800,7 +800,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
             backups.push((file.clone(), file_content));
         }
 
-        // 3. Modifikasi referensi di seluruh workspace
+        // 3. Reference modification across the workspace
         let mut modified_files = Vec::new();
         for file in &files {
             let file_content = self.reader.read_file_as_string(file)?;
@@ -811,7 +811,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
             }
         }
 
-        // 4. Rename target file fisik
+        // 4. Physical target file rename
         self.writer.rename_file(target_file, &new_target_path)?;
         modified_files.push(new_target_path.clone());
 
@@ -820,16 +820,16 @@ impl AutorepairAggregate for AutorepairOrchestrator {
             .and_then(|_| self.linter.run_lint(&modified_files));
 
         if let Err(verification_err) = verification_result {
-            // Rollback penamaan file target fisik
+            // Rollback physical target file rename
             let _ = self.writer.rename_file(&new_target_path, target_file);
             
-            // Kembalikan isi file di seluruh workspace dari backup data
+            // Restore file contents across the workspace from backup data
             for (original_path, backup_content) in backups {
                 let _ = self.writer.write_file_as_string(&original_path, &backup_content);
             }
             
             return Err(SystemError::VerificationError(format!(
-                "Verifikasi pasca auto-fix gagal: {:?}. Seluruh modifikasi di-rollback.",
+                "Post-auto-fix verification failed: {:?}. All modifications have been rolled back.",
                 verification_err
             )));
         }
@@ -843,7 +843,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
 
 ## 6. Surface Layer (User Interaction / UI)
 
-Batas interaksi luar yang menampung command dan router (AES506).
+External interaction boundary that houses the command and router (AES506).
 
 ### File: `surface_autofix_command.rs`
 ```rust
@@ -851,22 +851,22 @@ use crate::contract_autorepair_aggregate::AutorepairAggregate;
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 
-/// M-2 Fix: Merangkul fungsi bisnis command Autofix ke dalam struktur kelas untuk memenuhi AES303.
+/// M-2 Fix: Wrapping the Autofix command business function into a class structure to satisfy AES303.
 pub struct AutofixCommand;
 
 impl AutofixCommand {
-    /// Fungsi bisnis dari command untuk melakukan perbaikan nama file.
+    /// Business function of the command to perform file name repair.
     pub fn execute(
         &self,
         aggregate: &dyn AutorepairAggregate, 
         workspace: &FilePath, 
         target: &FilePath
     ) -> Result<(), SystemError> {
-        // H-4 Fix: Mengatur keluaran antarmuka human approval jika terjadi kegagalan threshold keyakinan
+        // H-4 Fix: Setting human-approval interface output when confidence threshold failure occurs
         match aggregate.execute_fix(workspace, target) {
             Ok(()) => Ok(()),
             Err(SystemError::LowConfidence(msg)) => {
-                println!("Informasi: Sistem menunda perbaikan otomatis karena keyakinan rendah.");
+                println!("Info: System deferred automatic repair due to low confidence.");
                 println!("{}", msg);
                 Ok(())
             }
@@ -883,7 +883,7 @@ use crate::surface_autofix_command::AutofixCommand;
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 
-/// Penyalur command (Router) untuk menjembatani entry point (Root) dan controller bisnis command.
+/// Command dispatcher (Router) bridging the entry point (Root) and the business command controller.
 pub struct AutofixRouter<'a> {
     aggregate: &'a dyn AutorepairAggregate,
 }
@@ -896,7 +896,7 @@ impl<'a> AutofixRouter<'a> {
     pub fn route_command(&self, command: &str, workspace: &FilePath, target: &FilePath) -> Result<(), SystemError> {
         match command {
             "autofix" => AutofixCommand.execute(self.aggregate, workspace, target),
-            _ => Err(SystemError::ArgumentError(format!("Command tidak dikenal: {}", command))),
+            _ => Err(SystemError::ArgumentError(format!("Unknown command: {}", command))),
         }
     }
 }
@@ -906,7 +906,7 @@ impl<'a> AutofixRouter<'a> {
 
 ## 7. Root Layer (Dependency Injection / Composition Root)
 
-Composition Root teratas yang menyambungkan seluruh adapter konkret ke tipe interface contract.
+Top-level Composition Root that wires all concrete adapters to the interface contract types.
 
 ### File: `root_app_container.rs`
 ```rust
@@ -934,14 +934,14 @@ pub struct AutorepairContainer;
 
 impl AutorepairContainer {
     pub fn build() -> Result<Box<dyn AutorepairAggregate>, SystemError> {
-        // M-1 Fix: Pembentukan FilePath dari MODEL_WEIGHTS_PATH menggunakan helper VO terenkapsulasi
+        // M-1 Fix: FilePath construction from MODEL_WEIGHTS_PATH using encapsulated VO helper
         let weights_path = FilePath::from_constant(MODEL_WEIGHTS_PATH);
         let weights_bytes = FileSystemReaderAdapter.read_file_as_bytes(&weights_path)?;
         
         let device = Device::<NdArray>::default();
         let predictor = AESNamingModelPredictor::<NdArray>::new_from_bytes(&weights_bytes, &device)?;
 
-        // AES305 & AES503 Fix: Composition DI inline tanpa pengulangan let Box::new(Adapter)
+        // AES305 & AES503 Fix: Inline DI composition without repeating let Box::new(Adapter)
         let orchestrator = AutorepairOrchestrator::new(
             Box::new(FileSystemReaderAdapter),
             Box::new(FileSystemWriterAdapter),
@@ -969,7 +969,7 @@ use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 use std::env;
 
-/// M-3 Fix: Memindahkan alur pemrosesan CLI utama ke fungsi helper run() agar SystemError terekspos aman via Result
+/// M-3 Fix: Moving main CLI processing flow to helper function run() so SystemError is safely exposed via Result
 fn run() -> Result<(), SystemError> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 4 {
@@ -981,7 +981,7 @@ fn run() -> Result<(), SystemError> {
     let aggregate = AutorepairContainer::build()?;
     let command = &args[1];
     
-    // M-1 Fix: Mengonversi arguments langsung menggunakan enkapsulasi FilePath
+    // M-1 Fix: Converting arguments directly using FilePath encapsulation
     let workspace = FilePath::from_constant(&args[2]);
     let target = FilePath::from_constant(&args[3]);
     
@@ -992,7 +992,7 @@ fn run() -> Result<(), SystemError> {
 }
 
 fn main() {
-    // M-3 Fix: std::process::exit(1) hanya bertindak sebagai pintu gerbang terakhir penanganan Result
+    // M-3 Fix: std::process::exit(1) only serves as the final gateway for Result handling
     if let Err(e) = run() {
         eprintln!("Fatal Error: {:?}", e);
         std::process::exit(1);

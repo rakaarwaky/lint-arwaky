@@ -22,17 +22,16 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
+
+use shared::external_lint::taxonomy_external_lint_helper::{default_working_dir, exec_cmd_adapter};
 
 pub struct MyPyAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
@@ -90,137 +89,126 @@ impl ILinterAdapterPort for MyPyAdapter {
             "--pretty".to_string(),
             "false".to_string(),
         ];
-        let command = PatternList::new(cmd);
-        let working_dir = match FilePath::new(".".to_string()) {
-            Ok(fp) => fp,
-            Err(_) => path.clone(),
+        let working_dir = default_working_dir(path);
+
+        let response = exec_cmd_adapter(
+            self.executor.as_ref(),
+            cmd,
+            working_dir,
+            120.0,
+            self.name(),
+        )
+        .await?;
+
+        let stdout = &response.stdout;
+        let re = match Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
+            Ok(r) => r,
+            Err(_) => match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
+                Ok(r) => r,
+                Err(_) => return Ok(LintResultList::new(vec![])),
+            },
         };
+        let re_simple = match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
+            Ok(r) => r,
+            Err(_) => return Ok(LintResultList::new(vec![])),
+        };
+        let mut results = Vec::new();
 
-        match self
-            .executor
-            .execute_command(
-                command,
-                working_dir,
-                Some(shared::taxonomy_duration_vo::Timeout::new(120.0)),
-            )
-            .await
-        {
-            Ok(response) => {
-                let stdout = &response.stdout;
-                let re = match Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
-                    Ok(r) => r,
-                    Err(_) => match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
-                        Ok(r) => r,
-                        Err(_) => return Ok(LintResultList::new(vec![])),
-                    },
-                };
-                let re_simple = match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {
-                    Ok(r) => r,
-                    Err(_) => return Ok(LintResultList::new(vec![])),
-                };
-                let mut results = Vec::new();
-
-                for line in stdout.lines() {
-                    let line = line.trim();
-                    if line.is_empty() {
-                        continue;
-                    }
-
-                    if let Some(caps) = re.captures(line) {
-                        let filename = match caps.get(1) {
-                            Some(m) => m.as_str(),
-                            None => "",
-                        };
-                        let line_number: i64 = caps
-                            .get(2)
-                            .and_then(|m| m.as_str().parse().ok())
-                            .unwrap_or_default();
-                        let column: i64 = caps
-                            .get(3)
-                            .and_then(|m| m.as_str().parse().ok())
-                            .unwrap_or_default();
-                        let msg_type = match caps.get(4) {
-                            Some(m) => m.as_str(),
-                            None => "error",
-                        };
-                        let message = match caps.get(5) {
-                            Some(m) => m.as_str(),
-                            None => "",
-                        };
-                        let code = match caps.get(6) {
-                            Some(m) => m.as_str(),
-                            None => "",
-                        };
-
-                        let resolved = self.path_norm.resolve_infrastructure_path(
-                            match FilePath::new(filename.to_string()) {
-                                Ok(fp) => fp,
-                                Err(_) => path.clone(),
-                            },
-                            Some(path.clone()),
-                        );
-
-                        results.push(LintResult {
-                            file: resolved,
-                            line: LineNumber::new(line_number),
-                            column: ColumnNumber::new(column),
-                            code: ErrorCode::raw(code),
-                            message: LintMessage::new(message),
-                            source: Some(self.name()),
-                            severity: Self::map_severity(msg_type, message),
-                            enclosing_scope: None,
-                            related_locations: LocationList::new(),
-                        });
-                    } else if let Some(caps) = re_simple.captures(line) {
-                        let filename = match caps.get(1) {
-                            Some(m) => m.as_str(),
-                            None => "",
-                        };
-                        let line_number: i64 = caps
-                            .get(2)
-                            .and_then(|m| m.as_str().parse().ok())
-                            .unwrap_or_default();
-                        let msg_type = match caps.get(3) {
-                            Some(m) => m.as_str(),
-                            None => "error",
-                        };
-                        let message = match caps.get(4) {
-                            Some(m) => m.as_str(),
-                            None => "",
-                        };
-                        let code = match caps.get(5) {
-                            Some(m) => m.as_str(),
-                            None => "",
-                        };
-
-                        let resolved = self.path_norm.resolve_infrastructure_path(
-                            match FilePath::new(filename.to_string()) {
-                                Ok(fp) => fp,
-                                Err(_) => path.clone(),
-                            },
-                            Some(path.clone()),
-                        );
-
-                        results.push(LintResult {
-                            file: resolved,
-                            line: LineNumber::new(line_number),
-                            column: ColumnNumber::new(0),
-                            code: ErrorCode::raw(code),
-                            message: LintMessage::new(message),
-                            source: Some(self.name()),
-                            severity: Self::map_severity(msg_type, message),
-                            enclosing_scope: None,
-                            related_locations: LocationList::new(),
-                        });
-                    }
-                }
-                Ok(LintResultList::new(results))
+        for line in stdout.lines() {
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
             }
-            Err(e) => Err(LinterOperationError::Adapter(AdapterError::new(
-                self.name(),
-                ErrorMessage::new(format!("MyPy execution failed: {}", e)),
-            ))),
+
+            if let Some(caps) = re.captures(line) {
+                let filename = match caps.get(1) {
+                    Some(m) => m.as_str(),
+                    None => "",
+                };
+                let line_number: i64 = caps
+                    .get(2)
+                    .and_then(|m| m.as_str().parse().ok())
+                    .unwrap_or_default();
+                let column: i64 = caps
+                    .get(3)
+                    .and_then(|m| m.as_str().parse().ok())
+                    .unwrap_or_default();
+                let msg_type = match caps.get(4) {
+                    Some(m) => m.as_str(),
+                    None => "error",
+                };
+                let message = match caps.get(5) {
+                    Some(m) => m.as_str(),
+                    None => "",
+                };
+                let code = match caps.get(6) {
+                    Some(m) => m.as_str(),
+                    None => "",
+                };
+
+                let resolved = self.path_norm.resolve_infrastructure_path(
+                    match FilePath::new(filename.to_string()) {
+                        Ok(fp) => fp,
+                        Err(_) => path.clone(),
+                    },
+                    Some(path.clone()),
+                );
+
+                results.push(LintResult {
+                    file: resolved,
+                    line: LineNumber::new(line_number),
+                    column: ColumnNumber::new(column),
+                    code: ErrorCode::raw(code),
+                    message: LintMessage::new(message),
+                    source: Some(self.name()),
+                    severity: Self::map_severity(msg_type, message),
+                    enclosing_scope: None,
+                    related_locations: LocationList::new(),
+                });
+            } else if let Some(caps) = re_simple.captures(line) {
+                let filename = match caps.get(1) {
+                    Some(m) => m.as_str(),
+                    None => "",
+                };
+                let line_number: i64 = caps
+                    .get(2)
+                    .and_then(|m| m.as_str().parse().ok())
+                    .unwrap_or_default();
+                let msg_type = match caps.get(3) {
+                    Some(m) => m.as_str(),
+                    None => "error",
+                };
+                let message = match caps.get(4) {
+                    Some(m) => m.as_str(),
+                    None => "",
+                };
+                let code = match caps.get(5) {
+                    Some(m) => m.as_str(),
+                    None => "",
+                };
+
+                let resolved = self.path_norm.resolve_infrastructure_path(
+                    match FilePath::new(filename.to_string()) {
+                        Ok(fp) => fp,
+                        Err(_) => path.clone(),
+                    },
+                    Some(path.clone()),
+                );
+
+                results.push(LintResult {
+                    file: resolved,
+                    line: LineNumber::new(line_number),
+                    column: ColumnNumber::new(0),
+                    code: ErrorCode::raw(code),
+                    message: LintMessage::new(message),
+                    source: Some(self.name()),
+                    severity: Self::map_severity(msg_type, message),
+                    enclosing_scope: None,
+                    related_locations: LocationList::new(),
+                });
+            }
         }
+        Ok(LintResultList::new(results))
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {

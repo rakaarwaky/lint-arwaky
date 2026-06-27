@@ -261,7 +261,7 @@ The CLI is implemented in `crates/cli-commands/src/surface_core_command.rs` (wit
 ## TUI (Interactive File Browser)
 
 `lint-arwaky-tui` — Ranger-style 3-panel file browser (`ratatui` + `crossterm`).
-Path project dimasukkan sekali di startup, lalu navigasi folder dan jalanin perintah pada file/folder terseleksi.
+Path project is entered once at startup, then navigate folders and run commands on selected files/folders.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -287,13 +287,13 @@ Path project dimasukkan sekali di startup, lalu navigasi folder dan jalanin peri
 
 ### Panels
 
-| Panel  | Isi                                        |
+| Panel  | Content                                    |
 | ------ | ------------------------------------------ |
-| Kiri   | Directory tree                             |
-| Tengah | File list + layer AES badges (warna-coded) |
-| Kanan  | File preview / hasil lint                  |
+| Left   | Directory tree                             |
+| Center | File list + layer AES badges (color-coded) |
+| Right  | File preview / lint results                |
 
-Setiap file dikasih **layer badge** warna:
+Each file is given a **layer badge** color:
 `[taxonomy]` cyan, `[contract]` blue, `[capabilities]` magenta, `[infra]` yellow, `[agent]` green, `[surface]` red, `[root]` white.
 
 ### Shortcuts (always visible at bottom bar)
@@ -302,13 +302,13 @@ Setiap file dikasih **layer badge** warna:
 
 | Key               | Action                   |
 | ----------------- | ------------------------ |
-| `j`/`k`       | Gerak atas/bawah         |
+| `j`/`k`       | Move up/down             |
 | `h`             | Back (parent dir)        |
-| `l` / `Enter` | Buka folder / preview    |
-| `gg` / `G`    | Lompat awal/akhir        |
-| `/`             | Cari file                |
+| `l` / `Enter` | Open folder / preview    |
+| `gg` / `G`    | Jump to start/end        |
+| `/`             | Search file              |
 | Tab               | Cycle panel focus        |
-| Mouse click       | Pilih item / fokus panel |
+| Mouse click       | Select item / focus panel |
 | Scroll wheel      | Scroll panel             |
 
 #### Actions (on selected file/folder)
@@ -338,13 +338,13 @@ Setiap file dikasih **layer badge** warna:
 
 #### Mouse support
 
-Semua elemen bisa diklik: file list, action buttons, panel focus. Scroll wheel untuk scroll.
+All elements are clickable: file list, action buttons, panel focus. Scroll wheel to scroll.
 
 ### Run
 
 ```bash
 cargo run --bin lint-arwaky-tui
-# atau langsung:
+# or directly:
 ./target/release/lint-arwaky-tui
 ```
 

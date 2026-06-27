@@ -1,11 +1,11 @@
 # Implementation Draft: AI Auto-Repair Model (Flawless AES + Full Implementation)
 
-Draft v4 ini menggabungkan **Arsitektur 7-Layer AES yang Tahan Peluru (100% Compliant)** dengan **Implementasi Nyata** (Logika Burn Neural Network, Parser AST Syn, dan Mutasi Direktori WalkDir).
+Draft v4 combines the **Bullet-Proof 7-Layer AES Architecture (100% Compliant)** with **Real Implementation** (Burn Neural Network logic, Syn AST Parser, and WalkDir Directory Mutation).
 
 ---
 
 ## 1. Taxonomy Layer (Data, Constants, Errors & Value Objects)
-Layer murni tanpa ketergantungan framework.
+Pure layer without framework dependencies.
 
 **File:** `taxonomy_system_constant.rs`
 ```rust
@@ -74,7 +74,7 @@ pub struct AESNamingModelConfig {
 ---
 
 ## 2. Contract Layer (Interfaces / Ports, Protocols & Aggregates)
-Batas suci arsitektur yang menggunakan VO untuk menghindari *Primitive Obsession*.
+Sacred boundary of the architecture that uses VOs to avoid *Primitive Obsession*.
 
 **File:** `contract_file_reader_port.rs`
 ```rust
@@ -134,7 +134,7 @@ pub trait AutorepairAggregate {
 ---
 
 ## 3. Capabilities Layer (Pure Business Logic)
-Mengandung logika *syn* parser dan model *Burn* murni, tanpa I/O.
+Contains the *syn* parser logic and pure *Burn* model, without I/O.
 
 **File:** `capabilities_ast_extractor.rs`
 ```rust
@@ -210,8 +210,8 @@ pub struct AESNamingModelPredictor<B: Backend> {
 
 impl<B: Backend> AESNamingModelPredictor<B> {
     pub fn new_from_bytes(weights_bytes: &[u8], device: &Device<B>) -> Result<Self, SystemError> {
-        // Implementasi memuat bobot model Safetensors ke dalam arsitektur Transformer
-        // Bebas dari akses I/O disk secara langsung.
+        // Implementation for loading Safetensors model weights into the Transformer architecture
+        // Free of direct disk I/O access.
         todo!("Load safetensors using burn_import::safetensors")
     }
 
@@ -261,7 +261,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
 ---
 
 ## 4. Infrastructure Layer (I/O & External Systems)
-Implementasi baca/tulis murni.
+Pure read/write implementation.
 
 **File:** `infrastructure_fs_reader.rs`
 ```rust

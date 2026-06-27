@@ -2,11 +2,11 @@
 
 ## Current State (after cleanup)
 
-MCP server sudah berjalan dengan 4 tools:
-1. `execute_command` — wrap 18 CLI commands
-2. `list_commands` — list from COMMAND_CATALOG
-3. `read_skill` — read SKILL.md
-4. `health_check` — check adapter availability
+MCP server is already running with 4 tools:
+1. `execute_command` — wraps 18 CLI commands
+2. `list_commands` — lists from COMMAND_CATALOG
+3. `read_skill` — reads SKILL.md
+4. `health_check` — checks adapter availability
 
 ## CLI Commands (18 — wrapped by MCP)
 

@@ -2,9 +2,9 @@
 
 ## Problem
 
-- `import` — stub,只 print "Imported" tanpa baca/parse/write
-- `export` — duplikat dari `report`, run lint + print json/sarif/junit
-- `diff` — redundant, user bisa `check` dua kali manual
+- `import` — stub, only prints "Imported" without reading/parsing/writing
+- `export` — duplicate of `report`, runs lint + prints json/sarif/junit
+- `diff` — redundant, user can `check` twice manually
 
 ## Changes
 

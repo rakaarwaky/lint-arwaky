@@ -2,6 +2,8 @@
 // Implements ILintExecutorProtocol, providing all lint action methods (check, scan, fix, ci, etc.)
 // with user-facing output formatting. Many actions delegate to the CLI for full pipeline execution.
 
+use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
@@ -11,13 +13,28 @@ use std::sync::Arc;
 
 /// LintExecutor — TUI-facing lint action provider.
 /// Delegates code analysis to ICodeAnalysisAggregate and formats results for display.
+/// Optionally holds a LintFixOrchestratorAggregate for real auto-fix execution.
 pub struct LintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
+    fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
 }
 
 impl LintExecutor {
     pub fn new(code_analysis: Arc<dyn ICodeAnalysisAggregate>) -> Self {
-        Self { code_analysis }
+        Self {
+            code_analysis,
+            fix_orchestrator: None,
+        }
+    }
+
+    pub fn new_with_fix(
+        code_analysis: Arc<dyn ICodeAnalysisAggregate>,
+        fix_orchestrator: Arc<dyn LintFixOrchestratorAggregate>,
+    ) -> Self {
+        Self {
+            code_analysis,
+            fix_orchestrator: Some(fix_orchestrator),
+        }
     }
 
     /// Format lint results into a human-readable numbered list for TUI preview panel.
@@ -65,13 +82,29 @@ impl ILintExecutorProtocol for LintExecutor {
 
     fn fix(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
         let mode = if flags.dry_run { "DRY-RUN" } else { "LIVE" };
-        let results = self.code_analysis.run_code_analysis(path);
-        let count_before = results.len();
-        let output = format!(
-            "[{}] Fix scan on {}\nViolations found: {}\nFix application requires FixOrchestrator aggregate.\nUse CLI `lint-arwaky-cli fix {}` for full fix pipeline.",
-            mode, path, count_before, path
-        );
-        LintExecutionResult::success(output, count_before)
+
+        match &self.fix_orchestrator {
+            Some(orchestrator) => {
+                let file_path =
+                    shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
+                let fix_result: FixResult = orchestrator.execute(&file_path);
+                let output = format!("[{}] {}", mode, fix_result.output);
+                if fix_result.is_success() {
+                    LintExecutionResult::success(output, 0)
+                } else {
+                    LintExecutionResult::failure(output)
+                }
+            }
+            None => {
+                let results = self.code_analysis.run_code_analysis(path);
+                let count_before = results.len();
+                let output = format!(
+                    "[{}] Fix scan on {}\nViolations found: {}\nFix application requires FixOrchestrator aggregate.\nUse CLI `lint-arwaky-cli fix {}` for full fix pipeline.",
+                    mode, path, count_before, path
+                );
+                LintExecutionResult::success(output, count_before)
+            }
+        }
     }
 
     fn ci(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {

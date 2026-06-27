@@ -1,35 +1,35 @@
 # Feature Requirement Document (FRD) - MCP Server
 
 ## 1. Feature Goal
-Tujuan utama modul `mcp-server` adalah mengimplementasikan server Model Context Protocol (MCP) yang mengekspos pipeline linting sebagai tools dan resources yang dapat diakses oleh AI agents. Server ini memungkinkan integrasi lint_arwaky dengan IDE dan tools AI lainnya melalui protokol standar.
+The primary purpose of the `mcp-server` module is to implement a Model Context Protocol (MCP) server that exposes the linting pipeline as tools and resources accessible by AI agents. This server enables lint_arwaky integration with IDEs and other AI tools through a standard protocol.
 
 ## 2. Requirements & Scope
-Modul `mcp-server` bertanggung jawab untuk MCP server berdasarkan spesifikasi berikut:
+The `mcp-server` module is responsible for the MCP server based on the following specifications:
 
 ### Component Specifications
-* **McpServerOrchestrator**: Mengkoordinasikan eksekusi tools MCP dan routing requests.
-* **McpServerAggregate**: Aggregate root untuk semua MCP capabilities.
-* **McpCommandSurface**: Surface yang menangani command MCP requests.
+* **McpServerOrchestrator**: Coordinates MCP tool execution and request routing.
+* **McpServerAggregate**: Aggregate root for all MCP capabilities.
+* **McpCommandSurface**: Surface that handles MCP command requests.
 
 ### Tools
-* **lint_scan**: Memindai workspace dan mengembalikan hasil pelanggaran.
-* **lint_fix**: Menerapkan perbaikan otomatis pada file yang ditentukan.
-* **lint_check**: Memeriksa satu file terhadap aturan AES.
-* **lint_config**: Mengelola konfigurasi lint_arwaky.
-* **lint_setup**: Menyiapkan proyek baru dengan struktur AES.
+* **lint_scan**: Scans the workspace and returns violation results.
+* **lint_fix**: Applies automatic fixes to specified files.
+* **lint_check**: Checks a single file against AES rules.
+* **lint_config**: Manages lint_arwaky configuration.
+* **lint_setup**: Sets up a new project with AES structure.
 
 ### Inputs
-* Request MCP JSON-RPC dari client.
-* Parameter tool yang sesuai skema.
+* MCP JSON-RPC requests from clients.
+* Tool parameters matching the schema.
 
 ### Outputs
-* Response MCP dengan hasil linting atau status operasi.
+* MCP response with linting results or operation status.
 
 ---
 
 ## 3. Success Indicators
-Keberhasilan modul `mcp-server` diukur oleh:
-* **Protocol Compliance**: Implementasi sesuai standar MCP JSON-RPC.
-* **Tool Discovery**: Semua tools dapat ditemukan oleh AI client.
-* **Response Time**: Response time di bawah 5 detik untuk operasi standar.
-* **Self-Audit Conformity**: Modul ini sendiri lulus pemeriksaan aturan AES.
+The success of the `mcp-server` module is measured by:
+* **Protocol Compliance**: Implementation conforms to MCP JSON-RPC standards.
+* **Tool Discovery**: All tools can be discovered by AI clients.
+* **Response Time**: Response time is under 5 seconds for standard operations.
+* **Self-Audit Conformity**: The module itself passes AES rule checks.

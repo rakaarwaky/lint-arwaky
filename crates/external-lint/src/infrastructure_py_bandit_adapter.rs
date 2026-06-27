@@ -21,17 +21,16 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
+
+use shared::external_lint::taxonomy_external_lint_helper::{default_working_dir, exec_cmd_adapter};
 
 pub struct BanditAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
@@ -85,85 +84,74 @@ impl ILinterAdapterPort for BanditAdapter {
             "json".to_string(),
             "--exit-zero".to_string(),
         ];
-        let command = PatternList::new(cmd);
-        let working_dir = match FilePath::new(".".to_string()) {
-            Ok(fp) => fp,
-            Err(_) => path.clone(),
+        let working_dir = default_working_dir(path);
+
+        let response = exec_cmd_adapter(
+            self.executor.as_ref(),
+            cmd,
+            working_dir,
+            120.0,
+            self.name(),
+        )
+        .await?;
+
+        let stdout = &response.stdout;
+        let parsed: Value = match serde_json::from_str(stdout) {
+            Ok(v) => v,
+            Err(_) => Value::Object(serde_json::Map::new()),
         };
+        let findings = match parsed.get("results").and_then(|v| v.as_array()) {
+            Some(arr) => arr.clone(),
+            None => Vec::new(),
+        };
+        let mut results = Vec::new();
 
-        match self
-            .executor
-            .execute_command(
-                command,
-                working_dir,
-                Some(shared::taxonomy_duration_vo::Timeout::new(120.0)),
-            )
-            .await
-        {
-            Ok(response) => {
-                let stdout = &response.stdout;
-                let parsed: Value = match serde_json::from_str(stdout) {
-                    Ok(v) => v,
-                    Err(_) => Value::Object(serde_json::Map::new()),
-                };
-                let findings = match parsed.get("results").and_then(|v| v.as_array()) {
-                    Some(arr) => arr.clone(),
-                    None => Vec::new(),
-                };
-                let mut results = Vec::new();
+        for f in findings {
+            let filename = f
+                .get("filename")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default();
+            let line_number = f
+                .get("line_number")
+                .and_then(|v| v.as_i64())
+                .unwrap_or_default();
+            let line_range = f
+                .get("line_range")
+                .and_then(|v| v.as_array())
+                .and_then(|a| a.first())
+                .and_then(|v| v.as_i64())
+                .unwrap_or_default();
+            let test_id = f.get("test_id").and_then(|v| v.as_str()).unwrap_or("B000");
+            let issue_text = f
+                .get("issue_text")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default();
+            let issue_severity = f
+                .get("issue_severity")
+                .and_then(|v| v.as_str())
+                .unwrap_or("MEDIUM");
 
-                for f in findings {
-                    let filename = f
-                        .get("filename")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or_default();
-                    let line_number = f
-                        .get("line_number")
-                        .and_then(|v| v.as_i64())
-                        .unwrap_or_default();
-                    let line_range = f
-                        .get("line_range")
-                        .and_then(|v| v.as_array())
-                        .and_then(|a| a.first())
-                        .and_then(|v| v.as_i64())
-                        .unwrap_or_default();
-                    let test_id = f.get("test_id").and_then(|v| v.as_str()).unwrap_or("B000");
-                    let issue_text = f
-                        .get("issue_text")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or_default();
-                    let issue_severity = f
-                        .get("issue_severity")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("MEDIUM");
+            let resolved = self.path_norm.resolve_infrastructure_path(
+                match FilePath::new(filename.to_string()) {
+                    Ok(fp) => fp,
+                    Err(_) => path.clone(),
+                },
+                Some(path.clone()),
+            );
 
-                    let resolved = self.path_norm.resolve_infrastructure_path(
-                        match FilePath::new(filename.to_string()) {
-                            Ok(fp) => fp,
-                            Err(_) => path.clone(),
-                        },
-                        Some(path.clone()),
-                    );
-
-                    results.push(LintResult {
-                        file: resolved,
-                        line: LineNumber::new(line_number),
-                        column: ColumnNumber::new(line_range),
-                        code: ErrorCode::raw(test_id),
-                        message: LintMessage::new(issue_text),
-                        source: Some(self.name()),
-                        severity: self.map_severity(issue_severity),
-                        enclosing_scope: None,
-                        related_locations: LocationList::new(),
-                    });
-                }
-                Ok(LintResultList::new(results))
-            }
-            Err(e) => Err(LinterOperationError::Adapter(AdapterError::new(
-                self.name(),
-                ErrorMessage::new(format!("Bandit execution failed: {}", e)),
-            ))),
+            results.push(LintResult {
+                file: resolved,
+                line: LineNumber::new(line_number),
+                column: ColumnNumber::new(line_range),
+                code: ErrorCode::raw(test_id),
+                message: LintMessage::new(issue_text),
+                source: Some(self.name()),
+                severity: self.map_severity(issue_severity),
+                enclosing_scope: None,
+                related_locations: LocationList::new(),
+            });
         }
+        Ok(LintResultList::new(results))
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {

@@ -19,14 +19,12 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_adapter_error::ScanError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
@@ -34,7 +32,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use shared::external_lint::taxonomy_external_lint_helper::{
-    canonicalize_path, exec_cmd_scan, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir,
+    canonicalize_path, exec_cmd_adapter, exec_cmd_scan, resolve_js_cmd,
+    resolve_js_working_dir as resolve_working_dir,
 };
 
 pub struct ESLintAdapter {
@@ -163,33 +162,11 @@ impl ILinterAdapterPort for ESLintAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        let path_str = &path.value;
         let wd = resolve_working_dir(path);
-        let abs_path = match std::fs::canonicalize(path_str) {
-            Ok(p) => p.to_string_lossy().to_string(),
-            Err(_) => path_str.clone(),
-        };
-
+        let abs_path = canonicalize_path(&path.value);
         let cmd = resolve_js_cmd("eslint", vec![abs_path, "--fix".to_string()], &wd.value);
 
-        match self
-            .executor
-            .execute_command(
-                PatternList::new(cmd),
-                wd,
-                Some(shared::taxonomy_duration_vo::Timeout::new(60.0)),
-            )
-            .await
-        {
-            Ok(r) => Ok(ComplianceStatus::new(r.returncode == 0)),
-            Err(e) => Err(LinterOperationError::Adapter(AdapterError {
-                adapter_name: self.name(),
-                message: ErrorMessage::new(e.to_string()),
-                error_code: None,
-                command: None,
-                stderr: Some(ErrorMessage::new("")),
-                exit_code: None,
-            })),
-        }
+        let response = exec_cmd_adapter(self.executor.as_ref(), cmd, wd, 60.0, self.name()).await?;
+        Ok(ComplianceStatus::new(response.returncode == 0))
     }
 }

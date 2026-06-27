@@ -1,14 +1,14 @@
 in id    pub importsala hadraft ayng saya buat tolong adna berikan kritik dan saranasaja # Implementation Draft: AI Auto-Repair Model (AES Dogfooding Architecture)
 
-Draft ini mendemonstrasikan bagaimana fitur AI Auto-Repair yang menggunakan Rust Burn diimplementasikan di dalam `lint-arwaky` secara *dogfooding* (mematuhi aturan 7-layer AES secara ketat).
+This draft demonstrates how the AI Auto-Repair feature using Rust Burn is implemented within `lint-arwaky` following *dogfooding* principles (strictly adhering to the 7-layer AES rules).
 
-Kode tidak lagi ditulis secara monolitik, melainkan dipecah menjadi layer-layer spesifik: **Taxonomy, Contract, Capabilities, Infrastructure, dan Agent**.
+Code is no longer written monolithically, but is instead split into specific layers: **Taxonomy, Contract, Capabilities, Infrastructure, and Agent**.
 
 ---
 
 ## 1. Taxonomy Layer (Data, Value Objects)
 
-Layer ini hanya berisi struktur data pasif (Value Objects) tanpa logika eksekusi I/O atau perhitungan berat.
+This layer only contains passive data structures (Value Objects) without I/O execution logic or heavy computation.
 
 **File:** `taxonomy_model_config_vo.rs`
 
@@ -54,7 +54,7 @@ pub struct ModelOutputVO<B: Backend> {
 
 ## 2. Contract Layer (Interfaces / Ports & Protocols)
 
-Mendefinisikan *boundaries* antar layer agar Capabilities dan Infrastructure tidak saling terikat secara langsung (dependency inversion).
+Defines *boundaries* between layers so that Capabilities and Infrastructure are not directly coupled (dependency inversion).
 
 **File:** `contract_model_predictor_protocol.rs`
 
@@ -62,7 +62,7 @@ Mendefinisikan *boundaries* antar layer agar Capabilities dan Infrastructure tid
 use crate::taxonomy::{AESNamingModelConfigVO, ExtractedFeatureVO, ModelOutputVO};
 use burn::tensor::backend::Backend;
 
-/// Diimplementasikan oleh layer Capabilities
+/// Implemented by the Capabilities layer
 pub trait ModelPredictorProtocol<B: Backend> {
     fn predict(&self, features: &ExtractedFeatureVO) -> ModelOutputVO<B>;
 }
@@ -74,7 +74,7 @@ pub trait ModelPredictorProtocol<B: Backend> {
 use crate::taxonomy::ExtractedFeatureVO;
 use std::path::Path;
 
-/// Diimplementasikan oleh layer Infrastructure
+/// Implemented by the Infrastructure layer
 pub trait AstScannerPort {
     fn scan_file_features(&self, path: &Path) -> Result<ExtractedFeatureVO, String>;
 }
@@ -85,7 +85,7 @@ pub trait AstScannerPort {
 ```rust
 use std::path::Path;
 
-/// Diimplementasikan oleh layer Infrastructure
+/// Implemented by the Infrastructure layer
 pub trait ReferenceModifierPort {
     fn propagate_rename(&self, workspace_root: &Path, old_name: &str, new_name: &str) -> Result<(), String>;
 }
@@ -95,26 +95,26 @@ pub trait ReferenceModifierPort {
 
 ## 3. Capabilities Layer (Pure Business Logic)
 
-Layer ini berisi logika prediksi (Burn Model) dan *parsing* (Syn AST). Tidak boleh ada akses *file system* di sini.
+This layer contains prediction logic (Burn Model) and *parsing* (Syn AST). There should be no *file system* access here.
 
 **File:** `capabilities_model_predictor.rs`
 
 ```rust
 use burn::module::Module;
 use burn::tensor::{backend::Backend, Device, Int, Tensor};
-// ... imports lain (Embedding, TransformerEncoder, Linear) ...
+// ... other imports (Embedding, TransformerEncoder, Linear) ...
 use crate::taxonomy::{AESNamingModelConfigVO, ExtractedFeatureVO, ModelOutputVO};
 use crate::contract::ModelPredictorProtocol;
 
 #[derive(Module, Debug)]
 pub struct AESNamingModelPredictor<B: Backend> {
-    // Definisi layer model...
+    // Model layer definitions...
 }
 
 impl<B: Backend> ModelPredictorProtocol<B> for AESNamingModelPredictor<B> {
     fn predict(&self, features: &ExtractedFeatureVO) -> ModelOutputVO<B> {
-        // 1. Ubah ExtractedFeatureVO menjadi tensor
-        // 2. Lakukan forward pass pada self.encoder, dst...
+        // 1. Convert ExtractedFeatureVO to tensor
+        // 2. Perform forward pass on self.encoder, etc...
         // 3. Return ModelOutputVO
         todo!("Implement pure inference forward pass")
     }
@@ -127,10 +127,10 @@ impl<B: Backend> ModelPredictorProtocol<B> for AESNamingModelPredictor<B> {
 use crate::taxonomy::ExtractedFeatureVO;
 use syn::{parse_file, File};
 
-/// Fungsi murni (pure function) tanpa baca tulis disk
+/// Pure function without disk I/O
 pub fn extract_ast_from_string(content: &str) -> Result<ExtractedFeatureVO, syn::Error> {
     let syntax: File = parse_file(content)?;
-    // Ekstraksi murni AST ke dalam VO...
+    // Pure AST extraction into VO...
     Ok(ExtractedFeatureVO {
         imports: vec![],
         structs_traits: vec![],
@@ -143,7 +143,7 @@ pub fn extract_ast_from_string(content: &str) -> Result<ExtractedFeatureVO, syn:
 
 ## 4. Infrastructure Layer (I/O & External Systems)
 
-Layer ini mengimplementasikan Port dari Contract layer. Layer ini menangani I/O secara langsung (akses Disk/OS).
+This layer implements the Ports from the Contract layer. It handles I/O directly (Disk/OS access).
 
 **File:** `infrastructure_fs_ast_scanner.rs`
 
@@ -158,10 +158,10 @@ pub struct FileSystemAstScannerAdapter;
 
 impl AstScannerPort for FileSystemAstScannerAdapter {
     fn scan_file_features(&self, path: &Path) -> Result<ExtractedFeatureVO, String> {
-        // 1. Membaca file dari sistem (Infrastructure duty)
+        // 1. Read file from the system (Infrastructure duty)
         let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
       
-        // 2. Mendelegasikan parsing ke Capabilities
+        // 2. Delegate parsing to Capabilities
         extract_ast_from_string(&content).map_err(|e| e.to_string())
     }
 }
@@ -179,7 +179,7 @@ pub struct FileSystemReferenceModifierAdapter;
 
 impl ReferenceModifierPort for FileSystemReferenceModifierAdapter {
     fn propagate_rename(&self, workspace_root: &Path, old_name: &str, new_name: &str) -> Result<(), String> {
-        // Logika WalkDir dan fs::write untuk mereplace string di dalam file workspace
+        // WalkDir and fs::write logic to replace strings within workspace files
         todo!("Implement disk write operations")
     }
 }
@@ -189,7 +189,7 @@ impl ReferenceModifierPort for FileSystemReferenceModifierAdapter {
 
 ## 5. Agent Layer (Orchestration Workflow)
 
-Layer ini menjadi "otak" yang mengoordinasikan seluruh alur kerja. Layer ini tidak tahu bagaimana cara membaca file atau bagaimana model dihitung, ia murni mendelegasikan tugas ke Contract Port & Protocol.
+This layer serves as the "brain" that coordinates the entire workflow. It does not know how to read files or how the model is computed — it purely delegates tasks to Contract Ports & Protocols.
 
 **File:** `agent_autorepair_orchestrator.rs`
 
@@ -213,19 +213,19 @@ impl<'a, B: Backend> AutorepairOrchestrator<'a, B> {
         Self { scanner, modifier, predictor }
     }
 
-    /// Alur utama workflow
+    /// Main workflow flow
     pub fn execute_fix(&self, workspace_root: &Path, target_file: &Path) -> Result<(), String> {
-        // 1. Panggil Infra: Baca dan ekstrak fitur file
+        // 1. Call Infra: Read and extract file features
         let features = self.scanner.scan_file_features(target_file)?;
 
-        // 2. Panggil Capabilities: Prediksi nama yang benar
+        // 2. Call Capabilities: Predict the correct name
         let prediction = self.predictor.predict(&features);
 
-        // 3. Rakit nama baru dari prediksi (mocking extraction)
+        // 3. Assemble new name from prediction (mocking extraction)
         let new_file_name = "infrastructure_database_adapter.rs"; 
         let old_file_name = target_file.file_name().unwrap().to_str().unwrap();
 
-        // 4. Panggil Infra: Perbaiki referensi di seluruh workspace
+        // 4. Call Infra: Fix references throughout the workspace
         self.modifier.propagate_rename(workspace_root, old_file_name, new_file_name)?;
 
         Ok(())
@@ -235,10 +235,10 @@ impl<'a, B: Backend> AutorepairOrchestrator<'a, B> {
 
 ---
 
-## Kesimpulan Refactoring
+## Refactoring Conclusion
 
-Dengan menstrukturisasi ulang draf ke dalam standar AES ini, maka:
+By restructuring the draft to comply with AES standards, the following are achieved:
 
-1. **Tidak Ada Pelanggaran I/O di Logika Bisnis (AES404)**: `capabilities` hanya melakukan prediksi matematika dan parser string murni. Akses file dipindahkan seutuhnya ke `infrastructure_fs_*.rs`.
-2. **Dependensi Terbalik dengan Tepat (Contract)**: Orchestrator di layer `agent_` hanya bergantung pada *traits* (Port/Protocol) yang abstrak, bukan pada konkrit.
-3. **Data Pasif Terisolasi (AES401)**: Konfigurasi model dan hasil parsing menjadi entitas `_vo` di layer `taxonomy_` yang dapat di-*share* secara aman ke semua layer tanpa *circular dependencies*.
+1. **No I/O Violation in Business Logic (AES404)**: `capabilities` only performs mathematical prediction and pure string parsing. File access has been entirely moved to `infrastructure_fs_*.rs`.
+2. **Correct Dependency Inversion (Contract)**: The orchestrator in the `agent_` layer only depends on abstract *traits* (Port/Protocol), not on concrete types.
+3. **Isolated Passive Data (AES401)**: Model configuration and parsing results become `_vo` entities in the `taxonomy_` layer that can be safely shared across all layers without *circular dependencies*.

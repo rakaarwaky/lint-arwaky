@@ -2,8 +2,8 @@
 
 ## Problem
 
-- CLI `report` — stub, cuma print "not yet implemented"
-- MCP `report` — functional tapi redundant dengan `scan` (sudah punya summary + violations)
+- CLI `report` — stub, only prints "not yet implemented"
+- MCP `report` — functional but redundant with `scan` (already has summary + violations)
 
 ## Changes
 
@@ -17,7 +17,7 @@
 
 | File | Remove |
 |---|---|
-| `surface_report_command.rs` | Delete entire file (`handle_report` is stub) |
+| `surface_report_command.rs` | Delete entire file (`handle_report` is a stub) |
 
 ### 3. Remove root entry
 
@@ -63,7 +63,7 @@
 | CLI `report` removed | Scripts using `lint-arwaky report` break |
 | MCP `report` action removed | AI agents using `execute_command(action="report")` break |
 
-**Mitigation**: `scan` already provides same data (violations + summary). MCP clients can use `execute_command(action="scan")` instead.
+**Mitigation**: `scan` already provides the same data (violations + summary). MCP clients can use `execute_command(action="scan")` instead.
 
 ## File Changes Summary
 

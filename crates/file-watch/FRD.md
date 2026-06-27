@@ -1,30 +1,30 @@
 # Feature Requirement Document (FRD) - File Watch
 
 ## 1. Feature Goal
-Tujuan utama modul `file-watch` adalah menyediakan sistem pemantauan filesystem yang mampu mendeteksi perubahan file secara real-time dan memicu ulang pipeline linting secara otomatis. Modul ini menggunakan `notify` dan `notify-debouncer-mini` untuk mengoptimalkan performa dan menghindari pemrosesan berulang pada perubahan cepat.
+The primary purpose of the `file-watch` module is to provide a filesystem monitoring system capable of detecting file changes in real-time and automatically re-triggering the linting pipeline. This module uses `notify` and `notify-debouncer-mini` to optimize performance and avoid redundant processing during rapid changes.
 
 ## 2. Requirements & Scope
-Modul `file-watch` bertanggung jawab untuk pemantauan berdasarkan spesifikasi berikut:
+The `file-watch` module is responsible for monitoring based on the following specifications:
 
 ### Component Specifications
-* **NotifyWatchProvider**: Provider yang mengimplementasikan watch events menggunakan crate `notify`.
-* **ChangeAnalyzer**: Menganalisis perubahan file untuk menentukan apakah perlu menjalankan linting.
-* **WatchOrchestrator**: Mengkoordinasikan proses watch, analisis, dan triggering ulang linting.
-* **FileWatchContainer**: Container yang menyatukan semua komponen watch menjadi satu.
+* **NotifyWatchProvider**: Provider that implements watch events using the `notify` crate.
+* **ChangeAnalyzer**: Analyzes file changes to determine whether linting needs to be triggered.
+* **WatchOrchestrator**: Coordinates the watch, analysis, and linting re-triggering process.
+* **FileWatchContainer**: Container that unifies all watch components into one.
 
 ### Inputs
-* Path ke direktori yang akan dipantau.
-* Pola file yang relevan (Rust, Python, JS/TS extensions).
+* Path to the directory to be monitored.
+* Relevant file patterns (Rust, Python, JS/TS extensions).
 
 ### Outputs
-* Event perubahan file yang telah di-debounce.
-* Trigger execute lint pada file yang berubah.
+* Debounced file change events.
+* Lint execution trigger on changed files.
 
 ---
 
 ## 3. Success Indicators
-Keberhasilan modul `file-watch` diukur oleh:
-* **Responsiveness**: Perubahan file terdeteksi dalam 100ms-2s tergantung debouncing.
-* **Debouncing Effectiveness**: Perubahan cepat tidak memicu multiple lint runs.
-* **Resource Efficiency**: Memory usage tetap rendah saat menjalankan watch lama.
-* **Self-Audit Conformity**: Modul ini sendiri lulus pemeriksaan aturan AES.
+The success of the `file-watch` module is measured by:
+* **Responsiveness**: File changes are detected within 100ms-2s depending on debouncing.
+* **Debouncing Effectiveness**: Rapid changes do not trigger multiple lint runs.
+* **Resource Efficiency**: Memory usage remains low during long-running watches.
+* **Self-Audit Conformity**: The module itself passes AES rule checks.

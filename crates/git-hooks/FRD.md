@@ -1,30 +1,30 @@
 # Feature Requirement Document (FRD) - Git Hooks
 
 ## 1. Feature Goal
-Tujuan utama modul `git-hooks` adalah mengimplementasikan sistem git hooks untuk pemeriksaan lint pada tahap pre-commit. Modul ini mendeteksi perubahan file melalui diff git dan menjalankan linter hanya pada file yang dimodifikasi, memastikan kode yang masuk ke repository mematuhi aturan AES.
+The primary purpose of the `git-hooks` module is to implement a git hooks system for lint checking at the pre-commit stage. This module detects file changes through git diffs and runs the linter only on modified files, ensuring that code entering the repository complies with AES rules.
 
 ## 2. Requirements & Scope
-Modul `git-hooks` bertanggung jawab untuk git hooks berdasarkan spesifikasi berikut:
+The `git-hooks` module is responsible for git hooks based on the following specifications:
 
 ### Component Specifications
-* **GitHooksOrchestrator**: Mengkoordinasikan proses pre-commit hook execution.
-* **DiffChecker**: Menganalisis diff git untuk menentukan file yang berubah.
-* **HookManager**: Mengelola instalasi dan konfigurasi git hooks.
-* **GitHookAdapter**: Adapter untuk interaksi dengan sistem git (subprocess calls).
+* **GitHooksOrchestrator**: Coordinates the pre-commit hook execution process.
+* **DiffChecker**: Analyzes git diffs to determine changed files.
+* **HookManager**: Manages git hook installation and configuration.
+* **GitHookAdapter**: Adapter for interaction with the git system (subprocess calls).
 
 ### Inputs
-* Status git stage (staged files).
-* Konfigurasi hook yang didefinisikan dalam YAML.
+* Git staging status (staged files).
+* Hook configuration defined in YAML.
 
 ### Outputs
-* Hasil lint pada file yang dimodifikasi.
-* Exit code non-zero jika ada pelanggaran, mencegah commit.
+* Lint results on modified files.
+* Non-zero exit code if violations are found, preventing the commit.
 
 ---
 
 ## 3. Success Indicators
-Keberhasilan modul `git-hooks` diukur oleh:
-* **Hook Installation**: Hooks terpasang dengan benar di semua jenis sistem (Linux, macOS, Windows).
-* **Diff Accuracy**: Hanya file yang benar-benar diubah yang dipindai.
-* **Commit Blocking**: Commit yang melanggar aturan AES berhasil diblokir.
-* **Self-Audit Conformity**: Modul ini sendiri mematuhi aturan AES dalam kode sumbernya.
+The success of the `git-hooks` module is measured by:
+* **Hook Installation**: Hooks are correctly installed on all system types (Linux, macOS, Windows).
+* **Diff Accuracy**: Only files that have actually been changed are scanned.
+* **Commit Blocking**: Commits that violate AES rules are successfully blocked.
+* **Self-Audit Conformity**: The module itself complies with AES rules in its source code.

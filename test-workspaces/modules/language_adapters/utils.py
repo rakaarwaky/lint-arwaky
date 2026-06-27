@@ -1,5 +1,5 @@
 def deep_nested_complexity(data):
-    """Fungsi ini sengaja dibuat kompleks untuk memicu Radon."""
+    """This function is intentionally made complex to trigger Radon."""
     result = []
     if data:
         for i in data:

@@ -1,11 +1,11 @@
 # Implementation Draft: AI Auto-Repair Model (Flawless AES Dogfooding)
 
-Draft ini mendemonstrasikan implementasi AI Auto-Repair (Rust Burn) dengan tingkat kepatuhan **100% absolut** terhadap aturan 7-Layer AES. Tidak ada satupun *Primitive Obsession*, *Concrete Type Leak*, atau pelanggaran *I/O Boundaries* yang tersisa.
+This draft demonstrates the implementation of AI Auto-Repair (Rust Burn) with **100% absolute** compliance with the 7-Layer AES rules. Not a single *Primitive Obsession*, *Concrete Type Leak*, or *I/O Boundaries* violation remains.
 
 ---
 
 ## 1. Taxonomy Layer (Data, Constants, Errors & Value Objects)
-Layer murni tanpa ketergantungan framework. Semua tipe primitif (`String`, `Path`) yang melintasi *Contract boundary* dibungkus ke dalam *Value Object* (VO).
+Pure layer without framework dependencies. All primitive types (`String`, `Path`) that cross the *Contract boundary* are wrapped in *Value Objects* (VO).
 
 **File:** `taxonomy_system_constant.rs`
 ```rust
@@ -26,14 +26,14 @@ pub enum SystemError {
 ```rust
 use std::path::PathBuf;
 
-/// VO untuk mencegah penggunaan std::path::Path secara telanjang di Contract
+/// VO to prevent bare std::path::Path usage in Contract
 #[derive(Debug, Clone)]
 pub struct FilePath(pub PathBuf);
 ```
 
 **File:** `taxonomy_module_name_vo.rs`
 ```rust
-/// VO untuk mencegah penggunaan &str primitif untuk nama file/modul
+/// VO to prevent primitive &str usage for file/module names
 #[derive(Debug, Clone)]
 pub struct ModuleName(pub String);
 ```
@@ -70,7 +70,7 @@ pub struct AESNamingModelConfig {
 ---
 
 ## 2. Contract Layer (Interfaces / Ports, Protocols & Aggregates)
-Batas suci arsitektur. Tidak ada tipe `std::*` atau primitif Rust yang melintas di sini. Semuanya menggunakan *Taxonomy VO*.
+Sacred boundary of the architecture. No `std::*` types or Rust primitives cross here. Everything uses *Taxonomy VOs*.
 
 **File:** `contract_file_reader_port.rs`
 ```rust
@@ -122,7 +122,7 @@ pub trait AstExtractorProtocol {
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 
-/// Firewall Aggregate: Menyembunyikan Agent Orchestrator dari Root dan Surface
+/// Firewall Aggregate: Hides the Agent Orchestrator from Root and Surface
 pub trait AutorepairAggregate {
     fn execute_fix(&self, workspace_root: &FilePath, target_file: &FilePath) -> Result<(), SystemError>;
 }
@@ -131,7 +131,7 @@ pub trait AutorepairAggregate {
 ---
 
 ## 3. Capabilities Layer (Pure Business Logic)
-Tidak tahu menahu soal file eksternal atau disk. Sepenuhnya *memory-bound*.
+Knows nothing about external files or disk. Entirely *memory-bound*.
 
 **File:** `capabilities_ast_extractor.rs`
 ```rust
@@ -157,7 +157,7 @@ use crate::taxonomy_model_config_vo::AESNamingModelConfig;
 use crate::taxonomy_system_error::SystemError;
 
 pub struct AESNamingModelPredictor {
-    // Layer neural network murni tanpa backend spesifik yang ter-hardcode
+    // Pure neural network layers without hard-coded specific backend
 }
 
 impl AESNamingModelPredictor {
@@ -183,7 +183,7 @@ impl ModelPredictorProtocol for AESNamingModelPredictor {
 ---
 
 ## 4. Infrastructure Layer (I/O & External Systems)
-Penanganan OS dan *File System*.
+Handles OS and *File System* operations.
 
 **File:** `infrastructure_fs_reader.rs`
 ```rust
@@ -216,7 +216,7 @@ pub struct FileSystemReferenceWriterAdapter;
 
 impl ReferenceWriterPort for FileSystemReferenceWriterAdapter {
     fn propagate_rename(&self, workspace_root: &FilePath, old_name: &ModuleName, new_name: &ModuleName) -> Result<(), SystemError> {
-        // Implementasi mutasi referensi workspace murni
+        // Pure workspace reference mutation implementation
         Ok(())
     }
 }
@@ -225,7 +225,7 @@ impl ReferenceWriterPort for FileSystemReferenceWriterAdapter {
 ---
 
 ## 5. Agent Layer (Orchestration Workflow)
-*Orchestrator* kini hanya bergantung pada *Contract*, merangkai VO, dan tidak membocorkan *concrete type* keluar.
+The *Orchestrator* now only depends on *Contract*, assembles VOs, and does not leak *concrete types* outward.
 
 **File:** `agent_autorepair_orchestrator.rs`
 ```rust
@@ -266,7 +266,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
         let old_name_str = target_file.0.file_name().and_then(|n| n.to_str())
             .ok_or_else(|| SystemError::ParsingError("Invalid file name".to_string()))?;
 
-        // Menggunakan VO untuk mitigasi primitive obsession
+        // Using VO to mitigate primitive obsession
         let old_name = ModuleName(old_name_str.to_string());
         let new_name = ModuleName(new_name_str);
 
@@ -279,7 +279,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
 ---
 
 ## 6. Surface Layer (User Interaction / UI)
-*Surface* yang murni pasif (AES406). Ia hanya men-dispatch instruksi ke dalam *Aggregate Firewall*, dan me-return *Result*. 
+The *Surface* is purely passive (AES406). It only dispatches instructions into the *Aggregate Firewall* and returns the *Result*.
 
 **File:** `surface_autofix_command.rs`
 ```rust
@@ -287,8 +287,8 @@ use crate::contract_autorepair_aggregate::AutorepairAggregate;
 use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 
-/// Dipanggil dari Binary Entry (Root Layer). 
-/// Surface tidak tahu menahu tentang concrete Orchestrator atau error printing.
+/// Called from Binary Entry (Root Layer). 
+/// Surface has no knowledge of the concrete Orchestrator or error printing.
 pub fn handle_autofix_command(
     aggregate: &dyn AutorepairAggregate, 
     workspace: &FilePath, 
@@ -301,7 +301,7 @@ pub fn handle_autofix_command(
 ---
 
 ## 7. Root Layer (Dependency Injection / Composition Root)
-*Container* merakit segalanya dan **hanya mengembalikan tipe Trait/Aggregate (Interface)**. Bebas dari *hardcoded Burn Backend*.
+The *Container* assembles everything and **only returns Trait/Aggregate types (Interface)**. Free of *hardcoded Burn Backend*.
 
 **File:** `root_app_container.rs`
 ```rust
@@ -320,7 +320,7 @@ use std::path::PathBuf;
 pub struct AutorepairContainer;
 
 impl AutorepairContainer {
-    /// PENTING: Mengembalikan tipe Trait Object (Interface), bukan concrete struct
+    /// IMPORTANT: Returns a Trait Object (Interface), not a concrete struct
     pub fn build() -> Result<Box<dyn AutorepairAggregate>, SystemError> {
         let reader = Box::new(FileSystemReaderAdapter);
         let writer = Box::new(FileSystemReferenceWriterAdapter);
@@ -351,7 +351,7 @@ fn main() {
             let workspace = FilePath(PathBuf::from("./"));
             let target = FilePath(PathBuf::from("src/wrong_file.rs"));
             
-            // Error handling murni ditangani oleh Root
+            // Error handling is purely handled by the Root
             if let Err(e) = handle_autofix_command(aggregate.as_ref(), &workspace, &target) {
                 eprintln!("Fatal Error (Domain): {:?}", e);
                 std::process::exit(1);

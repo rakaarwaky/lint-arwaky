@@ -1,32 +1,32 @@
 # Feature Requirement Document (FRD) - Config System
 
 ## 1. Feature Goal
-Tujuan utama modul `config-system` adalah mengelola konfigurasi lint_arwaky dengan mengimplementasikan sistem pemuatan, parsing, validasi, serta deteksi workspace. Modul ini bertanggung jawab untuk membaca file `lint_arwaky.config.*.yaml` dan menggabungkannya dengan override level proyek.
+The primary purpose of the `config-system` module is to manage lint_arwaky configuration by implementing a loading, parsing, validation, and workspace detection system. This module is responsible for reading `lint_arwaky.config.*.yaml` files and merging them with project-level overrides.
 
 ## 2. Requirements & Scope
-Modul `config-system` bertanggung jawab untuk konfigurasi berdasarkan spesifikasi berikut:
+The `config-system` module is responsible for configuration based on the following specifications:
 
 ### Component Specifications
-* **ConfigLoadingOrchestrator**: Mengkoordinasikan proses pemuatan konfigurasi dari berbagai sumber.
-* **ConfigRulesValidator**: Memvalidasi aturan konfigurasi yang dimuat sesuai skema yang ditentukan.
-* **WorkspaceDetector**: Mendeteksi root workspace Rust berdasarkan Cargo.toml atau root proyek umum.
-* **ConfigParserProvider**: Menyediakan parser untuk format YAML, TOML (Cargo.toml), dan konfigurasi lainnya.
-* **ConfigYamlReader**: Membaca dan mengurai berkas konfigurasi YAML utama.
-* **MultiProjectOrchestrator**: Mengelola konfigurasi untuk multiple project/workspace secara bersamaan.
+* **ConfigLoadingOrchestrator**: Coordinates the configuration loading process from various sources.
+* **ConfigRulesValidator**: Validates loaded configuration rules against the defined schema.
+* **WorkspaceDetector**: Detects Rust workspace roots based on Cargo.toml or common project roots.
+* **ConfigParserProvider**: Provides parsers for YAML, TOML (Cargo.toml), and other configuration formats.
+* **ConfigYamlReader**: Reads and parses the main YAML configuration file.
+* **MultiProjectOrchestrator**: Manages configuration for multiple projects/workspaces simultaneously.
 
 ### Inputs
-* Path ke root proyek atau direktori kerja saat ini.
-* Nilai konfigurasi default dan aturan AES yang ditentukan.
+* Path to the project root or current working directory.
+* Default configuration values and defined AES rules.
 
 ### Outputs
-* Struct konfigurasi yang sudah divalidasi (`ArchitectureConfig`).
-* Error validasi jika konfigurasi tidak sesuai skema.
+* A validated configuration struct (`ArchitectureConfig`).
+* Validation errors if the configuration does not match the schema.
 
 ---
 
 ## 3. Success Indicators
-Keberhasilan modul `config-system` diukur oleh:
-* **Discovery Reliability**: Workspace terdeteksi dengan benar dari berbagai struktur proyek.
-* **Validation Accuracy**: Konfigurasi tidak valid ditolak dengan pesan error yang jelas.
-* **Merge Correctness**: Override level proyek digabungkan dengan benar tanpa konflik.
-* **Self-Audit Conformity**: Modul ini sendiri mematuhi aturan AES dalam kode sumbernya.
+The success of the `config-system` module is measured by:
+* **Discovery Reliability**: Workspaces are correctly detected from various project structures.
+* **Validation Accuracy**: Invalid configurations are rejected with clear error messages.
+* **Merge Correctness**: Project-level overrides are merged correctly without conflicts.
+* **Self-Audit Conformity**: The module itself complies with AES rules in its source code.

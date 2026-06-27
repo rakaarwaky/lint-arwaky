@@ -1,7 +1,7 @@
 """
 Security Dump Adapter — TEST PROJECT ONLY.
-Sengaja dibuat sangat tidak aman untuk menguji Bandit scanner.
-BUKAN KODE PRODUKSI.
+Intentionally made very insecure to test the Bandit scanner.
+NOT PRODUCTION CODE.
 """
 
 import os
@@ -44,7 +44,7 @@ def check_admin(user_id):
 
 
 # =============================================================================
-# VIOLATION 3: eval() dan exec() (B307)
+# VIOLATION 3: eval() and exec() (B307)
 # =============================================================================
 def evaluate_expression(expr):
     return eval(expr)
@@ -108,7 +108,7 @@ def database_operation(query):
 
 
 # =============================================================================
-# VIOLATION 6: Pickle module import dan penggunaan (B301)
+# VIOLATION 6: Pickle module import and usage (B301)
 # =============================================================================
 def serialize_object(obj):
     return pickle.dumps(obj)
@@ -146,7 +146,7 @@ def hash_file_sha1(filepath):
 
 
 # =============================================================================
-# VIOLATION 8: random module — bukan crypto random (B311)
+# VIOLATION 8: random module — not crypto random (B311)
 # =============================================================================
 def generate_session_id():
     return random.randint(100000, 999999)
@@ -168,7 +168,7 @@ def pick_backup_node(nodes):
 
 
 # =============================================================================
-# VIOLATION 9: yaml.load tanpa safe_load (B506)
+# VIOLATION 9: yaml.load without safe_load (B506)
 # =============================================================================
 def load_yaml_config(content):
     return yaml.load(content)
@@ -187,7 +187,7 @@ def merge_yaml_configs(base, override):
 
 
 # =============================================================================
-# VIOLATION 10: subprocess dengan shell=True (B602)
+# VIOLATION 10: subprocess with shell=True (B602)
 # =============================================================================
 def run_command(cmd):
     return subprocess.check_output(cmd, shell=True)
@@ -260,7 +260,7 @@ def tail_log(logfile):
 
 
 # =============================================================================
-# VIOLATION 13: requests dengan verify=False (B501)
+# VIOLATION 13: requests with verify=False (B501)
 # =============================================================================
 def fetch_insecure(url):
     return requests.get(url, verify=False)
@@ -338,7 +338,7 @@ def generate_email_body(user_name, message):
 
 
 # =============================================================================
-# VIOLATION 17: XML parsing dengan vulnerable parser (B314, B315, B319)
+# VIOLATION 17: XML parsing with vulnerable parser (B314, B315, B319)
 # =============================================================================
 def parse_xml(xml_string):
     return ET.fromstring(xml_string)

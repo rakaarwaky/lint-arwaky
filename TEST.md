@@ -1,10 +1,10 @@
 # Test Plan — Test Project Methodology
 
-> **Prinsip**: Aplikasi hanya dinyatakan **LULUS** jika berhasil mendeteksi **banyak violations** pada test project folder.
+> **Principle**: The application is only declared **PASSED** if it successfully detects **many violations** in the test project folder.
 
 ## 1. Test Projects
 
-Ada 23 test workspace member dengan intentional violations yang dikelompokkan di bawah satu direktori multi-project:
+There are 23 test workspace members with intentional violations grouped under a single multi-project directory:
 
 | Category         | Workspace Members | Path                                | Purpose                               |
 | ---------------- | ----------------- | ----------------------------------- | ------------------------------------- |
@@ -12,48 +12,48 @@ Ada 23 test workspace member dengan intentional violations yang dikelompokkan di
 | Python (modules) | 8                 | `test-workspaces/modules/<name>`  | AES Python + Ruff/MyPy/Bandit scans   |
 | JS/TS (packages) | 8                 | `test-workspaces/packages/<name>` | AES JS/TS + ESLint/Prettier/TSC scans |
 
-> **Catatan**: `check` = AES self-lint — hanya untuk `crates/` project sendiri. `scan` = multi-adapter — untuk SEMUA target project (Rust, Python, JavaScript).
-> `check` HANYA untuk `cargo run --bin lint-arwaky-cli -- check .` (self-lint). Test project menggunakan `scan`.
-> Test Python & JavaScript membutuhkan external tools terinstall (ruff, mypy, bandit, eslint, dll) untuk violations tambahan.
+> **Note**: `check` = AES self-lint — only for the `crates/` project itself. `scan` = multi-adapter — for ALL target projects (Rust, Python, JavaScript).
+> `check` is ONLY for `cargo run --bin lint-arwaky-cli -- check .` (self-lint). Test projects use `scan`.
+> Python & JavaScript tests require external tools installed (ruff, mypy, bandit, eslint, etc.) for additional violations.
 
-## 2. Cara Menjalankan Test
+## 2. How to Run Tests
 
-### 2.1 Menjalankan Scan Multi-Workspace (Semua Project)
+### 2.1 Running a Multi-Workspace Scan (All Projects)
 
 ```bash
 cd /home/raka/mcp-arwaky/lint-arwaky
 cargo run --bin lint-arwaky-cli -- scan test-workspaces/
 ```
 
-### 2.2 Menjalankan Scan pada Specific Workspace Member
+### 2.2 Running a Scan on a Specific Workspace Member
 
 ```bash
-# Contoh menscan salah satu Rust workspace member
+# Example: scanning one Rust workspace member
 cargo run --bin lint-arwaky-cli -- scan test-workspaces/crates/cli_commands
 
-# Contoh menscan salah satu Python workspace member
+# Example: scanning one Python workspace member
 cargo run --bin lint-arwaky-cli -- scan test-workspaces/modules/cli_commands
 
-# Contoh menscan salah satu JS/TS workspace member
+# Example: scanning one JS/TS workspace member
 cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 ```
 
-## 3. Kriteria LULUS / GAGAL
+## 3. Pass / Fail Criteria
 
-| Kriteria                           | LULUS                  | GAGAL         |
+| Criteria                           | PASS                   | FAIL          |
 | ---------------------------------- | ---------------------- | ------------- |
 | Total discovered workspace members | 23 workspace members   | < 23          |
-| Total violations (scan)            | >= 2000 violations     | < 2000 atau 0 |
+| Total violations (scan)            | >= 2000 violations     | < 2000 or 0   |
 | Unique AES codes (Rust)            | >= 24 unique AES codes | < 24          |
 | Unique AES codes (Python)          | >= 24 unique AES codes | < 24          |
 | Unique AES codes (JS/TS)           | >= 24 unique AES codes | < 24          |
 | Total unique AES codes (all)       | >= 24 unique AES codes | < 24          |
 
-## 4. Violations yang Diharapkan
+## 4. Expected Violations
 
 ### 4.1 Rust (AES Self-Lint) — 155 violations detected ✅
 
-| AES Code | Type                | Contoh File                                                |
+| AES Code | Type                | Example File                                                |
 | -------- | ------------------- | ---------------------------------------------------------- |
 | AES201   | Forbidden import    | surface_direct_infra_handler, taxonomy_forbidden_import    |
 | AES202   | Mandatory import    | capabilities files missing taxonomy import                 |
@@ -96,7 +96,7 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 cargo run --bin lint-arwaky-cli -- scan test-workspaces/
 ```
 
-**Baseline v1.10.29** (22 Juni 2026):
+**Baseline v1.10.29** (22 June 2026):
 
 | Project                 | Command                           | Total Violations | Unique AES Codes | Status  |
 | ----------------------- | --------------------------------- | ---------------- | ---------------- | ------- |

@@ -2,11 +2,11 @@
 
 ## Why
 
-- Official SDK dari modelcontextprotocol org (3.5k stars)
-- `#[tool]` macro — auto-generate JSON Schema dari struct
-- Built-in stdio transport — tidak perlu hand-roll JSON-RPC
+- Official SDK from modelcontextprotocol org (3.5k stars)
+- `#[tool]` macro — auto-generate JSON Schema from struct
+- Built-in stdio transport — no need to hand-roll JSON-RPC
 - `ServerHandler` trait — proper lifecycle management
-- Lebih sedikit boilerplate, lebih compliant dengan MCP spec
+- Less boilerplate, more compliant with MCP spec
 
 ## Current → Target
 

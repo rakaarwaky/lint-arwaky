@@ -1,41 +1,41 @@
 # Feature Requirement Document (FRD) - Auto Fix
 
 ## 1. Feature Goal
-Tujuan utama modul `auto-fix` adalah menyediakan mekanisme perbaikan otomatis untuk pelanggaran aturan AES yang dapat diperbaiki secara mekanis. Modul ini mengambil hasil linting dan menerapkan koreksi otomatis pada file sumber yang bersangkutan, mengurangi beban kerja manual developer dalam memperbaiki kesalahan yang dapat dideteksi dan diperbaiki secara deterministik.
+The primary purpose of the `auto-fix` module is to provide an automatic correction mechanism for AES rule violations that can be fixed mechanically. This module takes linting results and applies automatic corrections to the affected source files, reducing the manual workload for developers when fixing errors that can be detected and corrected deterministically.
 
 ## 2. Requirements & Scope
-Modul `auto-fix` bertanggung jawab untuk menerapkan koreksi otomatis berdasarkan spesifikasi berikut:
+The `auto-fix` module is responsible for applying automatic corrections based on the following specifications:
 
 ### Rules Specifications
-* **AES Fix: Perbaikan Import yang Tidak Digunakan**
-  * **Requirement**: Menghapus baris import yang tidak direferensikan dalam file secara otomatis.
-  * **Scope**: Rust, Python, JavaScript, dan TypeScript.
+* **AES Fix: Unused Import Correction**
+  * **Requirement**: Automatically remove import lines that are not referenced in the file.
+  * **Scope**: Rust, Python, JavaScript, and TypeScript.
 
-* **AES Fix: Perbaikan Penamaan File**
-  * **Requirement**: Mengganti nama file yang melanggar konvensi snake_case menjadi format yang benar secara otomatis.
-  * **Scope**: Semua bahasa yang didukung.
+* **AES Fix: File Naming Correction**
+  * **Requirement**: Automatically rename files that violate the snake_case convention to the correct format.
+  * **Scope**: All supported languages.
 
-* **AES Fix: Perbaikan Bypass Warning**
-  * **Requirement**: Menambahkan atau memperbaiki komentar bypass (seperti `noqa`, `type: ignore`) yang tidak valid menjadi format yang benar, atau menghapusnya bersama perbaikan kode.
-  * **Scope**: Python (ruff, mypy) dan JavaScript/TypeScript (eslint).
+* **AES Fix: Bypass Warning Correction**
+  * **Requirement**: Add or fix invalid bypass comments (such as `noqa`, `type: ignore`) to the correct format, or remove them along with the code fix.
+  * **Scope**: Python (ruff, mypy) and JavaScript/TypeScript (eslint).
 
-* **AES Fix: Perbaikan Format Kode**
-  * **Requirement**: Mengaplikasikan format otomatis menggunakan rustfmt, prettier, atau formatter bawaan.
+* **AES Fix: Code Format Correction**
+  * **Requirement**: Apply automatic formatting using rustfmt, prettier, or the built-in formatter.
   * **Scope**: Rust, JavaScript/TypeScript.
 
 ### Inputs
-* Daftar hasil linting (`Vec<LintResult>`) yang mengandung pelanggaran yang dapat diperbaiki.
-* Konfigurasi proyek (`ArchitectureConfig`) untuk menentukan aturan yang berlaku.
+* A list of linting results (`Vec<LintResult>`) containing fixable violations.
+* Project configuration (`ArchitectureConfig`) to determine the applicable rules.
 
 ### Outputs
-* File sumber yang telah diperbaiki.
-* Laporan perubahan yang berisi jumlah perbaikan yang diterapkan per kategori.
+* Source files that have been corrected.
+* A change report containing the number of fixes applied per category.
 
 ---
 
 ## 3. Success Indicators
-Keberhasilan modul `auto-fix` diukur oleh:
-* **Akurasi Perbaikan**: Perbaikan yang diterapkan tidak merusak fungsionalitas kode.
-* **Coverage Rules**: Persentase pelanggaran yang dapat diperbaiki secara otomatis mencapai target.
-* **Idempotensi**: Menjalankan auto-fix berulang kali pada file yang sama tidak menimbulkan perubahan tambahan.
-* **Self-Audit**: Modul ini sendiri harus mematuhi aturan AES dan lulus pemeriksaan linting.
+The success of the `auto-fix` module is measured by:
+* **Fix Accuracy**: Applied fixes do not break code functionality.
+* **Coverage Rules**: The percentage of automatically fixable violations reaches the target.
+* **Idempotency**: Running auto-fix repeatedly on the same file does not produce additional changes.
+* **Self-Audit**: The module itself must comply with AES rules and pass linting checks.

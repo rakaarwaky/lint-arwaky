@@ -27,11 +27,12 @@ use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
+
+use shared::external_lint::taxonomy_external_lint_helper::{default_working_dir, exec_cmd_adapter};
 
 pub struct RuffAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
@@ -85,90 +86,79 @@ impl ILinterAdapterPort for RuffAdapter {
             "--exit-zero".to_string(),
             "--no-cache".to_string(),
         ];
-        let command = PatternList::new(cmd);
-        let working_dir = match FilePath::new(".".to_string()) {
-            Ok(fp) => fp,
-            Err(_) => path.clone(),
-        };
+        let working_dir = default_working_dir(path);
 
-        match self
-            .executor
-            .execute_command(
-                command,
-                working_dir,
-                Some(shared::taxonomy_duration_vo::Timeout::new(60.0)),
-            )
-            .await
-        {
-            Ok(response) => {
-                let stdout = &response.stdout;
-                let findings: Vec<Value> = match serde_json::from_str(stdout) {
-                    Ok(v) => v,
-                    Err(e) => {
-                        return Err(LinterOperationError::Adapter(AdapterError::new(
-                            self.name(),
-                            ErrorMessage::new(format!(
-                                "Failed to parse ruff JSON output: {}. Output was: {:?}",
-                                e,
-                                stdout.chars().take(200).collect::<String>()
-                            )),
-                        )));
-                    }
-                };
-                let mut results = Vec::new();
+        let response = exec_cmd_adapter(
+            self.executor.as_ref(),
+            cmd,
+            working_dir,
+            60.0,
+            self.name(),
+        )
+        .await?;
 
-                for f in findings {
-                    let filename = f
-                        .get("filename")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or_default();
-                    let row = f
-                        .get("location")
-                        .and_then(|l| l.get("row"))
-                        .and_then(|v| v.as_i64())
-                        .unwrap_or_default();
-                    let col = f
-                        .get("location")
-                        .and_then(|l| l.get("column"))
-                        .and_then(|v| v.as_i64())
-                        .unwrap_or_default();
-                    let code = f.get("code").and_then(|v| v.as_str()).unwrap_or("UNKNOWN");
-                    let message = f
-                        .get("message")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or_default();
-                    let severity_str = f
-                        .get("severity")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or_default();
-
-                    let resolved = self.path_norm.resolve_infrastructure_path(
-                        match FilePath::new(filename) {
-                            Ok(fp) => fp,
-                            Err(_) => path.clone(),
-                        },
-                        Some(path.clone()),
-                    );
-
-                    results.push(LintResult {
-                        file: resolved,
-                        line: LineNumber::new(row),
-                        column: ColumnNumber::new(col),
-                        code: ErrorCode::raw(code),
-                        message: LintMessage::new(message),
-                        source: Some(self.name()),
-                        severity: self.map_severity(severity_str, code),
-                        enclosing_scope: None,
-                        related_locations: LocationList::new(),
-                    });
-                }
-                Ok(LintResultList::new(results))
+        let stdout = &response.stdout;
+        let findings: Vec<Value> = match serde_json::from_str(stdout) {
+            Ok(v) => v,
+            Err(e) => {
+                return Err(LinterOperationError::Adapter(AdapterError::new(
+                    self.name(),
+                    ErrorMessage::new(format!(
+                        "Failed to parse ruff JSON output: {}. Output was: {:?}",
+                        e,
+                        stdout.chars().take(200).collect::<String>()
+                    )),
+                )));
             }
-            Err(e) => Err(LinterOperationError::Adapter(AdapterError::new(
-                self.name(),
-                ErrorMessage::new(format!("Ruff execution failed: {}", e)),
-            ))),
+        };
+        let mut results = Vec::new();
+
+        for f in findings {
+            let filename = f
+                .get("filename")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default();
+            let row = f
+                .get("location")
+                .and_then(|l| l.get("row"))
+                .and_then(|v| v.as_i64())
+                .unwrap_or_default();
+            let col = f
+                .get("location")
+                .and_then(|l| l.get("column"))
+                .and_then(|v| v.as_i64())
+                .unwrap_or_default();
+            let code = f.get("code").and_then(|v| v.as_str()).unwrap_or("UNKNOWN");
+            let message = f
+                .get("message")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default();
+            let severity_str = f
+                .get("severity")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default();
+
+            let resolved = self.path_norm.resolve_infrastructure_path(
+                match FilePath::new(filename) {
+                    Ok(fp) => fp,
+                    Err(_) => path.clone(),
+                },
+                Some(path.clone()),
+            );
+
+            results.push(LintResult {
+                file: resolved,
+                line: LineNumber::new(row),
+                column: ColumnNumber::new(col),
+                code: ErrorCode::raw(code),
+                message: LintMessage::new(message),
+                source: Some(self.name()),
+                severity: self.map_severity(severity_str, code),
+                enclosing_scope: None,
+                related_locations: LocationList::new(),
+            });
         }
+        Ok(LintResultList::new(results))
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
@@ -180,26 +170,9 @@ impl ILinterAdapterPort for RuffAdapter {
             "--fix".to_string(),
             "--exit-zero".to_string(),
         ];
-        let command = PatternList::new(cmd);
-        let working_dir = match FilePath::new(".".to_string()) {
-            Ok(fp) => fp,
-            Err(_) => path.clone(),
-        };
+        let working_dir = default_working_dir(path);
 
-        match self
-            .executor
-            .execute_command(
-                command,
-                working_dir,
-                Some(shared::taxonomy_duration_vo::Timeout::new(60.0)),
-            )
-            .await
-        {
-            Ok(_) => Ok(ComplianceStatus::new(true)),
-            Err(e) => Err(LinterOperationError::Adapter(AdapterError::new(
-                self.name(),
-                ErrorMessage::new(format!("Ruff fix failed: {}", e)),
-            ))),
-        }
+        let _ = exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 60.0, self.name()).await?;
+        Ok(ComplianceStatus::new(true))
     }
 }

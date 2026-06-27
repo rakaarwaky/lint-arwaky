@@ -1,35 +1,35 @@
 # Feature Requirement Document (FRD) - Project Setup
 
 ## 1. Feature Goal
-Tujuan utama modul `project-setup` adalah menyediakan fasilitas scaffolding dan doctor checks untuk proyek baru. Modul ini menginisialisasi proyek dengan layout direktori yang sesuai AES, menyiapkan konfigurasi MCP, dan menyediakan template CI/CD untuk integrasi lint_arwaky.
+The primary purpose of the `project-setup` module is to provide scaffolding facilities and doctor checks for new projects. This module initializes projects with AES-compliant directory layouts, sets up MCP configuration, and provides CI/CD templates for lint_arwaky integration.
 
 ## 2. Requirements & Scope
-Modul `project-setup` bertanggung jawab untuk setup berdasarkan spesifikasi berikut:
+The `project-setup` module is responsible for setup based on the following specifications:
 
 ### Component Specifications
-* **SetupManagementOrchestrator**: Mengkoordinasikan proses inisialisasi proyek.
-* **SetupManagementProcessor**: Memproses template dan file-file yang perlu dibuat.
-* **SetupInstallerAdapter**: Adapter untuk operasi filesystem dan template installation.
+* **SetupManagementOrchestrator**: Coordinates the project initialization process.
+* **SetupManagementProcessor**: Processes templates and files that need to be created.
+* **SetupInstallerAdapter**: Adapter for filesystem operations and template installation.
 
 ### Features
-* **init**: Membuat struktur direktori AES (taxonomy, contract, capabilities, infrastructure, agent, surface, root).
-* **doctor**: Memeriksa apakah proyek sudah siap untuk lint_arwaky.
-* **mcp-config**: Membuat konfigurasi MCP untuk integrasi AI.
-* **ci-templates**: Menyediakan template GitHub Actions atau scripts CI.
+* **init**: Create AES directory structure (taxonomy, contract, capabilities, infrastructure, agent, surface, root).
+* **doctor**: Check whether a project is ready for lint_arwaky.
+* **mcp-config**: Create MCP configuration for AI integration.
+* **ci-templates**: Provide GitHub Actions templates or CI scripts.
 
 ### Inputs
-* Path target untuk inisialisasi.
-* Parameter setup (bahasa, framework, template).
+* Target path for initialization.
+* Setup parameters (language, framework, template).
 
 ### Outputs
-* File-file template yang telah dibuat.
-* Status inisialisasi dan pesan error bila diperlukan.
+* Created template files.
+* Initialization status and error messages when needed.
 
 ---
 
 ## 3. Success Indicators
-Keberhasilan modul `project-setup` diuki oleh:
-* **Structure Correctness**: Direktori dan file terbuat sesuai pola AES.
-* **Template Accuracy**: Template yang dibuat siap pakai dan sesuai standar.
-* **CI Integration**: Workflow CI dapat langsung dipakai tanpa modifikasi.
-* **Self-Audit Conformity**: Modul ini sendiri lulus pemeriksaan aturan AES.
+The success of the `project-setup` module is measured by:
+* **Structure Correctness**: Directories and files are created according to AES patterns.
+* **Template Accuracy**: Created templates are ready to use and meet standards.
+* **CI Integration**: CI workflows can be used immediately without modification.
+* **Self-Audit Conformity**: The module itself passes AES rule checks.
