@@ -35,3 +35,6 @@ orphan_detector.workspace = true
 auto_fix.workspace = true
 config_system.workspace = true
 git_hooks.workspace = true
+file_watch.workspace = true
+project_setup.workspace = true
+maintenance.workspace = true
