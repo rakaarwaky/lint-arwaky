@@ -235,7 +235,8 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
         let mut config = match serde_json::from_value::<ArchitectureConfig>(json) {
             Ok(c) => c,
             Err(e) => {
-                println!("[debug] serde_json from_value error: {:?}", e);
+                eprintln!("[warn] Failed to deserialize ArchitectureConfig: {:?}", e);
+                eprintln!("[warn] Falling back to default config. Check your YAML syntax and field types.");
                 ArchitectureConfig::default()
             }
         };
@@ -277,10 +278,14 @@ pub fn default_aes_config() -> ArchitectureConfig {
 
 pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
     match language {
+        "rust" => default_aes_config(),
         "python" => parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml")),
         "javascript" | "typescript" => parse_config_yaml(include_str!(
             "../../../../lint_arwaky.config.javascript.yaml"
         )),
-        _ => default_aes_config(),
+        _ => {
+            eprintln!("[warn] Unknown language '{}', using empty default config.", language);
+            ArchitectureConfig::default()
+        }
     }
 }

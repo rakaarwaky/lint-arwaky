@@ -101,3 +101,17 @@ fn primitive_vo_deserialize_from_map() {
     let v: MyNum = serde_json::from_str("{\"value\":11}").unwrap();
     assert_eq!(v.value(), 11);
 }
+
+#[test]
+fn score_deserialize_from_integer() {
+    let score: shared_lint_arwaky::common::taxonomy_common_vo::Score =
+        serde_json::from_str("80").unwrap();
+    assert_eq!(score.value, 80.0);
+}
+
+#[test]
+fn score_deserialize_from_float() {
+    let score: shared_lint_arwaky::common::taxonomy_common_vo::Score =
+        serde_json::from_str("80.5").unwrap();
+    assert_eq!(score.value, 80.5);
+}

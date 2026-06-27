@@ -476,6 +476,18 @@ impl<'de> serde::Deserialize<'de> for Score {
             {
                 Ok(Score { value: v })
             }
+            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(Score { value: v as f64 })
+            }
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(Score { value: v as f64 })
+            }
             fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
             where
                 A: serde::de::MapAccess<'de>,
