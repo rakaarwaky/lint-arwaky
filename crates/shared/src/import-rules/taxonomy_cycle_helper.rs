@@ -1,6 +1,6 @@
 // PURPOSE: taxonomy_cycle_helper — pure utility functions for cycle and layer path normalization
-use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use crate::common::taxonomy_name_vo::SymbolName;
+use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use std::collections::{HashMap, HashSet};
 
 pub fn normalize_to_layer(name: &str) -> String {

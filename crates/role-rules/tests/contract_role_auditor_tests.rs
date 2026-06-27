@@ -1,4 +1,6 @@
-use role_rules_lint_arwaky::capabilities_contract_role_auditor::{extract_trait_method_signatures, signature_uses_forbidden_primitive};
+use role_rules_lint_arwaky::capabilities_contract_role_auditor::{
+    extract_trait_method_signatures, signature_uses_forbidden_primitive,
+};
 
 #[test]
 fn extracts_single_line_method_signatures() {
@@ -20,12 +22,16 @@ fn ignores_free_functions_and_impls() {
 
 #[test]
 fn detects_string_param() {
-    assert_eq!(signature_uses_forbidden_primitive("fn f(&self, msg: String);"), vec!["String"]);
+    assert_eq!(
+        signature_uses_forbidden_primitive("fn f(&self, msg: String);"),
+        vec!["String"]
+    );
 }
 
 #[test]
 fn detects_result_string() {
-    let v = signature_uses_forbidden_primitive("fn f(&self, p: &Path) -> Result<String, ErrorCode>;");
+    let v =
+        signature_uses_forbidden_primitive("fn f(&self, p: &Path) -> Result<String, ErrorCode>;");
     assert!(v.contains(&"String"));
     assert!(v.contains(&"Result<String, _>"));
 }
@@ -39,13 +45,18 @@ fn detects_result_borrowed_str() {
 #[test]
 fn detects_numeric_primitives() {
     assert!(signature_uses_forbidden_primitive("fn f(&self, n: i32) -> i64;").contains(&"i32"));
-    assert!(signature_uses_forbidden_primitive("fn f(&self, n: usize) -> bool;").contains(&"usize"));
+    assert!(
+        signature_uses_forbidden_primitive("fn f(&self, n: usize) -> bool;").contains(&"usize")
+    );
     assert!(signature_uses_forbidden_primitive("fn f(&self) -> f64;").contains(&"f64"));
 }
 
 #[test]
 fn allows_borrowed_str() {
-    assert!(signature_uses_forbidden_primitive("fn f(&self, file: &str, content: &str) -> bool;").is_empty());
+    assert!(
+        signature_uses_forbidden_primitive("fn f(&self, file: &str, content: &str) -> bool;")
+            .is_empty()
+    );
 }
 
 #[test]

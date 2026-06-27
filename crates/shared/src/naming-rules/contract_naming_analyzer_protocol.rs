@@ -1,8 +1,8 @@
 // PURPOSE: INamingAnalyzerProtocol — protocol trait for naming-rules analyzer dependency isolation
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::common::taxonomy_definition_vo::LayerMapVO;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 
 pub trait INamingAnalyzerProtocol: Send + Sync {
     fn config(&self) -> &ArchitectureConfig;

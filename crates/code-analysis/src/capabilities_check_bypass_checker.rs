@@ -463,4 +463,3 @@ fn classify_token(token: &str) -> ViolationKind {
         _ => ViolationKind::BypassComment,
     }
 }
-

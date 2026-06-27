@@ -55,4 +55,3 @@ impl Hash for AdapterName {
         self.value.hash(state);
     }
 }
-

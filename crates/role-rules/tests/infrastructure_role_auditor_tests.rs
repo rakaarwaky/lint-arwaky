@@ -1,6 +1,6 @@
 use role_rules_lint_arwaky::capabilities_infrastructure_role_auditor::InfrastructureRoleChecker;
-use shared::role_rules::contract_infrastructure_role_protocol::IInfrastructureRoleChecker;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::role_rules::contract_infrastructure_role_protocol::IInfrastructureRoleChecker;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 
 fn make_source(file: &str, content: &str, language: &str) -> SourceContentVO {
@@ -25,7 +25,11 @@ fn rust_with_port_import_no_violation() {
 fn rust_without_port_import_emits_violation() {
     let checker = InfrastructureRoleChecker::new();
     let mut violations = Vec::new();
-    let source = make_source("infrastructure_random.rs", "fn helper() -> i32 { 42 }", "rust");
+    let source = make_source(
+        "infrastructure_random.rs",
+        "fn helper() -> i32 { 42 }",
+        "rust",
+    );
     checker.check_port_implementation(&source, &mut violations);
     assert_eq!(violations.len(), 1);
     assert!(violations[0].code.to_string().contains("AES404"));
@@ -48,7 +52,11 @@ fn python_with_port_import_no_violation() {
 fn js_without_port_import_emits_violation() {
     let checker = InfrastructureRoleChecker::new();
     let mut violations = Vec::new();
-    let source = make_source("infrastructure_foo.js", "function helper() { return 42; }", "javascript");
+    let source = make_source(
+        "infrastructure_foo.js",
+        "function helper() { return 42; }",
+        "javascript",
+    );
     checker.check_port_implementation(&source, &mut violations);
     assert_eq!(violations.len(), 1);
     assert!(violations[0].code.to_string().contains("AES404"));

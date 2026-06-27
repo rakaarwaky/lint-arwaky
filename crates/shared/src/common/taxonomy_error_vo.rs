@@ -65,4 +65,3 @@ impl Hash for ErrorCode {
         self.code.hash(state);
     }
 }
-

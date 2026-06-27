@@ -32,7 +32,12 @@ impl SuffixPrefixChecker {
         Self {}
     }
 
-    pub fn make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
+    pub fn make_result(
+        file: &str,
+        code: &str,
+        msg: impl Into<String>,
+        sev: Severity,
+    ) -> LintResult {
         let file_path = FilePath::new(file.to_string()).unwrap_or_default();
         LintResult {
             file: file_path,
@@ -128,8 +133,7 @@ impl SuffixPrefixChecker {
         // Step 5: Check if the suffix is explicitly forbidden for the current layer.
         if let Some(ref suf) = suffix {
             if def.naming.forbidden_suffix.values.contains(suf) {
-                let layer_display =
-                    _layer_name.as_deref().unwrap_or("unknown").to_string();
+                let layer_display = _layer_name.as_deref().unwrap_or("unknown").to_string();
                 violations.push(Self::make_result(
                     file,
                     "AES102",
@@ -158,8 +162,7 @@ impl SuffixPrefixChecker {
             };
             if !valid {
                 let allowed_list = def.naming.allowed_suffix.values.clone();
-                let layer_display =
-                    _layer_name.as_deref().unwrap_or("unknown").to_string();
+                let layer_display = _layer_name.as_deref().unwrap_or("unknown").to_string();
                 let suffix_display = suffix.as_deref().unwrap_or("(none)");
                 violations.push(Self::make_result(
                     file,

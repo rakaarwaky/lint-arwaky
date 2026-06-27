@@ -13,4 +13,6 @@ pub trait ITuiAggregate: Send + Sync {
     fn handle_event(&self, state: &mut AppState, event: TuiEvent);
     fn load_directory(&self, state: &mut AppState, path: &str);
     fn load_preview(&self, state: &mut AppState);
+    /// Poll for file watch events and update state. Call every event loop tick.
+    fn poll_watch(&self, state: &mut AppState);
 }

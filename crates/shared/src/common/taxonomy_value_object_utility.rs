@@ -234,4 +234,3 @@ macro_rules! primitive_value_object {
         }
     };
 }
-

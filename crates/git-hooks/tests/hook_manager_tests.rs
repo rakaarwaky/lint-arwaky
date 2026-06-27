@@ -10,7 +10,8 @@ struct MockAdapter;
 
 impl IHookManagerPort for MockAdapter {
     fn install_pre_commit(
-        &self, _executable_path: &FilePath,
+        &self,
+        _executable_path: &FilePath,
     ) -> Result<SuccessStatus, GitHookError> {
         Ok(SuccessStatus::new(true))
     }

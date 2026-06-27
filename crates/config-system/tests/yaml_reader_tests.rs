@@ -26,6 +26,12 @@ fn test_xdg_directories() {
 
 #[test]
 fn test_config_filename() {
-    assert_eq!(ConfigYamlReader::config_filename("rust"), "lint_arwaky.config.rust.yaml");
-    assert_eq!(ConfigYamlReader::config_filename("python"), "lint_arwaky.config.python.yaml");
+    assert_eq!(
+        ConfigYamlReader::config_filename("rust"),
+        "lint_arwaky.config.rust.yaml"
+    );
+    assert_eq!(
+        ConfigYamlReader::config_filename("python"),
+        "lint_arwaky.config.python.yaml"
+    );
 }

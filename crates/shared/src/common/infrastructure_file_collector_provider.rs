@@ -104,4 +104,3 @@ pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]
         }
     }
 }
-

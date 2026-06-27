@@ -284,4 +284,3 @@ pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
         _ => default_aes_config(),
     }
 }
-

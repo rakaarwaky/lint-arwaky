@@ -177,4 +177,3 @@ impl Hash for DirectoryPath {
         self.value.hash(state);
     }
 }
-

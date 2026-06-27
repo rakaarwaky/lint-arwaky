@@ -9,37 +9,66 @@ struct MockProtocol;
 
 #[async_trait::async_trait]
 impl shared::project_setup::contract_setup_protocol::ISetupManagementProtocol for MockProtocol {
-    fn generate_env(&self, _home: &DirectoryPath) -> shared::mcp_server::taxonomy_job_vo::EnvContentVO {
+    fn generate_env(
+        &self,
+        _home: &DirectoryPath,
+    ) -> shared::mcp_server::taxonomy_job_vo::EnvContentVO {
         shared::mcp_server::taxonomy_job_vo::EnvContentVO::new("MOCK=true\n")
     }
     fn generate_mcp_config(&self) -> shared::mcp_server::taxonomy_job_vo::McpConfigVO {
         let mut config = std::collections::HashMap::new();
-        config.insert("lint-arwaky".to_string(), serde_json::json!({"command": "mock"}));
+        config.insert(
+            "lint-arwaky".to_string(),
+            serde_json::json!({"command": "mock"}),
+        );
         shared::mcp_server::taxonomy_job_vo::McpConfigVO::new(config)
     }
-    fn mcp_config_claude(&self) -> shared::mcp_server::taxonomy_job_vo::McpConfigVO { self.generate_mcp_config() }
-    fn mcp_config_hermes(&self) -> shared::mcp_server::taxonomy_job_vo::McpConfigVO { self.generate_mcp_config() }
-    fn mcp_config_vscode(&self) -> shared::mcp_server::taxonomy_job_vo::McpConfigVO { self.generate_mcp_config() }
-    fn which_mcp_binary(&self) -> shared::project_setup::taxonomy_setup_contract_vo::McpBinaryNameVO {
-        shared::project_setup::taxonomy_setup_contract_vo::McpBinaryNameVO::new("mock-mcp".to_string())
+    fn mcp_config_claude(&self) -> shared::mcp_server::taxonomy_job_vo::McpConfigVO {
+        self.generate_mcp_config()
+    }
+    fn mcp_config_hermes(&self) -> shared::mcp_server::taxonomy_job_vo::McpConfigVO {
+        self.generate_mcp_config()
+    }
+    fn mcp_config_vscode(&self) -> shared::mcp_server::taxonomy_job_vo::McpConfigVO {
+        self.generate_mcp_config()
+    }
+    fn which_mcp_binary(
+        &self,
+    ) -> shared::project_setup::taxonomy_setup_contract_vo::McpBinaryNameVO {
+        shared::project_setup::taxonomy_setup_contract_vo::McpBinaryNameVO::new(
+            "mock-mcp".to_string(),
+        )
     }
     async fn install_python_adapters(&self) -> shared::mcp_server::taxonomy_job_vo::SuccessStatus {
         shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(true)
     }
-    async fn install_javascript_adapters(&self, _sudo: bool) -> shared::mcp_server::taxonomy_job_vo::SuccessStatus {
+    async fn install_javascript_adapters(
+        &self,
+        _sudo: bool,
+    ) -> shared::mcp_server::taxonomy_job_vo::SuccessStatus {
         shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(true)
     }
-    fn detect_language(&self) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO {
+    fn detect_language(
+        &self,
+    ) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO {
         shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO::new("rust")
     }
-    fn get_config_template(&self, _language: &str) -> &'static str { "mock template" }
-    fn write_config_file(&self, _filename: &str, _content: &str) -> shared::project_setup::WriteConfigResult {
+    fn get_config_template(&self, _language: &str) -> &'static str {
+        "mock template"
+    }
+    fn write_config_file(
+        &self,
+        _filename: &str,
+        _content: &str,
+    ) -> shared::project_setup::WriteConfigResult {
         Ok(shared::taxonomy_suggestion_vo::DescriptionVO::new("ok"))
     }
     fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
         Ok(std::path::PathBuf::from("/tmp/mock"))
     }
-    fn file_exists(&self, _path: &str) -> bool { true }
+    fn file_exists(&self, _path: &str) -> bool {
+        true
+    }
 }
 
 fn make_orchestrator() -> SetupManagementOrchestrator {

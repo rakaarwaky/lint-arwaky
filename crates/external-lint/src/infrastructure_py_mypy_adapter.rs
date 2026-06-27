@@ -91,14 +91,8 @@ impl ILinterAdapterPort for MyPyAdapter {
         ];
         let working_dir = default_working_dir(path);
 
-        let response = exec_cmd_adapter(
-            self.executor.as_ref(),
-            cmd,
-            working_dir,
-            120.0,
-            self.name(),
-        )
-        .await?;
+        let response =
+            exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 120.0, self.name()).await?;
 
         let stdout = &response.stdout;
         let re = match Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[(\w+)\]$") {

@@ -1,4 +1,6 @@
-use orphan_detector_lint_arwaky::taxonomy_orphan_filename_helper::{file_basename, file_stem, file_suffix};
+use orphan_detector_lint_arwaky::taxonomy_orphan_filename_helper::{
+    file_basename, file_stem, file_suffix,
+};
 
 #[test]
 fn basename_from_path_with_dir() {

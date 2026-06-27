@@ -642,7 +642,7 @@ impl std::fmt::Display for FixResult {
 use std::path::Path;
 
 /// Simple in-place symbol renamer — replaces old_name with new_name in a single file.
-/// Relaxed taxonomy rules: boleh dipakai oleh layer manapun.
+/// Relaxed taxonomy rules: can be used by any layer.
 pub struct SymbolRenamer;
 
 impl SymbolRenamer {

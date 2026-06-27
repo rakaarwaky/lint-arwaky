@@ -17,14 +17,14 @@
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::common::contract_parser_port::ISourceParserPort;
 use crate::common::contract_system_port::IFileSystemPort;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_definition_vo::LayerMapVO;
 use crate::common::taxonomy_layer_vo::Identity;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
 
 /// IAnalyzer — the central configuration and analysis hub.
 ///

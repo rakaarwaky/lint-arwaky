@@ -1,4 +1,6 @@
-use cli_commands_lint_arwaky::surface_common_command::{resolve_file_path, canonicalize_path, current_dir};
+use cli_commands_lint_arwaky::surface_common_command::{
+    canonicalize_path, current_dir, resolve_file_path,
+};
 
 #[test]
 fn resolve_file_path_creates_filepath() {
@@ -27,5 +29,8 @@ fn canonicalize_path_returns_original_for_bad_path() {
 #[test]
 fn current_dir_returns_some_path() {
     let dir = current_dir();
-    assert!(dir.as_os_str().len() > 0, "current_dir should return non-empty path");
+    assert!(
+        dir.as_os_str().len() > 0,
+        "current_dir should return non-empty path"
+    );
 }

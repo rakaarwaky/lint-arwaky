@@ -45,8 +45,14 @@ fn reported_line_numbers_are_1_indexed_not_byte_offsets() {
         .find(|m| m.contains("Duplicate block"))
         .expect("expected a CodeDuplication violation");
 
-    assert!(dup_msg.contains(":6"), "expected line 6 in violation, got: {dup_msg}");
-    assert!(dup_msg.contains(":14"), "expected line 14 in violation, got: {dup_msg}");
+    assert!(
+        dup_msg.contains(":6"),
+        "expected line 6 in violation, got: {dup_msg}"
+    );
+    assert!(
+        dup_msg.contains(":14"),
+        "expected line 14 in violation, got: {dup_msg}"
+    );
 }
 
 #[test]
@@ -59,7 +65,10 @@ fn no_duplicates_emits_no_block_violation() {
     }
     let violations = CodeDuplicationAnalyzer::new()
         .check_duplicates(&[file_path.to_string_lossy().to_string()], 5);
-    assert!(violations.is_empty(), "expected no violations for unique content");
+    assert!(
+        violations.is_empty(),
+        "expected no violations for unique content"
+    );
 }
 
 #[test]

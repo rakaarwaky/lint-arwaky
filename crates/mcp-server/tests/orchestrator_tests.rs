@@ -2,11 +2,13 @@ use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
     find_workspace_root, McpServerDependencies, McpServerOrchestrator,
 };
 use mcp_server_lint_arwaky::contract_mcp_server_aggregate::IMcpServerAggregate;
-use mcp_server_lint_arwaky::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
+use mcp_server_lint_arwaky::taxonomy_mcp_tool_args_vo::{
+    ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
+};
 use rmcp::handler::server::wrapper::Parameters;
+use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -19,54 +21,120 @@ use std::sync::Arc;
 struct MockDeps;
 
 impl ICodeAnalysisAggregate for MockDeps {
-    fn run_code_analysis(&self, _: &str) -> LintResultList { unreachable!() }
-    fn run_code_analysis_dir(&self, _: &str) -> LintResultList { unreachable!() }
-    fn run_code_analysis_path(&self, _: &str) -> Vec<LintResult> { unreachable!() }
-    fn calc_score(&self, _: &[LintResult]) -> f64 { unreachable!() }
-    fn check_critical(&self, _: &[LintResult]) -> bool { unreachable!() }
-    fn format_report(&self, _: &LintResultList, _: &str) -> String { unreachable!() }
-    fn active_rules(&self) -> Vec<shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO> { unreachable!() }
+    fn run_code_analysis(&self, _: &str) -> LintResultList {
+        unreachable!()
+    }
+    fn run_code_analysis_dir(&self, _: &str) -> LintResultList {
+        unreachable!()
+    }
+    fn run_code_analysis_path(&self, _: &str) -> Vec<LintResult> {
+        unreachable!()
+    }
+    fn calc_score(&self, _: &[LintResult]) -> f64 {
+        unreachable!()
+    }
+    fn check_critical(&self, _: &[LintResult]) -> bool {
+        unreachable!()
+    }
+    fn format_report(&self, _: &LintResultList, _: &str) -> String {
+        unreachable!()
+    }
+    fn active_rules(
+        &self,
+    ) -> Vec<shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO> {
+        unreachable!()
+    }
 }
 
 #[async_trait::async_trait]
 impl IImportRunnerAggregate for MockDeps {
-    async fn run_audit(&self, _: &FilePath) -> Vec<LintResult> { unreachable!() }
-    fn name(&self) -> &str { unreachable!() }
+    async fn run_audit(&self, _: &FilePath) -> Vec<LintResult> {
+        unreachable!()
+    }
+    fn name(&self) -> &str {
+        unreachable!()
+    }
 }
 
 #[async_trait::async_trait]
 impl INamingRunnerAggregate for MockDeps {
-    async fn run_audit(&self, _: &FilePath) -> Vec<LintResult> { unreachable!() }
-    fn name(&self) -> &str { unreachable!() }
+    async fn run_audit(&self, _: &FilePath) -> Vec<LintResult> {
+        unreachable!()
+    }
+    fn name(&self) -> &str {
+        unreachable!()
+    }
 }
 
 impl IOrphanAggregate for MockDeps {
-    fn build_orphan_graph_context(&self, _: &[String], _: &str) -> shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext { unreachable!() }
-    fn identify_orphan_entry_points(&self, _: &[String]) -> std::collections::HashSet<String> { unreachable!() }
-    fn check_orphans(&self, _: &dyn ILayerDetectionAggregate, _: &[String], _: &str) -> Vec<LintResult> { unreachable!() }
+    fn build_orphan_graph_context(
+        &self,
+        _: &[String],
+        _: &str,
+    ) -> shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext {
+        unreachable!()
+    }
+    fn identify_orphan_entry_points(&self, _: &[String]) -> std::collections::HashSet<String> {
+        unreachable!()
+    }
+    fn check_orphans(
+        &self,
+        _: &dyn ILayerDetectionAggregate,
+        _: &[String],
+        _: &str,
+    ) -> Vec<LintResult> {
+        unreachable!()
+    }
 }
 
 impl ILayerDetectionAggregate for MockDeps {
-    fn detect_layer(&self, _: &str, _: &str) -> Option<String> { unreachable!() }
-    fn get_layer_def(&self, _: &str) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> { unreachable!() }
-    fn get_orphan_entry_points(&self) -> Vec<String> { unreachable!() }
+    fn detect_layer(&self, _: &str, _: &str) -> Option<String> {
+        unreachable!()
+    }
+    fn get_layer_def(
+        &self,
+        _: &str,
+    ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
+        unreachable!()
+    }
+    fn get_orphan_entry_points(&self) -> Vec<String> {
+        unreachable!()
+    }
 }
 
 impl IScannerProviderPort for MockDeps {
-    fn scan_directory(&self, _: &DirectoryPath) -> Result<shared::common::taxonomy_paths_vo::FilePathList, shared::common::taxonomy_filesystem_error::FileSystemError> { unreachable!() }
-    fn get_ignored_files(&self) -> shared::common::taxonomy_paths_vo::FilePathList { unreachable!() }
+    fn scan_directory(
+        &self,
+        _: &DirectoryPath,
+    ) -> Result<
+        shared::common::taxonomy_paths_vo::FilePathList,
+        shared::common::taxonomy_filesystem_error::FileSystemError,
+    > {
+        unreachable!()
+    }
+    fn get_ignored_files(&self) -> shared::common::taxonomy_paths_vo::FilePathList {
+        unreachable!()
+    }
 }
 
 #[async_trait::async_trait]
 impl IExternalLintAggregate for MockDeps {
-    async fn scan_all(&self, _: &FilePath) -> LintResultList { unreachable!() }
-    fn adapter_names(&self) -> Vec<String> { unreachable!() }
+    async fn scan_all(&self, _: &FilePath) -> LintResultList {
+        unreachable!()
+    }
+    fn adapter_names(&self) -> Vec<String> {
+        unreachable!()
+    }
 }
 
 #[async_trait::async_trait]
 impl IRoleRunnerAggregate for MockDeps {
-    async fn run_audit(&self, _: &FilePath) -> Vec<LintResult> { unreachable!() }
-    fn name(&self) -> &str { unreachable!() }
+    async fn run_audit(&self, _: &FilePath) -> Vec<LintResult> {
+        unreachable!()
+    }
+    fn name(&self) -> &str {
+        unreachable!()
+    }
 }
 
 fn make_orchestrator() -> McpServerOrchestrator {
@@ -107,7 +175,10 @@ fn find_workspace_root_finds_cargo_toml() {
     let root = find_workspace_root("crates/mcp-server/src/lib.rs");
     assert!(root.is_some(), "should find workspace root from subpath");
     let path = root.unwrap();
-    assert!(path.join("Cargo.toml").exists(), "root should contain Cargo.toml");
+    assert!(
+        path.join("Cargo.toml").exists(),
+        "root should contain Cargo.toml"
+    );
 }
 
 #[test]
@@ -128,7 +199,11 @@ fn find_workspace_root_finds_crates_dir() {
 
     std::fs::create_dir_all(&tmp.join("crates")).unwrap();
     let root2 = find_workspace_root(tmp.join("sub/a/b").to_str().unwrap());
-    assert_eq!(root2.as_deref(), Some(tmp.as_path()), "should find crates/ dir");
+    assert_eq!(
+        root2.as_deref(),
+        Some(tmp.as_path()),
+        "should find crates/ dir"
+    );
     let _ = std::fs::remove_dir_all(&tmp);
 }
 
@@ -139,7 +214,11 @@ fn find_workspace_root_finds_packages_dir() {
     std::fs::create_dir_all(&tmp.join("packages")).unwrap();
     std::fs::create_dir_all(&tmp.join("sub/deep")).unwrap();
     let root = find_workspace_root(tmp.join("sub/deep").to_str().unwrap());
-    assert_eq!(root.as_deref(), Some(tmp.as_path()), "should find packages/ dir");
+    assert_eq!(
+        root.as_deref(),
+        Some(tmp.as_path()),
+        "should find packages/ dir"
+    );
     let _ = std::fs::remove_dir_all(&tmp);
 }
 
@@ -149,7 +228,11 @@ fn find_workspace_root_finds_modules_dir() {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp.join("modules")).unwrap();
     let root = find_workspace_root(tmp.to_str().unwrap());
-    assert_eq!(root.as_deref(), Some(tmp.as_path()), "modules/ at root itself");
+    assert_eq!(
+        root.as_deref(),
+        Some(tmp.as_path()),
+        "modules/ at root itself"
+    );
     let _ = std::fs::remove_dir_all(&tmp);
 }
 
@@ -208,8 +291,7 @@ async fn list_commands_empty_domain_equals_all() {
     assert!(total > 0);
 }
 
-static SKILL_LOCK: std::sync::OnceLock<std::sync::Mutex<()>> =
-    std::sync::OnceLock::new();
+static SKILL_LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
 
 struct TempSkill {
     path: std::path::PathBuf,
@@ -223,7 +305,10 @@ impl TempSkill {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("SKILL.md");
         let _ = std::fs::remove_file(&path);
         std::fs::write(&path, content).expect("write temp SKILL.md");
-        Self { path, _guard: guard }
+        Self {
+            path,
+            _guard: guard,
+        }
     }
 }
 
@@ -252,7 +337,10 @@ async fn read_skill_finds_existing_section() {
     let output = orch.read_skill(params).await;
     let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
     assert_eq!(parsed["section"].as_str(), Some("my-section"));
-    assert!(parsed["content"].as_str().unwrap().contains("Section content"));
+    assert!(parsed["content"]
+        .as_str()
+        .unwrap()
+        .contains("Section content"));
 }
 
 #[tokio::test]

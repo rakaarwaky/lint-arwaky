@@ -1,24 +1,24 @@
 use import_rules_lint_arwaky::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
+use shared::common::contract_parser_port::ISourceParserPort;
+use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::contract_system_port::IFileSystemPort;
-use shared::common::contract_parser_port::ISourceParserPort;
 use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use shared::code_analysis::taxonomy_import_source_vo::{ImportInfoList, PrimitiveViolationList};
 use shared::common::taxonomy_common_vo::{BooleanVO, Count};
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_filesystem_error::FileSystemError;
 use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_name_vo::SymbolName;
+use shared::common::taxonomy_naming_list_vo::PrimitiveTypeList;
 use shared::common::taxonomy_parser_error::SourceParserError;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::common::taxonomy_source_vo::ContentString;
-use shared::code_analysis::taxonomy_import_source_vo::{ImportInfoList, PrimitiveViolationList};
-use shared::common::taxonomy_naming_list_vo::PrimitiveTypeList;
 use shared::common::taxonomy_suggestion_vo::MetadataVO;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_layer_vo::LayerNameVO;
@@ -27,7 +27,11 @@ struct MockFs;
 
 #[async_trait]
 impl IFileSystemPort for MockFs {
-    async fn walk(&self, _path: &FilePath, _ignored_patterns: Option<&PatternList>) -> FilePathList {
+    async fn walk(
+        &self,
+        _path: &FilePath,
+        _ignored_patterns: Option<&PatternList>,
+    ) -> FilePathList {
         FilePathList::new(vec![])
     }
     async fn is_directory(&self, _path: &FilePath) -> SuccessStatus {
@@ -75,7 +79,11 @@ impl IFileSystemPort for MockFs {
     }
     async fn path_join(&self, parts: &[Identity]) -> FilePath {
         FilePath::new(
-            parts.iter().map(|p| p.value.as_str()).collect::<Vec<_>>().join("/"),
+            parts
+                .iter()
+                .map(|p| p.value.as_str())
+                .collect::<Vec<_>>()
+                .join("/"),
         )
         .unwrap_or_default()
     }
@@ -153,10 +161,7 @@ fn make_config() -> ArchitectureConfig {
             ..LayerDefinition::default()
         },
     );
-    layers.insert(
-        LayerNameVO::new("capabilities"),
-        LayerDefinition::default(),
-    );
+    layers.insert(LayerNameVO::new("capabilities"), LayerDefinition::default());
     layers.insert(
         LayerNameVO::new("surface"),
         LayerDefinition {
@@ -223,7 +228,11 @@ fn test_detect_module_layer_prefix_match() {
 fn test_resolve_specialized_layer_with_scoped_rule() {
     let mut config = make_config();
     let spec_key = LayerNameVO::new("capabilities(checker)");
-    let spec_def = config.layers.get(&LayerNameVO::new("capabilities")).cloned().unwrap();
+    let spec_def = config
+        .layers
+        .get(&LayerNameVO::new("capabilities"))
+        .cloned()
+        .unwrap();
     config.layers.insert(spec_key, spec_def);
     let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
     let result = analyzer.detect_layer("src/capabilities_import_checker.rs", ".");
@@ -244,7 +253,11 @@ fn test_get_layer_def_exists() {
     let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
     let result = analyzer.get_layer_def("taxonomy");
     assert!(result.is_some());
-    assert!(result.unwrap().allowed.values.contains(&"shared".to_string()));
+    assert!(result
+        .unwrap()
+        .allowed
+        .values
+        .contains(&"shared".to_string()));
 }
 
 #[test]
@@ -274,7 +287,10 @@ fn test_new_merges_global_rules() {
     });
     let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
     let taxonomy_def = analyzer.get_layer_def("taxonomy").unwrap();
-    assert!(taxonomy_def.mandatory.values.contains(&"shared::contract".to_string()));
+    assert!(taxonomy_def
+        .mandatory
+        .values
+        .contains(&"shared::contract".to_string()));
 }
 
 #[test]

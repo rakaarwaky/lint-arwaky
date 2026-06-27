@@ -6,7 +6,10 @@ fn empty_violations() -> Vec<shared::cli_commands::taxonomy_result_vo::LintResul
     Vec::new()
 }
 
-fn count_code(violations: &[shared::cli_commands::taxonomy_result_vo::LintResult], code: &str) -> usize {
+fn count_code(
+    violations: &[shared::cli_commands::taxonomy_result_vo::LintResult],
+    code: &str,
+) -> usize {
     violations.iter().filter(|v| v.code.code() == code).count()
 }
 
@@ -111,7 +114,11 @@ fn does_not_match_substring_of_identifier() {
 fn does_not_match_unwrap_in_identifier_name() {
     let checker = BypassChecker::new();
     let mut v = empty_violations();
-    checker.check_bypass_comments("f.rs", "let unwrap_helper = Some(5);\nlet _x = unwrap_helper;\n", &mut v);
+    checker.check_bypass_comments(
+        "f.rs",
+        "let unwrap_helper = Some(5);\nlet _x = unwrap_helper;\n",
+        &mut v,
+    );
     assert_eq!(count_code(&v, "AES304"), 0);
 }
 
@@ -120,7 +127,11 @@ fn honors_config_patterns() {
     let patterns = PatternList::new(vec!["panic".to_string()]);
     let checker = BypassChecker::from_patterns(&patterns);
     let mut v = empty_violations();
-    checker.check_bypass_comments("f.rs", "let x = Some(5).unwrap();\npanic!(\"oops\");\n", &mut v);
+    checker.check_bypass_comments(
+        "f.rs",
+        "let x = Some(5).unwrap();\npanic!(\"oops\");\n",
+        &mut v,
+    );
     assert_eq!(count_code(&v, "AES304"), 1);
 }
 
@@ -136,7 +147,11 @@ fn empty_patterns_falls_back_to_defaults() {
 fn detects_python_raise_not_implemented_error() {
     let checker = BypassChecker::new();
     let mut v = empty_violations();
-    checker.check_bypass_comments("f.py", "def foo():\n    raise NotImplementedError\n", &mut v);
+    checker.check_bypass_comments(
+        "f.py",
+        "def foo():\n    raise NotImplementedError\n",
+        &mut v,
+    );
     assert_eq!(count_code(&v, "AES304"), 1);
 }
 
@@ -152,7 +167,11 @@ fn detects_python_raise_not_implemented() {
 fn detects_python_assert_false() {
     let checker = BypassChecker::new();
     let mut v = empty_violations();
-    checker.check_bypass_comments("f.py", "def foo():\n    assert False, \"unreachable\"\n", &mut v);
+    checker.check_bypass_comments(
+        "f.py",
+        "def foo():\n    assert False, \"unreachable\"\n",
+        &mut v,
+    );
     assert_eq!(count_code(&v, "AES304"), 1);
 }
 
@@ -168,7 +187,11 @@ fn detects_python_noqa_bypass_comment() {
 fn detects_js_throw_new_error() {
     let checker = BypassChecker::new();
     let mut v = empty_violations();
-    checker.check_bypass_comments("f.js", "function foo() {\n    throw new Error(\"oops\");\n}\n", &mut v);
+    checker.check_bypass_comments(
+        "f.js",
+        "function foo() {\n    throw new Error(\"oops\");\n}\n",
+        &mut v,
+    );
     assert_eq!(count_code(&v, "AES304"), 1);
 }
 
@@ -184,7 +207,11 @@ fn detects_js_throw_new_type_error() {
 fn detects_ts_throw_new_error() {
     let checker = BypassChecker::new();
     let mut v = empty_violations();
-    checker.check_bypass_comments("f.ts", "export function foo(): never {\n    throw new Error(\"oops\");\n}\n", &mut v);
+    checker.check_bypass_comments(
+        "f.ts",
+        "export function foo(): never {\n    throw new Error(\"oops\");\n}\n",
+        &mut v,
+    );
     assert_eq!(count_code(&v, "AES304"), 1);
 }
 

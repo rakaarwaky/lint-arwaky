@@ -33,22 +33,34 @@ fn is_entry_point_rejects_regular_file() {
 
 #[test]
 fn get_stem_removes_extension() {
-    assert_eq!(SuffixPrefixChecker::get_stem("checker.rs"), Some("checker".to_string()));
+    assert_eq!(
+        SuffixPrefixChecker::get_stem("checker.rs"),
+        Some("checker".to_string())
+    );
 }
 
 #[test]
 fn get_stem_handles_no_extension() {
-    assert_eq!(SuffixPrefixChecker::get_stem("checker"), Some("checker".to_string()));
+    assert_eq!(
+        SuffixPrefixChecker::get_stem("checker"),
+        Some("checker".to_string())
+    );
 }
 
 #[test]
 fn get_stem_handles_multiple_dots() {
-    assert_eq!(SuffixPrefixChecker::get_stem("my.test.file.rs"), Some("my.test.file".to_string()));
+    assert_eq!(
+        SuffixPrefixChecker::get_stem("my.test.file.rs"),
+        Some("my.test.file".to_string())
+    );
 }
 
 #[test]
 fn get_suffix_returns_last_underscore_part() {
-    assert_eq!(SuffixPrefixChecker::get_suffix("capabilities_checker"), Some("checker".to_string()));
+    assert_eq!(
+        SuffixPrefixChecker::get_suffix("capabilities_checker"),
+        Some("checker".to_string())
+    );
 }
 
 #[test]
@@ -58,7 +70,10 @@ fn get_suffix_no_underscore_returns_none() {
 
 #[test]
 fn get_suffix_single_underscore() {
-    assert_eq!(SuffixPrefixChecker::get_suffix("_checker"), Some("checker".to_string()));
+    assert_eq!(
+        SuffixPrefixChecker::get_suffix("_checker"),
+        Some("checker".to_string())
+    );
 }
 
 #[test]
@@ -96,7 +111,13 @@ fn check_domain_suffixes_skips_exceptions() {
         exceptions: PatternList::new(vec!["skip.rs".to_string()]),
         ..Default::default()
     };
-    checker.check_domain_suffixes("skip.rs", "skip.rs", Some(&def), &Some("capabilities".to_string()), &mut violations);
+    checker.check_domain_suffixes(
+        "skip.rs",
+        "skip.rs",
+        Some(&def),
+        &Some("capabilities".to_string()),
+        &mut violations,
+    );
     assert!(violations.is_empty(), "exceptions should be skipped");
 }
 

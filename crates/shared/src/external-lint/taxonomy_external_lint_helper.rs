@@ -101,7 +101,10 @@ pub fn resolve_js_working_dir(path: &FilePath) -> FilePath {
     let path_str = &path.value;
     if let Ok(abs_path) = std::fs::canonicalize(path_str) {
         let mut current = if abs_path.is_file() {
-            abs_path.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| PathBuf::from("."))
+            abs_path
+                .parent()
+                .map(|p| p.to_path_buf())
+                .unwrap_or_else(|| PathBuf::from("."))
         } else {
             abs_path.clone()
         };
@@ -126,17 +129,23 @@ pub fn resolve_js_working_dir(path: &FilePath) -> FilePath {
 /// Find parent dir with Cargo.toml (for cargo fmt, cargo clippy).
 pub fn resolve_cargo_working_dir(path: &FilePath) -> FilePath {
     let path_str = &path.value;
-    if path_str.is_empty() { return path.clone(); }
+    if path_str.is_empty() {
+        return path.clone();
+    }
     let current = Path::new(path_str);
     if current.is_dir() {
-        if current.join("Cargo.toml").exists() { return path.clone(); }
+        if current.join("Cargo.toml").exists() {
+            return path.clone();
+        }
     } else if let Some(parent) = current.parent() {
         if parent.join("Cargo.toml").exists() {
-            return FilePath::new(parent.to_string_lossy().replace('\\', "/")).unwrap_or_else(|_| path.clone());
+            return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
+                .unwrap_or_else(|_| path.clone());
         }
         if let Some(grandparent) = parent.parent() {
             if grandparent.join("Cargo.toml").exists() {
-                return FilePath::new(grandparent.to_string_lossy().replace('\\', "/")).unwrap_or_else(|_| path.clone());
+                return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
+                    .unwrap_or_else(|_| path.clone());
             }
         }
     }
@@ -146,17 +155,23 @@ pub fn resolve_cargo_working_dir(path: &FilePath) -> FilePath {
 /// Find parent dir with Cargo.lock (for cargo-audit).
 pub fn resolve_cargo_lock_working_dir(path: &FilePath) -> FilePath {
     let path_str = &path.value;
-    if path_str.is_empty() { return path.clone(); }
+    if path_str.is_empty() {
+        return path.clone();
+    }
     let current = Path::new(path_str);
     if current.is_dir() {
-        if current.join("Cargo.lock").exists() { return path.clone(); }
+        if current.join("Cargo.lock").exists() {
+            return path.clone();
+        }
     } else if let Some(parent) = current.parent() {
         if parent.join("Cargo.lock").exists() {
-            return FilePath::new(parent.to_string_lossy().replace('\\', "/")).unwrap_or_else(|_| path.clone());
+            return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
+                .unwrap_or_else(|_| path.clone());
         }
         if let Some(grandparent) = parent.parent() {
             if grandparent.join("Cargo.lock").exists() {
-                return FilePath::new(grandparent.to_string_lossy().replace('\\', "/")).unwrap_or_else(|_| path.clone());
+                return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
+                    .unwrap_or_else(|_| path.clone());
             }
         }
     }

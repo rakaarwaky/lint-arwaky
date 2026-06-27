@@ -1,4 +1,3 @@
-use tui_lint_arwaky::capabilities_action_handler::ActionHandler;
 use shared::common::taxonomy_byte_count_vo::ByteCount;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_line_count_vo::LineCount;
@@ -11,6 +10,7 @@ use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use shared::tui::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
+use tui_lint_arwaky::capabilities_action_handler::ActionHandler;
 
 struct MockFs;
 

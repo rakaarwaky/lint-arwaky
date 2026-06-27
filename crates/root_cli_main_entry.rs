@@ -12,8 +12,8 @@ use std::env;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use cli_commands::surface_check_command;
 use cli_commands::surface_check_action;
+use cli_commands::surface_check_command;
 use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;

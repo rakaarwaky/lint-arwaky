@@ -2,7 +2,8 @@
 //
 // Assembles the full TUI dependency graph:
 //   FileSystemAdapter → ActionHandler → TuiOrchestrator → TuiCommandSurface
-//   CodeAnalysisContainer → AutoFixContainer → LintExecutor → ActionHandler
+//   CodeAnalysisContainer → AutoFixContainer → OrphanContainer → MaintenanceContainer
+//   → LintExecutor → ActionHandler
 //
 // The TUI follows the same 7-layer architecture as the CLI, with the main
 // event loop in TuiCommandSurface driving ratatui rendering + crossterm input.
@@ -30,10 +31,20 @@ impl TuiContainer {
         );
         let fix_orchestrator = auto_fix_container.orchestrator(false);
 
-        let lint_executor = Arc::new(LintExecutor::new_with_fix(
-            code_analysis_aggregate,
-            fix_orchestrator,
-        ));
+        let orphan_container =
+            orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+
+        let maintenance_container =
+            maintenance::root_maintenance_container::MaintenanceContainer::new();
+
+        let lint_executor = Arc::new(
+            LintExecutor::new_with_fix_and_orphan(
+                code_analysis_aggregate,
+                fix_orchestrator,
+                orphan_container,
+            )
+            .with_maintenance(maintenance_container.orchestrator()),
+        );
 
         let action_handler: Arc<dyn IActionHandlerProtocol> =
             Arc::new(ActionHandler::new(fs_adapter, lint_executor));

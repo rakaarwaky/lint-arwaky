@@ -1,22 +1,22 @@
 ```markdown
 # Implementation Draft: AI Auto-Repair Model (Perfect AES Dogfooding v10)
 
-Draft v10 menyelesaikan seluruh temuan audit dari v9, termasuk perbaikan pipeline input model (directory prior & feature extraction), eliminasi silent fallback pada label lookup, pemisahan ekstensi file dari module name untuk reference propagation, deduplikasi forward pass, serta penguatan logika rollback transaksional dan validasi input CLI.
+Draft v10 resolves all audit findings from v9, including fixes for the model input pipeline (directory prior & feature extraction), elimination of silent fallback in label lookup, separation of file extension from module name for reference propagation, deduplication of forward pass, as well as strengthened transactional rollback logic and CLI input validation.
 
 ## 1. Taxonomy Layer (Data, Constants, Errors & Value Objects)
 
 File: `taxonomy_system_constant.rs`
 ```rust
-/// Path absolut/relatif menuju file bobot model Safetensors.
-/// Akan di-load oleh Infrastructure saat inisialisasi Root.
+/// Absolute/relative path to the Safetensors model weights file.
+/// Will be loaded by Infrastructure during Root initialization.
 pub const MODEL_WEIGHTS_PATH: &str = "weights/model.safetensors";
 ```
 
 File: `taxonomy_prefix_label_constant.rs`
 
 ```rust
-/// Daftar label kelas untuk prefix arsitektur AES.
-/// Indeks dalam array ini berkorespondensi dengan kelas keluaran model.
+/// Class label list for the AES architecture prefix.
+/// Indices in this array correspond to the model output classes.
 pub const PREFIX_LABELS: &[&str] = &[
     "root", "taxonomy", "contract", "capabilities", "infrastructure", "agent", "surface",
 ];
@@ -25,8 +25,8 @@ pub const PREFIX_LABELS: &[&str] = &[
 File: `taxonomy_suffix_label_constant.rs`
 
 ```rust
-/// Daftar label kelas untuk suffix peran AES.
-/// Indeks dalam array ini berkorespondensi dengan kelas keluaran model.
+/// Class label list for the AES role suffix.
+/// Indices in this array correspond to the model output classes.
 pub const SUFFIX_LABELS: &[&str] = &[
     "entry", "container", "vo", "entity", "event",
     "error", "constant", "utility", "helper", "port",
@@ -41,7 +41,7 @@ pub const SUFFIX_LABELS: &[&str] = &[
 File: `taxonomy_concept_vocab_constant.rs`
 
 ```rust
-/// Kosakata dasar untuk mendekodekan konsep domain nama file dari model.
+/// Base vocabulary for decoding file name domain concepts from the model.
 pub const CONCEPT_VOCAB: &[&str] = &[
     "unknown", "database", "file_system", "parser", "model", "network", "rules_config", "user_checker",
 ];
@@ -50,13 +50,13 @@ pub const CONCEPT_VOCAB: &[&str] = &[
 File: `taxonomy_error_message_vo.rs`
 
 ```rust
-/// Value Object untuk membungkus pesan error secara aman.
-/// Mencegah Primitive Obsession terhadap String mentah di layer Taxonomy Error (AES401).
+/// Value Object to safely wrap error messages.
+/// Prevents Primitive Obsession with raw String in the Taxonomy Error layer (AES401).
 #[derive(Debug, Clone)]
 pub struct ErrorMessage(pub String);
 
 impl ErrorMessage {
-    /// Mengambil representasi as_str dari pesan error.
+    /// Returns the as_str representation of the error message.
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -68,8 +68,8 @@ File: `taxonomy_system_error.rs`
 ```rust
 use crate::taxonomy_error_message_vo::ErrorMessage;
 
-/// Struktur data error tersentralisasi untuk sistem Auto-Repair.
-/// Memetakan kegagalan operasi filesystem, parsing, prediksi, dan verifikasi.
+/// Centralized error data structure for the Auto-Repair system.
+/// Maps filesystem, parsing, prediction, and verification operation failures.
 #[derive(Debug)]
 pub enum SystemError {
     IoError(ErrorMessage),
@@ -79,7 +79,7 @@ pub enum SystemError {
     LowConfidence(ErrorMessage),
     ExemptFile(ErrorMessage),
     VerificationError(ErrorMessage),
-    RollbackFailure(ErrorMessage), // M-2 Fix: Error terpisah untuk kegagalan rollback
+    RollbackFailure(ErrorMessage), // M-2 Fix: Separate error for rollback failure
 }
 
 impl From<std::io::Error> for SystemError {
@@ -94,7 +94,7 @@ File: `taxonomy_file_path_vo.rs`
 ```rust
 use std::path::PathBuf;
 
-/// Value Object untuk merepresentasikan path file sistem secara aman.
+/// Value Object to safely represent a file system path.
 #[derive(Debug, Clone)]
 pub struct FilePath(pub PathBuf);
 
@@ -108,7 +108,7 @@ impl FilePath {
 File: `taxonomy_module_name_vo.rs`
 
 ```rust
-/// Value Object untuk merepresentasikan nama modul Rust (tanpa ekstensi).
+/// Value Object to represent a Rust module name (without extension).
 #[derive(Debug, Clone)]
 pub struct ModuleName(pub String);
 
@@ -122,7 +122,7 @@ impl ModuleName {
 File: `taxonomy_file_content_vo.rs`
 
 ```rust
-/// Value Object untuk merepresentasikan isi teks dari suatu file.
+/// Value Object to represent the text content of a file.
 #[derive(Debug, Clone)]
 pub struct FileContent(pub String);
 
@@ -136,7 +136,7 @@ impl FileContent {
 File: `taxonomy_file_bytes_vo.rs`
 
 ```rust
-/// Value Object untuk merepresentasikan bytes mentah dari file bobot model.
+/// Value Object to represent the raw bytes of a model weights file.
 #[derive(Debug, Clone)]
 pub struct FileBytes(pub Vec<u8>);
 
@@ -150,7 +150,7 @@ impl FileBytes {
 File: `taxonomy_file_extension_vo.rs`
 
 ```rust
-/// Value Object untuk merepresentasikan ekstensi file (misal "rs", "py").
+/// Value Object to represent a file extension (e.g. "rs", "py").
 #[derive(Debug, Clone)]
 pub struct FileExtension(pub String);
 
@@ -164,7 +164,7 @@ impl FileExtension {
 File: `taxonomy_token_ids_vo.rs`
 
 ```rust
-/// Value Object untuk membungkus hasil tokenisasi BPE.
+/// Value Object to wrap BPE tokenization results.
 #[derive(Debug, Clone)]
 pub struct TokenIds(pub Vec<u32>);
 
@@ -173,7 +173,7 @@ impl TokenIds {
         self.0.len()
     }
   
-    // L-2 Fix: Menambahkan is_empty untuk memenuhi standar Clippy
+    // L-2 Fix: Adding is_empty to satisfy Clippy standards
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -183,7 +183,7 @@ impl TokenIds {
 File: `taxonomy_layer_prefix_vo.rs`
 
 ```rust
-/// Value Object untuk membungkus classification output prefix secara aman.
+/// Value Object to safely wrap prefix classification output.
 #[derive(Debug, Clone)]
 pub struct LayerPrefix(pub String);
 
@@ -197,7 +197,7 @@ impl LayerPrefix {
 File: `taxonomy_layer_suffix_vo.rs`
 
 ```rust
-/// Value Object untuk membungkus classification output suffix secara aman.
+/// Value Object to safely wrap suffix classification output.
 #[derive(Debug, Clone)]
 pub struct LayerSuffix(pub String);
 
@@ -211,7 +211,7 @@ impl LayerSuffix {
 File: `taxonomy_concept_token_vo.rs`
 
 ```rust
-/// Value Object untuk membungkus hasil decoding konsep domain secara aman.
+/// Value Object to safely wrap domain concept decoding results.
 #[derive(Debug, Clone)]
 pub struct ConceptToken(pub String);
 
@@ -225,7 +225,7 @@ impl ConceptToken {
 File: `taxonomy_extracted_feature_vo.rs`
 
 ```rust
-/// Representasi fitur-fitur statis yang diekstraksi dari file kode sumber.
+/// Representation of static features extracted from a source code file.
 #[derive(Debug, Clone)]
 pub struct ExtractedFeature {
     pub imports: Vec<String>,
@@ -242,7 +242,7 @@ use crate::taxonomy_layer_prefix_vo::LayerPrefix;
 use crate::taxonomy_layer_suffix_vo::LayerSuffix;
 use crate::taxonomy_concept_token_vo::ConceptToken;
 
-/// Hasil klasifikasi penamaan baru dari model AI.
+/// New naming classification result from the AI model.
 #[derive(Debug, Clone)]
 pub struct PredictionResult {
     pub prefix: LayerPrefix,
@@ -257,7 +257,7 @@ pub struct PredictionResult {
 File: `taxonomy_model_config_vo.rs`
 
 ```rust
-/// Struktur data konfigurasi internal model prediksi AI.
+/// Internal AI prediction model configuration data structure.
 #[derive(Debug, Clone)]
 pub struct AESNamingModelConfig {
     pub vocab_size: usize,
@@ -267,7 +267,7 @@ pub struct AESNamingModelConfig {
     pub n_layers: usize,
 }
 
-// M-1 Fix: Sentralisasi nilai default konfigurasi untuk menghindari duplikasi (AES305)
+// M-1 Fix: Centralizing default configuration values to avoid duplication (AES305)
 impl Default for AESNamingModelConfig {
     fn default() -> Self {
         Self {
@@ -345,7 +345,7 @@ pub trait FileNameResolverProtocol {
     fn extract_module_name(&self, path: &FilePath) -> Result<ModuleName, SystemError>;
     fn extract_extension(&self, path: &FilePath) -> Result<FileExtension, SystemError>;
     fn assemble_new_name(&self, result: &PredictionResult, ext: &FileExtension) -> ModuleName;
-    // H-1 Fix: Memasukkan parameter ext agar ModuleName tidak perlu mengandung ekstensi
+    // H-1 Fix: Adding ext parameter so ModuleName does not need to contain the extension
     fn build_sibling_path(&self, original: &FilePath, new_name: &ModuleName, ext: &FileExtension) -> Result<FilePath, SystemError>;
 }
 ```
@@ -386,7 +386,7 @@ use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
 use crate::taxonomy_token_ids_vo::TokenIds;
 use crate::taxonomy_system_error::SystemError;
 
-/// M-3 Fix: Protokol Tokenizer BPE kini menerima ExtractedFeature, bukan FileContent mentah.
+/// M-3 Fix: BPE Tokenizer protocol now accepts ExtractedFeature, not raw FileContent.
 pub trait BpeTransformerProtocol {
     fn tokenize(&self, features: &ExtractedFeature) -> Result<TokenIds, SystemError>;
 }
@@ -476,7 +476,7 @@ pub struct StandardFileNameResolver;
 
 impl FileNameResolverProtocol for StandardFileNameResolver {
     fn extract_module_name(&self, path: &FilePath) -> Result<ModuleName, SystemError> {
-        let name_str = path.0.file_stem() // H-1 Fix: Menggunakan file_stem untuk membuang ekstensi
+        let name_str = path.0.file_stem() // H-1 Fix: Using file_stem to strip the extension
             .and_then(|n| n.to_str())
             .ok_or_else(|| SystemError::ParsingError(ErrorMessage("Invalid target file name".to_string())))?;
         Ok(ModuleName(name_str.to_string()))
@@ -489,12 +489,12 @@ impl FileNameResolverProtocol for StandardFileNameResolver {
         Ok(FileExtension(ext_str.to_string()))
     }
 
-    // H-1 Fix: ModuleName murni tanpa ekstensi
+    // H-1 Fix: ModuleName is pure without extension
     fn assemble_new_name(&self, r: &PredictionResult, _ext: &FileExtension) -> ModuleName {
         ModuleName(format!("{}_{}_{}", r.prefix.as_str(), r.concept.as_str(), r.suffix.as_str()))
     }
 
-    // H-1 Fix: Ekstensi digabungkan di sini saat membangun path fisik
+    // H-1 Fix: Extension is combined here when building the physical path
     fn build_sibling_path(&self, original: &FilePath, new_name: &ModuleName, ext: &FileExtension) -> Result<FilePath, SystemError> {
         let parent = original.0.parent()
             .ok_or_else(|| SystemError::ParsingError(ErrorMessage("File has no parent directory".to_string())))?;
@@ -527,7 +527,7 @@ impl AstExtractorProtocol for SynAstExtractor {
         let directory_context = path.0.parent()
             .and_then(|p| p.file_name())
             .and_then(|n| n.to_str())
-            .ok_or_else(|| SystemError::ParsingError(ErrorMessage("Gagal membaca direktori parent dari path".to_string())))?
+            .ok_or_else(|| SystemError::ParsingError(ErrorMessage("Failed to read parent directory from path".to_string())))?
             .to_string();
 
         for item in syntax.items {
@@ -570,7 +570,7 @@ use crate::taxonomy_system_error::SystemError;
 pub struct BpeTokenizer;
 
 impl BpeTransformerProtocol for BpeTokenizer {
-    // M-3 Fix: Tokenisasi hanya dari fitur AST yang sudah diekstraksi
+    // M-3 Fix: Tokenization only from extracted AST features
     fn tokenize(&self, features: &ExtractedFeature) -> Result<TokenIds, SystemError> {
         let mut tokens = Vec::new();
     
@@ -652,7 +652,7 @@ use burn::nn::transformer::{TransformerEncoder, TransformerEncoderConfig};
 pub struct AESNamingModelPredictor<B: Backend> {
     encoder: TransformerEncoder<B>,
     token_embed: Embedding<B>,
-    dir_embed: Embedding<B>, // C-1 Fix: Embedding untuk directory context
+    dir_embed: Embedding<B>, // C-1 Fix: Embedding for directory context
     prefix_head: Linear<B>,
     suffix_head: Linear<B>,
     concept_projection: Linear<B>,
@@ -665,7 +665,7 @@ impl<B: Backend> AESNamingModelPredictor<B> {
     
         let record = BinBytesRecorder::new()
             .load(weights.0.clone(), device)
-            .map_err(|e| SystemError::PredictionError(ErrorMessage(format!("Gagal memuat record: {}", e))))?;
+            .map_err(|e| SystemError::PredictionError(ErrorMessage(format!("Failed to load record: {}", e))))?;
     
         model = model.load_record(record);
         Ok(model)
@@ -682,7 +682,7 @@ impl<B: Backend> AESNamingModelPredictor<B> {
         }
     }
   
-    // H-3 Fix: Ekstraksi forward pass untuk menghindari duplikasi kode (AES305)
+    // H-3 Fix: Forward pass extraction to avoid code duplication (AES305)
     fn forward_logits(&self, tokens: &TokenIds, features: &ExtractedFeature) -> Result<(Tensor<B, 2>, Tensor<B, 2>, Tensor<B, 2>), SystemError> {
         let device = self.prefix_head.devices()[0].clone();
     
@@ -694,12 +694,12 @@ impl<B: Backend> AESNamingModelPredictor<B> {
         );
 
         let token_emb = self.token_embed.forward(tokens_tensor);
-        let x = token_emb; // Disimplikasi untuk kestabilan dimensi sequence
+        let x = token_emb; // Simplified for sequence dimension stability
         let encoded = self.encoder.forward(x, None);
     
         let pooled = encoded.clone().mean_dim(1);
     
-        // C-1 Fix: Directory Prior Embedding nyata
+        // C-1 Fix: Real Directory Prior Embedding
         let dir_hash = features.directory_context.bytes().fold(0u64, |acc, b| acc.wrapping_mul(31).wrapping_add(b as u64)) % 1024;
         let dir_idx_tensor = Tensor::<B, 1, Int>::from_data([dir_hash as i64], &device);
         let dir_prior = self.dir_embed.forward(dir_idx_tensor);
@@ -720,7 +720,7 @@ impl<B: Backend> ModelClassifierProtocol for AESNamingModelPredictor<B> {
 
         let prefix_idx = prefix_logits.clone().argmax(1).into_scalar() as usize;
         let prefix_confidence = prefix_logits.softmax(1).slice([0..1, prefix_idx..prefix_idx+1]).into_scalar() as f32;
-        // C-2 Fix: Eliminasi unwrap_or, gunakan ok_or_else
+        // C-2 Fix: Eliminate unwrap_or, use ok_or_else
         let prefix_str = PREFIX_LABELS.get(prefix_idx)
             .ok_or_else(|| SystemError::PredictionError(ErrorMessage(format!("Prefix index {} out of label range", prefix_idx))))?
             .to_string();
@@ -888,7 +888,7 @@ impl CompilerRunnerPort for CargoCompilerAdapter {
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-            return Err(SystemError::VerificationError(ErrorMessage(format!("cargo check gagal: {}", stderr))));
+            return Err(SystemError::VerificationError(ErrorMessage(format!("cargo check failed: {}", stderr))));
         }
         Ok(())
     }
@@ -920,7 +920,7 @@ impl LinterRunnerPort for LintArwakyAdapter {
 
             if !output.status.success() {
                 let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-                return Err(SystemError::VerificationError(ErrorMessage(format!("linter gagal untuk file {:?}: {}", file.0, stderr))));
+                return Err(SystemError::VerificationError(ErrorMessage(format!("linter failed for file {:?}: {}", file.0, stderr))));
             }
         }
         Ok(())
@@ -991,13 +991,13 @@ impl AutorepairOrchestrator {
 impl AutorepairAggregate for AutorepairOrchestrator {
     fn execute_fix(&self, workspace_root: &FilePath, target_file: &FilePath) -> Result<(), SystemError> {
         if self.exception_filter.is_exempt(target_file) {
-            return Err(SystemError::ExemptFile(ErrorMessage(format!("File dikecualikan: {:?}", target_file.0))));
+            return Err(SystemError::ExemptFile(ErrorMessage(format!("File is exempt: {:?}", target_file.0))));
         }
 
         let content = self.reader.read_file_as_string(target_file)?;
         let features = self.extractor.extract_from_file(target_file, &content)?;
     
-        // M-3 Fix: Mentransmisikan features ke tokenizer
+        // M-3 Fix: Passing features to the tokenizer
         let tokens = self.tokenizer.tokenize(&features)?;
 
         let config = self.predictor.get_config();
@@ -1013,7 +1013,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
                 .map(|alt| format!("{}_{}_{}.rs ({:.1}%)", alt.prefix.as_str(), alt.concept.as_str(), alt.suffix.as_str(), alt.prefix_confidence * 100.0))
                 .collect::<Vec<_>>()
                 .join(", ");
-            return Err(SystemError::LowConfidence(ErrorMessage(format!("Safety confidence threshold violated. Alternatif: {}", alt_details))));
+            return Err(SystemError::LowConfidence(ErrorMessage(format!("Safety confidence threshold violated. Alternatives: {}", alt_details))));
         }
 
         let old_name = self.resolver.extract_module_name(target_file)?;
@@ -1038,7 +1038,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
             }
         }
 
-        // H-4 Fix: Tracking status rename untuk rollback yang aman
+        // H-4 Fix: Tracking rename status for safe rollback
         let mut renamed = false;
         self.writer.rename_file(target_file, &new_target_path)?;
         renamed = true;
@@ -1066,12 +1066,12 @@ impl AutorepairAggregate for AutorepairOrchestrator {
             }
         
             let err_msg = format!(
-                "Verifikasi pasca auto-fix gagal: {:?}. Masalah Rollback: [{}]",
+                "Post-auto-fix verification failed: {:?}. Rollback Issues: [{}]",
                 verification_err,
                 if rollback_errors.is_empty() { "None".to_string() } else { rollback_errors.join("; ") }
             );
 
-            // M-2 Fix: Membedakan error verifikasi biasa dengan kegagalan rollback fatal
+            // M-2 Fix: Distinguishing regular verification errors from fatal rollback failures
             if rollback_failed {
                 return Err(SystemError::RollbackFailure(ErrorMessage(err_msg)));
             } else {
@@ -1094,7 +1094,7 @@ use crate::taxonomy_system_error::SystemError;
 use crate::taxonomy_file_path_vo::FilePath;
 use crate::taxonomy_error_message_vo::ErrorMessage;
 
-// L-3 Fix: Renamed dari _controller ke _command untuk semantik CLI yang lebih akurat
+// L-3 Fix: Renamed from _controller to _command for more accurate CLI semantics
 pub struct AutofixCommand<'a> {
     aggregate: &'a dyn AutorepairAggregate,
 }
@@ -1107,7 +1107,7 @@ impl<'a> AutofixCommand<'a> {
     pub fn route_command(&self, command: &str, workspace: &FilePath, target: &FilePath) -> Result<(), SystemError> {
         match command {
             "autofix" => self.aggregate.execute_fix(workspace, target),
-            _ => Err(SystemError::ArgumentError(ErrorMessage(format!("Command tidak dikenal: {}", command)))),
+            _ => Err(SystemError::ArgumentError(ErrorMessage(format!("Unknown command: {}", command)))),
         }
     }
 }
@@ -1138,7 +1138,7 @@ use crate::contract_autorepair_aggregate::AutorepairAggregate;
 use burn::backend::NdArray; 
 use burn::tensor::Device;
 
-// M-4 Fix: Penamaan file dan struct disesuaikan dengan feature crate (autorepair)
+// M-4 Fix: File and struct naming aligned with the feature crate (autorepair)
 pub struct AutorepairContainer;
 
 impl AutorepairContainer {
@@ -1188,7 +1188,7 @@ fn run() -> Result<(), SystemError> {
         ));
     }
 
-    // H-2 Fix: Validasi input path CLI agar tidak kosong
+    // H-2 Fix: CLI input path validation to ensure non-empty values
     if args[2].is_empty() || args[3].is_empty() {
         return Err(SystemError::ArgumentError(ErrorMessage("Path arguments cannot be empty".to_string())));
     }
@@ -1206,7 +1206,7 @@ fn run() -> Result<(), SystemError> {
             Ok(())
         }
         Err(SystemError::LowConfidence(msg)) => {
-            println!("Informasi: Sistem menunda perbaikan otomatis karena keyakinan rendah.");
+            println!("Info: System deferred automatic repair due to low confidence.");
             println!("{}", msg.as_str());
             Ok(())
         }

@@ -1,4 +1,5 @@
 // PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
+use crate::taxonomy_orphan_filename_helper::{file_basename, file_suffix};
 use regex::Regex;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
@@ -7,7 +8,6 @@ use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
-use crate::taxonomy_orphan_filename_helper::{file_basename, file_suffix};
 
 pub struct ContractOrphanAnalyzer {}
 

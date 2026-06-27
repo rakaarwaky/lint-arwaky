@@ -108,7 +108,10 @@ pub fn collect_source_files(
             if path.is_dir() {
                 // Skip Rust integration test directories — tests live in tests/ and
                 // should not be scanned by the AES linter.
-                let dir_name = path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default();
+                let dir_name = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy())
+                    .unwrap_or_default();
                 if dir_name == "tests" {
                     continue;
                 }
@@ -127,4 +130,3 @@ pub fn collect_source_files(
     }
     files
 }
-

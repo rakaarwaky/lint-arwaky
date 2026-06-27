@@ -41,6 +41,8 @@ pub struct AppState {
     pub filtered_indices: Vec<usize>,
     /// Position within `filtered_indices` — which matching entry is selected.
     pub filter_pos: usize,
+    /// Whether file watching is active (w key toggles this).
+    pub watching: bool,
 }
 
 impl AppState {
@@ -68,6 +70,7 @@ impl AppState {
             terminal_height: 0,
             filtered_indices: Vec::new(),
             filter_pos: 0,
+            watching: false,
         }
     }
 

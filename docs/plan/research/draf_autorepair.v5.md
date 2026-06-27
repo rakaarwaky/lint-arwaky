@@ -1,16 +1,16 @@
 # Implementation Draft: AI Auto-Repair Model (Perfect AES Dogfooding v5)
 
-Draft v5 menyajikan arsitektur AES tingkat *Master*. Tidak ada lagi business logic yang tersembunyi di I/O, semua error tertangani (bebas makro panic/unwrap), primitive terenkapsulasi, dan CLI menangkap argumen secara dinamis.
+Draft v5 presents the *Master*-level AES architecture. No more hidden business logic in I/O, all errors are handled (free of panic/unwrap macros), primitives are encapsulated, and the CLI captures arguments dynamically.
 
 ---
 
 ## 1. Taxonomy Layer (Data, Constants, Errors & Value Objects)
-Layer murni tanpa ketergantungan eksternal. Konstanta dan protokol didokumentasikan agar tidak melanggar limit baris (AES302).
+Pure layer without external dependencies. Constants and protocols are documented to avoid violating line limits (AES302).
 
 **File:** `taxonomy_system_constant.rs`
 ```rust
-/// Path absolut/relatif menuju file bobot model Safetensors.
-/// Akan di-load oleh Infrastructure saat inisialisasi Root.
+/// Absolute/relative path to the Safetensors model weights file.
+/// Will be loaded by Infrastructure during Root initialization.
 pub const MODEL_WEIGHTS_PATH: &str = "weights/model.safetensors";
 ```
 
@@ -24,7 +24,7 @@ pub enum SystemError {
     ArgumentError(String),
 }
 
-// AES305 Fix: Mengeliminasi duplikasi `.map_err` di seluruh layer Infrastructure
+// AES305 Fix: Eliminates `.map_err` duplication across the Infrastructure layer
 impl From<std::io::Error> for SystemError {
     fn from(err: std::io::Error) -> Self {
         SystemError::IoError(err.to_string())
@@ -61,7 +61,7 @@ pub struct ExtractedFeature {
 pub struct PredictionResult {
     pub prefix: String,
     pub concept: String,
-    pub suffix: String, // String murni tanpa "_" (e.g. "adapter")
+    pub suffix: String, // Pure string without "_" (e.g. "adapter")
     pub confidence: f32,
 }
 ```
@@ -81,7 +81,7 @@ pub struct AESNamingModelConfig {
 ---
 
 ## 2. Contract Layer (Interfaces / Ports, Protocols & Aggregates)
-Batas suci arsitektur yang menggunakan VO untuk menghindari *Primitive Obsession*.
+Sacred boundary of the architecture that uses VOs to avoid *Primitive Obsession*.
 
 **File:** `contract_file_reader_port.rs`
 ```rust
@@ -156,8 +156,8 @@ pub trait ModelPredictorProtocol {
 use crate::taxonomy_extracted_feature_vo::ExtractedFeature;
 use crate::taxonomy_system_error::SystemError;
 
-/// Protokol yang mendefinisikan batas interaksi ekstraksi fitur statis
-/// dari kode sumber (*Abstract Syntax Tree*), diimplementasikan oleh layer Capabilities.
+/// Protocol that defines the boundary for static feature extraction
+/// from source code (*Abstract Syntax Tree*), implemented by the Capabilities layer.
 pub trait AstExtractorProtocol {
     fn extract_from_string(&self, content: &str) -> Result<ExtractedFeature, SystemError>;
 }
@@ -176,7 +176,7 @@ pub trait AutorepairAggregate {
 ---
 
 ## 3. Capabilities Layer (Pure Business Logic)
-Mengandung seluruh manipulasi string, penyelesaian path, dan perhitungan model AI secara murni.
+Contains all string manipulation, path resolution, and pure AI model computation.
 
 **File:** `capabilities_reference_replacer.rs`
 ```rust
@@ -226,7 +226,7 @@ impl FileNameResolverProtocol for StandardFileNameResolver {
     }
 
     fn assemble_new_name(&self, r: &PredictionResult, ext: &str) -> ModuleName {
-        // Perakitan yang aman, menggunakan underscore murni di format string
+        // Safe assembly using plain underscore in the format string
         ModuleName(format!("{}_{}_{}.{}", r.prefix, r.concept, r.suffix, ext))
     }
 }
@@ -270,7 +270,7 @@ use burn::tensor::{backend::Backend, Device, Int, Tensor};
 
 #[derive(Module, Debug)]
 pub struct AESNamingModelPredictor<B: Backend> {
-    // Placeholder untuk layers (disederhanakan untuk menghindari todo! makro)
+    // Placeholder for layers (simplified to avoid todo! macro)
     _dummy_layer: burn::nn::Linear<B>,
 }
 
@@ -278,7 +278,7 @@ impl<B: Backend> AESNamingModelPredictor<B> {
     pub fn new_from_bytes(_weights: &[u8], device: &Device<B>) -> Result<Self, SystemError> {
         let config = burn::nn::LinearConfig::new(128, 128);
         Ok(Self {
-            _dummy_layer: config.init(device), // Inisialisasi murni tanpa panic!
+            _dummy_layer: config.init(device), // Pure initialization without panic!
         })
     }
 }
@@ -288,7 +288,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
         Ok(PredictionResult {
             prefix: "infrastructure".to_string(),
             concept: "database".to_string(),
-            suffix: "adapter".to_string(), // Tanpa underscore
+            suffix: "adapter".to_string(), // Without underscore
             confidence: 0.95,
         })
     }
@@ -302,7 +302,7 @@ impl<B: Backend> ModelPredictorProtocol for AESNamingModelPredictor<B> {
 ---
 
 ## 4. Infrastructure Layer (I/O & External Systems)
-Implementasi I/O sebagai "Kurir Bodoh" murni, memanfaatkan konversi otomatis `?` ke `SystemError`.
+I/O implementation as a pure "Dumb Courier", leveraging automatic `?` conversion to `SystemError`.
 
 **File:** `infrastructure_fs_reader.rs`
 ```rust
@@ -367,7 +367,7 @@ impl WorkspaceScannerPort for WalkdirWorkspaceScannerAdapter {
 ---
 
 ## 5. Agent Layer (Orchestration Workflow)
-Orchestrator mengoordinasikan seluruh alur dengan keanggunan murni, mendelegasikan semua beban ke Contract Trait.
+The Orchestrator coordinates the entire flow with pure elegance, delegating all burden to Contract Traits.
 
 **File:** `agent_autorepair_orchestrator.rs`
 ```rust
@@ -405,17 +405,17 @@ impl AutorepairOrchestrator {
 
 impl AutorepairAggregate for AutorepairOrchestrator {
     fn execute_fix(&self, workspace_root: &FilePath, target_file: &FilePath) -> Result<(), SystemError> {
-        // 1. Ekstraksi Info & Prediksi
+        // 1. Extract Info & Predict
         let content = self.reader.read_file_as_string(target_file)?;
         let features = self.extractor.extract_from_string(&content)?;
         let prediction = self.predictor.predict(&features)?;
 
-        // 2. Manipulasi string aman lewat resolver capabilities
+        // 2. Safe string manipulation via resolver capabilities
         let old_name = self.resolver.extract_module_name(target_file)?;
         let ext = self.resolver.extract_extension(target_file)?;
         let new_name = self.resolver.assemble_new_name(&prediction, &ext);
 
-        // 3. Modifikasi referensi di seluruh workspace
+        // 3. Modify references throughout the workspace
         let files = self.scanner.scan_rust_files(workspace_root)?;
         for file in files {
             let file_content = self.reader.read_file_as_string(&file)?;
@@ -425,7 +425,7 @@ impl AutorepairAggregate for AutorepairOrchestrator {
             }
         }
 
-        // 4. Rename target file fisik 
+        // 4. Rename physical target file 
         let new_target_path = FilePath(target_file.0.with_file_name(&new_name.0));
         self.writer.rename_file(target_file, &new_target_path)?;
 
@@ -498,6 +498,7 @@ impl AutorepairContainer {
 
         let weights_path = FilePath(PathBuf::from(MODEL_WEIGHTS_PATH));
         let weights_bytes = reader.read_file_as_bytes(&weights_path)?;
+
         let device = Device::<NdArray>::default();
         let predictor: Box<dyn ModelPredictorProtocol> = Box::new(AESNamingModelPredictor::<NdArray>::new_from_bytes(&weights_bytes, &device)?);
 
