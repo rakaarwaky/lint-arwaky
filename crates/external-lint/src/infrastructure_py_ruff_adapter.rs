@@ -99,6 +99,10 @@ impl ILinterAdapterPort for RuffAdapter {
             exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 60.0, self.name()).await?;
 
         let stdout = &response.stdout;
+        // Empty output — tool found nothing to report (or no applicable files)
+        if stdout.trim().is_empty() {
+            return Ok(LintResultList::new(vec![]));
+        }
         let findings: Vec<Value> = match serde_json::from_str(stdout) {
             Ok(v) => v,
             Err(e) => {
