@@ -48,7 +48,14 @@ impl fmt::Display for AesImportViolation {
                 let (allowed_str, fix_extra) = if allowed.is_empty() {
                     ("none".to_string(), " This layer is fully isolated — move the imported code into this layer or remove the dependency entirely.".to_string())
                 } else {
-                    (allowed.iter().map(|v| v.value().to_string()).collect::<Vec<String>>().join(", "), String::new())
+                    (
+                        allowed
+                            .iter()
+                            .map(|v| v.value().to_string())
+                            .collect::<Vec<String>>()
+                            .join(", "),
+                        String::new(),
+                    )
                 };
                 let dynamic_why = match reason {
                     Some(r) => r.to_string(),
