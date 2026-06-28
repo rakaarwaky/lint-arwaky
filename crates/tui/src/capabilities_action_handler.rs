@@ -8,6 +8,7 @@ use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_file_system_port::IFileSystemPort;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
+use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
 use shared::tui::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
@@ -381,4 +382,63 @@ impl IActionHandlerProtocol for ActionHandler {
     }
 
     fn poll_watch(&self, _state: &mut AppState) {}
+
+    fn start_scan(&self, state: &mut AppState) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
+        // Guard: don't start a second scan while one is running.
+        if state.scanning {
+            return None;
+        }
+        let path = state.selected_path();
+        state.set_scanning(true, "Starting scan...".to_string(), 0);
+        state.set_status(format!("Scanning {}...", path));
+        // Reset preview to show scan output when complete.
+        state.preview_text.clear();
+        state.preview_scroll = 0;
+
+        let lint_port = self.lint_port.clone();
+        let (tx, rx) = std::sync::mpsc::sync_channel(16);
+        std::thread::spawn(move || {
+            let _ = tx.send(ScanUpdate::Progress {
+                phase: "Running scan...".to_string(),
+                done: 0,
+                total: 0,
+            });
+            let result = lint_port.scan(&path);
+            let _ = tx.send(ScanUpdate::Complete {
+                output: result.output,
+                violation_count: result.violation_count,
+                success: result.success,
+            });
+        });
+
+        Some(rx)
+    }
+
+    fn poll_scan(&self, state: &mut AppState, rx: &std::sync::mpsc::Receiver<ScanUpdate>) {
+        while let Ok(update) = rx.try_recv() {
+            match update {
+                ScanUpdate::Progress { phase, done, total } => {
+                    state.update_scan_progress(phase, done, total);
+                }
+                ScanUpdate::Complete {
+                    output,
+                    violation_count,
+                    success,
+                } => {
+                    state.finish_scan(violation_count);
+                    state.preview_text = output;
+                    state.violation_count = violation_count;
+                    state.preview_scroll = 0;
+                    state.preview_mode = PreviewMode::LintResults;
+                    let status = if success { "Done" } else { "Error" };
+                    state.set_status(format!(
+                        "{}: {} | {} violations",
+                        status,
+                        state.selected_path(),
+                        violation_count
+                    ));
+                }
+            }
+        }
+    }
 }

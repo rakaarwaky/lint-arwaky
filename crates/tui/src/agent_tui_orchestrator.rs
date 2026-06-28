@@ -4,6 +4,7 @@
 
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
+use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
 use shared::tui::taxonomy_state_vo::AppState;
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
@@ -38,5 +39,13 @@ impl ITuiAggregate for TuiOrchestrator {
 
     fn poll_watch(&self, state: &mut AppState) {
         self.action_handler.poll_watch(state);
+    }
+
+    fn start_scan(&self, state: &mut AppState) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
+        self.action_handler.start_scan(state)
+    }
+
+    fn poll_scan(&self, state: &mut AppState, rx: &std::sync::mpsc::Receiver<ScanUpdate>) {
+        self.action_handler.poll_scan(state, rx);
     }
 }

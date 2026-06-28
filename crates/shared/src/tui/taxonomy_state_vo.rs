@@ -44,6 +44,16 @@ pub struct AppState {
     pub filter_pos: usize,
     /// Whether file watching is active (w key toggles this).
     pub watching: bool,
+    /// Whether a background scan is currently running.
+    pub scanning: bool,
+    /// Current phase description shown during scanning (e.g. "AES checks").
+    pub scan_phase: String,
+    /// Number of files processed so far.
+    pub scan_files_done: usize,
+    /// Total file count for the current scan phase.
+    pub scan_files_total: usize,
+    /// Violations found so far during the scan.
+    pub scan_violations: usize,
 }
 
 impl AppState {
@@ -73,6 +83,11 @@ impl AppState {
             filtered_indices: Vec::new(),
             filter_pos: 0,
             watching: false,
+            scanning: false,
+            scan_phase: String::new(),
+            scan_files_done: 0,
+            scan_files_total: 0,
+            scan_violations: 0,
         }
     }
 
@@ -204,5 +219,30 @@ impl AppState {
     /// Layout: 1 header row + 3 shortcut rows + 1 status row = 5 rows overhead.
     fn file_list_visible_height(&self) -> usize {
         (self.terminal_height as usize).saturating_sub(5)
+    }
+
+    /// Mark the scan as started with the given phase and total file count.
+    pub fn set_scanning(&mut self, scanning: bool, phase: String, total: usize) {
+        self.scanning = scanning;
+        self.scan_phase = phase;
+        self.scan_files_done = 0;
+        self.scan_files_total = total;
+        self.scan_violations = 0;
+    }
+
+    /// Update in-progress scan metrics.
+    pub fn update_scan_progress(&mut self, phase: String, done: usize, violations: usize) {
+        self.scan_phase = phase;
+        self.scan_files_done = done;
+        self.scan_violations = violations;
+    }
+
+    /// Mark the scan as finished and record the final violation count.
+    pub fn finish_scan(&mut self, total_violations: usize) {
+        self.scanning = false;
+        self.scan_phase.clear();
+        self.scan_files_done = 0;
+        self.scan_files_total = 0;
+        self.scan_violations = total_violations;
     }
 }

@@ -113,6 +113,11 @@ impl CheckCommandsSurface {
     ///
     /// If a factory is provided, per-project containers are created for
     /// each workspace member (used by scan, not check).
+    ///
+    /// **Note:** When `self.factory` is `None` (default), the `config` parameter
+    /// is accepted but silently ignored — the same orchestrator instances are
+    /// reused regardless of the passed `ArchitectureConfig`. Pass an explicit
+    /// factory via `new_with_factory()` to make per-project config effective.
     pub fn scan(
         &self,
         path: &str,

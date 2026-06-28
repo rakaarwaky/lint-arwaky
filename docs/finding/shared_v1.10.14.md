@@ -11,175 +11,7 @@ The following issues were detected by `lint-arwaky-cli scan`:
   AES Architecture Compliance Report
 ============================================================
   Project: /home/raka/mcp-arwaky/lint-arwaky/crates/shared
-  Violations: 56
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_adapter_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'ILinterAdapterPort' is orphaned.
-WHY? Contract port 'ILinterAdapterPort' not implemented by any infrastructure file.
-FIX: Implement 'ILinterAdapterPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_class_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IMandatoryClassProtocol' is orphaned.
-WHY? Contract protocol 'IMandatoryClassProtocol' not implemented by any capabilities file.
-FIX: Implement 'IMandatoryClassProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_code_metric_analyzer_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'ICodeMetricAnalyzerProtocol' is orphaned.
-WHY? Contract protocol 'ICodeMetricAnalyzerProtocol' not implemented by any capabilities file.
-FIX: Implement 'ICodeMetricAnalyzerProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_dead_inheritance_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IDeadInheritanceProtocol' is orphaned.
-WHY? Contract protocol 'IDeadInheritanceProtocol' not implemented by any capabilities file.
-FIX: Implement 'IDeadInheritanceProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_layer_detection_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'ILayerDetectionAggregate' is orphaned.
-WHY? Contract aggregate 'ILayerDetectionAggregate' not implemented by any agent file.
-FIX: Import and use 'ILayerDetectionAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_line_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'ILineCheckerProtocol' is orphaned.
-WHY? Contract protocol 'ILineCheckerProtocol' not implemented by any capabilities file.
-FIX: Implement 'ILineCheckerProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_code_analysis_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'ICodeAnalysisAggregate' is orphaned.
-WHY? Contract aggregate 'ICodeAnalysisAggregate' not implemented by any agent file.
-FIX: Import and use 'ICodeAnalysisAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_cycle_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'ICycleAnalysisProtocol' is orphaned.
-WHY? Contract protocol 'ICycleAnalysisProtocol' not implemented by any capabilities file.
-FIX: Implement 'ICycleAnalysisProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_bypass_checker_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IBypassCheckerProtocol' is orphaned.
-WHY? Contract protocol 'IBypassCheckerProtocol' not implemented by any capabilities file.
-FIX: Implement 'IBypassCheckerProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/contract_system_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IFileSystemPort' is orphaned.
-WHY? Contract port 'IFileSystemPort' not implemented by any infrastructure file.
-FIX: Implement 'IFileSystemPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/contract_language_detector_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'ILanguageDetectorPort' is orphaned.
-WHY? Contract port 'ILanguageDetectorPort' not implemented by any infrastructure file.
-FIX: Implement 'ILanguageDetectorPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/contract_parser_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'ISourceParserPort' is orphaned.
-WHY? Contract port 'ISourceParserPort' not implemented by any infrastructure file.
-FIX: Implement 'ISourceParserPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/contract_path_normalization_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IPathNormalizationPort' is orphaned.
-WHY? Contract port 'IPathNormalizationPort' not implemented by any infrastructure file.
-FIX: Implement 'IPathNormalizationPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/contract_scanner_provider_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IScannerProviderPort' is orphaned.
-WHY? Contract port 'IScannerProviderPort' not called by any orchestrator or container.
-FIX: Implement 'IScannerProviderPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_orchestration_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'IConfigOrchestrationAggregate' is orphaned.
-WHY? Contract aggregate 'IConfigOrchestrationAggregate' not implemented by any agent file.
-FIX: Import and use 'IConfigOrchestrationAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_reader_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IConfigReaderPort' is orphaned.
-WHY? Contract port 'IConfigReaderPort' not implemented by any infrastructure file.
-FIX: Implement 'IConfigReaderPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_workspace_detector_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IWorkspaceDetectorPort' is orphaned.
-WHY? Contract port 'IWorkspaceDetectorPort' not implemented by any infrastructure file.
-FIX: Implement 'IWorkspaceDetectorPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_multi_project_orchestrator_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'MultiProjectOrchestratorAggregate' is orphaned.
-WHY? Contract aggregate 'MultiProjectOrchestratorAggregate' not implemented by any agent file.
-FIX: Import and use 'MultiProjectOrchestratorAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_parser_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IConfigParserPort' is orphaned.
-WHY? Contract port 'IConfigParserPort' not implemented by any infrastructure file.
-FIX: Implement 'IConfigParserPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_validator_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IConfigValidatorProtocol' is orphaned.
-WHY? Contract protocol 'IConfigValidatorProtocol' not implemented by any capabilities file.
-FIX: Implement 'IConfigValidatorProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/external-lint/contract_external_lint_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'IExternalLintAggregate' is orphaned.
-WHY? Contract aggregate 'IExternalLintAggregate' not implemented by any agent file.
-FIX: Import and use 'IExternalLintAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/file-watch/contract_provider_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IWatchProviderPort' is orphaned.
-WHY? Contract port 'IWatchProviderPort' not implemented by any infrastructure file.
-FIX: Implement 'IWatchProviderPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/file-watch/contract_watch_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'IWatchAggregate' is orphaned.
-WHY? Contract aggregate 'IWatchAggregate' not implemented by any agent file.
-FIX: Import and use 'IWatchAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/file-watch/contract_change_analyzer_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IChangeAnalyzerProtocol' is orphaned.
-WHY? Contract protocol 'IChangeAnalyzerProtocol' not implemented by any capabilities file.
-FIX: Implement 'IChangeAnalyzerProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/git-hooks/contract_git_hooks_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'GitHooksAggregate' is orphaned.
-WHY? Contract aggregate 'GitHooksAggregate' not implemented by any agent file.
-FIX: Import and use 'GitHooksAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/git-hooks/contract_manager_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IHookManagerPort' is orphaned.
-WHY? Contract port 'IHookManagerPort' not implemented by any infrastructure file.
-FIX: Implement 'IHookManagerPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/git-hooks/contract_orchestrator_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'HookManagementOrchestratorAggregate' is orphaned.
-WHY? Contract aggregate 'HookManagementOrchestratorAggregate' not implemented by any agent file.
-FIX: Import and use 'HookManagementOrchestratorAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/git-hooks/contract_hook_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IHookProtocol' is orphaned.
-WHY? Contract protocol 'IHookProtocol' not implemented by any capabilities file.
-FIX: Implement 'IHookProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/git-hooks/contract_diff_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IDiffProtocol' is orphaned.
-WHY? Contract protocol 'IDiffProtocol' not implemented by any capabilities file.
-FIX: Implement 'IDiffProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/contract_import_runner_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'IImportRunnerAggregate' is orphaned.
-WHY? Contract aggregate 'IImportRunnerAggregate' not implemented by any agent file.
-FIX: Import and use 'IImportRunnerAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/contract_rule_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IAnalyzer' is orphaned.
-WHY? Contract protocol 'IAnalyzer' not implemented by any capabilities file.
-FIX: Implement 'IAnalyzer' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/contract_unused_import_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IUnusedImportProtocol' is orphaned.
-WHY? Contract protocol 'IUnusedImportProtocol' not implemented by any capabilities file.
-FIX: Implement 'IUnusedImportProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/contract_import_parser_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IImportParserPort' is orphaned.
-WHY? Contract port 'IImportParserPort' not implemented by any infrastructure file.
-FIX: Implement 'IImportParserPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/naming-rules/contract_naming_runner_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'INamingRunnerAggregate' is orphaned.
-WHY? Contract aggregate 'INamingRunnerAggregate' not implemented by any agent file.
-FIX: Import and use 'INamingRunnerAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/naming-rules/contract_naming_filesystem_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'INamingFileSystemPort' is orphaned.
-WHY? Contract port 'INamingFileSystemPort' not implemented by any infrastructure file.
-FIX: Implement 'INamingFileSystemPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/naming-rules/contract_naming_checker_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'INamingCheckerProtocol' is orphaned.
-WHY? Contract protocol 'INamingCheckerProtocol' not implemented by any capabilities file.
-FIX: Implement 'INamingCheckerProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/naming-rules/contract_naming_analyzer_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'INamingAnalyzerProtocol' is orphaned.
-WHY? Contract protocol 'INamingAnalyzerProtocol' not implemented by any capabilities file.
-FIX: Implement 'INamingAnalyzerProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/orphan-detector/contract_orphan_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'IOrphanAggregate' is orphaned.
-WHY? Contract aggregate 'IOrphanAggregate' not implemented by any agent file.
-FIX: Import and use 'IOrphanAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/orphan-detector/contract_orphan_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'ITaxonomyOrphanProtocol' is orphaned.
-WHY? Contract protocol 'ITaxonomyOrphanProtocol' not implemented by any capabilities file.
-FIX: Implement 'ITaxonomyOrphanProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/orphan-detector/contract_orphan_graph_resolver_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IOrphanGraphResolverProtocol' is orphaned.
-WHY? Contract protocol 'IOrphanGraphResolverProtocol' not implemented by any capabilities file.
-FIX: Implement 'IOrphanGraphResolverProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/project-setup/contract_maintenance_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'MaintenanceCommandsAggregate' is orphaned.
-WHY? Contract aggregate 'MaintenanceCommandsAggregate' not implemented by any agent file.
-FIX: Import and use 'MaintenanceCommandsAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/project-setup/contract_setup_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'SetupManagementAggregate' is orphaned.
-WHY? Contract aggregate 'SetupManagementAggregate' not implemented by any agent file.
-FIX: Import and use 'SetupManagementAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/project-setup/contract_setup_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'ISetupManagementProtocol' is orphaned.
-WHY? Contract protocol 'ISetupManagementProtocol' not implemented by any capabilities file.
-FIX: Implement 'ISetupManagementProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/project-setup/contract_maintenance_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IMaintenanceCheckerProtocol' is orphaned.
-WHY? Contract protocol 'IMaintenanceCheckerProtocol' not implemented by any capabilities file.
-FIX: Implement 'IMaintenanceCheckerProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_agent_role_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IAgentRoleChecker' is orphaned.
-WHY? Contract protocol 'IAgentRoleChecker' not implemented by any capabilities file.
-FIX: Implement 'IAgentRoleChecker' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_capabilities_role_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'ICapabilitiesRoleChecker' is orphaned.
-WHY? Contract protocol 'ICapabilitiesRoleChecker' not implemented by any capabilities file.
-FIX: Implement 'ICapabilitiesRoleChecker' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_infrastructure_role_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IInfrastructureRoleChecker' is orphaned.
-WHY? Contract protocol 'IInfrastructureRoleChecker' not implemented by any capabilities file.
-FIX: Implement 'IInfrastructureRoleChecker' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_role_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'IRoleAggregate' is orphaned.
-WHY? Contract aggregate 'IRoleAggregate' not implemented by any agent file.
-FIX: Import and use 'IRoleAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_role_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IContractRoleChecker' is orphaned.
-WHY? Contract protocol 'IContractRoleChecker' not implemented by any capabilities file.
-FIX: Implement 'IContractRoleChecker' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_role_runner_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'IRoleRunnerAggregate' is orphaned.
-WHY? Contract aggregate 'IRoleRunnerAggregate' not implemented by any agent file.
-FIX: Import and use 'IRoleRunnerAggregate' in a surface_* file or root_*_container.rs.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_surface_role_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'ISurfaceRoleChecker' is orphaned.
-WHY? Contract protocol 'ISurfaceRoleChecker' not implemented by any capabilities file.
-FIX: Implement 'ISurfaceRoleChecker' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_taxonomy_role_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'ITaxonomyRoleChecker' is orphaned.
-WHY? Contract protocol 'ITaxonomyRoleChecker' not implemented by any capabilities file.
-FIX: Implement 'ITaxonomyRoleChecker' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/tui/contract_action_handler_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'IActionHandlerProtocol' is orphaned.
-WHY? Contract protocol 'IActionHandlerProtocol' not implemented by any capabilities file.
-FIX: Implement 'IActionHandlerProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/tui/contract_file_system_port.rs - AES502 CONTRACT_ORPHAN: Contract port 'IFileSystemPort' is orphaned.
-WHY? Contract port 'IFileSystemPort' not implemented by any infrastructure file.
-FIX: Implement 'IFileSystemPort' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/tui/contract_lint_executor_protocol.rs - AES502 CONTRACT_ORPHAN: Contract protocol 'ILintExecutorProtocol' is orphaned.
-WHY? Contract protocol 'ILintExecutorProtocol' not implemented by any capabilities file.
-FIX: Implement 'ILintExecutorProtocol' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.
-  [AES502] /home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/tui/contract_tui_aggregate.rs - AES502 CONTRACT_ORPHAN: Contract aggregate 'ITuiAggregate' is orphaned.
-WHY? Contract aggregate 'ITuiAggregate' not implemented by any agent file.
-FIX: Import and use 'ITuiAggregate' in a surface_* file or root_*_container.rs.
+  Violations: 0
 ```
 
 ---
@@ -2334,6 +2166,7 @@ pub trait IFileSystemPort: Send + Sync {
 ## File: crates/shared/src/common/infrastructure_file_collector_provider.rs
 
 ```rust
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -2372,7 +2205,8 @@ fn default_ignored_paths() -> Vec<String> {
 pub fn collect_all_source_files(dir: &Path) -> Vec<FilePath> {
     let mut files = Vec::new();
     if dir.exists() && dir.is_dir() {
-        walk_source_files(dir, &mut files, &[]);
+        let ignored = default_ignored_paths();
+        walk_source_files(dir, &mut files, &ignored);
     }
     files
 }
@@ -2403,13 +2237,54 @@ fn is_ignored_dir(dir: &Path, ignored: &[String]) -> bool {
     is_path_ignored(&s, ignored)
 }
 
+#[cfg(unix)]
+fn get_inode(meta: &std::fs::Metadata) -> u64 {
+    use std::os::unix::fs::MetadataExt;
+    meta.ino()
+}
+
+#[cfg(not(unix))]
+fn get_inode(_meta: &std::fs::Metadata) -> u64 {
+    0
+}
+
 fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
+    let mut visited = HashSet::new();
+    walk_source_files_inner(dir, files, ignored, &mut visited)
+}
+
+fn walk_source_files_inner(
+    dir: &Path,
+    files: &mut Vec<FilePath>,
+    ignored: &[String],
+    visited: &mut HashSet<u64>,
+) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
             if is_ignored_dir(&path, ignored) {
                 continue;
             }
+
+            if let Ok(sym_meta) = std::fs::symlink_metadata(&path) {
+                if sym_meta.file_type().is_symlink() {
+                    if let Ok(target) = std::fs::canonicalize(&path) {
+                        if let Ok(target_meta) = target.metadata() {
+                            let inode = get_inode(&target_meta);
+                            if !visited.insert(inode) {
+                                continue;
+                            }
+                            if target_meta.is_dir() {
+                                walk_source_files_inner(&target, files, ignored, visited);
+                            } else if target_meta.is_file() {
+                                collect_source_file(&target, files);
+                            }
+                        }
+                    }
+                    continue;
+                }
+            }
+
             if path.is_dir() {
                 let dir_name = path
                     .file_name()
@@ -2418,29 +2293,77 @@ fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) 
                 if dir_name == "tests" {
                     continue;
                 }
-                walk_source_files(&path, files, ignored);
+                if let Ok(meta) = fs::metadata(&path) {
+                    let inode = get_inode(&meta);
+                    if !visited.insert(inode) {
+                        continue;
+                    }
+                }
+                walk_source_files_inner(&path, files, ignored, visited);
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if is_source_file(ext) {
-                    if let Some(path_str) = path.to_str() {
-                        if let Ok(fp) = FilePath::new(path_str.to_string()) {
-                            files.push(fp);
-                        }
-                    }
+                    collect_source_file(&path, files);
                 }
             }
         }
     }
 }
 
+fn collect_source_file(path: &Path, files: &mut Vec<FilePath>) {
+    if let Some(path_str) = path.to_str() {
+        if let Ok(fp) = FilePath::new(path_str.to_string()) {
+            files.push(fp);
+        }
+    }
+}
+
 pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
+    let mut visited = HashSet::new();
+    walk_rs_files_inner(dir, cb, ignored, &mut visited)
+}
+
+fn walk_rs_files_inner(
+    dir: &Path,
+    cb: &mut dyn FnMut(PathBuf),
+    ignored: &[String],
+    visited: &mut HashSet<u64>,
+) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
             let p = entry.path();
             if is_ignored_dir(&p, ignored) {
                 continue;
             }
+
+            if let Ok(sym_meta) = std::fs::symlink_metadata(&p) {
+                if sym_meta.file_type().is_symlink() {
+                    if let Ok(target) = std::fs::canonicalize(&p) {
+                        if let Ok(target_meta) = target.metadata() {
+                            let inode = get_inode(&target_meta);
+                            if !visited.insert(inode) {
+                                continue;
+                            }
+                            if target_meta.is_dir() {
+                                walk_rs_files_inner(&target, cb, ignored, visited);
+                            } else if target_meta.is_file()
+                                && matches!(target.extension().and_then(|e| e.to_str()), Some("rs"))
+                            {
+                                cb(target);
+                            }
+                        }
+                    }
+                    continue;
+                }
+            }
+
             if p.is_dir() {
-                walk_rs_files(&p, cb, ignored);
+                if let Ok(meta) = fs::metadata(&p) {
+                    let inode = get_inode(&meta);
+                    if !visited.insert(inode) {
+                        continue;
+                    }
+                }
+                walk_rs_files_inner(&p, cb, ignored, visited);
             } else if matches!(p.extension().and_then(|e| e.to_str()), Some("rs")) {
                 cb(p);
             }
@@ -6929,7 +6852,7 @@ pub trait IDiffProtocol: Send + Sync {
     async fn get_diff(&self, path: &FilePath) -> GitDiffResultVO;
 
     /// Get list of changed files from git diff
-    async fn get_changed_files(&self, path: &FilePath) -> FilePathList;
+    async fn get_changed_files(&self, path: &FilePath, base: &str) -> FilePathList;
 
     /// Get default branch name for a repository
     async fn get_default_branch(&self, path: &FilePath) -> String;
