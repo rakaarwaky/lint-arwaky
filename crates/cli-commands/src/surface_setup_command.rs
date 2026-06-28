@@ -81,7 +81,11 @@ fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> 
             }
         }
     }
-    if all_ok { ExitCode::SUCCESS } else { ExitCode::from(1) }
+    if all_ok {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
+    }
 }
 
 pub async fn handle_install(
@@ -151,6 +155,33 @@ pub fn handle_mcp_config(client: &str) -> ExitCode {
                 "command": binary,
                 "args": [],
                 "env": {}
+            }
+        }),
+        "hermes" => serde_json::json!({
+            "mcpServers": {
+                "lint-arwaky": {
+                    "command": binary,
+                    "args": [],
+                    "env": {}
+                }
+            }
+        }),
+        "vscode" => serde_json::json!({
+            "mcpServers": {
+                "lint-arwaky": {
+                    "command": binary,
+                    "args": [],
+                    "env": {}
+                }
+            }
+        }),
+        "all" => serde_json::json!({
+            "mcpServers": {
+                "lint-arwaky": {
+                    "command": binary,
+                    "args": [],
+                    "env": {}
+                }
             }
         }),
         _ => serde_json::json!({

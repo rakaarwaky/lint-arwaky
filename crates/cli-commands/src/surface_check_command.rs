@@ -228,7 +228,7 @@ impl CheckCommandsSurface {
                 .into_iter()
                 .filter(|r| {
                     let abs_path = cwd.join(&r.file.value);
-                    r.code.to_string().contains(code)
+                    r.code.code() == code
                         && abs_path.to_string_lossy().starts_with(&canonical_scan_path)
                 })
                 .collect()
@@ -482,7 +482,7 @@ impl CheckCommandsSurface {
                     .into_iter()
                     .filter(|r| {
                         let abs_path = cwd_for_ws.join(&r.file.value);
-                        r.code.to_string().contains(code)
+                        r.code.code() == code
                             && ws_canonical
                                 .as_ref()
                                 .map(|c| abs_path.starts_with(c))
@@ -666,7 +666,7 @@ impl CheckCommandsSurface {
                             uri: r.file.value.clone(),
                         },
                         region: SarifRegion {
-                            start_line: r.line.value(),
+                            start_line: std::cmp::max(1, r.line.value()),
                         },
                     },
                 }],
@@ -723,15 +723,18 @@ impl CheckCommandsSurface {
             let name = xml_escape(&format!("{}:{}", r.file.value, r.line.value()));
             let message = xml_escape(&r.message.value);
             let sev = r.severity.to_string();
+            let is_info = r.severity == shared::cli_commands::taxonomy_severity_vo::Severity::INFO;
 
             xml.push_str(&format!(
                 "    <testcase classname=\"{classname}\" name=\"{name}\">\n"
             ));
-            xml.push_str(&format!(
-                "      <failure message=\"{sev}: {message}\" type=\"{sev}\">\n"
-            ));
-            xml.push_str(&format!("        {message}\n"));
-            xml.push_str("      </failure>\n");
+            if !is_info {
+                xml.push_str(&format!(
+                    "      <failure message=\"{sev}: {message}\" type=\"{sev}\">\n"
+                ));
+                xml.push_str(&format!("        {message}\n"));
+                xml.push_str("      </failure>\n");
+            }
             xml.push_str("    </testcase>\n");
         }
 

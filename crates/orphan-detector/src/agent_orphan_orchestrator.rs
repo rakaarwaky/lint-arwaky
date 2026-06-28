@@ -181,7 +181,9 @@ impl ArchOrphanAnalyzer {
     /// Build a LintResult from orphan analysis output.
     fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
         LintResult {
-            file: FilePath::new(file.to_string()).unwrap_or_default(),
+            file: FilePath {
+                value: file.to_string(),
+            },
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),
             code: ErrorCode::raw(code),
@@ -245,7 +247,9 @@ impl ArchOrphanAnalyzer {
                 return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
             }
         };
-        let root = FilePath::new(root_dir.to_string()).unwrap_or_default();
+        let root = FilePath {
+            value: root_dir.to_string(),
+        };
 
         if layer_str.contains(LAYER_TAXONOMY) {
             return self.taxonomy_analyzer.is_taxonomy_orphan(
@@ -360,7 +364,9 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
 
 pub fn mk_orphan_result(file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
     LintResult {
-        file: FilePath::new(file.to_string()).unwrap_or_default(),
+        file: FilePath {
+            value: file.to_string(),
+        },
         line: LineNumber::new(0),
         column: ColumnNumber::new(0),
         code: ErrorCode::raw(code),

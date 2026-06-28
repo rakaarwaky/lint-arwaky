@@ -77,8 +77,8 @@ impl FilePath {
         if special_files.contains(&basename) || basename.starts_with('.') {
             return String::new();
         }
-        match basename.rsplit('.').next() {
-            Some(ext) => ext.to_string(),
+        match basename.rsplit_once('.') {
+            Some((_, ext)) => ext.to_string(),
             None => String::new(),
         }
     }
