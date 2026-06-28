@@ -44,7 +44,7 @@ impl FixCommandsSurface {
         self.run_fix(project_path, false);
     }
 
-    pub fn run_fix(&self, project_path: FilePath, dry_run: bool) {
+    pub fn run_fix(&self, project_path: FilePath, dry_run: bool) -> ExitCode {
         if dry_run {
             println!("[DRY-RUN] Previewing fixes for {}...", project_path.value);
         } else {
@@ -71,9 +71,16 @@ impl FixCommandsSurface {
                 fixed_count,
                 after_results.len()
             );
-            println!("Fix complete.");
+            if after_results.is_empty() {
+                println!("Fix complete — all violations resolved.");
+                ExitCode::SUCCESS
+            } else {
+                println!("Fix complete — {} violations remain.", after_results.len());
+                ExitCode::from(1)
+            }
         } else {
             println!("Dry-run complete — no changes applied.");
+            ExitCode::SUCCESS
         }
     }
 }
@@ -92,6 +99,5 @@ pub fn handle_fix(
     };
     let fix_surface = FixCommandsSurface::new(code_analysis_linter, fix_orchestrator_factory);
     let fp = FilePath::new(root).unwrap_or_default();
-    fix_surface.run_fix(fp, dry_run);
-    ExitCode::SUCCESS
+    fix_surface.run_fix(fp, dry_run)
 }

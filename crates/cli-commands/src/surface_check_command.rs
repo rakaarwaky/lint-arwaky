@@ -333,12 +333,12 @@ impl CheckCommandsSurface {
         filter: Option<&str>,
         member: Option<&str>,
         format: Format,
-    ) {
+    ) -> ExitCode {
         let path_obj = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
             Err(_) => {
                 eprintln!("[error] invalid path: {path}");
-                return;
+                return ExitCode::from(1);
             }
         };
 
@@ -346,21 +346,20 @@ impl CheckCommandsSurface {
             Some(o) => o.clone(),
             None => {
                 eprintln!("[error] multi-project orchestrator not available");
-                return;
+                return ExitCode::from(1);
             }
         };
 
         let rt = match crate::surface_common_command::create_runtime() {
             Ok(r) => r,
-            Err(_) => return,
+            Err(_) => return ExitCode::from(1),
         };
         let workspaces = rt.block_on(orchestrator.discover_workspaces(&path_obj));
 
         if workspaces.is_empty() {
             // No workspaces discovered — fall back to single-scan mode
             let default_config = ArchitectureConfig::default();
-            self.scan(path, filter, default_config, format);
-            return;
+            return self.scan(path, filter, default_config, format);
         }
 
         // Filter to specific member if requested
@@ -389,7 +388,7 @@ impl CheckCommandsSurface {
                 }
                 eprintln!();
                 eprintln!("Usage: lint-arwaky-cli scan {path} --member <name>");
-                return;
+                return ExitCode::from(1);
             }
             filtered
         } else {
@@ -569,6 +568,11 @@ impl CheckCommandsSurface {
                     println!("{junit}");
                 }
             }
+        }
+        if global_all_results.is_empty() {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::from(1)
         }
     }
 

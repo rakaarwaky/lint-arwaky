@@ -1,6 +1,7 @@
 // PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
 use crate::taxonomy_orphan_filename_helper::{file_basename, file_suffix};
 use regex::Regex;
+use std::sync::OnceLock;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
@@ -220,11 +221,27 @@ pub fn is_contract_orphan(
     OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
 }
 
+fn re_contract_rust() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok()).as_ref()
+}
+
+fn re_contract_py() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"class\s+([A-Za-z0-9_]+)").ok()).as_ref()
+}
+
+fn re_ts_interface_export() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok()).as_ref()
+}
+
+fn re_interface() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok()).as_ref()
+}
+
 pub fn extract_contract_trait_name(content: &str) -> Option<String> {
-    let re_rust = Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok()?;
-    let re_py = Regex::new(r"class\s+([A-Za-z0-9_]+)").ok()?;
-    let re_ts_interface = Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok()?;
-    let re_interface = Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok()?;
 
     // Skip comment lines to avoid matching "trait for" in comments
     let code_lines: String = content
@@ -236,16 +253,24 @@ pub fn extract_contract_trait_name(content: &str) -> Option<String> {
         .collect::<Vec<_>>()
         .join("\n");
 
-    if let Some(caps) = re_rust.captures(&code_lines) {
-        return Some(caps[1].to_string());
+    if let Some(re) = re_contract_rust() {
+        if let Some(caps) = re.captures(&code_lines) {
+            return Some(caps[1].to_string());
+        }
     }
-    if let Some(caps) = re_ts_interface.captures(&code_lines) {
-        return Some(caps[1].to_string());
+    if let Some(re) = re_ts_interface_export() {
+        if let Some(caps) = re.captures(&code_lines) {
+            return Some(caps[1].to_string());
+        }
     }
-    if let Some(caps) = re_interface.captures(&code_lines) {
-        return Some(caps[1].to_string());
+    if let Some(re) = re_interface() {
+        if let Some(caps) = re.captures(&code_lines) {
+            return Some(caps[1].to_string());
+        }
     }
-    re_py.captures(&code_lines).map(|caps| caps[1].to_string())
+    re_contract_py()
+        .and_then(|re| re.captures(&code_lines))
+        .map(|caps| caps[1].to_string())
 }
 
 fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {

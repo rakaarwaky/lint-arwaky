@@ -61,14 +61,12 @@ pub fn run_ci_analysis(
     let root = path.unwrap_or_else(|| ".".to_string());
     let results = code_analysis_linter.run_code_analysis_path(&root);
     let score = code_analysis_linter.calc_score(&results);
-    let effective_threshold = if threshold == 80 { 70 } else { threshold };
-
     let has_crit = code_analysis_linter.check_critical(&results);
-    let below_threshold = (score as u32) < effective_threshold;
+    let below_threshold = (score as u32) < threshold;
 
     println!("Architecture Compliance CI");
     println!("Score: {:.1} / 100", score);
-    println!("Threshold: {}", effective_threshold);
+    println!("Threshold: {}", threshold);
     println!();
 
     let mut reasons: Vec<String> = Vec::new();
@@ -78,7 +76,7 @@ pub fn run_ci_analysis(
     if below_threshold {
         reasons.push(format!(
             "Score below threshold ({:.1} < {})",
-            score, effective_threshold
+            score, threshold
         ));
     }
 

@@ -83,5 +83,9 @@ pub async fn handle_git_diff(
         total_violations,
         files.len()
     );
-    ExitCode::SUCCESS
+    if total_violations > 0 {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
 }

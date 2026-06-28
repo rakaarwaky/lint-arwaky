@@ -177,15 +177,20 @@ impl OrphanGraphResolver {
             let ws_path = root_path.join(ws_dir);
             if let Ok(entries) = std::fs::read_dir(&ws_path) {
                 for entry in entries.flatten() {
-                    if entry.path().is_dir() {
-                        if let Some(name) = entry.file_name().to_str().map(|s| s.to_string()) {
-                            workspace_modules.insert(name.clone());
-                            workspace_modules.insert(name.replace('-', "_"));
-                            let src_dir = entry.path().join("src");
-                            if src_dir.is_dir() {
-                                crate_src_dirs.insert(name.clone(), src_dir.clone());
-                                crate_src_dirs.insert(name.replace('-', "_"), src_dir);
-                            }
+                    if let Ok(ft) = entry.file_type() {
+                        if !ft.is_dir() {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                    if let Some(name) = entry.file_name().to_str().map(|s| s.to_string()) {
+                        workspace_modules.insert(name.clone());
+                        workspace_modules.insert(name.replace('-', "_"));
+                        let src_dir = entry.path().join("src");
+                        if src_dir.is_dir() {
+                            crate_src_dirs.insert(name.clone(), src_dir.clone());
+                            crate_src_dirs.insert(name.replace('-', "_"), src_dir);
                         }
                     }
                 }

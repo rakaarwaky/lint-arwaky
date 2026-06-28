@@ -14,6 +14,7 @@
 use async_trait::async_trait;
 use regex::Regex;
 use std::sync::Arc;
+use std::sync::OnceLock;
 
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -34,6 +35,20 @@ use shared::taxonomy_message_vo::LintMessage;
 use shared::external_lint::taxonomy_external_lint_helper::{
     default_working_dir, exec_cmd_adapter, has_python_files, noop_apply_fix,
 };
+
+fn mypy_re_with_col() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok()
+    }).as_ref()
+}
+
+fn mypy_re_without_col() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok()
+    }).as_ref()
+}
 
 pub struct MyPyAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
@@ -102,16 +117,16 @@ impl ILinterAdapterPort for MyPyAdapter {
             exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 120.0, self.name()).await?;
 
         let stdout = &response.stdout;
-        let re = match Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$") {
-            Ok(r) => r,
-            Err(_) => match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$") {
-                Ok(r) => r,
-                Err(_) => return Ok(LintResultList::new(vec![])),
+        let re = match mypy_re_with_col() {
+            Some(r) => r,
+            None => match mypy_re_without_col() {
+                Some(r) => r,
+                None => return Ok(LintResultList::new(vec![])),
             },
         };
-        let re_simple = match Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$") {
-            Ok(r) => r,
-            Err(_) => return Ok(LintResultList::new(vec![])),
+        let re_simple = match mypy_re_without_col() {
+            Some(r) => r,
+            None => return Ok(LintResultList::new(vec![])),
         };
         let mut results = Vec::new();
 
