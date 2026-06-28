@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.10.76 (2026-06-28)
+
+### Added
+
+- **Hook integrity protection**: `scripts/hook-integrity-check.sh` + systemd service prevents `--no-verify` bypass.
+- **Test coverage**: Orphan violation files added to test-workspaces for AES501-AES506 (6 new intentional violations).
+- **Concurrent linters (#107 P2 #17)**: Async linter groups now run via `tokio::join!` for parallel execution.
+
+### Fixed
+
+- **Default factory (#107 P1 #6)**: `scan()` builds default factory from existing orchestrators when none configured.
+- **Git-diff base param (#107 P1 #9)**: `IDiffProtocol::get_changed_files` now accepts and uses `base` parameter.
+- **Path canonicalization (#107 P1 #13)**: `check_orphan_single_file` canonicalizes paths before comparison.
+- **Orphan detection hoisted (#107 P1 #7)**: Cross-workspace orphan detection runs once instead of N× per member.
+- **CI severity counting (#107 P2 #20)**: Single-pass severity counting replaces 4× iteration.
+- **Symlink protection (#107 P2 #27)**: File walker now detects symlinks and tracks inodes to prevent loops.
+- **Workspace discovery (#107 P2 #18)**: `discover_workspaces` no longer called twice on member miss.
+- **`format!("{:?}").to_uppercase()` (#107 P2 #21)**: Replaced with direct match.
+- **JUnit pre-allocation (#107 P2 Miss #3)**: `String::with_capacity` prevents reallocation.
+- **Redundant FilePath (#107 P2 Miss #2)**: Reused existing `path_obj` instead of constructing new one.
+- **Ignore list (#107 P1 Miss #1)**: `collect_all_source_files` now passes `default_ignored_paths()` instead of `&[]`.
+- **File collector (#107 P2 #28)**: Added `std::collections::HashSet` import + inode-based symlink loop detection.
+- **Commit gate threshold**: Pre-commit hook now requires >=24 unique AES codes per language.
+
+### Performance
+
+- **Concurrent async linters**: All 4 async groups run in parallel via `tokio::join!`.
+- **Single-pass CI counting**: One loop instead of 4× `.filter().count()`.
+- **Pre-allocated JUnit buffer**: Estimated capacity prevents reallocation.
+
 ## 1.10.75 (2026-06-28)
 
 ### Fixed
