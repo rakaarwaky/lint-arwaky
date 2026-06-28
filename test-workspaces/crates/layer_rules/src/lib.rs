@@ -42,3 +42,6 @@ pub mod cycle_violation_processor;
 
 #[path = "contract_cycle_violation_aggregate.rs"]
 pub mod cycle_violation_aggregate;
+
+#[path = "contract_aes201_debug_aggregate.rs"]
+pub mod aes201_debug_aggregate;

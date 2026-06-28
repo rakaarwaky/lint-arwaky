@@ -67,7 +67,7 @@ The codebase uses **7 architectural layers** as **file prefixes**, organized int
 ```
 
 crates/
-shared/ — Foundation: ALL taxonomy_ + contract_
+shared/ — Foundation: ALL taxonomy* + contract*
 import-rules/ — Import compliance checks
 naming-rules/ — Naming convention enforcement
 role-rules/ — Role-layer violation checks
@@ -80,7 +80,7 @@ file-watch/ — File watching
 git-hooks/ — Git hooks management
 maintenance/ — Maintenance operations
 project-setup/ — Project init, doctor, mcp-config
-cli-commands/ — CLI surfaces (_command)
+cli-commands/ — CLI surfaces (\_command)
 mcp-server/ — MCP server surfaces
 tui/ — TUI Interface
 root_cli_main_entry.rs — CLI binary entry (root_entry)

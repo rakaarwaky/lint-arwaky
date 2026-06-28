@@ -58,16 +58,16 @@ ESLint is the standard linter for JavaScript and TypeScript, available at https:
 
 ## TypeScript-Specific Rules
 
-| Code | Rule | Severity |
+| Code                                             | Rule                                                | Severity |
 | ------------------------------------------------ | --------------------------------------------------- | -------- | ------------------------ | ------- |
-| @typescript-eslint/no-explicit-any | Use of `any` type bypasses type safety | Error |
-| @typescript-eslint/no-unused-vars | Variable/parameter declared but not used | Error |
-| @typescript-eslint/explicit-function-return-type | Function missing return type annotation | Warning |
-| @typescript-eslint/no-non-null-assertion | Use of non-null assertion `!` operator | Warning |
-| @typescript-eslint/no-unsafe-assignment | Assignment of `any` typed value to typed variable | Error |
-| @typescript-eslint/no-unsafe-call | Calling an `any` typed value | Error |
-| @typescript-eslint/no-unsafe-member-access | Accessing property on `any` typed value | Error |
-| @typescript-eslint/no-unsafe-return | Returning `any` from typed function | Error |
-| @typescript-eslint/ban-types | Use of banned types (`String`, `Number`, `Boolean`) | Error |
-| @typescript-eslint/prefer-optional-chain | Nested `&&` for optional access vs `?.` | Warning |
-| @typescript-eslint/prefer-nullish-coalescing | `                                                  |          |`with falsy check vs`??` | Warning |
+| @typescript-eslint/no-explicit-any               | Use of `any` type bypasses type safety              | Error    |
+| @typescript-eslint/no-unused-vars                | Variable/parameter declared but not used            | Error    |
+| @typescript-eslint/explicit-function-return-type | Function missing return type annotation             | Warning  |
+| @typescript-eslint/no-non-null-assertion         | Use of non-null assertion `!` operator              | Warning  |
+| @typescript-eslint/no-unsafe-assignment          | Assignment of `any` typed value to typed variable   | Error    |
+| @typescript-eslint/no-unsafe-call                | Calling an `any` typed value                        | Error    |
+| @typescript-eslint/no-unsafe-member-access       | Accessing property on `any` typed value             | Error    |
+| @typescript-eslint/no-unsafe-return              | Returning `any` from typed function                 | Error    |
+| @typescript-eslint/ban-types                     | Use of banned types (`String`, `Number`, `Boolean`) | Error    |
+| @typescript-eslint/prefer-optional-chain         | Nested `&&` for optional access vs `?.`             | Warning  |
+| @typescript-eslint/prefer-nullish-coalescing     | `                                                   |          | `with falsy check vs`??` | Warning |
