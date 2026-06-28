@@ -34,7 +34,7 @@ cargo clippy --all-targets -- -D warnings
 cargo clippy -p import_rules -- -D warnings  # per crate
 ```
 
-## Architecture (6-layer AES + Vertical Slicing + Multi-Crate Workspace)
+## Architecture (7-layer AES + Vertical Slicing + Multi-Crate Workspace)
 
 The codebase uses **7 architectural layers** as **file prefixes**, organized into **feature module** (vertical slicing) in a **Cargo workspace**.
 
@@ -127,11 +127,13 @@ Allowed branch naming:
 
 When merging a PR to develop:
 
-- Use `gh pr merge <num> --squash` ONLY
-- **NEVER use `--delete-branch`** — feature branches must NOT be deleted after merge
+- ** use `--delete-branch`** — for feature / fix branches after merger
+- **do NOT be deleted `develop` branch ** after merge to `main`
 - Branches that were accidentally deleted must be restored immediately via:
   ```bash
   git branch <branch-name> origin/develop
   jj git import
   jj bookmark set <branch-name>
   ```
+
+g

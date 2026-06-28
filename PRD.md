@@ -218,7 +218,7 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 
 ## 6. Architecture — AES Layered
 
-6 layers determined by **file prefix** (NOT folder):
+7 layers determined by **file prefix** (NOT folder):
 
 | Layer          | Prefix            | Allowed Suffixes                                                                                                         |
 | -------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |

@@ -587,8 +587,8 @@ pub fn is_in_surfaces(f: &FilePath) -> bool {
         Some(s) => s,
         None => &path_str,
     };
-    let stem = match basename.split('.').next() {
-        Some(s) => s,
+    let stem = match basename.rfind('.') {
+        Some(pos) => &basename[..pos],
         None => basename,
     };
     if stem.starts_with("surface_") || stem.starts_with("surfaces_") {

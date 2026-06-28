@@ -67,7 +67,7 @@ git clone https://github.com/rakaarwaky/lint-arwaky.git
 cd lint-arwaky
 cargo build --release
 # Binaries: target/release/lint-arwaky-cli, target/release/lint-arwaky-mcp, target/release/lint-arwaky-tui
-lint-arwaky-cli version        # should print "Lint Arwaky v1.10.72 (AES Semantic Builder)"
+lint-arwaky-cli version        # should print "Lint Arwaky v1.10.74 (AES Semantic Builder)"
 lint-arwaky-cli maintenance doctor   # environment diagnostics
 ```
 
@@ -113,7 +113,7 @@ lint-arwaky-cli scan /path/to/some-project/
 
 ## Architecture Overview
 
-Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with six layers, organized into **20 feature crates** (vertical slicing). See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification.
+Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with seven layers, organized into **16 crates** (vertical slicing: shared + 15 feature crates). See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification.
 
 ### Layer prefix naming
 
@@ -346,16 +346,16 @@ cargo run --bin lint-arwaky-tui
 
 ## Project Stats (v1.10.72)
 
-| Metric             | Value                                                                                               |
-| ------------------ | --------------------------------------------------------------------------------------------------- |
-| Language           | Rust 2021 edition                                                                                   |
-| Crate              | `lint_arwaky` (library)                                                                             |
-| Binaries           | `lint-arwaky-cli`, `lint-arwaky-mcp`, `lint-arwaky-tui`                                             |
-| Source files       | 270+ (across 6 layers + 3 entry points +`lib.rs`)                                                   |
-| Layers             | 7 (taxonomy, contract, capabilities, infrastructure, agent, surfaces, root)                         |
-| AES rules enforced | 24 (5 groups: Naming, Import, Quality, Role, Orphan)                                                |
-| Linter adapters    | 9 (Rust AST + Clippy, Python AST + Ruff + MyPy + Bandit + Metrics, JS/TS AST + ESLint/Prettier/TSC) |
-| MCP tools          | 5 (execute_command, list_commands, commands_schema, read_skill_context, health_check)               |
-| CLI subcommands    | 15+ across core/scans/maintenance/setup/dev                                                         |
-| Report formats     | `text`, `json`, `sarif` 2.1.0, `junit` XML                                                          |
-| Self-lint target   | `crates/` scanned under the same rules the project enforces                                         |
+| Metric             | Value                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------- |
+| Language           | Rust 2021 edition                                                                                       |
+| Crate              | `lint_arwaky` (library)                                                                                 |
+| Binaries           | `lint-arwaky-cli`, `lint-arwaky-mcp`, `lint-arwaky-tui`                                                 |
+| Source files       | 300+ (across 7 layers + 3 entry points + `lib.rs`)                                                      |
+| Layers             | 7 (taxonomy, contract, capabilities, infrastructure, agent, surfaces, root)                             |
+| AES rules enforced | 24 (5 groups: Naming, Import, Quality, Role, Orphan)                                                    |
+| Linter adapters    | 8 (Clippy, RustFmt, CargoAudit, Ruff, MyPy, Bandit, ESLint, Prettier, TSC)                              |
+| MCP tools          | 4 (execute_command, list_commands, read_skill, health_check)                                            |
+| CLI subcommands    | 12 (check, scan, fix, ci, orphan, security, duplicates, dependencies, watch, init, install, mcp-config) |
+| Report formats     | `text`, `json`, `sarif` 2.1.0, `junit` XML                                                              |
+| Self-lint target   | `crates/` scanned under the same rules the project enforces                                             |

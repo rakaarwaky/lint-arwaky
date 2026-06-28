@@ -113,6 +113,11 @@ impl CheckCommandsSurface {
     ///
     /// If a factory is provided, per-project containers are created for
     /// each workspace member (used by scan, not check).
+    ///
+    /// **Note:** When `self.factory` is `None` (default), the `config` parameter
+    /// is accepted but silently ignored — the same orchestrator instances are
+    /// reused regardless of the passed `ArchitectureConfig`. Pass an explicit
+    /// factory via `new_with_factory()` to make per-project config effective.
     pub fn scan(
         &self,
         path: &str,
@@ -127,23 +132,37 @@ impl CheckCommandsSurface {
         };
 
         // Determine dynamic orchestrators based on detected language config
-        let (code_analysis_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
-            if let Some(ref factory) = self.factory {
-                let ctx = factory(config.clone());
-                (
-                    ctx.code_analysis_linter,
-                    ctx.naming_orchestrator,
-                    ctx.import_orchestrator,
-                    ctx.role_orchestrator,
-                )
-            } else {
-                (
-                    self.code_analysis_linter.clone(),
-                    self.naming_orchestrator.clone(),
-                    self.import_orchestrator.clone(),
-                    self.role_orchestrator.clone(),
-                )
-            };
+        // If no factory was provided, build a default one from the current orchestrators
+        let effective_factory = self.factory.clone().unwrap_or_else(|| {
+            let cal = self.code_analysis_linter.clone();
+            let no = self.naming_orchestrator.clone();
+            let io = self.import_orchestrator.clone();
+            let ro = self.role_orchestrator.clone();
+            let ext = self.external_lint.clone();
+            let sp = self.scanner_provider.clone();
+            let oo = self.orphan_orchestrator.clone();
+            let ld = self.layer_detector.clone();
+            Arc::new(move |_cfg: ArchitectureConfig| CheckContext {
+                code_analysis_linter: cal.clone(),
+                naming_orchestrator: no.clone(),
+                import_orchestrator: io.clone(),
+                role_orchestrator: ro.clone(),
+                external_lint: ext.clone(),
+                scanner_provider: sp.clone(),
+                orphan_orchestrator: oo.clone(),
+                layer_detector: ld.clone(),
+                language_detector: Arc::new(
+                    crate::infrastructure_language_detector::CliLanguageDetector::new(),
+                ),
+            })
+        });
+        let ctx = effective_factory(config.clone());
+        let (code_analysis_linter, naming_orchestrator, import_orchestrator, role_orchestrator) = (
+            ctx.code_analysis_linter,
+            ctx.naming_orchestrator,
+            ctx.import_orchestrator,
+            ctx.role_orchestrator,
+        );
 
         let mut all_results = Vec::new();
 
@@ -151,21 +170,18 @@ impl CheckCommandsSurface {
         let aes_results = code_analysis_linter.run_code_analysis(path);
         all_results.extend(aes_results.values);
 
-        // 2. Run naming-rules audit (AES101, AES102)
-        let naming_results = rt.block_on(naming_orchestrator.run_audit(&path_obj));
+        // 2-5. Run async linter groups concurrently
+        let (naming_results, import_results, external_results, role_results) = rt.block_on(async {
+            tokio::join!(
+                naming_orchestrator.run_audit(&path_obj),
+                import_orchestrator.run_audit(&path_obj),
+                self.external_lint.scan_all(&path_obj),
+                role_orchestrator.run_audit(&path_obj),
+            )
+        });
         all_results.extend(naming_results);
-
-        // 3. Run import-rules audit (AES201, AES202, AES205, AES203, cycles)
-        let import_results = rt.block_on(import_orchestrator.run_audit(&path_obj));
         all_results.extend(import_results);
-
-        // 4. Run external linter adapters via aggregate
-        let path_obj2 = FilePath::new(path.to_string()).unwrap_or_default();
-        let external_results = rt.block_on(self.external_lint.scan_all(&path_obj2));
         all_results.extend(external_results.values);
-
-        // 5. Run role-rules audit (AES401-406: layer-role violations)
-        let role_results = rt.block_on(role_orchestrator.run_audit(&path_obj));
         all_results.extend(role_results);
 
         // 6. Run orphan detection (AES501-506: dead code via import graph)
@@ -228,7 +244,7 @@ impl CheckCommandsSurface {
                 .into_iter()
                 .filter(|r| {
                     let abs_path = cwd.join(&r.file.value);
-                    r.code.to_string().contains(code)
+                    r.code.code() == code
                         && abs_path.to_string_lossy().starts_with(&canonical_scan_path)
                 })
                 .collect()
@@ -294,10 +310,17 @@ impl CheckCommandsSurface {
             &scan_root.to_string_lossy(),
         );
 
-        // Filter results for the specific file
+        // Filter results for the specific file — canonicalize for robust comparison
+        let target_canonical = std::path::Path::new(&target_path).canonicalize().ok();
         let file_results: Vec<_> = all_results
             .into_iter()
-            .filter(|r| r.file.value == target_path || r.file.value == file_path)
+            .filter(|r| {
+                let r_canonical = std::path::Path::new(&r.file.value).canonicalize().ok();
+                match (target_canonical.as_deref(), r_canonical.as_deref()) {
+                    (Some(t), Some(r)) => t == r,
+                    _ => r.file.value == target_path || r.file.value == file_path,
+                }
+            })
             .collect();
 
         if file_results.is_empty() {
@@ -333,12 +356,12 @@ impl CheckCommandsSurface {
         filter: Option<&str>,
         member: Option<&str>,
         format: Format,
-    ) {
+    ) -> ExitCode {
         let path_obj = match FilePath::new(path.to_string()) {
             Ok(fp) => fp,
             Err(_) => {
                 eprintln!("[error] invalid path: {path}");
-                return;
+                return ExitCode::from(1);
             }
         };
 
@@ -346,21 +369,21 @@ impl CheckCommandsSurface {
             Some(o) => o.clone(),
             None => {
                 eprintln!("[error] multi-project orchestrator not available");
-                return;
+                return ExitCode::from(1);
             }
         };
 
         let rt = match crate::surface_common_command::create_runtime() {
             Ok(r) => r,
-            Err(_) => return,
+            Err(_) => return ExitCode::from(1),
         };
         let workspaces = rt.block_on(orchestrator.discover_workspaces(&path_obj));
+        let all_workspaces = workspaces.clone();
 
         if workspaces.is_empty() {
             // No workspaces discovered — fall back to single-scan mode
             let default_config = ArchitectureConfig::default();
-            self.scan(path, filter, default_config, format);
-            return;
+            return self.scan(path, filter, default_config, format);
         }
 
         // Filter to specific member if requested
@@ -379,8 +402,7 @@ impl CheckCommandsSurface {
                 eprintln!("[error] no workspace member matching '{member_name}'");
                 eprintln!();
                 eprintln!("Available members:");
-                let orig = rt.block_on(orchestrator.discover_workspaces(&path_obj));
-                for ws in &orig {
+                for ws in &all_workspaces {
                     let name = std::path::Path::new(&ws.path.value)
                         .file_name()
                         .map(|n| n.to_string_lossy())
@@ -389,7 +411,7 @@ impl CheckCommandsSurface {
                 }
                 eprintln!();
                 eprintln!("Usage: lint-arwaky-cli scan {path} --member <name>");
-                return;
+                return ExitCode::from(1);
             }
             filtered
         } else {
@@ -417,6 +439,14 @@ impl CheckCommandsSurface {
         }
 
         let mut global_all_results = Vec::new();
+
+        // Hoist orphan detection before per-workspace loop (#107 P1 #7)
+        let orphan_results_all = self.orphan_orchestrator.check_orphans(
+            self.layer_detector.as_ref(),
+            &all_source_files,
+            &scan_root.to_string_lossy(),
+        );
+        global_all_results.extend(orphan_results_all);
 
         for ws in &workspaces {
             let ws_name = match std::path::Path::new(&ws.path.value).file_name() {
@@ -449,28 +479,19 @@ impl CheckCommandsSurface {
             let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
             all_results.extend(aes_results.values);
 
-            let naming_results = rt.block_on(naming_orchestrator.run_audit(&ws.path));
+            let (naming_results, import_results, external_results, role_results) =
+                rt.block_on(async {
+                    tokio::join!(
+                        naming_orchestrator.run_audit(&ws.path),
+                        import_orchestrator.run_audit(&ws.path),
+                        self.external_lint.scan_all(&ws.path),
+                        role_orchestrator.run_audit(&ws.path),
+                    )
+                });
             all_results.extend(naming_results);
-
-            let import_results = rt.block_on(import_orchestrator.run_audit(&ws.path));
             all_results.extend(import_results);
-
-            let external_results = rt.block_on(self.external_lint.scan_all(&ws.path));
             all_results.extend(external_results.values);
-
-            // Role-rules per workspace (AES401, AES402, AES403, AES404, AES405, AES406)
-            let role_results = rt.block_on(role_orchestrator.run_audit(&ws.path));
             all_results.extend(role_results);
-
-            // Orphan detection — scan across ALL workspaces so contracts in shared/
-            // can find their implementations in other crates. Use scan_root (workspace
-            // root) so the graph resolver can find all workspace crate directories.
-            let orphan_results = self.orphan_orchestrator.check_orphans(
-                self.layer_detector.as_ref(),
-                &all_source_files,
-                &scan_root.to_string_lossy(),
-            );
-            all_results.extend(orphan_results);
 
             // Filter results to only those in this workspace member's path
             let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
@@ -483,7 +504,7 @@ impl CheckCommandsSurface {
                     .into_iter()
                     .filter(|r| {
                         let abs_path = cwd_for_ws.join(&r.file.value);
-                        r.code.to_string().contains(code)
+                        r.code.code() == code
                             && ws_canonical
                                 .as_ref()
                                 .map(|c| abs_path.starts_with(c))
@@ -569,6 +590,11 @@ impl CheckCommandsSurface {
                     println!("{junit}");
                 }
             }
+        }
+        if global_all_results.is_empty() {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::from(1)
         }
     }
 
@@ -662,7 +688,7 @@ impl CheckCommandsSurface {
                             uri: r.file.value.clone(),
                         },
                         region: SarifRegion {
-                            start_line: r.line.value(),
+                            start_line: std::cmp::max(1, r.line.value()),
                         },
                     },
                 }],
@@ -705,7 +731,7 @@ impl CheckCommandsSurface {
             .collect();
         let failure_count = failures.len();
 
-        let mut xml = String::new();
+        let mut xml = String::with_capacity(total.saturating_mul(256));
         xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xml.push_str(&format!(
             "<testsuites name=\"lint-arwaky\" tests=\"{total}\" failures=\"{failure_count}\">\n"
@@ -719,15 +745,18 @@ impl CheckCommandsSurface {
             let name = xml_escape(&format!("{}:{}", r.file.value, r.line.value()));
             let message = xml_escape(&r.message.value);
             let sev = r.severity.to_string();
+            let is_info = r.severity == shared::cli_commands::taxonomy_severity_vo::Severity::INFO;
 
             xml.push_str(&format!(
                 "    <testcase classname=\"{classname}\" name=\"{name}\">\n"
             ));
-            xml.push_str(&format!(
-                "      <failure message=\"{sev}: {message}\" type=\"{sev}\">\n"
-            ));
-            xml.push_str(&format!("        {message}\n"));
-            xml.push_str("      </failure>\n");
+            if !is_info {
+                xml.push_str(&format!(
+                    "      <failure message=\"{sev}: {message}\" type=\"{sev}\">\n"
+                ));
+                xml.push_str(&format!("        {message}\n"));
+                xml.push_str("      </failure>\n");
+            }
             xml.push_str("    </testcase>\n");
         }
 

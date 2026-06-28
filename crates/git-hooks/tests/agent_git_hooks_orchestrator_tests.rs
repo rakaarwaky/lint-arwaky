@@ -38,6 +38,7 @@ impl IDiffProtocol for MockDiff {
     async fn get_changed_files(
         &self,
         _path: &FilePath,
+        _base: &str,
     ) -> shared::common::taxonomy_paths_vo::FilePathList {
         shared::common::taxonomy_paths_vo::FilePathList::default()
     }

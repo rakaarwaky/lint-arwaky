@@ -1,5 +1,7 @@
 // PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 2 words)
+use crate::taxonomy_naming_utility::get_stem;
 use async_trait::async_trait;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
@@ -23,6 +25,9 @@ use shared::taxonomy_suggestion_vo::DescriptionVO;
 #[derive(Clone)]
 pub struct NamingConventionChecker {}
 
+static NAMING_REGEX: Lazy<Option<Regex>> =
+    Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+)+$").ok());
+
 impl Default for NamingConventionChecker {
     fn default() -> Self {
         Self::new()
@@ -40,7 +45,7 @@ impl NamingConventionChecker {
         msg: impl Into<String>,
         sev: Severity,
     ) -> LintResult {
-        let file_path = FilePath::new(file.to_string()).unwrap_or_default();
+        let file_path = FilePath::new(file).unwrap_or_default();
         LintResult {
             file: file_path,
             line: LineNumber::new(1),
@@ -60,39 +65,12 @@ impl NamingConventionChecker {
         }
     }
 
-    pub fn is_barrel_file(filename: &str) -> bool {
-        matches!(
-            filename,
-            "__init__.py" | "mod.rs" | "index.ts" | "index.js" | "index.tsx" | "index.jsx"
-        )
-    }
-
-    pub fn is_entry_point(filename: &str) -> bool {
-        matches!(
-            filename,
-            "__init__.py"
-                | "main.py"
-                | "py.typed"
-                | "app.py"
-                | "lib.rs"
-                | "main.rs"
-                | "index.ts"
-                | "index.js"
-                | "index.tsx"
-                | "index.jsx"
-                | "main.ts"
-                | "main.js"
-                | "app.ts"
-                | "app.js"
-        )
-    }
-
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min 2 words).
     pub fn check_file_naming(
         &self,
         file: &str,
         filename: &str,
-        layer_name: &Option<String>,
+        layer_name: &Option<LayerNameVO>,
         definition: Option<&LayerDefinition>,
         _config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
@@ -109,13 +87,14 @@ impl NamingConventionChecker {
         ];
 
         // Step 1: Skip naming verification for barrel files (e.g. __init__.py, mod.rs, index.ts) and entry point files (e.g. main.rs, app.py).
-        if Self::is_barrel_file(filename) || Self::is_entry_point(filename) {
+        let fp = FilePath::new(filename.to_string()).unwrap_or_default();
+        if fp.is_barrel_file() || fp.is_entry_point() {
             return;
         }
 
         // Step 2: Handle cases where the layer could not be determined.
         if layer_name.is_none() {
-            let stem = filename.split('.').next().unwrap_or(filename);
+            let stem = get_stem(filename).unwrap_or_default();
             let actual_prefix = stem.split('_').next().unwrap_or_default().to_string();
 
             // Check if the file starts with an unrecognized/invalid prefix (not corresponding to a standard AES layer).
@@ -144,7 +123,7 @@ impl NamingConventionChecker {
             }
 
             // If the prefix is recognized or is empty, but there is no underscore or does not meet basic naming requirements.
-            let stem = filename.split('.').next().unwrap_or(filename);
+            let stem = get_stem(filename).unwrap_or_default();
             violations.push(Self::make_result(
                 file,
                 "AES101",
@@ -164,42 +143,35 @@ impl NamingConventionChecker {
             return;
         }
 
-        // Step 3: Retrieve the layer definition. If it does not exist, abort.
-        let def = match definition {
-            Some(d) => d,
-            None => return,
-        };
-
-        // Step 4: Skip validation if the file name is explicitly listed in the layer's exception config.
-        if def.exceptions.values.contains(&filename.to_string()) {
-            return;
+        // Step 3: Skip validation if the file name is explicitly listed in the layer's exception config.
+        if let Some(def) = definition {
+            if def.exceptions.values.contains(&filename.to_string()) {
+                return;
+            }
         }
 
-        // Step 5: Validate the file stem pattern using a regular expression.
+        // Step 4: Validate the file stem pattern using a regular expression.
         // It must consist of lowercase letters and digits separated by underscores (e.g., prefix_concept_suffix).
-        let stem = filename.split('.').next().unwrap_or_default();
-        let naming_regex = r"^[a-z0-9]+(_[a-z0-9]+)+$";
+        let stem = get_stem(filename).unwrap_or_default();
 
-        if let Ok(re) = Regex::new(naming_regex) {
-            if !re.is_match(stem) {
-                violations.push(Self::make_result(
-                    file,
-                    "AES101",
-                    NamingViolation::NamingConvention {
-                        min_words: 2,
-                        separator: "_".to_string(),
-                        reason: Some(LintMessage::new(format!(
-                            "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
-                             Expected: lowercase alphanumeric words separated by underscores, minimum 2 words. \
-                             Example valid names: 'capabilities_user_checker', 'infrastructure_db_adapter'. \
-                             Issue: '{}' may have uppercase characters, wrong separator, or only 1 word.",
-                            stem, stem
-                        ))),
-                    }
-                    .to_string(),
-                    Severity::HIGH,
-                ));
-            }
+        if NAMING_REGEX.as_ref().is_none_or(|re| !re.is_match(stem)) {
+            violations.push(Self::make_result(
+                file,
+                "AES101",
+                NamingViolation::NamingConvention {
+                    min_words: 2,
+                    separator: "_".to_string(),
+                    reason: Some(LintMessage::new(format!(
+                        "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
+                         Expected: lowercase alphanumeric words separated by underscores, minimum 2 words. \
+                         Example valid names: 'capabilities_user_checker', 'infrastructure_db_adapter'. \
+                         Issue: '{}' may have uppercase characters, wrong separator, or only 1 word.",
+                        stem, stem
+                    ))),
+                }
+                .to_string(),
+                Severity::HIGH,
+            ));
         }
     }
 }
@@ -223,16 +195,11 @@ impl INamingCheckerProtocol for NamingConventionChecker {
                 None => &f_str,
             };
             // Step 3: Determine the architectural layer for the file.
-            let layer = analyzer
-                .detect_layer(f, root_dir)
-                .map(|l| l.value().to_string());
+            let layer = analyzer.detect_layer(f, root_dir);
             // Step 4: Fetch layer-specific definition properties.
-            let def = layer.as_ref().and_then(|l| {
-                analyzer
-                    .layer_map()
-                    .values
-                    .get(&LayerNameVO::new(l.as_str()))
-            });
+            let def = layer
+                .as_ref()
+                .and_then(|l| analyzer.layer_map().values.get(l));
             // Step 5: Execute the naming checker function.
             self.check_file_naming(
                 &f_str,

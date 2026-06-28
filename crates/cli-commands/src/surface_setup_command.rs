@@ -15,8 +15,7 @@ pub fn handle_init(
     global: bool,
 ) -> ExitCode {
     if global {
-        handle_init_global(setup_orchestrator);
-        return ExitCode::SUCCESS;
+        return handle_init_global(setup_orchestrator);
     }
     let language = setup_orchestrator.detect_language();
     let language_str = language.value().to_string();
@@ -33,18 +32,19 @@ pub fn handle_init(
             }
             Err(e) => {
                 println!("Error creating config: {e}");
+                return ExitCode::from(1);
             }
         }
     }
     ExitCode::SUCCESS
 }
 
-fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) {
+fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> ExitCode {
     let config_dir = match setup_orchestrator.create_global_config_dir() {
         Ok(d) => d,
         Err(_) => {
             println!("Error: Could not determine or create XDG config directory");
-            return;
+            return ExitCode::from(1);
         }
     };
 
@@ -65,6 +65,7 @@ fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) {
         ),
     ];
 
+    let mut all_ok = true;
     for (filename, content) in &configs {
         let target = config_dir.join(filename);
         let target_str = target.to_string_lossy();
@@ -73,9 +74,17 @@ fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) {
         } else {
             match setup_orchestrator.write_config_file(&target_str, content) {
                 Ok(_) => println!("  {filename} — created"),
-                Err(e) => println!("  {filename} — error: {e}"),
+                Err(e) => {
+                    println!("  {filename} — error: {e}");
+                    all_ok = false;
+                }
             }
         }
+    }
+    if all_ok {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
     }
 }
 
@@ -146,6 +155,33 @@ pub fn handle_mcp_config(client: &str) -> ExitCode {
                 "command": binary,
                 "args": [],
                 "env": {}
+            }
+        }),
+        "hermes" => serde_json::json!({
+            "mcpServers": {
+                "lint-arwaky": {
+                    "command": binary,
+                    "args": [],
+                    "env": {}
+                }
+            }
+        }),
+        "vscode" => serde_json::json!({
+            "mcpServers": {
+                "lint-arwaky": {
+                    "command": binary,
+                    "args": [],
+                    "env": {}
+                }
+            }
+        }),
+        "all" => serde_json::json!({
+            "mcpServers": {
+                "lint-arwaky": {
+                    "command": binary,
+                    "args": [],
+                    "env": {}
+                }
             }
         }),
         _ => serde_json::json!({

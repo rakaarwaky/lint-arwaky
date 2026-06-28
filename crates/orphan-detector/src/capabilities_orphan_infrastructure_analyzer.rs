@@ -90,11 +90,63 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
 
 pub fn check_infrastructure_orphan(
     fp: &str,
-    basename: &str,
+    _basename: &str,
     files: &[String],
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
 ) {
-    crate::capabilities_orphan_capabilities_analyzer::check_capabilities_orphan(
-        fp, basename, files, violations,
-    )
+    let stem = crate::taxonomy_orphan_filename_helper::file_stem(fp);
+    let content = std::fs::read_to_string(fp).unwrap_or_default();
+    use shared::orphan_detector::taxonomy_orphan_utility::{
+        extract_struct_names, extract_trait_names,
+    };
+
+    let mut identifiers: Vec<String> = Vec::new();
+    identifiers.extend(extract_struct_names(&content));
+    identifiers.extend(extract_trait_names(&content));
+    identifiers.push(stem.clone());
+
+    let pascal_stem: String = stem
+        .split('_')
+        .filter(|s| !s.is_empty())
+        .map(|s| {
+            let mut c = s.chars();
+            match c.next() {
+                Some(f) => f.to_uppercase().to_string() + c.as_str(),
+                None => String::new(),
+            }
+        })
+        .collect();
+    identifiers.push(pascal_stem);
+
+    let mut wired = false;
+    for cf in files {
+        let cb = crate::taxonomy_orphan_filename_helper::file_basename(cf);
+        let csuffix = crate::taxonomy_orphan_filename_helper::file_suffix(cb);
+        if csuffix != "container" {
+            continue;
+        }
+        if let Ok(c) = std::fs::read_to_string(cf) {
+            for id in &identifiers {
+                if c.contains(id) {
+                    wired = true;
+                    break;
+                }
+            }
+            if wired {
+                break;
+            }
+        }
+    }
+    if !wired {
+        violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
+            fp,
+            &shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation::InfrastructureOrphan {
+                stem: stem.clone(),
+                reason: Some(format!("infrastructure '{}' not wired in container.", stem).into()),
+            }
+            .to_string(),
+            shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM,
+            "AES504",
+        ));
+    }
 }

@@ -2,7 +2,7 @@
 
 ## 1. Feature Goal
 
-The goal of the `orphan-detector` module is to identify dead, unused, or unreachable code components across the layers of the 6-layer architecture. By building an import reachability graph starting from valid entry points (such as containers, binary entries, or main files), it flags any architecture component that has been orphaned, preventing codebase bloat and keeping the system maintainable.
+The goal of the `orphan-detector` module is to identify dead, unused, or unreachable code components across the layers of the 7-layer architecture. By building an import reachability graph starting from valid entry points (such as containers, binary entries, or main files), it flags any architecture component that has been orphaned, preventing codebase bloat and keeping the system maintainable.
 
 ## 2. Requirements & Scope
 

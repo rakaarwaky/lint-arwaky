@@ -86,8 +86,7 @@ pub fn handle_scan(
         return ExitCode::FAILURE;
     }
     let surface = CheckCommandsSurface::new_with_factory(ctx, multi_project_orchestrator, factory);
-    surface.scan_with_discovery(&root, filter.as_deref(), member.as_deref(), format);
-    ExitCode::SUCCESS
+    surface.scan_with_discovery(&root, filter.as_deref(), member.as_deref(), format)
 }
 
 pub fn handle_ci(

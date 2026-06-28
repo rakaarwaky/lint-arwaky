@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.10.75 (2026-06-28)
+
+### Fixed
+
+- **TUI scan freeze (#108)**: Scan now runs in a background thread with channel-based progress reporting. TUI remains responsive during scan — keyboard navigation, scrolling, and panel focus all work. Status bar shows live scan progress (phase, file count, violations found).
+- **Orphan detector false positives (#104-105)**: Fixed graph resolver — plain `pub mod foo;` declarations now parsed, `mod.rs` mapped by parent directory name, `#[path]` links only referenced file (not entire directory), path-key mismatch eliminated, entry-point matching by basename only.
+- **Orphan detector correctness (#104)**: Agent orphan logic fixed (flags only when ALL aggregates uncalled, not ANY), generic impls `impl<T> Trait for Struct` now supported, infrastructure reports AES504 (not AES503), polyglot file collection includes `.py`/`.ts`/`.js`.
+- **Import rules bugs (#101)**: Fixed `rsplit('_').next_back()` suffix extraction, aggregate intent filter now excludes `use`/`pub use`/`pub(crate) use` lines, `pub use` and `pub(crate) use` handled in import parser and unused checker, cycle detection rewritten with 3-color DFS algorithm.
+- **Code analysis patches (#103)**: Removed fake async/Tokio overhead, pre-read files to avoid double I/O, skip unreadable files, support `[lints.clippy]` sections, brace-depth tracking for static Lazy, hoisted `.to_lowercase()` in bypass checker, u32 string interning in duplication analyzer, `main.rs` skipped from mandatory definition check, tuple struct exclusion, multi-segment bare patterns in file collector.
+- **Naming rules consistency (#90-99)**: Inconsistent stem extraction between checkers fixed, AES101 regex check no longer skipped when layer definition missing, path-based ignore patterns now work for nested paths.
+- **Config system (#84-89)**: Silent failures in deserialization fixed, workspace detection bounded to 2 levels, TOCTOU race conditions eliminated, config loading and validation logic corrected.
+- **CLI exit codes (#107)**: scan/fix/git-diff/init commands now return correct ExitCode on violations/errors, CI threshold magic override removed.
+
+### Performance
+
+- **Regex caching**: All hot-path regexes now use `OnceLock` for one-time compilation (import-rules, naming-rules, orphan-detector, role-rules).
+- **Combined regex alternation (#102)**: Per-alias `Regex::new()` replaced with single combined alternation regex in unused symbol detection.
+- **String interning (#103)**: Duplication analyzer uses u32 string interning for sliding-window keys, reducing HashMap overhead.
+- **Pre-computed lookup maps (#105)**: Workspace crate resolution uses pre-built `crate_name -> src_dir` HashMap instead of `read_dir` in hot loop.
+- **Single-pass file reading (#103)**: Graph resolver merges multiple file loops into single pass.
+- **Borrow over clone**: Eliminated unnecessary `Vec<String>` clones, `to_string()` calls, and `entry.path().is_dir()` extra syscalls.
+- **Path normalization**: Single-pass slash collapse replaces multi-step string operations.
+
+### Changed
+
+- **Skill updates**: `rust-engineer` v1.6.0 and `rust-patterns` updated with 25+ patterns learned from issues #90-#108 (OnceLock, TOCTOU, basename matching, quantifier logic, brace-depth tracking, etc.).
+
 ## 1.10.72 (2026-06-27)
 
 ### Added

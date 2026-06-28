@@ -1,6 +1,7 @@
 // PURPOSE: Tests for TuiOrchestrator — the agent-level aggregate wrapping IActionHandlerProtocol
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
+use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
 use shared::tui::taxonomy_state_vo::AppState;
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
@@ -48,6 +49,10 @@ impl IActionHandlerProtocol for MockActionHandler {
         self.poll_watch_calls
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
+    fn start_scan(&self, _state: &mut AppState) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
+        None
+    }
+    fn poll_scan(&self, _state: &mut AppState, _rx: &std::sync::mpsc::Receiver<ScanUpdate>) {}
 }
 
 fn make_orchestrator() -> (TuiOrchestrator, Arc<MockActionHandler>) {
@@ -141,6 +146,13 @@ fn orchestrator_handle_quit_via_delegation() {
         fn load_directory(&self, _: &mut AppState, _: &str) {}
         fn load_preview(&self, _: &mut AppState) {}
         fn poll_watch(&self, _: &mut AppState) {}
+        fn start_scan(
+            &self,
+            _state: &mut AppState,
+        ) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
+            None
+        }
+        fn poll_scan(&self, _state: &mut AppState, _rx: &std::sync::mpsc::Receiver<ScanUpdate>) {}
     }
     let orch: Arc<dyn ITuiAggregate> = Arc::new(TuiOrchestrator::new(Arc::new(QuitHandler)));
     let mut state = AppState::new("/root".to_string());

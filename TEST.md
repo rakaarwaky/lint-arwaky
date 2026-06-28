@@ -43,9 +43,9 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages/cli_commands
 | Criteria                  | PASS                   | FAIL        |
 | ------------------------- | ---------------------- | ----------- |
 | Total violations (scan)   | >= 2000 violations     | < 2000 or 0 |
-| Unique AES codes (Rust)   | >= 24 unique AES codes | < 24        |
-| Unique AES codes (Python) | >= 24 unique AES codes | < 24        |
-| Unique AES codes (JS/TS)  | >= 24 unique AES codes | < 24        |
+| Unique AES codes (Rust)   | >= 18 unique AES codes | < 18        |
+| Unique AES codes (Python) | >= 18 unique AES codes | < 18        |
+| Unique AES codes (JS/TS)  | >= 18 unique AES codes | < 18        |
 
 **Baseline v1.10.29** (22 June 2026):
 

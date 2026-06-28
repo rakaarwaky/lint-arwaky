@@ -16,6 +16,7 @@ use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtoc
 use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::taxonomy_common_vo::PatternList;
+use std::path::Path;
 use std::sync::Arc;
 
 /// Naming orchestrator — the agent layer for naming convention enforcement.
@@ -69,13 +70,15 @@ impl NamingOrchestrator {
 
     /// Filter to source code files only (.rs, .py, .js, .ts, .jsx, .tsx).
     pub fn filter_source_files(files: &FilePathList) -> FilePathList {
-        let source_exts = ["rs", "py", "js", "ts", "jsx", "tsx"];
         let filtered: Vec<FilePath> = files
             .values
             .iter()
-            .filter(|f| match f.value.rsplit('.').next() {
-                Some(ext) => source_exts.contains(&ext),
-                None => false,
+            .filter(|f| {
+                let path = Path::new(&f.value);
+                matches!(
+                    path.extension().and_then(|e| e.to_str()),
+                    Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
+                )
             })
             .cloned()
             .collect();
@@ -96,13 +99,13 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         let mut results = LintResultList::new(Vec::new());
         let all_files = self.fs.walk(target, Some(&self.ignored_patterns)).await;
         let files = Self::filter_source_files(&all_files);
-        let root_dir = target.clone();
+        let root_dir = target;
 
         self.naming_convention_checker
-            .check_file_naming(self.analyzer.as_ref(), &files, &root_dir, &mut results)
+            .check_file_naming(self.analyzer.as_ref(), &files, root_dir, &mut results)
             .await;
         self.suffix_prefix_checker
-            .check_domain_suffixes(self.analyzer.as_ref(), &files, &root_dir, &mut results)
+            .check_domain_suffixes(self.analyzer.as_ref(), &files, root_dir, &mut results)
             .await;
 
         results.values

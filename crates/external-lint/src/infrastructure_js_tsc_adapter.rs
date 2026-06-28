@@ -12,6 +12,19 @@
 //   - All tsc errors are reported as HIGH severity
 
 use regex::Regex;
+use std::sync::OnceLock;
+fn tsc_pattern1() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok())
+        .as_ref()
+}
+
+fn tsc_pattern2() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
+        .as_ref()
+}
+
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -93,13 +106,13 @@ impl ILinterAdapterPort for TSCAdapter {
         let output = format!("{}{}", response.stdout, response.stderr);
         let mut results = Vec::new();
 
-        let pattern1 = match Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$") {
-            Ok(r) => r,
-            Err(_) => return Ok(LintResultList::new(vec![])),
+        let pattern1 = match tsc_pattern1() {
+            Some(r) => r,
+            None => return Ok(LintResultList::new(vec![])),
         };
-        let pattern2 = match Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$") {
-            Ok(r) => r,
-            Err(_) => return Ok(LintResultList::new(vec![])),
+        let pattern2 = match tsc_pattern2() {
+            Some(r) => r,
+            None => return Ok(LintResultList::new(vec![])),
         };
 
         for line in output.lines() {

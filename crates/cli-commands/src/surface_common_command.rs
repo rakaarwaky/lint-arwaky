@@ -61,14 +61,12 @@ pub fn run_ci_analysis(
     let root = path.unwrap_or_else(|| ".".to_string());
     let results = code_analysis_linter.run_code_analysis_path(&root);
     let score = code_analysis_linter.calc_score(&results);
-    let effective_threshold = if threshold == 80 { 70 } else { threshold };
-
     let has_crit = code_analysis_linter.check_critical(&results);
-    let below_threshold = (score as u32) < effective_threshold;
+    let below_threshold = (score as u32) < threshold;
 
     println!("Architecture Compliance CI");
     println!("Score: {:.1} / 100", score);
-    println!("Threshold: {}", effective_threshold);
+    println!("Threshold: {}", threshold);
     println!();
 
     let mut reasons: Vec<String> = Vec::new();
@@ -78,26 +76,20 @@ pub fn run_ci_analysis(
     if below_threshold {
         reasons.push(format!(
             "Score below threshold ({:.1} < {})",
-            score, effective_threshold
+            score, threshold
         ));
     }
 
-    let critical_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::CRITICAL)
-        .count();
-    let high_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::HIGH)
-        .count();
-    let medium_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::MEDIUM)
-        .count();
-    let low_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::LOW)
-        .count();
+    let (mut critical_count, mut high_count, mut medium_count, mut low_count) = (0usize, 0, 0, 0);
+    for r in &results {
+        match r.severity {
+            Severity::CRITICAL => critical_count += 1,
+            Severity::HIGH => high_count += 1,
+            Severity::MEDIUM => medium_count += 1,
+            Severity::LOW => low_count += 1,
+            _ => {}
+        }
+    }
 
     println!(
         "CRITICAL: {} | HIGH: {} | MEDIUM: {} | LOW: {}",

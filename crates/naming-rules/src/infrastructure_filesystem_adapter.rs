@@ -25,11 +25,10 @@ impl Default for OSFileSystemAdapter {
 impl INamingFileSystemPort for OSFileSystemAdapter {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
         let root = std::path::Path::new(&path.value);
-        let ignored: Vec<String> = match ignored_patterns {
-            Some(p) => p.values.clone(),
+        let ignored_refs: Vec<&str> = match ignored_patterns {
+            Some(p) => p.values.iter().map(|s| s.as_str()).collect(),
             None => Vec::new(),
         };
-        let ignored_refs: Vec<&str> = ignored.iter().map(|s| s.as_str()).collect();
         let results = PathUtils::walk_recursive(root, &ignored_refs);
         FilePathList {
             values: results

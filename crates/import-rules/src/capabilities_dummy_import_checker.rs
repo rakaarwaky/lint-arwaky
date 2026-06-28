@@ -436,6 +436,11 @@ impl DummyImportChecker {
                                     && !t.contains("PhantomData")
                                     && !t.contains("fn _use_")
                                     && !t.starts_with("//")
+                                    && !t.starts_with("use ")
+                                    && !t.starts_with("pub use ")
+                                    && !t.starts_with("pub(crate) use ")
+                                    && !t.starts_with("import ")
+                                    && !t.starts_with("from ")
                             })
                             .count();
 

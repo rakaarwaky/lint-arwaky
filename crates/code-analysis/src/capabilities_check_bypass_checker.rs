@@ -173,6 +173,7 @@ const LANGUAGE_PHRASE_PATTERNS: &[PhrasePattern] = &[
 
 pub struct BypassChecker {
     forbidden_bypass: Vec<String>,
+    forbidden_bypass_lower: Vec<String>,
 }
 
 impl Default for BypassChecker {
@@ -183,8 +184,11 @@ impl Default for BypassChecker {
 
 impl BypassChecker {
     pub fn new() -> Self {
+        let v = default_forbidden_bypass();
+        let lower = v.iter().map(|s| s.to_lowercase()).collect();
         Self {
-            forbidden_bypass: default_forbidden_bypass(),
+            forbidden_bypass: v,
+            forbidden_bypass_lower: lower,
         }
     }
 
@@ -194,8 +198,10 @@ impl BypassChecker {
         if patterns.values.is_empty() {
             return Self::new();
         }
+        let lower = patterns.values.iter().map(|s| s.to_lowercase()).collect();
         Self {
             forbidden_bypass: patterns.values.clone(),
+            forbidden_bypass_lower: lower,
         }
     }
 
@@ -320,7 +326,7 @@ impl IBypassCheckerProtocol for BypassChecker {
         let mut in_clippy_section = false;
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
-            if t.starts_with("[workspace.lints.clippy]") {
+            if t.starts_with("[workspace.lints.clippy]") || t.starts_with("[lints.clippy]") {
                 in_clippy_section = true;
                 continue;
             }
@@ -349,6 +355,7 @@ impl IBypassCheckerProtocol for BypassChecker {
         let language = SourceLanguage::from_file(file);
         let mut in_test_module = false;
         let mut in_static_lazy = false;
+        let mut lazy_brace_depth: i32 = 0;
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
             // Skip doc comments — documentation references to patterns are not runtime violations
@@ -364,13 +371,20 @@ impl IBypassCheckerProtocol for BypassChecker {
                 continue;
             }
             // Skip static Lazy<Regex> initialization (multiline)
-            if t.starts_with("static ") && t.contains("Lazy") {
+            if t.contains("static ") && t.contains("Lazy") {
                 in_static_lazy = true;
+                lazy_brace_depth = t.matches('{').count() as i32 - t.matches('}').count() as i32;
+                if lazy_brace_depth <= 0 {
+                    in_static_lazy = false;
+                    lazy_brace_depth = 0;
+                }
                 continue;
             }
             if in_static_lazy {
-                if t.contains("});") {
+                lazy_brace_depth += t.matches('{').count() as i32 - t.matches('}').count() as i32;
+                if lazy_brace_depth <= 0 {
                     in_static_lazy = false;
+                    lazy_brace_depth = 0;
                 }
                 continue;
             }
@@ -389,7 +403,12 @@ impl IBypassCheckerProtocol for BypassChecker {
 
             // Match forbidden-bypass patterns from config (with sensible defaults).
             let mut bypass_hit: Option<ViolationKind> = None;
-            for p in &self.forbidden_bypass {
+            let t_lower = t.to_lowercase();
+            for (p, p_lower) in self
+                .forbidden_bypass
+                .iter()
+                .zip(self.forbidden_bypass_lower.iter())
+            {
                 let p_str = p.as_str();
                 if WORD_PATTERN_TOKENS.contains(&p_str) {
                     // `unwrap` and `expect` are method names — require `.` prefix.
@@ -404,7 +423,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                         bypass_hit = Some(classify_token(p_str));
                         break;
                     }
-                } else if !p_str.is_empty() && t.to_lowercase().contains(&p_str.to_lowercase()) {
+                } else if !p_str.is_empty() && t_lower.contains(p_lower.as_str()) {
                     bypass_hit = Some(ViolationKind::BypassComment);
                     break;
                 }

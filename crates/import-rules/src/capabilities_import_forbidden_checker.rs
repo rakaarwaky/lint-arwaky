@@ -185,7 +185,7 @@ impl ArchImportForbiddenChecker {
             return;
         }
         let stem = basename.rsplit('.').next_back().map_or(basename, |s| s);
-        let suffix = stem.rsplit('_').next_back().map_or("", |s| s);
+        let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
         // Step 3: Parse import lines
         let import_lines = self.parser.read_import_lines(&file_path);

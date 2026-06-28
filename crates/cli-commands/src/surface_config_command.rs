@@ -12,15 +12,20 @@ pub async fn handle_config_show(
     let config_reader = config_orchestrator.config_reader();
     let config_files = config_reader.list_config_files(&project_root).await;
 
-    if !config_files.is_empty() {
-        let (lang, path_str) = &config_files[0];
-        if let Some(source) = config_reader.read_config(&project_root, lang).await {
-            println!("Found: {}", path_str);
-            println!("{}", source.raw_content);
-            return ExitCode::SUCCESS;
-        }
+    if config_files.is_empty() {
+        println!("No config file found. Run `lint-arwaky init` to create one.");
+        return ExitCode::SUCCESS;
     }
 
-    println!("No config file found. Run `lint-arwaky init` to create one.");
+    for (lang, path_str) in &config_files {
+        if let Some(source) = config_reader.read_config(&project_root, lang).await {
+            if config_files.len() > 1 {
+                println!("── [{}] {} ──", lang, path_str);
+            } else {
+                println!("Found: {}", path_str);
+            }
+            println!("{}", source.raw_content);
+        }
+    }
     ExitCode::SUCCESS
 }

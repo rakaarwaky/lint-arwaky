@@ -44,7 +44,7 @@ impl FixCommandsSurface {
         self.run_fix(project_path, false);
     }
 
-    pub fn run_fix(&self, project_path: FilePath, dry_run: bool) {
+    pub fn run_fix(&self, project_path: FilePath, dry_run: bool) -> ExitCode {
         if dry_run {
             println!("[DRY-RUN] Previewing fixes for {}...", project_path.value);
         } else {
@@ -54,7 +54,7 @@ impl FixCommandsSurface {
         let results = self
             .code_analysis_linter
             .run_code_analysis(&project_path.value);
-        println!("Found {} violations before fix", results.len());
+        println!("Found {} violations before fix (AES301-305 only; other rules not included in count — #107 P1 #15)", results.len());
 
         let fix_orch = (self.fix_orchestrator_factory)(dry_run);
         let fix_result = fix_orch.execute(&project_path);
@@ -67,13 +67,20 @@ impl FixCommandsSurface {
                 .run_code_analysis(&project_path.value);
             let fixed_count = results.len().saturating_sub(after_results.len());
             println!(
-                "Fixed {} violations ({} remaining)",
+                "Fixed {} violations ({} remaining, AES301-305 only — #107 P1 #15)",
                 fixed_count,
                 after_results.len()
             );
-            println!("Fix complete.");
+            if after_results.is_empty() {
+                println!("Fix complete — all violations resolved.");
+                ExitCode::SUCCESS
+            } else {
+                println!("Fix complete — {} violations remain.", after_results.len());
+                ExitCode::from(1)
+            }
         } else {
             println!("Dry-run complete — no changes applied.");
+            ExitCode::SUCCESS
         }
     }
 }
@@ -92,6 +99,5 @@ pub fn handle_fix(
     };
     let fix_surface = FixCommandsSurface::new(code_analysis_linter, fix_orchestrator_factory);
     let fp = FilePath::new(root).unwrap_or_default();
-    fix_surface.run_fix(fp, dry_run);
-    ExitCode::SUCCESS
+    fix_surface.run_fix(fp, dry_run)
 }

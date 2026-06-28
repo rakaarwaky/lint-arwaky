@@ -3,18 +3,19 @@
 //   1. Load config; build ignored-patterns list
 //   2. Recursively collect all lintable source files from src_dir (via detect_source_dir + collect_source_files)
 //   3. Fail early if no files found
-//   4. Create tokio runtime; run_all_checks inside block_on
+//   4. Run all checks directly (no async/Tokio overhead)
 // ALGORITHM (run_all_checks):
 //   1. If config.enabled = false, return empty
-//   2. For each file:
-//      a. Read file content
-//      b. Run bypass_checker.check_bypass_comments (AES304 — layer-independent)
-//      c. Run dead_inheritance_checker.check_dead_inheritance (AES303 sub-check 2)
-//      d. Skip barrel files (mod.rs, __init__.py, index.ts)
-//      e. Detect layer from filename prefix; skip if unknown or in exception list
-//      f. Run line_checker.check_line_counts (AES301–302)
-//      g. Run class_checker.check_mandatory_class_definition (AES303 sub-check 1)
-//   3. Return aggregated LintResult list
+//   2. Pre-read files into (path, content) entries; skip unreadable files
+//   3. For each file:
+//      a. Run bypass_checker.check_bypass_comments (AES304 — layer-independent)
+//      b. Run dead_inheritance_checker.check_dead_inheritance (AES303 sub-check 2)
+//      c. Skip barrel files (mod.rs, __init__.py, index.ts)
+//      d. Detect layer from filename prefix; skip if unknown or in exception list
+//      e. Run line_checker.check_line_counts (AES301–302)
+//      f. Run class_checker.check_mandatory_class_definition (AES303 sub-check 1)
+//   4. Run duplication check using pre-read entries (AES305)
+//   5. Return aggregated LintResult list
 
 use std::path::Path;
 use std::sync::Arc;
@@ -142,18 +143,14 @@ impl CodeAnalysisOrchestrator {
         }
         let root_dir = src_dir.to_string_lossy().to_string();
         let files_str: Vec<String> = files.iter().map(|f| f.value.clone()).collect();
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(runtime) => runtime,
-            Err(_) => return Vec::new(),
-        };
-        rt.block_on(async { self.run_all_checks(config, &files_str, &root_dir).await })
+        self.run_all_checks(config, &files_str, &root_dir)
     }
 
     /// Run code-analysis AES checks on the given files.
     /// Only handles checks belonging to the code-analysis crate.
     /// Other crates (import-rules, naming-rules, role-rules, orphan-detector)
     /// have their own orchestrators called by the surface via contract aggregates.
-    pub async fn run_all_checks(
+    pub fn run_all_checks(
         &self,
         config: &ArchitectureConfig,
         files: &[String],
@@ -163,6 +160,7 @@ impl CodeAnalysisOrchestrator {
             return Vec::new();
         }
         let mut violations: Vec<LintResult> = Vec::new();
+        let mut entries: Vec<(String, String)> = Vec::new();
 
         // Scan Cargo.toml for workspace clippy allow bypass (AES304)
         let root_path = Path::new(root_dir);
@@ -186,7 +184,11 @@ impl CodeAnalysisOrchestrator {
                 .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or_default();
-            let c = std::fs::read_to_string(file).unwrap_or_default();
+            let c = match std::fs::read_to_string(file) {
+                Ok(content) => content,
+                Err(_) => continue,
+            };
+            entries.push((file.clone(), c.clone()));
 
             // Layer-independent checks (run on ALL files)
             self.container
@@ -224,14 +226,13 @@ impl CodeAnalysisOrchestrator {
                 .check_mandatory_class_definition(file, Some(def), &c, &mut violations);
         }
 
-        // AES305: File-level similarity check (run once across all files)
+        // AES305: File-level similarity check (run once across all files, using pre-read entries)
         let min_dup_lines: usize = 5;
         let threshold_pct: f64 = 50.0;
-        let dup_violations = self.container.duplication_checker().check_file_similarity(
-            files,
-            min_dup_lines,
-            threshold_pct,
-        );
+        let dup_violations = self
+            .container
+            .duplication_checker()
+            .check_file_similarity_entries(&entries, min_dup_lines, threshold_pct);
         for (file_path, dv) in dup_violations {
             violations.push(LintResult::new_arch(
                 &file_path,

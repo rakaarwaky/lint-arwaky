@@ -2,7 +2,7 @@
 
 ## 1. Feature Goal
 
-The main goal of the `role-rules` module is to enforce architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Infrastructure, Agent, Surface, and Root) as defined by the 6-layer architecture standard. It ensures that components behave exactly according to their architectural roles (e.g., contracts define ports, infrastructure provides concrete implementations, agents coordinate, and taxonomy remains pure and free of external dependencies or raw primitives).
+The main goal of the `role-rules` module is to enforce architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Infrastructure, Agent, Surface, and Root) as defined by the 7-layer architecture standard. It ensures that components behave exactly according to their architectural roles (e.g., contracts define ports, infrastructure provides concrete implementations, agents coordinate, and taxonomy remains pure and free of external dependencies or raw primitives).
 
 ## 2. Requirements & Scope
 

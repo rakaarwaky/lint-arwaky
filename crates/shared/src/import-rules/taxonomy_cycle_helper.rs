@@ -1,7 +1,13 @@
-// PURPOSE: taxonomy_cycle_helper — pure utility functions for cycle and layer path normalization
 use crate::common::taxonomy_name_vo::SymbolName;
 use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use std::collections::{HashMap, HashSet};
+
+#[derive(Clone, Copy, PartialEq)]
+enum Color {
+    White,
+    Gray,
+    Black,
+}
 
 pub fn normalize_to_layer(name: &str) -> String {
     let layer_prefixes = [
@@ -30,39 +36,42 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
         .map(|e| DependencyEdge::new(normalize_to_layer(&e.source), normalize_to_layer(&e.target)))
         .collect();
 
-    let mut graph: HashMap<String, HashSet<String>> = HashMap::new();
+    let mut graph: HashMap<String, Vec<String>> = HashMap::new();
     for e in &normalized_edges {
         graph
             .entry(e.source.clone())
             .or_default()
-            .insert(e.target.clone());
+            .push(e.target.clone());
+        graph.entry(e.target.clone()).or_default();
+    }
+
+    let mut color: HashMap<String, Color> = HashMap::new();
+    let mut parent: HashMap<String, String> = HashMap::new();
+    let mut cycle_edges_set: HashSet<(String, String)> = HashSet::new();
+
+    for node in graph.keys() {
+        color.entry(node.clone()).or_insert(Color::White);
+    }
+
+    for node in graph.keys().cloned().collect::<Vec<_>>() {
+        if color[&node] == Color::White {
+            dfs_3color(&node, &graph, &mut color, &mut parent, &mut cycle_edges_set);
+        }
     }
 
     let mut unique_cycles: Vec<String> = Vec::new();
     let mut reported: HashSet<String> = HashSet::new();
 
-    let nodes: Vec<String> = graph.keys().cloned().collect();
-
-    for node in &nodes {
-        let mut local_visited: HashSet<String> = HashSet::new();
-        let mut path_stack: Vec<String> = Vec::new();
-        let mut cycles: Vec<Vec<String>> = Vec::new();
-        dfs_collect_paths(
-            node,
-            &graph,
-            &mut local_visited,
-            &mut path_stack,
-            &mut cycles,
-        );
-
-        for cycle in cycles {
+    for (src, tgt) in &cycle_edges_set {
+        let cycle_nodes = extract_cycle_nodes(src, tgt, &parent);
+        if let Some(cycle) = cycle_nodes {
             let mut sorted_cycle = cycle.clone();
             sorted_cycle.sort();
             let dedup_key = sorted_cycle.join("->");
             if reported.insert(dedup_key) {
                 for i in 0..cycle.len() {
                     let next = cycle[(i + 1) % cycle.len()].clone();
-                    unique_cycles.push(format!("{}->{}", cycle[i].clone(), next));
+                    unique_cycles.push(format!("{}->{}", cycle[i], next));
                 }
             }
         }
@@ -71,33 +80,48 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
     unique_cycles.into_iter().map(SymbolName::new).collect()
 }
 
-// ─── Private Helpers ───
-
-fn dfs_collect_paths(
+fn dfs_3color(
     node: &str,
-    graph: &HashMap<String, HashSet<String>>,
-    visited: &mut HashSet<String>,
-    path_stack: &mut Vec<String>,
-    cycles: &mut Vec<Vec<String>>,
+    graph: &HashMap<String, Vec<String>>,
+    color: &mut HashMap<String, Color>,
+    parent: &mut HashMap<String, String>,
+    cycle_edges: &mut HashSet<(String, String)>,
 ) {
-    if path_stack.contains(&node.to_string()) {
-        if let Some(pos) = path_stack.iter().position(|n| n == node) {
-            let cycle: Vec<String> = path_stack[pos..].to_vec();
-            cycles.push(cycle);
-        }
-        return;
-    }
-    if visited.contains(node) {
-        return;
-    }
-    visited.insert(node.to_string());
-    path_stack.push(node.to_string());
+    color.insert(node.to_string(), Color::Gray);
 
     if let Some(neighbors) = graph.get(node) {
         for neighbor in neighbors {
-            dfs_collect_paths(neighbor, graph, visited, path_stack, cycles);
+            if *color.get(neighbor).unwrap_or(&Color::White) == Color::Gray {
+                cycle_edges.insert((node.to_string(), neighbor.clone()));
+            } else if *color.get(neighbor).unwrap_or(&Color::White) == Color::White {
+                parent.insert(neighbor.clone(), node.to_string());
+                dfs_3color(neighbor, graph, color, parent, cycle_edges);
+            }
         }
     }
 
-    path_stack.pop();
+    color.insert(node.to_string(), Color::Black);
+}
+
+fn extract_cycle_nodes(
+    src: &str,
+    tgt: &str,
+    parent: &HashMap<String, String>,
+) -> Option<Vec<String>> {
+    let mut path = Vec::new();
+    let mut cur = src;
+    path.push(cur.to_string());
+
+    while cur != tgt {
+        match parent.get(cur) {
+            Some(p) => {
+                cur = p;
+                path.push(cur.to_string());
+            }
+            None => return None,
+        }
+    }
+
+    path.reverse();
+    Some(path)
 }

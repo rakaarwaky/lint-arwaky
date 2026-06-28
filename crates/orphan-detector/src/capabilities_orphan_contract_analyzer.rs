@@ -8,6 +8,7 @@ use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use std::sync::OnceLock;
 
 pub struct ContractOrphanAnalyzer {}
 
@@ -63,7 +64,7 @@ pub fn is_contract_orphan(
     for ws_dir in &["crates", "packages", "modules"] {
         let ws_path = root_path.join(ws_dir);
         if ws_path.exists() {
-            collect_rs_files(&ws_path, &mut search_files);
+            collect_source_files(&ws_path, &mut search_files);
         }
     }
 
@@ -133,7 +134,10 @@ pub fn is_contract_orphan(
                     || cb.ends_with("_orchestrator.ts")
                     || cb.ends_with("_orchestrator.js"));
             // Check container files (DI wiring)
-            let is_container = cb.ends_with("_container.rs");
+            let is_container = cb.ends_with("_container.rs")
+                || cb.ends_with("_container.py")
+                || cb.ends_with("_container.ts")
+                || cb.ends_with("_container.js");
             // Check capabilities files (trait implementations)
             let is_capabilities = cb.starts_with("capabilities_");
             // Check surface files (trait usage)
@@ -178,7 +182,10 @@ pub fn is_contract_orphan(
             // Check surface files
             let is_surface = cb.starts_with("surface_");
             // Check container files (DI wiring)
-            let is_container = cb.ends_with("_container.rs");
+            let is_container = cb.ends_with("_container.rs")
+                || cb.ends_with("_container.py")
+                || cb.ends_with("_container.ts")
+                || cb.ends_with("_container.js");
 
             if !is_surface && !is_container {
                 continue;
@@ -214,12 +221,31 @@ pub fn is_contract_orphan(
     OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
 }
 
-pub fn extract_contract_trait_name(content: &str) -> Option<String> {
-    let re_rust = Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok()?;
-    let re_py = Regex::new(r"class\s+([A-Za-z0-9_]+)").ok()?;
-    let re_ts_interface = Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok()?;
-    let re_interface = Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok()?;
+fn re_contract_rust() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
+}
 
+fn re_contract_py() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"class\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
+}
+
+fn re_ts_interface_export() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
+}
+
+fn re_interface() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
+}
+
+pub fn extract_contract_trait_name(content: &str) -> Option<String> {
     // Skip comment lines to avoid matching "trait for" in comments
     let code_lines: String = content
         .lines()
@@ -230,19 +256,27 @@ pub fn extract_contract_trait_name(content: &str) -> Option<String> {
         .collect::<Vec<_>>()
         .join("\n");
 
-    if let Some(caps) = re_rust.captures(&code_lines) {
-        return Some(caps[1].to_string());
+    if let Some(re) = re_contract_rust() {
+        if let Some(caps) = re.captures(&code_lines) {
+            return Some(caps[1].to_string());
+        }
     }
-    if let Some(caps) = re_ts_interface.captures(&code_lines) {
-        return Some(caps[1].to_string());
+    if let Some(re) = re_ts_interface_export() {
+        if let Some(caps) = re.captures(&code_lines) {
+            return Some(caps[1].to_string());
+        }
     }
-    if let Some(caps) = re_interface.captures(&code_lines) {
-        return Some(caps[1].to_string());
+    if let Some(re) = re_interface() {
+        if let Some(caps) = re.captures(&code_lines) {
+            return Some(caps[1].to_string());
+        }
     }
-    re_py.captures(&code_lines).map(|caps| caps[1].to_string())
+    re_contract_py()
+        .and_then(|re| re.captures(&code_lines))
+        .map(|caps| caps[1].to_string())
 }
 
-fn collect_rs_files(dir: &std::path::Path, files: &mut Vec<String>) {
+fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
     if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
@@ -251,10 +285,12 @@ fn collect_rs_files(dir: &std::path::Path, files: &mut Vec<String>) {
                 if name == "target" || name == ".git" || name == "node_modules" {
                     continue;
                 }
-                collect_rs_files(&path, files);
-            } else if path.extension().is_some_and(|e| e == "rs") {
-                if let Some(s) = path.to_str() {
-                    files.push(s.to_string());
+                collect_source_files(&path, files);
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
+                    if let Some(s) = path.to_str() {
+                        files.push(s.to_string());
+                    }
                 }
             }
         }

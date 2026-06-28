@@ -13,4 +13,5 @@ workspace = true
 [dependencies]  # (unchanged)
 async-trait.workspace = true
 regex.workspace = true
+once_cell.workspace = true
 shared.workspace = true

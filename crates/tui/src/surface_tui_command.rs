@@ -14,6 +14,7 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::Terminal;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
+use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
 use shared::tui::taxonomy_state_vo::AppState;
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::io::stdout;
@@ -89,7 +90,16 @@ impl TuiCommandSurface {
         state: &mut AppState,
         views: &RenderViews,
     ) -> anyhow::Result<()> {
+        let mut scan_rx: Option<std::sync::mpsc::Receiver<ScanUpdate>> = None;
+
         loop {
+            // --- Poll scan progress (non-blocking) ---
+            if state.scanning {
+                if let Some(ref rx) = scan_rx {
+                    self.tui_aggregate.poll_scan(state, rx);
+                }
+            }
+
             terminal.draw(|frame| {
                 let area = frame.area();
 
@@ -130,7 +140,31 @@ impl TuiCommandSurface {
             if event::poll(Duration::from_millis(50))? {
                 let crossterm_event = event::read()?;
                 let tui_event = from_crossterm_event(crossterm_event, state);
-                self.tui_aggregate.handle_event(state, tui_event);
+
+                // --- Intercept ActionScan: spawn background thread ---
+                if matches!(tui_event, TuiEvent::ActionScan) {
+                    if !state.scanning {
+                        if let Some(rx) = self.tui_aggregate.start_scan(state) {
+                            scan_rx = Some(rx);
+                        }
+                    }
+                    // Ignore if already scanning
+                } else if state.scanning
+                    && matches!(
+                        tui_event,
+                        TuiEvent::ActionCheck
+                            | TuiEvent::ActionFix
+                            | TuiEvent::ActionCi
+                            | TuiEvent::ActionOrphan
+                            | TuiEvent::ActionSecurity
+                            | TuiEvent::ActionDuplicates
+                            | TuiEvent::ActionDependencies
+                    )
+                {
+                    // Block long-running actions while a scan is in progress
+                } else {
+                    self.tui_aggregate.handle_event(state, tui_event);
+                }
             }
 
             if state.should_quit {

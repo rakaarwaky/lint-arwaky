@@ -35,6 +35,17 @@ impl MandatoryDefinitionChecker {
     }
 }
 
+/// Helper: check if a line declares a Rust struct/enum/trait (handles visibility modifiers).
+fn rust_declares_type(line: &str) -> bool {
+    let keywords = ["struct", "enum", "trait"];
+    for kw in keywords {
+        if line.contains(kw) && !line.contains('(') {
+            return true;
+        }
+    }
+    false
+}
+
 /// AES303 sub-check 1: file must have at least one struct/enum/trait/class definition
 impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
     fn check_mandatory_class_definition(
@@ -51,7 +62,7 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
 
         if matches!(
             basename.as_str(),
-            "__init__.py" | "main.py" | "py.typed" | "mod.rs" | "lib.rs"
+            "__init__.py" | "main.py" | "py.typed" | "mod.rs" | "lib.rs" | "main.rs"
         ) {
             return;
         }
@@ -70,22 +81,18 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
             return;
         }
 
-        let has_class = content.contains("\nclass ")
-            || content.starts_with("class ")
-            || content.contains("\npub struct ")
-            || content.starts_with("pub struct ")
-            || content.contains("\nstruct ")
-            || content.starts_with("struct ")
-            || content.contains("\npub trait ")
-            || content.starts_with("pub trait ")
-            || content.contains("\ntrait ")
-            || content.starts_with("trait ")
-            || content.contains("\npub enum ")
-            || content.starts_with("pub enum ")
-            || content.contains("\nenum ")
-            || content.starts_with("enum ")
-            || content.contains("\nexport class ")
-            || content.contains("\nexport default class ");
+        let mut has_class = false;
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("class ")
+                || trimmed.starts_with("export class ")
+                || trimmed.starts_with("export default class ")
+                || rust_declares_type(trimmed)
+            {
+                has_class = true;
+                break;
+            }
+        }
 
         if !has_class {
             violations.push(LintResult::new_arch(
@@ -117,8 +124,8 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                 i += 1;
                 continue;
             }
-            // Rust: unit struct `struct Foo;`
-            if t.starts_with("struct ") && t.ends_with(';') {
+            // Rust: unit struct `struct Foo;` (tuple structs `struct Foo(i32);` excluded)
+            if t.starts_with("struct ") && t.ends_with(';') && !t.contains('(') {
                 // Skip if followed by impl block or attribute (intentional placeholder)
                 let mut next_idx = i + 1;
                 while next_idx < lines.len() {

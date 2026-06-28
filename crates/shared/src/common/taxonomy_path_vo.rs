@@ -23,8 +23,21 @@ impl FilePath {
         if value.trim().is_empty() {
             return Err("File path cannot be empty".to_string());
         }
-        // Normalize: replace backslashes with forward slashes, and collapse multiple slashes.
-        value = value.replace('\\', "/");
+        // Normalize: replace backslashes with forward slashes, collapse repeated slashes.
+        let mut normalized = String::with_capacity(value.len());
+        let mut prev_slash = false;
+        for c in value.chars() {
+            if c == '/' || c == '\\' {
+                if !prev_slash {
+                    normalized.push('/');
+                    prev_slash = true;
+                }
+            } else {
+                normalized.push(c);
+                prev_slash = false;
+            }
+        }
+        value = normalized;
         // Remove trailing slashes
         let trimmed = value.trim_end_matches('/');
         value = if trimmed.is_empty() {
@@ -64,8 +77,8 @@ impl FilePath {
         if special_files.contains(&basename) || basename.starts_with('.') {
             return String::new();
         }
-        match basename.rsplit('.').next() {
-            Some(ext) => ext.to_string(),
+        match basename.rsplit_once('.') {
+            Some((_, ext)) => ext.to_string(),
             None => String::new(),
         }
     }
@@ -83,12 +96,12 @@ impl FilePath {
         }
     }
 
-    /// Check if the path is a barrel file.
+    /// Check if the path is a barrel file (module re-export aggregator).
     pub fn is_barrel_file(&self) -> bool {
         let f = self.basename();
         matches!(
             f.as_ref(),
-            "__init__.py" | "mod.rs" | "index.ts" | "index.js"
+            "__init__.py" | "mod.rs" | "index.ts" | "index.js" | "index.tsx" | "index.jsx"
         )
     }
 
@@ -97,7 +110,20 @@ impl FilePath {
         let f = self.basename();
         matches!(
             f.as_ref(),
-            "__init__.py" | "main.py" | "py.typed" | "app.py" | "lib.rs"
+            "__init__.py"
+                | "main.py"
+                | "py.typed"
+                | "app.py"
+                | "lib.rs"
+                | "main.rs"
+                | "index.ts"
+                | "index.js"
+                | "index.tsx"
+                | "index.jsx"
+                | "main.ts"
+                | "main.js"
+                | "app.ts"
+                | "app.js"
         )
     }
 }

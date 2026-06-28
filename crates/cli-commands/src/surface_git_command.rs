@@ -38,7 +38,7 @@ pub async fn handle_git_diff(
 
     let changed_files = git_aggregate
         .diff_protocol()
-        .get_changed_files(&project_path)
+        .get_changed_files(&project_path, &base)
         .await;
 
     let files: Vec<&shared::common::taxonomy_path_vo::FilePath> = changed_files
@@ -68,7 +68,13 @@ pub async fn handle_git_diff(
                     "    {}:{} [{}] {}",
                     r.file.value(),
                     r.line.value(),
-                    format!("{:?}", r.severity).to_uppercase(),
+                    match r.severity {
+                        shared::common::taxonomy_severity_vo::Severity::CRITICAL => "CRITICAL",
+                        shared::common::taxonomy_severity_vo::Severity::HIGH => "HIGH",
+                        shared::common::taxonomy_severity_vo::Severity::MEDIUM => "MEDIUM",
+                        shared::common::taxonomy_severity_vo::Severity::LOW => "LOW",
+                        _ => "INFO",
+                    },
                     r.message.value()
                 );
             }
@@ -83,5 +89,9 @@ pub async fn handle_git_diff(
         total_violations,
         files.len()
     );
-    ExitCode::SUCCESS
+    if total_violations > 0 {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
 }
