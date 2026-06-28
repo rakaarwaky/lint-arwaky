@@ -160,15 +160,33 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let first_component = str_or(target.value().split('/').next(), ".");
         let root_dir = filepath_or_default(FilePath::new(first_component.to_string()));
 
-        self.mandatory
-            .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)
-            .await;
-        self.forbidden
-            .check_forbidden_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)
-            .await;
-        self.intent
-            .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut results)
-            .await;
+        // Run mandatory/forbidden/intent checks concurrently (no data sharing between them)
+        let (mandatory_results, forbidden_results, intent_results) = tokio::join!(
+            async {
+                let mut r = LintResultList::new(Vec::new());
+                self.mandatory
+                    .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut r)
+                    .await;
+                r
+            },
+            async {
+                let mut r = LintResultList::new(Vec::new());
+                self.forbidden
+                    .check_forbidden_imports(self.analyzer.as_ref(), &files, &root_dir, &mut r)
+                    .await;
+                r
+            },
+            async {
+                let mut r = LintResultList::new(Vec::new());
+                self.intent
+                    .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut r)
+                    .await;
+                r
+            }
+        );
+        results.values.extend(mandatory_results.values);
+        results.values.extend(forbidden_results.values);
+        results.values.extend(intent_results.values);
 
         // AES203: unused import check — read file content once and check all languages
         for file in files.iter() {

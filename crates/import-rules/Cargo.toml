@@ -17,6 +17,6 @@ async-trait.workspace = true
 once_cell.workspace = true
 regex.workspace = true
 shared.workspace = true
+tokio.workspace = true
 
 [dev-dependencies]
-tokio.workspace = true
