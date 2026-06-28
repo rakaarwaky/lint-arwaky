@@ -165,21 +165,18 @@ impl CheckCommandsSurface {
         let aes_results = code_analysis_linter.run_code_analysis(path);
         all_results.extend(aes_results.values);
 
-        // 2. Run naming-rules audit (AES101, AES102)
-        let naming_results = rt.block_on(naming_orchestrator.run_audit(&path_obj));
+        // 2-5. Run async linter groups concurrently
+        let (naming_results, import_results, external_results, role_results) = rt.block_on(async {
+            tokio::join!(
+                naming_orchestrator.run_audit(&path_obj),
+                import_orchestrator.run_audit(&path_obj),
+                self.external_lint.scan_all(&path_obj),
+                role_orchestrator.run_audit(&path_obj),
+            )
+        });
         all_results.extend(naming_results);
-
-        // 3. Run import-rules audit (AES201, AES202, AES205, AES203, cycles)
-        let import_results = rt.block_on(import_orchestrator.run_audit(&path_obj));
         all_results.extend(import_results);
-
-        // 4. Run external linter adapters via aggregate
-        let path_obj2 = FilePath::new(path.to_string()).unwrap_or_default();
-        let external_results = rt.block_on(self.external_lint.scan_all(&path_obj2));
         all_results.extend(external_results.values);
-
-        // 5. Run role-rules audit (AES401-406: layer-role violations)
-        let role_results = rt.block_on(role_orchestrator.run_audit(&path_obj));
         all_results.extend(role_results);
 
         // 6. Run orphan detection (AES501-506: dead code via import graph)
@@ -376,6 +373,7 @@ impl CheckCommandsSurface {
             Err(_) => return ExitCode::from(1),
         };
         let workspaces = rt.block_on(orchestrator.discover_workspaces(&path_obj));
+        let all_workspaces = workspaces.clone();
 
         if workspaces.is_empty() {
             // No workspaces discovered — fall back to single-scan mode
@@ -399,8 +397,7 @@ impl CheckCommandsSurface {
                 eprintln!("[error] no workspace member matching '{member_name}'");
                 eprintln!();
                 eprintln!("Available members:");
-                let orig = rt.block_on(orchestrator.discover_workspaces(&path_obj));
-                for ws in &orig {
+                for ws in &all_workspaces {
                     let name = std::path::Path::new(&ws.path.value)
                         .file_name()
                         .map(|n| n.to_string_lossy())
@@ -477,17 +474,18 @@ impl CheckCommandsSurface {
             let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
             all_results.extend(aes_results.values);
 
-            let naming_results = rt.block_on(naming_orchestrator.run_audit(&ws.path));
+            let (naming_results, import_results, external_results, role_results) =
+                rt.block_on(async {
+                    tokio::join!(
+                        naming_orchestrator.run_audit(&ws.path),
+                        import_orchestrator.run_audit(&ws.path),
+                        self.external_lint.scan_all(&ws.path),
+                        role_orchestrator.run_audit(&ws.path),
+                    )
+                });
             all_results.extend(naming_results);
-
-            let import_results = rt.block_on(import_orchestrator.run_audit(&ws.path));
             all_results.extend(import_results);
-
-            let external_results = rt.block_on(self.external_lint.scan_all(&ws.path));
             all_results.extend(external_results.values);
-
-            // Role-rules per workspace (AES401, AES402, AES403, AES404, AES405, AES406)
-            let role_results = rt.block_on(role_orchestrator.run_audit(&ws.path));
             all_results.extend(role_results);
 
             // Filter results to only those in this workspace member's path
@@ -728,7 +726,7 @@ impl CheckCommandsSurface {
             .collect();
         let failure_count = failures.len();
 
-        let mut xml = String::new();
+        let mut xml = String::with_capacity(total.saturating_mul(256));
         xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xml.push_str(&format!(
             "<testsuites name=\"lint-arwaky\" tests=\"{total}\" failures=\"{failure_count}\">\n"

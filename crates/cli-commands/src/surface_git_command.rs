@@ -68,7 +68,13 @@ pub async fn handle_git_diff(
                     "    {}:{} [{}] {}",
                     r.file.value(),
                     r.line.value(),
-                    format!("{:?}", r.severity).to_uppercase(),
+                    match r.severity {
+                        shared::common::taxonomy_severity_vo::Severity::CRITICAL => "CRITICAL",
+                        shared::common::taxonomy_severity_vo::Severity::HIGH => "HIGH",
+                        shared::common::taxonomy_severity_vo::Severity::MEDIUM => "MEDIUM",
+                        shared::common::taxonomy_severity_vo::Severity::LOW => "LOW",
+                        _ => "INFO",
+                    },
                     r.message.value()
                 );
             }

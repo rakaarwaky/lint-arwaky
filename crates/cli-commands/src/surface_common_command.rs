@@ -80,22 +80,16 @@ pub fn run_ci_analysis(
         ));
     }
 
-    let critical_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::CRITICAL)
-        .count();
-    let high_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::HIGH)
-        .count();
-    let medium_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::MEDIUM)
-        .count();
-    let low_count = results
-        .iter()
-        .filter(|r| r.severity == Severity::LOW)
-        .count();
+    let (mut critical_count, mut high_count, mut medium_count, mut low_count) = (0usize, 0, 0, 0);
+    for r in &results {
+        match r.severity {
+            Severity::CRITICAL => critical_count += 1,
+            Severity::HIGH => high_count += 1,
+            Severity::MEDIUM => medium_count += 1,
+            Severity::LOW => low_count += 1,
+            _ => {}
+        }
+    }
 
     println!(
         "CRITICAL: {} | HIGH: {} | MEDIUM: {} | LOW: {}",
