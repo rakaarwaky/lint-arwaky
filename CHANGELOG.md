@@ -3,6 +3,7 @@
 ## 1.10.75 (2026-06-28)
 
 ### Fixed
+
 - **TUI scan freeze (#108)**: Scan now runs in a background thread with channel-based progress reporting. TUI remains responsive during scan — keyboard navigation, scrolling, and panel focus all work. Status bar shows live scan progress (phase, file count, violations found).
 - **Orphan detector false positives (#104-105)**: Fixed graph resolver — plain `pub mod foo;` declarations now parsed, `mod.rs` mapped by parent directory name, `#[path]` links only referenced file (not entire directory), path-key mismatch eliminated, entry-point matching by basename only.
 - **Orphan detector correctness (#104)**: Agent orphan logic fixed (flags only when ALL aggregates uncalled, not ANY), generic impls `impl<T> Trait for Struct` now supported, infrastructure reports AES504 (not AES503), polyglot file collection includes `.py`/`.ts`/`.js`.
@@ -13,6 +14,7 @@
 - **CLI exit codes (#107)**: scan/fix/git-diff/init commands now return correct ExitCode on violations/errors, CI threshold magic override removed.
 
 ### Performance
+
 - **Regex caching**: All hot-path regexes now use `OnceLock` for one-time compilation (import-rules, naming-rules, orphan-detector, role-rules).
 - **Combined regex alternation (#102)**: Per-alias `Regex::new()` replaced with single combined alternation regex in unused symbol detection.
 - **String interning (#103)**: Duplication analyzer uses u32 string interning for sliding-window keys, reducing HashMap overhead.
@@ -22,6 +24,7 @@
 - **Path normalization**: Single-pass slash collapse replaces multi-step string operations.
 
 ### Changed
+
 - **Skill updates**: `rust-engineer` v1.6.0 and `rust-patterns` updated with 25+ patterns learned from issues #90-#108 (OnceLock, TOCTOU, basename matching, quantifier logic, brace-depth tracking, etc.).
 
 ## 1.10.72 (2026-06-27)
