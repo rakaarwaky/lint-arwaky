@@ -290,7 +290,7 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from("."),
         };
-        let all_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
+        let all_files: Vec<String> = shared::common::collect_all_source_files_raw(&scan_root)
             .iter()
             .map(|f| f.value.clone())
             .collect();
@@ -423,10 +423,11 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from(path),
         };
-        let all_source_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
-            .iter()
-            .map(|f| f.value.clone())
-            .collect();
+        let all_source_files: Vec<String> =
+            shared::common::collect_all_source_files_raw(&scan_root)
+                .iter()
+                .map(|f| f.value.clone())
+                .collect();
 
         let multi = workspaces.len() > 1;
         if multi {
@@ -441,12 +442,11 @@ impl CheckCommandsSurface {
         let mut global_all_results = Vec::new();
 
         // Hoist orphan detection before per-workspace loop (#107 P1 #7)
-        let orphan_results_all = self.orphan_orchestrator.check_orphans(
+        let _orphan_results_all = self.orphan_orchestrator.check_orphans(
             self.layer_detector.as_ref(),
             &all_source_files,
             &scan_root.to_string_lossy(),
         );
-        global_all_results.extend(orphan_results_all);
 
         for ws in &workspaces {
             let ws_name = match std::path::Path::new(&ws.path.value).file_name() {
@@ -524,15 +524,47 @@ impl CheckCommandsSurface {
                     .collect()
             };
 
-            global_all_results.extend(filtered_results.clone());
+            // Filter orphan results to this workspace member's path
+            let filtered_orphans: Vec<_> = if let Some(code) = filter {
+                _orphan_results_all
+                    .iter()
+                    .filter(|r| {
+                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        r.code.code() == code
+                            && ws_canonical
+                                .as_ref()
+                                .map(|c| abs_path.starts_with(c))
+                                .unwrap_or(true)
+                    })
+                    .cloned()
+                    .collect()
+            } else {
+                _orphan_results_all
+                    .iter()
+                    .filter(|r| {
+                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        ws_canonical
+                            .as_ref()
+                            .map(|c| abs_path.starts_with(c))
+                            .unwrap_or(true)
+                    })
+                    .cloned()
+                    .collect()
+            };
+
+            // Merge per-member results with filtered orphans for this workspace
+            let mut member_results = filtered_results;
+            member_results.extend(filtered_orphans);
+
+            global_all_results.extend(member_results.clone());
 
             if multi {
-                let total = filtered_results.len();
+                let total = member_results.len();
                 println!("── [{ws_type}] {ws_name} — {total} violations ──");
-                if !filtered_results.is_empty() {
+                if !member_results.is_empty() {
                     let mut code_counts: std::collections::HashMap<String, usize> =
                         std::collections::HashMap::new();
-                    for r in &filtered_results {
+                    for r in &member_results {
                         *code_counts.entry(r.code.to_string()).or_insert(0) += 1;
                     }
                     let mut sorted: Vec<_> = code_counts.into_iter().collect();
@@ -548,23 +580,23 @@ impl CheckCommandsSurface {
                 // Single workspace — print full violation detail (respects --format)
                 match format {
                     Format::Text => {
-                        let results_list = LintResultList::new(filtered_results.clone());
+                        let results_list = LintResultList::new(member_results.clone());
                         print!(
                             "{}",
                             code_analysis_linter.format_report(&results_list, &ws.path.value)
                         );
                     }
                     Format::Json => {
-                        let json = serde_json::to_string_pretty(&filtered_results)
+                        let json = serde_json::to_string_pretty(&member_results)
                             .unwrap_or_else(|_| "[]".to_string());
                         println!("{json}");
                     }
                     Format::Sarif => {
-                        let sarif = self.format_sarif_output(&filtered_results);
+                        let sarif = self.format_sarif_output(&member_results);
                         println!("{sarif}");
                     }
                     Format::Junit => {
-                        let junit = self.format_junit_output(&filtered_results);
+                        let junit = self.format_junit_output(&member_results);
                         println!("{junit}");
                     }
                 }

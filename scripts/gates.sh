@@ -31,11 +31,10 @@ gate "Rust Format" cargo fmt --all -- --check
 
 gate "Clippy" cargo clippy --all-targets -- -D warnings
 
-gate "AES Scan (crates/ = 0 violations)" bash -c '
-    output=$(cargo run --bin lint-arwaky-cli -- scan crates 2>&1)
-    violations=$(echo "$output" | grep "Total Violations" | grep -oP "\d+")
-    codes=$(echo "$output" | grep "Total Unique AES Codes" | grep -oP "\d+")
-    echo "  violations: ${violations:-0}, unique codes: ${codes:-0}"
+gate "AES Self-Lint (check . = 0 violations)" bash -c '
+    output=$(cargo run --bin lint-arwaky-cli -- check . 2>&1)
+    violations=$(echo "$output" | grep "Violations:" | grep -oP "\d+")
+    echo "  violations: ${violations:-0}"
     [ "${violations:-0}" = "0" ]
 '
 

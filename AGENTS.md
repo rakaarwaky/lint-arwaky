@@ -1,8 +1,11 @@
 # AGENTS.md — Lint Arwaky
 
+Read before making any changes to the codebase.
+Make sure to read `TEST.md` for pass/fail criteria before committing any changes.
+
 ## Build & dev
 
-```bash
+````bash
 _# Build everything
 cargo build --release
 
@@ -28,10 +31,21 @@ cargo test --workspace        # all
 cargo test -p import_rules_lint_arwaky    # single crate
 cargo test --lib <name_fragment>  # single test by name
 
+## Testing with test projects
+
+```bash
+cd /home/raka/mcp-arwaky/lint-arwaky
+cargo run --bin lint-arwaky-cli -- scan test-workspaces/crates for rust
+cargo run --bin lint-arwaky-cli -- scan test-workspaces/modules for python
+cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages for typescript
+````
+
 # Format & lint
+
 cargo fmt --all
 cargo clippy --all-targets -- -D warnings
-cargo clippy -p import_rules -- -D warnings  # per crate
+cargo clippy -p import_rules -- -D warnings # per crate
+
 ```
 
 ## Architecture (7-layer AES + Vertical Slicing + Multi-Crate Workspace)
@@ -40,7 +54,7 @@ The codebase uses **7 architectural layers** as **file prefixes**, organized int
 
 | Layer (prefix)    | Allowed suffixes                                                                                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`                                                                        |
+| `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`, `_helper`, `_utility`                                                                   |
 | `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                       |
 | `capabilities_`   | `_checker`, `_analyzer`, `_processor`, etc.                                                                              |
 | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.                                                                                |
@@ -51,33 +65,30 @@ The codebase uses **7 architectural layers** as **file prefixes**, organized int
 ### Workspace Packages Strcuture
 
 ```
+
 crates/
-  shared/               — Foundation: ALL taxonomy_ + contract_
-  import-rules/         — Import compliance checks
-  naming-rules/         — Naming convention enforcement
-  role-rules/           — Role-layer violation checks
-  orphan-detector/      — Unreachable/dead component detection
-  code-analysis/        — Code quality: file limits, bypasses, mandatory defs
-  auto-fix/             — Auto-fix processor
-  config-system/        — Config loading & parsing
-  external-lint/        — Python, JS, Rust external linter adapters
-  file-watch/           — File watching
-  git-hooks/            — Git hooks management
-  maintenance/          — Maintenance operations
-  project-setup/        — Project init, doctor, mcp-config
-  cli-commands/         — CLI surfaces (_command)
-  mcp-server/           — MCP server surfaces
-  tui/                  — TUI Interface
-  root_cli_main_entry.rs       — CLI binary entry (root_entry)
-  root_mcp_main_entry.rs       — MCP binary entry (root_entry)
-  root_tui_main_entry.rs       — TUI binary entry (root_entry)
+shared/ — Foundation: ALL taxonomy* + contract*
+import-rules/ — Import compliance checks
+naming-rules/ — Naming convention enforcement
+role-rules/ — Role-layer violation checks
+orphan-detector/ — Unreachable/dead component detection
+code-analysis/ — Code quality: file limits, bypasses, mandatory defs
+auto-fix/ — Auto-fix processor
+config-system/ — Config loading & parsing
+external-lint/ — Python, JS, Rust external linter adapters
+file-watch/ — File watching
+git-hooks/ — Git hooks management
+maintenance/ — Maintenance operations
+project-setup/ — Project init, doctor, mcp-config
+cli-commands/ — CLI surfaces (\_command)
+mcp-server/ — MCP server surfaces
+tui/ — TUI Interface
+root_cli_main_entry.rs — CLI binary entry (root_entry)
+root_mcp_main_entry.rs — MCP binary entry (root_entry)
+root_tui_main_entry.rs — TUI binary entry (root_entry)
+
 ```
 
-## Testing with test projects
-
-```bash
-cargo run --bin lint-arwaky-cli -- scan test-workspaces
-```
 
 Each contains intentional violations. See `TEST.md` for pass/fail criteria.
 
@@ -129,11 +140,4 @@ When merging a PR to develop:
 
 - ** use `--delete-branch`** — for feature / fix branches after merger
 - **do NOT be deleted `develop` branch ** after merge to `main`
-- Branches that were accidentally deleted must be restored immediately via:
-  ```bash
-  git branch <branch-name> origin/develop
-  jj git import
-  jj bookmark set <branch-name>
-  ```
-
-g
+```

@@ -43,6 +43,15 @@ pub fn collect_all_source_files(dir: &Path) -> Vec<FilePath> {
     files
 }
 
+pub fn collect_all_source_files_raw(dir: &Path) -> Vec<FilePath> {
+    let mut files = Vec::new();
+    if dir.exists() && dir.is_dir() {
+        let ignored: Vec<String> = Vec::new();
+        walk_source_files(dir, &mut files, &ignored);
+    }
+    files
+}
+
 impl IScannerProviderPort for FileCollectorProvider {
     fn scan_directory(&self, path: &DirectoryPath) -> Result<FilePathList, FileSystemError> {
         let dir = Path::new(&path.value);

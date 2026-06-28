@@ -1,4 +1,5 @@
 // PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
+use crate::taxonomy_file_cache_utility;
 use crate::taxonomy_orphan_filename_helper::{file_basename, file_stem, file_suffix};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
@@ -47,7 +48,8 @@ pub fn is_infra_cap_orphan(
     let fp = f.value();
     let stem = file_stem(fp);
 
-    if let Ok(content) = std::fs::read_to_string(fp) {
+    if !fp.is_empty() {
+        let content = taxonomy_file_cache_utility::read_cached(fp);
         let mut identifiers: Vec<String> = Vec::new();
         identifiers.extend(extract_struct_names(&content));
         identifiers.extend(extract_trait_names(&content));
