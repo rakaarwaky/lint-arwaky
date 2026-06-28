@@ -1,7 +1,6 @@
 // PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
 use crate::taxonomy_orphan_filename_helper::{file_basename, file_suffix};
 use regex::Regex;
-use std::sync::OnceLock;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
@@ -9,6 +8,7 @@ use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use std::sync::OnceLock;
 
 pub struct ContractOrphanAnalyzer {}
 
@@ -223,26 +223,29 @@ pub fn is_contract_orphan(
 
 fn re_contract_rust() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok()).as_ref()
+    RE.get_or_init(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
 }
 
 fn re_contract_py() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"class\s+([A-Za-z0-9_]+)").ok()).as_ref()
+    RE.get_or_init(|| Regex::new(r"class\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
 }
 
 fn re_ts_interface_export() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok()).as_ref()
+    RE.get_or_init(|| Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
 }
 
 fn re_interface() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok()).as_ref()
+    RE.get_or_init(|| Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
 }
 
 pub fn extract_contract_trait_name(content: &str) -> Option<String> {
-
     // Skip comment lines to avoid matching "trait for" in comments
     let code_lines: String = content
         .lines()

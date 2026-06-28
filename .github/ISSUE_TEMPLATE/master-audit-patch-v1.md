@@ -18,25 +18,25 @@ Validasi patch dari 6 AI (Qwen, Mimo, DeepSeek, Gemini, Kimi, GLM) terhadap sour
 
 ## Validation Status
 
-| Fix | Module | Status | File:Line |
-|-----|--------|--------|-----------|
-| 1.1 Remove async/Tokio | Orchestrator | ✅ VALID | `orchestrator.rs:145-149` |
-| 1.2 Pre-read files | Orchestrator | ✅ VALID | `orchestrator.rs:189` |
-| 1.3 `lint_path` → `run_scan` | Orchestrator | ⚠️ DEBATABLE | `orchestrator.rs:91` |
-| 1.4 Skip unreadable files | Orchestrator | ✅ VALID | `orchestrator.rs:189` |
-| 2.1 Add `#[warn(...)]` | BypassChecker | ⚠️ DEBATABLE | `bypass_checker.rs:307-315` |
-| 2.2 Support `[lints.clippy]` | BypassChecker | ✅ VALID | `bypass_checker.rs:323` |
-| 2.4 Brace-depth static Lazy | BypassChecker | ✅ VALID | `bypass_checker.rs:367-376` |
-| 2.5 Hoist `.to_lowercase()` | BypassChecker | ✅ VALID | `bypass_checker.rs:407` |
-| 3.1 u32 String Interning | DuplicationAnalyzer | ✅ VALID | `duplication_analyzer.rs:69` |
-| 3.2 O(1) file_to_others map | DuplicationAnalyzer | ✅ VALID | `duplication_analyzer.rs:108-121` |
-| 3.3 Config parsing AES305 | DuplicationAnalyzer | ✅ VALID | `duplication_analyzer.rs:171-191` |
-| 3.4 Pre-read buffer API | DuplicationAnalyzer | ✅ VALID | `duplication_analyzer.rs:56-63` |
-| 4.1 Skip `main.rs` | MandatoryDefChecker | ✅ VALID | `mandatory_def_checker.rs:52-57` |
-| 4.2 `pub(crate)` struct | MandatoryDefChecker | ✅ VALID | `mandatory_def_checker.rs:73-88` |
-| 4.4 Tuple struct exclusion | MandatoryDefChecker | ✅ VALID | `mandatory_def_checker.rs:121` |
-| 5.1 Collapse repeated slashes | PathVO | ✅ VALID | `taxonomy_path_vo.rs:27` |
-| 5.2 Multi-segment bare patterns | FileCollector | ✅ VALID | `taxonomy_file_collector_helper.rs:82-85` |
+| Fix                             | Module              | Status       | File:Line                                 |
+| ------------------------------- | ------------------- | ------------ | ----------------------------------------- |
+| 1.1 Remove async/Tokio          | Orchestrator        | ✅ VALID     | `orchestrator.rs:145-149`                 |
+| 1.2 Pre-read files              | Orchestrator        | ✅ VALID     | `orchestrator.rs:189`                     |
+| 1.3 `lint_path` → `run_scan`    | Orchestrator        | ⚠️ DEBATABLE | `orchestrator.rs:91`                      |
+| 1.4 Skip unreadable files       | Orchestrator        | ✅ VALID     | `orchestrator.rs:189`                     |
+| 2.1 Add `#[warn(...)]`          | BypassChecker       | ⚠️ DEBATABLE | `bypass_checker.rs:307-315`               |
+| 2.2 Support `[lints.clippy]`    | BypassChecker       | ✅ VALID     | `bypass_checker.rs:323`                   |
+| 2.4 Brace-depth static Lazy     | BypassChecker       | ✅ VALID     | `bypass_checker.rs:367-376`               |
+| 2.5 Hoist `.to_lowercase()`     | BypassChecker       | ✅ VALID     | `bypass_checker.rs:407`                   |
+| 3.1 u32 String Interning        | DuplicationAnalyzer | ✅ VALID     | `duplication_analyzer.rs:69`              |
+| 3.2 O(1) file_to_others map     | DuplicationAnalyzer | ✅ VALID     | `duplication_analyzer.rs:108-121`         |
+| 3.3 Config parsing AES305       | DuplicationAnalyzer | ✅ VALID     | `duplication_analyzer.rs:171-191`         |
+| 3.4 Pre-read buffer API         | DuplicationAnalyzer | ✅ VALID     | `duplication_analyzer.rs:56-63`           |
+| 4.1 Skip `main.rs`              | MandatoryDefChecker | ✅ VALID     | `mandatory_def_checker.rs:52-57`          |
+| 4.2 `pub(crate)` struct         | MandatoryDefChecker | ✅ VALID     | `mandatory_def_checker.rs:73-88`          |
+| 4.4 Tuple struct exclusion      | MandatoryDefChecker | ✅ VALID     | `mandatory_def_checker.rs:121`            |
+| 5.1 Collapse repeated slashes   | PathVO              | ✅ VALID     | `taxonomy_path_vo.rs:27`                  |
+| 5.2 Multi-segment bare patterns | FileCollector       | ✅ VALID     | `taxonomy_file_collector_helper.rs:82-85` |
 
 ---
 
@@ -49,6 +49,7 @@ Validasi patch dari 6 AI (Qwen, Mimo, DeepSeek, Gemini, Kimi, GLM) terhadap sour
 `run_all_checks` didefinisikan `pub async fn` (line 156) tapi TIDAK ada `await` di dalamnya. Tokio runtime dibuat hanya untuk `block_on` — murni overhead.
 
 **Patch:**
+
 - Hapus `async` dari `run_all_checks` signature
 - Hapus `tokio::runtime::Runtime::new()` dan `block_on` di `run_lint_at` (line 145-149)
 - Langsung panggil `self.run_all_checks(config, &files_str, &root_dir)`
@@ -58,6 +59,7 @@ Validasi patch dari 6 AI (Qwen, Mimo, DeepSeek, Gemini, Kimi, GLM) terhadap sour
 Line 189: `std::fs::read_to_string(file)` dipanggil di dalam loop. Lalu line 230: `check_file_similarity(files, ...)` re-read semua file lagi.
 
 **Patch:**
+
 - Collect `(path, content)` pairs di awal loop sebelum checker calls
 - Skip file yang gagal dibaca (`Err(_) => continue`)
 - Pass entries ke `check_file_similarity_entries()` (lihat Fix 3.4)
@@ -91,6 +93,7 @@ Line 307-315: `starts_with_allow_attr` hanya punya `allow` dan `expect`.
 Line 323: hanya check `[workspace.lints.clippy]`. Rust 1.74+ mendukung `[lints.clippy]` di package level.
 
 **Patch:**
+
 ```rust
 if t.starts_with("[workspace.lints.clippy]")
     || t.starts_with("[lints.clippy]") {
@@ -106,6 +109,7 @@ if t.starts_with("[workspace.lints.clippy]")
 Line 367-376: `in_static_lazy` flag di-reset saat `});` ditemukan. Tapi miss visibility modifier: `pub static`, `pub(crate) static`.
 
 **Patch:**
+
 ```rust
 if t.contains("static ") && t.contains("Lazy") {
     in_static_lazy = true;
@@ -120,6 +124,7 @@ if t.contains("static ") && t.contains("Lazy") {
 Line 407: `t.to_lowercase().contains(&p_str.to_lowercase())` di dalam loop pattern.
 
 **Patch:**
+
 - Hoist `let t_lower = t.to_lowercase();` sebelum loop pattern
 - Pre-compute `p_str.to_lowercase()` untuk setiap pattern (di constructor)
 
@@ -134,6 +139,7 @@ Line 407: `t.to_lowercase().contains(&p_str.to_lowercase())` di dalam loop patte
 Line 69: `HashMap<String, Vec<(usize, usize)>>` — setiap window key adalah String yang di-clone millions of times.
 
 **Patch:**
+
 ```rust
 let mut interner: HashMap<String, u32> = HashMap::new();
 let mut get_id = |s: String| -> u32 {
@@ -148,6 +154,7 @@ let mut get_id = |s: String| -> u32 {
 Lines 108-121: nested loop O(N^2) untuk collect `other_files`.
 
 **Patch:**
+
 ```rust
 let mut file_to_others: Vec<HashSet<usize>> = vec![HashSet::new(); entries.len()];
 for locs in global.values() {
@@ -167,6 +174,7 @@ for locs in global.values() {
 Lines 171-191: `handle_duplicates` menggunakan `config.rules.first()` (arbitrary) dan `r.rule_type.to_string() == "AES305"` (inconsistent field). `min_lines` (integer) digunakan sebagai percentage threshold (type mismatch).
 
 **Patch:**
+
 ```rust
 let min_lines = config.rules.iter()
     .find(|r| r.name.value == "AES305")
@@ -181,6 +189,7 @@ let threshold_pct = config.rules.iter()
 ### Fix 3.4: Pre-read buffer API ✅
 
 Tambah method baru untuk accept pre-read entries:
+
 ```rust
 pub fn check_file_similarity_entries(
     &self,
@@ -201,6 +210,7 @@ pub fn check_file_similarity_entries(
 Line 52-57: skip list tidak ada `main.rs`. Binary entry points tidak perlu mandatory class definition.
 
 **Patch:**
+
 ```rust
 if matches!(
     basename.as_str(),
@@ -213,6 +223,7 @@ if matches!(
 Lines 73-88: `has_class` hanya cek `pub struct`, `struct` — miss `pub(crate) struct`, `pub(super) struct`.
 
 **Patch:** Gunakan helper function:
+
 ```rust
 fn rust_declares_type(line: &str) -> bool {
     let keywords = ["struct", "enum", "trait"];
@@ -230,6 +241,7 @@ fn rust_declares_type(line: &str) -> bool {
 Line 121: `t.starts_with("struct ") && t.ends_with(';')` — Tuple structs `struct Foo(i32);` ikut terdeteksi.
 
 **Patch:**
+
 ```rust
 if t.starts_with("struct ") && t.ends_with(';') && !t.contains('(') {
     // only unit structs, not tuple structs
@@ -247,6 +259,7 @@ if t.starts_with("struct ") && t.ends_with(';') && !t.contains('(') {
 `taxonomy_path_vo.rs:27`: `value.replace('\\', "/")` tidak collapse `//`.
 
 **Patch (single pass untuk performance):**
+
 ```rust
 let mut normalized = String::with_capacity(value.len());
 let mut prev_slash = false;
@@ -266,6 +279,7 @@ value = normalized;
 `taxonomy_file_collector_helper.rs:82-85`: `segments.contains(&pat.as_str())` hanya match single segments.
 
 **Patch:**
+
 ```rust
 let pat_segments: Vec<&str> = pat.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
 if pat_segments.len() == 1 {
@@ -286,6 +300,7 @@ if pat_segments.len() == 1 {
 ## Implementation Plan
 
 ### Phase 1: Safe Patches (no behavior change)
+
 1. Fix 1.1 — Remove async/Tokio
 2. Fix 1.4 — Skip unreadable files
 3. Fix 2.5 — Hoist `.to_lowercase()` (both `t` and `p`)
@@ -299,11 +314,13 @@ if pat_segments.len() == 1 {
 11. Fix 5.2 — Multi-segment bare patterns
 
 ### Phase 2: Correctness Fixes (with proper implementation)
+
 12. Fix 2.2 — Support `[lints.clippy]`
 13. Fix 2.4 — Brace-depth static Lazy (with visibility modifier)
 14. Fix 4.2 — `pub(crate)` struct detection
 
 ### Phase 3: Debatable Changes (needs discussion)
+
 15. Fix 1.3 — `lint_path` → `run_scan`
 16. Fix 2.1 — `#[warn(...)]` detection
 
@@ -312,16 +329,19 @@ if pat_segments.len() == 1 {
 ## Test Criteria
 
 ### Unit Tests
+
 ```bash
 cargo test -p code_analysis_lint_arwaky
 ```
 
 ### Integration Tests
+
 ```bash
 cargo run --bin lint-arwaky-cli -- scan test-workspaces
 ```
 
 ### Manual Verification
+
 - [ ] `[lints.clippy]` section di Cargo.toml terdeteksi sebagai bypass
 - [ ] `static Lazy<Regex>` multi-line dengan `pub static` terdeteksi
 - [ ] File yang tidak readable di-skip tanpa error
@@ -333,6 +353,7 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces
 - [ ] Bare pattern `"foo/bar"` match path `src/foo/bar/baz.rs`
 
 ### Performance Benchmark
+
 ```bash
 # Before: cargo run --bin lint-arwaky-cli -- scan large-project/ --duration
 # After:  cargo run --bin lint-arwaky-cli -- scan large-project/ --duration
@@ -344,6 +365,7 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces
 ## Deferred Fixes (not in this issue)
 
 Patch berikut diidentifikasi INVALID dan perlu implementasi baru:
+
 - Brace-depth `#[cfg(test)]` — perlu `pending_test_attr` flag
 - Python empty class multi-line — pertahankan branch yang sudah ada
 - JS/TS empty class — gunakan `find('{')` bukan `rfind`

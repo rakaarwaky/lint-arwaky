@@ -38,7 +38,7 @@ pub async fn handle_git_diff(
 
     let changed_files = git_aggregate
         .diff_protocol()
-        .get_changed_files(&project_path)
+        .get_changed_files(&project_path, &base)
         .await;
 
     let files: Vec<&shared::common::taxonomy_path_vo::FilePath> = changed_files

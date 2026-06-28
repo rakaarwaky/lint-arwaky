@@ -127,23 +127,37 @@ impl CheckCommandsSurface {
         };
 
         // Determine dynamic orchestrators based on detected language config
-        let (code_analysis_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
-            if let Some(ref factory) = self.factory {
-                let ctx = factory(config.clone());
-                (
-                    ctx.code_analysis_linter,
-                    ctx.naming_orchestrator,
-                    ctx.import_orchestrator,
-                    ctx.role_orchestrator,
-                )
-            } else {
-                (
-                    self.code_analysis_linter.clone(),
-                    self.naming_orchestrator.clone(),
-                    self.import_orchestrator.clone(),
-                    self.role_orchestrator.clone(),
-                )
-            };
+        // If no factory was provided, build a default one from the current orchestrators
+        let effective_factory = self.factory.clone().unwrap_or_else(|| {
+            let cal = self.code_analysis_linter.clone();
+            let no = self.naming_orchestrator.clone();
+            let io = self.import_orchestrator.clone();
+            let ro = self.role_orchestrator.clone();
+            let ext = self.external_lint.clone();
+            let sp = self.scanner_provider.clone();
+            let oo = self.orphan_orchestrator.clone();
+            let ld = self.layer_detector.clone();
+            Arc::new(move |_cfg: ArchitectureConfig| CheckContext {
+                code_analysis_linter: cal.clone(),
+                naming_orchestrator: no.clone(),
+                import_orchestrator: io.clone(),
+                role_orchestrator: ro.clone(),
+                external_lint: ext.clone(),
+                scanner_provider: sp.clone(),
+                orphan_orchestrator: oo.clone(),
+                layer_detector: ld.clone(),
+                language_detector: Arc::new(
+                    crate::infrastructure_language_detector::CliLanguageDetector::new(),
+                ),
+            })
+        });
+        let ctx = effective_factory(config.clone());
+        let (code_analysis_linter, naming_orchestrator, import_orchestrator, role_orchestrator) = (
+            ctx.code_analysis_linter,
+            ctx.naming_orchestrator,
+            ctx.import_orchestrator,
+            ctx.role_orchestrator,
+        );
 
         let mut all_results = Vec::new();
 
@@ -294,10 +308,17 @@ impl CheckCommandsSurface {
             &scan_root.to_string_lossy(),
         );
 
-        // Filter results for the specific file
+        // Filter results for the specific file — canonicalize for robust comparison
+        let target_canonical = std::path::Path::new(&target_path).canonicalize().ok();
         let file_results: Vec<_> = all_results
             .into_iter()
-            .filter(|r| r.file.value == target_path || r.file.value == file_path)
+            .filter(|r| {
+                let r_canonical = std::path::Path::new(&r.file.value).canonicalize().ok();
+                match (target_canonical.as_deref(), r_canonical.as_deref()) {
+                    (Some(t), Some(r)) => t == r,
+                    _ => r.file.value == target_path || r.file.value == file_path,
+                }
+            })
             .collect();
 
         if file_results.is_empty() {
@@ -417,6 +438,14 @@ impl CheckCommandsSurface {
 
         let mut global_all_results = Vec::new();
 
+        // Hoist orphan detection before per-workspace loop (#107 P1 #7)
+        let orphan_results_all = self.orphan_orchestrator.check_orphans(
+            self.layer_detector.as_ref(),
+            &all_source_files,
+            &scan_root.to_string_lossy(),
+        );
+        global_all_results.extend(orphan_results_all);
+
         for ws in &workspaces {
             let ws_name = match std::path::Path::new(&ws.path.value).file_name() {
                 Some(name) => name.to_string_lossy(),
@@ -460,16 +489,6 @@ impl CheckCommandsSurface {
             // Role-rules per workspace (AES401, AES402, AES403, AES404, AES405, AES406)
             let role_results = rt.block_on(role_orchestrator.run_audit(&ws.path));
             all_results.extend(role_results);
-
-            // Orphan detection — scan across ALL workspaces so contracts in shared/
-            // can find their implementations in other crates. Use scan_root (workspace
-            // root) so the graph resolver can find all workspace crate directories.
-            let orphan_results = self.orphan_orchestrator.check_orphans(
-                self.layer_detector.as_ref(),
-                &all_source_files,
-                &scan_root.to_string_lossy(),
-            );
-            all_results.extend(orphan_results);
 
             // Filter results to only those in this workspace member's path
             let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();

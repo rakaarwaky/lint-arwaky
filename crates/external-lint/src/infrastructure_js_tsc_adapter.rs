@@ -15,16 +15,14 @@ use regex::Regex;
 use std::sync::OnceLock;
 fn tsc_pattern1() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| {
-        Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok()
-    }).as_ref()
+    RE.get_or_init(|| Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok())
+        .as_ref()
 }
 
 fn tsc_pattern2() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| {
-        Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok()
-    }).as_ref()
+    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
+        .as_ref()
 }
 
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;

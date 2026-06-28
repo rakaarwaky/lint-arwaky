@@ -146,9 +146,13 @@ impl IDiffProtocol for DiffChecker {
         }
     }
 
-    async fn get_changed_files(&self, path: &FilePath) -> FilePathList {
-        let default_branch = self.get_default_branch(path);
-        self.collect_changed_files(path, &default_branch)
+    async fn get_changed_files(&self, path: &FilePath, base: &str) -> FilePathList {
+        let branch = if base.is_empty() || base == "." {
+            self.get_default_branch(path)
+        } else {
+            base.to_string()
+        };
+        self.collect_changed_files(path, &branch)
     }
 
     async fn get_default_branch(&self, path: &FilePath) -> String {

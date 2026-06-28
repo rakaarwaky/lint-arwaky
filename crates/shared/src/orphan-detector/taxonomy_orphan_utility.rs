@@ -5,11 +5,15 @@ static STRUCT_RE: OnceCell<Option<Regex>> = OnceCell::new();
 static TRAIT_RE: OnceCell<Option<Regex>> = OnceCell::new();
 
 fn struct_re() -> Option<&'static Regex> {
-    STRUCT_RE.get_or_init(|| Regex::new(r"(?:pub\s+)?struct\s+([A-Za-z0-9_]+)").ok()).as_ref()
+    STRUCT_RE
+        .get_or_init(|| Regex::new(r"(?:pub\s+)?struct\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
 }
 
 fn trait_re() -> Option<&'static Regex> {
-    TRAIT_RE.get_or_init(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok()).as_ref()
+    TRAIT_RE
+        .get_or_init(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
 }
 
 pub fn extract_struct_names(content: &str) -> Vec<String> {

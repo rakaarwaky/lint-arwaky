@@ -14,7 +14,7 @@ pub trait IDiffProtocol: Send + Sync {
     async fn get_diff(&self, path: &FilePath) -> GitDiffResultVO;
 
     /// Get list of changed files from git diff
-    async fn get_changed_files(&self, path: &FilePath) -> FilePathList;
+    async fn get_changed_files(&self, path: &FilePath, base: &str) -> FilePathList;
 
     /// Get default branch name for a repository
     async fn get_default_branch(&self, path: &FilePath) -> String;
