@@ -398,12 +398,12 @@ fn e2e_config_show_prints_config() {
     assert_eq!(code, Some(0));
     // Actual format: "Found: ./lint_arwaky.config.rust.yaml" then YAML sections
     assert!(
-        stdout.contains("Found:") || stdout.contains("thresholds") || stdout.contains("score"),
+        stdout.contains("Found:") || stdout.contains("──") || stdout.contains("thresholds") || stdout.contains("score"),
         "config-show should show configuration, got: {stdout:.100}"
     );
     assert!(
-        stdout.contains("Found:"),
-        "should show which file was found"
+        stdout.contains("Found:") || stdout.contains("──"),
+        "should show which file was found (single: 'Found:', multi: '── [lang] path ──')"
     );
 }
 

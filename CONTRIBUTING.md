@@ -7,7 +7,7 @@
 | Aspect                     | Benefit                                                        |
 | -------------------------- | -------------------------------------------------------------- |
 | **Real-world impact**      | Your code powers the same rule engine that audits this project |
-| **Skill development**      | Practice Rust, async/tokio, MCP, and 6-layer architecture      |
+| **Skill development**      | Practice Rust, async/tokio, MCP, and 7-layer architecture      |
 | **Open-source experience** | Build portfolio with a self-auditing codebase                  |
 | **Community**              | Join a project where every PR is checked by the rules it adds  |
 | **Learning opportunity**   | Study a codebase that passes its own architecture linter       |

@@ -44,9 +44,9 @@ AES enforces a **Word File Naming Convention**: `[layer]_[concept]_[suffix]` or 
 
 _Example:_ `contract_compliance_port.rs` = layer=contract, concept=compliance, suffix=port.
 
-Files are organized into **feature crates** (vertical slicing) rather than layer directories. All six layers coexist in each feature crate, distinguished by their file prefix.
+Files are organized into **feature crates** (vertical slicing) rather than layer directories. All seven layers coexist in each feature crate, distinguished by their file prefix.
 
-_Example feature crate `import-rules/` — all 6 layers in one crate:_
+_Example feature crate `import-rules/` — all 7 layers in one crate:_
 
 ```
 contract_import_parser_port.rs           ← contract layer

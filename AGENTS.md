@@ -34,7 +34,7 @@ cargo clippy --all-targets -- -D warnings
 cargo clippy -p import_rules -- -D warnings  # per crate
 ```
 
-## Architecture (6-layer AES + Vertical Slicing + Multi-Crate Workspace)
+## Architecture (7-layer AES + Vertical Slicing + Multi-Crate Workspace)
 
 The codebase uses **7 architectural layers** as **file prefixes**, organized into **feature module** (vertical slicing) in a **Cargo workspace**.
 

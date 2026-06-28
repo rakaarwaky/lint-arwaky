@@ -113,7 +113,7 @@ lint-arwaky-cli scan /path/to/some-project/
 
 ## Architecture Overview
 
-Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with six layers, organized into **20 feature crates** (vertical slicing). See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification.
+Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with seven layers, organized into **20 feature crates** (vertical slicing). See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification.
 
 ### Layer prefix naming
 
@@ -351,7 +351,7 @@ cargo run --bin lint-arwaky-tui
 | Language           | Rust 2021 edition                                                                                   |
 | Crate              | `lint_arwaky` (library)                                                                             |
 | Binaries           | `lint-arwaky-cli`, `lint-arwaky-mcp`, `lint-arwaky-tui`                                             |
-| Source files       | 270+ (across 6 layers + 3 entry points +`lib.rs`)                                                   |
+| Source files       | 270+ (across 7 layers + 3 entry points +`lib.rs`)                                                   |
 | Layers             | 7 (taxonomy, contract, capabilities, infrastructure, agent, surfaces, root)                         |
 | AES rules enforced | 24 (5 groups: Naming, Import, Quality, Role, Orphan)                                                |
 | Linter adapters    | 9 (Rust AST + Clippy, Python AST + Ruff + MyPy + Bandit + Metrics, JS/TS AST + ESLint/Prettier/TSC) |
