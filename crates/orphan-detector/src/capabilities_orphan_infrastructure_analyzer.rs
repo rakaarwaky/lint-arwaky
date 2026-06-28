@@ -96,7 +96,9 @@ pub fn check_infrastructure_orphan(
 ) {
     let stem = crate::taxonomy_orphan_filename_helper::file_stem(fp);
     let content = std::fs::read_to_string(fp).unwrap_or_default();
-    use shared::orphan_detector::taxonomy_orphan_utility::{extract_struct_names, extract_trait_names};
+    use shared::orphan_detector::taxonomy_orphan_utility::{
+        extract_struct_names, extract_trait_names,
+    };
 
     let mut identifiers: Vec<String> = Vec::new();
     identifiers.extend(extract_struct_names(&content));

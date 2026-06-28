@@ -35,24 +35,28 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 use std::sync::OnceLock;
 
 /// Cached regex for Rust impl with optional generics (Bug 12: impl<T> Trait for Struct)
-fn re_impl_generic() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"impl\s*(?:<[^>]+>)?\s+([A-Za-z0-9_]+)\s+for\s+").unwrap())
+fn re_impl_generic() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"impl\s*(?:<[^>]+>)?\s+([A-Za-z0-9_]+)\s+for\s+").ok())
+        .as_ref()
 }
 
-fn re_dyn() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(?:Box|Arc)<dyn\s+([A-Za-z0-9_]+)>").unwrap())
+fn re_dyn() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"(?:Box|Arc)<dyn\s+([A-Za-z0-9_]+)>").ok())
+        .as_ref()
 }
 
-fn re_py_class() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").unwrap())
+fn re_py_class() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
+        .as_ref()
 }
 
-fn re_ts_implements() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"class\s+\w+\s+implements\s+(\w+)").unwrap())
+fn re_ts_implements() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"class\s+\w+\s+implements\s+(\w+)").ok())
+        .as_ref()
 }
 
 /// Extract aggregate trait names from agent file content.
@@ -61,36 +65,44 @@ pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
     let mut traits = Vec::new();
 
     // Rust: impl ITrait for Struct (with optional generics: impl<T> Trait for Struct)
-    for cap in re_impl_generic().captures_iter(content) {
-        let name = cap[1].to_string();
-        if name.contains("Aggregate") || name.ends_with("Aggregate") {
-            traits.push(name);
-        }
-    }
-
-    // Rust: Box<dyn ITrait> or Arc<dyn ITrait>
-    for cap in re_dyn().captures_iter(content) {
-        let name = cap[1].to_string();
-        if name.contains("Aggregate") || name.ends_with("Aggregate") {
-            traits.push(name);
-        }
-    }
-
-    // Python: class Struct(ITrait):
-    for cap in re_py_class().captures_iter(content) {
-        for part in cap[1].split(',') {
-            let name = part.trim().to_string();
+    if let Some(re) = re_impl_generic() {
+        for cap in re.captures_iter(content) {
+            let name = cap[1].to_string();
             if name.contains("Aggregate") || name.ends_with("Aggregate") {
                 traits.push(name);
             }
         }
     }
 
+    // Rust: Box<dyn ITrait> or Arc<dyn ITrait>
+    if let Some(re) = re_dyn() {
+        for cap in re.captures_iter(content) {
+            let name = cap[1].to_string();
+            if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                traits.push(name);
+            }
+        }
+    }
+
+    // Python: class Struct(ITrait):
+    if let Some(re) = re_py_class() {
+        for cap in re.captures_iter(content) {
+            for part in cap[1].split(',') {
+                let name = part.trim().to_string();
+                if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                    traits.push(name);
+                }
+            }
+        }
+    }
+
     // JS/TS: class Struct implements IAggregateTrait
-    for cap in re_ts_implements().captures_iter(content) {
-        let name = cap[1].to_string();
-        if name.contains("Aggregate") || name.ends_with("Aggregate") {
-            traits.push(name);
+    if let Some(re) = re_ts_implements() {
+        for cap in re.captures_iter(content) {
+            let name = cap[1].to_string();
+            if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                traits.push(name);
+            }
         }
     }
 

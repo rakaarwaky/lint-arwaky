@@ -38,7 +38,10 @@ pub fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
 
     let mut graph: HashMap<String, Vec<String>> = HashMap::new();
     for e in &normalized_edges {
-        graph.entry(e.source.clone()).or_default().push(e.target.clone());
+        graph
+            .entry(e.source.clone())
+            .or_default()
+            .push(e.target.clone());
         graph.entry(e.target.clone()).or_default();
     }
 

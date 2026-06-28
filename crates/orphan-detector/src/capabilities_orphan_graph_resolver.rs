@@ -77,13 +77,12 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                 .iter()
                 .filter(|f| {
                     let basename = f.rsplit('/').next().unwrap_or(f);
-                    configured_strs
-                        .iter()
-                        .any(|pattern| {
-                            basename == pattern
-                                || basename.ends_with(pattern)
-                                || crate::taxonomy_orphan_filename_helper::file_stem(basename).contains(pattern)
-                        })
+                    configured_strs.iter().any(|pattern| {
+                        basename == pattern
+                            || basename.ends_with(pattern)
+                            || crate::taxonomy_orphan_filename_helper::file_stem(basename)
+                                .contains(pattern)
+                    })
                 })
                 .cloned()
                 .collect()
@@ -93,29 +92,35 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
 }
 
 /// Cached regexes (Perf 1): compiled once via OnceLock.
-static PUB_MOD_PATH_RE: OnceLock<Regex> = OnceLock::new();
-static PLAIN_MOD_RE: OnceLock<Regex> = OnceLock::new();
-static IMPORT_RE: OnceLock<Regex> = OnceLock::new();
-static INH_RE: OnceLock<Regex> = OnceLock::new();
+static PUB_MOD_PATH_RE: OnceLock<Option<Regex>> = OnceLock::new();
+static PLAIN_MOD_RE: OnceLock<Option<Regex>> = OnceLock::new();
+static IMPORT_RE: OnceLock<Option<Regex>> = OnceLock::new();
+static INH_RE: OnceLock<Option<Regex>> = OnceLock::new();
 
-fn pub_mod_path_re() -> &'static Regex {
-    PUB_MOD_PATH_RE.get_or_init(|| {
-        Regex::new(r#"#\[path\s*=\s*"([^"]+)"\]\s*(?:pub\s+)?mod\s+([a-zA-Z_]+)"#).unwrap()
-    })
+fn pub_mod_path_re() -> Option<&'static Regex> {
+    PUB_MOD_PATH_RE
+        .get_or_init(|| {
+            Regex::new(r#"#\[path\s*=\s*"([^"]+)"\]\s*(?:pub\s+)?mod\s+([a-zA-Z_]+)"#).ok()
+        })
+        .as_ref()
 }
 
-fn plain_mod_re() -> &'static Regex {
+fn plain_mod_re() -> Option<&'static Regex> {
     PLAIN_MOD_RE
-        .get_or_init(|| Regex::new(r"(?:pub\s+)?mod\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;").unwrap())
+        .get_or_init(|| Regex::new(r"(?:pub\s+)?mod\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;").ok())
+        .as_ref()
 }
 
-fn import_re() -> &'static Regex {
+fn import_re() -> Option<&'static Regex> {
     IMPORT_RE
-        .get_or_init(|| Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*)").unwrap())
+        .get_or_init(|| Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*)").ok())
+        .as_ref()
 }
 
-fn inh_re() -> &'static Regex {
-    INH_RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").unwrap())
+fn inh_re() -> Option<&'static Regex> {
+    INH_RE
+        .get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
+        .as_ref()
 }
 
 impl OrphanGraphResolver {
@@ -187,11 +192,6 @@ impl OrphanGraphResolver {
             }
         }
 
-        let pub_mod_path_re = pub_mod_path_re();
-        let plain_mod_re = plain_mod_re();
-        let import_re = import_re();
-        let inh_re = inh_re();
-
         // Perf 8: Single-pass file reading
         for f in files {
             import_graph.entry(f.clone()).or_default();
@@ -201,44 +201,54 @@ impl OrphanGraphResolver {
             };
 
             // Pass 1: #[path = "..."] pub mod (Bug 14 fix — link only the referenced file)
-            for cap in pub_mod_path_re.captures_iter(&content) {
-                let mod_path = cap[1].to_string();
-                let base_dir = match std::path::Path::new(f).parent() {
-                    Some(p) => p.to_string_lossy().to_string(),
-                    None => String::from("."),
-                };
-                let resolved = if mod_path.starts_with('/') {
-                    mod_path.clone()
-                } else {
-                    format!("{}/{}", base_dir, mod_path)
-                };
-                if std::path::Path::new(&resolved).exists() && resolved != *f {
-                    import_graph.entry(f.clone()).or_default().push(resolved.clone());
-                    inbound_links.entry(resolved).or_default().push(f.clone());
+            if let Some(re) = pub_mod_path_re() {
+                for cap in re.captures_iter(&content) {
+                    let mod_path = cap[1].to_string();
+                    let base_dir = match std::path::Path::new(f).parent() {
+                        Some(p) => p.to_string_lossy().to_string(),
+                        None => String::from("."),
+                    };
+                    let resolved = if mod_path.starts_with('/') {
+                        mod_path.clone()
+                    } else {
+                        format!("{}/{}", base_dir, mod_path)
+                    };
+                    if std::path::Path::new(&resolved).exists() && resolved != *f {
+                        import_graph
+                            .entry(f.clone())
+                            .or_default()
+                            .push(resolved.clone());
+                        inbound_links.entry(resolved).or_default().push(f.clone());
+                    }
                 }
             }
 
             // Pass 2: plain mod (Bug 10 fix)
-            for cap in plain_mod_re.captures_iter(&content) {
-                let mod_name = cap[1].to_string();
-                let parent = match std::path::Path::new(f).parent() {
-                    Some(p) => p,
-                    None => continue,
-                };
-                let candidates = [
-                    parent.join(format!("{}.rs", mod_name)),
-                    parent.join(&mod_name).join("mod.rs"),
-                    parent.join(format!("{}.py", mod_name)),
-                    parent.join(&mod_name).join("__init__.py"),
-                ];
-                for candidate in &candidates {
-                    if candidate.is_file() {
-                        if let Some(path_str) = candidate.to_str() {
-                            let resolved = path_str.to_string();
-                            if resolved != *f {
-                                import_graph.entry(f.clone()).or_default().push(resolved.clone());
-                                inbound_links.entry(resolved).or_default().push(f.clone());
-                                break;
+            if let Some(re) = plain_mod_re() {
+                for cap in re.captures_iter(&content) {
+                    let mod_name = cap[1].to_string();
+                    let parent = match std::path::Path::new(f).parent() {
+                        Some(p) => p,
+                        None => continue,
+                    };
+                    let candidates = [
+                        parent.join(format!("{}.rs", mod_name)),
+                        parent.join(&mod_name).join("mod.rs"),
+                        parent.join(format!("{}.py", mod_name)),
+                        parent.join(&mod_name).join("__init__.py"),
+                    ];
+                    for candidate in &candidates {
+                        if candidate.is_file() {
+                            if let Some(path_str) = candidate.to_str() {
+                                let resolved = path_str.to_string();
+                                if resolved != *f {
+                                    import_graph
+                                        .entry(f.clone())
+                                        .or_default()
+                                        .push(resolved.clone());
+                                    inbound_links.entry(resolved).or_default().push(f.clone());
+                                    break;
+                                }
                             }
                         }
                     }
@@ -246,12 +256,14 @@ impl OrphanGraphResolver {
             }
 
             // Pass 3: use/import/from
+            let Some(import_re) = import_re() else {
+                continue;
+            };
             for cap in import_re.captures_iter(&content) {
                 let full_import = cap[1].to_string();
 
                 // Handle crate:: and lint_arwaky:: imports
-                let normalized = if let Some(stripped) = full_import.strip_prefix("lint_arwaky::")
-                {
+                let normalized = if let Some(stripped) = full_import.strip_prefix("lint_arwaky::") {
                     format!("crate::{}", stripped)
                 } else {
                     full_import.clone()
@@ -430,12 +442,14 @@ impl OrphanGraphResolver {
             }
 
             // Pass 4: Python class inheritance
-            for cap in inh_re.captures_iter(&content) {
-                for base in cap[1].split(',') {
-                    inheritance_map
-                        .entry(f.clone())
-                        .or_default()
-                        .push(base.trim().to_string());
+            if let Some(re) = inh_re() {
+                for cap in re.captures_iter(&content) {
+                    for base in cap[1].split(',') {
+                        inheritance_map
+                            .entry(f.clone())
+                            .or_default()
+                            .push(base.trim().to_string());
+                    }
                 }
             }
         }

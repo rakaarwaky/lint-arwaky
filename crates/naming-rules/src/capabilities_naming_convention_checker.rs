@@ -25,8 +25,8 @@ use shared::taxonomy_suggestion_vo::DescriptionVO;
 #[derive(Clone)]
 pub struct NamingConventionChecker {}
 
-static NAMING_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+)+$").expect("invalid naming regex"));
+static NAMING_REGEX: Lazy<Option<Regex>> =
+    Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+)+$").ok());
 
 impl Default for NamingConventionChecker {
     fn default() -> Self {
@@ -154,7 +154,7 @@ impl NamingConventionChecker {
         // It must consist of lowercase letters and digits separated by underscores (e.g., prefix_concept_suffix).
         let stem = get_stem(filename).unwrap_or_default();
 
-        if !NAMING_REGEX.is_match(stem) {
+        if NAMING_REGEX.as_ref().is_none_or(|re| !re.is_match(stem)) {
             violations.push(Self::make_result(
                 file,
                 "AES101",
