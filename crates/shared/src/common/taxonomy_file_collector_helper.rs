@@ -79,9 +79,22 @@ pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
             }
             continue;
         }
-        // (3) Bare segment — match any segment anywhere in the path.
-        if segments.contains(&pat.as_str()) {
-            return true;
+        // (3) Bare segment/pattern — match single segment or multi-segment subpath.
+        let pat_segments: Vec<&str> = pat.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
+        if pat_segments.len() == 1 {
+            if segments.contains(&pat_segments[0]) {
+                return true;
+            }
+        } else if pat_segments.len() > 1 {
+            let n_pat = pat_segments.len();
+            let n_seg = segments.len();
+            if n_seg >= n_pat {
+                for start in 0..=(n_seg - n_pat) {
+                    if segments[start..start + n_pat] == pat_segments[..] {
+                        return true;
+                    }
+                }
+            }
         }
     }
     false

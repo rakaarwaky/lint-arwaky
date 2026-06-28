@@ -48,25 +48,36 @@ impl CodeDuplicationAnalyzer {
         build_violations(&blocks, total_loc, min_dup_lines)
     }
 
-    /// File-level similarity analysis.
+    /// File-level similarity analysis using pre-read entries.
     /// Instead of one violation per sliding-window match, calculates what % of a file's
     /// normalized windows also appear in other files. Only files exceeding `threshold_pct`
     /// are flagged — one violation per file.
     /// Returns (file_path, violation) tuples so the caller can attach the file path.
-    pub fn check_file_similarity(
+    pub fn check_file_similarity_entries(
         &self,
-        files: &[String],
+        entries: &[(String, String)],
         min_dup_lines: usize,
         threshold_pct: f64,
     ) -> Vec<(String, AesCodeAnalysisViolation)> {
-        let detector = LanguageDetector::new();
-        let entries = collect_file_entries(files, &detector);
         if entries.is_empty() {
             return Vec::new();
         }
 
-        // Build global map: normalized key → Vec<(file_idx, line_number)>
-        let mut global: HashMap<String, Vec<(usize, usize)>> = HashMap::new();
+        // u32 String Interning (Fix 3.1): intern normalized window keys to u32 IDs
+        let mut interner: HashMap<String, u32> = HashMap::new();
+        let mut interned_keys: Vec<String> = Vec::new();
+        let mut get_id = |key: String| -> u32 {
+            if let Some(&id) = interner.get(&key) {
+                return id;
+            }
+            let id = interner.len() as u32;
+            interned_keys.push(key.clone());
+            interner.insert(key, id);
+            id
+        };
+
+        // Build global map: interned key id → Vec<(file_idx, line_number)>
+        let mut global: HashMap<u32, Vec<(usize, usize)>> = HashMap::new();
         for (fi, (_, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
             if lines.len() < min_dup_lines {
@@ -74,23 +85,39 @@ impl CodeDuplicationAnalyzer {
             }
             for (li, w) in lines.windows(min_dup_lines).enumerate() {
                 let key = normalize_window(w);
-                global.entry(key).or_default().push((fi, li + 1));
+                let id = get_id(key);
+                global.entry(id).or_default().push((fi, li + 1));
             }
         }
 
         // Identify keys that appear in 2+ different files
-        let shared_keys: HashSet<String> = global
+        let shared_ids: HashSet<u32> = global
             .iter()
             .filter(|(_, locs)| {
                 let unique_files: HashSet<usize> = locs.iter().map(|(fi, _)| *fi).collect();
                 unique_files.len() > 1
             })
-            .map(|(k, _)| k.clone())
+            .map(|(id, _)| *id)
             .collect();
+
+        // Build O(1) file_to_others map (Fix 3.2)
+        let mut file_to_others: Vec<HashSet<usize>> = vec![HashSet::new(); entries.len()];
+        for locs in global.values() {
+            let unique: HashSet<usize> = locs.iter().map(|(fi, _)| *fi).collect();
+            if unique.len() > 1 {
+                for &fi in &unique {
+                    for &other in &unique {
+                        if other != fi {
+                            file_to_others[fi].insert(other);
+                        }
+                    }
+                }
+            }
+        }
 
         // Per-file similarity calculation
         let mut violations = Vec::new();
-        for (fi, (_path, content)) in entries.iter().enumerate() {
+        for (fi, (file_path, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
             if lines.len() < min_dup_lines {
                 continue;
@@ -99,28 +126,21 @@ impl CodeDuplicationAnalyzer {
             let shared_count = lines
                 .windows(min_dup_lines)
                 .enumerate()
-                .filter(|(_, w)| shared_keys.contains(&normalize_window(w)))
+                .filter(|(_, w)| {
+                    let key = normalize_window(w);
+                    let id = get_id(key);
+                    shared_ids.contains(&id)
+                })
                 .count();
 
             let pct = shared_count as f64 / total_win as f64 * 100.0;
             if pct > threshold_pct {
-                // Collect which other files share content with this file
-                let mut other_files: Vec<String> = Vec::new();
-                for (other_fi, (other_path, _)) in entries.iter().enumerate() {
-                    if other_fi == fi {
-                        continue;
-                    }
-                    if lines.windows(min_dup_lines).any(|w| {
-                        let key = normalize_window(w);
-                        global
-                            .get(&key)
-                            .is_some_and(|locs| locs.iter().any(|(ofi, _)| *ofi == other_fi))
-                    }) {
-                        other_files.push(other_path.display().to_string());
-                    }
-                }
+                let other_indices = &file_to_others[fi];
+                let mut other_files: Vec<String> = other_indices
+                    .iter()
+                    .map(|&ofi| entries[ofi].0.clone())
+                    .collect();
                 other_files.sort();
-                other_files.dedup();
 
                 let mut msg = format!(
                     "AES305: {:.0}% of this file's content appears in other files (threshold: {:.0}%). {} of {} windows are non-unique.",
@@ -139,9 +159,8 @@ impl CodeDuplicationAnalyzer {
                     ));
                 }
 
-                let file_path = _path.display().to_string();
                 violations.push((
-                    file_path,
+                    file_path.clone(),
                     AesCodeAnalysisViolation::CodeDuplication {
                         reason: Some(LintMessage::new(msg)),
                     },
@@ -150,6 +169,26 @@ impl CodeDuplicationAnalyzer {
         }
 
         violations
+    }
+
+    /// File-level similarity analysis (legacy API — reads files internally).
+    /// Prefer `check_file_similarity_entries` to avoid double I/O.
+    pub fn check_file_similarity(
+        &self,
+        files: &[String],
+        min_dup_lines: usize,
+        threshold_pct: f64,
+    ) -> Vec<(String, AesCodeAnalysisViolation)> {
+        let detector = LanguageDetector::new();
+        let entries = collect_file_entries(files, &detector);
+        self.check_file_similarity_entries(
+            &entries
+                .iter()
+                .map(|(p, c)| (p.display().to_string(), c.clone()))
+                .collect::<Vec<_>>(),
+            min_dup_lines,
+            threshold_pct,
+        )
     }
 }
 
@@ -168,26 +207,18 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             .iter()
             .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
             .collect();
-        let min_lines = match config
+        let min_lines = config
             .rules
-            .first()
-            .map(|r| r.code_analysis.min_lines.value)
+            .iter()
+            .find(|r| r.name.value == "AES305")
+            .map(|r| r.code_analysis.min_lines.value as usize)
             .filter(|&v| v > 0)
-        {
-            Some(v) => v as usize,
-            None => 10,
-        };
+            .unwrap_or(10);
         let threshold_pct = config
             .rules
             .iter()
-            .find(|r| r.rule_type.to_string() == "AES305")
-            .map(|r| {
-                if r.code_analysis.min_lines.value > 0 {
-                    r.code_analysis.min_lines.value as f64
-                } else {
-                    50.0
-                }
-            })
+            .find(|r| r.name.value == "AES305")
+            .and_then(|r| r.code_analysis.duplication_threshold)
             .unwrap_or(50.0);
 
         let dir_path = match shared::common::taxonomy_path_vo::DirectoryPath::new(

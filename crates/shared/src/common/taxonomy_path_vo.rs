@@ -23,8 +23,21 @@ impl FilePath {
         if value.trim().is_empty() {
             return Err("File path cannot be empty".to_string());
         }
-        // Normalize: replace backslashes with forward slashes, and collapse multiple slashes.
-        value = value.replace('\\', "/");
+        // Normalize: replace backslashes with forward slashes, collapse repeated slashes.
+        let mut normalized = String::with_capacity(value.len());
+        let mut prev_slash = false;
+        for c in value.chars() {
+            if c == '/' || c == '\\' {
+                if !prev_slash {
+                    normalized.push('/');
+                    prev_slash = true;
+                }
+            } else {
+                normalized.push(c);
+                prev_slash = false;
+            }
+        }
+        value = normalized;
         // Remove trailing slashes
         let trimmed = value.trim_end_matches('/');
         value = if trimmed.is_empty() {
