@@ -50,7 +50,7 @@ The base codebase must be clean of any internal architecture rule violations.
 - [ ] _Criteria:_ Output must show **`Total violations: 0`**.
 - [ ] _Safety Net:_ Ensure there are no arbitrary bypasses using `#[allow(...)]` or `unwrap()`. If an external module strictly requires an exception, register that module in the configuration file [lint_arwaky.config.rust.yaml](file:///home/raka/mcp-arwaky/lint-arwaky/lint_arwaky.config.rust.yaml) under the `exceptions` block, rather than using inline bypass comments.
 
-#### C. Cross-Language Functional Verification (Scan Test Projects)
+  #### B. Cross-Language Functional Verification (Scan Test Projects)
 
 The multi-adapter scanner must be proven to successfully detect at least 18 unique violation types in the test projects.
 
@@ -67,7 +67,7 @@ The multi-adapter scanner must be proven to successfully detect at least 18 uniq
   ```
 - [ ] _Criteria:_ Findings count matches target baselines (mandatory 24 unique AES violation codes detected)
 
-#### D. System & MCP Protocol Verification
+#### C. System & MCP Protocol Verification
 
 - [ ] Run workspace unit tests:
 
