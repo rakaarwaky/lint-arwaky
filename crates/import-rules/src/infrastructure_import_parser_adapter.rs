@@ -171,7 +171,11 @@ impl IImportParserPort for ImportParserAdapter {
                 return Some(Identity::new(first_token.to_string()));
             }
         }
-        if let Some(rest) = trimmed.strip_prefix("use ") {
+        if let Some(rest) = trimmed
+            .strip_prefix("pub(crate) use ")
+            .or_else(|| trimmed.strip_prefix("pub use "))
+            .or_else(|| trimmed.strip_prefix("use "))
+        {
             let module = rest.trim_end_matches(';').trim().to_string();
             if let Some(brace_pos) = module.find("::{") {
                 return Some(Identity::new(module[..brace_pos].to_string()));

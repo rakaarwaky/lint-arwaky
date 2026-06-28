@@ -106,7 +106,7 @@ publish = false
 [lints]
 workspace = true
 
-[dependencies]  
+[dependencies]
 serde.workspace = true
 serde_json.workspace = true
 async-trait.workspace = true
@@ -6512,7 +6512,7 @@ impl MetadataVO {
 
 ## File: crates/shared/src/common/taxonomy_value_object_utility.rs
 
-```rust
+````rust
 // PURPOSE: Macros for generating boilerplate impls on String/primitive wrapper value objects.
 //
 // These macros emit the impls that every String-wrapper VO needs:
@@ -6749,7 +6749,7 @@ macro_rules! primitive_value_object {
         }
     };
 }
-```
+````
 
 ---
 
@@ -9091,4 +9091,3 @@ pub use taxonomy_naming_violation_vo::NamingViolation;
 ```
 
 ---
-

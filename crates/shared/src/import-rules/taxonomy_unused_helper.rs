@@ -220,25 +220,41 @@ pub fn extract_used_symbols(
         .lines()
         .filter(|l| {
             let t = l.trim();
-            !t.starts_with("import ") && !t.starts_with("from ") && !t.starts_with("use ")
+            !t.starts_with("import ")
+                && !t.starts_with("from ")
+                && !t.starts_with("use ")
+                && !t.starts_with("pub use ")
+                && !t.starts_with("pub(crate) use ")
         })
         .collect::<Vec<_>>()
         .join("\n");
 
     for alias in imported_aliases.keys() {
         let alias_str = alias.value();
-
-        // Derive macros are consumed by #[derive(...)] — they are always "used"
-        // even if the bare name doesn't appear as a standalone symbol in code.
         if DERIVE_MACROS.contains(&alias_str) {
             used.insert(Identity::new(alias_str));
-            continue;
         }
+    }
 
-        let pattern = format!(r"\b{}\b", regex::escape(alias_str));
-        if let Ok(re) = Regex::new(&pattern) {
-            if re.is_match(&code_lines) {
-                used.insert(Identity::new(alias_str));
+    let non_derive_aliases: Vec<&str> = imported_aliases
+        .keys()
+        .map(|a| a.value())
+        .filter(|a| !DERIVE_MACROS.contains(a))
+        .collect();
+
+    if !non_derive_aliases.is_empty() && !code_lines.is_empty() {
+        let patterns: Vec<String> = non_derive_aliases
+            .iter()
+            .map(|a| regex::escape(a))
+            .collect();
+        let combined = format!(r"\b({})\b", patterns.join("|"));
+        if let Ok(re) = Regex::new(&combined) {
+            let matched_set: HashSet<&str> =
+                re.find_iter(&code_lines).map(|m| m.as_str()).collect();
+            for alias in non_derive_aliases {
+                if matched_set.contains(alias) {
+                    used.insert(Identity::new(alias));
+                }
             }
         }
     }
@@ -262,7 +278,10 @@ pub fn extract_rust_js_imports(content: &str) -> Vec<(SymbolName, LineNumber)> {
             continue;
         }
 
-        let names: Vec<SymbolName> = if t.starts_with("use ") {
+        let names: Vec<SymbolName> = if t.starts_with("use ")
+            || t.starts_with("pub use ")
+            || t.starts_with("pub(crate) use ")
+        {
             let target = t.trim_end_matches(';').trim_start_matches("use ").trim();
             if target.starts_with("std::")
                 || target.starts_with("core::")
