@@ -8,4 +8,5 @@ pub mod capabilities_orphan_infrastructure_analyzer;
 pub mod capabilities_orphan_surfaces_analyzer;
 pub mod capabilities_orphan_taxonomy_analyzer;
 pub mod root_orphan_detector_container;
+pub mod taxonomy_file_cache_utility;
 pub mod taxonomy_orphan_filename_helper;

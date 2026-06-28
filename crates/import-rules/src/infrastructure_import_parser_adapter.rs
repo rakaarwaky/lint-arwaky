@@ -12,8 +12,17 @@ use shared::import_rules::{
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::taxonomy_name_vo::SymbolName;
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fs;
+
+thread_local! {
+    static FILE_CACHE: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
+}
+
+pub fn clear_file_cache() {
+    FILE_CACHE.with(|c| c.borrow_mut().clear());
+}
 
 /// Returns `s` if `opt` is `Some`, otherwise returns `""`.
 /// Private helper — uses `Option::map_or` to avoid inline match patterns.
@@ -205,8 +214,17 @@ impl IImportParserPort for ImportParserAdapter {
     }
 
     fn read_file_to_message(&self, file: &FilePath) -> Result<LintMessage, std::io::Error> {
-        let raw = fs::read_to_string(file.value())?;
-        Ok(LintMessage::new(raw))
+        let path = file.value().to_string();
+        let content = FILE_CACHE.with(|cache| -> Result<String, std::io::Error> {
+            let mut cache = cache.borrow_mut();
+            if let Some(cached) = cache.get(&path) {
+                return Ok(cached.clone());
+            }
+            let raw = fs::read_to_string(&path)?;
+            cache.insert(path, raw.clone());
+            Ok(raw)
+        })?;
+        Ok(LintMessage::new(content))
     }
 
     fn extract_import_modules(&self, content: &str) -> Vec<SymbolName> {

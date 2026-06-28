@@ -352,6 +352,18 @@ impl IBypassCheckerProtocol for BypassChecker {
     }
 
     fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        // Early-exit: skip scan if file contains none of the bypass-related tokens
+        let content_lower = content.to_lowercase();
+        let has_bypass_token = self
+            .forbidden_bypass_lower
+            .iter()
+            .any(|p| content_lower.contains(p.as_str()))
+            || content_lower.contains("raise ")
+            || content_lower.contains("throw new");
+        if !has_bypass_token {
+            return;
+        }
+
         let language = SourceLanguage::from_file(file);
         let mut in_test_module = false;
         let mut in_static_lazy = false;
