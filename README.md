@@ -355,7 +355,7 @@ cargo run --bin lint-arwaky-tui
 | Layers             | 7 (taxonomy, contract, capabilities, infrastructure, agent, surfaces, root)                             |
 | AES rules enforced | 24 (5 groups: Naming, Import, Quality, Role, Orphan)                                                    |
 | Linter adapters    | 8 (Clippy, RustFmt, CargoAudit, Ruff, MyPy, Bandit, ESLint, Prettier, TSC)                              |
-| MCP tools          | 3 (execute_command, list_commands, read_skill)                                                          |
+| MCP tools          | 4 (execute_command, list_commands, read_skill, health_check)                                            |
 | CLI subcommands    | 12 (check, scan, fix, ci, orphan, security, duplicates, dependencies, watch, init, install, mcp-config) |
 | Report formats     | `text`, `json`, `sarif` 2.1.0, `junit` XML                                                              |
 | Self-lint target   | `crates/` scanned under the same rules the project enforces                                             |
