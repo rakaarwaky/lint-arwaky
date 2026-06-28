@@ -138,7 +138,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  Gate $GATE_NUM: AES Scan Coverage (test-workspaces)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-MIN_AES_CODES=18
+MIN_AES_CODES=24
 SCAN_OUTPUT=$("$LINT_CMD" scan "$REPO_ROOT/test-workspaces/" 2>&1) || true
 
 # Extract "Total Unique AES Codes: <number>" from scan output

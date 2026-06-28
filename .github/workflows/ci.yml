@@ -60,8 +60,8 @@ jobs:
           echo "$OUTPUT"
           UNIQUE_AES=$(echo "$OUTPUT" | grep -oP 'Total Unique AES Codes:\s*\K[0-9]+' || echo "0")
           echo "Unique AES codes: $UNIQUE_AES"
-          if [ "$UNIQUE_AES" -lt 18 ]; then
-            echo "FAIL: Only $UNIQUE_AES unique AES codes (minimum 18)"
+          if [ "$UNIQUE_AES" -lt 24 ]; then
+            echo "FAIL: Only $UNIQUE_AES unique AES codes (minimum 24)"
             exit 1
           fi
           echo "PASS: $UNIQUE_AES unique AES codes"
