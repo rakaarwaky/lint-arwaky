@@ -290,7 +290,7 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from("."),
         };
-        let all_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
+        let all_files: Vec<String> = shared::common::collect_all_source_files_raw(&scan_root)
             .iter()
             .map(|f| f.value.clone())
             .collect();
@@ -423,10 +423,11 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from(path),
         };
-        let all_source_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
-            .iter()
-            .map(|f| f.value.clone())
-            .collect();
+        let all_source_files: Vec<String> =
+            shared::common::collect_all_source_files_raw(&scan_root)
+                .iter()
+                .map(|f| f.value.clone())
+                .collect();
 
         let multi = workspaces.len() > 1;
         if multi {
