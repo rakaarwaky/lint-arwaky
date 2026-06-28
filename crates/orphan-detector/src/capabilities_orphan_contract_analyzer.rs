@@ -63,7 +63,7 @@ pub fn is_contract_orphan(
     for ws_dir in &["crates", "packages", "modules"] {
         let ws_path = root_path.join(ws_dir);
         if ws_path.exists() {
-            collect_rs_files(&ws_path, &mut search_files);
+            collect_source_files(&ws_path, &mut search_files);
         }
     }
 
@@ -133,7 +133,10 @@ pub fn is_contract_orphan(
                     || cb.ends_with("_orchestrator.ts")
                     || cb.ends_with("_orchestrator.js"));
             // Check container files (DI wiring)
-            let is_container = cb.ends_with("_container.rs");
+            let is_container = cb.ends_with("_container.rs")
+                || cb.ends_with("_container.py")
+                || cb.ends_with("_container.ts")
+                || cb.ends_with("_container.js");
             // Check capabilities files (trait implementations)
             let is_capabilities = cb.starts_with("capabilities_");
             // Check surface files (trait usage)
@@ -178,7 +181,10 @@ pub fn is_contract_orphan(
             // Check surface files
             let is_surface = cb.starts_with("surface_");
             // Check container files (DI wiring)
-            let is_container = cb.ends_with("_container.rs");
+            let is_container = cb.ends_with("_container.rs")
+                || cb.ends_with("_container.py")
+                || cb.ends_with("_container.ts")
+                || cb.ends_with("_container.js");
 
             if !is_surface && !is_container {
                 continue;
@@ -242,7 +248,7 @@ pub fn extract_contract_trait_name(content: &str) -> Option<String> {
     re_py.captures(&code_lines).map(|caps| caps[1].to_string())
 }
 
-fn collect_rs_files(dir: &std::path::Path, files: &mut Vec<String>) {
+fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
     if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
@@ -251,10 +257,12 @@ fn collect_rs_files(dir: &std::path::Path, files: &mut Vec<String>) {
                 if name == "target" || name == ".git" || name == "node_modules" {
                     continue;
                 }
-                collect_rs_files(&path, files);
-            } else if path.extension().is_some_and(|e| e == "rs") {
-                if let Some(s) = path.to_str() {
-                    files.push(s.to_string());
+                collect_source_files(&path, files);
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
+                    if let Some(s) = path.to_str() {
+                        files.push(s.to_string());
+                    }
                 }
             }
         }

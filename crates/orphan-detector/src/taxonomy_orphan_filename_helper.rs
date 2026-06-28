@@ -26,7 +26,7 @@ pub fn file_stem(fp: &str) -> String {
 }
 
 /// Extract the domain suffix from a file stem (the part after the last `_`, with
-/// language extension stripped). Returns an empty string if no underscore is present.
+/// language extension stripped). Returns the full stem if no underscore is present.
 ///
 /// Example: `capabilities_import_checker.rs` → `checker`
 pub fn file_suffix(fp: &str) -> String {

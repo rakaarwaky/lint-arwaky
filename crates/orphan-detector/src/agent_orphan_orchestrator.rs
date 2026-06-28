@@ -327,6 +327,13 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
     fn get_layer_def(&self, _layer: &str) -> Option<LayerDefinition> {
         let mut def = LayerDefinition::default();
         def.orphan.check_orphan = shared::common::taxonomy_common_vo::BooleanVO::new(true);
+        def.exceptions.values = vec![
+            "mod.rs".to_string(),
+            "__init__.py".to_string(),
+            "index.ts".to_string(),
+            "index.js".to_string(),
+            "py.typed".to_string(),
+        ];
         Some(def)
     }
 

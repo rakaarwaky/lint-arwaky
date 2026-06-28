@@ -32,54 +32,65 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
     }
 }
 
+use std::sync::OnceLock;
+
+/// Cached regex for Rust impl with optional generics (Bug 12: impl<T> Trait for Struct)
+fn re_impl_generic() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"impl\s*(?:<[^>]+>)?\s+([A-Za-z0-9_]+)\s+for\s+").unwrap())
+}
+
+fn re_dyn() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"(?:Box|Arc)<dyn\s+([A-Za-z0-9_]+)>").unwrap())
+}
+
+fn re_py_class() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").unwrap())
+}
+
+fn re_ts_implements() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"class\s+\w+\s+implements\s+(\w+)").unwrap())
+}
+
 /// Extract aggregate trait names from agent file content.
 /// Looks for: impl IAggregateTrait for Struct, Box<dyn IAggregateTrait>, Arc<dyn IAggregateTrait>
 pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
     let mut traits = Vec::new();
 
-    // Rust: impl ITrait for Struct
-    let re_impl = Regex::new(r"impl\s+([A-Za-z0-9_]+)\s+for\s+\s*").ok();
-    if let Some(re) = re_impl {
-        for cap in re.captures_iter(content) {
-            let name = cap[1].to_string();
-            if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                traits.push(name);
-            }
+    // Rust: impl ITrait for Struct (with optional generics: impl<T> Trait for Struct)
+    for cap in re_impl_generic().captures_iter(content) {
+        let name = cap[1].to_string();
+        if name.contains("Aggregate") || name.ends_with("Aggregate") {
+            traits.push(name);
         }
     }
 
     // Rust: Box<dyn ITrait> or Arc<dyn ITrait>
-    let re_dyn = Regex::new(r"(?:Box|Arc)<dyn\s+([A-Za-z0-9_]+)>").ok();
-    if let Some(re) = re_dyn {
-        for cap in re.captures_iter(content) {
-            let name = cap[1].to_string();
-            if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                traits.push(name);
-            }
+    for cap in re_dyn().captures_iter(content) {
+        let name = cap[1].to_string();
+        if name.contains("Aggregate") || name.ends_with("Aggregate") {
+            traits.push(name);
         }
     }
 
     // Python: class Struct(ITrait):
-    let re_py = Regex::new(r"class\s+\w+\(([^)]+)\)").ok();
-    if let Some(re) = re_py {
-        for cap in re.captures_iter(content) {
-            for part in cap[1].split(',') {
-                let name = part.trim().to_string();
-                if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                    traits.push(name);
-                }
+    for cap in re_py_class().captures_iter(content) {
+        for part in cap[1].split(',') {
+            let name = part.trim().to_string();
+            if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                traits.push(name);
             }
         }
     }
 
     // JS/TS: class Struct implements IAggregateTrait
-    let re_ts = Regex::new(r"class\s+\w+\s+implements\s+(\w+)").ok();
-    if let Some(re) = re_ts {
-        for cap in re.captures_iter(content) {
-            let name = cap[1].to_string();
-            if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                traits.push(name);
-            }
+    for cap in re_ts_implements().captures_iter(content) {
+        let name = cap[1].to_string();
+        if name.contains("Aggregate") || name.ends_with("Aggregate") {
+            traits.push(name);
         }
     }
 
@@ -101,17 +112,15 @@ pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicato
         return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
     }
 
-    // Step 2: Check if any of these aggregates are called by a surface file OR container
+    // Bug 2 fix: agent is orphan only if ALL aggregates are uncalled (not ANY)
+    let mut any_called = false;
     for agg_name in &aggregate_traits {
-        let mut called_by_surface_or_container = false;
         for cf in all_files {
             let cb = match cf.split('/').next_back() {
                 Some(b) => b,
                 None => continue,
             };
-            // Check surface files
             let is_surface = cb.starts_with("surface_");
-            // Check container files (DI wiring)
             let is_container = cb.ends_with("_container.rs")
                 || cb.ends_with("_container.py")
                 || cb.ends_with("_container.ts")
@@ -122,28 +131,32 @@ pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicato
             }
             if let Ok(c) = std::fs::read_to_string(cf) {
                 if c.contains(agg_name) {
-                    called_by_surface_or_container = true;
+                    any_called = true;
                     break;
                 }
             }
         }
-        if !called_by_surface_or_container {
-            return OrphanIndicatorResult::new(
-                true,
-                AesOrphanViolation::AgentOrphan {
-                    agg_name: agg_name.clone(),
-                    reason: Some(
-                        format!(
-                            "Agent orphan: aggregate '{}' not called by any surface.",
-                            agg_name
-                        )
-                        .into(),
-                    ),
-                }
-                .to_string(),
-                Severity::HIGH,
-            );
+        if any_called {
+            break;
         }
+    }
+
+    if !any_called {
+        return OrphanIndicatorResult::new(
+            true,
+            AesOrphanViolation::AgentOrphan {
+                agg_name: aggregate_traits.join(", "),
+                reason: Some(
+                    format!(
+                        "Agent orphan: aggregates [{}] not called by any surface.",
+                        aggregate_traits.join(", ")
+                    )
+                    .into(),
+                ),
+            }
+            .to_string(),
+            Severity::HIGH,
+        );
     }
 
     OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
