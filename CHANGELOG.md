@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.10.87 (2026-06-30)
+
+### Added
+
+- **XDG config distribution**: `install.local.sh` now copies SKILL.md and all documentation files (ARCHITECTURE.md, MIGRATION_*.md, RULES_AES.md) to `~/.config/lint-arwaky/` during installation.
+- **`init` distributes docs from XDG**: Running `lint-arwaky init` now automatically distributes SKILL.md, ARCHITECTURE.md, MIGRATION_RUST.md, MIGRATION_PYTHON.md, MIGRATION_TYPESCRIPT.md, and RULES_AES.md from XDG config to the current project root.
+- **`init --global` distributes docs to XDG**: Running `lint-arwaky init --global` now copies all documentation files from the project root to the XDG config directory.
+- **MCP `read_skill` XDG fallback**: The MCP server's `read_skill` tool now also searches `~/.config/lint-arwaky/SKILL.md` as a fallback when the file is not found in the project directory.
+- **Mouse drag in TUI preview**: Added mouse drag support for scrolling the preview panel in the TUI interface.
+- **Multi-language config on init**: `lint-arwaky init` now detects all languages in a project (Rust, Python, JavaScript) and generates config files for each.
+
+### Changed
+
+- **Architecture documentation**: Enhanced ARCHITECTURE.md with detailed AES layer examples, dependency diagrams, and migration guides.
+- **Migration guides**: Added MIGRATION_RUST.md, MIGRATION_PYTHON.md, and MIGRATION_TYPESCRIPT.md with language-specific AES adoption instructions.
+- **Config cleanup**: Updated lint_arwaky configuration files and removed deprecated finding documents.
+
+---
+
 ## 1.10.79 (2026-06-29)
 
 ### Fixed
