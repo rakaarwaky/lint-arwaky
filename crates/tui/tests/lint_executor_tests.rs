@@ -609,10 +609,12 @@ impl shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsA
         &self,
         _: &shared::common::taxonomy_path_vo::FilePath,
     ) -> Result<shared::project_setup::taxonomy_doctor_vo::DependencyReport, String> {
-        Ok(shared::project_setup::taxonomy_doctor_vo::DependencyReport {
-            language: "rust".to_string(),
-            dependencies: vec![],
-        })
+        Ok(
+            shared::project_setup::taxonomy_doctor_vo::DependencyReport {
+                language: "rust".to_string(),
+                dependencies: vec![],
+            },
+        )
     }
 }
 

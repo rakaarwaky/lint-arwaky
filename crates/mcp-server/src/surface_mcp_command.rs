@@ -75,9 +75,19 @@ impl LintArwakyMcpServer {
             ("clippy", "rust"),
             ("eslint", "javascript"),
         ] {
-            let found = match std::process::Command::new("which").arg(name).output() {
-                Ok(o) => o.status.success(),
-                Err(_) => false,
+            let found = if *name == "clippy" {
+                match std::process::Command::new("cargo")
+                    .args(["clippy", "--version"])
+                    .output()
+                {
+                    Ok(o) => o.status.success(),
+                    Err(_) => false,
+                }
+            } else {
+                match std::process::Command::new("which").arg(name).output() {
+                    Ok(o) => o.status.success(),
+                    Err(_) => false,
+                }
             };
             adapters.push(serde_json::json!({
                 "name": name,
