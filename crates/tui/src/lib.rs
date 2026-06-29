@@ -15,4 +15,5 @@ pub mod surface_status_component;
 pub mod surface_tree_view;
 pub mod surface_tui_command;
 
+pub mod root_logging_entry;
 pub mod root_tui_container;

@@ -270,13 +270,13 @@ fn test_mouse_scroll() {
     let mut state = AppState::new("/root".to_string());
     state.entries = make_entries(); // 2 entries — scroll needs entries to be bounded
     assert_eq!(state.scroll_offset, 0);
-    h.handle(&mut state, TuiEvent::MouseScrollDown);
+    h.handle(&mut state, TuiEvent::MouseScrollDown(0, 0));
     assert_eq!(state.scroll_offset, 1);
-    h.handle(&mut state, TuiEvent::MouseScrollDown);
+    h.handle(&mut state, TuiEvent::MouseScrollDown(0, 0));
     assert_eq!(state.scroll_offset, 1); // bounded at entries.len()-1
-    h.handle(&mut state, TuiEvent::MouseScrollUp);
+    h.handle(&mut state, TuiEvent::MouseScrollUp(0, 0));
     assert_eq!(state.scroll_offset, 0);
-    h.handle(&mut state, TuiEvent::MouseScrollUp);
+    h.handle(&mut state, TuiEvent::MouseScrollUp(0, 0));
     assert_eq!(state.scroll_offset, 0); // bounded at 0
 }
 
@@ -781,12 +781,12 @@ fn test_mouse_scroll_syncs_selection() {
     state.selected_index = 0;
 
     // Scroll down — selection should follow
-    h.handle(&mut state, TuiEvent::MouseScrollDown);
+    h.handle(&mut state, TuiEvent::MouseScrollDown(0, 0));
     assert_eq!(state.scroll_offset, 1);
     assert_eq!(state.selected_index, 1, "selection follows scroll down");
 
     // Scroll back up — selection should follow
-    h.handle(&mut state, TuiEvent::MouseScrollUp);
+    h.handle(&mut state, TuiEvent::MouseScrollUp(0, 0));
     assert_eq!(state.scroll_offset, 0);
     assert_eq!(state.selected_index, 0, "selection follows scroll up");
 }

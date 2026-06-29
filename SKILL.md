@@ -32,35 +32,32 @@ Peer layers cannot import each other. Violations are **AES201 (CRITICAL)**.
 
 # AES Rules (24 rules)
 
-| Code   | Group   | Rule                                                | Severity |
-| ------ | ------- | --------------------------------------------------- | -------- |
-| AES101 | Naming  | File suffix must match layer convention             | MAJOR    |
-| AES102 | Naming  | Filename must follow `layer_concept_suffix` pattern | MAJOR    |
-| AES201 | Import  | Forbidden layer import detected                     | CRITICAL |
-| AES202 | Import  | Missing mandatory import for layer                  | CRITICAL |
-| AES203 | Import  | Unused import detected                              | MINOR    |
-| AES204 | Import  | Dummy/todo-only import detected                     | MINOR    |
-| AES205 | Import  | Missing re-export in barrel file                    | MAJOR    |
-| AES301 | Quality | File exceeds max line count                         | MINOR    |
-| AES302 | Quality | Function exceeds max line count                     | MINOR    |
-| AES303 | Quality | Bypass (noqa/allow) suppression detected            | CRITICAL |
-| AES304 | Quality | Missing mandatory definition                        | MAJOR    |
-| AES305 | Quality | `todo!()` / `unimplemented!()` in non-test          | MINOR    |
-| AES306 | Quality | Function exceeds max parameters                     | MINOR    |
-| AES307 | Quality | Function exceeds max return types                   | MINOR    |
-| AES308 | Quality | Nested function complexity too high                 | MINOR    |
-| AES401 | Role    | Layer-role suffix mismatch                          | CRITICAL |
-| AES402 | Role    | Bypasses contract aggregate (direct impl dep)       | CRITICAL |
-| AES403 | Role    | Capability bypasses agent orchestrator              | CRITICAL |
-| AES404 | Role    | Surface calls capability directly                   | CRITICAL |
-| AES405 | Role    | Infrastructure implements port without aggregate    | CRITICAL |
-| AES406 | Role    | Duplicate registration in container                 | MAJOR    |
-| AES501 | Orphan  | Unused/Unreachable file                             | MAJOR    |
-| AES502 | Orphan  | Unused contract port/protocol                       | MAJOR    |
-| AES503 | Orphan  | Unused capability                                   | MAJOR    |
-| AES504 | Orphan  | Dead dependency                                     | MINOR    |
-| AES505 | Orphan  | Circular dependency                                 | CRITICAL |
-| AES506 | Orphan  | Barrel file with all-unused exports                 | MAJOR    |
+| Code   | Group   | Rule                                                               | Severity |
+| ------ | ------- | ------------------------------------------------------------------ | -------- |
+| AES101 | Naming  | Filename must follow `prefix_concept_suffix` pattern               | HIGH     |
+| AES102 | Naming  | Suffix must match layer definition (allowed/forbidden suffixes)    | HIGH     |
+| AES201 | Import  | Cross-layer imports must comply with allowed/mandatory/forbidden   | CRITICAL |
+| AES202 | Import  | File is missing required imports defined by config                 | HIGH     |
+| AES203 | Import  | Symbol is imported but never used in file scope                    | MEDIUM   |
+| AES204 | Import  | Import matches forbidden dummy pattern                             | MEDIUM   |
+| AES205 | Import  | Circular dependency between layers — must be unidirectional        | HIGH     |
+| AES301 | Quality | File exceeds maximum allowed line count (default: 1000)            | LOW      |
+| AES302 | Quality | File is below minimum required line count (default: 5)             | LOW      |
+| AES303 | Quality | File missing struct/enum/trait definition, or definition empty     | HIGH     |
+| AES304 | Quality | Forbidden bypass pattern detected (#[allow], unwrap!, panic!, etc) | CRITICAL |
+| AES305 | Quality | Duplicate code blocks detected across files                        | MEDIUM   |
+| AES401 | Role    | Constant purity violation or primitive usage in domain models      | HIGH     |
+| AES402 | Role    | Contract trait/method uses primitive types instead of VO/constant  | HIGH     |
+| AES403 | Role    | Capability has no protocol implementation                          | HIGH     |
+| AES404 | Role    | Infrastructure has no port implementation                          | HIGH     |
+| AES405 | Role    | Orchestrator does not call any port or protocol                    | MEDIUM   |
+| AES406 | Role    | Surface contains active domain logic; file exceeds 25 functions    | MEDIUM   |
+| AES501 | Orphan  | Taxonomy file has no inbound imports from any contract file        | LOW      |
+| AES502 | Orphan  | Contract trait not implemented by expected layer                   | LOW      |
+| AES503 | Orphan  | Capability not wired in container AND unreachable in import graph  | MEDIUM   |
+| AES504 | Orphan  | Infrastructure not wired in container AND unreachable in graph     | MEDIUM   |
+| AES505 | Orphan  | Agent aggregate not called by surface                              | HIGH     |
+| AES506 | Orphan  | Surface not imported by entry/router; utility not imported         | HIGH     |
 
 # MCP Tools
 

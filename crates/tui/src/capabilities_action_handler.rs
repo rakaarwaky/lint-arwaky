@@ -36,6 +36,7 @@ impl ActionHandler {
             TuiEvent::MoveDown => {
                 if state.panel_focus == PanelFocus::Preview {
                     state.preview_scroll = state.preview_scroll.saturating_add(3);
+                    state.preview_scroll = state.preview_scroll.min(self.max_preview_scroll(state));
                 } else {
                     state.select_next();
                     self.load_preview(state);
@@ -58,7 +59,7 @@ impl ActionHandler {
             }
             TuiEvent::MoveBottom => {
                 if state.panel_focus == PanelFocus::Preview {
-                    state.preview_scroll = usize::MAX;
+                    state.preview_scroll = self.max_preview_scroll(state);
                 } else {
                     state.select_last();
                 }
@@ -69,6 +70,7 @@ impl ActionHandler {
             }
             TuiEvent::PreviewScrollDown => {
                 state.preview_scroll = state.preview_scroll.saturating_add(10);
+                state.preview_scroll = state.preview_scroll.min(self.max_preview_scroll(state));
             }
             // ---- Focus cycling between panels (FileList / Preview / Tree) ----
             TuiEvent::FocusNext => state.cycle_focus_forward(),
@@ -100,8 +102,10 @@ impl ActionHandler {
                 }
             }
             TuiEvent::SearchBackspace => {
-                state.search_query.pop();
-                state.compute_filtered_indices();
+                if state.search_mode {
+                    state.search_query.pop();
+                    state.compute_filtered_indices();
+                }
             }
             TuiEvent::SearchConfirm | TuiEvent::SearchCancel => {
                 state.search_mode = false;
@@ -172,14 +176,15 @@ impl ActionHandler {
                 self.load_directory(state, &state.current_dir.clone());
             }
             // ---- Resize: track terminal height for mouse click mapping ----
-            TuiEvent::Resize(_w, h) => {
+            TuiEvent::Resize(w, h) => {
                 state.terminal_height = h;
+                state.terminal_width = w;
             }
             // ---- Quit and mouse scroll ----
             TuiEvent::Quit => state.should_quit = true,
             TuiEvent::MouseClick(col, row) => self.handle_mouse_click(state, col, row),
             TuiEvent::MouseDrag(col, row) => self.handle_mouse_drag(state, col, row),
-            TuiEvent::MouseScrollUp => {
+            TuiEvent::MouseScrollUp(_col, _row) => {
                 if state.panel_focus == PanelFocus::Preview {
                     state.preview_scroll = state.preview_scroll.saturating_sub(3);
                 } else if state.scroll_offset > 0 {
@@ -189,9 +194,10 @@ impl ActionHandler {
                     }
                 }
             }
-            TuiEvent::MouseScrollDown => {
+            TuiEvent::MouseScrollDown(_col, _row) => {
                 if state.panel_focus == PanelFocus::Preview {
                     state.preview_scroll = state.preview_scroll.saturating_add(3);
+                    state.preview_scroll = state.preview_scroll.min(self.max_preview_scroll(state));
                 } else {
                     let max_scroll = state.entries.len().saturating_sub(1);
                     if state.scroll_offset < max_scroll {
@@ -213,7 +219,7 @@ impl ActionHandler {
     fn navigate_back(&self, state: &mut AppState) {
         let current = FilePath::new(state.current_dir.clone()).unwrap_or_default();
         if let Some(parent) = self.fs_port.parent_directory(&current) {
-            if parent.len() >= state.project_root.len() {
+            if parent.value.starts_with(&state.project_root) {
                 state.current_dir = parent.value.clone();
                 self.load_directory(state, &state.current_dir.clone());
             }
@@ -238,6 +244,9 @@ impl ActionHandler {
     pub fn load_directory(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
         state.entries = self.fs_port.list_directory(&fp);
+        if state.entries.is_empty() {
+            state.set_status(format!("Empty or inaccessible: {}", path));
+        }
         state.entries.sort_by(|a, b| match (a.is_dir, b.is_dir) {
             (true, false) => std::cmp::Ordering::Less,
             (false, true) => std::cmp::Ordering::Greater,
@@ -329,7 +338,7 @@ impl ActionHandler {
             use std::io::Write;
             success = std::process::Command::new("sh")
                 .arg("-c")
-                .arg("xclip -selection clipboard 2>/dev/null || wl-copy 2>/dev/null || true")
+                .arg("xclip -selection clipboard 2>/dev/null || wl-copy 2>/dev/null")
                 .stdin(std::process::Stdio::piped())
                 .spawn()
                 .and_then(|mut child| {
@@ -364,65 +373,84 @@ impl ActionHandler {
         }
     }
 
-    /// Handle mouse clicks on the file list and shortcut areas.
-    /// File list: maps y-coordinate to entry index.
-    /// Shortcuts: maps x-coordinate to approximate action key.
+    /// Handle mouse clicks on the file list, shortcut, preview, and scrollbar areas.
     fn handle_mouse_click(&self, state: &mut AppState, col: u16, row: u16) {
         let h = state.terminal_height;
-        if h < 5 {
+        let w = state.terminal_width;
+        if h < 5 || w < 10 {
             return;
         }
-        // Shortcuts area = bottom 4 rows (3 shortcuts + 1 status)
         let shortcuts_start = h - 4;
-        let file_list_start: u16 = 1; // after header
+        let file_list_start: u16 = 1;
         let file_list_end = shortcuts_start - 1;
+        let preview_start = file_list_end;
+        let preview_end = shortcuts_start;
+        let scrollbar_col = w.saturating_sub(3);
 
         if row >= shortcuts_start && row < h {
-            // Clicked on shortcut bar — treat as no-op for now (tricky to map x→key)
             return;
-        } else if row >= file_list_start && row < file_list_end {
-            // Clicked on file list area — map y to entry index
+        }
+
+        // Click on scrollbar thumb area → jump to proportional position
+        if col >= scrollbar_col && row >= preview_start && row < preview_end {
+            self.jump_to_scroll_position(state, row - preview_start, preview_end - preview_start);
+            state.panel_focus = PanelFocus::Preview;
+            return;
+        }
+
+        if row >= file_list_start && row < file_list_end {
             let panel_row = row - file_list_start;
             let new_index = state.scroll_offset + panel_row as usize;
             if new_index < state.entries.len() {
                 state.selected_index = new_index;
                 state.panel_focus = PanelFocus::FileList;
             }
+        } else if row >= preview_start && row < preview_end {
+            self.jump_to_scroll_position(state, row - preview_start, preview_end - preview_start);
+            state.panel_focus = PanelFocus::Preview;
         }
-        // Ignore clicks on other panels for now (tree, preview)
-        let _ = col;
     }
 
-    /// Handle mouse drag in the preview panel to scroll content.
-    /// Maps vertical position within the preview area to scroll offset.
+    /// Handle mouse drag on the scrollbar thumb area.
     fn handle_mouse_drag(&self, state: &mut AppState, col: u16, row: u16) {
         let h = state.terminal_height;
-        if h < 5 {
+        let w = state.terminal_width;
+        if h < 5 || w < 10 {
             return;
         }
         let shortcuts_start = h - 4;
         let file_list_end = shortcuts_start - 1;
         let preview_start = file_list_end;
         let preview_end = shortcuts_start;
+        let scrollbar_col = w.saturating_sub(3);
 
-        if row >= preview_start && row < preview_end {
-            // Drag in preview area: map row to scroll position
-            let drag_row = row - preview_start;
-            let preview_height = preview_end - preview_start;
-            if preview_height > 0 {
-                let content_length = state
-                    .preview_text
-                    .lines()
-                    .filter(|line| !line.trim().is_empty())
-                    .count()
-                    .max(1);
-                let max_scroll = content_length.saturating_sub(preview_height as usize);
-                let scroll_fraction = drag_row as f64 / preview_height as f64;
-                let new_scroll = (scroll_fraction * max_scroll as f64).round() as usize;
-                state.preview_scroll = new_scroll.min(max_scroll);
-            }
+        if col >= scrollbar_col && row >= preview_start && row < preview_end {
+            self.jump_to_scroll_position(state, row - preview_start, preview_end - preview_start);
+            state.panel_focus = PanelFocus::Preview;
         }
-        let _ = col;
+    }
+
+    /// Map a click/drag row within the preview panel to a scroll position.
+    fn jump_to_scroll_position(&self, state: &mut AppState, relative_row: u16, panel_height: u16) {
+        if panel_height == 0 {
+            return;
+        }
+        let content_length = state.preview_text.lines().count().max(1);
+        let max_scroll = content_length.saturating_sub(panel_height as usize);
+        let fraction = relative_row as f64 / panel_height as f64;
+        let new_scroll = (fraction * max_scroll as f64).round() as usize;
+        state.preview_scroll = new_scroll.min(max_scroll);
+    }
+
+    /// Compute the maximum valid preview scroll offset.
+    fn max_preview_scroll(&self, state: &AppState) -> usize {
+        let h = state.terminal_height;
+        if h < 5 {
+            return 0;
+        }
+        let preview_height = (h - 4) as usize;
+        let content_length = state.preview_text.lines().count().max(1);
+        content_length.saturating_sub(preview_height)
     }
 }
 

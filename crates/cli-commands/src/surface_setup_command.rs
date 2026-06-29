@@ -17,8 +17,9 @@ pub fn handle_init(
     if global {
         return handle_init_global(setup_orchestrator);
     }
-    let languages = setup_orchestrator.detect_languages();
+    // 1. Write language config files
     let mut all_ok = true;
+    let languages = setup_orchestrator.detect_languages();
     for lang in languages.iter() {
         let lang_str = lang.value();
         let target = format!("lint_arwaky.config.{}.yaml", lang_str);
@@ -38,6 +39,45 @@ pub fn handle_init(
             }
         }
     }
+
+    // 2. Distribute docs + SKILL.md from XDG config to project
+    let doc_files = [
+        "SKILL.md",
+        "ARCHITECTURE.md",
+        "MIGRATION_RUST.md",
+        "MIGRATION_PYTHON.md",
+        "MIGRATION_TYPESCRIPT.md",
+        "RULES_AES.md",
+    ];
+    if let Some(config_dir) = dirs::config_dir() {
+        let xdg_base = config_dir.join("lint-arwaky");
+        for doc in &doc_files {
+            if setup_orchestrator.file_exists(doc) {
+                println!("  {doc} — already exists, skipping");
+                continue;
+            }
+            let xdg_src = xdg_base.join(doc);
+            if !xdg_src.exists() {
+                println!("  {doc} — not in XDG config, skipping");
+                continue;
+            }
+            match std::fs::read_to_string(&xdg_src) {
+                Ok(content) => {
+                    if let Some(parent) = std::path::Path::new(doc).parent() {
+                        let _ = std::fs::create_dir_all(parent);
+                    }
+                    match setup_orchestrator.write_config_file(doc, &content) {
+                        Ok(_) => println!("  {doc} — distributed from XDG config"),
+                        Err(e) => println!("  {doc} — error: {e}"),
+                    }
+                }
+                Err(e) => println!("  {doc} — read error: {e}"),
+            }
+        }
+    } else {
+        println!("Warning: could not determine XDG config dir");
+    }
+
     if all_ok {
         ExitCode::SUCCESS
     } else {
@@ -87,6 +127,40 @@ fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> 
             }
         }
     }
+
+    // Distribute docs + SKILL.md from project root to XDG config
+    let doc_files = [
+        "SKILL.md",
+        "ARCHITECTURE.md",
+        "MIGRATION_RUST.md",
+        "MIGRATION_PYTHON.md",
+        "MIGRATION_TYPESCRIPT.md",
+        "RULES_AES.md",
+    ];
+    for doc in &doc_files {
+        let target = config_dir.join(doc);
+        let target_str = target.to_string_lossy();
+        if setup_orchestrator.file_exists(&target_str) {
+            println!("  {doc} — already exists, skipping");
+            continue;
+        }
+        match std::fs::read_to_string(doc) {
+            Ok(content) => {
+                if let Some(parent) = target.parent() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+                match setup_orchestrator.write_config_file(&target_str, &content) {
+                    Ok(_) => println!("  {doc} — created"),
+                    Err(e) => {
+                        println!("  {doc} — error: {e}");
+                        all_ok = false;
+                    }
+                }
+            }
+            Err(_) => println!("  {doc} — not found in project root, skipping"),
+        }
+    }
+
     if all_ok {
         ExitCode::SUCCESS
     } else {

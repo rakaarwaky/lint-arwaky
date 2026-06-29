@@ -44,4 +44,27 @@ for BIN in "${BINARIES[@]}"; do
     echo "  -> $INSTALL_BIN/$BIN"
 done
 
+# 5. Install docs + SKILL.md to XDG config
+Docs=(
+    "SKILL.md"
+    "ARCHITECTURE.md"
+    "MIGRATION_RUST.md"
+    "MIGRATION_PYTHON.md"
+    "MIGRATION_TYPESCRIPT.md"
+)
+for DOC in "${Docs[@]}"; do
+    SRC="$PROJECT_ROOT/$DOC"
+    if [ -f "$SRC" ]; then
+        cp "$SRC" "$CONFIG_DIR/$DOC"
+        echo "  $DOC -> $CONFIG_DIR/$DOC"
+    fi
+done
+
+# RULES_AES.md: source in docs/rules/, target at XDG root
+RULES_SRC="$PROJECT_ROOT/docs/rules/RULES_AES.md"
+if [ -f "$RULES_SRC" ]; then
+    cp "$RULES_SRC" "$CONFIG_DIR/RULES_AES.md"
+    echo "  RULES_AES.md -> $CONFIG_DIR/RULES_AES.md"
+fi
+
 echo "Done: $NEW_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"

@@ -227,7 +227,7 @@ fn test_check_with_violations() {
     let executor = make_executor(MockCodeAnalysis::with_violations(3, false));
     let flags = ActionFlags::default();
     let result = executor.check("/root", &flags);
-    assert!(result.success);
+    assert!(!result.success);
     assert_eq!(result.violation_count, 3);
     assert!(result.output.contains("3 violation"));
 }
@@ -246,7 +246,7 @@ fn test_fix_dry_run() {
     let mut flags = ActionFlags::default();
     flags.dry_run = true;
     let result = executor.fix("/root", &flags);
-    assert!(result.success);
+    assert!(!result.success);
     assert!(result.output.contains("DRY-RUN"));
 }
 
@@ -255,7 +255,7 @@ fn test_fix_live() {
     let executor = make_executor(MockCodeAnalysis::empty());
     let flags = ActionFlags::default();
     let result = executor.fix("/root", &flags);
-    assert!(result.success);
+    assert!(!result.success);
     assert!(result.output.contains("LIVE"));
 }
 
@@ -283,7 +283,7 @@ fn test_ci_fail_low_score() {
     let mut flags = ActionFlags::default();
     flags.threshold = 80;
     let result = executor.ci("/root", &flags);
-    assert!(result.success);
+    assert!(!result.success);
     assert!(result.output.contains("FAIL"));
 }
 
@@ -297,7 +297,7 @@ fn test_ci_fail_critical() {
     let mut flags = ActionFlags::default();
     flags.threshold = 80;
     let result = executor.ci("/root", &flags);
-    assert!(result.success);
+    assert!(!result.success);
     assert!(result.output.contains("FAIL"));
 }
 
@@ -393,7 +393,7 @@ fn test_fix_without_orchestrator_shows_stub() {
     let executor = make_executor(MockCodeAnalysis::with_violations(2, false));
     let flags = ActionFlags::default();
     let result = executor.fix("/root", &flags);
-    assert!(result.success);
+    assert!(!result.success);
     assert!(result
         .output
         .contains("Fix application requires FixOrchestrator"));
@@ -406,7 +406,7 @@ fn test_fix_without_orchestrator_dry_run_shows_stub() {
     let mut flags = ActionFlags::default();
     flags.dry_run = true;
     let result = executor.fix("/root", &flags);
-    assert!(result.success);
+    assert!(!result.success);
     assert!(result.output.contains("[DRY-RUN]"));
     assert!(result
         .output
@@ -421,7 +421,7 @@ fn test_with_fix_preserves_code_analysis() {
     );
     let flags = ActionFlags::default();
     let result = executor.check("/root", &flags);
-    assert!(result.success);
+    assert!(!result.success);
     assert_eq!(result.violation_count, 3);
 }
 

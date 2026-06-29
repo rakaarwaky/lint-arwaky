@@ -27,10 +27,8 @@ use shared::tui::taxonomy_report_formatter_helper::ReportFormatterHelper;
 use std::sync::Arc;
 
 fn is_binary_available(b: &str) -> bool {
-    std::process::Command::new("which")
-        .arg(b)
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
+    std::process::Command::new("sh")
+        .args(["-c", &format!("command -v {} >/dev/null 2>&1", b)])
         .status()
         .map(|s| s.success())
         .unwrap_or(false)
@@ -442,7 +440,14 @@ impl LintExecutor {
 
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
-        self.run_comprehensive_scan(path)
+        let results = self.code_analysis.run_code_analysis(path);
+        let count = results.len();
+        let output = ReportFormatterHelper::format_results(&results);
+        LintExecutionResult {
+            output,
+            violation_count: count,
+            success: count == 0,
+        }
     }
 
     fn scan(&self, path: &str) -> LintExecutionResult {
@@ -467,7 +472,11 @@ impl ILintExecutorProtocol for LintExecutor {
                 let results = self.code_analysis.run_code_analysis(path);
                 let count_before = results.len();
                 let output = format!("[{}] Fix scan on {}\nViolations found: {}\nFix application requires FixOrchestrator aggregate.\nUse CLI `lint-arwaky-cli fix {}` for full fix pipeline.", mode, path, count_before, path);
-                LintExecutionResult::success(output, count_before)
+                LintExecutionResult {
+                    output,
+                    violation_count: count_before,
+                    success: false,
+                }
             }
         }
     }
@@ -479,7 +488,15 @@ impl ILintExecutorProtocol for LintExecutor {
         let pass = score >= flags.threshold as f64 && !has_critical;
         let status = if pass { "PASS" } else { "FAIL" };
         let output = format!("CI Report for {}\nScore: {:.1}/100 (threshold: {})\nViolations: {}\nCritical: {}\nStatus: {}", path, score, flags.threshold, results.len(), has_critical, status);
-        LintExecutionResult::success(output, results.len())
+        if pass {
+            LintExecutionResult::success(output, results.len())
+        } else {
+            LintExecutionResult {
+                output,
+                violation_count: results.len(),
+                success: false,
+            }
+        }
     }
 
     fn orphan(&self, path: &str) -> LintExecutionResult {
@@ -823,7 +840,11 @@ impl ILintExecutorProtocol for LintExecutor {
     fn install_hook(&self) -> LintExecutionResult {
         match &self.hook_port {
             Some(port) => {
-                let exe_path = shared::common::taxonomy_path_vo::FilePath::default();
+                let exe_path_str = std::env::current_exe()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|_| "lint-arwaky-cli".to_string());
+                let exe_path = shared::common::taxonomy_path_vo::FilePath::new(exe_path_str)
+                    .unwrap_or_default();
                 match port.install_pre_commit(&exe_path) {
                     Ok(status) => {
                         if status.value {

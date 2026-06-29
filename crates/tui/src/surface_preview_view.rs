@@ -65,12 +65,7 @@ impl PreviewView {
             horizontal: 0,
         });
         if inner_area.width > 0 && inner_area.height > 0 {
-            let content_length = state
-                .preview_text
-                .lines()
-                .filter(|line| !line.trim().is_empty())
-                .count()
-                .max(1);
+            let content_length = state.preview_text.lines().count().max(1);
             let max_scroll = content_length.saturating_sub(1);
             let scroll_position = if state.preview_scroll > max_scroll {
                 max_scroll

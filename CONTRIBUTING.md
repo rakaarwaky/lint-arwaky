@@ -76,7 +76,7 @@ cargo run --bin lint-arwaky-mcp
 
 ## Architecture
 
-### 6-Layer Model
+### 7-Layer Model
 
 The codebase is organized into **feature crates** (vertical slicing) in the `crates/` directory. Within each crate, files from different layers coexist and are identified strictly by their **file prefix**:
 

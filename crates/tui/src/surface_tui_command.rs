@@ -68,8 +68,9 @@ impl TuiCommandSurface {
         // Initialize terminal_height so mouse clicks work from the start.
         // Without this, the h < 5 guard in handle_mouse_click drops ALL
         // clicks until the first Resize event arrives.
-        if let Ok((_, h)) = terminal_size() {
+        if let Ok((w, h)) = terminal_size() {
             state.terminal_height = h;
+            state.terminal_width = w;
         }
         state.show_path_dialog = false;
         self.tui_aggregate.load_directory(&mut state, &cwd);
@@ -265,8 +266,8 @@ fn from_mouse_event(mouse: MouseEvent) -> TuiEvent {
         MouseEventKind::Drag(crossterm::event::MouseButton::Left) => {
             TuiEvent::MouseDrag(mouse.column, mouse.row)
         }
-        MouseEventKind::ScrollUp => TuiEvent::MouseScrollUp,
-        MouseEventKind::ScrollDown => TuiEvent::MouseScrollDown,
+        MouseEventKind::ScrollUp => TuiEvent::MouseScrollUp(mouse.column, mouse.row),
+        MouseEventKind::ScrollDown => TuiEvent::MouseScrollDown(mouse.column, mouse.row),
         _ => TuiEvent::None,
     }
 }

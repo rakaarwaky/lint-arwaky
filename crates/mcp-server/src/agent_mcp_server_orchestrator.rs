@@ -306,12 +306,17 @@ impl IMcpServerAggregate for McpServerOrchestrator {
     }
 
     async fn read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {
-        let candidates = [
+        let mut candidates = vec![
             env!("CARGO_MANIFEST_DIR").to_string() + "/../SKILL.md",
             env!("CARGO_MANIFEST_DIR").to_string() + "/SKILL.md",
             "SKILL.md".to_string(),
             "./SKILL.md".to_string(),
         ];
+        // XDG config fallback: ~/.config/lint-arwaky/SKILL.md
+        if let Some(config_dir) = dirs::config_dir() {
+            let xdg_skill = config_dir.join("lint-arwaky").join("SKILL.md");
+            candidates.push(xdg_skill.to_string_lossy().to_string());
+        }
         let content = candidates
             .iter()
             .map(std::path::Path::new)

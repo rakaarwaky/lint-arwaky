@@ -170,3 +170,138 @@ Wiring layer. Responsible for Dependency Injection (DI) composition. No business
 
 - **Container (`_container`)**: Per-feature DI container. Instantiates `infrastructure_*` and `capabilities_*` implementations, wires them behind `contract_*` traits, and exposes typed factory methods. Each feature crate owns exactly one `root_*_container`
 - **Entry (`_entry`)**: Binary entry point. Bootstraps the application by creating the `CompositionRoot` (the top-level root container that composes all feature containers) and starts the main loop. _Ex: `root_cli_main_entry root_mcp_main_entry`_
+
+---
+
+## Concrete Examples
+
+### Example 1: Container Wiring (DI)
+
+```rust
+// root_import_rules_container.rs
+// PURPOSE: DI container — instantiates and wires all import-rule dependencies.
+
+use import_rules::capabilities_import_mandatory_checker::ImportMandatoryChecker;
+use import_rules::capabilities_import_forbidden_checker::ImportForbiddenChecker;
+use import_rules::infrastructure_import_parser_adapter::ImportParserAdapter;
+use import_rules::agent_import_orchestrator::ImportOrchestrator;
+
+pub struct ImportContainer {
+    orchestrator: ImportOrchestrator,
+}
+
+impl ImportContainer {
+    pub fn new_default() -> Self {
+        // 1. Create infrastructure (adapters)
+        let parser = Box::new(ImportParserAdapter::new());
+
+        // 2. Create capabilities (checkers) — receive contract interfaces
+        let mandatory = ImportMandatoryChecker::new(parser.clone());
+        let forbidden = ImportForbiddenChecker::new(parser.clone());
+
+        // 3. Create agent (orchestrator) — coordinates capabilities
+        let orchestrator = ImportOrchestrator::new(mandatory, forbidden);
+
+        Self { orchestrator }
+    }
+
+    pub fn orchestrator(&self) -> &ImportOrchestrator {
+        &self.orchestrator
+    }
+}
+```
+
+### Example 2: Port → Adapter Pattern
+
+```rust
+// contract_file_port.rs — interface definition
+pub trait IFilePort {
+    fn read(&self, path: &str) -> Result<String, std::io::Error>;
+    fn write(&self, path: &str, content: &str) -> Result<(), std::io::Error>;
+    fn exists(&self, path: &str) -> bool;
+}
+
+// infrastructure_file_adapter.rs — implementation
+pub struct FileAdapter;
+
+impl IFilePort for FileAdapter {
+    fn read(&self, path: &str) -> Result<String, std::io::Error> {
+        std::fs::read_to_string(path)
+    }
+    fn write(&self, path: &str, content: &str) -> Result<(), std::io::Error> {
+        std::fs::write(path, content)
+    }
+    fn exists(&self, path: &str) -> bool {
+        std::path::Path::new(path).exists()
+    }
+}
+```
+
+### Example 3: Data Flow (Surface → Agent → Capability → Contract → Infrastructure)
+
+```
+User presses "c" (check) in TUI
+  ↓
+surface_tui_command.rs — maps key to TuiEvent::ActionCheck
+  ↓
+agent_tui_orchestrator.rs — receives event, delegates to lint executor
+  ↓
+capabilities_lint_executor.rs — runs check logic, calls code analysis
+  ↓
+contract_code_analysis_port.rs — interface for code analysis
+  ↓
+infrastructure_code_analysis_adapter.rs — actual file scanning
+```
+
+### Example 4: Before/After Migration
+
+**BEFORE (flat, no layers):**
+
+```
+src/
+  main.rs
+  user.rs          ← struct + business logic + DB calls
+  config.rs        ← struct + file I/O + validation
+  api.rs           ← HTTP handlers + business logic
+```
+
+**AFTER (AES 7-layer — feature-based vertical slicing):**
+
+```
+crates/
+├── shared/                        ← shared types (subfolders per feature)
+│   ├── src/
+│   │   ├── lib.rs
+│   │   ├── common/                ← shared across ALL features
+│   │   │   ├── taxonomy_common_vo.rs
+│   │   │   ├── contract_system_port.rs
+│   │   │   └── ...
+│   │   ├── user/                  ← shared types for user feature
+│   │   │   ├── taxonomy_user_vo.rs
+│   │   │   └── ...
+│   │   └── config/                ← shared types for config feature
+│   │       └── ...
+├── user/                          ← feature crate: user
+│   └── src/
+│       ├── taxonomy_user_vo.rs           ← User data structure
+│       ├── taxonomy_user_error.rs        ← User error types
+│       ├── contract_user_port.rs         ← User persistence interface
+│       ├── contract_user_protocol.rs     ← User business protocol
+│       ├── capabilities_user_checker.rs  ← User validation logic
+│       ├── infrastructure_user_adapter.rs  ← Database implementation
+│       ├── agent_user_orchestrator.rs    ← Coordinates user operations
+│       ├── surface_user_command.rs       ← CLI command for user
+│       ├── root_user_container.rs        ← DI wiring for user feature
+│       └── lib.rs
+├── config/                        ← feature crate: config
+│   └── src/
+│       ├── taxonomy_config_vo.rs         ← Config data structure
+│       ├── contract_config_port.rs       ← Config loading interface
+│       ├── capabilities_config_validator.rs ← Config validation logic
+│       ├── infrastructure_config_adapter.rs ← File system implementation
+│       └── lib.rs
+├── root_cli_main_entry.rs    ← CLI binary entry point (file, bukan directory)
+├── root_mcp_main_entry.rs    ← MCP server entry point
+├── root_tui_main_entry.rs    ← TUI entry point
+└── lib.rs                    ← workspace library root
+```

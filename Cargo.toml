@@ -43,6 +43,7 @@ rmcp = { version = "0.16", features = ["server", "transport-io"] }
 rand = "0.10.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
 rustsec = "0.33"
 dirs = "6.0"
 dialoguer = "0.11"
@@ -56,7 +57,7 @@ tui = { package = "tui-lint-arwaky", path = "crates/tui" }
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "1.10.82"
+version = "1.10.86"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
 license = "MIT"

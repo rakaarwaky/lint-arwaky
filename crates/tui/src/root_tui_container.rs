@@ -14,6 +14,8 @@ pub struct TuiContainer;
 
 impl TuiContainer {
     pub fn run() -> anyhow::Result<()> {
+        crate::root_logging_entry::init()?;
+        tracing::info!(target = "tui", "TUI container starting");
         let fs_adapter = Arc::new(FileSystemAdapter::new());
 
         // Initialize the global checker singleton so that

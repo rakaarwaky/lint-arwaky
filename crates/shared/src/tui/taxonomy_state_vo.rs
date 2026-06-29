@@ -38,6 +38,7 @@ pub struct AppState {
     pub tree_scroll: usize,
     pub preview_scroll: usize,
     pub terminal_height: u16,
+    pub terminal_width: u16,
     /// Indices into `entries` matching the current search query (empty when not filtering).
     pub filtered_indices: Vec<usize>,
     /// Position within `filtered_indices` — which matching entry is selected.
@@ -80,6 +81,7 @@ impl AppState {
             tree_scroll: 0,
             preview_scroll: 0,
             terminal_height: 0,
+            terminal_width: 0,
             filtered_indices: Vec::new(),
             filter_pos: 0,
             watching: false,

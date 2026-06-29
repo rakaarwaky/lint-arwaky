@@ -162,17 +162,48 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     }
 
     fn detect_languages(&self) -> ProjectLanguagesVO {
-        let mut langs = Vec::new();
-        if std::path::Path::new("crates").exists() {
-            langs.push(ProjectLanguageVO::new("rust"));
+        let mut found_rust = false;
+        let mut found_python = false;
+        let mut found_javascript = false;
+
+        // Phase 1: Marker-based detection (fast, no filesystem scan)
+        if std::path::Path::new("crates").exists() || std::path::Path::new("Cargo.toml").exists() {
+            found_rust = true;
         }
         if std::path::Path::new("packages").exists()
             || std::path::Path::new("modules").exists()
             || std::path::Path::new("pyproject.toml").exists()
+            || std::path::Path::new("setup.py").exists()
+            || std::path::Path::new("requirements.txt").exists()
         {
+            found_python = true;
+        }
+        if std::path::Path::new("package.json").exists()
+            || std::path::Path::new("tsconfig.json").exists()
+        {
+            found_javascript = true;
+        }
+
+        // Phase 2: File-extension scan (shallow, depth-limited)
+        if !(found_rust && found_python && found_javascript) {
+            self.scan_source_extensions(
+                std::path::Path::new("."),
+                0,
+                4,
+                &mut found_rust,
+                &mut found_python,
+                &mut found_javascript,
+            );
+        }
+
+        let mut langs = Vec::new();
+        if found_rust {
+            langs.push(ProjectLanguageVO::new("rust"));
+        }
+        if found_python {
             langs.push(ProjectLanguageVO::new("python"));
         }
-        if std::path::Path::new("package.json").exists() {
+        if found_javascript {
             langs.push(ProjectLanguageVO::new("javascript"));
         }
         if langs.is_empty() {
@@ -213,5 +244,67 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
 
     fn file_exists(&self, path: &str) -> bool {
         std::path::Path::new(path).exists()
+    }
+}
+
+impl SetupManagementProcessor {
+    /// Walk the directory tree (depth-limited) looking for source file extensions.
+    /// Sets the corresponding `found_*` flag to `true` when a match is found.
+    /// Skips hidden dirs, `target/`, `node_modules/`, and `vendor/` for speed.
+    fn scan_source_extensions(
+        &self,
+        dir: &std::path::Path,
+        depth: usize,
+        max_depth: usize,
+        found_rust: &mut bool,
+        found_python: &mut bool,
+        found_javascript: &mut bool,
+    ) {
+        if depth > max_depth {
+            return;
+        }
+        let entries = match std::fs::read_dir(dir) {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = path.file_name().unwrap_or_default().to_string_lossy();
+                if name.starts_with('.')
+                    || name == "target"
+                    || name == "node_modules"
+                    || name == "vendor"
+                    || name == "dist"
+                    || name == "build"
+                    || name == "__pycache__"
+                {
+                    continue;
+                }
+                self.scan_source_extensions(
+                    &path,
+                    depth + 1,
+                    max_depth,
+                    found_rust,
+                    found_python,
+                    found_javascript,
+                );
+                if *found_rust && *found_python && *found_javascript {
+                    return;
+                }
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                match ext {
+                    "rs" => *found_rust = true,
+                    "py" => *found_python = true,
+                    "ts" | "tsx" | "mts" | "cts" | "js" | "jsx" | "mjs" | "cjs" => {
+                        *found_javascript = true
+                    }
+                    _ => {}
+                }
+                if *found_rust && *found_python && *found_javascript {
+                    return;
+                }
+            }
+        }
     }
 }
