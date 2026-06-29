@@ -1,5 +1,45 @@
 # Changelog
 
+## 1.10.79 (2026-06-29)
+
+### Fixed
+
+- **serde_yml → serde_yaml_ng migration**: Replaced deprecated `serde_yml` with `serde_yaml_ng` to fix deserialization warnings and ensure forward compatibility.
+- **TUI preview scroll**: Fixed scroll behavior in TUI preview panel that was broken after recent refactor.
+- **MCP clippy detection**: Improved detection of `cargo clippy` command in MCP server to correctly identify and route clippy-specific invocations.
+- **Orphan cross-workspace detection**: Orphan detector now collects source files without the ignore list for cross-workspace orphan detection, preventing false negatives on files in ignored paths.
+- **Ignored tests & mock stubs**: Fixed tests that were silently skipped due to incorrect mock stubs; all TUI executor tests now run correctly.
+- **Gate checker paths**: `gates.sh` now uses `check .` instead of `scan crates` to correctly target the self-lint root.
+- **AES coverage gate**: Split AES coverage assertion per test-workspace instead of a single combined check, improving debuggability.
+- **TEST.md threshold**: Restored unique AES code threshold to 24 per language and merged security scripts.
+- **Rust formatting**: Fixed `rustfmt` violation in `lint_executor_tests.rs` (struct literal wrapping in `Ok()` block).
+
+### Performance
+
+- **Parallel import rule checks**: Mandatory, forbidden, and intent import checks now run concurrently via `tokio::join!` instead of sequential execution.
+- **File cache for ImportParserAdapter**: Added shared file content cache to avoid redundant I/O across import parsing calls.
+- **Early-exit bypass checker**: Bypass detection now exits early on first match instead of scanning all patterns.
+- **Shared cache for orphan-detector**: Orphan detection reuses the file cache from import-rules, reducing total file reads during full scans.
+
+### Refactored
+
+- **AES102 violation messages**: Updated naming rule AES102 violation output with `used_suffix` field and generic FIX guidance for clearer remediation instructions.
+- **Hooks simplified**: Removed commit message lint gate from pre-commit hook — commit message validation is now handled separately.
+
+### Test
+
+- **Full gate verification**: All quality gates (format, clippy, tests, AES coverage, hook integrity) now verified passing in CI.
+- **2528 violations detected**: Test workspaces produce 2528 intentional violations across 24 unique AES codes per language, meeting TEST.md criteria.
+- **0 self-lint violations**: Lint Arwaky passes its own checks on its own codebase.
+
+### Changed
+
+- **Build script**: Updated `install.local.sh` with improved build instructions and usage guidance.
+- **Documentation**: Fixed section headings in TEST.md for clearer pass/fail criteria.
+- **Security scripts**: Merged `hook-integrity-check.sh` and `install-hook-protection.sh` into unified `security.sh`.
+
+---
+
 ## 1.10.76 (2026-06-28)
 
 ### Added
