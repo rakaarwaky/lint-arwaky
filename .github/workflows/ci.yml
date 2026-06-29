@@ -53,18 +53,25 @@ jobs:
       - name: Gate 5 — AES compliance
         run: ./target/release/lint-arwaky-cli check .
 
-      # Gate 6: Test-workspace coverage
+      # Gate 6: Test-workspace AES coverage (per-workspace)
       - name: Gate 6 — test-workspace AES coverage
         run: |
-          OUTPUT=$(./target/release/lint-arwaky-cli scan test-workspaces/ 2>&1)
-          echo "$OUTPUT"
-          UNIQUE_AES=$(echo "$OUTPUT" | grep -oP 'Total Unique AES Codes:\s*\K[0-9]+' || echo "0")
-          echo "Unique AES codes: $UNIQUE_AES"
-          if [ "$UNIQUE_AES" -lt 24 ]; then
-            echo "FAIL: Only $UNIQUE_AES unique AES codes (minimum 24)"
+          ALL_PASS=true
+          for SP in test-workspaces/crates test-workspaces/modules test-workspaces/packages; do
+            OUTPUT=$(./target/release/lint-arwaky-cli scan "$SP" 2>&1)
+            echo "$OUTPUT"
+            UNIQUE_AES=$(echo "$OUTPUT" | grep -oP 'Total Unique AES Codes:\s*\K[0-9]+' || echo "0")
+            NAME=$(basename "$SP")
+            echo "  $NAME: $UNIQUE_AES unique AES codes"
+            if [ "$UNIQUE_AES" -lt 24 ]; then
+              echo "FAIL: $NAME only $UNIQUE_AES unique AES codes (minimum 24)"
+              ALL_PASS=false
+            fi
+          done
+          if [ "$ALL_PASS" = false ]; then
             exit 1
           fi
-          echo "PASS: $UNIQUE_AES unique AES codes"
+          echo "PASS: All workspaces have >= 24 unique AES codes"
 
       # Gate 7: Dependency audit
       - name: Gate 7 — cargo deny

@@ -131,28 +131,35 @@ else
     echo "✅ Gate $GATE_NUM passed — no TODO/FIXME in src/ comments."
 fi
 
-# ─── Gate 6: AES Scan Coverage (test-workspaces) ──────────────────────
+# ─── Gate 6: AES Scan Coverage (per-workspace) ──────────────────────
 GATE_NUM=6
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Gate $GATE_NUM: AES Scan Coverage (test-workspaces)"
+echo "  Gate $GATE_NUM: AES Scan Coverage (per-workspace)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
 MIN_AES_CODES=24
-SCAN_OUTPUT=$("$LINT_CMD" scan "$REPO_ROOT/test-workspaces/" 2>&1) || true
-
-# Extract "Total Unique AES Codes: <number>" from scan output
-UNIQUE_AES=$(echo "$SCAN_OUTPUT" | grep -oP 'Total Unique AES Codes:\s*\K[0-9]+' || echo "0")
-
-echo "  Unique AES codes detected: $UNIQUE_AES (minimum: $MIN_AES_CODES)"
-
-if [ "$UNIQUE_AES" -lt "$MIN_AES_CODES" ]; then
-    fail "AES Scan" "Only $UNIQUE_AES unique AES codes detected (minimum: $MIN_AES_CODES)"
-    echo ""
-    echo "   The scanner must detect at least $MIN_AES_CODES unique AES violation codes."
-    echo "   Ensure test-workspaces/ has enough intentional violations."
+ALL_PASS=true
+SCAN_PATHS=(
+  "$REPO_ROOT/test-workspaces/crates"
+  "$REPO_ROOT/test-workspaces/modules"
+  "$REPO_ROOT/test-workspaces/packages"
+)
+for SP in "${SCAN_PATHS[@]}"; do
+  SCAN_OUTPUT=$("$LINT_CMD" scan "$SP" 2>&1) || true
+  UNIQUE_AES=$(echo "$SCAN_OUTPUT" | grep -oP 'Total Unique AES Codes:\s*\K[0-9]+' || echo "0")
+  NAME=$(basename "$SP")
+  if [ "$UNIQUE_AES" -lt "$MIN_AES_CODES" ]; then
+    fail "AES Scan ($NAME)" "Only $UNIQUE_AES unique AES codes detected (minimum: $MIN_AES_CODES)"
+    ALL_PASS=false
+  else
+    echo "  ✅ $NAME: $UNIQUE_AES unique AES codes"
+  fi
+done
+if [ "$ALL_PASS" = true ]; then
+  echo "✅ Gate $GATE_NUM passed."
 else
-    echo "✅ Gate $GATE_NUM passed."
+  echo ""
+  echo "  Each workspace must detect at least $MIN_AES_CODES unique AES violation codes."
 fi
 
 # ─── Final Verdict ─────────────────────────────────────────────────────
