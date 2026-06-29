@@ -33,3 +33,4 @@ target/
 # Sensitive files (CRED007a)
 credentials.json
 serviceAccountKey
+.zed/settings.json

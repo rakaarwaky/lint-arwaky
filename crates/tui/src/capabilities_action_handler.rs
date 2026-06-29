@@ -178,6 +178,7 @@ impl ActionHandler {
             // ---- Quit and mouse scroll ----
             TuiEvent::Quit => state.should_quit = true,
             TuiEvent::MouseClick(col, row) => self.handle_mouse_click(state, col, row),
+            TuiEvent::MouseDrag(col, row) => self.handle_mouse_drag(state, col, row),
             TuiEvent::MouseScrollUp => {
                 if state.panel_focus == PanelFocus::Preview {
                     state.preview_scroll = state.preview_scroll.saturating_sub(3);
@@ -389,6 +390,38 @@ impl ActionHandler {
             }
         }
         // Ignore clicks on other panels for now (tree, preview)
+        let _ = col;
+    }
+
+    /// Handle mouse drag in the preview panel to scroll content.
+    /// Maps vertical position within the preview area to scroll offset.
+    fn handle_mouse_drag(&self, state: &mut AppState, col: u16, row: u16) {
+        let h = state.terminal_height;
+        if h < 5 {
+            return;
+        }
+        let shortcuts_start = h - 4;
+        let file_list_end = shortcuts_start - 1;
+        let preview_start = file_list_end;
+        let preview_end = shortcuts_start;
+
+        if row >= preview_start && row < preview_end {
+            // Drag in preview area: map row to scroll position
+            let drag_row = row - preview_start;
+            let preview_height = preview_end - preview_start;
+            if preview_height > 0 {
+                let content_length = state
+                    .preview_text
+                    .lines()
+                    .filter(|line| !line.trim().is_empty())
+                    .count()
+                    .max(1);
+                let max_scroll = content_length.saturating_sub(preview_height as usize);
+                let scroll_fraction = drag_row as f64 / preview_height as f64;
+                let new_scroll = (scroll_fraction * max_scroll as f64).round() as usize;
+                state.preview_scroll = new_scroll.min(max_scroll);
+            }
+        }
         let _ = col;
     }
 }

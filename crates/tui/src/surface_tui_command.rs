@@ -262,6 +262,9 @@ fn from_mouse_event(mouse: MouseEvent) -> TuiEvent {
         MouseEventKind::Down(crossterm::event::MouseButton::Left) => {
             TuiEvent::MouseClick(mouse.column, mouse.row)
         }
+        MouseEventKind::Drag(crossterm::event::MouseButton::Left) => {
+            TuiEvent::MouseDrag(mouse.column, mouse.row)
+        }
         MouseEventKind::ScrollUp => TuiEvent::MouseScrollUp,
         MouseEventKind::ScrollDown => TuiEvent::MouseScrollDown,
         _ => TuiEvent::None,
