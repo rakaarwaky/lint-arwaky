@@ -52,15 +52,13 @@ The base codebase must be clean of any internal architecture rule violations.
 
   #### B. Cross-Language Functional Verification (Scan Test Projects)
 
-The multi-adapter scanner must be proven to successfully detect at least 18 unique violation types in the test projects.
-
 - [ ] Build a clean release and copy the binary:
   ```bash
-  bash build.local.sh
+  bash scripts/install.local.sh
   ```
 - [ ] Run scan on the test-workspaces folder:
   ```bash
-  cd /home/raka/mcp-arwaky/lint-arwaky
+  cd test-workspaces
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/crates for rust
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/modules for python
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages for typescript
@@ -91,6 +89,6 @@ The multi-adapter scanner must be proven to successfully detect at least 18 uniq
 
 ### 4.2 Specific Instructions for AI Agents Working Here
 
-1. **Automated Verification:** Every time you modify the code, you must rebuild the binary using `build.local.sh` and run the `check .` audit locally.
-2. **Fix the Root Cause, Do Not Bypass:** Never use inline bypasses (`unwrap`, `expect`, `panic!`, `noqa`) to bypass architecture warnings. You must design code according to contracts or register the module under YAML exceptions if it is genuinely safe.
+1. **Automated Verification:** Every time you modify the code, you must rebuild the binary using `scripts/install.local.sh` and run the `check .` audit locally.
+2. **Fix the Root Cause, Do Not Bypass:** Never use inline bypasses (`unwrap`, `expect`, `panic!`, `noqa`) to bypass architecture warnings.
 3. **Readiness Report:** Upon completing work, report the status of every item in the checklist above transparently to the user.
