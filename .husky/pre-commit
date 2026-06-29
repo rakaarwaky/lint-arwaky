@@ -68,41 +68,8 @@ else
     fail "Tests" "Some tests failed"
 fi
 
-# ─── Gate 4: Commit Message Lint ───────────────────────────────────────
+# ─── Gate 4: TODO/FIXME Detection (src/ only) ─────────────────────────
 GATE_NUM=4
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Gate $GATE_NUM: Commit Message Format"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# Read commit message from the temp file git provides (if available)
-COMMIT_MSG=""
-if [ -n "${1:-}" ] && [ -f "$1" ]; then
-    COMMIT_MSG="$(head -1 "$1")"
-fi
-
-# Conventional commit regex: type(scope): description  OR  type: description
-# Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
-CONV_REGEX='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_-]+\))?:\s.+'
-
-if [ -n "$COMMIT_MSG" ]; then
-    if ! echo "$COMMIT_MSG" | grep -qE "$CONV_REGEX"; then
-        fail "Commit Message" "Does not follow conventional commit format"
-        echo ""
-        echo "   Expected: type(scope): description"
-        echo "   Examples:"
-        echo "     feat(cli): add --verbose flag"
-        echo "     fix(import-rules): exclude trait imports"
-        echo "     docs: update README"
-    else
-        echo "✅ Gate $GATE_NUM passed."
-    fi
-else
-    echo "⚠️  Gate $GATE_NUM skipped (no commit message available — may be checked by commit-msg hook instead)."
-fi
-
-# ─── Gate 5: TODO/FIXME Detection (src/ only) ─────────────────────────
-GATE_NUM=5
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Gate $GATE_NUM: TODO/FIXME Detection (src/ only)"
@@ -131,8 +98,8 @@ else
     echo "✅ Gate $GATE_NUM passed — no TODO/FIXME in src/ comments."
 fi
 
-# ─── Gate 6: AES Scan Coverage (per-workspace) ──────────────────────
-GATE_NUM=6
+# ─── Gate 5: AES Scan Coverage (per-workspace) ──────────────────────
+GATE_NUM=5
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Gate $GATE_NUM: AES Scan Coverage (per-workspace)"
