@@ -17,6 +17,7 @@ adapters:
 ignored_rules: []
 
 ignored_paths:
+  - "/.mimocode"
   - "./output"
   - "/.git"
   - "/.github"

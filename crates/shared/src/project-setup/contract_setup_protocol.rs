@@ -9,7 +9,8 @@
 use crate::common::taxonomy_path_vo::DirectoryPath;
 use crate::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use crate::project_setup::taxonomy_setup_contract_vo::{
-    CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, SetupError, WriteConfigResult,
+    CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
+    WriteConfigResult,
 };
 
 #[async_trait::async_trait]
@@ -25,6 +26,8 @@ pub trait ISetupManagementProtocol: Send + Sync {
     async fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus;
     /// Detect the dominant programming language of the current project.
     fn detect_language(&self) -> ProjectLanguageVO;
+    /// Detect ALL languages present in the current project.
+    fn detect_languages(&self) -> ProjectLanguagesVO;
     fn get_config_template(&self, language: &str) -> &'static str;
     /// Write a configuration file to disk. Returns a description of the
     /// operation on success, or a structured `SetupError` on failure.

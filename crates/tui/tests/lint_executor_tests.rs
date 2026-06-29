@@ -186,6 +186,11 @@ impl SetupManagementAggregate for MockSetupAggregate {
     fn detect_language(&self) -> ProjectLanguageVO {
         ProjectLanguageVO::new(&self.language)
     }
+    fn detect_languages(&self) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO {
+        shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO::new(vec![
+            shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO::new(&self.language),
+        ])
+    }
     fn get_config_template(&self, _language: &str) -> &'static str {
         "mock template"
     }

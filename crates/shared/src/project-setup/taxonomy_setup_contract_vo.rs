@@ -50,6 +50,26 @@ impl ProjectLanguageVO {
     }
 }
 
+/// List of programming languages detected for a project. Replaces the
+/// previous `Vec<String>` return type of
+/// `ISetupManagementProtocol::detect_languages`.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ProjectLanguagesVO {
+    pub values: Vec<ProjectLanguageVO>,
+}
+
+impl ProjectLanguagesVO {
+    pub fn new(values: Vec<ProjectLanguageVO>) -> Self {
+        Self { values }
+    }
+    pub fn iter(&self) -> impl Iterator<Item = &ProjectLanguageVO> {
+        self.values.iter()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
+}
+
 /// Error type for setup operations that previously returned
 /// `Result<(), String>` or `Result<PathBuf, String>`. Replaces ad-hoc
 /// `String` error types with a domain error VO so callers can

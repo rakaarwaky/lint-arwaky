@@ -16,7 +16,7 @@ use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::project_setup::taxonomy_setup_contract_vo::{
-    McpBinaryNameVO, ProjectLanguageVO, SetupError,
+    McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
 };
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 
@@ -153,18 +153,28 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     }
 
     fn detect_language(&self) -> ProjectLanguageVO {
+        let langs = self.detect_languages();
+        langs.values.into_iter().next().unwrap_or_else(|| ProjectLanguageVO::new("rust"))
+    }
+
+    fn detect_languages(&self) -> ProjectLanguagesVO {
+        let mut langs = Vec::new();
         if std::path::Path::new("crates").exists() {
-            ProjectLanguageVO::new("rust")
-        } else if std::path::Path::new("packages").exists()
+            langs.push(ProjectLanguageVO::new("rust"));
+        }
+        if std::path::Path::new("packages").exists()
             || std::path::Path::new("modules").exists()
             || std::path::Path::new("pyproject.toml").exists()
         {
-            ProjectLanguageVO::new("python")
-        } else if std::path::Path::new("package.json").exists() {
-            ProjectLanguageVO::new("javascript")
-        } else {
-            ProjectLanguageVO::new("rust")
+            langs.push(ProjectLanguageVO::new("python"));
         }
+        if std::path::Path::new("package.json").exists() {
+            langs.push(ProjectLanguageVO::new("javascript"));
+        }
+        if langs.is_empty() {
+            langs.push(ProjectLanguageVO::new("rust"));
+        }
+        ProjectLanguagesVO::new(langs)
     }
 
     fn get_config_template(&self, language: &str) -> &'static str {

@@ -16,7 +16,7 @@ use shared::mcp_server::taxonomy_job_vo::EnvContentVO;
 use shared::mcp_server::taxonomy_job_vo::McpConfigVO;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO;
+use shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO;
 use std::collections::HashMap;
 
 use async_trait::async_trait;
@@ -86,8 +86,12 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
         self.protocol.install_javascript_adapters(sudo).await
     }
 
-    fn detect_language(&self) -> ProjectLanguageVO {
+    fn detect_language(&self) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO {
         self.protocol.detect_language()
+    }
+
+    fn detect_languages(&self) -> ProjectLanguagesVO {
+        self.protocol.detect_languages()
     }
 
     fn get_config_template(&self, language: &str) -> &'static str {

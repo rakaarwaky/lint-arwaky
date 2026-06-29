@@ -22,6 +22,7 @@ ignored_paths:
   - "/packages"
   - "/node_modules"
   - "/.opencode"
+  - "/.mimocode"
   - "/.jj"
   - "/test-workspaces"
   - "/scripts"

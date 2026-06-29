@@ -44,14 +44,4 @@ for BIN in "${BINARIES[@]}"; do
     echo "  -> $INSTALL_BIN/$BIN"
 done
 
-# 5. Default config stub bila kosong
-if [ ! -f "$CONFIG_DIR/config.yaml" ]; then
-    cat > "$CONFIG_DIR/config.yaml" <<'YAML'
-profile: default
-report_dir: null
-track_trends: false
-YAML
-    echo "  + $CONFIG_DIR/config.yaml (stub)"
-fi
-
 echo "Done: $NEW_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"

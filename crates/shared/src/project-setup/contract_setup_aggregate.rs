@@ -7,7 +7,7 @@ use crate::mcp_server::taxonomy_job_vo::McpConfigVO;
 use crate::mcp_server::taxonomy_job_vo::SuccessStatus;
 use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use crate::project_setup::taxonomy_setup_contract_vo::{
-    CreateConfigDirResult, ProjectLanguageVO, WriteConfigResult,
+    CreateConfigDirResult, ProjectLanguageVO, ProjectLanguagesVO, WriteConfigResult,
 };
 
 pub type SetupMgmtProtocol = Box<dyn ISetupManagementProtocol>;
@@ -23,6 +23,7 @@ pub trait SetupManagementAggregate: Send + Sync {
     async fn install_python_adapters(&self) -> SuccessStatus;
     async fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus;
     fn detect_language(&self) -> ProjectLanguageVO;
+    fn detect_languages(&self) -> ProjectLanguagesVO;
     fn get_config_template(&self, language: &str) -> &'static str;
     fn write_config_file(&self, filename: &str, content: &str) -> WriteConfigResult;
     fn create_global_config_dir(&self) -> CreateConfigDirResult;

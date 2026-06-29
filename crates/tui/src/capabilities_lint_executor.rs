@@ -195,33 +195,40 @@ impl LintExecutor {
     fn run_init(&self) -> LintExecutionResult {
         match &self.setup_aggregate {
             Some(protocol) => {
-                let language = protocol.detect_language();
-                let lang_str = &language.value;
-                let config_path = format!("lint_arwaky.config.{}.yaml", lang_str);
-                if protocol.file_exists(&config_path) {
-                    let output = format!(
-                        "Config initialization.\n{} already exists.\nDetected language: {}",
-                        config_path, lang_str
-                    );
-                    return LintExecutionResult::success(output, 0);
-                }
-                let template = protocol.get_config_template(lang_str);
-                match protocol.write_config_file(&config_path, template) {
-                    Ok(desc) => {
-                        let output = format!(
-                            "Config initialization.\nConfig created: {} (language: {})\n  {}",
-                            config_path, lang_str, desc.value
-                        );
-                        LintExecutionResult::success(output, 0)
+                let languages = protocol.detect_languages();
+                let mut created = Vec::new();
+                let mut skipped = Vec::new();
+                let mut errors = Vec::new();
+                for lang in languages.iter() {
+                    let lang_str = lang.value();
+                    let config_path = format!("lint_arwaky.config.{}.yaml", lang_str);
+                    if protocol.file_exists(&config_path) {
+                        skipped.push(config_path);
+                        continue;
                     }
-                    Err(e) => {
-                        let output = format!(
-                            "Config initialization failed.\nError: {}\n\nUse CLI `lint-arwaky-cli init` as fallback.",
-                            e
-                        );
-                        LintExecutionResult::failure(output)
+                    let template = protocol.get_config_template(lang_str);
+                    match protocol.write_config_file(&config_path, template) {
+                        Ok(desc) => {
+                            created
+                                .push(format!("{} ({}) — {}", config_path, lang_str, desc.value));
+                        }
+                        Err(e) => {
+                            errors.push(format!("{} — error: {}", config_path, e));
+                        }
                     }
                 }
+                let mut output = String::from("Config initialization.\n");
+                if !created.is_empty() {
+                    output.push_str(&format!("Created:\n  {}\n", created.join("\n  ")));
+                }
+                if !skipped.is_empty() {
+                    output.push_str(&format!("Already exist:\n  {}\n", skipped.join("\n  ")));
+                }
+                if !errors.is_empty() {
+                    output.push_str(&format!("Errors:\n  {}\n", errors.join("\n  ")));
+                    return LintExecutionResult::failure(output);
+                }
+                LintExecutionResult::success(output, 0)
             }
             None => {
                 let output =

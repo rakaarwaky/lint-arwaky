@@ -53,6 +53,11 @@ impl shared::project_setup::contract_setup_protocol::ISetupManagementProtocol fo
     ) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO {
         shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO::new("rust")
     }
+    fn detect_languages(&self) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO {
+        shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO::new(vec![
+            shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO::new("rust"),
+        ])
+    }
     fn get_config_template(&self, _language: &str) -> &'static str {
         "mock template"
     }

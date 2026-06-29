@@ -9,7 +9,9 @@
 // Help content is embedded as a static string in help_text().
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
-use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
+use ratatui::widgets::{
+    Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
+};
 use ratatui::Frame;
 use shared::tui::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
 
@@ -57,6 +59,37 @@ impl PreviewView {
             .style(Style::default().fg(Color::White));
 
         frame.render_widget(paragraph, area);
+
+        let inner_area = area.inner(ratatui::layout::Margin {
+            vertical: 1,
+            horizontal: 0,
+        });
+        if inner_area.width > 0 && inner_area.height > 0 {
+            let content_length = state
+                .preview_text
+                .lines()
+                .filter(|line| !line.trim().is_empty())
+                .count()
+                .max(1);
+            let max_scroll = content_length.saturating_sub(1);
+            let scroll_position = if state.preview_scroll > max_scroll {
+                max_scroll
+            } else {
+                state.preview_scroll
+            };
+            let mut scrollbar_state = ScrollbarState::new(content_length).position(scroll_position);
+            let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+                .begin_symbol(Some("↑"))
+                .end_symbol(Some("↓"))
+                .thumb_style(Style::default().fg(if is_focused {
+                    Color::Cyan
+                } else {
+                    Color::DarkGray
+                }))
+                .track_style(Style::default().fg(Color::DarkGray));
+
+            frame.render_stateful_widget(scrollbar, inner_area, &mut scrollbar_state);
+        }
     }
 }
 
