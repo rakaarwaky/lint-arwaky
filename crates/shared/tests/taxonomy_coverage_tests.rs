@@ -766,6 +766,7 @@ fn test_naming_violation_suffix_forbidden() {
 fn test_naming_violation_suffix_mismatch() {
     let v = NamingViolation::SuffixMismatch {
         layer_name: "infrastructure".to_string(),
+        used_suffix: "utility".to_string(),
         allowed: vec!["adapter".to_string(), "provider".to_string()],
         reason: None,
     };

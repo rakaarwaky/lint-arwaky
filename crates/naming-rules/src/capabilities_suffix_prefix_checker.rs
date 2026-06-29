@@ -137,14 +137,16 @@ impl SuffixPrefixChecker {
                     "AES102",
                     NamingViolation::SuffixMismatch {
                         layer_name: layer_display.clone(),
+                        used_suffix: suffix_display.to_string(),
                         allowed: allowed_list.clone(),
                         reason: Some(LintMessage::new(format!(
-                            "Layer '{}' enforces a strict suffix policy, but the file uses suffix '{}'. \
-                             Expected one of: {}. \
-                             The suffix determines the file's architectural role — a missing or incorrect suffix \
-                             breaks the layer-to-role mapping that automated checks depend on.",
-                            layer_display,
+                            "Suffix '{}' is not in the allowed list for layer '{}'. \
+                             Allowed suffixes for '{}': {}. \
+                             A suffix outside this list means either the file belongs in a different layer \
+                             or needs a different architectural role suffix.",
                             suffix_display,
+                            layer_display,
+                            layer_display,
                             allowed_list.join(", ")
                         ))),
                     }
