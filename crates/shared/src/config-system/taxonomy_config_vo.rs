@@ -84,7 +84,7 @@ impl Default for ArchitectureConfig {
 }
 
 pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
-    let raw: serde_yml::Value = serde_yml::from_str(yaml_str).unwrap_or_default();
+    let raw: serde_yaml_ng::Value = serde_yaml_ng::from_str(yaml_str).unwrap_or_default();
     if let Some(arch_val) = raw.get("architecture") {
         let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
         // Extract layers from rules (first rule containing "layers" key) if not at top-level

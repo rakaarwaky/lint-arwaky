@@ -3,6 +3,11 @@
 
 [advisories]
 unmaintained = "all"
+ignore = [
+    # paste is unmaintained but only a transitive dep via ratatui; no direct usage.
+    # Upstream issue: https://github.com/dtolnay/paste
+    "RUSTSEC-2024-0436",
+]
 yanked = "warn"
 
 [licenses]

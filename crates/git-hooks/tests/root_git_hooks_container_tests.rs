@@ -9,7 +9,7 @@ fn container_default_constructs() {
     let _id = hp.get_hook_manager_identity();
 }
 
-#[ignore]
+#[ignore = "modifies real .git/hooks — requires temp git repo"]
 #[tokio::test]
 async fn container_aggregate_install_hook_ok() {
     let container = GitContainer::new_default();
@@ -20,7 +20,7 @@ async fn container_aggregate_install_hook_ok() {
     let _ = result;
 }
 
-#[ignore]
+#[ignore = "modifies real .git/hooks — requires temp git repo"]
 #[tokio::test]
 async fn container_aggregate_uninstall_hook_ok() {
     let container = GitContainer::new_default();

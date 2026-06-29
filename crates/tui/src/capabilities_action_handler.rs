@@ -32,23 +32,43 @@ impl ActionHandler {
     /// Categories: navigation, focus cycling, search, path dialog, lint actions, mouse.
     pub fn handle(&self, state: &mut AppState, event: TuiEvent) {
         match event {
-            // ---- Navigation: list selection ----
+            // ---- Navigation: list selection or preview scrolling based on focus ----
             TuiEvent::MoveDown => {
-                state.select_next();
-                self.load_preview(state);
+                if state.panel_focus == PanelFocus::Preview {
+                    state.preview_scroll = state.preview_scroll.saturating_add(3);
+                } else {
+                    state.select_next();
+                    self.load_preview(state);
+                }
             }
             TuiEvent::MoveUp => {
-                state.select_prev();
-                self.load_preview(state);
+                if state.panel_focus == PanelFocus::Preview {
+                    state.preview_scroll = state.preview_scroll.saturating_sub(3);
+                } else {
+                    state.select_prev();
+                    self.load_preview(state);
+                }
             }
-            TuiEvent::MoveTop => state.select_first(),
-            TuiEvent::MoveBottom => state.select_last(),
+            TuiEvent::MoveTop => {
+                if state.panel_focus == PanelFocus::Preview {
+                    state.preview_scroll = 0;
+                } else {
+                    state.select_first();
+                }
+            }
+            TuiEvent::MoveBottom => {
+                if state.panel_focus == PanelFocus::Preview {
+                    state.preview_scroll = usize::MAX;
+                } else {
+                    state.select_last();
+                }
+            }
             // ---- Preview panel scrolling ----
             TuiEvent::PreviewScrollUp => {
-                state.preview_scroll = state.preview_scroll.saturating_sub(3);
+                state.preview_scroll = state.preview_scroll.saturating_sub(10);
             }
             TuiEvent::PreviewScrollDown => {
-                state.preview_scroll = state.preview_scroll.saturating_add(3);
+                state.preview_scroll = state.preview_scroll.saturating_add(10);
             }
             // ---- Focus cycling between panels (FileList / Preview / Tree) ----
             TuiEvent::FocusNext => state.cycle_focus_forward(),
@@ -159,22 +179,26 @@ impl ActionHandler {
             TuiEvent::Quit => state.should_quit = true,
             TuiEvent::MouseClick(col, row) => self.handle_mouse_click(state, col, row),
             TuiEvent::MouseScrollUp => {
-                if state.scroll_offset > 0 {
+                if state.panel_focus == PanelFocus::Preview {
+                    state.preview_scroll = state.preview_scroll.saturating_sub(3);
+                } else if state.scroll_offset > 0 {
                     state.scroll_offset -= 1;
-                    // Sync selection: move with scroll to keep in view
                     if state.selected_index > 0 {
                         state.selected_index -= 1;
                     }
                 }
             }
             TuiEvent::MouseScrollDown => {
-                let max_scroll = state.entries.len().saturating_sub(1);
-                if state.scroll_offset < max_scroll {
-                    state.scroll_offset += 1;
-                    // Sync selection: move with scroll to keep in view
-                    let max_idx = state.entries.len().saturating_sub(1);
-                    if state.selected_index < max_idx {
-                        state.selected_index += 1;
+                if state.panel_focus == PanelFocus::Preview {
+                    state.preview_scroll = state.preview_scroll.saturating_add(3);
+                } else {
+                    let max_scroll = state.entries.len().saturating_sub(1);
+                    if state.scroll_offset < max_scroll {
+                        state.scroll_offset += 1;
+                        let max_idx = state.entries.len().saturating_sub(1);
+                        if state.selected_index < max_idx {
+                            state.selected_index += 1;
+                        }
                     }
                 }
             }
@@ -274,6 +298,7 @@ impl ActionHandler {
         let result = action(self.lint_port.as_ref());
         state.preview_text = result.output;
         state.violation_count = result.violation_count;
+        state.preview_scroll = 0;
         state.preview_mode = PreviewMode::ActionOutput;
         let status = if result.success { "Done" } else { "Error" };
         state.set_status(status);

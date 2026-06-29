@@ -544,12 +544,26 @@ impl shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsA
         &self,
         _: &shared::common::taxonomy_path_vo::FilePath,
     ) -> shared::project_setup::taxonomy_stats_vo::MaintenanceStatsVO {
-        unimplemented!()
+        shared::project_setup::taxonomy_stats_vo::MaintenanceStatsVO::new(
+            shared::common::taxonomy_path_vo::FilePath::default(),
+            shared::common::taxonomy_common_vo::Count::new(0),
+            shared::common::taxonomy_common_vo::Count::new(0),
+            shared::common::taxonomy_common_vo::Score::new(0.0),
+            shared::common::taxonomy_common_vo::Count::new(0),
+        )
     }
     async fn clean(&self) {}
     async fn update(&self) {}
     async fn doctor(&self) -> shared::project_setup::taxonomy_doctor_vo::DoctorResultVO {
-        unimplemented!()
+        use std::collections::HashMap;
+        shared::project_setup::taxonomy_doctor_vo::DoctorResultVO::new(
+            shared::common::taxonomy_suggestion_vo::DescriptionVO::new("mock".to_string()),
+            shared::common::taxonomy_message_vo::ComplianceStatus::new(true),
+            shared::common::taxonomy_paths_vo::FilePathList::new(vec![]),
+            HashMap::new(),
+            vec![],
+            shared::common::taxonomy_message_vo::ComplianceStatus::new(true),
+        )
     }
     async fn cancel(&self, _: shared::mcp_server::taxonomy_action_vo::JobId) {}
     async fn diagnose_toolchain(
@@ -584,13 +598,21 @@ impl shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsA
         &self,
         _: &shared::common::taxonomy_path_vo::FilePath,
     ) -> shared::project_setup::taxonomy_doctor_vo::SecurityScanReport {
-        unimplemented!()
+        shared::project_setup::taxonomy_doctor_vo::SecurityScanReport {
+            language: "rust".to_string(),
+            tool_name: "mock".to_string(),
+            findings: vec![],
+            tool_installed: false,
+        }
     }
     async fn run_dependency_report(
         &self,
         _: &shared::common::taxonomy_path_vo::FilePath,
     ) -> Result<shared::project_setup::taxonomy_doctor_vo::DependencyReport, String> {
-        unimplemented!()
+        Ok(shared::project_setup::taxonomy_doctor_vo::DependencyReport {
+            language: "rust".to_string(),
+            dependencies: vec![],
+        })
     }
 }
 

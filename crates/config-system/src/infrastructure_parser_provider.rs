@@ -36,7 +36,7 @@ impl IConfigParserPort for ConfigParserProvider {
                 });
             }
         };
-        let config: ProjectConfig = serde_yml::from_str(&content).map_err(|e| ConfigError {
+        let config: ProjectConfig = serde_yaml_ng::from_str(&content).map_err(|e| ConfigError {
             key: ConfigKey::new("yaml.parse"),
             message: ErrorMessage::new(format!("Failed to deserialize YAML config: {}", e)),
             config_file: err_path,
