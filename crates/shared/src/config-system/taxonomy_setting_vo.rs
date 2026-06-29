@@ -7,7 +7,6 @@ use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_common_vo::Score;
-use crate::common::taxonomy_path_vo::DirectoryPath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -118,8 +117,6 @@ pub struct ProjectConfig {
     #[serde(default)]
     pub layer_map: std::collections::HashMap<String, String>,
     #[serde(default)]
-    pub output_dir: Option<DirectoryPath>,
-    #[serde(default)]
     pub architecture: ArchitectureConfig,
 }
 
@@ -142,7 +139,6 @@ impl ProjectConfig {
             ignored_paths: FilePathList::default(),
             ignored_rules: PatternList::default(),
             layer_map: std::collections::HashMap::new(),
-            output_dir: None,
             architecture: ArchitectureConfig::default(),
         }
     }

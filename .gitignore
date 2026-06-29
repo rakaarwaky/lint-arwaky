@@ -27,6 +27,8 @@ output/
 target/
 .dsc_cache/
 .node_modules/
+.mimocode/
+.obsidian/
 
 # Sensitive files (CRED007a)
 credentials.json

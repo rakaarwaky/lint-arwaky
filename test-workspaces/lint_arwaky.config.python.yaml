@@ -2,8 +2,6 @@ thresholds:
   score: 100.0
   complexity: 15
 
-output_dir: "output"
-
 adapters:
   - name: "ruff"
     weight: 1.0
@@ -17,150 +15,188 @@ adapters:
 ignored_rules: []
 
 ignored_paths:
+  - "/.mimocode"
   - "./output"
   - "/.git"
   - "/.github"
   - "/scratch"
+  - "/packages"
   - "/__pycache__"
   - "/node_modules"
   - "/.venv"
   - "/venv"
   - "/.mypy_cache"
   - "/.ruff_cache"
+  - "/test-workspaces"
+  - "/tests"
 
 architecture:
   enabled: true
-  layers:
-    root:
-      suffix:
-        - strict: ["entry", "container"]
-    taxonomy:
-      suffix:
-        - strict:
-            ["vo", "entity", "error", "event", "constant", "utility", "helper"]
-    contract:
-      suffix:
-        - strict: ["port", "protocol", "aggregate"]
-    capabilities:
-      suffix:
-        - flexible:
-            [
-              "analyzer",
-              "checker",
-              "processor",
-              "evaluator",
-              "resolver",
-              "validator",
-              "formatter",
-              "executor",
-              "transformer",
-              "calculator",
-              "builder",
-              "compiler",
-              "aggregator",
-              "classifier",
-              "extractor",
-              "reporter",
-              "mapper",
-              "filter",
-              "collector",
-              "comparator",
-              "scorer",
-              "inspector",
-              "reviewer",
-              "assessor",
-              "auditor",
-              "actions",
-            ]
-        - forbidden:
-            [
-              "vo",
-              "entity",
-              "error",
-              "event",
-              "constant",
-              "constants",
-              "utility",
-              "helper",
-              "port",
-              "protocol",
-              "aggregate",
-            ]
-    infrastructure:
-      suffix:
-            - flexible:
-            [
-              "adapter",
-              "provider",
-              "scanner",
-              "client",
-              "schemas",
-              "lifespan",
-              "wrapper",
-              "tracer",
-              "tracker",
-              "variants",
-              "detector",
-              "patterns",
-              "system",
-              "repository",
-              "cache",
-              "loader",
-              "writer",
-              "reader",
-              "driver",
-              "connector",
-              "gateway",
-              "serializer",
-              "encoder",
-              "decoder",
-              "fetcher",
-              "watcher",
-              "indexer",
-              "dispatcher",
-              "recorder",
-              "proxy",
-              "publisher",
-              "subscriber",
-              "listener",
-              "poller",
-              "streamer",
-            ]
-        - forbidden:
-            [
-              "vo",
-              "entity",
-              "error",
-              "event",
-              "constant",
-              "constants",
-              "utility",
-              "helper",
-              "port",
-              "protocol",
-              "aggregate",
-            ]
-    surfaces:
-      suffix:
-        - strict:
-            [
-              "command",
-              "controller",
-              "page",
-              "view",
-              "component",
-              "router",
-              "layout",
-              "hook",
-              "store",
-              "action",
-              "screen",
-            ]
-    agent:
-      suffix:
-        - strict: ["orchestrator"]
-
   rules:
+    AES101:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
+
+    AES102:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
+      exceptions: ["__init__.py", "main.py", "lib.py"]
+      layers:
+        taxonomy:
+          suffix:
+            - strict:
+                [
+                  "vo",
+                  "entity",
+                  "error",
+                  "event",
+                  "constant",
+                  "utility",
+                  "helper",
+                ]
+        contract:
+          suffix:
+            - strict: ["port", "protocol", "aggregate"]
+        capabilities:
+          suffix:
+            - flexible:
+                [
+                  "analyzer",
+                  "checker",
+                  "processor",
+                  "evaluator",
+                  "resolver",
+                  "validator",
+                  "formatter",
+                  "executor",
+                  "transformer",
+                  "calculator",
+                  "builder",
+                  "compiler",
+                  "aggregator",
+                  "classifier",
+                  "extractor",
+                  "reporter",
+                  "mapper",
+                  "filter",
+                  "collector",
+                  "comparator",
+                  "scorer",
+                  "inspector",
+                  "reviewer",
+                  "assessor",
+                  "auditor",
+                  "actions",
+                ]
+            - forbidden:
+                [
+                  "vo",
+                  "entity",
+                  "error",
+                  "event",
+                  "constant",
+                  "constants",
+                  "utility",
+                  "helper",
+                  "port",
+                  "protocol",
+                  "aggregate",
+                ]
+        infrastructure:
+          suffix:
+            - flexible:
+                [
+                  "adapter",
+                  "provider",
+                  "scanner",
+                  "client",
+                  "schemas",
+                  "lifespan",
+                  "wrapper",
+                  "tracer",
+                  "tracker",
+                  "variants",
+                  "detector",
+                  "patterns",
+                  "system",
+                  "repository",
+                  "cache",
+                  "loader",
+                  "writer",
+                  "reader",
+                  "driver",
+                  "connector",
+                  "gateway",
+                  "serializer",
+                  "encoder",
+                  "decoder",
+                  "fetcher",
+                  "watcher",
+                  "indexer",
+                  "dispatcher",
+                  "recorder",
+                  "proxy",
+                  "publisher",
+                  "subscriber",
+                  "listener",
+                  "poller",
+                  "streamer",
+                ]
+            - forbidden:
+                [
+                  "vo",
+                  "entity",
+                  "error",
+                  "event",
+                  "constant",
+                  "constants",
+                  "utility",
+                  "helper",
+                  "port",
+                  "protocol",
+                  "aggregate",
+                ]
+        agent:
+          suffix:
+            - strict: ["orchestrator"]
+        surfaces:
+          suffix:
+            - strict:
+                [
+                  "command",
+                  "controller",
+                  "page",
+                  "view",
+                  "component",
+                  "router",
+                  "layout",
+                  "hook",
+                  "store",
+                  "action",
+                  "screen",
+                ]
+        root:
+          suffix:
+            - strict: ["entry", "container"]
     AES201:
       enabled: true
       scope:
@@ -172,15 +208,7 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -246,12 +274,26 @@ architecture:
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
             ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
+              purpose: "call"
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(port)"]
           forbidden:
             ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
+              purpose: "call"
 
         - scope: "agent(orchestrator)"
           allowed:
@@ -315,59 +357,33 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
+      conditions:
+        - scope: "capabilities"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy", "contract(protocol)"]
+          forbidden:
+            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
+              purpose: "call"
 
-    AES101:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-          "root",
-        ]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
-
-    AES102:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-          "root",
-        ]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+        - scope: "infrastructure"
+          allowed: ["taxonomy", "contract"]
+          mandatory: ["taxonomy", "contract(port)"]
+          forbidden:
+            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
+              purpose: "call"
 
     AES205:
       enabled: true
@@ -389,57 +405,25 @@ architecture:
     AES402:
       enabled: true
       scope: ["contract(aggregate)", "contract(port|protocol)"]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES403:
       enabled: true
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES404:
       enabled: true
       scope: ["infrastructure"]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES405:
       enabled: true
       scope: ["agent(orchestrator)"]
       max_lines: 1000
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES406:
       enabled: true
@@ -450,15 +434,7 @@ architecture:
           "surfaces(component|view|layout)",
         ]
       max_functions: 15
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES301:
       enabled: true
@@ -472,15 +448,7 @@ architecture:
           "surfaces",
         ]
       max_lines: 1000
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES302:
       enabled: true
@@ -494,15 +462,7 @@ architecture:
           "surfaces",
         ]
       min_lines: 5
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES304:
       enabled: true
@@ -515,7 +475,7 @@ architecture:
           "agent",
           "surfaces",
         ]
-      patterns:
+      forbidden_bypass:
         [
           "# noqa",
           "# type: ignore",
@@ -577,90 +537,40 @@ architecture:
           "agent",
           "surfaces",
         ]
-      exceptions:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES501:
       enabled: true
+      check_orphan: true
       scope: ["taxonomy"]
-      entry_points:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      entry_points: []
 
     AES502:
       enabled: true
+      check_orphan: true
       scope: ["contract"]
-      entry_points:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      entry_points: []
 
     AES503:
       enabled: true
+      check_orphan: true
       scope: ["capabilities"]
-      entry_points:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      entry_points: []
 
     AES504:
       enabled: true
+      check_orphan: true
       scope: ["infrastructure"]
-      entry_points:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      entry_points: []
 
     AES505:
       enabled: true
+      check_orphan: true
       scope: ["agent"]
-      entry_points:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      entry_points: []
 
     AES506:
       enabled: true
+      check_orphan: true
       scope: ["surfaces"]
-      entry_points:
-        [
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "cli_main_entry.py",
-          "mcp_main_entry.py",
-          "tui_main_entry.py",
-        ]
+      entry_points: []

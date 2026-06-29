@@ -86,7 +86,9 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
         self.protocol.install_javascript_adapters(sudo).await
     }
 
-    fn detect_language(&self) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO {
+    fn detect_language(
+        &self,
+    ) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO {
         self.protocol.detect_language()
     }
 

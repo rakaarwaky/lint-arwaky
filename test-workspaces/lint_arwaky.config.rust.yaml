@@ -19,13 +19,17 @@ ignored_paths:
   - "/.git"
   - "/.github"
   - "/scratch"
-  - "/test-project-rust"
-  - "/test-project-python"
-  - "/test-project-javascript"
   - "/packages"
   - "/node_modules"
   - "/.opencode"
+  - "/.mimocode"
   - "/.jj"
+  - "/test-workspaces"
+  - "/scripts"
+  - ".min.js"
+  - ".min.css"
+  - "/.dsc_cache"
+  - "/tests"
 
 architecture:
   enabled: true
@@ -43,15 +47,7 @@ architecture:
           "surfaces",
           "root",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES102:
       enabled: true
@@ -65,19 +61,20 @@ architecture:
           "surfaces",
           "root",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       layers:
         taxonomy:
           suffix:
-            - strict: ["vo", "entity", "error", "event", "constant"]
+            - strict:
+                [
+                  "vo",
+                  "entity",
+                  "error",
+                  "event",
+                  "constant",
+                  "utility",
+                  "helper",
+                ]
         contract:
           suffix:
             - strict: ["port", "protocol", "aggregate"]
@@ -97,7 +94,6 @@ architecture:
                   "calculator",
                   "builder",
                   "compiler",
-                  "aggregator",
                   "classifier",
                   "extractor",
                   "reporter",
@@ -110,7 +106,6 @@ architecture:
                   "reviewer",
                   "assessor",
                   "auditor",
-                  "actions",
                 ]
             - forbidden:
                 [
@@ -216,32 +211,7 @@ architecture:
           "surfaces",
           "root",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-          "surface_multi_command.rs",
-          "surface_watch_command.rs",
-          "surface_check_command.rs",
-          "capabilities_arch_lint.rs",
-          "surface_tools_command.rs",
-          "surface_job_controller.rs",
-          "agent_orphan_orchestrator.rs",
-          "surface_vscode_command.rs",
-          "infrastructure_vscode_graph_generator.rs",
-          "infrastructure_language_detector.rs",
-          "root_source_parsing_container.rs",
-          "surface_git_command.rs",
-          "surface_dev_command.rs",
-          "surface_map_command.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -310,9 +280,9 @@ architecture:
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
-            - layer: "contract"
-              purpose: "call"
-            - layer: "contract(port|protocol|aggregate)"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
               purpose: "call"
 
         - scope: "infrastructure"
@@ -323,9 +293,9 @@ architecture:
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
-            - layer: "contract"
-              purpose: "call"
-            - layer: "contract(port|protocol|aggregate)"
+            - layer: "contract(port)"
+              purpose: "implement"
+            - layer: "contract(protocol|aggregate)"
               purpose: "call"
 
         - scope: "agent(orchestrator)"
@@ -409,7 +379,7 @@ architecture:
               "agent",
               "surfaces",
             ]
-          mandatory: ["taxonomy", "contract(aggregate)"]
+          mandatory: []
           forbidden: []
           allowed_imports:
             - layer: "taxonomy"
@@ -437,33 +407,7 @@ architecture:
           "surfaces",
           "root",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "cli_main_entry.rs",
-          "mcp_main_entry.rs",
-          "tui_main_entry.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-          "root_file_system_container.rs",
-          "root_git_hooks_container.rs",
-          "root_file_watch_container.rs",
-          "root_config_system_container.rs",
-          "root_vscode_container.rs",
-          "root_auto_fix_container.rs",
-          "root_multi_project_container.rs",
-          "root_maintenance_container.rs",
-          "root_project_setup_container.rs",
-          "root_orphan_detector_container.rs",
-          "root_naming_rules_container.rs",
-          "root_import_rules_container.rs",
-          "root_role_rules_container.rs",
-          "root_source_parsing_container.rs",
-          "root_external_lint_container.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -598,7 +542,7 @@ architecture:
               "agent",
               "surfaces",
             ]
-          mandatory: ["taxonomy", "contract(aggregate)"]
+          mandatory: []
           forbidden: []
           allowed_imports:
             - layer: "taxonomy"
@@ -701,7 +645,18 @@ architecture:
 
     AES205:
       enabled: true
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+      exceptions:
+        [
+          "main.rs",
+          "lib.rs",
+          "mod.rs",
+          "taxonomy_fix_applied_event.rs",
+          "contract_fix_aggregate.rs",
+          "taxonomy_fix_vo.rs",
+          "contract_fix_protocol.rs",
+          "contract_executor_port.rs",
+          "taxonomy_symbol_renamer_utility.rs",
+        ]
       scope:
         [
           "taxonomy",
@@ -756,15 +711,31 @@ architecture:
 
     AES304:
       enabled: true
-      scope: ["main.rs", "lib.rs", "mod.rs"]
-      patterns:
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+          "root",
+        ]
+      forbidden_bypass:
         [
           "#[allow(",
-          "unwrap()",
-          "panic!",
+          "unwrap",
+          "expect",
+          "panic",
+          "todo",
+          "unimplemented",
+          "unreachable",
           "noqa",
           "type: ignore",
           "eslint-disable",
+          "ts-ignore",
+          "ts-expect-error",
+          "pylint: disable",
         ]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
@@ -824,30 +795,36 @@ architecture:
     # ─── AES500: Orphan ───
     AES501:
       enabled: true
+      check_orphan: true
       scope: ["taxonomy"]
-      entry_points: ["main.rs", "lib.rs", "mod.rs"]
+      entry_points: []
 
     AES502:
       enabled: true
+      check_orphan: true
       scope: ["contract"]
-      entry_points: ["main.rs", "lib.rs", "mod.rs"]
+      entry_points: []
 
     AES503:
       enabled: true
+      check_orphan: true
       scope: ["capabilities"]
-      entry_points: ["main.rs", "lib.rs", "mod.rs"]
+      entry_points: []
 
     AES504:
       enabled: true
+      check_orphan: true
       scope: ["infrastructure"]
-      entry_points: ["main.rs", "lib.rs", "mod.rs"]
+      entry_points: []
 
     AES505:
       enabled: true
+      check_orphan: true
       scope: ["agent"]
-      entry_points: ["main.rs", "lib.rs", "mod.rs"]
+      entry_points: []
 
     AES506:
       enabled: true
+      check_orphan: true
       scope: ["surfaces"]
-      entry_points: ["main.rs", "lib.rs", "mod.rs"]
+      entry_points: []

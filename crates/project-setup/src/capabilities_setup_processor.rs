@@ -154,7 +154,11 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
 
     fn detect_language(&self) -> ProjectLanguageVO {
         let langs = self.detect_languages();
-        langs.values.into_iter().next().unwrap_or_else(|| ProjectLanguageVO::new("rust"))
+        langs
+            .values
+            .into_iter()
+            .next()
+            .unwrap_or_else(|| ProjectLanguageVO::new("rust"))
     }
 
     fn detect_languages(&self) -> ProjectLanguagesVO {
