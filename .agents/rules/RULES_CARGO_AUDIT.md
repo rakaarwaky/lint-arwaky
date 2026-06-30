@@ -1,5 +1,7 @@
 # Cargo-Audit Security Rules
 
+See [README.md](../README.md) for Rust adapter usage and [RULES_CLIPPY.md](RULES_CLIPPY.md) for related Rust linting.
+
 Cargo-audit audits Cargo.lock for crates with security vulnerabilities, available at https://github.com/rustsec/cargo-audit. It checks against the RustSec Advisory Database.
 
 ## Key Checks

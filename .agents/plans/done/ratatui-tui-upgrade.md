@@ -2,6 +2,8 @@ Full Implementation: Ratatui TUI — Flat File Structure (AES Compliant)
 
 All files are flat in `crates/tui/src/` with strict AES prefix/suffix naming. No subfolders.
 
+See [ARCHITECTURE.md](../../../ARCHITECTURE.md) for AES layer rules and [crates/tui/FRD.md](../../../crates/tui/FRD.md) for TUI requirements.
+
 ---
 
 ## 1. Workspace `Cargo.toml` — Add to `[workspace.dependencies]`

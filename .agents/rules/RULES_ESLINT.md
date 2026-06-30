@@ -1,5 +1,7 @@
 # ESLint Linting Rules (JavaScript/TypeScript)
 
+See [README.md](../README.md) for JS/TS adapter usage and [RULES_TSC.md](RULES_TSC.md) for related type-checking.
+
 ESLint is the standard linter for JavaScript and TypeScript, available at https://eslint.org/. It enforces code quality and style rules.
 
 ## Rule Categories

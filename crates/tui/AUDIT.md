@@ -4,6 +4,8 @@
 **Scope**: `crates/tui/src/` (15 files) + `crates/tui/tests/` (5 files)
 **Baseline**: FRD (`crates/tui/FRD.md`) compliance + DX review + functional bug hunt
 
+See [ARCHITECTURE.md](../../../ARCHITECTURE.md) for AES layer details and [README.md](../../../README.md) for project context.
+
 ---
 
 ## Executive Summary

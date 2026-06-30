@@ -7,6 +7,8 @@ description: Build workspace and verify clean compile, then optionally run tests
 
 Fast feedback loop after code edits. Run after every meaningful change.
 
+See [README.md](../../../../README.md) for build commands, [TEST.md](../../../../TEST.md) for pass/fail criteria, and [scripts/gates.sh](../../../../scripts/gates.sh) for the full quality gate pipeline.
+
 ## Quick Check (30s)
 
 ```bash

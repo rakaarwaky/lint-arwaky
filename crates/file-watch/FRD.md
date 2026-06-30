@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - File Watch
 
+See [README.md](../../../README.md) for project context and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for layer rules.
+
 ## 1. Feature Goal
 
 The primary purpose of the `file-watch` module is to provide a filesystem monitoring system capable of detecting file changes in real-time and automatically re-triggering the linting pipeline. This module uses `notify` and `notify-debouncer-mini` to optimize performance and avoid redundant processing during rapid changes.

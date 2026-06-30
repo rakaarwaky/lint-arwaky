@@ -1,5 +1,7 @@
 # Ruff Linting Rules
 
+See [README.md](../README.md) for Python adapter usage and [RULES_AES.md](RULES_AES.md) for AES rule context.
+
 Ruff is an extremely fast Python linter written in Rust. It re-implements popular linting rules from Flake8, Pyflakes, isort, and pylint.
 
 ## Rule Categories

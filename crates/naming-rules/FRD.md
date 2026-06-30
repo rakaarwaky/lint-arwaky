@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - Naming Rules
 
+See [RULES_AES.md](../../.agents/rules/RULES_AES.md) for AES101-AES102 details and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for naming conventions.
+
 ## 1. Feature Goal
 
 The primary objective of the `naming-rules` feature is to enforce strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer architecture system. By validating that files and identifiers conform to structural and semantic naming patterns, it prevents naming chaos and helps developers instantly recognize the architectural role of any component based solely on its name.

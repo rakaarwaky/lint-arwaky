@@ -2,6 +2,8 @@
 
 Hello Raka! Based on the _Technical Research Proposal_ document you provided, you want to implement the _Deep Learning-Based Semantic Code Naming_ system using the **Rust Burn Framework**.
 
+See [ai-autorepair-burn.md](ai-autorepair-burn.md) for the full research proposal and [RULES_AES.md](../../rules/RULES_AES.md) for AES101-AES102 naming rules.
+
 To "work on" or realize this proposal, I have prepared the **core implementation code** in Rust. This implementation covers the three main pillars outlined in the document: Model Architecture (Burn), AST Feature Extractor, and Reference Propagation Engine.
 
 Here is the technical realization of that proposal:

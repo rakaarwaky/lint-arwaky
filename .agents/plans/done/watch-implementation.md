@@ -1,5 +1,7 @@
 # Plan: Full Watch Implementation
 
+See [README.md](../../../README.md) for watch usage and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for layer rules.
+
 ## Current State
 
 | Component              | Status      | Problem                                                             |

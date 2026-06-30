@@ -1,5 +1,7 @@
 # Plan: Cleanup Setup & Maintenance — Remove `cancel`, Move `doctor`
 
+See [README.md](../../../README.md) for CLI commands and [DEPLOY.md](../../../DEPLOY.md) for maintenance context.
+
 ## Problem
 
 1. `cancel` command is useless — lint process is fast, no long-running jobs to cancel

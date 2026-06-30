@@ -1,6 +1,8 @@
 ---
 name: lint-scan
 description: Scan project with lint-arwaky CLI and filter results by AES violation code. Use to verify specific rule compliance after fixes.
+
+See [README.md](../../../../README.md) for scan commands and [RULES_AES.md](../../rules/RULES_AES.md) for rule details.
 ---
 
 # Lint Scan

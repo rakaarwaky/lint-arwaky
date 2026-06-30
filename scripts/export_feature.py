@@ -4,29 +4,34 @@
 The output includes the crate's own source, its Cargo.toml, and any shared
 crate modules transitively reachable through `shared::...` import paths.
 """
+
 import re
 import subprocess
 import sys
 from pathlib import Path
 
 CARGO_TOML = "Cargo.toml"
-VERSION_PATTERN = re.compile(r'(?m)^\[package\].*?^version\s*=\s*"([^"]+)"', re.MULTILINE | re.DOTALL)
-WORKSPACE_VERSION_PATTERN = re.compile(r'(?m)^\[package\].*?version\.workspace\s*=\s*true', re.MULTILINE | re.DOTALL)
-DECL_PATTERN = re.compile(
-    r'\bpub(?:\([^)]+\))?\s+(struct|enum|trait|type|fn|const|static|mod)\s+(\w+)'
+VERSION_PATTERN = re.compile(
+    r'(?m)^\[package\].*?^version\s*=\s*"([^"]+)"', re.MULTILINE | re.DOTALL
 )
-MACRO_PATTERN = re.compile(r'\bmacro_rules!\s+(\w+)')
-SHARED_PATH_PATTERN = re.compile(r'\bshared::([a-zA-Z0-9_:]+)')
+WORKSPACE_VERSION_PATTERN = re.compile(
+    r"(?m)^\[package\].*?version\.workspace\s*=\s*true", re.MULTILINE | re.DOTALL
+)
+DECL_PATTERN = re.compile(
+    r"\bpub(?:\([^)]+\))?\s+(struct|enum|trait|type|fn|const|static|mod)\s+(\w+)"
+)
+MACRO_PATTERN = re.compile(r"\bmacro_rules!\s+(\w+)")
+SHARED_PATH_PATTERN = re.compile(r"\bshared::([a-zA-Z0-9_:]+)")
 
 # Sanitize version strings to a safe filename fragment (CWE-22 mitigation).
-SAFE_VERSION_CHARS = re.compile(r'[^0-9A-Za-z.\-]')
+SAFE_VERSION_CHARS = re.compile(r"[^0-9A-Za-z.\-]")
 
 
 def resolve_workspace() -> tuple[Path, Path, Path]:
     """Return (workspace_root, crates_dir, docs_finding_dir). Exit on missing crates/."""
     workspace_root = Path(__file__).resolve().parent.parent
     crates_dir = workspace_root / "crates"
-    docs_finding_dir = workspace_root / "docs" / "finding"
+    docs_finding_dir = workspace_root / ".agents" / "finding"
 
     if not crates_dir.exists():
         print(f"Error: 'crates' directory not found at {crates_dir}", file=sys.stderr)
@@ -82,7 +87,9 @@ def read_crate_version(crate_path: Path, fallback: str = "0.1.0") -> str:
     try:
         content = cargo_toml_path.read_text(encoding="utf-8", errors="replace")
     except OSError as e:
-        print(f"Warning: Could not read {cargo_toml_path} ({e}). Defaulting to {fallback}.")
+        print(
+            f"Warning: Could not read {cargo_toml_path} ({e}). Defaulting to {fallback}."
+        )
         return fallback
 
     if WORKSPACE_VERSION_PATTERN.search(content):
@@ -107,17 +114,21 @@ def read_crate_version(crate_path: Path, fallback: str = "0.1.0") -> str:
 
 
 def sanitize_version(version: str) -> str:
-    """CWE-22: strip any character that could escape the docs/finding directory."""
+    """CWE-22: strip any character that could escape the .agents/finding directory."""
     safe = SAFE_VERSION_CHARS.sub("_", version)
     return safe or "0.0.0"
 
 
-def index_shared_module(shared_src_dir: Path) -> tuple[dict[str, list[Path]], dict[str, list[Path]]]:
+def index_shared_module(
+    shared_src_dir: Path,
+) -> tuple[dict[str, list[Path]], dict[str, list[Path]]]:
     module_to_files: dict[str, list[Path]] = {}
     symbol_to_files: dict[str, list[Path]] = {}
 
     if not shared_src_dir.exists():
-        print("Warning: 'crates/shared/src' directory not found. Shared dependencies cannot be resolved.")
+        print(
+            "Warning: 'crates/shared/src' directory not found. Shared dependencies cannot be resolved."
+        )
         return module_to_files, symbol_to_files
 
     print("Indexing shared crate for resolving dependencies...")
@@ -197,17 +208,25 @@ def _score_files(files: list[Path], components: list[str]) -> list[tuple[int, Pa
 def collect_crate_files(crate_path: Path) -> set[Path]:
     files: set[Path] = set()
     src_dir = crate_path / "src"
-    important_files = {CARGO_TOML, "build.rs", "README.md", "FRD.md", "LICENSE", "LICENSE-MIT", "LICENSE-APACHE"}
-    
+    important_files = {
+        CARGO_TOML,
+        "build.rs",
+        "README.md",
+        "FRD.md",
+        "LICENSE",
+        "LICENSE-MIT",
+        "LICENSE-APACHE",
+    }
+
     for f in crate_path.iterdir():
         if f.is_file() and f.name in important_files:
             files.add(f)
-    
+
     if src_dir.exists():
         for f in src_dir.rglob("*"):
             if f.is_file():
                 files.add(f)
-    
+
     return files
 
 
@@ -233,7 +252,7 @@ def scan_shared_imports(
     print("Scanning source files for imported shared dependencies...")
     extra: set[Path] = set()
     scanned: set[Path] = set()
-    
+
     for f in files:
         if f.suffix != ".rs" or f in scanned:
             continue
@@ -245,12 +264,15 @@ def scan_shared_imports(
             continue
         for path_str in SHARED_PATH_PATTERN.findall(content):
             components = path_str.split("::")
-            extra.update(resolve_dependency_files(components, module_to_files, symbol_to_files))
+            extra.update(
+                resolve_dependency_files(components, module_to_files, symbol_to_files)
+            )
     return extra
 
 
 def run_lint_scan(workspace_root: Path, crate_path: Path) -> str:
     import shutil
+
     cli_bin = shutil.which("lint-arwaky-cli")
     if not cli_bin:
         cli_bin_candidate = workspace_root / "target" / "release" / "lint-arwaky-cli"
@@ -260,7 +282,7 @@ def run_lint_scan(workspace_root: Path, crate_path: Path) -> str:
             cli_bin_candidate = workspace_root / "target" / "debug" / "lint-arwaky-cli"
             if cli_bin_candidate.exists():
                 cli_bin = str(cli_bin_candidate)
-    
+
     if not cli_bin:
         print("Warning: lint-arwaky-cli not found. Run install.local.sh first.")
         return ""
@@ -297,11 +319,15 @@ def write_markdown(
         out.write(
             f"This document contains the source code for feature crate `{selected_crate}` "
         )
-        out.write("along with its corresponding and imported definitions from the `shared` crate.\n\n")
+        out.write(
+            "along with its corresponding and imported definitions from the `shared` crate.\n\n"
+        )
 
         if lint_output:
             out.write("## Problem Statement\n\n")
-            out.write("The following issues were detected by `lint-arwaky-cli scan`:\n\n")
+            out.write(
+                "The following issues were detected by `lint-arwaky-cli scan`:\n\n"
+            )
             out.write("```\n")
             out.write(lint_output)
             if not lint_output.endswith("\n"):
@@ -350,7 +376,9 @@ def main() -> None:
 
         feature_crates = list_feature_crates(crates_dir)
         if not feature_crates:
-            print("Error: No feature crates found in 'crates' directory.", file=sys.stderr)
+            print(
+                "Error: No feature crates found in 'crates' directory.", file=sys.stderr
+            )
             sys.exit(1)
 
         selected_crate = prompt_crate(feature_crates)
@@ -384,7 +412,14 @@ def main() -> None:
 
         print(f"Writing export to {output_path}...")
         sorted_files = sorted(files_to_export)
-        write_markdown(output_path, sorted_files, workspace_root, selected_crate, safe_version, lint_output)
+        write_markdown(
+            output_path,
+            sorted_files,
+            workspace_root,
+            selected_crate,
+            safe_version,
+            lint_output,
+        )
 
         print(f"\nSuccess! Consolidate markdown file created: {output_path}")
 

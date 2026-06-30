@@ -1,5 +1,7 @@
 # Clippy Linting Rules
 
+See [README.md](../README.md) for Rust adapter usage and [RULES_RUSTFMT.md](RULES_RUSTFMT.md) for related Rust formatting.
+
 Clippy is the official Rust linter, available at https://github.com/rust-lang/rust-clippy. It catches common mistakes and enforces idiomatic Rust code.
 
 ## Rule Categories

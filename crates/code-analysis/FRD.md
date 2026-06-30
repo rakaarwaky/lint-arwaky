@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - Code Analysis
 
+See [RULES_AES.md](../../.agents/rules/RULES_AES.md) for AES301-AES305 details and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for layer rules.
+
 ## 1. Feature Goal
 
 The goal of the `code-analysis` module is to enforce general code quality, formatting limits, and clean-coding policies. It protects the codebase from bloated files, empty structures, and duplicate blocks, while guaranteeing zero tolerance for warning/error bypasses (such as compiler suppression comments or crash-prone operations like unwrap/expect).

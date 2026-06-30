@@ -23,7 +23,7 @@ critical_files=(
     "TEST.md"
     "AGENTS.md"
     "ARCHITECTURE.md"
-    "docs/rules/RULES_AES.md"
+    ".agents/rules/RULES_AES.md"
     "CONTRIBUTING.md"
     "SKILL.md"
     "MIGRATION_RUST.md"

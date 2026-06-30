@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - Import Rules
 
+See [RULES_AES.md](../../.agents/rules/RULES_AES.md) for AES201-AES205 details and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for layer rules.
+
 ## 1. Feature Goal
 
 The primary goal of the `import-rules` module is to enforce correct structural boundaries and unidirectional dependency flows. It prevents spaghetti architecture, circular dependencies, and dead/unused imports by validating every import statement against a predefined layer-hierarchy matrix.

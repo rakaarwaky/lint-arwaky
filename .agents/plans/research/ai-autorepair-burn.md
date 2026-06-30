@@ -1,5 +1,7 @@
 # Deep Learning-Based Semantic Code Naming and Reference Propagation using Rust Burn Framework
 
+See [RULES_AES.md](../../rules/RULES_AES.md) for the rule catalog and [ARCHITECTURE.md](../ARCHITECTURE.md) for AES layer details.
+
 **Authors:** Development Team, Agentic Engineering Systems Group  
 **Date:** June 22, 2026  
 **Document Class:** Technical Research Proposal & Architectural Design Spec

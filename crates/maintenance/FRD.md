@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - Maintenance
 
+See [README.md](../../../README.md) for project context and [TEST.md](../../../TEST.md) for verification criteria.
+
 ## 1. Feature Goal
 
 The primary purpose of the `maintenance` module is to provide maintenance operations for the lint_arwaky system, including dependency updates, security audits, configuration drift detection, and AES rule catalog refresh. This module helps keep the codebase up-to-date and compliant with standards.

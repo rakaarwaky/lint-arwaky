@@ -1,5 +1,7 @@
 # Plan: Remove `import`, `export`, `diff` Commands
 
+See [README.md](../../README.md) for CLI overview and [TEST.md](../../../TEST.md) for verification criteria.
+
 ## Problem
 
 - `import` — stub, only prints "Imported" without reading/parsing/writing

@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - Config System
 
+See [README.md](../../../README.md) for config commands and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for architecture context.
+
 ## 1. Feature Goal
 
 The primary purpose of the `config-system` module is to manage lint_arwaky configuration by implementing a loading, parsing, validation, and workspace detection system. This module is responsible for reading `lint_arwaky.config.*.yaml` files and merging them with project-level overrides.

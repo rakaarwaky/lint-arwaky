@@ -60,8 +60,8 @@ for DOC in "${Docs[@]}"; do
     fi
 done
 
-# RULES_AES.md: source in docs/rules/, target at XDG root
-RULES_SRC="$PROJECT_ROOT/docs/rules/RULES_AES.md"
+# RULES_AES.md: source in .agents/rules/, target at XDG root
+RULES_SRC="$PROJECT_ROOT/.agents/rules/RULES_AES.md"
 if [ -f "$RULES_SRC" ]; then
     cp "$RULES_SRC" "$CONFIG_DIR/RULES_AES.md"
     echo "  RULES_AES.md -> $CONFIG_DIR/RULES_AES.md"

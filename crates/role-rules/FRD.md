@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - Role Rules
 
+See [RULES_AES.md](../../.agents/rules/RULES_AES.md) for AES401-AES406 details and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for layer roles.
+
 ## 1. Feature Goal
 
 The main goal of the `role-rules` module is to enforce architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Infrastructure, Agent, Surface, and Root) as defined by the 7-layer architecture standard. It ensures that components behave exactly according to their architectural roles (e.g., contracts define ports, infrastructure provides concrete implementations, agents coordinate, and taxonomy remains pure and free of external dependencies or raw primitives).

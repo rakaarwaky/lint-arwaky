@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - Git Hooks
 
+See [README.md](../../../README.md) for usage and [TEST.md](../../../TEST.md) for verification criteria.
+
 ## 1. Feature Goal
 
 The primary purpose of the `git-hooks` module is to implement a git hooks system for lint checking at the pre-commit stage. This module detects file changes through git diffs and runs the linter only on modified files, ensuring that code entering the repository complies with AES rules.

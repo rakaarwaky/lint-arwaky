@@ -3,6 +3,8 @@
 > Step-by-step guide for migrating a Python project to AES architecture.
 > Workspace structure: `modules/` with pyproject.toml.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for layer rules and [README.md](README.md) for project usage.
+
 ## Workspace Structure
 
 ```

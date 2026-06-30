@@ -3,6 +3,8 @@
 > Step-by-step guide for migrating a TypeScript/JavaScript project to AES architecture.
 > Workspace structure: `packages/` with npm/pnpm workspaces.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for layer rules and [README.md](README.md) for project usage.
+
 ## Workspace Structure
 
 ```

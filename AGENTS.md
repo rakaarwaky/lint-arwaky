@@ -1,8 +1,8 @@
 # AGENTS.md — Lint Arwaky
 
 Read before making any changes to the codebase.
-Make sure to read `TEST.md` for pass/fail criteria before committing any changes.
-See also `ARCHITECTURE.md` for the full 7-layer specification.
+Make sure to read [TEST.md](TEST.md) for pass/fail criteria before committing any changes.
+See also [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 
 ## Build & dev
 

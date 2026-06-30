@@ -1,5 +1,7 @@
 # Plan: Proper MCP Server Implementation
 
+See [README.md](../../README.md) for MCP setup and [SKILL.md](../../../.agents/skills/build-verify/SKILL.md) for verification workflow.
+
 ## Current State (after cleanup)
 
 MCP server is already running with 4 tools:

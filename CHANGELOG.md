@@ -1,5 +1,7 @@
 # Changelog
 
+See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
+
 ## 1.10.87 (2026-06-30)
 
 ### Added

@@ -1,5 +1,7 @@
 # TypeScript Compiler (TSC) Rules
 
+See [README.md](../README.md) for JS/TS adapter usage and [RULES_ESLINT.md](RULES_ESLINT.md) for related linting.
+
 TypeScript is the type-checked superset of JavaScript, available at https://www.typescriptlang.org/. The TypeScript compiler (`tsc`) enforces type safety and modern JavaScript features.
 
 ## Strict Mode Checks

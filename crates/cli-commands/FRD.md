@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - CLI Commands
 
+See [README.md](../../../README.md) for CLI usage and [SKILL.md](../../../.agents/skills/lint-scan/SKILL.md) for scan patterns.
+
 ## 1. Feature Goal
 
 The primary purpose of the `cli-commands` module is to provide a unified command-line interface (CLI) for users to run the entire linting pipeline. This module implements surfaces for main commands such as `check`, `scan`, `fix`, `git`, `config`, `setup`, `tui`, and `watch`.

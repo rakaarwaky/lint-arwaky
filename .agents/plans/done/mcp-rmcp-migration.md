@@ -1,5 +1,7 @@
 # Plan: Migrate MCP to Official SDK (`rmcp`)
 
+See [README.md](../../../README.md) for MCP setup and [TEST.md](../../../TEST.md) for smoke-test criteria.
+
 ## Why
 
 - Official SDK from modelcontextprotocol org (3.5k stars)

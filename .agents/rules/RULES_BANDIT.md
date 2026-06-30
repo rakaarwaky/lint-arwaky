@@ -1,5 +1,7 @@
 # Bandit Security Rules
 
+See [README.md](../README.md) for Python adapter usage and [RULES_RUFF.md](RULES_RUFF.md) for related Python linting.
+
 Bandit is a security linter for Python code, available at https://bandit.readthedocs.io/. It detects common security issues by walking the Python AST.
 
 ## B100–B199: Assert & Hash

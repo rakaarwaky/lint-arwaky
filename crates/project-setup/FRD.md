@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - Project Setup
 
+See [README.md](../../../README.md) for setup commands and [DEPLOY.md](../../../DEPLOY.md) for install options.
+
 ## 1. Feature Goal
 
 The primary purpose of the `project-setup` module is to provide scaffolding facilities and doctor checks for new projects. This module initializes projects with AES-compliant directory layouts, sets up MCP configuration, and provides CI/CD templates for lint_arwaky integration.

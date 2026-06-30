@@ -6,7 +6,7 @@ version: 1.10.72
 
 Multi-language linting and AES (Agentic Engineering System) architecture enforcement.
 
-See `README.md` for install/usage and `ARCHITECTURE.md` for layer details.
+See [README.md](README.md) for install/usage and [ARCHITECTURE.md](ARCHITECTURE.md) for layer details.
 
 #### Key Features
 

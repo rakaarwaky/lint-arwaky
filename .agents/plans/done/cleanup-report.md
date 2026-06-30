@@ -1,5 +1,7 @@
 # Plan: Remove `report` Command
 
+See [README.md](../../../README.md) for CLI overview and [TEST.md](../../../TEST.md) for verification criteria.
+
 ## Problem
 
 - CLI `report` — stub, only prints "not yet implemented"

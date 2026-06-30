@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - Auto Fix
 
+See [ARCHITECTURE.md](../../../ARCHITECTURE.md) for layer rules and [README.md](../../../README.md) for project context.
+
 ## 1. Feature Goal
 
 The primary purpose of the `auto-fix` module is to provide an automatic correction mechanism for AES rule violations that can be fixed mechanically. This module takes linting results and applies automatic corrections to the affected source files, reducing the manual workload for developers when fixing errors that can be detected and corrected deterministically.

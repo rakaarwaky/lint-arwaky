@@ -2,6 +2,8 @@ in id pub importsala hadraft ayng saya buat tolong adna berikan kritik dan saran
 
 This draft demonstrates how the AI Auto-Repair feature using Rust Burn is implemented within `lint-arwaky` following _dogfooding_ principles (strictly adhering to the 7-layer AES rules).
 
+See [ai-autorepair-burn.md](ai-autorepair-burn.md) for the research proposal and [RULES_AES.md](../../rules/RULES_AES.md) for naming rule context.
+
 Code is no longer written monolithically, but is instead split into specific layers: **Taxonomy, Contract, Capabilities, Infrastructure, and Agent**.
 
 ---

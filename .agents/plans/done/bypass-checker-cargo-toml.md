@@ -1,5 +1,7 @@
 Upgrade BypassChecker — 2 Changes
 
+See [RULES_AES.md](../../rules/RULES_AES.md) for AES304 details and [RULES_CLIPPY.md](../../rules/RULES_CLIPPY.md) for Rust linting context.
+
 ## 1. Split Safe vs Unsafe Unwrap Detection
 
 Current: `.unwrap()`, `.unwrap_or()`, `.unwrap_or_default()`, `.expect()` — all flagged as UnwrapExpect

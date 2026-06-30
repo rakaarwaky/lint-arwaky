@@ -1,5 +1,7 @@
 # Feature Requirement Document — TUI (lint-arwaky-tui)
 
+See [README.md](../../../README.md) for TUI usage and [AUDIT.md](AUDIT.md) for current audit findings.
+
 ## 1. Feature Goal
 
 State-driven 3-panel Ratatui file browser that replaces the flat-menu dialoguer TUI. Provides real-time AES architecture linting with navigation, file preview, and all CLI commands mapped to keyboard shortcuts. Supports mouse interaction for panel focus, scrolling, and scrollbar navigation.

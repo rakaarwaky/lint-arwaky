@@ -1,5 +1,7 @@
 # AES (Agentic Engineering System) Rules — v3.0
 
+See [ARCHITECTURE.md](../ARCHITECTURE.md) for the full 7-layer specification.
+
 ---
 
 ## Summary

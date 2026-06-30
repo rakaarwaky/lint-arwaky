@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - MCP Server
 
+See [README.md](../../../README.md) for MCP setup and [TEST.md](../../../TEST.md) for smoke-test criteria.
+
 ## 1. Feature Goal
 
 The primary purpose of the `mcp-server` module is to implement a Model Context Protocol (MCP) server that exposes the linting pipeline as tools and resources accessible by AI agents. This server enables lint_arwaky integration with IDEs and other AI tools through a standard protocol.

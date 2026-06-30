@@ -1,5 +1,7 @@
 # FINDING: Source-Parsing Decoupling — Complete Context for AI Agent
 
+See [ARCHITECTURE.md](../../../ARCHITECTURE.md) for layer rules and [RULES_AES.md](../../rules/RULES_AES.md) for import rule details.
+
 ## 1. Problem Statement
 
 The `source-parsing` crate provides infrastructure implementations (scanners, language detector, etc.) that are injected at runtime into other feature crates. If `source-parsing` is deleted, the following crates fail at **runtime**:

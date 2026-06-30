@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - External Lint
 
+See [README.md](../../../README.md) for adapter overview and [SKILL.md](../../../.agents/skills/build-verify/SKILL.md) for verification steps.
+
 ## 1. Feature Goal
 
 The goal of the `external-lint` module is to serve as an aggregate bridge for external, industry-standard linter and formatting tools. It coordinates and executes tools like Cargo Clippy, Ruff, Mypy, ESLint, and Prettier on Rust, Python, and JS/TS files, normalizes their stdout/JSON reports, and integrates them seamlessly into the Lint Arwaky compliance report.

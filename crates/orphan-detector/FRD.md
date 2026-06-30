@@ -1,5 +1,7 @@
 # Feature Requirement Document (FRD) - Orphan Detector
 
+See [RULES_AES.md](../../.agents/rules/RULES_AES.md) for AES501-AES506 details and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for layer rules.
+
 ## 1. Feature Goal
 
 The goal of the `orphan-detector` module is to identify dead, unused, or unreachable code components across the layers of the 7-layer architecture. By building an import reachability graph starting from valid entry points (such as containers, binary entries, or main files), it flags any architecture component that has been orphaned, preventing codebase bloat and keeping the system maintainable.

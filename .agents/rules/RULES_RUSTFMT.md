@@ -1,5 +1,7 @@
 # Rustfmt Formatting Rules
 
+See [README.md](../README.md) for Rust adapter usage and [RULES_CLIPPY.md](RULES_CLIPPY.md) for related Rust linting.
+
 Rustfmt is the official Rust code formatter, available at https://github.com/rust-lang/rustfmt. It enforces consistent code style across the entire Rust ecosystem.
 
 ## Checking Formatting

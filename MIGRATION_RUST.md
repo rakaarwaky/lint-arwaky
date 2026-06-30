@@ -3,6 +3,8 @@
 > Step-by-step guide for migrating a Rust project to AES architecture.
 > Workspace structure: `crates/` with Cargo workspace.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for layer rules and [README.md](README.md) for project usage.
+
 ## Workspace Structure
 
 ```
