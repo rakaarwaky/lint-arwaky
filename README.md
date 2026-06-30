@@ -113,142 +113,15 @@ lint-arwaky-cli scan /path/to/some-project/
 
 ## Architecture Overview
 
-Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with seven layers, organized into **16 crates** (vertical slicing: shared + 15 feature crates). See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification.
-
-### Layer prefix naming
-
-Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[suffix].rs`
-
-| Layer (prefix)    | Allowed suffixes                                                                                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`, `_utility`, `_helper`                                                 |
-| `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                       |
-| `capabilities_`   | `_analyzer`, `_checker`, `_processor`, etc.                                                                              |
-| `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.                                                                                |
-| `agent_`          | `_orchestrator`                                                                                                          |
-| `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` |
-
-### Feature folders (vertical slicing)
-
-```
-crates/
-  cli-commands/      import-rules/         role-rules/
-  config-system/     naming-rules/         external-lint/
-  project-setup/     git-hooks/            orphan-detector/
-  file-watch/        auto-fix/             tui/
-  maintenance/       mcp-server/
-  code-analysis/     shared/
-```
-
-Import flow: `surface_` → `agent_` → `capabilities_` / `infrastructure_` → `contract_` → `taxonomy_`.
-
-### Adapters (External Linters)
-
-| Adapter (Crate)     | Target Language       | Linters / Tools Run             | Layer          |
-| ------------------- | --------------------- | ------------------------------- | -------------- |
-| `RustLinterAdapter` | Rust                  | Clippy (`cargo clippy`)         | infrastructure |
-| `RustFmtAdapter`    | Rust                  | Code Formatter (`cargo fmt`)    | infrastructure |
-| `CargoAuditAdapter` | Rust                  | Vulnerabilities (`cargo audit`) | infrastructure |
-| `RuffAdapter`       | Python                | Linter & Formatter (`ruff`)     | infrastructure |
-| `MyPyAdapter`       | Python                | Type Checker (`mypy`)           | infrastructure |
-| `BanditAdapter`     | Python                | Security Scanner (`bandit`)     | infrastructure |
-| `ESLintAdapter`     | JavaScript/TypeScript | Code Linter (`eslint`)          | infrastructure |
-| `PrettierAdapter`   | JavaScript/TypeScript | Code Formatter (`prettier`)     | infrastructure |
-| `TSCAdapter`        | JavaScript/TypeScript | Type Checker (`tsc`)            | infrastructure |
-
-The AES rules enforcement (such as filename rules, layer dependency constraints, and primitive usage checks) is executed directly at the AST and text parsing levels by internal check orchestrators, carrying the highest weight in compliance scoring.
-
----
+Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with seven layers, organized into **feature crates** (vertical slicing). See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification, layer hierarchy, and naming conventions.
 
 ## MCP Server Configuration
 
-### Entry point
-
-The MCP server is bootstrapped by `crates/root_mcp_main_entry.rs`:
-
-### MCP tools
-
-| Tool                            | Description                                                       |
-| ------------------------------- | ----------------------------------------------------------------- |
-| `execute_command(action, args)` | Execute any CLI command with arguments. This is the primary tool. |
-| `list_commands(domain)`         | List all available CLI commands with descriptions.                |
-| `command_schema(tool_name)`     | Retrieve the JSON Schema for a registered MCP tool.               |
-| `read_skill(section)`           | Read SKILL.md documentation by section for AI context.            |
-| `health_check()`                | Verify linter adapter health and system state.                    |
-
-### Configure
-
-Add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "lint-arwaky": {
-      "command": "lint-arwaky-mcp",
-      "args": []
-    }
-  }
-}
-```
-
-Or print the config from the CLI:
-
-```bash
-lint-arwaky-cli setup mcp-config --client claude
-lint-arwaky-cli setup mcp-config --client vscode
-lint-arwaky-cli setup mcp-config --client hermes
-```
-
----
+See [SKILL.md](SKILL.md) for the MCP tool reference and [DEPLOY.md](DEPLOY.md) for client setup.
 
 ## CLI Commands Reference
 
-The CLI is implemented in `crates/cli-commands/src/surface_core_command.rs` (with subcommands split across `surface_check_command.rs`, `surface_dev_command.rs`, `surface_setup_command.rs`, etc.). All commands are defined in `crates/shared/src/cli-commands/taxonomy_catalog_constant.rs` (`COMMAND_CATALOG`).
-
-### Core
-
-| Command                                     | Description                               |
-| ------------------------------------------- | ----------------------------------------- |
-| `lint-arwaky-cli check [path] [--git-diff]` | Run full architecture compliance analysis |
-| `lint-arwaky-cli scan [path]`               | Alias for`check` (CI-friendly)            |
-| `lint-arwaky-cli fix [path]`                | Apply safe fixes automatically            |
-| `lint-arwaky-cli ci [path] --threshold <N>` | CI mode with exit codes                   |
-| `lint-arwaky-cli orphan <path>`             | Check if file is dead/unreachable code    |
-
-### Scans
-
-| Command                               | Description                             |
-| ------------------------------------- | --------------------------------------- |
-| `lint-arwaky-cli security [path]`     | Bandit-style vulnerability scan         |
-| `lint-arwaky-cli duplicates [path]`   | 5-line block duplication detection      |
-| `lint-arwaky-cli dependencies [path]` | Parse and list`Cargo.toml` dependencies |
-
-### Maintenance
-
-| Command                              | Description                              |
-| ------------------------------------ | ---------------------------------------- |
-| `lint-arwaky-cli maintenance doctor` | Environment diagnostics (Rust toolchain) |
-
-### Setup
-
-| Command                                                                   | Description                                         |
-| ------------------------------------------------------------------------- | --------------------------------------------------- |
-| `lint-arwaky-cli setup init`                                              | Create a default`lint_arwaky.config.yaml`           |
-| `lint-arwaky-cli setup install [--sudo]`                                  | Install linter adapter dependencies                 |
-| `lint-arwaky-cli setup mcp-config --client <claude\|vscode\|hermes\|all>` | Print MCP config for AI clients                     |
-| `lint-arwaky-cli setup hermes [--remove]`                                 | Add/remove the`[mcp.lint-arwaky]` section in Hermes |
-
-### Dev & Info
-
-| Command                                   | Description                                               |
-| ----------------------------------------- | --------------------------------------------------------- |
-| `lint-arwaky-cli git-diff [--base <ref>]` | List files changed since base ref (default`HEAD`)         |
-| `lint-arwaky-cli watch [path]`            | Watch path for changes and re-lint (inotify-based)        |
-| `lint-arwaky-cli install-hook`            | Install`lint-arwaky-cli check .` as a git pre-commit hook |
-| `lint-arwaky-cli uninstall-hook`          | Remove the installed git pre-commit hook                  |
-| `lint-arwaky-cli adapters`                | List active linter adapters                               |
-| `lint-arwaky-cli config show`             | Show active configuration                                 |
-| `lint-arwaky-cli version`                 | Show version                                              |
+See [SKILL.md](SKILL.md) for the complete command catalog.
 
 ---
 

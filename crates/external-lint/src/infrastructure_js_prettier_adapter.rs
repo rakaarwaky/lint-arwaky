@@ -1,11 +1,11 @@
 // PURPOSE: PrettierAdapter — ILinterAdapterPort implementation for Prettier integration
 //
-// Runs `prettier --check <path>` on JS/TS/JSON/CSS/Markdown files via
-// resolve_js_cmd (npx). Only files with recognized extensions are scanned.
+// Runs `prettier --check <path>` on JS/TS files via
+// resolve_js_cmd (npx). Only files with .ts/.tsx/.js/.jsx extensions are scanned.
 // apply_fix runs `prettier --write <path>` to auto-format.
 //
 // Key details:
-//   - Early-returns empty results for non-JS/TS/JSON/CSS/MD/YAML files
+//   - Early-returns empty results for non-JS/TS files
 //   - Uses canonical absolute paths for reliable prettier invocation
 //   - Detects warnings by checking for "[warn]" in combined stdout+stderr
 //   - Reports a single LintResult per file (not per-difference)
@@ -62,11 +62,6 @@ impl ILinterAdapterPort for PrettierAdapter {
             && !path_str.ends_with(".tsx")
             && !path_str.ends_with(".js")
             && !path_str.ends_with(".jsx")
-            && !path_str.ends_with(".json")
-            && !path_str.ends_with(".css")
-            && !path_str.ends_with(".md")
-            && !path_str.ends_with(".yml")
-            && !path_str.ends_with(".yaml")
         {
             return Ok(LintResultList::default());
         }

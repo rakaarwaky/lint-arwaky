@@ -3,8 +3,6 @@
 > Official documentation scraped from https://mimo.xiaomi.com/mimocode/start
 > Generated: 2026-06-30
 
----
-
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -779,251 +777,38 @@ To include files that would normally be ignored, create a `.ignore` file in your
 
 ## Config Files
 
-MiMo Code manages providers, models, server, tools, permissions, and other runtime parameters through **JSON / JSONC** config files. Multiple layers are merged on load, with the managed layer taking the highest precedence.
+MiMo Code manages runtime parameters through **JSON / JSONC** config files, with multiple layers merged on load. The managed layer takes the highest precedence.
 
-### Top-level fields
+For this project, the main config is [`mimocode.json`](mimocode.json), with local defaults in [`.agents/settings.json`](.agents/settings.json).
 
-| Field                | Type                  | Description                                               |
-| -------------------- | --------------------- | --------------------------------------------------------- |
-| `$schema`            | string                | JSON Schema URL, enables editor completion and validation |
-| `model`              | string                | Default primary model, in the form `provider_id/model_id` |
-| `small_model`        | string                | Model used for lightweight tasks (e.g. title generation)  |
-| `provider`           | object                | Provider connection and runtime options                   |
-| `disabled_providers` | array                 | List of disabled provider IDs                             |
-| `enabled_providers`  | array                 | Allowlist of enabled providers                            |
-| `agent`              | object                | Custom agent definitions                                  |
-| `default_agent`      | string                | Default agent                                             |
-| `command`            | object                | Custom command templates                                  |
-| `permission`         | object \| string      | Permission rules for tool actions                         |
-| `tool`               | object                | Tool invocation style                                     |
-| `mcp`                | object                | MCP servers                                               |
-| `plugin`             | array                 | List of plugin specs (npm package name or local path)     |
-| `skills`             | object                | Skill load sources                                        |
-| `lsp`                | object                | LSP integration                                           |
-| `formatter`          | object                | Code formatters                                           |
-| `instructions`       | array                 | Instruction file paths or globs                           |
-| `share`              | string                | `"manual"` / `"auto"` / `"disabled"`                      |
-| `autoupdate`         | boolean \| `"notify"` | Auto-update behavior                                      |
-| `compaction`         | object                | Context compaction policy                                 |
-| `checkpoint`         | object                | Checkpoint thresholds and quotas                          |
-| `snapshot`           | boolean               | Enable snapshots (default `true`)                         |
-| `watcher`            | object                | File watcher ignore patterns                              |
-| `server`             | object                | `mimo serve` / `mimo web` server settings                 |
-| `enterprise`         | object                | Enterprise-related config (`url`)                         |
-| `username`           | string                | Custom username                                           |
-| `logLevel`           | string                | Log level                                                 |
-| `experimental`       | object                | Experimental features, **unstable**                       |
+### Essentials
 
-### Full example
+- Top-level fields include: `model`, `small_model`, `provider`, `default_agent`, `permission`, `mcp`, `skills`, `compaction`, `checkpoint`, `server`, and `instructions`.
+- Custom agents and command templates live under `agent` and `command`.
+- Permissions support global and per-agent/tool rules: `allow`, `ask`, or `deny`.
+- Provider options support `apiKey`, `baseURL`, `timeout`, and `setCacheKey`.
+- Values can reference environment variables with `{env:VAR}` and file contents with `{file:path}`.
+
+### Example
 
 ```json
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
   "model": "mimo/mimo-v2.5-pro",
-  "small_model": "mimo/mimo-v2.5-pro",
   "default_agent": "build",
   "share": "manual",
   "autoupdate": true,
-
-  "provider": {
-    "anthropic": {
-      "options": { "timeout": 600000, "setCacheKey": true }
-    }
-  },
-
-  "server": {
-    "port": 4096,
-    "hostname": "0.0.0.0",
-    "mdns": true
-  },
-
-  "permission": {
-    "*": "ask",
-    "bash": "allow",
-    "edit": "deny"
-  },
-
+  "permission": { "*": "ask", "bash": "allow", "edit": "deny" },
   "compaction": { "auto": true, "prune": true, "tail_turns": 2 },
   "watcher": { "ignore": ["node_modules/**", "dist/**"] },
-
   "mcp": {},
   "plugin": ["mimocode-helicone-session"],
   "instructions": ["CONTRIBUTING.md"],
-
   "disabled_providers": ["openai", "gemini"]
 }
 ```
 
-### Field reference
-
-#### `model` / `small_model`
-
-Set the default models. Format is `provider_id/model_id`. When `small_model` is unset, it falls back to the primary model or a cheaper model within the provider.
-
-#### `provider`
-
-Each provider can be configured individually through `options`:
-
-| Field           | Type              | Default  | Description                                          |
-| --------------- | ----------------- | -------- | ---------------------------------------------------- |
-| `apiKey`        | string            | —        | API key                                              |
-| `baseURL`       | string            | —        | Custom endpoint URL                                  |
-| `enterpriseUrl` | string            | —        | Enterprise endpoint (e.g. GitHub Enterprise Copilot) |
-| `timeout`       | number \| `false` | `300000` | Request timeout (ms), `false` to disable             |
-| `chunkTimeout`  | number \| `false` | —        | Inter-chunk timeout for streaming (ms), `false` off  |
-| `setCacheKey`   | boolean           | `false`  | Always set a cache key for this provider             |
-
-#### `server`
-
-Server settings for `mimo serve` / `mimo web`:
-
-| Field        | Type            | Default          | Description                                            |
-| ------------ | --------------- | ---------------- | ------------------------------------------------------ |
-| `port`       | number          | —                | Listen port                                            |
-| `hostname`   | string          | —                | Listen hostname; `0.0.0.0` when `mdns` is on and unset |
-| `mdns`       | boolean         | —                | Enable mDNS service discovery                          |
-| `mdnsDomain` | string          | `mimocode.local` | Custom mDNS domain                                     |
-| `cors`       | array\<string\> | —                | Allowed CORS origins                                   |
-
-#### `permission`
-
-Controls whether tool actions run directly, prompt for approval, or are blocked. Can be set globally or per tool.
-
-#### `compaction`
-
-Automatic context compaction policy:
-
-| Field                    | Type    | Default | Description                                      |
-| ------------------------ | ------- | ------- | ------------------------------------------------ |
-| `auto`                   | boolean | `true`  | Compact automatically when context is full       |
-| `prune`                  | boolean | `true`  | Remove old tool outputs to save tokens           |
-| `tail_turns`             | number  | `2`     | Number of recent turns to keep on compaction     |
-| `preserve_recent_tokens` | number  | —       | Recent tokens to force-keep on compaction        |
-| `reserved`               | number  | —       | Token buffer to avoid overflow during compaction |
-
-#### `watcher`
-
-```json
-{ "watcher": { "ignore": ["node_modules/**", "dist/**"] } }
-```
-
-#### `agent` / `default_agent`
-
-`agent` defines dedicated agents:
-
-```json
-{
-  "agent": {
-    "code-reviewer": {
-      "description": "Reviews code for best practices",
-      "model": "mimo/mimo-v2.5-pro",
-      "prompt": "You are a code reviewer.",
-      "tools": { "write": false, "edit": false }
-    }
-  },
-  "default_agent": "build"
-}
-```
-
-`default_agent` must be a primary agent. An invalid value falls back to `"build"` with a warning.
-
-#### `command`
-
-Command templates for repetitive tasks.
-
-```json
-{
-  "command": {
-    "test": {
-      "template": "Run the full test suite with coverage report.",
-      "description": "Run tests with coverage",
-      "agent": "build"
-    }
-  }
-}
-```
-
-#### `share`
-
-| Value        | Behavior                              |
-| ------------ | ------------------------------------- |
-| `"manual"`   | Share manually via `/share` (default) |
-| `"auto"`     | Auto-share new sessions               |
-| `"disabled"` | Fully disabled                        |
-
-#### `autoupdate`
-
-| Value      | Behavior                                                       |
-| ---------- | -------------------------------------------------------------- |
-| `true`     | Auto-download new versions on startup                          |
-| `false`    | Disable auto-update                                            |
-| `"notify"` | Don't auto-update, only notify when a new version is available |
-
-#### `formatter`
-
-```json
-{
-  "formatter": {
-    "prettier": { "disabled": true },
-    "custom-prettier": {
-      "command": ["npx", "prettier", "--write", "$FILE"],
-      "environment": { "NODE_ENV": "development" },
-      "extensions": [".js", ".ts", ".jsx", ".tsx"]
-    }
-  }
-}
-```
-
-#### `plugin`
-
-Accepts npm package names or local paths:
-
-```json
-{ "plugin": ["mimocode-helicone-session", "./plugins/local.ts"] }
-```
-
-#### `skills`
-
-```json
-{
-  "skills": {
-    "paths": ["./skills/"],
-    "urls": ["https://example.com/bundle.json"]
-  }
-}
-```
-
-#### `tool`
-
-Controls tool invocation style:
-
-| Field                      | Type   | Description                                       |
-| -------------------------- | ------ | ------------------------------------------------- |
-| `invocation_style`         | string | Global invocation style (e.g. `"json"` / `"xml"`) |
-| `invocation_style_by_tool` | object | Override per tool name                            |
-
-#### `instructions`
-
-Inject additional instruction files; accepts paths and globs:
-
-```json
-{ "instructions": ["CONTRIBUTING.md", ".cursor/rules/*.md"] }
-```
-
-#### `disabled_providers` / `enabled_providers`
-
-```json
-{
-  "disabled_providers": ["openai", "gemini"],
-  "enabled_providers": ["anthropic", "openai"]
-}
-```
-
-- A disabled provider won't load even if its environment variable is set or a key is configured via `/connect`, and its models won't appear in the selection list.
-- When `enabled_providers` is set, only providers in the list are enabled; all others are ignored.
-- `disabled_providers` takes precedence over `enabled_providers`.
-
-### Variable substitution
+See [`.agents/settings.json`](.agents/settings.json) for the project-local defaults.
 
 Config values can reference environment variables and file contents:
 
@@ -1270,184 +1055,22 @@ Only analyze code and suggest changes.
 
 Agent skills let MiMo Code discover reusable instructions from your repo or home directory. Skills are loaded on-demand via the native `skill` tool—agents see available skills and can load the full content when needed.
 
-### Place files
+For this project, skills are stored in [`.agents/skills/`](.agents/skills) and mirrored via `.mimocode/`.
 
-Put a `SKILL.md` inside a folder. The skill's name comes from its frontmatter—not the folder name—and `SKILL.md` files are discovered recursively, so you can nest them however you like.
+### Essentials
 
-MiMo Code searches these locations:
+- Each skill is a folder containing `SKILL.md` with required frontmatter: `name` and `description`.
+- Discovery order: project `.mimocode/skills/**/SKILL.md`, compatibility dirs `.claude/.agents/.codex/.opencode`, then global `~/.config/mimocode/skills/**/SKILL.md`.
+- Duplicate names are overridden by the last-loaded skill; a warning is logged.
+- Permissions control loading behavior: `allow`, `deny`, or `ask` per skill pattern.
 
-- Project config: `.mimocode/skills/**/SKILL.md` (the singular `skill/` folder also works)
-- Global config: `~/.config/mimocode/skills/**/SKILL.md`
-- Project compatibility dirs: `.claude`, `.agents`, `.codex`, and `.opencode`—each scanned at `skills/**/SKILL.md`
-- Global compatibility dirs: the same four folders under `~/` (e.g. `~/.claude/skills/**/SKILL.md`)
-
-Add more sources with the `skills.paths` and `skills.urls` config options.
-
-### Understand discovery
-
-For project-local paths, MiMo Code walks up from your current working directory until it reaches the workspace root. Along the way it loads any matching `skills/**/SKILL.md` (or `skill/**/SKILL.md`) in `.mimocode/`, and `skills/**/SKILL.md` in the `.claude`, `.agents`, `.codex`, and `.opencode` directories.
-
-Global definitions are also loaded from `~/.config/mimocode/` and from the same compatibility folders under your home directory (e.g. `~/.claude/skills/**/SKILL.md`).
-
-If two skills resolve to the same `name`, the last one loaded wins and a warning is logged.
-
-### Write frontmatter
-
-Each `SKILL.md` must start with YAML frontmatter. Only these fields are read:
-
-- `name` (required)
-- `description` (required)
-- `hidden` (optional boolean—when `true`, the skill is loaded but kept out of the available-skills list)
-
-Any other frontmatter fields are ignored.
-
-### Name your skill
-
-MiMo Code does not enforce a format on `name` or a length on `description`, but the `name` is how an agent references the skill, so keep it short and predictable. We recommend lowercase alphanumerics with single hyphens, e.g. `git-release`.
-
-Keep the `description` specific enough for the agent to choose the skill correctly—it is the only signal the agent sees before loading the full content.
-
-### Use an example
-
-Create `.mimocode/skills/git-release/SKILL.md` like this:
-
-```markdown
----
-name: git-release
-description: Create consistent releases and changelogs
----
-
-## What I do
-
-- Draft release notes from merged PRs
-- Propose a version bump
-- Provide a copy-pasteable `gh release create` command
-
-## When to use me
-
-Use this when you are preparing a tagged release.
-Ask clarifying questions if the target versioning scheme is unclear.
-```
-
-### Recognize tool description
-
-MiMo Code lists available skills in the `skill` tool description. Each entry includes the skill name and description:
-
-```xml
-<available_skills>
-  <skill>
-    <name>git-release</name>
-    <description>Create consistent releases and changelogs</description>
-  </skill>
-</available_skills>
-```
-
-The agent loads a skill by calling the tool:
-
-```javascript
-skill({ name: "git-release" });
-```
-
-### Configure permissions
-
-Control which skills agents can access using pattern-based permissions in `mimocode.json`:
-
-```json
-{
-  "permission": {
-    "skill": {
-      "*": "allow",
-      "pr-review": "allow",
-      "internal-*": "deny",
-      "experimental-*": "ask"
-    }
-  }
-}
-```
-
-| Permission | Behavior                                  |
-| ---------- | ----------------------------------------- |
-| `allow`    | Skill loads immediately                   |
-| `deny`     | Skill hidden from agent, access rejected  |
-| `ask`      | User prompted for approval before loading |
-
-Patterns support wildcards: `internal-*` matches `internal-docs`, `internal-tools`, etc.
-
-### Override per agent
-
-Give specific agents different permissions than the global defaults.
-
-**For custom agents** (in agent frontmatter):
-
-```yaml
----
-permission:
-  skill:
-    "documents-*": "allow"
----
-```
-
-**For built-in agents** (in `mimocode.json`):
-
-```json
-{
-  "agent": {
-    "plan": {
-      "permission": {
-        "skill": {
-          "internal-*": "allow"
-        }
-      }
-    }
-  }
-}
-```
-
-### Disable the skill tool
-
-Completely disable skills for agents that shouldn't use them:
-
-**For custom agents:**
-
-```yaml
----
-tools:
-  skill: false
----
-```
-
-**For built-in agents:**
-
-```json
-{
-  "agent": {
-    "plan": {
-      "tools": {
-        "skill": false
-      }
-    }
-  }
-}
-```
-
-### Troubleshoot loading
-
-If a skill does not show up:
-
-1. Verify `SKILL.md` is spelled in all caps
-2. Check that frontmatter includes `name` and `description`
-3. Ensure skill names are unique—a duplicate `name` is silently overridden (last one loaded wins)
-4. Check permissions—skills with `deny` are hidden from agents
+See [`.agents/README.md`](.agents/README.md) for local conventions and [SKILL.md](SKILL.md) for the lint-arwaky command catalog.
 
 ---
 
 ## Agents
 
-Agents are specialized AI assistants that can be configured for specific tasks and workflows. They allow you to create focused tools with custom prompts, models, and tool access.
-
-> **TIP**: Use the plan agent to analyze code and review suggestions without making any code changes.
-
-You can switch between agents during a session or invoke them with the `@` mention.
+Agents are specialized AI assistants configured for specific tasks and workflows. You can switch between agents during a session or invoke them with the `@` mention.
 
 ### Types
 
@@ -1455,7 +1078,7 @@ There are two types of agents in MiMo Code; primary agents and subagents.
 
 #### Primary agents
 
-Primary agents are the main assistants you interact with directly. You can cycle through them using the **Tab** key, or your configured `switch_agent` keybind. These agents handle your main conversation. Tool access is configured via permissions — for example, Build has all tools enabled while Plan is restricted.
+Primary agents are the main assistants you interact with directly. You can cycle through them using the **Tab** key, or your configured `switch_agent` keybind. Tool access is configured via permissions — for example, Build has all tools enabled while Plan is restricted.
 
 #### Subagents
 
@@ -1463,17 +1086,12 @@ Subagents are specialized assistants that primary agents can invoke for specific
 
 ### Built-in
 
-#### Build
+- **Build** — default primary agent with full tool access.
+- **Plan** — restricted primary agent for planning and analysis; write/edit/execute tools are gated by approval prompts.
+- **Compose** — workflow-driven primary agent that uses built-in skills to execute plans.
+- **general / explore** — common subagents for delegated tasks.
 
-_Mode_: `primary`
-
-Build is the **default** primary agent with all tools enabled. This is the standard agent for development work where you need full access to file operations and system commands.
-
-#### Plan
-
-_Mode_: `primary`
-
-A restricted agent designed for planning and analysis. We use a permission system to give you more control and prevent unintended changes. By default, all of the following are set to `ask`:
+See [`.agents/README.md`](.agents/README.md) for local agent/skill folder conventions.
 
 - `file edits`: All writes, patches, and edits
 - `bash`: All bash commands
