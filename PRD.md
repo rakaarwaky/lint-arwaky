@@ -275,3 +275,5 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 - No database required
 - Static binary release via `cargo build --release`
 - Platform: Linux
+
+See `README.md` for usage and `ARCHITECTURE.md` for layer rules.

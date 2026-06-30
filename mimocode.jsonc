@@ -1,22 +1,10 @@
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
-  // ===========================
-  // MODEL CONFIGURATION
-  // ===========================
   "model": "OmniRouter/high-availability",
   "small_model": "OmniRouter/high-availability",
-  // ===========================
-  // DEFAULT AGENT
-  // ===========================
   "default_agent": "build",
-  // ===========================
-  // AUTO-UPDATE & SHARING
-  // ===========================
   "autoupdate": "notify",
   "share": "auto",
-  // ===========================
-  // PROVIDER CONFIGURATION
-  // ===========================
   "provider": {
     "anthropic": {
       "options": {
@@ -30,24 +18,15 @@
       }
     }
   },
-  // Disabled providers (uncomment to disable)
-  // "disabled_providers": ["openai", "gemini"],
-  // ===========================
-  // SERVER CONFIGURATION
-  // ===========================
   "server": {
     "port": 4096,
     "hostname": "0.0.0.0",
     "mdns": false
   },
-  // ===========================
-  // PERMISSIONS
-  // ===========================
-  // Default: most tools allowed, bash needs approval
   "permission": {
     "*": "allow",
     "bash": {
-      "*": "ask",
+      "*": "allow",
       "cargo *": "allow",
       "cargo build *": "allow",
       "cargo check *": "allow",
@@ -60,10 +39,10 @@
       "git diff *": "allow",
       "git log *": "allow",
       "git add *": "allow",
-      "git commit *": "ask",
-      "git push *": "ask",
-      "git checkout *": "ask",
-      "git branch *": "ask",
+      "git commit *": "allow",
+      "git push *": "allow",
+      "git checkout *": "allow",
+      "git branch *": "allow",
       "ls *": "allow",
       "cat *": "allow",
       "head *": "allow",
@@ -74,8 +53,8 @@
       "rm *": "deny",
       "rm -rf *": "deny",
       "sudo *": "deny",
-      "curl *": "ask",
-      "wget *": "ask"
+      "curl *": "allow",
+      "wget *": "allow"
     },
     "edit": "allow",
     "read": {
@@ -90,16 +69,13 @@
     "websearch": "allow",
     "external_directory": {
       "~/projects/*": "allow",
-      "~/*": "ask"
+      "~/*": "allow"
     },
     "skill": {
       "*": "allow"
     },
     "doom_loop": "ask"
   },
-  // ===========================
-  // AGENT CONFIGURATION
-  // ===========================
   "agent": {
     "build": {
       "description": "Default development agent with full tool access",
@@ -108,7 +84,7 @@
       "temperature": 0.3,
       "permission": {
         "bash": {
-          "*": "ask",
+          "*": "allow",
           "cargo *": "allow",
           "git *": "allow"
         }
@@ -148,7 +124,6 @@
         "bash": "deny"
       }
     },
-    // Custom agents for this project
     "rust-reviewer": {
       "description": "Reviews Rust code for AES compliance and best practices",
       "mode": "subagent",
@@ -195,18 +170,12 @@
       }
     }
   },
-  // ===========================
-  // COMPACTION SETTINGS
-  // ===========================
   "compaction": {
     "auto": true,
     "prune": true,
     "tail_turns": 3,
     "reserved": 15000
   },
-  // ===========================
-  // WATCHER SETTINGS
-  // ===========================
   "watcher": {
     "ignore": [
       "target/**",
@@ -218,9 +187,6 @@
       "*.log"
     ]
   },
-  // ===========================
-  // CUSTOM COMMANDS
-  // ===========================
   "command": {
     "build": {
       "template": "Build the entire workspace with release profile",
@@ -258,50 +224,41 @@
       "agent": "build"
     }
   },
-  // ===========================
-  // SKILLS CONFIGURATION
-  // ===========================
   "skills": {
-    "paths": [".agents/skills", ".mimocode/skills"]
+    "paths": [
+      ".agents/skills",
+      ".mimocode/skills"
+    ]
   },
-  // ===========================
-  // INSTRUCTIONS
-  // ===========================
-  // Additional instruction files to load
   "instructions": [
     "AGENTS.md",
     "ARCHITECTURE.md",
     "CONTRIBUTING.md",
     "TEST.md"
   ],
-  // ===========================
-  // FORMATTER
-  // ===========================
   "formatter": {
     "rustfmt": {
-      "command": ["cargo", "fmt", "--all"],
-      "extensions": [".rs"]
+      "command": [
+        "cargo",
+        "fmt",
+        "--all"
+      ],
+      "extensions": [
+        ".rs"
+      ]
     }
   },
-  // ===========================
-  // SNAPSHOT
-  // ===========================
   "snapshot": true,
-  // ===========================
-  // CHECKPOINT
-  // ===========================
   "checkpoint": {
-    "thresholds": {
-      "token_budget": 100000,
-      "message_count": 50
-    },
+    "thresholds": [
+      "40%",
+      "60%",
+      "80%"
+    ],
     "reserved": 10000,
     "push_caps": {
       "max_per_session": 10
     }
   },
-  // ===========================
-  // LOG LEVEL
-  // ===========================
   "logLevel": "INFO"
 }

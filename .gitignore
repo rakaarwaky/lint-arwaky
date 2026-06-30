@@ -27,7 +27,6 @@ output/
 target/
 .dsc_cache/
 .node_modules/
-.mimocode/
 .obsidian/
 log/
 

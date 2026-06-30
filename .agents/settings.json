@@ -1,0 +1,14 @@
+{
+  "default_agent": "build",
+  "skills": {
+    "paths": ["./.agents/skills"]
+  },
+  "agent": {
+    "build": {
+      "mode": "primary"
+    },
+    "plan": {
+      "mode": "primary"
+    }
+  }
+}

@@ -131,6 +131,8 @@ lint-arwaky-cli doctor   # Self-diagnose (Rust toolchain, binary path)
 lint-arwaky-cli adapters       # List active linter adapters
 ```
 
+See [TEST.md](TEST.md) for the full production checklist and [README.md](README.md) for user-facing usage.
+
 The `health_check` MCP tool reports on adapter health and system state.
 
 ---

@@ -12,6 +12,8 @@ There are 3 test workspace
 | Python (modules) | `test-workspaces/modules/`  | AES Python + Ruff/MyPy/Bandit scans   |
 | JS/TS (packages) | `test-workspaces/packages/` | AES JS/TS + ESLint/Prettier/TSC scans |
 
+See [README.md](README.md) for CLI reference and [ARCHITECTURE.md](ARCHITECTURE.md) for AES background.
+
 > `check` is ONLY for `cargo run --bin lint-arwaky-cli -- check .` (self-lint). Test projects use `scan`.
 > Python & JavaScript tests require external tools installed (ruff, mypy, bandit, eslint, etc.) for additional violations.
 

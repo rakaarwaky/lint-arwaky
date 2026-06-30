@@ -6,6 +6,8 @@ version: 1.10.72
 
 Multi-language linting and AES (Agentic Engineering System) architecture enforcement.
 
+See `README.md` for install/usage and `ARCHITECTURE.md` for layer details.
+
 #### Key Features
 
 - **Multi-Language**: Audits Rust (Clippy, Cargo Audit, rustfmt), Python (Ruff, MyPy, Bandit), and JavaScript/TypeScript (ESLint, Prettier, TSC) in a single command.
