@@ -507,4 +507,8 @@ impl shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionA
             "index.js".to_string(),
         ]
     }
+
+    fn config(&self) -> &shared::config_system::taxonomy_config_vo::ArchitectureConfig {
+        &self.config
+    }
 }

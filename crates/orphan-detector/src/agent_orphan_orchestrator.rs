@@ -111,6 +111,12 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         files: &[String],
         root_dir: &str,
     ) -> Vec<LintResult> {
+        // Global gate: skip all orphan checks if architecture checker is disabled
+        let config = layer_detector.config();
+        if !config.enabled.value {
+            return Vec::new();
+        }
+
         let mut results: Vec<LintResult> = Vec::new();
         // Build comprehensive context — bridge &[String] -> &[OrphanFileListVO].
         let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
@@ -304,6 +310,14 @@ impl ArchOrphanAnalyzer {
 }
 
 impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
+    fn config(&self) -> &shared::config_system::taxonomy_config_vo::ArchitectureConfig {
+        // ArchOrphanAnalyzer does not own the config; return default (enabled=true)
+        // The real config check happens at the caller (ImportOrchestrator / CLI surface).
+        static EMPTY: std::sync::OnceLock<
+            shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        > = std::sync::OnceLock::new();
+        EMPTY.get_or_init(shared::config_system::taxonomy_config_vo::ArchitectureConfig::default)
+    }
     fn detect_layer(&self, file_path: &str, _root_dir: &str) -> Option<String> {
         let path = std::path::Path::new(file_path);
         let filename = path.file_name()?.to_str()?;

@@ -101,6 +101,9 @@ impl ILayerDetectionAggregate for MockDeps {
     fn get_orphan_entry_points(&self) -> Vec<String> {
         unreachable!()
     }
+    fn config(&self) -> &shared::config_system::taxonomy_config_vo::ArchitectureConfig {
+        unreachable!()
+    }
 }
 
 impl IScannerProviderPort for MockDeps {

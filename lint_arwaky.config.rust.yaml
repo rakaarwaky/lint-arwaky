@@ -30,6 +30,7 @@ ignored_paths:
   - ".min.css"
   - "/.dsc_cache"
   - "/tests"
+  - "/mimocode"
 
 architecture:
   enabled: true

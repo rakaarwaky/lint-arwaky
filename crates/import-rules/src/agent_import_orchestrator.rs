@@ -155,6 +155,12 @@ impl IImportRunnerAggregate for ImportOrchestrator {
     ///   4. Unused import check reads each file individually (file I/O).
     ///   5. Cycle detection runs last — it requires the full import graph.
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        // Global gate: skip all import checks if architecture checker is disabled
+        let config = self.analyzer.config();
+        if !config.enabled.value {
+            return Vec::new();
+        }
+
         let mut results = LintResultList::new(Vec::new());
         let files = self.collect_files(target);
         let first_component = str_or(target.value().split('/').next(), ".");

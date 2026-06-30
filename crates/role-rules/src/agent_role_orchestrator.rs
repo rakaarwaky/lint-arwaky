@@ -35,6 +35,7 @@ use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 
 pub struct RoleOrchestrator {
     aggregate: Arc<dyn IRoleAggregate>,
+    config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
     ignored_paths: Vec<String>,
 }
 
@@ -51,6 +52,7 @@ impl RoleOrchestrator {
             .collect();
         Self {
             aggregate,
+            config: config.clone(),
             ignored_paths,
         }
     }
@@ -84,6 +86,11 @@ impl RoleOrchestrator {
         max_lines: usize,
         violations: &mut Vec<LintResult>,
     ) {
+        // Global gate: skip all role checks if architecture checker is disabled
+        if !self.config.enabled.value {
+            return;
+        }
+
         for file in files {
             let content = std::fs::read_to_string(file).unwrap_or_default();
             let filename = Path::new(file)

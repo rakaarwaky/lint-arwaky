@@ -839,6 +839,12 @@ impl ILayerDetectionAggregate for MockLayerDetector {
     fn get_orphan_entry_points(&self) -> Vec<String> {
         vec![]
     }
+    fn config(&self) -> &shared::config_system::taxonomy_config_vo::ArchitectureConfig {
+        static DEFAULT: std::sync::OnceLock<
+            shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        > = std::sync::OnceLock::new();
+        DEFAULT.get_or_init(shared::config_system::taxonomy_config_vo::ArchitectureConfig::default)
+    }
 }
 
 struct MockScannerProvider;
