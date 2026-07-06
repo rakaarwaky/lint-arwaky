@@ -67,7 +67,7 @@ impl IConfigReaderPort for ConfigYamlReader {
         let mut current = std::path::PathBuf::from(&project_root.value);
         let mut depth = 0;
 
-        while !current.as_os_str().is_empty() && depth < 2 {
+        while !current.as_os_str().is_empty() && depth < 5 {
             let candidate = current.join(&filename);
             if let Ok(content) = tokio::fs::read_to_string(&candidate).await {
                 return Some(ConfigSource::new(

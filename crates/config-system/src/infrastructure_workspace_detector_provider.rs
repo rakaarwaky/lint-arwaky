@@ -49,7 +49,7 @@ impl IWorkspaceDetectorPort for WorkspaceDetector {
         // 3. Walk up parent chain looking for config files (fallback, max 2 levels)
         let mut current = path_buf;
         let mut depth = 0;
-        while !current.as_os_str().is_empty() && depth < 2 {
+        while !current.as_os_str().is_empty() && depth < 5 {
             if current.join("Cargo.toml").exists() {
                 return WorkspaceType::Rust;
             }

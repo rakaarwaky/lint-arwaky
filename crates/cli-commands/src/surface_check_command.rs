@@ -187,9 +187,9 @@ impl CheckCommandsSurface {
         // 6. Run orphan detection (AES501-506: dead code via import graph)
         let orphan_results = self.run_orphan_detection_pass(
             path,
-            &self.scanner_provider,
-            &self.orphan_orchestrator,
-            &self.layer_detector,
+            &ctx.scanner_provider,
+            &ctx.orphan_orchestrator,
+            &ctx.layer_detector,
         );
         all_results.extend(orphan_results);
 
@@ -441,13 +441,6 @@ impl CheckCommandsSurface {
 
         let mut global_all_results = Vec::new();
 
-        // Hoist orphan detection before per-workspace loop (#107 P1 #7)
-        let _orphan_results_all = self.orphan_orchestrator.check_orphans(
-            self.layer_detector.as_ref(),
-            &all_source_files,
-            &scan_root.to_string_lossy(),
-        );
-
         for ws in &workspaces {
             let ws_name = match std::path::Path::new(&ws.path.value).file_name() {
                 Some(name) => name.to_string_lossy(),
@@ -458,23 +451,33 @@ impl CheckCommandsSurface {
             let mut all_results = Vec::new();
 
             // Determine dynamic orchestrators based on detected language config
-            let (code_analysis_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
-                if let Some(ref factory) = self.factory {
-                    let ctx = factory(ws.config.clone());
-                    (
-                        ctx.code_analysis_linter,
-                        ctx.naming_orchestrator,
-                        ctx.import_orchestrator,
-                        ctx.role_orchestrator,
-                    )
-                } else {
-                    (
-                        self.code_analysis_linter.clone(),
-                        self.naming_orchestrator.clone(),
-                        self.import_orchestrator.clone(),
-                        self.role_orchestrator.clone(),
-                    )
-                };
+            let (
+                code_analysis_linter,
+                naming_orchestrator,
+                import_orchestrator,
+                role_orchestrator,
+                orphan_orchestrator,
+                layer_detector,
+            ) = if let Some(ref factory) = self.factory {
+                let ctx = factory(ws.config.clone());
+                (
+                    ctx.code_analysis_linter,
+                    ctx.naming_orchestrator,
+                    ctx.import_orchestrator,
+                    ctx.role_orchestrator,
+                    ctx.orphan_orchestrator,
+                    ctx.layer_detector,
+                )
+            } else {
+                (
+                    self.code_analysis_linter.clone(),
+                    self.naming_orchestrator.clone(),
+                    self.import_orchestrator.clone(),
+                    self.role_orchestrator.clone(),
+                    self.orphan_orchestrator.clone(),
+                    self.layer_detector.clone(),
+                )
+            };
 
             let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
             all_results.extend(aes_results.values);
@@ -524,10 +527,16 @@ impl CheckCommandsSurface {
                     .collect()
             };
 
+            let member_orphans = orphan_orchestrator.check_orphans(
+                layer_detector.as_ref(),
+                &all_source_files,
+                &scan_root.to_string_lossy(),
+            );
+
             // Filter orphan results to this workspace member's path
             let filtered_orphans: Vec<_> = if let Some(code) = filter {
-                _orphan_results_all
-                    .iter()
+                member_orphans
+                    .into_iter()
                     .filter(|r| {
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         r.code.code() == code
@@ -536,11 +545,10 @@ impl CheckCommandsSurface {
                                 .map(|c| abs_path.starts_with(c))
                                 .unwrap_or(true)
                     })
-                    .cloned()
                     .collect()
             } else {
-                _orphan_results_all
-                    .iter()
+                member_orphans
+                    .into_iter()
                     .filter(|r| {
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         ws_canonical
@@ -548,7 +556,6 @@ impl CheckCommandsSurface {
                             .map(|c| abs_path.starts_with(c))
                             .unwrap_or(true)
                     })
-                    .cloned()
                     .collect()
             };
 
