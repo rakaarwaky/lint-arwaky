@@ -101,11 +101,38 @@ impl ILinterAdapterPort for CargoAuditAdapter {
             }
         };
 
+        let mut ignored_advisories = std::collections::HashSet::new();
+        let deny_toml_path = Path::new(working_dir_str).join("deny.toml");
+        if deny_toml_path.exists() {
+            if let Ok(content) = std::fs::read_to_string(&deny_toml_path) {
+                #[derive(serde::Deserialize)]
+                struct DenyConfig {
+                    advisories: Option<AdvisoriesConfig>,
+                }
+                #[derive(serde::Deserialize)]
+                struct AdvisoriesConfig {
+                    ignore: Option<Vec<String>>,
+                }
+                if let Ok(deny_cfg) = toml::from_str::<DenyConfig>(&content) {
+                    if let Some(advisories) = deny_cfg.advisories {
+                        if let Some(ignore) = advisories.ignore {
+                            for id in ignore {
+                                ignored_advisories.insert(id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let settings = rustsec::report::Settings::default();
         let report = rustsec::Report::generate(&db, &lockfile, &settings);
 
         for vuln in &report.vulnerabilities.list {
             let id = vuln.advisory.id.to_string();
+            if ignored_advisories.contains(&id) {
+                continue;
+            }
             let title = &vuln.advisory.title;
             let severity_str = match vuln.advisory.cvss.as_ref() {
                 Some(c) => c.severity().to_string().to_lowercase(),

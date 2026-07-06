@@ -57,7 +57,7 @@ tui = { package = "tui-lint-arwaky", path = "crates/tui" }
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "1.10.87"
+version = "1.10.88"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
 license = "MIT"
@@ -129,7 +129,7 @@ futures.workspace = true
 # `thin` LTO is ~95% of `fat`'s gains and never segfaults in our CI.
 [profile.release]
 opt-level = "z"
-lto = true
+lto = false
 codegen-units = 1
 strip = "symbols"
 panic = "abort"
