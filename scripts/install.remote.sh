@@ -139,10 +139,10 @@ fi
 # ── 4. Initialize Config ────────────────────────────────────────────
 echo -e "\n${BOLD}[4/4] Initializing configuration...${NC}"
 if [ -n "$LINT_CLI" ]; then
-    if "$LINT_CLI" setup init; then
+    if "$LINT_CLI" init; then
         echo -e "  ${GREEN}✓ Created lint_arwaky.config.yaml in the current directory${NC}"
     else
-        echo -e "  ${YELLOW}Failed to run setup init automatically. Run manually: lint-arwaky-cli setup init${NC}"
+        echo -e "  ${YELLOW}Failed to run init automatically. Run manually: lint-arwaky-cli init${NC}"
     fi
 else
     echo "  Could not find lint-arwaky-cli command to initialize config."
@@ -155,14 +155,14 @@ echo -e "${GREEN}Lint Arwaky is successfully installed and ready.${NC}"
 echo ""
 echo "Quick start:"
 echo "  lint-arwaky-cli check .            # run architecture check"
-echo "  lint-arwaky-cli setup doctor       # run environment diagnostics"
-echo "  lint-arwaky-cli setup mcp-config   # print MCP server configuration"
+echo "  lint-arwaky-cli doctor             # run environment diagnostics"
+echo "  lint-arwaky-cli mcp-config         # print MCP server configuration"
 echo ""
 echo "As MCP server:"
 echo "  lint-arwaky-mcp                    # start MCP server (stdio)"
 echo ""
 echo "For MCP clients (Claude, Hermes, VS Code):"
-echo "  lint-arwaky-cli setup mcp-config --client claude"
-echo "  lint-arwaky-cli setup mcp-config --client vscode"
-echo "  lint-arwaky-cli setup mcp-config --client hermes"
+echo "  lint-arwaky-cli mcp-config --client claude"
+echo "  lint-arwaky-cli mcp-config --client vscode"
+echo "  lint-arwaky-cli mcp-config --client hermes"
 echo ""

@@ -191,11 +191,11 @@ Each file is given a **layer badge** color:
 | `^S` | **security** — vulnerability scan        | `security [path]`         |
 | `^D` | **duplicates** — duplication detection   | `duplicates [path]`       |
 | `^P` | **dependencies** — library vulnerability | `dependencies [path]`     |
-| `d`  | **doctor** — environment diagnosis       | `maintenance doctor`      |
-| `i`  | **init** — create default config         | `setup init`              |
-| `I`  | **install** — install adapter deps       | `setup install`           |
-| `m`  | **mcp-config** — print MCP config        | `setup mcp-config`        |
-| `C`  | **config-show** — show active config     | `config show`             |
+| `d`  | **doctor** — environment diagnosis       | `doctor`                  |
+| `i`  | **init** — create default config         | `init`                    |
+| `I`  | **install** — install adapter deps       | `install`                 |
+| `m`  | **mcp-config** — print MCP config        | `mcp-config`              |
+| `C`  | **config-show** — show active config     | `config-show`             |
 | `H`  | **install-hook** — git hook install      | `install-hook`            |
 | `U`  | **uninstall-hook** — git hook remove     | `uninstall-hook`          |
 | `a`  | **adapters** — list active adapters      | `adapters`                |

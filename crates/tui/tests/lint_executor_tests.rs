@@ -449,7 +449,7 @@ fn test_doctor_stub() {
     let result = executor.doctor();
     assert!(result.success);
     assert!(result.output.contains("Use CLI"));
-    assert!(result.output.contains("lint-arwaky-cli maintenance doctor"));
+    assert!(result.output.contains("lint-arwaky-cli doctor"));
 }
 
 // ---------------------------------------------------------------------------
@@ -463,7 +463,7 @@ fn test_install_stub_without_setup_aggregate() {
     let result = executor.install(&flags);
     assert!(result.success);
     assert!(result.output.contains("Adapter dependency installation"));
-    assert!(result.output.contains("lint-arwaky-cli setup install"));
+    assert!(result.output.contains("lint-arwaky-cli install"));
 }
 
 #[test]
@@ -643,7 +643,7 @@ fn test_doctor_with_maintenance_returns_real_diagnostics() {
     assert!(result.output.contains("Python 3.11.0"));
     assert!(result.output.contains("All required tools OK"));
     assert!(
-        !result.output.contains("lint-arwaky-cli maintenance doctor"),
+        !result.output.contains("lint-arwaky-cli doctor"),
         "Should NOT show CLI stub when maintenance is wired"
     );
 }

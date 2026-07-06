@@ -91,23 +91,20 @@ Edit `claude_desktop_config.json`:
 Or print the config snippet from the CLI:
 
 ```bash
-lint-arwaky-cli setup mcp-config --client claude
+lint-arwaky-cli mcp-config --client claude
 ```
 
 ### Configure for VS Code (MCP extension)
 
 ```bash
-lint-arwaky-cli setup mcp-config --client vscode
+lint-arwaky-cli mcp-config --client vscode
 ```
 
 ### Configure for Hermes Agent
 
 ```bash
-# Add lint-arwaky to ~/.hermes/config.toml
-lint-arwaky-cli setup hermes
-
-# To remove:
-lint-arwaky-cli setup hermes --remove
+# Print configuration snippet for Hermes:
+lint-arwaky-cli mcp-config --client hermes
 ```
 
 ### Smoke-test the MCP server manually
@@ -164,7 +161,7 @@ lint-arwaky-cli watch .
 ## Configuration
 
 ```bash
-lint-arwaky-cli setup init
+lint-arwaky-cli init
 # Creates lint_arwaky.config.yaml in the current directory
 ```
 
@@ -177,7 +174,7 @@ lint-arwaky-cli setup init
 - [ ] `cargo run --bin lint-arwaky-cli -- check .` reports 0 CRITICAL findings
 - [ ] `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings` clean
 - [ ] `lint-arwaky-cli version` returns `1.10.14`
-- [ ] `lint-arwaky-cli maintenance doctor` reports no issues
+- [ ] `lint-arwaky-cli doctor` reports no issues
 - [ ] `lint-arwaky-mcp` responds to `tools/list` with the expected tools
 - [ ] `health_check` MCP tool returns all adapters healthy
 

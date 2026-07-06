@@ -26,7 +26,7 @@ Peer layers cannot import each other. Violations are **AES201 (CRITICAL)**.
 
 | Code   | Group   | Rule                                                               | Severity |
 | ------ | ------- | ------------------------------------------------------------------ | -------- |
-| AES101 | Naming  | Filename must follow `prefix_concept_suffix` pattern               | HIGH     |
+| AES101 | Naming  | Filename must follow`prefix_concept_suffix` pattern                | HIGH     |
 | AES102 | Naming  | Suffix must match layer definition (allowed/forbidden suffixes)    | HIGH     |
 | AES201 | Import  | Cross-layer imports must comply with allowed/mandatory/forbidden   | CRITICAL |
 | AES202 | Import  | File is missing required imports defined by config                 | HIGH     |
@@ -80,10 +80,10 @@ Peer layers cannot import each other. Violations are **AES201 (CRITICAL)**.
 
 ### Setup & Config
 
-- `setup init` — auto-configure lint-arwaky
-- `setup install [--sudo]` — install linter dependencies
-- `setup mcp-config --client <claude|hermes|vscode|all>` — print MCP server config
-- `config show` — show active configuration
+- `init` — auto-configure lint-arwaky
+- `install [--sudo]` — install linter dependencies
+- `mcp-config --client <claude|hermes|vscode|all>` — print MCP server config
+- `config-show` — show active configuration
 - `adapters` — list active linter adapters
 
 ### Maintenance
