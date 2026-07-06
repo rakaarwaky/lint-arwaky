@@ -96,6 +96,11 @@ impl INamingRunnerAggregate for NamingOrchestrator {
     ///   3. Run naming_convention_checker.check_file_naming (AES102)
     ///   4. Run suffix_prefix_checker.check_domain_suffixes (AES101)
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        let config = self.analyzer.config();
+        if !config.enabled.value {
+            return Vec::new();
+        }
+
         let mut results = LintResultList::new(Vec::new());
         let all_files = self.fs.walk(target, Some(&self.ignored_patterns)).await;
         let files = Self::filter_source_files(&all_files);
