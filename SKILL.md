@@ -1,28 +1,18 @@
 ---
-version: 1.10.72
+name: lint-arwaky
+description: Multi-language linting and AES architecture enforcement. Use this skill for scan, check, fix, ci, orphan, watch, setup, adapters, config, maintenance, MCP setup, and release workflows.
 ---
 
 # Lint Arwaky Skill
 
-Multi-language linting and AES (Agentic Engineering System) architecture enforcement.
+See [README.md](README.md) for user-facing usage and [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 
-See [README.md](README.md) for install/usage and [ARCHITECTURE.md](ARCHITECTURE.md) for layer details.
+## AES Layers
 
-#### Key Features
-
-- **Multi-Language**: Audits Rust (Clippy, Cargo Audit, rustfmt), Python (Ruff, MyPy, Bandit), and JavaScript/TypeScript (ESLint, Prettier, TSC) in a single command.
-- **AES Rules**: 24 rules across 5 groups — Naming, Import, Quality, Role, Orphan.
-- **Auto-Fix**: `fix` subcommand applies safe style fixes without human intervention.
-- **Watch**: Real-time file watching with inotify-based change detection.
-
-# AES Architecture
-
-Agentic Engineering System — 7-layer strict layered architecture enforced by file prefix naming.
-
-| Layer              | Prefix            | Dependency Direction                                 |
+| Layer              | Prefix            | Role                                                 |
 | ------------------ | ----------------- | ---------------------------------------------------- |
 | **root**           | `root_`           | Wires everything, depends on all                     |
-| **surfaces**       | `surface_`        | UI/API entry points → agents                         |
+| **surface**        | `surface_`        | UI/API entry points → agents                         |
 | **agent**          | `agent_`          | Orchestrators → capabilities + infra                 |
 | **capabilities**   | `capabilities_`   | Business logic → contracts                           |
 | **infrastructure** | `infrastructure_` | Tech adapters → contracts                            |
@@ -32,11 +22,11 @@ Agentic Engineering System — 7-layer strict layered architecture enforced by f
 Import rule: `surface` → `agent` → `capabilities` / `infrastructure` → `contract` → `taxonomy`.
 Peer layers cannot import each other. Violations are **AES201 (CRITICAL)**.
 
-# AES Rules (24 rules)
+## AES Rules
 
 | Code   | Group   | Rule                                                               | Severity |
 | ------ | ------- | ------------------------------------------------------------------ | -------- |
-| AES101 | Naming  | Filename must follow `prefix_concept_suffix` pattern               | HIGH     |
+| AES101 | Naming  | Filename must follow`prefix_concept_suffix` pattern                | HIGH     |
 | AES102 | Naming  | Suffix must match layer definition (allowed/forbidden suffixes)    | HIGH     |
 | AES201 | Import  | Cross-layer imports must comply with allowed/mandatory/forbidden   | CRITICAL |
 | AES202 | Import  | File is missing required imports defined by config                 | HIGH     |
@@ -61,55 +51,45 @@ Peer layers cannot import each other. Violations are **AES201 (CRITICAL)**.
 | AES505 | Orphan  | Agent aggregate not called by surface                              | HIGH     |
 | AES506 | Orphan  | Surface not imported by entry/router; utility not imported         | HIGH     |
 
-# MCP Tools
+## MCP Tools
 
-### `health_check()`
+- `health_check()` — server health and component status
+- `read_skill(section)` — read skill markdown context
+- `list_commands(domain)` — list CLI commands, optional domain filter
+- `execute_command(action, args)` — execute a CLI action
+- `command_schema(tool_name)` — retrieve JSON Schema for a tool
 
-Server health and component status.
-
-## `read_skill (section)`
-
-read skilll md context
-
-### `list_commands(domain)`
-
-List available commands with descriptions and examples. Optional `domain` filter (e.g. `"setup"`, `"check"`).
-
-### `execute_command(action, args)`
-
-Execute a command action (check, scan, fix, etc.) with arguments.
-
-# CLI Subcommands
+## CLI Commands
 
 ### Core
 
-- `check [path]`: Run full AES compliance analysis.
-- `scan [path]`: Deep directory scan (alias for check).
-- `fix [path] [--dry-run]`: Apply safe automatic fixes; `--dry-run` to preview.
-- `ci [path] [--threshold N]`: CI mode; exit 1 if score < threshold (default 80).
-- `orphan <path>`: Check if a file is dead/unreachable code
+- `check [path]` — run full AES compliance analysis
+- `scan [path]` — deep directory scan, alias for `check`
+- `fix [path] [--dry-run]` — apply safe automatic fixes
+- `ci [path] [--threshold N]` — CI mode; exit 1 if score < threshold
+- `orphan <path>` — check if a file is dead/unreachable code
 
 ### Git & Integration
 
-- `install-hook`: Install git pre-commit hook (`lint-arwaky check .`).
-- `uninstall-hook`: Remove installed git hook.
+- `install-hook` — install git pre-commit hook
+- `uninstall-hook` — remove installed git hook
 
 ### Project
 
-- `watch [path]`: Watch path every 2s and re-lint on changes (Ctrl+C to stop).
+- `watch [path]` — watch path and re-lint on changes
 
 ### Setup & Config
 
-- `setup init`: Auto-configure lint-arwaky.
-- `setup install [--sudo]`: Install linter deps (ruff, mypy, bandit, eslint, prettier, tsc).
-- `setup mcp-config --client <claude|hermes|vscode|all>`: Print MCP server config.
-- `config show`: Show active configuration.
-- `adapters`: List active linter adapters.
+- `init` — auto-configure lint-arwaky
+- `install [--sudo]` — install linter dependencies
+- `mcp-config --client <claude|hermes|vscode|all>` — print MCP server config
+- `config-show` — show active configuration
+- `adapters` — list active linter adapters
 
 ### Maintenance
 
-- `maintenance doctor`: Diagnose environment health and toolchain.
+- `maintenance doctor` — diagnose environment health and toolchain
 
 ### Info
 
-- `version`: Show version.
+- `version` — show version

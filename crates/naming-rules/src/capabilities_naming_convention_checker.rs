@@ -99,47 +99,51 @@ impl NamingConventionChecker {
 
             // Check if the file starts with an unrecognized/invalid prefix (not corresponding to a standard AES layer).
             if !actual_prefix.is_empty() && !LAYER_PREFIXES.iter().any(|p| stem.starts_with(p)) {
-                let allowed: Vec<String> = LAYER_PREFIXES
-                    .iter()
-                    .map(|p| p.trim_end_matches('_').to_string())
-                    .collect();
-                violations.push(Self::make_result(
-                    file,
-                    "AES102",
-                    NamingViolation::UnknownPrefix {
-                        prefix: actual_prefix.clone(),
-                        allowed,
-                        reason: Some(LintMessage::new(format!(
-                            "The prefix '{}' is not one of the {} recognised AES layer prefixes. \
-                             Every source file must start with a valid layer prefix so it can be assigned to the correct architectural layer. \
-                             Likely causes: typo in the prefix name, or the file is in the wrong directory.",
-                            actual_prefix, LAYER_PREFIXES.len()
-                        ))),
-                    }
-                    .to_string(),
-                    Severity::HIGH,
-                ));
+                if _config.is_rule_enabled("AES102") {
+                    let allowed: Vec<String> = LAYER_PREFIXES
+                        .iter()
+                        .map(|p| p.trim_end_matches('_').to_string())
+                        .collect();
+                    violations.push(Self::make_result(
+                        file,
+                        "AES102",
+                        NamingViolation::UnknownPrefix {
+                            prefix: actual_prefix.clone(),
+                            allowed,
+                            reason: Some(LintMessage::new(format!(
+                                "The prefix '{}' is not one of the {} recognised AES layer prefixes. \
+                                 Every source file must start with a valid layer prefix so it can be assigned to the correct architectural layer. \
+                                 Likely causes: typo in the prefix name, or the file is in the wrong directory.",
+                                actual_prefix, LAYER_PREFIXES.len()
+                            ))),
+                        }
+                        .to_string(),
+                        Severity::HIGH,
+                    ));
+                }
                 return;
             }
 
             // If the prefix is recognized or is empty, but there is no underscore or does not meet basic naming requirements.
             let stem = get_stem(filename).unwrap_or_default();
-            violations.push(Self::make_result(
-                file,
-                "AES101",
-                NamingViolation::NamingConvention {
-                    min_words: 2,
-                    separator: "_".to_string(),
-                    reason: Some(LintMessage::new(format!(
-                        "No architectural layer could be determined for '{}', and the stem '{}' does not follow \
-                         the 'prefix_concept_suffix' naming pattern. Files must contain at least 2 underscore-separated \
-                         lowercase words (e.g., 'capabilities_user_checker'). A valid layer prefix is the first word.",
-                        file, stem
-                    ))),
-                }
-                .to_string(),
-                Severity::HIGH,
-            ));
+            if _config.is_rule_enabled("AES101") {
+                violations.push(Self::make_result(
+                    file,
+                    "AES101",
+                    NamingViolation::NamingConvention {
+                        min_words: 2,
+                        separator: "_".to_string(),
+                        reason: Some(LintMessage::new(format!(
+                            "No architectural layer could be determined for '{}', and the stem '{}' does not follow \
+                             the 'prefix_concept_suffix' naming pattern. Files must contain at least 2 underscore-separated \
+                             lowercase words (e.g., 'capabilities_user_checker'). A valid layer prefix is the first word.",
+                            file, stem
+                        ))),
+                    }
+                    .to_string(),
+                    Severity::HIGH,
+                ));
+            }
             return;
         }
 
@@ -154,7 +158,9 @@ impl NamingConventionChecker {
         // It must consist of lowercase letters and digits separated by underscores (e.g., prefix_concept_suffix).
         let stem = get_stem(filename).unwrap_or_default();
 
-        if NAMING_REGEX.as_ref().is_none_or(|re| !re.is_match(stem)) {
+        if _config.is_rule_enabled("AES101")
+            && NAMING_REGEX.as_ref().is_none_or(|re| !re.is_match(stem))
+        {
             violations.push(Self::make_result(
                 file,
                 "AES101",

@@ -76,23 +76,9 @@ cargo run --bin lint-arwaky-mcp
 
 ## Architecture
 
-### 7-Layer Model
-
-The codebase is organized into **feature crates** (vertical slicing) in the `crates/` directory. Within each crate, files from different layers coexist and are identified strictly by their **file prefix**:
-
-- `taxonomy_` — Value Objects (VOs), entities, constants, errors, events, utilities, helpers
-- `contract_` — Interface layer: ports (I\*), protocols, aggregates
-- `capabilities_` — Thinking layer: checkers, analyzers, processors, evaluators, resolvers, etc.
-- `infrastructure_` — Toolbox layer: linter adapters, providers, scanners
-- `agent_` — Wiring layer: orchestrators
-- `surface_` — Interface layer: CLI commands, MCP handlers
-- `root_` — Composition containers, main entries (root layer)
-
----
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification and naming conventions.
 
 ## Code Style
-
-### Formatting
 
 ```bash
 cargo fmt --all
@@ -101,12 +87,7 @@ cargo clippy --all-targets -- -D warnings
 
 ## Pull Request Process
 
-### Before Submitting
-
-1. **Run tests**: `cargo test --workspace`
-2. **Run self-lint**: `cargo run --bin lint-arwaky-cli -- check .` — no CRITICAL findings.
-3. **Format & lint**: `cargo fmt --all && cargo clippy --all-targets -- -D warnings`
-4. **Update docs**: Ensure `README.md`, `SKILL.md`, `PRD.md`, and `CHANGELOG.md` reflect your changes.
+See [TEST.md](TEST.md) for verification criteria.
 
 ### PR Description Template
 

@@ -14,6 +14,10 @@ use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
+fn default_rule_enabled() -> BooleanVO {
+    BooleanVO::new(true)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]
 pub struct ArchitectureRule {
@@ -22,6 +26,8 @@ pub struct ArchitectureRule {
     pub rule_type: ErrorCode,
     pub scope: LayerNameVO,
     pub exceptions: PatternList,
+    #[serde(default = "default_rule_enabled")]
+    pub enabled: BooleanVO,
     #[serde(default)]
     pub allowed: PatternList,
     #[serde(default)]
@@ -67,6 +73,14 @@ impl ArchitectureConfig {
             ignored_paths,
             mandatory_class_definition,
         }
+    }
+
+    pub fn is_rule_enabled(&self, rule_code: &str) -> bool {
+        self.rules
+            .iter()
+            .find(|r| r.name.value == rule_code)
+            .map(|r| r.enabled.value)
+            .unwrap_or(true)
     }
 }
 

@@ -147,11 +147,6 @@ impl LayerDetectionAnalyzer {
                                 }
                             }
                         }
-                        // Merge orphan rule settings into layer definition
-                        if rule.orphan.check_orphan.value {
-                            ldef.orphan.check_orphan =
-                                shared::common::taxonomy_common_vo::BooleanVO::new(true);
-                        }
                         if !rule.orphan.orphan_entry_points.values.is_empty() {
                             for val in &rule.orphan.orphan_entry_points.values {
                                 if !ldef.orphan.orphan_entry_points.values.contains(val) {

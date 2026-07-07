@@ -719,7 +719,7 @@ impl ILintExecutorProtocol for LintExecutor {
                 Self::format_doctor_report(&diagnostics)
             }
             None => {
-                let output = "Environment Diagnostics:\nUse CLI `lint-arwaky-cli maintenance doctor` for full environment check.\nRequired: Rust toolchain, Python 3.8+, Node.js 18+".to_string();
+                let output = "Environment Diagnostics:\nUse CLI `lint-arwaky-cli doctor` for full environment check.\nRequired: Rust toolchain, Python 3.8+, Node.js 18+".to_string();
                 LintExecutionResult::success(output, 0)
             }
         }
@@ -768,7 +768,7 @@ impl ILintExecutorProtocol for LintExecutor {
                 }
             }
             None => {
-                let output = "Adapter dependency installation.\nUse CLI `lint-arwaky-cli setup install` to install all adapter dependencies.".to_string();
+                let output = "Adapter dependency installation.\nUse CLI `lint-arwaky-cli install` to install all adapter dependencies.".to_string();
                 LintExecutionResult::success(output, 0)
             }
         }
@@ -802,7 +802,7 @@ impl ILintExecutorProtocol for LintExecutor {
             }
             None => {
                 let output = format!(
-                    "MCP Configuration for client: {}.\n  Use CLI `lint-arwaky-cli setup mcp-config --client {}` to print config.",
+                    "MCP Configuration for client: {}.\n  Use CLI `lint-arwaky-cli mcp-config --client {}` to print config.",
                     flags.mcp_client, flags.mcp_client
                 );
                 LintExecutionResult::success(output, 0)

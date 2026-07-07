@@ -68,7 +68,6 @@ fn main() -> ExitCode {
     // on each one independently. This factory creates a fresh
     // CheckContext for each member project with per-project config.
     let ext_lint_clone = container.external_lint.clone();
-    let layer_det_clone = layer_detector.clone();
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
         let import_container =
             import_rules::root_import_rules_container::ImportContainer::new_with_config(
@@ -90,6 +89,11 @@ fn main() -> ExitCode {
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
 
+        let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
+        let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
+        let layer_detector: Arc<dyn ILayerDetectionAggregate> =
+            Arc::new(LayerDetectionAnalyzer::new(config.clone(), fs, parser));
+
         surface_check_command::CheckContext {
             code_analysis_linter: arch_linter,
             import_orchestrator: import_container.orchestrator(),
@@ -101,7 +105,7 @@ fn main() -> ExitCode {
                 ),
             ),
             orphan_orchestrator: orphan_container.analyzer(),
-            layer_detector: layer_det_clone.clone(),
+            layer_detector,
             language_detector: Arc::new(
                 cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
             ),

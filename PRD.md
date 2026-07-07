@@ -218,54 +218,19 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 
 ## 6. Architecture — AES Layered
 
-7 layers determined by **file prefix** (NOT folder):
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification, dependency rules, and naming conventions.
 
-| Layer          | Prefix            | Allowed Suffixes                                                                                                         |
-| -------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Taxonomy       | `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`, `_utility`, `_helper`                                                 |
-| Contract       | `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                       |
-| Capabilities   | `capabilities_`   | `_checker`, `_analyzer`, `_processor`, etc.                                                                              |
-| Infrastructure | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, etc.                                                                                |
-| Agent          | `agent_`          | `_orchestrator` (only)                                                                                                   |
-| Surface        | `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` |
-| Root           | `root_`           | `_container`, `_entry`                                                                                                   |
+## 7. AES Rules
 
----
-
-## 7. AES Rules — 24 Codes Across 5 Groups
-
-| Group   | Codes      | Count |
-| ------- | ---------- | ----- |
-| Naming  | AES101–102 | 2     |
-| Import  | AES201–205 | 5     |
-| Quality | AES301–305 | 5     |
-| Role    | AES401–406 | 6     |
-| Orphan  | AES501–506 | 6     |
-
----
+See [RULES_AES.md](.agents/rules/RULES_AES.md) for the complete rule catalog.
 
 ## 8. CLI Interface
 
-| Category       | Subcommands                                                        |
-| -------------- | ------------------------------------------------------------------ |
-| Core           | check, scan, fix, ci, orphan, security, duplicates, dependencies   |
-| Git            | install-hook, uninstall-hook, git-diff                             |
-| Maintenance    | maintenance doctor                                                 |
-| Setup & Config | setup init, setup install, setup mcp-config, config show, adapters |
-| Dev            | watch                                                              |
-| Info           | version, vscode-graph                                              |
+See [SKILL.md](SKILL.md) for the complete command catalog.
 
----
+## 9. MCP Interface
 
-## 9. MCP Interface (5 Tools)
-
-| Tool                            | Purpose                                      |
-| ------------------------------- | -------------------------------------------- |
-| `execute_command(action, args)` | Execute any CLI command                      |
-| `list_commands(domain)`         | Discover available CLI commands              |
-| `command_schema(tool_name)`     | Retrieve JSON Schema for a registered tool   |
-| `read_skill(section)`           | Read SKILL.md documentation by section       |
-| `health_check()`                | Check linter adapter health and system state |
+See [SKILL.md](SKILL.md) for the MCP tool reference and [DEPLOY.md](DEPLOY.md) for client setup.
 
 ---
 

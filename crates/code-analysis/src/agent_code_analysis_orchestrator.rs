@@ -163,18 +163,20 @@ impl CodeAnalysisOrchestrator {
         let mut entries: Vec<(String, String)> = Vec::new();
 
         // Scan Cargo.toml for workspace clippy allow bypass (AES304)
-        let root_path = Path::new(root_dir);
-        let mut cargo_candidates: Vec<std::path::PathBuf> = Vec::new();
-        cargo_candidates.push(root_path.join("Cargo.toml"));
-        if let Some(parent) = root_path.parent() {
-            cargo_candidates.push(parent.join("Cargo.toml"));
-        }
-        for cargo_path in &cargo_candidates {
-            if cargo_path.exists() {
-                if let Ok(cargo_content) = std::fs::read_to_string(cargo_path) {
-                    self.container
-                        .bypass_checker()
-                        .check_cargo_toml(&cargo_content, &mut violations);
+        if config.is_rule_enabled("AES304") {
+            let root_path = Path::new(root_dir);
+            let mut cargo_candidates: Vec<std::path::PathBuf> = Vec::new();
+            cargo_candidates.push(root_path.join("Cargo.toml"));
+            if let Some(parent) = root_path.parent() {
+                cargo_candidates.push(parent.join("Cargo.toml"));
+            }
+            for cargo_path in &cargo_candidates {
+                if cargo_path.exists() {
+                    if let Ok(cargo_content) = std::fs::read_to_string(cargo_path) {
+                        self.container
+                            .bypass_checker()
+                            .check_cargo_toml(&cargo_content, &mut violations);
+                    }
                 }
             }
         }
@@ -191,12 +193,16 @@ impl CodeAnalysisOrchestrator {
             entries.push((file.clone(), c.clone()));
 
             // Layer-independent checks (run on ALL files)
-            self.container
-                .bypass_checker()
-                .check_bypass_comments(file, &c, &mut violations);
-            self.container
-                .dead_inheritance_checker()
-                .check_dead_inheritance(file, &c, &mut violations);
+            if config.is_rule_enabled("AES304") {
+                self.container
+                    .bypass_checker()
+                    .check_bypass_comments(file, &c, &mut violations);
+            }
+            if config.is_rule_enabled("AES303") {
+                self.container
+                    .dead_inheritance_checker()
+                    .check_dead_inheritance(file, &c, &mut violations);
+            }
 
             if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
                 continue;
@@ -216,31 +222,40 @@ impl CodeAnalysisOrchestrator {
             }
 
             // Layer-dependent checks (code-analysis only)
-            self.container
-                .line_checker()
-                .check_line_counts(file, Some(def), &c, &mut violations);
+            if config.is_rule_enabled("AES301") || config.is_rule_enabled("AES302") {
+                self.container.line_checker().check_line_counts(
+                    file,
+                    Some(def),
+                    &c,
+                    &mut violations,
+                );
+            }
 
             // Mandatory class definition check (AES303)
-            self.container
-                .class_checker()
-                .check_mandatory_class_definition(file, Some(def), &c, &mut violations);
+            if config.is_rule_enabled("AES303") {
+                self.container
+                    .class_checker()
+                    .check_mandatory_class_definition(file, Some(def), &c, &mut violations);
+            }
         }
 
         // AES305: File-level similarity check (run once across all files, using pre-read entries)
-        let min_dup_lines: usize = 5;
-        let threshold_pct: f64 = 50.0;
-        let dup_violations = self
-            .container
-            .duplication_checker()
-            .check_file_similarity_entries(&entries, min_dup_lines, threshold_pct);
-        for (file_path, dv) in dup_violations {
-            violations.push(LintResult::new_arch(
-                &file_path,
-                0,
-                "AES305",
-                Severity::HIGH,
-                dv.to_string(),
-            ));
+        if config.is_rule_enabled("AES305") {
+            let min_dup_lines: usize = 5;
+            let threshold_pct: f64 = 50.0;
+            let dup_violations = self
+                .container
+                .duplication_checker()
+                .check_file_similarity_entries(&entries, min_dup_lines, threshold_pct);
+            for (file_path, dv) in dup_violations {
+                violations.push(LintResult::new_arch(
+                    &file_path,
+                    0,
+                    "AES305",
+                    Severity::HIGH,
+                    dv.to_string(),
+                ));
+            }
         }
 
         violations

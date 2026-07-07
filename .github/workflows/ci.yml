@@ -58,7 +58,7 @@ jobs:
         run: |
           ALL_PASS=true
           for SP in test-workspaces/crates test-workspaces/modules test-workspaces/packages; do
-            OUTPUT=$(./target/release/lint-arwaky-cli scan "$SP" 2>&1)
+            OUTPUT=$(./target/release/lint-arwaky-cli scan "$SP" 2>&1) || true
             echo "$OUTPUT"
             UNIQUE_AES=$(echo "$OUTPUT" | grep -oP 'Total Unique AES Codes:\s*\K[0-9]+' || echo "0")
             NAME=$(basename "$SP")
