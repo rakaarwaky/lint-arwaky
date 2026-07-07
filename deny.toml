@@ -9,6 +9,8 @@ ignore = [
     "RUSTSEC-2024-0436",
     # DNS rebinding vulnerability in rmcp Streamable HTTP server transport (rmcp v0.16.0)
     "RUSTSEC-2026-0189",
+    # Invalid pointer dereference in crossbeam-epoch v0.9.18
+    "RUSTSEC-2026-0204",
 ]
 yanked = "warn"
 
