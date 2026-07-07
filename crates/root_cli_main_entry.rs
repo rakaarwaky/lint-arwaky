@@ -132,7 +132,14 @@ fn main() -> ExitCode {
         return run_default_check(".");
     }
 
-    let cli = match <Cli as clap::Parser>::try_parse_from(&raw_args) {
+    use clap::{CommandFactory, FromArgMatches};
+    let mut cmd = <Cli as CommandFactory>::command();
+    cmd = cmd.version(env!("CARGO_PKG_VERSION"));
+    let matches = match cmd.try_get_matches_from(&raw_args) {
+        Ok(m) => m,
+        Err(e) => e.exit(),
+    };
+    let cli = match <Cli as FromArgMatches>::from_arg_matches(&matches) {
         Ok(c) => c,
         Err(e) => e.exit(),
     };
