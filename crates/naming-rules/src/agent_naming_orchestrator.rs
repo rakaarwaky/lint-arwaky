@@ -106,12 +106,16 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         let files = Self::filter_source_files(&all_files);
         let root_dir = target;
 
-        self.naming_convention_checker
-            .check_file_naming(self.analyzer.as_ref(), &files, root_dir, &mut results)
-            .await;
-        self.suffix_prefix_checker
-            .check_domain_suffixes(self.analyzer.as_ref(), &files, root_dir, &mut results)
-            .await;
+        if config.is_rule_enabled("AES101") || config.is_rule_enabled("AES102") {
+            self.naming_convention_checker
+                .check_file_naming(self.analyzer.as_ref(), &files, root_dir, &mut results)
+                .await;
+        }
+        if config.is_rule_enabled("AES102") {
+            self.suffix_prefix_checker
+                .check_domain_suffixes(self.analyzer.as_ref(), &files, root_dir, &mut results)
+                .await;
+        }
 
         results.values
     }

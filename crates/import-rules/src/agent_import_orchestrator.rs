@@ -170,23 +170,29 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let (mandatory_results, forbidden_results, intent_results) = tokio::join!(
             async {
                 let mut r = LintResultList::new(Vec::new());
-                self.mandatory
-                    .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut r)
-                    .await;
+                if config.is_rule_enabled("AES201") {
+                    self.mandatory
+                        .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut r)
+                        .await;
+                }
                 r
             },
             async {
                 let mut r = LintResultList::new(Vec::new());
-                self.forbidden
-                    .check_forbidden_imports(self.analyzer.as_ref(), &files, &root_dir, &mut r)
-                    .await;
+                if config.is_rule_enabled("AES202") {
+                    self.forbidden
+                        .check_forbidden_imports(self.analyzer.as_ref(), &files, &root_dir, &mut r)
+                        .await;
+                }
                 r
             },
             async {
                 let mut r = LintResultList::new(Vec::new());
-                self.intent
-                    .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut r)
-                    .await;
+                if config.is_rule_enabled("AES204") {
+                    self.intent
+                        .check_mandatory_imports(self.analyzer.as_ref(), &files, &root_dir, &mut r)
+                        .await;
+                }
                 r
             }
         );
@@ -195,18 +201,22 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         results.values.extend(intent_results.values);
 
         // AES203: unused import check — read file content once and check all languages
-        for file in files.iter() {
-            let file_path = file.value();
-            if let Ok(content) = std::fs::read_to_string(file_path) {
-                self.unused
-                    .check_unused_imports(file_path, &content, &mut results.values);
+        if config.is_rule_enabled("AES203") {
+            for file in files.iter() {
+                let file_path = file.value();
+                if let Ok(content) = std::fs::read_to_string(file_path) {
+                    self.unused
+                        .check_unused_imports(file_path, &content, &mut results.values);
+                }
             }
         }
 
         // AES205: circular dependency / cycle detection
-        self.cycle
-            .check_cycles(self.analyzer.as_ref(), &files, &root_dir, &mut results)
-            .await;
+        if config.is_rule_enabled("AES205") {
+            self.cycle
+                .check_cycles(self.analyzer.as_ref(), &files, &root_dir, &mut results)
+                .await;
+        }
 
         results.values
     }

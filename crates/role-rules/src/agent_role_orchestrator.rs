@@ -117,7 +117,7 @@ impl RoleOrchestrator {
 
             // Dispatch based on layer prefix — each layer has its own checker protocol
             match prefix {
-                "agent" => {
+                "agent" if self.config.is_rule_enabled("AES405") => {
                     let checker = self.aggregate.agent();
                     checker.check_file_size_limit(&source_vo, max_lines, violations);
                     checker.check_any_type_annotation(&source_vo, violations);
@@ -130,7 +130,7 @@ impl RoleOrchestrator {
                     }
                 }
                 "root" => {} // Root layer (di containers, entries) has no role rules
-                "surfaces" | "surface" => {
+                "surfaces" | "surface" if self.config.is_rule_enabled("AES406") => {
                     let checker = self.aggregate.surface();
                     checker.check_fn_count_limit(&source_vo, violations);
                     // Classify surface type for more specific checks
@@ -151,11 +151,11 @@ impl RoleOrchestrator {
                         checker.check_passive_surface(&source_vo, violations);
                     }
                 }
-                "infrastructure" | "infra" => {
+                "infrastructure" | "infra" if self.config.is_rule_enabled("AES404") => {
                     let checker = self.aggregate.infrastructure();
                     checker.check_port_implementation(&source_vo, violations);
                 }
-                "contract" => {
+                "contract" if self.config.is_rule_enabled("AES402") => {
                     let checker = self.aggregate.contract();
                     if filename.contains("_port") {
                         violations.extend(checker.check_port(&source_vo));
@@ -163,18 +163,18 @@ impl RoleOrchestrator {
                         violations.extend(checker.check_protocol(&source_vo));
                     }
                 }
-                "capabilities" | "capability" => {
+                "capabilities" | "capability" if self.config.is_rule_enabled("AES403") => {
                     let checker = self.aggregate.capabilities();
                     checker.check_capability_routing(&source_vo, "capabilities", violations);
                 }
-                "taxonomy" => {
+                "taxonomy" if self.config.is_rule_enabled("AES401") => {
                     let checker = self.aggregate.taxonomy();
                     checker.check_entity(&source_vo, violations);
                     checker.check_error(&source_vo, violations);
                     checker.check_event(&source_vo, violations);
                     checker.check_constant(&source_vo, violations);
                 }
-                _ => {} // Unknown prefix — skip (handled by other crates)
+                _ => {} // Unknown/disabled prefix — skip
             }
         }
     }

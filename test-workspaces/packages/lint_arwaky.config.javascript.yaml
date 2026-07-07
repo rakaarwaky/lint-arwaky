@@ -679,42 +679,36 @@ architecture:
 
     AES501:
       enabled: true
-      check_orphan: true
       scope: ["taxonomy"]
       entry_points:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
 
     AES502:
       enabled: true
-      check_orphan: true
       scope: ["contract"]
       entry_points:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
 
     AES503:
       enabled: true
-      check_orphan: true
       scope: ["capabilities"]
       entry_points:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
 
     AES504:
       enabled: true
-      check_orphan: true
       scope: ["infrastructure"]
       entry_points:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
 
     AES505:
       enabled: true
-      check_orphan: true
       scope: ["agent"]
       entry_points:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
 
     AES506:
       enabled: true
-      check_orphan: true
       scope: ["surfaces"]
       entry_points:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]

@@ -155,8 +155,17 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 continue;
             }
 
-            // Skip if orphan checking is disabled for this layer
-            if !definition.orphan.check_orphan.value {
+            // Skip if the specific orphan rule for this layer is disabled
+            let rule_code = match layer_str.to_lowercase() {
+                s if s.contains(LAYER_TAXONOMY) => "AES501",
+                s if s.contains(LAYER_CONTRACT) => "AES502",
+                s if s.contains(LAYER_CAPABILITIES) => "AES503",
+                s if s.contains(LAYER_INFRASTRUCTURE) => "AES504",
+                s if s.contains(LAYER_AGENT) => "AES505",
+                s if s.contains(LAYER_SURFACES) => "AES506",
+                _ => "",
+            };
+            if !rule_code.is_empty() && !config.is_rule_enabled(rule_code) {
                 continue;
             }
 
@@ -344,7 +353,6 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
 
     fn get_layer_def(&self, _layer: &str) -> Option<LayerDefinition> {
         let mut def = LayerDefinition::default();
-        def.orphan.check_orphan = shared::common::taxonomy_common_vo::BooleanVO::new(true);
         def.exceptions.values = vec![
             "mod.rs".to_string(),
             "__init__.py".to_string(),
