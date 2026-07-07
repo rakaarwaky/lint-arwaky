@@ -30,24 +30,24 @@ The project is its own first customer: running `lint-arwaky-cli check .` on the 
 
 ### What it does
 
-| Feature                      | Description                                                                                            |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Feature                | Description                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | **Multi-Language**     | Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon), JavaScript/TypeScript (ESLint, Prettier, TSC) |
 | **Architecture Audit** | 24 AES rules enforce clean architecture layer boundaries, naming, type safety, and dead code           |
 | **MCP Server**         | 5 tools for autonomous AI-agent integration over JSON-RPC 2.0                                          |
-| **Zero Bypass**        | `noqa`, `type: ignore`, and `#[allow(...)]` suppressions are detected and flagged               |
+| **Zero Bypass**        | `noqa`, `type: ignore`, and `#[allow(...)]` suppressions are detected and flagged                      |
 | **CI Ready**           | SARIF 2.1.0, JUnit XML, and JSON reports with proper exit codes                                        |
 | **Self-Auditing**      | The project lints itself under its own rule engine                                                     |
 
 ### Who it's for
 
-| Persona               | Use Case                                       | Start Here                        |
-| --------------------- | ---------------------------------------------- | --------------------------------- |
+| Persona         | Use Case                                       | Start Here                         |
+| --------------- | ---------------------------------------------- | ---------------------------------- |
 | **AI Agent**    | Autonomous linting, self-healing, code review  | [SKILL.md](SKILL.md)               |
 | **Developer**   | Lint codebases, enforce architecture           | [Quick Start](#usage) below        |
-| **DevOps / CI** | Quality gates, trend reports, dependency scans | `ci`, `check`                 |
+| **DevOps / CI** | Quality gates, trend reports, dependency scans | `ci`, `check`                      |
 | **Contributor** | Extend adapters, add CLI commands              | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| **Reviewer**    | Architecture audit, code quality analysis      | `check`, `orphan`             |
+| **Reviewer**    | Architecture audit, code quality analysis      | `check`, `orphan`                  |
 
 ---
 
@@ -167,21 +167,21 @@ Each file is given a **layer badge** color:
 
 #### Navigation
 
-| Key               | Action                    |
-| ----------------- | ------------------------- |
+| Key           | Action                    |
+| ------------- | ------------------------- |
 | `j`/`k`       | Move up/down              |
-| `h`             | Back (parent dir)         |
+| `h`           | Back (parent dir)         |
 | `l` / `Enter` | Open folder / preview     |
 | `gg` / `G`    | Jump to start/end         |
-| `/`             | Search file               |
-| Tab               | Cycle panel focus         |
-| Mouse click       | Select item / focus panel |
-| Scroll wheel      | Scroll panel              |
+| `/`           | Search file               |
+| Tab           | Cycle panel focus         |
+| Mouse click   | Select item / focus panel |
+| Scroll wheel  | Scroll panel              |
 
 #### Actions (on selected file/folder)
 
-| Key    | Action                                          | CLI Equivalent              |
-| ------ | ----------------------------------------------- | --------------------------- |
+| Key  | Action                                   | CLI Equivalent            |
+| ---- | ---------------------------------------- | ------------------------- |
 | `c`  | **check** — full AES compliance          | `check [path]`            |
 | `s`  | **scan** — multi-adapter scan            | `scan [path]`             |
 | `f`  | **fix** — auto-fix (toggle dry-run)      | `fix [path]`              |
@@ -200,8 +200,8 @@ Each file is given a **layer badge** color:
 | `U`  | **uninstall-hook** — git hook remove     | `uninstall-hook`          |
 | `a`  | **adapters** — list active adapters      | `adapters`                |
 | `v`  | **version** — show version               | `version`                 |
-| `?`  | Help overlay                                    | —                          |
-| `q`  | Quit                                            | —                          |
+| `?`  | Help overlay                             | —                         |
+| `q`  | Quit                                     | —                         |
 
 #### Mouse support
 
