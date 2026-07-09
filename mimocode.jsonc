@@ -1,7 +1,5 @@
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
-  "model": "OmniRouter/high-availability",
-  "small_model": "OmniRouter/high-availability",
   "default_agent": "build",
   "autoupdate": "notify",
   "share": "auto",
