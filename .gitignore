@@ -29,6 +29,7 @@ target/
 .node_modules/
 .obsidian/
 log/
+.mimocode
 
 # Sensitive files (CRED007a)
 credentials.json
