@@ -239,10 +239,15 @@ impl CheckCommandsSurface {
     ) -> usize {
         let canonical_scan_path = crate::surface_common_command::canonicalize_path(path);
         let cwd = crate::surface_common_command::current_dir();
+        let config = self.layer_detector.config();
         let filtered_results: Vec<_> = if let Some(code) = filter {
             all_results
                 .into_iter()
                 .filter(|r| {
+                    let rule_code = r.code.to_string();
+                    if config.ignored_rules.values.contains(&rule_code) {
+                        return false;
+                    }
                     let abs_path = cwd.join(&r.file.value);
                     r.code.code() == code
                         && abs_path.to_string_lossy().starts_with(&canonical_scan_path)
@@ -252,6 +257,10 @@ impl CheckCommandsSurface {
             all_results
                 .into_iter()
                 .filter(|r| {
+                    let rule_code = r.code.to_string();
+                    if config.ignored_rules.values.contains(&rule_code) {
+                        return false;
+                    }
                     let abs_path = cwd.join(&r.file.value);
                     abs_path.to_string_lossy().starts_with(&canonical_scan_path)
                 })
@@ -506,6 +515,10 @@ impl CheckCommandsSurface {
                 all_results
                     .into_iter()
                     .filter(|r| {
+                        let rule_code = r.code.to_string();
+                        if ws.config.ignored_rules.values.contains(&rule_code) {
+                            return false;
+                        }
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         r.code.code() == code
                             && ws_canonical
@@ -518,6 +531,10 @@ impl CheckCommandsSurface {
                 all_results
                     .into_iter()
                     .filter(|r| {
+                        let rule_code = r.code.to_string();
+                        if ws.config.ignored_rules.values.contains(&rule_code) {
+                            return false;
+                        }
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         ws_canonical
                             .as_ref()
@@ -538,6 +555,10 @@ impl CheckCommandsSurface {
                 member_orphans
                     .into_iter()
                     .filter(|r| {
+                        let rule_code = r.code.to_string();
+                        if ws.config.ignored_rules.values.contains(&rule_code) {
+                            return false;
+                        }
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         r.code.code() == code
                             && ws_canonical
@@ -550,6 +571,10 @@ impl CheckCommandsSurface {
                 member_orphans
                     .into_iter()
                     .filter(|r| {
+                        let rule_code = r.code.to_string();
+                        if ws.config.ignored_rules.values.contains(&rule_code) {
+                            return false;
+                        }
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         ws_canonical
                             .as_ref()

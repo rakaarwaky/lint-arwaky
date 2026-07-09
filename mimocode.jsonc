@@ -1,7 +1,5 @@
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
-  "model": "OmniRouter/high-availability",
-  "small_model": "OmniRouter/high-availability",
   "default_agent": "build",
   "autoupdate": "notify",
   "share": "auto",
@@ -9,19 +7,19 @@
     "anthropic": {
       "options": {
         "timeout": 600000,
-        "setCacheKey": true,
-      },
+        "setCacheKey": true
+      }
     },
     "openai": {
       "options": {
-        "timeout": 300000,
-      },
-    },
+        "timeout": 300000
+      }
+    }
   },
   "server": {
     "port": 4096,
     "hostname": "0.0.0.0",
-    "mdns": false,
+    "mdns": false
   },
   "permission": {
     "*": "allow",
@@ -54,7 +52,7 @@
       "rm -rf *": "deny",
       "sudo *": "deny",
       "curl *": "allow",
-      "wget *": "allow",
+      "wget *": "allow"
     },
     "edit": "allow",
     "read": {
@@ -62,19 +60,19 @@
       "*.env": "deny",
       "*.env.*": "deny",
       "*.env.example": "allow",
-      "*.env.local": "deny",
+      "*.env.local": "deny"
     },
     "write": "allow",
     "webfetch": "allow",
     "websearch": "allow",
     "external_directory": {
       "~/projects/*": "allow",
-      "~/*": "allow",
+      "~/*": "allow"
     },
     "skill": {
-      "*": "allow",
+      "*": "allow"
     },
-    "doom_loop": "ask",
+    "doom_loop": "ask"
   },
   "agent": {
     "build": {
@@ -86,9 +84,9 @@
         "bash": {
           "*": "allow",
           "cargo *": "allow",
-          "git *": "allow",
-        },
-      },
+          "git *": "allow"
+        }
+      }
     },
     "plan": {
       "description": "Read-only analysis and planning agent",
@@ -98,20 +96,20 @@
       "permission": {
         "edit": "deny",
         "write": "deny",
-        "bash": "deny",
-      },
+        "bash": "deny"
+      }
     },
     "compose": {
       "description": "Workflow-driven agent with built-in skills",
       "mode": "primary",
       "model": "OmniRouter/high-availability",
-      "temperature": 0.3,
+      "temperature": 0.3
     },
     "general": {
       "description": "General-purpose multi-step worker",
       "mode": "subagent",
       "model": "OmniRouter/high-availability",
-      "temperature": 0.3,
+      "temperature": 0.3
     },
     "explore": {
       "description": "Fast read-only codebase explorer",
@@ -121,15 +119,15 @@
       "permission": {
         "edit": "deny",
         "write": "deny",
-        "bash": "deny",
-      },
-    },
+        "bash": "deny"
+      }
+    }
   },
   "compaction": {
     "auto": true,
     "prune": true,
     "tail_turns": 3,
-    "reserved": 15000,
+    "reserved": 15000
   },
   "watcher": {
     "ignore": [
@@ -139,68 +137,68 @@
       ".git/**",
       "*.lock",
       "log/**",
-      "*.log",
-    ],
+      "*.log"
+    ]
   },
   "command": {
     "build": {
       "template": "Build the entire workspace with release profile",
       "description": "Build all crates in release mode",
-      "agent": "build",
+      "agent": "build"
     },
     "test": {
       "template": "Run all workspace tests",
       "description": "Run cargo test --workspace",
-      "agent": "build",
+      "agent": "build"
     },
     "lint": {
       "template": "Run clippy on all targets with warnings as errors",
       "description": "Run cargo clippy --all-targets -- -D warnings",
-      "agent": "build",
+      "agent": "build"
     },
     "fmt": {
       "template": "Format all code with rustfmt",
       "description": "Run cargo fmt --all",
-      "agent": "build",
+      "agent": "build"
     },
     "check": {
       "template": "Run cargo check on the workspace",
       "description": "Quick type and borrow check",
-      "agent": "build",
+      "agent": "build"
     },
     "scan": {
       "template": "Run the lint-arwaky CLI to scan the current project",
       "description": "Self-lint with lint-arwaky",
-      "agent": "build",
+      "agent": "build"
     },
     "release": {
       "template": "Build release, run tests, and prepare for deployment",
       "description": "Full release pipeline",
-      "agent": "build",
-    },
+      "agent": "build"
+    }
   },
   "skills": {
-    "paths": [".agents/skills", ".mimocode/skills"],
+    "paths": [".agents/skills", ".mimocode/skills"]
   },
   "instructions": [
     "AGENTS.md",
     "ARCHITECTURE.md",
     "CONTRIBUTING.md",
-    "TEST.md",
+    "TEST.md"
   ],
   "formatter": {
     "rustfmt": {
       "command": ["cargo", "fmt", "--all"],
-      "extensions": [".rs"],
-    },
+      "extensions": [".rs"]
+    }
   },
   "snapshot": true,
   "checkpoint": {
     "thresholds": ["40%", "60%", "80%"],
     "reserved": 10000,
     "push_caps": {
-      "max_per_session": 10,
-    },
+      "max_per_session": 10
+    }
   },
-  "logLevel": "INFO",
+  "logLevel": "INFO"
 }

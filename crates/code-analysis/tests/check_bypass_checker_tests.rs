@@ -257,3 +257,63 @@ fn skips_non_clippy_sections_in_cargo_toml() {
     checker.check_cargo_toml(cargo, &mut v);
     assert_eq!(v.len(), 0);
 }
+
+#[test]
+fn ignores_keywords_in_comments_and_docstrings() {
+    let patterns = PatternList::new(vec![
+        "Any".to_string(),
+        "except:".to_string(),
+        "pass".to_string(),
+        "# noqa".to_string(),
+    ]);
+    let checker = BypassChecker::from_patterns(&patterns);
+    let mut v = empty_violations();
+
+    // 1. In comment: '# pass' and '# this is Any' should be ignored
+    checker.check_bypass_comments(
+        "f.py",
+        "x = 1  # pass this parameter\n# except: should be ignored\n# Any is fine\n",
+        &mut v,
+    );
+    assert_eq!(count_code(&v, "AES304"), 0);
+
+    // 2. In docstrings: triple-quotes in Python should be ignored
+    let py_doc = r#"
+def foo():
+    """
+    docstring containing pass, except:, Any
+    """
+    return None
+"#;
+    checker.check_bypass_comments("f.py", py_doc, &mut v);
+    assert_eq!(count_code(&v, "AES304"), 0);
+
+    // 3. Comment bypass in Python should still trigger (e.g. # noqa)
+    checker.check_bypass_comments("f.py", "x = 1  # noqa\n", &mut v);
+    assert_eq!(count_code(&v, "AES304"), 1);
+}
+
+#[test]
+fn keyword_matches_with_word_boundary_safety() {
+    let patterns = PatternList::new(vec!["Any".to_string(), "pass".to_string()]);
+    let checker = BypassChecker::from_patterns(&patterns);
+    let mut v = empty_violations();
+
+    // Word boundary safety: 'company' contains 'any', 'password' contains 'pass'.
+    // Neither should trigger code-level bypass.
+    checker.check_bypass_comments(
+        "f.py",
+        "my_company = 'Google'\nmy_password = '123'\n",
+        &mut v,
+    );
+    assert_eq!(count_code(&v, "AES304"), 0);
+
+    // True violations should still trigger
+    let mut v2 = empty_violations();
+    checker.check_bypass_comments("f.py", "x = Any\n", &mut v2);
+    assert_eq!(count_code(&v2, "AES304"), 1);
+
+    let mut v3 = empty_violations();
+    checker.check_bypass_comments("f.py", "pass\n", &mut v3);
+    assert_eq!(count_code(&v3, "AES304"), 1);
+}

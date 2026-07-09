@@ -134,8 +134,21 @@ fn has_py_in_dir(dir: &std::path::Path) -> bool {
     false
 }
 
+fn is_in_path(executable: &str) -> bool {
+    if let Ok(path_var) = std::env::var("PATH") {
+        for path_dir in std::env::split_paths(&path_var) {
+            let path = path_dir.join(executable);
+            if path.is_file() {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 /// Resolve the executable command for a JS tool (eslint, prettier, tsc).
-/// Prefers local node_modules/.bin over npx/bunx.
+/// Prefers local node_modules/.bin, then system PATH, otherwise falls back to
+/// the executable directly (to fail immediately with an OS error instead of hanging on npx).
 pub fn resolve_js_cmd(executable: &str, args: Vec<String>, working_dir: &str) -> Vec<String> {
     let local_bin = Path::new(working_dir)
         .join("node_modules")
@@ -146,8 +159,14 @@ pub fn resolve_js_cmd(executable: &str, args: Vec<String>, working_dir: &str) ->
         cmd.extend(args);
         return cmd;
     }
-    let runner = if is_bun_available() { "bunx" } else { "npx" };
-    let mut cmd = vec![runner.to_string(), executable.to_string()];
+    if is_in_path(executable) {
+        let mut cmd = vec![executable.to_string()];
+        cmd.extend(args);
+        return cmd;
+    }
+    // Fall back to executing directly so it fails immediately with "No such file or directory"
+    // instead of hanging/prompting on npx/bunx when not installed.
+    let mut cmd = vec![executable.to_string()];
     cmd.extend(args);
     cmd
 }
@@ -233,14 +252,4 @@ pub fn resolve_cargo_lock_working_dir(path: &FilePath) -> FilePath {
         }
     }
     FilePath::new("nonexistent_directory_for_cargo_lock".to_string()).unwrap_or_default()
-}
-
-fn is_bun_available() -> bool {
-    std::process::Command::new("bun")
-        .arg("--version")
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
 }

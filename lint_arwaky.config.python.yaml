@@ -197,6 +197,7 @@ architecture:
         root:
           suffix:
             - strict: ["entry", "container"]
+
     AES201:
       enabled: true
       scope:
@@ -385,7 +386,7 @@ architecture:
             - layer: "contract(protocol|aggregate)"
               purpose: "call"
 
-    AES205:
+    AES203:
       enabled: true
       scope:
         [
@@ -397,44 +398,30 @@ architecture:
           "surfaces",
         ]
 
-    AES401:
-      enabled: true
-      scope:
-        ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)"]
-
-    AES402:
-      enabled: true
-      scope: ["contract(aggregate)", "contract(port|protocol)"]
-      exceptions: ["__init__.py", "__main__.py", "main.py"]
-
-    AES403:
-      enabled: true
-      scope: ["capabilities"]
-      max_functions: 30
-      max_impl: 5
-      exceptions: ["__init__.py", "__main__.py", "main.py"]
-
-    AES404:
-      enabled: true
-      scope: ["infrastructure"]
-      exceptions: ["__init__.py", "__main__.py", "main.py"]
-
-    AES405:
-      enabled: true
-      scope: ["agent(orchestrator)"]
-      max_lines: 1000
-      exceptions: ["__init__.py", "__main__.py", "main.py"]
-
-    AES406:
+    AES204:
       enabled: true
       scope:
         [
-          "surfaces(command|controller|page|entry)",
-          "surfaces(hook|store|action|screen|router)",
-          "surfaces(component|view|layout)",
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
         ]
-      max_functions: 15
-      exceptions: ["__init__.py", "__main__.py", "main.py"]
+      exceptions: []
+
+    AES205:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
 
     AES301:
       enabled: true
@@ -462,6 +449,19 @@ architecture:
           "surfaces",
         ]
       min_lines: 5
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
+
+    AES303:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
       exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES304:
@@ -501,42 +501,43 @@ architecture:
         ]
       exceptions: []
 
-    AES203:
+    AES401:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)"]
 
-    AES204:
+    AES402:
       enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-      exceptions: []
+      scope: ["contract(aggregate)", "contract(port|protocol)"]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
 
-    AES303:
+    AES403:
+      enabled: true
+      scope: ["capabilities"]
+      max_functions: 30
+      max_impl: 5
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
+
+    AES404:
+      enabled: true
+      scope: ["infrastructure"]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
+
+    AES405:
+      enabled: true
+      scope: ["agent(orchestrator)"]
+      max_lines: 1000
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
+
+    AES406:
       enabled: true
       scope:
         [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
+          "surfaces(command|controller|page|entry)",
+          "surfaces(hook|store|action|screen|router)",
+          "surfaces(component|view|layout)",
         ]
+      max_functions: 15
       exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES501:

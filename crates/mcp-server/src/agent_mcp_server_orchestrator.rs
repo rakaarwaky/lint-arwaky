@@ -73,20 +73,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let linter = self.deps.code_analysis_linter.clone();
-                let import_orch = self.deps.import_orchestrator.clone();
-                let naming_orch = self.deps.naming_orchestrator.clone();
-                let role_orch = self.deps.role_orchestrator.clone();
                 let ext_lint = self.deps.external_lint.clone();
                 let orphan_orch = self.deps.orphan_orchestrator.clone();
-                let layer_det = self.deps.layer_detector.clone();
                 let scanner = self.deps.scanner_provider.clone();
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
-                    let aes_results = linter.run_code_analysis_path(&path);
-                    all_results.extend(aes_results);
-
                     let path_obj = FilePath::new(path.clone()).unwrap_or_default();
                     let rt = match tokio::runtime::Runtime::new() {
                         Ok(r) => r,
@@ -95,13 +87,49 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         }
                     };
 
-                    let naming_results = rt.block_on(naming_orch.run_audit(&path_obj));
+                    let config_container = config_system::root_config_system_container::ConfigContainer::new();
+                    let config_orchestrator = config_container.orchestrator();
+                    let config_result = rt.block_on(config_orchestrator.load_project_config(&path_obj));
+                    let loaded_config = config_result.config;
+
+                    let import_container =
+                        import_rules::root_import_rules_container::ImportContainer::new_with_config(
+                            loaded_config.clone(),
+                            Arc::new(import_rules::root_import_rules_container::NullSourceParser),
+                        );
+                    let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
+                        import_container.analyzer(),
+                    );
+                    let role_container =
+                        role_rules::root_role_rules_container::RoleContainer::new_with_config(loaded_config.clone());
+                    let analyzer = import_container.analyzer();
+                    let arch_linter =
+                        code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_analyzer(
+                            analyzer.clone(),
+                        )
+                        .code_analysis_linter();
+
+                    let fs: Arc<dyn shared::common::contract_system_port::IFileSystemPort> =
+                        Arc::new(import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
+                    let parser: Arc<dyn shared::common::contract_parser_port::ISourceParserPort> =
+                        Arc::new(import_rules::root_import_rules_container::NullSourceParser);
+                    let layer_det: Arc<dyn ILayerDetectionAggregate> =
+                        Arc::new(import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
+                            loaded_config.clone(),
+                            fs,
+                            parser,
+                        ));
+
+                    let aes_results = arch_linter.run_code_analysis_path(&path);
+                    all_results.extend(aes_results);
+
+                    let naming_results = rt.block_on(naming_container.orchestrator().run_audit(&path_obj));
                     all_results.extend(naming_results);
-                    let import_results = rt.block_on(import_orch.run_audit(&path_obj));
+                    let import_results = rt.block_on(import_container.orchestrator().run_audit(&path_obj));
                     all_results.extend(import_results);
                     let external_results = rt.block_on(ext_lint.scan_all(&path_obj));
                     all_results.extend(external_results.values);
-                    let role_results = rt.block_on(role_orch.run_audit(&path_obj));
+                    let role_results = rt.block_on(role_container.orchestrator().run_audit(&path_obj));
                     all_results.extend(role_results);
 
                     let scan_root = find_workspace_root(&path);
@@ -123,9 +151,16 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     );
                     all_results.extend(orphan_results);
 
-                    let report = linter.format_report(
+                    let final_results: Vec<_> = all_results
+                        .into_iter()
+                        .filter(|r| {
+                            !loaded_config.ignored_rules.values.contains(&r.code.to_string())
+                        })
+                        .collect();
+
+                    let report = arch_linter.format_report(
                         &shared::cli_commands::taxonomy_result_vo::LintResultList::new(
-                            all_results.clone(),
+                            final_results.clone(),
                         ),
                         &path,
                     );
@@ -133,7 +168,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         "status": "success",
                         "action": action,
                         "path": path,
-                        "total_violations": all_results.len(),
+                        "total_violations": final_results.len(),
                         "report": report
                     })
                 })
