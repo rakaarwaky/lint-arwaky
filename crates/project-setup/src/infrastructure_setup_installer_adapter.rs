@@ -25,35 +25,67 @@ impl SetupInstallerAdapter {
         let _dummy = ProjectLanguage::new("rust");
         Self
     }
-}
 
-#[async_trait]
-impl ISetupInstallerPort for SetupInstallerAdapter {
-    async fn install_python_packages(&self, packages: &[String]) -> Result<(), SetupError> {
-        let status = tokio::process::Command::new("pip")
-            .args(["install", "--user"])
+    async fn run_pip_command(
+        &self,
+        cmd: &str,
+        base_args: &[&str],
+        packages: &[String],
+    ) -> Result<(), SetupError> {
+        let status = tokio::process::Command::new(cmd)
+            .args(base_args)
             .args(packages)
             .status()
             .await
             .map_err(|e| SetupError::io(e.to_string()))?;
         if status.success() {
-            return Ok(());
-        }
-
-        // Retry with --break-system-packages if initial attempt fails (typically PEP 668 on modern Linux)
-        let status2 = tokio::process::Command::new("pip")
-            .args(["install", "--user", "--break-system-packages"])
-            .args(packages)
-            .status()
-            .await;
-
-        match status2 {
-            Ok(s) if s.success() => Ok(()),
-            _ => Err(SetupError::other(format!(
-                "pip install exited with status {:?}",
+            Ok(())
+        } else {
+            Err(SetupError::other(format!(
+                "Command {} exited with status {:?}",
+                cmd,
                 status.code()
-            ))),
+            )))
         }
+    }
+}
+
+#[async_trait]
+impl ISetupInstallerPort for SetupInstallerAdapter {
+    async fn install_python_packages(&self, packages: &[String]) -> Result<(), SetupError> {
+        let mut errors = Vec::new();
+
+        // Try pip3, pip, python3 -m pip, python -m pip (with and without --break-system-packages)
+        let candidates = [
+            ("pip3", vec!["install", "--user"]),
+            ("pip3", vec!["install", "--user", "--break-system-packages"]),
+            ("pip", vec!["install", "--user"]),
+            ("pip", vec!["install", "--user", "--break-system-packages"]),
+            ("python3", vec!["-m", "pip", "install", "--user"]),
+            (
+                "python3",
+                vec!["-m", "pip", "install", "--user", "--break-system-packages"],
+            ),
+            ("python", vec!["-m", "pip", "install", "--user"]),
+            (
+                "python",
+                vec!["-m", "pip", "install", "--user", "--break-system-packages"],
+            ),
+        ];
+
+        for (cmd, args) in candidates {
+            match self.run_pip_command(cmd, &args, packages).await {
+                Ok(_) => return Ok(()),
+                Err(e) => {
+                    errors.push(format!("{} {:?}: {}", cmd, args, e));
+                }
+            }
+        }
+
+        Err(SetupError::other(format!(
+            "Failed to install Python packages. Attempted commands failed: {}",
+            errors.join("; ")
+        )))
     }
 
     async fn install_npm_packages(
@@ -62,12 +94,26 @@ impl ISetupInstallerPort for SetupInstallerAdapter {
         sudo: bool,
     ) -> Result<(), SetupError> {
         let (cmd, args) = if sudo {
-            ("sudo", vec!["npm", "install", "-g"])
+            let path_val = std::env::var("PATH").unwrap_or_default();
+            (
+                "sudo".to_string(),
+                vec![
+                    "env".to_string(),
+                    format!("PATH={}", path_val),
+                    "npm".to_string(),
+                    "install".to_string(),
+                    "-g".to_string(),
+                ],
+            )
         } else {
-            ("npm", vec!["install", "-g"])
+            (
+                "npm".to_string(),
+                vec!["install".to_string(), "-g".to_string()],
+            )
         };
-        let status = tokio::process::Command::new(cmd)
-            .args(args)
+
+        let status = tokio::process::Command::new(&cmd)
+            .args(&args)
             .args(packages)
             .status()
             .await
