@@ -151,15 +151,81 @@ fn main() -> ExitCode {
             path,
             git_diff,
             format,
-        } => surface_check_action::handle_check(
-            path,
-            git_diff,
-            make_check_context(&container, &layer_detector),
-            filter,
-            Some(container.git_aggregate.clone()),
-            shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
-            format,
-        ),
+        } => {
+            let root_path = path.clone().unwrap_or_else(|| ".".to_string());
+            let fp = shared::common::taxonomy_path_vo::FilePath::new(root_path).unwrap_or_default();
+
+            let config_container =
+                config_system::root_config_system_container::ConfigContainer::new();
+            let config_orchestrator = config_container.orchestrator();
+            let rt = match tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+            {
+                Ok(r) => r,
+                Err(_) => return ExitCode::FAILURE,
+            };
+            let config_result = rt.block_on(config_orchestrator.load_project_config(&fp));
+            let loaded_config = config_result.config;
+
+            let import_container =
+                import_rules::root_import_rules_container::ImportContainer::new_with_config(
+                    loaded_config.clone(),
+                    Arc::new(NullSourceParser),
+                );
+            let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
+                import_container.analyzer(),
+            );
+            let role_container =
+                role_rules::root_role_rules_container::RoleContainer::new_with_config(
+                    loaded_config.clone(),
+                );
+            let analyzer = import_container.analyzer();
+            let arch_linter =
+                code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_analyzer(
+                    analyzer.clone(),
+                )
+                .code_analysis_linter();
+
+            let orphan_container =
+                orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+
+            let fs: Arc<dyn IFileSystemPort> = Arc::new(
+                import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
+            );
+            let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
+            let layer_detector: Arc<dyn ILayerDetectionAggregate> = Arc::new(
+                import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
+                    loaded_config.clone(),
+                    fs,
+                    parser,
+                ),
+            );
+
+            let ctx = surface_check_command::CheckContext {
+                code_analysis_linter: arch_linter,
+                import_orchestrator: import_container.orchestrator(),
+                naming_orchestrator: naming_container.orchestrator(),
+                external_lint: container.external_lint.clone(),
+                role_orchestrator: role_container.orchestrator(),
+                scanner_provider: container.scanner_provider.clone(),
+                orphan_orchestrator: orphan_container.analyzer(),
+                layer_detector,
+                language_detector: Arc::new(
+                    cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
+                ),
+            };
+
+            surface_check_action::handle_check(
+                path,
+                git_diff,
+                ctx,
+                filter,
+                Some(container.git_aggregate.clone()),
+                loaded_config,
+                format,
+            )
+        }
         Commands::Scan {
             path,
             member,

@@ -54,6 +54,7 @@ pub struct ArchitectureConfig {
     pub naming: NamingConfig,
     pub ignored_paths: FilePathList,
     pub mandatory_class_definition: BooleanVO,
+    pub ignored_rules: PatternList,
 }
 
 impl ArchitectureConfig {
@@ -64,6 +65,7 @@ impl ArchitectureConfig {
         naming: NamingConfig,
         ignored_paths: FilePathList,
         mandatory_class_definition: BooleanVO,
+        ignored_rules: PatternList,
     ) -> Self {
         Self {
             enabled,
@@ -72,6 +74,7 @@ impl ArchitectureConfig {
             naming,
             ignored_paths,
             mandatory_class_definition,
+            ignored_rules,
         }
     }
 
@@ -93,6 +96,7 @@ impl Default for ArchitectureConfig {
             naming: NamingConfig::new(Count::new(2)),
             ignored_paths: FilePathList { values: vec![] },
             mandatory_class_definition: BooleanVO::new(false),
+            ignored_rules: PatternList::default(),
         }
     }
 }
@@ -101,6 +105,10 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
     let raw: serde_yaml_ng::Value = serde_yaml_ng::from_str(yaml_str).unwrap_or_default();
     if let Some(arch_val) = raw.get("architecture") {
         let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
+        if let Some(ignored_rules_val) = raw.get("ignored_rules") {
+            let ignored_json = serde_json::to_value(ignored_rules_val).unwrap_or_default();
+            arch_json["ignored_rules"] = ignored_json;
+        }
         // Extract layers from rules (first rule containing "layers" key) if not at top-level
         if arch_json.get("layers").is_none() {
             if let Some(rules_obj) = arch_json.get_mut("rules").and_then(|r| r.as_object_mut()) {
