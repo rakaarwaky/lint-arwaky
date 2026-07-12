@@ -65,6 +65,11 @@ impl IConfigReaderPort for ConfigYamlReader {
     async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource> {
         let filename = Self::config_filename(language);
         let mut current = std::path::PathBuf::from(&project_root.value);
+        if current.is_relative() {
+            if let Ok(cwd) = std::env::current_dir() {
+                current = cwd.join(current);
+            }
+        }
         let mut depth = 0;
 
         while !current.as_os_str().is_empty() && depth < 5 {

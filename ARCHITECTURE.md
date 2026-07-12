@@ -146,23 +146,183 @@ Interface definitions — _what_ can be done without _how_.
 
 Use-case logic. Entirely agnostic of infrastructure.
 
+#### Allowed Logic:
+
+| Category | Example | Allowed Suffix |
+|----------|---------|----------------|
+| **Computation / Calculation** | `score = total_violations * weight` | `_calculator`, `_scorer` |
+| **Validation / Checking** | `if input.is_empty() { return Err(...) }` | `_checker`, `_validator` |
+| **Data Transformation** | `map`, `filter`, `reduce` on collections | `_transformer`, `_mapper`, `_filter` |
+| **Business Rules** | `if severity == "error" { block_commit() }` | `_evaluator`, `_resolver` |
+| **Information Extraction** | `parse_imports_from_source(code)` | `_extractor`, `_classifier` |
+| **Assessment / Scoring** | `grade = score_to_grade(total_score)` | `_assessor`, `_auditor`, `_inspector` |
+
+#### Forbidden Logic:
+
+- ❌ Flow control (loops, branching for orchestration) → **Agent**
+- ❌ File I/O, network calls → **Infrastructure**
+- ❌ Direct struct mutation without contract → **Taxonomy**
+
+#### Example:
+
+```rust
+// capabilities_score_calculator.rs
+pub struct ScoreCalculator;
+
+impl ScoreCalculator {
+    pub fn calculate(results: &[LintResult]) -> f64 {
+        let errors = results.iter().filter(|r| r.severity == Severity::Error).count();
+        let warnings = results.iter().filter(|r| r.severity == Severity::Warning).count();
+        // Pure computation — no I/O
+        100.0 - (errors as f64 * 10.0) - (warnings as f64 * 2.0)
+    }
+}
+```
+
 ### 4. Infrastructure (`infrastructure_` prefix)
 
 Technical implementations and external tool wrappers.
+
+#### Allowed Logic:
+
+| Category | Example | Allowed Suffix |
+|----------|---------|----------------|
+| **File I/O** | `std::fs::read_to_string(path)` | `_adapter`, `_reader`, `_writer` |
+| **Network Calls** | `reqwest::get(url).await` | `_client`, `_connector`, `_gateway` |
+| **Database Operations** | `sqlite::execute(sql)` | `_repository`, `_driver` |
+| **CLI Execution** | `Command::new("git").arg("diff")` | `_adapter`, `_provider` |
+| **Library Wrappers** | Wrapping crates `notify`, `tokio`, `serde` | `_provider`, `_wrapper` |
+| **System Operations** | Process management, env vars | `_system`, `_lifespan` |
+| **Streaming / Pub-Sub** | `tokio::sync::broadcast` | `_publisher`, `_subscriber`, `_streamer` |
+
+#### Forbidden Logic:
+
+- ❌ Business rules / computation → **Capabilities**
+- ❌ Flow control for orchestration → **Agent**
+- ❌ Domain logic without I/O → **Taxonomy**
+
+#### Example:
+
+```rust
+// infrastructure_file_adapter.rs
+pub struct FileAdapter;
+
+impl IFilePort for FileAdapter {
+    fn read(&self, path: &str) -> Result<String, io::Error> {
+        std::fs::read_to_string(path)  // ← pure technical
+    }
+}
+```
 
 #### 5. Agent (`agent_` prefix)
 
 Orchestration and pipeline execution.
 
+#### Allowed Logic (Flow Control):
+
+| Category | Example | Rust Syntax |
+|----------|---------|-------------|
+| **Looping** | Process events in event loop | `while`, `loop`, `for` |
+| **Sequential** | Step A → Step B → Step C | Sequential statements |
+| **Branching** | Conditional execution | `if/else`, `match` |
+| **Error Handling** | Handle `Result`/`Option` from other layers | `match`, `if let`, `?` |
+| **Timeout / Cancellation** | Cancellable async operations | `tokio::select!`, `tokio::time::sleep` |
+
+#### Forbidden Logic:
+
+- ❌ Computation / business rules → **Capabilities**
+- ❌ File I/O, network calls → **Infrastructure**
+- ❌ Domain model definition → **Taxonomy**
+
+#### Agent Orchestrator Pattern:
+
+```rust
+pub struct ConceptOrchestrator {
+    protocol_a: Arc<dyn IProtocolA>,  // ← via Contract
+    protocol_b: Arc<dyn IProtocolB>,  // ← via Contract
+}
+
+impl ConceptOrchestrator {
+    pub fn new(a: Arc<dyn IProtocolA>, b: Arc<dyn IProtocolB>) -> Self {
+        Self { protocol_a: a, protocol_b: b }
+    }
+}
+
+impl IAggregate for ConceptOrchestrator {
+    fn execute(&self, config: Config) -> Result<Output, Error> {
+        // 1. Sequential
+        let data = self.protocol_a.fetch(&config)?;
+
+        // 2. Branching
+        if data.is_empty() {
+            return Err(Error::NoData);
+        }
+
+        // 3. Looping + Error Handling
+        for item in &data {
+            match self.protocol_b.process(item) {
+                Ok(result) => println!("Success: {}", result),
+                Err(e) => eprintln!("Failed: {}", e),
+            }
+        }
+
+        Ok(Output::Success)
+    }
+}
+```
+
 #### 6. Surfaces (`surface_` prefix)
 
-CLI and MCP server entry points.
+User-facing entry points — CLI, TUI, MCP server, API.
 
 ##### Components
 
 - **Smart Surfaces (`command`/`controller`/`page`/`entry`)**: `taxonomy_` + `contract_aggregate_` only (AES201). Must NOT import capabilities/infrastructure/agent directly — use `ServiceContainerAggregate`.
 - **Utility Surfaces (`hook`/`store`/`action`/`screen`)**: `taxonomy_` only + passive surfaces. Must NOT import smart surfaces (AES406).
 - **Passive Surfaces (`component`/`view`/`layout`)**: `taxonomy_` only (AES406). No logic or orchestration.
+
+##### Allowed Logic:
+
+| Category | Example | Allowed Suffix |
+|----------|---------|----------------|
+| **User Input Handling** | `match key { "c" => scan, "q" => quit }` | `_command`, `_controller` |
+| **UI Rendering** | `print!("[INFO] Scanning...")` | `_view`, `_component` |
+| **Event Mapping** | `key press → TuiEvent::ActionCheck` | `_command`, `_action` |
+| **State Management** | `state.selected_file = Some(path)` | `_store`, `_state` |
+| **Routing** | `navigate_to_screen(Screen::Help)` | `_router`, `_page` |
+
+##### Forbidden Logic:
+
+- ❌ Computation / business rules → **Capabilities**
+- ❌ Flow control for orchestration → **Agent**
+- ❌ File I/O, network calls → **Infrastructure**
+- ❌ Direct import of capabilities/infrastructure → **AES201 violation**
+
+#### Surface vs Infrastructure — Key Difference
+
+| Aspect | Surface | Infrastructure |
+|--------|---------|----------------|
+| **Purpose** | User interaction (UI/presentation) | System interaction (technical I/O) |
+| **Input source** | Human (keyboard, mouse, API request) | System (file system, network, database) |
+| **Output target** | Human (console, UI, HTTP response) | System (files, network, processes) |
+| **Logic** | Event mapping, routing, rendering | File I/O, network calls, CLI execution |
+| **Example** | `surface_tui_command.rs` — maps key press to action | `infrastructure_file_adapter.rs` — reads/writes files |
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      SURFACE LAYER                       │
+│  "What the user sees/interacts with"                    │
+│                                                          │
+│  User → [CLI/TUI/API] → Event → Agent → Capabilities   │
+└─────────────────────────────────────────────────────────┘
+                           ↓
+┌─────────────────────────────────────────────────────────┐
+│                   INFRASTRUCTURE LAYER                   │
+│  "How the system interacts with external tools"          │
+│                                                          │
+│  Capabilities → [Port] → Adapter → File/Network/DB     │
+└─────────────────────────────────────────────────────────┘
+```
 
 #### 7. Root (`root_` prefix)
 
@@ -172,6 +332,33 @@ Wiring layer. Responsible for Dependency Injection (DI) composition. No business
 
 - **Container (`_container`)**: Per-feature DI container. Instantiates `infrastructure_*` and `capabilities_*` implementations, wires them behind `contract_*` traits, and exposes typed factory methods. Each feature crate owns exactly one `root_*_container`
 - **Entry (`_entry`)**: Binary entry point. Bootstraps the application by creating the `CompositionRoot` (the top-level root container that composes all feature containers) and starts the main loop. _Ex: `root_cli_main_entry root_mcp_main_entry`_
+
+---
+
+## Quick Reference: Logic Ownership
+
+| Logic Type | Layer | Suffix |
+|------------|-------|--------|
+| **User Input Handling** | `surface_` | `_command`, `_controller` |
+| **UI Rendering** | `surface_` | `_view`, `_component` |
+| **Event Mapping** | `surface_` | `_command`, `_action` |
+| **Routing** | `surface_` | `_router`, `_page` |
+| **Computation / Calculation** | `capabilities_` | `_calculator`, `_scorer` |
+| **Validation / Checking** | `capabilities_` | `_checker`, `_validator` |
+| **Data Transformation** | `capabilities_` | `_transformer`, `_mapper` |
+| **Business Rules** | `capabilities_` | `_evaluator`, `_resolver` |
+| **File I/O** | `infrastructure_` | `_adapter`, `_reader` |
+| **Network Calls** | `infrastructure_` | `_client`, `_gateway` |
+| **Database** | `infrastructure_` | `_repository`, `_driver` |
+| **CLI Execution** | `infrastructure_` | `_adapter`, `_provider` |
+| **Library Wrappers** | `infrastructure_` | `_provider`, `_wrapper` |
+| **Looping** | `agent_` | `_orchestrator` |
+| **Sequential Steps** | `agent_` | `_orchestrator` |
+| **Branching (if/match)** | `agent_` | `_orchestrator` |
+| **Error Handling** | `agent_` | `_orchestrator` |
+| **Domain Models** | `taxonomy_` | `_vo`, `_entity` |
+| **Interfaces** | `contract_` | `_port`, `_protocol` |
+| **DI Wiring** | `root_` | `_container`, `_entry` |
 
 ---
 
