@@ -83,7 +83,6 @@ impl RoleOrchestrator {
     pub fn run_all_role_checks(
         &self,
         files: &[String],
-        max_lines: usize,
         violations: &mut Vec<LintResult>,
     ) {
         // Global gate: skip all role checks if architecture checker is disabled
@@ -223,7 +222,7 @@ impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate fo
         let mut results = Vec::new();
         let files = self.collect_files(target);
         let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        self.run_all_role_checks(&file_strings, 500, &mut results);
+        self.run_all_role_checks(&file_strings, &mut results);
         results
     }
 

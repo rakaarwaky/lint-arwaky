@@ -234,6 +234,11 @@ Orchestration and pipeline execution.
 - ❌ File I/O, network calls → **Infrastructure**
 - ❌ Domain model definition → **Taxonomy**
 
+#### File Limits:
+
+- **AES301** (max 1000 lines) applies to all files including agent files
+- **AES405** checks for `any` type annotations (no file size limit)
+
 #### Agent Orchestrator Pattern:
 
 ```rust

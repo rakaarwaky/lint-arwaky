@@ -283,6 +283,8 @@ Checks:
 - **Single execution goal** — orchestrator must coordinate at minimum 2 subsystems
 - **Container initialization** — complex domain logic in container module
 
+**Note:** File size limits for agent files are governed by **AES301** (max 1000 lines), same as all other layers.
+
 ---
 
 ### AES406 — Surface Role
