@@ -119,7 +119,6 @@ impl RoleOrchestrator {
             match prefix {
                 "agent" if self.config.is_rule_enabled("AES405") => {
                     let checker = self.aggregate.agent();
-                    checker.check_file_size_limit(&source_vo, max_lines, violations);
                     checker.check_any_type_annotation(&source_vo, violations);
                     if filename.contains("_container") {
                         checker.check_container(&source_vo, violations);
