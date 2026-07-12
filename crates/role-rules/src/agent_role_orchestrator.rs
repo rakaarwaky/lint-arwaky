@@ -80,11 +80,7 @@ impl RoleOrchestrator {
     ///   - capabilities: routing checks
     ///   - taxonomy: entity, error, event, constant checks
     ///   - root: no role checks (pure DI wiring)
-    pub fn run_all_role_checks(
-        &self,
-        files: &[String],
-        violations: &mut Vec<LintResult>,
-    ) {
+    pub fn run_all_role_checks(&self, files: &[String], violations: &mut Vec<LintResult>) {
         // Global gate: skip all role checks if architecture checker is disabled
         if !self.config.enabled.value {
             return;

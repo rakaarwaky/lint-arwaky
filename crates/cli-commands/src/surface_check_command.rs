@@ -391,7 +391,8 @@ impl CheckCommandsSurface {
 
         if workspaces.is_empty() {
             // No workspaces discovered — fall back to single-scan mode and load config dynamically
-            let config_container = config_system::root_config_system_container::ConfigContainer::new();
+            let config_container =
+                config_system::root_config_system_container::ConfigContainer::new();
             let config_orchestrator = config_container.orchestrator();
             let config_result = rt.block_on(config_orchestrator.load_project_config(&path_obj));
             let loaded_config = config_result.config;

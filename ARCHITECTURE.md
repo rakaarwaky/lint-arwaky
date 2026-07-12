@@ -10,8 +10,9 @@ The **Agentic Engineering System (AES)** is a strictly layered, highly decoupled
 
 AES supported lsanguages (Rust, TypeScript, Python) to maintain a single unified vocabulary:
 
+
 | Term          | Language        | Definition                                                                                                         |
-| ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| --------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------- |
 | **Workspace** | All             | The entire project root directory (e.g.,`lint-arwaky/`) containing all configs and language-specific sub-projects. |
 | `crates/`     | Rust            | The directory containing all Rust crates (workspace members), conforming to Cargo workspace specifications.        |
 | `packages/`   | TypeScript / JS | The directory containing all TypeScript/JavaScript packages, following npm/pnpm workspace conventions.             |
@@ -108,13 +109,14 @@ graph TD
 
 Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[suffix].`or `[layer]_[concept1]_[concept2]_[suffix]` if needed All seven layers coexist in each feature crate, distinguished by their prefix.
 
+
 | Layer Prefix      | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                  | Allowed Imports                                                                                  | Semantic Role / Description                                                                       |
-| :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------ |
+| :------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------- |
 | `taxonomy_`       | `_vo`, `_entity`, `_event`, `_error`, `_constant`, `_utility`, `_helper`                                                                                                                                                                                                                                                                                                                                                          | `taxonomy_` files only (outer imports trigger **AES201**).                                       | Pure domain models, value objects, domain events, errors, helpers, and compile-time constants.    |
 | `contract_`       | `_port`, `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                | `taxonomy_`, `contract_`                                                                         | Abstract interfaces: Outbound interface ports, inbound protocols, and facade aggregates.          |
 | `capabilities_`   | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_auditor`                                                                                                     | `taxonomy_`, `contract_`                                                                         | Domain use-cases, business logic, and computations. Pure and agnostic of infrastructure.          |
 | `infrastructure_` | `_adapter`, `_provider`, `_scanner`, `_client`,`_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_system`, `_repository`, `_cache`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `taxonomy_`, `contract_`                                                                         | Technical implementations, system adapters, library wraps, databases, CLI/network calls.          |
-| `agent_`          | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                   | `taxonomy_`, `contract_`                                                                         | Coordinates multiple capabilities and infrastructure flows to execute pipelines/workflows.        |
+| `agent_`          | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                   | `taxonomy_`, `contract_`                                                                        | Coordinates multiple capabilities and infrastructure flows to execute pipelines/workflows.        |
 | `surface_`        | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                          | Varies by surface role (see Surface layer details below).                                        | Application entry points, UI components, CLI commands, controllers, and pages.                    |
 | `root_`           | `_container`, `_entry`                                                                                                                                                                                                                                                                                                                                                                                                            | All layers (`taxonomy_`, `contract_`, `capabilities_`, `infrastructure_`, `agent_`, `surface_`). | App bootstrap, inline composition, and Dependency Injection wiring. Absolutely no business logic. |
 
@@ -148,14 +150,15 @@ Use-case logic. Entirely agnostic of infrastructure.
 
 #### Allowed Logic:
 
-| Category | Example | Allowed Suffix |
-|----------|---------|----------------|
-| **Computation / Calculation** | `score = total_violations * weight` | `_calculator`, `_scorer` |
-| **Validation / Checking** | `if input.is_empty() { return Err(...) }` | `_checker`, `_validator` |
-| **Data Transformation** | `map`, `filter`, `reduce` on collections | `_transformer`, `_mapper`, `_filter` |
-| **Business Rules** | `if severity == "error" { block_commit() }` | `_evaluator`, `_resolver` |
-| **Information Extraction** | `parse_imports_from_source(code)` | `_extractor`, `_classifier` |
-| **Assessment / Scoring** | `grade = score_to_grade(total_score)` | `_assessor`, `_auditor`, `_inspector` |
+
+| Category                      | Example                                     | Allowed Suffix                        |
+| ------------------------------- | --------------------------------------------- | --------------------------------------- |
+| **Computation / Calculation** | `score = total_violations * weight`         | `_calculator`, `_scorer`              |
+| **Validation / Checking**     | `if input.is_empty() { return Err(...) }`   | `_checker`, `_validator`              |
+| **Data Transformation**       | `map`, `filter`, `reduce` on collections    | `_transformer`, `_mapper`, `_filter`  |
+| **Business Rules**            | `if severity == "error" { block_commit() }` | `_evaluator`, `_resolver`             |
+| **Information Extraction**    | `parse_imports_from_source(code)`           | `_extractor`, `_classifier`           |
+| **Assessment / Scoring**      | `grade = score_to_grade(total_score)`       | `_assessor`, `_auditor`, `_inspector` |
 
 #### Forbidden Logic:
 
@@ -185,15 +188,16 @@ Technical implementations and external tool wrappers.
 
 #### Allowed Logic:
 
-| Category | Example | Allowed Suffix |
-|----------|---------|----------------|
-| **File I/O** | `std::fs::read_to_string(path)` | `_adapter`, `_reader`, `_writer` |
-| **Network Calls** | `reqwest::get(url).await` | `_client`, `_connector`, `_gateway` |
-| **Database Operations** | `sqlite::execute(sql)` | `_repository`, `_driver` |
-| **CLI Execution** | `Command::new("git").arg("diff")` | `_adapter`, `_provider` |
-| **Library Wrappers** | Wrapping crates `notify`, `tokio`, `serde` | `_provider`, `_wrapper` |
-| **System Operations** | Process management, env vars | `_system`, `_lifespan` |
-| **Streaming / Pub-Sub** | `tokio::sync::broadcast` | `_publisher`, `_subscriber`, `_streamer` |
+
+| Category                | Example                                   | Allowed Suffix                           |
+| ------------------------- | ------------------------------------------- | ------------------------------------------ |
+| **File I/O**            | `std::fs::read_to_string(path)`           | `_adapter`, `_reader`, `_writer`         |
+| **Network Calls**       | `reqwest::get(url).await`                 | `_client`, `_connector`, `_gateway`      |
+| **Database Operations** | `sqlite::execute(sql)`                    | `_repository`, `_driver`                 |
+| **CLI Execution**       | `Command::new("git").arg("diff")`         | `_adapter`, `_provider`                  |
+| **Library Wrappers**    | Wrapping crates`notify`, `tokio`, `serde` | `_provider`, `_wrapper`                  |
+| **System Operations**   | Process management, env vars              | `_system`, `_lifespan`                   |
+| **Streaming / Pub-Sub** | `tokio::sync::broadcast`                  | `_publisher`, `_subscriber`, `_streamer` |
 
 #### Forbidden Logic:
 
@@ -220,13 +224,14 @@ Orchestration and pipeline execution.
 
 #### Allowed Logic (Flow Control):
 
-| Category | Example | Rust Syntax |
-|----------|---------|-------------|
-| **Looping** | Process events in event loop | `while`, `loop`, `for` |
-| **Sequential** | Step A → Step B → Step C | Sequential statements |
-| **Branching** | Conditional execution | `if/else`, `match` |
-| **Error Handling** | Handle `Result`/`Option` from other layers | `match`, `if let`, `?` |
-| **Timeout / Cancellation** | Cancellable async operations | `tokio::select!`, `tokio::time::sleep` |
+
+| Category                   | Example                                   | Rust Syntax                            |
+| ---------------------------- | ------------------------------------------- | ---------------------------------------- |
+| **Looping**                | Process events in event loop              | `while`, `loop`, `for`                 |
+| **Sequential**             | Step A → Step B → Step C                | Sequential statements                  |
+| **Branching**              | Conditional execution                     | `if/else`, `match`                     |
+| **Error Handling**         | Handle`Result`/`Option` from other layers | `match`, `if let`, `?`                 |
+| **Timeout / Cancellation** | Cancellable async operations              | `tokio::select!`, `tokio::time::sleep` |
 
 #### Forbidden Logic:
 
@@ -288,13 +293,14 @@ User-facing entry points — CLI, TUI, MCP server, API.
 
 ##### Allowed Logic:
 
-| Category | Example | Allowed Suffix |
-|----------|---------|----------------|
+
+| Category                | Example                                  | Allowed Suffix            |
+| ------------------------- | ------------------------------------------ | --------------------------- |
 | **User Input Handling** | `match key { "c" => scan, "q" => quit }` | `_command`, `_controller` |
-| **UI Rendering** | `print!("[INFO] Scanning...")` | `_view`, `_component` |
-| **Event Mapping** | `key press → TuiEvent::ActionCheck` | `_command`, `_action` |
-| **State Management** | `state.selected_file = Some(path)` | `_store`, `_state` |
-| **Routing** | `navigate_to_screen(Screen::Help)` | `_router`, `_page` |
+| **UI Rendering**        | `print!("[INFO] Scanning...")`           | `_view`, `_component`     |
+| **Event Mapping**       | `key press → TuiEvent::ActionCheck`     | `_command`, `_action`     |
+| **State Management**    | `state.selected_file = Some(path)`       | `_store`, `_state`        |
+| **Routing**             | `navigate_to_screen(Screen::Help)`       | `_router`, `_page`        |
 
 ##### Forbidden Logic:
 
@@ -305,13 +311,14 @@ User-facing entry points — CLI, TUI, MCP server, API.
 
 #### Surface vs Infrastructure — Key Difference
 
-| Aspect | Surface | Infrastructure |
-|--------|---------|----------------|
-| **Purpose** | User interaction (UI/presentation) | System interaction (technical I/O) |
-| **Input source** | Human (keyboard, mouse, API request) | System (file system, network, database) |
-| **Output target** | Human (console, UI, HTTP response) | System (files, network, processes) |
-| **Logic** | Event mapping, routing, rendering | File I/O, network calls, CLI execution |
-| **Example** | `surface_tui_command.rs` — maps key press to action | `infrastructure_file_adapter.rs` — reads/writes files |
+
+| Aspect            | Surface                                              | Infrastructure                                         |
+| ------------------- | ------------------------------------------------------ | -------------------------------------------------------- |
+| **Purpose**       | User interaction (UI/presentation)                   | System interaction (technical I/O)                     |
+| **Input source**  | Human (keyboard, mouse, API request)                 | System (file system, network, database)                |
+| **Output target** | Human (console, UI, HTTP response)                   | System (files, network, processes)                     |
+| **Logic**         | Event mapping, routing, rendering                    | File I/O, network calls, CLI execution                 |
+| **Example**       | `surface_tui_command.rs` — maps key press to action | `infrastructure_file_adapter.rs` — reads/writes files |
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -342,28 +349,29 @@ Wiring layer. Responsible for Dependency Injection (DI) composition. No business
 
 ## Quick Reference: Logic Ownership
 
-| Logic Type | Layer | Suffix |
-|------------|-------|--------|
-| **User Input Handling** | `surface_` | `_command`, `_controller` |
-| **UI Rendering** | `surface_` | `_view`, `_component` |
-| **Event Mapping** | `surface_` | `_command`, `_action` |
-| **Routing** | `surface_` | `_router`, `_page` |
-| **Computation / Calculation** | `capabilities_` | `_calculator`, `_scorer` |
-| **Validation / Checking** | `capabilities_` | `_checker`, `_validator` |
-| **Data Transformation** | `capabilities_` | `_transformer`, `_mapper` |
-| **Business Rules** | `capabilities_` | `_evaluator`, `_resolver` |
-| **File I/O** | `infrastructure_` | `_adapter`, `_reader` |
-| **Network Calls** | `infrastructure_` | `_client`, `_gateway` |
-| **Database** | `infrastructure_` | `_repository`, `_driver` |
-| **CLI Execution** | `infrastructure_` | `_adapter`, `_provider` |
-| **Library Wrappers** | `infrastructure_` | `_provider`, `_wrapper` |
-| **Looping** | `agent_` | `_orchestrator` |
-| **Sequential Steps** | `agent_` | `_orchestrator` |
-| **Branching (if/match)** | `agent_` | `_orchestrator` |
-| **Error Handling** | `agent_` | `_orchestrator` |
-| **Domain Models** | `taxonomy_` | `_vo`, `_entity` |
-| **Interfaces** | `contract_` | `_port`, `_protocol` |
-| **DI Wiring** | `root_` | `_container`, `_entry` |
+
+| Logic Type                    | Layer             | Suffix                    |
+| ------------------------------- | ------------------- | --------------------------- |
+| **User Input Handling**       | `surface_`        | `_command`, `_controller` |
+| **UI Rendering**              | `surface_`        | `_view`, `_component`     |
+| **Event Mapping**             | `surface_`        | `_command`, `_action`     |
+| **Routing**                   | `surface_`        | `_router`, `_page`        |
+| **Computation / Calculation** | `capabilities_`   | `_calculator`, `_scorer`  |
+| **Validation / Checking**     | `capabilities_`   | `_checker`, `_validator`  |
+| **Data Transformation**       | `capabilities_`   | `_transformer`, `_mapper` |
+| **Business Rules**            | `capabilities_`   | `_evaluator`, `_resolver` |
+| **File I/O**                  | `infrastructure_` | `_adapter`, `_reader`     |
+| **Network Calls**             | `infrastructure_` | `_client`, `_gateway`     |
+| **Database**                  | `infrastructure_` | `_repository`, `_driver`  |
+| **CLI Execution**             | `infrastructure_` | `_adapter`, `_provider`   |
+| **Library Wrappers**          | `infrastructure_` | `_provider`, `_wrapper`   |
+| **Looping**                   | `agent_`          | `_orchestrator`           |
+| **Sequential Steps**          | `agent_`          | `_orchestrator`           |
+| **Branching (if/match)**      | `agent_`          | `_orchestrator`           |
+| **Error Handling**            | `agent_`          | `_orchestrator`           |
+| **Domain Models**             | `taxonomy_`       | `_vo`, `_entity`          |
+| **Interfaces**                | `contract_`       | `_port`, `_protocol`      |
+| **DI Wiring**                 | `root_`           | `_container`, `_entry`    |
 
 ---
 

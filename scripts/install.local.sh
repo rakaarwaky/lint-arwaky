@@ -32,7 +32,7 @@ sed -i "0,/^version = \"$OLD_VERSION\"/s/^version = \"$OLD_VERSION\"/version = \
 echo "  $OLD_VERSION  ->  $NEW_VERSION"
 
 # 3. Build (increase stack size to prevent LLVM SIGSEGV during LTO)
-RUST_MIN_STACK=16777216 cargo build --release
+RUST_MIN_STACK=33554432 cargo build --release
 
 # 4. Checksums + install
 pushd "$RELEASE_DIR" >/dev/null
