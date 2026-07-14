@@ -19,7 +19,12 @@ impl Default for WorkspaceDetector {
 
 impl IWorkspaceDetectorPort for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
-        let path_buf = std::path::Path::new(&path.value).to_path_buf();
+        let mut path_buf = std::path::Path::new(&path.value).to_path_buf();
+        if path_buf.is_relative() {
+            if let Ok(cwd) = std::env::current_dir() {
+                path_buf = cwd.join(path_buf);
+            }
+        }
 
         // 1. Check for explicit language markers in the workspace directory itself
         if path_buf.join("Cargo.toml").exists() {

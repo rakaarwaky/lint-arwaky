@@ -80,12 +80,7 @@ impl RoleOrchestrator {
     ///   - capabilities: routing checks
     ///   - taxonomy: entity, error, event, constant checks
     ///   - root: no role checks (pure DI wiring)
-    pub fn run_all_role_checks(
-        &self,
-        files: &[String],
-        max_lines: usize,
-        violations: &mut Vec<LintResult>,
-    ) {
+    pub fn run_all_role_checks(&self, files: &[String], violations: &mut Vec<LintResult>) {
         // Global gate: skip all role checks if architecture checker is disabled
         if !self.config.enabled.value {
             return;
@@ -119,7 +114,6 @@ impl RoleOrchestrator {
             match prefix {
                 "agent" if self.config.is_rule_enabled("AES405") => {
                     let checker = self.aggregate.agent();
-                    checker.check_file_size_limit(&source_vo, max_lines, violations);
                     checker.check_any_type_annotation(&source_vo, violations);
                     if filename.contains("_container") {
                         checker.check_container(&source_vo, violations);
@@ -224,7 +218,7 @@ impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate fo
         let mut results = Vec::new();
         let files = self.collect_files(target);
         let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        self.run_all_role_checks(&file_strings, 500, &mut results);
+        self.run_all_role_checks(&file_strings, &mut results);
         results
     }
 

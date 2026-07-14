@@ -40,7 +40,7 @@ fn name_returns_role_rules() {
 fn run_all_role_checks_empty_input_no_panic() {
     let orch = make_orchestrator();
     let mut violations = Vec::new();
-    orch.run_all_role_checks(&[], 500, &mut violations);
+    orch.run_all_role_checks(&[], &mut violations);
     assert!(violations.is_empty());
 }
 
@@ -51,12 +51,12 @@ fn run_all_role_checks_with_valid_file() {
     // Use a real source file from the shared crate as test input
     let file_path = "crates/shared/src/common/taxonomy_path_vo.rs";
     if std::path::Path::new(file_path).exists() {
-        orch.run_all_role_checks(&[file_path.to_string()], 500, &mut violations);
+        orch.run_all_role_checks(&[file_path.to_string()], &mut violations);
         // Should not panic; results may vary
         assert!(violations.len() <= 10);
     } else {
         // Fallback: just check it doesn't panic with a bogus path
-        orch.run_all_role_checks(&["nonexistent.rs".to_string()], 500, &mut violations);
+        orch.run_all_role_checks(&["nonexistent.rs".to_string()], &mut violations);
         assert!(violations.is_empty());
     }
 }

@@ -390,9 +390,13 @@ impl CheckCommandsSurface {
         let all_workspaces = workspaces.clone();
 
         if workspaces.is_empty() {
-            // No workspaces discovered — fall back to single-scan mode
-            let default_config = ArchitectureConfig::default();
-            return self.scan(path, filter, default_config, format);
+            // No workspaces discovered — fall back to single-scan mode and load config dynamically
+            let config_container =
+                config_system::root_config_system_container::ConfigContainer::new();
+            let config_orchestrator = config_container.orchestrator();
+            let config_result = rt.block_on(config_orchestrator.load_project_config(&path_obj));
+            let loaded_config = config_result.config;
+            return self.scan(path, filter, loaded_config, format);
         }
 
         // Filter to specific member if requested

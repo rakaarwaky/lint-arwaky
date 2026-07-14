@@ -40,8 +40,8 @@ fn os_str_to_str_opt(opt: Option<&std::ffi::OsStr>) -> &str {
 ///   4. `check_taxonomy_intent` — For surface-layer files: if a dummy function exists but the real
 ///      function signatures use only primitive types (i32, String, bool) instead of taxonomy VOs,
 ///      flag as taxonomy intent violation.
-///   5. `check_aggregate_intent` — For surface-layer files: if aggregate types appear only inside
-///      PhantomData (never called in real code), flag each as aggregate intent violation.
+///   5. `check_layer_contract_intent` — For active layers (surfaces, agent, capabilities, infrastructure):
+///      verify that imported contracts are implemented (inherited) or used in real code.
 ///   6. `check_surface_logic` — For surface-layer files: if business logic (lint_path, compute_score)
 ///      is called directly instead of being delegated to the aggregate, flag each occurrence.
 pub struct DummyImportChecker {
@@ -397,80 +397,193 @@ impl DummyImportChecker {
     ///      combined with an aggregate type name.
     ///   4. Count how many times the aggregate type appears outside phantom/dummy/comment contexts.
     ///   5. If count == 0, the aggregate is imported only as PhantomData → violation.
-    fn check_aggregate_intent(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    fn check_layer_contract_intent(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+        analyzer: &dyn IAnalyzer,
+        root_dir: &FilePath,
+    ) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = self.parser.get_language_from_path(file);
 
-        // Step 2: Detect aggregate types by naming convention (type names ending with "Aggregate")
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
+        let layer = match analyzer.detect_layer(&file_path, root_dir) {
+            Some(l) => l.to_string(),
+            None => return,
+        };
+
+        let base_layer = match layer.split('(').next() {
+            Some(s) => s.trim(),
+            None => layer.as_str(),
+        };
+
+        let (target_suffix, role_name) = match base_layer {
+            "agent" => ("Aggregate", "aggregate contract"),
+            "capabilities" => ("Protocol", "protocol contract"),
+            "infrastructure" => ("Port", "port contract"),
+            "surfaces" => ("Aggregate", "aggregate contract"),
+            _ => return,
+        };
+
+        // Step 2: Detect imported contract types by suffix
         let imported = self.parser.get_imported_symbols(&lines, lang);
-        let aggregate_types: Vec<String> = imported
+        let contract_types: Vec<String> = imported
             .into_iter()
-            .filter(|(symbol, _)| symbol.value().ends_with("Aggregate"))
+            .filter(|(symbol, _)| symbol.value().ends_with(target_suffix))
             .map(|(symbol, _)| symbol.value().to_string())
             .collect();
 
-        // Step 3-5: Scan lines for phantom + aggregate type combinations
-        for (i, line) in lines.iter().enumerate() {
-            let trimmed = line.trim();
-
-            let is_phantom = match lang {
-                LanguageVO::Rust => trimmed.contains("PhantomData"),
-                LanguageVO::Python => trimmed.contains("TYPE_CHECKING"),
-                LanguageVO::JavaScript => {
-                    trimmed.contains(concat!("@ts-", "ignore"))
-                        || trimmed.contains(concat!("@ts-", "expect"))
+        // Track Python TYPE_CHECKING imports
+        let mut type_checking_imports = Vec::new();
+        if lang == LanguageVO::Python {
+            let mut in_type_checking = false;
+            let mut type_checking_indent = 0;
+            for line in &lines {
+                let trimmed = line.trim();
+                if trimmed.is_empty() || trimmed.starts_with('#') {
+                    continue;
                 }
-                LanguageVO::Unknown => false,
-            };
-
-            if is_phantom {
-                for agg_type in &aggregate_types {
-                    if trimmed.contains(agg_type) {
-                        let type_name = agg_type.to_string();
-                        // Step 4: Count real (non-phantom, non-dummy, non-comment) usages
-                        let real_usage_count = lines
-                            .iter()
-                            .filter(|l| {
-                                let t = l.trim();
-                                t.contains(&type_name)
-                                    && !t.contains("PhantomData")
-                                    && !t.contains("fn _use_")
-                                    && !t.starts_with("//")
-                                    && !t.starts_with("use ")
-                                    && !t.starts_with("pub use ")
-                                    && !t.starts_with("pub(crate) use ")
-                                    && !t.starts_with("import ")
-                                    && !t.starts_with("from ")
-                            })
-                            .count();
-
-                        // Step 5: Zero real usage → PhantomData-only → violation
-                        if real_usage_count == 0 {
-                            violations.push(LintResult::new_arch(
-                                file,
-                                i + 1,
-                                "AES204",
-                                Severity::HIGH,
-                                AesImportViolation::ImportIntentViolation {
-                                    source_layer: LayerNameVO::new("surfaces".to_string()),
-                                    import_type: SymbolName::new(agg_type.to_string()),
-                                    intent: SymbolName::new(
-                                        "Call aggregate functions instead of using PhantomData"
-                                            .to_string(),
-                                    ),
-                                    reason: Some(shared::taxonomy_message_vo::LintMessage::new(
-                                        "Aggregate types placed only inside PhantomData{} are \
-                                         never instantiated or called — the import is effectively \
-                                         dead code. Aggregates exist to be invoked; using them as \
-                                         mere type markers bypasses the contract layer and hides \
-                                         missing orchestration logic."
-                                            .to_string(),
-                                    )),
-                                }
-                                .to_string(),
-                            ));
+                let indent = line.len() - line.trim_start().len();
+                if in_type_checking {
+                    if indent <= type_checking_indent {
+                        in_type_checking = false;
+                    } else {
+                        for c_type in &contract_types {
+                            if trimmed.contains(c_type)
+                                && (trimmed.starts_with("from ") || trimmed.starts_with("import "))
+                            {
+                                type_checking_imports.push(c_type.clone());
+                            }
                         }
                     }
+                }
+                if trimmed.starts_with("if TYPE_CHECKING:")
+                    || trimmed.starts_with("if typing.TYPE_CHECKING:")
+                {
+                    in_type_checking = true;
+                    type_checking_indent = indent;
+                }
+            }
+        }
+
+        for c_type in &contract_types {
+            let is_imported_in_phantom = if lang == LanguageVO::Python {
+                type_checking_imports.contains(c_type)
+            } else {
+                lines.iter().any(|line| {
+                    let trimmed = line.trim();
+                    let has_phantom = match lang {
+                        LanguageVO::Rust => trimmed.contains("PhantomData"),
+                        LanguageVO::JavaScript => {
+                            trimmed.contains(concat!("@ts-", "ignore"))
+                                || trimmed.contains(concat!("@ts-", "expect"))
+                        }
+                        _ => false,
+                    };
+                    has_phantom && trimmed.contains(c_type)
+                })
+            };
+
+            if (base_layer == "agent"
+                || base_layer == "capabilities"
+                || base_layer == "infrastructure")
+                && lang == LanguageVO::Python
+            {
+                let inherits = lines.iter().any(|line| python_class_inherits(line, c_type));
+
+                if !inherits {
+                    let class_line = lines
+                        .iter()
+                        .position(|l| {
+                            let t = l.trim();
+                            t.starts_with("class ")
+                        })
+                        .map(|idx| idx + 1)
+                        .unwrap_or(1);
+
+                    violations.push(LintResult::new_arch(
+                        file,
+                        class_line,
+                        "AES204",
+                        Severity::HIGH,
+                        AesImportViolation::ImportIntentViolation {
+                            source_layer: LayerNameVO::new(layer.clone()),
+                            import_type: SymbolName::new(c_type.to_string()),
+                            intent: SymbolName::new(
+                                format!(
+                                    "Inherit from or implement the {} '{}' in your class definition",
+                                    role_name, c_type
+                                )
+                            ),
+                            reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                                format!(
+                                    "Classes in the '{}' layer must implement/inherit the contract ('{}') rather than just using it for type annotations. \
+                                    This enforces architectural contracts and ensures type safety at runtime.",
+                                    layer, c_type
+                                )
+                            )),
+                        }
+                        .to_string(),
+                    ));
+                }
+            } else if base_layer == "surfaces" && is_imported_in_phantom {
+                let real_usage_count = lines
+                    .iter()
+                    .filter(|l| {
+                        let t = l.trim();
+                        t.contains(c_type)
+                            && !t.contains("PhantomData")
+                            && !t.contains("TYPE_CHECKING")
+                            && !t.contains("fn _use_")
+                            && !t.starts_with("//")
+                            && !t.starts_with("#")
+                            && !t.starts_with("use ")
+                            && !t.starts_with("pub use ")
+                            && !t.starts_with("pub(crate) use ")
+                            && !t.starts_with("import ")
+                            && !t.starts_with("from ")
+                            && !(lang == LanguageVO::Python
+                                && (t.contains(&format!("\"{}\"", c_type))
+                                    || t.contains(&format!("'{}'", c_type))))
+                    })
+                    .count();
+
+                if real_usage_count == 0 {
+                    let error_line = lines
+                        .iter()
+                        .position(|l| {
+                            let t = l.trim();
+                            t.contains(c_type)
+                                && (t.contains("PhantomData")
+                                    || t.contains("TYPE_CHECKING")
+                                    || t.contains("@ts-")
+                                    || t.starts_with("from ")
+                                    || t.starts_with("import "))
+                        })
+                        .map(|idx| idx + 1)
+                        .unwrap_or(1);
+
+                    violations.push(LintResult::new_arch(
+                        file,
+                        error_line,
+                        "AES204",
+                        Severity::HIGH,
+                        AesImportViolation::ImportIntentViolation {
+                            source_layer: LayerNameVO::new("surfaces".to_string()),
+                            import_type: SymbolName::new(c_type.to_string()),
+                            intent: SymbolName::new(
+                                "Call aggregate functions instead of using PhantomData or TYPE_CHECKING stubs".to_string()
+                            ),
+                            reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                                "Aggregate types placed only inside PhantomData, TYPE_CHECKING blocks, or type annotations are never instantiated or called. \
+                                Aggregates exist to be invoked; using them as mere type markers bypasses the contract layer and hides missing orchestration logic."
+                                    .to_string(),
+                            )),
+                         }
+                        .to_string(),
+                    ));
                 }
             }
         }
@@ -609,14 +722,25 @@ impl shared::import_rules::contract_rule_protocol::IArchImportProtocol for Dummy
                 LanguageVO::Unknown => false,
             };
 
-            // Step 6: Surface-only sub-checks
-            if !is_surface {
-                continue;
+            // Step 6: Layer-specific sub-checks
+            if is_surface {
+                self.check_taxonomy_intent(
+                    &f_str,
+                    &content,
+                    &mut results.values,
+                    analyzer,
+                    root_dir,
+                );
+                self.check_surface_logic(&f_str, &content, &mut results.values);
             }
 
-            self.check_taxonomy_intent(&f_str, &content, &mut results.values, analyzer, root_dir);
-            self.check_aggregate_intent(&f_str, &content, &mut results.values);
-            self.check_surface_logic(&f_str, &content, &mut results.values);
+            self.check_layer_contract_intent(
+                &f_str,
+                &content,
+                &mut results.values,
+                analyzer,
+                root_dir,
+            );
         }
     }
 
@@ -628,4 +752,20 @@ impl shared::import_rules::contract_rule_protocol::IArchImportProtocol for Dummy
         _results: &mut LintResultList,
     ) {
     }
+}
+
+// ─── Private Class Inheritance Helpers ───
+
+fn python_class_inherits(line: &str, agg_type: &str) -> bool {
+    let trimmed = line.trim();
+    if !trimmed.starts_with("class ") {
+        return false;
+    }
+    if let Some(open) = trimmed.find('(') {
+        if let Some(close) = trimmed.find(')') {
+            let bases = &trimmed[open + 1..close];
+            return bases.split(',').any(|b| b.trim() == agg_type);
+        }
+    }
+    false
 }
