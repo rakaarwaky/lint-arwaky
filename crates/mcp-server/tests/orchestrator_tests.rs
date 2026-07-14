@@ -18,9 +18,19 @@ use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggrega
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::project_setup::taxonomy_doctor_vo::{SecurityScanReport, DependencyReport};
+use shared::project_setup::taxonomy_doctor_vo::{SecurityScanReport, DependencyReport, DoctorResultVO, ToolchainDiagnostics};
+use shared::project_setup::taxonomy_stats_vo::MaintenanceStatsVO;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use shared::common::taxonomy_bool_vo::BoolVO;
+use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use shared::git_hooks::contract_hook_protocol::IHookProtocol;
+use shared::mcp_server::taxonomy_action_vo::JobId;
+use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
+use shared::git_hooks::taxonomy_hook_error::GitHookError;
+use shared::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_layer_vo::Identity;
+use shared::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared::git_hooks::taxonomy_git_diff_data_vo::{GitDiffDataVO, HookIgnoreUpdateVO};
 use std::sync::Arc;
 
 struct MockDeps;
@@ -145,24 +155,42 @@ impl IRoleRunnerAggregate for MockDeps {
     }
 }
 
+struct MockDiffProtocol;
+#[async_trait::async_trait]
+impl IDiffProtocol for MockDiffProtocol {
+    async fn run_git_diff_check(&self, _: &FilePath) -> LintResultList { unreachable!() }
+    async fn get_diff(&self, _: &FilePath) -> GitDiffResultVO { unreachable!() }
+    async fn get_changed_files(&self, _: &FilePath, _: &str) -> FilePathList { unreachable!() }
+    async fn get_default_branch(&self, _: &FilePath) -> String { unreachable!() }
+}
+
+struct MockHookProtocol;
+#[async_trait::async_trait]
+impl IHookProtocol for MockHookProtocol {
+    async fn install_pre_commit(&self, _: &FilePath) -> Result<SuccessStatus, GitHookError> { unreachable!() }
+    async fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> { unreachable!() }
+    fn get_hook_manager_identity(&self) -> Identity { unreachable!() }
+    async fn initialize_config(&self, _: &str) -> DescriptionVO { unreachable!() }
+    fn update_ignore_rule(&self, _: HookIgnoreUpdateVO) -> DescriptionVO { unreachable!() }
+    async fn get_diff_data(&self, _: &str, _: &str) -> GitDiffDataVO { unreachable!() }
+}
+
 #[async_trait::async_trait]
 impl MaintenanceCommandsAggregate for MockDeps {
-    async fn run_security_scan(&self, _: &FilePath) -> SecurityScanReport {
-        unreachable!()
-    }
-    async fn run_dependency_report(&self, _: &FilePath) -> Result<DependencyReport, String> {
-        unreachable!()
-    }
+    async fn stats(&self, _: &FilePath) -> MaintenanceStatsVO { unreachable!() }
+    async fn clean(&self) { unreachable!() }
+    async fn update(&self) { unreachable!() }
+    async fn doctor(&self) -> DoctorResultVO { unreachable!() }
+    async fn cancel(&self, _: JobId) { unreachable!() }
+    async fn diagnose_toolchain(&self) -> ToolchainDiagnostics { unreachable!() }
+    async fn run_security_scan(&self, _: &FilePath) -> SecurityScanReport { unreachable!() }
+    async fn run_dependency_report(&self, _: &FilePath) -> Result<DependencyReport, String> { unreachable!() }
 }
 
 #[async_trait::async_trait]
 impl GitHooksAggregate for MockDeps {
-    async fn install_hook(&self, _: &FilePath) -> Result<BoolVO, String> {
-        unreachable!()
-    }
-    async fn uninstall_hook(&self) -> Result<BoolVO, String> {
-        unreachable!()
-    }
+    fn diff_protocol(&self) -> &dyn IDiffProtocol { &MockDiffProtocol }
+    fn hook_protocol(&self) -> &dyn IHookProtocol { &MockHookProtocol }
 }
 
 fn make_orchestrator() -> McpServerOrchestrator {
