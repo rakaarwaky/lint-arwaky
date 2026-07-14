@@ -3,16 +3,16 @@
 
 ```bash
 # Scan directory
-lint-arwaky-cli scan modules/
+lint-arwaky-cli scan modules/ crates/ packages/
 
 # Auto-fix
-lint-arwaky-cli fix modules/
+lint-arwaky-cli fix modules/ crates/ packages/
 
 # Preview fixes
-lint-arwaky-cli fix modules/ --dry-run
+lint-arwaky-cli fix modules/ crates/ packages/ --dry-run
 
 # CI mode (exit 1 if score < 80)
-lint-arwaky-cli check modules/ --threshold 80
+lint-arwaky-cli check modules/ crates/ packages/ --threshold 80
 ```
 
 ### Git Integration
