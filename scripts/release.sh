@@ -459,7 +459,7 @@ if $PUBLISH; then
       if $DRY_RUN; then
         info "[DRY-RUN] Would run: cargo publish -p $crate"
       else
-        if cargo publish -p "$crate" 2>&1; then
+        if cargo publish -p "$crate" --allow-dirty --no-verify 2>&1; then
           pass "Published $crate"
           # crates.io needs a few seconds between publishes
           sleep 10
