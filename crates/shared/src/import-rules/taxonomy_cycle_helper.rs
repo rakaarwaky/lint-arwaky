@@ -113,13 +113,9 @@ fn extract_cycle_nodes(
     path.push(cur.to_string());
 
     while cur != tgt {
-        match parent.get(cur) {
-            Some(p) => {
-                cur = p;
-                path.push(cur.to_string());
-            }
-            None => return None,
-        }
+        let p = parent.get(cur)?;
+        cur = p;
+        path.push(cur.to_string());
     }
 
     path.reverse();
