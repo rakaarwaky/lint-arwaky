@@ -9,6 +9,8 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 
 pub struct McpContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
@@ -19,6 +21,8 @@ pub struct McpContainer {
     pub scanner_provider: Arc<dyn IScannerProviderPort>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
+    pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
 }
 
 impl McpContainer {
@@ -61,6 +65,14 @@ impl McpContainer {
         let role_container = role_rules::root_role_rules_container::RoleContainer::new();
         let role_orchestrator = role_container.orchestrator();
 
+        let maintenance_container =
+            maintenance::root_maintenance_container::MaintenanceContainer::new();
+        let maintenance_orchestrator = maintenance_container.orchestrator();
+
+        let git_hooks_container =
+            git_hooks::root_git_hooks_container::GitContainer::new_default();
+        let git_hooks_aggregate = git_hooks_container.aggregate();
+
         Self {
             code_analysis_linter,
             import_orchestrator,
@@ -70,6 +82,8 @@ impl McpContainer {
             scanner_provider,
             external_lint,
             role_orchestrator,
+            maintenance_orchestrator,
+            git_hooks_aggregate,
         }
     }
 }

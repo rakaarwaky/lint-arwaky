@@ -17,6 +17,10 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::project_setup::taxonomy_doctor_vo::{SecurityScanReport, DependencyReport};
+use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
+use shared::common::taxonomy_bool_vo::BoolVO;
 use std::sync::Arc;
 
 struct MockDeps;
@@ -141,6 +145,26 @@ impl IRoleRunnerAggregate for MockDeps {
     }
 }
 
+#[async_trait::async_trait]
+impl MaintenanceCommandsAggregate for MockDeps {
+    async fn run_security_scan(&self, _: &FilePath) -> SecurityScanReport {
+        unreachable!()
+    }
+    async fn run_dependency_report(&self, _: &FilePath) -> Result<DependencyReport, String> {
+        unreachable!()
+    }
+}
+
+#[async_trait::async_trait]
+impl GitHooksAggregate for MockDeps {
+    async fn install_hook(&self, _: &FilePath) -> Result<BoolVO, String> {
+        unreachable!()
+    }
+    async fn uninstall_hook(&self) -> Result<BoolVO, String> {
+        unreachable!()
+    }
+}
+
 fn make_orchestrator() -> McpServerOrchestrator {
     let deps = McpServerDependencies {
         code_analysis_linter: Arc::new(MockDeps),
@@ -151,6 +175,8 @@ fn make_orchestrator() -> McpServerOrchestrator {
         scanner_provider: Arc::new(MockDeps),
         external_lint: Arc::new(MockDeps),
         role_orchestrator: Arc::new(MockDeps),
+        maintenance_orchestrator: Arc::new(MockDeps),
+        git_hooks_aggregate: Arc::new(MockDeps),
     };
     McpServerOrchestrator::new(deps)
 }

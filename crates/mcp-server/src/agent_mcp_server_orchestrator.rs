@@ -19,6 +19,9 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use std::sync::Arc;
 
 pub struct McpServerDependencies {
@@ -30,6 +33,8 @@ pub struct McpServerDependencies {
     pub scanner_provider: Arc<dyn IScannerProviderPort>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
+    pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
 }
 
 pub struct McpServerOrchestrator {
@@ -183,12 +188,48 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                serde_json::json!({
-                    "status": "success",
-                    "action": "fix",
-                    "path": path,
-                    "message": "Auto-fix completed."
+                let dry_run = args
+                    .args
+                    .as_ref()
+                    .and_then(|a| a.get("dry_run"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                let linter = self.deps.code_analysis_linter.clone();
+
+                let join_result = tokio::task::spawn_blocking(move || {
+                    let path_obj = FilePath::new(path.clone()).unwrap_or_default();
+                    let results_before = linter.run_code_analysis(&path_obj.value);
+                    let violations_before = results_before.len();
+
+                    let auto_fix_container =
+                        auto_fix::root_auto_fix_container::AutoFixContainer::new(linter.clone());
+                    let fix_orch = auto_fix_container.orchestrator(dry_run);
+                    let fix_result = fix_orch.execute(&path_obj);
+
+                    let violations_after = if dry_run {
+                        violations_before
+                    } else {
+                        let after = linter.run_code_analysis(&path_obj.value);
+                        after.len()
+                    };
+                    let fixed_count = violations_before.saturating_sub(violations_after);
+
+                    serde_json::json!({
+                        "status": "success",
+                        "action": "fix",
+                        "path": path,
+                        "dry_run": dry_run,
+                        "violations_before": violations_before,
+                        "violations_after": violations_after,
+                        "fixed": fixed_count,
+                        "output": fix_result.output.value
+                    })
                 })
+                .await;
+                match join_result {
+                    Ok(v) => v,
+                    Err(e) => serde_json::json!({"error": format!("blocking task failed: {}", e)}),
+                }
             }
             "ci" => {
                 let path = match arg_path {
@@ -276,12 +317,208 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 }
                 serde_json::json!({"status": "success", "action": "doctor", "checks": checks})
             }
-            "orphan" | "security" | "duplicates" | "dependencies" => {
+            "orphan" => {
                 let path = match arg_path {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                serde_json::json!({"status": "success", "action": action, "path": path})
+                let orphan_orch = self.deps.orphan_orchestrator.clone();
+                let layer_det = self.deps.layer_detector.clone();
+                let scanner = self.deps.scanner_provider.clone();
+
+                let join_result = tokio::task::spawn_blocking(move || {
+                    let scan_root = find_workspace_root(&path);
+                    let orphan_scan_root = match scan_root.as_ref().and_then(|r| r.to_str()) {
+                        Some(s) => s.to_string(),
+                        None => ".".to_string(),
+                    };
+                    let dir_path = DirectoryPath::new(orphan_scan_root.clone()).unwrap_or_default();
+                    let source_files = match scanner.scan_directory(&dir_path) {
+                        Ok(list) => list.values,
+                        Err(_) => Vec::new(),
+                    };
+                    let file_strs: Vec<String> =
+                        source_files.iter().map(|f| f.value.clone()).collect();
+                    let orphan_results = orphan_orch.check_orphans(
+                        layer_det.as_ref(),
+                        &file_strs,
+                        &orphan_scan_root,
+                    );
+
+                    let path_canonical = std::path::Path::new(&path)
+                        .canonicalize()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| path.clone());
+
+                    let filtered: Vec<_> = orphan_results
+                        .into_iter()
+                        .filter(|r| {
+                            let f = &r.file.value;
+                            let f_canonical = std::path::Path::new(f)
+                                .canonicalize()
+                                .map(|p| p.to_string_lossy().to_string())
+                                .unwrap_or_else(|_| f.clone());
+                            f_canonical == path_canonical
+                        })
+                        .collect();
+
+                    let is_orphan = !filtered.is_empty();
+                    let report: Vec<_> = filtered
+                        .iter()
+                        .map(|v| {
+                            serde_json::json!({
+                                "code": v.code.code(),
+                                "message": v.message.value,
+                                "file": v.file.value,
+                                "line": v.line.value,
+                            })
+                        })
+                        .collect();
+
+                    serde_json::json!({
+                        "status": "success",
+                        "action": "orphan",
+                        "path": path,
+                        "is_orphan": is_orphan,
+                        "violations": report.len(),
+                        "details": report
+                    })
+                })
+                .await;
+                match join_result {
+                    Ok(v) => v,
+                    Err(e) => serde_json::json!({"error": format!("blocking task failed: {}", e)}),
+                }
+            }
+            "security" => {
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let maint = self.deps.maintenance_orchestrator.clone();
+
+                let join_result = tokio::task::spawn_blocking(move || {
+                    let rt = match tokio::runtime::Runtime::new() {
+                        Ok(r) => r,
+                        Err(_) => {
+                            return serde_json::json!({"error": "failed to create runtime"});
+                        }
+                    };
+                    let path_obj = FilePath::new(path.clone()).unwrap_or_default();
+                    let report = rt.block_on(maint.run_security_scan(&path_obj));
+
+                    let findings: Vec<_> = report
+                        .findings
+                        .iter()
+                        .map(|f| {
+                            serde_json::json!({
+                                "severity": f.severity,
+                                "test_id": f.test_id,
+                                "file": f.file,
+                                "line": f.line,
+                                "issue": f.issue,
+                            })
+                        })
+                        .collect();
+
+                    serde_json::json!({
+                        "status": "success",
+                        "action": "security",
+                        "path": path,
+                        "language": report.language,
+                        "tool": report.tool_name,
+                        "tool_installed": report.tool_installed,
+                        "findings_count": findings.len(),
+                        "findings": findings
+                    })
+                })
+                .await;
+                match join_result {
+                    Ok(v) => v,
+                    Err(e) => serde_json::json!({"error": format!("blocking task failed: {}", e)}),
+                }
+            }
+            "duplicates" => {
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+
+                let join_result = tokio::task::spawn_blocking(move || {
+                    let dup_analyzer = code_analysis::CodeDuplicationAnalyzer::new();
+                    let fs_adapter = import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new();
+                    let violations = dup_analyzer.handle_duplicates(Some(path.clone()), &fs_adapter);
+
+                    let findings: Vec<_> = violations
+                        .iter()
+                        .map(|v| {
+                            let s: String = v.clone().into();
+                            serde_json::json!({
+                                "issue": s,
+                            })
+                        })
+                        .collect();
+
+                    serde_json::json!({
+                        "status": "success",
+                        "action": "duplicates",
+                        "path": path,
+                        "duplicates_found": findings.len(),
+                        "details": findings
+                    })
+                })
+                .await;
+                match join_result {
+                    Ok(v) => v,
+                    Err(e) => serde_json::json!({"error": format!("blocking task failed: {}", e)}),
+                }
+            }
+            "dependencies" => {
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let maint = self.deps.maintenance_orchestrator.clone();
+
+                let join_result = tokio::task::spawn_blocking(move || {
+                    let rt = match tokio::runtime::Runtime::new() {
+                        Ok(r) => r,
+                        Err(_) => {
+                            return serde_json::json!({"error": "failed to create runtime"});
+                        }
+                    };
+                    let path_obj = FilePath::new(path.clone()).unwrap_or_default();
+                    match rt.block_on(maint.run_dependency_report(&path_obj)) {
+                        Ok(report) => {
+                            let deps: Vec<_> = report.dependencies.iter().take(50).map(|d| {
+                                serde_json::json!({
+                                    "name": d.name,
+                                    "version": d.version,
+                                    "dep_type": d.dep_type,
+                                })
+                            }).collect();
+                            serde_json::json!({
+                                "status": "success",
+                                "action": "dependencies",
+                                "path": path,
+                                "language": report.language,
+                                "total": report.dependencies.len(),
+                                "dependencies": deps
+                            })
+                        }
+                        Err(e) => serde_json::json!({
+                            "status": "error",
+                            "action": "dependencies",
+                            "path": path,
+                            "error": e
+                        })
+                    }
+                })
+                .await;
+                match join_result {
+                    Ok(v) => v,
+                    Err(e) => serde_json::json!({"error": format!("blocking task failed: {}", e)}),
+                }
             }
             "version" => {
                 serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "name": "lint-arwaky"})
@@ -300,10 +537,82 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 serde_json::json!({"adapters": adapters})
             }
             "install-hook" => {
-                serde_json::json!({"status": "success", "message": "Git hook installed."})
+                let git_hooks = self.deps.git_hooks_aggregate.clone();
+
+                let join_result = tokio::task::spawn_blocking(move || {
+                    let rt = match tokio::runtime::Runtime::new() {
+                        Ok(r) => r,
+                        Err(_) => {
+                            return serde_json::json!({"error": "failed to create runtime"});
+                        }
+                    };
+                    let exe_path = shared::common::taxonomy_path_vo::FilePath::new(
+                        "lint-arwaky".to_string(),
+                    )
+                    .unwrap_or_default();
+                    match rt.block_on(git_hooks.install_hook(&exe_path)) {
+                        Ok(status) if status.value => {
+                            serde_json::json!({
+                                "status": "success",
+                                "message": "Git pre-commit hook installed successfully."
+                            })
+                        }
+                        Ok(_) => {
+                            serde_json::json!({
+                                "status": "success",
+                                "message": "Not a git repository, hook installation skipped."
+                            })
+                        }
+                        Err(e) => {
+                            serde_json::json!({
+                                "status": "error",
+                                "message": format!("Failed to install hook: {:?}", e)
+                            })
+                        }
+                    }
+                })
+                .await;
+                match join_result {
+                    Ok(v) => v,
+                    Err(e) => serde_json::json!({"error": format!("blocking task failed: {}", e)}),
+                }
             }
             "uninstall-hook" => {
-                serde_json::json!({"status": "success", "message": "Git hook removed."})
+                let git_hooks = self.deps.git_hooks_aggregate.clone();
+
+                let join_result = tokio::task::spawn_blocking(move || {
+                    let rt = match tokio::runtime::Runtime::new() {
+                        Ok(r) => r,
+                        Err(_) => {
+                            return serde_json::json!({"error": "failed to create runtime"});
+                        }
+                    };
+                    match rt.block_on(git_hooks.uninstall_hook()) {
+                        Ok(status) if status.value => {
+                            serde_json::json!({
+                                "status": "success",
+                                "message": "Git pre-commit hook removed successfully."
+                            })
+                        }
+                        Ok(_) => {
+                            serde_json::json!({
+                                "status": "success",
+                                "message": "Not a git repository, hook removal skipped."
+                            })
+                        }
+                        Err(e) => {
+                            serde_json::json!({
+                                "status": "error",
+                                "message": format!("Failed to remove hook: {:?}", e)
+                            })
+                        }
+                    }
+                })
+                .await;
+                match join_result {
+                    Ok(v) => v,
+                    Err(e) => serde_json::json!({"error": format!("blocking task failed: {}", e)}),
+                }
             }
             "init" => serde_json::json!({"status": "success", "action": "init"}),
             "install" => serde_json::json!({"status": "success", "action": "install"}),
@@ -314,7 +623,53 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 };
                 serde_json::json!({"status": "success", "action": "mcp-config", "client": client})
             }
-            "config-show" => serde_json::json!({"status": "success", "action": "config-show"}),
+            "config-show" => {
+                let join_result = tokio::task::spawn_blocking(move || {
+                    let rt = match tokio::runtime::Runtime::new() {
+                        Ok(r) => r,
+                        Err(_) => {
+                            return serde_json::json!({"error": "failed to create runtime"});
+                        }
+                    };
+                    let config_container =
+                        config_system::root_config_system_container::ConfigContainer::new();
+                    let config_orchestrator = config_container.orchestrator();
+                    let config_reader = config_orchestrator.config_reader();
+                    let project_root = FilePath::new(".".to_string()).unwrap_or_default();
+                    let config_files = rt.block_on(config_reader.list_config_files(&project_root));
+
+                    if config_files.is_empty() {
+                        return serde_json::json!({
+                            "status": "success",
+                            "action": "config-show",
+                            "message": "No config files found. Run `lint-arwaky init` to create one.",
+                            "config_files": []
+                        });
+                    }
+
+                    let mut configs = Vec::new();
+                    for (lang, path_str) in &config_files {
+                        if let Some(source) = rt.block_on(config_reader.read_config(&project_root, lang)) {
+                            configs.push(serde_json::json!({
+                                "language": lang,
+                                "path": path_str,
+                                "content": source.raw_content,
+                            }));
+                        }
+                    }
+
+                    serde_json::json!({
+                        "status": "success",
+                        "action": "config-show",
+                        "config_files": configs
+                    })
+                })
+                .await;
+                match join_result {
+                    Ok(v) => v,
+                    Err(e) => serde_json::json!({"error": format!("blocking task failed: {}", e)}),
+                }
+            }
             _ => serde_json::json!({"error": format!("Unknown action: {}", action)}),
         };
         serde_json::to_string_pretty(&result).unwrap_or_default()

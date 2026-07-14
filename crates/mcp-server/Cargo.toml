@@ -30,3 +30,6 @@ role_rules.workspace = true
 code_analysis.workspace = true
 config_system.workspace = true
 dirs.workspace = true
+maintenance.workspace = true
+git_hooks.workspace = true
+auto_fix.workspace = true
