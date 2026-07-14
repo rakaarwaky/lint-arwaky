@@ -418,22 +418,53 @@ fi
 if $PUBLISH; then
   if ! command -v cargo &>/dev/null; then
     warn "cargo not found — skipping crates.io publish"
-  elif ! check_cargo_publish_token; then
-    warn "Skipping crates.io publish (missing CARGO_REGISTRY_TOKEN)"
   else
     echo ""
     echo -e "${BOLD}━━━ Publish to crates.io ━━━${NC}"
-    if $AUTO; then
-      run "cargo publish --token '$CARGO_REGISTRY_TOKEN'"
-      pass "Published to crates.io"
-    else
-      read -rp "Publish to crates.io? [y/N] " publish_confirm
-      if [[ "$publish_confirm" =~ ^[Yy]$ ]]; then
-        run "cargo publish --token '$CARGO_REGISTRY_TOKEN'"
-        pass "Published to crates.io"
+
+    # Crates in dependency order (leaf → root)
+    PUBLISH_CRATES=(
+      "shared-lint-arwaky"
+      "import_rules-lint-arwaky"
+      "naming_rules-lint-arwaky"
+      "code_analysis-lint-arwaky"
+      "config_system-lint-arwaky"
+      "external_lint-lint-arwaky"
+      "orphan_detector-lint-arwaky"
+      "role_rules-lint-arwaky"
+      "auto_fix-lint-arwaky"
+      "git_hooks-lint-arwaky"
+      "project_setup-lint-arwaky"
+      "maintenance-lint-arwaky"
+      "cli_commands-lint-arwaky"
+      "mcp_server-lint-arwaky"
+      "file_watch-lint-arwaky"
+      "tui-lint-arwaky"
+      "lint_arwaky-arwaky"
+    )
+
+    PUBLISH_FAIL=0
+    for crate in "${PUBLISH_CRATES[@]}"; do
+      echo ""
+      info "Publishing $crate..."
+      if $DRY_RUN; then
+        info "[DRY-RUN] Would run: cargo publish -p $crate"
       else
-        warn "Skipped crates.io publish"
+        if cargo publish -p "$crate" 2>&1; then
+          pass "Published $crate"
+          # crates.io needs a few seconds between publishes
+          sleep 10
+        else
+          warn "Failed to publish $crate (may already exist or have errors)"
+          PUBLISH_FAIL=1
+        fi
       fi
+    done
+
+    if [ $PUBLISH_FAIL -eq 0 ]; then
+      pass "All crates published to crates.io"
+    else
+      warn "Some crates failed to publish (check output above)"
     fi
   fi
 fi
