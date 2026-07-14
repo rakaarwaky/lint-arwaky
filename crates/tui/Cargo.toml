@@ -1,6 +1,6 @@
 [package]
 name = "tui-lint-arwaky"
-version = "1.10.43"
+version = "1.10.106"
 edition = "2021"
 description = "Ratatui-based interactive 3-panel file browser TUI for lint-arwaky"
 license = "MIT"

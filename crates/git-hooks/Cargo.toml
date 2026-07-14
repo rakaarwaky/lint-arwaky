@@ -1,11 +1,11 @@
 [package]
 name = "git_hooks-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 edition = "2021"
 description = "Git hook installation and diff-based pre-commit lint enforcement, integrated with the agent orchestrator."
 license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
-publish = false
+publish = true
 
 [lints]
 workspace = true
