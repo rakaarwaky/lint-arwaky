@@ -422,6 +422,15 @@ if $PUBLISH; then
     echo ""
     echo -e "${BOLD}━━━ Publish to crates.io ━━━${NC}"
 
+    # Copy config files into shared crate for packaging
+    SHARED_CONFIG_DIR="crates/shared/src/config-system"
+    for cfg in lint_arwaky.config.*.yaml; do
+      if [ -f "$cfg" ]; then
+        cp "$cfg" "$SHARED_CONFIG_DIR/"
+        info "Copied $cfg -> $SHARED_CONFIG_DIR/"
+      fi
+    done
+
     # Crates in dependency order (leaf → root)
     PUBLISH_CRATES=(
       "shared-lint-arwaky"
@@ -466,6 +475,10 @@ if $PUBLISH; then
     else
       warn "Some crates failed to publish (check output above)"
     fi
+
+    # Cleanup: remove copied config files from shared crate
+    rm -f "$SHARED_CONFIG_DIR"/lint_arwaky.config.*.yaml
+    info "Cleaned up copied config files"
   fi
 fi
 
