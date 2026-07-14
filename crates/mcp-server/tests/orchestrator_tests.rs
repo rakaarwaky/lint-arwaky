@@ -98,7 +98,7 @@ impl IOrphanAggregate for MockDeps {
         _: &[String],
         _: &str,
     ) -> Vec<LintResult> {
-        unreachable!()
+        Vec::new()
     }
 }
 
@@ -128,10 +128,10 @@ impl IScannerProviderPort for MockDeps {
         shared::common::taxonomy_paths_vo::FilePathList,
         shared::common::taxonomy_filesystem_error::FileSystemError,
     > {
-        unreachable!()
+        Ok(shared::common::taxonomy_paths_vo::FilePathList { values: Vec::new() })
     }
     fn get_ignored_files(&self) -> shared::common::taxonomy_paths_vo::FilePathList {
-        unreachable!()
+        shared::common::taxonomy_paths_vo::FilePathList { values: Vec::new() }
     }
 }
 
@@ -167,8 +167,12 @@ impl IDiffProtocol for MockDiffProtocol {
 struct MockHookProtocol;
 #[async_trait::async_trait]
 impl IHookProtocol for MockHookProtocol {
-    async fn install_pre_commit(&self, _: &FilePath) -> Result<SuccessStatus, GitHookError> { unreachable!() }
-    async fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> { unreachable!() }
+    async fn install_pre_commit(&self, _: &FilePath) -> Result<SuccessStatus, GitHookError> {
+        Ok(SuccessStatus::new(true))
+    }
+    async fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> {
+        Ok(SuccessStatus::new(true))
+    }
     fn get_hook_manager_identity(&self) -> Identity { unreachable!() }
     async fn initialize_config(&self, _: &str) -> DescriptionVO { unreachable!() }
     fn update_ignore_rule(&self, _: HookIgnoreUpdateVO) -> DescriptionVO { unreachable!() }
