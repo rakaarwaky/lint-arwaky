@@ -11,17 +11,17 @@ use crate::contract_mcp_server_aggregate::IMcpServerAggregate;
 use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
 
 pub struct McpServerDependencies {
@@ -446,8 +446,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let dup_analyzer = code_analysis::CodeDuplicationAnalyzer::new();
-                    let fs_adapter = import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new();
-                    let violations = dup_analyzer.handle_duplicates(Some(path.clone()), &fs_adapter);
+                    let fs_adapter =
+                        import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new();
+                    let violations =
+                        dup_analyzer.handle_duplicates(Some(path.clone()), &fs_adapter);
 
                     let findings: Vec<_> = violations
                         .iter()
@@ -490,13 +492,18 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     let path_obj = FilePath::new(path.clone()).unwrap_or_default();
                     match rt.block_on(maint.run_dependency_report(&path_obj)) {
                         Ok(report) => {
-                            let deps: Vec<_> = report.dependencies.iter().take(50).map(|d| {
-                                serde_json::json!({
-                                    "name": d.name,
-                                    "version": d.version,
-                                    "dep_type": d.dep_type,
+                            let deps: Vec<_> = report
+                                .dependencies
+                                .iter()
+                                .take(50)
+                                .map(|d| {
+                                    serde_json::json!({
+                                        "name": d.name,
+                                        "version": d.version,
+                                        "dep_type": d.dep_type,
+                                    })
                                 })
-                            }).collect();
+                                .collect();
                             serde_json::json!({
                                 "status": "success",
                                 "action": "dependencies",
@@ -511,7 +518,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                             "action": "dependencies",
                             "path": path,
                             "error": e
-                        })
+                        }),
                     }
                 })
                 .await;
@@ -546,10 +553,9 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                             return serde_json::json!({"error": "failed to create runtime"});
                         }
                     };
-                    let exe_path = shared::common::taxonomy_path_vo::FilePath::new(
-                        "lint-arwaky".to_string(),
-                    )
-                    .unwrap_or_default();
+                    let exe_path =
+                        shared::common::taxonomy_path_vo::FilePath::new("lint-arwaky".to_string())
+                            .unwrap_or_default();
                     match rt.block_on(git_hooks.install_hook(&exe_path)) {
                         Ok(status) if status.value => {
                             serde_json::json!({
