@@ -1,24 +1,30 @@
-// PURPOSE: InfrastructureOrphanAnalyzer — IInfrastructureOrphanProtocol for orphan infrastructure detection
-use crate::taxonomy_orphan_filename_helper::file_stem;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IInfrastructureOrphanProtocol;
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 use shared::orphan_detector::taxonomy_orphan_utility::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use std::sync::Arc;
 
-pub struct InfrastructureOrphanAnalyzer {}
+pub struct InfrastructureOrphanAnalyzer {
+    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+}
 
 impl Default for InfrastructureOrphanAnalyzer {
     fn default() -> Self {
-        Self::new()
+        Self {
+            extractor: Arc::new(
+                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
+            ),
+        }
     }
 }
 
 impl InfrastructureOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
+        Self { extractor }
     }
 }
 
@@ -36,7 +42,7 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
 
         // Check if wired in any container
         let fp = f.value();
-        let stem = file_stem(fp);
+        let stem = self.extractor.file_stem(f).value;
 
         if let Ok(content) = std::fs::read_to_string(fp) {
             let mut identifiers: Vec<String> = Vec::new();
@@ -93,8 +99,13 @@ pub fn check_infrastructure_orphan(
     _basename: &str,
     files: &[String],
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
 ) {
-    let stem = crate::taxonomy_orphan_filename_helper::file_stem(fp);
+    let stem = extractor
+        .file_stem(&shared::common::taxonomy_path_vo::FilePath {
+            value: fp.to_string(),
+        })
+        .value;
     let content = std::fs::read_to_string(fp).unwrap_or_default();
     use shared::orphan_detector::taxonomy_orphan_utility::{
         extract_struct_names, extract_trait_names,
@@ -120,8 +131,12 @@ pub fn check_infrastructure_orphan(
 
     let mut wired = false;
     for cf in files {
-        let cb = crate::taxonomy_orphan_filename_helper::file_basename(cf);
-        let csuffix = crate::taxonomy_orphan_filename_helper::file_suffix(cb);
+        let cb = extractor
+            .file_basename(&shared::common::taxonomy_path_vo::FilePath { value: cf.clone() })
+            .value;
+        let csuffix = extractor
+            .file_suffix(&shared::common::taxonomy_path_vo::FilePath { value: cb.clone() })
+            .value;
         if csuffix != "container" {
             continue;
         }

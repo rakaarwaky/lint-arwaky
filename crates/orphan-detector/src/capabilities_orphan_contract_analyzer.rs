@@ -1,5 +1,3 @@
-// PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
-use crate::taxonomy_orphan_filename_helper::{file_basename, file_suffix};
 use regex::Regex;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
@@ -7,20 +5,28 @@ use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use std::sync::Arc;
 use std::sync::OnceLock;
 
-pub struct ContractOrphanAnalyzer {}
+pub struct ContractOrphanAnalyzer {
+    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+}
 
 impl Default for ContractOrphanAnalyzer {
     fn default() -> Self {
-        Self::new()
+        Self {
+            extractor: Arc::new(
+                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
+            ),
+        }
     }
 }
 
 impl ContractOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
+        Self { extractor }
     }
 }
 
@@ -33,7 +39,14 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         inheritance_map: &InheritanceMap,
         all_files: &[String],
     ) -> OrphanIndicatorResult {
-        is_contract_orphan(f, root_dir, file_definitions, inheritance_map, all_files)
+        is_contract_orphan(
+            f,
+            root_dir,
+            file_definitions,
+            inheritance_map,
+            all_files,
+            &self.extractor,
+        )
     }
 }
 
@@ -43,9 +56,10 @@ pub fn is_contract_orphan(
     _file_definitions: &FileDefinitionMap,
     _inheritance_map: &InheritanceMap,
     all_files: &[String],
+    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
 ) -> OrphanIndicatorResult {
     let fp = f.value();
-    let suffix = file_suffix(fp);
+    let suffix = extractor.file_suffix(f).value;
 
     let content = match std::fs::read_to_string(fp) {
         Ok(c) => c,
@@ -78,7 +92,9 @@ pub fn is_contract_orphan(
 
     let mut has_impl = false;
     for cf in &search_files {
-        let cb = file_basename(cf);
+        let cb = extractor
+            .file_basename(&shared::common::taxonomy_path_vo::FilePath { value: cf.clone() })
+            .value;
         // Check target layer files (infrastructure_ for ports, capabilities_ for protocols, agent_ for aggregates)
         // Also check root_*_container files (DI wiring often implements traits there)
         let is_target_layer = cb.starts_with(target_prefix);
@@ -126,7 +142,9 @@ pub fn is_contract_orphan(
     if suffix == "port" || suffix == "protocol" {
         let mut called_by_impl_or_user = false;
         for cf in &search_files {
-            let cb = file_basename(cf);
+            let cb = extractor
+                .file_basename(&shared::common::taxonomy_path_vo::FilePath { value: cf.clone() })
+                .value;
             // Check orchestrator files
             let is_orchestrator = cb.starts_with("agent_")
                 && (cb.ends_with("_orchestrator.rs")
@@ -178,7 +196,9 @@ pub fn is_contract_orphan(
     if suffix == "aggregate" {
         let mut called_by_surface_or_container = false;
         for cf in &search_files {
-            let cb = file_basename(cf);
+            let cb = extractor
+                .file_basename(&shared::common::taxonomy_path_vo::FilePath { value: cf.clone() })
+                .value;
             // Check surface files
             let is_surface = cb.starts_with("surface_");
             // Check container files (DI wiring)

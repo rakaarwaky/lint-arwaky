@@ -3,26 +3,33 @@
 // - Smart surface (_command, _controller, _page, _entry): must be imported by entry or router
 // - Utility surface (_hook, _store, _action, _screen, _router): must be imported by smart surface
 // - Passive surface (_component, _view, _layout): must be imported by smart or utility surface
-use crate::taxonomy_orphan_filename_helper::{file_basename, file_stem, file_suffix};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 use shared::orphan_detector::contract_orphan_protocol::ISurfacesOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
+use std::sync::Arc;
 
-pub struct SurfacesOrphanAnalyzer {}
+pub struct SurfacesOrphanAnalyzer {
+    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+}
 
 impl Default for SurfacesOrphanAnalyzer {
     fn default() -> Self {
-        Self::new()
+        Self {
+            extractor: Arc::new(
+                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
+            ),
+        }
     }
 }
 
 impl SurfacesOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
+        Self { extractor }
     }
 }
 
@@ -33,13 +40,20 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         alive_files: &ReachabilityResult,
         definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult {
-        is_surface_orphan(f, alive_files, definition)
+        is_surface_orphan(f, alive_files, definition, &self.extractor)
     }
 }
 
 /// Get surface suffix from filename
-pub fn get_surface_suffix(basename: &str) -> String {
-    file_suffix(basename)
+pub fn get_surface_suffix(
+    basename: &str,
+    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
+) -> String {
+    extractor
+        .file_suffix(&shared::common::taxonomy_path_vo::FilePath {
+            value: basename.to_string(),
+        })
+        .value
 }
 
 /// Surface category
@@ -56,6 +70,7 @@ pub fn is_surface_orphan(
     f: &FilePath,
     alive_files: &ReachabilityResult,
     _definition: Option<&LayerDefinition>,
+    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
 ) -> OrphanIndicatorResult {
     let alive: Vec<String> = alive_files
         .paths
@@ -69,8 +84,8 @@ pub fn is_surface_orphan(
 
     // Check if imported by entry or router
     let fp_val = f.value();
-    let basename = file_basename(fp_val);
-    let stem = file_stem(fp_val);
+    let basename = extractor.file_basename(f).value;
+    let stem = extractor.file_stem(f).value;
 
     if let Ok(content) = std::fs::read_to_string(fp_val) {
         // Check if this surface is imported by any entry or router file
@@ -116,7 +131,7 @@ pub fn is_surface_orphan(
         }
     }
 
-    let suffix = get_surface_suffix(basename);
+    let suffix = get_surface_suffix(&basename, extractor);
     let category = surface_category(&suffix);
     OrphanIndicatorResult::new(
         true,
@@ -175,20 +190,27 @@ fn check_dir_imports(dir: &std::path::Path, stem: &str) -> Result<bool, std::io:
     Ok(false)
 }
 
-pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicatorResult {
-    let fp = f.value();
-    let basename = file_basename(fp);
-    let suffix = get_surface_suffix(basename);
+pub fn is_surface_orphan_raw(
+    f: &FilePath,
+    all_files: &[String],
+    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
+) -> OrphanIndicatorResult {
+    let basename = extractor.file_basename(f).value;
+    let suffix = get_surface_suffix(&basename, extractor);
     let category = surface_category(&suffix);
-    let stem = file_stem(fp);
+    let stem = extractor.file_stem(f).value;
 
     match category {
         // Smart surface: must be imported by entry point or router
         "smart" => {
             let mut imported_by_entry_or_router = false;
             for cf in all_files {
-                let cb = file_basename(cf);
-                let cf_suffix = get_surface_suffix(cb);
+                let cb = extractor
+                    .file_basename(&shared::common::taxonomy_path_vo::FilePath {
+                        value: cf.clone(),
+                    })
+                    .value;
+                let cf_suffix = get_surface_suffix(&cb, extractor);
                 // Entry point or router
                 if cb.starts_with("cli_")
                     || cb.starts_with("mcp_")
@@ -224,8 +246,12 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
         "utility" => {
             let mut imported_by_smart = false;
             for cf in all_files {
-                let cb = file_basename(cf);
-                let cf_suffix = get_surface_suffix(cb);
+                let cb = extractor
+                    .file_basename(&shared::common::taxonomy_path_vo::FilePath {
+                        value: cf.clone(),
+                    })
+                    .value;
+                let cf_suffix = get_surface_suffix(&cb, extractor);
                 if surface_category(&cf_suffix) == "smart" {
                     if let Ok(c) = std::fs::read_to_string(cf) {
                         if c.contains(&stem) {
@@ -256,8 +282,12 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
         "passive" => {
             let mut imported = false;
             for cf in all_files {
-                let cb = file_basename(cf);
-                let cf_suffix = get_surface_suffix(cb);
+                let cb = extractor
+                    .file_basename(&shared::common::taxonomy_path_vo::FilePath {
+                        value: cf.clone(),
+                    })
+                    .value;
+                let cf_suffix = get_surface_suffix(&cb, extractor);
                 let cat = surface_category(&cf_suffix);
                 if cat == "smart" || cat == "utility" {
                     if let Ok(c) = std::fs::read_to_string(cf) {
@@ -293,12 +323,13 @@ pub fn check_surfaces_orphan(
     fp: &str,
     all_files: &[String],
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
 ) {
     let fp_vo = match FilePath::new(fp.to_string()) {
         Ok(p) => p,
         Err(_) => return,
     };
-    let result = is_surface_orphan_raw(&fp_vo, all_files);
+    let result = is_surface_orphan_raw(&fp_vo, all_files, extractor);
     if result.is_orphan {
         violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
             fp,

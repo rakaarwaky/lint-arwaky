@@ -6,7 +6,7 @@ use shared::orphan_detector::taxonomy_orphan_contract_vo::{
 
 #[test]
 fn identify_entry_points_empty_config_auto_detects() {
-    let resolver = OrphanGraphResolver::new();
+    let resolver = OrphanGraphResolver::default();
     // When no patterns configured, auto-detects main.rs / lib.rs / _entry / root_
     let files = vec![OrphanFileListVO::new(vec!["src/main.rs".to_string()])];
     let entries = resolver.identify_entry_points(&files, &[]);
@@ -27,7 +27,7 @@ fn identify_entry_points_empty_config_auto_detects() {
 
 #[test]
 fn identify_entry_points_matches_ends_with() {
-    let resolver = OrphanGraphResolver::new();
+    let resolver = OrphanGraphResolver::default();
     let files = vec![OrphanFileListVO::new(vec![
         "src/root_container.rs".to_string(),
         "src/surface_command.rs".to_string(),
@@ -42,7 +42,7 @@ fn identify_entry_points_matches_ends_with() {
 
 #[test]
 fn identify_entry_points_matches_contains() {
-    let resolver = OrphanGraphResolver::new();
+    let resolver = OrphanGraphResolver::default();
     let files = vec![OrphanFileListVO::new(vec![
         "src/root_entry.rs".to_string(),
         "src/lib.rs".to_string(),
@@ -55,7 +55,7 @@ fn identify_entry_points_matches_contains() {
 
 #[test]
 fn identify_entry_points_all_config_empty_returns_empty() {
-    let resolver = OrphanGraphResolver::new();
+    let resolver = OrphanGraphResolver::default();
     let files = vec![OrphanFileListVO::new(vec!["f.rs".to_string()])];
     let patterns = vec![OrphanEntryPatternListVO::new(vec![])];
     let entries = resolver.identify_entry_points(&files, &patterns);
@@ -64,7 +64,7 @@ fn identify_entry_points_all_config_empty_returns_empty() {
 
 #[test]
 fn identify_entry_points_no_match() {
-    let resolver = OrphanGraphResolver::new();
+    let resolver = OrphanGraphResolver::default();
     let files = vec![OrphanFileListVO::new(vec!["src/helper.rs".to_string()])];
     let patterns = vec![OrphanEntryPatternListVO::new(
         vec!["_container".to_string()],
@@ -75,7 +75,7 @@ fn identify_entry_points_no_match() {
 
 #[test]
 fn identify_entry_points_multiple_matches() {
-    let resolver = OrphanGraphResolver::new();
+    let resolver = OrphanGraphResolver::default();
     let files = vec![OrphanFileListVO::new(vec![
         "src/root_container.rs".to_string(),
         "src/root_entry.rs".to_string(),
@@ -92,7 +92,7 @@ fn identify_entry_points_multiple_matches() {
 
 #[test]
 fn build_graph_context_with_empty_files() {
-    let resolver = OrphanGraphResolver::new();
+    let resolver = OrphanGraphResolver::default();
     let files = vec![OrphanFileListVO::new(vec![])];
     let context = resolver.build_graph_context(&files, ".");
     assert!(context.import_graph.mapping.is_empty());

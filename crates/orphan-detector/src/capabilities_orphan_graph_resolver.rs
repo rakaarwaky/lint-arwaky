@@ -1,5 +1,4 @@
 // PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
-use crate::taxonomy_orphan_filename_helper::file_stem;
 use regex::Regex;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
@@ -7,18 +6,26 @@ use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 use shared::orphan_detector::taxonomy_orphan_contract_vo::{
     OrphanEntryPatternListVO, OrphanFileListVO,
 };
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::sync::OnceLock;
 
 /// Build graph context and identify entry points for orphan analysis.
-pub struct OrphanGraphResolver {}
+pub struct OrphanGraphResolver {
+    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+}
 
 impl Default for OrphanGraphResolver {
     fn default() -> Self {
-        Self::new()
+        Self {
+            extractor: Arc::new(
+                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
+            ),
+        }
     }
 }
 
@@ -80,7 +87,12 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                     configured_strs.iter().any(|pattern| {
                         basename == pattern
                             || basename.ends_with(pattern)
-                            || crate::taxonomy_orphan_filename_helper::file_stem(basename)
+                            || self
+                                .extractor
+                                .file_stem(&shared::common::taxonomy_path_vo::FilePath {
+                                    value: basename.to_string(),
+                                })
+                                .value
                                 .contains(pattern)
                     })
                 })
@@ -124,8 +136,8 @@ fn inh_re() -> Option<&'static Regex> {
 }
 
 impl OrphanGraphResolver {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
+        Self { extractor }
     }
 
     fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
@@ -137,7 +149,10 @@ impl OrphanGraphResolver {
         // Build a lookup: module_name -> file_path for crate:: resolution
         let mut module_to_file: HashMap<String, String> = HashMap::new();
         for f in files {
-            let stem = file_stem(f);
+            let stem = self
+                .extractor
+                .file_stem(&shared::common::taxonomy_path_vo::FilePath { value: f.clone() })
+                .value;
             module_to_file.insert(stem.clone(), f.clone());
             if let Some(parent) = f.rsplit('/').nth(1) {
                 let module_path = format!("{}/{}", parent, stem);

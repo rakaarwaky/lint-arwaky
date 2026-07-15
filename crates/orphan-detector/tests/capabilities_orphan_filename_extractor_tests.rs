@@ -1,4 +1,4 @@
-use orphan_detector_lint_arwaky::taxonomy_orphan_filename_helper::{
+use orphan_detector_lint_arwaky::capabilities_orphan_filename_extractor::{
     file_basename, file_stem, file_suffix,
 };
 

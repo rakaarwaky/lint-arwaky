@@ -1,25 +1,37 @@
-// PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
-use crate::taxonomy_file_cache_utility;
-use crate::taxonomy_orphan_filename_helper::{file_basename, file_stem, file_suffix};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
+use shared::orphan_detector::contract_orphan_protocol::{
+    IOrphanFileCachePort, IOrphanFilenameExtractorProtocol,
+};
 use shared::orphan_detector::taxonomy_orphan_utility::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use std::sync::Arc;
 
-pub struct CapabilitiesOrphanAnalyzer {}
+pub struct CapabilitiesOrphanAnalyzer {
+    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+    cache: Arc<dyn IOrphanFileCachePort>,
+}
 
 impl Default for CapabilitiesOrphanAnalyzer {
     fn default() -> Self {
-        Self::new()
+        Self {
+            extractor: Arc::new(
+                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
+            ),
+            cache: Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()),
+        }
     }
 }
 
 impl CapabilitiesOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(
+        extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+        cache: Arc<dyn IOrphanFileCachePort>,
+    ) -> Self {
+        Self { extractor, cache }
     }
 }
 
@@ -30,7 +42,7 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         root_dir: &FilePath,
         alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult {
-        is_infra_cap_orphan(f, root_dir, alive_files)
+        is_infra_cap_orphan(f, root_dir, alive_files, &self.extractor, &self.cache)
     }
 }
 
@@ -38,6 +50,8 @@ pub fn is_infra_cap_orphan(
     f: &FilePath,
     root_dir: &FilePath,
     alive_files: &ReachabilityResult,
+    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
+    cache: &Arc<dyn IOrphanFileCachePort>,
 ) -> OrphanIndicatorResult {
     let is_reachable = alive_files.paths.contains(f);
     if is_reachable {
@@ -46,10 +60,10 @@ pub fn is_infra_cap_orphan(
 
     // Check if wired in any container
     let fp = f.value();
-    let stem = file_stem(fp);
+    let stem = extractor.file_stem(f).value;
 
     if !fp.is_empty() {
-        let content = taxonomy_file_cache_utility::read_cached(fp);
+        let content = cache.read_cached(f).value;
         let mut identifiers: Vec<String> = Vec::new();
         identifiers.extend(extract_struct_names(&content));
         identifiers.extend(extract_trait_names(&content));
@@ -176,10 +190,11 @@ pub fn is_infra_cap_orphan_raw(
     f: &FilePath,
     all_files: &[String],
     is_reachable: bool,
+    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
 ) -> OrphanIndicatorResult {
     let fp = f.value();
-    let _basename = file_basename(fp);
-    let stem = file_stem(fp);
+    let _basename = extractor.file_basename(f).value;
+    let stem = extractor.file_stem(f).value;
 
     let content = std::fs::read_to_string(fp).unwrap_or_default();
     let mut identifiers: Vec<String> = Vec::new();
@@ -202,8 +217,12 @@ pub fn is_infra_cap_orphan_raw(
 
     let mut is_wired = false;
     for cf in all_files {
-        let cb = file_basename(cf);
-        let csuffix = file_suffix(cb);
+        let cb = extractor
+            .file_basename(&shared::common::taxonomy_path_vo::FilePath { value: cf.clone() })
+            .value;
+        let csuffix = extractor
+            .file_suffix(&shared::common::taxonomy_path_vo::FilePath { value: cb.clone() })
+            .value;
         if csuffix != "container" {
             continue;
         }
@@ -228,8 +247,13 @@ pub fn check_capabilities_orphan(
     _basename: &str,
     files: &[String],
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
 ) {
-    let stem = file_stem(fp);
+    let stem = extractor
+        .file_stem(&shared::common::taxonomy_path_vo::FilePath {
+            value: fp.to_string(),
+        })
+        .value;
     let content = std::fs::read_to_string(fp).unwrap_or_default();
 
     let mut identifiers: Vec<String> = Vec::new();
@@ -252,8 +276,12 @@ pub fn check_capabilities_orphan(
 
     let mut wired = false;
     for cf in files {
-        let cb = file_basename(cf);
-        let csuffix = file_suffix(cb);
+        let cb = extractor
+            .file_basename(&shared::common::taxonomy_path_vo::FilePath { value: cf.clone() })
+            .value;
+        let csuffix = extractor
+            .file_suffix(&shared::common::taxonomy_path_vo::FilePath { value: cb.clone() })
+            .value;
         if csuffix != "container" {
             continue;
         }

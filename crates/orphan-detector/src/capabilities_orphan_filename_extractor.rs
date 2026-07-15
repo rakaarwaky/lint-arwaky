@@ -1,5 +1,9 @@
-// PURPOSE: taxonomy_orphan_filename_helper — shared filename parsing utilities for orphan analyzers
+// PURPOSE: capabilities_orphan_filename_extractor — shared filename parsing utilities for orphan analyzers
 // Extracts basename, stem, and suffix from file paths in a consistent way across all orphan layer analyzers.
+
+use shared::common::taxonomy_layer_vo::Identity;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 
 /// All language extensions recognized by the orphan detector.
 const KNOWN_EXTENSIONS: &[&str] = &["tsx", "jsx", "ts", "js", "rs", "py"];
@@ -34,4 +38,32 @@ pub fn file_suffix(fp: &str) -> String {
     let stem = file_stem(fp);
     let stem_str = if stem.is_empty() { basename } else { &stem };
     stem_str.rsplit('_').next().unwrap_or_default().to_string()
+}
+
+pub struct OrphanFilenameExtractor;
+
+impl Default for OrphanFilenameExtractor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl OrphanFilenameExtractor {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl IOrphanFilenameExtractorProtocol for OrphanFilenameExtractor {
+    fn file_basename(&self, fp: &FilePath) -> Identity {
+        Identity::new(file_basename(fp.value()))
+    }
+
+    fn file_stem(&self, fp: &FilePath) -> Identity {
+        Identity::new(file_stem(fp.value()))
+    }
+
+    fn file_suffix(&self, fp: &FilePath) -> Identity {
+        Identity::new(file_suffix(fp.value()))
+    }
 }

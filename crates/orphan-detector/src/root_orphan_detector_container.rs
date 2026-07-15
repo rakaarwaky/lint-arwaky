@@ -17,15 +17,23 @@ impl OrphanContainer {
     }
 
     pub fn new_with_ignored(_ignored_paths: Vec<String>) -> Self {
-        let resolver: Arc<dyn IOrphanGraphResolverProtocol> = Arc::new(OrphanGraphResolver::new());
+        let extractor: Arc<
+            dyn shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol,
+        > = Arc::new(crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new());
+        let cache: Arc<
+            dyn shared::orphan_detector::contract_orphan_protocol::IOrphanFileCachePort,
+        > = Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new());
+
+        let resolver: Arc<dyn IOrphanGraphResolverProtocol> =
+            Arc::new(OrphanGraphResolver::new(extractor.clone()));
         let arch = Arc::new(ArchOrphanAnalyzer::new(
             resolver,
-            Arc::new(crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new()),
-            Arc::new(crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new()),
-            Arc::new(crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new()),
-            Arc::new(crate::capabilities_orphan_infrastructure_analyzer::InfrastructureOrphanAnalyzer::new()),
+            Arc::new(crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new(extractor.clone())),
+            Arc::new(crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(extractor.clone())),
+            Arc::new(crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new(extractor.clone(), cache.clone())),
+            Arc::new(crate::capabilities_orphan_infrastructure_analyzer::InfrastructureOrphanAnalyzer::new(extractor.clone())),
             Arc::new(crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new()),
-            Arc::new(crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new()),
+            Arc::new(crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new(extractor.clone())),
         ));
         let layer: Arc<dyn ILayerDetectionAggregate> = arch.clone();
         Self {
