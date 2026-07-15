@@ -401,8 +401,7 @@ impl OrphanGraphResolver {
                     for ext in &[".py", ".ts", ".js", ".rs"] {
                         let candidate = root_path.join(format!("{}{}", path_from_dots, ext));
                         if let Some(candidate_str) = candidate.to_str() {
-                            if std::path::Path::new(candidate_str).exists() && candidate_str != *f
-                            {
+                            if std::path::Path::new(candidate_str).exists() && candidate_str != *f {
                                 import_graph
                                     .entry(f.clone())
                                     .or_default()

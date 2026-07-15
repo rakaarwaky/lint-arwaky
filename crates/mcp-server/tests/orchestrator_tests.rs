@@ -541,10 +541,14 @@ async fn execute_config_show_returns_success() {
 #[tokio::test]
 async fn execute_orphan_with_path() {
     let orch = make_orchestrator();
-    let params = make_exec_params("orphan", Some("/some/path"));
+    let cwd = std::env::current_dir()
+        .unwrap()
+        .to_string_lossy()
+        .to_string();
+    let params = make_exec_params("orphan", Some(&cwd));
     let output = orch.execute_command(params).await;
     let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
     assert_eq!(parsed["status"].as_str(), Some("success"));
     assert_eq!(parsed["action"].as_str(), Some("orphan"));
-    assert_eq!(parsed["path"].as_str(), Some("/some/path"));
+    assert_eq!(parsed["path"].as_str(), Some(cwd.as_str()));
 }
