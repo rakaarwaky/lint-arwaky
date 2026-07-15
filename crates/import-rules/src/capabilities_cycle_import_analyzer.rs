@@ -34,6 +34,14 @@ pub struct CycleImportAnalyzer {
     parser: Arc<dyn IImportParserPort>,
 }
 
+/// Color enum for DFS 3-coloring cycle detection.
+#[derive(Clone, Copy, PartialEq)]
+enum Color {
+    White,
+    Gray,
+    Black,
+}                    
+
 #[async_trait]
 impl ICycleImportProtocol for CycleImportAnalyzer {
     /// Returns `fp` if `result` is `Ok`, otherwise returns `FilePath::default()`.
@@ -374,10 +382,4 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
     }
 }
 
-/// Color enum for DFS 3-coloring cycle detection.
-#[derive(Clone, Copy, PartialEq)]
-enum Color {
-    White,
-    Gray,
-    Black,
-}
+

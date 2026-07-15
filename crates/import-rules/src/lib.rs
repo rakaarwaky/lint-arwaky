@@ -8,7 +8,6 @@ pub mod capabilities_import_forbidden_checker;
 pub use capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 pub mod capabilities_import_mandatory_checker;
 pub use capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
-pub mod capabilities_layer_prefix_extractor;
 pub mod capabilities_dummy_import_checker;
 pub use capabilities_dummy_import_checker::DummyImportChecker;
 pub mod capabilities_import_unused_checker;
