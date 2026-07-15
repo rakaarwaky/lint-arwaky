@@ -17,16 +17,24 @@ related:
 
 ## Purpose
 
-Consolidate ALL function signatures from a capability/infrastructure/agent implementation file into its corresponding trait. Makes every method part of the contract for DI and verifiability.
+Consolidate ALL function signatures from a capability/infrastructure/agent implementation file into its corresponding trait. Makes every method part of the contract for DI and verifiability. **1:1 fn-to-trait matching** — every fn in impl MUST have exactly one corresponding fn in the trait.
 
 ## Rules
 
+- **1:1 fn-to-trait matching**: Every fn in impl file MUST have exactly one corresponding fn in the trait
 - Trait MUST contain ALL fn signatures from the impl file
 - Instance methods keep original name in trait
 - Free functions get `pure_` prefix in trait
 - All trait methods MUST have `&self` parameter
 - Generic bounds need `where Self: Sized`
 - Rename inherent methods with `do_` prefix if they conflict with trait method names
+
+## Contract Rules
+
+- **If contract exists**: Update the existing contract to include all fn signatures from impl file
+- **If contract doesn't exist**: Create a new contract file following naming convention
+- **If contract needs replacement**: Replace old contract with unified contract (merge methods from multiple traits)
+- Follow the naming convention below for trait files and names
 
 ## Naming Convention
 
@@ -42,6 +50,8 @@ Consolidate ALL function signatures from a capability/infrastructure/agent imple
 - Capability/Infra/Agent impl file has fn methods NOT in the trait
 - You want to make all methods part of the contract interface
 - Refactoring and want to document new functionality in trait first
+- Need to create a new contract for an impl file that doesn't have one yet
+- Need to replace/update an existing contract with merged methods
 
 ## The Pattern
 

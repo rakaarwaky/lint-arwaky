@@ -1,4 +1,4 @@
-use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
+use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::CycleImportAnalyzer;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -161,7 +161,7 @@ fn no_edges_no_violations() {
         imports: HashMap::new(),
         cycle_edges: HashMap::new(),
     });
-    let _analyzer = DependencyCycleAnalyzer::new(config, parser);
+    let _analyzer = CycleImportAnalyzer::new(config, parser);
     // A dummy IAnalyzer is needed — the scan method requires it
     // For now, we test that the DependencyEdge struct and cycle detection concepts work
     let edge = DependencyEdge::new("capabilities".to_string(), "surfaces".to_string());

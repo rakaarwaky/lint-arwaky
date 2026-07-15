@@ -1,5 +1,5 @@
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
-use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
+use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::common::contract_parser_port::ISourceParserPort;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -16,7 +16,7 @@ pub struct ImportContainer {
     forbidden: Arc<dyn IArchImportProtocol>,
     intent: Arc<dyn IDummyImportCheckerProtocol>,
     unused: Arc<dyn IUnusedImportProtocol>,
-    cycle: Arc<dyn ICycleAnalysisProtocol>,
+    cycle: Arc<dyn ICycleImportProtocol>,
     analyzer: Arc<dyn IAnalyzer>,
 }
 
@@ -35,9 +35,7 @@ impl ImportContainer {
         let fs = Arc::new(crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
 
         // Wire capabilities via DI
-        let cycle_analyzer: Arc<
-            dyn shared::import_rules::contract_cycle_analyzer_port::ICycleAnalyzerPort,
-        > = Arc::new(crate::capabilities_cycle_analyzer::CycleAnalyzer::new());
+        // Cycle detection is now merged into CycleImportAnalyzer — no separate port needed
         let parser_processor: Arc<
             dyn shared::import_rules::contract_parser_processor_port::IParserProcessorPort,
         > = Arc::new(crate::capabilities_parser_processor::ParserProcessor::new());
@@ -55,7 +53,7 @@ impl ImportContainer {
         let import_analyzer: Arc<
             dyn shared::import_rules::contract_import_analyzer_port::IImportAnalyzerPort,
         > = Arc::new(crate::capabilities_import_analyzer::ImportAnalyzer::new(
-            cycle_analyzer,
+            cycle.clone(),
             parser_processor,
             unused_analyzer,
         ));
@@ -96,7 +94,7 @@ impl ImportContainer {
             crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new(parser.clone()),
         );
         let cycle = Arc::new(
-            crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new(
+            crate::capabilities_cycle_import_analyzer::CycleImportAnalyzer::new(
                 config,
                 parser.clone(),
             ),

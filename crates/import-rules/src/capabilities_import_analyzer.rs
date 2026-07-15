@@ -7,7 +7,7 @@
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_name_vo::SymbolName;
-use shared::import_rules::contract_cycle_analyzer_port::ICycleAnalyzerPort;
+use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_import_analyzer_port::IImportAnalyzerPort;
 use shared::import_rules::contract_parser_processor_port::IParserProcessorPort;
 use shared::import_rules::contract_unused_analyzer_port::IUnusedAnalyzerPort;
@@ -17,14 +17,14 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 pub struct ImportAnalyzer {
-    cycle: Arc<dyn ICycleAnalyzerPort>,
+    cycle: Arc<dyn ICycleImportProtocol>,
     parser: Arc<dyn IParserProcessorPort>,
     unused: Arc<dyn IUnusedAnalyzerPort>,
 }
 
 impl ImportAnalyzer {
     pub fn new(
-        cycle: Arc<dyn ICycleAnalyzerPort>,
+        cycle: Arc<dyn ICycleImportProtocol>,
         parser: Arc<dyn IParserProcessorPort>,
         unused: Arc<dyn IUnusedAnalyzerPort>,
     ) -> Self {
@@ -77,7 +77,7 @@ impl IImportAnalyzerPort for ImportAnalyzer {
     }
 
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
-        self.cycle.detect_cycle_edges(edges)
+        self.cycle.pure_detect_cycle_edges(edges)
     }
 
     fn extract_imported_aliases(&self, content: &str) -> HashMap<Identity, Identity> {
