@@ -17,7 +17,7 @@ related:
 
 ## Purpose
 
-Consolidate ALL function signatures from a capability/infrastructure implementation file into its corresponding trait. Makes every method part of the contract for DI and verifiability.
+Consolidate ALL function signatures from a capability/infrastructure/agent implementation file into its corresponding trait. Makes every method part of the contract for DI and verifiability.
 
 ## Rules
 
@@ -31,24 +31,26 @@ Consolidate ALL function signatures from a capability/infrastructure implementat
 ## Naming Convention
 
 
-| Layer              | Trait File                    | Trait Name        | Impl File                  |
-| -------------------- | ------------------------------- | ------------------- | ---------------------------- |
-| **Capabilities**   | `contract_<name>_protocol.rs` | `I<Name>Protocol` | `capabilities_<name>.rs`   |
-| **Infrastructure** | `contract_<name>_port.rs`     | `I<Name>Port`     | `infrastructure_<name>.rs` |
+| Layer              | Trait File                     | Trait Name         | Impl File                  |
+| -------------------- | -------------------------------- | -------------------- | ---------------------------- |
+| **Capabilities**   | `contract_<name>_protocol.rs`  | `I<Name>Protocol`  | `capabilities_<name>.rs`   |
+| **Infrastructure** | `contract_<name>_port.rs`      | `I<Name>Port`      | `infrastructure_<name>.rs` |
+| **Agents**         | `contract_<name>_aggregate.rs` | `I<Name>Aggregate` | `agent_<name>.rs`          |
 
 ## When to Use
 
-- Capability/Infra impl file has fn methods NOT in the trait
+- Capability/Infra/Agent impl file has fn methods NOT in the trait
 - You want to make all methods part of the contract interface
 - Refactoring and want to document new functionality in trait first
 
 ## The Pattern
 
-### Trait File (`contract_<name>_protocol.rs` or `contract_<name>_port.rs`)
+### Trait File (`contract_<name>_protocol.rs`, `contract_<name>_port.rs`, or `contract_<name>_aggregate.rs`)
 
 ```rust
 pub trait I<Name>Protocol: Send + Sync {    // Protocol for capabilities
 pub trait I<Name>Port: Send + Sync {        // Port for infrastructure
+pub trait I<Name>Aggregate: Send + Sync {   // Aggregate for agents
 
     // Instance methods — keep original name
     fn instance_method(&self, ...) -> ...;
@@ -65,10 +67,10 @@ pub trait I<Name>Port: Send + Sync {        // Port for infrastructure
 }
 ```
 
-### Implementation File (`capabilities_<name>.rs` or `infrastructure_<name>.rs`)
+### Implementation File (`capabilities_<name>.rs`, `infrastructure_<name>.rs`, or `agent_<name>.rs`)
 
 ```rust
-impl I<Name>Protocol for <CapabilityType> {   // or I<Name>Port for <InfraType>
+impl I<Name>Protocol for <CapabilityType> {   // or I<Name>Port / I<Name>Aggregate
     // Instance method wrapper — calls renamed inherent method
     fn instance_method(&self, ...) {
         self.do_instance_method(...)
@@ -104,13 +106,13 @@ fn free_function(...) -> ... { ... }
 ### Step 1: Count fn in Impl File
 
 ```bash
-grep -c "^fn \|^pub(crate) fn " path/to/capabilities_or_infrastructure_file.rs
+grep -c "^fn \|^pub(crate) fn " path/to/capabilities_or_infrastructure_or_agent_file.rs
 ```
 
 ### Step 2: Count fn in Trait File
 
 ```bash
-grep -c "^    fn \|^    async fn " path/to/contract_<name>_protocol_or_port.rs
+grep -c "^    fn \|^    async fn " path/to/contract_<name>_protocol_or_port_or_aggregate.rs
 ```
 
 ### Step 3: Extract Signatures from Impl File
@@ -133,7 +135,7 @@ For each fn:
 - Generic functions: add `where Self: Sized` and `&self`
 
 ```rust
-pub trait I<Name>Protocol: Send + Sync {    // or I<Name>Port for infrastructure
+pub trait I<Name>Protocol: Send + Sync {    // or I<Name>Port / I<Name>Aggregate
     fn check_dummy_imports(&self, ...) -> ...;
     fn pure_filepath_or_default(&self, ...) -> ...;
     fn pure_python_class_inherits(&self, ...) -> bool;
@@ -142,10 +144,10 @@ pub trait I<Name>Protocol: Send + Sync {    // or I<Name>Port for infrastructure
 
 ### Step 5: Implement in Impl File
 
-Add to `impl I<Name>Protocol/Port for <Type>` block:
+Add to `impl I<Name>Protocol/Port/Aggregate for <Type>` block:
 
 ```rust
-impl IDummyImportCheckerProtocol for DummyImportChecker {   // or I<Name>Port
+impl IDummyImportCheckerProtocol for DummyImportChecker {   // or I<Name>Port / I<Name>Aggregate
     fn check_dummy_imports(&self, ...) {
         self.do_check_dummy_imports(...)
     }
@@ -192,18 +194,24 @@ crates/<crate>/src/capabilities_<name>.rs                 # Impl (trait methods 
 # Infrastructure (Port)
 crates/shared/src/<layer>/contract_<name>_port.rs        # Trait (ALL fn)
 crates/<crate>/src/infrastructure_<name>.rs               # Impl (trait methods + inherent)
+
+# Agents (Aggregate)
+crates/shared/src/<layer>/contract_<name>_aggregate.rs   # Trait (ALL fn)
+crates/<crate>/src/agent_<name>.rs                        # Impl (trait methods + inherent)
 ```
 
 ## Quick Commands
 
 ```bash
-# Count fn in impl file (capabilities or infrastructure)
+# Count fn in impl file (capabilities, infrastructure, or agent)
 grep -c "^fn \|^pub(crate) fn " crates/import-rules/src/capabilities_dummy_import_checker.rs
 grep -c "^fn \|^pub(crate) fn " crates/external-lint/src/infrastructure_rs_clippy_adapter.rs
+grep -c "^fn \|^pub(crate) fn " crates/import-rules/src/agent_import_orchestrator.rs
 
-# Count fn in trait file (Protocol or Port)
+# Count fn in trait file (Protocol, Port, or Aggregate)
 grep -c "^    fn \|^    async fn " crates/shared/src/import-rules/contract_dummy_import_checker_protocol.rs
 grep -c "^    fn \|^    async fn " crates/shared/src/external-lint/contract_external_lint_port.rs
+grep -c "^    fn \|^    async fn " crates/shared/src/import-rules/contract_import_analyzer_port.rs
 
 # Check missing implementations
 cargo check -p <crate-name> 2>&1 | grep "not implemented"
