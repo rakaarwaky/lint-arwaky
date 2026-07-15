@@ -36,10 +36,12 @@ Fix AES201 violations where:
 
 ## When to Use
 
-- `capabilities_*.rs` uses types from `capabilities_*.rs`
-- `infrastructure_*.rs` uses types from `infrastructure_*.rs`
-- `infrastructure_*.rs` uses types from `capabilities_*.rs`
-- `capabilities_*.rs` uses types from `infrastructure_*.rs`
+- Any layer file uses types/functions from another layer file directly (not via trait)
+- `capabilities_*.rs` uses types from `capabilities_*.rs` (peer-to-peer import)
+- `infrastructure_*.rs` uses types from `infrastructure_*.rs` (peer-to-peer import)
+- Infrastructure imports from capabilities (cross-layer import)
+- Capabilities import from infrastructure (cross-layer import)
+- Any file directly instantiates a concrete type instead of using DI
 
 ## The Fundamental Question
 
@@ -270,13 +272,26 @@ If the implementation is shared across crates:
 
 ## File Naming Convention
 
-```
-contract_<concept>_port.rs      // Outbound interface (implemented by infrastructure) - TRAIT ONLY
-contract_<concept>_protocol.rs  // Inbound interface (implemented by capabilities) - TRAIT ONLY
-contract_<concept>_aggregate.rs // Facade interface - TRAIT ONLY
-```
+| Trait Type | Suffix | Used By | Implemented By | Example |
+|-----------|--------|---------|----------------|---------|
+| **Protocol** | `_protocol.rs` | Capabilities receive from capabilities | Capabilities implements | `contract_dummy_import_checker_protocol.rs` |
+| **Port** | `_port.rs` | Infrastructure receives from infrastructure | Infrastructure implements | `contract_external_lint_port.rs` |
+| **Aggregate** | `_aggregate.rs` | Agents receive from agents | Agents implements | `contract_agent_role_aggregate.rs` |
 
-**Important**: Contract layer contains ONLY trait definitions, NOT implementations or pure functions.
+**Rule**: Contract layer contains ONLY trait definitions, NOT implementations or pure functions.
+
+### When to Use Each
+
+```rust
+// Use _protocol when capabilities need to communicate with each other
+pub trait I<Name>Protocol: Send + Sync { ... }  // capabilities_<name>.rs implements
+
+// Use _port when infrastructure components need to communicate with each other  
+pub trait I<Name>Port: Send + Sync { ... }      // infrastructure_<name>.rs implements
+
+// Use _aggregate when agents need to communicate with each other
+pub trait I<Name>Aggregate: Send + Sync { ... }  // agent_<name>.rs implements
+```
 
 ## Quick Reference
 
