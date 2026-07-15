@@ -2,9 +2,9 @@
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -161,7 +161,7 @@ impl SuffixPrefixChecker {
 impl INamingCheckerProtocol for SuffixPrefixChecker {
     async fn check_file_naming(
         &self,
-        _analyzer: &dyn INamingAnalyzerProtocol,
+        _analyzer: &dyn ILayerDetectionProtocol,
         _files: &FilePathList,
         _root_dir: &FilePath,
         _results: &mut LintResultList,
@@ -172,7 +172,7 @@ impl INamingCheckerProtocol for SuffixPrefixChecker {
     // Implement check_domain_suffixes from INamingCheckerProtocol trait to perform checks on multiple files.
     async fn check_domain_suffixes(
         &self,
-        analyzer: &dyn INamingAnalyzerProtocol,
+        analyzer: &dyn ILayerDetectionProtocol,
         files: &FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
@@ -183,13 +183,12 @@ impl INamingCheckerProtocol for SuffixPrefixChecker {
             // Step 2: Extract the raw filename from the path.
             let filename = f.rsplit('/').next().unwrap_or(&f_str);
             // Step 3: Determine the architectural layer for the file.
-            let layer = analyzer.detect_layer(f, root_dir);
+            let layer_str = analyzer.detect_layer(&f.value, &root_dir.value);
+            let layer = layer_str.as_ref().map(LayerNameVO::new);
             // Step 4: Fetch layer-specific definition properties.
-            let def = layer
-                .as_ref()
-                .and_then(|l| analyzer.layer_map().values.get(l));
+            let def = layer_str.as_deref().and_then(|l| analyzer.get_layer_def(l));
             // Step 5: Execute the suffix checker function.
-            self.check_domain_suffixes(&f_str, filename, def, &layer, &mut results.values);
+            self.check_domain_suffixes(&f_str, filename, def.as_ref(), &layer, &mut results.values);
         }
     }
 }

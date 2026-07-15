@@ -338,10 +338,6 @@ impl DirectoryPath {
         let mut files = Vec::new();
         let path = std::path::Path::new(&self.value);
         if path.is_file() {
-            let relative_path = match path.strip_prefix(root_dir) {
-                Ok(p) => p,
-                Err(_) => path,
-            };
             let fp = FilePath::new(path.to_string_lossy().to_string()).unwrap_or_default();
             if !fp.is_ignored(ignored) && fp.is_lintable() {
                 files.push(fp);

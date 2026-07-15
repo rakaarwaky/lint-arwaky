@@ -2,15 +2,10 @@
 use serde::{Deserialize, Serialize};
 
 /// DFS color for cycle detection.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
 pub enum Color {
+    #[default]
     White, // unvisited
     Gray,  // currently in stack
     Black, // fully explored
-}
-
-impl Default for Color {
-    fn default() -> Self {
-        Self::White
-    }
 }
