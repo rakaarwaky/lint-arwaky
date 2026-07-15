@@ -69,14 +69,7 @@ architecture:
       layers:
         taxonomy:
           suffix:
-            - strict:
-                [
-                  "vo",
-                  "entity",
-                  "error",
-                  "event",
-                  "constant"
-                ]
+            - strict: ["vo", "entity", "error", "event", "constant"]
         contract:
           suffix:
             - strict: ["port", "protocol", "aggregate"]

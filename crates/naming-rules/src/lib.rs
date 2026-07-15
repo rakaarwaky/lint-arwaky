@@ -4,4 +4,3 @@ pub mod capabilities_naming_convention_checker;
 pub mod capabilities_suffix_prefix_checker;
 pub mod infrastructure_filesystem_adapter;
 pub mod root_naming_rules_container;
-pub mod taxonomy_naming_utility;

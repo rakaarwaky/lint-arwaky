@@ -1,5 +1,4 @@
 // PURPOSE: SuffixPrefixChecker — Handles AES102 suffix/prefix rules (allowed, forbidden, mandatory strict)
-use crate::taxonomy_naming_utility::{get_stem, get_suffix};
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
@@ -85,12 +84,12 @@ impl SuffixPrefixChecker {
         }
 
         // Step 4: Extract the file stem (name without extension) and get the suffix (word after the last underscore).
-        let stem = match get_stem(filename) {
-            Some(s) => s,
-            None => return,
+        let suffix_str = fp.suffix();
+        let suffix = if suffix_str.is_empty() {
+            None
+        } else {
+            Some(suffix_str.as_str())
         };
-
-        let suffix = get_suffix(stem);
 
         // Step 5: Check if the suffix is explicitly forbidden for the current layer.
         if let Some(suf) = &suffix {

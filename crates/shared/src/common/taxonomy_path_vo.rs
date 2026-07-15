@@ -126,6 +126,123 @@ impl FilePath {
                 | "app.js"
         )
     }
+
+    /// Extract the file stem (basename without the last extension).
+    pub fn stem(&self) -> String {
+        let base = self.basename();
+        if let Some(pos) = base.rfind('.') {
+            base[..pos].to_string()
+        } else {
+            base
+        }
+    }
+
+    /// Extract the suffix (word after the last underscore in the stem).
+    pub fn suffix(&self) -> String {
+        let st = self.stem();
+        match st.rfind('_') {
+            Some(pos) => st[pos + 1..].to_string(),
+            None => String::new(),
+        }
+    }
+
+    /// Detect language from extension.
+    pub fn language(&self) -> crate::common::taxonomy_language_vo::Language {
+        let ext = self.extension();
+        match ext.as_str() {
+            "py" => crate::common::taxonomy_language_vo::Language::Python,
+            "js" | "jsx" | "mjs" | "cjs" => crate::common::taxonomy_language_vo::Language::JavaScript,
+            "ts" | "tsx" | "mts" | "cts" => crate::common::taxonomy_language_vo::Language::TypeScript,
+            "rs" => crate::common::taxonomy_language_vo::Language::Rust,
+            _ => crate::common::taxonomy_language_vo::Language::Unknown,
+        }
+    }
+
+    /// Check if the file is a lintable source code file.
+    pub fn is_lintable(&self) -> bool {
+        matches!(
+            self.language(),
+            crate::common::taxonomy_language_vo::Language::Python
+                | crate::common::taxonomy_language_vo::Language::JavaScript
+                | crate::common::taxonomy_language_vo::Language::TypeScript
+                | crate::common::taxonomy_language_vo::Language::Rust
+        )
+    }
+
+    /// Check if the path should be ignored according to patterns.
+    pub fn is_ignored(&self, ignored: &[String]) -> bool {
+        let rel_path = &self.value;
+        if rel_path.is_empty() {
+            return false;
+        }
+        let segments: Vec<&str> = rel_path
+            .split(['/', '\\'])
+            .filter(|s| !s.is_empty())
+            .collect();
+        for pat in ignored {
+            if pat.is_empty() {
+                continue;
+            }
+            // (1) Absolute-style prefix "/foo" or "/foo/bar"
+            if let Some(stripped) = pat.strip_prefix('/') {
+                if stripped.is_empty() {
+                    continue;
+                }
+                let pat_segments: Vec<&str> = stripped
+                    .split(['/', '\\'])
+                    .filter(|s| !s.is_empty())
+                    .collect();
+                if pat_segments.is_empty() {
+                    continue;
+                }
+                let n_pat = pat_segments.len();
+                let n_seg = segments.len();
+                if n_seg < n_pat {
+                    continue;
+                }
+                for start in 0..=(n_seg - n_pat) {
+                    if segments[start..start + n_pat] == pat_segments[..] {
+                        return true;
+                    }
+                }
+                continue;
+            }
+            // (2) Suffix glob "*.ext" or ".ext"
+            if pat.starts_with("*.") || (pat.starts_with('.') && pat.contains('.')) {
+                let suffix = if let Some(s) = pat.strip_prefix('*') {
+                    s.trim_start_matches('.')
+                } else {
+                    pat.trim_start_matches('.')
+                };
+                if suffix.is_empty() {
+                    continue;
+                }
+                let basename = segments.last().copied().unwrap_or_default();
+                if basename.ends_with(suffix) {
+                    return true;
+                }
+                continue;
+            }
+            // (3) Bare segment/pattern
+            let pat_segments: Vec<&str> = pat.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
+            if pat_segments.len() == 1 {
+                if segments.contains(&pat_segments[0]) {
+                    return true;
+                }
+            } else if pat_segments.len() > 1 {
+                let n_pat = pat_segments.len();
+                let n_seg = segments.len();
+                if n_seg >= n_pat {
+                    for start in 0..=(n_seg - n_pat) {
+                        if segments[start..start + n_pat] == pat_segments[..] {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
 }
 
 impl std::ops::Deref for FilePath {
