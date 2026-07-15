@@ -392,6 +392,52 @@ impl OrphanGraphResolver {
                     continue;
                 }
 
+                // Python/JS-style absolute dot-separated imports
+                // e.g. from modules.shared.src.common.taxonomy_common_vo import X
+                // Convert dots to path separators and resolve against root_dir
+                if full_import.contains('.') && !full_import.contains("::") {
+                    let path_from_dots = full_import.replace('.', "/");
+                    let mut resolved_abs = false;
+                    for ext in &[".py", ".ts", ".js", ".rs"] {
+                        let candidate = root_path.join(format!("{}{}", path_from_dots, ext));
+                        if let Some(candidate_str) = candidate.to_str() {
+                            if std::path::Path::new(candidate_str).exists() && candidate_str != *f
+                            {
+                                import_graph
+                                    .entry(f.clone())
+                                    .or_default()
+                                    .push(candidate_str.to_string());
+                                inbound_links
+                                    .entry(candidate_str.to_string())
+                                    .or_default()
+                                    .push(f.clone());
+                                resolved_abs = true;
+                                break;
+                            }
+                        }
+                    }
+                    if !resolved_abs {
+                        let init_candidate =
+                            root_path.join(format!("{}/__init__.py", path_from_dots));
+                        if let Some(init_str) = init_candidate.to_str() {
+                            if std::path::Path::new(init_str).exists() && init_str != *f {
+                                import_graph
+                                    .entry(f.clone())
+                                    .or_default()
+                                    .push(init_str.to_string());
+                                inbound_links
+                                    .entry(init_str.to_string())
+                                    .or_default()
+                                    .push(f.clone());
+                                resolved_abs = true;
+                            }
+                        }
+                    }
+                    if resolved_abs {
+                        continue;
+                    }
+                }
+
                 let mut dep = full_import.clone();
                 if let Some(dot) = dep.find('.') {
                     dep = dep[..dot].to_string();
