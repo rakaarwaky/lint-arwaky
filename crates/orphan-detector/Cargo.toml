@@ -10,10 +10,11 @@ publish = true
 [lints]
 workspace = true
 
-[dependencies]  # (unchanged)
+[dependencies]
 serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true
+once_cell.workspace = true
 shared.workspace = true
 
 [dev-dependencies]

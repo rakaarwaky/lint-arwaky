@@ -2,12 +2,8 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::orphan_detector::capabilities_orphan_analyzer::{
-    extract_struct_names, extract_trait_names,
-};
-use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
 use shared::orphan_detector::contract_orphan_protocol::{
-    IOrphanFileCachePort, IOrphanFilenameExtractorProtocol,
+    ICapabilitiesOrphanProtocol, IOrphanFileCachePort, IOrphanFilenameExtractorProtocol,
 };
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use std::sync::Arc;
@@ -67,8 +63,8 @@ pub fn is_infra_cap_orphan(
     if !fp.is_empty() {
         let content = cache.read_cached(f).value;
         let mut identifiers: Vec<String> = Vec::new();
-        identifiers.extend(extract_struct_names(&content));
-        identifiers.extend(extract_trait_names(&content));
+        identifiers.extend(extractor.extract_struct_names(&content));
+        identifiers.extend(extractor.extract_trait_names(&content));
         identifiers.push(stem.clone());
 
         let pascal_stem: String = stem
@@ -200,8 +196,8 @@ pub fn is_infra_cap_orphan_raw(
 
     let content = std::fs::read_to_string(fp).unwrap_or_default();
     let mut identifiers: Vec<String> = Vec::new();
-    identifiers.extend(extract_struct_names(&content));
-    identifiers.extend(extract_trait_names(&content));
+    identifiers.extend(extractor.extract_struct_names(&content));
+    identifiers.extend(extractor.extract_trait_names(&content));
     identifiers.push(stem.clone());
 
     let pascal_stem: String = stem
@@ -259,8 +255,8 @@ pub fn check_capabilities_orphan(
     let content = std::fs::read_to_string(fp).unwrap_or_default();
 
     let mut identifiers: Vec<String> = Vec::new();
-    identifiers.extend(extract_struct_names(&content));
-    identifiers.extend(extract_trait_names(&content));
+    identifiers.extend(extractor.extract_struct_names(&content));
+    identifiers.extend(extractor.extract_trait_names(&content));
     identifiers.push(stem.clone());
 
     let pascal_stem: String = stem

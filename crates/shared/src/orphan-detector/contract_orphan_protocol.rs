@@ -76,4 +76,6 @@ pub trait IOrphanFilenameExtractorProtocol: Send + Sync {
     fn file_basename(&self, fp: &FilePath) -> Identity;
     fn file_stem(&self, fp: &FilePath) -> Identity;
     fn file_suffix(&self, fp: &FilePath) -> Identity;
+    fn extract_struct_names(&self, content: &str) -> Vec<String>;
+    fn extract_trait_names(&self, content: &str) -> Vec<String>;
 }
