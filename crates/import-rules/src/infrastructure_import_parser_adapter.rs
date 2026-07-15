@@ -33,6 +33,12 @@ impl ImportParserAdapter {
     }
 }
 
+impl Default for ImportParserAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IImportParserPort for ImportParserAdapter {
     /// Extract layer from filename prefix — inline implementation.
     fn extract_layer_from_prefix(&self, segment: &str) -> Option<String> {

@@ -175,7 +175,7 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
         }
 
         for rule in &config.rules {
-            if rule.exceptions.values.iter().any(|ex| ex == basename) {
+            if rule.exceptions.values.contains(&basename.to_string()) {
                 continue;
             }
 
@@ -274,8 +274,7 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
 
                 // 3. FIX BUG LOGIKA: Cek apakah import diizinkan secara eksplisit (Allowed List)
                 let is_explicitly_allowed = resolved_allowed_strs.iter().any(|allowed| {
-                    module_str.contains(allowed)
-                        || segments.iter().any(|seg| *seg == allowed.as_str())
+                    module_str.contains(allowed) || segments.contains(&allowed.as_str())
                 });
 
                 if is_explicitly_allowed {

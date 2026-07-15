@@ -158,10 +158,8 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
                     source_layer: LayerNameVO::new(layer_name.clone()),
                     import_type: SymbolName::new(trait_name_str),
                     intent: SymbolName::new(
-                        concat!(
-                            "Implement contract methods with real behavior instead of empty, todo stubs"
-                        )
-                        .to_string(),
+                        "Implement contract methods with real behavior instead of empty, todo stubs"
+                            .to_string(),
                     ),
                     reason: Some(shared::taxonomy_message_vo::LintMessage::new(
                         concat!(
@@ -386,8 +384,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
                     let has_phantom = match lang {
                         LanguageVO::Rust => trimmed.contains("PhantomData"),
                         LanguageVO::JavaScript => {
-                            trimmed.contains(concat!("@ts-", "ignore"))
-                                || trimmed.contains(concat!("@ts-", "expect"))
+                            trimmed.contains("@ts-ignore") || trimmed.contains("@ts-expect")
                         }
                         _ => false,
                     };

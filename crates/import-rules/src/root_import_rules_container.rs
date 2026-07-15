@@ -96,3 +96,9 @@ impl ImportContainer {
         ))
     }
 }
+
+impl Default for ImportContainer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
