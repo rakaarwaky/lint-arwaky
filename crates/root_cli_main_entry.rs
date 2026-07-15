@@ -58,10 +58,8 @@ fn main() -> ExitCode {
     // precise layer matching in check/scan/orphan commands. This is
     // different from the orphan detector's prefix-based detection.
     let aes_config = default_aes_config();
-    let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
-    let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
     let layer_detector: Arc<dyn ILayerDetectionAggregate> =
-        Arc::new(LayerDetectionAnalyzer::new(aes_config, fs, parser));
+        Arc::new(LayerDetectionAnalyzer::new(aes_config));
 
     // ── Phase 2: Create per-project factory (for `scan` command) ─────
     // The scan command discovers workspace members and runs all linters
@@ -72,7 +70,6 @@ fn main() -> ExitCode {
         let import_container =
             import_rules::root_import_rules_container::ImportContainer::new_with_config(
                 config.clone(),
-                Arc::new(NullSourceParser),
             );
         let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
             import_container.analyzer(),
@@ -89,10 +86,8 @@ fn main() -> ExitCode {
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
 
-        let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
-        let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
         let layer_detector: Arc<dyn ILayerDetectionAggregate> =
-            Arc::new(LayerDetectionAnalyzer::new(config.clone(), fs, parser));
+            Arc::new(LayerDetectionAnalyzer::new(config.clone()));
 
         surface_check_command::CheckContext {
             code_analysis_linter: arch_linter,
@@ -168,7 +163,6 @@ fn main() -> ExitCode {
             let import_container =
                 import_rules::root_import_rules_container::ImportContainer::new_with_config(
                     loaded_config.clone(),
-                    Arc::new(NullSourceParser),
                 );
             let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
                 import_container.analyzer(),
@@ -187,15 +181,9 @@ fn main() -> ExitCode {
             let orphan_container =
                 orphan_detector::root_orphan_detector_container::OrphanContainer::new();
 
-            let fs: Arc<dyn IFileSystemPort> = Arc::new(
-                import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
-            );
-            let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
             let layer_detector: Arc<dyn ILayerDetectionAggregate> = Arc::new(
                 import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
                     loaded_config.clone(),
-                    fs,
-                    parser,
                 ),
             );
 

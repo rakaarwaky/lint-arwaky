@@ -223,7 +223,7 @@ impl CodeAnalysisOrchestrator {
             if config.is_rule_enabled("AES301") || config.is_rule_enabled("AES302") {
                 self.container.line_checker().check_line_counts(
                     file,
-                    Some(def),
+                    Some(&def),
                     &c,
                     &mut violations,
                 );
@@ -233,7 +233,7 @@ impl CodeAnalysisOrchestrator {
             if config.is_rule_enabled("AES303") {
                 self.container
                     .class_checker()
-                    .check_mandatory_class_definition(file, Some(def), &c, &mut violations);
+                    .check_mandatory_class_definition(file, Some(&def), &c, &mut violations);
             }
         }
 

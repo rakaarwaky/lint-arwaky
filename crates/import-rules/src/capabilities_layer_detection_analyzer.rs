@@ -444,3 +444,23 @@ impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
         base_name.to_string()
     }
 }
+
+impl shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate
+    for LayerDetectionAnalyzer
+{
+    fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String> {
+        ILayerDetectionProtocol::detect_layer(self, file_path, root_dir)
+    }
+
+    fn get_layer_def(&self, layer: &str) -> Option<LayerDefinition> {
+        ILayerDetectionProtocol::get_layer_def(self, layer)
+    }
+
+    fn get_orphan_entry_points(&self) -> Vec<String> {
+        ILayerDetectionProtocol::get_orphan_entry_points(self)
+    }
+
+    fn config(&self) -> &ArchitectureConfig {
+        ILayerDetectionProtocol::config(self)
+    }
+}

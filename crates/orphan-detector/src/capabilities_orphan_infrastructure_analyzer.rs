@@ -109,7 +109,7 @@ pub fn check_infrastructure_orphan(
         })
         .value;
     let content = std::fs::read_to_string(fp).unwrap_or_default();
-    use shared::orphan_detector::taxonomy_orphan_utility::{
+    use shared::orphan_detector::capabilities_orphan_analyzer::{
         extract_struct_names, extract_trait_names,
     };
 

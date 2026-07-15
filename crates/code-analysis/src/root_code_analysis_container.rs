@@ -12,10 +12,10 @@ use crate::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
+use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use std::sync::Arc;
 
 /// CodeAnalysisCheckerContainer holds only code-analysis protocol implementations.
@@ -23,7 +23,7 @@ use std::sync::Arc;
 /// have their own containers and orchestrators.
 #[derive(Clone)]
 pub struct CodeAnalysisCheckerContainer {
-    analyzer: Arc<dyn IAnalyzer>,
+    analyzer: Arc<dyn ILayerDetectionProtocol>,
     bypass_checker: Arc<dyn IBypassCheckerProtocol>,
     mandatory_definition_checker: Arc<MandatoryDefinitionChecker>,
     line_checker: Arc<dyn ILineCheckerProtocol>,
@@ -31,7 +31,7 @@ pub struct CodeAnalysisCheckerContainer {
 }
 
 impl CodeAnalysisCheckerContainer {
-    pub fn new(analyzer: Arc<dyn IAnalyzer>) -> Self {
+    pub fn new(analyzer: Arc<dyn ILayerDetectionProtocol>) -> Self {
         let mandatory = Arc::new(MandatoryDefinitionChecker::new());
         // Honor AES304 forbidden_bypass from config when the analyzer exposes one;
         // fall back to the in-code default list otherwise.
@@ -72,25 +72,19 @@ impl CodeAnalysisCheckerContainer {
         file: &str,
         root_dir: &str,
     ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
-        let f = match shared::common::taxonomy_path_vo::FilePath::new(file.to_string()) {
-            Ok(fp) => fp,
-            Err(_) => return None,
-        };
-        let rd = match shared::common::taxonomy_path_vo::FilePath::new(root_dir.to_string()) {
-            Ok(fp) => fp,
-            Err(_) => return None,
-        };
-        self.analyzer.detect_layer(&f, &rd)
+        self.analyzer
+            .detect_layer(file, root_dir)
+            .map(|s| shared::taxonomy_layer_vo::LayerNameVO::new(&s))
     }
 
     pub fn get_layer_def(
         &self,
         layer: &shared::taxonomy_layer_vo::LayerNameVO,
-    ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
-        self.analyzer.layer_map().values.get(layer)
+    ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
+        self.analyzer.get_layer_def(&layer.value)
     }
 
-    pub fn analyzer(&self) -> &Arc<dyn IAnalyzer> {
+    pub fn analyzer(&self) -> &Arc<dyn ILayerDetectionProtocol> {
         &self.analyzer
     }
 
@@ -113,7 +107,7 @@ pub trait CodeAnalysisCheckerContainerRef {
     fn get_layer_def(
         &self,
         layer: &shared::taxonomy_layer_vo::LayerNameVO,
-    ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition>;
+    ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition>;
 }
 
 impl CodeAnalysisCheckerContainerRef for CodeAnalysisCheckerContainer {
@@ -127,7 +121,7 @@ impl CodeAnalysisCheckerContainerRef for CodeAnalysisCheckerContainer {
     fn get_layer_def(
         &self,
         layer: &shared::taxonomy_layer_vo::LayerNameVO,
-    ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
+    ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
         self.get_layer_def(layer)
     }
 }
@@ -241,6 +235,13 @@ impl shared::common::contract_system_port::IFileSystemPort for NullFileSystem {
             ),
         )
     }
+    fn walk_recursive(
+        &self,
+        _dir: &std::path::Path,
+        _ignored: &[String],
+        _results: &mut Vec<FilePath>,
+    ) {
+    }
 }
 
 struct NullSourceParser;
@@ -352,43 +353,34 @@ impl shared::common::contract_parser_port::ISourceParserPort for NullSourceParse
 }
 
 struct PlaceholderAnalyzer;
-impl shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol
-    for PlaceholderAnalyzer
-{
+impl ILayerDetectionProtocol for PlaceholderAnalyzer {
     fn config(&self) -> &ArchitectureConfig {
         static CONFIG: std::sync::OnceLock<ArchitectureConfig> = std::sync::OnceLock::new();
         CONFIG.get_or_init(ArchitectureConfig::default)
     }
-    fn layer_map(&self) -> &shared::taxonomy_definition_vo::LayerMapVO {
-        static MAP: std::sync::OnceLock<shared::taxonomy_definition_vo::LayerMapVO> =
-            std::sync::OnceLock::new();
-        MAP.get_or_init(|| {
-            shared::taxonomy_definition_vo::LayerMapVO::new(std::collections::HashMap::new())
-        })
-    }
-    fn detect_layer(
-        &self,
-        _f: &FilePath,
-        _root_dir: &FilePath,
-    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
+    fn detect_layer(&self, _file_path: &str, _root_dir: &str) -> Option<String> {
         None
     }
-}
-
-impl IAnalyzer for PlaceholderAnalyzer {
-    fn fs(&self) -> &dyn shared::common::contract_system_port::IFileSystemPort {
-        static FS: std::sync::OnceLock<NullFileSystem> = std::sync::OnceLock::new();
-        FS.get_or_init(|| NullFileSystem)
-    }
-    fn parser(&self) -> &dyn shared::common::contract_parser_port::ISourceParserPort {
-        static PARSER: std::sync::OnceLock<NullSourceParser> = std::sync::OnceLock::new();
-        PARSER.get_or_init(|| NullSourceParser)
-    }
-    fn detect_module_layer(
+    fn get_layer_def(
         &self,
-        _module_path: &FilePath,
-    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
+        _layer: &str,
+    ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
         None
+    }
+    fn get_orphan_entry_points(&self) -> Vec<String> {
+        Vec::new()
+    }
+    fn extract_layer_from_prefix(&self, _filename: &str) -> Option<String> {
+        None
+    }
+    fn resolve_specialized_layer(&self, base_layer: &str, _file_path: &str) -> String {
+        base_layer.to_string()
+    }
+    fn detect_module_layer(&self, _module: &str) -> Option<String> {
+        None
+    }
+    fn refine_module_layer(&self, base_name: &str, _parts: &[&str]) -> String {
+        base_name.to_string()
     }
 }
 
@@ -407,7 +399,7 @@ impl CodeAnalysisContainer {
         }
     }
 
-    pub fn new_with_analyzer(analyzer: Arc<dyn IAnalyzer>) -> Self {
+    pub fn new_with_analyzer(analyzer: Arc<dyn ILayerDetectionProtocol>) -> Self {
         let checker_container = CodeAnalysisCheckerContainer::new(analyzer);
         Self {
             code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new_with_container(Arc::new(

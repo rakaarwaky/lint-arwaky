@@ -1,6 +1,6 @@
 ---
 name: fix-cross-import-rust
-version: 1.0.0
+version: 2.0.0
 category: refactoring
 tags: [aes, import, separation, shared, taxonomy, aes201, rust]
 triggers:
@@ -12,6 +12,7 @@ dependencies: []
 related:
   - fix-capability-structure
   - module_logic_validator
+  - trait-consolidation
 ---
 # fix-cross-import-rust
 
@@ -286,7 +287,7 @@ If the implementation is shared across crates:
 // Use _protocol when capabilities need to communicate with each other
 pub trait I<Name>Protocol: Send + Sync { ... }  // capabilities_<name>.rs implements
 
-// Use _port when infrastructure components need to communicate with each other  
+// Use _port when infrastructure components need to communicate with each other
 pub trait I<Name>Port: Send + Sync { ... }      // infrastructure_<name>.rs implements
 
 // Use _aggregate when agents need to communicate with each other

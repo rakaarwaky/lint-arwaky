@@ -303,7 +303,6 @@ impl LintExecutor {
                     let import_container =
                         import_rules::root_import_rules_container::ImportContainer::new_with_config(
                             ws.config.clone(),
-                            Arc::new(import_rules::root_import_rules_container::NullSourceParser),
                         );
                     let naming_container =
                         naming_rules::root_naming_rules_container::NamingContainer::new(

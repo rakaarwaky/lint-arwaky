@@ -150,7 +150,6 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     let import_container =
                         import_rules::root_import_rules_container::ImportContainer::new_with_config(
                             loaded_config.clone(),
-                            Arc::new(import_rules::root_import_rules_container::NullSourceParser),
                         );
                     let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
                         import_container.analyzer(),
@@ -164,15 +163,9 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         )
                         .code_analysis_linter();
 
-                    let fs: Arc<dyn shared::common::contract_system_port::IFileSystemPort> =
-                        Arc::new(import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
-                    let parser: Arc<dyn shared::common::contract_parser_port::ISourceParserPort> =
-                        Arc::new(import_rules::root_import_rules_container::NullSourceParser);
                     let layer_det: Arc<dyn ILayerDetectionAggregate> =
                         Arc::new(import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
                             loaded_config.clone(),
-                            fs,
-                            parser,
                         ));
 
                     let aes_results = arch_linter.run_code_analysis_path(&path);
