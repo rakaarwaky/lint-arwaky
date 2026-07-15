@@ -1,11 +1,11 @@
 [package]
 name = "mcp_server-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 edition = "2021"
 description = "Model Context Protocol (MCP) server surfaces exposing the lint pipeline as tools/resources to AI agents."
 license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
-publish = false
+publish = true
 
 [lints]
 workspace = true
@@ -30,3 +30,6 @@ role_rules.workspace = true
 code_analysis.workspace = true
 config_system.workspace = true
 dirs.workspace = true
+maintenance.workspace = true
+git_hooks.workspace = true
+auto_fix.workspace = true

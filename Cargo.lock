@@ -154,7 +154,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "auto_fix-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "serde",
  "serde_json",
@@ -400,7 +400,7 @@ checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
 name = "cli_commands-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -460,7 +460,7 @@ dependencies = [
 
 [[package]]
 name = "code_analysis-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "async-trait",
  "once_cell",
@@ -520,7 +520,7 @@ checksum = "cc14f565cf027a105f7a44ccf9e5b424348421a1d8952a8fc9d499d313107789"
 
 [[package]]
 name = "config_system-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "async-trait",
  "dirs",
@@ -893,7 +893,7 @@ checksum = "dea2df4cf52843e0452895c455a1a2cfbb842a1e7329671acf418fdc53ed4c59"
 
 [[package]]
 name = "external_lint-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -942,7 +942,7 @@ dependencies = [
 
 [[package]]
 name = "file_watch-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "async-trait",
  "notify",
@@ -1179,7 +1179,7 @@ dependencies = [
 
 [[package]]
 name = "git_hooks-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "async-trait",
  "serde",
@@ -2317,7 +2317,7 @@ dependencies = [
 
 [[package]]
 name = "import_rules-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "async-trait",
  "once_cell",
@@ -2581,7 +2581,7 @@ dependencies = [
 
 [[package]]
 name = "lint_arwaky-arwaky"
-version = "1.10.105"
+version = "1.10.106"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2674,7 +2674,7 @@ checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 
 [[package]]
 name = "maintenance-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "async-trait",
  "serde",
@@ -2705,15 +2705,18 @@ dependencies = [
 
 [[package]]
 name = "mcp_server-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "anyhow",
  "async-trait",
+ "auto_fix-lint-arwaky",
  "code_analysis-lint-arwaky",
  "config_system-lint-arwaky",
  "dirs",
  "external_lint-lint-arwaky",
+ "git_hooks-lint-arwaky",
  "import_rules-lint-arwaky",
+ "maintenance-lint-arwaky",
  "naming_rules-lint-arwaky",
  "once_cell",
  "orphan_detector-lint-arwaky",
@@ -2795,7 +2798,7 @@ dependencies = [
 
 [[package]]
 name = "naming_rules-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "async-trait",
  "once_cell",
@@ -2974,7 +2977,7 @@ checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
 name = "orphan_detector-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "regex",
  "serde",
@@ -3133,7 +3136,7 @@ dependencies = [
 
 [[package]]
 name = "project_setup-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "async-trait",
  "dirs",
@@ -3479,7 +3482,7 @@ dependencies = [
 
 [[package]]
 name = "role_rules-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 dependencies = [
  "async-trait",
  "once_cell",
@@ -3836,7 +3839,7 @@ dependencies = [
 
 [[package]]
 name = "shared-lint-arwaky"
-version = "1.10.14"
+version = "1.10.107"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4463,7 +4466,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "tui-lint-arwaky"
-version = "1.10.43"
+version = "1.10.106"
 dependencies = [
  "anyhow",
  "arboard",

@@ -31,6 +31,9 @@ ignored_paths:
   - "/.dsc_cache"
   - "/tests"
   - "/mimocode"
+  - "build.rs"
+  - "/build.rs"
+  - "**/build.rs"
 
 architecture:
   enabled: true

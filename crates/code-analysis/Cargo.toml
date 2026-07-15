@@ -1,11 +1,11 @@
 [package]
 name = "code_analysis-lint-arwaky"
-version = "1.10.14"
+version = "1.10.106"
 edition = "2021"
 description = "Code-quality analyzers (file-size limits, code duplication detection, bypass checks, mandatory definition enforcement) covering AES301–AES305."
 license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
-publish = false
+publish = true
 
 [lints]
 workspace = true

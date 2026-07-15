@@ -4,9 +4,10 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct ExecuteCommandArgs {
-    /// The command action to execute
+    /// The command action to execute (e.g. "scan", "check", "security", "doctor")
     pub action: String,
-    /// Additional arguments for the command
+    /// Additional arguments. For scan/check: {"path": "/absolute/path/to/project"}.
+    /// Path MUST be absolute — relative paths resolve from MCP server cwd, not your project.
     pub args: Option<serde_json::Value>,
 }
 

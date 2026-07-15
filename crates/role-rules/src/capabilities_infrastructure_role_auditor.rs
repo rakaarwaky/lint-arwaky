@@ -96,7 +96,7 @@ impl InfrastructureRoleChecker {
             return;
         }
         let has_impl = content.contains("class ")
-            && (content.contains("(_port") || content.contains("(_protocol"));
+            && (content.contains("_port") || content.contains("_protocol"));
         if !has_impl {
             violations.push(LintResult::new_arch(
                 file,
