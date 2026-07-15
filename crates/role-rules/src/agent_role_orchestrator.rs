@@ -105,9 +105,7 @@ impl RoleOrchestrator {
                 Err(_) => continue,
             };
             let content_vo = ContentString::new(content);
-            let detector =
-                shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
-            let language = detector.detect(&fp).as_str().to_string();
+            let language = fp.language().as_str().to_string();
             let source_vo = SourceContentVO::new(fp, content_vo, &language);
 
             // Dispatch based on layer prefix — each layer has its own checker protocol

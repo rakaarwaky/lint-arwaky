@@ -93,7 +93,7 @@ impl ImportOrchestrator {
             Some(n) => n.to_string_lossy().to_string(),
             None => String::new(),
         };
-        shared::common::taxonomy_file_collector_helper::is_path_ignored(&s, &self.ignored_paths)
+        FilePath::new(s.to_string()).unwrap_or_default().is_ignored(&self.ignored_paths)
             || match dir_name.strip_prefix('.') {
                 Some(n) => self.ignored_paths.iter().any(|i| i.contains(n)),
                 None => false,
