@@ -70,8 +70,6 @@ architecture:
                   "error",
                   "event",
                   "constant",
-                  "utility",
-                  "helper",
                 ]
         contract:
           suffix:
@@ -106,6 +104,8 @@ architecture:
                   "assessor",
                   "auditor",
                   "actions",
+                  "utility",
+                  "helper",
                 ]
             - forbidden:
                 [
@@ -115,8 +115,6 @@ architecture:
                   "event",
                   "constant",
                   "constants",
-                  "utility",
-                  "helper",
                   "port",
                   "protocol",
                   "aggregate",
@@ -160,6 +158,8 @@ architecture:
                   "listener",
                   "poller",
                   "streamer",
+                  "utility",
+                  "helper",
                 ]
             - forbidden:
                 [
@@ -169,8 +169,6 @@ architecture:
                   "event",
                   "constant",
                   "constants",
-                  "utility",
-                  "helper",
                   "port",
                   "protocol",
                   "aggregate",
