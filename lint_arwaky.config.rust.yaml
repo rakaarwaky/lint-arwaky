@@ -75,9 +75,7 @@ architecture:
                   "entity",
                   "error",
                   "event",
-                  "constant",
-                  "utility",
-                  "helper",
+                  "constant"
                 ]
         contract:
           suffix:
