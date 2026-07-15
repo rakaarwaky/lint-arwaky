@@ -234,7 +234,38 @@ impl IImportParserPort for ImportParserAdapter {
     }
 
     fn extract_import_modules(&self, content: &str) -> Vec<SymbolName> {
-        self.analyzer.extract_import_modules(content)
+        let mut modules = Vec::new();
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if let Some(rest) = trimmed.strip_prefix("from ") {
+                if let Some(module) = rest.split_whitespace().next() {
+                    modules.push(SymbolName::new(module));
+                }
+            } else if trimmed.starts_with("import ") {
+                if let Some(pos) = trimmed.rfind(" from ") {
+                    let module_part = trimmed[pos + 6..].trim();
+                    let cleaned = module_part
+                        .trim_end_matches(';')
+                        .trim_matches(|c: char| c == '\'' || c == '"' || c == '`' || c == ';')
+                        .trim();
+                    modules.push(SymbolName::new(cleaned));
+                } else if let Some(rest) = trimmed.strip_prefix("import ") {
+                    if rest.contains('"') || rest.contains('\'') || rest.contains('`') {
+                        let cleaned = rest
+                            .trim_end_matches(';')
+                            .trim_matches(|c: char| c == '\'' || c == '"' || c == '`' || c == ';')
+                            .trim();
+                        modules.push(SymbolName::new(cleaned));
+                    } else if let Some(first_token) = rest.split_whitespace().next() {
+                        modules.push(SymbolName::new(first_token.trim_end_matches(',')));
+                    }
+                }
+            } else if let Some(rest) = trimmed.strip_prefix("use ") {
+                let module = rest.trim_end_matches(';');
+                modules.push(SymbolName::new(module));
+            }
+        }
+        modules
     }
 
     fn get_language_from_path(&self, path: &str) -> LanguageVO {
