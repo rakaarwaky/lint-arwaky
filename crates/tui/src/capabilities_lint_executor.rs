@@ -19,8 +19,8 @@ use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAg
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::tui::capabilities_report_formatter::ReportFormatterHelper;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
+use shared::tui::contract_report_formatter_port::IReportFormatterPort;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
@@ -103,10 +103,14 @@ pub struct LintExecutor {
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
     multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
+    formatter: Arc<dyn IReportFormatterPort>,
 }
 
 impl LintExecutor {
-    pub fn new(code_analysis: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+    pub fn new(
+        code_analysis: Arc<dyn ICodeAnalysisAggregate>,
+        formatter: Arc<dyn IReportFormatterPort>,
+    ) -> Self {
         Self {
             code_analysis,
             fix_orchestrator: None,
@@ -122,6 +126,7 @@ impl LintExecutor {
             naming_orchestrator: None,
             role_orchestrator: None,
             multi_project_orchestrator: None,
+            formatter,
         }
     }
 
@@ -203,13 +208,13 @@ impl LintExecutor {
     }
 
     pub fn format_results(&self, results: &LintResultList) -> String {
-        ReportFormatterHelper::format_results(results)
+        self.formatter.format_results(results)
     }
 
     fn format_doctor_report(
         diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
     ) -> LintExecutionResult {
-        ReportFormatterHelper::format_doctor_report(diagnostics)
+        self.formatter.format_doctor_report(diagnostics)
     }
 
     fn run_init(&self) -> LintExecutionResult {
@@ -260,13 +265,13 @@ impl LintExecutor {
     }
 
     fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
-        ReportFormatterHelper::format_dependency_report(path, report)
+        self.formatter.format_dependency_report(path, report)
     }
 
     fn format_config_result(
         result: &shared::config_system::taxonomy_source_vo::ConfigResult,
     ) -> LintExecutionResult {
-        ReportFormatterHelper::format_config_result(result)
+        self.formatter.format_config_result(result)
     }
 }
 
@@ -462,7 +467,7 @@ impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
         let results = self.code_analysis.run_code_analysis(path);
         let count = results.len();
-        let output = ReportFormatterHelper::format_results(&results);
+        let output = self.formatter.format_results(&results);
         LintExecutionResult {
             output,
             violation_count: count,

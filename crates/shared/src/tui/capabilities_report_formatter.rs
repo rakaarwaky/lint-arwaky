@@ -7,22 +7,25 @@ use crate::project_setup::taxonomy_doctor_vo::{DependencyReport, ToolchainDiagno
 use crate::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use crate::taxonomy_error_vo::ErrorCode;
 use crate::taxonomy_message_vo::LintMessage;
+use crate::tui::contract_report_formatter_port::IReportFormatterPort;
 use crate::tui::taxonomy_lint_result_vo::LintExecutionResult;
 
 pub struct ReportFormatterHelper;
 
 impl ReportFormatterHelper {
-    // Keep reference checks happy
-    pub fn _use_unused() {
-        let _ = LineNumber::new(1);
-        let _ = ColumnNumber::new(1);
-        let _ = ErrorCode::raw("code");
-        let _ = LintMessage::new("msg");
-        let _ = LintResultList::default();
-        let _ = Severity::LOW;
+    pub fn new() -> Self {
+        Self
     }
+}
 
-    pub fn format_results(results: &LintResultList) -> String {
+impl Default for ReportFormatterHelper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl IReportFormatterPort for ReportFormatterHelper {
+    fn format_results(&self, results: &LintResultList) -> String {
         if results.is_empty() {
             return "No violations found.".to_string();
         }
@@ -47,7 +50,7 @@ impl ReportFormatterHelper {
         output
     }
 
-    pub fn format_doctor_report(diagnostics: &ToolchainDiagnostics) -> LintExecutionResult {
+    fn format_doctor_report(&self, diagnostics: &ToolchainDiagnostics) -> LintExecutionResult {
         let mut output = format!(
             "Environment Diagnostics\nBinary: {}\n\n",
             diagnostics.binary_path
@@ -90,7 +93,11 @@ impl ReportFormatterHelper {
         LintExecutionResult::success(output, fail_count)
     }
 
-    pub fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
+    fn format_dependency_report(
+        &self,
+        path: &str,
+        report: &DependencyReport,
+    ) -> LintExecutionResult {
         let count = report.dependencies.len();
         let mut output = format!(
             "Dependency scan for {}\nLanguage: {}\nTotal dependencies: {}\n",
@@ -123,7 +130,7 @@ impl ReportFormatterHelper {
         LintExecutionResult::success(output, count)
     }
 
-    pub fn format_config_result(result: &ConfigResult) -> LintExecutionResult {
+    fn format_config_result(&self, result: &ConfigResult) -> LintExecutionResult {
         let mut output = String::from("Active Configuration\n");
         output.push_str(&format!(
             "Source: {} ({})\n",

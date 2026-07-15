@@ -1,4 +1,5 @@
 pub mod capabilities_report_formatter;
+pub mod contract_report_formatter_port;
 pub mod taxonomy_action_flags_vo;
 pub mod taxonomy_adapter_info_vo;
 pub mod taxonomy_file_entry_vo;
