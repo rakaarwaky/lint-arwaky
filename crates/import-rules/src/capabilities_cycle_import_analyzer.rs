@@ -8,13 +8,14 @@ use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
-use shared::import_rules::contract_rule_protocol::IAnalyzer;
+use shared::import_rules::taxonomy_cycle_color_vo::Color;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::taxonomy_message_vo::LintMessage;
@@ -34,33 +35,26 @@ pub struct CycleImportAnalyzer {
     parser: Arc<dyn IImportParserPort>,
 }
 
-/// Color enum for DFS 3-coloring cycle detection.
-#[derive(Clone, Copy, PartialEq)]
-enum Color {
-    White,
-    Gray,
-    Black,
-}                    
-
-#[async_trait]
-impl ICycleImportProtocol for CycleImportAnalyzer {
-    /// Returns `fp` if `result` is `Ok`, otherwise returns `FilePath::default()`.
-    fn pure_filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-        result.unwrap_or_default()
-    }
-
-    /// Create a new CycleImportAnalyzer instance.
+impl CycleImportAnalyzer {
     pub fn new(config: ArchitectureConfig, parser: Arc<dyn IImportParserPort>) -> Self {
         Self {
             _config: config,
             parser,
         }
     }
+}
+
+#[async_trait]
+impl ICycleImportProtocol for CycleImportAnalyzer {
+    /// Returns `fp` if `result` is `Ok`, otherwise returns `FilePath::default()`.
+    fn filepath_or_default(&self, result: Result<FilePath, String>) -> FilePath {
+        result.unwrap_or_default()
+    }
 
     /// Scan all files for circular dependency cycles (AES205).
     fn scan(
         &self,
-        analyzer: &dyn IAnalyzer,
+        analyzer: &dyn ILayerDetectionProtocol,
         files: &[String],
         root_dir: &str,
     ) -> Vec<LintResult> {
@@ -71,7 +65,7 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
     /// and appends results into the shared LintResultList.
     async fn check_cycles(
         &self,
-        analyzer: &dyn IAnalyzer,
+        analyzer: &dyn ILayerDetectionProtocol,
         files: &FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
@@ -82,33 +76,19 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
     }
 
     /// Detect cycle edges in a directed graph using DFS 3-coloring.
-    fn pure_detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
+    fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
         self.do_detect_cycle_edges(edges)
     }
 
     /// Normalize a file/module name to its architectural layer name.
-    fn pure_normalize_to_layer(&self, name: &str) -> String {
+    fn normalize_to_layer(&self, name: &str) -> String {
         self.do_normalize_to_layer(name)
     }
 
     /// Scan all files for circular dependency cycles (AES205).
-    ///
-    /// Steps:
-    ///   1. Check if the architecture analysis is globally enabled — return empty if disabled.
-    ///   2. Locate the AES205 rule config to read exception lists (files to skip).
-    ///   3. For each file in the project:
-    ///      a. Check if the filename is in the AES205 exception list — skip if yes.
-    ///      b. Read file content through the parser port.
-    ///      c. Detect the file's architectural layer via filename prefix / path fallback.
-    ///      d. Record one representative file path per layer (for error reporting).
-    ///      e. Parse all import module paths from the file.
-    ///      f. For each import, detect the target layer via module-path analysis.
-    ///      g. If the target layer differs from source layer, record a cross-layer edge.
-    ///   4. Delegate cycle detection to `do_detect_cycle_edges()` (DFS 3-color SCC).
-    ///   5. Transform each cycle edge string into a CRITICAL LintResult.
     fn do_scan(
         &self,
-        analyzer: &dyn IAnalyzer,
+        analyzer: &dyn ILayerDetectionProtocol,
         files: &[String],
         root_dir: &str,
     ) -> Vec<LintResult> {
@@ -127,7 +107,9 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
         // Step 3: Iterate every file in the project
         for file in files {
             // Step 3a: Skip files exempted via rule exceptions
-            let file_fp = Self::pure_filepath_or_default(FilePath::new(file.clone()));
+            let file_fp = self
+                .filepath_or_default(FilePath::new(file.clone()).map_err(|e| format!("{:?}", e)));
+
             let basename = file_fp.basename();
             if let Some(rule) = aes205_rule {
                 if rule.exceptions.values.contains(&basename.to_string()) {
@@ -142,19 +124,22 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
             let content = content_msg.value().to_string();
 
             // Step 3c: Detect the file's architectural layer (strip scoped suffix)
-            let file_fp = Self::pure_filepath_or_default(FilePath::new(file.clone()));
-            let root_dir_fp = Self::pure_filepath_or_default(FilePath::new(root_dir.to_string()));
-            let file_layer = match analyzer.detect_layer(&file_fp, &root_dir_fp) {
-                Some(l) => {
-                    let val = l.value();
-                    let s = match val.split('(').next() {
-                        Some(part) => part,
-                        None => val,
-                    };
-                    s.to_string()
-                }
-                None => continue,
-            };
+            let file_fp = self
+                .filepath_or_default(FilePath::new(file.clone()).map_err(|e| format!("{:?}", e)));
+            let root_dir_fp = self.filepath_or_default(
+                FilePath::new(root_dir.to_string()).map_err(|e| format!("{:?}", e)),
+            );
+            let file_layer =
+                match analyzer.detect_layer(&file_fp.to_string(), &root_dir_fp.to_string()) {
+                    Some(l) => {
+                        let s = match l.split('(').next() {
+                            Some(part) => part,
+                            None => &l,
+                        };
+                        s.to_string()
+                    }
+                    None => continue,
+                };
 
             // Step 3e: Parse every import statement in the file
             let modules = self.parser.extract_import_modules(&content);
@@ -205,12 +190,13 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
                 } else {
                     module_value
                 };
-                let module_fp = Self::pure_filepath_or_default(FilePath::new(module_path.to_string()));
-                if let Some(target_layer) = analyzer.detect_module_layer(&module_fp) {
-                    let val = target_layer.value();
-                    let target_layer_str = match val.split('(').next() {
+                let module_fp = self.filepath_or_default(
+                    FilePath::new(module_path.to_string()).map_err(|e| format!("{:?}", e)),
+                );
+                if let Some(target_layer) = analyzer.detect_module_layer(&module_fp.to_string()) {
+                    let target_layer_str = match target_layer.split('(').next() {
                         Some(part) => part,
-                        None => val,
+                        None => &target_layer,
                     }
                     .to_string();
                     // Step 3g: Only record cross-layer edges (same-layer edges cannot cause cycles)
@@ -266,7 +252,12 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
     fn do_detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
         let normalized_edges: Vec<DependencyEdge> = edges
             .iter()
-            .map(|e| DependencyEdge::new(self.do_normalize_to_layer(&e.source), self.do_normalize_to_layer(&e.target)))
+            .map(|e| {
+                DependencyEdge::new(
+                    self.do_normalize_to_layer(&e.source),
+                    self.do_normalize_to_layer(&e.target),
+                )
+            })
             .collect();
 
         let mut graph: HashMap<String, Vec<String>> = HashMap::new();
@@ -381,5 +372,3 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
         Some(path)
     }
 }
-
-

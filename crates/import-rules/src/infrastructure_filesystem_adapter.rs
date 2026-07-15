@@ -43,7 +43,16 @@ impl OSFileSystemAdapter {
     pub fn new() -> Self {
         Self {}
     }
+}
 
+impl Default for OSFileSystemAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl IFileSystemPort for OSFileSystemAdapter {
     fn walk_recursive(&self, dir: &Path, ignored: &[String], results: &mut Vec<FilePath>) {
         if dir.is_file() {
             if let Ok(fp) = FilePath::new(dir.to_string_lossy().to_string()) {
@@ -66,16 +75,7 @@ impl OSFileSystemAdapter {
             }
         }
     }
-}
 
-impl Default for OSFileSystemAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl IFileSystemPort for OSFileSystemAdapter {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
         let root = Path::new(&path.value);
         let ignored = match ignored_patterns {

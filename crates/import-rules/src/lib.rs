@@ -1,11 +1,8 @@
 // PURPOSE: Module declarations for import-rules (checkers, analyzers, orchestrators)
-pub mod capabilities_import_analyzer;
-
-pub mod capabilities_parser_processor;
 pub mod capabilities_layer_detection_analyzer;
 pub use capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 pub mod capabilities_import_forbidden_checker;
-pub use capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
+pub use capabilities_import_forbidden_checker::ImportForbiddenChecker;
 pub mod capabilities_import_mandatory_checker;
 pub use capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 pub mod capabilities_dummy_import_checker;

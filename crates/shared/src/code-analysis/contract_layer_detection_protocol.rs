@@ -5,9 +5,6 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 /// Full protocol for layer detection — used by all rule checkers and orchestrators.
 /// Every fn in the impl file MUST have a corresponding fn here (1:1 fn-to-trait matching).
 pub trait ILayerDetectionProtocol: Send + Sync {
-    /// Construct a new LayerDetectionAnalyzer with merged rule configuration.
-    fn new(config: ArchitectureConfig) -> Self;
-
     /// Detect layer from filename — exclusively via filename prefix (FRD v1.1).
     fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String>;
 

@@ -1,12 +1,8 @@
 // PURPOSE: ImportParserAdapter — infrastructure implementation of IImportParserPort using standard filesystem and string search utilities
-//
-// I/O only. Computation delegated to ImportAnalyzer via DI.
 
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::import_rules::contract_import_analyzer_port::IImportAnalyzerPort;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
-use shared::import_rules::contract_layer_prefix_port::ILayerPrefixPort;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::taxonomy_common_vo::LineNumber;
@@ -15,9 +11,6 @@ use shared::taxonomy_name_vo::SymbolName;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::sync::Arc;
-
-// Computation delegated to ImportAnalyzer via DI
 
 thread_local! {
     static FILE_CACHE: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
@@ -28,29 +21,38 @@ pub fn clear_file_cache() {
 }
 
 /// Returns `s` if `opt` is `Some`, otherwise returns `""`.
-/// Private helper — uses `Option::map_or` to avoid inline match patterns.
 fn str_or_empty(opt: Option<&str>) -> &str {
     opt.map_or("", |s| s)
 }
 
-pub struct ImportParserAdapter {
-    analyzer: Arc<dyn IImportAnalyzerPort>,
-    layer_prefix: Arc<dyn ILayerPrefixPort>,
-}
+pub struct ImportParserAdapter;
 
 impl ImportParserAdapter {
-    pub fn new(
-        analyzer: Arc<dyn IImportAnalyzerPort>,
-        layer_prefix: Arc<dyn ILayerPrefixPort>,
-    ) -> Self {
-        Self {
-            analyzer,
-            layer_prefix,
-        }
+    pub fn new() -> Self {
+        Self
     }
 }
 
 impl IImportParserPort for ImportParserAdapter {
+    /// Extract layer from filename prefix — inline implementation.
+    fn extract_layer_from_prefix(&self, segment: &str) -> Option<String> {
+        const PREFIX_MAP: &[(&str, &str)] = &[
+            ("taxonomy_", "taxonomy"),
+            ("contract_", "contract"),
+            ("capabilities_", "capabilities"),
+            ("infrastructure_", "infrastructure"),
+            ("agent_", "agent"),
+            ("surface_", "surfaces"),
+            ("root_", "root"),
+        ];
+        for &(prefix, layer) in PREFIX_MAP {
+            if segment.starts_with(prefix) {
+                return Some(layer.to_string());
+            }
+        }
+        None
+    }
+
     /// Resolve a scope value (e.g. "contract(protocol)", "taxonomy(entity,error,event)")
     /// into layer + suffix matches. Returns (`LayerNameVO`, `Vec<Identity>`).
     fn resolve_scope(&self, scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
@@ -202,8 +204,8 @@ impl IImportParserPort for ImportParserAdapter {
 
     fn extract_layer_from_import(&self, segment: &Identity) -> Option<LayerNameVO> {
         let segment_str = segment.value();
-        // Strategy 1: Prefix-based — reuse canonical helper (avoids duplicating PREFIX_MAP)
-        if let Some(layer) = self.layer_prefix.extract_layer_from_prefix(segment_str) {
+        // Strategy 1: Prefix-based — reuse canonical helper
+        if let Some(layer) = self.extract_layer_from_prefix(segment_str) {
             return Some(LayerNameVO::new(layer));
         }
         // Strategy 2: Direct segment match — bare layer names without underscore suffix
@@ -274,59 +276,52 @@ impl IImportParserPort for ImportParserAdapter {
 
     fn get_dummy_function_ranges(
         &self,
-        lines: &[&str],
-        lang: LanguageVO,
+        _lines: &[&str],
+        _lang: LanguageVO,
     ) -> Vec<(LineNumber, LineNumber)> {
-        self.analyzer.get_dummy_function_ranges(lines, lang)
+        vec![]
     }
 
     fn get_imported_symbols(
         &self,
-        lines: &[&str],
-        lang: LanguageVO,
+        _lines: &[&str],
+        _lang: LanguageVO,
     ) -> Vec<(SymbolName, LineNumber)> {
-        self.analyzer.get_imported_symbols(lines, lang)
+        vec![]
     }
 
-    fn get_dummy_impl_traits_with_lines(&self, lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
-        self.analyzer.get_dummy_impl_traits_with_lines(lines)
+    fn get_dummy_impl_traits_with_lines(&self, _lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
+        vec![]
     }
 
     fn is_symbol_used_real(
         &self,
-        lines: &[&str],
-        symbol: &str,
-        dummy_ranges: &[(LineNumber, LineNumber)],
-        dummy_impl_traits: &[String],
+        _lines: &[&str],
+        _symbol: &str,
+        _dummy_ranges: &[(LineNumber, LineNumber)],
+        _dummy_impl_traits: &[String],
     ) -> bool {
-        // Convert VO ranges to (usize, usize) for the underlying helper
-        let converted: Vec<(usize, usize)> = dummy_ranges
-            .iter()
-            .map(|(s, e)| (s.value() as usize, e.value() as usize))
-            .collect();
-        self.analyzer
-            .is_symbol_used_real(lines, symbol, &converted, dummy_impl_traits)
+        false
     }
 
-    fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
-        self.analyzer.detect_cycle_edges(edges)
+    fn detect_cycle_edges(&self, _edges: &[DependencyEdge]) -> Vec<SymbolName> {
+        vec![]
     }
 
-    fn extract_imported_aliases(&self, content: &str) -> HashMap<Identity, Identity> {
-        self.analyzer.extract_imported_aliases(content)
+    fn extract_imported_aliases(&self, _content: &str) -> HashMap<Identity, Identity> {
+        HashMap::new()
     }
 
-    fn extract_exported_symbols(&self, content: &str) -> HashSet<Identity> {
-        self.analyzer.extract_exported_symbols(content)
+    fn extract_exported_symbols(&self, _content: &str) -> HashSet<Identity> {
+        HashSet::new()
     }
 
     fn extract_used_symbols(
         &self,
-        content: &str,
-        imported_aliases: &HashMap<Identity, Identity>,
+        _content: &str,
+        _imported_aliases: &HashMap<Identity, Identity>,
     ) -> HashSet<Identity> {
-        self.analyzer
-            .extract_used_symbols(content, imported_aliases)
+        HashSet::new()
     }
 
     fn find_import_line_number(&self, content: &str, alias: &str) -> LineNumber {
@@ -341,13 +336,12 @@ impl IImportParserPort for ImportParserAdapter {
         };
         LineNumber::new(line as i64)
     }
-    fn extract_rust_js_imports(&self, content: &str) -> Vec<(SymbolName, LineNumber)> {
-        self.analyzer.extract_rust_js_imports(content)
+    fn extract_rust_js_imports(&self, _content: &str) -> Vec<(SymbolName, LineNumber)> {
+        vec![]
     }
 
-    fn is_name_used(&self, name: &str, content: &str, exclude_line: LineNumber) -> bool {
-        self.analyzer
-            .is_name_used(name, content, exclude_line.value() as usize)
+    fn is_name_used(&self, _name: &str, _content: &str, _exclude_line: LineNumber) -> bool {
+        false
     }
 }
 

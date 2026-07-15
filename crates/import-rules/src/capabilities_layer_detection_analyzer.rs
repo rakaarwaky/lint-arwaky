@@ -14,7 +14,7 @@ use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionPro
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_config_vo::ArchitectureRule;
-use shared::taxonomy_definition_vo::{LayerMapVO};
+use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 
 /// Central layer detection and rule analysis engine implementing ILayerDetectionProtocol.
@@ -42,23 +42,9 @@ pub struct LayerDetectionAnalyzer {
     pub layer_map: LayerMapVO,
 }
 
-impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
+impl LayerDetectionAnalyzer {
     /// Construct a new LayerDetectionAnalyzer with merged rule configuration.
-    ///
-    /// Steps:
-    ///   1. Build a `rules_by_layer` index: for each rule, map by both its base scope
-    ///      (e.g., "agent") and its full scoped name (e.g., "agent(container|registry)").
-    ///   2. Iterate all layer definitions from config. For each:
-    ///      a. Apply global rules (empty scope key).
-    ///      b. Apply base-layer rules (e.g., rules scoped to "agent").
-    ///      c. Skip specialised scoped rules (e.g., "agent(container)") at this stage.
-    ///   3. For each scoped rule "X(Y|Z)":
-    ///      a. Parse the base name X and the set of suffixes {Y, Z}.
-    ///      b. Clone the base layer definition.
-    ///      c. Overlay the scoped rule's values (forbidden, mandatory, allowed, etc.).
-    ///      d. Insert as a new sub-layer entry "X(Y)", "X(Z)".
-    ///   4. Store the enriched config and build a LayerMapVO for fast lookups.
-    fn new(mut config: ArchitectureConfig) -> Self {
+    pub fn new(mut config: ArchitectureConfig) -> Self {
         // Step 1: Index all rules by layer scope (both base + full scoped)
         let mut rules_by_layer: HashMap<String, Vec<&ArchitectureRule>> = HashMap::new();
         for rule in &config.rules {
@@ -252,12 +238,11 @@ impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
         // Step 4: Store enriched config and build LayerMapVO
         config.layers = new_layers;
         let layer_map = LayerMapVO::new(config.layers.clone());
-        Self {
-            config,
-            layer_map,
-        }
+        Self { config, layer_map }
     }
+}
 
+impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
     /// Detect layer from filename — exclusively via filename prefix (FRD v1.1).
     ///
     /// Files MUST carry a layer prefix (e.g., `capabilities_foo.rs` → capabilities layer).
@@ -267,7 +252,7 @@ impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
     /// After prefix detection, `resolve_specialized_layer` checks whether the file suffix
     /// corresponds to a specialised sub-layer (e.g., `capabilities_command.rs` with a defined
     /// `capabilities(command)` layer → returns `capabilities(command)` instead of `capabilities`).
-    fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String> {
+    fn detect_layer(&self, file_path: &str, _root_dir: &str) -> Option<String> {
         let filename = Path::new(file_path)
             .file_name()
             .and_then(|s| s.to_str())
@@ -295,6 +280,7 @@ impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
         self.config
             .layers
             .get(&LayerNameVO::new(layer))
+            .cloned()
             .or_else(|| {
                 let base = match layer.split('(').next() {
                     Some(s) => s,

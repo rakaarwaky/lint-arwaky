@@ -23,11 +23,10 @@ Consolidate ALL function signatures from a capability/infrastructure/agent imple
 
 - **1:1 fn-to-trait matching**: Every fn in impl file MUST have exactly one corresponding fn in the trait
 - Trait MUST contain ALL fn signatures from the impl file
-- Instance methods keep original name in trait
-- Free functions get `pure_` prefix in trait
+- All trait methods keep the **same name** as their impl counterparts (no `do_` or `pure_` prefixes)
 - All trait methods MUST have `&self` parameter
 - Generic bounds need `where Self: Sized`
-- Rename inherent methods with `do_` prefix if they conflict with trait method names
+- If impl has a separate inherent `impl Type` block with conflicting methods, split into trait method + inherent method with same name (trait calls inherent directly)
 
 ## Contract Rules
 
@@ -62,14 +61,12 @@ pub trait I<Name>Protocol: Send + Sync {    // Protocol for capabilities
 pub trait I<Name>Port: Send + Sync {        // Port for infrastructure
 pub trait I<Name>Aggregate: Send + Sync {   // Aggregate for agents
 
-    // Instance methods — keep original name
+    // All methods — same name as in impl, no prefixes
     fn instance_method(&self, ...) -> ...;
-
-    // Free functions — add pure_ prefix
-    fn pure_free_function(&self, ...) -> ...;
+    fn another_method(&self, ...) -> ...;
 
     // Generic functions — add where Self: Sized
-    fn pure_generic_fn<F, G>(&self, ...) -> ...
+    fn generic_fn<F, G>(&self, ...) -> ...
     where
         Self: Sized,
         F: Fn(...) -> ...,
@@ -81,35 +78,27 @@ pub trait I<Name>Aggregate: Send + Sync {   // Aggregate for agents
 
 ```rust
 impl I<Name>Protocol for <CapabilityType> {   // or I<Name>Port / I<Name>Aggregate
-    // Instance method wrapper — calls renamed inherent method
+    // All methods — same name as trait, implementation directly here
     fn instance_method(&self, ...) {
-        self.do_instance_method(...)
+        // actual implementation logic
     }
 
-    // Free function wrapper — calls free function directly
-    fn pure_free_function(&self, ...) -> ... {
-        free_function(...)
+    fn another_method(&self, ...) {
+        // actual implementation logic
     }
 
-    // Generic function wrapper
-    fn pure_generic_fn<F, G>(&self, ...) -> ...
+    fn generic_fn<F, G>(&self, ...) -> ...
     where
         Self: Sized,
         F: Fn(...) -> ...,
         G: Fn(...) -> ...,
     {
-        generic_fn(...)
+        // actual implementation logic
     }
 }
-
-// Inherent methods — rename with do_ prefix if conflict
-impl <Type> {
-    pub(crate) fn do_instance_method(&self, ...) { ... }
-}
-
-// Free functions — keep original name (no changes needed)
-fn free_function(...) -> ... { ... }
 ```
+
+**Key**: Methods in trait impl blocks keep their **original names** — no `do_` or `pure_` prefixes. The trait and impl share the same name.
 
 ## Step-by-Step Process
 
@@ -140,15 +129,14 @@ fn python_class_inherits(line: &str, agg_type: &str) -> bool;
 
 For each fn:
 
-- Instance methods: add `&self` if missing, keep name
-- Free functions: add `pure_` prefix and `&self` parameter
-- Generic functions: add `where Self: Sized` and `&self`
+- All methods: add `&self` if missing, keep **original name** (no prefixes)
+- Generic functions: add `where Self: Sized`
 
 ```rust
 pub trait I<Name>Protocol: Send + Sync {    // or I<Name>Port / I<Name>Aggregate
     fn check_dummy_imports(&self, ...) -> ...;
-    fn pure_filepath_or_default(&self, ...) -> ...;
-    fn pure_python_class_inherits(&self, ...) -> bool;
+    fn filepath_or_default(&self, ...) -> ...;
+    fn python_class_inherits(&self, ...) -> bool;
 }
 ```
 
@@ -159,22 +147,12 @@ Add to `impl I<Name>Protocol/Port/Aggregate for <Type>` block:
 ```rust
 impl IDummyImportCheckerProtocol for DummyImportChecker {   // or I<Name>Port / I<Name>Aggregate
     fn check_dummy_imports(&self, ...) {
-        self.do_check_dummy_imports(...)
+        // actual implementation logic
     }
 
-    fn pure_filepath_or_default(&self, ...) -> ... {
-        filepath_or_default(...)
+    fn filepath_or_default(&self, ...) -> ... {
+        // actual implementation logic
     }
-}
-```
-
-### Step 6: Rename Conflicting Inherent Methods
-
-If inherent method has same name as trait method:
-
-```rust
-impl <Type> {
-    pub(crate) fn do_check_dummy_imports(&self, ...) { ... }  // renamed with do_ prefix
 }
 ```
 
@@ -186,12 +164,10 @@ cargo check -p <crate-name> 2>&1 | grep -E "error|cannot find"
 
 ## Verification Checklist
 
-- [ ]  All fn from impl file are in trait
+- [ ]  All fn from impl file are in trait (same name, no prefixes)
 - [ ]  All trait methods have `&self`
-- [ ]  Free functions use `pure_` prefix
 - [ ]  Generic bounds include `where Self: Sized`
 - [ ]  All trait methods have implementations
-- [ ]  Inherent methods renamed with `do_` if conflict
 - [ ]  `cargo check` passes
 
 ## File Locations
