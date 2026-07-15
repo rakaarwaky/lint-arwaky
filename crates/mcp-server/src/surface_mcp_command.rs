@@ -46,7 +46,7 @@ impl ServerHandler for LintArwakyMcpServer {
 
 #[tool_router]
 impl LintArwakyMcpServer {
-    #[tool(description = "Execute any CLI command. This is the primary tool.")]
+    #[tool(description = "Execute any CLI command. This is the primary tool. Args: {\"action\": \"scan\", \"args\": {\"path\": \"/absolute/path/to/project\"}} — path MUST be absolute.")]
     async fn execute_command(&self, args: Parameters<ExecuteCommandArgs>) -> String {
         self.agent.execute_command(args).await
     }
