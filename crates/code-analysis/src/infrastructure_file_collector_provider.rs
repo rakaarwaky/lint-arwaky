@@ -1,13 +1,16 @@
+// PURPOSE: FileCollectorProvider — IScannerProviderPort implementation for collecting source files
+//
+// Main implementator of file collection. Wired to other crates via DI through root containers.
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::common::contract_scanner_provider_port::IScannerProviderPort;
-use crate::common::taxonomy_filesystem_error::FileSystemError;
-use crate::common::taxonomy_path_vo::DirectoryPath;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::config_system::taxonomy_config_vo::default_aes_config;
+use shared::common::contract_scanner_provider_port::IScannerProviderPort;
+use shared::common::taxonomy_filesystem_error::FileSystemError;
+use shared::common::taxonomy_path_vo::DirectoryPath;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::config_system::taxonomy_config_vo::default_aes_config;
 
 pub struct FileCollectorProvider {}
 

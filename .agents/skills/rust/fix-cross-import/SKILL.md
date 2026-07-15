@@ -78,19 +78,25 @@ use crate::capabilities_keyframe_calculator::Calculator;    // FORBIDDEN
 use crate::capabilities_layer_prefix_extractor::extract_layer_from_prefix;  // FORBIDDEN!
 
 // CORRECT:
-// 1. For pure functions: move to contract layer
-// contract_layer_prefix_port.rs
-pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
-    // pure computation, no I/O
-}
-
-// 2. For traits: create trait in contract layer
+// 1. Create trait in contract layer (ONLY traits, no functions!)
 // contract_frame_exporter_port.rs
 pub trait IFrameExporterPort: Send + Sync {
     fn export(&self, frame: &Frame) -> PathBuf;
 }
 
-// 3. Capability imports from contract (ALLOWED)
+// contract_keyframe_calculator_port.rs
+pub trait IKeyframeCalculatorPort: Send + Sync {
+    fn calculate(&self, keyframes: &[Keyframe]) -> Vec<MotionPath>;
+}
+
+// 2. Capability implements trait
+// capabilities_frame_exporter.rs
+pub struct FrameExporter;
+impl IFrameExporterPort for FrameExporter {
+    fn export(&self, frame: &Frame) -> PathBuf { ... }
+}
+
+// 3. Other capability receives via DI (knows only the trait)
 // capabilities_timeline_processor.rs
 use crate::contract_frame_exporter_port::IFrameExporterPort;      // ALLOWED
 use crate::contract_keyframe_calculator_port::IKeyframeCalculatorPort;  // ALLOWED
@@ -99,7 +105,15 @@ pub struct TimelineProcessor {
     exporter: Arc<dyn IFrameExporterPort>,      // via DI
     calculator: Arc<dyn IKeyframeCalculatorPort>, // via DI
 }
+
+// 4. Root container wires implementation
+// root_container.rs
+let exporter: Arc<dyn IFrameExporterPort> = Arc::new(FrameExporter::new());
+let calculator: Arc<dyn IKeyframeCalculatorPort> = Arc::new(Calculator::new());
+let processor = TimelineProcessor::new(exporter, calculator);
 ```
+
+**Note**: Contract layer contains ONLY traits (interfaces), NOT pure functions or implementations.
 
 ### Pattern 2: Infrastructure importing from Infrastructure [FORBIDDEN]
 
@@ -133,34 +147,31 @@ use crate::capabilities_dummy_analyzer::symbol_used_real;  // FORBIDDEN
 use crate::capabilities_unused_analyzer::extract_imported_aliases;  // FORBIDDEN
 
 // CORRECT:
-// Option A: Move computation to capabilities, infrastructure only does I/O
-// capabilities_import_analyzer.rs (NEW)
+// 1. Create trait in contract layer (ONLY trait, no implementation)
+// contract_import_analyzer_port.rs
+pub trait IImportAnalyzerPort: Send + Sync {
+    fn analyze(&self, content: &str) -> AnalysisResult;
+}
+
+// 2. Capability implements trait
+// capabilities_import_analyzer.rs
 pub struct ImportAnalyzer;
-impl ImportAnalyzer {
-    pub fn analyze(content: &str) -> AnalysisResult {
+impl IImportAnalyzerPort for ImportAnalyzer {
+    fn analyze(&self, content: &str) -> AnalysisResult {
         // All computation here
     }
 }
 
-// infrastructure_import_parser_adapter.rs
-// Only does I/O (file reading), returns raw content
-pub struct ImportParserAdapter;
-impl IImportParserPort for ImportParserAdapter {
-    fn read_file(&self, path: &Path) -> Result<String, io::Error> {
-        fs::read_to_string(path)  // I/O only
-    }
-}
-
-// Option B: If infrastructure MUST call capabilities, use protocol in contract
-// contract_import_analyzer_protocol.rs
-pub trait IImportAnalyzerProtocol: Send + Sync {
-    fn analyze(&self, content: &str) -> AnalysisResult;
-}
-
+// 3. Infrastructure receives via DI (knows only the trait)
 // infrastructure_import_parser_adapter.rs
 pub struct ImportParserAdapter {
-    analyzer: Arc<dyn IImportAnalyzerProtocol>,  // via DI
+    analyzer: Arc<dyn IImportAnalyzerPort>,  // via DI
 }
+
+// 4. Root container wires implementation
+// root_container.rs
+let analyzer: Arc<dyn IImportAnalyzerPort> = Arc::new(ImportAnalyzer::new());
+let parser = ImportParserAdapter::new(analyzer);
 ```
 
 ### Pattern 4: Shared Infrastructure Implementation [DI WIRING]
@@ -218,6 +229,7 @@ Create trait (port/protocol) in contract layer for needed functionality:
 
 ```rust
 // contract_<concept>_port.rs or contract_<concept>_protocol.rs
+// ONLY traits, NO implementations or pure functions!
 pub trait I<Concept>Port: Send + Sync {
     fn method(&self, args...) -> Result<Output, Error>;
 }
@@ -259,10 +271,12 @@ If the implementation is shared across crates:
 ## File Naming Convention
 
 ```
-contract_<concept>_port.rs      // Outbound interface (implemented by infrastructure)
-contract_<concept>_protocol.rs  // Inbound interface (implemented by capabilities)
-contract_<concept>_aggregate.rs // Facade interface
+contract_<concept>_port.rs      // Outbound interface (implemented by infrastructure) - TRAIT ONLY
+contract_<concept>_protocol.rs  // Inbound interface (implemented by capabilities) - TRAIT ONLY
+contract_<concept>_aggregate.rs // Facade interface - TRAIT ONLY
 ```
+
+**Important**: Contract layer contains ONLY trait definitions, NOT implementations or pure functions.
 
 ## Quick Reference
 

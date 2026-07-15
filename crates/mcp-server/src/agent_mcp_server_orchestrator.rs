@@ -24,6 +24,28 @@ use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAg
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
 
+pub(crate) fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
+    let mut dir = std::path::Path::new(path).to_path_buf();
+    if !dir.is_absolute() {
+        dir = std::env::current_dir().ok()?.join(&dir);
+    }
+    if dir.is_file() {
+        dir.pop();
+    }
+    loop {
+        if dir.join("Cargo.toml").exists()
+            || dir.join("crates").is_dir()
+            || dir.join("packages").is_dir()
+            || dir.join("modules").is_dir()
+        {
+            return Some(dir);
+        }
+        if !dir.pop() {
+            return None;
+        }
+    }
+}
+
 pub struct McpServerDependencies {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -46,8 +68,6 @@ impl McpServerOrchestrator {
         Self { deps }
     }
 }
-
-use shared::common::taxonomy_workspace_helper::find_workspace_root;
 
 /// Resolve a path to an absolute path, using current_dir as fallback.
 /// Returns None if the path doesn't exist.

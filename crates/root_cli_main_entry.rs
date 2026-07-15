@@ -100,10 +100,7 @@ fn main() -> ExitCode {
             naming_orchestrator: naming_container.orchestrator(),
             external_lint: ext_lint_clone.clone(),
             role_orchestrator: role_container.orchestrator(),
-            scanner_provider: Arc::new(
-                shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(
-                ),
-            ),
+            scanner_provider: Arc::new(code_analysis::FileCollectorProvider::new()),
             orphan_orchestrator: orphan_container.analyzer(),
             layer_detector,
             language_detector: Arc::new(

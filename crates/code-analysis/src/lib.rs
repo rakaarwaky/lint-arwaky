@@ -1,5 +1,9 @@
 // PURPOSE: Module declarations for code-analysis (checkers, container, orchestrator)
 
+pub mod infrastructure_file_collector_provider;
+pub use infrastructure_file_collector_provider::{
+    collect_all_source_files, collect_all_source_files_raw, walk_rs_files, FileCollectorProvider,
+};
 pub mod capabilities_mandatory_definition_checker;
 pub use capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
 pub mod capabilities_line_checker;

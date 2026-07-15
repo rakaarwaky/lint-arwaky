@@ -1,8 +1,8 @@
+pub mod capabilities_report_formatter;
 pub mod taxonomy_action_flags_vo;
 pub mod taxonomy_adapter_info_vo;
 pub mod taxonomy_file_entry_vo;
 pub mod taxonomy_lint_result_vo;
-pub mod taxonomy_report_formatter_helper;
 pub mod taxonomy_scan_update_vo;
 pub mod taxonomy_state_vo;
 pub mod taxonomy_tui_event;

@@ -1,3 +1,4 @@
+use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::find_workspace_root;
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
     McpServerDependencies, McpServerOrchestrator,
 };
@@ -14,7 +15,6 @@ use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::common::taxonomy_workspace_helper::find_workspace_root;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;

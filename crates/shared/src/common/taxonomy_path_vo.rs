@@ -342,12 +342,9 @@ impl DirectoryPath {
                 Ok(p) => p,
                 Err(_) => path,
             };
-            let rel_str = relative_path.to_string_lossy();
             let fp = FilePath::new(path.to_string_lossy().to_string()).unwrap_or_default();
-            if !fp.is_ignored(ignored) {
-                if fp.is_lintable() {
-                    files.push(fp);
-                }
+            if !fp.is_ignored(ignored) && fp.is_lintable() {
+                files.push(fp);
             }
             return files;
         }

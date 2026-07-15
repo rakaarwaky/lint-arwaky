@@ -15,8 +15,8 @@ use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_config_vo::ArchitectureRule;
+use shared::import_rules::contract_layer_prefix_port::ILayerPrefixPort;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
-use shared::import_rules::taxonomy_path_helper;
 use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::taxonomy_layer_vo::LayerNameVO;
 use std::sync::Arc;
@@ -43,6 +43,7 @@ pub struct LayerDetectionAnalyzer {
     pub layer_map: LayerMapVO,
     pub fs: Arc<dyn IFileSystemPort>,
     pub parser: Arc<dyn ISourceParserPort>,
+    pub layer_prefix: Arc<dyn ILayerPrefixPort>,
 }
 
 impl LayerDetectionAnalyzer {
@@ -65,6 +66,7 @@ impl LayerDetectionAnalyzer {
         mut config: ArchitectureConfig,
         fs: Arc<dyn IFileSystemPort>,
         parser: Arc<dyn ISourceParserPort>,
+        layer_prefix: Arc<dyn ILayerPrefixPort>,
     ) -> Self {
         // Step 1: Index all rules by layer scope (both base + full scoped)
         let mut rules_by_layer: HashMap<String, Vec<&ArchitectureRule>> = HashMap::new();
@@ -264,6 +266,7 @@ impl LayerDetectionAnalyzer {
             layer_map,
             fs,
             parser,
+            layer_prefix,
         }
     }
 
@@ -284,7 +287,7 @@ impl LayerDetectionAnalyzer {
 
         // PREFIX-BASED DETECTION (FRD v1.1)
         // All valid files must carry a layer prefix — enforced by AES101/AES102 naming rules.
-        if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(filename) {
+        if let Some(layer) = self.layer_prefix.extract_layer_from_prefix(filename) {
             return Some(self.resolve_specialized_layer(&layer, file_path));
         }
 
@@ -337,7 +340,7 @@ impl LayerDetectionAnalyzer {
 
         // Strategy 2: Prefix-based match (e.g., "taxonomy_definition_vo" → "taxonomy")
         for part in &meaningful_parts {
-            if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(part) {
+            if let Some(layer) = self.layer_prefix.extract_layer_from_prefix(part) {
                 return Some(self.refine_module_layer(&layer, &meaningful_parts));
             }
         }

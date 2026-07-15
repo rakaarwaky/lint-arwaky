@@ -1182,6 +1182,7 @@ name = "git_hooks-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "code_analysis-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
@@ -3845,6 +3846,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "clap",
+ "code_analysis-lint-arwaky",
  "once_cell",
  "regex",
  "serde",

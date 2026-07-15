@@ -1,6 +1,27 @@
 use crate::common::taxonomy_name_vo::SymbolName;
+use crate::import_rules::contract_cycle_analyzer_port::ICycleAnalyzerPort;
 use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use std::collections::{HashMap, HashSet};
+
+pub struct CycleAnalyzer;
+
+impl CycleAnalyzer {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for CycleAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ICycleAnalyzerPort for CycleAnalyzer {
+    fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
+        detect_cycle_edges(edges)
+    }
+}
 
 #[derive(Clone, Copy, PartialEq)]
 enum Color {

@@ -19,12 +19,34 @@ use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAg
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::tui::capabilities_report_formatter::ReportFormatterHelper;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
-use shared::tui::taxonomy_report_formatter_helper::ReportFormatterHelper;
 use std::sync::Arc;
+
+fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
+    let mut dir = std::path::Path::new(path).to_path_buf();
+    if !dir.is_absolute() {
+        dir = std::env::current_dir().ok()?.join(&dir);
+    }
+    if dir.is_file() {
+        dir.pop();
+    }
+    loop {
+        if dir.join("Cargo.toml").exists()
+            || dir.join("crates").is_dir()
+            || dir.join("packages").is_dir()
+            || dir.join("modules").is_dir()
+        {
+            return Some(dir);
+        }
+        if !dir.pop() {
+            return None;
+        }
+    }
+}
 
 fn is_binary_available(b: &str) -> bool {
     std::process::Command::new("sh")
@@ -269,12 +291,11 @@ impl LintExecutor {
 
                 // Collect ALL source files from workspace root for cross-workspace orphan detection
                 let scan_root =
-                    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
-                        .unwrap_or_else(|| std::path::PathBuf::from(path));
+                    find_workspace_root(path).unwrap_or_else(|| std::path::PathBuf::from(path));
                 let all_source_files: Vec<String> =
-                    shared::common::collect_all_source_files(&scan_root)
-                        .iter()
-                        .map(|f| f.value.clone())
+                    code_analysis::collect_all_source_files(&scan_root)
+                        .into_iter()
+                        .map(|f| f.value)
                         .collect();
 
                 for ws in &workspaces {
@@ -507,10 +528,9 @@ impl ILintExecutorProtocol for LintExecutor {
         ) {
             (Some(orphan_agg), Some(layer_det), Some(scanner)) => {
                 // Resolve workspace root like CLI does
-                let scan_root =
-                    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or_else(|| path.to_string());
+                let scan_root = find_workspace_root(path)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|| path.to_string());
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
@@ -636,15 +656,18 @@ impl ILintExecutorProtocol for LintExecutor {
     fn duplicates(&self, path: &str) -> LintExecutionResult {
         let analyzer =
             code_analysis::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer::new();
-        let scan_root = shared::common::taxonomy_workspace_helper::find_workspace_root(path)
+        let scan_root = find_workspace_root(path)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
         let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
             .unwrap_or_default();
-        let scanner =
-            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
-        let source_files = match scanner.scan_directory(&dir_path) {
+        let source_files = match self
+            .scanner_provider
+            .as_ref()
+            .map(|s| s.scan_directory(&dir_path))
+            .unwrap_or(Ok(Default::default()))
+        {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };

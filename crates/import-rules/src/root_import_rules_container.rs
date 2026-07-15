@@ -3,6 +3,7 @@ use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
 use shared::common::contract_parser_port::ISourceParserPort;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_dummy_import_checker_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
@@ -13,7 +14,7 @@ use std::sync::Arc;
 pub struct ImportContainer {
     mandatory: Arc<dyn IArchImportProtocol>,
     forbidden: Arc<dyn IArchImportProtocol>,
-    intent: Arc<dyn IArchImportProtocol>,
+    intent: Arc<dyn IDummyImportCheckerProtocol>,
     unused: Arc<dyn IUnusedImportProtocol>,
     cycle: Arc<dyn ICycleAnalysisProtocol>,
     analyzer: Arc<dyn IAnalyzer>,
@@ -32,13 +33,47 @@ impl ImportContainer {
         source_parser: Arc<dyn ISourceParserPort>,
     ) -> Self {
         let fs = Arc::new(crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
-        let parser: Arc<dyn IImportParserPort> =
-            Arc::new(crate::infrastructure_import_parser_adapter::ImportParserAdapter::new());
+
+        // Wire capabilities via DI
+        let cycle_analyzer: Arc<
+            dyn shared::import_rules::contract_cycle_analyzer_port::ICycleAnalyzerPort,
+        > = Arc::new(crate::capabilities_cycle_analyzer::CycleAnalyzer::new());
+        let parser_processor: Arc<
+            dyn shared::import_rules::contract_parser_processor_port::IParserProcessorPort,
+        > = Arc::new(crate::capabilities_parser_processor::ParserProcessor::new());
+        let unused_analyzer: Arc<
+            dyn shared::import_rules::contract_unused_analyzer_port::IUnusedAnalyzerPort,
+        > = Arc::new(crate::capabilities_unused_analyzer::UnusedAnalyzer::new());
+
+        let layer_prefix: Arc<
+            dyn shared::import_rules::contract_layer_prefix_port::ILayerPrefixPort,
+        > = Arc::new(
+            crate::capabilities_layer_prefix_extractor::LayerPrefixExtractor::new(),
+        );
+
+        // Wire import_analyzer with all dependencies (no more separate DummyAnalyzer — logic merged into DummyImportChecker)
+        let import_analyzer: Arc<
+            dyn shared::import_rules::contract_import_analyzer_port::IImportAnalyzerPort,
+        > = Arc::new(crate::capabilities_import_analyzer::ImportAnalyzer::new(
+            cycle_analyzer,
+            parser_processor,
+            unused_analyzer,
+        ));
+
+        // Infrastructure receives capabilities via DI
+        let parser: Arc<dyn IImportParserPort> = Arc::new(
+            crate::infrastructure_import_parser_adapter::ImportParserAdapter::new(
+                import_analyzer,
+                layer_prefix.clone(),
+            ),
+        );
+
         let analyzer = Arc::new(
             crate::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
                 config.clone(),
                 fs,
                 source_parser,
+                layer_prefix,
             ),
         );
 
@@ -52,7 +87,9 @@ impl ImportContainer {
                 parser.clone(),
             ),
         );
-        let intent = Arc::new(
+        let intent: Arc<
+            dyn shared::import_rules::contract_dummy_import_checker_protocol::IDummyImportCheckerProtocol,
+        > = Arc::new(
             crate::capabilities_dummy_import_checker::DummyImportChecker::new(parser.clone()),
         );
         let unused = Arc::new(

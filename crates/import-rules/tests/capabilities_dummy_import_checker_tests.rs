@@ -1,4 +1,3 @@
-use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
@@ -7,10 +6,11 @@ use shared::common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, Li
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::import_rules::contract_dummy_import_checker_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
-use shared::import_rules::contract_rule_protocol::IArchRuleProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
+use std::collections::{HashMap, HashSet};
 
 // ---------------------------------------------------------------------------
 // Mock parser (minimal implementation)

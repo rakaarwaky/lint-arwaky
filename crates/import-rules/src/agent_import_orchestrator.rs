@@ -19,6 +19,7 @@ use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::import_rules::contract_dummy_import_checker_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_rule_protocol::{IAnalyzer, IArchImportProtocol};
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
@@ -49,7 +50,7 @@ fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePa
 pub struct ImportOrchestrator {
     mandatory: Arc<dyn IArchImportProtocol>,
     forbidden: Arc<dyn IArchImportProtocol>,
-    intent: Arc<dyn IArchImportProtocol>,
+    intent: Arc<dyn IDummyImportCheckerProtocol>,
     unused: Arc<dyn IUnusedImportProtocol>,
     cycle: Arc<dyn ICycleAnalysisProtocol>,
     analyzer: Arc<dyn IAnalyzer>,
@@ -62,7 +63,7 @@ impl ImportOrchestrator {
     pub fn new(
         mandatory: Arc<dyn IArchImportProtocol>,
         forbidden: Arc<dyn IArchImportProtocol>,
-        intent: Arc<dyn IArchImportProtocol>,
+        intent: Arc<dyn IDummyImportCheckerProtocol>,
         unused: Arc<dyn IUnusedImportProtocol>,
         cycle: Arc<dyn ICycleAnalysisProtocol>,
         analyzer: Arc<dyn IAnalyzer>,

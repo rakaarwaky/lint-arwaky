@@ -42,7 +42,7 @@ impl GitContainer {
                     .unwrap_or_default(),
             ));
         let scanner: Arc<dyn IScannerProviderPort> =
-            Arc::new(shared::common::FileCollectorProvider::new());
+            Arc::new(code_analysis::FileCollectorProvider::new());
         Self::new(scanner, hook_adapter)
     }
 

@@ -1,5 +1,26 @@
-// PURPOSE: taxonomy_parser_helper — pure utility functions for import parsing and syntax token extraction
+// PURPOSE: ParserProcessor — capabilities layer for import parsing
 use crate::common::taxonomy_name_vo::SymbolName;
+use crate::import_rules::contract_parser_processor_port::IParserProcessorPort;
+
+pub struct ParserProcessor;
+
+impl ParserProcessor {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for ParserProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl IParserProcessorPort for ParserProcessor {
+    fn extract_import_modules(&self, content: &str) -> Vec<SymbolName> {
+        extract_import_modules(content)
+    }
+}
 
 pub fn extract_import_modules(content: &str) -> Vec<SymbolName> {
     let mut modules = Vec::new();

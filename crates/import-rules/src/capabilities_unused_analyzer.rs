@@ -1,10 +1,51 @@
-// PURPOSE: taxonomy_unused_helper — pure utility functions for unused import detection
+// PURPOSE: UnusedAnalyzer — capabilities layer for unused import detection
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_layer_vo::Identity;
 use crate::common::taxonomy_name_vo::SymbolName;
+use crate::import_rules::contract_unused_analyzer_port::IUnusedAnalyzerPort;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
+
+pub struct UnusedAnalyzer;
+
+impl UnusedAnalyzer {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for UnusedAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl IUnusedAnalyzerPort for UnusedAnalyzer {
+    fn extract_imported_aliases(&self, content: &str) -> HashMap<Identity, Identity> {
+        extract_imported_aliases(content)
+    }
+
+    fn extract_exported_symbols(&self, content: &str) -> HashSet<Identity> {
+        extract_exported_symbols(content)
+    }
+
+    fn extract_used_symbols(
+        &self,
+        content: &str,
+        imported_aliases: &HashMap<Identity, Identity>,
+    ) -> HashSet<Identity> {
+        extract_used_symbols(content, imported_aliases)
+    }
+
+    fn extract_rust_js_imports(&self, content: &str) -> Vec<(SymbolName, LineNumber)> {
+        extract_rust_js_imports(content)
+    }
+
+    fn is_name_used(&self, name: &str, content: &str, exclude_line: usize) -> bool {
+        is_name_used(name, content, exclude_line)
+    }
+}
 
 static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
 
