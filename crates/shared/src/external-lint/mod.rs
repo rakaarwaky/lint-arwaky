@@ -1,3 +1,3 @@
-// external-lint — infrastructure adapter for external linters
+// external-lint — contract layer for external linters
 pub mod contract_external_lint_aggregate;
-pub mod infrastructure_external_lint_adapter;
+pub mod contract_external_lint_utility_port;

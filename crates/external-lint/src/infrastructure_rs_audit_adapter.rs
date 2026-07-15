@@ -31,15 +31,19 @@ use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 use tracing::debug;
 
-use shared::external_lint::infrastructure_external_lint_adapter::resolve_cargo_lock_working_dir;
+use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
 pub struct CargoAuditAdapter {
     path_norm: Arc<dyn IPathNormalizationPort>,
+    utility: Arc<dyn IExternalLintUtilityPort>,
 }
 
 impl CargoAuditAdapter {
-    pub fn new(path_norm: Arc<dyn IPathNormalizationPort>) -> Self {
-        Self { path_norm }
+    pub fn new(
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        utility: Arc<dyn IExternalLintUtilityPort>,
+    ) -> Self {
+        Self { path_norm, utility }
     }
 }
 
@@ -51,7 +55,7 @@ impl ILinterAdapterPort for CargoAuditAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
-        let working_dir = resolve_cargo_lock_working_dir(path);
+        let working_dir = self.utility.resolve_cargo_lock_working_dir(path);
         let working_dir_str = &working_dir.value;
 
         let cargo_lock = Path::new(working_dir_str).join("Cargo.lock");

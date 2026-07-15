@@ -42,24 +42,24 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::external_lint::infrastructure_external_lint_adapter::{
-    canonicalize_path, exec_cmd_scan, noop_apply_fix, resolve_js_cmd,
-    resolve_js_working_dir as resolve_working_dir,
-};
+use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
 pub struct TSCAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
+    utility: Arc<dyn IExternalLintUtilityPort>,
 }
 
 impl TSCAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorPort>,
         path_norm: Arc<dyn IPathNormalizationPort>,
+        utility: Arc<dyn IExternalLintUtilityPort>,
     ) -> Self {
         Self {
             executor,
             path_norm,
+            utility,
         }
     }
 }
@@ -79,8 +79,8 @@ impl ILinterAdapterPort for TSCAdapter {
             return Ok(LintResultList::default());
         }
 
-        let wd = resolve_working_dir(path);
-        let abs_path = canonicalize_path(path_str);
+        let wd = self.utility.resolve_js_working_dir(path);
+        let abs_path = self.utility.canonicalize_path(path_str);
 
         let mut args = vec![
             "--noEmit".to_string(),
@@ -91,17 +91,19 @@ impl ILinterAdapterPort for TSCAdapter {
             args.push(abs_path);
         }
 
-        let cmd = resolve_js_cmd("tsc", args, &wd.value);
+        let cmd = self.utility.resolve_js_cmd("tsc", args, &wd.value);
 
-        let response = exec_cmd_scan(
-            self.executor.as_ref(),
-            cmd,
-            wd.clone(),
-            60.0,
-            Some(self.name()),
-            path,
-        )
-        .await?;
+        let response = self
+            .utility
+            .exec_cmd_scan(
+                self.executor.as_ref(),
+                cmd,
+                wd.clone(),
+                60.0,
+                Some(self.name()),
+                path,
+            )
+            .await?;
 
         let output = format!("{}{}", response.stdout, response.stderr);
         let mut results = Vec::new();
@@ -162,6 +164,6 @@ impl ILinterAdapterPort for TSCAdapter {
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        noop_apply_fix().await
+        self.utility.noop_apply_fix().await
     }
 }

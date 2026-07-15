@@ -32,9 +32,9 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
-use shared::external_lint::infrastructure_external_lint_adapter::{
-    default_working_dir, exec_cmd_adapter, has_python_files, noop_apply_fix,
-};
+use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
+// old imports removed:
+// removed
 
 fn mypy_re_with_col() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
@@ -51,6 +51,7 @@ fn mypy_re_without_col() -> Option<&'static Regex> {
 pub struct MyPyAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
+    utility: Arc<dyn IExternalLintUtilityPort>,
     bin_path: Option<FilePath>,
 }
 
@@ -58,11 +59,13 @@ impl MyPyAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorPort>,
         path_norm: Arc<dyn IPathNormalizationPort>,
+        utility: Arc<dyn IExternalLintUtilityPort>,
         bin_path: Option<FilePath>,
     ) -> Self {
         Self {
             executor,
             path_norm,
+            utility,
             bin_path,
         }
     }
@@ -97,7 +100,7 @@ impl ILinterAdapterPort for MyPyAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         // Skip if no Python files exist in the target path
-        if !has_python_files(path) {
+        if !self.utility.has_python_files(path) {
             return Ok(LintResultList::new(vec![]));
         }
 
@@ -109,10 +112,12 @@ impl ILinterAdapterPort for MyPyAdapter {
             "--pretty".to_string(),
             "false".to_string(),
         ];
-        let working_dir = default_working_dir(path);
+        let working_dir = self.utility.default_working_dir(path);
 
-        let response =
-            exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 120.0, self.name()).await?;
+        let response = self
+            .utility
+            .exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 120.0, self.name())
+            .await?;
 
         let stdout = &response.stdout;
         let re = match mypy_re_with_col() {
@@ -226,6 +231,6 @@ impl ILinterAdapterPort for MyPyAdapter {
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        noop_apply_fix().await
+        self.utility.noop_apply_fix().await
     }
 }
