@@ -10,7 +10,6 @@ use shared::common::taxonomy_name_vo::SymbolName;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_import_analyzer_port::IImportAnalyzerPort;
 use shared::import_rules::contract_parser_processor_port::IParserProcessorPort;
-use shared::import_rules::contract_unused_analyzer_port::IUnusedAnalyzerPort;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use std::collections::{HashMap, HashSet};
@@ -19,19 +18,16 @@ use std::sync::Arc;
 pub struct ImportAnalyzer {
     cycle: Arc<dyn ICycleImportProtocol>,
     parser: Arc<dyn IParserProcessorPort>,
-    unused: Arc<dyn IUnusedAnalyzerPort>,
 }
 
 impl ImportAnalyzer {
     pub fn new(
         cycle: Arc<dyn ICycleImportProtocol>,
         parser: Arc<dyn IParserProcessorPort>,
-        unused: Arc<dyn IUnusedAnalyzerPort>,
     ) -> Self {
         Self {
             cycle,
             parser,
-            unused,
         }
     }
 }
@@ -81,11 +77,11 @@ impl IImportAnalyzerPort for ImportAnalyzer {
     }
 
     fn extract_imported_aliases(&self, content: &str) -> HashMap<Identity, Identity> {
-        self.unused.extract_imported_aliases(content)
+        crate::capabilities_import_unused_checker::extract_imported_aliases(content)
     }
 
     fn extract_exported_symbols(&self, content: &str) -> HashSet<Identity> {
-        self.unused.extract_exported_symbols(content)
+        crate::capabilities_import_unused_checker::extract_exported_symbols(content)
     }
 
     fn extract_used_symbols(
@@ -93,11 +89,11 @@ impl IImportAnalyzerPort for ImportAnalyzer {
         content: &str,
         imported_aliases: &HashMap<Identity, Identity>,
     ) -> HashSet<Identity> {
-        self.unused.extract_used_symbols(content, imported_aliases)
+        crate::capabilities_import_unused_checker::extract_used_symbols(content, imported_aliases)
     }
 
     fn extract_rust_js_imports(&self, content: &str) -> Vec<(SymbolName, LineNumber)> {
-        self.unused.extract_rust_js_imports(content)
+        crate::capabilities_import_unused_checker::extract_rust_js_imports(content)
     }
 
     fn is_name_used(&self, name: &str, content: &str, exclude_line: usize) -> bool {

@@ -36,12 +36,10 @@ impl ImportContainer {
 
         // Wire capabilities via DI
         // Cycle detection is now merged into CycleImportAnalyzer — no separate port needed
+        // Unused import analysis is now merged into UnusedImportRuleChecker — no separate port needed
         let parser_processor: Arc<
             dyn shared::import_rules::contract_parser_processor_port::IParserProcessorPort,
         > = Arc::new(crate::capabilities_parser_processor::ParserProcessor::new());
-        let unused_analyzer: Arc<
-            dyn shared::import_rules::contract_unused_analyzer_port::IUnusedAnalyzerPort,
-        > = Arc::new(crate::capabilities_unused_analyzer::UnusedAnalyzer::new());
 
         let layer_prefix: Arc<
             dyn shared::import_rules::contract_layer_prefix_port::ILayerPrefixPort,
@@ -55,7 +53,6 @@ impl ImportContainer {
         > = Arc::new(crate::capabilities_import_analyzer::ImportAnalyzer::new(
             cycle.clone(),
             parser_processor,
-            unused_analyzer,
         ));
 
         // Infrastructure receives capabilities via DI

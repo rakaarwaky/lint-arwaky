@@ -2,7 +2,6 @@
 pub mod capabilities_import_analyzer;
 
 pub mod capabilities_parser_processor;
-pub mod capabilities_unused_analyzer;
 pub mod capabilities_layer_detection_analyzer;
 pub use capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 pub mod capabilities_import_forbidden_checker;
