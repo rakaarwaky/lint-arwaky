@@ -17,36 +17,6 @@ use shared::config_system::taxonomy_config_vo::ArchitectureRule;
 use shared::taxonomy_definition_vo::{LayerMapVO};
 use shared::taxonomy_layer_vo::LayerNameVO;
 
-/// Compute relative path from file_path relative to root_dir (pure computation).
-///
-/// Steps:
-///   1. Normalize both paths by canonicalizing and replacing backslashes with forward slashes.
-///   2. If file_path starts with root_dir, strip the prefix and return the remainder.
-///   3. Otherwise return the full normalized file_path.
-pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
-    let normalized_file = match Path::new(file_path)
-        .canonicalize()
-        .map(|p| p.to_string_lossy().replace('\\', "/"))
-    {
-        Ok(p) => p,
-        Err(_) => file_path.replace('\\', "/"),
-    };
-    let normalized_root = match Path::new(root_dir)
-        .canonicalize()
-        .map(|p| p.to_string_lossy().replace('\\', "/"))
-    {
-        Ok(p) => p,
-        Err(_) => root_dir.trim_end_matches('/').replace('\\', "/"),
-    };
-    if normalized_file.starts_with(&normalized_root) {
-        normalized_file[normalized_root.len()..]
-            .trim_start_matches('/')
-            .to_string()
-    } else {
-        normalized_file
-    }
-}
-
 /// Central layer detection and rule analysis engine implementing ILayerDetectionProtocol.
 ///
 /// Capabilities:
@@ -60,7 +30,6 @@ pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
 ///   - Internal: `resolve_specialized_layer(base, file)` → resolves sub-layers (e.g., "capabilities(command").
 ///   - Internal: `new(config)` → builds a complete layer map by merging global rules, base-layer rules,
 ///     and specialised sub-layer rules from the rule configuration.
-///   - Helper: `get_relative_path(file, root)` → computes relative path from file to root.
 ///
 /// Constructor workflow:
 ///   1. Index all config rules by layer scope (both base name and full scoped name).
