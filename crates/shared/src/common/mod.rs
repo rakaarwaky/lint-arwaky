@@ -38,6 +38,7 @@ pub mod taxonomy_parser_error;
 pub mod taxonomy_path_utils_vo;
 pub mod taxonomy_path_vo;
 pub mod taxonomy_paths_vo;
+pub mod taxonomy_workspace_helper;
 pub use infrastructure_file_collector_provider::{
     collect_all_source_files, collect_all_source_files_raw, walk_rs_files, FileCollectorProvider,
 };

@@ -151,8 +151,12 @@ impl FilePath {
         let ext = self.extension();
         match ext.as_str() {
             "py" => crate::common::taxonomy_language_vo::Language::Python,
-            "js" | "jsx" | "mjs" | "cjs" => crate::common::taxonomy_language_vo::Language::JavaScript,
-            "ts" | "tsx" | "mts" | "cts" => crate::common::taxonomy_language_vo::Language::TypeScript,
+            "js" | "jsx" | "mjs" | "cjs" => {
+                crate::common::taxonomy_language_vo::Language::JavaScript
+            }
+            "ts" | "tsx" | "mts" | "cts" => {
+                crate::common::taxonomy_language_vo::Language::TypeScript
+            }
             "rs" => crate::common::taxonomy_language_vo::Language::Rust,
             _ => crate::common::taxonomy_language_vo::Language::Unknown,
         }
@@ -224,7 +228,8 @@ impl FilePath {
                 continue;
             }
             // (3) Bare segment/pattern
-            let pat_segments: Vec<&str> = pat.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
+            let pat_segments: Vec<&str> =
+                pat.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
             if pat_segments.len() == 1 {
                 if segments.contains(&pat_segments[0]) {
                     return true;
@@ -325,7 +330,11 @@ impl DirectoryPath {
     }
 
     /// Recursively collect all lintable source files from this directory.
-    pub fn collect_source_files(&self, root_dir: &std::path::Path, ignored: &[String]) -> Vec<FilePath> {
+    pub fn collect_source_files(
+        &self,
+        root_dir: &std::path::Path,
+        ignored: &[String],
+    ) -> Vec<FilePath> {
         let mut files = Vec::new();
         let path = std::path::Path::new(&self.value);
         if path.is_file() {
