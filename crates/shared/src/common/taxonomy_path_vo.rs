@@ -243,6 +243,14 @@ impl FilePath {
         }
         false
     }
+
+    /// Walk up from the path looking for workspace root markers.
+    pub fn find_workspace_root(&self) -> Option<DirectoryPath> {
+        let mut dir = std::path::Path::new(&self.value).to_path_buf();
+        dir.pop();
+        let dp = DirectoryPath::new(dir.to_string_lossy().to_string()).ok()?;
+        dp.find_workspace_root()
+    }
 }
 
 impl std::ops::Deref for FilePath {
@@ -294,6 +302,80 @@ impl DirectoryPath {
             trimmed.to_string()
         };
         Ok(DirectoryPath { value })
+    }
+
+    /// Walk up from the directory looking for workspace root markers.
+    pub fn find_workspace_root(&self) -> Option<DirectoryPath> {
+        let mut dir = std::path::Path::new(&self.value).to_path_buf();
+        if !dir.is_absolute() {
+            dir = std::env::current_dir().ok()?.join(&dir);
+        }
+        loop {
+            if dir.join("Cargo.toml").exists()
+                || dir.join("crates").is_dir()
+                || dir.join("packages").is_dir()
+                || dir.join("modules").is_dir()
+            {
+                return DirectoryPath::new(dir.to_string_lossy().to_string()).ok();
+            }
+            if !dir.pop() {
+                return None;
+            }
+        }
+    }
+
+    /// Recursively collect all lintable source files from this directory.
+    pub fn collect_source_files(&self, root_dir: &std::path::Path, ignored: &[String]) -> Vec<FilePath> {
+        let mut files = Vec::new();
+        let path = std::path::Path::new(&self.value);
+        if path.is_file() {
+            let relative_path = match path.strip_prefix(root_dir) {
+                Ok(p) => p,
+                Err(_) => path,
+            };
+            let rel_str = relative_path.to_string_lossy();
+            let fp = FilePath::new(path.to_string_lossy().to_string()).unwrap_or_default();
+            if !fp.is_ignored(ignored) {
+                if fp.is_lintable() {
+                    files.push(fp);
+                }
+            }
+            return files;
+        }
+
+        if let Ok(entries) = std::fs::read_dir(&self.value) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                let relative_path = match path.strip_prefix(root_dir) {
+                    Ok(p) => p,
+                    Err(_) => &path,
+                };
+                let rel_str = relative_path.to_string_lossy();
+                let fp_for_ignore = FilePath::new(rel_str.to_string()).unwrap_or_default();
+                if fp_for_ignore.is_ignored(ignored) {
+                    continue;
+                }
+                if path.is_dir() {
+                    let dir_name = path
+                        .file_name()
+                        .map(|n| n.to_string_lossy())
+                        .unwrap_or_default();
+                    if dir_name == "tests" {
+                        continue;
+                    }
+                    let sub_dir =
+                        DirectoryPath::new(path.to_string_lossy().to_string()).unwrap_or_default();
+                    files.extend(sub_dir.collect_source_files(root_dir, ignored));
+                } else if let Some(path_str) = path.to_str() {
+                    if let Ok(fp) = FilePath::new(path_str.to_string()) {
+                        if fp.is_lintable() {
+                            files.push(fp);
+                        }
+                    }
+                }
+            }
+        }
+        files
     }
 }
 

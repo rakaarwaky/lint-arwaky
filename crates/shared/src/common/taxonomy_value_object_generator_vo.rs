@@ -1,28 +1,6 @@
 // PURPOSE: Macros for generating boilerplate impls on String/primitive wrapper value objects.
-//
-// These macros emit the impls that every String-wrapper VO needs:
-//   - `new(value)` constructor
-//   - `value()` accessor
-//   - `Display`
-//   - `Hash` / `PartialEq` / `Eq` (optional)
-//   - `From<&str>` / `From<String>` / `From<$Inner>` (for primitives)
-//   - serde `Deserialize` (accepts either a primitive or a map with a `value` key)
-//
-// Using the macro keeps each VO file to its domain-specific surface and stops
-// AES305 from flagging the same serde visitor across ~13 files.
 
 /// Generate a String-wrapped value object with the standard VO surface.
-///
-/// # Usage
-/// ```ignore
-/// // in any sibling module file:
-/// use crate::string_value_object;
-/// string_value_object!(FooName);
-/// ```
-///
-/// The macro is `#[macro_export]`-ed so it is accessible at the crate root.
-/// Each VO file `use crate::string_value_object;` once and then invokes the
-/// macro locally.
 #[macro_export]
 macro_rules! string_value_object {
     ($name:ident) => {
@@ -126,15 +104,6 @@ macro_rules! string_value_object {
 }
 
 /// Generate a primitive-wrapped value object (e.g. `i64`, `f64`, `bool`).
-///
-/// # Usage
-/// ```ignore
-/// primitive_value_object!(LineNumber, i64);
-/// ```
-///
-/// Emits the same surface as `string_value_object!` but with `From<$Inner>`,
-/// `From<$Inner>` conversions, and a serde visitor that accepts the inner
-/// type or a `{"value": ...}` map.
 #[macro_export]
 macro_rules! primitive_value_object {
     ($name:ident, $inner:ty) => {
@@ -234,3 +203,6 @@ macro_rules! primitive_value_object {
         }
     };
 }
+
+/// ValueObjectGeneratorVo defines a placeholder struct to represent the generator concept.
+pub struct ValueObjectGeneratorVo;

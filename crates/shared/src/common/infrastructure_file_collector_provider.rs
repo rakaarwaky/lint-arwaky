@@ -3,7 +3,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::common::contract_scanner_provider_port::IScannerProviderPort;
-use crate::common::taxonomy_file_collector_helper::is_path_ignored;
 use crate::common::taxonomy_filesystem_error::FileSystemError;
 use crate::common::taxonomy_path_vo::DirectoryPath;
 use crate::common::taxonomy_path_vo::FilePath;
@@ -75,7 +74,11 @@ fn is_source_file(ext: &str) -> bool {
 
 fn is_ignored_dir(dir: &Path, ignored: &[String]) -> bool {
     let s = dir.to_string_lossy();
-    is_path_ignored(&s, ignored)
+    if let Ok(fp) = FilePath::new(s.to_string()) {
+        fp.is_ignored(ignored)
+    } else {
+        false
+    }
 }
 
 #[cfg(unix)]
