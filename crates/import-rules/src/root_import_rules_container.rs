@@ -27,7 +27,13 @@ impl ImportContainer {
     pub fn new_with_config(config: ArchitectureConfig) -> Self {
         let parser: Arc<dyn IImportParserPort> =
             Arc::new(crate::infrastructure_import_parser_adapter::ImportParserAdapter::new());
+        Self::new_with_config_and_parser(config, parser)
+    }
 
+    pub fn new_with_config_and_parser(
+        config: ArchitectureConfig,
+        parser: Arc<dyn IImportParserPort>,
+    ) -> Self {
         let analyzer: Arc<dyn ILayerDetectionProtocol> = Arc::new(
             crate::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
                 config.clone(),
@@ -100,5 +106,123 @@ impl ImportContainer {
 impl Default for ImportContainer {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Null source parser — placeholder for testing or when no parser is needed
+pub struct NullSourceParser;
+
+impl shared::common::contract_parser_port::ISourceParserPort for NullSourceParser {
+    fn extract_imports(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Result<
+        shared::code_analysis::taxonomy_import_source_vo::ImportInfoList,
+        shared::common::taxonomy_parser_error::SourceParserError,
+    > {
+        Ok(shared::code_analysis::taxonomy_import_source_vo::ImportInfoList::default())
+    }
+    fn get_raw_symbols(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Result<
+        shared::mcp_server::taxonomy_job_vo::ResponseData,
+        shared::common::taxonomy_parser_error::SourceParserError,
+    > {
+        Ok(shared::mcp_server::taxonomy_job_vo::ResponseData::default())
+    }
+    fn get_class_attributes(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::mcp_server::taxonomy_job_vo::ResponseData {
+        shared::mcp_server::taxonomy_job_vo::ResponseData::default()
+    }
+    fn has_all_export(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::mcp_server::taxonomy_job_vo::SuccessStatus {
+        shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(false)
+    }
+    fn find_primitive_violations(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+        _primitive_types: &shared::common::taxonomy_naming_list_vo::PrimitiveTypeList,
+    ) -> shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList {
+        shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList::default()
+    }
+    fn find_unused_imports(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::code_analysis::taxonomy_import_source_vo::ImportInfoList {
+        shared::code_analysis::taxonomy_import_source_vo::ImportInfoList::default()
+    }
+    fn get_class_definitions(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Result<
+        shared::common::taxonomy_suggestion_vo::MetadataVO,
+        shared::common::taxonomy_parser_error::SourceParserError,
+    > {
+        Ok(shared::common::taxonomy_suggestion_vo::MetadataVO::new(
+            std::collections::HashMap::new(),
+        ))
+    }
+    fn get_function_definitions(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
+        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
+    }
+    fn is_symbol_exported(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+        _symbol: &shared::common::taxonomy_name_vo::SymbolName,
+    ) -> shared::mcp_server::taxonomy_job_vo::SuccessStatus {
+        shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(false)
+    }
+    fn get_class_methods(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
+        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
+    }
+    fn get_class_bases_map(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
+        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
+    }
+    fn get_assignment_targets(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
+        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
+    }
+    fn get_control_flow_count(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::common::taxonomy_common_vo::Count {
+        shared::common::taxonomy_common_vo::Count::default()
+    }
+    fn is_barrel_file(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::common::taxonomy_common_vo::BooleanVO {
+        shared::common::taxonomy_common_vo::BooleanVO::default()
+    }
+    fn get_stem(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::common::taxonomy_name_vo::SymbolName {
+        shared::common::taxonomy_name_vo::SymbolName::new("")
+    }
+    fn is_entry_point(
+        &self,
+        _path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::common::taxonomy_common_vo::BooleanVO {
+        shared::common::taxonomy_common_vo::BooleanVO::default()
+    }
+    fn get_supported_extensions(&self) -> shared::common::taxonomy_common_vo::PatternList {
+        shared::common::taxonomy_common_vo::PatternList::default()
     }
 }

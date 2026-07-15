@@ -8,9 +8,8 @@ use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
+use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
-use shared::import_rules::contract_layer_prefix_port;
-use shared::import_rules::contract_rule_protocol::IArchRuleProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::taxonomy_definition_vo::LayerDefinition;
@@ -94,14 +93,26 @@ impl IImportParserPort for MockMandatoryParser {
             "agent" => Some(LayerNameVO::new("agent")),
             "surfaces" | "surface" => Some(LayerNameVO::new("surfaces")),
             "root" => Some(LayerNameVO::new("root")),
-            s => {
-                if let Some(layer) = contract_layer_prefix_port::extract_layer_from_prefix(s) {
-                    Some(LayerNameVO::new(layer))
-                } else {
-                    None
-                }
+            s => self.extract_layer_from_prefix(s).map(LayerNameVO::new),
+        }
+    }
+
+    fn extract_layer_from_prefix(&self, segment: &str) -> Option<String> {
+        const PREFIX_MAP: &[(&str, &str)] = &[
+            ("taxonomy_", "taxonomy"),
+            ("contract_", "contract"),
+            ("capabilities_", "capabilities"),
+            ("infrastructure_", "infrastructure"),
+            ("agent_", "agent"),
+            ("surface_", "surfaces"),
+            ("root_", "root"),
+        ];
+        for &(prefix, layer) in PREFIX_MAP {
+            if segment.starts_with(prefix) {
+                return Some(layer.to_string());
             }
         }
+        None
     }
 
     fn read_file_to_message(&self, _: &FilePath) -> Result<LintMessage, std::io::Error> {

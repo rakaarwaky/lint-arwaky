@@ -91,6 +91,23 @@ impl IImportParserPort for MockDummyParser {
     fn is_name_used(&self, _: &str, _: &str, _: LineNumber) -> bool {
         false
     }
+    fn extract_layer_from_prefix(&self, segment: &str) -> Option<String> {
+        const PREFIX_MAP: &[(&str, &str)] = &[
+            ("taxonomy_", "taxonomy"),
+            ("contract_", "contract"),
+            ("capabilities_", "capabilities"),
+            ("infrastructure_", "infrastructure"),
+            ("agent_", "agent"),
+            ("surface_", "surfaces"),
+            ("root_", "root"),
+        ];
+        for &(prefix, layer) in PREFIX_MAP {
+            if segment.starts_with(prefix) {
+                return Some(layer.to_string());
+            }
+        }
+        None
+    }
 }
 
 // ---------------------------------------------------------------------------

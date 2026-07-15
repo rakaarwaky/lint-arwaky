@@ -1,4 +1,5 @@
 use import_rules_lint_arwaky::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
+use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::contract_parser_port::ISourceParserPort;
 use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_common_vo::PatternList;
@@ -90,6 +91,7 @@ impl IFileSystemPort for MockFs {
     async fn read_file(&self, _path: &FilePath) -> Result<ContentString, FileSystemError> {
         Ok(ContentString::new(""))
     }
+    fn walk_recursive(&self, _: &std::path::Path, _: &[String], _: &mut Vec<FilePath>) {}
 }
 
 struct MockParser;
@@ -179,7 +181,7 @@ fn make_config() -> ArchitectureConfig {
 #[test]
 fn test_detect_layer_by_prefix_taxonomy() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_layer("src/taxonomy_config_vo.rs", ".");
     assert_eq!(result, Some("taxonomy".to_string()));
 }
@@ -187,7 +189,7 @@ fn test_detect_layer_by_prefix_taxonomy() {
 #[test]
 fn test_detect_layer_by_prefix_capabilities() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_layer("src/capabilities_import_checker.rs", ".");
     assert_eq!(result, Some("capabilities".to_string()));
 }
@@ -195,7 +197,7 @@ fn test_detect_layer_by_prefix_capabilities() {
 #[test]
 fn test_detect_layer_no_prefix_returns_none() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_layer("src/main.rs", ".");
     assert_eq!(result, None);
 }
@@ -203,7 +205,7 @@ fn test_detect_layer_no_prefix_returns_none() {
 #[test]
 fn test_detect_layer_unknown_prefix_returns_none() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_layer("src/random_file.rs", ".");
     assert_eq!(result, None);
 }
@@ -211,7 +213,7 @@ fn test_detect_layer_unknown_prefix_returns_none() {
 #[test]
 fn test_detect_module_layer_direct_match() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_module_layer("shared::taxonomy::taxonomy_config_vo");
     assert_eq!(result, Some("taxonomy".to_string()));
 }
@@ -219,7 +221,7 @@ fn test_detect_module_layer_direct_match() {
 #[test]
 fn test_detect_module_layer_prefix_match() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_module_layer("crate::taxonomy_config_vo::Config");
     assert_eq!(result, Some("taxonomy".to_string()));
 }
@@ -234,7 +236,7 @@ fn test_resolve_specialized_layer_with_scoped_rule() {
         .cloned()
         .unwrap();
     config.layers.insert(spec_key, spec_def);
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_layer("src/capabilities_import_checker.rs", ".");
     assert_eq!(result, Some("capabilities(checker)".to_string()));
 }
@@ -242,7 +244,7 @@ fn test_resolve_specialized_layer_with_scoped_rule() {
 #[test]
 fn test_detect_layer_empty_path() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_layer("", ".");
     assert_eq!(result, None);
 }
@@ -250,7 +252,7 @@ fn test_detect_layer_empty_path() {
 #[test]
 fn test_get_layer_def_exists() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.get_layer_def("taxonomy");
     assert!(result.is_some());
     assert!(result
@@ -263,7 +265,7 @@ fn test_get_layer_def_exists() {
 #[test]
 fn test_get_layer_def_not_found() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.get_layer_def("nonexistent");
     assert!(result.is_none());
 }
@@ -271,7 +273,7 @@ fn test_get_layer_def_not_found() {
 #[test]
 fn test_detect_empty_module_path() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_module_layer("");
     assert_eq!(result, None);
 }
@@ -285,7 +287,7 @@ fn test_new_merges_global_rules() {
         mandatory: PatternList::new(vec!["shared::contract".to_string()]),
         ..ArchitectureRule::default()
     });
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let taxonomy_def = analyzer.get_layer_def("taxonomy").unwrap();
     assert!(taxonomy_def
         .mandatory
@@ -296,7 +298,7 @@ fn test_new_merges_global_rules() {
 #[test]
 fn test_detect_module_layer_prefix_fallback() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_module_layer("some_module::taxonomy_random_thing");
     assert_eq!(result, Some("taxonomy".to_string()));
 }
@@ -304,7 +306,7 @@ fn test_detect_module_layer_prefix_fallback() {
 #[test]
 fn test_layer_detection_case_sensitive() {
     let config = make_config();
-    let analyzer = LayerDetectionAnalyzer::new(config, Arc::new(MockFs), Arc::new(MockParser));
+    let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_layer("src/Taxonomy_Config.rs", ".");
     assert_eq!(result, None);
 }

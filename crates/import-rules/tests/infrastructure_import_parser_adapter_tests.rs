@@ -1,7 +1,5 @@
 use std::fs;
-use std::sync::Arc;
 
-use import_rules_lint_arwaky::capabilities_import_analyzer::ImportAnalyzer;
 use import_rules_lint_arwaky::infrastructure_import_parser_adapter::ImportParserAdapter;
 use shared::common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::common::taxonomy_path_vo::FilePath;
@@ -9,7 +7,7 @@ use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 
 fn make_parser() -> ImportParserAdapter {
-    ImportParserAdapter::new(Arc::new(ImportAnalyzer::new()))
+    ImportParserAdapter::new()
 }
 
 fn make_fp(s: &str) -> FilePath {

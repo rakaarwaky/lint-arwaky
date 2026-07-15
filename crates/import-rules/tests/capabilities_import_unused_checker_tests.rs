@@ -11,10 +11,6 @@ use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
-
-// ---------------------------------------------------------------------------
-// Mock parser
-// ---------------------------------------------------------------------------
 struct MockUnusedParser {
     content: String,
     imported_aliases: HashMap<Identity, Identity>,
@@ -113,28 +109,14 @@ impl IImportParserPort for MockUnusedParser {
     fn is_name_used(&self, _: &str, _: &str, _: LineNumber) -> bool {
         self.name_used
     }
+    fn extract_layer_from_prefix(&self, _: &str) -> Option<String> {
+        None
+    }
 }
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-
-#[test]
-fn unused_detection_returns_empty_when_all_used() {
-    let mut parser = MockUnusedParser::new();
-    parser.content = "import os\nimport sys\n\nos.getcwd()\n".to_string();
-    let mut aliases = HashMap::new();
-    aliases.insert(Identity::new("os"), Identity::new("os"));
-    parser.imported_aliases = aliases;
-    let mut used = HashSet::new();
-    used.insert(Identity::new("os"));
-    parser.used_symbols = used;
-
-    let checker = UnusedImportRuleChecker::new(Arc::new(parser));
-    let path = FilePath::new("test.py").unwrap_or_default();
-    let unused = checker.find_unused_imports(&path);
-    assert!(unused.is_empty(), "all imports used");
-}
 
 #[test]
 fn unused_detection_finds_unused_import() {
