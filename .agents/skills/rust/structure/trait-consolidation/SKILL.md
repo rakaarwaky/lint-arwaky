@@ -28,9 +28,11 @@ Consolidate ALL function signatures from a capability/infrastructure/agent imple
 
 - **ONE impl block**: All methods (public, private, helpers, utilities) go into a single `impl I<Name>Protocol for <Type>` block. No separate inherent `impl Type` blocks for methods.
 - **EVERY fn in trait**: Including private helpers and utility functions. Zero exceptions.
+- **NO standalone functions**: Every function MUST be an abstract method in the trait. No free functions, no standalone helper functions outside the trait.
+- **NO free functions**: All logic lives inside `impl Trait for Type` blocks. No `fn helper()` outside of impl blocks.
 - **Only `new()` in inherent impl**: The constructor is the sole exception — it stays in its own `impl Type { pub fn new(...) }` block. Everything else goes in trait impl.
 - **Same names, no prefixes**: All trait methods keep their original names — no `do_`, `pure_`, or any other prefix.
-- **All trait methods have `&self`**: Sync methods use `&self`. Async methods use `async fn(&self, ...)`.
+- **All trait methods have `&self`**: Sync methods use `&self`. Async methods use `async fn(&self, ...)`. Even if the method doesn't use `self`, add `&self` to make it dyn-compatible.
 - **Generic bounds need `where Self: Sized`**: Add this clause to generic trait methods.
 - **Extract shared logic**: When two+ methods share common logic, extract it into one consolidated helper that all callers use. This eliminates duplication and creates a single trait method for the shared logic.
 
@@ -245,8 +247,10 @@ cargo check -p <crate-name> 2>&1 | grep -E "error|cannot find"
 - [ ] ONE `impl Trait for Type` block — no other method impl blocks
 - [ ] ONLY `new()` in separate inherent `impl Type` block
 - [ ] ALL fn from impl file are in trait (same name, no prefixes)
+- [ ] NO standalone functions — every fn is an abstract method in the trait
+- [ ] NO free functions outside of impl blocks
 - [ ] Private helpers and utilities also have trait signatures
-- [ ] All trait methods have `&self`
+- [ ] All trait methods have `&self` (even if unused)
 - [ ] Generic bounds include `where Self: Sized`
 - [ ] All trait methods have implementations
 - [ ] Trait module registered in shared crate's `mod.rs`
@@ -292,3 +296,6 @@ grep "^impl [A-Z]" crates/import-rules/src/capabilities_<name>.rs | grep -v "I<N
 - ❌ Forgetting to register the trait in shared crate's `mod.rs`
 - ❌ Having methods split across multiple `impl` blocks — everything in ONE trait impl
 - ❌ Leaving shared logic duplicated across two public methods — extract into one helper
+- ❌ Creating standalone functions (`fn helper()`) outside of impl blocks — ALL logic goes in trait impl
+- ❌ Using free functions instead of trait methods — every fn must be an abstract method in the trait
+- ❌ Keeping static methods in separate inherent impl blocks — add `&self` and move to trait impl
