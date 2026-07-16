@@ -12,7 +12,7 @@ use std::sync::Arc;
 use std::sync::LazyLock;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// P2 #16: Magic strings → constants
+// CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SUFFIX_PORT: &str = "port";
@@ -23,14 +23,16 @@ const LAYER_CAPABILITIES: &str = "capabilities";
 const LAYER_AGENT: &str = "agent";
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// P2 #21: LazyLock instead of OnceLock
+// STATIC REGEXES (LazyLock)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 static RE_CONTRACT_RUST: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").unwrap());
 
-static RE_CONTRACT_PY: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"class\s+([A-Za-z0-9_]+)\s*[\(:]").unwrap());
+// #11: More specific — only match ABC/Protocol classes, not all classes
+static RE_CONTRACT_PY: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?:class\s+([A-Za-z0-9_]+)\s*\([^)]*ABC[^)]*\)|class\s+([A-Za-z0-9_]+)\s*\([^)]*Protocol[^)]*\))").unwrap()
+});
 
 static RE_TS_INTERFACE_EXPORT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").unwrap());
@@ -38,30 +40,17 @@ static RE_TS_INTERFACE_EXPORT: LazyLock<Regex> =
 static RE_INTERFACE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"interface\s+([A-Za-z0-9_]+)").unwrap());
 
-// P0 #5: Word boundary regex for trait matching
-pub fn word_boundary_re(trait_name: &str) -> Regex {
-    Regex::new(&format!(r"\b{}\b", regex::escape(trait_name))).unwrap()
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
-// P2 #17: Helper to reduce repetition
-// ═══════════════════════════════════════════════════════════════════════════════
-
-pub fn not_orphan() -> OrphanIndicatorResult {
-    OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// P1 #7 + P1 #11: File cache + dedup
+// FILE CACHE — built ONCE, passed by reference
 // ═══════════════════════════════════════════════════════════════════════════════
 
 pub struct FileCache {
-    contents: HashMap<String, Arc<str>>,
-    basenames: HashMap<String, String>,
+    pub contents: HashMap<String, Arc<str>>,
+    pub basenames: HashMap<String, String>,
 }
 
 impl FileCache {
-    fn build(
+    pub fn build(
         all_files: &[FilePath],
         root_dir: &FilePath,
         extractor: &dyn IOrphanFilenameExtractorProtocol,
@@ -72,9 +61,8 @@ impl FileCache {
 
         for path in &search_files {
             if contents.contains_key(path) {
-                continue; // P1 #11: dedup
+                continue;
             }
-            // P2 #14: log warning instead of silent swallow
             match std::fs::read_to_string(path) {
                 Ok(c) => {
                     contents.insert(path.clone(), Arc::from(c.as_str()));
@@ -94,12 +82,6 @@ impl FileCache {
             contents,
             basenames,
         }
-    }
-
-    fn get(&self, path: &str) -> Option<(&str, &str)> {
-        let content = self.contents.get(path).map(|s| s.as_ref())?;
-        let basename = self.basenames.get(path).map(|s| s.as_str())?;
-        Some((content, basename))
     }
 }
 
@@ -136,7 +118,9 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         _inheritance_map: &InheritanceMap,
         all_files: &[FilePath],
     ) -> OrphanIndicatorResult {
-        is_contract_orphan(f, root_dir, all_files, self.extractor.as_ref())
+        // #1: Cache built ONCE by caller, not per-file
+        let cache = FileCache::build(all_files, root_dir, self.extractor.as_ref());
+        is_contract_orphan(f, &cache, self.extractor.as_ref())
     }
 }
 
@@ -146,25 +130,22 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
 
 pub fn is_contract_orphan(
     f: &FilePath,
-    root_dir: &FilePath,
-    all_files: &[FilePath],
+    cache: &FileCache,
     extractor: &dyn IOrphanFilenameExtractorProtocol,
 ) -> OrphanIndicatorResult {
     let fp = f.value();
     let suffix = extractor.file_suffix(f).value;
 
-    let content = match std::fs::read_to_string(fp) {
-        Ok(c) => c,
-        Err(_) => return not_orphan(),
-    };
-
-    let trait_name = match extract_contract_trait_name(&content, fp) {
-        Some(t) => t,
+    // #6: Use cache instead of reading file again
+    let content = match cache.contents.get(fp) {
+        Some(c) => c.as_ref(),
         None => return not_orphan(),
     };
 
-    // P1 #7: Build cache ONCE, not per-check
-    let cache = FileCache::build(all_files, root_dir, extractor);
+    let trait_name = match extract_contract_trait_name(content, fp) {
+        Some(t) => t,
+        None => return not_orphan(),
+    };
 
     let target_prefix = match suffix.as_str() {
         SUFFIX_PORT => LAYER_INFRASTRUCTURE,
@@ -173,8 +154,8 @@ pub fn is_contract_orphan(
         _ => return not_orphan(),
     };
 
-    // ── Check 1: trait not implemented by expected layer ──
-    if !check_implemented(&cache, &trait_name, target_prefix) {
+    // Check 1: trait not implemented
+    if !check_implemented(cache, &trait_name, target_prefix) {
         return orphan_result(
             &suffix,
             &trait_name,
@@ -186,9 +167,9 @@ pub fn is_contract_orphan(
         );
     }
 
-    // ── Check 2: port/protocol not called/wired ──
+    // Check 2: port/protocol not called/wired
     if suffix == SUFFIX_PORT || suffix == SUFFIX_PROTOCOL {
-        if !check_called_port_protocol(&cache, &trait_name) {
+        if !check_called_port_protocol(cache, &trait_name) {
             return orphan_result(
                 &suffix,
                 &trait_name,
@@ -201,9 +182,9 @@ pub fn is_contract_orphan(
         }
     }
 
-    // ── Check 3: aggregate not called/wired ──
+    // Check 3: aggregate not called/wired
     if suffix == SUFFIX_AGGREGATE {
-        if !check_called_aggregate(&cache, &trait_name) {
+        if !check_called_aggregate(cache, &trait_name) {
             return orphan_result(
                 &suffix,
                 &trait_name,
@@ -223,7 +204,6 @@ pub fn is_contract_orphan(
 // MODULAR DETECTION: IMPLEMENT / CALL / WIRE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// Check if trait is implemented by any file in the target layer.
 fn check_implemented(cache: &FileCache, trait_name: &str, target_prefix: &str) -> bool {
     let rust_impl_pattern = format!("impl {} for", trait_name);
     let re_trait = word_boundary_re(trait_name);
@@ -248,7 +228,6 @@ fn check_implemented(cache: &FileCache, trait_name: &str, target_prefix: &str) -
     false
 }
 
-/// Check if port/protocol is called or wired.
 fn check_called_port_protocol(cache: &FileCache, trait_name: &str) -> bool {
     let re_trait = word_boundary_re(trait_name);
 
@@ -285,7 +264,6 @@ fn check_called_port_protocol(cache: &FileCache, trait_name: &str) -> bool {
     false
 }
 
-/// Check if aggregate is called or wired.
 fn check_called_aggregate(cache: &FileCache, trait_name: &str) -> bool {
     let re_trait = word_boundary_re(trait_name);
 
@@ -317,10 +295,9 @@ fn check_called_aggregate(cache: &FileCache, trait_name: &str) -> bool {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// RUST DETECTION
+// RUST DETECTION — per-line, tight patterns
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// Rust: `impl Trait for Type { ... }`
 pub fn has_rust_impl(content: &str, rust_impl_pattern: &str, re_trait: &Regex) -> bool {
     content.contains(rust_impl_pattern)
         || content.lines().any(|ln| {
@@ -329,92 +306,159 @@ pub fn has_rust_impl(content: &str, rust_impl_pattern: &str, re_trait: &Regex) -
         })
 }
 
-/// Rust: `use TraitName`, `TraitName::method()`, `<dyn TraitName>`
+// #4: Per-line checking — not global content.contains("::")
 pub fn has_rust_call(content: &str, re_trait: &Regex) -> bool {
-    re_trait.is_match(content)
-        && (content.contains("use ") || content.contains("::") || content.contains("<dyn "))
-}
-
-/// Rust: `Arc::new(Type::new())`, `Box::new(Type::new())`
-pub fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
-    re_trait.is_match(content)
-        && (content.contains("Arc::new(")
-            || content.contains("Box::new(")
-            || content.contains("::new("))
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PYTHON DETECTION (abc abstractmethod)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/// Python: `class Type(BaseTrait):` or ABC with @abstractmethod
-pub fn has_py_impl(content: &str, trait_name: &str) -> bool {
-    // P1 #12: More specific ABC check — verify @abstractmethod is inside the class
-    let inherit_pattern = format!(
-        r"class\s+\w+\([^)]*\b{}\b[^)]*\)",
-        regex::escape(trait_name)
-    );
-    if Regex::new(&inherit_pattern)
-        .map(|re| re.is_match(content))
-        .unwrap_or(false)
-    {
-        return true;
-    }
-
-    // ABC check: verify @abstractmethod exists AND the class defines the trait
-    if content.contains("from abc import") && content.contains("@abstractmethod") {
-        let class_pattern = format!(r"class\s+{}\s*[\(:]", regex::escape(trait_name));
-        if Regex::new(&class_pattern)
-            .map(|re| re.is_match(content))
-            .unwrap_or(false)
+    for line in content.lines() {
+        let t = line.trim();
+        if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
+            continue;
+        }
+        // Specific patterns: use TraitName, TraitName::, <dyn TraitName>, Arc<dyn TraitName>
+        if (t.starts_with("use ")
+            || t.contains("::")
+            || t.contains("<dyn ")
+            || t.contains("Arc<dyn "))
+            && re_trait.is_match(t)
         {
             return true;
         }
     }
-
     false
 }
 
-/// Python: `import TraitName`, `instance.method()`, `: TraitName`
+// #4: Per-line checking for wire
+pub fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
+    for line in content.lines() {
+        let t = line.trim();
+        if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
+            continue;
+        }
+        if re_trait.is_match(t)
+            && (t.contains("Arc::new(") || t.contains("Box::new(") || t.contains("::new("))
+        {
+            return true;
+        }
+    }
+    false
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PYTHON DETECTION — per-line, tight patterns
+// ═══════════════════════════════════════════════════════════════════════════════
+
+pub fn has_py_impl(content: &str, trait_name: &str) -> bool {
+    // #3: Don't compile regex per call — use string matching
+    for line in content.lines() {
+        let t = line.trim();
+        if t.starts_with('#') {
+            continue;
+        }
+        // class Type(BaseTrait):
+        if t.starts_with("class ") && t.contains(trait_name) && t.contains('(') {
+            return true;
+        }
+    }
+    false
+}
+
+// #5: Unified call detection — not duplicated
 pub fn has_py_call(content: &str, re_trait: &Regex) -> bool {
-    // P0 #1: No duplicate — single check with word boundary
-    re_trait.is_match(content)
-        && (content.contains("import ") || content.contains(".") || content.contains(": "))
+    for line in content.lines() {
+        let t = line.trim();
+        if t.starts_with('#') {
+            continue;
+        }
+        // from module import TraitName OR import TraitName
+        if (t.starts_with("from ") || t.starts_with("import ")) && re_trait.is_match(t) {
+            return true;
+        }
+        // instance.method() or Type.method()
+        if re_trait.is_match(t) && (t.contains('.') || t.contains(": ")) {
+            return true;
+        }
+    }
+    false
 }
 
-/// Python: `TraitName()` constructor injection
 pub fn has_py_wire(content: &str, re_trait: &Regex) -> bool {
-    re_trait.is_match(content) && content.contains("(")
+    for line in content.lines() {
+        let t = line.trim();
+        if t.starts_with('#') {
+            continue;
+        }
+        // TraitName() constructor injection
+        if re_trait.is_match(t) && t.contains('(') && !t.starts_with("class ") {
+            return true;
+        }
+    }
+    false
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TYPESCRIPT DETECTION
+// TYPESCRIPT DETECTION — per-line, tight patterns
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// TypeScript: `class Type implements TraitName` or `extends TraitName`
+// #8: Use word boundary for ts_impl
 pub fn has_ts_impl(content: &str, trait_name: &str) -> bool {
-    content.contains(&format!("implements {}", trait_name))
-        || content.contains(&format!("extends {}", trait_name))
+    let re = word_boundary_re(trait_name);
+    for line in content.lines() {
+        let t = line.trim();
+        if t.starts_with("//") || t.starts_with("/*") {
+            continue;
+        }
+        if (t.contains("implements ") || t.contains("extends ")) && re.is_match(t) {
+            return true;
+        }
+    }
+    false
 }
 
-/// TypeScript: `import { TraitName }`, `instance.method()`, `: TraitName`
+// #5: Unified call detection
 pub fn has_ts_call(content: &str, re_trait: &Regex) -> bool {
-    // P0 #2: No duplicate — single check with word boundary
-    re_trait.is_match(content)
-        && (content.contains("import ") || content.contains(".") || content.contains(": "))
+    for line in content.lines() {
+        let t = line.trim();
+        if t.starts_with("//") || t.starts_with("/*") {
+            continue;
+        }
+        // import { TraitName } from '...'
+        if t.starts_with("import ") && re_trait.is_match(t) {
+            return true;
+        }
+        // instance.method() or Type.method()
+        if re_trait.is_match(t) && (t.contains('.') || t.contains(": ")) {
+            return true;
+        }
+    }
+    false
 }
 
-/// TypeScript: `new TraitName()` constructor injection
-/// P0 #3: Removed Arc<dyn> — that's Rust syntax, not TypeScript
 pub fn has_ts_wire(content: &str, re_trait: &Regex) -> bool {
-    re_trait.is_match(content) && content.contains("new ")
+    for line in content.lines() {
+        let t = line.trim();
+        if t.starts_with("//") || t.starts_with("/*") {
+            continue;
+        }
+        // new TraitName() constructor injection
+        if re_trait.is_match(t) && t.contains("new ") && t.contains('(') {
+            return true;
+        }
+    }
+    false
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-fn build_search_files(all_files: &[FilePath], root_dir: &FilePath) -> Vec<String> {
+pub fn word_boundary_re(trait_name: &str) -> Regex {
+    Regex::new(&format!(r"\b{}\b", regex::escape(trait_name))).unwrap()
+}
+
+pub fn not_orphan() -> OrphanIndicatorResult {
+    OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+}
+
+pub fn build_search_files(all_files: &[FilePath], root_dir: &FilePath) -> Vec<String> {
     let mut search_files: Vec<String> = all_files.iter().map(|fp| fp.value().to_string()).collect();
     let root_path = std::path::Path::new(root_dir.value());
     for ws_dir in &["crates", "packages", "modules"] {
@@ -426,7 +470,7 @@ fn build_search_files(all_files: &[FilePath], root_dir: &FilePath) -> Vec<String
     search_files
 }
 
-fn orphan_result(
+pub fn orphan_result(
     suffix: &str,
     trait_name: &str,
     target_prefix: &str,
@@ -449,15 +493,14 @@ fn orphan_result(
 // TRAIT NAME EXTRACTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// P1 #9: Improved comment filtering — handles #, inline, multi-line
-pub fn strip_comments(content: &str) -> String {
+// #3: Route by language — don't strip # for Rust
+pub fn strip_comments(content: &str, ext: &str) -> String {
     let mut result = String::with_capacity(content.len());
     let mut in_block_comment = false;
 
     for line in content.lines() {
         let trimmed = line.trim();
 
-        // Handle multi-line block comments
         if in_block_comment {
             if trimmed.contains("*/") {
                 in_block_comment = false;
@@ -465,23 +508,51 @@ pub fn strip_comments(content: &str) -> String {
             continue;
         }
 
-        // Skip full-line comments (Rust //, Python #, TS //)
-        if trimmed.starts_with("//") || trimmed.starts_with('#') || trimmed.starts_with("/*") {
+        // Rust: only strip // and /* — NOT #
+        if ext == "rs" {
+            if trimmed.starts_with("//") || trimmed.starts_with("/*") {
+                if trimmed.starts_with("/*") && !trimmed.contains("*/") {
+                    in_block_comment = true;
+                }
+                continue;
+            }
+            let code_line = if let Some(pos) = line.find("//") {
+                &line[..pos]
+            } else {
+                line
+            };
+            result.push_str(code_line);
+            result.push('\n');
+            continue;
+        }
+
+        // Python: strip # and """
+        if ext == "py" {
+            if trimmed.starts_with('#') {
+                continue;
+            }
+            let code_line = if let Some(pos) = line.find('#') {
+                &line[..pos]
+            } else {
+                line
+            };
+            result.push_str(code_line);
+            result.push('\n');
+            continue;
+        }
+
+        // TypeScript/JS: strip // and /* — NOT #
+        if trimmed.starts_with("//") || trimmed.starts_with("/*") {
             if trimmed.starts_with("/*") && !trimmed.contains("*/") {
                 in_block_comment = true;
             }
             continue;
         }
-
-        // P1 #9: Handle inline comments — strip everything after // or #
         let code_line = if let Some(pos) = line.find("//") {
-            &line[..pos]
-        } else if let Some(pos) = line.find('#') {
             &line[..pos]
         } else {
             line
         };
-
         result.push_str(code_line);
         result.push('\n');
     }
@@ -489,23 +560,31 @@ pub fn strip_comments(content: &str) -> String {
     result
 }
 
-/// P1 #10: Check file extension before language-specific regex
+// #10: Route by file extension
 pub fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<String> {
-    let code = strip_comments(content);
-
-    // P1 #10: Route by file extension
     let ext = std::path::Path::new(file_path)
         .extension()
         .and_then(|e| e.to_str())
         .unwrap_or("");
 
+    let code = strip_comments(content, ext);
+
     match ext {
         "rs" => RE_CONTRACT_RUST
             .captures(&code)
             .map(|caps| caps[1].to_string()),
-        "py" => RE_CONTRACT_PY
-            .captures(&code)
-            .map(|caps| caps[1].to_string()),
+        "py" => {
+            // #11: Try ABC/Protocol first, fallback to any class
+            if let Some(caps) = RE_CONTRACT_PY.captures(&code) {
+                caps.get(1)
+                    .or_else(|| caps.get(2))
+                    .map(|m| m.as_str().to_string())
+            } else {
+                // Fallback: first class definition
+                let fallback = Regex::new(r"class\s+([A-Za-z0-9_]+)\s*[\(:]").unwrap();
+                fallback.captures(&code).map(|caps| caps[1].to_string())
+            }
+        }
         "ts" | "tsx" | "js" | "jsx" => RE_TS_INTERFACE_EXPORT
             .captures(&code)
             .or_else(|| RE_INTERFACE.captures(&code))
@@ -514,15 +593,14 @@ pub fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<Str
     }
 }
 
-/// P2 #19: Handle symlinks to prevent infinite loops
-fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
-    // P2 #19: Use symlink_metadata to detect symlinks
+// #19: Handle symlinks
+pub fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
     let meta = match std::fs::symlink_metadata(dir) {
         Ok(m) => m,
         Err(_) => return,
     };
     if meta.file_type().is_symlink() {
-        return; // Skip symlinks to prevent infinite loops
+        return;
     }
 
     if let Ok(entries) = std::fs::read_dir(dir) {
