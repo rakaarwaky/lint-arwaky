@@ -243,30 +243,16 @@ impl LayerDetectionAnalyzer {
 }
 
 impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
-    /// Detect layer from filename — exclusively via filename prefix (FRD v1.1).
-    ///
-    /// Files MUST carry a layer prefix (e.g., `capabilities_foo.rs` → capabilities layer).
-    /// Files without a valid prefix return None, and AES101 naming enforcement will report
-    /// them as violations — forcing the developer to add the correct prefix.
-    ///
-    /// After prefix detection, `resolve_specialized_layer` checks whether the file suffix
-    /// corresponds to a specialised sub-layer (e.g., `capabilities_command.rs` with a defined
-    /// `capabilities(command)` layer → returns `capabilities(command)` instead of `capabilities`).
-    fn detect_layer(&self, file_path: &str, _root_dir: &str) -> Option<String> {
-        let filename = Path::new(file_path)
+    fn detect_layer(&self, file_path: &FilePath, _root_dir: &FilePath) -> Option<LayerNameVO> {
+        let filename = Path::new(file_path.value())
             .file_name()
             .and_then(|s| s.to_str())
             .map_or("", |s| s);
 
-        // PREFIX-BASED DETECTION (FRD v1.1)
-        // All valid files must carry a layer prefix — enforced by AES101/AES102 naming rules.
-        if let Some(layer) = self.extract_layer_from_prefix(filename) {
-            return Some(self.resolve_specialized_layer(&layer, file_path));
+        if let Some(layer) = self.extract_layer_from_prefix_str(filename) {
+            return Some(self.resolve_specialized_layer_str(&layer, file_path.value()));
         }
 
-        // No valid prefix found — violates AES101 naming convention.
-        // AES101/AES102 will report this separately; we return None so the file
-        // is not silently assigned to a wrong layer.
         None
     }
 
@@ -276,51 +262,72 @@ impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
     /// Steps:
     ///   1. Try direct lookup with the full layer name (including parenthesised suffix).
     ///   2. If not found, extract the base name (before the parenthesis) and try again.
-    fn get_layer_def(&self, layer: &str) -> Option<LayerDefinition> {
-        self.config
-            .layers
-            .get(&LayerNameVO::new(layer))
-            .cloned()
-            .or_else(|| {
-                let base = match layer.split('(').next() {
-                    Some(s) => s,
-                    None => layer,
-                };
-                self.config.layers.get(&LayerNameVO::new(base)).cloned()
-            })
+    fn get_layer_def(&self, layer: &LayerNameVO) -> Option<LayerDefinition> {
+        self.config.layers.get(layer).cloned().or_else(|| {
+            let base = match layer.value.split('(').next() {
+                Some(s) => s,
+                None => &layer.value,
+            };
+            self.config.layers.get(&LayerNameVO::new(base)).cloned()
+        })
     }
 
-    /// Return known orphan entry point filenames.
-    fn get_orphan_entry_points(&self) -> Vec<String> {
+    fn get_orphan_entry_points(&self) -> Vec<FilePath> {
         vec![
-            "_container.rs".to_string(),
-            "_container.py".to_string(),
-            "_container.ts".to_string(),
-            "_container.js".to_string(),
-            "_entry.rs".to_string(),
-            "_entry.py".to_string(),
-            "_entry.ts".to_string(),
-            "_entry.js".to_string(),
-            "main.rs".to_string(),
-            "lib.rs".to_string(),
-            "main.py".to_string(),
-            "main.ts".to_string(),
-            "main.js".to_string(),
-            "index.ts".to_string(),
-            "index.js".to_string(),
+            FilePath::new("_container.rs".to_string()).unwrap_or_default(),
+            FilePath::new("_container.py".to_string()).unwrap_or_default(),
+            FilePath::new("_container.ts".to_string()).unwrap_or_default(),
+            FilePath::new("_container.js".to_string()).unwrap_or_default(),
+            FilePath::new("_entry.rs".to_string()).unwrap_or_default(),
+            FilePath::new("_entry.py".to_string()).unwrap_or_default(),
+            FilePath::new("_entry.ts".to_string()).unwrap_or_default(),
+            FilePath::new("_entry.js".to_string()).unwrap_or_default(),
+            FilePath::new("main.rs".to_string()).unwrap_or_default(),
+            FilePath::new("lib.rs".to_string()).unwrap_or_default(),
+            FilePath::new("main.py".to_string()).unwrap_or_default(),
+            FilePath::new("main.ts".to_string()).unwrap_or_default(),
+            FilePath::new("main.js".to_string()).unwrap_or_default(),
+            FilePath::new("index.ts".to_string()).unwrap_or_default(),
+            FilePath::new("index.js".to_string()).unwrap_or_default(),
         ]
     }
 
-    /// Return the merged architecture configuration.
     fn config(&self) -> &ArchitectureConfig {
         &self.config
     }
 
-    /// Extract layer from filename prefix (FRD v1.1).
+    fn extract_layer_from_prefix(&self, filename: &FilePath) -> Option<LayerNameVO> {
+        self.extract_layer_from_prefix_str(filename.value())
+            .map(LayerNameVO::new)
+    }
+
+    /// Resolve specialised sub-layer from file suffix (e.g., "capabilities(command").
     ///
-    /// All valid files must carry a layer prefix — enforced by AES101/AES102 naming rules.
-    /// Files without a valid prefix return None.
-    fn extract_layer_from_prefix(&self, filename: &str) -> Option<String> {
+    /// E.g., `capabilities_user_command.rs` with base_layer="capabilities":
+    ///   → stem = "capabilities_user_command", last suffix = "command"
+    ///   → checks if "capabilities(command)" is a defined specialised layer
+    ///   → if yes, returns "capabilities(command)", else returns "capabilities".
+    fn resolve_specialized_layer(
+        &self,
+        base_layer: &LayerNameVO,
+        file_path: &FilePath,
+    ) -> LayerNameVO {
+        self.resolve_specialized_layer_str(&base_layer.value, file_path.value())
+            .map(LayerNameVO::new)
+            .unwrap_or_else(|| base_layer.clone())
+    }
+
+    fn detect_module_layer(&self, module: &str) -> Option<LayerNameVO> {
+        self.detect_module_layer_str(module).map(LayerNameVO::new)
+    }
+
+    fn refine_module_layer(&self, base_name: &LayerNameVO, parts: &[&str]) -> LayerNameVO {
+        LayerNameVO::new(self.refine_module_layer_str(&base_name.value, parts))
+    }
+}
+
+impl LayerDetectionAnalyzer {
+    fn extract_layer_from_prefix_str(&self, filename: &str) -> Option<String> {
         let stem = Path::new(filename)
             .file_stem()
             .and_then(|s| s.to_str())
@@ -345,26 +352,17 @@ impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
         None
     }
 
-    /// Resolve specialised sub-layer from file suffix (e.g., "capabilities(command").
-    ///
-    /// E.g., `capabilities_user_command.rs` with base_layer="capabilities":
-    ///   → stem = "capabilities_user_command", last suffix = "command"
-    ///   → checks if "capabilities(command)" is a defined specialised layer
-    ///   → if yes, returns "capabilities(command)", else returns "capabilities".
-    fn resolve_specialized_layer(&self, base_layer: &str, file_path: &str) -> String {
-        // Step 1: Get file stem
+    fn resolve_specialized_layer_str(&self, base_layer: &str, file_path: &str) -> String {
         let basename = Path::new(file_path)
             .file_stem()
             .and_then(|s| s.to_str())
             .map_or("", |s| s);
 
-        // Step 2-5: Check if last underscore suffix matches a specialised sub-layer
         if let Some(underscore_pos) = basename.rfind('_') {
             let suffix = &basename[underscore_pos + 1..];
             if !suffix.is_empty() {
                 let specialized = format!("{}({})", base_layer, suffix);
                 let key = LayerNameVO::new(specialized.as_str());
-                // Step 4: Must have been created in new() from scoped rules
                 if self.config.layers.contains_key(&key) {
                     return specialized;
                 }
@@ -374,19 +372,7 @@ impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
         base_layer.to_string()
     }
 
-    /// Determine which architectural layer a module path (from an import statement) belongs to.
-    ///
-    /// Three strategies, in priority order:
-    ///
-    /// Strategy 1 — Direct segment match:
-    ///   Compare each segment of the module path against known layer names.
-    ///   E.g., "shared::taxonomy::..." → segment "taxonomy" matches → taxonomy layer.
-    ///
-    /// Strategy 2 — Prefix-based match (FRD v1.1):
-    ///   If no direct match, check if any segment starts with a layer prefix.
-    ///   E.g., "taxonomy_definition_vo" starts with "taxonomy_" → taxonomy layer.
-    fn detect_module_layer(&self, module: &str) -> Option<String> {
-        // Split module path into meaningful segments (handles ::, ., /, \ separators)
+    fn detect_module_layer_str(&self, module: &str) -> Option<String> {
         let meaningful_parts: Vec<&str> = module
             .split([':', '.', '/', '\\'])
             .filter(|p| !p.is_empty())
@@ -396,43 +382,31 @@ impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
             return None;
         }
 
-        // Strategy 1: Direct match with layer names (ignoring specialisation suffix)
         for name in self.config.layers.keys() {
             let base_name = match name.value.split('(').next() {
                 Some(s) => s,
                 None => &name.value,
             };
             if meaningful_parts.contains(&base_name) {
-                return Some(self.refine_module_layer(base_name, &meaningful_parts));
+                return Some(self.refine_module_layer_str(base_name, &meaningful_parts));
             }
         }
 
-        // Strategy 2: Prefix-based match (e.g., "taxonomy_definition_vo" → "taxonomy")
         for part in &meaningful_parts {
-            if let Some(layer) = self.extract_layer_from_prefix(part) {
-                return Some(self.refine_module_layer(&layer, &meaningful_parts));
+            if let Some(layer) = self.extract_layer_from_prefix_str(part) {
+                return Some(self.refine_module_layer_str(&layer, &meaningful_parts));
             }
         }
 
         None
     }
 
-    /// Refine a base layer to a specialised sub-layer by inspecting the segment
-    /// immediately after the layer name in a dotted module path.
-    ///
-    /// E.g., parts = ["capabilities", "user_command", "UserCommand"], base = "capabilities"
-    ///   → next part after "capabilities" is "user_command"
-    ///   → last underscore suffix of "user_command" is "command"
-    ///   → checks if "capabilities(command)" exists → returns it if yes.
-    fn refine_module_layer(&self, base_name: &str, parts: &[&str]) -> String {
-        // Step 1-2: Find base name position and get next segment
+    fn refine_module_layer_str(&self, base_name: &str, parts: &[&str]) -> String {
         if let Some(idx) = parts.iter().position(|&p| p == base_name) {
             if idx + 1 < parts.len() {
                 let next_part = parts[idx + 1];
-                // Step 3: Extract suffix from next segment
                 if let Some(underscore_pos) = next_part.rfind('_') {
                     let suffix = &next_part[underscore_pos + 1..];
-                    // Step 4-5: Check if specialised sub-layer exists
                     let specialized = format!("{}({})", base_name, suffix);
                     let key = LayerNameVO::new(specialized.as_str());
                     if self.config.layers.contains_key(&key) {
@@ -449,15 +423,23 @@ impl shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionA
     for LayerDetectionAnalyzer
 {
     fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String> {
-        ILayerDetectionProtocol::detect_layer(self, file_path, root_dir)
+        ILayerDetectionProtocol::detect_layer(
+            self,
+            &FilePath::new(file_path.to_string()).unwrap_or_default(),
+            &FilePath::new(root_dir.to_string()).unwrap_or_default(),
+        )
+        .map(|l| l.value)
     }
 
     fn get_layer_def(&self, layer: &str) -> Option<LayerDefinition> {
-        ILayerDetectionProtocol::get_layer_def(self, layer)
+        ILayerDetectionProtocol::get_layer_def(self, &LayerNameVO::new(layer))
     }
 
     fn get_orphan_entry_points(&self) -> Vec<String> {
         ILayerDetectionProtocol::get_orphan_entry_points(self)
+            .into_iter()
+            .map(|fp| fp.value)
+            .collect()
     }
 
     fn config(&self) -> &ArchitectureConfig {

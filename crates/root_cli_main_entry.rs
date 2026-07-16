@@ -16,12 +16,9 @@ use cli_commands::CliContainer;
 use code_analysis::{lint_path, CodeDuplicationAnalyzer};
 use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter;
-use import_rules::root_import_rules_container::NullSourceParser;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::common::contract_parser_port::ISourceParserPort;
-use shared::common::contract_system_port::IFileSystemPort;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 
 pub struct CliMainEntry {}

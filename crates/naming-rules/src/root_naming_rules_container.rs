@@ -61,28 +61,46 @@ impl ILayerDetectionProtocol for DefaultLayerDetector {
         static CONFIG: std::sync::OnceLock<ArchitectureConfig> = std::sync::OnceLock::new();
         CONFIG.get_or_init(ArchitectureConfig::default)
     }
-    fn detect_layer(&self, _file_path: &str, _root_dir: &str) -> Option<String> {
+    fn detect_layer(
+        &self,
+        _file_path: &shared::common::taxonomy_path_vo::FilePath,
+        _root_dir: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Option<shared::common::taxonomy_layer_vo::LayerNameVO> {
         None
     }
     fn get_layer_def(
         &self,
-        _layer: &str,
+        _layer: &shared::common::taxonomy_layer_vo::LayerNameVO,
     ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
         None
     }
-    fn get_orphan_entry_points(&self) -> Vec<String> {
+    fn get_orphan_entry_points(&self) -> Vec<shared::common::taxonomy_path_vo::FilePath> {
         Vec::new()
     }
-    fn extract_layer_from_prefix(&self, _filename: &str) -> Option<String> {
+    fn extract_layer_from_prefix(
+        &self,
+        _filename: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Option<shared::common::taxonomy_layer_vo::LayerNameVO> {
         None
     }
-    fn resolve_specialized_layer(&self, base_layer: &str, _file_path: &str) -> String {
-        base_layer.to_string()
+    fn resolve_specialized_layer(
+        &self,
+        base_layer: &shared::common::taxonomy_layer_vo::LayerNameVO,
+        _file_path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::common::taxonomy_layer_vo::LayerNameVO {
+        base_layer.clone()
     }
-    fn detect_module_layer(&self, _module: &str) -> Option<String> {
+    fn detect_module_layer(
+        &self,
+        _module: &str,
+    ) -> Option<shared::common::taxonomy_layer_vo::LayerNameVO> {
         None
     }
-    fn refine_module_layer(&self, base_name: &str, _parts: &[&str]) -> String {
-        base_name.to_string()
+    fn refine_module_layer(
+        &self,
+        base_name: &shared::common::taxonomy_layer_vo::LayerNameVO,
+        _parts: &[&str],
+    ) -> shared::common::taxonomy_layer_vo::LayerNameVO {
+        base_name.clone()
     }
 }
