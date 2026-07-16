@@ -22,6 +22,10 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
+fn filepath_or_default(result: Result<FilePath, String>) -> FilePath {
+    result.unwrap_or_default()
+}
+
 /// Unified cycle import analyzer — combines scanning logic and core cycle detection (AES205).
 ///
 /// Workflow:
@@ -46,7 +50,6 @@ impl CycleImportAnalyzer {
 
 #[async_trait]
 impl ICycleImportProtocol for CycleImportAnalyzer {
-    /// Returns `fp` if `result` is `Ok`, otherwise returns `FilePath::default()`.
     fn filepath_or_default(&self, result: Result<FilePath, String>) -> FilePath {
         result.unwrap_or_default()
     }
@@ -107,8 +110,8 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
         // Step 3: Iterate every file in the project
         for file in files {
             // Step 3a: Skip files exempted via rule exceptions
-            let file_fp = self
-                .filepath_or_default(FilePath::new(file.clone()).map_err(|e| format!("{:?}", e)));
+            let file_fp =
+                filepath_or_default(FilePath::new(file.clone()).map_err(|e| format!("{:?}", e)));
 
             let basename = file_fp.basename();
             if let Some(rule) = aes205_rule {
@@ -124,9 +127,9 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
             let content = content_msg.value().to_string();
 
             // Step 3c: Detect the file's architectural layer (strip scoped suffix)
-            let file_fp = self
-                .filepath_or_default(FilePath::new(file.clone()).map_err(|e| format!("{:?}", e)));
-            let root_dir_fp = self.filepath_or_default(
+            let file_fp =
+                filepath_or_default(FilePath::new(file.clone()).map_err(|e| format!("{:?}", e)));
+            let root_dir_fp = filepath_or_default(
                 FilePath::new(root_dir.to_string()).map_err(|e| format!("{:?}", e)),
             );
             let file_layer =
@@ -190,7 +193,7 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
                 } else {
                     module_value
                 };
-                let module_fp = self.filepath_or_default(
+                let module_fp = filepath_or_default(
                     FilePath::new(module_path.to_string()).map_err(|e| format!("{:?}", e)),
                 );
                 if let Some(target_layer) = analyzer.detect_module_layer(&module_fp.to_string()) {

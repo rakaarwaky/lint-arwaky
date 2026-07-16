@@ -11,6 +11,12 @@ use crate::taxonomy_definition_vo::LayerDefinition;
 use crate::taxonomy_layer_vo::{Identity, LayerNameVO};
 use async_trait::async_trait;
 
+pub struct ForbiddenRuleConfig<'a> {
+    pub forbidden_list: &'a [String],
+    pub source_layer: &'a LayerNameVO,
+    pub allowed_values: &'a [String],
+}
+
 /// Exclusive protocol for forbidden import checks (AES201).
 #[async_trait]
 pub trait IImportForbiddenProtocol: Send + Sync {
@@ -47,14 +53,11 @@ pub trait IImportForbiddenProtocol: Send + Sync {
     );
 
     /// Core: scan import lines against a list of forbidden layers and build violations.
-    #[allow(clippy::too_many_arguments)]
     fn check_imports_against_forbidden(
         &self,
         file_path: &FilePath,
         import_lines: &[(LineNumber, LineContentVO)],
-        forbidden_list: &[String],
-        source_layer: &LayerNameVO,
-        allowed_values: &[String],
+        rule: &ForbiddenRuleConfig<'_>,
         violations: &mut Vec<LintResult>,
         processed: &mut std::collections::HashSet<(String, usize, String)>,
     );

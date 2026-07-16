@@ -28,15 +28,7 @@ use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol
 use std::path::Path;
 use std::sync::Arc;
 
-/// Returns `s` if `opt` is `Some`, otherwise returns `fallback`.
-/// Private helper — uses `Option::map_or` to avoid inline match patterns.
-pub fn str_or<'a>(opt: Option<&'a str>, fallback: &'a str) -> &'a str {
-    opt.map_or(fallback, |s| s)
-}
-
-/// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
-/// Private helper — uses `Result::match` to avoid inline match patterns.
-fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
+fn filepath_or_default(result: Result<FilePath, String>) -> FilePath {
     result.unwrap_or_default()
 }
 
@@ -49,6 +41,7 @@ fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePa
 ///   - `unused`: checks AES203 — imports that are never referenced
 ///   - `cycle`: checks AES205 — detects circular dependency chains
 ///   - `analyzer`: provides configuration (layer definitions, ignored paths, etc.)
+///   - `helper`: provides filepath and string helper utilities
 pub struct ImportOrchestrator {
     mandatory: Arc<dyn IImportMandatoryProtocol>,
     forbidden: Arc<dyn IImportForbiddenProtocol>,
@@ -160,8 +153,10 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 
         let mut results = LintResultList::new(Vec::new());
         let files = self.collect_files(target);
-        let first_component = str_or(target.value().split('/').next(), ".");
-        let root_dir = filepath_or_default(FilePath::new(first_component.to_string()));
+        let first_component = target.value().split('/').next().unwrap_or(".");
+        let root_dir = filepath_or_default(
+            FilePath::new(first_component.to_string()).map_err(|e| format!("{:?}", e)),
+        );
 
         // Run mandatory/forbidden checks concurrently (no data sharing between them)
         let (mandatory_results, forbidden_results) = tokio::join!(

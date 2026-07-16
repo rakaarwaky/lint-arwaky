@@ -138,12 +138,16 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
         }
 
         let layer_name_vo = LayerNameVO::new(layer_name);
+        let rule_config =
+            shared::import_rules::contract_import_forbidden_protocol::ForbiddenRuleConfig {
+                forbidden_list,
+                source_layer: &layer_name_vo,
+                allowed_values: definition.allowed.values.as_slice(),
+            };
         self.check_imports_against_forbidden(
             file_path,
             &import_lines,
-            forbidden_list,
-            &layer_name_vo,
-            definition.allowed.values.as_slice(),
+            &rule_config,
             violations,
             processed,
         );
@@ -196,12 +200,16 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
                 continue;
             }
 
+            let rule_config =
+                shared::import_rules::contract_import_forbidden_protocol::ForbiddenRuleConfig {
+                    forbidden_list: &rule.forbidden.values,
+                    source_layer: &rule_layer,
+                    allowed_values: rule.allowed.values.as_slice(),
+                };
             self.check_imports_against_forbidden(
                 file_path,
                 &import_lines,
-                &rule.forbidden.values,
-                &rule_layer,
-                rule.allowed.values.as_slice(),
+                &rule_config,
                 violations,
                 processed,
             );
@@ -213,20 +221,19 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
         &self,
         file_path: &FilePath,
         import_lines: &[(LineNumber, LineContentVO)],
-        forbidden_list: &[String],
-        source_layer: &LayerNameVO,
-        allowed_values: &[String],
+        rule: &shared::import_rules::contract_import_forbidden_protocol::ForbiddenRuleConfig<'_>,
         violations: &mut Vec<LintResult>,
         processed: &mut HashSet<(String, usize, String)>,
     ) {
-        if import_lines.is_empty() || forbidden_list.is_empty() {
+        if import_lines.is_empty() || rule.forbidden_list.is_empty() {
             return;
         }
 
         let file_str = file_path.to_string();
 
         // 1. PRE-RESOLVE Forbidden Scopes (Menghindari parsing O(Lines * Forbidden))
-        let resolved_forbidden: Vec<(&String, LayerNameVO, Vec<Identity>)> = forbidden_list
+        let resolved_forbidden: Vec<(&String, LayerNameVO, Vec<Identity>)> = rule
+            .forbidden_list
             .iter()
             .map(|forbidden| {
                 let identity = Identity::new(forbidden);
@@ -236,7 +243,8 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
             .collect();
 
         // 2. PRE-RESOLVE Allowed Scopes
-        let resolved_allowed_strs: Vec<String> = allowed_values
+        let resolved_allowed_strs: Vec<String> = rule
+            .allowed_values
             .iter()
             .map(|s| {
                 self.parser
@@ -306,7 +314,7 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
                         "AES201",
                         Severity::CRITICAL,
                         AesImportViolation::ForbiddenImport {
-                            source_layer: source_layer.clone(),
+                            source_layer: rule.source_layer.clone(),
                             forbidden_layer: LayerNameVO::new(forbidden_name.to_string()),
                             allowed: resolved_allowed_vos.clone(),
                             reason: None,

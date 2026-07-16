@@ -12,6 +12,10 @@ use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
 
+fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
+    result.unwrap_or_default()
+}
+
 pub struct DummyImportChecker {
     parser: Arc<dyn IImportParserPort>,
 }
@@ -46,7 +50,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
             .map(|(trait_name, _)| trait_name.value().to_string())
             .collect();
 
-        let file_path = Self::filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),
@@ -99,7 +103,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         let lines: Vec<&str> = content.lines().collect();
         let lang = self.parser.get_language_from_path(file);
 
-        let file_path = Self::filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),
@@ -140,7 +144,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
     ) {
         let lines: Vec<&str> = content.lines().collect();
 
-        let file_path = Self::filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),
@@ -192,7 +196,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         let lines: Vec<&str> = content.lines().collect();
         let lang = self.parser.get_language_from_path(file);
 
-        let file_path = Self::filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let _layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => "any".to_string(),
@@ -317,7 +321,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         let lines: Vec<&str> = content.lines().collect();
         let lang = self.parser.get_language_from_path(file);
 
-        let file_path = Self::filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.to_string(),
             None => return,
@@ -553,10 +557,6 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 }
 
 impl DummyImportChecker {
-    fn filepath_or_default<E: std::fmt::Debug>(result: Result<FilePath, E>) -> FilePath {
-        result.unwrap_or_default()
-    }
-
     fn python_class_inherits(line: &str, agg_type: &str) -> bool {
         let trimmed = line.trim();
         if !trimmed.starts_with("class ") {

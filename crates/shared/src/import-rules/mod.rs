@@ -2,7 +2,6 @@
 pub mod contract_cycle_import_protocol;
 pub mod contract_dummy_import_protocol;
 pub mod contract_import_forbidden_protocol;
-pub mod contract_import_helper_port;
 pub mod contract_import_mandatory_protocol;
 pub mod contract_import_parser_port;
 pub mod contract_import_runner_aggregate;

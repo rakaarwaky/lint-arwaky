@@ -20,11 +20,6 @@ pub fn clear_file_cache() {
     FILE_CACHE.with(|c| c.borrow_mut().clear());
 }
 
-/// Returns `s` if `opt` is `Some`, otherwise returns `""`.
-fn str_or_empty(opt: Option<&str>) -> &str {
-    opt.map_or("", |s| s)
-}
-
 pub struct ImportParserAdapter;
 
 impl ImportParserAdapter {
@@ -190,7 +185,7 @@ impl IImportParserPort for ImportParserAdapter {
                         .trim();
                     return Some(Identity::new(cleaned.to_string()));
                 }
-                let first_token = str_or_empty(rest.split_whitespace().next());
+                let first_token = rest.split_whitespace().next().unwrap_or("");
                 return Some(Identity::new(first_token.to_string()));
             }
         }
@@ -332,7 +327,7 @@ impl IImportParserPort for ImportParserAdapter {
 
     fn find_import_line_number(&self, content: &str, alias: &str) -> LineNumber {
         let pos_opt = content.lines().position(|l| {
-            let first_part = str_or_empty(alias.split('.').next());
+            let first_part = alias.split('.').next().unwrap_or("");
             l.trim().contains(&format!("import {}", alias))
                 || l.trim().contains(&format!("from {} import", first_part))
         });
