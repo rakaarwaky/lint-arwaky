@@ -31,6 +31,7 @@ use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use std::sync::Arc;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
+use tui_lint_arwaky::capabilities_report_formatter::ReportFormatterHelper;
 
 struct MockCodeAnalysis {
     results: LintResultList,
@@ -101,29 +102,31 @@ impl ICodeAnalysisAggregate for MockCodeAnalysis {
 }
 
 // ---------------------------------------------------------------------------
-// MockFormatter — stub implementation of IReportFormatterProtocol
+// MockFormatter — delegates to the real ReportFormatterHelper so assertions
+// against actual formatted output (violation counts, diagnostics text, etc.)
+// exercise genuine formatting logic instead of a hardcoded stub string.
 // ---------------------------------------------------------------------------
 struct MockFormatter;
 
 impl IReportFormatterProtocol for MockFormatter {
-    fn format_results(&self, _results: &LintResultList) -> DisplayContent {
-        DisplayContent::new("mock results".to_string())
+    fn format_results(&self, results: &LintResultList) -> DisplayContent {
+        ReportFormatterHelper::new().format_results(results)
     }
 
-    fn format_doctor_report(&self, _diagnostics: &ToolchainDiagnostics) -> LintExecutionResult {
-        LintExecutionResult::success("mock doctor report".to_string(), 0)
+    fn format_doctor_report(&self, diagnostics: &ToolchainDiagnostics) -> LintExecutionResult {
+        ReportFormatterHelper::new().format_doctor_report(diagnostics)
     }
 
     fn format_dependency_report(
         &self,
-        _path: &str,
-        _report: &DependencyReport,
+        path: &str,
+        report: &DependencyReport,
     ) -> LintExecutionResult {
-        LintExecutionResult::success("mock dependency report".to_string(), 0)
+        ReportFormatterHelper::new().format_dependency_report(path, report)
     }
 
-    fn format_config_result(&self, _result: &ConfigResult) -> LintExecutionResult {
-        LintExecutionResult::success("mock config result".to_string(), 0)
+    fn format_config_result(&self, result: &ConfigResult) -> LintExecutionResult {
+        ReportFormatterHelper::new().format_config_result(result)
     }
 }
 

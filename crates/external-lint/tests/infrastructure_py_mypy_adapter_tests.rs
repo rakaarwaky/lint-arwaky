@@ -6,7 +6,7 @@ use external_lint_lint_arwaky::infrastructure_py_mypy_adapter::MyPyAdapter;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared::common::taxonomy_common_vo::{BooleanVO, PatternList};
+use shared::common::taxonomy_common_vo::{BooleanVO, ErrorMessage, PatternList};
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
@@ -80,42 +80,50 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
     }
     async fn exec_cmd_scan(
         &self,
-        _executor: &dyn ICommandExecutorPort,
+        executor: &dyn ICommandExecutorPort,
         args: PatternList,
-        _working_dir: FilePath,
+        working_dir: FilePath,
         _timeout_secs: Timeout,
         _adapter_name: Option<shared::common::taxonomy_adapter_name_vo::AdapterName>,
         _path: &FilePath,
     ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
     {
-        let mut meta = std::collections::HashMap::new();
-        meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
-        Ok(ResponseData {
-            value: None,
-            stdout: args.values.join(" "),
-            stderr: String::new(),
-            returncode: 0,
-            metadata: meta,
-        })
+        executor
+            .execute_command(args, working_dir, None)
+            .await
+            .map_err(|e| {
+                use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
+                LinterOperationError::Scan(shared::common::taxonomy_adapter_error::ScanError {
+                    path: FilePath::new("unknown".to_string()).unwrap_or_default(),
+                    message: ErrorMessage::new(e.to_string()),
+                    error_code: None,
+                    adapter_name: None,
+                    cause: None,
+                })
+            })
     }
     async fn exec_cmd_adapter(
         &self,
-        _executor: &dyn ICommandExecutorPort,
+        executor: &dyn ICommandExecutorPort,
         args: PatternList,
-        _working_dir: FilePath,
+        working_dir: FilePath,
         _timeout_secs: Timeout,
         _adapter_name: shared::common::taxonomy_adapter_name_vo::AdapterName,
     ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
     {
-        let mut meta = std::collections::HashMap::new();
-        meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
-        Ok(ResponseData {
-            value: None,
-            stdout: args.values.join(" "),
-            stderr: String::new(),
-            returncode: 0,
-            metadata: meta,
-        })
+        executor
+            .execute_command(args, working_dir, None)
+            .await
+            .map_err(|e| {
+                use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
+                LinterOperationError::Scan(shared::common::taxonomy_adapter_error::ScanError {
+                    path: FilePath::new("unknown".to_string()).unwrap_or_default(),
+                    message: ErrorMessage::new(e.to_string()),
+                    error_code: None,
+                    adapter_name: None,
+                    cause: None,
+                })
+            })
     }
     async fn js_apply_fix(
         &self,
@@ -135,7 +143,8 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         ComplianceStatus,
         shared::code_analysis::taxonomy_operation_error::LinterOperationError,
     > {
-        Ok(ComplianceStatus::new(true))
+        // mypy is a type-checker, not a formatter — matches real ExternalLintUtilityAdapter behavior.
+        Ok(ComplianceStatus::new(false))
     }
 }
 

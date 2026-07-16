@@ -1,10 +1,20 @@
-```markdown
+````markdown
 ---
 name: trait-consolidation-rust
 description: "Idiomatic Rust refactoring for clean architecture using the 3-Block Structure."
 version: 4.0.0
 category: refactoring
-tags: [rust, trait, protocol, port, interface-segregation, encapsulation, di, 3-block-structure]
+tags:
+  [
+    rust,
+    trait,
+    protocol,
+    port,
+    interface-segregation,
+    encapsulation,
+    di,
+    3-block-structure,
+  ]
 triggers:
   - "consolidate trait methods"
   - "refactor to 3-block structure"
@@ -25,17 +35,18 @@ related:
 Refactor Rust implementation files into a clean, idiomatic **3-Block Structure**. This ensures that public contracts (Traits) are clearly separated from internal implementation details (Private Helpers), improving readability, testability, and encapsulation.
 
 **CRITICAL: The 3-Block Structure** — Every implementation file MUST follow this exact order:
+
 1. `struct Definition`
 2. `impl Trait for Struct` (Public Contract)
 3. `impl Struct` (Constructors & Private Helpers)
 
 ## Rules
 
-- **Trait = Public Contract Only**: Only methods that form the external API or `pub(crate)` boundary belong in the trait. 
+- **Trait = Public Contract Only**: Only methods that form the external API or `pub(crate)` boundary belong in the trait.
 - **Encapsulate Private Helpers**: Private helpers, utilities, and internal logic **MUST** stay in the inherent `impl Struct` block (Block 3). Do NOT pollute the trait with implementation details.
 - **Interface Segregation**: If a struct has multiple distinct responsibilities, split them into multiple focused traits (e.g., `ICoreProtocol`, `IHelperTrait`) and implement them separately.
 - **Constructors in Block 3**: `new()`, `default()`, and builder methods stay exclusively in the inherent `impl Struct` block.
-- **Object Safety**: 
+- **Object Safety**:
   - Add `where Self: Sized` to generic trait methods.
   - Do NOT artificially add `&self` to pure utility functions. If a function doesn't need state, make it an inherent method without `self` or a module-level function.
 - **Extract Shared Logic**: When multiple public methods share logic, extract it into a private inherent method (e.g., `fn shared_helper(&self)`) in Block 3, called by the public trait methods in Block 2.
@@ -64,13 +75,14 @@ Refactor Rust implementation files into a clean, idiomatic **3-Block Structure**
 ## The 3-Block Pattern
 
 ### 1. Trait File (`contract_<name>_protocol.rs`)
-*Contains ONLY the public contract. No private helpers.*
+
+_Contains ONLY the public contract. No private helpers._
 
 ```rust
 pub trait I<Name>Protocol: Send + Sync {
     // Public API methods only
     fn public_method(&self, input: &str) -> Result<String, MyError>;
-    
+
     // Async methods
     async fn async_method(&self, id: u32) -> Option<Data>;
 
@@ -81,9 +93,11 @@ pub trait I<Name>Protocol: Send + Sync {
         F: Fn(&str) -> String;
 }
 ```
+````
 
 ### 2. Implementation File (`capabilities_<name>.rs`)
-*Follows the strict 3-Block Structure.*
+
+_Follows the strict 3-Block Structure._
 
 ```rust
 use shared::contract_<name>_protocol::I<Name>Protocol;
@@ -133,21 +147,27 @@ impl <Type> {
 ## Step-by-Step Process
 
 ### Step 1: Audit Existing Methods
+
 Identify which methods are truly part of the external contract (used by other modules/traits) and which are internal implementation details.
 
 ### Step 2: Extract Shared Logic
+
 If multiple public methods share logic, create a `fn shared_logic(&self)` in Block 3 (Inherent impl). Do NOT put this in the trait unless other structs need to override it.
 
 ### Step 3: Define/Update the Trait
+
 Add only the public/contract method signatures to the trait file. Add `where Self: Sized` to generic methods.
 
 ### Step 4: Reorganize into 3 Blocks
+
 Structure the implementation file strictly:
+
 1. `pub struct <Type>`
 2. `impl I<Name>Protocol for <Type>` (All public contract methods)
 3. `impl <Type>` (Constructors and all private/helpers)
 
 ### Step 5: Register and Verify
+
 Add the trait to `mod.rs` and run verification commands.
 
 ## Verification Checklist
@@ -184,4 +204,7 @@ cargo check -p <crate-name> 2>&1 | grep "not a member of trait"
 - ❌ **Creating "God Traits"**: If a trait has >10 methods or mixes unrelated concerns, split it into multiple traits.
 - ❌ **Forgetting `where Self: Sized`**: This will break `dyn Trait` usage for the rest of the trait.
 - ❌ **Placing `new()` in the trait impl**: Constructors must stay in the inherent `impl Struct` block (Block 3).
+
+```
+
 ```
