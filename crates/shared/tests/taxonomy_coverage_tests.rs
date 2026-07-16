@@ -109,7 +109,7 @@ fn test_aes_orphan_violation_contract_orphan_port() {
     let v = AesOrphanViolation::ContractOrphan {
         suffix: "port".to_string(),
         trait_name: "MyPort".to_string(),
-        target_layer: "infrastructure",
+        target_layer: "infrastructure".to_string(),
         reason: None,
     };
     let msg = v.to_string();
@@ -124,7 +124,7 @@ fn test_aes_orphan_violation_contract_orphan_protocol() {
     let v = AesOrphanViolation::ContractOrphan {
         suffix: "protocol".to_string(),
         trait_name: "MyProtocol".to_string(),
-        target_layer: "capabilities",
+        target_layer: "capabilities".to_string(),
         reason: None,
     };
     let msg = v.to_string();
@@ -137,7 +137,7 @@ fn test_aes_orphan_violation_contract_orphan_aggregate() {
     let v = AesOrphanViolation::ContractOrphan {
         suffix: "aggregate".to_string(),
         trait_name: "MyAgg".to_string(),
-        target_layer: "surface",
+        target_layer: "surface".to_string(),
         reason: None,
     };
     let msg = v.to_string();

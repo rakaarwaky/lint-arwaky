@@ -87,7 +87,7 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         &self,
         _executor: &dyn ICommandExecutorPort,
         args: PatternList,
-        working_dir: FilePath,
+        _working_dir: FilePath,
         _timeout_secs: Timeout,
         _adapter_name: Option<shared::common::taxonomy_adapter_name_vo::AdapterName>,
         _path: &FilePath,
@@ -107,7 +107,7 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         &self,
         _executor: &dyn ICommandExecutorPort,
         args: PatternList,
-        working_dir: FilePath,
+        _working_dir: FilePath,
         _timeout_secs: Timeout,
         _adapter_name: shared::common::taxonomy_adapter_name_vo::AdapterName,
     ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>

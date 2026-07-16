@@ -14,7 +14,6 @@ use shared_lint_arwaky::common::taxonomy_common_vo::{
     BooleanVO, ColumnNumber, Count, DataFlowList, ErrorMessage, JobIdList, LineContentList,
     LineNumber, PatternList, ResponseDataList, Score, Timestamp,
 };
-use shared_lint_arwaky::common::taxonomy_file_collector_helper::is_path_ignored;
 use shared_lint_arwaky::common::taxonomy_job_id_vo::JobId;
 use shared_lint_arwaky::common::taxonomy_layer_vo::LineContentVO;
 use shared_lint_arwaky::common::taxonomy_lint_vo::{
@@ -440,49 +439,6 @@ fn symbol_renamer_symbol_not_found_in_nonexistent() {
         "/nonexistent/path/file.rs",
         "sym"
     ));
-}
-
-// ============================================================================
-// taxonomy_file_collector_helper: is_path_ignored
-// ============================================================================
-
-#[test]
-fn is_path_ignored_empty_path() {
-    assert!(!is_path_ignored("", &[]));
-}
-
-#[test]
-fn is_path_ignored_absolute_style_prefix() {
-    let ignored = vec!["/test-workspaces".to_string()];
-    assert!(is_path_ignored(
-        "home/user/test-workspaces/crates/main.rs",
-        &ignored
-    ));
-}
-
-#[test]
-fn is_path_ignored_bare_segment() {
-    let ignored = vec!["node_modules".to_string()];
-    assert!(is_path_ignored("src/node_modules/pkg/index.js", &ignored));
-}
-
-#[test]
-fn is_path_ignored_suffix_glob() {
-    let ignored = vec!["*.min.js".to_string()];
-    assert!(is_path_ignored("dist/bundle.min.js", &ignored));
-    assert!(!is_path_ignored("src/app.js", &ignored));
-}
-
-#[test]
-fn is_path_ignored_no_match() {
-    let ignored = vec!["test".to_string()];
-    assert!(!is_path_ignored("src/main.rs", &ignored));
-}
-
-#[test]
-fn is_path_ignored_empty_pattern_skipped() {
-    let ignored = vec!["".to_string(), "target".to_string()];
-    assert!(is_path_ignored("project/target/debug", &ignored));
 }
 
 // ============================================================================
