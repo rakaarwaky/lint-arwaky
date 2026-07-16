@@ -46,8 +46,8 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
 
         if let Ok(content) = std::fs::read_to_string(fp) {
             let mut identifiers: Vec<String> = Vec::new();
-            identifiers.extend(self.extractor.extract_struct_names(&content));
-            identifiers.extend(self.extractor.extract_trait_names(&content));
+            identifiers.extend(self.extractor.extract_struct_names(&content).into_iter().map(|sn| sn.value));
+            identifiers.extend(self.extractor.extract_trait_names(&content).into_iter().map(|sn| sn.value));
             identifiers.push(stem.clone());
 
             let pascal_stem: String = stem

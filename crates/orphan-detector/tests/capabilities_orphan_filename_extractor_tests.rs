@@ -1,73 +1,94 @@
-use orphan_detector_lint_arwaky::capabilities_orphan_filename_extractor::{
-    file_basename, file_stem, file_suffix,
-};
+use orphan_detector_lint_arwaky::capabilities_orphan_filename_extractor::OrphanFilenameExtractor;
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
+
+fn make_extractor() -> OrphanFilenameExtractor {
+    OrphanFilenameExtractor::new()
+}
+
+fn fp(s: &str) -> shared::common::taxonomy_path_vo::FilePath {
+    shared::common::taxonomy_path_vo::FilePath::new(s.to_string()).unwrap()
+}
 
 #[test]
 fn basename_from_path_with_dir() {
-    assert_eq!(file_basename("crates/shared/src/lib.rs"), "lib.rs");
+    let ex = make_extractor();
+    assert_eq!(ex.file_basename(&fp("crates/shared/src/lib.rs")).value, "lib.rs");
 }
 
 #[test]
 fn basename_no_dir() {
-    assert_eq!(file_basename("lib.rs"), "lib.rs");
+    let ex = make_extractor();
+    assert_eq!(ex.file_basename(&fp("lib.rs")).value, "lib.rs");
 }
 
 #[test]
 fn basename_root_file() {
-    assert_eq!(file_basename("/root/file.py"), "file.py");
+    let ex = make_extractor();
+    assert_eq!(ex.file_basename(&fp("/root/file.py")).value, "file.py");
 }
 
 #[test]
 fn stem_removes_rs_extension() {
-    assert_eq!(file_stem("checker.rs"), "checker");
+    let ex = make_extractor();
+    assert_eq!(ex.file_stem(&fp("checker.rs")).value, "checker");
 }
 
 #[test]
 fn stem_removes_py_extension() {
-    assert_eq!(file_stem("checker.py"), "checker");
+    let ex = make_extractor();
+    assert_eq!(ex.file_stem(&fp("checker.py")).value, "checker");
 }
 
 #[test]
 fn stem_removes_tsx_extension() {
-    assert_eq!(file_stem("component.tsx"), "component");
+    let ex = make_extractor();
+    assert_eq!(ex.file_stem(&fp("component.tsx")).value, "component");
 }
 
 #[test]
 fn stem_with_full_path() {
-    assert_eq!(file_stem("crates/shared/src/lib.rs"), "lib");
+    let ex = make_extractor();
+    assert_eq!(ex.file_stem(&fp("crates/shared/src/lib.rs")).value, "lib");
 }
 
 #[test]
 fn stem_keeps_mid_dots() {
-    assert_eq!(file_stem("my.test.file.rs"), "my.test.file");
+    let ex = make_extractor();
+    assert_eq!(ex.file_stem(&fp("my.test.file.rs")).value, "my.test.file");
 }
 
 #[test]
 fn stem_empty_basename() {
-    assert_eq!(file_stem(""), "");
+    let ex = make_extractor();
+    assert_eq!(ex.file_stem(&fp("")).value, "");
 }
 
 #[test]
 fn suffix_gets_last_part() {
-    assert_eq!(file_suffix("capabilities_checker.rs"), "checker");
+    let ex = make_extractor();
+    assert_eq!(ex.file_suffix(&fp("capabilities_checker.rs")).value, "checker");
 }
 
 #[test]
 fn suffix_no_underscore_empty() {
-    assert_eq!(file_suffix("checker.rs"), "checker");
+    let ex = make_extractor();
+    assert_eq!(ex.file_suffix(&fp("checker.rs")).value, "checker");
 }
 
 #[test]
 fn suffix_with_full_path() {
-    assert_eq!(file_suffix("/path/to/surface_command.rs"), "command");
+    let ex = make_extractor();
+    assert_eq!(ex.file_suffix(&fp("/path/to/surface_command.rs")).value, "command");
 }
 
 #[test]
 fn suffix_py_file() {
-    assert_eq!(file_suffix("infrastructure_adapter.py"), "adapter");
+    let ex = make_extractor();
+    assert_eq!(ex.file_suffix(&fp("infrastructure_adapter.py")).value, "adapter");
 }
 
 #[test]
 fn suffix_single_underscore_prefix() {
-    assert_eq!(file_suffix("_helper.rs"), "helper");
+    let ex = make_extractor();
+    assert_eq!(ex.file_suffix(&fp("_helper.rs")).value, "helper");
 }

@@ -5,6 +5,7 @@
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
@@ -207,7 +208,7 @@ impl LintExecutor {
         self
     }
 
-    pub fn format_results(&self, results: &LintResultList) -> String {
+    pub fn format_results(&self, results: &LintResultList) -> DisplayContent {
         self.formatter.format_results(results)
     }
 
@@ -394,7 +395,7 @@ impl LintExecutor {
                 let count = all_results.len();
                 let results = LintResultList::new(all_results);
                 let output = self.format_results(&results);
-                return LintExecutionResult::success(output, count);
+                return LintExecutionResult::success(output.value, count);
             }
         }
 
@@ -465,7 +466,7 @@ impl LintExecutor {
         let count = all_results.len();
         let results = LintResultList::new(all_results);
         let output = self.format_results(&results);
-        LintExecutionResult::success(output, count)
+        LintExecutionResult::success(output.value, count)
     }
 }
 
@@ -475,7 +476,7 @@ impl ILintExecutorProtocol for LintExecutor {
         let count = results.len();
         let output = self.formatter.format_results(&results);
         LintExecutionResult {
-            output,
+            output: output.value,
             violation_count: count,
             success: count == 0,
         }

@@ -63,8 +63,8 @@ pub fn is_infra_cap_orphan(
     if !fp.is_empty() {
         let content = cache.read_cached(f).value;
         let mut identifiers: Vec<String> = Vec::new();
-        identifiers.extend(extractor.extract_struct_names(&content));
-        identifiers.extend(extractor.extract_trait_names(&content));
+        identifiers.extend(extractor.extract_struct_names(&content).into_iter().map(|sn| sn.value));
+        identifiers.extend(extractor.extract_trait_names(&content).into_iter().map(|sn| sn.value));
         identifiers.push(stem.clone());
 
         let pascal_stem: String = stem
@@ -196,8 +196,8 @@ pub fn is_infra_cap_orphan_raw(
 
     let content = std::fs::read_to_string(fp).unwrap_or_default();
     let mut identifiers: Vec<String> = Vec::new();
-    identifiers.extend(extractor.extract_struct_names(&content));
-    identifiers.extend(extractor.extract_trait_names(&content));
+    identifiers.extend(extractor.extract_struct_names(&content).into_iter().map(|sn| sn.value));
+    identifiers.extend(extractor.extract_trait_names(&content).into_iter().map(|sn| sn.value));
     identifiers.push(stem.clone());
 
     let pascal_stem: String = stem
@@ -255,8 +255,8 @@ pub fn check_capabilities_orphan(
     let content = std::fs::read_to_string(fp).unwrap_or_default();
 
     let mut identifiers: Vec<String> = Vec::new();
-    identifiers.extend(extractor.extract_struct_names(&content));
-    identifiers.extend(extractor.extract_trait_names(&content));
+    identifiers.extend(extractor.extract_struct_names(&content).into_iter().map(|sn| sn.value));
+    identifiers.extend(extractor.extract_trait_names(&content).into_iter().map(|sn| sn.value));
     identifiers.push(stem.clone());
 
     let pascal_stem: String = stem

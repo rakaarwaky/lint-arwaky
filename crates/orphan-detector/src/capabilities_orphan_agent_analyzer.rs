@@ -111,7 +111,7 @@ pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
     traits
 }
 
-pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicatorResult {
+pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[FilePath]) -> OrphanIndicatorResult {
     let fp = f.value();
     let content = match std::fs::read_to_string(fp) {
         Ok(c) => c,
@@ -128,7 +128,7 @@ pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicato
     let mut any_called = false;
     for agg_name in &aggregate_traits {
         for cf in all_files {
-            let cb = match cf.split('/').next_back() {
+            let cb = match cf.value().split('/').next_back() {
                 Some(b) => b,
                 None => continue,
             };
@@ -141,7 +141,7 @@ pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicato
             if !is_surface && !is_container {
                 continue;
             }
-            if let Ok(c) = std::fs::read_to_string(cf) {
+            if let Ok(c) = std::fs::read_to_string(cf.value()) {
                 if c.contains(agg_name) {
                     any_called = true;
                     break;
@@ -177,7 +177,7 @@ pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicato
 pub fn check_agent_orphan(
     fp: &str,
     _basename: &str,
-    files: &[String],
+    files: &[FilePath],
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
 ) {
     let fp_vo = match FilePath::new(fp.to_string()) {

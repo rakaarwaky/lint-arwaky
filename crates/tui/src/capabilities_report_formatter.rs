@@ -1,6 +1,7 @@
 // PURPOSE: Taxonomy-layer report formatter helper — provides formatting functions for scan results, toolchain diagnostics, dependencies, and active configurations.
 
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::config_system::taxonomy_source_vo::ConfigResult;
 use shared::project_setup::taxonomy_doctor_vo::{DependencyReport, ToolchainDiagnostics};
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
@@ -22,9 +23,9 @@ impl Default for ReportFormatterHelper {
 }
 
 impl IReportFormatterProtocol for ReportFormatterHelper {
-    fn format_results(&self, results: &LintResultList) -> String {
+    fn format_results(&self, results: &LintResultList) -> DisplayContent {
         if results.is_empty() {
-            return "No violations found.".to_string();
+            return DisplayContent::new("No violations found.");
         }
         let mut output = format!("Found {} violation(s):\n\n", results.len());
         for (i, r) in results.iter().enumerate() {
@@ -44,7 +45,7 @@ impl IReportFormatterProtocol for ReportFormatterHelper {
                 r.severity
             ));
         }
-        output
+        DisplayContent::new(output)
     }
 
     fn format_doctor_report(&self, diagnostics: &ToolchainDiagnostics) -> LintExecutionResult {
