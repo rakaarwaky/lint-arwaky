@@ -61,16 +61,53 @@ impl fmt::Display for AesOrphanViolation {
             } => {
                 let why = match reason.as_ref() {
                     Some(r) => r.to_string(),
-                    None => format!(
-                        "Contract {} '{}' is not implemented by any {} file.",
-                        suffix, trait_name, target_layer
-                    ),
+                    None => match suffix.as_str() {
+                        "port" => format!(
+                            "Contract port '{}' defines an outbound interface that infrastructure adapters must implement. \
+                             Without an implementation, the port is dead code — the system cannot interact with external \
+                             resources through this interface, and the contract is untestable.",
+                            trait_name
+                        ),
+                        "protocol" => format!(
+                            "Contract protocol '{}' defines an inbound interface that capabilities must implement. \
+                             Without an implementation, the protocol is dead code — no business logic can process \
+                             requests through this interface, and the contract is untestable.",
+                            trait_name
+                        ),
+                        "aggregate" => format!(
+                            "Contract aggregate '{}' coordinates multiple capabilities and infrastructure flows. \
+                             Without usage, the orchestration logic is dead code — the workflow it defines \
+                             is never executed.",
+                            trait_name
+                        ),
+                        _ => format!(
+                            "Contract '{}' is not implemented by any {} file.",
+                            trait_name, target_layer
+                        ),
+                    },
                 };
                 let fix = match suffix.as_str() {
-                    "port" => format!("Implement '{}' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.", trait_name),
-                    "protocol" => format!("Implement '{}' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.", trait_name),
-                    "aggregate" => format!("Import and use '{}' in a surface_* file or root_*_container.rs.", trait_name),
-                    _ => format!("Implement '{}' in the appropriate layer.", trait_name),
+                    "port" => format!(
+                        "Create an infrastructure_*_adapter.rs file that implements '{}'. \
+                         The adapter should use the port's interface to interact with external systems \
+                         (databases, APIs, file systems). Wire it in root_*_container.rs via Arc<dyn {}>.",
+                        trait_name, trait_name
+                    ),
+                    "protocol" => format!(
+                        "Create a capabilities_*_checker.rs or capabilities_*_analyzer.rs file that implements '{}'. \
+                         The capability should use the protocol's interface to process domain logic. \
+                         Wire it in root_*_container.rs via Arc<dyn {}>.",
+                        trait_name, trait_name
+                    ),
+                    "aggregate" => format!(
+                        "Import and use '{}' in a surface_* file or root_*_container.rs. \
+                         The aggregate should be called from the surface layer to execute workflows.",
+                        trait_name
+                    ),
+                    _ => format!(
+                        "Implement '{}' in the appropriate layer.",
+                        trait_name
+                    ),
                 };
                 write!(
                     f,
