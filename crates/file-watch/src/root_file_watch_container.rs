@@ -5,6 +5,7 @@ use crate::agent_watch_orchestrator::WatchOrchestrator;
 use crate::capabilities_change_analyzer::ChangeAnalyzer;
 use crate::infrastructure_notify_provider::NotifyWatchProvider;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 
 pub struct FileWatchContainer {
@@ -23,8 +24,12 @@ impl FileWatchContainer {
     }
 
     pub fn orchestrator(&self, linter: Arc<dyn ICodeAnalysisAggregate>) -> Arc<WatchOrchestrator> {
-        let _wire_cap = ChangeAnalyzer::new();
-        Arc::new(WatchOrchestrator::new(self.provider(), linter))
+        let change_analyzer: Arc<dyn IChangeAnalyzerProtocol> = Arc::new(ChangeAnalyzer::new());
+        Arc::new(WatchOrchestrator::new(
+            self.provider(),
+            linter,
+            change_analyzer,
+        ))
     }
 }
 

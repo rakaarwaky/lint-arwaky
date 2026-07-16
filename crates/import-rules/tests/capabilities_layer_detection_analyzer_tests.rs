@@ -1,6 +1,5 @@
 use import_rules_lint_arwaky::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
-use shared::common::contract_parser_port::ISourceParserPort;
 use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -8,18 +7,12 @@ use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, Architecture
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use shared::code_analysis::taxonomy_import_source_vo::{ImportInfoList, PrimitiveViolationList};
-use shared::common::taxonomy_common_vo::{BooleanVO, Count};
+use shared::common::taxonomy_common_vo::Count;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_filesystem_error::FileSystemError;
 use shared::common::taxonomy_layer_vo::Identity;
-use shared::common::taxonomy_name_vo::SymbolName;
-use shared::common::taxonomy_naming_list_vo::PrimitiveTypeList;
-use shared::common::taxonomy_parser_error::SourceParserError;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::common::taxonomy_source_vo::ContentString;
-use shared::common::taxonomy_suggestion_vo::MetadataVO;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_layer_vo::LayerNameVO;
 
@@ -92,67 +85,6 @@ impl IFileSystemPort for MockFs {
         Ok(ContentString::new(""))
     }
     fn walk_recursive(&self, _: &std::path::Path, _: &[String], _: &mut Vec<FilePath>) {}
-}
-
-#[allow(dead_code)]
-struct MockParser;
-
-impl ISourceParserPort for MockParser {
-    fn extract_imports(&self, _path: &FilePath) -> Result<ImportInfoList, SourceParserError> {
-        Ok(ImportInfoList::new())
-    }
-    fn get_raw_symbols(&self, _path: &FilePath) -> Result<ResponseData, SourceParserError> {
-        Ok(ResponseData::new())
-    }
-    fn get_class_attributes(&self, _path: &FilePath) -> ResponseData {
-        ResponseData::new()
-    }
-    fn has_all_export(&self, _path: &FilePath) -> SuccessStatus {
-        SuccessStatus::new(false)
-    }
-    fn find_primitive_violations(
-        &self,
-        _path: &FilePath,
-        _primitive_types: &PrimitiveTypeList,
-    ) -> PrimitiveViolationList {
-        PrimitiveViolationList::new()
-    }
-    fn find_unused_imports(&self, _path: &FilePath) -> ImportInfoList {
-        ImportInfoList::new()
-    }
-    fn get_class_definitions(&self, _path: &FilePath) -> Result<MetadataVO, SourceParserError> {
-        Ok(MetadataVO::new(HashMap::new()))
-    }
-    fn get_function_definitions(&self, _path: &FilePath) -> MetadataVO {
-        MetadataVO::new(HashMap::new())
-    }
-    fn is_symbol_exported(&self, _path: &FilePath, _symbol: &SymbolName) -> SuccessStatus {
-        SuccessStatus::new(false)
-    }
-    fn get_class_methods(&self, _path: &FilePath) -> MetadataVO {
-        MetadataVO::new(HashMap::new())
-    }
-    fn get_class_bases_map(&self, _path: &FilePath) -> MetadataVO {
-        MetadataVO::new(HashMap::new())
-    }
-    fn get_assignment_targets(&self, _path: &FilePath) -> MetadataVO {
-        MetadataVO::new(HashMap::new())
-    }
-    fn get_control_flow_count(&self, _path: &FilePath) -> Count {
-        Count::new(0)
-    }
-    fn is_barrel_file(&self, _path: &FilePath) -> BooleanVO {
-        BooleanVO::new(false)
-    }
-    fn get_stem(&self, _path: &FilePath) -> SymbolName {
-        SymbolName::new("")
-    }
-    fn is_entry_point(&self, _path: &FilePath) -> BooleanVO {
-        BooleanVO::new(false)
-    }
-    fn get_supported_extensions(&self) -> PatternList {
-        PatternList::new(vec![".rs".to_string()])
-    }
 }
 
 fn make_config() -> ArchitectureConfig {

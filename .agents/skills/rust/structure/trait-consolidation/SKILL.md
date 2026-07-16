@@ -1,47 +1,50 @@
+```markdown
 ---
 name: trait-consolidation-rust
-description: "rait-consolidation-rust"
-version: 2.0.0
+description: "Idiomatic Rust refactoring for clean architecture using the 3-Block Structure."
+version: 4.0.0
 category: refactoring
-tags: [aes, trait, protocol, port, consolidation, rust, interface, single-impl]
+tags: [rust, trait, protocol, port, interface-segregation, encapsulation, di, 3-block-structure]
 triggers:
   - "consolidate trait methods"
-  - "add fn to trait protocol"
-  - "trait consolidation"
-  - "merge fn signatures into trait"
-  - "move helper to trait"
+  - "refactor to 3-block structure"
+  - "split god trait"
+  - "organize impl blocks"
+  - "extract trait contract"
 
 related:
   - fix-cross-import
   - enforce-1-class-per-file
+  - rust-error-handling
 ---
 
 # trait-consolidation-rust
 
 ## Purpose
 
-Consolidate ALL function signatures from a capability/infrastructure/agent implementation file into its corresponding trait. Makes every method part of the contract for DI and verifiability.
+Refactor Rust implementation files into a clean, idiomatic **3-Block Structure**. This ensures that public contracts (Traits) are clearly separated from internal implementation details (Private Helpers), improving readability, testability, and encapsulation.
 
-**CRITICAL: Single `impl Trait` block only** — every fn in the impl file MUST be inside exactly one `impl I<Name>Protocol/Port/Aggregate for <Type>` block. Zero exceptions.
+**CRITICAL: The 3-Block Structure** — Every implementation file MUST follow this exact order:
+1. `struct Definition`
+2. `impl Trait for Struct` (Public Contract)
+3. `impl Struct` (Constructors & Private Helpers)
 
 ## Rules
 
-- **ONE impl block**: All methods (public, private, helpers, utilities) go into a single `impl I<Name>Protocol for <Type>` block. No separate inherent `impl Type` blocks for methods.
-- **EVERY fn in trait**: Including private helpers and utility functions. Zero exceptions.
-- **NO standalone functions**: Every function MUST be an abstract method in the trait. No free functions, no standalone helper functions outside the trait.
-- **NO free functions**: All logic lives inside `impl Trait for Type` blocks. No `fn helper()` outside of impl blocks.
-- **Only `new()` in inherent impl**: The constructor is the sole exception — it stays in its own `impl Type { pub fn new(...) }` block. Everything else goes in trait impl.
-- **Same names, no prefixes**: All trait methods keep their original names — no `do_`, `pure_`, or any other prefix.
-- **All trait methods have `&self`**: Sync methods use `&self`. Async methods use `async fn(&self, ...)`. Even if the method doesn't use `self`, add `&self` to make it dyn-compatible.
-- **Generic bounds need `where Self: Sized`**: Add this clause to generic trait methods.
-- **Extract shared logic**: When two+ methods share common logic, extract it into one consolidated helper that all callers use. This eliminates duplication and creates a single trait method for the shared logic.
+- **Trait = Public Contract Only**: Only methods that form the external API or `pub(crate)` boundary belong in the trait. 
+- **Encapsulate Private Helpers**: Private helpers, utilities, and internal logic **MUST** stay in the inherent `impl Struct` block (Block 3). Do NOT pollute the trait with implementation details.
+- **Interface Segregation**: If a struct has multiple distinct responsibilities, split them into multiple focused traits (e.g., `ICoreProtocol`, `IHelperTrait`) and implement them separately.
+- **Constructors in Block 3**: `new()`, `default()`, and builder methods stay exclusively in the inherent `impl Struct` block.
+- **Object Safety**: 
+  - Add `where Self: Sized` to generic trait methods.
+  - Do NOT artificially add `&self` to pure utility functions. If a function doesn't need state, make it an inherent method without `self` or a module-level function.
+- **Extract Shared Logic**: When multiple public methods share logic, extract it into a private inherent method (e.g., `fn shared_helper(&self)`) in Block 3, called by the public trait methods in Block 2.
 
 ## Contract Rules
 
-- **If contract exists**: Update the existing contract to include ALL fn signatures from impl file (including private helpers)
-- **If contract doesn't exist**: Create a new contract file following naming convention
-- **If contract needs replacement**: Replace old contract with unified contract (merge methods from multiple traits)
-- **Register trait module**: Add the new trait file to `mod.rs` in the shared crate so it's exported
+- **If contract exists**: Update the existing trait to include ONLY the public/contract method signatures. Remove any private helpers that were incorrectly placed there.
+- **If contract doesn't exist**: Create a new trait file following the naming convention, containing only the public contract.
+- **Register trait module**: Add the new trait file to `mod.rs` in the shared crate so it's exported.
 
 ## Naming Convention
 
@@ -53,249 +56,132 @@ Consolidate ALL function signatures from a capability/infrastructure/agent imple
 
 ## When to Use
 
-- Capability/Infra/Agent impl file has fn methods NOT in the trait (including private helpers)
-- You want to make all methods part of the contract interface
-- Refactoring and want to document new functionality in trait first
-- Need to create a new contract for an impl file that doesn't have one yet
-- Need to replace/update an existing contract with merged methods
-- Two+ methods share common logic — extract into one shared helper
+- A struct has methods scattered across multiple `impl` blocks without clear separation.
+- A trait has become a "God Trait" containing private helpers.
+- You want to improve readability by placing the public contract above internal details.
+- Refactoring to align with Ports & Adapters / Hexagonal Architecture in an idiomatic Rust way.
 
-## The Pattern
+## The 3-Block Pattern
 
-### Trait File (`contract_<name>_protocol.rs`, `contract_<name>_port.rs`, or `contract_<name>_aggregate.rs`)
+### 1. Trait File (`contract_<name>_protocol.rs`)
+*Contains ONLY the public contract. No private helpers.*
 
 ```rust
-pub trait I<Name>Protocol: Send + Sync {    // Protocol for capabilities
-pub trait I<Name>Port: Send + Sync {        // Port for infrastructure
-pub trait I<Name>Aggregate: Send + Sync {   // Aggregate for agents
+pub trait I<Name>Protocol: Send + Sync {
+    // Public API methods only
+    fn public_method(&self, input: &str) -> Result<String, MyError>;
+    
+    // Async methods
+    async fn async_method(&self, id: u32) -> Option<Data>;
 
-    // ALL methods — same name as in impl, no prefixes
-    // Includes public API, private helpers, and utility functions
-    fn public_method(&self, ...) -> ...;
-    fn another_method(&self, ...) -> ...;
-    fn shared_helper(&self, ...) -> ...;     // extracted from multiple callers
-    fn internal_utility(&self, ...) -> ...;  // even private helpers
-
-    // Generic functions — add where Self: Sized
-    fn generic_fn<F, G>(&self, ...) -> ...
+    // Generic methods (must be Sized for object safety)
+    fn generic_fn<F>(&self, mapper: F) -> Vec<String>
     where
         Self: Sized,
-        F: Fn(...) -> ...,
-        G: Fn(...) -> ...;
-
-    // Async methods
-    async fn async_method(&self, ...) -> ...;
+        F: Fn(&str) -> String;
 }
 ```
 
-### Implementation File (`capabilities_<name>.rs`, `infrastructure_<name>.rs`, or `agent_<name>.rs`)
+### 2. Implementation File (`capabilities_<name>.rs`)
+*Follows the strict 3-Block Structure.*
 
 ```rust
+use shared::contract_<name>_protocol::I<Name>Protocol;
+
+// BLOCK 1: STRUCT DEFINITION
 pub struct <Type> {
     // fields only
 }
 
+// BLOCK 2: IMPL TRAIT FOR STRUCT (Public Contract)
+// Placed here so readers see the "Role" of the struct first.
+impl I<Name>Protocol for <Type> {
+    fn public_method(&self, input: &str) -> Result<String, MyError> {
+        // Call private helper from Block 3
+        self.shared_internal_logic(input)?;
+        Ok(format!("Processed: {}", input))
+    }
+
+    async fn async_method(&self, id: u32) -> Option<Data> {
+        None
+    }
+
+    fn generic_fn<F>(&self, mapper: F) -> Vec<String>
+    where
+        Self: Sized,
+        F: Fn(&str) -> String,
+    {
+        vec![]
+    }
+}
+
+// BLOCK 3: IMPL STRUCT (Constructors & Private Helpers)
+// Internal details are kept below the public contract.
 impl <Type> {
     pub fn new(...) -> Self {
         Self { ... }
     }
-    // NOTHING ELSE — no methods here
-}
 
-impl I<Name>Protocol for <Type> {
-    // ALL methods — same name as trait, implementation directly here
-    fn public_method(&self, ...) {
-        // actual implementation logic
-    }
-
-    fn another_method(&self, ...) {
-        // actual implementation logic
-    }
-
-    fn shared_helper(&self, ...) {
-        // extracted shared logic — called by multiple methods
-    }
-
-    fn internal_utility(&self, ...) {
-        // even private helpers are in trait impl
-    }
-
-    fn generic_fn<F, G>(&self, ...) -> ...
-    where
-        Self: Sized,
-        F: Fn(...) -> ...,
-        G: Fn(...) -> ...,
-    {
-        // actual implementation logic
-    }
-
-    async fn async_method(&self, ...) {
-        // actual implementation logic
+    // Private helper (encapsulated, not in trait)
+    fn shared_internal_logic(&self, param: &str) -> Result<(), MyError> {
+        // Extracted shared logic
+        Ok(())
     }
 }
 ```
-
-**Key**: Only `new()` stays in its own inherent `impl Type` block. ALL other methods — public, private, helpers, utilities — go into the single trait impl block. No `do_`, `pure_`, or any prefix modifications.
 
 ## Step-by-Step Process
 
-### Step 1: Count fn in Impl File
+### Step 1: Audit Existing Methods
+Identify which methods are truly part of the external contract (used by other modules/traits) and which are internal implementation details.
 
-```bash
-# Count all fn signatures (pub, private, async)
-grep -c "^    fn \|^    pub fn \|^    async fn " path/to/impl_file.rs
-```
+### Step 2: Extract Shared Logic
+If multiple public methods share logic, create a `fn shared_logic(&self)` in Block 3 (Inherent impl). Do NOT put this in the trait unless other structs need to override it.
 
-### Step 2: Count fn in Trait File
+### Step 3: Define/Update the Trait
+Add only the public/contract method signatures to the trait file. Add `where Self: Sized` to generic methods.
 
-```bash
-grep -c "^    fn \|^    async fn " path/to/contract_<name>_protocol_or_port_or_aggregate.rs
-```
+### Step 4: Reorganize into 3 Blocks
+Structure the implementation file strictly:
+1. `pub struct <Type>`
+2. `impl I<Name>Protocol for <Type>` (All public contract methods)
+3. `impl <Type>` (Constructors and all private/helpers)
 
-### Step 3: Extract Shared Logic (Consolidate)
-
-When two+ methods share common patterns (e.g., same loop structure, same parsing logic), extract it into one shared helper:
-
-```rust
-// Before: duplicated logic in check_forbidden_imports and check_scope_forbidden_imports
-fn check_forbidden_imports(&self, ...) {
-    // ... parse imports ...
-    for (line_num, line) in import_lines {
-        // common loop body
-    }
-}
-
-fn check_scope_forbidden_imports(&self, ...) {
-    // ... parse imports ...
-    for (line_num, line) in import_lines {
-        // SAME common loop body — duplicate!
-    }
-}
-
-// After: extract shared logic into one helper
-fn check_forbidden_imports(&self, ...) {
-    let import_lines = self.parser.read_import_lines(&file_path);
-    self.check_imports_against_forbidden(&import_lines, &forbidden_list, ...);
-}
-
-fn check_scope_forbidden_imports(&self, ...) {
-    let import_lines = self.parser.read_import_lines(&file_path);
-    self.check_imports_against_forbidden(&import_lines, &rule.forbidden.values, ...);
-}
-
-// Shared helper — ONE method that both call
-fn check_imports_against_forbidden(&self, ..., violations: &mut Vec<LintResult>) {
-    for (line_num, line) in import_lines {
-        // the common loop body — extracted once
-    }
-}
-```
-
-### Step 4: Add ALL fn Signatures to Trait File
-
-For each fn in impl file:
-
-- Keep **original name** (no prefixes)
-- All methods: use `&self`
-- Async methods: use `async fn(&self, ...)`
-- Generic functions: add `where Self: Sized`
-
-```rust
-pub trait I<Name>Protocol: Send + Sync {
-    // Public API
-    fn public_method(&self, ...) -> ...;
-    async fn async_api(&self, ...) -> ...;
-
-    // Private helpers (still in trait!)
-    fn shared_helper(&self, ...) -> ...;
-    fn internal_utility(&self, ...) -> ...;
-}
-```
-
-### Step 5: Move ALL Methods to Single Trait Impl Block
-
-```rust
-impl I<Name>Protocol for <Type> {
-    fn public_method(&self, ...) { /* impl */ }
-    async fn async_api(&self, ...) { /* impl */ }
-    fn shared_helper(&self, ...) { /* impl */ }
-    fn internal_utility(&self, ...) { /* impl */ }
-}
-
-impl <Type> {
-    pub fn new(...) -> Self { /* constructor only */ }
-}
-```
-
-### Step 6: Register Trait Module in Shared Crate
-
-Add the new trait file to `mod.rs` so it's exported:
-
-```rust
-// In crates/shared/src/<layer>/mod.rs
-pub mod contract_<name>_protocol;  // add this line
-```
-
-### Step 7: Verify Compilation
-
-```bash
-cargo check -p <crate-name> 2>&1 | grep -E "error|cannot find"
-```
+### Step 5: Register and Verify
+Add the trait to `mod.rs` and run verification commands.
 
 ## Verification Checklist
 
-- [ ] ONE `impl Trait for Type` block — no other method impl blocks
-- [ ] ONLY `new()` in separate inherent `impl Type` block
-- [ ] ALL fn from impl file are in trait (same name, no prefixes)
-- [ ] NO standalone functions — every fn is an abstract method in the trait
-- [ ] NO free functions outside of impl blocks
-- [ ] Private helpers and utilities also have trait signatures
-- [ ] All trait methods have `&self` (even if unused)
-- [ ] Generic bounds include `where Self: Sized`
-- [ ] All trait methods have implementations
-- [ ] Trait module registered in shared crate's `mod.rs`
-- [ ] Shared logic extracted into one consolidated helper (no duplication)
-- [ ] `cargo check` passes
-
-## File Locations
-
-```
-# Capabilities (Protocol)
-crates/shared/src/<layer>/contract_<name>_protocol.rs    # Trait (ALL fn — public + private)
-crates/<crate>/src/capabilities_<name>.rs                 # Impl (only new() in inherent impl)
-
-# Infrastructure (Port)
-crates/shared/src/<layer>/contract_<name>_port.rs        # Trait (ALL fn — public + private)
-crates/<crate>/src/infrastructure_<name>.rs               # Impl (only new() in inherent impl)
-
-# Agents (Aggregate)
-crates/shared/src/<layer>/contract_<name>_aggregate.rs   # Trait (ALL fn — public + private)
-crates/<crate>/src/agent_<name>.rs                        # Impl (only new() in inherent impl)
-```
+- [ ] File follows the **3-Block Structure** (Struct -> Impl Trait -> Impl Struct).
+- [ ] Trait contains **only** public/contract methods (no private helpers).
+- [ ] Private helpers and utilities are in Block 3 (`impl Struct`).
+- [ ] Constructors (`new`, builders) are in Block 3.
+- [ ] Generic trait methods include `where Self: Sized`.
+- [ ] Pure utility functions do not artificially force `&self`.
+- [ ] Trait module is registered in the shared crate's `mod.rs`.
+- [ ] `cargo check -p <crate-name>` passes without warnings or errors.
 
 ## Quick Commands
 
 ```bash
-# Count fn in trait impl block (should include ALL methods)
-grep -c "^    fn \|^    async fn " crates/import-rules/src/capabilities_<name>.rs
+# Verify 3-Block Structure order (rough check)
+grep -n "^impl\|^pub struct" crates/<crate>/src/capabilities_<name>.rs
 
-# Verify only new() in inherent impl
-grep -A5 "^impl <Name>Checker {" crates/import-rules/src/capabilities_<name>.rs
+# Ensure trait does NOT contain private helper keywords
+grep -E "fn (helper|util|private|internal)" crates/shared/src/contract_*.rs || echo "Clean: No helpers in trait"
 
-# Check trait has all methods (no "not a member of trait" errors)
+# Check for object safety violations
+cargo check -p <crate-name> 2>&1 | grep "cannot be made into an object"
+
+# Ensure all trait methods are implemented
 cargo check -p <crate-name> 2>&1 | grep "not a member of trait"
-
-# Check no separate impl blocks with methods
-grep "^impl [A-Z]" crates/import-rules/src/capabilities_<name>.rs | grep -v "I<Name>"
 ```
 
 ## Common Mistakes (AVOID)
 
-- ❌ Creating separate `impl Type { fn helper(...) }` for private helpers — they go in trait impl
-- ❌ Renaming helpers with `do_` or `pure_` prefixes — keep original names
-- ❌ Forgetting to register the trait in shared crate's `mod.rs`
-- ❌ Having methods split across multiple `impl` blocks — everything in ONE trait impl
-- ❌ Leaving shared logic duplicated across two public methods — extract into one helper
-- ❌ Creating standalone functions (`fn helper()`) outside of impl blocks — ALL logic goes in trait impl
-- ❌ Using free functions instead of trait methods — every fn must be an abstract method in the trait
-- ❌ Keeping static methods in separate inherent impl blocks — add `&self` and move to trait impl
+- ❌ **Putting private helpers in the trait**: This violates encapsulation and forces all implementors to write boilerplate.
+- ❌ **Mixing Block 2 and Block 3**: Do not interleave trait methods and private helpers. Keep them in separate `impl` blocks.
+- ❌ **Creating "God Traits"**: If a trait has >10 methods or mixes unrelated concerns, split it into multiple traits.
+- ❌ **Forgetting `where Self: Sized`**: This will break `dyn Trait` usage for the rest of the trait.
+- ❌ **Placing `new()` in the trait impl**: Constructors must stay in the inherent `impl Struct` block (Block 3).
+```

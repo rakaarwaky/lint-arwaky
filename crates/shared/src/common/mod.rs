@@ -27,7 +27,6 @@ pub mod taxonomy_filesystem_error;
 
 // from source-parsing/ (foundational, multi-feature)
 pub mod contract_language_detector_port;
-pub mod contract_parser_port;
 pub mod contract_path_normalization_port;
 pub mod contract_scanner_provider_port;
 pub mod taxonomy_adapter_error;

@@ -82,42 +82,47 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
     }
     async fn exec_cmd_scan(
         &self,
-        _executor: &dyn ICommandExecutorPort,
+        executor: &dyn ICommandExecutorPort,
         args: PatternList,
-        _working_dir: FilePath,
-        _timeout_secs: Timeout,
+        working_dir: FilePath,
+        timeout_secs: Timeout,
         _adapter_name: Option<shared::common::taxonomy_adapter_name_vo::AdapterName>,
-        _path: &FilePath,
+        path: &FilePath,
     ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
     {
-        let mut meta = std::collections::HashMap::new();
-        meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
-        Ok(ResponseData {
-            value: None,
-            stdout: args.values.join(" "),
-            stderr: String::new(),
-            returncode: 0,
-            metadata: meta,
-        })
+        // Actually call the executor so the mock's stdout/stderr/exit_code are respected
+        executor
+            .execute_command(args, working_dir, Some(timeout_secs))
+            .await
+            .map_err(|e| {
+                shared::code_analysis::taxonomy_operation_error::LinterOperationError::Scan(
+                    shared::common::taxonomy_adapter_error::ScanError::new(
+                        path.clone(),
+                        shared::common::taxonomy_common_error::ErrorMessage::new(e.to_string()),
+                    ),
+                )
+            })
     }
     async fn exec_cmd_adapter(
         &self,
-        _executor: &dyn ICommandExecutorPort,
+        executor: &dyn ICommandExecutorPort,
         args: PatternList,
-        _working_dir: FilePath,
-        _timeout_secs: Timeout,
-        _adapter_name: shared::common::taxonomy_adapter_name_vo::AdapterName,
+        working_dir: FilePath,
+        timeout_secs: Timeout,
+        adapter_name: shared::common::taxonomy_adapter_name_vo::AdapterName,
     ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
     {
-        let mut meta = std::collections::HashMap::new();
-        meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
-        Ok(ResponseData {
-            value: None,
-            stdout: args.values.join(" "),
-            stderr: String::new(),
-            returncode: 0,
-            metadata: meta,
-        })
+        executor
+            .execute_command(args, working_dir, Some(timeout_secs))
+            .await
+            .map_err(|e| {
+                shared::code_analysis::taxonomy_operation_error::LinterOperationError::Adapter(
+                    shared::common::taxonomy_adapter_error::AdapterError::new(
+                        adapter_name,
+                        shared::common::taxonomy_common_error::ErrorMessage::new(e.to_string()),
+                    ),
+                )
+            })
     }
     async fn js_apply_fix(
         &self,

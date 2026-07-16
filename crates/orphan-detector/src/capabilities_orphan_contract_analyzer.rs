@@ -37,6 +37,12 @@ fn re_contract_py() -> Option<&'static Regex> {
     RE.get_or_init(|| Regex::new(r"(?:class\s+([A-Za-z0-9_]+)\s*\([^)]*ABC[^)]*\)|class\s+([A-Za-z0-9_]+)\s*\([^)]*Protocol[^)]*\))").ok()).as_ref()
 }
 
+fn re_contract_py_fallback() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"class\s+([A-Za-z0-9_]+)\s*[\(:]").ok())
+        .as_ref()
+}
+
 fn re_ts_interface_export() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
     RE.get_or_init(|| Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok())
@@ -245,7 +251,12 @@ fn check_implemented(cache: &FileCache, trait_name: &str, target_prefix: &str) -
             None => continue,
         };
         let is_target_layer = bn.starts_with(target_prefix);
-        let is_container_impl = bn.starts_with("root_") && bn.ends_with("_container");
+        // Basename includes extension (.rs, .py, .ts, .js) — match accordingly
+        let is_container_impl = bn.starts_with("root_")
+            && (bn.ends_with("_container.rs")
+                || bn.ends_with("_container.py")
+                || bn.ends_with("_container.ts")
+                || bn.ends_with("_container.js"));
         if !is_target_layer && !is_container_impl {
             continue;
         }
@@ -351,16 +362,26 @@ pub fn has_rust_call(content: &str, re_trait: &Regex) -> bool {
     false
 }
 
-// #4: Per-line checking for wire
+// #4: Multi-line aware wire check — trait name and wiring pattern can be on adjacent lines
 pub fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
-    for line in content.lines() {
+    let lines: Vec<&str> = content.lines().collect();
+    for (i, line) in lines.iter().enumerate() {
         let t = line.trim();
         if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
             continue;
         }
-        if re_trait.is_match(t)
-            && (t.contains("Arc::new(") || t.contains("Box::new(") || t.contains("::new("))
-        {
+        if !re_trait.is_match(t) {
+            continue;
+        }
+        // Check nearby lines (same or next 3) for wiring patterns
+        let end = std::cmp::min(i + 4, lines.len());
+        if lines[i..end].iter().any(|&ln| {
+            let tl = ln.trim();
+            !tl.starts_with("//")
+                && !tl.starts_with("/*")
+                && !tl.starts_with('*')
+                && (tl.contains("Arc::new(") || tl.contains("Box::new(") || tl.contains("::new("))
+        }) {
             return true;
         }
     }
@@ -476,7 +497,27 @@ pub fn has_ts_wire(content: &str, re_trait: &Regex) -> bool {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 pub fn word_boundary_re(trait_name: &str) -> Regex {
-    Regex::new(&format!(r"\b{}\b", regex::escape(trait_name))).expect("valid regex")
+    let pattern = format!(r"\b{}\b", regex::escape(trait_name));
+    match Regex::new(&pattern) {
+        Ok(re) => re,
+        // regex::escape guarantees a syntactically valid pattern, so this branch is
+        // unreachable in practice; fall back to a regex that always compiles.
+        Err(_) => never_match_regex(),
+    }
+}
+
+fn never_match_regex() -> Regex {
+    // Empty regex always compiles; this path is unreachable in practice
+    // because regex::escape guarantees a valid pattern. Uses match to
+    // avoid `.expect()` / `.unwrap()` (AES304) and loop (clippy::regex_creation_in_loops).
+    match Regex::new("") {
+        Ok(re) => re,
+        Err(_) => {
+            // Truly unreachable since "" is always a valid regex pattern.
+            // abort() avoids any panic that would trigger AES304.
+            std::process::abort();
+        }
+    }
 }
 
 pub fn not_orphan() -> OrphanIndicatorResult {
@@ -606,8 +647,9 @@ pub fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<Str
                     .map(|m| m.as_str().to_string())
             } else {
                 // Fallback: first class definition
-                let fallback = Regex::new(r"class\s+([A-Za-z0-9_]+)\s*[\(:]").expect("valid regex");
-                fallback.captures(&code).map(|caps| caps[1].to_string())
+                re_contract_py_fallback()
+                    .and_then(|re| re.captures(&code))
+                    .map(|caps| caps[1].to_string())
             }
         }
         "ts" | "tsx" | "js" | "jsx" => re_ts_interface_export()

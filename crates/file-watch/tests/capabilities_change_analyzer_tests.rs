@@ -8,88 +8,92 @@ use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
 
 #[test]
 fn lintable_rust_file() {
-    assert!(ChangeAnalyzer::is_lintable("src/main.rs"));
+    assert!(ChangeAnalyzer::new().is_lintable("src/main.rs"));
 }
 
 #[test]
 fn lintable_python_file() {
-    assert!(ChangeAnalyzer::is_lintable("app.py"));
+    assert!(ChangeAnalyzer::new().is_lintable("app.py"));
 }
 
 #[test]
 fn lintable_js_file() {
-    assert!(ChangeAnalyzer::is_lintable("index.js"));
+    assert!(ChangeAnalyzer::new().is_lintable("index.js"));
 }
 
 #[test]
 fn lintable_ts_file() {
-    assert!(ChangeAnalyzer::is_lintable("component.ts"));
+    assert!(ChangeAnalyzer::new().is_lintable("component.ts"));
 }
 
 #[test]
 fn lintable_tsx_file() {
-    assert!(ChangeAnalyzer::is_lintable("component.tsx"));
+    assert!(ChangeAnalyzer::new().is_lintable("component.tsx"));
 }
 
 #[test]
 fn lintable_jsx_file() {
-    assert!(ChangeAnalyzer::is_lintable("component.jsx"));
+    assert!(ChangeAnalyzer::new().is_lintable("component.jsx"));
 }
 
 #[test]
 fn lintable_yaml_file() {
-    assert!(ChangeAnalyzer::is_lintable("config.yaml"));
+    assert!(ChangeAnalyzer::new().is_lintable("config.yaml"));
 }
 
 #[test]
 fn lintable_yml_file() {
-    assert!(ChangeAnalyzer::is_lintable("config.yml"));
+    assert!(ChangeAnalyzer::new().is_lintable("config.yml"));
 }
 
 #[test]
 fn lintable_json_file() {
-    assert!(ChangeAnalyzer::is_lintable("package.json"));
+    assert!(ChangeAnalyzer::new().is_lintable("package.json"));
 }
 
 #[test]
 fn lintable_css_file() {
-    assert!(ChangeAnalyzer::is_lintable("styles.css"));
+    assert!(ChangeAnalyzer::new().is_lintable("styles.css"));
 }
 
 #[test]
 fn lintable_md_file() {
-    assert!(ChangeAnalyzer::is_lintable("README.md"));
+    assert!(ChangeAnalyzer::new().is_lintable("README.md"));
 }
 
 #[test]
 fn lintable_toml_file() {
-    assert!(ChangeAnalyzer::is_lintable("Cargo.toml"));
+    assert!(ChangeAnalyzer::new().is_lintable("Cargo.toml"));
 }
 
 #[test]
 fn not_lintable_other_extension() {
-    assert!(!ChangeAnalyzer::is_lintable("image.png"));
-    assert!(!ChangeAnalyzer::is_lintable("data.bin"));
-    assert!(!ChangeAnalyzer::is_lintable("font.woff2"));
-    assert!(!ChangeAnalyzer::is_lintable("document.pdf"));
+    let analyzer = ChangeAnalyzer::new();
+    assert!(!analyzer.is_lintable("image.png"));
+    assert!(!analyzer.is_lintable("data.bin"));
+    assert!(!analyzer.is_lintable("font.woff2"));
+    assert!(!analyzer.is_lintable("document.pdf"));
 }
 
 #[test]
 fn not_lintable_without_extension() {
-    assert!(!ChangeAnalyzer::is_lintable("Makefile"));
-    assert!(!ChangeAnalyzer::is_lintable("LICENSE"));
+    let analyzer = ChangeAnalyzer::new();
+    assert!(!analyzer.is_lintable("Makefile"));
+    assert!(!analyzer.is_lintable("LICENSE"));
 }
 
 #[test]
 fn lintable_with_full_path() {
-    assert!(ChangeAnalyzer::is_lintable("/home/user/project/src/lib.rs"));
-    assert!(ChangeAnalyzer::is_lintable("crates/shared/src/lib.rs"));
+    let analyzer = ChangeAnalyzer::new();
+    assert!(analyzer.is_lintable("/home/user/project/src/lib.rs"));
+    assert!(analyzer.is_lintable("crates/shared/src/lib.rs"));
 }
 
 #[test]
 fn lintable_dotfiles_in_hidden_dirs() {
-    assert!(ChangeAnalyzer::is_lintable(".config/settings.py"));
-    assert!(ChangeAnalyzer::is_lintable(".github/workflows/deploy.rs"));
+    let analyzer = ChangeAnalyzer::new();
+    assert!(analyzer.is_lintable(".config/settings.py"));
+    assert!(analyzer.is_lintable(".github/workflows/deploy.rs"));
 }
 
 // ─── analyze — deduplication ────────────────────────────────────────────────
