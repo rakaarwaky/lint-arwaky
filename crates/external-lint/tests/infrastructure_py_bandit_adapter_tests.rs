@@ -6,10 +6,12 @@ use external_lint_lint_arwaky::infrastructure_py_bandit_adapter::BanditAdapter;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_common_vo::{BooleanVO, ErrorMessage, PatternList};
 use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_message_vo::ComplianceStatus;
+use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_response_data_vo::ResponseData;
+use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
 struct MockBanditExecutor {
     output: String,
@@ -38,6 +40,114 @@ impl ICommandExecutorPort for MockBanditExecutor {
     }
 }
 
+struct MockExternalLintUtilityPort;
+
+#[async_trait]
+impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
+    fn canonicalize_path(&self, path_str: &str) -> FilePath {
+        FilePath::new(path_str.to_string()).unwrap_or_default()
+    }
+    fn default_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
+    fn has_python_files(&self, _path: &FilePath) -> BooleanVO {
+        BooleanVO::new(true)
+    }
+    fn has_py_in_dir(&self, _dir: &DirectoryPath) -> BooleanVO {
+        BooleanVO::new(true)
+    }
+    fn is_in_path(&self, _executable: &str) -> BooleanVO {
+        BooleanVO::new(true)
+    }
+    fn resolve_js_cmd(
+        &self,
+        executable: &str,
+        args: PatternList,
+        _working_dir: &FilePath,
+    ) -> PatternList {
+        let mut cmd = vec![executable.to_string()];
+        cmd.extend(args.values);
+        PatternList::new(cmd)
+    }
+    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
+    fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
+    fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
+    async fn exec_cmd_scan(
+        &self,
+        executor: &dyn ICommandExecutorPort,
+        args: PatternList,
+        working_dir: FilePath,
+        _timeout_secs: Timeout,
+        _adapter_name: Option<shared::common::taxonomy_adapter_name_vo::AdapterName>,
+        _path: &FilePath,
+    ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
+    {
+        executor
+            .execute_command(args, working_dir, None)
+            .await
+            .map_err(|e| {
+                use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
+                LinterOperationError::Scan(shared::common::taxonomy_adapter_error::ScanError {
+                    path: FilePath::new("unknown".to_string()).unwrap_or_default(),
+                    message: ErrorMessage::new(e.to_string()),
+                    error_code: None,
+                    adapter_name: None,
+                    cause: None,
+                })
+            })
+    }
+    async fn exec_cmd_adapter(
+        &self,
+        executor: &dyn ICommandExecutorPort,
+        args: PatternList,
+        working_dir: FilePath,
+        _timeout_secs: Timeout,
+        _adapter_name: shared::common::taxonomy_adapter_name_vo::AdapterName,
+    ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
+    {
+        executor
+            .execute_command(args, working_dir, None)
+            .await
+            .map_err(|e| {
+                use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
+                LinterOperationError::Scan(shared::common::taxonomy_adapter_error::ScanError {
+                    path: FilePath::new("unknown".to_string()).unwrap_or_default(),
+                    message: ErrorMessage::new(e.to_string()),
+                    error_code: None,
+                    adapter_name: None,
+                    cause: None,
+                })
+            })
+    }
+    async fn js_apply_fix(
+        &self,
+        _executor: &dyn ICommandExecutorPort,
+        _path: &FilePath,
+        _tool: &str,
+        _fix_arg: &str,
+    ) -> Result<
+        ComplianceStatus,
+        shared::code_analysis::taxonomy_operation_error::LinterOperationError,
+    > {
+        Ok(ComplianceStatus::new(true))
+    }
+    async fn noop_apply_fix(
+        &self,
+    ) -> Result<
+        ComplianceStatus,
+        shared::code_analysis::taxonomy_operation_error::LinterOperationError,
+    > {
+        // bandit can't auto-fix findings — matches real ExternalLintUtilityAdapter behavior.
+        Ok(ComplianceStatus::new(false))
+    }
+}
+
 struct IdentityPathNorm;
 impl IPathNormalizationPort for IdentityPathNorm {
     fn normalize_path(&self, path: FilePath) -> FilePath {
@@ -54,6 +164,7 @@ fn make_adapter(output: &str) -> BanditAdapter {
             output: output.to_string(),
         }),
         Arc::new(IdentityPathNorm),
+        Arc::new(MockExternalLintUtilityPort),
         None,
     )
 }

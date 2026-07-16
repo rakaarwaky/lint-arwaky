@@ -30,7 +30,7 @@ target/
 .obsidian/
 log/
 .mimocode
-
+.qwen
 # Sensitive files (CRED007a)
 credentials.json
 serviceAccountKey

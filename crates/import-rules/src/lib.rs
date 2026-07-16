@@ -2,7 +2,7 @@
 pub mod capabilities_layer_detection_analyzer;
 pub use capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 pub mod capabilities_import_forbidden_checker;
-pub use capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
+pub use capabilities_import_forbidden_checker::ImportForbiddenChecker;
 pub mod capabilities_import_mandatory_checker;
 pub use capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 pub mod capabilities_dummy_import_checker;
@@ -10,7 +10,7 @@ pub use capabilities_dummy_import_checker::DummyImportChecker;
 pub mod capabilities_import_unused_checker;
 pub use capabilities_import_unused_checker::UnusedImportRuleChecker;
 pub mod capabilities_cycle_import_analyzer;
-pub use capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
+pub use capabilities_cycle_import_analyzer::CycleImportAnalyzer;
 pub mod infrastructure_import_parser_adapter;
 pub use infrastructure_import_parser_adapter::ImportParserAdapter;
 pub mod infrastructure_filesystem_adapter;

@@ -22,7 +22,6 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_language_detector_helper::LanguageDetector;
 use shared::common::taxonomy_path_vo::FilePath;
 
 /// Default forbidden-bypass patterns applied when config is empty or missing.
@@ -88,7 +87,7 @@ impl SourceLanguage {
         let Ok(fp) = FilePath::new(file) else {
             return SourceLanguage::Rust;
         };
-        match LanguageDetector::new().detect(&fp) {
+        match fp.language() {
             shared::common::contract_language_detector_port::Language::Rust => SourceLanguage::Rust,
             shared::common::contract_language_detector_port::Language::Python => {
                 SourceLanguage::Python

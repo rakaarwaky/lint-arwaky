@@ -54,9 +54,8 @@ impl McpContainer {
         let orphan_orchestrator = orphan_container.analyzer();
         let layer_detector = orphan_container.layer_detector();
 
-        let scanner_provider: Arc<dyn IScannerProviderPort> = Arc::new(
-            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
-        );
+        let scanner_provider: Arc<dyn IScannerProviderPort> =
+            Arc::new(code_analysis::FileCollectorProvider::new());
 
         let ext_container =
             external_lint::root_external_lint_container::ExternalLintContainer::new_default();

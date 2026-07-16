@@ -1,34 +1,46 @@
+use orphan_detector_lint_arwaky::capabilities_orphan_filename_extractor::OrphanFilenameExtractor;
 use orphan_detector_lint_arwaky::capabilities_orphan_surfaces_analyzer::{
     get_surface_suffix, surface_category,
 };
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
+use std::sync::Arc;
+
+fn get_extractor() -> Arc<dyn IOrphanFilenameExtractorProtocol> {
+    Arc::new(OrphanFilenameExtractor::new())
+}
 
 #[test]
 fn suffix_from_command_file() {
-    let suffix = get_surface_suffix("surface_check_command.rs");
+    let extractor = get_extractor();
+    let suffix = get_surface_suffix("surface_check_command.rs", &extractor);
     assert_eq!(suffix, "command");
 }
 
 #[test]
 fn suffix_from_controller_file() {
-    let suffix = get_surface_suffix("surface_user_controller.rs");
+    let extractor = get_extractor();
+    let suffix = get_surface_suffix("surface_user_controller.rs", &extractor);
     assert_eq!(suffix, "controller");
 }
 
 #[test]
 fn suffix_from_component_file() {
-    let suffix = get_surface_suffix("surface_header_component.tsx");
+    let extractor = get_extractor();
+    let suffix = get_surface_suffix("surface_header_component.tsx", &extractor);
     assert_eq!(suffix, "component");
 }
 
 #[test]
 fn suffix_from_hook_file() {
-    let suffix = get_surface_suffix("surface_use_auth_hook.ts");
+    let extractor = get_extractor();
+    let suffix = get_surface_suffix("surface_use_auth_hook.ts", &extractor);
     assert_eq!(suffix, "hook");
 }
 
 #[test]
 fn suffix_from_entry_file() {
-    let suffix = get_surface_suffix("root_cli_entry.rs");
+    let extractor = get_extractor();
+    let suffix = get_surface_suffix("root_cli_entry.rs", &extractor);
     assert_eq!(suffix, "entry");
 }
 

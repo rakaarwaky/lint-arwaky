@@ -13,15 +13,13 @@ use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
-use code_analysis::{lint_path, CodeDuplicationAnalyzer};
+use code_analysis::CodeDuplicationAnalyzer;
 use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter;
-use import_rules::root_import_rules_container::NullSourceParser;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::common::contract_parser_port::ISourceParserPort;
-use shared::common::contract_system_port::IFileSystemPort;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 
 pub struct CliMainEntry {}
@@ -58,10 +56,8 @@ fn main() -> ExitCode {
     // precise layer matching in check/scan/orphan commands. This is
     // different from the orphan detector's prefix-based detection.
     let aes_config = default_aes_config();
-    let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
-    let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
     let layer_detector: Arc<dyn ILayerDetectionAggregate> =
-        Arc::new(LayerDetectionAnalyzer::new(aes_config, fs, parser));
+        Arc::new(LayerDetectionAnalyzer::new(aes_config));
 
     // ── Phase 2: Create per-project factory (for `scan` command) ─────
     // The scan command discovers workspace members and runs all linters
@@ -72,7 +68,6 @@ fn main() -> ExitCode {
         let import_container =
             import_rules::root_import_rules_container::ImportContainer::new_with_config(
                 config.clone(),
-                Arc::new(NullSourceParser),
             );
         let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
             import_container.analyzer(),
@@ -89,10 +84,8 @@ fn main() -> ExitCode {
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
 
-        let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
-        let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
         let layer_detector: Arc<dyn ILayerDetectionAggregate> =
-            Arc::new(LayerDetectionAnalyzer::new(config.clone(), fs, parser));
+            Arc::new(LayerDetectionAnalyzer::new(config.clone()));
 
         surface_check_command::CheckContext {
             code_analysis_linter: arch_linter,
@@ -100,10 +93,7 @@ fn main() -> ExitCode {
             naming_orchestrator: naming_container.orchestrator(),
             external_lint: ext_lint_clone.clone(),
             role_orchestrator: role_container.orchestrator(),
-            scanner_provider: Arc::new(
-                shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(
-                ),
-            ),
+            scanner_provider: Arc::new(code_analysis::FileCollectorProvider::new()),
             orphan_orchestrator: orphan_container.analyzer(),
             layer_detector,
             language_detector: Arc::new(
@@ -129,7 +119,7 @@ fn main() -> ExitCode {
     // ── Phase 4: Parse CLI arguments ──────────────────────────────────
     let raw_args: Vec<String> = env::args().collect();
     if raw_args.len() <= 1 {
-        return run_default_check(".");
+        return run_default_check(".", container.code_analysis_linter.clone());
     }
 
     use clap::{CommandFactory, FromArgMatches};
@@ -171,7 +161,6 @@ fn main() -> ExitCode {
             let import_container =
                 import_rules::root_import_rules_container::ImportContainer::new_with_config(
                     loaded_config.clone(),
-                    Arc::new(NullSourceParser),
                 );
             let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
                 import_container.analyzer(),
@@ -190,15 +179,9 @@ fn main() -> ExitCode {
             let orphan_container =
                 orphan_detector::root_orphan_detector_container::OrphanContainer::new();
 
-            let fs: Arc<dyn IFileSystemPort> = Arc::new(
-                import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new(),
-            );
-            let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
             let layer_detector: Arc<dyn ILayerDetectionAggregate> = Arc::new(
                 import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
                     loaded_config.clone(),
-                    fs,
-                    parser,
                 ),
             );
 
@@ -446,11 +429,11 @@ fn main() -> ExitCode {
 }
 
 // run_default_check: Self-lint shortcut when no subcommand is provided.
-fn run_default_check(project_root: &str) -> ExitCode {
+fn run_default_check(project_root: &str, linter: Arc<dyn ICodeAnalysisAggregate>) -> ExitCode {
     use shared::cli_commands::taxonomy_severity_vo::Severity;
     use std::collections::BTreeMap;
 
-    let results = lint_path(project_root);
+    let results = linter.run_code_analysis_path(project_root);
 
     let mut lines: Vec<String> = Vec::new();
     lines.push("=".repeat(60));

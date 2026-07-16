@@ -34,4 +34,11 @@ pub trait IFileSystemPort: Send + Sync {
     async fn get_basename(&self, path: &FilePath) -> Identity;
     async fn path_join(&self, parts: &[Identity]) -> FilePath;
     async fn read_file(&self, path: &FilePath) -> Result<ContentString, FileSystemError>;
+    /// Recursive directory walker helper.
+    fn walk_recursive(
+        &self,
+        dir: &std::path::Path,
+        ignored: &[String],
+        results: &mut Vec<FilePath>,
+    );
 }

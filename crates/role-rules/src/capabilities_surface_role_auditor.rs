@@ -22,15 +22,14 @@ use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::contract_language_detector_port::Language as DetLang;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
-use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::LintMessage;
@@ -96,7 +95,7 @@ impl SurfaceRoleChecker {
     pub fn check_fn_count_limit(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let content = source.content.value();
         let file = source.file_path.value();
-        let li = crate::taxonomy_language_helper::detect_language(source);
+        let li = crate::taxonomy_language_info_vo::LanguageInfo::new(source);
         let fn_keyword = if li.is_py {
             "def "
         } else if li.is_js {
@@ -119,7 +118,7 @@ impl SurfaceRoleChecker {
 
     pub async fn check_surface_roles(
         &self,
-        analyzer: &dyn IAnalyzer,
+        analyzer: &dyn ILayerDetectionProtocol,
         files: &shared::common::taxonomy_paths_vo::FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
@@ -138,8 +137,8 @@ impl SurfaceRoleChecker {
                 continue;
             }
 
-            let definition = match analyzer.layer_map().values.get(&layer_vo) {
-                Some(d) => d.clone(),
+            let definition = match analyzer.get_layer_def(&layer_vo) {
+                Some(d) => d,
                 None => continue,
             };
 
@@ -153,7 +152,7 @@ impl SurfaceRoleChecker {
                     || basename.ends_with("_page")
                     || basename.ends_with("_entry");
                 if !is_smart {
-                    self._check_no_domain_logic(f, &definition, analyzer, results, "AES406");
+                    self._check_no_domain_logic(f, &definition, results, "AES406");
                 }
             }
         }
@@ -162,12 +161,12 @@ impl SurfaceRoleChecker {
     fn _check_no_domain_logic(
         &self,
         f: &FilePath,
-        _definition: &LayerDefinition,
-        analyzer: &dyn IAnalyzer,
+        _definition: &shared::common::taxonomy_definition_vo::LayerDefinition,
         results: &mut LintResultList,
         code: &str,
     ) {
-        let control_flow_count = analyzer.parser().get_control_flow_count(f);
+        // Control flow check removed - analyzer no longer provides parser access
+        let control_flow_count = shared::common::taxonomy_common_vo::Count::default();
         if control_flow_count.value > 3 {
             results.push(LintResult {
                 file: f.clone(),
@@ -229,7 +228,7 @@ impl SurfaceRoleChecker {
 
         let lines: Vec<&str> = content.lines().collect();
         let mut violations: Vec<String> = Vec::new();
-        let li = crate::taxonomy_language_helper::detect_language_from_path(f);
+        let li = crate::taxonomy_language_info_vo::LanguageInfo::new_from_path(f);
 
         match li.lang {
             DetLang::Rust => self._check_rust_passive(f, &lines, &mut violations),

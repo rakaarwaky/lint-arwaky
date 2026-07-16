@@ -1,4 +1,4 @@
-use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
+use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::CycleImportAnalyzer;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -145,6 +145,26 @@ impl IImportParserPort for MockCycleParser {
     fn is_name_used(&self, _name: &str, _content: &str, _exclude_line: LineNumber) -> bool {
         false
     }
+    fn extract_layer_from_prefix(
+        &self,
+        segment: &str,
+    ) -> Option<shared::common::taxonomy_layer_vo::LayerNameVO> {
+        const PREFIX_MAP: &[(&str, &str)] = &[
+            ("taxonomy_", "taxonomy"),
+            ("contract_", "contract"),
+            ("capabilities_", "capabilities"),
+            ("infrastructure_", "infrastructure"),
+            ("agent_", "agent"),
+            ("surface_", "surfaces"),
+            ("root_", "root"),
+        ];
+        for &(prefix, layer) in PREFIX_MAP {
+            if segment.starts_with(prefix) {
+                return Some(shared::common::taxonomy_layer_vo::LayerNameVO::new(layer));
+            }
+        }
+        None
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -161,7 +181,7 @@ fn no_edges_no_violations() {
         imports: HashMap::new(),
         cycle_edges: HashMap::new(),
     });
-    let _analyzer = DependencyCycleAnalyzer::new(config, parser);
+    let _analyzer = CycleImportAnalyzer::new(config, parser);
     // A dummy IAnalyzer is needed — the scan method requires it
     // For now, we test that the DependencyEdge struct and cycle detection concepts work
     let edge = DependencyEdge::new("capabilities".to_string(), "surfaces".to_string());

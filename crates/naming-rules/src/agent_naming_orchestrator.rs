@@ -9,9 +9,9 @@
 // INamingCheckerProtocol trait but are configured with different rules.
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
@@ -30,7 +30,7 @@ use std::sync::Arc;
 pub struct NamingOrchestrator {
     naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
     suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
-    analyzer: Arc<dyn INamingAnalyzerProtocol>,
+    analyzer: Arc<dyn ILayerDetectionProtocol>,
     fs: Arc<dyn INamingFileSystemPort>,
     ignored_patterns: PatternList,
 }
@@ -41,7 +41,7 @@ impl NamingOrchestrator {
     pub fn new(
         naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
         suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
-        analyzer: Arc<dyn INamingAnalyzerProtocol>,
+        analyzer: Arc<dyn ILayerDetectionProtocol>,
         fs: Arc<dyn INamingFileSystemPort>,
     ) -> Self {
         let config = analyzer.config();

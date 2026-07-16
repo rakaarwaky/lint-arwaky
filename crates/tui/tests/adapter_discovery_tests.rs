@@ -4,6 +4,7 @@ use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use std::sync::Arc;
 use tui_lint_arwaky::capabilities_lint_executor::{discover_adapters, LintExecutor};
+use tui_lint_arwaky::capabilities_report_formatter::ReportFormatterHelper;
 
 struct MockCodeAnalysis;
 impl ICodeAnalysisAggregate for MockCodeAnalysis {
@@ -104,7 +105,7 @@ fn test_discover_adapters_deterministic() {
 
 #[test]
 fn test_adapters_method_formats_output() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis));
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis), Arc::new(ReportFormatterHelper));
     let result = executor.adapters();
     assert!(result.success);
     assert!(result.output.contains("Active Linter Adapters"));

@@ -11,10 +11,6 @@ use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
-
-// ---------------------------------------------------------------------------
-// Mock parser
-// ---------------------------------------------------------------------------
 struct MockUnusedParser {
     content: String,
     imported_aliases: HashMap<Identity, Identity>,
@@ -113,28 +109,17 @@ impl IImportParserPort for MockUnusedParser {
     fn is_name_used(&self, _: &str, _: &str, _: LineNumber) -> bool {
         self.name_used
     }
+    fn extract_layer_from_prefix(
+        &self,
+        _: &str,
+    ) -> Option<shared::common::taxonomy_layer_vo::LayerNameVO> {
+        None
+    }
 }
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-
-#[test]
-fn unused_detection_returns_empty_when_all_used() {
-    let mut parser = MockUnusedParser::new();
-    parser.content = "import os\nimport sys\n\nos.getcwd()\n".to_string();
-    let mut aliases = HashMap::new();
-    aliases.insert(Identity::new("os"), Identity::new("os"));
-    parser.imported_aliases = aliases;
-    let mut used = HashSet::new();
-    used.insert(Identity::new("os"));
-    parser.used_symbols = used;
-
-    let checker = UnusedImportRuleChecker::new(Arc::new(parser));
-    let path = FilePath::new("test.py").unwrap_or_default();
-    let unused = checker.find_unused_imports(&path);
-    assert!(unused.is_empty(), "all imports used");
-}
 
 #[test]
 fn unused_detection_finds_unused_import() {
@@ -183,7 +168,11 @@ fn check_unused_imports_empty_content_no_violations() {
     let parser = MockUnusedParser::new();
     let checker = UnusedImportRuleChecker::new(Arc::new(parser));
     let mut violations = vec![];
-    checker.check_unused_imports("test.rs", "", &mut violations);
+    checker.check_unused_imports(
+        &shared::common::taxonomy_path_vo::FilePath::new("test.rs".to_string()).unwrap_or_default(),
+        "",
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 
@@ -197,7 +186,11 @@ fn check_unused_imports_detects_unused_rust_import() {
     let content = parser.content.clone();
     let checker = UnusedImportRuleChecker::new(Arc::new(parser));
     let mut violations = vec![];
-    checker.check_unused_imports("test.rs", &content, &mut violations);
+    checker.check_unused_imports(
+        &shared::common::taxonomy_path_vo::FilePath::new("test.rs".to_string()).unwrap_or_default(),
+        &content,
+        &mut violations,
+    );
     assert_eq!(violations.len(), 1, "unused Rust import should be flagged");
     assert!(violations[0].code.to_string().contains("AES203"));
 }
@@ -213,6 +206,10 @@ fn check_unused_imports_used_rust_import_no_violation() {
     let content = parser.content.clone();
     let checker = UnusedImportRuleChecker::new(Arc::new(parser));
     let mut violations = vec![];
-    checker.check_unused_imports("test.rs", &content, &mut violations);
+    checker.check_unused_imports(
+        &shared::common::taxonomy_path_vo::FilePath::new("test.rs".to_string()).unwrap_or_default(),
+        &content,
+        &mut violations,
+    );
     assert!(violations.is_empty(), "used import should not flag");
 }

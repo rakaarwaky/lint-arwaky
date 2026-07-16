@@ -25,14 +25,20 @@ use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 pub struct WatchOrchestrator {
     provider: Arc<dyn IWatchProviderPort>,
     linter: Arc<dyn ICodeAnalysisAggregate>,
+    change_analyzer: Arc<dyn IChangeAnalyzerProtocol>,
 }
 
 impl WatchOrchestrator {
     pub fn new(
         provider: Arc<dyn IWatchProviderPort>,
         linter: Arc<dyn ICodeAnalysisAggregate>,
+        change_analyzer: Arc<dyn IChangeAnalyzerProtocol>,
     ) -> Self {
-        Self { provider, linter }
+        Self {
+            provider,
+            linter,
+            change_analyzer,
+        }
     }
 
     pub async fn run_async(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
@@ -58,7 +64,8 @@ impl WatchOrchestrator {
         while running.load(Ordering::SeqCst) {
             tokio::select! {
                 Ok(event) = rx.recv() => {
-                    if crate::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(&event.path) {
+                    let lintable = self.change_analyzer.filter_lintable(vec![event.clone()]);
+                    if let Some(event) = lintable.into_iter().next() {
                         let lint_results = self.linter.run_code_analysis_path(&event.path);
                         let lint_score = self.linter.calc_score(&lint_results);
                         println!(

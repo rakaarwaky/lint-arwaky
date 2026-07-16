@@ -10,22 +10,28 @@ use shared::code_analysis::taxonomy_analysis_vo::{
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::common::taxonomy_common_vo::LineNumber;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_error_vo::ErrorCode;
 use shared::common::taxonomy_lint_vo::ScopeRef;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared::config_system::taxonomy_source_vo::ConfigResult;
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::project_setup::taxonomy_doctor_vo::{DependencyReport, ToolchainDiagnostics};
 use shared::project_setup::taxonomy_setup_contract_vo::{
     CreateConfigDirResult, ProjectLanguageVO, WriteConfigResult,
 };
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
+use shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
+use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use std::sync::Arc;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
+use tui_lint_arwaky::capabilities_report_formatter::ReportFormatterHelper;
 
 struct MockCodeAnalysis {
     results: LintResultList,
@@ -95,8 +101,37 @@ impl ICodeAnalysisAggregate for MockCodeAnalysis {
     }
 }
 
+// ---------------------------------------------------------------------------
+// MockFormatter — delegates to the real ReportFormatterHelper so assertions
+// against actual formatted output (violation counts, diagnostics text, etc.)
+// exercise genuine formatting logic instead of a hardcoded stub string.
+// ---------------------------------------------------------------------------
+struct MockFormatter;
+
+impl IReportFormatterProtocol for MockFormatter {
+    fn format_results(&self, results: &LintResultList) -> DisplayContent {
+        ReportFormatterHelper::new().format_results(results)
+    }
+
+    fn format_doctor_report(&self, diagnostics: &ToolchainDiagnostics) -> LintExecutionResult {
+        ReportFormatterHelper::new().format_doctor_report(diagnostics)
+    }
+
+    fn format_dependency_report(
+        &self,
+        path: &str,
+        report: &DependencyReport,
+    ) -> LintExecutionResult {
+        ReportFormatterHelper::new().format_dependency_report(path, report)
+    }
+
+    fn format_config_result(&self, result: &ConfigResult) -> LintExecutionResult {
+        ReportFormatterHelper::new().format_config_result(result)
+    }
+}
+
 fn make_executor(mock: MockCodeAnalysis) -> LintExecutor {
-    LintExecutor::new(Arc::new(mock))
+    LintExecutor::new(Arc::new(mock), Arc::new(MockFormatter))
 }
 
 struct MockFixOrchestrator {
@@ -116,7 +151,7 @@ impl LintFixOrchestratorAggregate for MockFixOrchestrator {
 }
 
 fn make_executor_with_fix(mock: MockCodeAnalysis, fix_mock: MockFixOrchestrator) -> LintExecutor {
-    LintExecutor::new(Arc::new(mock)).with_fix(Arc::new(fix_mock))
+    LintExecutor::new(Arc::new(mock), Arc::new(MockFormatter)).with_fix(Arc::new(fix_mock))
 }
 
 // ---------------------------------------------------------------------------
@@ -338,7 +373,7 @@ fn test_format_results_empty() {
     let executor = make_executor(MockCodeAnalysis::empty());
     let results = LintResultList::new(vec![]);
     let output = executor.format_results(&results);
-    assert_eq!(output, "No violations found.");
+    assert_eq!(output.value(), "No violations found.");
 }
 
 #[test]
@@ -469,7 +504,7 @@ fn test_install_stub_without_setup_aggregate() {
 #[test]
 fn test_install_with_setup_aggregate_python_project() {
     let mock = MockSetupAggregate::new("rust");
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()), Arc::new(MockFormatter))
         .with_fix(Arc::new(MockFixOrchestrator::new("ok")))
         .with_setup(Arc::new(mock));
     let flags = ActionFlags::default();
@@ -488,7 +523,7 @@ fn test_install_with_setup_aggregate_python_project() {
 #[test]
 fn test_install_with_setup_aggregate_js_project() {
     let mock = MockSetupAggregate::new("javascript");
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()), Arc::new(MockFormatter))
         .with_fix(Arc::new(MockFixOrchestrator::new("ok")))
         .with_setup(Arc::new(mock));
     let flags = ActionFlags::default();
@@ -506,7 +541,7 @@ fn test_install_with_setup_aggregate_js_project() {
 fn test_install_with_setup_aggregate_python_failure() {
     let mut mock = MockSetupAggregate::new("rust");
     mock.py_success = false;
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()), Arc::new(MockFormatter))
         .with_fix(Arc::new(MockFixOrchestrator::new("ok")))
         .with_setup(Arc::new(mock));
     let flags = ActionFlags::default();
@@ -629,7 +664,7 @@ impl shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsA
 
 #[test]
 fn test_doctor_with_maintenance_returns_real_diagnostics() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()), Arc::new(MockFormatter))
         .with_maintenance(Arc::new(MockMaintenanceAggregate));
     let result = executor.doctor();
     assert!(result.success, "doctor() failed: {}", result.output);
@@ -719,7 +754,7 @@ impl shared::git_hooks::contract_manager_port::IHookManagerPort for MockHookPort
 
 #[test]
 fn test_install_hook_with_port_success() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()), Arc::new(MockFormatter))
         .with_hook_port(Arc::new(MockHookPort::success()));
     let result = executor.install_hook();
     assert!(result.success);
@@ -728,7 +763,7 @@ fn test_install_hook_with_port_success() {
 
 #[test]
 fn test_install_hook_with_port_error() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()), Arc::new(MockFormatter))
         .with_hook_port(Arc::new(MockHookPort::install_error()));
     let result = executor.install_hook();
     assert!(!result.success);
@@ -740,7 +775,7 @@ fn test_install_hook_with_port_error() {
 
 #[test]
 fn test_install_hook_without_port_falls_back_to_stub() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()));
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()), Arc::new(MockFormatter));
     let result = executor.install_hook();
     assert!(result.success);
     assert!(result.output.contains("lint-arwaky-cli install-hook"));
@@ -748,7 +783,7 @@ fn test_install_hook_without_port_falls_back_to_stub() {
 
 #[test]
 fn test_uninstall_hook_with_port_success() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()), Arc::new(MockFormatter))
         .with_hook_port(Arc::new(MockHookPort::success()));
     let result = executor.uninstall_hook();
     assert!(result.success);
@@ -757,7 +792,7 @@ fn test_uninstall_hook_with_port_success() {
 
 #[test]
 fn test_uninstall_hook_with_port_error() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()), Arc::new(MockFormatter))
         .with_hook_port(Arc::new(MockHookPort::uninstall_error()));
     let result = executor.uninstall_hook();
     assert!(!result.success);
@@ -767,7 +802,7 @@ fn test_uninstall_hook_with_port_error() {
 
 #[test]
 fn test_uninstall_hook_without_port_falls_back_to_stub() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()));
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis::empty()), Arc::new(MockFormatter));
     let result = executor.uninstall_hook();
     assert!(result.success);
     assert!(result.output.contains("lint-arwaky-cli uninstall-hook"));
@@ -867,7 +902,7 @@ fn make_executor_with_orphan(
     mock: MockCodeAnalysis,
     orphan_agg: MockOrphanAggregate,
 ) -> LintExecutor {
-    LintExecutor::new(Arc::new(mock)).with_orphan(
+    LintExecutor::new(Arc::new(mock), Arc::new(MockFormatter)).with_orphan(
         Arc::new(orphan_agg),
         Arc::new(MockLayerDetector),
         Arc::new(MockScannerProvider),

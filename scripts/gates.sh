@@ -45,11 +45,16 @@ gate "AES Codes (test-workspaces >= 24)" bash -c '
 '
 
 gate "Tests" bash -c '
-    output=$(cargo test --workspace 2>&1)
+    output=$(cargo test --workspace 2>&1) || true
+    if echo "$output" | grep -q "^error"; then
+        echo "$output" | grep "^error" | head -10
+        echo "  COMPILATION FAILED"
+        exit 1
+    fi
     total_passed=$(echo "$output" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" "{sum+=\$1} END{print sum+0}")
     total_failed=$(echo "$output" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" "{sum+=\$2} END{print sum+0}")
-    echo "  passed: ${total_passed}, failed: ${total_failed}"
-    [ "${total_failed}" = "0" ]
+    echo "  passed: ${total_passed:-0}, failed: ${total_failed:-0}"
+    [ "${total_failed:-0}" = "0" ]
 '
 
 echo -e "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

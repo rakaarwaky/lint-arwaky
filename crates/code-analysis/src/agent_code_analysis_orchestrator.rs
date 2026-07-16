@@ -55,9 +55,7 @@ pub fn collect_source_files(
     dir_path: &DirectoryPath,
     ignored: &[String],
 ) -> Vec<FilePath> {
-    shared::common::taxonomy_file_collector_helper::collect_source_files(
-        root_dir, dir_path, ignored,
-    )
+    dir_path.collect_source_files(root_dir, ignored)
 }
 
 /// Code-analysis orchestrator — collects files, runs Code Quality checks (AES301–AES305), formats reports.
@@ -209,7 +207,9 @@ impl CodeAnalysisOrchestrator {
             }
 
             // Layer detection
-            let layer = match self.container.detect_layer(file, root_dir) {
+            let fp = FilePath::new(file.to_string()).unwrap_or_default();
+            let rdp = FilePath::new(root_dir.to_string()).unwrap_or_default();
+            let layer = match self.container.detect_layer(&fp, &rdp) {
                 Some(l) => l,
                 None => continue,
             };
@@ -225,7 +225,7 @@ impl CodeAnalysisOrchestrator {
             if config.is_rule_enabled("AES301") || config.is_rule_enabled("AES302") {
                 self.container.line_checker().check_line_counts(
                     file,
-                    Some(def),
+                    Some(&def),
                     &c,
                     &mut violations,
                 );
@@ -235,7 +235,7 @@ impl CodeAnalysisOrchestrator {
             if config.is_rule_enabled("AES303") {
                 self.container
                     .class_checker()
-                    .check_mandatory_class_definition(file, Some(def), &c, &mut violations);
+                    .check_mandatory_class_definition(file, Some(&def), &c, &mut violations);
             }
         }
 

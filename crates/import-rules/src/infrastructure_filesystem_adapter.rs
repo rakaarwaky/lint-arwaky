@@ -15,35 +15,30 @@ use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_layer_vo::Identity;
 use shared::taxonomy_source_vo::ContentString;
 
-/// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
-/// Private helper — uses `Result::match` to avoid inline match patterns.
-fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    result.unwrap_or_default()
-}
-
-/// Returns the inner `FilePath` if `result` is `Ok`, otherwise clones `fallback`.
-fn filepath_or_clone(
-    result: Result<FilePath, impl std::fmt::Debug>,
-    fallback: &FilePath,
-) -> FilePath {
-    match result {
-        Ok(fp) => fp,
-        Err(_) => fallback.clone(),
-    }
-}
-
-/// Returns the `&str` slice from an `OsStr` option, falling back to `""`.
 fn os_str_to_str(opt: Option<&std::ffi::OsStr>) -> &str {
     opt.and_then(|o| o.to_str()).map_or("", |s| s)
 }
 
-pub struct OSFileSystemAdapter {}
+fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
+    result.unwrap_or_default()
+}
+
+pub struct OSFileSystemAdapter;
 
 impl OSFileSystemAdapter {
     pub fn new() -> Self {
-        Self {}
+        Self
     }
+}
 
+impl Default for OSFileSystemAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl IFileSystemPort for OSFileSystemAdapter {
     fn walk_recursive(&self, dir: &Path, ignored: &[String], results: &mut Vec<FilePath>) {
         if dir.is_file() {
             if let Ok(fp) = FilePath::new(dir.to_string_lossy().to_string()) {
@@ -66,16 +61,7 @@ impl OSFileSystemAdapter {
             }
         }
     }
-}
 
-impl Default for OSFileSystemAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[async_trait]
-impl IFileSystemPort for OSFileSystemAdapter {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
         let root = Path::new(&path.value);
         let ignored = match ignored_patterns {
@@ -100,7 +86,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
         let s = Path::new(&start.value);
         p.strip_prefix(s).ok().map_or_else(
             || path.clone(),
-            |rel| filepath_or_clone(FilePath::new(rel.to_string_lossy().to_string()), path),
+            |rel| filepath_or_default(FilePath::new(rel.to_string_lossy().to_string())),
         )
     }
 
@@ -124,7 +110,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
         let p = Path::new(&path.value);
         p.parent().map_or_else(
             || path.clone(),
-            |parent| filepath_or_clone(FilePath::new(parent.to_string_lossy().to_string()), path),
+            |parent| filepath_or_default(FilePath::new(parent.to_string_lossy().to_string())),
         )
     }
 

@@ -31,6 +31,9 @@ ignored_paths:
   - "/.dsc_cache"
   - "/tests"
   - "/mimocode"
+  - "build.rs"
+  - "/build.rs"
+  - "**/build.rs"
 
 architecture:
   enabled: true
@@ -66,16 +69,7 @@ architecture:
       layers:
         taxonomy:
           suffix:
-            - strict:
-                [
-                  "vo",
-                  "entity",
-                  "error",
-                  "event",
-                  "constant",
-                  "utility",
-                  "helper",
-                ]
+            - strict: ["vo", "entity", "error", "event", "constant", "utility"]
         contract:
           suffix:
             - strict: ["port", "protocol", "aggregate"]
@@ -107,6 +101,7 @@ architecture:
                   "reviewer",
                   "assessor",
                   "auditor",
+                  "helper",
                 ]
             - forbidden:
                 [
@@ -116,11 +111,10 @@ architecture:
                   "event",
                   "constant",
                   "constants",
-                  "utility",
-                  "helper",
                   "port",
                   "protocol",
                   "aggregate",
+                  "utility",
                 ]
         infrastructure:
           suffix:
@@ -161,6 +155,7 @@ architecture:
                   "listener",
                   "poller",
                   "streamer",
+                  "helper",
                 ]
             - forbidden:
                 [
@@ -170,11 +165,10 @@ architecture:
                   "event",
                   "constant",
                   "constants",
-                  "utility",
-                  "helper",
                   "port",
                   "protocol",
                   "aggregate",
+                  "utility",
                 ]
         agent:
           suffix:

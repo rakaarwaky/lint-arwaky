@@ -21,8 +21,7 @@ ignored_paths:
   - "/scratch"
   - "/packages"
   - "/node_modules"
-  - "/.opencode"
-  - "/.mimocode"
+
   - "/.jj"
   - "/test-workspaces"
   - "/scripts"
@@ -30,6 +29,12 @@ ignored_paths:
   - ".min.css"
   - "/.dsc_cache"
   - "/tests"
+  - "/mimocode"
+  - "build.rs"
+  - "/build.rs"
+  - "**/build.rs"
+  - "/.opencode"
+  - "/.mimocode"
 
 architecture:
   enabled: true
@@ -65,16 +70,7 @@ architecture:
       layers:
         taxonomy:
           suffix:
-            - strict:
-                [
-                  "vo",
-                  "entity",
-                  "error",
-                  "event",
-                  "constant",
-                  "utility",
-                  "helper",
-                ]
+            - strict: ["vo", "entity", "error", "event", "constant", "utility"]
         contract:
           suffix:
             - strict: ["port", "protocol", "aggregate"]
@@ -106,6 +102,7 @@ architecture:
                   "reviewer",
                   "assessor",
                   "auditor",
+                  "helper",
                 ]
             - forbidden:
                 [
@@ -115,11 +112,10 @@ architecture:
                   "event",
                   "constant",
                   "constants",
-                  "utility",
-                  "helper",
                   "port",
                   "protocol",
                   "aggregate",
+                  "utility",
                 ]
         infrastructure:
           suffix:
@@ -160,6 +156,7 @@ architecture:
                   "listener",
                   "poller",
                   "streamer",
+                  "helper",
                 ]
             - forbidden:
                 [
@@ -169,11 +166,10 @@ architecture:
                   "event",
                   "constant",
                   "constants",
-                  "utility",
-                  "helper",
                   "port",
                   "protocol",
                   "aggregate",
+                  "utility",
                 ]
         agent:
           suffix:

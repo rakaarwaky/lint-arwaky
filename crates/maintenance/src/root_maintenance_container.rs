@@ -4,6 +4,7 @@ use std::sync::Arc;
 use crate::agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;
 use crate::capabilities_maintenance_checker::MaintenanceChecker;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 
 pub struct MaintenanceContainer {
     orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
@@ -11,7 +12,7 @@ pub struct MaintenanceContainer {
 
 impl MaintenanceContainer {
     pub fn new() -> Self {
-        let _checker = MaintenanceChecker::new();
+        let _checker: Arc<dyn IMaintenanceCheckerProtocol> = Arc::new(MaintenanceChecker::new());
         let orchestrator: Arc<dyn MaintenanceCommandsAggregate> =
             Arc::new(MaintenanceCommandsOrchestrator::new());
         Self { orchestrator }

@@ -1,5 +1,4 @@
 // PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
-use crate::taxonomy_orphan_filename_helper::file_stem;
 use regex::Regex;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
@@ -7,18 +6,26 @@ use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 use shared::orphan_detector::taxonomy_orphan_contract_vo::{
     OrphanEntryPatternListVO, OrphanFileListVO,
 };
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::sync::OnceLock;
 
 /// Build graph context and identify entry points for orphan analysis.
-pub struct OrphanGraphResolver {}
+pub struct OrphanGraphResolver {
+    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+}
 
 impl Default for OrphanGraphResolver {
     fn default() -> Self {
-        Self::new()
+        Self {
+            extractor: Arc::new(
+                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
+            ),
+        }
     }
 }
 
@@ -80,7 +87,12 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                     configured_strs.iter().any(|pattern| {
                         basename == pattern
                             || basename.ends_with(pattern)
-                            || crate::taxonomy_orphan_filename_helper::file_stem(basename)
+                            || self
+                                .extractor
+                                .file_stem(&shared::common::taxonomy_path_vo::FilePath {
+                                    value: basename.to_string(),
+                                })
+                                .value
                                 .contains(pattern)
                     })
                 })
@@ -124,8 +136,8 @@ fn inh_re() -> Option<&'static Regex> {
 }
 
 impl OrphanGraphResolver {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
+        Self { extractor }
     }
 
     fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
@@ -137,7 +149,10 @@ impl OrphanGraphResolver {
         // Build a lookup: module_name -> file_path for crate:: resolution
         let mut module_to_file: HashMap<String, String> = HashMap::new();
         for f in files {
-            let stem = file_stem(f);
+            let stem = self
+                .extractor
+                .file_stem(&shared::common::taxonomy_path_vo::FilePath { value: f.clone() })
+                .value;
             module_to_file.insert(stem.clone(), f.clone());
             if let Some(parent) = f.rsplit('/').nth(1) {
                 let module_path = format!("{}/{}", parent, stem);
@@ -392,6 +407,51 @@ impl OrphanGraphResolver {
                     continue;
                 }
 
+                // Python/JS-style absolute dot-separated imports
+                // e.g. from modules.shared.src.common.taxonomy_common_vo import X
+                // Convert dots to path separators and resolve against root_dir
+                if full_import.contains('.') && !full_import.contains("::") {
+                    let path_from_dots = full_import.replace('.', "/");
+                    let mut resolved_abs = false;
+                    for ext in &[".py", ".ts", ".js", ".rs"] {
+                        let candidate = root_path.join(format!("{}{}", path_from_dots, ext));
+                        if let Some(candidate_str) = candidate.to_str() {
+                            if std::path::Path::new(candidate_str).exists() && candidate_str != *f {
+                                import_graph
+                                    .entry(f.clone())
+                                    .or_default()
+                                    .push(candidate_str.to_string());
+                                inbound_links
+                                    .entry(candidate_str.to_string())
+                                    .or_default()
+                                    .push(f.clone());
+                                resolved_abs = true;
+                                break;
+                            }
+                        }
+                    }
+                    if !resolved_abs {
+                        let init_candidate =
+                            root_path.join(format!("{}/__init__.py", path_from_dots));
+                        if let Some(init_str) = init_candidate.to_str() {
+                            if std::path::Path::new(init_str).exists() && init_str != *f {
+                                import_graph
+                                    .entry(f.clone())
+                                    .or_default()
+                                    .push(init_str.to_string());
+                                inbound_links
+                                    .entry(init_str.to_string())
+                                    .or_default()
+                                    .push(f.clone());
+                                resolved_abs = true;
+                            }
+                        }
+                    }
+                    if resolved_abs {
+                        continue;
+                    }
+                }
+
                 let mut dep = full_import.clone();
                 if let Some(dot) = dep.find('.') {
                     dep = dep[..dot].to_string();
@@ -418,7 +478,31 @@ impl OrphanGraphResolver {
                             if let Ok(entries) = std::fs::read_dir(src_dir) {
                                 for entry in entries.flatten() {
                                     let path = entry.path();
-                                    if let Some(path_str) = path.to_str() {
+                                    if path.is_dir() {
+                                        // FIX: Check mod.rs in subdirectories (e.g., code-analysis/mod.rs)
+                                        let mod_rs = path.join("mod.rs");
+                                        if mod_rs.exists() {
+                                            let dir_name = path
+                                                .file_name()
+                                                .and_then(|n| n.to_str())
+                                                .unwrap_or_default();
+                                            let normalized_dir = dir_name.replace('-', "_");
+                                            if normalized_dir == module_name {
+                                                if let Some(path_str) = mod_rs.to_str() {
+                                                    if path_str != *f {
+                                                        import_graph
+                                                            .entry(f.clone())
+                                                            .or_default()
+                                                            .push(path_str.to_string());
+                                                        inbound_links
+                                                            .entry(path_str.to_string())
+                                                            .or_default()
+                                                            .push(f.clone());
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else if let Some(path_str) = path.to_str() {
                                         let stem = path
                                             .file_stem()
                                             .and_then(|s| s.to_str())
@@ -441,9 +525,21 @@ impl OrphanGraphResolver {
                     }
                 }
 
-                // Python/JS relative imports
-                import_graph.entry(f.clone()).or_default().push(dep.clone());
-                inbound_links.entry(dep).or_default().push(f.clone());
+                // Python/JS relative imports — only add if resolved to a file path
+                if let Some(resolved_path) = module_to_file.get(&dep) {
+                    if resolved_path != f {
+                        import_graph
+                            .entry(f.clone())
+                            .or_default()
+                            .push(resolved_path.clone());
+                        inbound_links
+                            .entry(resolved_path.clone())
+                            .or_default()
+                            .push(f.clone());
+                    }
+                }
+                // If it's a workspace module (e.g., "shared") but not resolved to a specific file,
+                // we do not add it to the import graph to avoid polluting it with directory names.
             }
 
             // Pass 4: Python class inheritance

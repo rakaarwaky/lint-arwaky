@@ -98,7 +98,26 @@ impl MultiProjectOrchestrator {
                 results.extend(Self::collect_subdirs(&dir_path));
             }
         }
-        results
+        if !results.is_empty() {
+            return results;
+        }
+
+        // Case 4: walk up the directory tree to find the workspace member
+        // e.g. crates/shared/src/import-rules -> crates/shared
+        let mut current = root;
+        while let Some(parent) = current.parent() {
+            if let Some(parent_name) = parent.file_name() {
+                let parent_str = parent_name.to_string_lossy();
+                if workspace_dirs.contains(&parent_str.as_ref()) && current.is_dir() {
+                    if let Ok(fp) = FilePath::new(current.to_string_lossy().to_string()) {
+                        return vec![fp];
+                    }
+                }
+            }
+            current = parent;
+        }
+
+        Vec::new()
     }
 }
 

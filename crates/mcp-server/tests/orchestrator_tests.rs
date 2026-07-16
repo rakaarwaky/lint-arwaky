@@ -1,3 +1,4 @@
+use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::find_workspace_root;
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
     McpServerDependencies, McpServerOrchestrator,
 };
@@ -14,7 +15,6 @@ use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::common::taxonomy_workspace_helper::find_workspace_root;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
@@ -71,6 +71,13 @@ impl IImportRunnerAggregate for MockDeps {
     fn name(&self) -> &str {
         unreachable!()
     }
+    fn is_ignored(&self, _: &std::path::Path) -> bool {
+        false
+    }
+    fn collect_files(&self, _: &FilePath) -> FilePathList {
+        FilePathList { values: Vec::new() }
+    }
+    fn walk_dir(&self, _: &std::path::Path, _: &mut Vec<FilePath>, _: bool) {}
 }
 
 #[async_trait::async_trait]
@@ -541,10 +548,14 @@ async fn execute_config_show_returns_success() {
 #[tokio::test]
 async fn execute_orphan_with_path() {
     let orch = make_orchestrator();
-    let params = make_exec_params("orphan", Some("/some/path"));
+    let cwd = std::env::current_dir()
+        .unwrap()
+        .to_string_lossy()
+        .to_string();
+    let params = make_exec_params("orphan", Some(&cwd));
     let output = orch.execute_command(params).await;
     let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
     assert_eq!(parsed["status"].as_str(), Some("success"));
     assert_eq!(parsed["action"].as_str(), Some("orphan"));
-    assert_eq!(parsed["path"].as_str(), Some("/some/path"));
+    assert_eq!(parsed["path"].as_str(), Some(cwd.as_str()));
 }

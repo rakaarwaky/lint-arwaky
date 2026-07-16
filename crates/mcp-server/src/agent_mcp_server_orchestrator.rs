@@ -24,6 +24,28 @@ use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAg
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
 
+pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
+    let mut dir = std::path::Path::new(path).to_path_buf();
+    if !dir.is_absolute() {
+        dir = std::env::current_dir().ok()?.join(&dir);
+    }
+    if dir.is_file() {
+        dir.pop();
+    }
+    loop {
+        if dir.join("Cargo.toml").exists()
+            || dir.join("crates").is_dir()
+            || dir.join("packages").is_dir()
+            || dir.join("modules").is_dir()
+        {
+            return Some(dir);
+        }
+        if !dir.pop() {
+            return None;
+        }
+    }
+}
+
 pub struct McpServerDependencies {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -47,7 +69,22 @@ impl McpServerOrchestrator {
     }
 }
 
-use shared::common::taxonomy_workspace_helper::find_workspace_root;
+/// Resolve a path to an absolute path, using current_dir as fallback.
+/// Returns None if the path doesn't exist.
+fn resolve_path(path: &str) -> Option<String> {
+    let p = std::path::Path::new(path);
+    let abs = if p.is_absolute() {
+        p.to_path_buf()
+    } else {
+        let cwd = std::env::current_dir().ok()?;
+        cwd.join(p)
+    };
+    if abs.exists() {
+        Some(abs.to_string_lossy().to_string())
+    } else {
+        None
+    }
+}
 
 #[async_trait::async_trait]
 impl IMcpServerAggregate for McpServerOrchestrator {
@@ -75,8 +112,21 @@ impl IMcpServerAggregate for McpServerOrchestrator {
         let result = match action.as_str() {
             "check" | "scan" => {
                 let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
+                    Some(p) => match resolve_path(&p) {
+                        Some(resolved) => resolved,
+                        None => {
+                            return serde_json::to_string_pretty(&serde_json::json!({
+                                "status": "error",
+                                "action": action,
+                                "error": format!("Path does not exist: {}", p),
+                                "hint": "Pass an absolute path to the project directory, e.g. {\"path\": \"/home/user/myproject\"}"
+                            }))
+                            .unwrap_or_default();
+                        }
+                    },
+                    None => std::env::current_dir()
+                        .map(|c| c.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| ".".to_string()),
                 };
                 let ext_lint = self.deps.external_lint.clone();
                 let orphan_orch = self.deps.orphan_orchestrator.clone();
@@ -100,7 +150,6 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     let import_container =
                         import_rules::root_import_rules_container::ImportContainer::new_with_config(
                             loaded_config.clone(),
-                            Arc::new(import_rules::root_import_rules_container::NullSourceParser),
                         );
                     let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
                         import_container.analyzer(),
@@ -114,15 +163,9 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         )
                         .code_analysis_linter();
 
-                    let fs: Arc<dyn shared::common::contract_system_port::IFileSystemPort> =
-                        Arc::new(import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
-                    let parser: Arc<dyn shared::common::contract_parser_port::ISourceParserPort> =
-                        Arc::new(import_rules::root_import_rules_container::NullSourceParser);
                     let layer_det: Arc<dyn ILayerDetectionAggregate> =
                         Arc::new(import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
                             loaded_config.clone(),
-                            fs,
-                            parser,
                         ));
 
                     let aes_results = arch_linter.run_code_analysis_path(&path);
@@ -185,8 +228,21 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             }
             "fix" => {
                 let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
+                    Some(p) => match resolve_path(&p) {
+                        Some(resolved) => resolved,
+                        None => {
+                            return serde_json::to_string_pretty(&serde_json::json!({
+                                "status": "error",
+                                "action": "fix",
+                                "error": format!("Path does not exist: {}", p),
+                                "hint": "Pass an absolute path to the project directory"
+                            }))
+                            .unwrap_or_default();
+                        }
+                    },
+                    None => std::env::current_dir()
+                        .map(|c| c.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| ".".to_string()),
                 };
                 let dry_run = args
                     .args
@@ -233,8 +289,21 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             }
             "ci" => {
                 let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
+                    Some(p) => match resolve_path(&p) {
+                        Some(resolved) => resolved,
+                        None => {
+                            return serde_json::to_string_pretty(&serde_json::json!({
+                                "status": "error",
+                                "action": "ci",
+                                "error": format!("Path does not exist: {}", p),
+                                "hint": "Pass an absolute path to the project directory"
+                            }))
+                            .unwrap_or_default();
+                        }
+                    },
+                    None => std::env::current_dir()
+                        .map(|c| c.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| ".".to_string()),
                 };
                 let threshold = arg_threshold.unwrap_or(80);
                 let linter = self.deps.code_analysis_linter.clone();
@@ -319,8 +388,21 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             }
             "orphan" => {
                 let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
+                    Some(p) => match resolve_path(&p) {
+                        Some(resolved) => resolved,
+                        None => {
+                            return serde_json::to_string_pretty(&serde_json::json!({
+                                "status": "error",
+                                "action": "orphan",
+                                "error": format!("Path does not exist: {}", p),
+                                "hint": "Pass an absolute path to the project directory"
+                            }))
+                            .unwrap_or_default();
+                        }
+                    },
+                    None => std::env::current_dir()
+                        .map(|c| c.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| ".".to_string()),
                 };
                 let orphan_orch = self.deps.orphan_orchestrator.clone();
                 let layer_det = self.deps.layer_detector.clone();
@@ -392,8 +474,21 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             }
             "security" => {
                 let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
+                    Some(p) => match resolve_path(&p) {
+                        Some(resolved) => resolved,
+                        None => {
+                            return serde_json::to_string_pretty(&serde_json::json!({
+                                "status": "error",
+                                "action": "security",
+                                "error": format!("Path does not exist: {}", p),
+                                "hint": "Pass an absolute path to the project directory"
+                            }))
+                            .unwrap_or_default();
+                        }
+                    },
+                    None => std::env::current_dir()
+                        .map(|c| c.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| ".".to_string()),
                 };
                 let maint = self.deps.maintenance_orchestrator.clone();
 
@@ -440,8 +535,21 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             }
             "duplicates" => {
                 let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
+                    Some(p) => match resolve_path(&p) {
+                        Some(resolved) => resolved,
+                        None => {
+                            return serde_json::to_string_pretty(&serde_json::json!({
+                                "status": "error",
+                                "action": "duplicates",
+                                "error": format!("Path does not exist: {}", p),
+                                "hint": "Pass an absolute path to the project directory"
+                            }))
+                            .unwrap_or_default();
+                        }
+                    },
+                    None => std::env::current_dir()
+                        .map(|c| c.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| ".".to_string()),
                 };
 
                 let join_result = tokio::task::spawn_blocking(move || {
@@ -477,8 +585,21 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             }
             "dependencies" => {
                 let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
+                    Some(p) => match resolve_path(&p) {
+                        Some(resolved) => resolved,
+                        None => {
+                            return serde_json::to_string_pretty(&serde_json::json!({
+                                "status": "error",
+                                "action": "dependencies",
+                                "error": format!("Path does not exist: {}", p),
+                                "hint": "Pass an absolute path to the project directory"
+                            }))
+                            .unwrap_or_default();
+                        }
+                    },
+                    None => std::env::current_dir()
+                        .map(|c| c.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| ".".to_string()),
                 };
                 let maint = self.deps.maintenance_orchestrator.clone();
 

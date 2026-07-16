@@ -28,7 +28,7 @@ Because subsequent architectural rules (such as import boundaries, circular depe
 
 Currently, resolving these violations requires human engineers to read the file, synthesize the core business concept, deduce the appropriate layer prefix/suffix, rename the file, and manually fix all import declarations across the workspace. We present a deep learning-based method implemented in Rust to automate this entire lifecycle locally.
 
-### 1.1 Data Security & Privacy Guarantee (Local Execution)
+### 1.1 Data Security & Privacy Guarantee
 
 Because this model is designed to operate on proprietary enterprise source code, data security is paramount. By leveraging the **Rust Burn** framework, the AI model is distributed directly as part of the `lint-arwaky` binary. **100% of the inference is executed locally** on the user's machine (CPU or GPU). The source code is never transmitted to external cloud APIs (such as OpenAI, Anthropic, or Google), guaranteeing absolute data privacy and compliance with strict corporate security policies.
 

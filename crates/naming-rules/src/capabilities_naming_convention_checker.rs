@@ -1,14 +1,12 @@
-// PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 2 words)
-use crate::taxonomy_naming_utility::get_stem;
 use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -94,7 +92,8 @@ impl NamingConventionChecker {
 
         // Step 2: Handle cases where the layer could not be determined.
         if layer_name.is_none() {
-            let stem = get_stem(filename).unwrap_or_default();
+            let stem_str = fp.stem();
+            let stem = &stem_str;
             let actual_prefix = stem.split('_').next().unwrap_or_default().to_string();
 
             // Check if the file starts with an unrecognized/invalid prefix (not corresponding to a standard AES layer).
@@ -125,7 +124,7 @@ impl NamingConventionChecker {
             }
 
             // If the prefix is recognized or is empty, but there is no underscore or does not meet basic naming requirements.
-            let stem = get_stem(filename).unwrap_or_default();
+            let stem = fp.stem();
             if _config.is_rule_enabled("AES101") {
                 violations.push(Self::make_result(
                     file,
@@ -156,7 +155,8 @@ impl NamingConventionChecker {
 
         // Step 4: Validate the file stem pattern using a regular expression.
         // It must consist of lowercase letters and digits separated by underscores (e.g., prefix_concept_suffix).
-        let stem = get_stem(filename).unwrap_or_default();
+        let stem_str = fp.stem();
+        let stem = &stem_str;
 
         if _config.is_rule_enabled("AES101")
             && NAMING_REGEX.as_ref().is_none_or(|re| !re.is_match(stem))
@@ -187,7 +187,7 @@ impl INamingCheckerProtocol for NamingConventionChecker {
     // Implement check_file_naming from INamingCheckerProtocol trait to perform checks on multiple files.
     async fn check_file_naming(
         &self,
-        analyzer: &dyn INamingAnalyzerProtocol,
+        analyzer: &dyn ILayerDetectionProtocol,
         files: &FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
@@ -201,17 +201,15 @@ impl INamingCheckerProtocol for NamingConventionChecker {
                 None => &f_str,
             };
             // Step 3: Determine the architectural layer for the file.
-            let layer = analyzer.detect_layer(f, root_dir);
-            // Step 4: Fetch layer-specific definition properties.
-            let def = layer
-                .as_ref()
-                .and_then(|l| analyzer.layer_map().values.get(l));
+            let layer_name = analyzer.detect_layer(f, root_dir);
+            let layer = layer_name.clone();
+            let def = layer_name.as_ref().and_then(|l| analyzer.get_layer_def(l));
             // Step 5: Execute the naming checker function.
             self.check_file_naming(
                 &f_str,
                 filename,
                 &layer,
-                def,
+                def.as_ref(),
                 analyzer.config(),
                 &mut results.values,
             );
@@ -220,7 +218,7 @@ impl INamingCheckerProtocol for NamingConventionChecker {
 
     async fn check_domain_suffixes(
         &self,
-        _analyzer: &dyn INamingAnalyzerProtocol,
+        _analyzer: &dyn ILayerDetectionProtocol,
         _files: &FilePathList,
         _root_dir: &FilePath,
         _results: &mut LintResultList,

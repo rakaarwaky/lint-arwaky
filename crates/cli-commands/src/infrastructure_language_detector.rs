@@ -1,21 +1,16 @@
 // PURPOSE: CliLanguageDetector — ILanguageDetectorPort implementation for CLI commands
 //
-// Thin wrapper around the shared LanguageDetector to adapt it for CLI use.
-// Delegates detect() and is_lintable() to the inner LanguageDetector.
+// Detects programming language from file extension.
+// Self-contained infrastructure adapter — no shared helper needed.
 use shared::common::contract_language_detector_port::ILanguageDetectorPort;
 use shared::common::contract_language_detector_port::Language;
-use shared::common::taxonomy_language_detector_helper::LanguageDetector;
 use shared::common::taxonomy_path_vo::FilePath;
 
-pub struct CliLanguageDetector {
-    inner: LanguageDetector,
-}
+pub struct CliLanguageDetector;
 
 impl CliLanguageDetector {
     pub fn new() -> Self {
-        Self {
-            inner: LanguageDetector::new(),
-        }
+        Self
     }
 }
 
@@ -27,10 +22,16 @@ impl Default for CliLanguageDetector {
 
 impl ILanguageDetectorPort for CliLanguageDetector {
     fn detect(&self, path: &FilePath) -> Language {
-        self.inner.detect(path)
-    }
-
-    fn is_lintable(&self, path: &FilePath) -> bool {
-        self.inner.is_lintable(path)
+        let ext = std::path::Path::new(path.value())
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("");
+        match ext {
+            "py" => Language::Python,
+            "js" | "jsx" | "mjs" | "cjs" => Language::JavaScript,
+            "ts" | "tsx" | "mts" | "cts" => Language::TypeScript,
+            "rs" => Language::Rust,
+            _ => Language::Unknown,
+        }
     }
 }

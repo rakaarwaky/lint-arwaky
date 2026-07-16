@@ -8,6 +8,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -20,11 +21,33 @@ use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
+use shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
-use shared::tui::taxonomy_report_formatter_helper::ReportFormatterHelper;
 use std::sync::Arc;
+
+fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
+    let mut dir = std::path::Path::new(path).to_path_buf();
+    if !dir.is_absolute() {
+        dir = std::env::current_dir().ok()?.join(&dir);
+    }
+    if dir.is_file() {
+        dir.pop();
+    }
+    loop {
+        if dir.join("Cargo.toml").exists()
+            || dir.join("crates").is_dir()
+            || dir.join("packages").is_dir()
+            || dir.join("modules").is_dir()
+        {
+            return Some(dir);
+        }
+        if !dir.pop() {
+            return None;
+        }
+    }
+}
 
 fn is_binary_available(b: &str) -> bool {
     std::process::Command::new("sh")
@@ -81,10 +104,14 @@ pub struct LintExecutor {
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
     multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
+    formatter: Arc<dyn IReportFormatterProtocol>,
 }
 
 impl LintExecutor {
-    pub fn new(code_analysis: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+    pub fn new(
+        code_analysis: Arc<dyn ICodeAnalysisAggregate>,
+        formatter: Arc<dyn IReportFormatterProtocol>,
+    ) -> Self {
         Self {
             code_analysis,
             fix_orchestrator: None,
@@ -100,6 +127,7 @@ impl LintExecutor {
             naming_orchestrator: None,
             role_orchestrator: None,
             multi_project_orchestrator: None,
+            formatter,
         }
     }
 
@@ -180,14 +208,15 @@ impl LintExecutor {
         self
     }
 
-    pub fn format_results(&self, results: &LintResultList) -> String {
-        ReportFormatterHelper::format_results(results)
+    pub fn format_results(&self, results: &LintResultList) -> DisplayContent {
+        self.formatter.format_results(results)
     }
 
-    fn format_doctor_report(
+    pub fn format_doctor_report(
+        &self,
         diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
     ) -> LintExecutionResult {
-        ReportFormatterHelper::format_doctor_report(diagnostics)
+        self.formatter.format_doctor_report(diagnostics)
     }
 
     fn run_init(&self) -> LintExecutionResult {
@@ -237,14 +266,19 @@ impl LintExecutor {
         }
     }
 
-    fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
-        ReportFormatterHelper::format_dependency_report(path, report)
+    pub fn format_dependency_report(
+        &self,
+        path: &str,
+        report: &DependencyReport,
+    ) -> LintExecutionResult {
+        self.formatter.format_dependency_report(path, report)
     }
 
-    fn format_config_result(
+    pub fn format_config_result(
+        &self,
         result: &shared::config_system::taxonomy_source_vo::ConfigResult,
     ) -> LintExecutionResult {
-        ReportFormatterHelper::format_config_result(result)
+        self.formatter.format_config_result(result)
     }
 }
 
@@ -269,12 +303,11 @@ impl LintExecutor {
 
                 // Collect ALL source files from workspace root for cross-workspace orphan detection
                 let scan_root =
-                    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
-                        .unwrap_or_else(|| std::path::PathBuf::from(path));
+                    find_workspace_root(path).unwrap_or_else(|| std::path::PathBuf::from(path));
                 let all_source_files: Vec<String> =
-                    shared::common::collect_all_source_files(&scan_root)
-                        .iter()
-                        .map(|f| f.value.clone())
+                    code_analysis::collect_all_source_files(&scan_root)
+                        .into_iter()
+                        .map(|f| f.value)
                         .collect();
 
                 for ws in &workspaces {
@@ -282,7 +315,6 @@ impl LintExecutor {
                     let import_container =
                         import_rules::root_import_rules_container::ImportContainer::new_with_config(
                             ws.config.clone(),
-                            Arc::new(import_rules::root_import_rules_container::NullSourceParser),
                         );
                     let naming_container =
                         naming_rules::root_naming_rules_container::NamingContainer::new(
@@ -363,7 +395,7 @@ impl LintExecutor {
                 let count = all_results.len();
                 let results = LintResultList::new(all_results);
                 let output = self.format_results(&results);
-                return LintExecutionResult::success(output, count);
+                return LintExecutionResult::success(output.value, count);
             }
         }
 
@@ -434,7 +466,7 @@ impl LintExecutor {
         let count = all_results.len();
         let results = LintResultList::new(all_results);
         let output = self.format_results(&results);
-        LintExecutionResult::success(output, count)
+        LintExecutionResult::success(output.value, count)
     }
 }
 
@@ -442,9 +474,9 @@ impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
         let results = self.code_analysis.run_code_analysis(path);
         let count = results.len();
-        let output = ReportFormatterHelper::format_results(&results);
+        let output = self.formatter.format_results(&results);
         LintExecutionResult {
-            output,
+            output: output.value,
             violation_count: count,
             success: count == 0,
         }
@@ -507,10 +539,9 @@ impl ILintExecutorProtocol for LintExecutor {
         ) {
             (Some(orphan_agg), Some(layer_det), Some(scanner)) => {
                 // Resolve workspace root like CLI does
-                let scan_root =
-                    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or_else(|| path.to_string());
+                let scan_root = find_workspace_root(path)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|| path.to_string());
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
@@ -636,15 +667,18 @@ impl ILintExecutorProtocol for LintExecutor {
     fn duplicates(&self, path: &str) -> LintExecutionResult {
         let analyzer =
             code_analysis::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer::new();
-        let scan_root = shared::common::taxonomy_workspace_helper::find_workspace_root(path)
+        let scan_root = find_workspace_root(path)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
         let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
             .unwrap_or_default();
-        let scanner =
-            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
-        let source_files = match scanner.scan_directory(&dir_path) {
+        let source_files = match self
+            .scanner_provider
+            .as_ref()
+            .map(|s| s.scan_directory(&dir_path))
+            .unwrap_or(Ok(Default::default()))
+        {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };
@@ -689,7 +723,7 @@ impl ILintExecutorProtocol for LintExecutor {
                     }
                 };
                 match rt.block_on(maintenance.run_dependency_report(&fp)) {
-                    Ok(report) => Self::format_dependency_report(path, &report),
+                    Ok(report) => self.format_dependency_report(path, &report),
                     Err(e) => LintExecutionResult::failure(format!(
                         "Dependency scan for {}\nError: {}",
                         path, e
@@ -716,7 +750,7 @@ impl ILintExecutorProtocol for LintExecutor {
                     }
                 };
                 let diagnostics = rt.block_on(maintenance.diagnose_toolchain());
-                Self::format_doctor_report(&diagnostics)
+                self.format_doctor_report(&diagnostics)
             }
             None => {
                 let output = "Environment Diagnostics:\nUse CLI `lint-arwaky-cli doctor` for full environment check.\nRequired: Rust toolchain, Python 3.8+, Node.js 18+".to_string();
@@ -828,7 +862,7 @@ impl ILintExecutorProtocol for LintExecutor {
                 let project_root =
                     shared::common::taxonomy_path_vo::FilePath::new(cwd).unwrap_or_default();
                 let result = rt.block_on(orchestrator.load_project_config(&project_root));
-                Self::format_config_result(&result)
+                self.format_config_result(&result)
             }
             None => {
                 let output = "Active Configuration\nSource: embedded (built-in defaults)\nNo config orchestrator configured. Use CLI `lint-arwaky-cli config-show`.".to_string();

@@ -73,16 +73,7 @@ architecture:
       layers:
         taxonomy:
           suffix:
-            - strict:
-                [
-                  "vo",
-                  "entity",
-                  "error",
-                  "event",
-                  "constant",
-                  "utility",
-                  "helper",
-                ]
+            - strict: ["vo", "entity", "error", "event", "constant", "utility"]
         contract:
           suffix:
             - strict: ["port", "protocol", "aggregate"]
@@ -116,6 +107,7 @@ architecture:
                   "assessor",
                   "auditor",
                   "actions",
+                  "helper",
                 ]
             - forbidden:
                 [
@@ -125,11 +117,10 @@ architecture:
                   "event",
                   "constant",
                   "constants",
-                  "utility",
-                  "helper",
                   "port",
                   "protocol",
                   "aggregate",
+                  "utility",
                 ]
         infrastructure:
           suffix:
@@ -171,6 +162,8 @@ architecture:
                   "listener",
                   "poller",
                   "streamer",
+                  "utility",
+                  "helper",
                 ]
             - forbidden:
                 [
@@ -180,8 +173,6 @@ architecture:
                   "event",
                   "constant",
                   "constants",
-                  "utility",
-                  "helper",
                   "port",
                   "protocol",
                   "aggregate",
@@ -208,6 +199,7 @@ architecture:
         root:
           suffix:
             - strict: ["entry", "container"]
+
     AES201:
       enabled: true
       scope:
@@ -424,6 +416,31 @@ architecture:
             - layer: "contract(protocol|aggregate)"
               purpose: "call"
 
+    AES203:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+
+    AES204:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      exceptions: []
+
     AES205:
       enabled: true
       scope:
@@ -435,6 +452,112 @@ architecture:
           "agent",
           "surfaces",
         ]
+
+    AES301:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      max_lines: 1000
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
+
+    AES302:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      min_lines: 5
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
+
+    AES303:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      exceptions:
+        ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
+
+    AES304:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      forbidden_bypass:
+        [
+          "// @ts-ignore",
+          "// @ts-expect-error",
+          "// @ts-nocheck",
+          "// eslint-disable",
+          "eslint-disable-next-line",
+          "any",
+          "as any",
+        ]
+      exceptions: []
+
+    AES305:
+      enabled: true
+      scope:
+        [
+          "taxonomy",
+          "contract",
+          "capabilities",
+          "infrastructure",
+          "agent",
+          "surfaces",
+        ]
+      exceptions: []
 
     AES401:
       enabled: true
@@ -544,137 +667,6 @@ architecture:
           "tui_main_entry.ts",
           "tui_main_entry.js",
         ]
-
-    AES301:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-      max_lines: 1000
-      exceptions:
-        [
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "main.ts",
-          "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
-
-    AES302:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-      min_lines: 5
-      exceptions:
-        [
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "main.ts",
-          "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
-
-    AES304:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-      forbidden_bypass:
-        [
-          "// @ts-ignore",
-          "// @ts-expect-error",
-          "// @ts-nocheck",
-          "// eslint-disable",
-          "eslint-disable-next-line",
-          "any",
-          "as any",
-        ]
-      exceptions: []
-
-    AES305:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-      exceptions: []
-
-    AES203:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-
-    AES204:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-      exceptions: []
-
-    AES303:
-      enabled: true
-      scope:
-        [
-          "taxonomy",
-          "contract",
-          "capabilities",
-          "infrastructure",
-          "agent",
-          "surfaces",
-        ]
-      exceptions:
-        ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
 
     AES501:
       enabled: true

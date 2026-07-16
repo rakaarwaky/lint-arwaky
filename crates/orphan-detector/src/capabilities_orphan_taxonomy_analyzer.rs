@@ -1,24 +1,30 @@
-// PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection
-use crate::taxonomy_orphan_filename_helper::file_stem;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 use shared::orphan_detector::contract_orphan_protocol::ITaxonomyOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
+use std::sync::Arc;
 
-pub struct TaxonomyOrphanAnalyzer {}
+pub struct TaxonomyOrphanAnalyzer {
+    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+}
 
 impl Default for TaxonomyOrphanAnalyzer {
     fn default() -> Self {
-        Self::new()
+        Self {
+            extractor: Arc::new(
+                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
+            ),
+        }
     }
 }
 
 impl TaxonomyOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
+        Self { extractor }
     }
 }
 
@@ -30,7 +36,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         definition: Option<&LayerDefinition>,
         inbound_links: &InboundLinkMap,
     ) -> OrphanIndicatorResult {
-        is_taxonomy_orphan(f, root_dir, definition, inbound_links)
+        is_taxonomy_orphan(f, root_dir, definition, inbound_links, &self.extractor)
     }
 }
 
@@ -70,8 +76,9 @@ pub fn is_taxonomy_orphan(
     _root: &FilePath,
     _def: Option<&LayerDefinition>,
     inbound: &InboundLinkMap,
+    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
 ) -> OrphanIndicatorResult {
-    let stem = file_stem(f.value());
+    let stem = extractor.file_stem(f).value;
 
     let suffix = match stem.rfind('_') {
         Some(pos) => &stem[pos + 1..],
@@ -175,6 +182,10 @@ pub fn check_taxonomy_orphan(
 
     let mut imported = false;
     for cf in files {
+        // FIX: Skip self to avoid false negatives where the file matches its own stem
+        if cf == fp {
+            continue;
+        }
         let cb = match cf.split('/').next_back() {
             Some(b) => b,
             None => continue,

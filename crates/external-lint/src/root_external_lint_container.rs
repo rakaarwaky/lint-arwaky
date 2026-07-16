@@ -14,6 +14,7 @@ use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
 pub struct ExternalLintContainer {
     aggregate: Arc<dyn IExternalLintAggregate>,
@@ -25,12 +26,16 @@ impl ExternalLintContainer {
             Arc::new(crate::infrastructure_stdio_client::StdioClient::new(
                 std::time::Duration::from_secs(60),
             ));
+        let utility: Arc<dyn IExternalLintUtilityPort> = Arc::new(
+            crate::infrastructure_external_lint_adapter::ExternalLintUtilityAdapter::new(),
+        );
         let mut adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
         adapters.insert(
             "ruff".to_string(),
             Arc::new(crate::infrastructure_py_ruff_adapter::RuffAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
+                utility.clone(),
                 None,
             )),
         );
@@ -39,6 +44,7 @@ impl ExternalLintContainer {
             Arc::new(crate::infrastructure_py_bandit_adapter::BanditAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
+                utility.clone(),
                 None,
             )),
         );
@@ -47,6 +53,7 @@ impl ExternalLintContainer {
             Arc::new(crate::infrastructure_py_mypy_adapter::MyPyAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
+                utility.clone(),
                 None,
             )),
         );
@@ -55,6 +62,7 @@ impl ExternalLintContainer {
             Arc::new(crate::infrastructure_js_eslint_adapter::ESLintAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
+                utility.clone(),
             )),
         );
         adapters.insert(
@@ -63,6 +71,7 @@ impl ExternalLintContainer {
                 crate::infrastructure_js_prettier_adapter::PrettierAdapter::new(
                     executor.clone(),
                     path_norm.clone(),
+                    utility.clone(),
                 ),
             ),
         );
@@ -71,6 +80,7 @@ impl ExternalLintContainer {
             Arc::new(crate::infrastructure_js_tsc_adapter::TSCAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
+                utility.clone(),
             )),
         );
         adapters.insert(
@@ -79,6 +89,7 @@ impl ExternalLintContainer {
                 crate::infrastructure_rs_clippy_adapter::RustLinterAdapter::new(
                     executor.clone(),
                     path_norm.clone(),
+                    utility.clone(),
                     None,
                 ),
             ),
@@ -88,13 +99,17 @@ impl ExternalLintContainer {
             Arc::new(crate::infrastructure_rs_fmt_adapter::RustFmtAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
+                utility.clone(),
                 None,
             )),
         );
         adapters.insert(
             "cargo-audit".to_string(),
             Arc::new(
-                crate::infrastructure_rs_audit_adapter::CargoAuditAdapter::new(path_norm.clone()),
+                crate::infrastructure_rs_audit_adapter::CargoAuditAdapter::new(
+                    path_norm.clone(),
+                    utility.clone(),
+                ),
             ),
         );
 
