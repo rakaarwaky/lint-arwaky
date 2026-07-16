@@ -132,17 +132,16 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
             let root_dir_fp = filepath_or_default(
                 FilePath::new(root_dir.to_string()).map_err(|e| format!("{:?}", e)),
             );
-            let file_layer =
-                match analyzer.detect_layer(&file_fp.to_string(), &root_dir_fp.to_string()) {
-                    Some(l) => {
-                        let s = match l.split('(').next() {
-                            Some(part) => part,
-                            None => &l,
-                        };
-                        s.to_string()
-                    }
-                    None => continue,
-                };
+            let file_layer = match analyzer.detect_layer(&file_fp, &root_dir_fp) {
+                Some(l) => {
+                    let s = match l.value.split('(').next() {
+                        Some(part) => part,
+                        None => &l.value,
+                    };
+                    s.to_string()
+                }
+                None => continue,
+            };
 
             // Step 3e: Parse every import statement in the file
             let modules = self.parser.extract_import_modules(&content);
@@ -197,9 +196,9 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
                     FilePath::new(module_path.to_string()).map_err(|e| format!("{:?}", e)),
                 );
                 if let Some(target_layer) = analyzer.detect_module_layer(&module_fp.to_string()) {
-                    let target_layer_str = match target_layer.split('(').next() {
+                    let target_layer_str = match target_layer.value.split('(').next() {
                         Some(part) => part,
-                        None => &target_layer,
+                        None => &target_layer.value,
                     }
                     .to_string();
                     // Step 3g: Only record cross-layer edges (same-layer edges cannot cause cycles)

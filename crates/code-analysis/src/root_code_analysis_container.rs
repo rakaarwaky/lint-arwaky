@@ -14,6 +14,7 @@ use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use std::sync::Arc;
 
@@ -68,19 +69,17 @@ impl CodeAnalysisCheckerContainer {
 
     pub fn detect_layer(
         &self,
-        file: &str,
-        root_dir: &str,
+        file: &FilePath,
+        root_dir: &FilePath,
     ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
-        self.analyzer
-            .detect_layer(file, root_dir)
-            .map(|s| shared::taxonomy_layer_vo::LayerNameVO::new(&s))
+        self.analyzer.detect_layer(file, root_dir)
     }
 
     pub fn get_layer_def(
         &self,
         layer: &shared::taxonomy_layer_vo::LayerNameVO,
     ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
-        self.analyzer.get_layer_def(&layer.value)
+        self.analyzer.get_layer_def(layer)
     }
 
     pub fn analyzer(&self) -> &Arc<dyn ILayerDetectionProtocol> {
@@ -100,8 +99,8 @@ impl CodeAnalysisCheckerContainer {
 pub trait CodeAnalysisCheckerContainerRef {
     fn detect_layer(
         &self,
-        file: &str,
-        root_dir: &str,
+        file: &FilePath,
+        root_dir: &FilePath,
     ) -> Option<shared::taxonomy_layer_vo::LayerNameVO>;
     fn get_layer_def(
         &self,
@@ -112,8 +111,8 @@ pub trait CodeAnalysisCheckerContainerRef {
 impl CodeAnalysisCheckerContainerRef for CodeAnalysisCheckerContainer {
     fn detect_layer(
         &self,
-        file: &str,
-        root_dir: &str,
+        file: &FilePath,
+        root_dir: &FilePath,
     ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
         self.detect_layer(file, root_dir)
     }

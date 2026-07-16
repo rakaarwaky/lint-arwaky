@@ -207,7 +207,9 @@ impl CodeAnalysisOrchestrator {
             }
 
             // Layer detection
-            let layer = match self.container.detect_layer(file, root_dir) {
+            let fp = FilePath::new(file.to_string()).unwrap_or_default();
+            let rdp = FilePath::new(root_dir.to_string()).unwrap_or_default();
+            let layer = match self.container.detect_layer(&fp, &rdp) {
                 Some(l) => l,
                 None => continue,
             };

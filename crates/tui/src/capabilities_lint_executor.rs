@@ -20,7 +20,7 @@ use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
-use shared::tui::contract_report_formatter_port::IReportFormatterPort;
+use shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
@@ -109,7 +109,7 @@ pub struct LintExecutor {
 impl LintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
-        formatter: Arc<dyn IReportFormatterPort>,
+    formatter: Arc<dyn IReportFormatterProtocol>,
     ) -> Self {
         Self {
             code_analysis,

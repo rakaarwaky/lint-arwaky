@@ -61,5 +61,5 @@ pub trait IImportParserPort: Send + Sync {
     fn extract_rust_js_imports(&self, content: &str) -> Vec<(SymbolName, LineNumber)>;
     fn is_name_used(&self, name: &str, content: &str, exclude_line: LineNumber) -> bool;
     /// Extract layer from filename prefix.
-    fn extract_layer_from_prefix(&self, segment: &str) -> Option<String>;
+    fn extract_layer_from_prefix(&self, segment: &str) -> Option<LayerNameVO>;
 }

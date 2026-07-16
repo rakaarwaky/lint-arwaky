@@ -12,6 +12,7 @@ use std::path::Path;
 
 use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_config_vo::ArchitectureRule;
 use shared::taxonomy_definition_vo::LayerMapVO;
@@ -249,11 +250,8 @@ impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
             .and_then(|s| s.to_str())
             .map_or("", |s| s);
 
-        if let Some(layer) = self.extract_layer_from_prefix_str(filename) {
-            return Some(self.resolve_specialized_layer_str(&layer, file_path.value()));
-        }
-
-        None
+        let base = self.extract_layer_from_prefix_str(filename)?;
+        Some(self.resolve_specialized_layer(&LayerNameVO::new(&base), file_path))
     }
 
     /// Look up a `LayerDefinition` by its layer name string.
@@ -352,7 +350,7 @@ impl LayerDetectionAnalyzer {
         None
     }
 
-    fn resolve_specialized_layer_str(&self, base_layer: &str, file_path: &str) -> String {
+    fn resolve_specialized_layer_str(&self, base_layer: &str, file_path: &str) -> Option<String> {
         let basename = Path::new(file_path)
             .file_stem()
             .and_then(|s| s.to_str())
@@ -364,12 +362,12 @@ impl LayerDetectionAnalyzer {
                 let specialized = format!("{}({})", base_layer, suffix);
                 let key = LayerNameVO::new(specialized.as_str());
                 if self.config.layers.contains_key(&key) {
-                    return specialized;
+                    return Some(specialized);
                 }
             }
         }
 
-        base_layer.to_string()
+        None
     }
 
     fn detect_module_layer_str(&self, module: &str) -> Option<String> {

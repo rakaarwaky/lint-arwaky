@@ -182,7 +182,10 @@ fn make_config() -> ArchitectureConfig {
 fn test_detect_layer_by_prefix_taxonomy() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
-    let result = analyzer.detect_layer("src/taxonomy_config_vo.rs", ".");
+    let result = analyzer.detect_layer(
+        &FilePath::new("src/taxonomy_config_vo.rs".to_string()).unwrap_or_default(),
+        &FilePath::new(".".to_string()).unwrap_or_default(),
+    );
     assert_eq!(result, Some("taxonomy".to_string()));
 }
 
@@ -190,7 +193,10 @@ fn test_detect_layer_by_prefix_taxonomy() {
 fn test_detect_layer_by_prefix_capabilities() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
-    let result = analyzer.detect_layer("src/capabilities_import_checker.rs", ".");
+    let result = analyzer.detect_layer(
+        &FilePath::new("src/capabilities_import_checker.rs".to_string()).unwrap_or_default(),
+        &FilePath::new(".".to_string()).unwrap_or_default(),
+    );
     assert_eq!(result, Some("capabilities".to_string()));
 }
 
@@ -198,7 +204,10 @@ fn test_detect_layer_by_prefix_capabilities() {
 fn test_detect_layer_no_prefix_returns_none() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
-    let result = analyzer.detect_layer("src/main.rs", ".");
+    let result = analyzer.detect_layer(
+        &FilePath::new("src/main.rs".to_string()).unwrap_or_default(),
+        &FilePath::new(".".to_string()).unwrap_or_default(),
+    );
     assert_eq!(result, None);
 }
 
@@ -206,7 +215,10 @@ fn test_detect_layer_no_prefix_returns_none() {
 fn test_detect_layer_unknown_prefix_returns_none() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
-    let result = analyzer.detect_layer("src/random_file.rs", ".");
+    let result = analyzer.detect_layer(
+        &FilePath::new("src/random_file.rs".to_string()).unwrap_or_default(),
+        &FilePath::new(".".to_string()).unwrap_or_default(),
+    );
     assert_eq!(result, None);
 }
 
@@ -237,7 +249,10 @@ fn test_resolve_specialized_layer_with_scoped_rule() {
         .unwrap();
     config.layers.insert(spec_key, spec_def);
     let analyzer = LayerDetectionAnalyzer::new(config);
-    let result = analyzer.detect_layer("src/capabilities_import_checker.rs", ".");
+    let result = analyzer.detect_layer(
+        &FilePath::new("src/capabilities_import_checker.rs".to_string()).unwrap_or_default(),
+        &FilePath::new(".".to_string()).unwrap_or_default(),
+    );
     assert_eq!(result, Some("capabilities(checker)".to_string()));
 }
 
@@ -245,7 +260,10 @@ fn test_resolve_specialized_layer_with_scoped_rule() {
 fn test_detect_layer_empty_path() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
-    let result = analyzer.detect_layer("", ".");
+    let result = analyzer.detect_layer(
+        &FilePath::new("".to_string()).unwrap_or_default(),
+        &FilePath::new(".".to_string()).unwrap_or_default(),
+    );
     assert_eq!(result, None);
 }
 
@@ -253,7 +271,7 @@ fn test_detect_layer_empty_path() {
 fn test_get_layer_def_exists() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
-    let result = analyzer.get_layer_def("taxonomy");
+    let result = analyzer.get_layer_def(&LayerNameVO::new("taxonomy"));
     assert!(result.is_some());
     assert!(result
         .unwrap()
@@ -266,7 +284,7 @@ fn test_get_layer_def_exists() {
 fn test_get_layer_def_not_found() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
-    let result = analyzer.get_layer_def("nonexistent");
+    let result = analyzer.get_layer_def(&LayerNameVO::new("nonexistent"));
     assert!(result.is_none());
 }
 
@@ -288,7 +306,9 @@ fn test_new_merges_global_rules() {
         ..ArchitectureRule::default()
     });
     let analyzer = LayerDetectionAnalyzer::new(config);
-    let taxonomy_def = analyzer.get_layer_def("taxonomy").unwrap();
+    let taxonomy_def = analyzer
+        .get_layer_def(&LayerNameVO::new("taxonomy"))
+        .unwrap();
     assert!(taxonomy_def
         .mandatory
         .values
@@ -307,6 +327,9 @@ fn test_detect_module_layer_prefix_fallback() {
 fn test_layer_detection_case_sensitive() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
-    let result = analyzer.detect_layer("src/Taxonomy_Config.rs", ".");
+    let result = analyzer.detect_layer(
+        &FilePath::new("src/Taxonomy_Config.rs".to_string()).unwrap_or_default(),
+        &FilePath::new(".".to_string()).unwrap_or_default(),
+    );
     assert_eq!(result, None);
 }

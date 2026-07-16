@@ -52,7 +52,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
         let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
-            Some(l) => l.to_string(),
+            Some(l) => l.value,
             None => "any".to_string(),
         };
 
@@ -105,7 +105,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
         let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
-            Some(l) => l.to_string(),
+            Some(l) => l.value,
             None => "any".to_string(),
         };
 
@@ -146,7 +146,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
         let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
-            Some(l) => l.to_string(),
+            Some(l) => l.value,
             None => "any".to_string(),
         };
 
@@ -198,7 +198,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
         let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let _layer_name = match analyzer.detect_layer(&file_path, root_dir) {
-            Some(l) => l.to_string(),
+            Some(l) => l.value,
             None => "any".to_string(),
         };
 
@@ -323,7 +323,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
         let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let layer = match analyzer.detect_layer(&file_path, root_dir) {
-            Some(l) => l.to_string(),
+            Some(l) => l.value,
             None => return,
         };
 

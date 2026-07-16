@@ -75,12 +75,12 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
             }
 
             // Step 3-4: Deteksi layer dan jalankan pengecekan level layer
-            if let Some(layer) = analyzer.detect_layer(&f.to_string(), &root_dir_str) {
+            if let Some(layer) = analyzer.detect_layer(f, root_dir) {
                 let layer_str = layer.clone();
                 if let Some(def) = analyzer.get_layer_def(&layer_str) {
                     self.check_forbidden_imports_layer(
                         f,
-                        &layer_str,
+                        &layer_str.value,
                         &def,
                         &default_surface_forbidden,
                         &mut results.values,

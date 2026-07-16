@@ -201,10 +201,9 @@ impl INamingCheckerProtocol for NamingConventionChecker {
                 None => &f_str,
             };
             // Step 3: Determine the architectural layer for the file.
-            let layer_str = analyzer.detect_layer(&f.value, &root_dir.value);
-            let layer = layer_str.as_ref().map(LayerNameVO::new);
-            // Step 4: Fetch layer-specific definition properties.
-            let def = layer_str.as_deref().and_then(|l| analyzer.get_layer_def(l));
+            let layer_name = analyzer.detect_layer(f, root_dir);
+            let layer = layer_name.clone();
+            let def = layer_name.as_ref().and_then(|l| analyzer.get_layer_def(l));
             // Step 5: Execute the naming checker function.
             self.check_file_naming(
                 &f_str,

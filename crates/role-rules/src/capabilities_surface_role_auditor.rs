@@ -124,11 +124,10 @@ impl SurfaceRoleChecker {
         results: &mut LintResultList,
     ) {
         for f in &files.values {
-            let layer_str = match analyzer.detect_layer(&f.value, &root_dir.value) {
+            let layer_vo = match analyzer.detect_layer(f, root_dir) {
                 Some(l) => l,
                 None => continue,
             };
-            let layer_vo = shared::taxonomy_layer_vo::LayerNameVO::new(&layer_str);
 
             let is_surface = layer_vo == layer_surfaces()
                 || layer_vo
@@ -138,7 +137,7 @@ impl SurfaceRoleChecker {
                 continue;
             }
 
-            let definition = match analyzer.get_layer_def(&layer_vo.value) {
+            let definition = match analyzer.get_layer_def(&layer_vo) {
                 Some(d) => d,
                 None => continue,
             };
