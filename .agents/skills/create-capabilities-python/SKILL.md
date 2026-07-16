@@ -45,14 +45,14 @@ Create and validate Python **capabilities layer** files following clean architec
 
 **Capabilities Layer (`capabilities_*.py`)**
 
-| Allowed                              | Forbidden                                    |
-| ------------------------------------ | -------------------------------------------- |
-| Computation, validation, calculation | File I/O (`open()`, `Path()`, `os.`)         |
-| Data transformation, business rules  | Network calls (`requests.`, `httpx.`)        |
+| Allowed                               | Forbidden                                    |
+| ------------------------------------- | -------------------------------------------- |
+| Computation, validation, calculation  | File I/O (`open()`, `Path()`, `os.`)         |
+| Data transformation, business rules   | Network calls (`requests.`, `httpx.`)        |
 | Domain logic, domain model definition | Database operations (`sqlite3.`, `asyncpg.`) |
-| Protocol/ABC implementation          | Direct import from `infrastructure_*`        |
-|                                      | Direct import from `agent_*`                 |
-|                                      | Direct import from `capabilities_*` (self)   |
+| Protocol/ABC implementation           | Direct import from `infrastructure_*`        |
+|                                       | Direct import from `agent_*`                 |
+|                                       | Direct import from `capabilities_*` (self)   |
 
 ### Structural Rules (All Layers)
 
@@ -89,11 +89,11 @@ If no (has I/O) → **split into infrastructure layer instead**
 
 ## Naming Convention
 
-| Layer          | File Pattern             | Protocol File                          | Protocol Name         |
-| -------------- | ------------------------ | -------------------------------------- | --------------------- |
-| **Capabilities** | `capabilities_*.py`      | `contract_<name>_protocol.py`          | `I<Name>Protocol`     |
-| **Infrastructure** | `infrastructure_*.py`  | `contract_<name>_port.py`              | `I<Name>Port`         |
-| **Agents**       | `agent_*.py`             | `contract_<name>_aggregate.py`         | `I<Name>Aggregate`    |
+| Layer              | File Pattern          | Protocol File                  | Protocol Name      |
+| ------------------ | --------------------- | ------------------------------ | ------------------ |
+| **Capabilities**   | `capabilities_*.py`   | `contract_<name>_protocol.py`  | `I<Name>Protocol`  |
+| **Infrastructure** | `infrastructure_*.py` | `contract_<name>_port.py`      | `I<Name>Port`      |
+| **Agents**         | `agent_*.py`          | `contract_<name>_aggregate.py` | `I<Name>Aggregate` |
 
 ## Detection Patterns
 
@@ -169,11 +169,11 @@ Create `contract_<name>_protocol.py` in the shared module with abstract methods.
 
 **Protocol location:**
 
-| Module       | Protocol Path                                          |
-| ------------ | ------------------------------------------------------ |
-| compositor   | `modules/shared/src/compositor/contract_*_protocol.py` |
-| animator     | `modules/shared/src/animator/contract_*_protocol.py`   |
-| scripting    | `modules/shared/src/scripting/contract_*_protocol.py`  |
+| Module     | Protocol Path                                          |
+| ---------- | ------------------------------------------------------ |
+| compositor | `modules/shared/src/compositor/contract_*_protocol.py` |
+| animator   | `modules/shared/src/animator/contract_*_protocol.py`   |
+| scripting  | `modules/shared/src/scripting/contract_*_protocol.py`  |
 
 ### Step 4: Enforce 3-Block Structure
 
@@ -219,7 +219,7 @@ Run syntax check to confirm no violations.
 - [ ] All dataclasses imported from shared/taxonomy (none defined locally).
 - [ ] Constructor fields use protocol interfaces, not concrete types.
 - [ ] **Zero I/O** in capabilities layer (no open(), no Path(), no os.).
-- [ ] No forbidden imports (no infrastructure_*, no agent_*).
+- [ ] No forbidden imports (no infrastructure__, no agent__).
 - [ ] Protocol module is registered in the shared module's `__init__.py`.
 - [ ] `python -c "import <module>"` passes without errors.
 

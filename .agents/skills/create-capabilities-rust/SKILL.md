@@ -45,14 +45,14 @@ Create and validate Rust **capabilities layer** files following clean architectu
 
 **Capabilities Layer (`capabilities_*.rs`)**
 
-| Allowed                              | Forbidden                                    |
-| ------------------------------------ | -------------------------------------------- |
-| Computation, validation, calculation | File I/O (`std::fs`, `File::open`)           |
-| Data transformation, business rules  | Network calls (`reqwest`, `hyper`)           |
-| Domain logic, domain model definition | Database operations (`sqlx`, `rusqlite`)     |
-| Trait implementation                 | Direct import from `infrastructure_*`        |
-|                                      | Direct import from `agent_*`                 |
-|                                      | Direct import from `capabilities_*` (self)   |
+| Allowed                               | Forbidden                                  |
+| ------------------------------------- | ------------------------------------------ |
+| Computation, validation, calculation  | File I/O (`std::fs`, `File::open`)         |
+| Data transformation, business rules   | Network calls (`reqwest`, `hyper`)         |
+| Domain logic, domain model definition | Database operations (`sqlx`, `rusqlite`)   |
+| Trait implementation                  | Direct import from `infrastructure_*`      |
+|                                       | Direct import from `agent_*`               |
+|                                       | Direct import from `capabilities_*` (self) |
 
 ### Structural Rules (All Layers)
 
@@ -90,11 +90,11 @@ If no (has I/O) → **split into infrastructure layer instead**
 
 ## Naming Convention
 
-| Layer          | File Pattern             | Trait File                          | Trait Name         |
-| -------------- | ------------------------ | ----------------------------------- | ------------------ |
-| **Capabilities** | `capabilities_*.rs`      | `contract_<name>_protocol.rs`       | `I<Name>Protocol`  |
-| **Infrastructure** | `infrastructure_*.rs`  | `contract_<name>_port.rs`           | `I<Name>Port`      |
-| **Agents**       | `agent_*.rs`             | `contract_<name>_aggregate.rs`      | `I<Name>Aggregate` |
+| Layer              | File Pattern          | Trait File                     | Trait Name         |
+| ------------------ | --------------------- | ------------------------------ | ------------------ |
+| **Capabilities**   | `capabilities_*.rs`   | `contract_<name>_protocol.rs`  | `I<Name>Protocol`  |
+| **Infrastructure** | `infrastructure_*.rs` | `contract_<name>_port.rs`      | `I<Name>Port`      |
+| **Agents**         | `agent_*.rs`          | `contract_<name>_aggregate.rs` | `I<Name>Aggregate` |
 
 ## Detection Patterns
 
@@ -176,10 +176,10 @@ Create `contract_<name>_protocol.rs` in the shared crate with all public method 
 
 **Trait location:**
 
-| Crate         | Trait Path                                              |
-| ------------- | ------------------------------------------------------- |
-| import-rules  | `crates/shared/src/import_rules/contract_*_protocol.rs` |
-| code-analysis | `crates/shared/src/code_analysis/contract_*_protocol.rs`|
+| Crate           | Trait Path                                                 |
+| --------------- | ---------------------------------------------------------- |
+| import-rules    | `crates/shared/src/import_rules/contract_*_protocol.rs`    |
+| code-analysis   | `crates/shared/src/code_analysis/contract_*_protocol.rs`   |
 | orphan-detector | `crates/shared/src/orphan_detector/contract_*_protocol.rs` |
 
 ### Step 4: Enforce 3-Block Structure
@@ -227,7 +227,7 @@ Run `cargo check` to confirm no violations.
 - [ ] All data classes imported from shared/taxonomy (none defined locally).
 - [ ] Impl struct fields use DI (`Arc<dyn Trait>`), not concrete types.
 - [ ] **Zero I/O** in capabilities layer (no std::fs, no network, no database).
-- [ ] No forbidden imports (no infrastructure_*, no agent_*).
+- [ ] No forbidden imports (no infrastructure__, no agent__).
 - [ ] Trait module is registered in the shared crate's `mod.rs`.
 - [ ] `cargo check -p <crate-name>` passes without warnings or errors.
 
@@ -327,11 +327,11 @@ When fixing cross-import violations in capabilities, choose the right approach:
 
 Use when the code is **stateless, pure logic** with no side effects:
 
-| Condition | Example |
-| --- | --- |
-| Pure function — no `&self`, no struct state | `parse_path()`, `normalize_name()` |
-| Stateless — all data via parameters | `fn compute_distance(a: &Point, b: &Point)` |
-| No side effects — deterministic output | `fn sanitize_string(input: &str) -> String` |
+| Condition                                   | Example                                     |
+| ------------------------------------------- | ------------------------------------------- |
+| Pure function — no `&self`, no struct state | `parse_path()`, `normalize_name()`          |
+| Stateless — all data via parameters         | `fn compute_distance(a: &Point, b: &Point)` |
+| No side effects — deterministic output      | `fn sanitize_string(input: &str) -> String` |
 
 ```rust
 // taxonomy_path_utility.rs (TAXONOMY LAYER)
@@ -347,10 +347,10 @@ use crate::taxonomy_path_utility::{parse_path, normalize_name}; // ALLOWED: taxo
 
 Use when the code requires **state, side effects, or layer-specific behavior**:
 
-| Condition | Example |
-| --- | --- |
-| Needs `&self` / struct state | Struct with fields for data/mutation |
-| Has side effects / I/O | File operations, network calls, DB queries |
+| Condition                     | Example                                         |
+| ----------------------------- | ----------------------------------------------- |
+| Needs `&self` / struct state  | Struct with fields for data/mutation            |
+| Has side effects / I/O        | File operations, network calls, DB queries      |
 | Layer-specific implementation | Adapter that depends on concrete infrastructure |
 
 ```rust

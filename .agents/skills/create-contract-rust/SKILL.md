@@ -4,17 +4,7 @@ description: "Create and validate contract layer files (contract_*.rs) — port,
 version: 1.0.0
 category: refactoring
 tags:
-  [
-    rust,
-    aes,
-    contract,
-    protocol,
-    port,
-    aggregate,
-    interface,
-    shared,
-    structure,
-  ]
+  [rust, aes, contract, protocol, port, aggregate, interface, shared, structure]
 triggers:
   - "create contract rust"
   - "add contract rust"
@@ -61,11 +51,11 @@ crates/shared/src/<domain>/
 
 ### Three Suffix Types and Their Roles
 
-| Suffix | Role | Implemented By | Example |
-|--------|------|-----------------|---------|
-| `_port` | Outbound interface | Infrastructure layer | `contract_system_port.rs`, `contract_import_parser_port.rs` |
-| `_protocol` | Inbound interface | Capabilities layer | `contract_import_forbidden_protocol.rs`, `contract_naming_checker_protocol.rs` |
-| `_aggregate` | Composition facade | Agent layer | `contract_import_runner_aggregate.rs`, `contract_tui_aggregate.rs` |
+| Suffix       | Role               | Implemented By       | Example                                                                        |
+| ------------ | ------------------ | -------------------- | ------------------------------------------------------------------------------ |
+| `_port`      | Outbound interface | Infrastructure layer | `contract_system_port.rs`, `contract_import_parser_port.rs`                    |
+| `_protocol`  | Inbound interface  | Capabilities layer   | `contract_import_forbidden_protocol.rs`, `contract_naming_checker_protocol.rs` |
+| `_aggregate` | Composition facade | Agent layer          | `contract_import_runner_aggregate.rs`, `contract_tui_aggregate.rs`             |
 
 **CRITICAL:** These suffixes are **strict** — only `_port`, `_protocol`, `_aggregate` are allowed for `contract_` prefixed files. No other suffixes.
 
@@ -73,19 +63,19 @@ crates/shared/src/<domain>/
 
 `contract_<concept_word(s)>_<role_suffix>.rs`
 
-| Concept | File Name | Trait Name | Implemented By |
-|---|---|---|---|
-| System operations | `contract_system_port.rs` | `IFileSystemPort` | Infrastructure adapters |
-| Forbidden import checking | `contract_import_forbidden_protocol.rs` | `IImportForbiddenProtocol` | Capabilities checkers |
-| Import runner orchestration | `contract_import_runner_aggregate.rs` | `IImportRunnerAggregate` | Agent orchestrators |
+| Concept                     | File Name                               | Trait Name                 | Implemented By          |
+| --------------------------- | --------------------------------------- | -------------------------- | ----------------------- |
+| System operations           | `contract_system_port.rs`               | `IFileSystemPort`          | Infrastructure adapters |
+| Forbidden import checking   | `contract_import_forbidden_protocol.rs` | `IImportForbiddenProtocol` | Capabilities checkers   |
+| Import runner orchestration | `contract_import_runner_aggregate.rs`   | `IImportRunnerAggregate`   | Agent orchestrators     |
 
 ### Import Restrictions (AES201)
 
 Contract files must remain **completely pure**:
 
-| Can Import From | Cannot Import From |
-| --- | --- |
-| `taxonomy_*` files | capabilities, infrastructure, agents, surfaces |
+| Can Import From          | Cannot Import From                                           |
+| ------------------------ | ------------------------------------------------------------ |
+| `taxonomy_*` files       | capabilities, infrastructure, agents, surfaces               |
 | Other `contract_*` files | Any layer files (*.rs without contract_ or taxonomy_ prefix) |
 
 **Contracts define interfaces only — zero implementation logic.**
@@ -183,6 +173,7 @@ grep -rn "fn " crates/<crate>/src/ | grep -v "shared/" | head -50
 Create `contract_<concept>_<suffix>.rs` in the appropriate domain under `crates/shared/src/<domain>/`.
 
 **Rules:**
+
 - Trait must include `Send + Sync` bounds
 - Generic methods need `where Self: Sized`
 - Use associated error types (`type Error`) for flexible error handling
@@ -319,11 +310,11 @@ pub trait IFileSystemPort: Send + Sync {
 
 **Contract File Naming:**
 
-| Concept | File Name | Trait Name | Implemented By |
-|---|---|---|---|
-| System operations | `contract_system_port.rs` | `IFileSystemPort` | Infrastructure adapters |
-| Forbidden import checking | `contract_import_forbidden_protocol.rs` | `IImportForbiddenProtocol` | Capabilities checkers |
-| Import runner orchestration | `contract_import_runner_aggregate.rs` | `IImportRunnerAggregate` | Agent orchestrators |
+| Concept                     | File Name                               | Trait Name                 | Implemented By          |
+| --------------------------- | --------------------------------------- | -------------------------- | ----------------------- |
+| System operations           | `contract_system_port.rs`               | `IFileSystemPort`          | Infrastructure adapters |
+| Forbidden import checking   | `contract_import_forbidden_protocol.rs` | `IImportForbiddenProtocol` | Capabilities checkers   |
+| Import runner orchestration | `contract_import_runner_aggregate.rs`   | `IImportRunnerAggregate`   | Agent orchestrators     |
 
 ## Common Mistakes (AVOID)
 

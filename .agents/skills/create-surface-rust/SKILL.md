@@ -56,11 +56,11 @@ Create and validate Rust **surface layer** files in feature crates. The surface 
 
 ### Three Surface Types
 
-| Type | Suffixes | Can Import From | Forbidden | Description |
-|------|----------|-----------------|-----------|-------------|
-| **Smart Surface** | `_command`, `_controller`, `_page`, `_entry` | `taxonomy_*` + `contract_aggregate_*` only | capabilities, infrastructure, agents, smart surfaces | Entry points; owns DI container, orchestrates via aggregates |
-| **Utility Surface** | `_hook`, `_store`, `_action`, `_screen` | `taxonomy_*` + passive surfaces only | smart surfaces, capabilities, infrastructure, agents | Thin wrappers; maps events/actions to smart surfaces |
-| **Passive Surface** | `_component`, `_view`, `_layout` | `taxonomy_*` only | everything else (no logic, no orchestration) | Pure rendering/display; zero business logic |
+| Type                | Suffixes                                     | Can Import From                            | Forbidden                                            | Description                                                  |
+| ------------------- | -------------------------------------------- | ------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------ |
+| **Smart Surface**   | `_command`, `_controller`, `_page`, `_entry` | `taxonomy_*` + `contract_aggregate_*` only | capabilities, infrastructure, agents, smart surfaces | Entry points; owns DI container, orchestrates via aggregates |
+| **Utility Surface** | `_hook`, `_store`, `_action`, `_screen`      | `taxonomy_*` + passive surfaces only       | smart surfaces, capabilities, infrastructure, agents | Thin wrappers; maps events/actions to smart surfaces         |
+| **Passive Surface** | `_component`, `_view`, `_layout`             | `taxonomy_*` only                          | everything else (no logic, no orchestration)         | Pure rendering/display; zero business logic                  |
 
 ### Import Restrictions (AES406)
 
@@ -218,6 +218,7 @@ grep -n "surface_.*_command\|surface_.*_controller" crates/*/src/surface_*_actio
 Create `surface_<concept>_<suffix>.rs` in the appropriate feature crate.
 
 **Smart Surface rules:**
+
 - Can import `taxonomy_*` + `contract_aggregate_*` only
 - Owns DI container via aggregate interfaces (`Arc<dyn IAggregate>`)
 - Orchestrates via aggregates — never imports capabilities/infrastructure directly
@@ -243,6 +244,7 @@ impl CheckCommand {
 ```
 
 **Passive Surface rules:**
+
 - Can import `taxonomy_*` only
 - Pure rendering/display — zero business logic, zero computation, zero orchestration
 
@@ -326,15 +328,15 @@ done
 
 **All Layer File Naming:**
 
-| Layer          | Pattern                       | Suffix                            |
-| -------------- | ----------------------------- | --------------------------------- |
-| **root**       | `root_*_container.rs`         | `_container`                      |
-| **taxonomy**   | `taxonomy_*_vo.rs`            | `_vo`, `_constant`                |
-| **contract**   | `contract_*_protocol.rs`      | `_protocol`, `_port`, `_aggregate`|
-| **capabilities** | `capabilities_*.rs`         | flexible                          |
-| **infrastructure** | `infrastructure_*.rs`     | flexible                          |
-| **agent**      | `agent_*.rs`                  | `_orchestrator`                   |
-| **surface**    | `surface_*.rs`                | `_command`, `_controller`         |
+| Layer              | Pattern                  | Suffix                             |
+| ------------------ | ------------------------ | ---------------------------------- |
+| **root**           | `root_*_container.rs`    | `_container`                       |
+| **taxonomy**       | `taxonomy_*_vo.rs`       | `_vo`, `_constant`                 |
+| **contract**       | `contract_*_protocol.rs` | `_protocol`, `_port`, `_aggregate` |
+| **capabilities**   | `capabilities_*.rs`      | flexible                           |
+| **infrastructure** | `infrastructure_*.rs`    | flexible                           |
+| **agent**          | `agent_*.rs`             | `_orchestrator`                    |
+| **surface**        | `surface_*.rs`           | `_command`, `_controller`          |
 
 ## AES406 Violations (from module_logic_validator)
 

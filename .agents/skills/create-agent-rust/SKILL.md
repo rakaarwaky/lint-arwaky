@@ -4,16 +4,7 @@ description: "Create and validate agent layer files following AES rules: 3-block
 version: 1.0.0
 category: refactoring
 tags:
-  [
-    rust,
-    aes,
-    agent,
-    aggregate,
-    structure,
-    3-block-structure,
-    di,
-    orchestration,
-  ]
+  [rust, aes, agent, aggregate, structure, 3-block-structure, di, orchestration]
 triggers:
   - "create agent rust"
   - "add agent rust"
@@ -43,16 +34,16 @@ Create and validate Rust **agent layer** files following clean architecture rule
 
 **Agent Layer (`agent_*.rs`)**
 
-| Allowed                                          | Forbidden                                            |
-| ------------------------------------------------ | ---------------------------------------------------- |
-| `for`, `while`, `loop` (orchestration flow)      | Computation (arithmetic, `sum()`, `len()`)           |
-| `if/else`, `match` (control flow for pipelines)  | Business rules, domain logic                         |
-| `?`, `if let` (error propagation)                | File I/O (`std::fs`, `File::open`)                   |
-| `tokio::select!`, `tokio::time::sleep` (async)   | Network (`reqwest`, `hyper`)                         |
-| Sequential statements (orchestration)            | Database (`sqlx`, `rusqlite`)                        |
-| Trait implementation                             | Domain model definition (`struct`)                   |
-|                                                  | Direct import from `capabilities_*`                  |
-|                                                  | Direct import from `infrastructure_*`                |
+| Allowed                                         | Forbidden                                  |
+| ----------------------------------------------- | ------------------------------------------ |
+| `for`, `while`, `loop` (orchestration flow)     | Computation (arithmetic, `sum()`, `len()`) |
+| `if/else`, `match` (control flow for pipelines) | Business rules, domain logic               |
+| `?`, `if let` (error propagation)               | File I/O (`std::fs`, `File::open`)         |
+| `tokio::select!`, `tokio::time::sleep` (async)  | Network (`reqwest`, `hyper`)               |
+| Sequential statements (orchestration)           | Database (`sqlx`, `rusqlite`)              |
+| Trait implementation                            | Domain model definition (`struct`)         |
+|                                                 | Direct import from `capabilities_*`        |
+|                                                 | Direct import from `infrastructure_*`      |
 
 ### Structural Rules (All Layers)
 
@@ -90,11 +81,11 @@ If no (has computation, I/O, or business logic) → **split into appropriate lay
 
 ## Naming Convention
 
-| Layer          | File Pattern             | Trait File                          | Trait Name         |
-| -------------- | ------------------------ | ----------------------------------- | ------------------ |
-| **Capabilities** | `capabilities_*.rs`      | `contract_<name>_protocol.rs`       | `I<Name>Protocol`  |
-| **Infrastructure** | `infrastructure_*.rs`  | `contract_<name>_port.rs`           | `I<Name>Port`      |
-| **Agents**       | `agent_*.rs`             | `contract_<name>_aggregate.rs`      | `I<Name>Aggregate` |
+| Layer              | File Pattern          | Trait File                     | Trait Name         |
+| ------------------ | --------------------- | ------------------------------ | ------------------ |
+| **Capabilities**   | `capabilities_*.rs`   | `contract_<name>_protocol.rs`  | `I<Name>Protocol`  |
+| **Infrastructure** | `infrastructure_*.rs` | `contract_<name>_port.rs`      | `I<Name>Port`      |
+| **Agents**         | `agent_*.rs`          | `contract_<name>_aggregate.rs` | `I<Name>Aggregate` |
 
 ## Agent Layer Purpose
 
@@ -187,10 +178,10 @@ Create `contract_<name>_aggregate.rs` in the shared crate with all public method
 
 **Aggregate location:**
 
-| Crate         | Aggregate Path                                           |
-| ------------- | -------------------------------------------------------- |
-| import-rules  | `crates/shared/src/import_rules/contract_*_aggregate.rs` |
-| code-analysis | `crates/shared/src/code_analysis/contract_*_aggregate.rs`|
+| Crate           | Aggregate Path                                              |
+| --------------- | ----------------------------------------------------------- |
+| import-rules    | `crates/shared/src/import_rules/contract_*_aggregate.rs`    |
+| code-analysis   | `crates/shared/src/code_analysis/contract_*_aggregate.rs`   |
 | orphan-detector | `crates/shared/src/orphan_detector/contract_*_aggregate.rs` |
 
 ### Step 4: Enforce 3-Block Structure
@@ -240,7 +231,7 @@ Run `cargo check` to confirm no violations.
 - [ ] **Zero computation** in agent layer (no arithmetic, no sum(), no len()).
 - [ ] **Zero I/O** in agent layer (no std::fs, no network, no database).
 - [ ] **Zero business logic** in agent layer (no domain rules, no validation).
-- [ ] No forbidden imports (no capabilities_*, no infrastructure_*).
+- [ ] No forbidden imports (no capabilities__, no infrastructure__).
 - [ ] Aggregate module is registered in the shared crate's `mod.rs`.
 - [ ] `cargo check -p <crate-name>` passes without warnings or errors.
 
@@ -413,7 +404,7 @@ Circular dependencies can occur when Agent ↔ Capabilities create unresolvable 
 // agent_runner.rs
 use crate::capabilities_analyzer::Analyzer;  // Agent → Cap
 
-// capabilities_analyzer.rs  
+// capabilities_analyzer.rs
 use crate::agent_runner::Runner;  // Cap → Agent (CYCLE!)
 ```
 

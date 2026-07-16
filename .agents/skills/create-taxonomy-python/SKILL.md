@@ -3,18 +3,7 @@ name: create-taxonomy-python
 description: "Create and validate taxonomy layer files (shared/taxonomy) — all data classes, VOs, errors, and utilities must live here following strict naming conventions."
 version: 1.0.0
 category: refactoring
-tags:
-  [
-    python,
-    aes,
-    taxonomy,
-    shared,
-    dataclass,
-    vo,
-    entity,
-    utility,
-    structure,
-  ]
+tags: [python, aes, taxonomy, shared, dataclass, vo, entity, utility, structure]
 triggers:
   - "create taxonomy python"
   - "add taxonomy python"
@@ -68,14 +57,14 @@ modules/shared/src/
 
 Taxonomy files follow strict naming patterns:
 
-| Suffix       | Purpose                          | Allowed? | Example                              |
-| ------------ | -------------------------------- | -------- | ------------------------------------ |
-| `_vo`        | Value Objects (wraps a single value) | ✅ YES  | `taxonomy_import_rule_vo.py`         |
-| `_entity`    | Domain entities with identity    | ✅ YES   | `taxonomy_analysis_entity.py`        |
-| `_error`     | Error types (`Exception`)        | ✅ YES   | `taxonomy_config_error.py`           |
-| `_event`     | Event/message types              | ✅ YES   | `taxonomy_scan_event.py`             |
-| `_constant`  | Static compile-time constants    | ✅ YES   | `taxonomy_layer_names_constant.py`   |
-| `_utility`   | Stateless functions              | ✅ YES   | `taxonomy_symbol_renamer_utility.py` |
+| Suffix      | Purpose                              | Allowed? | Example                              |
+| ----------- | ------------------------------------ | -------- | ------------------------------------ |
+| `_vo`       | Value Objects (wraps a single value) | ✅ YES   | `taxonomy_import_rule_vo.py`         |
+| `_entity`   | Domain entities with identity        | ✅ YES   | `taxonomy_analysis_entity.py`        |
+| `_error`    | Error types (`Exception`)            | ✅ YES   | `taxonomy_config_error.py`           |
+| `_event`    | Event/message types                  | ✅ YES   | `taxonomy_scan_event.py`             |
+| `_constant` | Static compile-time constants        | ✅ YES   | `taxonomy_layer_names_constant.py`   |
+| `_utility`  | Stateless functions                  | ✅ YES   | `taxonomy_symbol_renamer_utility.py` |
 
 **CRITICAL:** These suffixes are **strict** — only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed for `taxonomy_` prefixed files. No other suffixes.
 
@@ -83,12 +72,12 @@ Taxonomy files follow strict naming patterns:
 
 Taxonomy files must remain **completely pure**:
 
-| Taxonomy Type | Can Import From | Cannot Import From |
-| --- | --- | --- |
-| **taxonomy(vo)** | Other taxonomy types | agents, infrastructure, surfaces, contracts, capabilities, root |
-| **taxonomy(entity), taxonomy(error), taxonomy(event)** | taxonomy VOs/constants | agents, infrastructure, surfaces, contracts, capabilities |
-| **taxonomy(constant)** | Nothing (pure static values) | Any external imports |
-| **taxonomy(utility)** | taxonomy types | Non-taxonomy layers |
+| Taxonomy Type                                          | Can Import From              | Cannot Import From                                              |
+| ------------------------------------------------------ | ---------------------------- | --------------------------------------------------------------- |
+| **taxonomy(vo)**                                       | Other taxonomy types         | agents, infrastructure, surfaces, contracts, capabilities, root |
+| **taxonomy(entity), taxonomy(error), taxonomy(event)** | taxonomy VOs/constants       | agents, infrastructure, surfaces, contracts, capabilities       |
+| **taxonomy(constant)**                                 | Nothing (pure static values) | Any external imports                                            |
+| **taxonomy(utility)**                                  | taxonomy types               | Non-taxonomy layers                                             |
 
 ### Dataclass Patterns
 
@@ -220,13 +209,13 @@ When you find a dataclass in a layer file (capabilities/infrastructure/agent/sur
 
 Find the correct domain directory under `modules/shared/src/<domain>/`:
 
-| Domain | Directory | Example Types |
-| --- | --- | --- |
-| `common` | `shared/src/common/` | Cross-domain types (PathVO, BooleanVO) |
-| `orphan-detector` | `shared/src/orphan-detector/` | Orphan results, severity, violations |
-| `code-analysis` | `shared/src/code-analysis/` | Analysis results, reachability, violations |
-| `import-rules` | `shared/src/import-rules/` | Import rules, violations, language types |
-| `naming-rules` | `shared/src/naming-rules/` | Naming violations, patterns |
+| Domain            | Directory                     | Example Types                              |
+| ----------------- | ----------------------------- | ------------------------------------------ |
+| `common`          | `shared/src/common/`          | Cross-domain types (PathVO, BooleanVO)     |
+| `orphan-detector` | `shared/src/orphan-detector/` | Orphan results, severity, violations       |
+| `code-analysis`   | `shared/src/code-analysis/`   | Analysis results, reachability, violations |
+| `import-rules`    | `shared/src/import-rules/`    | Import rules, violations, language types   |
+| `naming-rules`    | `shared/src/naming-rules/`    | Naming violations, patterns                |
 
 ### Step 3: Create or Update Taxonomy File
 
@@ -318,7 +307,7 @@ done
 - ❌ **Defining dataclasses in layer files**: Domain data must be in shared/taxonomy. Only the class belongs in layer files.
 - ❌ **Importing non-taxonomy types into taxonomy files**: Taxonomy must remain completely pure — no imports from capabilities, infrastructure, agents, contracts, or surface.
 - ❌ **Using wrong suffix for taxonomy files**: Only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed. No other suffixes.
-- ❌ **Forgetting to register new taxonomy modules in __init__.py**: Every `taxonomy_*.py` file must have a corresponding `from .taxonomy_<name> import ...` in the domain's `__init__.py`.
+- ❌ **Forgetting to register new taxonomy modules in **init**.py**: Every `taxonomy_*.py` file must have a corresponding `from .taxonomy_<name> import ...` in the domain's `__init__.py`.
 - ❌ **Placing utility functions in layer files**: Standalone functions (no `self`) MUST be extracted to `*_utility.py` modules in shared/taxonomy.
 - ❌ **Creating multiple dataclasses with different names for the same concept**: Consolidate into a single taxonomy file.
 - ❌ **Duplicating taxonomy types across domains**: If a type belongs to multiple domains, put it in `common/` and import from there.

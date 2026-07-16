@@ -61,11 +61,11 @@ modules/shared/src/<domain>/
 
 ### Three Suffix Types and Their Roles
 
-| Suffix | Role | Implemented By | Example |
-|--------|------|-----------------|---------|
-| `_port` | Outbound interface | Infrastructure layer | `contract_system_port.py`, `contract_import_parser_port.py` |
-| `_protocol` | Inbound interface | Capabilities layer | `contract_import_forbidden_protocol.py`, `contract_naming_checker_protocol.py` |
-| `_aggregate` | Composition facade | Agent layer | `contract_import_runner_aggregate.py`, `contract_tui_aggregate.py` |
+| Suffix       | Role               | Implemented By       | Example                                                                        |
+| ------------ | ------------------ | -------------------- | ------------------------------------------------------------------------------ |
+| `_port`      | Outbound interface | Infrastructure layer | `contract_system_port.py`, `contract_import_parser_port.py`                    |
+| `_protocol`  | Inbound interface  | Capabilities layer   | `contract_import_forbidden_protocol.py`, `contract_naming_checker_protocol.py` |
+| `_aggregate` | Composition facade | Agent layer          | `contract_import_runner_aggregate.py`, `contract_tui_aggregate.py`             |
 
 **CRITICAL:** These suffixes are **strict** — only `_port`, `_protocol`, `_aggregate` are allowed for `contract_` prefixed files. No other suffixes.
 
@@ -73,19 +73,19 @@ modules/shared/src/<domain>/
 
 `contract_<concept_word(s)>_<role_suffix>.py`
 
-| Concept | File Name | Protocol Name | Implemented By |
-|---|---|---|---|
-| System operations | `contract_system_port.py` | `ISystemPort` | Infrastructure adapters |
-| Forbidden import checking | `contract_import_forbidden_protocol.py` | `IImportForbiddenProtocol` | Capabilities checkers |
-| Import runner orchestration | `contract_import_runner_aggregate.py` | `IImportRunnerAggregate` | Agent orchestrators |
+| Concept                     | File Name                               | Protocol Name              | Implemented By          |
+| --------------------------- | --------------------------------------- | -------------------------- | ----------------------- |
+| System operations           | `contract_system_port.py`               | `ISystemPort`              | Infrastructure adapters |
+| Forbidden import checking   | `contract_import_forbidden_protocol.py` | `IImportForbiddenProtocol` | Capabilities checkers   |
+| Import runner orchestration | `contract_import_runner_aggregate.py`   | `IImportRunnerAggregate`   | Agent orchestrators     |
 
 ### Import Restrictions (AES201)
 
 Contract files must remain **completely pure**:
 
-| Can Import From | Cannot Import From |
-| --- | --- |
-| `taxonomy_*` files | capabilities, infrastructure, agents, surfaces |
+| Can Import From          | Cannot Import From                                           |
+| ------------------------ | ------------------------------------------------------------ |
+| `taxonomy_*` files       | capabilities, infrastructure, agents, surfaces               |
 | Other `contract_*` files | Any layer files (*.py without contract_ or taxonomy_ prefix) |
 
 **Contracts define interfaces only — zero implementation logic.**
@@ -185,6 +185,7 @@ grep -rn "def " modules/*/src/ | grep -v "shared/" | head -50
 Create `contract_<concept>_<suffix>.py` in the appropriate domain under `modules/shared/src/<domain>/`.
 
 **Rules:**
+
 - ABC must be imported from `abc` module
 - Methods must use `@abstractmethod` decorator
 - Use `...` (ellipsis) for method bodies — no implementation logic
@@ -288,7 +289,7 @@ python -c "import <module>"
 - ❌ **Putting implementation logic in contract files**: Contracts must contain ONLY ABC definitions. Implementors belong in layer files.
 - ❌ **Importing non-taxonomy types into contracts**: Contracts can only import `taxonomy_*` and other `contract_*` files.
 - ❌ **Using wrong suffix for contract files**: Only `_port`, `_protocol`, `_aggregate` are allowed. No other suffixes.
-- ❌ **Forgetting to register new contract modules in __init__.py**: Every `contract_*.py` file must have a corresponding `from .contract_<name>_<suffix> import ...` in the domain's `__init__.py`.
+- ❌ **Forgetting to register new contract modules in **init**.py**: Every `contract_*.py` file must have a corresponding `from .contract_<name>_<suffix> import ...` in the domain's `__init__.py`.
 - ❌ **Missing @abstractmethod decorators on methods**: All contract methods MUST use `@abstractmethod` for proper interface enforcement.
 - ❌ **Forgetting to import ABC from abc module**: All contract files must `from abc import ABC, abstractmethod`.
 - ❌ **Placing method bodies in contract files**: Even thin wrapper methods belong in layer files, not contracts.

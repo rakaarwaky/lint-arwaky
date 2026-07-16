@@ -4,16 +4,7 @@ description: "Create and validate infrastructure layer files following AES rules
 version: 1.0.0
 category: refactoring
 tags:
-  [
-    python,
-    aes,
-    infrastructure,
-    port,
-    structure,
-    aes404,
-    3-block-structure,
-    di,
-  ]
+  [python, aes, infrastructure, port, structure, aes404, 3-block-structure, di]
 triggers:
   - "create infrastructure python"
   - "add infrastructure python"
@@ -44,13 +35,13 @@ Create and validate Python **infrastructure layer** files following clean archit
 
 **Infrastructure Layer (`infrastructure_*.py`)**
 
-| Allowed                              | Forbidden                                    |
-| ------------------------------------ | -------------------------------------------- |
-| File I/O (`open()`, `Path()`)        | Business rules                               |
-| Network calls (`requests.`, `httpx.`)| Domain logic                                 |
-| Database operations (`sqlite3.`, `asyncpg.`) | Calculations (should be in capabilities)  |
-| External API calls                   | Direct import from `agent_*`                 |
-| Protocol/ABC implementation          | Direct import from `capabilities_*`          |
+| Allowed                                      | Forbidden                                |
+| -------------------------------------------- | ---------------------------------------- |
+| File I/O (`open()`, `Path()`)                | Business rules                           |
+| Network calls (`requests.`, `httpx.`)        | Domain logic                             |
+| Database operations (`sqlite3.`, `asyncpg.`) | Calculations (should be in capabilities) |
+| External API calls                           | Direct import from `agent_*`             |
+| Protocol/ABC implementation                  | Direct import from `capabilities_*`      |
 
 ### Structural Rules (All Layers)
 
@@ -87,11 +78,11 @@ If no (has business logic) → **split into capabilities layer instead**
 
 ## Naming Convention
 
-| Layer          | File Pattern             | Protocol File                         | Protocol Name         |
-| -------------- | ------------------------ | ------------------------------------- | --------------------- |
-| **Capabilities** | `capabilities_*.py`      | `contract_<name>_protocol.py`         | `I<Name>Protocol`     |
-| **Infrastructure** | `infrastructure_*.py`  | `contract_<name>_port.py`             | `I<Name>Port`         |
-| **Agents**       | `agent_*.py`             | `contract_<name>_aggregate.py`        | `I<Name>Aggregate`    |
+| Layer              | File Pattern          | Protocol File                  | Protocol Name      |
+| ------------------ | --------------------- | ------------------------------ | ------------------ |
+| **Capabilities**   | `capabilities_*.py`   | `contract_<name>_protocol.py`  | `I<Name>Protocol`  |
+| **Infrastructure** | `infrastructure_*.py` | `contract_<name>_port.py`      | `I<Name>Port`      |
+| **Agents**         | `agent_*.py`          | `contract_<name>_aggregate.py` | `I<Name>Aggregate` |
 
 ## Detection Patterns
 
@@ -167,11 +158,11 @@ Create `contract_<name>_port.py` in the shared module with abstract methods.
 
 **Port location:**
 
-| Module       | Port Path                                              |
-| ------------ | ------------------------------------------------------ |
-| compositor   | `modules/shared/src/compositor/contract_*_port.py`     |
-| animator     | `modules/shared/src/animator/contract_*_port.py`       |
-| scripting    | `modules/shared/src/scripting/contract_*_port.py`      |
+| Module     | Port Path                                          |
+| ---------- | -------------------------------------------------- |
+| compositor | `modules/shared/src/compositor/contract_*_port.py` |
+| animator   | `modules/shared/src/animator/contract_*_port.py`   |
+| scripting  | `modules/shared/src/scripting/contract_*_port.py`  |
 
 ### Step 4: Enforce 3-Block Structure
 
@@ -217,7 +208,7 @@ Run syntax check to confirm no violations.
 - [ ] All dataclasses imported from shared/taxonomy (none defined locally).
 - [ ] Constructor fields use port interfaces, not concrete types.
 - [ ] **Zero business logic** in infrastructure layer (no domain rules, no calculations).
-- [ ] No forbidden imports (no capabilities_*, no agent_*).
+- [ ] No forbidden imports (no capabilities__, no agent__).
 - [ ] Port module is registered in the shared module's `__init__.py`.
 - [ ] `python -c "import <module>"` passes without errors.
 

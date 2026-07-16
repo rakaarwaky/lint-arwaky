@@ -56,11 +56,11 @@ Create and validate Python **surface layer** files in feature modules. The surfa
 
 ### Three Surface Types
 
-| Type | Suffixes | Can Import From | Forbidden | Description |
-|------|----------|-----------------|-----------|-------------|
-| **Smart Surface** | `_command`, `_controller`, `_page`, `_entry` | `taxonomy_*` + `contract_aggregate_*` only | capabilities, infrastructure, agents, smart surfaces | Entry points; owns DI container, orchestrates via aggregates |
-| **Utility Surface** | `_hook`, `_store`, `_action`, `_screen` | `taxonomy_*` + passive surfaces only | smart surfaces, capabilities, infrastructure, agents | Thin wrappers; maps events/actions to smart surfaces |
-| **Passive Surface** | `_component`, `_view`, `_layout` | `taxonomy_*` only | everything else (no logic, no orchestration) | Pure rendering/display; zero business logic |
+| Type                | Suffixes                                     | Can Import From                            | Forbidden                                            | Description                                                  |
+| ------------------- | -------------------------------------------- | ------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------ |
+| **Smart Surface**   | `_command`, `_controller`, `_page`, `_entry` | `taxonomy_*` + `contract_aggregate_*` only | capabilities, infrastructure, agents, smart surfaces | Entry points; owns DI container, orchestrates via aggregates |
+| **Utility Surface** | `_hook`, `_store`, `_action`, `_screen`      | `taxonomy_*` + passive surfaces only       | smart surfaces, capabilities, infrastructure, agents | Thin wrappers; maps events/actions to smart surfaces         |
+| **Passive Surface** | `_component`, `_view`, `_layout`             | `taxonomy_*` only                          | everything else (no logic, no orchestration)         | Pure rendering/display; zero business logic                  |
 
 ### Import Restrictions (AES406)
 
@@ -205,6 +205,7 @@ grep -n "surface_.*_command\|surface_.*_controller" modules/*/src/surface_*_acti
 Create `surface_<concept>_<suffix>.py` in the appropriate feature module.
 
 **Smart Surface rules:**
+
 - Can import `taxonomy_*` + `contract_aggregate_*` only
 - Owns DI container via aggregate interfaces (`I<Name>Aggregate`)
 - Orchestrates via aggregates — never imports capabilities/infrastructure directly
@@ -223,6 +224,7 @@ class CheckCommand:
 ```
 
 **Passive Surface rules:**
+
 - Can import `taxonomy_*` only
 - Pure rendering/display — zero business logic, zero computation, zero orchestration
 

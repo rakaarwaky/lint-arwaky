@@ -3,18 +3,7 @@ name: create-taxonomy-rust
 description: "Create and validate taxonomy layer files (shared/taxonomy) — all data classes, VOs, errors, and utilities must live here following strict naming conventions."
 version: 1.0.0
 category: refactoring
-tags:
-  [
-    rust,
-    aes,
-    taxonomy,
-    shared,
-    dataclass,
-    vo,
-    entity,
-    utility,
-    structure,
-  ]
+tags: [rust, aes, taxonomy, shared, dataclass, vo, entity, utility, structure]
 triggers:
   - "create taxonomy rust"
   - "add taxonomy rust"
@@ -69,14 +58,14 @@ crates/shared/src/
 
 Taxonomy files follow strict naming patterns:
 
-| Suffix       | Purpose                          | Allowed? | Example                              |
-| ------------ | -------------------------------- | -------- | ------------------------------------ |
-| `_vo`        | Value Objects (wraps a single value) | ✅ YES  | `taxonomy_import_rule_vo.rs`         |
-| `_entity`    | Domain entities with identity    | ✅ YES   | `taxonomy_analysis_entity.rs`        |
-| `_error`     | Error types (`thiserror::Error`) | ✅ YES   | `taxonomy_config_error.rs`           |
-| `_event`     | Event/message types              | ✅ YES   | `taxonomy_scan_event.rs`             |
-| `_constant`  | Static compile-time constants    | ✅ YES   | `taxonomy_layer_names_constant.rs`   |
-| `_utility`   | Stateless free functions         | ✅ YES   | `taxonomy_symbol_renamer_utility.rs` |
+| Suffix      | Purpose                              | Allowed? | Example                              |
+| ----------- | ------------------------------------ | -------- | ------------------------------------ |
+| `_vo`       | Value Objects (wraps a single value) | ✅ YES   | `taxonomy_import_rule_vo.rs`         |
+| `_entity`   | Domain entities with identity        | ✅ YES   | `taxonomy_analysis_entity.rs`        |
+| `_error`    | Error types (`thiserror::Error`)     | ✅ YES   | `taxonomy_config_error.rs`           |
+| `_event`    | Event/message types                  | ✅ YES   | `taxonomy_scan_event.rs`             |
+| `_constant` | Static compile-time constants        | ✅ YES   | `taxonomy_layer_names_constant.rs`   |
+| `_utility`  | Stateless free functions             | ✅ YES   | `taxonomy_symbol_renamer_utility.rs` |
 
 **CRITICAL:** These suffixes are **strict** — only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed for `taxonomy_` prefixed files. No other suffixes.
 
@@ -84,12 +73,12 @@ Taxonomy files follow strict naming patterns:
 
 Taxonomy files must remain **completely pure**:
 
-| Taxonomy Type | Can Import From | Cannot Import From |
-| --- | --- | --- |
-| **taxonomy(vo)** | Other taxonomy types | agents, infrastructure, surfaces, contracts, capabilities, root |
-| **taxonomy(entity), taxonomy(error), taxonomy(event)** | taxonomy VOs/constants | agents, infrastructure, surfaces, contracts, capabilities |
-| **taxonomy(constant)** | Nothing (pure static values) | Any external imports |
-| **taxonomy(utility)** | taxonomy types | Non-taxonomy layers |
+| Taxonomy Type                                          | Can Import From              | Cannot Import From                                              |
+| ------------------------------------------------------ | ---------------------------- | --------------------------------------------------------------- |
+| **taxonomy(vo)**                                       | Other taxonomy types         | agents, infrastructure, surfaces, contracts, capabilities, root |
+| **taxonomy(entity), taxonomy(error), taxonomy(event)** | taxonomy VOs/constants       | agents, infrastructure, surfaces, contracts, capabilities       |
+| **taxonomy(constant)**                                 | Nothing (pure static values) | Any external imports                                            |
+| **taxonomy(utility)**                                  | taxonomy types               | Non-taxonomy layers                                             |
 
 ### Dataclass Patterns
 
@@ -238,13 +227,13 @@ When you find a struct in a layer file (capabilities/infrastructure/agent/surfac
 
 Find the correct domain directory under `crates/shared/src/<domain>/`:
 
-| Domain | Directory | Example Types |
-| --- | --- | --- |
-| `common` | `shared/src/common/` | Cross-domain types (PathVO, BooleanVO) |
-| `orphan-detector` | `shared/src/orphan-detector/` | Orphan results, severity, violations |
-| `code-analysis` | `shared/src/code-analysis/` | Analysis results, reachability, violations |
-| `import-rules` | `shared/src/import-rules/` | Import rules, violations, language types |
-| `naming-rules` | `shared/src/naming-rules/` | Naming violations, patterns |
+| Domain            | Directory                     | Example Types                              |
+| ----------------- | ----------------------------- | ------------------------------------------ |
+| `common`          | `shared/src/common/`          | Cross-domain types (PathVO, BooleanVO)     |
+| `orphan-detector` | `shared/src/orphan-detector/` | Orphan results, severity, violations       |
+| `code-analysis`   | `shared/src/code-analysis/`   | Analysis results, reachability, violations |
+| `import-rules`    | `shared/src/import-rules/`    | Import rules, violations, language types   |
+| `naming-rules`    | `shared/src/naming-rules/`    | Naming violations, patterns                |
 
 ### Step 3: Create or Update Taxonomy File
 
@@ -339,15 +328,15 @@ rg "[0-9]+\.[0-9]+|#[0-9A-Fa-f]+" crates/<crate>/src/ | grep -v "shared/" | grep
 
 **All Layer File Naming:**
 
-| Layer          | Pattern                       | Suffix                            |
-| -------------- | ----------------------------- | --------------------------------- |
-| **root**       | `root_*_container.rs`         | `_container`                      |
-| **taxonomy**   | `taxonomy_*_vo.rs`            | `_vo`, `_constant`                |
-| **contract**   | `contract_*_protocol.rs`      | `_protocol`, `_port`, `_aggregate`|
-| **capabilities** | `capabilities_*.rs`         | flexible                          |
-| **infrastructure** | `infrastructure_*.rs`     | flexible                          |
-| **agent**      | `agent_*.rs`                  | `_orchestrator`                   |
-| **surface**    | `surface_*.rs`                | `_command`, `_controller`         |
+| Layer              | Pattern                  | Suffix                             |
+| ------------------ | ------------------------ | ---------------------------------- |
+| **root**           | `root_*_container.rs`    | `_container`                       |
+| **taxonomy**       | `taxonomy_*_vo.rs`       | `_vo`, `_constant`                 |
+| **contract**       | `contract_*_protocol.rs` | `_protocol`, `_port`, `_aggregate` |
+| **capabilities**   | `capabilities_*.rs`      | flexible                           |
+| **infrastructure** | `infrastructure_*.rs`    | flexible                           |
+| **agent**          | `agent_*.rs`             | `_orchestrator`                    |
+| **surface**        | `surface_*.rs`           | `_command`, `_controller`          |
 
 ## Primitive-to-VO Patterns (from fix-primitive-to-vo)
 
@@ -362,7 +351,7 @@ rg "[0-9]+\.[0-9]+|#[0-9A-Fa-f]+" crates/<crate>/src/ | grep -v "shared/" | grep
 // BEFORE (primitive in layer file)
 pub struct LintResult {
     pub file_path: String,   // ← primitive
-    pub line: u32,           // ← primitive  
+    pub line: u32,           // ← primitive
     pub severity: String,    // ← primitive
 }
 
@@ -375,7 +364,7 @@ impl FilePath {
     pub fn value(&self) -> &str { &self.0 }
 }
 
-// crates/shared/src/import-rules/taxonomy_line_number_vo.rs  
+// crates/shared/src/import-rules/taxonomy_line_number_vo.rs
 string_value_object!(LineNumber);  // wraps String/number
 
 // crates/shared/src/import-rules/taxonomy_severity_vo.rs
@@ -419,7 +408,7 @@ let result = self.process(fps: FPS_DEFAULT);
 use crate::taxonomy_animator_constant::MIN_REVEAL_SECONDS;
 fn calculate_duration(&self) -> f64 { MIN_REVEAL_SECONDS }
 
-// Infrastructure layer  
+// Infrastructure layer
 use crate::taxonomy_animator_constant::MANIFEST_FILENAME;
 let file = std::fs::File::create(MANIFEST_FILENAME);
 ```

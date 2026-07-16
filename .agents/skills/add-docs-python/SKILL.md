@@ -3,15 +3,7 @@ name: add-docs-python
 description: "Add proper docstrings and type hints to Python files following PEP 257 and project conventions."
 version: 1.0.0
 category: documentation
-tags:
-  [
-    python,
-    docs,
-    docstring,
-    type-hints,
-    pep257,
-    refactoring,
-  ]
+tags: [python, docs, docstring, type-hints, pep257, refactoring]
 triggers:
   - "add docs python"
   - "add docstring python"
@@ -84,13 +76,13 @@ Add method documentation with parameters, returns, and raises:
 ```python
 def check(self, path: str) -> bool:
     """Check if path matches the import rule.
-    
+
     Args:
         path: File path to check
-        
+
     Returns:
         True if path matches the rule
-        
+
     Raises:
         ValueError: If path is empty
     """

@@ -3,15 +3,7 @@ name: lint-arwaky-python
 description: "Run lint-arwaky CLI scanner and MCP server for Python projects — validate AES compliance, check layer violations, and fix architecture issues."
 version: 1.0.0
 category: tooling
-tags:
-  [
-    python,
-    lint,
-    aes,
-    compliance,
-    scanning,
-    mcp,
-  ]
+tags: [python, lint, aes, compliance, scanning, mcp]
 triggers:
   - "lint arwaky python"
   - "scan python project"
@@ -142,10 +134,10 @@ python -m lint_arwaky mcp --language python
 
 ## Common Issues (FIX)
 
-| Issue | Fix Strategy |
-| --- | --- |
-| Cross-layer imports | Use contract layer protocols via DI |
-| Missing protocol inheritance | Create protocol ABC and inherit |
-| Mixed layer responsibilities | Move code to appropriate layer |
-| Magic constants | Extract to taxonomy constants |
-| Surface importing capabilities | Use aggregate contracts instead |
+| Issue                          | Fix Strategy                        |
+| ------------------------------ | ----------------------------------- |
+| Cross-layer imports            | Use contract layer protocols via DI |
+| Missing protocol inheritance   | Create protocol ABC and inherit     |
+| Mixed layer responsibilities   | Move code to appropriate layer      |
+| Magic constants                | Extract to taxonomy constants       |
+| Surface importing capabilities | Use aggregate contracts instead     |

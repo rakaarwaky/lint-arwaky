@@ -182,14 +182,14 @@ If answer is not "required by MVP" → mark for removal. Check both:
 
 Report per file — show what to keep/remove. Group findings into:
 
-| Category | What It Is | Action |
-| --- | --- | --- |
-| **Stubs** | Empty or near-empty methods | Remove |
-| **Thin Wrappers** | Direct attribute access, simple comparisons | Remove |
-| **Duplicates** | Same function in multiple files | Keep in owning file, remove rest |
-| **Overengineered** | Patterns not in MVP scope | Remove |
-| **Unused Files** | 0 inbound imports | Delete (after verification) |
-| **Re-export Only** | Files with only re-exports | Consolidate into real impl |
+| Category           | What It Is                                  | Action                           |
+| ------------------ | ------------------------------------------- | -------------------------------- |
+| **Stubs**          | Empty or near-empty methods                 | Remove                           |
+| **Thin Wrappers**  | Direct attribute access, simple comparisons | Remove                           |
+| **Duplicates**     | Same function in multiple files             | Keep in owning file, remove rest |
+| **Overengineered** | Patterns not in MVP scope                   | Remove                           |
+| **Unused Files**   | 0 inbound imports                           | Delete (after verification)      |
+| **Re-export Only** | Files with only re-exports                  | Consolidate into real impl       |
 
 ### Step 6: Get Approval
 

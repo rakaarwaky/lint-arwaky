@@ -3,15 +3,7 @@ name: cleanup-files-python
 description: "Clean up Python files by removing unused imports, fixing formatting, and ensuring PEP 8 compliance."
 version: 1.0.0
 category: cleanup
-tags:
-  [
-    python,
-    cleanup,
-    pep8,
-    formatting,
-    imports,
-    refactoring,
-  ]
+tags: [python, cleanup, pep8, formatting, imports, refactoring]
 triggers:
   - "cleanup python"
   - "fix formatting python"

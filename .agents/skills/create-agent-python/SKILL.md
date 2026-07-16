@@ -43,16 +43,16 @@ Create and validate Python **agent layer** files following clean architecture ru
 
 **Agent Layer (`agent_*.py`)**
 
-| Allowed                                          | Forbidden                                            |
-| ------------------------------------------------ | ---------------------------------------------------- |
-| `for`, `while`, `async for` (orchestration flow) | Computation (`sum()`, `len()`, arithmetic)           |
-| `if/else`, `elif`, `match` (control flow)        | Business rules, domain logic                         |
-| `try/except`, `raise` (error propagation)        | File I/O (`open()`, `Path()`, `os.`)                 |
-| `asyncio.wait_for`, `.sleep` (async)             | Network (`requests.`, `httpx.`)                      |
-| Sequential statements (orchestration)            | Database (`sqlite3.`, `asyncpg.`)                    |
-| Protocol/ABC implementation                      | Domain model definition (`@dataclass`)               |
-|                                                  | Direct import from `capabilities_*`                  |
-|                                                  | Direct import from `infrastructure_*`                |
+| Allowed                                          | Forbidden                                  |
+| ------------------------------------------------ | ------------------------------------------ |
+| `for`, `while`, `async for` (orchestration flow) | Computation (`sum()`, `len()`, arithmetic) |
+| `if/else`, `elif`, `match` (control flow)        | Business rules, domain logic               |
+| `try/except`, `raise` (error propagation)        | File I/O (`open()`, `Path()`, `os.`)       |
+| `asyncio.wait_for`, `.sleep` (async)             | Network (`requests.`, `httpx.`)            |
+| Sequential statements (orchestration)            | Database (`sqlite3.`, `asyncpg.`)          |
+| Protocol/ABC implementation                      | Domain model definition (`@dataclass`)     |
+|                                                  | Direct import from `capabilities_*`        |
+|                                                  | Direct import from `infrastructure_*`      |
 
 ### Structural Rules (All Layers)
 
@@ -89,11 +89,11 @@ If no (has computation, I/O, or business logic) → **split into appropriate lay
 
 ## Naming Convention
 
-| Layer          | File Pattern             | Protocol File                         | Protocol Name         |
-| -------------- | ------------------------ | ------------------------------------- | --------------------- |
-| **Capabilities** | `capabilities_*.py`      | `contract_<name>_protocol.py`         | `I<Name>Protocol`     |
-| **Infrastructure** | `infrastructure_*.py`  | `contract_<name>_port.py`             | `I<Name>Port`         |
-| **Agents**       | `agent_*.py`             | `contract_<name>_aggregate.py`        | `I<Name>Aggregate`    |
+| Layer              | File Pattern          | Protocol File                  | Protocol Name      |
+| ------------------ | --------------------- | ------------------------------ | ------------------ |
+| **Capabilities**   | `capabilities_*.py`   | `contract_<name>_protocol.py`  | `I<Name>Protocol`  |
+| **Infrastructure** | `infrastructure_*.py` | `contract_<name>_port.py`      | `I<Name>Port`      |
+| **Agents**         | `agent_*.py`          | `contract_<name>_aggregate.py` | `I<Name>Aggregate` |
 
 ## Agent Layer Purpose
 
@@ -179,11 +179,11 @@ Create `contract_<name>_aggregate.py` in the shared module with abstract methods
 
 **Aggregate location:**
 
-| Module       | Aggregate Path                                         |
-| ------------ | ------------------------------------------------------ |
-| compositor   | `modules/shared/src/compositor/contract_*_aggregate.py`|
-| animator     | `modules/shared/src/animator/contract_*_aggregate.py`  |
-| scripting    | `modules/shared/src/scripting/contract_*_aggregate.py` |
+| Module     | Aggregate Path                                          |
+| ---------- | ------------------------------------------------------- |
+| compositor | `modules/shared/src/compositor/contract_*_aggregate.py` |
+| animator   | `modules/shared/src/animator/contract_*_aggregate.py`   |
+| scripting  | `modules/shared/src/scripting/contract_*_aggregate.py`  |
 
 ### Step 4: Enforce 3-Block Structure
 
@@ -231,7 +231,7 @@ Run syntax check to confirm no violations.
 - [ ] **Zero computation** in agent layer (no sum(), no len(), no iteration transforms).
 - [ ] **Zero I/O** in agent layer (no open(), no network, no database).
 - [ ] **Zero business logic** in agent layer (no domain rules, no validation).
-- [ ] No forbidden imports (no capabilities_*, no infrastructure_*).
+- [ ] No forbidden imports (no capabilities__, no infrastructure__).
 - [ ] Aggregate module is registered in the shared module's `__init__.py`.
 - [ ] `python -c "import <module>"` passes without errors.
 

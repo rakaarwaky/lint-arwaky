@@ -3,14 +3,7 @@ name: consolidate-files-python
 description: "Consolidate multiple Python files into single cohesive modules following single responsibility principle."
 version: 1.0.0
 category: refactoring
-tags:
-  [
-    python,
-    consolidation,
-    single-responsibility,
-    refactoring,
-    structure,
-  ]
+tags: [python, consolidation, single-responsibility, refactoring, structure]
 triggers:
   - "consolidate python"
   - "merge files python"
