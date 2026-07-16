@@ -3,7 +3,9 @@
 // taxonomy_parser_error, taxonomy_adapter_error, taxonomy_common_error,
 // taxonomy_symbol_renamer_utility, taxonomy_file_collector_helper, taxonomy_naming_list_vo
 
-use shared_lint_arwaky::auto_fix::taxonomy_symbol_renamer_utility::SymbolRenamer;
+use shared_lint_arwaky::auto_fix::taxonomy_symbol_renamer_utility::{
+    rename_in_file, symbol_exists,
+};
 use shared_lint_arwaky::cli_commands::taxonomy_severity_vo::Severity;
 use shared_lint_arwaky::common::taxonomy_adapter_error::{
     AdapterError, ScanError, ValidationError,
@@ -429,16 +431,13 @@ fn exit_code_new_value_display_from() {
 
 #[test]
 fn symbol_renamer_nonexistent_file() {
-    let count = SymbolRenamer::rename_in_file("/nonexistent/path/file.rs", "old_sym", "new_sym");
+    let count = rename_in_file("/nonexistent/path/file.rs", "old_sym", "new_sym");
     assert_eq!(count, 0);
 }
 
 #[test]
 fn symbol_renamer_symbol_not_found_in_nonexistent() {
-    assert!(!SymbolRenamer::symbol_exists(
-        "/nonexistent/path/file.rs",
-        "sym"
-    ));
+    assert!(!symbol_exists("/nonexistent/path/file.rs", "sym"));
 }
 
 // ============================================================================
