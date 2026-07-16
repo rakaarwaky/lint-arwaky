@@ -211,7 +211,8 @@ impl LintExecutor {
         self.formatter.format_results(results)
     }
 
-    fn format_doctor_report(
+    pub fn format_doctor_report(
+        &self,
         diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
     ) -> LintExecutionResult {
         self.formatter.format_doctor_report(diagnostics)
@@ -264,11 +265,16 @@ impl LintExecutor {
         }
     }
 
-    fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
+    pub fn format_dependency_report(
+        &self,
+        path: &str,
+        report: &DependencyReport,
+    ) -> LintExecutionResult {
         self.formatter.format_dependency_report(path, report)
     }
 
-    fn format_config_result(
+    pub fn format_config_result(
+        &self,
         result: &shared::config_system::taxonomy_source_vo::ConfigResult,
     ) -> LintExecutionResult {
         self.formatter.format_config_result(result)
@@ -716,7 +722,7 @@ impl ILintExecutorProtocol for LintExecutor {
                     }
                 };
                 match rt.block_on(maintenance.run_dependency_report(&fp)) {
-                    Ok(report) => Self::format_dependency_report(path, &report),
+                    Ok(report) => self.format_dependency_report(path, &report),
                     Err(e) => LintExecutionResult::failure(format!(
                         "Dependency scan for {}\nError: {}",
                         path, e
@@ -743,7 +749,7 @@ impl ILintExecutorProtocol for LintExecutor {
                     }
                 };
                 let diagnostics = rt.block_on(maintenance.diagnose_toolchain());
-                Self::format_doctor_report(&diagnostics)
+                self.format_doctor_report(&diagnostics)
             }
             None => {
                 let output = "Environment Diagnostics:\nUse CLI `lint-arwaky-cli doctor` for full environment check.\nRequired: Rust toolchain, Python 3.8+, Node.js 18+".to_string();
@@ -855,7 +861,7 @@ impl ILintExecutorProtocol for LintExecutor {
                 let project_root =
                     shared::common::taxonomy_path_vo::FilePath::new(cwd).unwrap_or_default();
                 let result = rt.block_on(orchestrator.load_project_config(&project_root));
-                Self::format_config_result(&result)
+                self.format_config_result(&result)
             }
             None => {
                 let output = "Active Configuration\nSource: embedded (built-in defaults)\nNo config orchestrator configured. Use CLI `lint-arwaky-cli config-show`.".to_string();

@@ -58,7 +58,7 @@ impl TuiContainer {
         let scanner_provider: Arc<dyn IScannerProviderPort> =
             Arc::new(code_analysis::FileCollectorProvider::new());
         let formatter: Arc<dyn shared::tui::contract_report_formatter_port::IReportFormatterPort> =
-            Arc::new(shared::tui::capabilities_report_formatter::ReportFormatterHelper::new());
+            Arc::new(crate::capabilities_report_formatter::ReportFormatterHelper::new());
         let lint_executor = Arc::new(
             LintExecutor::new(code_analysis_aggregate, formatter)
                 .with_fix(fix_orchestrator)

@@ -1,7 +1,7 @@
 # Skills Index
 
 > Rust AES (Agentic Engineering System) Skills Library
-> Version: 2.0.0 | Last Updated: 2026-07-16
+> Version: 2.1.0 | Last Updated: 2026-07-16
 
 ---
 
@@ -9,10 +9,10 @@
 
 | Category | Purpose | Skills |
 |----------|---------|--------|
-| [Structure](#structure) | File & struct organization | 6 |
+| [Structure](#structure) | File & struct organization | 8 |
 | [Imports](#imports) | Import rules & DI | 3 |
-| [Quality](#quality) | Code cleanup & best practices | 5 |
-| [Compliance](#compliance) | Validation & linting | 3 |
+| [Quality](#quality) | Code cleanup & best practices | 6 |
+| [Compliance](#compliance) | Validation & linting | 4 |
 | [Testing](#testing) | Test creation | 1 |
 
 ---
@@ -30,6 +30,7 @@ Skills for file organization and struct layout.
 | [enforce-1-struct-per-file](structure/enforce-1-struct-per-file/SKILL.md) | Ensure 1 struct per file | File has >1 struct |
 | [create-missing-protocols](structure/create-missing-protocols/SKILL.md) | Create traits for capabilities | Capability has no trait |
 | [trait-consolidation](structure/trait-consolidation/SKILL.md) | Consolidate all fn into trait | Capability has methods not in trait |
+| [consolidate-helpers](structure/consolidate-helpers/SKILL.md) | Extract duplicated helpers to shared module | Same helper function in 2+ files |
 
 ---
 
@@ -56,6 +57,7 @@ Skills for code cleanup and best practices.
 | [fix-magic-constant](quality/fix-magic-constant/SKILL.md) | Replace hardcoded values | Magic constants in code |
 | [fix-primitive-to-vo](quality/fix-primitive-to-vo/SKILL.md) | Replace primitives with VOs | Raw types in signatures |
 | [find-unused-files](quality/find-unused-files/SKILL.md) | Find dead/orphan files | After refactoring |
+| [fix-error-handling](quality/fix-error-handling/SKILL.md) | Replace silent error discards with proper propagation | Capabilities swallow errors with unwrap_or_default() |
 
 ---
 
@@ -68,6 +70,7 @@ Skills for validation and linting.
 | [module_logic_validator](compliance/module_logic_validator/SKILL.md) | Validate AES layer compliance | After modifying any file |
 | [method_classifier](compliance/method_classifier/SKILL.md) | Validate Public/Helper/Utility | After adding methods |
 | [lint-arwaky-cli](compliance/lint-arwaky-cli/SKILL.md) | Rust linting (clippy, rustfmt) | Before committing |
+| [add-docs](compliance/add-docs/SKILL.md) | Add crate README and doc comments | No README or missing doc comments on public items |
 
 ---
 
