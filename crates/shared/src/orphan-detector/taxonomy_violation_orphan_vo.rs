@@ -63,24 +63,36 @@ impl fmt::Display for AesOrphanViolation {
                     Some(r) => r.to_string(),
                     None => match suffix.as_str() {
                         "port" => format!(
-                            "Contract port '{}' has two orphan indicators:\n\
-                             1. Not implemented by any infrastructure_* file (no adapter provides the outbound interface)\n\
-                             2. Not called by any orchestrator, container, capabilities, or surface file (no one uses this port)\n\
-                             Without both an implementation and usage, the port is dead code.",
+                            "Contract port '{}' failed 3 modular checks:\n\
+                             1. IMPLEMENT: Not implemented by any infrastructure_* file \
+                             (no adapter provides the outbound interface via `impl Trait for Type`)\n\
+                             2. CALL: Not called by any orchestrator, container, capabilities, or surface \
+                             (no file uses `TraitName::method()` or imports the trait)\n\
+                             3. WIRE: Not wired in any DI container \
+                             (no `Arc::new(Type::new())` or constructor injection)\n\
+                             Without implement + call + wire, the port is dead code.",
                             trait_name
                         ),
                         "protocol" => format!(
-                            "Contract protocol '{}' has two orphan indicators:\n\
-                             1. Not implemented by any capabilities_* file (no checker/analyzer provides the inbound interface)\n\
-                             2. Not called by any orchestrator, container, capabilities, or surface file (no one uses this protocol)\n\
-                             Without both an implementation and usage, the protocol is dead code.",
+                            "Contract protocol '{}' failed 3 modular checks:\n\
+                             1. IMPLEMENT: Not implemented by any capabilities_* file \
+                             (no checker/analyzer provides the inbound interface via `impl Trait for Type`)\n\
+                             2. CALL: Not called by any orchestrator, container, capabilities, or surface \
+                             (no file uses `TraitName::method()` or imports the trait)\n\
+                             3. WIRE: Not wired in any DI container \
+                             (no `Arc::new(Type::new())` or constructor injection)\n\
+                             Without implement + call + wire, the protocol is dead code.",
                             trait_name
                         ),
                         "aggregate" => format!(
-                            "Contract aggregate '{}' has two orphan indicators:\n\
-                             1. Not implemented by any agent_*_orchestrator.rs file (no orchestrator coordinates this workflow)\n\
-                             2. Not called by any surface_* or root_*_container.rs file (no one invokes this aggregate)\n\
-                             Without both an implementation and usage, the orchestration logic is dead code.",
+                            "Contract aggregate '{}' failed 3 modular checks:\n\
+                             1. IMPLEMENT: Not implemented by any agent_*_orchestrator.rs file \
+                             (no orchestrator coordinates this workflow via `impl Trait for Type`)\n\
+                             2. CALL: Not called by any surface_* file \
+                             (no surface invokes this aggregate's methods)\n\
+                             3. WIRE: Not wired in any root_*_container.rs \
+                             (no `Arc::new(Type::new())` or constructor injection)\n\
+                             Without implement + call + wire, the orchestration logic is dead code.",
                             trait_name
                         ),
                         _ => format!(
@@ -91,21 +103,31 @@ impl fmt::Display for AesOrphanViolation {
                 };
                 let fix = match suffix.as_str() {
                     "port" => format!(
-                        "1. Create an infrastructure_<name>_<suffix>.rs file that implements '{}'. \
-                         The adapter should use the port's interface to interact with external systems.\n\
-                         2. Wire it in agent_*_orchestrator.rs or root_*_container.rs via Arc<dyn {}>.",
-                        trait_name, trait_name
+                        "1. IMPLEMENT: Create infrastructure_<name>_<suffix>.rs with `impl {} for Type` \
+                         — the adapter uses the port's interface to interact with external systems.\n\
+                         2. CALL: Import and use the trait in agent_*_orchestrator.rs \
+                         — call `trait_name::method()` or reference the trait.\n\
+                         3. WIRE: Pass `Arc::new(Type::new())` to the orchestrator constructor \
+                         in root_*_container.rs.",
+                        trait_name
                     ),
                     "protocol" => format!(
-                        "1. Create a capabilities_<name>_<suffix>.rs file that implements '{}'. \
-                         The capability should use the protocol's interface to process domain logic.\n\
-                         2. Wire it in agent_*_orchestrator.rs or root_*_container.rs via Arc<dyn {}>.",
-                        trait_name, trait_name
+                        "1. IMPLEMENT: Create capabilities_<name>_<suffix>.rs with `impl {} for Type` \
+                         — the capability uses the protocol's interface to process domain logic.\n\
+                         2. CALL: Import and use the trait in agent_*_orchestrator.rs \
+                         — call `trait_name::method()` or reference the trait.\n\
+                         3. WIRE: Pass `Arc::new(Type::new())` to the orchestrator constructor \
+                         in root_*_container.rs.",
+                        trait_name
                     ),
                     "aggregate" => format!(
-                        "1. Implement '{}' in agent_*_orchestrator.rs to coordinate the workflow.\n\
-                         2. Call it from a surface_* file or root_*_container.rs via Arc<dyn {}>.",
-                        trait_name, trait_name
+                        "1. IMPLEMENT: Add `impl {} for Type` in agent_*_orchestrator.rs \
+                         — the orchestrator coordinates the workflow.\n\
+                         2. CALL: Import and use the aggregate in a surface_* file \
+                         — call `aggregate::execute()` or reference the trait.\n\
+                         3. WIRE: Pass `Arc::new(Type::new())` to the surface constructor \
+                         in root_*_container.rs.",
+                        trait_name
                     ),
                     _ => format!(
                         "Implement '{}' in the appropriate layer.",
