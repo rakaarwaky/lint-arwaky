@@ -6,7 +6,6 @@ use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
 use std::collections::HashMap;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use shared::code_analysis::taxonomy_import_source_vo::{ImportInfoList, PrimitiveViolationList};
@@ -24,6 +23,7 @@ use shared::common::taxonomy_suggestion_vo::MetadataVO;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_layer_vo::LayerNameVO;
 
+#[allow(dead_code)]
 struct MockFs;
 
 #[async_trait]
@@ -94,6 +94,7 @@ impl IFileSystemPort for MockFs {
     fn walk_recursive(&self, _: &std::path::Path, _: &[String], _: &mut Vec<FilePath>) {}
 }
 
+#[allow(dead_code)]
 struct MockParser;
 
 impl ISourceParserPort for MockParser {

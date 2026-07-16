@@ -9,7 +9,7 @@ use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorP
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::LazyLock;
+use std::sync::OnceLock;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -26,19 +26,28 @@ const LAYER_AGENT: &str = "agent";
 // STATIC REGEXES (LazyLock)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-static RE_CONTRACT_RUST: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").unwrap());
+fn re_contract_rust() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
+}
 
-// #11: More specific — only match ABC/Protocol classes, not all classes
-static RE_CONTRACT_PY: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?:class\s+([A-Za-z0-9_]+)\s*\([^)]*ABC[^)]*\)|class\s+([A-Za-z0-9_]+)\s*\([^)]*Protocol[^)]*\))").unwrap()
-});
+fn re_contract_py() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"(?:class\s+([A-Za-z0-9_]+)\s*\([^)]*ABC[^)]*\)|class\s+([A-Za-z0-9_]+)\s*\([^)]*Protocol[^)]*\))").ok()).as_ref()
+}
 
-static RE_TS_INTERFACE_EXPORT: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").unwrap());
+fn re_ts_interface_export() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
+}
 
-static RE_INTERFACE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"interface\s+([A-Za-z0-9_]+)").unwrap());
+fn re_interface() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok())
+        .as_ref()
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FILE CACHE — built ONCE, passed by reference
@@ -167,34 +176,56 @@ pub fn is_contract_orphan(
         );
     }
 
-    // Check 2: port/protocol not called/wired
-    if suffix == SUFFIX_PORT || suffix == SUFFIX_PROTOCOL {
-        if !check_called_port_protocol(cache, &trait_name) {
-            return orphan_result(
-                &suffix,
-                &trait_name,
-                target_prefix,
-                &format!(
-                    "Contract {} '{}' not called or wired by any orchestrator, container, capabilities, or surface file.",
-                    suffix, trait_name
-                ),
-            );
-        }
+    // Check 2: port/protocol not called
+    if (suffix == SUFFIX_PORT || suffix == SUFFIX_PROTOCOL) && !check_called(cache, &trait_name) {
+        return orphan_result(
+            &suffix,
+            &trait_name,
+            target_prefix,
+            &format!(
+                "Contract {} '{}' not called by any orchestrator, container, capabilities, or surface file.",
+                suffix, trait_name
+            ),
+        );
     }
 
-    // Check 3: aggregate not called/wired
-    if suffix == SUFFIX_AGGREGATE {
-        if !check_called_aggregate(cache, &trait_name) {
-            return orphan_result(
-                &suffix,
-                &trait_name,
-                target_prefix,
-                &format!(
-                    "Contract aggregate '{}' not called or wired by any surface or container file.",
-                    trait_name
-                ),
-            );
-        }
+    // Check 3: port/protocol not wired
+    if (suffix == SUFFIX_PORT || suffix == SUFFIX_PROTOCOL) && !check_wired(cache, &trait_name) {
+        return orphan_result(
+            &suffix,
+            &trait_name,
+            target_prefix,
+            &format!(
+                "Contract {} '{}' not wired in any DI container (no Arc::new, Box::new, or constructor injection).",
+                suffix, trait_name
+            ),
+        );
+    }
+
+    // Check 4: aggregate not called
+    if suffix == SUFFIX_AGGREGATE && !check_called(cache, &trait_name) {
+        return orphan_result(
+            &suffix,
+            &trait_name,
+            target_prefix,
+            &format!(
+                "Contract aggregate '{}' not called by any surface or container file.",
+                trait_name
+            ),
+        );
+    }
+
+    // Check 5: aggregate not wired
+    if suffix == SUFFIX_AGGREGATE && !check_wired(cache, &trait_name) {
+        return orphan_result(
+            &suffix,
+            &trait_name,
+            target_prefix,
+            &format!(
+                "Contract aggregate '{}' not wired in any DI container (no Arc::new, Box::new, or constructor injection).",
+                trait_name
+            ),
+        );
     }
 
     not_orphan()
@@ -228,7 +259,8 @@ fn check_implemented(cache: &FileCache, trait_name: &str, target_prefix: &str) -
     false
 }
 
-fn check_called_port_protocol(cache: &FileCache, trait_name: &str) -> bool {
+/// Check if trait is called (imported/used) by any relevant file.
+fn check_called(cache: &FileCache, trait_name: &str) -> bool {
     let re_trait = word_boundary_re(trait_name);
 
     for (path, content) in &cache.contents {
@@ -236,27 +268,20 @@ fn check_called_port_protocol(cache: &FileCache, trait_name: &str) -> bool {
             Some(b) => b.as_str(),
             None => continue,
         };
-        let is_orchestrator = bn.starts_with("agent_")
-            && (bn.ends_with("_orchestrator.rs")
-                || bn.ends_with("_orchestrator.py")
-                || bn.ends_with("_orchestrator.ts")
-                || bn.ends_with("_orchestrator.js"));
-        let is_container = bn.ends_with("_container.rs")
+        let is_relevant = bn.starts_with("agent_")
+            || bn.ends_with("_container.rs")
             || bn.ends_with("_container.py")
             || bn.ends_with("_container.ts")
-            || bn.ends_with("_container.js");
-        let is_capabilities = bn.starts_with("capabilities_");
-        let is_surface = bn.starts_with("surface_");
+            || bn.ends_with("_container.js")
+            || bn.starts_with("capabilities_")
+            || bn.starts_with("surface_");
 
-        if !is_orchestrator && !is_container && !is_capabilities && !is_surface {
+        if !is_relevant {
             continue;
         }
         if has_rust_call(content, &re_trait)
             || has_py_call(content, &re_trait)
             || has_ts_call(content, &re_trait)
-            || has_rust_wire(content, &re_trait)
-            || has_py_wire(content, &re_trait)
-            || has_ts_wire(content, &re_trait)
         {
             return true;
         }
@@ -264,7 +289,8 @@ fn check_called_port_protocol(cache: &FileCache, trait_name: &str) -> bool {
     false
 }
 
-fn check_called_aggregate(cache: &FileCache, trait_name: &str) -> bool {
+/// Check if trait is wired (DI injected) by any relevant file.
+fn check_wired(cache: &FileCache, trait_name: &str) -> bool {
     let re_trait = word_boundary_re(trait_name);
 
     for (path, content) in &cache.contents {
@@ -272,19 +298,18 @@ fn check_called_aggregate(cache: &FileCache, trait_name: &str) -> bool {
             Some(b) => b.as_str(),
             None => continue,
         };
-        let is_surface = bn.starts_with("surface_");
-        let is_container = bn.ends_with("_container.rs")
+        let is_relevant = bn.starts_with("agent_")
+            || bn.ends_with("_container.rs")
             || bn.ends_with("_container.py")
             || bn.ends_with("_container.ts")
-            || bn.ends_with("_container.js");
+            || bn.ends_with("_container.js")
+            || bn.starts_with("capabilities_")
+            || bn.starts_with("surface_");
 
-        if !is_surface && !is_container {
+        if !is_relevant {
             continue;
         }
-        if has_rust_call(content, &re_trait)
-            || has_py_call(content, &re_trait)
-            || has_ts_call(content, &re_trait)
-            || has_rust_wire(content, &re_trait)
+        if has_rust_wire(content, &re_trait)
             || has_py_wire(content, &re_trait)
             || has_ts_wire(content, &re_trait)
         {
@@ -451,7 +476,7 @@ pub fn has_ts_wire(content: &str, re_trait: &Regex) -> bool {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 pub fn word_boundary_re(trait_name: &str) -> Regex {
-    Regex::new(&format!(r"\b{}\b", regex::escape(trait_name))).unwrap()
+    Regex::new(&format!(r"\b{}\b", regex::escape(trait_name))).expect("valid regex")
 }
 
 pub fn not_orphan() -> OrphanIndicatorResult {
@@ -570,24 +595,24 @@ pub fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<Str
     let code = strip_comments(content, ext);
 
     match ext {
-        "rs" => RE_CONTRACT_RUST
-            .captures(&code)
+        "rs" => re_contract_rust()
+            .and_then(|re| re.captures(&code))
             .map(|caps| caps[1].to_string()),
         "py" => {
             // #11: Try ABC/Protocol first, fallback to any class
-            if let Some(caps) = RE_CONTRACT_PY.captures(&code) {
+            if let Some(caps) = re_contract_py().and_then(|re| re.captures(&code)) {
                 caps.get(1)
                     .or_else(|| caps.get(2))
                     .map(|m| m.as_str().to_string())
             } else {
                 // Fallback: first class definition
-                let fallback = Regex::new(r"class\s+([A-Za-z0-9_]+)\s*[\(:]").unwrap();
+                let fallback = Regex::new(r"class\s+([A-Za-z0-9_]+)\s*[\(:]").expect("valid regex");
                 fallback.captures(&code).map(|caps| caps[1].to_string())
             }
         }
-        "ts" | "tsx" | "js" | "jsx" => RE_TS_INTERFACE_EXPORT
-            .captures(&code)
-            .or_else(|| RE_INTERFACE.captures(&code))
+        "ts" | "tsx" | "js" | "jsx" => re_ts_interface_export()
+            .and_then(|re| re.captures(&code))
+            .or_else(|| re_interface().and_then(|re| re.captures(&code)))
             .map(|caps| caps[1].to_string()),
         _ => None,
     }
