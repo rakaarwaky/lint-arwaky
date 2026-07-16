@@ -2,7 +2,18 @@
 name: clean-bloat
 version: 3.1.0
 category: validation
-tags: [aes, cleanup, bloat, stubs, thin-wrappers, mvp, boilerplate, facade, re-export]
+tags:
+  [
+    aes,
+    cleanup,
+    bloat,
+    stubs,
+    thin-wrappers,
+    mvp,
+    boilerplate,
+    facade,
+    re-export,
+  ]
 triggers:
   - "clean bloat"
   - "remove stubs"
@@ -25,7 +36,7 @@ related:
 
 - Never remove real logic
 - Always update protocol (remove abstract methods)
-- Always update __init__ (remove exports)
+- Always update **init** (remove exports)
 - Always run lint after changes
 
 ## Purpose
@@ -45,6 +56,7 @@ Before keeping any function, ask:
 > **"Why does this function need to exist?"**
 
 If the answer is:
+
 - "Because it was always there" -> **REMOVE**
 - "Because it might be useful someday" -> **REMOVE**
 - "Because it handles edge cases we don't have" -> **REMOVE**
@@ -132,11 +144,13 @@ class RenderingProtocol:  # Empty class, no logic
 ```
 
 **Detection pattern:**
+
 - File has 50+ import statements but 0-1 class definitions
 - File name contains `protocol` but has no abstract methods
 - File re-exports types that consumers could import directly
 
 **Fix:**
+
 1. Delete the re-export hub file
 2. Update all consumers to import directly from taxonomy/shared module
 3. If a proper contract is needed, define it with abstract methods in shared module
@@ -154,6 +168,7 @@ __all__ = ["LayerRetrievalService"]
 ```
 
 **Fix:**
+
 1. Delete the re-export file
 2. Update consumers to import directly from contract/shared module
 3. Update `__init__.py` if it re-exports from this file
@@ -186,4 +201,4 @@ Get approval per file.
 
 ### Step 7: Execute Cleanup
 
-Remove bloat, update protocol, update __init__.
+Remove bloat, update protocol, update **init**.

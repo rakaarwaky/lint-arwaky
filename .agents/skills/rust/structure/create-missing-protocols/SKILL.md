@@ -57,9 +57,9 @@ impl IFrameComposerProtocol for FrameComposer {
 
 ## Trait Location
 
-| Crate | Trait Path |
-|-------|------------|
-| import-rules | `crates/shared/src/import_rules/contract_*_protocol.rs` |
+| Crate         | Trait Path                                               |
+| ------------- | -------------------------------------------------------- |
+| import-rules  | `crates/shared/src/import_rules/contract_*_protocol.rs`  |
 | code-analysis | `crates/shared/src/code_analysis/contract_*_protocol.rs` |
 
 ## Workflow

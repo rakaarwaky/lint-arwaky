@@ -22,29 +22,29 @@ Generate a conventional commit message following the Lint Arwaky project convent
 
 ### Types
 
-| Type | When to Use |
-|------|-------------|
-| `feat` | New feature, new file, new capability |
-| `fix` | Bug fix, error correction |
-| `refactor` | Code restructuring, merging files, renaming |
-| `docs` | Documentation changes (README, ARCHITECTURE, etc.) |
-| `test` | Adding or modifying tests |
-| `chore` | Build, CI/CD changes, dependency updates |
-| `style` | Formatting, whitespace, naming conventions |
+| Type       | When to Use                                        |
+| ---------- | -------------------------------------------------- |
+| `feat`     | New feature, new file, new capability              |
+| `fix`      | Bug fix, error correction                          |
+| `refactor` | Code restructuring, merging files, renaming        |
+| `docs`     | Documentation changes (README, ARCHITECTURE, etc.) |
+| `test`     | Adding or modifying tests                          |
+| `chore`    | Build, CI/CD changes, dependency updates           |
+| `style`    | Formatting, whitespace, naming conventions         |
 
 ### Scopes
 
-| Scope | When to Use |
-|-------|-------------|
-| `import-rules` | Changes in import_rules crate |
-| `code-analysis` | Changes in code_analysis crate |
-| `config-system` | Changes in config_system crate |
-| `shared` | Changes in shared crate |
-| `cli` | CLI command changes |
-| `mcp` | MCP server changes |
-| `tui` | TUI launcher changes |
-| `rust` | Rust skill/prompt/instruction changes |
-| `all` | Changes across multiple crates |
+| Scope           | When to Use                           |
+| --------------- | ------------------------------------- |
+| `import-rules`  | Changes in import_rules crate         |
+| `code-analysis` | Changes in code_analysis crate        |
+| `config-system` | Changes in config_system crate        |
+| `shared`        | Changes in shared crate               |
+| `cli`           | CLI command changes                   |
+| `mcp`           | MCP server changes                    |
+| `tui`           | TUI launcher changes                  |
+| `rust`          | Rust skill/prompt/instruction changes |
+| `all`           | Changes across multiple crates        |
 
 ## Rules
 

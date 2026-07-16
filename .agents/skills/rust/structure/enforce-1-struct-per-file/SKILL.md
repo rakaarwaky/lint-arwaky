@@ -57,19 +57,19 @@ impl CoordinateMapper {
 
 ## Types to Move to Taxonomy
 
-| Type | Move To |
-|------|---------|
-| `struct` with data | `taxonomy_*_vo.rs` |
-| `enum` | `taxonomy_*_vo.rs` |
-| `const` | `taxonomy_*_constant.rs` |
+| Type               | Move To                  |
+| ------------------ | ------------------------ |
+| `struct` with data | `taxonomy_*_vo.rs`       |
+| `enum`             | `taxonomy_*_vo.rs`       |
+| `const`            | `taxonomy_*_constant.rs` |
 
 ## Types to Merge into Main Struct
 
-| Type | Merge Into |
-|------|-----------|
-| Helper struct | Main struct as methods |
-| Factory struct | Main struct methods |
-| Builder struct | Main struct methods |
+| Type           | Merge Into             |
+| -------------- | ---------------------- |
+| Helper struct  | Main struct as methods |
+| Factory struct | Main struct methods    |
+| Builder struct | Main struct methods    |
 
 ## Workflow
 

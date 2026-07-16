@@ -276,7 +276,10 @@ impl ArchOrphanAnalyzer {
         }
 
         if layer_str.contains(LAYER_CONTRACT) {
-            let all_files_fp: Vec<FilePath> = all_files.iter().map(|s| FilePath::new(s.clone()).unwrap()).collect();
+            let all_files_fp: Vec<FilePath> = all_files
+                .iter()
+                .filter_map(|s| FilePath::new(s.clone()).ok())
+                .collect();
             return self.contract_analyzer.is_contract_orphan(
                 &fp,
                 &root,
@@ -306,8 +309,13 @@ impl ArchOrphanAnalyzer {
         }
 
         if layer_str.contains(LAYER_AGENT) {
-            let all_files_fp: Vec<FilePath> = all_files.iter().map(|s| FilePath::new(s.clone()).unwrap()).collect();
-            return self.agent_analyzer.is_agent_orphan(&fp, &root, &all_files_fp);
+            let all_files_fp: Vec<FilePath> = all_files
+                .iter()
+                .filter_map(|s| FilePath::new(s.clone()).ok())
+                .collect();
+            return self
+                .agent_analyzer
+                .is_agent_orphan(&fp, &root, &all_files_fp);
         }
 
         if layer_str.contains(LAYER_SURFACES) {

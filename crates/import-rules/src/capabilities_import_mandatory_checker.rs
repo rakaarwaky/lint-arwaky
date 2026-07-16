@@ -76,7 +76,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             }
 
             // Step 3-4: Detect layer and run layer-level mandatory check
-            let root_dir_str = root_dir.to_string();
+            let _root_dir_str = root_dir.to_string();
             if let Some(layer) = analyzer.detect_layer(f, root_dir) {
                 if let Some(def) = analyzer.get_layer_def(&layer) {
                     self.check_mandatory_imports(&f_str, &def, &mut results.values);

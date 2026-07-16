@@ -2,14 +2,13 @@
 
 ## Rules
 
-
-| Layer          | Pattern                  | Suffix                          |
-| ---------------- | -------------------------- | --------------------------------- |
-| root           | `root_*_container.py`    | `_container`                    |
-| taxonomy       | `taxonomy_*_vo.py`       | `_vo`, `_constant`              |
+| Layer          | Pattern                  | Suffix                         |
+| -------------- | ------------------------ | ------------------------------ |
+| root           | `root_*_container.py`    | `_container`                   |
+| taxonomy       | `taxonomy_*_vo.py`       | `_vo`, `_constant`             |
 | contract       | `contract_*_protocol.py` | `_protocol`, `_port` _agregate |
-| capabilities   | `capabilities_*.py`      | flexible                        |
-| infrastructure | `infrastructure_*.py`    | flexible                        |
+| capabilities   | `capabilities_*.py`      | flexible                       |
+| infrastructure | `infrastructure_*.py`    | flexible                       |
 
 ## Purpose
 

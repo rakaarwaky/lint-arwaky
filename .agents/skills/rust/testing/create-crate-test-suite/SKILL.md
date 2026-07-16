@@ -24,11 +24,11 @@ related:
 
 ## Coverage Targets
 
-| Layer | Minimum |
-|-------|---------|
-| Capabilities | 90% |
-| Infrastructure | 70% |
-| Agent | 80% |
+| Layer          | Minimum |
+| -------------- | ------- |
+| Capabilities   | 90%     |
+| Infrastructure | 70%     |
+| Agent          | 80%     |
 
 ## Purpose
 

@@ -12,6 +12,7 @@ related:
   - module_logic_validator
   - clean-bloat
 ---
+
 # lint-arwaky-cli
 
 ## Rules

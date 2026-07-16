@@ -38,6 +38,7 @@ Before keeping any function, ask:
 > **"Why does this function need to exist?"**
 
 If the answer is:
+
 - "Because it was always there" -> **REMOVE**
 - "Because it might be useful someday" -> **REMOVE**
 - "Because it handles edge cases we don't have" -> **REMOVE**

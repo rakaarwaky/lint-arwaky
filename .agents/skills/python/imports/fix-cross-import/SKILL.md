@@ -14,6 +14,7 @@ related:
   - module_logic_validator
   - protocol-consolidation
 ---
+
 # fix-cross-import-python
 
 ## Rules
@@ -280,22 +281,22 @@ If the implementation is shared across modules:
 
 ## Common Violations and Fixes
 
-| Violation | Fix |
-|-----------|-----|
-| `capabilities_a.py` uses `capabilities_b.Struct` | Create `contract_b_protocol.py` with protocol, use DI |
-| `infrastructure_a.py` uses `infrastructure_b.Struct` | Create `contract_b_port.py` with protocol, use DI |
-| `infrastructure_a.py` uses `capabilities_b.fn()` | Move computation to capabilities, infra only does I/O |
-| `capabilities_a.py` uses `infrastructure_b.fn()` | Receive via `I<Name>Protocol` in constructor |
-| Capability creates `Infrastructure()` directly | Receive via `I<Name>Protocol` in constructor |
-| Infrastructure imports from capabilities | Create protocol in contract layer |
+| Violation                                            | Fix                                                   |
+| ---------------------------------------------------- | ----------------------------------------------------- |
+| `capabilities_a.py` uses `capabilities_b.Struct`     | Create `contract_b_protocol.py` with protocol, use DI |
+| `infrastructure_a.py` uses `infrastructure_b.Struct` | Create `contract_b_port.py` with protocol, use DI     |
+| `infrastructure_a.py` uses `capabilities_b.fn()`     | Move computation to capabilities, infra only does I/O |
+| `capabilities_a.py` uses `infrastructure_b.fn()`     | Receive via `I<Name>Protocol` in constructor          |
+| Capability creates `Infrastructure()` directly       | Receive via `I<Name>Protocol` in constructor          |
+| Infrastructure imports from capabilities             | Create protocol in contract layer                     |
 
 ## File Naming Convention
 
-| Protocol Type | Suffix | Used By | Implemented By | Example |
-|---------------|--------|---------|----------------|---------|
-| **Protocol** | `_protocol.py` | Capabilities receive from capabilities | Capabilities implements | `contract_dummy_import_checker_protocol.py` |
-| **Port** | `_port.py` | Infrastructure receives from infrastructure | Infrastructure implements | `contract_external_lint_port.py` |
-| **Aggregate** | `_aggregate.py` | Agents receive from agents | Agents implements | `contract_agent_role_aggregate.py` |
+| Protocol Type | Suffix          | Used By                                     | Implemented By            | Example                                     |
+| ------------- | --------------- | ------------------------------------------- | ------------------------- | ------------------------------------------- |
+| **Protocol**  | `_protocol.py`  | Capabilities receive from capabilities      | Capabilities implements   | `contract_dummy_import_checker_protocol.py` |
+| **Port**      | `_port.py`      | Infrastructure receives from infrastructure | Infrastructure implements | `contract_external_lint_port.py`            |
+| **Aggregate** | `_aggregate.py` | Agents receive from agents                  | Agents implements         | `contract_agent_role_aggregate.py`          |
 
 **Rule**: Contract layer contains ONLY protocol definitions, NOT implementations or pure functions.
 
@@ -314,14 +315,14 @@ class I<Name>Aggregate(ABC): ...  # agent_<name>.py implements
 
 ## Quick Reference
 
-| Layer | Can Import From | Cannot Import From |
-|-------|-----------------|-------------------|
-| taxonomy | taxonomy | contract, capabilities, infrastructure, agent, surface, root |
-| contract | taxonomy, contract | capabilities, infrastructure, agent, surface, root |
-| capabilities | taxonomy, contract | **infrastructure**, surface, agent, **capabilities**, root |
-| infrastructure | taxonomy, contract | surface, **capabilities**, agent, **infrastructure**, root |
-| agent | taxonomy, contract | capabilities, infrastructure, surface, root |
-| surface | taxonomy, contract (limited) | capabilities, infrastructure, agent, root |
-| root | ALL layers | (none) |
+| Layer          | Can Import From              | Cannot Import From                                           |
+| -------------- | ---------------------------- | ------------------------------------------------------------ |
+| taxonomy       | taxonomy                     | contract, capabilities, infrastructure, agent, surface, root |
+| contract       | taxonomy, contract           | capabilities, infrastructure, agent, surface, root           |
+| capabilities   | taxonomy, contract           | **infrastructure**, surface, agent, **capabilities**, root   |
+| infrastructure | taxonomy, contract           | surface, **capabilities**, agent, **infrastructure**, root   |
+| agent          | taxonomy, contract           | capabilities, infrastructure, surface, root                  |
+| surface        | taxonomy, contract (limited) | capabilities, infrastructure, agent, root                    |
+| root           | ALL layers                   | (none)                                                       |
 
 **Key Rule**: Capabilities and Infrastructure are PEER layers — they CANNOT import from each other!

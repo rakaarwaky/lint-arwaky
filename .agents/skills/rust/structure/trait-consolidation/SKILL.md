@@ -15,6 +15,7 @@ related:
   - fix-cross-import
   - enforce-1-class-per-file
 ---
+
 # trait-consolidation-rust
 
 ## Purpose
@@ -42,9 +43,8 @@ Consolidate ALL function signatures from a capability/infrastructure/agent imple
 
 ## Naming Convention
 
-
 | Layer              | Trait File                     | Trait Name         | Impl File                  |
-| -------------------- | -------------------------------- | -------------------- | ---------------------------- |
+| ------------------ | ------------------------------ | ------------------ | -------------------------- |
 | **Capabilities**   | `contract_<name>_protocol.rs`  | `I<Name>Protocol`  | `capabilities_<name>.rs`   |
 | **Infrastructure** | `contract_<name>_port.rs`      | `I<Name>Port`      | `infrastructure_<name>.rs` |
 | **Agents**         | `contract_<name>_aggregate.rs` | `I<Name>Aggregate` | `agent_<name>.rs`          |

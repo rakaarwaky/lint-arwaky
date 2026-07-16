@@ -16,15 +16,15 @@ related:
 
 ## Rules
 
-| Layer | Pattern | Suffix |
-|-------|---------|--------|
-| root | `root_*_container.rs` | `_container` |
-| taxonomy | `taxonomy_*_vo.rs` | `_vo`, `_constant` |
-| contract | `contract_*_protocol.rs` | `_protocol`, `_port`, `_aggregate` |
-| capabilities | `capabilities_*.rs` | flexible |
-| infrastructure | `infrastructure_*.rs` | flexible |
-| agent | `agent_*.rs` | `_orchestrator` |
-| surface | `surface_*.rs` | `_command`, `_controller` |
+| Layer          | Pattern                  | Suffix                             |
+| -------------- | ------------------------ | ---------------------------------- |
+| root           | `root_*_container.rs`    | `_container`                       |
+| taxonomy       | `taxonomy_*_vo.rs`       | `_vo`, `_constant`                 |
+| contract       | `contract_*_protocol.rs` | `_protocol`, `_port`, `_aggregate` |
+| capabilities   | `capabilities_*.rs`      | flexible                           |
+| infrastructure | `infrastructure_*.rs`    | flexible                           |
+| agent          | `agent_*.rs`             | `_orchestrator`                    |
+| surface        | `surface_*.rs`           | `_command`, `_controller`          |
 
 ## Purpose
 
@@ -57,9 +57,9 @@ Update all files that import from this file.
 
 ## Common Violations
 
-| Violation | Fix |
-|-----------|-----|
-| `checker.rs` | Rename to `capabilities_checker.rs` |
-| `parser.rs` | Rename to `infrastructure_parser.rs` |
+| Violation      | Fix                                  |
+| -------------- | ------------------------------------ |
+| `checker.rs`   | Rename to `capabilities_checker.rs`  |
+| `parser.rs`    | Rename to `infrastructure_parser.rs` |
 | `my_struct.rs` | Rename to `taxonomy_my_struct_vo.rs` |
-| `contract.rs` | Rename to `contract_*_protocol.rs` |
+| `contract.rs`  | Rename to `contract_*_protocol.rs`   |

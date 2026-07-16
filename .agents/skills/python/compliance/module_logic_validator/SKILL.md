@@ -16,6 +16,7 @@ related:
   - fix_aes201_capability_cross_import
   - fix_aes404_capabilities_infrastructure_mismatch
 ---
+
 # module_logic_validator
 
 ## Rules
@@ -55,7 +56,7 @@ If the answer is:
 
 ### Step 1: Modify Target File
 
-Modify the target file (agent_*, capabilities_*, or infrastructure_*).
+Modify the target file (agent__, capabilities__, or infrastructure_*).
 
 ### Step 2: Ask Questions
 
@@ -71,9 +72,8 @@ If violations found, go back to Step 1.
 
 **Purpose:** Orchestration and pipeline execution.
 
-
 | Allowed                      | Forbidden                                  |
-| ------------------------------ | -------------------------------------------- |
+| ---------------------------- | ------------------------------------------ |
 | `for`, `while`, `async for`  | Computation (`sum()`, `len()`, arithmetic) |
 | `if/else`, `elif`, `match`   | Business rules, domain logic               |
 | `try/except`, `raise`        | File I/O (`open()`, `Path()`, `os.`)       |
@@ -87,9 +87,8 @@ If violations found, go back to Step 1.
 
 **Purpose:** Business logic and domain rules.
 
-
 | Allowed                     | Forbidden                            |
-| ----------------------------- | -------------------------------------- |
+| --------------------------- | ------------------------------------ |
 | Business rules              | File I/O (`open()`, `Path()`, `os.`) |
 | Domain logic                | Network (`requests.`, `httpx.`)      |
 | Calculations                | Database (`sqlite3.`, `asyncpg.`)    |
@@ -102,9 +101,8 @@ If violations found, go back to Step 1.
 
 **Purpose:** External system integration.
 
-
 | Allowed                       | Forbidden                                |
-| ------------------------------- | ------------------------------------------ |
+| ----------------------------- | ---------------------------------------- |
 | File I/O (`open()`, `Path()`) | Business rules                           |
 | Network calls                 | Domain logic                             |
 | Database operations           | Calculations (should be in capabilities) |
@@ -156,7 +154,6 @@ sqlite3\.|asyncpg\.|sqlalchemy\.|\.execute\(|\.fetchone\(|\.fetchall\(
 ```python
 if.*compliance|if.*validation|if.*business|if.*rule
 ```
-
 
 ## See Also
 

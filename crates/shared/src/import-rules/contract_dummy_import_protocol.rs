@@ -59,5 +59,12 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         root_dir: &FilePath,
     );
 
-    fn check_surface_logic(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
+    fn check_surface_logic(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+        analyzer: &dyn ILayerDetectionProtocol,
+        root_dir: &FilePath,
+    );
 }

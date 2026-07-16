@@ -4,7 +4,6 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::config_system::taxonomy_source_vo::ConfigResult;
 use shared::project_setup::taxonomy_doctor_vo::{DependencyReport, ToolchainDiagnostics};
-use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 

@@ -39,22 +39,22 @@ If yes -> **Use DI via wire() method**
 
 ## Workflow
 
-### Step 1: Find Aggregate Contract 
+### Step 1: Find Aggregate Contract
 
 Read file in `modules/shared/src/<domain>/contract_*_aggregate.py`
 
-### Step 2: Check Agent Inheritance 
+### Step 2: Check Agent Inheritance
 
 Read agent file, ask: Does agent inherit aggregate?
 
-### Step 3: Remove Forbidden Imports 
+### Step 3: Remove Forbidden Imports
 
 Remove imports from capabilities/infrastructure.
 
-### Step 4: Add wire() Method 
+### Step 4: Add wire() Method
 
 Add method for dependency injection.
 
-### Step 5: Update Container 
+### Step 5: Update Container
 
 Update container to pass dependencies.

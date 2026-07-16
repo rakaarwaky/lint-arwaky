@@ -36,8 +36,8 @@ Fix violations where capability struct doesn't implement trait (AES403) or file 
 
 > **"Is this file pure business logic?"**
 
-If yes -> **capabilities_*.rs + implement trait**
-If no (has I/O) -> **split into infrastructure_*.rs**
+If yes -> **capabilities\_*.rs + implement trait**
+If no (has I/O) -> **split into infrastructure\_*.rs**
 
 ## AES Layer Rules
 
@@ -75,14 +75,14 @@ Check that ALL methods are in trait.
 
 ## File Naming Convention
 
-| Layer | File Pattern | Trait Pattern |
-|-------|--------------|---------------|
-| Capabilities | `capabilities_*.rs` | `contract_*_protocol.rs` |
-| Infrastructure | `infrastructure_*.rs` | `contract_*_port.rs` |
+| Layer          | File Pattern          | Trait Pattern            |
+| -------------- | --------------------- | ------------------------ |
+| Capabilities   | `capabilities_*.rs`   | `contract_*_protocol.rs` |
+| Infrastructure | `infrastructure_*.rs` | `contract_*_port.rs`     |
 
 ## Quick Reference
 
-| Layer | Can Contain | Cannot Contain |
-|-------|-------------|----------------|
-| capabilities | Pure computation, validation | I/O, network, database |
-| infrastructure | I/O, network, database | Business logic, computation |
+| Layer          | Can Contain                  | Cannot Contain              |
+| -------------- | ---------------------------- | --------------------------- |
+| capabilities   | Pure computation, validation | I/O, network, database      |
+| infrastructure | I/O, network, database       | Business logic, computation |

@@ -66,6 +66,7 @@ Run the detection script.
 ### Step 2: Verify Each Candidate
 
 Check if file is:
+
 - Declared in `mod.rs`
 - Used by external crates
 - A trait/contract definition

@@ -66,7 +66,7 @@ pub struct ImportOrchestrator {
 
 // [OK] /// doc comment — appears in cargo doc
 /// Orchestrates AES201-AES205 import rule checks.
-/// 
+///
 /// Execution order:
 /// 1. Mandatory imports (concurrent)
 /// 2. Forbidden imports (concurrent)
@@ -79,7 +79,7 @@ pub struct ImportOrchestrator {
 
 ## README.md Template
 
-```markdown
+````markdown
 # <Crate Name>
 
 ## Purpose
@@ -90,19 +90,19 @@ Brief description of what this crate does and its role in the larger system.
 
 Follows the 7-layer AES architecture:
 
-| Layer | Files | Responsibility |
-|-------|-------|----------------|
-| Agent | `agent_*.rs` | Orchestration, no computation |
-| Capabilities | `capabilities_*.rs` | Business logic, no I/O |
-| Infrastructure | `infrastructure_*.rs` | I/O abstractions |
+| Layer          | Files                 | Responsibility                |
+| -------------- | --------------------- | ----------------------------- |
+| Agent          | `agent_*.rs`          | Orchestration, no computation |
+| Capabilities   | `capabilities_*.rs`   | Business logic, no I/O        |
+| Infrastructure | `infrastructure_*.rs` | I/O abstractions              |
 
 ## AES Rules Implemented
 
-| Rule | Description | Checker |
-|------|-------------|---------|
+| Rule   | Description       | Checker                              |
+| ------ | ----------------- | ------------------------------------ |
 | AES201 | Forbidden imports | `CapabilitiesImportForbiddenChecker` |
 | AES202 | Mandatory imports | `CapabilitiesImportMandatoryChecker` |
-| ... | ... | ... |
+| ...    | ...               | ...                                  |
 
 ## Public API
 
@@ -112,13 +112,15 @@ use import_rules::*;
 let container = ImportContainer::new(/* args */);
 let orchestrator = container.orchestrator();
 ```
+````
 
 ## Testing
 
 ```bash
 cargo test -p import_rules
 ```
-```
+
+````
 
 ## Doc Comment Template
 
@@ -148,7 +150,7 @@ pub struct MyType { ... }
 /// # Panics
 /// - Describe if any
 pub fn my_method(&self, param: &Type) -> Result<T, E> { ... }
-```
+````
 
 ## Workflow
 
@@ -161,6 +163,7 @@ pub fn my_method(&self, param: &Type) -> Result<T, E> { ... }
 ### Step 2: Create README.md
 
 Write crate-level README.md following the template above. Include:
+
 - Purpose (one sentence)
 - Architecture overview (layer table)
 - AES rules implemented
@@ -170,6 +173,7 @@ Write crate-level README.md following the template above. Include:
 ### Step 3: Add Doc Comments
 
 For each public struct and method:
+
 1. Convert `//` comments to `///` doc comments
 2. Add summary line
 3. Add explanation if >10 lines of logic

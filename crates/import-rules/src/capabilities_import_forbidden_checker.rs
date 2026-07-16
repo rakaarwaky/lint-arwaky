@@ -64,7 +64,7 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
         // 3. TRACKER: Mencegah pelaporan duplikat (File, Line, Rule)
         let mut processed_violations: HashSet<(String, usize, String)> = HashSet::new();
 
-        let root_dir_str = root_dir.to_string();
+        let _root_dir_str = root_dir.to_string();
 
         for f in &files.values {
             let basename = f.basename();

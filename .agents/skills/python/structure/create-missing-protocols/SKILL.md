@@ -52,25 +52,30 @@ class FrameComposer(FrameComposerProtocol):
 
 ## Protocol Location
 
-| Module | Protocol Path |
-|--------|--------------|
+| Module     | Protocol Path                                          |
+| ---------- | ------------------------------------------------------ |
 | compositor | `modules/shared/src/compositor/contract_*_protocol.py` |
-| animator | `modules/shared/src/animator/contract_*_protocol.py` |
-| scripting | `modules/shared/src/scripting/contract_*_protocol.py` |
+| animator   | `modules/shared/src/animator/contract_*_protocol.py`   |
+| scripting  | `modules/shared/src/scripting/contract_*_protocol.py`  |
 
 ## Workflow
 
 ### Step 1: Find Capabilities Without Protocols
+
 Check each capability file for protocol inheritance.
 
 ### Step 2: List Public Methods
+
 Identify all public methods that should be in the protocol.
 
 ### Step 3: Create Protocol File
+
 Create `contract_*_protocol.py` in shared module with ABC and abstract methods.
 
 ### Step 4: Update Capability
+
 Make capability class inherit from the new protocol.
 
 ### Step 5: Verify
+
 Run lint to confirm AES403 is resolved.

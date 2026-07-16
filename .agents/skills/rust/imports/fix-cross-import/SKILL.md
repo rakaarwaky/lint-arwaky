@@ -14,6 +14,7 @@ related:
   - module_logic_validator
   - trait-consolidation
 ---
+
 # fix-cross-import-rust
 
 ## Rules
@@ -262,22 +263,22 @@ If the implementation is shared across crates:
 
 ## Common Violations and Fixes
 
-| Violation | Fix |
-|-----------|-----|
-| `capabilities_a.rs` uses `capabilities_b::Struct` | Create `contract_b_port.rs` with trait, use DI |
-| `infrastructure_a.rs` uses `infrastructure_b::Struct` | Create `contract_b_port.rs` with trait, use DI |
-| `infrastructure_a.rs` uses `capabilities_b::fn()` | Move computation to capabilities, infra only does I/O |
-| `capabilities_a.rs` uses `infrastructure_b::fn()` | Receive via `Arc<dyn ITrait>` in constructor |
-| Capability creates `Infrastructure::new()` directly | Receive via `Arc<dyn ITrait>` in constructor |
-| Infrastructure imports from capabilities | Create protocol in contract layer |
+| Violation                                             | Fix                                                   |
+| ----------------------------------------------------- | ----------------------------------------------------- |
+| `capabilities_a.rs` uses `capabilities_b::Struct`     | Create `contract_b_port.rs` with trait, use DI        |
+| `infrastructure_a.rs` uses `infrastructure_b::Struct` | Create `contract_b_port.rs` with trait, use DI        |
+| `infrastructure_a.rs` uses `capabilities_b::fn()`     | Move computation to capabilities, infra only does I/O |
+| `capabilities_a.rs` uses `infrastructure_b::fn()`     | Receive via `Arc<dyn ITrait>` in constructor          |
+| Capability creates `Infrastructure::new()` directly   | Receive via `Arc<dyn ITrait>` in constructor          |
+| Infrastructure imports from capabilities              | Create protocol in contract layer                     |
 
 ## File Naming Convention
 
-| Trait Type | Suffix | Used By | Implemented By | Example |
-|-----------|--------|---------|----------------|---------|
-| **Protocol** | `_protocol.rs` | Capabilities receive from capabilities | Capabilities implements | `contract_dummy_import_checker_protocol.rs` |
-| **Port** | `_port.rs` | Infrastructure receives from infrastructure | Infrastructure implements | `contract_external_lint_port.rs` |
-| **Aggregate** | `_aggregate.rs` | Agents receive from agents | Agents implements | `contract_agent_role_aggregate.rs` |
+| Trait Type    | Suffix          | Used By                                     | Implemented By            | Example                                     |
+| ------------- | --------------- | ------------------------------------------- | ------------------------- | ------------------------------------------- |
+| **Protocol**  | `_protocol.rs`  | Capabilities receive from capabilities      | Capabilities implements   | `contract_dummy_import_checker_protocol.rs` |
+| **Port**      | `_port.rs`      | Infrastructure receives from infrastructure | Infrastructure implements | `contract_external_lint_port.rs`            |
+| **Aggregate** | `_aggregate.rs` | Agents receive from agents                  | Agents implements         | `contract_agent_role_aggregate.rs`          |
 
 **Rule**: Contract layer contains ONLY trait definitions, NOT implementations or pure functions.
 
@@ -296,14 +297,14 @@ pub trait I<Name>Aggregate: Send + Sync { ... }  // agent_<name>.rs implements
 
 ## Quick Reference
 
-| Layer | Can Import From | Cannot Import From |
-|-------|-----------------|-------------------|
-| taxonomy | taxonomy | contract, capabilities, infrastructure, agent, surface, root |
-| contract | taxonomy, contract | capabilities, infrastructure, agent, surface, root |
-| capabilities | taxonomy, contract | **infrastructure**, surface, agent, **capabilities**, root |
-| infrastructure | taxonomy, contract | surface, **capabilities**, agent, **infrastructure**, root |
-| agent | taxonomy, contract | capabilities, infrastructure, surface, root |
-| surface | taxonomy, contract (limited) | capabilities, infrastructure, agent, root |
-| root | ALL layers | (none) |
+| Layer          | Can Import From              | Cannot Import From                                           |
+| -------------- | ---------------------------- | ------------------------------------------------------------ |
+| taxonomy       | taxonomy                     | contract, capabilities, infrastructure, agent, surface, root |
+| contract       | taxonomy, contract           | capabilities, infrastructure, agent, surface, root           |
+| capabilities   | taxonomy, contract           | **infrastructure**, surface, agent, **capabilities**, root   |
+| infrastructure | taxonomy, contract           | surface, **capabilities**, agent, **infrastructure**, root   |
+| agent          | taxonomy, contract           | capabilities, infrastructure, surface, root                  |
+| surface        | taxonomy, contract (limited) | capabilities, infrastructure, agent, root                    |
+| root           | ALL layers                   | (none)                                                       |
 
 **Key Rule**: Capabilities and Infrastructure are PEER layers — they CANNOT import from each other!

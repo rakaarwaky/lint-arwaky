@@ -53,6 +53,7 @@ Replace magic with named constant.
 ## Layer-Specific Examples
 
 ### Agent
+
 ```python
 # [FORBIDDEN] BEFORE
 result = self.process(fps=24)
@@ -63,6 +64,7 @@ result = self.process(fps=FPS_DEFAULT)
 ```
 
 ### Capabilities
+
 ```python
 # [FORBIDDEN] BEFORE
 def calculate_duration(self) -> float:
@@ -75,6 +77,7 @@ def calculate_duration(self) -> float:
 ```
 
 ### Infrastructure
+
 ```python
 # [FORBIDDEN] BEFORE
 def save(self):

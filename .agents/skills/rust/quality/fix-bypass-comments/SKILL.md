@@ -53,10 +53,10 @@ Remove the bypass comment or unsafe call.
 
 ## Common Violations
 
-| Violation | Fix |
-|-----------|-----|
-| `#[allow(dead_code)]` | Remove unused code or add to config exceptions |
-| `#[allow(clippy::...)]` | Fix the clippy warning |
-| `unwrap()` | Use `?` or `match` for error handling |
-| `expect("msg")` | Use `?` or `match` for error handling |
-| `panic!("msg")` | Return `Result::Err` instead |
+| Violation               | Fix                                            |
+| ----------------------- | ---------------------------------------------- |
+| `#[allow(dead_code)]`   | Remove unused code or add to config exceptions |
+| `#[allow(clippy::...)]` | Fix the clippy warning                         |
+| `unwrap()`              | Use `?` or `match` for error handling          |
+| `expect("msg")`         | Use `?` or `match` for error handling          |
+| `panic!("msg")`         | Return `Result::Err` instead                   |

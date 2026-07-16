@@ -102,6 +102,7 @@ fn helper_b(...) -> ... { ... }
 ### Step 1: Analyze Both Files
 
 Read both files to understand:
+
 - What structs/classes exist
 - What traits they implement
 - What fields each struct has
@@ -152,6 +153,7 @@ pub struct UnifiedStruct {
 Put ALL methods into impl blocks. If multiple traits exist, create separate impl blocks for each trait.
 
 **For each trait:**
+
 - Trait method (public) → wrapper calling `do_*` method
 - Internal implementation → `do_*` prefix
 

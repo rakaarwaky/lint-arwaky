@@ -5,10 +5,10 @@
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;

@@ -222,8 +222,13 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                         self.analyzer.as_ref(),
                         &root_dir,
                     );
-                    self.intent
-                        .check_surface_logic(file_path, &content, &mut results.values);
+                    self.intent.check_surface_logic(
+                        file_path,
+                        &content,
+                        &mut results.values,
+                        self.analyzer.as_ref(),
+                        &root_dir,
+                    );
                 }
             }
         }

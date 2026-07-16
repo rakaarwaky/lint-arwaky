@@ -500,9 +500,25 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         }
     }
 
-    fn check_surface_logic(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    fn check_surface_logic(
+        &self,
+        file: &str,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+        analyzer: &dyn ILayerDetectionProtocol,
+        root_dir: &FilePath,
+    ) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = self.parser.get_language_from_path(file);
+
+        let file_path = filepath_or_default(FilePath::new(file.to_string()));
+        let layer = match analyzer.detect_layer(&file_path, root_dir) {
+            Some(l) => l.value,
+            None => return,
+        };
+        if !layer.starts_with("surfaces") {
+            return;
+        }
 
         let logic_patterns = [
             "lint_path(",

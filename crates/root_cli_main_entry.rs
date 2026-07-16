@@ -13,10 +13,11 @@ use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
-use code_analysis::{lint_path, CodeDuplicationAnalyzer};
+use code_analysis::CodeDuplicationAnalyzer;
 use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
@@ -118,7 +119,7 @@ fn main() -> ExitCode {
     // ── Phase 4: Parse CLI arguments ──────────────────────────────────
     let raw_args: Vec<String> = env::args().collect();
     if raw_args.len() <= 1 {
-        return run_default_check(".");
+        return run_default_check(".", container.code_analysis_linter.clone());
     }
 
     use clap::{CommandFactory, FromArgMatches};
@@ -428,11 +429,11 @@ fn main() -> ExitCode {
 }
 
 // run_default_check: Self-lint shortcut when no subcommand is provided.
-fn run_default_check(project_root: &str) -> ExitCode {
+fn run_default_check(project_root: &str, linter: Arc<dyn ICodeAnalysisAggregate>) -> ExitCode {
     use shared::cli_commands::taxonomy_severity_vo::Severity;
     use std::collections::BTreeMap;
 
-    let results = lint_path(project_root);
+    let results = linter.run_code_analysis_path(project_root);
 
     let mut lines: Vec<String> = Vec::new();
     lines.push("=".repeat(60));

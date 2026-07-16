@@ -35,23 +35,23 @@ Fix violations where capability class doesn't inherit protocol ABC (AES403) or f
 
 > **"Is this file pure business logic?"**
 
-If yes -> **capabilities_*.py + inherit protocol**
-If no (has I/O) -> **split into infrastructure_*.py**
+If yes -> **capabilities\_*.py + inherit protocol**
+If no (has I/O) -> **split into infrastructure\_*.py**
 
 ## Workflow
 
-### Step 1: Analyze File 
+### Step 1: Analyze File
 
 Read file and check for mixed responsibilities.
 
-### Step 2: Create/Find Protocol 
+### Step 2: Create/Find Protocol
 
 If pure business logic -> create/find protocol, inherit it.
 
-### Step 3: Split if Mixed 
+### Step 3: Split if Mixed
 
 If mixed -> split into capabilities + infrastructure.
 
-### Step 4: Ensure All Methods in Protocol 
+### Step 4: Ensure All Methods in Protocol
 
 Check that ALL methods are in protocol.

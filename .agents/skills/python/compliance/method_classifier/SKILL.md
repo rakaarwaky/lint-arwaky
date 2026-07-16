@@ -2,7 +2,8 @@
 name: method_classifier
 version: 1.0.0
 category: validation
-tags: [aes, classification, public, helper, utility, capabilities, infrastructure]
+tags:
+  [aes, classification, public, helper, utility, capabilities, infrastructure]
 triggers:
   - "classify methods"
   - "check method order"
@@ -56,15 +57,15 @@ If the answer is:
 
 Read file and list all methods.
 
-### Step 2: Classify Each Method 
+### Step 2: Classify Each Method
 
 For each method, ask "Should this be called by the agent?"
 
-### Step 3: Check Ordering 
+### Step 3: Check Ordering
 
 Verify Public above Helper above Utility.
 
-### Step 4: Add Comments 
+### Step 4: Add Comments
 
 Add classification comments.
 

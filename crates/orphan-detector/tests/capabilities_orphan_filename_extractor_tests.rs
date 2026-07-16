@@ -12,7 +12,10 @@ fn fp(s: &str) -> shared::common::taxonomy_path_vo::FilePath {
 #[test]
 fn basename_from_path_with_dir() {
     let ex = make_extractor();
-    assert_eq!(ex.file_basename(&fp("crates/shared/src/lib.rs")).value, "lib.rs");
+    assert_eq!(
+        ex.file_basename(&fp("crates/shared/src/lib.rs")).value,
+        "lib.rs"
+    );
 }
 
 #[test]
@@ -66,7 +69,10 @@ fn stem_empty_basename() {
 #[test]
 fn suffix_gets_last_part() {
     let ex = make_extractor();
-    assert_eq!(ex.file_suffix(&fp("capabilities_checker.rs")).value, "checker");
+    assert_eq!(
+        ex.file_suffix(&fp("capabilities_checker.rs")).value,
+        "checker"
+    );
 }
 
 #[test]
@@ -78,13 +84,19 @@ fn suffix_no_underscore_empty() {
 #[test]
 fn suffix_with_full_path() {
     let ex = make_extractor();
-    assert_eq!(ex.file_suffix(&fp("/path/to/surface_command.rs")).value, "command");
+    assert_eq!(
+        ex.file_suffix(&fp("/path/to/surface_command.rs")).value,
+        "command"
+    );
 }
 
 #[test]
 fn suffix_py_file() {
     let ex = make_extractor();
-    assert_eq!(ex.file_suffix(&fp("infrastructure_adapter.py")).value, "adapter");
+    assert_eq!(
+        ex.file_suffix(&fp("infrastructure_adapter.py")).value,
+        "adapter"
+    );
 }
 
 #[test]

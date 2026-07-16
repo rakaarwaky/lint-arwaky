@@ -60,19 +60,25 @@ done
 ## Workflow
 
 ### Step 1: Scan for Unused Files
+
 Run the detection script.
 
 ### Step 2: Verify Each Candidate
+
 Check if file is:
+
 - Exported by `__init__.py`
 - Used by external modules
 - A protocol/contract definition
 
 ### Step 3: Report
+
 List confirmed unused files.
 
 ### Step 4: Get Approval
+
 Confirm before deletion.
 
 ### Step 5: Delete
+
 Remove unused files and update imports.

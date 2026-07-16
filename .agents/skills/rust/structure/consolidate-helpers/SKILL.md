@@ -99,6 +99,7 @@ pub(crate) const LAYER_PREFIXES: &[&str] = &[
 ### Step 1: Find Duplicated Helpers
 
 Search for identical free functions across files. Look for:
+
 - Same function name in different files
 - Same function body (even if names differ slightly)
 

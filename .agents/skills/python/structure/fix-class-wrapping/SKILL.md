@@ -34,11 +34,11 @@ If yes -> **Wrap into class**
 
 ## Workflow
 
-### Step 1: Find Module-Level Functions 
+### Step 1: Find Module-Level Functions
 
 Read code and find standalone functions.
 
-### Step 2: Wrap into Class 
+### Step 2: Wrap into Class
 
 Wrap into class (static methods if needed).
 

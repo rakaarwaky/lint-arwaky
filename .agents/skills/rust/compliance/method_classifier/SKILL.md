@@ -2,7 +2,17 @@
 name: method_classifier-rust
 version: 1.0.0
 category: validation
-tags: [aes, classification, public, helper, utility, capabilities, infrastructure, rust]
+tags:
+  [
+    aes,
+    classification,
+    public,
+    helper,
+    utility,
+    capabilities,
+    infrastructure,
+    rust,
+  ]
 triggers:
   - "classify methods rust"
   - "check method order rust"
