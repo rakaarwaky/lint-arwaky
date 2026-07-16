@@ -272,6 +272,17 @@ pub fn check_capabilities_orphan(
             value: fp.to_string(),
         })
         .value;
+
+    // Utility/helper files contain standalone functions — no class/trait to wire.
+    // They don't need container wiring; they are imported directly by callers.
+    let suffix = match stem.rfind('_') {
+        Some(pos) => &stem[pos + 1..],
+        None => "",
+    };
+    if matches!(suffix, "utility" | "helper") {
+        return;
+    }
+
     let content = std::fs::read_to_string(fp).unwrap_or_default();
 
     let mut identifiers: Vec<String> = Vec::new();

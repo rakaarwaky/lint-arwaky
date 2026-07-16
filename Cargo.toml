@@ -57,7 +57,7 @@ tui = { package = "tui-lint-arwaky", path = "crates/tui", version = "1.10.106" }
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "1.10.107"
+version = "1.10.108"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
 license = "MIT"

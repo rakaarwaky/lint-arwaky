@@ -63,7 +63,7 @@ architecture:
       layers:
         taxonomy:
           suffix:
-            - strict: ["vo", "entity", "error", "event", "constant"]
+            - strict: ["vo", "entity", "error", "event", "constant", "utility"]
         contract:
           suffix:
             - strict: ["port", "protocol", "aggregate"]
@@ -97,7 +97,6 @@ architecture:
                   "assessor",
                   "auditor",
                   "actions",
-                  "utility",
                   "helper",
                 ]
             - forbidden:
@@ -111,6 +110,7 @@ architecture:
                   "port",
                   "protocol",
                   "aggregate",
+                  "utility",
                 ]
         infrastructure:
           suffix:
