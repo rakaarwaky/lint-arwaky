@@ -1,8 +1,19 @@
 ---
-name: merge-files-rust
-version: 1.0.0
+name: consolidate-files-rust
+description: "Merge multiple Rust implementation files with overlapping concerns into a single file with one struct, combining structs, impl blocks, imports, and free functions."
+version: 2.0.0
 category: refactoring
-tags: [aes, merge, rust, consolidation, single-file, single-class]
+tags:
+  [
+    rust,
+    merge,
+    consolidation,
+    deduplication,
+    single-file,
+    single-struct,
+    aes,
+    structure,
+  ]
 triggers:
   - "merge two files into one"
   - "combine two impl files"
@@ -10,34 +21,73 @@ triggers:
   - "merge capabilities files"
   - "merge infrastructure files"
   - "merge agent files"
+  - "merge overlap rust"
+  - "deduplicate modules rust"
 dependencies: []
 related:
   - trait-consolidation-rust
-  - fix-cross-import
-  - enforce-1-class-per-file
+  - fix-cross-import-rust
+  - enforce-1-struct-per-file-rust
 ---
 
-# merge-files-rust
+# consolidate-files-rust
 
 ## Purpose
 
-Merge TWO Rust implementation files into ONE file with ONE class/struct. This skill handles the mechanical merging process — combining structs, impl blocks, imports, and free functions into a single coherent file.
+Merge Rust implementation files with overlapping concerns into a single file. This skill handles both **two-file merging** (combine two impl files into one) and **overlap detection** (identify files doing the same thing and consolidate them). The result is always a single coherent file with one struct, combined impl blocks, deduplicated imports, and merged free functions.
+
+**CRITICAL: The Consolidation Rule** — After merging, there MUST be exactly ONE struct in the target file. All fields from old structs are combined, all methods are placed into appropriate impl blocks (following trait-consolidation if traits exist), and the source file(s) are deleted.
 
 ## Rules
 
-- Merge two impl files → single file with single struct/class
-- Combine fields from both old structs into one struct
-- Merge all methods into ONE impl block (follows trait-consolidation if traits exist)
-- Remove duplicate imports
-- Delete the old file after merge
-- Update ALL references across the codebase
+- **One Struct Per File**: Merge two impl files → single file with single struct. Combine fields from both old structs into one.
+- **Target Selection**: Keep the file with the most logic as the target; move unique functions from source files into target.
+- **Merge All Methods**: Put ALL methods into impl blocks. If multiple traits exist, create separate `impl Trait` blocks for each trait (follows trait-consolidation).
+- **Deduplicate Imports**: Combine imports from both files, remove duplicates.
+- **Delete Source Files**: Remove the merged source file(s) after confirming compilation passes.
+- **Update All References**: Fix all references across the codebase — lib.rs exports, root container wiring, test files.
 
 ## When to Use
 
-- Two impl files share the same domain and can be unified
-- You want to reduce file count while keeping all functionality
-- Both files implement related functionality that belongs together
-- Refactoring to follow single-class-per-domain principle
+- Two impl files share the same domain and can be unified.
+- Multiple files implement the same concept (e.g., 7 coordinate transform files).
+- Multiple files handle the same feature (e.g., cursor drawer + cursor renderer).
+- Multiple adapter files for the same technology (e.g., 3 FFmpeg adapters).
+- You want to reduce file count while keeping all functionality.
+
+## The Fundamental Question
+
+> **"Do these files do the same thing or share the same domain?"**
+
+If yes → **Merge them into 1 file**
+
+## Detection Patterns
+
+### Same-Concept Files (Merge)
+
+```rust
+capabilities_world_to_camera.rs
+capabilities_camera_to_world.rs
+capabilities_camera_to_viewport.rs
+// All do coordinate transforms → merge into capabilities_coordinate_mapper.rs
+```
+
+### Same-Feature Files (Merge)
+
+```rust
+capabilities_brush_cursor_drawer.rs
+capabilities_drag_cursor_drawer.rs
+capabilities_cursor_data_renderer.rs
+// All render cursors → merge into capabilities_cursor_renderer.rs
+```
+
+### Same-Technology Adapters (Merge)
+
+```rust
+infrastructure_ffmpeg_adapter.rs
+infrastructure_video_ffmpeg_adapter.rs
+// Both use FFmpeg → merge into 1 adapter
+```
 
 ## The Pattern
 
@@ -99,9 +149,9 @@ fn helper_b(...) -> ... { ... }
 
 ## Step-by-Step Process
 
-### Step 1: Analyze Both Files
+### Step 1: Detect Overlaps and Analyze Files
 
-Read both files to understand:
+Group files by concept/feature/technology. Read each file to understand:
 
 - What structs/classes exist
 - What traits they implement
@@ -111,18 +161,22 @@ Read both files to understand:
 - What imports are used
 
 ```bash
-# Read both files
-cat crates/<crate>/src/file1.rs
-cat crates/<crate>/src/file2.rs
+# Group files by capability name pattern
+ls crates/<crate>/src/capabilities_*.rs
 
-# Count structs, methods, imports
+# Analyze both files
+wc -l crates/<crate>/src/file1.rs crates/<crate>/src/file2.rs
 grep -c "^pub struct" crates/<crate>/src/file1.rs
 grep -c "^    fn \|^    pub fn " crates/<crate>/src/file1.rs
 ```
 
-### Step 2: Merge Imports
+### Step 2: Pick Target File
 
-Combine imports from both files, remove duplicates:
+Select the file with the most logic (most lines, most methods, most fields) as the merge target.
+
+### Step 3: Merge Imports
+
+Combine imports from all files, remove duplicates:
 
 ```rust
 // From file1 + file2 — deduplicated
@@ -132,9 +186,9 @@ use shared::import_rules::...;
 use std::collections::{HashMap, HashSet};
 ```
 
-### Step 3: Merge Structs
+### Step 4: Merge Structs
 
-Combine fields from both old structs into one struct:
+Combine fields from all old structs into one struct:
 
 ```rust
 pub struct UnifiedStruct {
@@ -148,7 +202,9 @@ pub struct UnifiedStruct {
 }
 ```
 
-### Step 4: Merge Impl Blocks
+**Merge carefully**: If both structs have the same field (e.g., `_config`), keep only one.
+
+### Step 5: Merge Impl Blocks
 
 Put ALL methods into impl blocks. If multiple traits exist, create separate impl blocks for each trait.
 
@@ -179,7 +235,7 @@ impl TraitB for UnifiedStruct {
 }
 ```
 
-### Step 5: Merge Free Functions
+### Step 6: Merge Free Functions
 
 Keep free functions as standalone (outside impl block) or convert to methods:
 
@@ -195,7 +251,7 @@ impl UnifiedStruct {
 }
 ```
 
-### Step 6: Update All References
+### Step 7: Update All References
 
 Find and update ALL references across the codebase:
 
@@ -208,15 +264,15 @@ grep -r "OldStructA\|OldStructB\|TraitA\|TraitB" crates/
 # Update test files
 ```
 
-### Step 7: Delete Old File
+### Step 8: Delete Source File(s)
 
-Remove the file whose functionality was merged:
+Remove the file(s) whose functionality was merged:
 
 ```bash
 rm crates/<crate>/src/file2.rs
 ```
 
-### Step 8: Verify Compilation
+### Step 9: Verify Compilation
 
 ```bash
 cargo check -p <crate-name> 2>&1 | grep -E "error|cannot find"
@@ -224,18 +280,22 @@ cargo check -p <crate-name> 2>&1 | grep -E "error|cannot find"
 
 ## Verification Checklist
 
-- [ ] Both files read and analyzed
+- [ ] Files analyzed and overlaps confirmed
+- [ ] Target file selected (most logic)
 - [ ] Imports merged and deduplicated
 - [ ] Structs combined into one struct with all fields
-- [ ] All methods moved to impl blocks
+- [ ] All methods moved to impl blocks (trait impl + inherent impl)
 - [ ] Free functions kept as standalone or converted to methods
-- [ ] Old file deleted
+- [ ] Source file(s) deleted
 - [ ] All references updated (lib.rs, root container, tests)
-- [ ] `cargo check` passes
+- [ ] `cargo check -p <crate-name>` passes without warnings or errors
 
 ## Quick Commands
 
 ```bash
+# Detect potential overlaps by concept/feature
+ls crates/<crate>/src/capabilities_*.rs | xargs -n1 basename | sort
+
 # Analyze files before merge
 wc -l crates/<crate>/src/file1.rs crates/<crate>/src/file2.rs
 grep -c "^pub struct" crates/<crate>/src/file1.rs
