@@ -67,7 +67,7 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         working_dir: &FilePath,
     ) -> PatternList {
         let mut cmd = vec![executable.to_string()];
-        cmd.extend(args.value);
+        cmd.extend(args.values);
         PatternList::new(cmd)
     }
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
@@ -93,7 +93,7 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
         Ok(ResponseData {
             value: None,
-            stdout: args.value.join(" "),
+            stdout: args.values.join(" "),
             stderr: String::new(),
             returncode: 0,
             metadata: meta,
@@ -112,7 +112,7 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
         Ok(ResponseData {
             value: None,
-            stdout: args.value.join(" "),
+            stdout: args.values.join(" "),
             stderr: String::new(),
             returncode: 0,
             metadata: meta,

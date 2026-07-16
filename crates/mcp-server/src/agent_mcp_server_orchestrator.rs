@@ -24,7 +24,7 @@ use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAg
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
 
-pub(crate) fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
+pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
     let mut dir = std::path::Path::new(path).to_path_buf();
     if !dir.is_absolute() {
         dir = std::env::current_dir().ok()?.join(&dir);

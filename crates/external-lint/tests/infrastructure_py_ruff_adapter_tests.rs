@@ -65,10 +65,10 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         &self,
         executable: &str,
         args: PatternList,
-        working_dir: &FilePath,
+        _working_dir: &FilePath,
     ) -> PatternList {
         let mut cmd = vec![executable.to_string()];
-        cmd.extend(args.value);
+        cmd.extend(args.values);
         PatternList::new(cmd)
     }
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
@@ -84,7 +84,7 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         &self,
         _executor: &dyn ICommandExecutorPort,
         args: PatternList,
-        working_dir: FilePath,
+        _working_dir: FilePath,
         _timeout_secs: Timeout,
         _adapter_name: Option<shared::common::taxonomy_adapter_name_vo::AdapterName>,
         _path: &FilePath,
@@ -94,7 +94,7 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
         Ok(ResponseData {
             value: None,
-            stdout: args.value.join(" "),
+            stdout: args.values.join(" "),
             stderr: String::new(),
             returncode: 0,
             metadata: meta,
@@ -104,7 +104,7 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         &self,
         _executor: &dyn ICommandExecutorPort,
         args: PatternList,
-        working_dir: FilePath,
+        _working_dir: FilePath,
         _timeout_secs: Timeout,
         _adapter_name: shared::common::taxonomy_adapter_name_vo::AdapterName,
     ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
@@ -113,7 +113,7 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
         Ok(ResponseData {
             value: None,
-            stdout: args.value.join(" "),
+            stdout: args.values.join(" "),
             stderr: String::new(),
             returncode: 0,
             metadata: meta,

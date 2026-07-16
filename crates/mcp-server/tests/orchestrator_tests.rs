@@ -71,6 +71,13 @@ impl IImportRunnerAggregate for MockDeps {
     fn name(&self) -> &str {
         unreachable!()
     }
+    fn is_ignored(&self, _: &std::path::Path) -> bool {
+        false
+    }
+    fn collect_files(&self, _: &FilePath) -> FilePathList {
+        FilePathList { values: Vec::new() }
+    }
+    fn walk_dir(&self, _: &std::path::Path, _: &mut Vec<FilePath>, _: bool) {}
 }
 
 #[async_trait::async_trait]

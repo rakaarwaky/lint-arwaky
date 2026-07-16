@@ -10,7 +10,7 @@ use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 use std::sync::Arc;
 
-async_trait::async_trait;
+use async_trait::async_trait;
 
 struct MockExternalLintUtilityPort;
 
@@ -38,7 +38,7 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         working_dir: &FilePath,
     ) -> PatternList {
         let mut cmd = vec![executable.to_string()];
-        cmd.extend(args.value);
+        cmd.extend(args.values);
         PatternList::new(cmd)
     }
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
@@ -58,12 +58,13 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         _timeout_secs: Timeout,
         _adapter_name: Option<shared::common::taxonomy_adapter_name_vo::AdapterName>,
         _path: &FilePath,
-    ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError> {
+    ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
+    {
         let mut meta = std::collections::HashMap::new();
         meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
         Ok(ResponseData {
             value: None,
-            stdout: args.value.join(" "),
+            stdout: args.values.join(" "),
             stderr: String::new(),
             returncode: 0,
             metadata: meta,
@@ -76,12 +77,13 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         working_dir: FilePath,
         _timeout_secs: Timeout,
         _adapter_name: shared::common::taxonomy_adapter_name_vo::AdapterName,
-    ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError> {
+    ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
+    {
         let mut meta = std::collections::HashMap::new();
         meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
         Ok(ResponseData {
             value: None,
-            stdout: args.value.join(" "),
+            stdout: args.values.join(" "),
             stderr: String::new(),
             returncode: 0,
             metadata: meta,
@@ -93,10 +95,18 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
         _path: &FilePath,
         _tool: &str,
         _fix_arg: &str,
-    ) -> Result<ComplianceStatus, shared::code_analysis::taxonomy_operation_error::LinterOperationError> {
+    ) -> Result<
+        ComplianceStatus,
+        shared::code_analysis::taxonomy_operation_error::LinterOperationError,
+    > {
         Ok(ComplianceStatus::new(true))
     }
-    async fn noop_apply_fix(&self) -> Result<ComplianceStatus, shared::code_analysis::taxonomy_operation_error::LinterOperationError> {
+    async fn noop_apply_fix(
+        &self,
+    ) -> Result<
+        ComplianceStatus,
+        shared::code_analysis::taxonomy_operation_error::LinterOperationError,
+    > {
         Ok(ComplianceStatus::new(true))
     }
 }
@@ -117,7 +127,10 @@ impl IPathNormalizationPort for IdentityPathNorm {
 }
 
 fn make_adapter() -> CargoAuditAdapter {
-    CargoAuditAdapter::new(Arc::new(IdentityPathNorm), Arc::new(MockExternalLintUtilityPort))
+    CargoAuditAdapter::new(
+        Arc::new(IdentityPathNorm),
+        Arc::new(MockExternalLintUtilityPort),
+    )
 }
 
 fn make_path(p: &str) -> FilePath {

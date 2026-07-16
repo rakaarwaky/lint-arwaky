@@ -11,7 +11,7 @@ pub enum AesOrphanViolation {
     ContractOrphan {
         suffix: String,
         trait_name: String,
-        target_layer: &'static str,
+        target_layer: String,
         reason: Option<LintMessage>,
     },
     CapabilitiesOrphan {
