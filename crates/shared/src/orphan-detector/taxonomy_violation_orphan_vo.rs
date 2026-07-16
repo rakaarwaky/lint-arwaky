@@ -63,21 +63,24 @@ impl fmt::Display for AesOrphanViolation {
                     Some(r) => r.to_string(),
                     None => match suffix.as_str() {
                         "port" => format!(
-                            "Contract port '{}' defines an outbound interface that infrastructure adapters must implement. \
-                             Without an implementation, the port is dead code — the system cannot interact with external \
-                             resources through this interface, and the contract is untestable.",
+                            "Contract port '{}' has two orphan indicators:\n\
+                             1. Not implemented by any infrastructure_* file (no adapter provides the outbound interface)\n\
+                             2. Not called by any orchestrator, container, capabilities, or surface file (no one uses this port)\n\
+                             Without both an implementation and usage, the port is dead code.",
                             trait_name
                         ),
                         "protocol" => format!(
-                            "Contract protocol '{}' defines an inbound interface that capabilities must implement. \
-                             Without an implementation, the protocol is dead code — no business logic can process \
-                             requests through this interface, and the contract is untestable.",
+                            "Contract protocol '{}' has two orphan indicators:\n\
+                             1. Not implemented by any capabilities_* file (no checker/analyzer provides the inbound interface)\n\
+                             2. Not called by any orchestrator, container, capabilities, or surface file (no one uses this protocol)\n\
+                             Without both an implementation and usage, the protocol is dead code.",
                             trait_name
                         ),
                         "aggregate" => format!(
-                            "Contract aggregate '{}' coordinates multiple capabilities and infrastructure flows. \
-                             Without usage, the orchestration logic is dead code — the workflow it defines \
-                             is never executed.",
+                            "Contract aggregate '{}' has two orphan indicators:\n\
+                             1. Not implemented by any agent_*_orchestrator.rs file (no orchestrator coordinates this workflow)\n\
+                             2. Not called by any surface_* or root_*_container.rs file (no one invokes this aggregate)\n\
+                             Without both an implementation and usage, the orchestration logic is dead code.",
                             trait_name
                         ),
                         _ => format!(
@@ -88,21 +91,21 @@ impl fmt::Display for AesOrphanViolation {
                 };
                 let fix = match suffix.as_str() {
                     "port" => format!(
-                        "Create an infrastructure_*_adapter.rs file that implements '{}'. \
-                         The adapter should use the port's interface to interact with external systems \
-                         (databases, APIs, file systems). Wire it in root_*_container.rs via Arc<dyn {}>.",
+                        "1. Create an infrastructure_<name>_<suffix>.rs file that implements '{}'. \
+                         The adapter should use the port's interface to interact with external systems.\n\
+                         2. Wire it in agent_*_orchestrator.rs or root_*_container.rs via Arc<dyn {}>.",
                         trait_name, trait_name
                     ),
                     "protocol" => format!(
-                        "Create a capabilities_*_checker.rs or capabilities_*_analyzer.rs file that implements '{}'. \
-                         The capability should use the protocol's interface to process domain logic. \
-                         Wire it in root_*_container.rs via Arc<dyn {}>.",
+                        "1. Create a capabilities_<name>_<suffix>.rs file that implements '{}'. \
+                         The capability should use the protocol's interface to process domain logic.\n\
+                         2. Wire it in agent_*_orchestrator.rs or root_*_container.rs via Arc<dyn {}>.",
                         trait_name, trait_name
                     ),
                     "aggregate" => format!(
-                        "Import and use '{}' in a surface_* file or root_*_container.rs. \
-                         The aggregate should be called from the surface layer to execute workflows.",
-                        trait_name
+                        "1. Implement '{}' in agent_*_orchestrator.rs to coordinate the workflow.\n\
+                         2. Call it from a surface_* file or root_*_container.rs via Arc<dyn {}>.",
+                        trait_name, trait_name
                     ),
                     _ => format!(
                         "Implement '{}' in the appropriate layer.",
