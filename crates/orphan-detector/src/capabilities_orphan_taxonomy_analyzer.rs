@@ -182,6 +182,10 @@ pub fn check_taxonomy_orphan(
 
     let mut imported = false;
     for cf in files {
+        // FIX: Skip self to avoid false negatives where the file matches its own stem
+        if cf == fp {
+            continue;
+        }
         let cb = match cf.split('/').next_back() {
             Some(b) => b,
             None => continue,

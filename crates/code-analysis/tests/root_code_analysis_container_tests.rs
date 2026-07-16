@@ -1,6 +1,8 @@
 use code_analysis_lint_arwaky::root_code_analysis_container::{
     CodeAnalysisCheckerContainer, CodeAnalysisContainer,
 };
+use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_path_vo::FilePath;
 
 #[test]
 fn checker_container_default_constructs() {
@@ -18,7 +20,10 @@ fn checker_container_default_constructs() {
 #[test]
 fn checker_container_detect_layer_returns_none_for_empty_analyzer() {
     let container = CodeAnalysisCheckerContainer::default();
-    let layer = container.detect_layer("src/foo.rs", ".");
+    let layer = container.detect_layer(
+        &FilePath::new("src/foo.rs").unwrap_or_default(),
+        &FilePath::new(".").unwrap_or_default(),
+    );
     assert!(layer.is_none());
 }
 
@@ -76,28 +81,32 @@ impl shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionPr
             config
         })
     }
-    fn detect_layer(&self, _file_path: &str, _root_dir: &str) -> Option<String> {
+    fn detect_layer(&self, _file_path: &FilePath, _root_dir: &FilePath) -> Option<LayerNameVO> {
         None
     }
     fn get_layer_def(
         &self,
-        _layer: &str,
+        _layer: &LayerNameVO,
     ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
         None
     }
-    fn get_orphan_entry_points(&self) -> Vec<String> {
+    fn get_orphan_entry_points(&self) -> Vec<FilePath> {
         Vec::new()
     }
-    fn extract_layer_from_prefix(&self, _filename: &str) -> Option<String> {
+    fn extract_layer_from_prefix(&self, _filename: &FilePath) -> Option<LayerNameVO> {
         None
     }
-    fn resolve_specialized_layer(&self, base_layer: &str, _file_path: &str) -> String {
-        base_layer.to_string()
+    fn resolve_specialized_layer(
+        &self,
+        base_layer: &LayerNameVO,
+        _file_path: &FilePath,
+    ) -> LayerNameVO {
+        LayerNameVO::new(base_layer.value())
     }
-    fn detect_module_layer(&self, _module: &str) -> Option<String> {
+    fn detect_module_layer(&self, _module: &str) -> Option<LayerNameVO> {
         None
     }
-    fn refine_module_layer(&self, base_name: &str, _parts: &[&str]) -> String {
-        base_name.to_string()
+    fn refine_module_layer(&self, base_name: &LayerNameVO, _parts: &[&str]) -> LayerNameVO {
+        LayerNameVO::new(base_name.value())
     }
 }

@@ -103,15 +103,26 @@ pub fn is_contract_orphan(
             continue;
         }
         if let Ok(c) = std::fs::read_to_string(cf) {
-            if c.contains(&format!("impl {} for", trait_name))
+            let has_rust_impl = c.contains(&format!("impl {} for", trait_name))
                 || c.lines().any(|ln| {
                     let t = ln.trim();
                     t.starts_with("impl") && t.contains(&trait_name) && t.contains(" for")
-                })
-                || c.contains(&format!("class {}(\\(", trait_name))
-                || c.contains(&format!("class {} ", trait_name))
-                || c.contains(&format!("class {}:", trait_name))
-            {
+                });
+
+            // Python: class MyClass(TraitName): or class MyClass(Base, TraitName):
+            let py_pattern = format!(
+                r"class\s+\w+\([^)]*\b{}\b[^)]*\)",
+                regex::escape(&trait_name)
+            );
+            let has_py_impl = regex::Regex::new(&py_pattern)
+                .map(|re| re.is_match(&c))
+                .unwrap_or(false);
+
+            // TypeScript: class MyClass implements TraitName or extends TraitName
+            let has_ts_impl = c.contains(&format!("implements {}", trait_name))
+                || c.contains(&format!("extends {}", trait_name));
+
+            if has_rust_impl || has_py_impl || has_ts_impl {
                 has_impl = true;
                 break;
             }

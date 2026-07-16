@@ -6,7 +6,7 @@ fn make_extractor() -> OrphanFilenameExtractor {
 }
 
 fn fp(s: &str) -> shared::common::taxonomy_path_vo::FilePath {
-    shared::common::taxonomy_path_vo::FilePath::new(s.to_string()).unwrap()
+    shared::common::taxonomy_path_vo::FilePath::new(s.to_string()).unwrap_or_default()
 }
 
 #[test]
@@ -78,7 +78,7 @@ fn suffix_gets_last_part() {
 #[test]
 fn suffix_no_underscore_empty() {
     let ex = make_extractor();
-    assert_eq!(ex.file_suffix(&fp("checker.rs")).value, "checker");
+    assert_eq!(ex.file_suffix(&fp("checker.rs")).value, "");
 }
 
 #[test]

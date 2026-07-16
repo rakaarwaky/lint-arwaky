@@ -403,7 +403,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
             {
                 let inherits = lines
                     .iter()
-                    .any(|line| Self::python_class_inherits(line, c_type));
+                    .any(|line| self.python_class_inherits(line, c_type));
 
                 if !inherits {
                     let class_line = lines
@@ -570,10 +570,8 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
             }
         }
     }
-}
 
-impl DummyImportChecker {
-    fn python_class_inherits(line: &str, agg_type: &str) -> bool {
+    fn python_class_inherits(&self, line: &str, agg_type: &str) -> bool {
         let trimmed = line.trim();
         if !trimmed.starts_with("class ") {
             return false;

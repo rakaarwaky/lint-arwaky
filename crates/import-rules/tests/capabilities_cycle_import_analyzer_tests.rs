@@ -145,7 +145,10 @@ impl IImportParserPort for MockCycleParser {
     fn is_name_used(&self, _name: &str, _content: &str, _exclude_line: LineNumber) -> bool {
         false
     }
-    fn extract_layer_from_prefix(&self, segment: &str) -> Option<String> {
+    fn extract_layer_from_prefix(
+        &self,
+        segment: &str,
+    ) -> Option<shared::common::taxonomy_layer_vo::LayerNameVO> {
         const PREFIX_MAP: &[(&str, &str)] = &[
             ("taxonomy_", "taxonomy"),
             ("contract_", "contract"),
@@ -157,7 +160,7 @@ impl IImportParserPort for MockCycleParser {
         ];
         for &(prefix, layer) in PREFIX_MAP {
             if segment.starts_with(prefix) {
-                return Some(layer.to_string());
+                return Some(shared::common::taxonomy_layer_vo::LayerNameVO::new(layer));
             }
         }
         None

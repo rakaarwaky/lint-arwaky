@@ -478,7 +478,31 @@ impl OrphanGraphResolver {
                             if let Ok(entries) = std::fs::read_dir(src_dir) {
                                 for entry in entries.flatten() {
                                     let path = entry.path();
-                                    if let Some(path_str) = path.to_str() {
+                                    if path.is_dir() {
+                                        // FIX: Check mod.rs in subdirectories (e.g., code-analysis/mod.rs)
+                                        let mod_rs = path.join("mod.rs");
+                                        if mod_rs.exists() {
+                                            let dir_name = path
+                                                .file_name()
+                                                .and_then(|n| n.to_str())
+                                                .unwrap_or_default();
+                                            let normalized_dir = dir_name.replace('-', "_");
+                                            if normalized_dir == module_name {
+                                                if let Some(path_str) = mod_rs.to_str() {
+                                                    if path_str != *f {
+                                                        import_graph
+                                                            .entry(f.clone())
+                                                            .or_default()
+                                                            .push(path_str.to_string());
+                                                        inbound_links
+                                                            .entry(path_str.to_string())
+                                                            .or_default()
+                                                            .push(f.clone());
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else if let Some(path_str) = path.to_str() {
                                         let stem = path
                                             .file_stem()
                                             .and_then(|s| s.to_str())
@@ -501,9 +525,21 @@ impl OrphanGraphResolver {
                     }
                 }
 
-                // Python/JS relative imports
-                import_graph.entry(f.clone()).or_default().push(dep.clone());
-                inbound_links.entry(dep).or_default().push(f.clone());
+                // Python/JS relative imports — only add if resolved to a file path
+                if let Some(resolved_path) = module_to_file.get(&dep) {
+                    if resolved_path != f {
+                        import_graph
+                            .entry(f.clone())
+                            .or_default()
+                            .push(resolved_path.clone());
+                        inbound_links
+                            .entry(resolved_path.clone())
+                            .or_default()
+                            .push(f.clone());
+                    }
+                }
+                // If it's a workspace module (e.g., "shared") but not resolved to a specific file,
+                // we do not add it to the import graph to avoid polluting it with directory names.
             }
 
             // Pass 4: Python class inheritance

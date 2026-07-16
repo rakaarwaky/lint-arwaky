@@ -23,6 +23,7 @@ use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use std::sync::Arc;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
+use tui_lint_arwaky::capabilities_report_formatter::ReportFormatterHelper;
 
 // ---------------------------------------------------------------------------
 // Minimal mocks (config_show does not invoke code analysis)
@@ -166,7 +167,7 @@ impl IConfigOrchestrationAggregate for MockConfigOrchestratorEmpty {
 
 #[test]
 fn config_show_with_orchestrator_returns_rules_and_layers() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis), Arc::new(ReportFormatterHelper))
         .with_config(Arc::new(MockConfigOrchestratorRich));
     let result: LintExecutionResult = executor.config_show();
 
@@ -208,7 +209,7 @@ fn config_show_with_orchestrator_returns_rules_and_layers() {
 
 #[test]
 fn config_show_with_orchestrator_empty_config_shows_warnings() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis), Arc::new(ReportFormatterHelper))
         .with_config(Arc::new(MockConfigOrchestratorEmpty));
     let result: LintExecutionResult = executor.config_show();
 

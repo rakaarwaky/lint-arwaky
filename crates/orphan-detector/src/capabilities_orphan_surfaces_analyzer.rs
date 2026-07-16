@@ -89,9 +89,12 @@ pub fn is_surface_orphan(
 
     if let Ok(content) = std::fs::read_to_string(fp_val) {
         // Check if this surface is imported by any entry or router file
-        let root = std::path::Path::new(".");
+        // FIX: Use parent directory from the file being analyzed, not CWD
+        let file_parent = std::path::Path::new(fp_val)
+            .parent()
+            .unwrap_or(std::path::Path::new("."));
         if let Ok(workspace_root) =
-            crate::capabilities_orphan_capabilities_analyzer::find_workspace_root(root)
+            crate::capabilities_orphan_capabilities_analyzer::find_workspace_root(file_parent)
         {
             if let Ok(imported) = check_imported_by_entry_or_router(&workspace_root, &stem) {
                 if imported {

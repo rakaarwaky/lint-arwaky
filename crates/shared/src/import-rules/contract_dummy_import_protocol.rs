@@ -67,4 +67,6 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
     );
+
+    fn python_class_inherits(&self, line: &str, agg_type: &str) -> bool;
 }
