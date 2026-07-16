@@ -9,6 +9,13 @@ pub trait IImportHelperPort: Send + Sync {
     /// Returns `fp` if `result` is `Ok`, otherwise returns `FilePath::default()`.
     fn filepath_or_default<T>(&self, result: Result<FilePath, T>) -> FilePath;
 
+    /// Returns `fp` if `result` is `Ok`, otherwise returns `fallback`.
+    fn filepath_or_clone(
+        &self,
+        result: Result<FilePath, impl std::fmt::Debug>,
+        fallback: &FilePath,
+    ) -> FilePath;
+
     /// Returns `s` if `opt` is `Some`, otherwise returns `fallback`.
     fn str_or<'a>(&self, opt: Option<&'a str>, fallback: &'a str) -> &'a str;
 

@@ -47,6 +47,7 @@ pub trait IImportForbiddenProtocol: Send + Sync {
     );
 
     /// Core: scan import lines against a list of forbidden layers and build violations.
+    #[allow(clippy::too_many_arguments)]
     fn check_imports_against_forbidden(
         &self,
         file_path: &FilePath,

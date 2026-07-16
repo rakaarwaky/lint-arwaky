@@ -1,12 +1,8 @@
 // PURPOSE: Taxonomy-layer report formatter helper — provides formatting functions for scan results, toolchain diagnostics, dependencies, and active configurations.
 
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
-use crate::cli_commands::taxonomy_severity_vo::Severity;
 use crate::config_system::taxonomy_source_vo::ConfigResult;
 use crate::project_setup::taxonomy_doctor_vo::{DependencyReport, ToolchainDiagnostics};
-use crate::taxonomy_common_vo::{ColumnNumber, LineNumber};
-use crate::taxonomy_error_vo::ErrorCode;
-use crate::taxonomy_message_vo::LintMessage;
 use crate::tui::contract_report_formatter_port::IReportFormatterPort;
 use crate::tui::taxonomy_lint_result_vo::LintExecutionResult;
 
