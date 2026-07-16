@@ -20,6 +20,7 @@ use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
 use shared::common::taxonomy_adapter_error::ScanError;
+use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
@@ -75,8 +76,12 @@ impl ILinterAdapterPort for ESLintAdapter {
 
         let cmd = self.utility.resolve_js_cmd(
             "eslint",
-            vec![abs_path, "--format".to_string(), "json".to_string()],
-            &wd.value,
+            shared::common::taxonomy_common_vo::PatternList::new(vec![
+                abs_path.value,
+                "--format".to_string(),
+                "json".to_string(),
+            ]),
+            &wd,
         );
 
         let response = self
@@ -85,7 +90,7 @@ impl ILinterAdapterPort for ESLintAdapter {
                 self.executor.as_ref(),
                 cmd,
                 wd.clone(),
-                60.0,
+                Timeout::new(60.0),
                 Some(self.name()),
                 path,
             )

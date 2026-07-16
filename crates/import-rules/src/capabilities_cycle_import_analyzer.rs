@@ -9,6 +9,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
+use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
@@ -21,10 +22,6 @@ use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::taxonomy_message_vo::LintMessage;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-
-fn filepath_or_default(result: Result<FilePath, String>) -> FilePath {
-    result.unwrap_or_default()
-}
 
 /// Unified cycle import analyzer — combines scanning logic and core cycle detection (AES205).
 ///
@@ -50,7 +47,10 @@ impl CycleImportAnalyzer {
 
 #[async_trait]
 impl ICycleImportProtocol for CycleImportAnalyzer {
-    fn filepath_or_default(&self, result: Result<FilePath, String>) -> FilePath {
+    fn filepath_or_default(
+        &self,
+        result: Result<FilePath, shared::taxonomy_common_error::ErrorMessage>,
+    ) -> FilePath {
         result.unwrap_or_default()
     }
 
@@ -58,8 +58,8 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
     fn scan(
         &self,
         analyzer: &dyn ILayerDetectionProtocol,
-        files: &[String],
-        root_dir: &str,
+        files: &[FilePath],
+        root_dir: &FilePath,
     ) -> Vec<LintResult> {
         self.do_scan(analyzer, files, root_dir)
     }
@@ -73,8 +73,7 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
         root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
-        let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        let cycle_violations = self.scan(analyzer, &file_strs, &root_dir.to_string());
+        let cycle_violations = self.scan(analyzer, &files.values, root_dir);
         results.values.extend(cycle_violations);
     }
 
@@ -84,7 +83,7 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
     }
 
     /// Normalize a file/module name to its architectural layer name.
-    fn normalize_to_layer(&self, name: &str) -> String {
+    fn normalize_to_layer(&self, name: &str) -> LayerNameVO {
         self.do_normalize_to_layer(name)
     }
 
@@ -92,8 +91,8 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
     fn do_scan(
         &self,
         analyzer: &dyn ILayerDetectionProtocol,
-        files: &[String],
-        root_dir: &str,
+        files: &[FilePath],
+        root_dir: &FilePath,
     ) -> Vec<LintResult> {
         // Step 1: Skip analysis if the architecture checker is globally disabled
         let config = analyzer.config();
@@ -105,15 +104,12 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
         let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
 
         let mut edges = Vec::new();
-        let mut file_by_layer: HashMap<String, String> = HashMap::new();
+        let mut file_by_layer: HashMap<String, FilePath> = HashMap::new();
 
         // Step 3: Iterate every file in the project
         for file in files {
             // Step 3a: Skip files exempted via rule exceptions
-            let file_fp =
-                filepath_or_default(FilePath::new(file.clone()).map_err(|e| format!("{:?}", e)));
-
-            let basename = file_fp.basename();
+            let basename = file.basename();
             if let Some(rule) = aes205_rule {
                 if rule.exceptions.values.contains(&basename.to_string()) {
                     continue;
@@ -121,18 +117,13 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
             }
 
             // Step 3b: Read the raw file content
-            let Ok(content_msg) = self.parser.read_file_to_message(&file_fp) else {
+            let Ok(content_msg) = self.parser.read_file_to_message(file) else {
                 continue;
             };
             let content = content_msg.value().to_string();
 
             // Step 3c: Detect the file's architectural layer (strip scoped suffix)
-            let file_fp =
-                filepath_or_default(FilePath::new(file.clone()).map_err(|e| format!("{:?}", e)));
-            let root_dir_fp = filepath_or_default(
-                FilePath::new(root_dir.to_string()).map_err(|e| format!("{:?}", e)),
-            );
-            let file_layer = match analyzer.detect_layer(&file_fp, &root_dir_fp) {
+            let file_layer = match analyzer.detect_layer(file, root_dir) {
                 Some(l) => {
                     let s = match l.value.split('(').next() {
                         Some(part) => part,
@@ -192,10 +183,7 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
                 } else {
                     module_value
                 };
-                let module_fp = filepath_or_default(
-                    FilePath::new(module_path.to_string()).map_err(|e| format!("{:?}", e)),
-                );
-                if let Some(target_layer) = analyzer.detect_module_layer(&module_fp.to_string()) {
+                if let Some(target_layer) = analyzer.detect_module_layer(module_path) {
                     let target_layer_str = match target_layer.value.split('(').next() {
                         Some(part) => part,
                         None => &target_layer.value,
@@ -228,7 +216,7 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
                 let source = parts[0];
                 let target = parts[1];
                 let file = match file_by_layer.get(source) {
-                    Some(f) => f.clone(),
+                    Some(f) => f.value.clone(),
                     None => source.to_string(),
                 };
                 LintResult::new_arch(
@@ -256,24 +244,24 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
             .iter()
             .map(|e| {
                 DependencyEdge::new(
-                    self.do_normalize_to_layer(&e.source),
-                    self.do_normalize_to_layer(&e.target),
+                    self.do_normalize_to_layer(&e.source).value,
+                    self.do_normalize_to_layer(&e.target).value,
                 )
             })
             .collect();
 
-        let mut graph: HashMap<String, Vec<String>> = HashMap::new();
+        let mut graph: HashMap<LayerNameVO, Vec<LayerNameVO>> = HashMap::new();
         for e in &normalized_edges {
             graph
-                .entry(e.source.clone())
+                .entry(LayerNameVO::new(e.source.clone()))
                 .or_default()
-                .push(e.target.clone());
-            graph.entry(e.target.clone()).or_default();
+                .push(LayerNameVO::new(e.target.clone()));
+            graph.entry(LayerNameVO::new(e.target.clone())).or_default();
         }
 
-        let mut color: HashMap<String, Color> = HashMap::new();
-        let mut parent: HashMap<String, String> = HashMap::new();
-        let mut cycle_edges_set: HashSet<(String, String)> = HashSet::new();
+        let mut color: HashMap<LayerNameVO, Color> = HashMap::new();
+        let mut parent: HashMap<LayerNameVO, LayerNameVO> = HashMap::new();
+        let mut cycle_edges_set: HashSet<(LayerNameVO, LayerNameVO)> = HashSet::new();
 
         for node in graph.keys() {
             color.entry(node.clone()).or_insert(Color::White);
@@ -292,12 +280,16 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
             let cycle_nodes = self.extract_cycle_nodes(src, tgt, &parent);
             if let Some(cycle) = cycle_nodes {
                 let mut sorted_cycle = cycle.clone();
-                sorted_cycle.sort();
-                let dedup_key = sorted_cycle.join("->");
+                sorted_cycle.sort_by(|a, b| a.value.cmp(&b.value));
+                let dedup_key: String = sorted_cycle
+                    .iter()
+                    .map(|n| n.value.clone())
+                    .collect::<Vec<_>>()
+                    .join("->");
                 if reported.insert(dedup_key) {
                     for i in 0..cycle.len() {
                         let next = cycle[(i + 1) % cycle.len()].clone();
-                        unique_cycles.push(format!("{}->{}", cycle[i], next));
+                        unique_cycles.push(format!("{}->{}", cycle[i].value, next.value));
                     }
                 }
             }
@@ -307,7 +299,7 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
     }
 
     /// Normalize a file/module name to its architectural layer name.
-    fn do_normalize_to_layer(&self, name: &str) -> String {
+    fn do_normalize_to_layer(&self, name: &str) -> LayerNameVO {
         let layer_prefixes = [
             "taxonomy_",
             "contract_",
@@ -322,52 +314,52 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
         };
         for prefix in &layer_prefixes {
             if base.starts_with(prefix) {
-                return prefix.trim_end_matches('_').to_string();
+                return LayerNameVO::new(prefix.trim_end_matches('_').to_string());
             }
         }
-        name.to_string()
+        LayerNameVO::new(name.to_string())
     }
 
     /// DFS 3-coloring traversal to detect back-edges (cycles).
     fn dfs_3color(
         &self,
-        node: &str,
-        graph: &HashMap<String, Vec<String>>,
-        color: &mut HashMap<String, Color>,
-        parent: &mut HashMap<String, String>,
-        cycle_edges: &mut HashSet<(String, String)>,
+        node: &LayerNameVO,
+        graph: &HashMap<LayerNameVO, Vec<LayerNameVO>>,
+        color: &mut HashMap<LayerNameVO, Color>,
+        parent: &mut HashMap<LayerNameVO, LayerNameVO>,
+        cycle_edges: &mut HashSet<(LayerNameVO, LayerNameVO)>,
     ) {
-        color.insert(node.to_string(), Color::Gray);
+        color.insert(node.clone(), Color::Gray);
 
         if let Some(neighbors) = graph.get(node) {
             for neighbor in neighbors {
                 if *color.get(neighbor).unwrap_or(&Color::White) == Color::Gray {
-                    cycle_edges.insert((node.to_string(), neighbor.clone()));
+                    cycle_edges.insert((node.clone(), neighbor.clone()));
                 } else if *color.get(neighbor).unwrap_or(&Color::White) == Color::White {
-                    parent.insert(neighbor.clone(), node.to_string());
+                    parent.insert(neighbor.clone(), node.clone());
                     self.dfs_3color(neighbor, graph, color, parent, cycle_edges);
                 }
             }
         }
 
-        color.insert(node.to_string(), Color::Black);
+        color.insert(node.clone(), Color::Black);
     }
 
     /// Extract cycle nodes from source to target using parent tracking.
     fn extract_cycle_nodes(
         &self,
-        src: &str,
-        tgt: &str,
-        parent: &HashMap<String, String>,
-    ) -> Option<Vec<String>> {
+        src: &LayerNameVO,
+        tgt: &LayerNameVO,
+        parent: &HashMap<LayerNameVO, LayerNameVO>,
+    ) -> Option<Vec<LayerNameVO>> {
         let mut path = Vec::new();
-        let mut cur = src;
-        path.push(cur.to_string());
+        let mut cur = src.clone();
+        path.push(cur.clone());
 
-        while cur != tgt {
-            let p = parent.get(cur)?;
-            cur = p;
-            path.push(cur.to_string());
+        while cur != *tgt {
+            let p = parent.get(&cur)?;
+            cur = p.clone();
+            path.push(cur.clone());
         }
 
         path.reverse();

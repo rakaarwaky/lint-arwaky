@@ -12,39 +12,21 @@ use crate::common::taxonomy_path_vo::FilePath;
 use std::collections::{HashMap, HashSet};
 
 pub trait IUnusedImportProtocol: Send + Sync {
-    /// Find unused imports in a file by path (reads file internally).
-    /// Returns a list of human-readable lint messages describing each unused
-    /// import. Replaces the previous `Vec<String>` so callers can introspect,
-    /// translate, or log messages without parsing free-form strings.
     fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage>;
-
-    /// Check unused imports given file content directly (for inline checking).
-    /// Useful when content is already available (avoids re-reading file).
-    fn check_unused_imports(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // Internal computation methods — needed for trait 1:1 matching
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// Check if a name is a Rust trait import (Protocol, Port, Trait, Aggregate, etc).
-    fn is_rust_trait_import(&self, name: &str) -> bool;
-
-    /// Extract imported aliases from file content.
+    fn check_unused_imports(
+        &self,
+        file: &FilePath,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    );
+    fn is_rust_trait_import(&self, name: &SymbolName) -> bool;
     fn extract_imported_aliases(&self, content: &str) -> HashMap<Identity, Identity>;
-
-    /// Extract exported symbols from file content.
     fn extract_exported_symbols(&self, content: &str) -> HashSet<Identity>;
-
-    /// Extract used symbols from file content given imported aliases.
     fn extract_used_symbols(
         &self,
         content: &str,
         imported_aliases: &HashMap<Identity, Identity>,
     ) -> HashSet<Identity>;
-
-    /// Extract Rust/JS named imports.
     fn extract_rust_js_imports(&self, content: &str) -> Vec<(SymbolName, LineNumber)>;
-
-    /// Check whether a symbol name is used in the content (excluding the import line).
-    fn is_name_used(&self, name: &str, content: &str, exclude_line: usize) -> bool;
+    fn is_name_used(&self, name: &SymbolName, content: &str, exclude_line: LineNumber) -> bool;
 }

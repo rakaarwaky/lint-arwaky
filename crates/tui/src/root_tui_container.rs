@@ -57,8 +57,9 @@ impl TuiContainer {
         let role_container = role_rules::root_role_rules_container::RoleContainer::new();
         let scanner_provider: Arc<dyn IScannerProviderPort> =
             Arc::new(code_analysis::FileCollectorProvider::new());
-        let formatter: Arc<dyn shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol> =
-            Arc::new(crate::capabilities_report_formatter::ReportFormatterHelper::new());
+        let formatter: Arc<
+            dyn shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol,
+        > = Arc::new(crate::capabilities_report_formatter::ReportFormatterHelper::new());
         let lint_executor = Arc::new(
             LintExecutor::new(code_analysis_aggregate, formatter)
                 .with_fix(fix_orchestrator)

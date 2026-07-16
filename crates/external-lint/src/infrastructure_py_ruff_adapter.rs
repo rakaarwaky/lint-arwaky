@@ -22,6 +22,8 @@ use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
 use shared::common::taxonomy_adapter_error::AdapterError;
+use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
@@ -82,7 +84,7 @@ impl ILinterAdapterPort for RuffAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         // Skip if no Python files exist in the target path
-        if !self.utility.has_python_files(path) {
+        if !self.utility.has_python_files(path).value {
             return Ok(LintResultList::new(vec![]));
         }
 
@@ -99,7 +101,13 @@ impl ILinterAdapterPort for RuffAdapter {
 
         let response = self
             .utility
-            .exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 60.0, self.name())
+            .exec_cmd_adapter(
+                self.executor.as_ref(),
+                PatternList::new(cmd),
+                working_dir,
+                Timeout::new(60.0),
+                self.name(),
+            )
             .await?;
 
         let stdout = &response.stdout;
@@ -183,7 +191,13 @@ impl ILinterAdapterPort for RuffAdapter {
 
         let _ = self
             .utility
-            .exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 60.0, self.name())
+            .exec_cmd_adapter(
+                self.executor.as_ref(),
+                PatternList::new(cmd),
+                working_dir,
+                Timeout::new(60.0),
+                self.name(),
+            )
             .await?;
         Ok(ComplianceStatus::new(true))
     }

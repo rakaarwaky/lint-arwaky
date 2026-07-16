@@ -15,8 +15,12 @@ pub trait IExternalLintUtilityPort: Send + Sync {
     fn has_python_files(&self, path: &FilePath) -> BooleanVO;
     fn has_py_in_dir(&self, dir: &DirectoryPath) -> BooleanVO;
     fn is_in_path(&self, executable: &str) -> BooleanVO;
-    fn resolve_js_cmd(&self, executable: &str, args: PatternList, working_dir: &FilePath)
-        -> PatternList;
+    fn resolve_js_cmd(
+        &self,
+        executable: &str,
+        args: PatternList,
+        working_dir: &FilePath,
+    ) -> PatternList;
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath;
     fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath;
     fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath;
@@ -32,9 +36,9 @@ pub trait IExternalLintUtilityPort: Send + Sync {
     async fn exec_cmd_adapter(
         &self,
         executor: &dyn ICommandExecutorPort,
-        args: Vec<String>,
+        args: PatternList,
         working_dir: FilePath,
-        timeout_secs: f64,
+        timeout_secs: Timeout,
         adapter_name: AdapterName,
     ) -> Result<ResponseData, LinterOperationError>;
     async fn js_apply_fix(

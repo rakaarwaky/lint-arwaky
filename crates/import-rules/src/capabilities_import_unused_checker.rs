@@ -66,23 +66,24 @@ const DERIVE_MACROS: &[&str] = &[
 ];
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
-    fn is_rust_trait_import(&self, name: &str) -> bool {
-        if name.starts_with('I')
-            && name.len() > 1
-            && name.chars().nth(1).unwrap_or(' ').is_uppercase()
+    fn is_rust_trait_import(&self, name: &SymbolName) -> bool {
+        let name_str = name.value();
+        if name_str.starts_with('I')
+            && name_str.len() > 1
+            && name_str.chars().nth(1).unwrap_or(' ').is_uppercase()
         {
             return true;
         }
-        if name.ends_with("Protocol")
-            || name.ends_with("Port")
-            || name.ends_with("Trait")
-            || name.ends_with("Aggregate")
-            || name.ends_with("Ext")
+        if name_str.ends_with("Protocol")
+            || name_str.ends_with("Port")
+            || name_str.ends_with("Trait")
+            || name_str.ends_with("Aggregate")
+            || name_str.ends_with("Ext")
         {
             return true;
         }
         matches!(
-            name,
+            name_str,
             "Default"
                 | "Debug"
                 | "Display"
@@ -189,7 +190,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                             if !name.is_empty()
                                 && name != "_"
                                 && name != "*"
-                                && !self.is_rust_trait_import(name)
+                                && !self.is_rust_trait_import(&SymbolName::new(name))
                             {
                                 aliases.insert(
                                     Identity::new(name),
@@ -200,7 +201,10 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                     } else {
                         let raw_name = use_part.rsplit("::").next().unwrap_or(use_part);
                         let name = raw_name.split(" as ").last().unwrap_or(raw_name).trim();
-                        if !name.is_empty() && name != "*" && !self.is_rust_trait_import(name) {
+                        if !name.is_empty()
+                            && name != "*"
+                            && !self.is_rust_trait_import(&SymbolName::new(name))
+                        {
                             aliases.insert(Identity::new(name), Identity::new(use_part));
                         }
                     }
@@ -405,19 +409,19 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         imports
     }
 
-    fn is_name_used(&self, name: &str, content: &str, exclude_line: usize) -> bool {
-        if self.is_rust_trait_import(name) || DERIVE_MACROS.contains(&name) {
+    fn is_name_used(&self, name: &SymbolName, content: &str, exclude_line: LineNumber) -> bool {
+        if self.is_rust_trait_import(name) || DERIVE_MACROS.contains(&name.value()) {
             return true;
         }
 
         let rest = content
             .lines()
             .enumerate()
-            .filter(|(j, _)| *j != exclude_line)
+            .filter(|(j, _)| *j != exclude_line.value() as usize)
             .map(|(_, l)| l)
             .collect::<Vec<_>>()
             .join("\n");
-        rest.contains(name)
+        rest.contains(name.value())
     }
 
     fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
@@ -436,15 +440,19 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         }
         let rust_js_imports = self.extract_rust_js_imports(&content);
         for (name, line_idx) in rust_js_imports {
-            let name_str = name.value();
-            if !self.is_name_used(name_str, &content, line_idx.value() as usize) {
-                unused.push(name_str.to_string());
+            if !self.is_name_used(&name, &content, line_idx) {
+                unused.push(name.value().to_string());
             }
         }
         unused.into_iter().map(LintMessage::new).collect()
     }
 
-    fn check_unused_imports(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    fn check_unused_imports(
+        &self,
+        file: &FilePath,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
         let imported_aliases = self.extract_imported_aliases(content);
         let exported_symbols = self.extract_exported_symbols(content);
         let used_symbols = self.extract_used_symbols(content, &imported_aliases);
@@ -455,7 +463,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                     .find_import_line_number(content, alias.value())
                     .value() as usize;
                 violations.push(LintResult::new_arch(
-                    file,
+                    file.value(),
                     line_num,
                     "AES203",
                     Severity::MEDIUM,
@@ -471,18 +479,16 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         }
         let rust_js_imports = self.extract_rust_js_imports(content);
         for (name, line_idx) in rust_js_imports {
-            let name_str = name.value().to_string();
-            let line_no_us = line_idx.value() as usize;
-            if !self.is_name_used(&name_str, content, line_no_us) {
+            if !self.is_name_used(&name, content, line_idx.clone()) {
                 violations.push(LintResult::new_arch(
-                    file,
-                    line_no_us,
+                    file.value(),
+                    line_idx.value() as usize,
                     "AES203",
                     Severity::MEDIUM,
                     AesImportViolation::FixUnusedImport {
                         reason: Some(LintMessage::new(format!(
                             "Import '{}' is declared but never used in this file.",
-                            name_str
+                            name.value()
                         ))),
                     }
                     .to_string(),

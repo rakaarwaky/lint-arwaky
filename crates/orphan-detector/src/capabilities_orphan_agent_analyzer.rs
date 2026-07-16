@@ -26,7 +26,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         &self,
         f: &FilePath,
         _root_dir: &FilePath,
-        all_files: &[String],
+        all_files: &[FilePath],
     ) -> OrphanIndicatorResult {
         is_agent_orphan_raw(f, all_files)
     }

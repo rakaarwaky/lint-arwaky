@@ -4,10 +4,10 @@ use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_adapter_error::ScanError;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_common_vo::{BooleanVO, PatternList};
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 use std::path::{Path, PathBuf};
@@ -28,10 +28,10 @@ impl Default for ExternalLintUtilityAdapter {
 
 #[async_trait::async_trait]
 impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
-    fn canonicalize_path(&self, path_str: &str) -> String {
+    fn canonicalize_path(&self, path_str: &str) -> FilePath {
         match std::fs::canonicalize(path_str) {
-            Ok(p) => p.to_string_lossy().to_string(),
-            Err(_) => path_str.to_string(),
+            Ok(p) => FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default(),
+            Err(_) => FilePath::new(path_str.to_string()).unwrap_or_default(),
         }
     }
 
@@ -39,40 +39,44 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
         FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
     }
 
-    fn has_python_files(&self, path: &FilePath) -> bool {
+    fn has_python_files(&self, path: &FilePath) -> BooleanVO {
         let p = std::path::Path::new(&path.value);
         if !p.exists() {
-            return p.extension().map(|e| e == "py").unwrap_or(false);
+            return BooleanVO::new(p.extension().map(|e| e == "py").unwrap_or(false));
         }
         if p.is_file() {
-            return p.extension().map(|e| e == "py").unwrap_or(false);
+            return BooleanVO::new(p.extension().map(|e| e == "py").unwrap_or(false));
         }
-        self.has_py_in_dir(p)
+        if let Ok(dir) = DirectoryPath::new(path.value.clone()) {
+            self.has_py_in_dir(&dir)
+        } else {
+            BooleanVO::new(false)
+        }
     }
 
     fn resolve_js_cmd(
         &self,
         executable: &str,
-        args: Vec<String>,
-        working_dir: &str,
-    ) -> Vec<String> {
-        let local_bin = Path::new(working_dir)
+        args: PatternList,
+        working_dir: &FilePath,
+    ) -> PatternList {
+        let local_bin = Path::new(&working_dir.value)
             .join("node_modules")
             .join(".bin")
             .join(executable);
         if local_bin.exists() {
             let mut cmd = vec![local_bin.to_string_lossy().to_string()];
-            cmd.extend(args);
-            return cmd;
+            cmd.extend(args.values);
+            return PatternList::new(cmd);
         }
-        if self.is_in_path(executable) {
+        if self.is_in_path(executable).value {
             let mut cmd = vec![executable.to_string()];
-            cmd.extend(args);
-            return cmd;
+            cmd.extend(args.values);
+            return PatternList::new(cmd);
         }
         let mut cmd = vec![executable.to_string()];
-        cmd.extend(args);
-        cmd
+        cmd.extend(args.values);
+        PatternList::new(cmd)
     }
 
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
@@ -158,18 +162,14 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
     async fn exec_cmd_scan(
         &self,
         executor: &dyn ICommandExecutorPort,
-        args: Vec<String>,
+        args: PatternList,
         working_dir: FilePath,
-        timeout_secs: f64,
+        timeout_secs: Timeout,
         adapter_name: Option<AdapterName>,
         path: &FilePath,
     ) -> Result<ResponseData, LinterOperationError> {
         executor
-            .execute_command(
-                PatternList::new(args),
-                working_dir,
-                Some(Timeout::new(timeout_secs)),
-            )
+            .execute_command(args, working_dir, Some(timeout_secs))
             .await
             .map_err(|e| {
                 LinterOperationError::Scan(ScanError {
@@ -185,17 +185,13 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
     async fn exec_cmd_adapter(
         &self,
         executor: &dyn ICommandExecutorPort,
-        args: Vec<String>,
+        args: PatternList,
         working_dir: FilePath,
-        timeout_secs: f64,
+        timeout_secs: Timeout,
         adapter_name: AdapterName,
     ) -> Result<ResponseData, LinterOperationError> {
         executor
-            .execute_command(
-                PatternList::new(args),
-                working_dir,
-                Some(Timeout::new(timeout_secs)),
-            )
+            .execute_command(args, working_dir, Some(timeout_secs))
             .await
             .map_err(|e| {
                 LinterOperationError::Adapter(AdapterError::new(
@@ -214,9 +210,19 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
     ) -> Result<ComplianceStatus, LinterOperationError> {
         let wd = self.resolve_js_working_dir(path);
         let abs_path = self.canonicalize_path(&path.value);
-        let cmd = self.resolve_js_cmd(tool, vec![abs_path, fix_arg.to_string()], &wd.value);
+        let cmd = self.resolve_js_cmd(
+            tool,
+            PatternList::new(vec![abs_path.value, fix_arg.to_string()]),
+            &wd,
+        );
         let response = self
-            .exec_cmd_adapter(executor, cmd, wd, 60.0, AdapterName::raw(tool))
+            .exec_cmd_adapter(
+                executor,
+                cmd,
+                wd,
+                Timeout::new(60.0),
+                AdapterName::raw(tool),
+            )
             .await?;
         Ok(ComplianceStatus::new(response.returncode == 0))
     }
@@ -225,32 +231,34 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
         Ok(ComplianceStatus::new(false))
     }
 
-    fn has_py_in_dir(&self, dir: &std::path::Path) -> bool {
-        let Ok(entries) = std::fs::read_dir(dir) else {
-            return false;
+    fn has_py_in_dir(&self, dir: &DirectoryPath) -> BooleanVO {
+        let Ok(entries) = std::fs::read_dir(&dir.value) else {
+            return BooleanVO::new(false);
         };
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                if self.has_py_in_dir(&path) {
-                    return true;
+                if let Ok(sub_dir) = DirectoryPath::new(path.to_string_lossy().to_string()) {
+                    if self.has_py_in_dir(&sub_dir).value {
+                        return BooleanVO::new(true);
+                    }
                 }
             } else if path.extension().map(|e| e == "py").unwrap_or(false) {
-                return true;
+                return BooleanVO::new(true);
             }
         }
-        false
+        BooleanVO::new(false)
     }
 
-    fn is_in_path(&self, executable: &str) -> bool {
+    fn is_in_path(&self, executable: &str) -> BooleanVO {
         if let Ok(path_var) = std::env::var("PATH") {
             for path_dir in std::env::split_paths(&path_var) {
                 let path = path_dir.join(executable);
                 if path.is_file() {
-                    return true;
+                    return BooleanVO::new(true);
                 }
             }
         }
-        false
+        BooleanVO::new(false)
     }
 }

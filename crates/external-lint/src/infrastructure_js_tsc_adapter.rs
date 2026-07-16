@@ -32,6 +32,8 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -87,11 +89,13 @@ impl ILinterAdapterPort for TSCAdapter {
             "--pretty".to_string(),
             "false".to_string(),
         ];
-        if abs_path != "." && abs_path != "./" {
-            args.push(abs_path);
+        if abs_path.value != "." && abs_path.value != "./" {
+            args.push(abs_path.value);
         }
 
-        let cmd = self.utility.resolve_js_cmd("tsc", args, &wd.value);
+        let cmd = self
+            .utility
+            .resolve_js_cmd("tsc", PatternList::new(args), &wd);
 
         let response = self
             .utility
@@ -99,7 +103,7 @@ impl ILinterAdapterPort for TSCAdapter {
                 self.executor.as_ref(),
                 cmd,
                 wd.clone(),
-                60.0,
+                Timeout::new(60.0),
                 Some(self.name()),
                 path,
             )

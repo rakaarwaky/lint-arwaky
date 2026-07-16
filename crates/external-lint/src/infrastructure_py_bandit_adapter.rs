@@ -21,6 +21,8 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -81,7 +83,7 @@ impl ILinterAdapterPort for BanditAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         // Skip if no Python files exist in the target path
-        if !self.utility.has_python_files(path) {
+        if !self.utility.has_python_files(path).value {
             return Ok(LintResultList::new(vec![]));
         }
 
@@ -98,7 +100,13 @@ impl ILinterAdapterPort for BanditAdapter {
 
         let response = self
             .utility
-            .exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 120.0, self.name())
+            .exec_cmd_adapter(
+                self.executor.as_ref(),
+                PatternList::new(cmd),
+                working_dir,
+                Timeout::new(120.0),
+                self.name(),
+            )
             .await?;
 
         let stdout = &response.stdout;

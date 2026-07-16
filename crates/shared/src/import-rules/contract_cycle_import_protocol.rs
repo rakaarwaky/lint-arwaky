@@ -4,6 +4,7 @@
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
+use crate::common::taxonomy_common_vo::ErrorMessage;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_name_vo::SymbolName;
 use crate::common::taxonomy_path_vo::FilePath;
@@ -32,7 +33,7 @@ pub trait ICycleImportProtocol: Send + Sync {
 
     fn normalize_to_layer(&self, name: &str) -> LayerNameVO;
 
-    fn filepath_or_default(&self, result: Result<FilePath, String>) -> FilePath;
+    fn filepath_or_default(&self, result: Result<FilePath, ErrorMessage>) -> FilePath;
 
     fn do_scan(
         &self,

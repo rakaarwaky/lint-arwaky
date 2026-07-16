@@ -1,5 +1,6 @@
 use once_cell::sync::OnceCell;
 use regex::Regex;
+use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 use shared::taxonomy_layer_vo::Identity;
@@ -46,24 +47,24 @@ impl IOrphanFilenameExtractorProtocol for OrphanFilenameExtractor {
         Identity::new(fp.suffix())
     }
 
-    fn extract_struct_names(&self, content: &str) -> Vec<String> {
+    fn extract_struct_names(&self, content: &str) -> Vec<SymbolName> {
         let mut names = Vec::new();
         if let Some(re) = struct_re() {
             for cap in re.captures_iter(content) {
                 let name = cap[1].to_string();
                 if name != "Self" && !name.is_empty() {
-                    names.push(name);
+                    names.push(SymbolName::new(name));
                 }
             }
         }
         names
     }
 
-    fn extract_trait_names(&self, content: &str) -> Vec<String> {
+    fn extract_trait_names(&self, content: &str) -> Vec<SymbolName> {
         let mut names = Vec::new();
         if let Some(re) = trait_re() {
             for cap in re.captures_iter(content) {
-                names.push(cap[1].to_string());
+                names.push(SymbolName::new(cap[1].to_string()));
             }
         }
         names

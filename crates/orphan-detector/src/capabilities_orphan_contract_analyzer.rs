@@ -37,7 +37,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         root_dir: &FilePath,
         file_definitions: &FileDefinitionMap,
         inheritance_map: &InheritanceMap,
-        all_files: &[String],
+        all_files: &[FilePath],
     ) -> OrphanIndicatorResult {
         is_contract_orphan(
             f,
@@ -55,7 +55,7 @@ pub fn is_contract_orphan(
     root_dir: &FilePath,
     _file_definitions: &FileDefinitionMap,
     _inheritance_map: &InheritanceMap,
-    all_files: &[String],
+    all_files: &[FilePath],
     extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
 ) -> OrphanIndicatorResult {
     let fp = f.value();
@@ -73,7 +73,7 @@ pub fn is_contract_orphan(
     };
 
     // Build search_files: combine scan-directory files with all workspace .rs files
-    let mut search_files: Vec<String> = all_files.to_vec();
+    let mut search_files: Vec<String> = all_files.iter().map(|fp| fp.value().to_string()).collect();
     let root_path = std::path::Path::new(root_dir.value());
     for ws_dir in &["crates", "packages", "modules"] {
         let ws_path = root_path.join(ws_dir);

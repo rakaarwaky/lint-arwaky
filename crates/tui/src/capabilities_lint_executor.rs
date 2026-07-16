@@ -103,13 +103,13 @@ pub struct LintExecutor {
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
     multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
-    formatter: Arc<dyn IReportFormatterPort>,
+    formatter: Arc<dyn IReportFormatterProtocol>,
 }
 
 impl LintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
-    formatter: Arc<dyn IReportFormatterProtocol>,
+        formatter: Arc<dyn IReportFormatterProtocol>,
     ) -> Self {
         Self {
             code_analysis,

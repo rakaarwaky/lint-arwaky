@@ -36,7 +36,7 @@ impl Default for ImportParserAdapter {
 
 impl IImportParserPort for ImportParserAdapter {
     /// Extract layer from filename prefix — inline implementation.
-    fn extract_layer_from_prefix(&self, segment: &str) -> Option<String> {
+    fn extract_layer_from_prefix(&self, segment: &str) -> Option<LayerNameVO> {
         const PREFIX_MAP: &[(&str, &str)] = &[
             ("taxonomy_", "taxonomy"),
             ("contract_", "contract"),
@@ -48,7 +48,7 @@ impl IImportParserPort for ImportParserAdapter {
         ];
         for &(prefix, layer) in PREFIX_MAP {
             if segment.starts_with(prefix) {
-                return Some(layer.to_string());
+                return Some(LayerNameVO::new(layer));
             }
         }
         None
@@ -207,7 +207,7 @@ impl IImportParserPort for ImportParserAdapter {
         let segment_str = segment.value();
         // Strategy 1: Prefix-based — reuse canonical helper
         if let Some(layer) = self.extract_layer_from_prefix(segment_str) {
-            return Some(LayerNameVO::new(layer));
+            return Some(layer);
         }
         // Strategy 2: Direct segment match — bare layer names without underscore suffix
         match segment_str {

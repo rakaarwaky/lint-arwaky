@@ -231,10 +231,9 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         // AES203: unused import check — read file content once and check all languages
         if config.is_rule_enabled("AES203") {
             for file in files.iter() {
-                let file_path = file.value();
-                if let Ok(content) = std::fs::read_to_string(file_path) {
+                if let Ok(content) = std::fs::read_to_string(file.value()) {
                     self.unused
-                        .check_unused_imports(file_path, &content, &mut results.values);
+                        .check_unused_imports(file, &content, &mut results.values);
                 }
             }
         }
