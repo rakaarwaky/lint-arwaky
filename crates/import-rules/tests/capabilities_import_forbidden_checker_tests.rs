@@ -145,7 +145,10 @@ impl IImportParserPort for MockForbiddenParser {
     fn is_name_used(&self, _: &str, _: &str, _: LineNumber) -> bool {
         false
     }
-    fn extract_layer_from_prefix(&self, _: &str) -> Option<String> {
+    fn extract_layer_from_prefix(
+        &self,
+        _: &str,
+    ) -> Option<shared::common::taxonomy_layer_vo::LayerNameVO> {
         None
     }
 }

@@ -109,7 +109,10 @@ impl IImportParserPort for MockUnusedParser {
     fn is_name_used(&self, _: &str, _: &str, _: LineNumber) -> bool {
         self.name_used
     }
-    fn extract_layer_from_prefix(&self, _: &str) -> Option<String> {
+    fn extract_layer_from_prefix(
+        &self,
+        _: &str,
+    ) -> Option<shared::common::taxonomy_layer_vo::LayerNameVO> {
         None
     }
 }
@@ -165,7 +168,11 @@ fn check_unused_imports_empty_content_no_violations() {
     let parser = MockUnusedParser::new();
     let checker = UnusedImportRuleChecker::new(Arc::new(parser));
     let mut violations = vec![];
-    checker.check_unused_imports("test.rs", "", &mut violations);
+    checker.check_unused_imports(
+        &shared::common::taxonomy_path_vo::FilePath::new("test.rs".to_string()).unwrap_or_default(),
+        "",
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 
@@ -179,7 +186,11 @@ fn check_unused_imports_detects_unused_rust_import() {
     let content = parser.content.clone();
     let checker = UnusedImportRuleChecker::new(Arc::new(parser));
     let mut violations = vec![];
-    checker.check_unused_imports("test.rs", &content, &mut violations);
+    checker.check_unused_imports(
+        &shared::common::taxonomy_path_vo::FilePath::new("test.rs".to_string()).unwrap_or_default(),
+        &content,
+        &mut violations,
+    );
     assert_eq!(violations.len(), 1, "unused Rust import should be flagged");
     assert!(violations[0].code.to_string().contains("AES203"));
 }
@@ -195,6 +206,10 @@ fn check_unused_imports_used_rust_import_no_violation() {
     let content = parser.content.clone();
     let checker = UnusedImportRuleChecker::new(Arc::new(parser));
     let mut violations = vec![];
-    checker.check_unused_imports("test.rs", &content, &mut violations);
+    checker.check_unused_imports(
+        &shared::common::taxonomy_path_vo::FilePath::new("test.rs".to_string()).unwrap_or_default(),
+        &content,
+        &mut violations,
+    );
     assert!(violations.is_empty(), "used import should not flag");
 }

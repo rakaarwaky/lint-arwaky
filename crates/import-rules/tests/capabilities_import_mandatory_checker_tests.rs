@@ -93,11 +93,14 @@ impl IImportParserPort for MockMandatoryParser {
             "agent" => Some(LayerNameVO::new("agent")),
             "surfaces" | "surface" => Some(LayerNameVO::new("surfaces")),
             "root" => Some(LayerNameVO::new("root")),
-            s => self.extract_layer_from_prefix(s).map(LayerNameVO::new),
+            s => self.extract_layer_from_prefix(s),
         }
     }
 
-    fn extract_layer_from_prefix(&self, segment: &str) -> Option<String> {
+    fn extract_layer_from_prefix(
+        &self,
+        segment: &str,
+    ) -> Option<shared::common::taxonomy_layer_vo::LayerNameVO> {
         const PREFIX_MAP: &[(&str, &str)] = &[
             ("taxonomy_", "taxonomy"),
             ("contract_", "contract"),
@@ -109,7 +112,7 @@ impl IImportParserPort for MockMandatoryParser {
         ];
         for &(prefix, layer) in PREFIX_MAP {
             if segment.starts_with(prefix) {
-                return Some(layer.to_string());
+                return Some(shared::common::taxonomy_layer_vo::LayerNameVO::new(layer));
             }
         }
         None

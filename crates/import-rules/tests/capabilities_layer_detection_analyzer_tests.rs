@@ -186,7 +186,12 @@ fn test_detect_layer_by_prefix_taxonomy() {
         &FilePath::new("src/taxonomy_config_vo.rs".to_string()).unwrap_or_default(),
         &FilePath::new(".".to_string()).unwrap_or_default(),
     );
-    assert_eq!(result, Some(shared::common::taxonomy_layer_vo::LayerNameVO::new("taxonomy")));
+    assert_eq!(
+        result,
+        Some(shared::common::taxonomy_layer_vo::LayerNameVO::new(
+            "taxonomy"
+        ))
+    );
 }
 
 #[test]
@@ -197,7 +202,12 @@ fn test_detect_layer_by_prefix_capabilities() {
         &FilePath::new("src/capabilities_import_checker.rs".to_string()).unwrap_or_default(),
         &FilePath::new(".".to_string()).unwrap_or_default(),
     );
-    assert_eq!(result, Some(shared::common::taxonomy_layer_vo::LayerNameVO::new("capabilities")));
+    assert_eq!(
+        result,
+        Some(shared::common::taxonomy_layer_vo::LayerNameVO::new(
+            "capabilities"
+        ))
+    );
 }
 
 #[test]
@@ -227,7 +237,12 @@ fn test_detect_module_layer_direct_match() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_module_layer("shared::taxonomy::taxonomy_config_vo");
-    assert_eq!(result, Some(shared::common::taxonomy_layer_vo::LayerNameVO::new("taxonomy")));
+    assert_eq!(
+        result,
+        Some(shared::common::taxonomy_layer_vo::LayerNameVO::new(
+            "taxonomy"
+        ))
+    );
 }
 
 #[test]
@@ -235,7 +250,12 @@ fn test_detect_module_layer_prefix_match() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_module_layer("crate::taxonomy_config_vo::Config");
-    assert_eq!(result, Some(shared::common::taxonomy_layer_vo::LayerNameVO::new("taxonomy")));
+    assert_eq!(
+        result,
+        Some(shared::common::taxonomy_layer_vo::LayerNameVO::new(
+            "taxonomy"
+        ))
+    );
 }
 
 #[test]
@@ -253,7 +273,12 @@ fn test_resolve_specialized_layer_with_scoped_rule() {
         &FilePath::new("src/capabilities_import_checker.rs".to_string()).unwrap_or_default(),
         &FilePath::new(".".to_string()).unwrap_or_default(),
     );
-    assert_eq!(result, Some(shared::common::taxonomy_layer_vo::LayerNameVO::new("capabilities(checker)")));
+    assert_eq!(
+        result,
+        Some(shared::common::taxonomy_layer_vo::LayerNameVO::new(
+            "capabilities(checker)"
+        ))
+    );
 }
 
 #[test]
@@ -320,7 +345,12 @@ fn test_detect_module_layer_prefix_fallback() {
     let config = make_config();
     let analyzer = LayerDetectionAnalyzer::new(config);
     let result = analyzer.detect_module_layer("some_module::taxonomy_random_thing");
-    assert_eq!(result, Some(shared::common::taxonomy_layer_vo::LayerNameVO::new("taxonomy")));
+    assert_eq!(
+        result,
+        Some(shared::common::taxonomy_layer_vo::LayerNameVO::new(
+            "taxonomy"
+        ))
+    );
 }
 
 #[test]
