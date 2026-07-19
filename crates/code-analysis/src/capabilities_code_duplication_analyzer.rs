@@ -14,6 +14,9 @@ use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAn
 use shared::code_analysis::taxonomy_duplication_utility::{
     build_violations, collect_file_entries, normalize_window, scan_duplicate_blocks,
 };
+use shared::code_analysis::taxonomy_target_utility::{
+    collect_source_files, detect_source_dir, resolve_target,
+};
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_message_vo::LintMessage;
@@ -186,9 +189,8 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
         path: Option<String>,
         _fs: &dyn IFileSystemPort,
     ) -> Vec<AesCodeAnalysisViolation> {
-        let root = crate::agent_code_analysis_orchestrator::resolve_target(path);
-        let src =
-            crate::agent_code_analysis_orchestrator::detect_source_dir(std::path::Path::new(&root));
+        let root = resolve_target(path);
+        let src = detect_source_dir(std::path::Path::new(&root));
         let config = default_aes_config();
         let ignored_vec: Vec<String> = config
             .ignored_paths
@@ -216,11 +218,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-        let source_files = crate::agent_code_analysis_orchestrator::collect_source_files(
-            &src,
-            &dir_path,
-            &ignored_vec,
-        );
+        let source_files = collect_source_files(&src, &dir_path, &ignored_vec);
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         self.check_file_similarity(&file_strs, min_lines, threshold_pct)
             .into_iter()

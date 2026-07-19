@@ -1,7 +1,9 @@
-// PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations via IArchLintProtocol, tracks fix results
+// PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations via IFixProtocol, tracks fix results
+use shared::auto_fix::contract_file_adapter_port::IFileAdapterPort;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
+use shared::auto_fix::taxonomy_symbol_renamer_utility::rename_in_file;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -17,9 +19,10 @@ use std::sync::Arc;
 pub struct LintFixProcessor {
     dry_run: bool,
     linter: Arc<dyn ICodeAnalysisAggregate>,
+    file_adapter: Arc<dyn IFileAdapterPort>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
 impl IFixProtocol for LintFixProcessor {
     fn execute(&self, path: &FilePath) -> FixResult {
         let results = self.linter.run_code_analysis(&path.value).values;
@@ -41,7 +44,6 @@ impl IFixProtocol for LintFixProcessor {
         let mut total_fixable =
             naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
 
-        let renamer = SimpleSymbolRenamer {};
         for violation in &naming_violations {
             let msg = violation.message.value();
             if let Some(old_name) = msg
@@ -59,7 +61,7 @@ impl IFixProtocol for LintFixProcessor {
                     }
                 };
                 if old_name != new_name {
-                    let count = renamer.rename_symbol(&path.value, old_name, &new_name);
+                    let count = rename_in_file(&path.value, old_name, &new_name);
                     fixed_count += count;
                     self.emit_fix_event_impl(&violation.file, "AES011", count);
                 }
@@ -184,27 +186,38 @@ impl IFixProtocol for LintFixProcessor {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl LintFixProcessor {
-    pub fn new(linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+    pub fn new(
+        linter: Arc<dyn ICodeAnalysisAggregate>,
+        file_adapter: Arc<dyn IFileAdapterPort>,
+    ) -> Self {
         Self {
             dry_run: false,
             linter,
+            file_adapter,
         }
     }
 
-    pub fn with_dry_run(dry_run: bool, linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
-        Self { dry_run, linter }
+    pub fn with_dry_run(
+        dry_run: bool,
+        linter: Arc<dyn ICodeAnalysisAggregate>,
+        file_adapter: Arc<dyn IFileAdapterPort>,
+    ) -> Self {
+        Self {
+            dry_run,
+            linter,
+            file_adapter,
+        }
     }
 
     fn fix_bypass_comments_impl(&self, file_path: &str, line: u32) -> bool {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() {
+        if !self.file_adapter.path_exists(file_path) {
             return false;
         }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return false,
+        let content = match self.file_adapter.read_file(file_path) {
+            Some(c) => c,
+            None => return false,
         };
         let lines: Vec<&str> = content.lines().collect();
         if (line as usize) > lines.len() || line == 0 {
@@ -259,17 +272,16 @@ impl LintFixProcessor {
             result.push_str(l);
             result.push('\n');
         }
-        std::fs::write(path, result).is_ok()
+        self.file_adapter.write_file(file_path, &result)
     }
 
     fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> bool {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() {
+        if !self.file_adapter.path_exists(file_path) {
             return false;
         }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return false,
+        let content = match self.file_adapter.read_file(file_path) {
+            Some(c) => c,
+            None => return false,
         };
         let lines: Vec<&str> = content.lines().collect();
         if (line as usize) > lines.len() || line == 0 {
@@ -295,7 +307,7 @@ impl LintFixProcessor {
                 result.push('\n');
             }
         }
-        std::fs::write(path, result).is_ok()
+        self.file_adapter.write_file(file_path, &result)
     }
 
     fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {
@@ -309,26 +321,8 @@ impl LintFixProcessor {
     }
 }
 
-/// Simple in-place symbol renamer — replaces old_name with new_name in a single file.
-struct SimpleSymbolRenamer {}
-
-impl SimpleSymbolRenamer {
-    fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> usize {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() || !path.is_file() {
-            return 0;
-        }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return 0,
-        };
-        if !content.contains(old_name) {
-            return 0;
-        }
-        let new_content = content.replace(old_name, new_name);
-        if new_content != content && std::fs::write(path, &new_content).is_ok() {
-            return 1;
-        }
-        0
+impl Default for LintFixProcessor {
+    fn default() -> Self {
+        panic!("LintFixProcessor requires linter and file_adapter dependencies via DI")
     }
 }

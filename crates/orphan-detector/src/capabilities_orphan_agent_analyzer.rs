@@ -1,43 +1,13 @@
 // PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
-// Agent is orphan if the contract aggregate it implements is NOT called by any surface or container.
-use regex::Regex;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::{
     IAgentOrphanProtocol, IOrphanFileCachePort,
 };
+use shared::orphan_detector::taxonomy_agent_regex_utility::extract_aggregate_traits;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use std::sync::Arc;
-use std::sync::OnceLock;
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STATIC REGEXES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-fn re_impl_generic() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"impl\s*(?:<[^>]+>)?\s+([A-Za-z0-9_]+)\s+for\s+").ok())
-        .as_ref()
-}
-
-fn re_dyn() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(?:Box|Arc)<dyn\s+([A-Za-z0-9_]+)>").ok())
-        .as_ref()
-}
-
-fn re_py_class() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
-        .as_ref()
-}
-
-fn re_ts_implements() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"class\s+\w+\s+implements\s+(\w+)").ok())
-        .as_ref()
-}
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct AgentOrphanAnalyzer {
@@ -57,14 +27,6 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
-impl Default for AgentOrphanAnalyzer {
-    fn default() -> Self {
-        Self {
-            cache: Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()),
-        }
-    }
-}
-
 impl AgentOrphanAnalyzer {
     pub fn new(cache: Arc<dyn IOrphanFileCachePort>) -> Self {
         Self { cache }
@@ -127,74 +89,5 @@ impl AgentOrphanAnalyzer {
         }
 
         OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
-    }
-}
-
-pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
-    let mut traits = Vec::new();
-
-    if let Some(re) = re_impl_generic() {
-        for cap in re.captures_iter(content) {
-            let name = cap[1].to_string();
-            if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                traits.push(name);
-            }
-        }
-    }
-
-    if let Some(re) = re_dyn() {
-        for cap in re.captures_iter(content) {
-            let name = cap[1].to_string();
-            if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                traits.push(name);
-            }
-        }
-    }
-
-    if let Some(re) = re_py_class() {
-        for cap in re.captures_iter(content) {
-            for part in cap[1].split(',') {
-                let name = part.trim().to_string();
-                if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                    traits.push(name);
-                }
-            }
-        }
-    }
-
-    if let Some(re) = re_ts_implements() {
-        for cap in re.captures_iter(content) {
-            let name = cap[1].to_string();
-            if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                traits.push(name);
-            }
-        }
-    }
-
-    traits.sort();
-    traits.dedup();
-    traits
-}
-
-pub fn check_agent_orphan(
-    fp: &str,
-    _basename: &str,
-    files: &[FilePath],
-    violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    cache: &Arc<dyn IOrphanFileCachePort>,
-) {
-    let fp_vo = match FilePath::new(fp.to_string()) {
-        Ok(p) => p,
-        Err(_) => return,
-    };
-    let analyzer = AgentOrphanAnalyzer::new(cache.clone());
-    let result = analyzer.check_agent_orphan(&fp_vo, files);
-    if result.is_orphan {
-        violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
-            fp,
-            &result.reason,
-            result.severity,
-            "AES505",
-        ));
     }
 }

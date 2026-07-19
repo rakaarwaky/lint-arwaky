@@ -9,50 +9,12 @@
 // elevated permissions.
 use async_trait::async_trait;
 use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
-use shared::project_setup::taxonomy_language_vo::ProjectLanguage;
 use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct SetupInstallerAdapter;
 
-// ─── Block 2: Public Contract ─────────────────────────────
-impl Default for SetupInstallerAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl SetupInstallerAdapter {
-    pub fn new() -> Self {
-        let _dummy = ProjectLanguage::new("rust");
-        Self
-    }
-
-    async fn run_pip_command(
-        &self,
-        cmd: &str,
-        base_args: &[&str],
-        packages: &[String],
-    ) -> Result<(), SetupError> {
-        let status = tokio::process::Command::new(cmd)
-            .args(base_args)
-            .args(packages)
-            .status()
-            .await
-            .map_err(|e| SetupError::io(e.to_string()))?;
-        if status.success() {
-            Ok(())
-        } else {
-            Err(SetupError::other(format!(
-                "Command {} exited with status {:?}",
-                cmd,
-                status.code()
-            )))
-        }
-    }
-}
-
+// ─── Block 2: Public Contract (domain port ONLY) ──────────
 #[async_trait]
 impl ISetupInstallerPort for SetupInstallerAdapter {
     async fn install_python_packages(&self, packages: &[String]) -> Result<(), SetupError> {
@@ -126,6 +88,42 @@ impl ISetupInstallerPort for SetupInstallerAdapter {
         } else {
             Err(SetupError::other(format!(
                 "npm install exited with status {:?}",
+                status.code()
+            )))
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for SetupInstallerAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SetupInstallerAdapter {
+    pub fn new() -> Self {
+        Self
+    }
+
+    async fn run_pip_command(
+        &self,
+        cmd: &str,
+        base_args: &[&str],
+        packages: &[String],
+    ) -> Result<(), SetupError> {
+        let status = tokio::process::Command::new(cmd)
+            .args(base_args)
+            .args(packages)
+            .status()
+            .await
+            .map_err(|e| SetupError::io(e.to_string()))?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(SetupError::other(format!(
+                "Command {} exited with status {:?}",
+                cmd,
                 status.code()
             )))
         }

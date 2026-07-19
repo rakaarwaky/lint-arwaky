@@ -1,24 +1,8 @@
-use once_cell::sync::OnceCell;
-use regex::Regex;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
+use shared::orphan_detector::taxonomy_filename_regex_utility::{struct_re, trait_re};
 use shared::taxonomy_layer_vo::Identity;
-
-static STRUCT_RE: OnceCell<Option<Regex>> = OnceCell::new();
-static TRAIT_RE: OnceCell<Option<Regex>> = OnceCell::new();
-
-fn struct_re() -> Option<&'static Regex> {
-    STRUCT_RE
-        .get_or_init(|| Regex::new(r"(?:pub\s+)?struct\s+([A-Za-z0-9_]+)").ok())
-        .as_ref()
-}
-
-fn trait_re() -> Option<&'static Regex> {
-    TRAIT_RE
-        .get_or_init(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok())
-        .as_ref()
-}
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct OrphanFilenameExtractor;

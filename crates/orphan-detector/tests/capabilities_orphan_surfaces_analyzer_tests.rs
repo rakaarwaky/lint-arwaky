@@ -1,8 +1,6 @@
 use orphan_detector_lint_arwaky::capabilities_orphan_filename_extractor::OrphanFilenameExtractor;
-use orphan_detector_lint_arwaky::capabilities_orphan_surfaces_analyzer::{
-    get_surface_suffix, surface_category,
-};
 use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
+use shared::orphan_detector::taxonomy_surface_utility::{get_surface_suffix, surface_category};
 use std::sync::Arc;
 
 fn get_extractor() -> Arc<dyn IOrphanFilenameExtractorProtocol> {

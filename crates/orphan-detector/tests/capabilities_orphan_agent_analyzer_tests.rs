@@ -1,4 +1,4 @@
-use orphan_detector_lint_arwaky::capabilities_orphan_agent_analyzer::extract_aggregate_traits;
+use shared::orphan_detector::taxonomy_agent_regex_utility::extract_aggregate_traits;
 
 #[test]
 fn extract_aggregate_rust_impl_trait() {

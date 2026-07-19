@@ -25,9 +25,12 @@ impl AutoFixContainer {
     }
 
     pub fn orchestrator(&self, dry_run: bool) -> Arc<dyn LintFixOrchestratorAggregate> {
+        let file_adapter: Arc<dyn shared::auto_fix::contract_file_adapter_port::IFileAdapterPort> =
+            Arc::new(crate::infrastructure_file_adapter::FileAdapter::new());
         let fix_protocol = crate::capabilities_fix_processor::LintFixProcessor::with_dry_run(
             dry_run,
             self.code_analysis_linter.clone(),
+            file_adapter,
         );
         Arc::new(crate::agent_fix_orchestrator::FixOrchestrator::new(
             Arc::new(fix_protocol),

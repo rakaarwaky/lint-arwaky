@@ -29,17 +29,6 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
 }
 
 // ─── Block 3: Constructors & Helpers ──────────────────────
-impl Default for TaxonomyOrphanAnalyzer {
-    fn default() -> Self {
-        Self {
-            extractor: Arc::new(
-                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
-            ),
-            cache: Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()),
-        }
-    }
-}
-
 impl TaxonomyOrphanAnalyzer {
     pub fn new(
         extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,

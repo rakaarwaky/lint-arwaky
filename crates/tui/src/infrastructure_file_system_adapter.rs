@@ -17,20 +17,7 @@ use std::path::Path;
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct FileSystemAdapter;
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl FileSystemAdapter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-// ─── Block 2: Public Contract ─────────────────────────────
-impl Default for FileSystemAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
+// ─── Block 2: Public Contract (domain port ONLY) ──────────
 impl IFileSystemPort for FileSystemAdapter {
     fn list_directory(&self, path: &FilePath) -> Vec<FileEntry> {
         let dir_path = Path::new(path.value());
@@ -112,5 +99,18 @@ impl IFileSystemPort for FileSystemAdapter {
                     .and_then(|s| FilePath::new(s.to_string()).ok())
             })
             .collect()
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for FileSystemAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl FileSystemAdapter {
+    pub fn new() -> Self {
+        Self
     }
 }

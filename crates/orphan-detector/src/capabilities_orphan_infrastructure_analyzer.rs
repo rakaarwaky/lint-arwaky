@@ -6,6 +6,9 @@ use shared::orphan_detector::contract_orphan_protocol::{
     IInfrastructureOrphanProtocol, IOrphanFileCachePort, IOrphanFilenameExtractorProtocol,
 };
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use shared::orphan_detector::taxonomy_workspace_utility::{
+    check_wired_in_container, find_workspace_root,
+};
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -27,17 +30,6 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
-impl Default for InfrastructureOrphanAnalyzer {
-    fn default() -> Self {
-        Self {
-            extractor: Arc::new(
-                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
-            ),
-            cache: Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()),
-        }
-    }
-}
-
 impl InfrastructureOrphanAnalyzer {
     pub fn new(
         extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
@@ -91,14 +83,8 @@ impl InfrastructureOrphanAnalyzer {
             identifiers.push(pascal_stem);
 
             let root = std::path::Path::new(root_dir.value());
-            if let Ok(workspace_root) =
-                crate::capabilities_orphan_capabilities_analyzer::find_workspace_root(root)
-            {
-                if crate::capabilities_orphan_capabilities_analyzer::check_wired_in_container(
-                    &workspace_root,
-                    &identifiers,
-                    self.cache.as_ref(),
-                ) {
+            if let Ok(workspace_root) = find_workspace_root(root) {
+                if check_wired_in_container(&workspace_root, &identifiers, self.cache.as_ref()) {
                     return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
                 }
             }

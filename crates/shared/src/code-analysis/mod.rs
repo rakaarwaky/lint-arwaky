@@ -15,5 +15,6 @@ pub mod taxonomy_duplication_utility;
 pub mod taxonomy_import_source_vo;
 pub mod taxonomy_mandatory_utility;
 pub mod taxonomy_operation_error;
+pub mod taxonomy_target_utility;
 pub mod taxonomy_violation_code_analysis_vo;
 pub use taxonomy_violation_code_analysis_vo::{AesCodeAnalysisViolation, Language};

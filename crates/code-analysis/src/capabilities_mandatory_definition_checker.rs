@@ -14,19 +14,6 @@ use shared::taxonomy_definition_vo::LayerDefinition;
 // Block 1: struct Definition
 pub struct MandatoryDefinitionChecker {}
 
-// Block 3: constructors
-impl Default for MandatoryDefinitionChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl MandatoryDefinitionChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
 // Block 2: impl Trait for Struct (Public Contract)
 impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
     fn check_mandatory_class_definition(
@@ -162,5 +149,18 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
             }
             i += 1;
         }
+    }
+}
+
+// Block 3: Constructors, Std Traits & Helpers
+impl Default for MandatoryDefinitionChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl MandatoryDefinitionChecker {
+    pub fn new() -> Self {
+        Self {}
     }
 }

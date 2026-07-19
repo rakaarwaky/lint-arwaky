@@ -10,20 +10,7 @@ use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct ReportFormatterHelper;
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl ReportFormatterHelper {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-// ─── Block 2: Public Contract ─────────────────────────────
-impl Default for ReportFormatterHelper {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
 impl IReportFormatterProtocol for ReportFormatterHelper {
     fn format_results(&self, results: &LintResultList) -> DisplayContent {
         if results.is_empty() {
@@ -189,5 +176,18 @@ impl IReportFormatterProtocol for ReportFormatterHelper {
             }
         }
         LintExecutionResult::success(output, 0)
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for ReportFormatterHelper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ReportFormatterHelper {
+    pub fn new() -> Self {
+        Self
     }
 }
