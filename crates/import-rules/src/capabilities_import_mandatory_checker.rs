@@ -19,6 +19,7 @@ use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// Enforces AES202 mandatory import rules — both layer-level and scope-level.
 pub struct ArchImportMandatoryChecker {
     parser: Arc<dyn IImportParserPort>,

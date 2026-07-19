@@ -23,7 +23,7 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-/// Unified cycle import analyzer — combines scanning logic and core cycle detection (AES205).
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct CycleImportAnalyzer {
     _config: ArchitectureConfig,
     parser: Arc<dyn IImportParserPort>,

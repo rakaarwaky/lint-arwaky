@@ -19,7 +19,7 @@ use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use std::collections::HashSet;
 use std::sync::Arc;
 
-/// Enforces AES201 forbidden import rules — both layer-level and scope-level rules.
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ImportForbiddenChecker {
     parser: Arc<dyn IImportParserPort>,
 }

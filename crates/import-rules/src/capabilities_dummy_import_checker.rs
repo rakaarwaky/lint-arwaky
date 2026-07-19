@@ -13,6 +13,7 @@ use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct DummyImportChecker {
     parser: Arc<dyn IImportParserPort>,
 }

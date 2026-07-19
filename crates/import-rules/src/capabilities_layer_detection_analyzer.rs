@@ -17,6 +17,7 @@ use shared::import_rules::taxonomy_import_constant::LAYER_PREFIXES;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// Central layer detection and rule analysis engine implementing ILayerDetectionProtocol.
 pub struct LayerDetectionAnalyzer {
     pub config: ArchitectureConfig,

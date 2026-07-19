@@ -19,6 +19,7 @@ use std::sync::Arc;
 
 static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// Identifies imports that are declared but never used in the file (AES203).
 pub struct UnusedImportRuleChecker {
     parser: Arc<dyn IImportParserPort>,
