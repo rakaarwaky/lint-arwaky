@@ -85,8 +85,8 @@ A capabilities file must contain **pure domain behavior**:
 
 | File | Purpose |
 |------|---------|
-| `templates/capabilities.py` | New capabilities implementation file |
-| `templates/protocol.py` | New protocol ABC definition |
+| `templates/capabilities_name.py` | New capabilities implementation file |
+| `templates/contract_name_protocol.py` | New protocol ABC definition |
 
 ## Workflow
 

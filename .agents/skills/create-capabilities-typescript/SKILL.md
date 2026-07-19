@@ -85,8 +85,8 @@ A capabilities file must contain **pure domain behavior**:
 
 | File | Purpose |
 |------|---------|
-| `templates/capabilities.ts` | New capabilities implementation file |
-| `templates/protocol.ts` | New protocol interface definition |
+| `templates/capabilities_name.ts` | New capabilities implementation file |
+| `templates/contract_name_protocol.ts` | New protocol interface definition |
 
 ## Workflow
 

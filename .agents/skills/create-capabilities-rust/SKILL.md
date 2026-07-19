@@ -89,8 +89,8 @@ Use these templates when creating new files:
 
 | File | Purpose |
 |------|---------|
-| `templates/capabilities.rs` | New capabilities implementation file |
-| `templates/protocol.rs` | New protocol trait definition |
+| `templates/capabilities_name.rs` | New capabilities implementation file |
+| `templates/contract_name_protocol.rs` | New protocol trait definition |
 | `templates/mod.rs` | Module registration |
 
 ## Workflow

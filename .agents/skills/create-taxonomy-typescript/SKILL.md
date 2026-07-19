@@ -79,10 +79,10 @@ No domain data structures may be defined in capabilities, infrastructure, agents
 
 | File | Purpose |
 |------|---------|
-| `templates/vo.ts` | New value object file |
-| `templates/error.ts` | New error type file |
-| `templates/constant.ts` | New constants file |
-| `templates/utility.ts` | New utility function file |
+| `templates/taxonomy_name_vo.ts` | New value object file |
+| `templates/taxonomy_name_error.ts` | New error type file |
+| `templates/taxonomy_name_constant.ts` | New constants file |
+| `templates/taxonomy_name_utility.ts` | New utility function file |
 
 ## Workflow
 

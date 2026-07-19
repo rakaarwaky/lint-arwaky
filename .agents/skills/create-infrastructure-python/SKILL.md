@@ -81,8 +81,8 @@ Infrastructure MUST NOT contain business logic.
 
 | File | Purpose |
 |------|---------|
-| `templates/infrastructure.py` | New infrastructure implementation file |
-| `templates/port.py` | New port ABC definition |
+| `templates/infrastructure_name.py` | New infrastructure implementation file |
+| `templates/contract_name_port.py` | New port ABC definition |
 
 ## Workflow
 

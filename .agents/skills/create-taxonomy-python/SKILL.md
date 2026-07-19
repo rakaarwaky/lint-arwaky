@@ -79,10 +79,10 @@ No domain data structures may be defined in capabilities, infrastructure, agents
 
 | File | Purpose |
 |------|---------|
-| `templates/vo.py` | New value object file |
-| `templates/error.py` | New error type file |
-| `templates/constant.py` | New constants file |
-| `templates/utility.py` | New utility function file |
+| `templates/taxonomy_name_vo.py` | New value object file |
+| `templates/taxonomy_name_error.py` | New error type file |
+| `templates/taxonomy_name_constant.py` | New constants file |
+| `templates/taxonomy_name_utility.py` | New utility function file |
 
 ## Workflow
 

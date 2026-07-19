@@ -81,8 +81,8 @@ Infrastructure MUST NOT contain business logic.
 
 | File | Purpose |
 |------|---------|
-| `templates/infrastructure.rs` | New infrastructure implementation file |
-| `templates/port.rs` | New port trait definition |
+| `templates/infrastructure_name.rs` | New infrastructure implementation file |
+| `templates/contract_name_port.rs` | New port trait definition |
 
 ## Workflow
 

@@ -81,8 +81,8 @@ Infrastructure MUST NOT contain business logic.
 
 | File | Purpose |
 |------|---------|
-| `templates/infrastructure.ts` | New infrastructure implementation file |
-| `templates/port.ts` | New port interface definition |
+| `templates/infrastructure_name.ts` | New infrastructure implementation file |
+| `templates/contract_name_port.ts` | New port interface definition |
 
 ## Workflow
 

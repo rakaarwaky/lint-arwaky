@@ -79,10 +79,10 @@ No domain data structures may be defined in capabilities, infrastructure, agents
 
 | File | Purpose |
 |------|---------|
-| `templates/vo.rs` | New value object file |
-| `templates/error.rs` | New error type file |
-| `templates/constant.rs` | New constants file |
-| `templates/utility.rs` | New utility function file |
+| `templates/taxonomy_name_vo.rs` | New value object file |
+| `templates/taxonomy_name_error.rs` | New error type file |
+| `templates/taxonomy_name_constant.rs` | New constants file |
+| `templates/taxonomy_name_utility.rs` | New utility function file |
 
 ## Workflow
 
