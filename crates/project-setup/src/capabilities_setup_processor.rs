@@ -265,8 +265,9 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         filename: &str,
         content: &str,
     ) -> Result<DescriptionVO, SetupError> {
+        let fp = FilePath::new(filename.to_string()).map_err(|e| SetupError::io(e))?;
         self.fs_port
-            .write_file(filename, content)
+            .write_file(&fp, content)
             .await
             .map_err(|e| SetupError::io(e))?;
         Ok(DescriptionVO::new(format!(
@@ -280,15 +281,18 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         let config_dir = dirs::config_dir()
             .map(|d| d.join("lint-arwaky"))
             .ok_or_else(|| SetupError::invalid_state("Could not determine XDG config directory"))?;
+        let fp = FilePath::new(config_dir.to_string_lossy().to_string())
+            .map_err(|e| SetupError::io(e))?;
         self.fs_port
-            .create_dir_all(&config_dir.to_string_lossy())
+            .create_dir_all(&fp)
             .await
             .map_err(|e| SetupError::io(e))?;
         Ok(config_dir)
     }
 
     async fn file_exists(&self, path: &str) -> bool {
-        self.fs_port.file_exists(path).await
+        let fp = FilePath::new(path.to_string()).unwrap_or_default();
+        self.fs_port.file_exists(&fp).await
     }
 }
 
