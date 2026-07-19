@@ -156,20 +156,15 @@ impl ContractRoleChecker {
     ///     (e.g. `StringBuilder`, `MyFloat`)
     ///   * language words in English comments ("Float values are rounded")
     ///
-    /// Rules:
-    ///   * `&str` (borrowed string slice) is allowed — borrow lifetimes preclude
-    ///     replacement with a taxonomy VO without major API changes. It is the
-    ///     idiomatic Rust type for file paths, error messages, and other borrowed
-    ///     string data passed into trait methods.
-    ///   * `bool` is allowed — represents a semantic toggle that is not meaningfully
-    ///     expressible as a VO without ceremony.
-    ///   * `String` (owned) is FORBIDDEN — must be replaced with a taxonomy VO
-    ///     (`LintMessage`, `ErrorMessage`, `SymbolName`, `JobId`, etc.).
-    ///   * `Result<String, _>` / `Result<&str, _>` are FORBIDDEN — error variants
-    ///     must use a defined `taxonomy_*_error` type, not a raw `String`.
-    ///   * Numeric primitives `i32/i64/u32/u64/f32/f64` and `char` are FORBIDDEN —
-    ///     must be wrapped in domain VOs (`Count`, `LineNumber`, `ColumnNumber`,
-    ///     `Duration`, etc.) or new domain-specific VOs.
+    /// Rules (cross-language):
+    ///   * `bool` and string types are the ONLY allowed primitives:
+    ///       - Rust: `bool`, `&str`
+    ///       - Python: `bool`, `str`
+    ///       - TypeScript: `boolean`, `string`
+    ///   * FORBIDDEN in Rust: `String`, `Result<String, _>`, `i32/i64/u32/u64/f32/f64`, `char`
+    ///   * FORBIDDEN in Python: `int`, `float`, `list`, `dict`
+    ///   * FORBIDDEN in TypeScript: `number`, `any`
+    ///   * All forbidden primitives must be wrapped in domain VOs.
     ///
     /// Only the parameter types and return type of each trait method signature
     /// are inspected — implementation bodies are out of scope (the contract
@@ -355,9 +350,7 @@ impl ContractRoleChecker {
     fn python_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
         let mut forbidden: Vec<&'static str> = Vec::new();
         let lower = sig.to_lowercase();
-        if lower.contains(": str") {
-            forbidden.push("str");
-        }
+        // `str` and `bool` are ALLOWED (equivalent to Rust's `&str` and `bool`)
         if lower.contains(": int") {
             forbidden.push("int");
         }
@@ -372,9 +365,6 @@ impl ContractRoleChecker {
         }
         if let Some(arrow_idx) = lower.find("->") {
             let ret = lower[arrow_idx + 2..].trim();
-            if ret.starts_with("str") {
-                forbidden.push("str");
-            }
             if ret.starts_with("int") {
                 forbidden.push("int");
             }
@@ -467,9 +457,7 @@ impl ContractRoleChecker {
     fn typescript_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
         let mut forbidden: Vec<&'static str> = Vec::new();
         let lower = sig.to_lowercase();
-        if lower.contains(": string") {
-            forbidden.push("string");
-        }
+        // `string` and `boolean` are ALLOWED (equivalent to Rust's `&str` and `bool`)
         if lower.contains(": number") {
             forbidden.push("number");
         }
@@ -478,9 +466,6 @@ impl ContractRoleChecker {
         }
         if let Some(paren_idx) = lower.rfind(')') {
             let after = lower[paren_idx + 1..].trim();
-            if after.starts_with(": string") {
-                forbidden.push("string");
-            }
             if after.starts_with(": number") {
                 forbidden.push("number");
             }
@@ -562,9 +547,6 @@ impl ContractRoleChecker {
         }
         if combined.contains("Result<String,") || combined.contains("Result<String >") {
             forbidden.push("Result<String, _>");
-        }
-        if combined.contains("Result<&str,") || combined.contains("Result<&str >") {
-            forbidden.push("Result<&str, _>");
         }
         for kw in &["i32", "i64", "u32", "u64", "f32", "f64", "usize", "isize"] {
             if Self::regex_lite_match_whole_token(&combined, kw) {

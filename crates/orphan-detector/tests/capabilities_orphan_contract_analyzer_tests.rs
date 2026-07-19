@@ -44,7 +44,10 @@ fn has_rust_wire_basic() {
 
 #[test]
 fn has_py_impl_inheritance() {
-    assert!(ContractOrphanAnalyzer::has_py_impl("class FooAdapter(BaseFoo):", "BaseFoo"));
+    assert!(ContractOrphanAnalyzer::has_py_impl(
+        "class FooAdapter(BaseFoo):",
+        "BaseFoo"
+    ));
 }
 
 #[test]
@@ -65,7 +68,10 @@ fn has_py_call_basic() {
 
 #[test]
 fn has_ts_impl_basic() {
-    assert!(ContractOrphanAnalyzer::has_ts_impl("class FooAdapter implements IFoo {}", "IFoo"));
+    assert!(ContractOrphanAnalyzer::has_ts_impl(
+        "class FooAdapter implements IFoo {}",
+        "IFoo"
+    ));
 }
 
 #[test]

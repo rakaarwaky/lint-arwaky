@@ -1,0 +1,20 @@
+skill: create-surface-typescript
+version: 1.3.0
+
+cases:
+  - id: good-01
+    type: good
+    description: "Smart surface with correct DI and aggregate delegation"
+    expect: pass
+
+  - id: bad-01
+    type: bad
+    description: "Smart surface imports capabilities directly"
+    expect: fail
+    violation: AES406
+
+  - id: bad-02
+    type: bad
+    description: "Passive surface contains business logic"
+    expect: fail
+    violation: BUSINESS_LOGIC

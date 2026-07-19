@@ -54,7 +54,7 @@ fn no_definition_no_check() {
 #[test]
 fn disabled_mandatory_class_no_violation() {
     use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+    use shared::taxonomy_common_vo::{bool, Count, PatternList};
     use shared::taxonomy_definition_vo::LayerDefinition;
 
     let checker = MandatoryDefinitionChecker::new();
@@ -63,7 +63,7 @@ fn disabled_mandatory_class_no_violation() {
         code_analysis: CodeAnalysisRuleVO {
             min_lines: Count::new(1),
             max_lines: Count::new(100),
-            mandatory_class_definition: BooleanVO::new(false),
+            mandatory_class_definition: bool::new(false),
             ..Default::default()
         },
         exceptions: PatternList::default(),
@@ -81,7 +81,7 @@ fn disabled_mandatory_class_no_violation() {
 #[test]
 fn missing_class_emits_violation() {
     use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+    use shared::taxonomy_common_vo::{bool, Count, PatternList};
     use shared::taxonomy_definition_vo::LayerDefinition;
 
     let checker = MandatoryDefinitionChecker::new();
@@ -90,7 +90,7 @@ fn missing_class_emits_violation() {
         code_analysis: CodeAnalysisRuleVO {
             min_lines: Count::new(1),
             max_lines: Count::new(100),
-            mandatory_class_definition: BooleanVO::new(true),
+            mandatory_class_definition: bool::new(true),
             ..Default::default()
         },
         exceptions: PatternList::default(),
@@ -109,7 +109,7 @@ fn missing_class_emits_violation() {
 #[test]
 fn has_pub_struct_no_violation() {
     use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+    use shared::taxonomy_common_vo::{bool, Count, PatternList};
     use shared::taxonomy_definition_vo::LayerDefinition;
 
     let checker = MandatoryDefinitionChecker::new();
@@ -118,7 +118,7 @@ fn has_pub_struct_no_violation() {
         code_analysis: CodeAnalysisRuleVO {
             min_lines: Count::new(1),
             max_lines: Count::new(100),
-            mandatory_class_definition: BooleanVO::new(true),
+            mandatory_class_definition: bool::new(true),
             ..Default::default()
         },
         exceptions: PatternList::default(),
@@ -136,7 +136,7 @@ fn has_pub_struct_no_violation() {
 #[test]
 fn exception_list_skips_file() {
     use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-    use shared::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+    use shared::taxonomy_common_vo::{bool, Count, PatternList};
     use shared::taxonomy_definition_vo::LayerDefinition;
 
     let checker = MandatoryDefinitionChecker::new();
@@ -145,7 +145,7 @@ fn exception_list_skips_file() {
         code_analysis: CodeAnalysisRuleVO {
             min_lines: Count::new(1),
             max_lines: Count::new(100),
-            mandatory_class_definition: BooleanVO::new(true),
+            mandatory_class_definition: bool::new(true),
             ..Default::default()
         },
         exceptions: PatternList::new(vec!["foo.rs".to_string()]),

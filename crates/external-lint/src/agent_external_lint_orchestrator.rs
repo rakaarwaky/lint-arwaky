@@ -13,7 +13,7 @@ use async_trait::async_trait;
 use futures::future;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use shared::common::taxonomy_common_vo::BooleanVO;
+use shared::common::taxonomy_common_vo::bool;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::external_lint::contract_external_lint_language_detector_port::IExternalLintLanguageDetectorPort;

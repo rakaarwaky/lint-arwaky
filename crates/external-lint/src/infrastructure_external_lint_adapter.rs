@@ -4,7 +4,7 @@ use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_adapter_error::ScanError;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_common_vo::{BooleanVO, PatternList};
+use shared::common::taxonomy_common_vo::{bool, PatternList};
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
@@ -29,18 +29,18 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
         FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
     }
 
-    fn has_python_files(&self, path: &FilePath) -> BooleanVO {
+    fn has_python_files(&self, path: &FilePath) -> bool {
         let p = std::path::Path::new(&path.value);
         if !p.exists() {
-            return BooleanVO::new(p.extension().map(|e| e == "py").unwrap_or(false));
+            return bool::new(p.extension().map(|e| e == "py").unwrap_or(false));
         }
         if p.is_file() {
-            return BooleanVO::new(p.extension().map(|e| e == "py").unwrap_or(false));
+            return bool::new(p.extension().map(|e| e == "py").unwrap_or(false));
         }
         if let Ok(dir) = DirectoryPath::new(path.value.clone()) {
             self.has_py_in_dir(&dir)
         } else {
-            BooleanVO::new(false)
+            bool::new(false)
         }
     }
 
@@ -221,35 +221,35 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
         Ok(ComplianceStatus::new(false))
     }
 
-    fn has_py_in_dir(&self, dir: &DirectoryPath) -> BooleanVO {
+    fn has_py_in_dir(&self, dir: &DirectoryPath) -> bool {
         let Ok(entries) = std::fs::read_dir(&dir.value) else {
-            return BooleanVO::new(false);
+            return bool::new(false);
         };
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
                 if let Ok(sub_dir) = DirectoryPath::new(path.to_string_lossy().to_string()) {
                     if self.has_py_in_dir(&sub_dir).value {
-                        return BooleanVO::new(true);
+                        return bool::new(true);
                     }
                 }
             } else if path.extension().map(|e| e == "py").unwrap_or(false) {
-                return BooleanVO::new(true);
+                return bool::new(true);
             }
         }
-        BooleanVO::new(false)
+        bool::new(false)
     }
 
-    fn is_in_path(&self, executable: &str) -> BooleanVO {
+    fn is_in_path(&self, executable: &str) -> bool {
         if let Ok(path_var) = std::env::var("PATH") {
             for path_dir in std::env::split_paths(&path_var) {
                 let path = path_dir.join(executable);
                 if path.is_file() {
-                    return BooleanVO::new(true);
+                    return bool::new(true);
                 }
             }
         }
-        BooleanVO::new(false)
+        bool::new(false)
     }
 }
 

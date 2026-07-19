@@ -4,7 +4,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
-use shared::taxonomy_common_vo::BooleanVO;
+use shared::taxonomy_common_vo::bool;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::taxonomy_name_vo::SymbolName;
@@ -174,7 +174,7 @@ impl IImportParserPort for MockCycleParser {
 #[test]
 fn no_edges_no_violations() {
     let config = ArchitectureConfig {
-        enabled: BooleanVO::new(true),
+        enabled: bool::new(true),
         ..Default::default()
     };
     let parser = Arc::new(MockCycleParser {

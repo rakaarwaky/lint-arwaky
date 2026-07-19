@@ -1,4 +1,4 @@
-use shared::common::taxonomy_common_vo::BooleanVO;
+use shared::common::taxonomy_common_vo::bool;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::orphan_detector::contract_orphan_protocol::IOrphanFileCachePort;
@@ -41,12 +41,12 @@ impl IOrphanFileCachePort for OrphanFileCache {
         entries
     }
 
-    fn path_exists(&self, path: &FilePath) -> BooleanVO {
-        BooleanVO::from(std::path::Path::new(path.value()).exists())
+    fn path_exists(&self, path: &FilePath) -> bool {
+        bool::from(std::path::Path::new(path.value()).exists())
     }
 
-    fn is_symlink(&self, path: &FilePath) -> BooleanVO {
-        BooleanVO::from(
+    fn is_symlink(&self, path: &FilePath) -> bool {
+        bool::from(
             std::fs::symlink_metadata(path.value())
                 .map(|m| m.file_type().is_symlink())
                 .unwrap_or(false),

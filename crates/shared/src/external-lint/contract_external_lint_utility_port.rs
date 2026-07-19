@@ -1,7 +1,7 @@
 use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
 use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_common_vo::{BooleanVO, PatternList};
+use crate::common::taxonomy_common_vo::{bool, PatternList};
 use crate::common::taxonomy_duration_vo::Timeout;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_path_vo::{DirectoryPath, FilePath};
@@ -12,9 +12,9 @@ use async_trait::async_trait;
 pub trait IExternalLintUtilityPort: Send + Sync {
     fn canonicalize_path(&self, path_str: &str) -> FilePath;
     fn default_working_dir(&self, path: &FilePath) -> FilePath;
-    fn has_python_files(&self, path: &FilePath) -> BooleanVO;
-    fn has_py_in_dir(&self, dir: &DirectoryPath) -> BooleanVO;
-    fn is_in_path(&self, executable: &str) -> BooleanVO;
+    fn has_python_files(&self, path: &FilePath) -> bool;
+    fn has_py_in_dir(&self, dir: &DirectoryPath) -> bool;
+    fn is_in_path(&self, executable: &str) -> bool;
     fn resolve_js_cmd(
         &self,
         executable: &str,

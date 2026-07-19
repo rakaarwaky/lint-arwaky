@@ -7,7 +7,7 @@
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::common::taxonomy_common_vo::BooleanVO;
+use shared::common::taxonomy_common_vo::bool;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -118,7 +118,7 @@ impl IConfigOrchestrationAggregate for MockConfigOrchestratorRich {
             },
         ];
         let config = ArchitectureConfig {
-            enabled: BooleanVO::new(true),
+            enabled: bool::new(true),
             layers,
             rules,
             ..Default::default()

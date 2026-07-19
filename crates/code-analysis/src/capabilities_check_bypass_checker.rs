@@ -17,12 +17,12 @@
 // Per-language patterns are applied only when the file extension matches. Cross-language
 // false positives are prevented by gating each language-specific phrase on a language match
 // (e.g. `raise` only fires on .py files; `throw` only fires on .js/.jsx/.mjs/.cjs/.ts/.tsx files).
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 
 /// Logical source languages recognised by the bypass checker.
@@ -209,7 +209,7 @@ impl BypassChecker {
         let mut i = 0;
         while i + tlen <= bytes.len() {
             if &bytes[i..i + tlen] == token_bytes {
-                let before_ok = i == 0 || !is_ident_start(bytes[i - 1]);
+                let before_ok = i == 0 || !Self::is_ident_start(bytes[i - 1]);
                 if !before_ok {
                     i += 1;
                     continue;
@@ -237,11 +237,11 @@ impl BypassChecker {
                     if j >= bytes.len() {
                         return false;
                     }
-                    if !is_ident_start(bytes[j]) {
+                    if !Self::is_ident_start(bytes[j]) {
                         return false;
                     }
                     j += 1;
-                    while j < bytes.len() && is_ident_continue(bytes[j]) {
+                    while j < bytes.len() && Self::is_ident_continue(bytes[j]) {
                         j += 1;
                     }
                     if j >= bytes.len() {
@@ -354,8 +354,7 @@ impl BypassChecker {
                                 classes[i + 1] = CharClass::StringLiteral;
                                 classes[i + 2] = CharClass::StringLiteral;
                                 i += 2;
-                            } else if i + 2 < chars.len() && chars[i..i + 3] == ['\'', '\'', '\'']
-                            {
+                            } else if i + 2 < chars.len() && chars[i..i + 3] == ['\'', '\'', '\''] {
                                 state = ClassifierState::TripleSingleQuoteString;
                                 classes[i] = CharClass::StringLiteral;
                                 classes[i + 1] = CharClass::StringLiteral;
@@ -413,8 +412,7 @@ impl BypassChecker {
                             if chars[i] == '\\' && i + 1 < chars.len() {
                                 classes[i + 1] = CharClass::StringLiteral;
                                 i += 1;
-                            } else if i + 2 < chars.len() && chars[i..i + 3] == ['\'', '\'', '\'']
-                            {
+                            } else if i + 2 < chars.len() && chars[i..i + 3] == ['\'', '\'', '\''] {
                                 classes[i] = CharClass::StringLiteral;
                                 classes[i + 1] = CharClass::StringLiteral;
                                 classes[i + 2] = CharClass::StringLiteral;
@@ -665,7 +663,10 @@ impl IBypassCheckerProtocol for BypassChecker {
                         }
                     } else {
                         if !p_str.is_empty()
-                            && Self::matches_keyword_token(&code_line.to_lowercase(), p_lower.as_str())
+                            && Self::matches_keyword_token(
+                                &code_line.to_lowercase(),
+                                p_lower.as_str(),
+                            )
                         {
                             bypass_hit = Some(Self::classify_token(p_str));
                             break;

@@ -1,5 +1,5 @@
 // PURPOSE: CodeAnalysisRuleVO — value object containing code analysis and line checker rule definitions
-use crate::common::taxonomy_common_vo::BooleanVO;
+use crate::common::taxonomy_common_vo::bool;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::import_rules::taxonomy_import_rule_vo::MandatoryImportRuleVO;
@@ -14,15 +14,15 @@ pub struct CodeAnalysisRuleVO {
     #[serde(default)]
     pub forbidden_bypass: PatternList,
     #[serde(default)]
-    pub mandatory_class_definition: BooleanVO,
+    pub mandatory_class_definition: bool,
     #[serde(default)]
-    pub dead_inheritance_bypass: BooleanVO,
+    pub dead_inheritance_bypass: bool,
     #[serde(default)]
-    pub check_unused_mandatory_imports: BooleanVO,
+    pub check_unused_mandatory_imports: bool,
     #[serde(default)]
     pub forbidden_inheritance: PatternList,
     #[serde(default)]
-    pub forbid_any_type: BooleanVO,
+    pub forbid_any_type: bool,
     #[serde(default)]
     pub mandatory_imports: Vec<MandatoryImportRuleVO>,
     #[serde(default)]

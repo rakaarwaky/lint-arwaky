@@ -14,7 +14,7 @@ use shared::common::taxonomy_common_error::ErrorMessage;
 use shared::common::taxonomy_common_vo::ColumnNumber;
 use shared::common::taxonomy_common_vo::LineNumber;
 
-use shared::common::taxonomy_common_vo::BooleanVO;
+use shared::common::taxonomy_common_vo::bool;
 use shared::common::taxonomy_error_vo::ErrorCode;
 use shared::common::taxonomy_lint_vo::LocationList;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
@@ -114,9 +114,9 @@ impl IExternalLintLanguageDetectorPort for MockLanguageDetector {
         }
 
         DetectedLanguages {
-            has_rs: BooleanVO::new(has_rs),
-            has_py: BooleanVO::new(has_py),
-            has_js: BooleanVO::new(has_js),
+            has_rs: bool::new(has_rs),
+            has_py: bool::new(has_py),
+            has_js: bool::new(has_js),
         }
     }
 }
@@ -130,9 +130,9 @@ struct MockSelector;
 impl IExternalLintSelectorProtocol for MockSelector {
     fn select_adapters(
         &self,
-        has_rs: BooleanVO,
-        has_py: BooleanVO,
-        has_js: BooleanVO,
+        has_rs: bool,
+        has_py: bool,
+        has_js: bool,
     ) -> Vec<String> {
         let mut names = Vec::new();
         if has_rs.value {

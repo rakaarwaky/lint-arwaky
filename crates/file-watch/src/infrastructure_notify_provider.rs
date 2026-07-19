@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode};
 use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
-use shared::common::taxonomy_common_vo::BooleanVO;
+use shared::common::taxonomy_common_vo::bool;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::taxonomy_service_error::WatchServiceError;
@@ -105,8 +105,8 @@ impl IWatchProviderPort for NotifyWatchProvider {
         Ok(())
     }
 
-    async fn is_available(&self) -> BooleanVO {
-        BooleanVO::new(cfg!(feature = "watch"))
+    async fn is_available(&self) -> bool {
+        bool::new(cfg!(feature = "watch"))
     }
 
     fn subscribe(&self) -> broadcast::Receiver<WatchEvent> {

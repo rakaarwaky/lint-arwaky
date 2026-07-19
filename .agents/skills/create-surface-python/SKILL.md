@@ -1,7 +1,7 @@
 ---
 name: create-surface-python
-description: "Create and validate surface layer files (surface_*.py) — entry points, controllers, hooks, stores, and passive UI components following AES406 role rules."
-version: 1.0.0
+description: "Create and validate Python surface layer files following AES406: smart/utility/passive surfaces, strict import rules, delegate to aggregates, zero direct lower-layer imports, zero business logic, VO-based state, and explicit error handling."
+version: 1.3.0
 category: refactoring
 tags:
   [
@@ -18,6 +18,8 @@ tags:
     entry,
     structure,
     aes406,
+    vo,
+    di,
   ]
 triggers:
   - "create surface python"
@@ -26,7 +28,9 @@ triggers:
   - "create command python"
   - "create component python"
   - "create hook python"
+  - "create store python"
   - "surface role violation python"
+  - "audit surface python"
 dependencies: []
 related:
   - create-capabilities-python
@@ -42,138 +46,60 @@ related:
 
 ## Purpose
 
-Create and validate Python **surface layer** files in feature modules. The surface layer is the outermost boundary — it receives user input, maps events, and delegates to aggregates. It never imports capabilities or infrastructure directly. Three surface types serve different roles with strict import rules.
+Create and validate Python **surface layer** files in feature modules.
 
-## Rules
+The surface layer is the outermost boundary of the application.
 
-### The Fundamental Question
+It is responsible for:
 
-> **"What type of surface is this?"**
+- receiving user input,
+- mapping input events to shared action/event VOs,
+- delegating execution to aggregates,
+- rendering/displaying state from shared VOs.
 
-- **Smart Surface** (`_command`, `_controller`, `_page`, `_entry`) — Entry points; maps events, orchestrates via aggregates
-- **Utility Surface** (`_hook`, `_store`, `_action`, `_screen`) — Thin wrappers around smart surfaces; passive logic
-- **Passive Surface** (`_component`, `_view`, `_layout`) — Pure rendering/display; no logic or orchestration
+The surface layer MUST NOT:
 
-### Three Surface Types
+- import capabilities directly,
+- import infrastructure directly,
+- import concrete agent classes directly,
+- contain business logic,
+- contain domain computation,
+- perform I/O directly.
 
-| Type                | Suffixes                                     | Can Import From                            | Forbidden                                            | Description                                                  |
-| ------------------- | -------------------------------------------- | ------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------ |
-| **Smart Surface**   | `_command`, `_controller`, `_page`, `_entry` | `taxonomy_*` + `contract_aggregate_*` only | capabilities, infrastructure, agents, smart surfaces | Entry points; owns DI container, orchestrates via aggregates |
-| **Utility Surface** | `_hook`, `_store`, `_action`, `_screen`      | `taxonomy_*` + passive surfaces only       | smart surfaces, capabilities, infrastructure, agents | Thin wrappers; maps events/actions to smart surfaces         |
-| **Passive Surface** | `_component`, `_view`, `_layout`             | `taxonomy_*` only                          | everything else (no logic, no orchestration)         | Pure rendering/display; zero business logic                  |
+## Definition of Done
 
-### Import Restrictions (AES406)
+1. Surface file uses a valid suffix.
+2. Surface role is clear: smart, utility, or passive.
+3. Smart surface imports only taxonomy and aggregate contracts.
+4. Utility surface imports only taxonomy and passive surfaces.
+5. Passive surface imports only taxonomy.
+6. No surface file imports capabilities, infrastructure, or concrete agents.
+7. Smart surface delegates to aggregates via `I<Name>Aggregate`.
+8. Utility surface does not import concrete smart surfaces.
+9. Passive surface contains only rendering/display logic.
+10. Surface state fields use shared VOs.
+11. Service dependencies use protocol interfaces via DI.
+12. Errors are handled explicitly.
+13. `python -c "import <module>"` passes.
 
-Surface layer follows strict role-based import rules:
+## References
 
-```python
-# Smart Surface — CAN import taxonomy + contract_aggregate
-from shared.common.taxonomy_path import FilePath
-from shared.cli_commands.contract_import_runner import IImportRunnerAggregate  # ✅ ALLOWED
+| File | Content |
+|------|---------|
+| `references/layer-boundaries.md` | Allowed/Forbidden imports for each surface type |
+| `references/surface-types.md` | Smart/Utility/Passive surface definitions |
+| `references/helper-vs-utility.md` | Helper vs utility decision |
+| `references/error-handling.md` | Error handling rules |
+| `references/primitive-vo-policy.md` | Primitive policy table |
+| `references/examples.md` | All BAD/GOOD code examples |
+| `references/commands.md` | Quick heuristic check commands |
+| `references/checklist.md` | 20-item verification checklist |
 
-# Smart Surface — CANNOT import capabilities/infrastructure directly
-from capabilities_my_checker import MyChecker  # ❌ FORBIDDEN (AES406)
-from infrastructure_adapter import FileAdapter  # ❌ FORBIDDEN (AES406)
+## Templates
 
-# Utility Surface — CAN import taxonomy + passive surfaces only
-from shared.tui.surface_shortcut_component import ShortcutComponent  # ✅ ALLOWED (passive)
-from surface_smart_command import SmartCommand  # ❌ FORBIDDEN (AES406 - smart surface)
-
-# Passive Surface — CAN import taxonomy only
-from shared.common.taxonomy_common import AppState  # ✅ ALLOWED
-```
-
-### Data Flow Pattern
-
-```
-User presses "c" (check) in TUI
- ↓
-surface_tui_command.py (Smart Surface) — maps key to TuiEvent.ActionCheck
- ↓
-agent_tui_orchestrator.py — receives event, delegates to lint executor
- ↓
-capabilities_lint_executor.py — runs check logic, calls code analysis
- ↓
-contract_code_analysis_port.py — interface for code analysis
- ↓
-infrastructure_code_analysis_adapter.py — actual file scanning
-```
-
-The surface layer is the **outermost boundary** — it receives user input, maps events, and delegates to aggregates. It never imports capabilities or infrastructure directly.
-
-### Structural Rules (All Layers)
-
-- **1 file = 1 class** for smart surfaces that hold state
-- **All data classes in shared/taxonomy** — no dataclasses/Enums may be defined outside shared/taxonomy
-- **Fields must use DI** — class fields should receive protocol interfaces via constructor
-- **Helper methods stay in layer** — helper methods that support the class remain in the file
-- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions (no `self`) should be extracted to `*_utility.py` modules in shared/taxonomy
-
-## Detection Patterns
-
-### BAD: Smart Surface Imports Capabilities Directly
-
-```python
-# BAD: Smart surface imports capabilities directly
-from capabilities_my_checker import MyChecker  # ← FORBIDDEN (AES406)
-
-class CheckCommand:
-    def __init__(self):
-        self._checker = MyChecker()  # ← Should use IMyProtocol via contract_aggregate
-```
-
-### BAD: Passive Surface Contains Business Logic
-
-```python
-# BAD: Passive surface contains business logic
-class MyComponent:
-    def render(self) -> str:
-        # ← BUSINESS LOGIC — passive surfaces should only render
-        output = f"Result: {self.result}"
-        return output
-```
-
-### BAD: Utility Surface Imports Smart Surface
-
-```python
-# BAD: Utility surface imports smart surface (AES406)
-from surface_check_command import CheckCommand  # ← FORBIDDEN
-
-class MyAction:
-    def __init__(self):
-        self._command = CheckCommand()  # ← Should only depend on passive surfaces or taxonomy
-```
-
-### GOOD: Smart Surface Uses Aggregates Only
-
-```python
-# GOOD: Smart surface imports only taxonomy + contract aggregates
-from shared.cli_commands.contract_import_runner import IImportRunnerAggregate
-from shared.common.taxonomy_path import FilePath
-
-class CheckCommand:
-    def __init__(self, runner: IImportRunnerAggregate):
-        self._runner = runner  # ← DI via contract
-
-    def scan(self) -> None:
-        # Delegates to aggregate — never imports capabilities/infrastructure directly
-        self._runner.run_check()
-```
-
-### GOOD: Passive Surface is Pure Rendering
-
-```python
-# GOOD: Passive surface only renders, no logic
-from shared.tui.taxonomy_tui_vo import AppState
-
-class StatusComponent:
-    def __init__(self, state: AppState):
-        self._state = state
-
-    def render(self) -> str:
-        # Pure rendering — no business logic, no computation
-        return f"Status: {self._state.status}"
-```
+| File | Purpose |
+|------|---------|
+| `templates/surface_name.py` | New surface implementation file |
 
 ## Workflow
 
@@ -181,133 +107,56 @@ class StatusComponent:
 
 Ask: **"What role does this surface serve?"**
 
-- Entry point / CLI command / TUI entry → **Smart Surface** (`_command`, `_controller`, `_page`, `_entry`)
-- Event handler / store / action / screen → **Utility Surface** (`_hook`, `_store`, `_action`, `_screen`)
-- UI component / view / layout → **Passive Surface** (`_component`, `_view`, `_layout`)
+| Role | Suffixes |
+|------|----------|
+| Entry point / command / controller | `_command`, `_controller`, `_page`, `_entry` |
+| Event/action/store/screen adapter | `_hook`, `_store`, `_action`, `_screen` |
+| Rendering component/view/layout | `_component`, `_view`, `_layout` |
 
 ### Step 2: Check Import Rules
 
-Verify imports follow the correct pattern for the surface type:
-
-```bash
-# Check smart surfaces for forbidden imports
-grep -n "capabilities_\|infrastructure_\|agent_" modules/*/src/surface_*_command.py
-
-# Check passive surfaces for business logic
-grep -n "\.len(\|\.map(\|\.sum(\|if.*contains" modules/*/src/surface_*_component.py
-
-# Check utility surfaces for smart surface imports
-grep -n "surface_.*_command\|surface_.*_controller" modules/*/src/surface_*_action.py
-```
+Verify imports follow the correct pattern for the surface type.
 
 ### Step 3: Create Surface File
 
 Create `surface_<concept>_<suffix>.py` in the appropriate feature module.
 
-**Smart Surface rules:**
+### Step 4: Verify Role Compliance
 
-- Can import `taxonomy_*` + `contract_aggregate_*` only
-- Owns DI container via aggregate interfaces (`I<Name>Aggregate`)
-- Orchestrates via aggregates — never imports capabilities/infrastructure directly
+No capabilities imports, no infrastructure imports, no concrete agent imports, no business logic, no domain computation, no I/O.
 
-```python
-# surface_check_command.py (Smart Surface)
-from shared.cli_commands.contract_import_runner import IImportRunnerAggregate
-from shared.common.taxonomy_path import FilePath
+### Step 5: Verify DI and VO Usage
 
-class CheckCommand:
-    def __init__(self, runner: IImportRunnerAggregate):
-        self._runner = runner
+Service fields use protocol interfaces, state fields use shared VOs.
 
-    def scan(self) -> None:
-        self._runner.run_check()  # ← Delegates to aggregate
-```
+### Step 6: Verify Error Handling
 
-**Passive Surface rules:**
+No silent error swallowing.
 
-- Can import `taxonomy_*` only
-- Pure rendering/display — zero business logic, zero computation, zero orchestration
-
-```python
-# surface_status_component.py (Passive Surface)
-from shared.tui.taxonomy_tui_vo import AppState
-
-class StatusComponent:
-    def __init__(self, state: AppState):
-        self._state = state
-
-    def render(self) -> str:
-        return f"Status: {self._state.status}"  # ← Pure rendering only
-```
-
-### Step 4: Verify Layer Compliance
-
-Check forbidden imports and prohibited patterns:
+### Step 7: Verify Compilation
 
 ```bash
-# Check for capabilities/infrastructure imports in surface files
-grep -rn "capabilities_\|infrastructure_\|agent_" modules/*/src/surface_*.py
-
-# Check passive surfaces for business logic
-grep -n "\.len(\|\.map(\|\.sum(\|if.*contains" modules/*/src/surface_*_component.py modules/*/src/surface_*_view.py
-
-# Check utility surfaces for smart surface imports
-grep -n "surface_.*_command\|surface_.*_controller" modules/*/src/surface_*_action.py modules/*/src/surface_*_hook.py
+python -c "import <module>"
 ```
-
-### Step 5: Verify
-
-Run syntax check to confirm no violations.
-
-## Verification Checklist
-
-- [ ] Surface file uses correct suffix (`_command`, `_controller`, `_page`, `_entry`, `_hook`, `_store`, `_action`, `_screen`, `_component`, `_view`, `_layout`).
-- [ ] **Smart Surface** imports only `taxonomy_*` + `contract_aggregate_*` — no capabilities, infrastructure, agents.
-- [ ] **Utility Surface** imports only `taxonomy_*` + passive surfaces — no smart surfaces, capabilities, infrastructure.
-- [ ] **Passive Surface** imports only `taxonomy_*` — zero business logic, zero computation, zero orchestration.
-- [ ] **Zero direct imports** of capabilities, infrastructure, or agents in any surface file.
-- [ ] Smart surfaces delegate to aggregates via `I<Name>Aggregate` — never call capabilities/infrastructure directly.
-- [ ] Passive surfaces contain only rendering/display logic — no computation, no data transformation.
-- [ ] Utility surfaces are thin wrappers — no business logic, no orchestration.
-- [ ] All dataclasses imported from shared/taxonomy (none defined locally).
-- [ ] `python -c "import <module>"` passes without errors.
 
 ## Quick Commands
 
 ```bash
-# Check smart surfaces for forbidden imports (AES406)
-grep -n "capabilities_\|infrastructure_\|agent_" modules/*/src/surface_*_command.py modules/*/src/surface_*_controller.py
-
-# Check passive surfaces for business logic (AES406)
-grep -n "\.len(\|\.map(\|\.sum(\|if.*contains\|for.*in" modules/*/src/surface_*_component.py modules/*/src/surface_*_view.py
-
-# Check utility surfaces for smart surface imports (AES406)
-grep -n "surface_.*_command\|surface_.*_controller" modules/*/src/surface_*_action.py modules/*/src/surface_*_hook.py
-
-# Find surface files that import non-taxonomy/non-contract types
-find modules/*/src/ -name "surface_*.py" | while read f; do
-    grep -n "^from capabilities_\|^from infrastructure_\|^from agent_" "$f" || true
-done
-
-# Check for dataclasses defined in surface files (should be in taxonomy)
-grep -rn "^@dataclass\|^class.*Enum" modules/*/src/surface_*.py | grep -v "shared/" | grep -v "__init__"
-
-# Check for concrete type fields (non-protocol) in smart surfaces
-grep -n "__init__" modules/*/src/surface_*_command.py | while read line; do
-    file=$(echo "$line" | cut -d: -f1)
-    grep -A5 "def __init__" "$file" | grep -v "Protocol\|Port\|Aggregate" || echo "NON-PROTOCOL FIELD: $file"
-done
+# Check forbidden lower-layer imports
+grep -n "^\s*from\s+.*(capabilities_|infrastructure_|agent_)" modules/*/src/surface_*.py
 
 # Check syntax
 python -c "import <module>"
 ```
 
-## Common Mistakes (AVOID)
+## Common Mistakes
 
-- ❌ **Importing capabilities/infrastructure directly in surface files**: Smart surfaces must use `contract_aggregate_*` interfaces via `I<Name>Aggregate`. Never import capabilities or infrastructure directly.
-- ❌ **Putting business logic in passive surfaces**: Passive surfaces (`_component`, `_view`, `_layout`) must contain only rendering/display logic — zero computation, zero data transformation.
-- ❌ **Utility surfaces importing smart surfaces**: Utility surfaces (`_hook`, `_store`, `_action`, `_screen`) can only import `taxonomy_*` + passive surfaces. Importing smart surfaces violates AES406.
-- ❌ **Defining dataclasses in surface files**: Domain data must be in shared/taxonomy. Only the class belongs in surface files.
-- ❌ **Using concrete types as constructor fields in smart surfaces**: Smart surface fields should always receive `I<Name>Aggregate` (DI via aggregates), not concrete implementations.
-- ❌ **Orchestrating directly from smart surfaces**: Smart surfaces delegate to agents via aggregates — they don't call capabilities or infrastructure directly.
-- ❌ **Duplicating surface definitions across features**: If a surface belongs to multiple features, put it in a shared location and import from there.
+- Importing capabilities directly in surface files.
+- Importing infrastructure directly in surface files.
+- Importing concrete agent classes in surface files.
+- Smart surface calling capabilities or infrastructure directly.
+- Utility surface importing concrete smart surface.
+- Passive surface containing business logic.
+- Defining domain data classes in surface files.
+- Using concrete service types as smart surface fields.
+- Silently discarding errors.

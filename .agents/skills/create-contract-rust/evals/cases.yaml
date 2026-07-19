@@ -1,0 +1,20 @@
+skill: create-contract-rust
+version: 1.3.0
+
+cases:
+  - id: good-01
+    type: good
+    description: "Port contract with correct trait definition"
+    expect: pass
+
+  - id: bad-01
+    type: bad
+    description: "Contract contains implementation"
+    expect: fail
+    violation: AES201
+
+  - id: bad-02
+    type: bad
+    description: "Contract imports non-taxonomy types"
+    expect: fail
+    violation: AES201

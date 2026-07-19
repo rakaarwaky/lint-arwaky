@@ -1,0 +1,22 @@
+# Verification Checklist
+
+- [ ] Surface file uses a valid suffix.
+- [ ] Surface role is clear: smart, utility, or passive.
+- [ ] Smart surface imports only taxonomy and aggregate contracts.
+- [ ] Utility surface imports only taxonomy and passive surfaces.
+- [ ] Passive surface imports only taxonomy.
+- [ ] No surface file imports capabilities.
+- [ ] No surface file imports infrastructure.
+- [ ] No surface file imports concrete agents.
+- [ ] Smart surface delegates to aggregates via `Arc<dyn IAggregate>`.
+- [ ] Utility surface does not import concrete smart surfaces.
+- [ ] Utility surface does not call aggregates directly.
+- [ ] Passive surface contains only rendering/display logic.
+- [ ] Passive surface does not contain domain computation.
+- [ ] Passive surface does not contain business rules.
+- [ ] Surface state fields use shared VOs.
+- [ ] Service dependencies use `Arc<dyn Trait>`.
+- [ ] No local domain data structures are defined.
+- [ ] Errors are handled explicitly.
+- [ ] No `unwrap()` or silent error swallowing.
+- [ ] `cargo check -p <crate-name>` passes.

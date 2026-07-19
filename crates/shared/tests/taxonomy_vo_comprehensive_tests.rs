@@ -11,7 +11,7 @@ use shared_lint_arwaky::common::taxonomy_adapter_error::{
 use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
 use shared_lint_arwaky::common::taxonomy_common_error::{ExitCode, FieldName};
 use shared_lint_arwaky::common::taxonomy_common_vo::{
-    BooleanVO, ColumnNumber, Count, DataFlowList, ErrorMessage, JobIdList, LineContentList,
+    bool, ColumnNumber, Count, DataFlowList, ErrorMessage, JobIdList, LineContentList,
     LineNumber, PatternList, ResponseDataList, Score, Timestamp,
 };
 use shared_lint_arwaky::common::taxonomy_job_id_vo::JobId;
@@ -31,19 +31,19 @@ use shared_lint_arwaky::common::taxonomy_source_vo::ContentString;
 use shared_lint_arwaky::common::taxonomy_suggestion_vo::DescriptionVO;
 
 // ============================================================================
-// taxonomy_common_vo: BooleanVO, ColumnNumber, Count, DataFlowList, JobIdList,
+// taxonomy_common_vo: bool, ColumnNumber, Count, DataFlowList, JobIdList,
 //                     LineContentList, LineNumber, PatternList, ResponseDataList,
 //                     Score, Timestamp, ErrorMessage
 // ============================================================================
 
 #[test]
 fn boolean_vo_new_value_display() {
-    let b = BooleanVO::new(true);
+    let b = bool::new(true);
     assert!(b.value());
     assert_eq!(b.to_string(), "true");
-    let b2 = BooleanVO::from(false);
+    let b2 = bool::from(false);
     assert!(!b2.value);
-    let b3: BooleanVO = Default::default();
+    let b3: bool = Default::default();
     assert!(!b3.value);
 }
 

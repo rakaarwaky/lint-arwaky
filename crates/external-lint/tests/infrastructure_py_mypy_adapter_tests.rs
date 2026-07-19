@@ -6,7 +6,7 @@ use external_lint_lint_arwaky::infrastructure_py_mypy_adapter::MyPyAdapter;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared::common::taxonomy_common_vo::{BooleanVO, ErrorMessage, PatternList};
+use shared::common::taxonomy_common_vo::{bool, ErrorMessage, PatternList};
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
@@ -50,14 +50,14 @@ impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
     fn default_working_dir(&self, path: &FilePath) -> FilePath {
         path.clone()
     }
-    fn has_python_files(&self, _path: &FilePath) -> BooleanVO {
-        BooleanVO::new(true)
+    fn has_python_files(&self, _path: &FilePath) -> bool {
+        bool::new(true)
     }
-    fn has_py_in_dir(&self, _dir: &DirectoryPath) -> BooleanVO {
-        BooleanVO::new(true)
+    fn has_py_in_dir(&self, _dir: &DirectoryPath) -> bool {
+        bool::new(true)
     }
-    fn is_in_path(&self, _executable: &str) -> BooleanVO {
-        BooleanVO::new(true)
+    fn is_in_path(&self, _executable: &str) -> bool {
+        bool::new(true)
     }
     fn resolve_js_cmd(
         &self,

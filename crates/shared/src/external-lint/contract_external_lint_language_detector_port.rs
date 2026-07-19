@@ -1,12 +1,12 @@
 // PURPOSE: IExternalLintLanguageDetectorPort — port for detecting languages in a project directory
-use crate::common::taxonomy_common_vo::BooleanVO;
+use crate::common::taxonomy_common_vo::bool;
 use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 pub struct DetectedLanguages {
-    pub has_rs: BooleanVO,
-    pub has_py: BooleanVO,
-    pub has_js: BooleanVO,
+    pub has_rs: bool,
+    pub has_py: bool,
+    pub has_js: bool,
 }
 
 #[async_trait]

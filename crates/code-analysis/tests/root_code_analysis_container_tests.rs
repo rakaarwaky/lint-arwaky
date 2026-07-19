@@ -77,7 +77,7 @@ impl shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionPr
         C.get_or_init(|| {
             let mut config =
                 shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
-            config.enabled = shared::taxonomy_common_vo::BooleanVO::new(false);
+            config.enabled = shared::taxonomy_common_vo::bool::new(false);
             config
         })
     }

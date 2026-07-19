@@ -383,9 +383,7 @@ impl ContractOrphanAnalyzer {
                 .and_then(|re| re.captures(&code))
                 .map(|caps| caps[1].to_string()),
             "py" => {
-                if let Some(caps) = Self::re_contract_py()
-                    .and_then(|re| re.captures(&code))
-                {
+                if let Some(caps) = Self::re_contract_py().and_then(|re| re.captures(&code)) {
                     caps.get(1)
                         .or_else(|| caps.get(2))
                         .map(|m| m.as_str().to_string())
@@ -395,15 +393,10 @@ impl ContractOrphanAnalyzer {
                         .map(|caps| caps[1].to_string())
                 }
             }
-            "ts" | "tsx" | "js" | "jsx" => {
-                Self::re_ts_interface_export()
-                    .and_then(|re| re.captures(&code))
-                    .or_else(|| {
-                        Self::re_interface()
-                            .and_then(|re| re.captures(&code))
-                    })
-                    .map(|caps| caps[1].to_string())
-            }
+            "ts" | "tsx" | "js" | "jsx" => Self::re_ts_interface_export()
+                .and_then(|re| re.captures(&code))
+                .or_else(|| Self::re_interface().and_then(|re| re.captures(&code)))
+                .map(|caps| caps[1].to_string()),
             _ => None,
         }
     }
@@ -606,7 +599,8 @@ impl ContractOrphanAnalyzer {
             );
         }
 
-        if suffix == Self::SUFFIX_AGGREGATE && !Self::check_called(contents, basenames, &trait_name) {
+        if suffix == Self::SUFFIX_AGGREGATE && !Self::check_called(contents, basenames, &trait_name)
+        {
             return Self::orphan_result(
                 &suffix,
                 &trait_name,
@@ -618,7 +612,8 @@ impl ContractOrphanAnalyzer {
             );
         }
 
-        if suffix == Self::SUFFIX_AGGREGATE && !Self::check_wired(contents, basenames, &trait_name) {
+        if suffix == Self::SUFFIX_AGGREGATE && !Self::check_wired(contents, basenames, &trait_name)
+        {
             return Self::orphan_result(
                 &suffix,
                 &trait_name,

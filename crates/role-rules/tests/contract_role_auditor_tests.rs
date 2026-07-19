@@ -36,11 +36,11 @@ fn detects_result_string() {
 }
 
 #[test]
-fn detects_result_borrowed_str() {
+fn allows_result_borrowed_str() {
     let v = ContractRoleChecker::signature_uses_forbidden_primitive(
         "fn f(&self, p: &Path) -> Result<&str, ErrorCode>;",
     );
-    assert!(v.contains(&"Result<&str, _>"));
+    assert!(v.is_empty());
 }
 
 #[test]

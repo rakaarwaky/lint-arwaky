@@ -17,14 +17,16 @@ fn suffix_from_command_file() {
 #[test]
 fn suffix_from_controller_file() {
     let extractor = get_extractor();
-    let suffix = SurfacesOrphanAnalyzer::get_surface_suffix("surface_user_controller.rs", &extractor);
+    let suffix =
+        SurfacesOrphanAnalyzer::get_surface_suffix("surface_user_controller.rs", &extractor);
     assert_eq!(suffix, "controller");
 }
 
 #[test]
 fn suffix_from_component_file() {
     let extractor = get_extractor();
-    let suffix = SurfacesOrphanAnalyzer::get_surface_suffix("surface_header_component.tsx", &extractor);
+    let suffix =
+        SurfacesOrphanAnalyzer::get_surface_suffix("surface_header_component.tsx", &extractor);
     assert_eq!(suffix, "component");
 }
 
@@ -45,7 +47,10 @@ fn suffix_from_entry_file() {
 #[test]
 fn category_smart_for_command() {
     assert_eq!(SurfacesOrphanAnalyzer::surface_category("command"), "smart");
-    assert_eq!(SurfacesOrphanAnalyzer::surface_category("controller"), "smart");
+    assert_eq!(
+        SurfacesOrphanAnalyzer::surface_category("controller"),
+        "smart"
+    );
     assert_eq!(SurfacesOrphanAnalyzer::surface_category("page"), "smart");
 }
 
@@ -53,16 +58,31 @@ fn category_smart_for_command() {
 fn category_utility_for_hook() {
     assert_eq!(SurfacesOrphanAnalyzer::surface_category("hook"), "utility");
     assert_eq!(SurfacesOrphanAnalyzer::surface_category("store"), "utility");
-    assert_eq!(SurfacesOrphanAnalyzer::surface_category("action"), "utility");
-    assert_eq!(SurfacesOrphanAnalyzer::surface_category("screen"), "utility");
-    assert_eq!(SurfacesOrphanAnalyzer::surface_category("router"), "utility");
+    assert_eq!(
+        SurfacesOrphanAnalyzer::surface_category("action"),
+        "utility"
+    );
+    assert_eq!(
+        SurfacesOrphanAnalyzer::surface_category("screen"),
+        "utility"
+    );
+    assert_eq!(
+        SurfacesOrphanAnalyzer::surface_category("router"),
+        "utility"
+    );
 }
 
 #[test]
 fn category_passive_for_component() {
-    assert_eq!(SurfacesOrphanAnalyzer::surface_category("component"), "passive");
+    assert_eq!(
+        SurfacesOrphanAnalyzer::surface_category("component"),
+        "passive"
+    );
     assert_eq!(SurfacesOrphanAnalyzer::surface_category("view"), "passive");
-    assert_eq!(SurfacesOrphanAnalyzer::surface_category("layout"), "passive");
+    assert_eq!(
+        SurfacesOrphanAnalyzer::surface_category("layout"),
+        "passive"
+    );
 }
 
 #[test]

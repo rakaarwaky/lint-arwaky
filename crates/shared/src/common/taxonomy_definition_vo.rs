@@ -1,5 +1,5 @@
 // PURPOSE: LayerDefinition, LayerMapVO, NamingConfig — VOs for AES layer definitions and naming policies
-use crate::common::taxonomy_common_vo::BooleanVO;
+use crate::common::taxonomy_common_vo::bool;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
@@ -37,7 +37,7 @@ pub struct LayerDefinition {
     #[serde(default)]
     pub exceptions: PatternList,
     #[serde(default)]
-    pub recursive: BooleanVO,
+    pub recursive: bool,
 
     #[serde(flatten)]
     pub naming: crate::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO,

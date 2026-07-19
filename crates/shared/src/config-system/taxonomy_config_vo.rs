@@ -1,7 +1,7 @@
 // PURPOSE: ArchitectureConfig, LayerDefinition, ConfigRule — configuration value objects for AES rules definition
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_common_vo::BooleanVO;
+use crate::common::taxonomy_common_vo::bool;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
@@ -14,8 +14,8 @@ use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-fn default_rule_enabled() -> BooleanVO {
-    BooleanVO::new(true)
+fn default_rule_enabled() -> bool {
+    bool::new(true)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -27,7 +27,7 @@ pub struct ArchitectureRule {
     pub scope: LayerNameVO,
     pub exceptions: PatternList,
     #[serde(default = "default_rule_enabled")]
-    pub enabled: BooleanVO,
+    pub enabled: bool,
     #[serde(default)]
     pub allowed: PatternList,
     #[serde(default)]
@@ -48,23 +48,23 @@ pub struct ArchitectureRule {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(default)]
 pub struct ArchitectureConfig {
-    pub enabled: BooleanVO,
+    pub enabled: bool,
     pub layers: std::collections::HashMap<LayerNameVO, LayerDefinition>,
     pub rules: Vec<ArchitectureRule>,
     pub naming: NamingConfig,
     pub ignored_paths: FilePathList,
-    pub mandatory_class_definition: BooleanVO,
+    pub mandatory_class_definition: bool,
     pub ignored_rules: PatternList,
 }
 
 impl ArchitectureConfig {
     pub fn new(
-        enabled: BooleanVO,
+        enabled: bool,
         layers: std::collections::HashMap<LayerNameVO, LayerDefinition>,
         rules: Vec<ArchitectureRule>,
         naming: NamingConfig,
         ignored_paths: FilePathList,
-        mandatory_class_definition: BooleanVO,
+        mandatory_class_definition: bool,
         ignored_rules: PatternList,
     ) -> Self {
         Self {
@@ -90,12 +90,12 @@ impl ArchitectureConfig {
 impl Default for ArchitectureConfig {
     fn default() -> Self {
         Self {
-            enabled: BooleanVO::new(true),
+            enabled: bool::new(true),
             layers: HashMap::new(),
             rules: Vec::new(),
             naming: NamingConfig::new(Count::new(2)),
             ignored_paths: FilePathList { values: vec![] },
-            mandatory_class_definition: BooleanVO::new(false),
+            mandatory_class_definition: bool::new(false),
             ignored_rules: PatternList::default(),
         }
     }

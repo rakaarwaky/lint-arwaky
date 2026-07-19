@@ -3,7 +3,7 @@
 // Pure business logic: maps language flags to adapter name lists.
 // No I/O, no infrastructure dependencies.
 
-use shared::common::taxonomy_common_vo::BooleanVO;
+use shared::common::taxonomy_common_vo::bool;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -17,9 +17,9 @@ pub struct CapabilitiesExternalLintSelector {
 impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
     fn select_adapters(
         &self,
-        has_rs: BooleanVO,
-        has_py: BooleanVO,
-        has_js: BooleanVO,
+        has_rs: bool,
+        has_py: bool,
+        has_js: bool,
     ) -> Vec<String> {
         let mut adapter_names = Vec::new();
         if has_rs.value() {
