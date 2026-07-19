@@ -1,4 +1,4 @@
-use crate::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 use std::sync::Arc;
 
 pub fn get_surface_suffix(
@@ -6,7 +6,7 @@ pub fn get_surface_suffix(
     extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
 ) -> String {
     extractor
-        .file_suffix(&crate::common::taxonomy_path_vo::FilePath {
+        .file_suffix(&shared::common::taxonomy_path_vo::FilePath {
             value: basename.to_string(),
         })
         .value

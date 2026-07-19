@@ -34,6 +34,5 @@ pub use capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 pub mod root_role_rules_container;
 
 // Private utility modules (extracted from shared)
-mod utils_signature;
 mod utils_path;
 mod utils_surface;

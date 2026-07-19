@@ -3,18 +3,19 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use shared::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 struct MockLinter;
 
 impl ICodeAnalysisAggregate for MockLinter {
-    fn run_code_analysis(&self, _path: &str) -> LintResultList {
+    fn run_code_analysis(&self, _path: &FilePath) -> LintResultList {
         LintResultList::default()
     }
-    fn run_code_analysis_dir(&self, _src_dir: &str) -> LintResultList {
+    fn run_code_analysis_dir(&self, _src_dir: &FilePath) -> LintResultList {
         LintResultList::default()
     }
-    fn run_code_analysis_path(&self, _path: &str) -> Vec<LintResult> {
+    fn run_code_analysis_path(&self, _path: &FilePath) -> Vec<LintResult> {
         vec![]
     }
     fn calc_score(&self, _results: &[LintResult]) -> f64 {
@@ -23,7 +24,7 @@ impl ICodeAnalysisAggregate for MockLinter {
     fn check_critical(&self, _results: &[LintResult]) -> bool {
         false
     }
-    fn format_report(&self, _results: &LintResultList, _project_root: &str) -> String {
+    fn format_report(&self, _results: &LintResultList, _project_root: &FilePath) -> String {
         String::new()
     }
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
