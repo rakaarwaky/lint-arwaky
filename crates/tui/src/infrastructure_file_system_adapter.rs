@@ -100,6 +100,10 @@ impl IFileSystemPort for FileSystemAdapter {
             })
             .collect()
     }
+
+    fn write_file(&self, path: &str, content: &str) -> bool {
+        std::fs::write(path, content).is_ok()
+    }
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────

@@ -105,17 +105,6 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
-impl Default for OrphanGraphResolver {
-    fn default() -> Self {
-        Self {
-            extractor: Arc::new(
-                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
-            ),
-            cache: Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()),
-        }
-    }
-}
-
 impl OrphanGraphResolver {
     pub fn new(
         extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,

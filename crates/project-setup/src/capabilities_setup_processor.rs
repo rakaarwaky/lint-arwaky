@@ -28,12 +28,18 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct SetupManagementProcessor {
     installer: Arc<dyn ISetupInstallerPort>,
+    fs_port: Arc<
+        dyn shared::project_setup::contract_filesystem_maintenance_port::IFileSystemMaintenancePort,
+    >,
 }
 
 // ─── Block 3: Constructors & Helpers ──────────────────────
 impl SetupManagementProcessor {
-    pub fn new(installer: Arc<dyn ISetupInstallerPort>) -> Self {
-        Self { installer }
+    pub fn new(
+        installer: Arc<dyn ISetupInstallerPort>,
+        fs_port: Arc<dyn shared::project_setup::contract_filesystem_maintenance_port::IFileSystemMaintenancePort>,
+    ) -> Self {
+        Self { installer, fs_port }
     }
 }
 
@@ -155,8 +161,8 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         SuccessStatus::new(res.is_ok())
     }
 
-    fn detect_language(&self) -> ProjectLanguageVO {
-        let langs = self.detect_languages();
+    async fn detect_language(&self) -> ProjectLanguageVO {
+        let langs = self.detect_languages().await;
         langs
             .values
             .into_iter()
@@ -164,25 +170,26 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
             .unwrap_or_else(|| ProjectLanguageVO::new("rust"))
     }
 
-    fn detect_languages(&self) -> ProjectLanguagesVO {
+    async fn detect_languages(&self) -> ProjectLanguagesVO {
         let mut found_rust = false;
         let mut found_python = false;
         let mut found_javascript = false;
 
         // Phase 1: Marker-based detection (fast, no filesystem scan)
-        if std::path::Path::new("crates").exists() || std::path::Path::new("Cargo.toml").exists() {
+        if self.fs_port.path_exists("crates").await || self.fs_port.path_exists("Cargo.toml").await
+        {
             found_rust = true;
         }
-        if std::path::Path::new("packages").exists()
-            || std::path::Path::new("modules").exists()
-            || std::path::Path::new("pyproject.toml").exists()
-            || std::path::Path::new("setup.py").exists()
-            || std::path::Path::new("requirements.txt").exists()
+        if self.fs_port.path_exists("packages").await
+            || self.fs_port.path_exists("modules").await
+            || self.fs_port.path_exists("pyproject.toml").await
+            || self.fs_port.path_exists("setup.py").await
+            || self.fs_port.path_exists("requirements.txt").await
         {
             found_python = true;
         }
-        if std::path::Path::new("package.json").exists()
-            || std::path::Path::new("tsconfig.json").exists()
+        if self.fs_port.path_exists("package.json").await
+            || self.fs_port.path_exists("tsconfig.json").await
         {
             found_javascript = true;
         }
@@ -190,13 +197,14 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         // Phase 2: File-extension scan (shallow, depth-limited)
         if !(found_rust && found_python && found_javascript) {
             self.scan_source_extensions(
-                std::path::Path::new("."),
+                ".",
                 0,
                 4,
                 &mut found_rust,
                 &mut found_python,
                 &mut found_javascript,
-            );
+            )
+            .await;
         }
 
         let mut langs = Vec::new();
@@ -224,12 +232,15 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         }
     }
 
-    fn write_config_file(
+    async fn write_config_file(
         &self,
         filename: &str,
         content: &str,
     ) -> Result<DescriptionVO, SetupError> {
-        std::fs::write(filename, content).map_err(|e| SetupError::io(e.to_string()))?;
+        self.fs_port
+            .write_file(filename, content)
+            .await
+            .map_err(|e| SetupError::io(e))?;
         Ok(DescriptionVO::new(format!(
             "wrote {} ({} bytes)",
             filename,
@@ -237,16 +248,19 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         )))
     }
 
-    fn create_global_config_dir(&self) -> Result<std::path::PathBuf, SetupError> {
+    async fn create_global_config_dir(&self) -> Result<std::path::PathBuf, SetupError> {
         let config_dir = dirs::config_dir()
             .map(|d| d.join("lint-arwaky"))
             .ok_or_else(|| SetupError::invalid_state("Could not determine XDG config directory"))?;
-        std::fs::create_dir_all(&config_dir).map_err(|e| SetupError::io(e.to_string()))?;
+        self.fs_port
+            .create_dir_all(&config_dir.to_string_lossy())
+            .await
+            .map_err(|e| SetupError::io(e))?;
         Ok(config_dir)
     }
 
-    fn file_exists(&self, path: &str) -> bool {
-        std::path::Path::new(path).exists()
+    async fn file_exists(&self, path: &str) -> bool {
+        self.fs_port.file_exists(path).await
     }
 }
 
@@ -254,9 +268,9 @@ impl SetupManagementProcessor {
     /// Walk the directory tree (depth-limited) looking for source file extensions.
     /// Sets the corresponding `found_*` flag to `true` when a match is found.
     /// Skips hidden dirs, `target/`, `node_modules/`, and `vendor/` for speed.
-    fn scan_source_extensions(
+    async fn scan_source_extensions(
         &self,
-        dir: &std::path::Path,
+        dir: &str,
         depth: usize,
         max_depth: usize,
         found_rust: &mut bool,
@@ -266,13 +280,10 @@ impl SetupManagementProcessor {
         if depth > max_depth {
             return;
         }
-        let entries = match std::fs::read_dir(dir) {
-            Ok(e) => e,
-            Err(_) => return,
-        };
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
+        let entries = self.fs_port.list_dir(dir).await;
+        for entry in &entries {
+            let path = std::path::Path::new(&entry.path);
+            if entry.is_dir {
                 let name = path.file_name().unwrap_or_default().to_string_lossy();
                 if name.starts_with('.')
                     || name == "target"
@@ -284,14 +295,15 @@ impl SetupManagementProcessor {
                 {
                     continue;
                 }
-                self.scan_source_extensions(
-                    &path,
+                Box::pin(self.scan_source_extensions(
+                    &entry.path,
                     depth + 1,
                     max_depth,
                     found_rust,
                     found_python,
                     found_javascript,
-                );
+                ))
+                .await;
                 if *found_rust && *found_python && *found_javascript {
                     return;
                 }

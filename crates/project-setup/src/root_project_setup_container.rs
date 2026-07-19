@@ -19,8 +19,11 @@ impl SetupContainer {
     pub fn new() -> Self {
         let installer =
             Arc::new(crate::infrastructure_setup_installer_adapter::SetupInstallerAdapter::new());
-        let protocol =
-            Arc::new(crate::capabilities_setup_processor::SetupManagementProcessor::new(installer));
+        let fs_port: Arc<dyn shared::project_setup::contract_filesystem_maintenance_port::IFileSystemMaintenancePort> =
+            Arc::new(crate::infrastructure_filesystem_maintenance_adapter::FileSystemMaintenanceAdapter::new());
+        let protocol = Arc::new(
+            crate::capabilities_setup_processor::SetupManagementProcessor::new(installer, fs_port),
+        );
         let aggregate = Arc::new(
             crate::agent_setup_orchestrator::SetupManagementOrchestrator::new(protocol.clone()),
         );

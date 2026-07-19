@@ -88,34 +88,34 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
         self.protocol.install_javascript_adapters(sudo).await
     }
 
-    fn detect_language(
+    async fn detect_language(
         &self,
     ) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO {
-        self.protocol.detect_language()
+        self.protocol.detect_language().await
     }
 
-    fn detect_languages(&self) -> ProjectLanguagesVO {
-        self.protocol.detect_languages()
+    async fn detect_languages(&self) -> ProjectLanguagesVO {
+        self.protocol.detect_languages().await
     }
 
     fn get_config_template(&self, language: &str) -> &'static str {
         self.protocol.get_config_template(language)
     }
 
-    fn write_config_file(
+    async fn write_config_file(
         &self,
         filename: &str,
         content: &str,
     ) -> shared::project_setup::WriteConfigResult {
-        self.protocol.write_config_file(filename, content)
+        self.protocol.write_config_file(filename, content).await
     }
 
-    fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
-        self.protocol.create_global_config_dir()
+    async fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
+        self.protocol.create_global_config_dir().await
     }
 
-    fn file_exists(&self, path: &str) -> bool {
-        self.protocol.file_exists(path)
+    async fn file_exists(&self, path: &str) -> bool {
+        self.protocol.file_exists(path).await
     }
 }
 

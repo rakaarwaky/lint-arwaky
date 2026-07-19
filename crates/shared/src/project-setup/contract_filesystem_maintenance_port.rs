@@ -9,6 +9,9 @@ pub struct FileEntry {
 #[async_trait]
 pub trait IFileSystemMaintenancePort: Send + Sync {
     async fn read_file(&self, path: &str) -> Result<String, String>;
+    async fn write_file(&self, path: &str, content: &str) -> Result<(), String>;
+    async fn create_dir_all(&self, path: &str) -> Result<(), String>;
+    async fn path_exists(&self, path: &str) -> bool;
     async fn file_exists(&self, path: &str) -> bool;
     async fn walk_py_files(&self, dir: &str) -> Vec<String>;
     async fn find_cache_dirs(&self, dir: &str, cache_names: &[&str]) -> Vec<String>;

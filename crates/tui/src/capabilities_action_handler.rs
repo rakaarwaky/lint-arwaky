@@ -368,10 +368,11 @@ impl ActionHandler {
             return;
         }
 
-        let path = std::path::Path::new("lint-results.txt");
-        match std::fs::write(path, text) {
-            Ok(()) => state.set_status("Saved to lint-results.txt"),
-            Err(e) => state.set_status(format!("Save failed: {e}")),
+        let path = "lint-results.txt";
+        if self.fs_port.write_file(path, text) {
+            state.set_status("Saved to lint-results.txt");
+        } else {
+            state.set_status("Save failed");
         }
     }
 

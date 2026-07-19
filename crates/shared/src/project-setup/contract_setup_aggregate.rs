@@ -22,10 +22,10 @@ pub trait SetupManagementAggregate: Send + Sync {
     fn mcp_config_vscode(&self, transport: &TransportProtocol) -> McpConfigVO;
     async fn install_python_adapters(&self) -> SuccessStatus;
     async fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus;
-    fn detect_language(&self) -> ProjectLanguageVO;
-    fn detect_languages(&self) -> ProjectLanguagesVO;
+    async fn detect_language(&self) -> ProjectLanguageVO;
+    async fn detect_languages(&self) -> ProjectLanguagesVO;
     fn get_config_template(&self, language: &str) -> &'static str;
-    fn write_config_file(&self, filename: &str, content: &str) -> WriteConfigResult;
-    fn create_global_config_dir(&self) -> CreateConfigDirResult;
-    fn file_exists(&self, path: &str) -> bool;
+    async fn write_config_file(&self, filename: &str, content: &str) -> WriteConfigResult;
+    async fn create_global_config_dir(&self) -> CreateConfigDirResult;
+    async fn file_exists(&self, path: &str) -> bool;
 }

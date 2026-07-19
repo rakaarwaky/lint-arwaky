@@ -12,17 +12,25 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> ExitCode {
+    let rt = match tokio::runtime::Runtime::new() {
+        Ok(rt) => rt,
+        Err(e) => {
+            println!("Failed to create runtime: {e}");
+            return ExitCode::from(1);
+        }
+    };
+
     // 1. Write language config files
     let mut all_ok = true;
-    let languages = setup_orchestrator.detect_languages();
+    let languages = rt.block_on(setup_orchestrator.detect_languages());
     for lang in languages.iter() {
         let lang_str = lang.value();
         let target = format!("lint_arwaky.config.{}.yaml", lang_str);
-        if setup_orchestrator.file_exists(&target) {
+        if rt.block_on(setup_orchestrator.file_exists(&target)) {
             println!("Config already exists: {}", target);
         } else {
             let content = setup_orchestrator.get_config_template(lang_str);
-            match setup_orchestrator.write_config_file(&target, content) {
+            match rt.block_on(setup_orchestrator.write_config_file(&target, content)) {
                 Ok(desc) => {
                     println!("Config created: {} (language: {})", target, lang_str);
                     println!("  {}", desc.value);
@@ -55,7 +63,7 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
                     if let Some(parent) = std::path::Path::new(doc).parent() {
                         let _ = std::fs::create_dir_all(parent);
                     }
-                    match setup_orchestrator.write_config_file(doc, &content) {
+                    match rt.block_on(setup_orchestrator.write_config_file(doc, &content)) {
                         Ok(_) => println!("  {doc} — distributed from XDG config"),
                         Err(e) => println!("  {doc} — error: {e}"),
                     }

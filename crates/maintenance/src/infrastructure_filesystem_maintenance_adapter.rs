@@ -16,6 +16,18 @@ impl IFileSystemMaintenancePort for FileSystemMaintenanceAdapter {
         fs::read_to_string(path).map_err(|e| e.to_string())
     }
 
+    async fn write_file(&self, path: &str, content: &str) -> Result<(), String> {
+        fs::write(path, content).map_err(|e| e.to_string())
+    }
+
+    async fn create_dir_all(&self, path: &str) -> Result<(), String> {
+        fs::create_dir_all(path).map_err(|e| e.to_string())
+    }
+
+    async fn path_exists(&self, path: &str) -> bool {
+        Path::new(path).exists()
+    }
+
     async fn file_exists(&self, path: &str) -> bool {
         Path::new(path).exists()
     }

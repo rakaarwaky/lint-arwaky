@@ -31,5 +31,4 @@ pub use capabilities_surface_role_auditor::SurfaceRoleChecker;
 pub mod capabilities_taxonomy_role_auditor;
 pub use agent_role_orchestrator::RoleAggregateImpl;
 pub use capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
-pub mod infrastructure_file_reader_adapter;
 pub mod root_role_rules_container;
