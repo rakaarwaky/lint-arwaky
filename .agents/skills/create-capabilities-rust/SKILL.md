@@ -64,6 +64,7 @@ Create and validate Rust **capabilities layer** files following clean architectu
 ### Helper vs Utility Decision (The Litmus Test)
 
 > **The Litmus Test:** "If I copy-paste this function to a completely different file, would it still work 100% the same without changing a single line of code?"
+>
 > - If **YES** → **Extract to Utility File**.
 > - If **NO** (needs `self`, struct state, or class context) → **Keep as Private Helper**.
 
@@ -135,7 +136,10 @@ Trait impl found in a capabilities file?
 #### Example: Correct 3-Block Order
 
 ```rust
+use shared::code_analysis::taxonomy_line_checker_utility::is_barrel_file;
+
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ArchLineChecker;
 
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
@@ -147,7 +151,13 @@ impl ILineCheckerProtocol for ArchLineChecker {
         content: &str,
         violations: &mut Vec<LintResult>,
     ) {
-        // ... domain logic ...
+        let basename = std::path::Path::new(file).file_name().and_then(|f| f.to_str()).unwrap_or("");
+      
+        // ✅ BENAR: Menggunakan utility function yang di-import, bukan method internal
+        if is_barrel_file(basename) {
+            return;
+        }
+        // ... sisa logic ...
     }
 }
 
@@ -163,8 +173,10 @@ impl ArchLineChecker {
         Self
     }
 
-    fn is_barrel_file(basename: &str) -> bool {
-        matches!(basename, "__init__.py" | "mod.rs")
+    // ✅ CONTOH PRIVATE HELPER YANG BENAR: 
+    // Fungsi ini MEMANG harus di Block 3 karena menggunakan `self` (instance state)
+    fn get_effective_threshold(&self, layer: &str) -> i64 {
+        self.config.get_threshold(layer) * 2 // Contoh akses `self`
     }
 }
 ```

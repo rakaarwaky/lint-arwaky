@@ -4,44 +4,17 @@ use regex::Regex;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
+use shared::orphan_detector::contract_orphan_protocol::{
+    IAgentOrphanProtocol, IOrphanFileCachePort,
+};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
-
-// ─── Block 1: Struct Definition ───────────────────────────
-pub struct AgentOrphanAnalyzer {}
-
-// ─── Block 2: Public Contract (domain protocol ONLY) ──────
-impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
-    fn is_agent_orphan(
-        &self,
-        f: &FilePath,
-        _root_dir: &FilePath,
-        all_files: &[FilePath],
-    ) -> OrphanIndicatorResult {
-        self.check_agent_orphan(f, all_files)
-    }
-}
-
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
-impl Default for AgentOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AgentOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    fn check_agent_orphan(&self, f: &FilePath, all_files: &[FilePath]) -> OrphanIndicatorResult {
-        is_agent_orphan_raw(f, all_files)
-    }
-}
-
+use std::sync::Arc;
 use std::sync::OnceLock;
 
-/// Cached regex for Rust impl with optional generics (Bug 12: impl<T> Trait for Struct)
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATIC REGEXES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 fn re_impl_generic() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
     RE.get_or_init(|| Regex::new(r"impl\s*(?:<[^>]+>)?\s+([A-Za-z0-9_]+)\s+for\s+").ok())
@@ -66,12 +39,104 @@ fn re_ts_implements() -> Option<&'static Regex> {
         .as_ref()
 }
 
-/// Extract aggregate trait names from agent file content.
-/// Looks for: impl IAggregateTrait for Struct, Box<dyn IAggregateTrait>, Arc<dyn IAggregateTrait>
-pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
+// ─── Block 1: Struct Definition ───────────────────────────
+pub struct AgentOrphanAnalyzer {
+    cache: Arc<dyn IOrphanFileCachePort>,
+}
+
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
+    fn is_agent_orphan(
+        &self,
+        f: &FilePath,
+        _root_dir: &FilePath,
+        all_files: &[FilePath],
+    ) -> OrphanIndicatorResult {
+        self.check_agent_orphan(f, all_files)
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for AgentOrphanAnalyzer {
+    fn default() -> Self {
+        Self {
+            cache: Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()),
+        }
+    }
+}
+
+impl AgentOrphanAnalyzer {
+    pub fn new(cache: Arc<dyn IOrphanFileCachePort>) -> Self {
+        Self { cache }
+    }
+
+    fn check_agent_orphan(&self, f: &FilePath, all_files: &[FilePath]) -> OrphanIndicatorResult {
+        let content = self.cache.read_cached(f).value;
+        if content.is_empty() {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
+        let aggregate_traits = extract_aggregate_traits(&content);
+        if aggregate_traits.is_empty() {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
+        let mut any_called = false;
+        for agg_name in &aggregate_traits {
+            for cf in all_files {
+                let cb = match cf.value().split('/').next_back() {
+                    Some(b) => b,
+                    None => continue,
+                };
+                let is_surface = cb.starts_with("surface_");
+                let is_container = cb.ends_with("_container.rs")
+                    || cb.ends_with("_container.py")
+                    || cb.ends_with("_container.ts")
+                    || cb.ends_with("_container.js");
+
+                if !is_surface && !is_container {
+                    continue;
+                }
+                let cf_content = self.cache.read_cached(cf).value;
+                if cf_content.contains(agg_name) {
+                    any_called = true;
+                    break;
+                }
+            }
+            if any_called {
+                break;
+            }
+        }
+
+        if !any_called {
+            return OrphanIndicatorResult::new(
+                true,
+                AesOrphanViolation::AgentOrphan {
+                    agg_name: aggregate_traits.join(", "),
+                    reason: Some(
+                        format!(
+                            "Agent orphan: aggregates [{}] not called by any surface.",
+                            aggregate_traits.join(", ")
+                        )
+                        .into(),
+                    ),
+                }
+                .to_string(),
+                Severity::HIGH,
+            );
+        }
+
+        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+fn extract_aggregate_traits(content: &str) -> Vec<String> {
     let mut traits = Vec::new();
 
-    // Rust: impl ITrait for Struct (with optional generics: impl<T> Trait for Struct)
     if let Some(re) = re_impl_generic() {
         for cap in re.captures_iter(content) {
             let name = cap[1].to_string();
@@ -81,7 +146,6 @@ pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
         }
     }
 
-    // Rust: Box<dyn ITrait> or Arc<dyn ITrait>
     if let Some(re) = re_dyn() {
         for cap in re.captures_iter(content) {
             let name = cap[1].to_string();
@@ -91,7 +155,6 @@ pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
         }
     }
 
-    // Python: class Struct(ITrait):
     if let Some(re) = re_py_class() {
         for cap in re.captures_iter(content) {
             for part in cap[1].split(',') {
@@ -103,7 +166,6 @@ pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
         }
     }
 
-    // JS/TS: class Struct implements IAggregateTrait
     if let Some(re) = re_ts_implements() {
         for cap in re.captures_iter(content) {
             let name = cap[1].to_string();
@@ -118,80 +180,19 @@ pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
     traits
 }
 
-pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[FilePath]) -> OrphanIndicatorResult {
-    let fp = f.value();
-    let content = match std::fs::read_to_string(fp) {
-        Ok(c) => c,
-        Err(_) => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
-    };
-
-    // Step 1: Find aggregate traits this agent implements
-    let aggregate_traits = extract_aggregate_traits(&content);
-    if aggregate_traits.is_empty() {
-        return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-    }
-
-    // Bug 2 fix: agent is orphan only if ALL aggregates are uncalled (not ANY)
-    let mut any_called = false;
-    for agg_name in &aggregate_traits {
-        for cf in all_files {
-            let cb = match cf.value().split('/').next_back() {
-                Some(b) => b,
-                None => continue,
-            };
-            let is_surface = cb.starts_with("surface_");
-            let is_container = cb.ends_with("_container.rs")
-                || cb.ends_with("_container.py")
-                || cb.ends_with("_container.ts")
-                || cb.ends_with("_container.js");
-
-            if !is_surface && !is_container {
-                continue;
-            }
-            if let Ok(c) = std::fs::read_to_string(cf.value()) {
-                if c.contains(agg_name) {
-                    any_called = true;
-                    break;
-                }
-            }
-        }
-        if any_called {
-            break;
-        }
-    }
-
-    if !any_called {
-        return OrphanIndicatorResult::new(
-            true,
-            AesOrphanViolation::AgentOrphan {
-                agg_name: aggregate_traits.join(", "),
-                reason: Some(
-                    format!(
-                        "Agent orphan: aggregates [{}] not called by any surface.",
-                        aggregate_traits.join(", ")
-                    )
-                    .into(),
-                ),
-            }
-            .to_string(),
-            Severity::HIGH,
-        );
-    }
-
-    OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
-}
-
 pub fn check_agent_orphan(
     fp: &str,
     _basename: &str,
     files: &[FilePath],
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    cache: &Arc<dyn IOrphanFileCachePort>,
 ) {
     let fp_vo = match FilePath::new(fp.to_string()) {
         Ok(p) => p,
         Err(_) => return,
     };
-    let result = is_agent_orphan_raw(&fp_vo, files);
+    let analyzer = AgentOrphanAnalyzer::new(cache.clone());
+    let result = analyzer.check_agent_orphan(&fp_vo, files);
     if result.is_orphan {
         violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
             fp,

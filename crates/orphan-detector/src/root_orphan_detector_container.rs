@@ -11,7 +11,7 @@ pub struct OrphanContainer {
 }
 
 // ─── Block 2: Public Contract ─────────────────────────────
-// (No trait impl )
+// (No trait impl)
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl Default for OrphanContainer {
@@ -59,9 +59,10 @@ impl OrphanContainer {
             Arc::new(
                 crate::capabilities_orphan_infrastructure_analyzer::InfrastructureOrphanAnalyzer::new(
                     extractor.clone(),
+                    cache.clone(),
                 ),
             ),
-            Arc::new(crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new()),
+            Arc::new(crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new(cache.clone())),
             Arc::new(
                 crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new(
                     extractor.clone(),

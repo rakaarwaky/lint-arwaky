@@ -58,7 +58,6 @@ impl InfrastructureOrphanAnalyzer {
         }
 
         // Check if wired in any container
-        let fp = f.value();
         let stem = self.extractor.file_stem(f).value;
 
         let content = self.cache.read_cached(f).value;
