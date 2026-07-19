@@ -20,7 +20,6 @@ related:
   - trait-consolidation-rust
   - method_classifier-rust
 ---
-
 # create-taxonomy-rust
 
 ## Purpose
@@ -58,11 +57,11 @@ crates/shared/src/
 
 Taxonomy files follow strict naming patterns:
 
-| Suffix      | Purpose                              | Allowed? | Example                              |
-| ----------- | ------------------------------------ | -------- | ------------------------------------ |
+| Suffix        | Purpose                              | Allowed? | Example                                |
+| ------------- | ------------------------------------ | -------- | -------------------------------------- |
 | `_vo`       | Value Objects (wraps a single value) | ✅ YES   | `taxonomy_import_rule_vo.rs`         |
 | `_entity`   | Domain entities with identity        | ✅ YES   | `taxonomy_analysis_entity.rs`        |
-| `_error`    | Error types (`thiserror::Error`)     | ✅ YES   | `taxonomy_config_error.rs`           |
+| `_error`    | Error types (`thiserror::Error`)   | ✅ YES   | `taxonomy_config_error.rs`           |
 | `_event`    | Event/message types                  | ✅ YES   | `taxonomy_scan_event.rs`             |
 | `_constant` | Static compile-time constants        | ✅ YES   | `taxonomy_layer_names_constant.rs`   |
 | `_utility`  | Stateless free functions             | ✅ YES   | `taxonomy_symbol_renamer_utility.rs` |
@@ -73,8 +72,8 @@ Taxonomy files follow strict naming patterns:
 
 Taxonomy files must remain **completely pure**:
 
-| Taxonomy Type                                          | Can Import From              | Cannot Import From                                              |
-| ------------------------------------------------------ | ---------------------------- | --------------------------------------------------------------- |
+| Taxonomy Type                                                | Can Import From              | Cannot Import From                                              |
+| ------------------------------------------------------------ | ---------------------------- | --------------------------------------------------------------- |
 | **taxonomy(vo)**                                       | Other taxonomy types         | agents, infrastructure, surfaces, contracts, capabilities, root |
 | **taxonomy(entity), taxonomy(error), taxonomy(event)** | taxonomy VOs/constants       | agents, infrastructure, surfaces, contracts, capabilities       |
 | **taxonomy(constant)**                                 | Nothing (pure static values) | Any external imports                                            |
@@ -227,8 +226,8 @@ When you find a struct in a layer file (capabilities/infrastructure/agent/surfac
 
 Find the correct domain directory under `crates/shared/src/<domain>/`:
 
-| Domain            | Directory                     | Example Types                              |
-| ----------------- | ----------------------------- | ------------------------------------------ |
+| Domain              | Directory                       | Example Types                              |
+| ------------------- | ------------------------------- | ------------------------------------------ |
 | `common`          | `shared/src/common/`          | Cross-domain types (PathVO, BooleanVO)     |
 | `orphan-detector` | `shared/src/orphan-detector/` | Orphan results, severity, violations       |
 | `code-analysis`   | `shared/src/code-analysis/`   | Analysis results, reachability, violations |
@@ -328,15 +327,15 @@ rg "[0-9]+\.[0-9]+|#[0-9A-Fa-f]+" crates/<crate>/src/ | grep -v "shared/" | grep
 
 **All Layer File Naming:**
 
-| Layer              | Pattern                  | Suffix                             |
-| ------------------ | ------------------------ | ---------------------------------- |
-| **root**           | `root_*_container.rs`    | `_container`                       |
-| **taxonomy**       | `taxonomy_*_vo.rs`       | `_vo`, `_constant`                 |
+| Layer                    | Pattern                    | Suffix                                   |
+| ------------------------ | -------------------------- | ---------------------------------------- |
+| **root**           | `root_*_container.rs`    | `_container`                           |
+| **taxonomy**       | `taxonomy_*_vo.rs`       | `_vo`, `_constant`                   |
 | **contract**       | `contract_*_protocol.rs` | `_protocol`, `_port`, `_aggregate` |
-| **capabilities**   | `capabilities_*.rs`      | flexible                           |
-| **infrastructure** | `infrastructure_*.rs`    | flexible                           |
-| **agent**          | `agent_*.rs`             | `_orchestrator`                    |
-| **surface**        | `surface_*.rs`           | `_command`, `_controller`          |
+| **capabilities**   | `capabilities_*.rs`      | flexible                                 |
+| **infrastructure** | `infrastructure_*.rs`    | flexible                                 |
+| **agent**          | `agent_*.rs`             | `_orchestrator`                        |
+| **surface**        | `surface_*.rs`           | `_command`, `_controller`            |
 
 ## Primitive-to-VO Patterns (from fix-primitive-to-vo)
 

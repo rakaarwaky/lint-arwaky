@@ -110,6 +110,38 @@ impl OrphanGraphResolver {
         Self { extractor, cache }
     }
 
+    /// Given the directory module currently being descended into (`mod_dir`) and
+    /// a segment that did not resolve to a real file/dir, check that module's
+    /// `mod.rs` for a `pub use ...<segment>` re-export and return the segments of
+    /// the re-exported path (e.g. `crate::common::taxonomy_action_vo` ->
+    /// `["common", "taxonomy_action_vo"]`). Returns `None` if no matching
+    /// re-export is found.
+    fn resolve_reexport(
+        &self,
+        mod_dir: &std::path::Path,
+        seg: &str,
+    ) -> Option<Vec<String>> {
+        let mod_rs = mod_dir.join("mod.rs");
+        let content = std::fs::read_to_string(&mod_rs).ok()?;
+        // Match `pub use crate::...::seg;` or `pub use crate::seg;`
+        // (strip a trailing `::*` / `::{...}` / item path).
+        let re = regex::Regex::new(
+            r"pub use crate::((?:[A-Za-z_][A-Za-z0-9_]*)(?:::[A-Za-z_][A-Za-z0-9_]*)*)",
+        )
+        .ok()?;
+        let seg_norm = seg.replace('-', "_");
+        for cap in re.captures_iter(&content) {
+            let path = cap.get(1)?.as_str();
+            // The re-exported path ends with the segment we are looking for
+            // (e.g. `common::taxonomy_action_vo` ends with `taxonomy_action_vo`).
+            let leaf = path.rsplit("::").next().unwrap_or(path);
+            if leaf.replace('-', "_") == seg_norm {
+                return Some(path.split("::").map(|s| s.to_string()).collect());
+            }
+        }
+        None
+    }
+
     /// Resolve a multi-segment external-crate import path to the real leaf
     /// module file, so inbound-links are attached to the actual module and not
     /// just its domain `mod.rs` (which previously caused false AES501/AES502
@@ -123,8 +155,12 @@ impl OrphanGraphResolver {
     /// resolved module is the one that should receive the inbound link.
     /// e.g. `shared::orphan_detector::taxonomy_orphan_result_utility`
     ///   -> `crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs`
-    /// Resolve an external-crate import path (e.g. `shared::orphan_detector::taxonomy_orphan_result_utility`)
-    /// to the real leaf module file, descending through directory modules.
+    ///
+    /// When a segment cannot be resolved directly it may be a re-export: the
+    /// current module's `mod.rs` can contain `pub use crate::common::X;`. In that
+    /// case we follow the re-export to `common::X` and resume resolution.
+    ///
+    /// Returns the resolved `.rs` file path, or `None` if it cannot be found.
     fn resolve_module_file(
         &self,
         _crate_name: &str,
@@ -142,7 +178,7 @@ impl OrphanGraphResolver {
         // produced non-existent candidate paths, which caused leaf modules to
         // never be linked and produced false AES501/AES502 orphans.
         let mut last_resolved: Option<String> = None;
-        for seg in segments {
+        for (seg_i, seg) in segments.iter().enumerate() {
             // Rust module names use underscores, but the repo's directories use
             // hyphens (e.g. `code_analysis` module lives in `code-analysis/`), and
             // vice versa (`orphan_detector` import -> `orphan-detector/` dir). Try
@@ -178,8 +214,35 @@ impl OrphanGraphResolver {
                     .unwrap_or(current);
                 continue;
             } else {
+                // The segment did not resolve to a real file/directory module.
+                // It may be reachable through a re-export: e.g.
+                // `shared::mcp_server::taxonomy_action_vo` where `mcp-server/mod.rs`
+                // contains `pub use crate::common::taxonomy_action_vo;`. Follow
+                // `pub use` re-exports and resume resolution from the re-exported
+                // module's real location.
+                if let Some(reexport_segments) =
+                    self.resolve_reexport(&current, seg)
+                {
+                    // Recurse with the re-exported module path, then continue the
+                    // remaining original segments (the item, if any).
+                    let mut full = reexport_segments;
+                    full.extend_from_slice(&segments[seg_i + 1..]);
+                    if let Some(resolved) = self.resolve_module_file(
+                        _crate_name,
+                        &full,
+                        src_dir,
+                        importing_file,
+                    ) {
+                        return if resolved != importing_file {
+                            Some(resolved)
+                        } else {
+                            last_resolved
+                        };
+                    }
+                }
                 return last_resolved;
             }
+
         }
         let final_mod = format!("{}/mod.rs", current.display());
         if Path::new(&final_mod).is_file() {
