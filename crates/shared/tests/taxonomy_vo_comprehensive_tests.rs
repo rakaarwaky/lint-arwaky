@@ -3,9 +3,7 @@
 // taxonomy_parser_error, taxonomy_adapter_error, taxonomy_common_error,
 // taxonomy_symbol_renamer_utility, taxonomy_file_collector_helper, taxonomy_naming_list_vo
 
-use shared_lint_arwaky::auto_fix::utils_symbol_renamer::{
-    rename_in_file, symbol_exists,
-};
+use shared_lint_arwaky::auto_fix::utils_symbol_renamer::{rename_in_file, symbol_exists};
 use shared_lint_arwaky::cli_commands::taxonomy_severity_vo::Severity;
 use shared_lint_arwaky::common::taxonomy_adapter_error::{
     AdapterError, ScanError, ValidationError,

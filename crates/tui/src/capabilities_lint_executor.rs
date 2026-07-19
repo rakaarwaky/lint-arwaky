@@ -8,8 +8,8 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -372,8 +372,9 @@ impl LintExecutor {
                         (&self.orphan_aggregate, &self.layer_detector)
                     {
                         if !all_source_files.is_empty() {
-                            let scan_root_fp = FilePath::new(scan_root.to_string_lossy().to_string())
-                                .unwrap_or_default();
+                            let scan_root_fp =
+                                FilePath::new(scan_root.to_string_lossy().to_string())
+                                    .unwrap_or_default();
                             let orphan_results = orphan_agg.check_orphans(
                                 layer_det.as_ref(),
                                 &all_source_files,
@@ -413,8 +414,8 @@ impl LintExecutor {
         let mut all_results = Vec::new();
 
         // 1. AES code analysis
-        let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-            .unwrap_or_default();
+        let fp =
+            shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
         let aes_results = self.code_analysis.run_code_analysis(&fp);
         all_results.extend(aes_results.values);
 
@@ -472,7 +473,8 @@ impl LintExecutor {
             let file_fps: Vec<FilePath> = source_files;
             if !file_fps.is_empty() {
                 let root_fp = FilePath::new(path.to_string()).unwrap_or_default();
-                let orphan_results = orphan_agg.check_orphans(layer_det.as_ref(), &file_fps, &root_fp);
+                let orphan_results =
+                    orphan_agg.check_orphans(layer_det.as_ref(), &file_fps, &root_fp);
                 all_results.extend(orphan_results);
             }
         }
@@ -487,8 +489,8 @@ impl LintExecutor {
 // ─── Block 2: Public Contract ─────────────────────────────
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
-        let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-            .unwrap_or_default();
+        let fp =
+            shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
         let results = self.code_analysis.run_code_analysis(&fp);
         let count = results.len();
         let output = self.formatter.format_results(&results);
@@ -533,8 +535,8 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn ci(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
-        let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-            .unwrap_or_default();
+        let fp =
+            shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
         let results = self.code_analysis.run_code_analysis(&fp);
         let score = self.code_analysis.calc_score(&results.values);
         let has_critical = self.code_analysis.check_critical(&results.values);

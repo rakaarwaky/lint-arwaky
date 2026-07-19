@@ -28,45 +28,66 @@ fn detects_string_param() {
 
 #[test]
 fn detects_result_string() {
-    let v =
-        ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self, p: &Path) -> Result<String, ErrorCode>;");
+    let v = ContractRoleChecker::signature_uses_forbidden_primitive(
+        "fn f(&self, p: &Path) -> Result<String, ErrorCode>;",
+    );
     assert!(v.contains(&"String"));
     assert!(v.contains(&"Result<String, _>"));
 }
 
 #[test]
 fn detects_result_borrowed_str() {
-    let v = ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self, p: &Path) -> Result<&str, ErrorCode>;");
+    let v = ContractRoleChecker::signature_uses_forbidden_primitive(
+        "fn f(&self, p: &Path) -> Result<&str, ErrorCode>;",
+    );
     assert!(v.contains(&"Result<&str, _>"));
 }
 
 #[test]
 fn detects_numeric_primitives() {
-    assert!(ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self, n: i32) -> i64;").contains(&"i32"));
     assert!(
-        ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self, n: usize) -> bool;").contains(&"usize")
+        ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self, n: i32) -> i64;")
+            .contains(&"i32")
     );
-    assert!(ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self) -> f64;").contains(&"f64"));
+    assert!(ContractRoleChecker::signature_uses_forbidden_primitive(
+        "fn f(&self, n: usize) -> bool;"
+    )
+    .contains(&"usize"));
+    assert!(
+        ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self) -> f64;")
+            .contains(&"f64")
+    );
 }
 
 #[test]
 fn allows_borrowed_str() {
-    assert!(
-        ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self, file: &str, content: &str) -> bool;")
-            .is_empty()
-    );
+    assert!(ContractRoleChecker::signature_uses_forbidden_primitive(
+        "fn f(&self, file: &str, content: &str) -> bool;"
+    )
+    .is_empty());
 }
 
 #[test]
 fn allows_bool() {
-    assert!(ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self) -> bool;").is_empty());
-    assert!(ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self, flag: bool) -> bool;").is_empty());
+    assert!(
+        ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self) -> bool;").is_empty()
+    );
+    assert!(ContractRoleChecker::signature_uses_forbidden_primitive(
+        "fn f(&self, flag: bool) -> bool;"
+    )
+    .is_empty());
 }
 
 #[test]
 fn does_not_match_substring_of_identifier() {
-    assert!(ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self, s: StringBuilder);").is_empty());
-    assert!(ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self, x: MyFloat);").is_empty());
+    assert!(ContractRoleChecker::signature_uses_forbidden_primitive(
+        "fn f(&self, s: StringBuilder);"
+    )
+    .is_empty());
+    assert!(
+        ContractRoleChecker::signature_uses_forbidden_primitive("fn f(&self, x: MyFloat);")
+            .is_empty()
+    );
 }
 
 #[test]

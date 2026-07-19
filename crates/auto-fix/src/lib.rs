@@ -1,6 +1,6 @@
 // PURPOSE: Module declarations for auto-fix (fix processor, orchestrator, container)
-mod utils_symbol_renamer;
 pub mod capabilities_fix_processor;
+mod utils_symbol_renamer;
 pub use capabilities_fix_processor::LintFixProcessor;
 pub mod agent_fix_orchestrator;
 pub use agent_fix_orchestrator::FixOrchestrator;

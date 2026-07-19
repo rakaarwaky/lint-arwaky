@@ -1,0 +1,25 @@
+# Verification Checklist
+
+- [ ] File follows the 3-Block Structure.
+- [ ] Block 1 contains exactly one implementation class + `__init__`.
+- [ ] Block 2 contains ONLY the domain protocol method implementations.
+- [ ] Block 3 contains dunder methods, factories, and private helpers.
+- [ ] Capability class inherits a protocol ABC (AES403).
+- [ ] Protocol contains only public domain contract methods.
+- [ ] Private helpers are not declared in the protocol.
+- [ ] Constructors are not declared in the protocol.
+- [ ] Dunder methods are in Block 3.
+- [ ] Domain-specific helpers may remain in Block 3.
+- [ ] Reusable, stateless, domain-agnostic functions are extracted to `*_utility.py`.
+- [ ] No reusable utility-like functions remain inside Block 3.
+- [ ] One file contains exactly one implementation class.
+- [ ] No domain data structures are defined locally.
+- [ ] All domain data structures are imported from shared/taxonomy.
+- [ ] Service dependencies use protocol interfaces via DI.
+- [ ] Value/configuration fields use shared VOs.
+- [ ] Zero I/O in capabilities layer (AES404).
+- [ ] No forbidden imports from `infrastructure_*`.
+- [ ] No forbidden imports from `agent_*`.
+- [ ] No direct dependency on concrete `capabilities_*` implementations.
+- [ ] Protocol module is registered in the shared module's `__init__.py`.
+- [ ] `python -c "import <module>"` passes.

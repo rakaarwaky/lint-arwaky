@@ -286,12 +286,14 @@ impl ContractRoleChecker {
             let line_no = idx + 1;
             let line = raw.trim();
             if in_trait_depth == 0 {
-                let is_trait_header = (line.starts_with("pub trait ") || line.starts_with("trait "))
+                let is_trait_header = (line.starts_with("pub trait ")
+                    || line.starts_with("trait "))
                     && line.contains('{')
                     && line.contains(')').ge(&line.contains('('));
                 if is_trait_header {
                     in_trait_depth = 1;
-                    brace_depth = line.matches('{').count() as i32 - line.matches('}').count() as i32;
+                    brace_depth =
+                        line.matches('{').count() as i32 - line.matches('}').count() as i32;
                     continue;
                 }
                 continue;
@@ -353,18 +355,38 @@ impl ContractRoleChecker {
     fn python_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
         let mut forbidden: Vec<&'static str> = Vec::new();
         let lower = sig.to_lowercase();
-        if lower.contains(": str") { forbidden.push("str"); }
-        if lower.contains(": int") { forbidden.push("int"); }
-        if lower.contains(": float") { forbidden.push("float"); }
-        if lower.contains(": list") { forbidden.push("list"); }
-        if lower.contains(": dict") { forbidden.push("dict"); }
+        if lower.contains(": str") {
+            forbidden.push("str");
+        }
+        if lower.contains(": int") {
+            forbidden.push("int");
+        }
+        if lower.contains(": float") {
+            forbidden.push("float");
+        }
+        if lower.contains(": list") {
+            forbidden.push("list");
+        }
+        if lower.contains(": dict") {
+            forbidden.push("dict");
+        }
         if let Some(arrow_idx) = lower.find("->") {
             let ret = lower[arrow_idx + 2..].trim();
-            if ret.starts_with("str") { forbidden.push("str"); }
-            if ret.starts_with("int") { forbidden.push("int"); }
-            if ret.starts_with("float") { forbidden.push("float"); }
-            if ret.starts_with("list") { forbidden.push("list"); }
-            if ret.starts_with("dict") { forbidden.push("dict"); }
+            if ret.starts_with("str") {
+                forbidden.push("str");
+            }
+            if ret.starts_with("int") {
+                forbidden.push("int");
+            }
+            if ret.starts_with("float") {
+                forbidden.push("float");
+            }
+            if ret.starts_with("list") {
+                forbidden.push("list");
+            }
+            if ret.starts_with("dict") {
+                forbidden.push("dict");
+            }
         }
         forbidden.sort();
         forbidden.dedup();
@@ -385,7 +407,8 @@ impl ContractRoleChecker {
                 && trimmed.contains('{')
             {
                 in_block = true;
-                brace_depth = trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
+                brace_depth =
+                    trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
                 if brace_depth == 0 {
                     if let Some(open) = trimmed.find('{') {
                         if let Some(close) = trimmed.rfind('}') {
@@ -413,7 +436,8 @@ impl ContractRoleChecker {
                 continue;
             }
             if in_block {
-                brace_depth += trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
+                brace_depth +=
+                    trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
                 if brace_depth <= 0 {
                     in_block = false;
                     brace_depth = 0;
@@ -443,14 +467,26 @@ impl ContractRoleChecker {
     fn typescript_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
         let mut forbidden: Vec<&'static str> = Vec::new();
         let lower = sig.to_lowercase();
-        if lower.contains(": string") { forbidden.push("string"); }
-        if lower.contains(": number") { forbidden.push("number"); }
-        if lower.contains(": any") { forbidden.push("any"); }
+        if lower.contains(": string") {
+            forbidden.push("string");
+        }
+        if lower.contains(": number") {
+            forbidden.push("number");
+        }
+        if lower.contains(": any") {
+            forbidden.push("any");
+        }
         if let Some(paren_idx) = lower.rfind(')') {
             let after = lower[paren_idx + 1..].trim();
-            if after.starts_with(": string") { forbidden.push("string"); }
-            if after.starts_with(": number") { forbidden.push("number"); }
-            if after.starts_with(": any") { forbidden.push("any"); }
+            if after.starts_with(": string") {
+                forbidden.push("string");
+            }
+            if after.starts_with(": number") {
+                forbidden.push("number");
+            }
+            if after.starts_with(": any") {
+                forbidden.push("any");
+            }
         }
         forbidden.sort();
         forbidden.dedup();

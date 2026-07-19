@@ -230,7 +230,8 @@ impl CheckCommandsSurface {
         } else {
             Vec::new()
         };
-        let orphan_scan_root_fp = FilePath::new(orphan_scan_root_str.to_string()).unwrap_or_default();
+        let orphan_scan_root_fp =
+            FilePath::new(orphan_scan_root_str.to_string()).unwrap_or_default();
         orphan_orchestrator.check_orphans(
             layer_detector.as_ref(),
             &orphan_files,
@@ -455,7 +456,8 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from(path),
         };
-        let all_source_files: Vec<FilePath> = code_analysis::collect_all_source_files_raw(&scan_root);
+        let all_source_files: Vec<FilePath> =
+            code_analysis::collect_all_source_files_raw(&scan_root);
 
         let multi = workspaces.len() > 1;
         if multi {
@@ -563,7 +565,8 @@ impl CheckCommandsSurface {
                     .collect()
             };
 
-            let scan_root_fp = FilePath::new(scan_root.to_string_lossy().to_string()).unwrap_or_default();
+            let scan_root_fp =
+                FilePath::new(scan_root.to_string_lossy().to_string()).unwrap_or_default();
             let member_orphans = orphan_orchestrator.check_orphans(
                 layer_detector.as_ref(),
                 &all_source_files,

@@ -17,13 +17,13 @@
 // Per-language patterns are applied only when the file extension matches. Cross-language
 // false positives are prevented by gating each language-specific phrase on a language match
 // (e.g. `raise` only fires on .py files; `throw` only fires on .js/.jsx/.mjs/.cjs/.ts/.tsx files).
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use crate::utils_bypass::{
     classify_source, classify_token, is_comment_bypass_pattern, is_ident_continue, is_ident_start,
     matches_keyword_token, starts_with_allow_attr, CharClass, SourceLanguage, ViolationKind,
 };
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;

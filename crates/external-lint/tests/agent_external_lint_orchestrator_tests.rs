@@ -14,11 +14,11 @@ use shared::common::taxonomy_common_error::ErrorMessage;
 use shared::common::taxonomy_common_vo::ColumnNumber;
 use shared::common::taxonomy_common_vo::LineNumber;
 
+use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_error_vo::ErrorCode;
 use shared::common::taxonomy_lint_vo::LocationList;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -128,7 +128,12 @@ impl IExternalLintLanguageDetectorPort for MockLanguageDetector {
 struct MockSelector;
 
 impl IExternalLintSelectorProtocol for MockSelector {
-    fn select_adapters(&self, has_rs: BooleanVO, has_py: BooleanVO, has_js: BooleanVO) -> Vec<String> {
+    fn select_adapters(
+        &self,
+        has_rs: BooleanVO,
+        has_py: BooleanVO,
+        has_js: BooleanVO,
+    ) -> Vec<String> {
         let mut names = Vec::new();
         if has_rs.value {
             names.extend(["clippy", "rustfmt", "cargo-audit"].map(String::from));

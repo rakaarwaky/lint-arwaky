@@ -32,8 +32,8 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
-use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 use crate::utils_mypy_regex::{mypy_re_with_col, mypy_re_without_col};
+use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct MyPyAdapter {

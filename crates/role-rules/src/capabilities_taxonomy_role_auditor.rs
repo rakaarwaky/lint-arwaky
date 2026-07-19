@@ -13,12 +13,12 @@
 //
 // NOTE: scan_primitives uses language-specific primitive sets. Only Rust, Python,
 //      and JavaScript/TypeScript are currently supported.
+use crate::utils_path::has_suffix;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
 use shared::common::contract_language_detector_port::Language as DetLang;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
-use crate::utils_path::has_suffix;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;

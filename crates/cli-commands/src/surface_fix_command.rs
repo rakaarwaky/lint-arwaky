@@ -54,9 +54,7 @@ impl FixCommandsSurface {
             println!("Applying safe fixes to {}...", project_path.value);
         }
 
-        let results = self
-            .code_analysis_linter
-            .run_code_analysis(&project_path);
+        let results = self.code_analysis_linter.run_code_analysis(&project_path);
         println!("Found {} violations before fix (AES301-305 only; other rules not included in count — #107 P1 #15)", results.len());
 
         let fix_orch = (self.fix_orchestrator_factory)(dry_run);
@@ -65,9 +63,7 @@ impl FixCommandsSurface {
         println!("{}", fix_result.output.value);
 
         if !dry_run {
-            let after_results = self
-                .code_analysis_linter
-                .run_code_analysis(&project_path);
+            let after_results = self.code_analysis_linter.run_code_analysis(&project_path);
             let fixed_count = results.len().saturating_sub(after_results.len());
             println!(
                 "Fixed {} violations ({} remaining, AES301-305 only — #107 P1 #15)",

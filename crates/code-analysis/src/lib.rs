@@ -5,10 +5,10 @@ pub use infrastructure_file_collector_provider::{
     collect_all_source_files, collect_all_source_files_raw, FileCollectorProvider,
 };
 pub use shared::common::taxonomy_file_utility::walk_rs_files;
+pub mod capabilities_mandatory_definition_checker;
 mod utils_bypass;
 mod utils_duplication;
 mod utils_mandatory;
-pub mod capabilities_mandatory_definition_checker;
 pub use capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
 pub mod capabilities_line_checker;
 pub use capabilities_line_checker::ArchLineChecker;

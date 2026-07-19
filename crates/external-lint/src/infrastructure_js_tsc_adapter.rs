@@ -30,8 +30,8 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 use crate::utils_tsc_regex::{tsc_pattern1, tsc_pattern2};
+use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct TSCAdapter {

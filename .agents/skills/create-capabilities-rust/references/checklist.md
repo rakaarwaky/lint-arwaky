@@ -1,0 +1,26 @@
+# Verification Checklist
+
+- [ ] File follows the 3-Block Structure.
+- [ ] Block 1 contains exactly one implementation struct.
+- [ ] Block 2 contains ONLY the domain protocol trait implementation.
+- [ ] Block 3 contains constructors, std traits, and private helpers.
+- [ ] Capability struct implements a protocol trait (AES403).
+- [ ] Trait contains only public domain contract methods.
+- [ ] Private helpers are not declared in the trait.
+- [ ] Constructors are not declared in the trait.
+- [ ] Std trait impls are in Block 3.
+- [ ] Domain-specific helpers may remain in Block 3.
+- [ ] Reusable, stateless, domain-agnostic functions are extracted to `*_utility.rs`.
+- [ ] No reusable utility-like functions remain inside Block 3.
+- [ ] Generic trait methods are object-safe or bounded with `where Self: Sized`.
+- [ ] One file contains exactly one implementation struct.
+- [ ] No domain data structures are defined locally.
+- [ ] All domain data structures are imported from shared/taxonomy.
+- [ ] Service dependencies use `Arc<dyn Trait>`.
+- [ ] Value/configuration fields use shared VOs.
+- [ ] Zero I/O in capabilities layer (AES404).
+- [ ] No forbidden imports from `infrastructure_*`.
+- [ ] No forbidden imports from `agent_*`.
+- [ ] No direct dependency on concrete `capabilities_*` implementations.
+- [ ] Trait module is registered in the shared crate's `mod.rs`.
+- [ ] `cargo check -p <crate-name>` passes.

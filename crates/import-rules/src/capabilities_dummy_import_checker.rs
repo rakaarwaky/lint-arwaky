@@ -5,9 +5,9 @@ use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionPro
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 
+use crate::utils_import::filepath_or_default;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
-use crate::utils_import::filepath_or_default;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
