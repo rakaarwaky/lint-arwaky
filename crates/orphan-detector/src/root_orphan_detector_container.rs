@@ -49,6 +49,7 @@ impl OrphanContainer {
             Arc::new(
                 crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(
                     extractor.clone(),
+                    cache.clone(),
                 ),
             ),
             Arc::new(

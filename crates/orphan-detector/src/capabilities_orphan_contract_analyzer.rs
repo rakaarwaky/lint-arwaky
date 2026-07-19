@@ -469,7 +469,10 @@ fn word_boundary_re(trait_name: &str) -> Regex {
 }
 
 fn never_match_regex() -> Regex {
-    Regex::new("").unwrap_or_default()
+    match Regex::new("") {
+        Ok(re) => re,
+        Err(_) => std::process::abort(),
+    }
 }
 
 fn not_orphan() -> OrphanIndicatorResult {
