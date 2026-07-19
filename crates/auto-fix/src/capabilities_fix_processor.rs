@@ -70,7 +70,7 @@ impl IFixProtocol for LintFixProcessor {
 
         for violation in &bypass_violations {
             let line = violation.line.value() as u32;
-            let fixed = self.fix_bypass_comments_impl(&violation.file.value, line);
+            let fixed = self.fix_bypass_comments_impl(&violation.file, line);
             if fixed {
                 fixed_count += 1;
                 self.emit_fix_event_impl(&violation.file, "AES304", 1);
@@ -81,7 +81,7 @@ impl IFixProtocol for LintFixProcessor {
 
         for violation in &unused_import_violations {
             let line = violation.line.value() as u32;
-            let fixed = self.fix_unused_import_impl(&violation.file.value, line);
+            let fixed = self.fix_unused_import_impl(&violation.file, line);
             if fixed {
                 fixed_count += 1;
                 self.emit_fix_event_impl(&violation.file, "AES203", 1);
@@ -136,11 +136,17 @@ impl IFixProtocol for LintFixProcessor {
     }
 
     fn fix_bypass_comments(&self, file_path: &str, line: LineNumber) -> bool {
-        self.fix_bypass_comments_impl(file_path, line.value as u32)
+        match FilePath::new(file_path.to_string()) {
+            Ok(fp) => self.fix_bypass_comments_impl(&fp, line.value as u32),
+            Err(_) => false,
+        }
     }
 
     fn fix_unused_import(&self, file_path: &str, line: LineNumber) -> bool {
-        self.fix_unused_import_impl(file_path, line.value as u32)
+        match FilePath::new(file_path.to_string()) {
+            Ok(fp) => self.fix_unused_import_impl(&fp, line.value as u32),
+            Err(_) => false,
+        }
     }
 
     fn emit_fix_event(&self, path: &FilePath, error_code: ErrorCode, changes: Count) -> FixApplied {

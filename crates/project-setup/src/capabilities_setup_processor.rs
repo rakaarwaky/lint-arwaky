@@ -176,10 +176,7 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         let mut found_javascript = false;
 
         // Phase 1: Marker-based detection (fast, no filesystem scan)
-        if self
-            .fs_port
-            .path_exists(&FilePath::new("crates").unwrap())
-            .await
+        if self.fs_port.path_exists(&FilePath::new("crates").unwrap()).await
             || self
                 .fs_port
                 .path_exists(&FilePath::new("Cargo.toml").unwrap())
@@ -225,7 +222,7 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         // Phase 2: File-extension scan (shallow, depth-limited)
         if !(found_rust && found_python && found_javascript) {
             self.scan_source_extensions(
-                ".",
+                &FilePath::new(".").unwrap(),
                 0,
                 4,
                 &mut found_rust,
@@ -291,8 +288,7 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     }
 
     async fn file_exists(&self, path: &str) -> bool {
-        let fp = FilePath::new(path.to_string()).unwrap_or_default();
-        self.fs_port.file_exists(&fp).await
+        self.fs_port.file_exists(path).await
     }
 }
 
@@ -312,10 +308,9 @@ impl SetupManagementProcessor {
         if depth > max_depth {
             return;
         }
-        let dir_fp = FilePath::new(dir.to_string()).unwrap_or_default();
-        let entries = self.fs_port.list_dir(&dir_fp).await;
+        let entries = self.fs_port.list_dir(dir).await;
         for entry in &entries {
-            let path = std::path::Path::new(entry.path.value());
+            let path = std::path::Path::new(&entry.path);
             if entry.is_dir {
                 let name = path.file_name().unwrap_or_default().to_string_lossy();
                 if name.starts_with('.')
@@ -329,7 +324,7 @@ impl SetupManagementProcessor {
                     continue;
                 }
                 Box::pin(self.scan_source_extensions(
-                    entry.path.value(),
+                    &entry.path,
                     depth + 1,
                     max_depth,
                     found_rust,
