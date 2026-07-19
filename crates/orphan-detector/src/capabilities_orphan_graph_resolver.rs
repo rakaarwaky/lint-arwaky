@@ -147,6 +147,13 @@ impl OrphanGraphResolver {
                 candidate_mod.is_file(),
                 candidate_mod
             );
+            if let Ok(entries) = std::fs::read_dir(&current) {
+                let names: Vec<String> = entries
+                    .flatten()
+                    .filter_map(|e| e.file_name().into_string().ok())
+                    .collect();
+                eprintln!("[DBG-RMF] current contents: {names:?}");
+            }
             if candidate_file.is_file() {
                 let p = candidate_file.to_string_lossy().to_string();
                 if p != importing_file {

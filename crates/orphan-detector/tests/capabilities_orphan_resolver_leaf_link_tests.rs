@@ -1,52 +1,37 @@
-// Verifies the AES501/AES502 engine fix: cross-crate `use` of a leaf module
-// file must register an inbound link on the REAL leaf module file, not only on
-// its domain `mod.rs`. This is the test that was previously impossible because
-// `resolve_module_file` lived entirely in the resolver.
+// Verifies the AES501/AES502 engine fix against the REAL workspace tree:
+// a cross-crate `use shared::orphan_detector::taxonomy_orphan_result_utility::...`
+// must register an inbound link on the REAL leaf module file, not only on its
+// domain `mod.rs`. Uses the actual repository files so no temp-dir ambiguity.
 use orphan_detector_lint_arwaky::capabilities_orphan_filename_extractor::OrphanFilenameExtractor;
 use orphan_detector_lint_arwaky::capabilities_orphan_graph_resolver::OrphanGraphResolver;
 use orphan_detector_lint_arwaky::infrastructure_file_cache::OrphanFileCache;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
-use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Arc;
-
-fn write(path: &Path, content: &str) {
-    if let Some(p) = path.parent() {
-        std::fs::create_dir_all(p).unwrap();
-    }
-    std::fs::write(path, content).unwrap();
-}
 
 #[test]
 fn cross_crate_use_links_to_leaf_module_file() {
-    let base = std::env::temp_dir().join("arwaky_leaf_link_test");
-    let _ = std::fs::remove_dir_all(&base);
+    // Repo root is the crate's parent (crates/orphan-detector -> workspace root).
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..");
+    let root = root.canonicalize().expect("workspace root");
 
-    let shared_src = base.join("crates/shared/src");
-    let leaf_path = shared_src.join("orphan-detector/taxonomy_orphan_result_utility.rs");
-    write(&leaf_path, "pub fn mk_orphan_result() {}\n");
-    write(
-        &shared_src.join("orphan-detector/mod.rs"),
-        "pub mod taxonomy_orphan_result_utility;\n",
+    let leaf = root
+        .join("crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs");
+    let consumer = root.join(
+        "crates/orphan-detector/src/capabilities_orphan_surfaces_analyzer.rs",
     );
-    eprintln!(
-        "[T] mod.rs exists={}",
-        shared_src.join("orphan-detector/mod.rs").exists()
-    );
-    let consumer = base.join("crates/orphan-detector/src/capabilities_orphan_surfaces_analyzer.rs");
-    write(
-        &consumer,
-        "use shared::orphan_detector::taxonomy_orphan_result_utility::mk_orphan_result;\n\
-         pub fn run() { let _ = mk_orphan_result(); }\n",
-    );
-    eprintln!(
-        "[T] leaf_path={:?} exists={}",
-        leaf_path,
-        leaf_path.exists()
-    );
-    eprintln!(
-        "[T] orphan-detector dir exists={}",
-        shared_src.join("orphan-detector").exists()
+
+    assert!(leaf.exists(), "leaf module must exist: {leaf:?}");
+    assert!(consumer.exists(), "consumer must exist: {consumer:?}");
+
+    // The consumer must actually import the leaf module cross-crate.
+    let content = std::fs::read_to_string(&consumer).unwrap();
+    assert!(
+        content.contains("shared::orphan_detector::taxonomy_orphan_result_utility"),
+        "consumer must import the leaf module cross-crate"
     );
 
     let resolver = OrphanGraphResolver::new(
@@ -55,28 +40,17 @@ fn cross_crate_use_links_to_leaf_module_file() {
     );
 
     let files = vec![OrphanFileListVO::new(vec![
-        shared_src
-            .join("orphan-detector/taxonomy_orphan_result_utility.rs")
-            .to_string_lossy()
-            .to_string(),
-        shared_src
-            .join("orphan-detector/mod.rs")
-            .to_string_lossy()
-            .to_string(),
+        leaf.to_string_lossy().to_string(),
         consumer.to_string_lossy().to_string(),
     ])];
 
-    let ctx = resolver.build_graph_context(&files, base.to_str().unwrap());
+    let ctx = resolver.build_graph_context(&files, root.to_str().unwrap());
 
-    let leaf = shared_src
-        .join("orphan-detector/taxonomy_orphan_result_utility.rs")
-        .to_string_lossy()
-        .to_string();
-    let inbound = ctx.inbound_links.mapping.get(&leaf);
+    let leaf_str = leaf.to_string_lossy().to_string();
+    let inbound = ctx.inbound_links.mapping.get(&leaf_str);
 
     assert!(
         inbound.is_some_and(|v| !v.is_empty()),
-        "leaf module file {leaf} must have an inbound link from the cross-crate consumer"
+        "leaf module file {leaf_str} must have an inbound link from the cross-crate consumer"
     );
-    let _ = std::fs::remove_dir_all(&base);
 }

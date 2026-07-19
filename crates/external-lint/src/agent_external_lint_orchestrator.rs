@@ -13,6 +13,7 @@ use async_trait::async_trait;
 use futures::future;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::external_lint::contract_external_lint_language_detector_port::IExternalLintLanguageDetectorPort;
@@ -25,29 +26,16 @@ pub struct ExternalLintOrchestrator {
     selector: Arc<dyn IExternalLintSelectorProtocol>,
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl ExternalLintOrchestrator {
-    pub fn new(
-        adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
-        language_detector: Arc<dyn IExternalLintLanguageDetectorPort>,
-        selector: Arc<dyn IExternalLintSelectorProtocol>,
-    ) -> Self {
-        Self {
-            adapters,
-            language_detector,
-            selector,
-        }
-    }
-}
-
 #[async_trait]
 // ─── Block 2: Public Contract ─────────────────────────────
 impl IExternalLintAggregate for ExternalLintOrchestrator {
     async fn scan_all(&self, path: &FilePath) -> LintResultList {
         let detected = self.language_detector.detect_languages(path).await;
-        let adapter_names =
-            self.selector
-                .select_adapters(detected.has_rs, detected.has_py, detected.has_js);
+        let adapter_names = self.selector.select_adapters(
+            BooleanVO::new(detected.has_rs),
+            BooleanVO::new(detected.has_py),
+            BooleanVO::new(detected.has_js),
+        );
 
         let mut futures = Vec::new();
         for name in &adapter_names {
@@ -87,5 +75,19 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
 
     fn adapter_names(&self) -> Vec<String> {
         self.adapters.keys().cloned().collect()
+    }
+}
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl ExternalLintOrchestrator {
+    pub fn new(
+        adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
+        language_detector: Arc<dyn IExternalLintLanguageDetectorPort>,
+        selector: Arc<dyn IExternalLintSelectorProtocol>,
+    ) -> Self {
+        Self {
+            adapters,
+            language_detector,
+            selector,
+        }
     }
 }
